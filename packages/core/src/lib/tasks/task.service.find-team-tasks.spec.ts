@@ -40,7 +40,17 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 			{ metadata: { tableName: 'task' }, createQueryBuilder } as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{ findAndCount } as any,
-			...(Array.from({ length: 8 }, () => stub) as [never, never, never, never, never, never, never, never])
+			...(Array.from({ length: 9 }, () => stub) as [
+				never,
+				never,
+				never,
+				never,
+				never,
+				never,
+				never,
+				never,
+				never
+			])
 		);
 	});
 

@@ -1,6 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, HttpStatus, HttpException } from '@nestjs/common';
 import {
+	DeleteResult,
 	IsNull,
 	SelectQueryBuilder,
 	Brackets,
@@ -53,6 +54,7 @@ import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
+import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
@@ -75,7 +77,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _mentionService: MentionService,
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
-		private readonly _employeeRecentVisitService: EmployeeRecentVisitService
+		private readonly _employeeRecentVisitService: EmployeeRecentVisitService,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -385,6 +388,40 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Deletes a task on behalf of the current user.
+	 *
+	 * The route also admits ORG_TASK_EDIT so that a team manager, whose role holds no task-delete
+	 * permission, reaches this check. Without ALL_ORG_EDIT or ORG_TASK_DELETE, the caller must manage one
+	 * of the task's teams that belongs to the task's organization.
+	 *
+	 * @param id - The task to delete
+	 * @returns The result of the deletion
+	 * @throws ForbiddenException when the caller may not delete that task
+	 */
+	async deleteTask(id: ID): Promise<DeleteResult> {
+		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
+			const employeeId = RequestContext.currentEmployeeId();
+			const { organizationId, teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
+
+			// Task writes only check that a linked team is in the same tenant, so a task can reference a team
+			// of another organization. Only teams of the task's own organization count, and a task without
+			// an organization grants nothing.
+			const teamIds = isNotEmpty(organizationId)
+				? teams.filter((team) => team.organizationId === organizationId).map((team) => team.id)
+				: [];
+			const isTeamManager =
+				isNotEmpty(employeeId) &&
+				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
+
+			if (!isTeamManager) {
+				throw new ForbiddenException('You can only delete a task of a team you manage.');
+			}
+		}
+
+		return await this.delete(id);
+	}
+
+	/**
 	 * Recursively searches for the parent epic of a given task (issue) using a SQL recursive query.
 	 *
 	 * @param issueId The ID of the task (issue) to start the search from.
@@ -472,6 +509,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Resolves the employee whose tasks a member-filtered list returns, or null for no member filter.
+	 *
+	 * A CHANGE_SELECTED_EMPLOYEE holder gets the `members.id` they asked for. Anyone else keeps their own
+	 * tasks, unless they ask for a member they manage in a team of the requested organization.
+	 *
+	 * @param where - The list query's where clause, as the client sent it
+	 * @returns The employee to filter the tasks by, or null
+	 */
+	private async resolveMemberFilter(where: FindOptionsWhere<Task>): Promise<ID | null> {
+		const { members, organizationId } = where;
+		const requestedId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedId;
+		}
+
+		// A repeated or nested query value is not an id: it is never looked up and the caller keeps their own tasks
+		const canManageRequested =
+			typeof requestedId === 'string' &&
+			isUUID(requestedId) &&
+			typeof organizationId === 'string' &&
+			(await this._managedEmployeeService.canManageEmployee(requestedId, undefined, organizationId));
+
+		return canManageRequested ? requestedId : RequestContext.currentEmployeeId();
+	}
+
+	/**
 	 * Find employee tasks
 	 *
 	 * @param options - Pagination options including limit, page, and sorting.
@@ -495,7 +559,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						isScreeningTask = false,
 						organizationSprintId = null
 					} = where;
-					const { organizationId, projectId, members } = where;
+					const { organizationId, projectId } = where;
 					const tenantId = RequestContext.currentTenantId();
 
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
@@ -507,11 +571,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						mikroWhere.organizationSprintId = null;
 					}
 
-					const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-						? isNotEmpty(members) && isNotEmpty(members['id'])
-							? members['id']
-							: null
-						: RequestContext.currentEmployeeId();
+					const employeeId = await this.resolveMemberFilter(where);
 
 					if (isNotEmpty(employeeId)) {
 						mikroWhere.$or = [{ members: { id: employeeId } }, { teams: { members: { employeeId } } }];
@@ -539,7 +599,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						isScreeningTask = false,
 						organizationSprintId = null
 					} = where;
-					const { organizationId, projectId, members } = where;
+					const { organizationId, projectId } = where;
+					const employeeId = await this.resolveMemberFilter(where);
 
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.innerJoin(`${query.alias}.members`, 'members');
@@ -568,18 +629,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 
-						// If user have permission to change employee
-						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-								const employeeId = members['id'];
-								subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-							}
-						} else {
-							// If employee has login and don't have permission to change employee
-							const employeeId = RequestContext.currentEmployeeId();
-							if (isNotEmpty(employeeId)) {
-								subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-							}
+						if (isNotEmpty(employeeId)) {
+							subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
 						}
 						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
