@@ -5368,7 +5368,8 @@
 			"CREDENTIALS_SAVED": "נשמרו",
 			"CREDENTIALS_INCOMPLETE": "חלקיים",
 			"CREDENTIALS_NONE": "לא הוגדרו",
-			"CREDENTIALS_NOT_NEEDED": "לא נדרשים"
+			"CREDENTIALS_NOT_NEEDED": "לא נדרשים",
+			"SERVER_DEFAULT": "ברירת המחדל של השרת"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "היכן להשיג את המפתחות",
@@ -5403,6 +5404,7 @@
 			"BUTTON": "בדוק תצורה",
 			"OK": "כל השדות הנדרשים מולאו וכתובות ה-URL תקינות. המפתחות עצמם נבדקים רק על ידי הספק.",
 			"OK_LOCAL": "אחסון מקומי אינו דורש הגדרה.",
+			"OK_SERVER_DEFAULTS": "לא חסר דבר. השדות הריקים האלה משתמשים בתצורת השרת:",
 			"MISSING": "חסר:",
 			"INVALID_URL": "כתובת http(s) לא תקינה:"
 		},

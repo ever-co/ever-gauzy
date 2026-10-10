@@ -4710,7 +4710,8 @@
 			"CREDENTIALS_SAVED": "Saved",
 			"CREDENTIALS_INCOMPLETE": "Incomplete",
 			"CREDENTIALS_NONE": "Not set",
-			"CREDENTIALS_NOT_NEEDED": "Not needed"
+			"CREDENTIALS_NOT_NEEDED": "Not needed",
+			"SERVER_DEFAULT": "Server default"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Where to get the keys",
@@ -4745,6 +4746,7 @@
 			"BUTTON": "Check configuration",
 			"OK": "All required fields are filled in and the URLs are valid. The keys themselves are only verified by the provider.",
 			"OK_LOCAL": "Local storage needs no configuration.",
+			"OK_SERVER_DEFAULTS": "Nothing is missing. Left empty, so the server's own configuration is used:",
 			"MISSING": "Missing:",
 			"INVALID_URL": "Not a valid http(s) URL:"
 		},

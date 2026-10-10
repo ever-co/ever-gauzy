@@ -5358,7 +5358,8 @@
 			"CREDENTIALS_SAVED": "Zapisane",
 			"CREDENTIALS_INCOMPLETE": "Niekompletne",
 			"CREDENTIALS_NONE": "Nie ustawiono",
-			"CREDENTIALS_NOT_NEEDED": "Niewymagane"
+			"CREDENTIALS_NOT_NEEDED": "Niewymagane",
+			"SERVER_DEFAULT": "Domyślne serwera"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Skąd wziąć klucze",
@@ -5393,6 +5394,7 @@
 			"BUTTON": "Sprawdź konfigurację",
 			"OK": "Wszystkie wymagane pola są wypełnione, a adresy URL są poprawne. Same klucze weryfikuje wyłącznie dostawca.",
 			"OK_LOCAL": "Magazyn lokalny nie wymaga konfiguracji.",
+			"OK_SERVER_DEFAULTS": "Niczego nie brakuje. Te puste pola używają konfiguracji serwera:",
 			"MISSING": "Brakuje:",
 			"INVALID_URL": "Nieprawidłowy adres URL http(s):"
 		},

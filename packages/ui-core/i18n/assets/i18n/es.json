@@ -5361,7 +5361,8 @@
 			"CREDENTIALS_SAVED": "Guardadas",
 			"CREDENTIALS_INCOMPLETE": "Incompletas",
 			"CREDENTIALS_NONE": "Sin definir",
-			"CREDENTIALS_NOT_NEEDED": "No necesarias"
+			"CREDENTIALS_NOT_NEEDED": "No necesarias",
+			"SERVER_DEFAULT": "Predeterminado del servidor"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Dónde obtener las claves",
@@ -5396,6 +5397,7 @@
 			"BUTTON": "Comprobar configuración",
 			"OK": "Todos los campos obligatorios están completos y las URL son válidas. Las claves solo las verifica el proveedor.",
 			"OK_LOCAL": "El almacenamiento local no necesita configuración.",
+			"OK_SERVER_DEFAULTS": "No falta nada. Estos campos vacíos usan la configuración del servidor:",
 			"MISSING": "Falta:",
 			"INVALID_URL": "URL http(s) no válida:"
 		},

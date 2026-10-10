@@ -5359,7 +5359,8 @@
 			"CREDENTIALS_SAVED": "Opgeslagen",
 			"CREDENTIALS_INCOMPLETE": "Onvolledig",
 			"CREDENTIALS_NONE": "Niet ingesteld",
-			"CREDENTIALS_NOT_NEEDED": "Niet nodig"
+			"CREDENTIALS_NOT_NEEDED": "Niet nodig",
+			"SERVER_DEFAULT": "Serverstandaard"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Waar u de sleutels krijgt",
@@ -5394,6 +5395,7 @@
 			"BUTTON": "Configuratie controleren",
 			"OK": "Alle verplichte velden zijn ingevuld en de URL's zijn geldig. De sleutels zelf worden alleen door de provider gecontroleerd.",
 			"OK_LOCAL": "Lokale opslag heeft geen configuratie nodig.",
+			"OK_SERVER_DEFAULTS": "Er ontbreekt niets. Deze lege velden gebruiken de configuratie van de server:",
 			"MISSING": "Ontbreekt:",
 			"INVALID_URL": "Geen geldige http(s)-URL:"
 		},

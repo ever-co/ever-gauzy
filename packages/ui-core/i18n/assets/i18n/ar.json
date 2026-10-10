@@ -5344,7 +5344,8 @@
 			"CREDENTIALS_SAVED": "محفوظة",
 			"CREDENTIALS_INCOMPLETE": "غير مكتملة",
 			"CREDENTIALS_NONE": "غير معيّنة",
-			"CREDENTIALS_NOT_NEEDED": "غير مطلوبة"
+			"CREDENTIALS_NOT_NEEDED": "غير مطلوبة",
+			"SERVER_DEFAULT": "الإعداد الافتراضي للخادم"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "أين تحصل على المفاتيح",
@@ -5379,6 +5380,7 @@
 			"BUTTON": "التحقق من الإعداد",
 			"OK": "جميع الحقول المطلوبة مملوءة وعناوين URL صالحة. المفاتيح نفسها يتحقق منها المزوّد فقط.",
 			"OK_LOCAL": "التخزين المحلي لا يحتاج إلى إعداد.",
+			"OK_SERVER_DEFAULTS": "لا شيء ناقص. هذه الحقول الفارغة تستخدم إعدادات الخادم:",
 			"MISSING": "ناقص:",
 			"INVALID_URL": "عنوان http(s) غير صالح:"
 		},

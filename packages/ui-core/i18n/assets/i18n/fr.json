@@ -5350,7 +5350,8 @@
 			"CREDENTIALS_SAVED": "Enregistrés",
 			"CREDENTIALS_INCOMPLETE": "Incomplets",
 			"CREDENTIALS_NONE": "Non définis",
-			"CREDENTIALS_NOT_NEEDED": "Non requis"
+			"CREDENTIALS_NOT_NEEDED": "Non requis",
+			"SERVER_DEFAULT": "Valeur du serveur"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Où obtenir les clés",
@@ -5385,6 +5386,7 @@
 			"BUTTON": "Vérifier la configuration",
 			"OK": "Tous les champs obligatoires sont remplis et les URL sont valides. Les clés elles-mêmes ne sont vérifiées que par le fournisseur.",
 			"OK_LOCAL": "Le stockage local ne nécessite aucune configuration.",
+			"OK_SERVER_DEFAULTS": "Rien ne manque. Laissés vides, ces champs utilisent la configuration du serveur :",
 			"MISSING": "Manquant :",
 			"INVALID_URL": "URL http(s) non valide :"
 		},

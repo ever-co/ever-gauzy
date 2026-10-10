@@ -5359,7 +5359,8 @@
 			"CREDENTIALS_SAVED": "已保存",
 			"CREDENTIALS_INCOMPLETE": "不完整",
 			"CREDENTIALS_NONE": "未设置",
-			"CREDENTIALS_NOT_NEEDED": "无需"
+			"CREDENTIALS_NOT_NEEDED": "无需",
+			"SERVER_DEFAULT": "服务器默认值"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "如何获取密钥",
@@ -5394,6 +5395,7 @@
 			"BUTTON": "检查配置",
 			"OK": "所有必填字段均已填写，URL 有效。密钥本身仅由提供商验证。",
 			"OK_LOCAL": "本地存储无需配置。",
+			"OK_SERVER_DEFAULTS": "没有缺失项。以下留空的字段将使用服务器自身的配置：",
 			"MISSING": "缺少：",
 			"INVALID_URL": "无效的 http(s) URL："
 		},

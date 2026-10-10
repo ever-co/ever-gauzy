@@ -5355,7 +5355,8 @@
 			"CREDENTIALS_SAVED": "Gespeichert",
 			"CREDENTIALS_INCOMPLETE": "Unvollständig",
 			"CREDENTIALS_NONE": "Nicht festgelegt",
-			"CREDENTIALS_NOT_NEEDED": "Nicht erforderlich"
+			"CREDENTIALS_NOT_NEEDED": "Nicht erforderlich",
+			"SERVER_DEFAULT": "Server-Standard"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Wo Sie die Schlüssel erhalten",
@@ -5390,6 +5391,7 @@
 			"BUTTON": "Konfiguration prüfen",
 			"OK": "Alle Pflichtfelder sind ausgefüllt und die URLs sind gültig. Die Schlüssel selbst werden nur vom Anbieter überprüft.",
 			"OK_LOCAL": "Lokaler Speicher erfordert keine Konfiguration.",
+			"OK_SERVER_DEFAULTS": "Nichts fehlt. Diese leeren Felder verwenden die Konfiguration des Servers:",
 			"MISSING": "Fehlt:",
 			"INVALID_URL": "Keine gültige http(s)-URL:"
 		},
