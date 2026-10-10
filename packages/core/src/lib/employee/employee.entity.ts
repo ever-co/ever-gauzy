@@ -385,6 +385,19 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	isTrackingTime?: boolean;
 
 	/**
+	 * When the last presence heartbeat was received, by the server clock. Written only by
+	 * `PUT /employee/me/presence`, so it is deliberately absent from every input DTO.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@MultiORMColumn({ nullable: true })
+	lastSeenAt?: Date;
+
+	/** Whether the last presence heartbeat reported no keyboard, mouse or touch input for a while. */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@MultiORMColumn({ type: Boolean, nullable: true })
+	isIdle?: boolean;
+
+	/**
 	 * Enabled/Disabled Screen Capture Feature
 	 */
 	@ApiPropertyOptional({ type: () => Boolean })
