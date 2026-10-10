@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { environment as env } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { CrudService } from '../core/crud';
 import { ReportCategory } from './report-category.entity';
@@ -13,6 +14,25 @@ export interface IReportCategoryInput {
 
 /** The longest text any member of a catalogue row may hold: the columns are plain `varchar`s. */
 export const REPORT_CATALOGUE_TEXT_MAX = 255;
+
+
+/**
+ * Refuses report-catalogue authoring unless the deployment enabled it.
+ *
+ * `report` and `report_category` carry no tenant, so a row written here appears in every tenant's report menu.
+ * `SUPER_ADMIN` is a per-tenant role — anyone who signs up is one for their own tenant — so on a shared
+ * (SaaS) deployment the role alone would let any tenant owner edit the catalogue every tenant sees. Authoring
+ * is therefore off unless `REPORT_CATALOGUE_AUTHORING_ENABLED=true`, which a single-organisation deployment sets.
+ *
+ * @throws ForbiddenException when authoring is not enabled on this deployment.
+ */
+export function assertReportCatalogueAuthoringEnabled(): void {
+	if (!env.reportCatalogueAuthoring) {
+		throw new ForbiddenException(
+			'Report catalogue authoring is disabled on this deployment (REPORT_CATALOGUE_AUTHORING_ENABLED).'
+		);
+	}
+}
 
 @Injectable()
 export class ReportCategoryService extends CrudService<ReportCategory> {
@@ -34,6 +54,7 @@ export class ReportCategoryService extends CrudService<ReportCategory> {
 	 * @returns The category.
 	 */
 	async createCategory(input: IReportCategoryInput): Promise<ReportCategory> {
+		assertReportCatalogueAuthoringEnabled();
 		const name = this.requiredText(input?.name, 'name');
 
 		return await this.create({ name, iconClass: this.optionalText(input?.iconClass, 'iconClass') });
@@ -48,6 +69,7 @@ export class ReportCategoryService extends CrudService<ReportCategory> {
 	 * @throws NotFoundException when there is no such category.
 	 */
 	async updateCategory(id: ID, input: IReportCategoryInput): Promise<ReportCategory> {
+		assertReportCatalogueAuthoringEnabled();
 		await this.findOneByIdString(id);
 
 		const changes: Partial<ReportCategory> = {};
@@ -80,6 +102,7 @@ export class ReportCategoryService extends CrudService<ReportCategory> {
 	 * @throws ConflictException when a live report is still filed under it.
 	 */
 	async withdrawCategory(id: ID): Promise<boolean> {
+		assertReportCatalogueAuthoringEnabled();
 		let category: ReportCategory;
 
 		try {

@@ -4,7 +4,7 @@ import { CrudService } from '../core/crud';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { RequestContext } from './../core/context';
 import { Report } from './report.entity';
-import { REPORT_CATALOGUE_TEXT_MAX, ReportCategoryService } from './report-category.service';
+import { assertReportCatalogueAuthoringEnabled, REPORT_CATALOGUE_TEXT_MAX, ReportCategoryService } from './report-category.service';
 import { REPORT_SLUG_PATTERN } from './dto/report-authoring.dto';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
@@ -48,6 +48,7 @@ export class ReportService extends CrudService<Report> {
 	 * @throws ConflictException when a live report already has the slug.
 	 */
 	async createReport(input: IReportCreateInput): Promise<Report> {
+		assertReportCatalogueAuthoringEnabled();
 		const name = typeof input?.name === 'string' ? input.name.trim() : '';
 		const slug = typeof input?.slug === 'string' ? input.slug.trim() : '';
 

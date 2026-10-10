@@ -7,7 +7,8 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BadRequestException, ConflictException, ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { environment as env } from '@gauzy/config';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
@@ -792,7 +793,14 @@ describe('ReportModule — the resolver is declared where its dependencies are r
 });
 
 describe('Report authoring — the global catalogue, written only where it is safe to', () => {
-	afterEach(() => jest.restoreAllMocks());
+	const authoring = env.reportCatalogueAuthoring;
+	beforeEach(() => {
+		env.reportCatalogueAuthoring = true;
+	});
+	afterEach(() => {
+		env.reportCatalogueAuthoring = authoring;
+		jest.restoreAllMocks();
+	});
 
 	/** The report service over a scripted category read and a scripted store. */
 	function reports(options: { categoryLive?: boolean; slugTaken?: boolean } = {}) {
@@ -903,5 +911,39 @@ describe('Report authoring — the global catalogue, written only where it is sa
 		await service.updateCategory(CATEGORY, { iconClass: 'pie-chart-outline' });
 		expect(update).toHaveBeenCalledWith(CATEGORY, { iconClass: 'pie-chart-outline' });
 		await expect(service.updateCategory(CATEGORY, { name: '  ' })).rejects.toBeInstanceOf(BadRequestException);
+	});
+});
+
+describe('Report authoring — off unless the deployment enables it', () => {
+	const authoring = env.reportCatalogueAuthoring;
+	afterEach(() => {
+		env.reportCatalogueAuthoring = authoring;
+		jest.restoreAllMocks();
+	});
+
+	it('is off by default, because every tenant owner is a Super Admin of their own tenant', () => {
+		delete process.env.REPORT_CATALOGUE_AUTHORING_ENABLED;
+		expect(Boolean(authoring)).toBe(false);
+	});
+
+	it('refuses every catalogue write, before anything is read or written, when the deployment has not enabled it', async () => {
+		env.reportCatalogueAuthoring = false;
+		const categories = { findOneByIdString: jest.fn() };
+		const service = new ReportService({} as never, {} as never, categories as never);
+		const create = jest.spyOn(service, 'create');
+		const categoryService = new ReportCategoryService({} as never, {} as never);
+		const categoryCreate = jest.spyOn(categoryService, 'create');
+
+		await expect(
+			service.createReport({ name: 'Time', slug: 'time-and-activity', categoryId: CATEGORY })
+		).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(categoryService.createCategory({ name: 'Finance' })).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(categoryService.updateCategory(CATEGORY, { name: 'Money' })).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		await expect(categoryService.withdrawCategory(CATEGORY)).rejects.toBeInstanceOf(ForbiddenException);
+		expect(categories.findOneByIdString).not.toHaveBeenCalled();
+		expect(create).not.toHaveBeenCalled();
+		expect(categoryCreate).not.toHaveBeenCalled();
 	});
 });
