@@ -28,6 +28,34 @@ const seedPassword = (ctx) => {
 	return value;
 };
 
+/**
+ * The pages a person sees before signing in. Signed in, their guard sends the walk to the dashboard,
+ * so the browser opens them first, signed out: each as a full page load (a query of its own before
+ * the fragment), so the harness records its requests and dumps its links (under the path `/`).
+ */
+const SIGNED_OUT_ROUTES = [
+	'/auth/login',
+	'/auth/register',
+	'/auth/request-password',
+	'/auth/reset-password',
+	'/auth/confirm-email',
+	'/auth/accept-invite',
+	'/auth/accept-client-invite',
+	'/auth/estimate',
+	'/auth/login-workspace',
+	'/auth/login-magic',
+	'/auth/magic-sign-in',
+	'/auth/ever-id',
+	'/auth/ever-id/confirm',
+	'/auth/ever-id/signup',
+	'/share/workspace/create',
+	'/share/workspace/find',
+	'/share/workspace/signin',
+	'/legal/terms',
+	'/legal/privacy',
+	'/legal/cookies'
+];
+
 /** The route of a web app URL: its fragment without the query (`#/pages/settings`). */
 const routeOf = (url) => new URL(url).hash.split('?')[0] || '/';
 
@@ -172,7 +200,7 @@ export default {
 	},
 
 	/**
-	 * Browser leg: the real sign-in page. The web app routes in the URL fragment (`/#/auth/login`),
+	 * Browser leg: the signed-out pages first (SIGNED_OUT_ROUTES), then the real sign-in page. The web app routes in the URL fragment (`/#/auth/login`),
 	 * so the config's web_url ends in `/#` and every route is opened as `/#/<route>`.
 	 *
 	 * The session is checked during the whole walk: the web app keeps its token in its persisted
@@ -180,6 +208,13 @@ export default {
 	 * route after that faults instead of passing on the sign-in page.
 	 */
 	async uiLogin(page, ctx) {
+		const origin = new URL(ctx.baseUrl).origin;
+		for (const [index, route] of SIGNED_OUT_ROUTES.entries()) {
+			await page.goto(`${origin}/?signed-out=${index}#${route}`, { waitUntil: 'load' });
+			await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+			await page.waitForTimeout(500);
+		}
+		ctx.log(`adapter: opened ${SIGNED_OUT_ROUTES.length} signed-out pages`);
 		await page.goto(`${ctx.baseUrl}/auth/login`);
 		try {
 			await page.fill('#input-email', SEED_EMAIL, { timeout: 120_000 });
@@ -239,6 +274,10 @@ export default {
 			'/pages/users/edit/:id/main': { id: f.userId ?? UNKNOWN_ID },
 			'/pages/users/edit/:id/organizations': { id: f.userId ?? UNKNOWN_ID },
 			'/pages/users/edit/:id/settings': { id: f.userId ?? UNKNOWN_ID },
+			'/pages/organizations/edit/:id': { id: f.organizationId ?? UNKNOWN_ID },
+			'/pages/organizations/edit/:id/main': { id: f.organizationId ?? UNKNOWN_ID },
+			'/pages/organizations/edit/:id/location': { id: f.organizationId ?? UNKNOWN_ID },
+			'/pages/organizations/edit/:id/settings': { id: f.organizationId ?? UNKNOWN_ID },
 			'/pages/employees/edit/:id': { id: f.employeeId ?? UNKNOWN_ID },
 			'/pages/employees/view/:id': { id: f.employeeId ?? UNKNOWN_ID }
 		};

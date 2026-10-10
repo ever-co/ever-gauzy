@@ -1099,6 +1099,30 @@
       "source": "router"
     },
     {
+      "path": "/pages/organizations/edit/:id",
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
+      "source": "manual",
+      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+    },
+    {
+      "path": "/pages/organizations/edit/:id/location",
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
+      "source": "manual",
+      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+    },
+    {
+      "path": "/pages/organizations/edit/:id/main",
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
+      "source": "manual",
+      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+    },
+    {
+      "path": "/pages/organizations/edit/:id/settings",
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
+      "source": "manual",
+      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+    },
+    {
       "path": "/pages/playground",
       "file": "packages/plugins/ai-chat-react-ui/src/lib/playground.routes.ts",
       "source": "manual",
