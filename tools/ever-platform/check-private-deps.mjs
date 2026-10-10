@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // No dependency of the public default branch on a private ever-co repository.
 //
-// Anyone who clones `develop` must be able to install and build it. This reads every tracked
+// Anyone who clones `develop` must be able to install and build it. This reads every
 // package.json (its dependency fields only: dependencies, devDependencies, optionalDependencies,
 // peerDependencies, resolutions, overrides), yarn.lock (entry specs and `resolved` URLs) and workflow
 // (`uses:` values only), finds the ones that install from an ever-co GitHub repository, and asks
@@ -11,14 +11,14 @@
 // Dependency forms recognised: `github:ever-co/<repo>`, the shorthand `ever-co/<repo>`,
 // `git+https://github.com/ever-co/<repo>`, `https://github.com/ever-co/<repo>.git`,
 // `git+ssh://git@github.com[:/]ever-co/<repo>`, `git@github.com:ever-co/<repo>`,
-// `git://github.com/ever-co/<repo>`.
+// `git://github.com/ever-co/<repo>`, and GitHub tarballs (`https://codeload.github.com/ever-co/<repo>/...`,
+// `https://github.com/ever-co/<repo>/archive/...`).
 //
 //   node tools/ever-platform/check-private-deps.mjs [--root <dir>]
 //
 // Exit codes: 0 every referenced ever-co repository is public, 1 a private one is referenced, 2 the
 // check could not tell (GitHub answered something else, for example a rate limit).
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,27 +26,31 @@ const OWNER = 'ever-co';
 const REPO = '([A-Za-z0-9._-]+)';
 /** A dependency specification that installs from an ever-co GitHub repository (whole value). */
 const SPEC_FORMS = [
-	String.raw`^github:${OWNER}/${REPO}`,
-	String.raw`^${OWNER}/${REPO}(?:#.*)?$`,
+	`^github:${OWNER}/${REPO}`,
+	`^${OWNER}/${REPO}(?:#.*)?$`,
 	String.raw`^git\+https://(?:[^@/\s]+@)?github\.com/${OWNER}/${REPO}`,
 	String.raw`^https://(?:[^@/\s]+@)?github\.com/${OWNER}/${REPO}\.git(?:#.*)?$`,
 	String.raw`^git\+ssh://git@github\.com[:/]${OWNER}/${REPO}`,
 	String.raw`^git@github\.com:${OWNER}/${REPO}`,
-	String.raw`^git://github\.com/${OWNER}/${REPO}`
+	String.raw`^git://github\.com/${OWNER}/${REPO}`,
+	String.raw`^https://codeload\.github\.com/${OWNER}/${REPO}/`,
+	String.raw`^https://github\.com/${OWNER}/${REPO}/(?:archive|tarball)/`
 ].map((source) => new RegExp(source));
 /**
- * The same forms inside a yarn.lock line (entry specs like `"pkg@github:ever-co/x#ref"`, `resolved` URLs).
- * The shorthand counts only after a quote, a space or the line start: `"@ever-co/<package>"` is an npm
- * scope, never a repository.
+ * The same forms inside a yarn.lock line (entry selectors like `"pkg@github:ever-co/x#ref"`,
+ * `resolved` URLs). The shorthand counts after a quote, a space or the line start, or as the spec of
+ * a selector (`pkg@ever-co/<repo>`: a package name right before the `@`); `"@ever-co/<package>"` is
+ * an npm scope, never a repository.
  */
 const LOCK_FORMS = [
-	String.raw`github:${OWNER}/${REPO}`,
+	`github:${OWNER}/${REPO}`,
 	String.raw`git\+https://(?:[^@/\s"]+@)?github\.com/${OWNER}/${REPO}`,
 	String.raw`git\+ssh://git@github\.com[:/]${OWNER}/${REPO}`,
 	String.raw`git@github\.com:${OWNER}/${REPO}`,
-	String.raw`(?:^|[\s"'])${OWNER}/${REPO}(?=[#\s"':]|$)`,
+	String.raw`(?:^|[\s"'])${OWNER}/${REPO}(?=[#\s"':,]|$)`,
+	String.raw`(?<=[A-Za-z0-9._-]@)${OWNER}/${REPO}(?=[#\s"':,]|$)`,
 	String.raw`git://github\.com/${OWNER}/${REPO}`,
-	String.raw`https://(?:codeload\.)?github\.com/${OWNER}/${REPO}(?:\.git|/tar\.gz/)`
+	String.raw`https://(?:codeload\.)?github\.com/${OWNER}/${REPO}(?:\.git|/tar\.gz/|/archive/)`
 ].map((source) => new RegExp(source, 'g'));
 const USES = new RegExp(String.raw`^\s*-?\s*uses:\s*["']?${OWNER}/${REPO}`);
 const DEPENDENCY_FIELDS = [
@@ -57,19 +61,30 @@ const DEPENDENCY_FIELDS = [
 	'resolutions',
 	'overrides'
 ];
+/** Directories never read: dependencies, build output and VCS data. */
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '.angular', '.nx', 'tmp', 'coverage']);
+/** The check's own fixtures name a private repository on purpose. */
+const FIXTURES = 'tools/ever-platform/fixtures';
 
 const normalise = (repo) => repo.replace(/\.git$/, '').toLowerCase();
 
-/** The tracked files that can declare a dependency (the check's own fixtures excepted). */
+/** The files that can declare a dependency: every package.json and yarn.lock, and the workflows. */
 export function dependencyFiles(root) {
-	const out = execFileSync(
-		'git',
-		['ls-files', '-z', '--', '*package.json', '*yarn.lock', '.github/workflows/*.yml', '.github/workflows/*.yaml'],
-		{ cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
-	);
-	return out
-		.split('\0')
-		.filter((f) => f && !f.includes('node_modules/') && !f.startsWith('tools/ever-platform/fixtures/'));
+	let files = [];
+	const walk = (dir) => {
+		for (const entry of readdirSync(join(root, dir), { withFileTypes: true })) {
+			const path = dir ? `${dir}/${entry.name}` : entry.name;
+			if (entry.isDirectory()) {
+				if (!SKIP_DIRS.has(entry.name) && path !== FIXTURES) walk(path);
+			} else if (entry.name === 'package.json' || entry.name === 'yarn.lock') {
+				files.push(path);
+			} else if (/^\.github\/workflows\/[^/]+\.ya?ml$/.test(path)) {
+				files.push(path);
+			}
+		}
+	};
+	walk('');
+	return files.sort();
 }
 
 /** The ever-co repository a dependency specification installs from, or null. */
