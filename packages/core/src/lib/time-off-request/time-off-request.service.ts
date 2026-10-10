@@ -90,7 +90,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			// `moment(undefined)` is "now", so the window collapsed to a single instant and no time off was
 			// ever listed. The format also used `hh`, the 12-hour clock without AM / PM, which moved an
 			// afternoon bound 12 hours back. Same bounds as `pagination()` now, and only when both are given.
-			const hasRange = isNotEmpty(startDate) && isNotEmpty(endDate);
+			// A plain presence check: `isNotEmpty` treats a Date (no enumerable property) as empty
+			const isGiven = (value: unknown) => value !== undefined && value !== null && value !== '';
+			const hasRange = isGiven(startDate) && isGiven(endDate);
 			const start = hasRange ? moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
 			const end = hasRange ? moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
 
