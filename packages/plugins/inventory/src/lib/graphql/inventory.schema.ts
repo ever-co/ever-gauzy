@@ -357,6 +357,11 @@ export const inventorySchemaExtensions = gql`
 		reconcileStockLevels(input: StockLevelReconciliationInput): StockLevelReconciliation!
 		adjustStock(input: StockAdjustmentInput!): StockAdjustment!
 		"""
+		Drafts a manual correction: \`POST /stock-adjustments\` over GraphQL, under the route's grant and
+		through the route's validation. The draft moves no stock until \`applyStockAdjustment\` applies it.
+		"""
+		createStockAdjustment(input: StockAdjustmentInput!): StockAdjustment!
+		"""
 		Applies a drafted correction. The key is the resolver's own argument here because the mutation
 		has no input object to carry it; the kernel reads both spellings, so the two protocols answer
 		identically.

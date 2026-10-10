@@ -1,5 +1,5 @@
 /**
- * The write routes this package answered under another name, and the three it did not answer at all.
+ * The write routes this package answered under another name, and the ones it did not answer at all.
  *
  * §3.1 requires one mutation per REST write route. A name-based audit reads a route's *handler* name
  * against the root fields this document declares, and it flags **five** of this package's twenty-eight
@@ -20,6 +20,13 @@
  * Five plus two is **seven**, which is what the strict instrument reports, and the reading collapses
  * **two** of them — the two naming variants — leaving **five**: the three this suite delivers and the two
  * it refuses. They are not all of one shape.
+ *
+ * **One of the naming variants has since been built under its own name.** `POST /stock-adjustments` was
+ * read as served by `adjustStock`, and the programme's ruling on a promised name the schema does not serve
+ * is to build it rather than read it away — so `createStockAdjustment` now answers the route under the
+ * route's own name, with the route's grant and the route's DTO validation (which `adjustStock` never ran),
+ * and `adjustStock` stays beside it because a client already selects it. That moves one route from the
+ * collapsed table to the delivered one: **one** collapsed, **four** delivered, two refused, still seven.
  *
  * **The three delivered.** Each is a capability a REST caller has and a GraphQL caller did not:
  *
@@ -64,7 +71,7 @@
  * every one of these controllers is the view grant none of these acts carries; and it **reaches the same
  * service call with the same arguments the route reaches**, because two protocols that perform one act
  * differently are two behaviours waiting to diverge — and it mirrors the route's `@Idempotent` scope and
- * `@Versioned` expectation where the route declares one, which none of these three does.
+ * `@Versioned` expectation where the route declares one, which none of these four does.
  *
  * **The collapsed routes are asserted rather than described**, so the reading is a test and not a
  * paragraph: for each one the name the audit looked for is declared *absent* from the document, and the
@@ -73,6 +80,8 @@
  * kernel's own where a controller extends it, and the document the fields are read out of is the real one.
  */
 
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { getMetadataStorage } from 'class-validator';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -90,6 +99,7 @@ import {
 } from 'graphql';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustmentController } from './../stock-adjustment/stock-adjustment.controller';
+import { CreateStockAdjustmentDTO, CreateStockAdjustmentInputDTO } from './../stock-adjustment/dto';
 import { StockCountController } from './../stock-count/stock-count.controller';
 import { StockReservationController } from './../stock-reservation/stock-reservation.controller';
 import { StockTransferLineController } from './../stock-transfer-line/stock-transfer-line.controller';
@@ -105,6 +115,15 @@ const ADJUSTMENT = '00000000-0000-4000-8000-000000000101';
 const COUNT = '00000000-0000-4000-8000-000000000102';
 const DOCUMENT = '00000000-0000-4000-8000-000000000103';
 const EXPIRES_AT = '2026-04-01T00:00:00.000Z';
+
+/** A draft correction as both surfaces receive it: the route's body, and the field's `input`. */
+const DRAFT = {
+	warehouseId: '00000000-0000-4000-8000-000000000104',
+	variantId: '00000000-0000-4000-8000-000000000105',
+	type: 'DECREASE',
+	quantity: 3,
+	reasonCode: 'DAMAGED'
+};
 
 /** What each service answers, so the two surfaces can be compared by identity. */
 const ADJUSTMENT_ROW = { id: ADJUSTMENT, status: 'CANCELED', quantity: 3 };
@@ -127,7 +146,7 @@ interface IParity {
 	route: string;
 	/** The controller's own resource name, which the audit's expectation is built from. */
 	resource: string;
-	/** The name the audit's convention expected, which for these three is the delivered name. */
+	/** The name the audit's convention expected, which for these four is the delivered name. */
 	expects: string;
 	/** The arguments the route's handler takes. */
 	routeArgs: any[];
@@ -150,11 +169,11 @@ interface IParity {
 }
 
 /**
- * The three routes no field answered.
+ * The routes no field answered under their own name.
  *
  * Each is a capability rather than a spare route: an instruction that can be withdrawn before it is
- * applied, a count session that can be refused, and the holds of a document whose expiry can be pushed
- * out in one call.
+ * applied, a count session that can be refused, the holds of a document whose expiry can be pushed
+ * out in one call, and the draft of a manual correction under the name its route gives it.
  */
 const DELIVERED: IParity[] = [
 	{
@@ -212,11 +231,30 @@ const DELIVERED: IParity[] = [
 		service: 'reservation',
 		controller: StockReservationController,
 		resolver: StockReservationResolver
+	},
+	{
+		// The draft of a manual correction, under the route's own name. The body is the route's whole
+		// argument and the field's whole `input`, and the service receives it unchanged from both.
+		field: 'createStockAdjustment',
+		route: 'create',
+		resource: 'StockAdjustment',
+		expects: 'createStockAdjustment',
+		routeArgs: [DRAFT],
+		fieldArgs: [DRAFT],
+		serviceArgs: [DRAFT],
+		declared: [['input', 'StockAdjustmentInput']],
+		answers: 'StockAdjustment',
+		grant: InventoryPermission.STOCK_EDIT as PermissionsEnum,
+		method: 'createAdjustment',
+		service: 'adjustment',
+		controller: StockAdjustmentController,
+		resolver: StockAdjustmentResolver
 	}
 ];
 
 /**
- * The two routes the reading collapsed, each with the field that already serves it.
+ * The route the reading still collapses, with the field that already serves it. The other one it collapsed,
+ * `POST /stock-adjustments`, is delivered under its own name now and is in `DELIVERED`.
  *
  * A route is listed here because its *capability* is answered, not because its handler name is — the
  * audit's expectation for each is asserted absent below, so this table fails if a future wave renames one
@@ -229,16 +267,6 @@ const COLLAPSED: {
 	expects: string;
 	field: string;
 }[] = [
-	// A manual correction: drafted by the field whose name says what the act is rather than repeating the
-	// resource, because `adjustStock` reads as the operation and `createStockAdjustment` as a second
-	// spelling of the resource the type already names.
-	{
-		controller: StockAdjustmentController,
-		resource: 'StockAdjustment',
-		route: 'create',
-		expects: 'createStockAdjustment',
-		field: 'adjustStock'
-	},
 	// A line of a draft transfer: added through the field named for the act, beside the transfer's own
 	// create, update and transitions.
 	{
@@ -292,16 +320,19 @@ const REFUSED: {
 function surfaces(entry: IParity): { stubs: Row; controller: Row; resolver: Row } {
 	const stubs: Row = {
 		adjustment: {
+			createAdjustment: jest.fn().mockResolvedValue(ADJUSTMENT_ROW),
 			cancel: jest.fn().mockResolvedValue(ADJUSTMENT_ROW),
 			extend: jest.fn().mockResolvedValue(EXTENDED),
 			apply: jest.fn().mockResolvedValue({ adjustment: ADJUSTMENT_ROW, version: 1 })
 		},
 		count: {
+			createAdjustment: jest.fn().mockResolvedValue(COUNT_ROW),
 			cancel: jest.fn().mockResolvedValue(COUNT_ROW),
 			extend: jest.fn().mockResolvedValue(EXTENDED),
 			close: jest.fn().mockResolvedValue({ count: COUNT_ROW, lines: [] })
 		},
 		reservation: {
+			createAdjustment: jest.fn().mockResolvedValue(undefined),
 			cancel: jest.fn().mockResolvedValue(undefined),
 			extend: jest.fn().mockResolvedValue(EXTENDED),
 			consume: jest.fn().mockResolvedValue(undefined)
@@ -407,13 +438,13 @@ function namedTypeName(type: TypeNode): string {
 }
 
 /**
- * The schema's half of the three fields.
+ * The schema's half of the four fields.
  *
  * A capability a client cannot express is not delivered: a field the document does not carry is one no
  * client can select, and the document is parsed by the tag it is written in — so a document that does not
  * build fails here rather than at boot.
  */
-describe('the inventory document — the three routes no field answered are declared', () => {
+describe('the inventory document — the four routes no field answered by name are declared', () => {
 	it.each(DELIVERED)('declares $field in the mutation block', ({ field }) => {
 		expect(mutationField(field).name.value).toBe(field);
 	});
@@ -480,7 +511,7 @@ describe('the inventory document — the three routes no field answered are decl
  * The two surfaces are one act stated twice, so the route is driven as well as the field: what is
  * compared is the call each of them makes on its own stub, not a service method named in this file.
  */
-describe('the three fields — the two protocols write the same rows the same way', () => {
+describe('the four fields — the two protocols write the same rows the same way', () => {
 	it.each(DELIVERED)('$field reaches the service method the $route route reaches', async (entry) => {
 		const { stubs, controller, resolver } = surfaces(entry);
 
@@ -527,13 +558,13 @@ describe('the three fields — the two protocols write the same rows the same wa
 /**
  * The authorisation is the route's, field by field.
  *
- * Each of the three is a write, so a field that stated no grant of its own would be one `PermissionGuard`
+ * Each of the four is a write, so a field that stated no grant of its own would be one `PermissionGuard`
  * answers `true` to, because it answers `true` to empty metadata: every authenticated caller could close a
- * correction, refuse a count or push out every hold of a document. No resolver in this plugin states a
- * class-level grant that could close that — all three state the view grant — which is why the comparison
+ * correction, refuse a count, push out every hold of a document or draft a correction. No resolver in this
+ * plugin states a class-level grant that could close that — all three state the view grant — which is why the comparison
  * is against the route's own handler metadata rather than against the class.
  */
-describe('the three fields — the permission and the guards are the route’s', () => {
+describe('the four fields — the permission and the guards are the route’s', () => {
 	it('states on every field exactly what its own route states, read from the route', () => {
 		// A control first: the routes are gated, so the comparison below cannot pass on two absences.
 		expect(DELIVERED.every(({ route, controller }) => permissionOfRoute(controller, route))).toBe(true);
@@ -560,7 +591,7 @@ describe('the three fields — the permission and the guards are the route’s',
 	});
 
 	it('declares no retry scope and no version expectation the route does not declare', () => {
-		// None of the three routes carries `@Idempotent` or `@Versioned`, so neither does any of the three
+		// None of the four routes carries `@Idempotent` or `@Versioned`, so neither does any of the four
 		// fields: a keyless GraphQL retry must not dedupe where REST does not, and a version expectation
 		// invented here would refuse writes the route accepts. The count's *cancel* is the case the domain
 		// states explicitly — its list of the actions that honour an `Idempotency-Key` omits it — and the
@@ -591,17 +622,18 @@ describe('the three fields — the permission and the guards are the route’s',
  * name it looked for is absent from the document while the field that serves the capability is present, or
  * the route is one of the two this suite refuses with its reason.
  */
-describe('the seven flagged routes — two collapsed, three delivered, two refused', () => {
-	it('flags seven routes strictly and five loosely, collapses two and delivers three', () => {
-		expect(COLLAPSED).toHaveLength(2);
-		expect(DELIVERED).toHaveLength(3);
+describe('the seven flagged routes — one collapsed, four delivered, two refused', () => {
+	it('flagged seven routes strictly and five loosely, and now collapses one and delivers four', () => {
+		expect(COLLAPSED).toHaveLength(1);
+		expect(DELIVERED).toHaveLength(4);
 		expect(REFUSED).toHaveLength(2);
 
-		// The arithmetic the two instruments state: the strict one flags seven, the loose one five, and
+		// The arithmetic the two instruments stated: the strict one flagged seven, the loose one five, and
 		// the difference is the two `cancel` routes it matched against `cancelStockTransfer`. Two of the
-		// seven are naming variants, three are delivered and two are refused.
+		// seven were naming variants; one of those is now delivered under its route's own name, so one is
+		// collapsed, four are delivered and two are refused — still seven.
 		expect(COLLAPSED.length + DELIVERED.length + REFUSED.length).toBe(7);
-		expect(7 - COLLAPSED.length).toBe(5);
+		expect(7 - COLLAPSED.length).toBe(DELIVERED.length + REFUSED.length);
 	});
 
 	it.each(COLLAPSED)('$resource.$route is served by $field', ({ controller, route, expects, field }) => {
@@ -633,9 +665,101 @@ describe('the seven flagged routes — two collapsed, three delivered, two refus
 		expect(declares('cancelStockAdjustment')).toBe(true);
 		expect(declares('cancelStockCount')).toBe(true);
 		expect(declares('cancelStockTransfer')).toBe(true);
-		expect(declares('createStockAdjustment')).toBe(false);
+		// Built under the route's own name since the reading collapsed it into `adjustStock`, which stays.
+		expect(declares('createStockAdjustment')).toBe(true);
 		expect(declares('createStockTransferLine')).toBe(false);
 		expect(declares('adjustStock')).toBe(true);
 		expect(declares('addStockTransferLine')).toBe(true);
+	});
+});
+
+/**
+ * The draft's validation is the route's, not only the schema's.
+ *
+ * The schema's input type says which members a draft has and which are required; it cannot say that the
+ * location and the variant are UUIDs, that the type is one the ledger knows or that a reason code fits its
+ * column. The route says all of that through `CreateStockAdjustmentDTO` under its validation pipe, so the
+ * field states the same pipe, with the same options, over a DTO that carries every one of those rules —
+ * `CreateStockAdjustmentInputDTO`, the route's DTO less the scope members the request supplies over
+ * GraphQL — and a draft the route refuses is refused by the field before the service is reached. The pipe
+ * is driven the way Nest drives it for an `@Args` parameter: with the parameter's declared type as the
+ * metatype and the GraphQL argument kind.
+ */
+describe('createStockAdjustment — the route’s validation, not only the schema’s', () => {
+	/** The pipes one handler states. */
+	const pipesOf = (handler: unknown): unknown[] => Reflect.getMetadata('__pipes__', handler as object) ?? [];
+
+	/** The declared type of a handler's first parameter, which is the metatype Nest hands the pipe. */
+	const parameterTypeOf = (prototype: object, handler: string) =>
+		(Reflect.getMetadata('design:paramtypes', prototype, handler) ?? [])[0];
+
+	/** `@nestjs/graphql`'s `GqlParamtype.ARGS`, the kind Nest states for an `@Args` parameter. */
+	const ARGS = 3;
+
+	/** The members the field leaves to the request's own scope, and only those. */
+	const SCOPE = ['organization', 'organizationId', 'sentTo', 'tenant', 'tenantId'];
+
+	/** Every rule class-validator holds a DTO to, one `member: rule` line each, in a stable order. */
+	const rulesOf = (target: Function): string[] =>
+		getMetadataStorage()
+			.getTargetValidationMetadatas(target, '', true, false)
+			.map(
+				(rule: any) =>
+					`${rule.propertyName}: ${rule.type}/${rule.name ?? ''}/${rule.constraintCls?.name ?? ''}/${JSON.stringify(rule.constraints ?? [])}`
+			)
+			.sort();
+
+	it('states the pipe the route states, with the same options', () => {
+		const [fieldPipe] = pipesOf(StockAdjustmentResolver.prototype.createStockAdjustment);
+		const [routePipe] = pipesOf(StockAdjustmentController.prototype.create);
+
+		expect(fieldPipe).toBeInstanceOf(ValidationPipe);
+		expect(routePipe).toBeInstanceOf(ValidationPipe);
+		expect((fieldPipe as any).isTransformEnabled).toBe(true);
+		expect((fieldPipe as any).isTransformEnabled).toBe((routePipe as any).isTransformEnabled);
+		expect((fieldPipe as any).validatorOptions).toEqual((routePipe as any).validatorOptions);
+		expect((fieldPipe as any).validatorOptions).toMatchObject({ whitelist: true });
+	});
+
+	it('holds the draft to every rule the route’s DTO holds it to, less the request’s scope members', () => {
+		const routeType = parameterTypeOf(StockAdjustmentController.prototype, 'create');
+		const fieldType = parameterTypeOf(StockAdjustmentResolver.prototype, 'createStockAdjustment');
+
+		expect(routeType).toBe(CreateStockAdjustmentDTO);
+		expect(fieldType).toBe(CreateStockAdjustmentInputDTO);
+
+		const routeRules = rulesOf(routeType);
+
+		// The control: the route's DTO carries both kinds of rule, so the comparison below is not two
+		// empty lists agreeing.
+		expect(routeRules.some((rule) => rule.startsWith('warehouseId: '))).toBe(true);
+		expect(routeRules.some((rule) => rule.startsWith('organizationId: '))).toBe(true);
+
+		expect(rulesOf(fieldType)).toEqual(routeRules.filter((rule) => !SCOPE.includes(rule.split(':')[0])));
+	});
+
+	it('refuses a draft the route refuses, and passes the one it accepts', async () => {
+		const [pipe] = pipesOf(StockAdjustmentResolver.prototype.createStockAdjustment) as ValidationPipe[];
+		const metadata = {
+			type: ARGS as any,
+			metatype: parameterTypeOf(StockAdjustmentResolver.prototype, 'createStockAdjustment'),
+			data: 'input'
+		};
+
+		for (const invalid of [
+			{ ...DRAFT, warehouseId: 'not-a-uuid' },
+			{ ...DRAFT, variantId: 'not-a-uuid' },
+			{ ...DRAFT, type: 'MOVE' },
+			{ ...DRAFT, quantity: 'three' },
+			{ ...DRAFT, reasonCode: 'x'.repeat(65) }
+		]) {
+			await expect(pipe.transform(invalid, metadata)).rejects.toBeInstanceOf(BadRequestException);
+		}
+
+		// The control: the draft both surfaces send in the parity table passes, as the field's DTO.
+		const valid = await pipe.transform({ ...DRAFT }, metadata);
+
+		expect(valid).toBeInstanceOf(CreateStockAdjustmentInputDTO);
+		expect(valid).toMatchObject(DRAFT);
 	});
 });

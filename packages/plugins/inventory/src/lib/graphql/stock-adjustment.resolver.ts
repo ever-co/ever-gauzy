@@ -18,6 +18,7 @@ import {
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	UseValidationPipe,
 	Versioned,
 	connectionFromOffsetPage,
 	resolveConnectionWindow
@@ -27,6 +28,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustmentStatus } from './../inventory.enums';
 import { StockAdjustment } from './../stock-adjustment/stock-adjustment.entity';
 import { StockAdjustmentService } from './../stock-adjustment/stock-adjustment.service';
+import { CreateStockAdjustmentInputDTO } from './../stock-adjustment/dto';
 import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
@@ -104,6 +106,34 @@ export class StockAdjustmentResolver {
 	@Versioned({ write: false })
 	async stockAdjustment(@Args('id') id: string): Promise<any> {
 		return await this.service.findOneByIdString(id);
+	}
+
+	/**
+	 * Drafts a manual correction, under the name of the route it mirrors.
+	 *
+	 * The route is `POST /stock-adjustments`, and this field is that route over GraphQL: the same
+	 * `createAdjustment` call with the same input, under the grant the route's own handler states —
+	 * `STOCK_EDIT`, not the class-level view grant — and through the same validation the route runs: the
+	 * route's `CreateStockAdjustmentDTO` rules, under the route's own pipe options. The validation is what
+	 * the schema's input type cannot say: that the location and the variant are UUIDs, that the type is
+	 * one the ledger knows, that the reason fits its column. A field that skipped it would accept over
+	 * GraphQL a draft the route refuses, which is GraphQL wider than REST. The input DTO is the route's
+	 * without its scope members (`CreateStockAdjustmentInputDTO` says why): the operation's organization is
+	 * the request's, which is where the service takes the row's scope from on both surfaces. The reason
+	 * requirement itself is the service's, so both surfaces meet it in the same place.
+	 *
+	 * The route declares no retry scope and no version expectation — a draft moves no stock and is
+	 * numbered on creation — so the field declares neither. `adjustStock` beside it drafts through the
+	 * same call; it stays, because a client already selects it.
+	 *
+	 * @param input The draft, validated as the route validates its body.
+	 * @returns The drafted instruction, numbered and in `DRAFT`.
+	 */
+	@Mutation('createStockAdjustment')
+	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async createStockAdjustment(@Args('input') input: CreateStockAdjustmentInputDTO): Promise<StockAdjustment> {
+		return await this.service.createAdjustment(input as any);
 	}
 
 	/** Drafts a manual correction. */
