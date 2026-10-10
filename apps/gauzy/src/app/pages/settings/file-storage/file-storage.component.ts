@@ -376,7 +376,7 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 			// Reload what is saved. Patch it into the form only after a successful save of exactly
 			// what the form holds: a failed save keeps the attempted values for correction, and
 			// newer edits are never overwritten (getSetting re-checks when the fetch resolves).
-			this.getSetting(saved && !editedSinceSubmit());
+			await this.getSetting(saved && !editedSinceSubmit());
 		}
 	}
 
@@ -410,7 +410,10 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		}
 
 		const endpoint = region === 'us-east-1' ? 'https://s3.wasabisys.com' : `https://s3.${region}.wasabisys.com`;
-		const current = `${group.get('wasabi_aws_service_url').value ?? ''}`.trim().replace(/\/+$/, '');
+		let current = `${group.get('wasabi_aws_service_url').value ?? ''}`.trim();
+		while (current.endsWith('/')) {
+			current = current.slice(0, -1);
+		}
 		return current === endpoint ? null : endpoint;
 	}
 
@@ -449,7 +452,8 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		}
 
 		const values = this.form.get(this.fileStorageProvider).getRawValue();
-		const isBlank = (value: unknown) => value === null || value === undefined || `${value}`.trim() === '';
+		const isBlank = (value: unknown) =>
+			value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 
 		const empty = fields.required.filter(({ control }) => isBlank(values[control])).map(({ label }) => label);
 
@@ -490,8 +494,13 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		let credentials: IFileStorageSummary['credentials'] = 'not_needed';
 		if (fields) {
 			const saved = fields.credentials.filter((name) => isNotEmpty(values[name])).length;
-			const empty = fields.serverFallback ? 'server_default' : 'none';
-			credentials = saved === fields.credentials.length ? 'saved' : saved > 0 ? 'incomplete' : empty;
+			if (saved === fields.credentials.length) {
+				credentials = 'saved';
+			} else if (saved > 0) {
+				credentials = 'incomplete';
+			} else {
+				credentials = fields.serverFallback ? 'server_default' : 'none';
+			}
 		}
 
 		return {
