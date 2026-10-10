@@ -30,6 +30,7 @@ import {
 	IOrganizationContact,
 	IEmployee,
 	IOrganization,
+	IPaginationParam,
 	ID
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -50,6 +51,7 @@ import {
 	getDaysBetweenDates,
 	MultiORMEnum,
 	parseFindOptionsRelations,
+	resolveRequestedPage,
 	resolveTimeZone
 } from './../../core/utils';
 import { RequestContext } from '../../core/context';
@@ -89,13 +91,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	/**
 	 * Retrieves time logs based on the provided input.
-	 * @param request The input parameters for fetching time logs.
+	 * @param request The input parameters for fetching time logs, with an optional page (`take`, and
+	 * `skip` as a 1-based page number). Without `take` every matching log is returned.
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
-	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
+	async getTimeLogs(request: IGetTimeLogReportInput & Pick<IPaginationParam, 'take' | 'skip'>): Promise<ITimeLog[]> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(request);
+
+		const page = resolveRequestedPage(request);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -110,7 +115,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						'organizationContact',
 						...(request.relations || [])
 					] as any[],
-					orderBy: { startedAt: 'ASC' as any }
+					orderBy: { startedAt: 'ASC' as any, ...(page ? { id: 'ASC' as const } : {}) },
+					...(page ? { limit: page.limit, offset: page.offset } : {})
 				});
 				return items.map((e) => this.serialize(e)) as ITimeLog[];
 			}
@@ -153,8 +159,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					relations: parseFindOptionsRelations([...(request.relations ? request.relations : [])]),
 					order: {
 						// Order results by the 'startedAt' field in ascending order
-						startedAt: 'ASC'
-					}
+						startedAt: 'ASC',
+						// On a page, the id breaks ties so that no log repeats or goes missing between pages
+						...(page ? { id: 'ASC' as const } : {})
+					},
+					...(page ? { skip: page.offset, take: page.limit } : {})
 				});
 
 				// Apply filters to the query

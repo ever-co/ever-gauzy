@@ -23,7 +23,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations, resolveRequestedPage } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -154,7 +154,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (employeeId) mikroWhere.employeeId = employeeId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						...(options?.relations ? { populate: options.relations as any[] } : {})
+						...(options?.relations ? { populate: options.relations as any[] } : {}),
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -187,6 +188,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (employeeId) {
 						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 					}
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
@@ -241,7 +244,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						populate: ['employee', 'tasks', ...(relations as any[])]
+						populate: ['employee', 'tasks', ...(relations as any[])],
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -268,6 +272,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							organizationTeamId
 						});
 					}
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
@@ -314,6 +320,39 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		if (!isMember) {
 			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
 		}
+	}
+
+	/**
+	 * Limits a plan list to the page the client asked for, only when it sent `take`: the clients that
+	 * sort plans into today, upcoming and past days read the whole list.
+	 *
+	 * Pages follow the plan date, and the id breaks ties so that no plan repeats or goes missing from one
+	 * page to the next.
+	 *
+	 * @param query The plan list query, filters already applied
+	 * @param options The client query
+	 */
+	private applyRequestedPage(query: SelectQueryBuilder<DailyPlan>, options: BaseQueryDTO): void {
+		const page = resolveRequestedPage(options);
+		if (!page) {
+			return;
+		}
+		query.orderBy(`${query.alias}.date`, 'ASC').addOrderBy(`${query.alias}.id`, 'ASC');
+		query.skip(page.offset).take(page.limit);
+	}
+
+	/**
+	 * The MikroORM find options for the page the client asked for, in the same order as
+	 * `applyRequestedPage`, or none when it sent no `take`.
+	 *
+	 * @param options The client query
+	 */
+	private mikroOrmRequestedPage(options: BaseQueryDTO) {
+		const page = resolveRequestedPage(options);
+		if (!page) {
+			return {};
+		}
+		return { orderBy: { date: 'ASC', id: 'ASC' } as const, limit: page.limit, offset: page.offset };
 	}
 
 	/**
@@ -726,7 +765,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					};
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						populate: ['employee', 'tasks', 'employee.user'] as any[]
+						populate: ['employee', 'tasks', 'employee.user'] as any[],
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -753,6 +793,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 						return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
 					});
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieves results and total count
 					const [items, total] = await query.getManyAndCount();

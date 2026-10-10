@@ -959,6 +959,28 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
 }
 
 /**
+ * Reads the page a client asked for on a list that is returned whole by default.
+ *
+ * `skip` is a 1-based page number, as everywhere `BaseQueryDTO` is read (see `CrudService.paginate`).
+ * The values may still be query strings, since some routes validate without transforming.
+ *
+ * @param options The client query, holding `take` and `skip`
+ * @returns The row limit and offset, or `undefined` when no positive `take` was sent, in which case
+ * the caller leaves the list unbounded
+ */
+export function resolveRequestedPage(options: {
+	take?: unknown;
+	skip?: unknown;
+}): { limit: number; offset: number } | undefined {
+	const limit = Number(options?.take);
+	if (!Number.isInteger(limit) || limit < 1) {
+		return undefined;
+	}
+	const page = Number(options?.skip);
+	return { limit, offset: Number.isInteger(page) && page > 1 ? limit * (page - 1) : 0 };
+}
+
+/**
  * Splits a free-text search into keywords.
  *
  * Splits on any whitespace and drops empty entries: with `split(' ')`, a trailing or repeated space
