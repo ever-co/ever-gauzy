@@ -103,6 +103,8 @@ const GRAPHQL_ONLY = {
 	shippingOptionsForContext: 'The options eligible in a context, which the option resource cannot answer without the context.',
 	shippingRate: 'The price an option quotes for a context, a computation over the option’s price shapes.',
 	subscriptionPlanByCode: 'A plan addressed by its code rather than its id; REST filters the plan route by code.',
+	upcomingSubscriptionBilling:
+		'The next billing of a subscription, a computation over its lines and plan that writes nothing; REST serves it at `/subscriptions/:id/upcoming-billing` on the subscription resource.',
 	warehouseBinSubtree: 'Everything under a bin, a walk of the bin hierarchy.',
 	warehouseBinContents: 'What a bin holds, derived from the stock ledger.',
 	warehouseBinCapacity: 'How much of a bin’s capacity a request would use, a conversion and a comparison.',

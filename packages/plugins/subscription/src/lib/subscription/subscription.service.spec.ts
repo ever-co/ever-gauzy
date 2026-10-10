@@ -2438,3 +2438,183 @@ describe('SubscriptionService — the versioned write', () => {
 		});
 	});
 });
+
+/**
+ * The upcoming billing, previewed.
+ *
+ * The preview exists so a customer can be told what the next cycle will cost before it is charged, so
+ * the one property that matters is that it is the charge: the suite drives the preview and then the
+ * cycle itself over the same fixture and asserts that the cycle billed exactly what the preview said,
+ * for exactly the period it said. The amount is computed by the one function the cycle bills with,
+ * which is what makes that agreement structural rather than coincidental. The other two properties are
+ * the ones a read has to have: it writes nothing — no key, no row, no adjustment, no order, no event —
+ * and it reads nothing outside the caller's tenant and organization.
+ */
+describe('SubscriptionService — previewing the next billing', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const MAY = new Date('2026-05-01T00:00:00.000Z');
+
+	/** Everything a preview could have written, so "it wrote nothing" is a comparison rather than a hope. */
+	const everythingWritten = (fixture: ReturnType<typeof subscriptionFixture>) =>
+		JSON.stringify({
+			tables: fixture.tables,
+			events: fixture.events,
+			orderCalls: fixture.orderCalls,
+			prorationCalls: fixture.prorationCalls,
+			adjustments: fixture.adjustments,
+			commits: fixture.commits,
+			keys: [...fixture.idempotencyService.records.entries()]
+		});
+
+	it.each([
+		['at the plan’s price', {}, '120.000000'],
+		['with the plan’s discount', { plans: [planRow(PLAN, { discountPercentage: '0.1' }), planRow(BETTER_PLAN)] }, '108.000000'],
+		[
+			'with the discount the subscription was sold with',
+			{ subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { discountPercentage: '0.25' } })] },
+			'90.000000'
+		],
+		[
+			'over two recurring lines',
+			{
+				items: [
+					itemRow('item-1'),
+					itemRow('item-2', { variantId: BETTER_VARIANT, quantity: '2.000000', unitPrice: '15.500000', position: 1 })
+				]
+			},
+			'151.000000'
+		]
+	])('previews exactly what the cycle then bills — %s', async (_case, options, amount) => {
+		const fixture = subscriptionFixture(options as Row);
+
+		const preview = await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH);
+
+		expect(preview).toEqual({
+			subscriptionId: SUBSCRIPTION,
+			amount,
+			currency: 'USD',
+			periodStart: APRIL,
+			periodEnd: monthAfter(APRIL),
+			nextBillingAt: APRIL
+		});
+
+		// The same state, billed at the instant the preview said the cycle is due.
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: preview?.nextBillingAt });
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(outcome.amount).toBe(preview?.amount);
+		expect(outcome.currency).toBe(preview?.currency);
+		expect(new Date(outcome.periodStart as Date)).toEqual(preview?.periodStart);
+		expect(new Date(outcome.periodEnd as Date)).toEqual(preview?.periodEnd);
+		expect(fixture.orderCalls[0].amount).toBe(preview?.amount);
+		expect(fixture.cycle(APRIL)?.amount).toBe(preview?.amount);
+	});
+
+	it('writes nothing at all', async () => {
+		// A state with every write a cycle makes in reach: a discount to append, a credit to consume.
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN, { discountPercentage: '0.1', setupFee: '9.99' }), planRow(BETTER_PLAN)],
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-5.000000', currency: 'USD' } } })]
+		});
+		const before = everythingWritten(fixture);
+
+		await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH);
+		await fixture.service.previewNextBilling(SUBSCRIPTION, APRIL);
+
+		expect(everythingWritten(fixture)).toBe(before);
+
+		// The control: the cycle itself does write, so the comparison above can see a write when one happens.
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(everythingWritten(fixture)).not.toBe(before);
+	});
+
+	it('refuses a subscription of another tenant or another organization, as the cycle does', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow('theirs', { tenantId: 'another-tenant' }),
+				subscriptionRow('elsewhere', { organizationId: 'another-organization' })
+			]
+		});
+
+		await expect(fixture.service.previewNextBilling('theirs', MID_MARCH)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(fixture.service.previewNextBilling('elsewhere', MID_MARCH)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(fixture.service.previewNextBilling('no-such-subscription', MID_MARCH)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+		// The control: the cycle refuses the same row, so the preview is no wider than the bill.
+		await expect(fixture.service.billCycle('theirs', { asOf: APRIL })).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	it.each([
+		['cancelled', { subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.CANCELED })] }],
+		['expired', { subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.EXPIRED })] }],
+		['paused with no end', { subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PAUSED })] }],
+		[
+			'at its plan’s cycle ceiling',
+			{
+				plans: [planRow(PLAN, { maxBillingCycles: 3 }), planRow(BETTER_PLAN)],
+				subscriptions: [subscriptionRow(SUBSCRIPTION, { billingCycleCount: 3 })]
+			}
+		],
+		[
+			'cancelled at the end of the period it would next bill',
+			{ subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true } })] }
+		]
+	])('answers null for a subscription %s, and the cycle bills nothing either', async (_case, options) => {
+		const fixture = subscriptionFixture(options as Row);
+
+		expect(await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH)).toBeNull();
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.billings()).toEqual([]);
+		expect(fixture.orderCalls).toEqual([]);
+	});
+
+	it('previews a paused subscription from the instant its pause ends, which is when the cycle bills it', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PAUSED, pausedUntil: MAY })]
+		});
+
+		const preview = await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH);
+
+		// The pause outlasts the period already paid for, so the next period starts when the pause ends.
+		expect(preview).toMatchObject({ amount: '120.000000', periodStart: MAY, periodEnd: monthAfter(MAY), nextBillingAt: MAY });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: preview?.nextBillingAt });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: preview?.amount });
+		expect(new Date(outcome.periodStart as Date)).toEqual(MAY);
+	});
+
+	it('previews a pause that ends inside the paid period from the end of that period', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PAUSED, pausedUntil: new Date('2026-03-20T00:00:00.000Z') })
+			]
+		});
+
+		const preview = await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH);
+
+		expect(preview).toMatchObject({ periodStart: APRIL, nextBillingAt: APRIL });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(new Date(outcome.periodStart as Date)).toEqual(APRIL);
+		expect(outcome.amount).toBe(preview?.amount);
+	});
+
+	it('refuses to preview a subscription with no recurring lines, as the cycle refuses to bill it', async () => {
+		const fixture = subscriptionFixture({ items: [] });
+
+		await expect(fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH)).rejects.toThrow(/SUBSCRIPTION_ITEMS_REQUIRED/);
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow(/SUBSCRIPTION_ITEMS_REQUIRED/);
+	});
+});

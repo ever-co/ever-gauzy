@@ -11,7 +11,20 @@ jest.mock('@gauzy/core', () => ({
 
 import { Money } from '@gauzy/core';
 import { SubscriptionBillingPeriod } from './subscription.types';
-import { addCalendarMonths, addDays, endOfPeriod, periodLengthMs, prorate, ratioOf, remainingMs } from './subscription.cycle';
+import {
+	addCalendarMonths,
+	addDays,
+	cycleDiscountOf,
+	endOfPeriod,
+	nextCyclePeriod,
+	periodLengthMs,
+	priceCycle,
+	prorate,
+	ratioOf,
+	remainingMs,
+	resumedNextBillingAt,
+	subscriptionDiscountOverrideOf
+} from './subscription.cycle';
 
 /**
  * The calendar and the arithmetic a recurring subscription is billed by.
@@ -169,5 +182,84 @@ describe('the billing anchor across month ends and daylight saving', () => {
 		expect(remainingMs(period, new Date('2026-02-01T00:00:00.000Z'))).toBe(periodLengthMs(period));
 		expect(remainingMs(period, new Date('2026-05-01T00:00:00.000Z'))).toBe(0);
 		expect(remainingMs(period, new Date('2026-03-16T00:00:00.000Z'))).toBe(16 * 24 * 60 * 60 * 1000);
+	});
+});
+
+/**
+ * The one computation of what a cycle bills.
+ *
+ * `billCycle` bills what `priceCycle` answers and the upcoming-billing preview reports what it answers,
+ * so these cases are the contract both of them stand on: the lines summed exactly, the discount the
+ * subscription was sold with taking precedence over its plan's, and one rounding boundary at the end.
+ */
+describe('priceCycle — what one cycle bills', () => {
+	const lines = [
+		{ quantity: '1', unitPrice: '120' },
+		{ quantity: '2', unitPrice: '15.5' }
+	];
+
+	it('sums the recurring lines exactly, with no discount when neither the plan nor the subscription grants one', () => {
+		const price = priceCycle({ items: lines, currency: 'USD' as any, plan: {} });
+
+		expect(price.gross.toStorageString()).toBe('151.000000');
+		expect(price.discount.toStorageString()).toBe('0.000000');
+		expect(price.net.toStorageString()).toBe('151.000000');
+	});
+
+	it('applies the plan’s discount, and the subscription’s own in its place when it was sold with one', () => {
+		const plan = { discountPercentage: '0.1' };
+
+		expect(priceCycle({ items: lines, currency: 'USD' as any, plan }).net.toStorageString()).toBe('135.900000');
+		expect(
+			priceCycle({ items: lines, currency: 'USD' as any, plan, metadata: { discountPercentage: '0.5' } }).net.toStorageString()
+		).toBe('75.500000');
+		// A subscription that records no discount of its own is billed with the plan's.
+		expect(priceCycle({ items: lines, currency: 'USD' as any, plan, metadata: { note: 'x' } }).net.toStorageString()).toBe(
+			'135.900000'
+		);
+	});
+
+	it('rounds once, at the currency’s scale, so the discount and the net add back to the gross', () => {
+		const price = priceCycle({ items: [{ quantity: '1', unitPrice: '99.99' }], currency: 'USD' as any, plan: { discountPercentage: '0.1' } });
+
+		expect(price.discount.toStorageString()).toBe('10.000000');
+		expect(price.net.toStorageString()).toBe('89.990000');
+		expect(price.discount.add(price.net).toStorageString()).toBe(price.gross.toStorageString());
+	});
+});
+
+describe('the discount rule a cycle is billed with', () => {
+	it('prefers a discount stated for the subscription over the plan’s, and treats an empty one as none', () => {
+		expect(cycleDiscountOf({ discountPercentage: '0.1' })).toBe('0.1');
+		expect(cycleDiscountOf({ discountPercentage: '0.1' }, '0.2')).toBe('0.2');
+		expect(cycleDiscountOf({ discountPercentage: '0.1' }, '')).toBe('0.1');
+		expect(cycleDiscountOf({}, undefined)).toBeUndefined();
+		expect(cycleDiscountOf({ discountPercentage: null }, null)).toBeUndefined();
+	});
+
+	it('reads the subscription’s own discount from where the sale recorded it', () => {
+		expect(subscriptionDiscountOverrideOf({ discountPercentage: '0.25' })).toBe('0.25');
+		expect(subscriptionDiscountOverrideOf({ discountPercentage: 0.25 })).toBe('0.25');
+		expect(subscriptionDiscountOverrideOf({})).toBeUndefined();
+		expect(subscriptionDiscountOverrideOf(undefined)).toBeUndefined();
+	});
+});
+
+describe('the period the next cycle covers', () => {
+	const monthly = { period: SubscriptionBillingPeriod.MONTHLY, interval: 1 };
+	const APRIL = new Date('2026-04-01T00:00:00.000Z');
+	const MAY = new Date('2026-05-01T00:00:00.000Z');
+	const NOW = new Date('2026-03-16T00:00:00.000Z');
+
+	it('starts at the next billing instant, else at the end of the paid period, else at the instant asked about', () => {
+		expect(nextCyclePeriod({ nextBillingAt: APRIL, currentPeriodEnd: MAY }, monthly, NOW)).toEqual({ start: APRIL, end: MAY });
+		expect(nextCyclePeriod({ nextBillingAt: null, currentPeriodEnd: APRIL }, monthly, NOW)).toEqual({ start: APRIL, end: MAY });
+		expect(nextCyclePeriod({}, monthly, NOW)).toEqual({ start: NOW, end: new Date('2026-04-16T00:00:00.000Z') });
+	});
+
+	it('resumes a paused subscription at the end of the paid period, or at the resume when that has passed', () => {
+		expect(resumedNextBillingAt(APRIL, NOW)).toEqual(APRIL);
+		expect(resumedNextBillingAt(APRIL, MAY)).toEqual(MAY);
+		expect(resumedNextBillingAt(undefined, NOW)).toEqual(NOW);
 	});
 });

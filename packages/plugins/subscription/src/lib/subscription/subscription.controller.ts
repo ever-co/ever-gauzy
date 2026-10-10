@@ -50,7 +50,8 @@ import { SubscriptionBilling } from '../subscription-billing/subscription-billin
 import {
 	ISubscriptionBillingOutcome,
 	ISubscriptionBillingRunOutcome,
-	ISubscriptionPlanChangeOutcome
+	ISubscriptionPlanChangeOutcome,
+	ISubscriptionUpcomingBilling
 } from '../subscription.types';
 import { Subscription } from './subscription.entity';
 import { SubscriptionService } from './subscription.service';
@@ -487,6 +488,29 @@ export class SubscriptionController extends CrudController<Subscription> {
 			limit: entity.limit,
 			subscriptionId: entity.subscriptionId
 		});
+	}
+
+	/**
+	 * Previews the next billing of a subscription, writing nothing.
+	 *
+	 * The amount is computed by the function `POST /subscriptions/:id/bill` bills with, over the same
+	 * lines, currency and discount, for the period the bill would cover — so what this answers is what
+	 * that route would charge. Nothing is claimed, created or emitted, so the route is a read and runs
+	 * under the read grant, the class-level `SUBSCRIPTIONS_VIEW`, stated on the handler as its siblings
+	 * state theirs. The `upcomingSubscriptionBilling` field answers the same preview.
+	 *
+	 * @param id The subscription.
+	 * @returns The next billing, or nothing when the subscription will not bill again as it stands —
+	 * cancelled, expired, at its plan's cycle ceiling, cancelled at the end of the period it would next
+	 * bill, or paused indefinitely.
+	 */
+	@ApiOperation({ summary: 'Preview the next billing of a subscription' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The next billing, or an empty body when there is none.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The subscription is not the caller’s.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
+	@Get(':id/upcoming-billing')
+	async upcomingBilling(@Param('id', UUIDValidationPipe) id: ID): Promise<ISubscriptionUpcomingBilling | null> {
+		return await this.subscriptionService.previewNextBilling(id);
 	}
 
 	/**

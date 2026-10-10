@@ -17,7 +17,8 @@ import { SubscriptionFeatures } from '../../subscription.features';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import {
 	ISubscription,
-	ISubscriptionBillingOutcome
+	ISubscriptionBillingOutcome,
+	ISubscriptionUpcomingBilling
 } from '../../subscription.types';
 import { Subscription } from '../../subscription/subscription.entity';
 import { SubscriptionService } from '../../subscription/subscription.service';
@@ -185,6 +186,25 @@ export class SubscriptionResolver {
 		} catch (error) {
 			return null;
 		}
+	}
+
+	/**
+	 * Previews the next billing of one subscription, writing nothing.
+	 *
+	 * The route it mirrors is `GET /subscriptions/:id/upcoming-billing`: the same `previewNextBilling`
+	 * call with the same identifier, under the same read grant. The amount is computed by the function
+	 * `billSubscription` bills with, for the period it would bill, so the preview cannot disagree with
+	 * the bill. Null means the subscription will not bill again as it stands; a subscription that is not
+	 * the caller's is refused rather than answered null, so the two cannot be mistaken for each other.
+	 *
+	 * @param id The subscription.
+	 * @returns The next billing, or null when there is none.
+	 */
+	@Versioned({ write: false })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
+	@Query('upcomingSubscriptionBilling')
+	async upcomingSubscriptionBilling(@Args('id') id: ID): Promise<ISubscriptionUpcomingBilling | null> {
+		return await this.subscriptionService.previewNextBilling(id);
 	}
 
 	/**

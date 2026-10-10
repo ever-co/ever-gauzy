@@ -492,6 +492,23 @@ export interface ISubscriptionBillingOutcome {
 	message?: string;
 }
 
+/**
+ * The next billing a subscription is due, previewed: computed exactly as the bill will be, and written
+ * nowhere.
+ */
+export interface ISubscriptionUpcomingBilling {
+	subscriptionId: ID;
+	/** What the cycle will bill: the amount `billCycle` records on the cycle's row and raises its order for. */
+	amount: DecimalString;
+	currency: CurrencyCode;
+	/** The start of the period the cycle covers. */
+	periodStart: Date;
+	/** The end of the period the cycle covers, exclusive. */
+	periodEnd: Date;
+	/** The instant the cycle is due to bill — the start of the period it covers. */
+	nextBillingAt: Date;
+}
+
 /** What one pass of the billing run did. */
 export interface ISubscriptionBillingRunOutcome {
 	/** How many subscriptions the pass examined. */

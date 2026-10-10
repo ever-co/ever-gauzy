@@ -28,6 +28,7 @@ import {
 	ISubscriptionPlanChangeOutcome,
 	ISubscriptionBillingOutcome,
 	ISubscriptionBillingRunOutcome,
+	ISubscriptionUpcomingBilling,
 	SUBSCRIPTION_INSTRUMENTS,
 	SUBSCRIPTION_ORDER_GATEWAY,
 	SubscriptionBillingStatus,
@@ -38,12 +39,16 @@ import {
 	ISubscriptionPeriod,
 	addDays,
 	applyRecurringDiscount,
+	cycleDiscountOf,
 	isDunningExhausted,
+	nextCyclePeriod,
 	nextRetryAt,
 	normalizeDecimal,
 	periodFrom,
+	priceCycle,
 	prorate,
-	recurringAmount
+	recurringAmount,
+	resumedNextBillingAt
 } from '../subscription.cycle';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
@@ -482,8 +487,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
 
 		const now = at ?? new Date();
-		const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
-		const nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
+		const nextBillingAt = resumedNextBillingAt(subscription.currentPeriodEnd, now);
 
 		await commitVersionedUpdate<Subscription>(this, {
 			where: currentScope(),
@@ -911,8 +915,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			});
 		}
 
-		const periodStart = new Date(subscription.nextBillingAt ?? subscription.currentPeriodEnd ?? now);
-		const period = periodFrom(periodStart, cadence);
+		const period = nextCyclePeriod(subscription, cadence, now);
 		const key = `${subscription.id}:${period.start.toISOString()}`;
 
 		const claim = await this.idempotencyService.claim({
@@ -961,6 +964,95 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		}
 
 		return outcome;
+	}
+
+	/**
+	 * Previews the next billing of one subscription, writing nothing.
+	 *
+	 * The amount is the one `billCycle` would bill, because it is computed by the same function —
+	 * `priceCycle`, over the same recurring lines, currency and discount rule — and the period is the
+	 * same one, because it is derived by the same function from the same calendar. Nothing is claimed,
+	 * created, appended or emitted: no idempotency key, no billing row, no adjustment, no order and no
+	 * event, so asking costs nothing and changes nothing.
+	 *
+	 * The gates are `billCycle`'s, read rather than acted on: a cancelled or expired subscription, one
+	 * whose plan's cycle ceiling is reached, and one that is cancelled at the end of the period it would
+	 * next bill have no upcoming billing, and the answer is null. A paused subscription bills once its
+	 * pause ends — from the instant it resumes, by the rule `resume` applies — and an indefinite pause has
+	 * no upcoming billing at all. A subscription with no recurring lines is refused exactly as
+	 * `billCycle` refuses it.
+	 *
+	 * @param id The subscription.
+	 * @param now The instant the question is asked.
+	 * @returns The next billing, or null when the subscription will not bill again as it stands.
+	 * @throws NotFoundException when the subscription is not the caller's.
+	 * @throws BadRequestException when it has no recurring lines to price.
+	 */
+	public async previewNextBilling(id: ID, now: Date = new Date()): Promise<ISubscriptionUpcomingBilling | null> {
+		const subscription = await this.findOneScoped(id);
+
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
+			return null;
+		}
+
+		let calendar: { nextBillingAt?: Date | null; currentPeriodEnd?: Date | null } = subscription;
+
+		if (subscription.status === SubscriptionStatus.PAUSED) {
+			if (!subscription.pausedUntil) {
+				return null;
+			}
+
+			// The billing run resumes it at the end of the pause, or at once when that is already past.
+			const pausedUntil = new Date(subscription.pausedUntil);
+			const resumeAt = pausedUntil.getTime() > now.getTime() ? pausedUntil : now;
+
+			calendar = {
+				nextBillingAt: resumedNextBillingAt(subscription.currentPeriodEnd, resumeAt),
+				currentPeriodEnd: subscription.currentPeriodEnd
+			};
+		}
+
+		const plan = await this.planService.findOneScoped(subscription.planId);
+
+		if (
+			plan.maxBillingCycles !== undefined &&
+			plan.maxBillingCycles !== null &&
+			subscription.billingCycleCount >= plan.maxBillingCycles
+		) {
+			return null;
+		}
+
+		const period = nextCyclePeriod(calendar, this.planService.cadenceOf(plan), now);
+
+		if (subscription.metadata?.['cancelAtPeriodEnd'] === true) {
+			// `billCycle` cancels instead of billing when the period it was cancelled at has ended by the
+			// time it runs; the cycle runs at the start of its period, or now when that is already past.
+			const runsAt = period.start.getTime() > now.getTime() ? period.start : now;
+			const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : runsAt;
+
+			if (periodEnd.getTime() <= runsAt.getTime()) {
+				return null;
+			}
+		}
+
+		const items = await this.itemService.findForSubscription(subscription.id);
+
+		if (!items.length) {
+			throw new BadRequestException(
+				'SUBSCRIPTION_ITEMS_REQUIRED: this subscription has no recurring lines, so its cycle cannot be priced.'
+			);
+		}
+
+		const { net } = priceCycle({ items, currency: subscription.currency, plan, metadata: subscription.metadata });
+
+		return {
+			subscriptionId: subscription.id,
+			amount: net.toStorageString(),
+			currency: subscription.currency,
+			periodStart: period.start,
+			periodEnd: period.end,
+			nextBillingAt: period.start
+		};
 	}
 
 	/**
@@ -1221,8 +1313,13 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			};
 		}
 
-		const gross = recurringAmount(items, subscription.currency);
-		const { discount, net } = applyRecurringDiscount(gross, this.discountOf(plan, this.discountOverrideOf(subscription)));
+		// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
+		const { gross, discount, net } = priceCycle({
+			items,
+			currency: subscription.currency,
+			plan,
+			metadata: subscription.metadata
+		});
 
 		// The subscription is written by whichever of the two writes below runs first — the metadata the
 		// order path records, or the cycle's own record — so the caller's version is handed to the writes
@@ -2041,28 +2138,12 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 
 	/**
 	 * @param subscription The subscription being billed.
-	 * @returns The discount this subscription was sold with, when it is not simply the plan's.
-	 */
-	private discountOverrideOf(subscription: Subscription): string | undefined {
-		const override = subscription.metadata?.['discountPercentage'];
-
-		return override === undefined || override === null ? undefined : String(override);
-	}
-
-	/**
-	 * @param subscription The subscription being billed.
 	 * @param plan The plan it is on.
 	 * @param override A discount the caller stated for this subscription alone.
 	 * @returns The discount fraction to apply.
 	 */
 	private discountOf(plan: SubscriptionPlan, override?: string | number): string | undefined {
-		if (override !== undefined && override !== null && String(override) !== '') {
-			return String(override);
-		}
-
-		return plan.discountPercentage !== undefined && plan.discountPercentage !== null
-			? String(plan.discountPercentage)
-			: undefined;
+		return cycleDiscountOf(plan, override);
 	}
 
 	/**
