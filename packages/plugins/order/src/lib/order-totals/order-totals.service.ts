@@ -22,7 +22,9 @@ import {
 	EventOutboxService,
 	addDecimalStrings,
 	commitVersionedUpdate,
-	compareDecimalStrings
+	compareDecimalStrings,
+	normalizeDecimalString,
+	subtractDecimalStrings
 } from '@gauzy/core';
 import { ITotalsAdjustment, ITotalsContext, ITotalsSnapshot, ITotalsTaxLine, TotalsCalculator } from '@gauzy/plugin-cart';
 import { Order } from '../order/order.entity';
@@ -108,7 +110,7 @@ export interface IOrderRecalculation {
  * ledger does not determine has no expectation to compare against, and comparing one would mean
  * inventing a second definition of what the sweep is checking.
  */
-const ORDER_TOTALS_MONEY_COLUMNS = [
+export const ORDER_TOTALS_MONEY_COLUMNS = [
 	'itemSubtotal',
 	'itemDiscountTotal',
 	'itemTaxTotal',
@@ -203,6 +205,50 @@ export interface IOrderTotalsAuditReport {
 	repaired: ID[];
 	/** The orders the pass could not examine. */
 	failed: IOrderTotalsAuditFailure[];
+}
+
+/**
+ * What one order line contributes to its order's totals, as the totals function computes it.
+ *
+ * Every figure is exact decimal text. `subtotal` is the line's value net of any tax its price contained,
+ * fees included and before discount; `discount` is a positive magnitude; `total` is
+ * `subtotal - discount + tax`.
+ */
+export interface IOrderLineFigures {
+	/** The line. */
+	line: OrderLine;
+	/** The line's quantity. */
+	quantity: string;
+	/** The price one unit was sold at, as the line's snapshot holds it. */
+	unitPrice: string;
+	subtotal: string;
+	discount: string;
+	tax: string;
+	total: string;
+}
+
+/** What one delivery choice contributes to its order's totals, on the same terms as a line. */
+export interface IOrderShippingFigures {
+	/** The delivery choice. */
+	method: OrderShippingMethod;
+	/** The amount the choice was placed at. */
+	amount: string;
+	subtotal: string;
+	discount: string;
+	tax: string;
+	total: string;
+}
+
+/** An order's totals, and the parts they are the sum of. */
+export interface IOrderTotalsBreakdown {
+	/** The order's totals, exactly as `computeTotals` answers them. */
+	totals: IOrderTotals;
+	/** One entry per line, in the order the lines were read. */
+	lines: IOrderLineFigures[];
+	/** One entry per delivery choice. */
+	shippingMethods: IOrderShippingFigures[];
+	/** The order's money totals as exact decimal text, column by column. */
+	exactTotals: Record<(typeof ORDER_TOTALS_MONEY_COLUMNS)[number], string>;
 }
 
 /**
@@ -756,6 +802,142 @@ export class OrderTotalsService {
 	 * @returns The computed totals, including the order-only tail.
 	 */
 	public async computeTotals(order: Order): Promise<IOrderTotals> {
+		const { context } = await this.readTotalsContext(order);
+
+		return this.totalsOf(context);
+	}
+
+	/**
+	 * Computes an order's totals and what each line and each delivery choice contributes to them, without
+	 * writing anything.
+	 *
+	 * **The parts are computed by the one totals function, one owner at a time.** The calculator rounds each
+	 * line's value at the line and sums already-rounded components, so running it over one line and that
+	 * line's own ledger rows yields exactly that line's share of the order's figures — and the shares then
+	 * add up to the order's totals by construction rather than by apportioning a total after the fact,
+	 * which is where a cent goes missing. The sum is still checked rather than assumed: a document that
+	 * bills the parts of an order has to bill the order, and a breakdown that does not add up is refused
+	 * here instead of being written into an accounting document.
+	 *
+	 * Every figure is exact decimal text.
+	 *
+	 * @param order The order.
+	 * @returns The order's totals, and the figures of each line and each delivery choice.
+	 * @throws InternalServerErrorException with `ORDER_TOTALS_BREAKDOWN_UNSETTLED` when the parts do not
+	 * sum to the totals.
+	 */
+	public async computeBreakdown(order: Order): Promise<IOrderTotalsBreakdown> {
+		const { lines, shippingMethods, context } = await this.readTotalsContext(order);
+		const totals = this.totalsOf(context);
+		const alone = (part: Partial<ITotalsContext>): ITotalsSnapshot =>
+			TotalsCalculator.compute({
+				currency: context.currency,
+				currencyDecimals: context.currencyDecimals,
+				lines: [],
+				shippingMethods: [],
+				lineAdjustments: [],
+				shippingAdjustments: [],
+				lineTaxLines: [],
+				shippingTaxLines: [],
+				...part
+			});
+		const figures = (subtotal: unknown, discount: unknown, tax: unknown) => {
+			const exact = {
+				subtotal: this.decimalOf(subtotal),
+				discount: this.decimalOf(discount),
+				tax: this.decimalOf(tax)
+			};
+			const net = subtractDecimalStrings(exact.subtotal, exact.discount);
+
+			return { ...exact, total: normalizeDecimalString(addDecimalStrings(net, exact.tax)) };
+		};
+		const ownedBy = <R extends { ownerId: string }>(rows: R[], ownerId: string): R[] =>
+			rows.filter((row) => row.ownerId === ownerId);
+
+		const lineFigures = lines.map((line) => {
+			const part = alone({
+				lines: context.lines.filter((candidate) => candidate.id === line.id),
+				lineAdjustments: ownedBy(context.lineAdjustments, line.id),
+				lineTaxLines: ownedBy(context.lineTaxLines, line.id)
+			});
+
+			return {
+				line,
+				quantity: this.decimalOf(line.quantity ?? 0),
+				unitPrice: this.decimalOf(line.unitPrice ?? 0),
+				...figures(part.itemSubtotal, part.itemDiscountTotal, part.itemTaxTotal)
+			};
+		});
+		const shippingFigures = shippingMethods.map((method) => {
+			const part = alone({
+				shippingMethods: context.shippingMethods.filter((candidate) => candidate.id === method.id),
+				shippingAdjustments: ownedBy(context.shippingAdjustments, method.id),
+				shippingTaxLines: ownedBy(context.shippingTaxLines, method.id)
+			});
+
+			return {
+				method,
+				amount: this.decimalOf(method.amount ?? 0),
+				...figures(part.shippingSubtotal, part.shippingDiscountTotal, part.shippingTaxTotal)
+			};
+		});
+
+		const sum = (values: string[]): string =>
+			values.reduce<string>((total, value) => addDecimalStrings(total, value), '0');
+		const unsettled = [
+			['itemSubtotal', sum(lineFigures.map((part) => part.subtotal)), totals.itemSubtotal],
+			['itemDiscountTotal', sum(lineFigures.map((part) => part.discount)), totals.itemDiscountTotal],
+			['itemTaxTotal', sum(lineFigures.map((part) => part.tax)), totals.itemTaxTotal],
+			['shippingSubtotal', sum(shippingFigures.map((part) => part.subtotal)), totals.shippingSubtotal],
+			['shippingDiscountTotal', sum(shippingFigures.map((part) => part.discount)), totals.shippingDiscountTotal],
+			['shippingTaxTotal', sum(shippingFigures.map((part) => part.tax)), totals.shippingTaxTotal]
+		].filter(([, parts, total]) => compareDecimalStrings(parts as string, this.decimalOf(total)) !== 0);
+
+		if (unsettled.length) {
+			const stated = unsettled.map(([column, parts, total]) => `${column}: ${parts} ≠ ${this.decimalOf(total)}`);
+
+			throw new InternalServerErrorException(
+				`ORDER_TOTALS_BREAKDOWN_UNSETTLED: the parts of order ${order.id} do not sum to its totals ` +
+					`(${stated.join('; ')}).`
+			);
+		}
+
+		const columns = totals as unknown as Record<string, unknown>;
+		const exactTotals = Object.fromEntries(
+			ORDER_TOTALS_MONEY_COLUMNS.map((column) => [column, this.decimalOf(columns[column] ?? 0)])
+		) as IOrderTotalsBreakdown['exactTotals'];
+
+		return { totals, lines: lineFigures, shippingMethods: shippingFigures, exactTotals };
+	}
+
+	/**
+	 * The one call the calculator is answered with for an order, and the order-only tail it marks optional.
+	 *
+	 * @param context What the chain reads.
+	 * @returns The computed totals, including the order-only tail.
+	 */
+	private totalsOf(context: ITotalsContext): IOrderTotals {
+		const snapshot = TotalsCalculator.compute(context);
+
+		return {
+			...snapshot,
+			creditTotal: snapshot.creditTotal ?? 0,
+			paidTotal: snapshot.paidTotal ?? 0,
+			refundedTotal: snapshot.refundedTotal ?? 0,
+			outstandingTotal: snapshot.outstandingTotal ?? 0
+		};
+	}
+
+	/**
+	 * Reads what an order's totals are computed from — its lines, its delivery choices, their ledger rows,
+	 * its credit lines and its money ledger — and states it as the calculator's context.
+	 *
+	 * @param order The order.
+	 * @returns The rows read, and the context built from them.
+	 */
+	private async readTotalsContext(
+		order: Order
+	): Promise<{ lines: OrderLine[]; shippingMethods: OrderShippingMethod[]; context: ITotalsContext }> {
 		const lines = ((await this.lineService.findAll({
 			where: { orderId: order.id }
 		})) as IPagination<OrderLine>).items;
@@ -832,15 +1014,7 @@ export class OrderTotalsService {
 			}))
 		};
 
-		const snapshot = TotalsCalculator.compute(context);
-
-		return {
-			...snapshot,
-			creditTotal: snapshot.creditTotal ?? 0,
-			paidTotal: snapshot.paidTotal ?? 0,
-			refundedTotal: snapshot.refundedTotal ?? 0,
-			outstandingTotal: snapshot.outstandingTotal ?? 0
-		};
+		return { lines, shippingMethods, context };
 	}
 
 	/**

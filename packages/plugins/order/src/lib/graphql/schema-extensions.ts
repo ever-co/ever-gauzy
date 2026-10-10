@@ -10,10 +10,10 @@ import { gql } from 'graphql-tag';
  * Money is `Decimal`, never `Float`: the value is the exact decimal string a `numeric(20,6)` column
  * carries, so a value read over GraphQL and the same value read over REST are string-identical.
  *
- * The root fields declared here are the ones this package resolves. The invoice, quote and approval
- * mutations of the order domain are deliberately absent: they are performed through the core invoice
- * service and the platform approval module, and a root field with no resolver would fail at request time
- * rather than at boot, which is worse than a field that does not exist yet.
+ * The root fields declared here are the ones this package resolves. The invoice mutation is resolved here
+ * too: the document itself is the core invoice row, issued through the port the installation binds to the
+ * core invoice service, and a process that binds nothing answers the field with the domain's own
+ * `ORDER_INVOICING_UNAVAILABLE` rather than with a field that does not exist.
  */
 export const orderSchemaExtensions = gql`
 	"An order: the immutable commercial record."
@@ -570,6 +570,13 @@ export const orderSchemaExtensions = gql`
 		placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
 		confirmOrder(id: ID!, version: Int): Order!
 		recalculateOrder(id: ID!, version: Int): Order!
+		"""
+		Issues the invoice that bills an order — the platform's own invoice, one item per billable line and per
+		delivery choice, the discount and tax as the order computed them — stamps the order's \`invoiceId\` and
+		records each line's link to the item that billed it. Refused when the order is already invoiced, is a
+		test order, or is a draft, cancelled or archived.
+		"""
+		generateOrderInvoice(id: ID!, version: Int, idempotencyKey: String): Order!
 		"Create a change: the only way a placed order is modified."
 		requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
 		"""

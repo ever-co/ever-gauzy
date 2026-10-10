@@ -204,6 +204,137 @@ export const ORDER_TOTALS_RECONCILED_REASON = 'DRIFT_REPAIRED';
  */
 export const ORDER_CHANGE_STALE_HOURS = 24;
 
+/*
+|--------------------------------------------------------------------------
+| The accounting document an order issues
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * One item of the accounting document an order issues: one billable order line, or one delivery choice.
+ *
+ * Every figure is the exact decimal text the order computed, never a number: the item is written into a
+ * `numeric` column of the finance table, and a value that crossed a `number` on its way there would be
+ * a figure the order never stated.
+ */
+export interface IOrderInvoiceDocumentItem {
+	/** What the order calls the item: the order line's id, or the delivery choice's. Echoed back with the item it became. */
+	readonly key: ID;
+	/** What the item reads as on the document. */
+	readonly description: string;
+	/** The quantity billed. */
+	readonly quantity: DecimalString;
+	/** The price one unit was sold at, as the line's snapshot holds it — gross when the line is priced tax-inclusive. */
+	readonly unitPrice: DecimalString;
+	/** The item's subtotal as the order computed it: net of any tax its price contained, fees included, before discount. */
+	readonly totalValue: DecimalString;
+	/** The product the line sold, when it names one. */
+	readonly productId?: ID;
+	/** Whether the order taxed the item. */
+	readonly applyTax: boolean;
+	/** Whether the order discounted the item. */
+	readonly applyDiscount: boolean;
+}
+
+/**
+ * The accounting document an order issues: an invoice, or — `isEstimate` — the estimate a quote is.
+ *
+ * The discount and the tax are stated as the flat amounts the order computed rather than re-derived by the
+ * document from rates: the order is the record that decided them, and a document that recomputed them
+ * could arrive at a different total than the one the buyer agreed to.
+ */
+export interface IOrderInvoiceDocument {
+	/** True for the estimate a quote sends, false for the invoice that bills the order. */
+	readonly isEstimate: boolean;
+	/** The order's tenant, which the document is written under. */
+	readonly tenantId?: ID;
+	/** The order's organization: the issuer of the document and the organization it is filed in. */
+	readonly organizationId: ID;
+	/** The order's currency. */
+	readonly currency: string;
+	/** The buyer, an `organization_contact`, when the order names one. */
+	readonly contactId?: ID;
+	/** The buyer's e-mail, when the order carries one. */
+	readonly sentTo?: string;
+	/** The settlement schedule the order was placed against. */
+	readonly paymentTermId?: ID;
+	/** The order's number, which the document states as its provenance. */
+	readonly reference: string;
+	/** The order's discount total, as a positive magnitude. */
+	readonly discountTotal: DecimalString;
+	/** The order's tax: the item tax and the shipping tax together. */
+	readonly taxTotal: DecimalString;
+	/** The order's grand total: the items, less the discount, plus the tax. */
+	readonly grandTotal: DecimalString;
+	/** The items, in the order they are listed. */
+	readonly items: readonly IOrderInvoiceDocumentItem[];
+}
+
+/** The document the invoicing capability issued. */
+export interface IOrderInvoiceIssued {
+	/** The `invoice` row that was written. */
+	readonly invoiceId: ID;
+	/** The number the document was given. */
+	readonly invoiceNumber: number;
+	/** Each item the document carries, under the key the order stated for it. */
+	readonly items: ReadonlyArray<{ readonly key: ID; readonly invoiceItemId: ID }>;
+}
+
+/** What the order reads back about a document it issued. */
+export interface IOrderInvoiceDocumentState {
+	/** The `invoice` row. */
+	readonly invoiceId: ID;
+	/** The number the document carries. */
+	readonly invoiceNumber?: number;
+	/** Whether the document is an estimate. */
+	readonly isEstimate: boolean;
+	/** The buyer's answer to an estimate: true accepted, false declined, null or absent not yet answered. */
+	readonly isAccepted?: boolean | null;
+	/** The document's own status. */
+	readonly status?: string;
+}
+
+/**
+ * The invoicing capability as the order sees it.
+ *
+ * Provided by the platform's finance document — the core `invoice` row, its items and its estimate e-mail —
+ * and injected under {@link ORDER_INVOICING}. The order package never imports the finance module: its
+ * module is also hosted by the worker process, which builds no e-mail, PDF or translation providers, so a
+ * dependency on the finance module would stop the worker booting. The installation joins the two in
+ * `apps/api/src/plugin-composition.ts`; an installation that does not is answered
+ * `ORDER_INVOICING_UNAVAILABLE` by every verb that needs a document, before anything is written.
+ */
+export interface IOrderInvoicingPort {
+	/**
+	 * Writes one document and its items.
+	 *
+	 * @param document The document, every figure as the order computed it.
+	 * @returns The document's identity and number, and the item each key became.
+	 */
+	issue(document: IOrderInvoiceDocument): Promise<IOrderInvoiceIssued>;
+
+	/**
+	 * Reads one document of the caller's tenant.
+	 *
+	 * @param invoiceId The document.
+	 * @returns What the document states, or null when the caller's tenant has no such document.
+	 */
+	read(invoiceId: ID): Promise<IOrderInvoiceDocumentState | null>;
+
+	/**
+	 * Voids a document the order no longer stands behind: one issued for a write that was then refused, or
+	 * an estimate a newer quote superseded. The row and its number stay, because a numbered accounting
+	 * document is voided rather than removed.
+	 *
+	 * @param invoiceId The document.
+	 * @param reason Why, recorded on the document's internal note.
+	 */
+	voidDocument(invoiceId: ID, reason: string): Promise<void>;
+}
+
+/** Token the invoicing capability is injected under. */
+export const ORDER_INVOICING = Symbol('ORDER_INVOICING');
+
 /**
  * What one line's counters say, and how the status follows from them.
  *
