@@ -5337,53 +5337,144 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fournisseur de fichiers",
+		"SHOW_SECRET": "Afficher le secret",
+		"HIDE_SECRET": "Masquer le secret",
+		"SUMMARY": {
+			"TITLE": "Configuration actuelle",
+			"DESCRIPTION": "Derniers paramètres enregistrés — utilisés par les nouveaux envois.",
+			"PROVIDER": "Fournisseur",
+			"BUCKET": "Bucket / nom du cloud",
+			"REGION": "Région",
+			"ENDPOINT": "Point de terminaison",
+			"CREDENTIALS": "Identifiants",
+			"CREDENTIALS_SAVED": "Enregistrés",
+			"CREDENTIALS_INCOMPLETE": "Incomplets",
+			"CREDENTIALS_NONE": "Non définis",
+			"CREDENTIALS_NOT_NEEDED": "Non requis"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Où obtenir les clés",
+			"LOCAL": {
+				"NAME": "Disque local",
+				"DESCRIPTION": "les fichiers sont enregistrés sur le système de fichiers du serveur API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "les fichiers sont enregistrés dans un bucket AWS S3. Utilisez une clé d'accès IAM pouvant lire et écrire dans le bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "stockage cloud compatible S3. Les identifiants sont vérifiés auprès de Wasabi lors de l'enregistrement."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hébergement d'images et de vidéos. Le nom du cloud et les clés API se trouvent dans la console Cloudinary, sous API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "stockage d'objets compatible S3 avec CDN optionnel. Créez une clé d'accès Spaces dans le panneau de contrôle DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Stockage local",
+			"WHERE": "Les fichiers envoyés sont écrits sur le système de fichiers du serveur API.",
+			"NO_CONFIG": "Rien à configurer — le stockage local fonctionne immédiatement.",
+			"WARNING": "Les fichiers sont perdus si le serveur est redéployé sans volume persistant, et ils ne sont pas partagés entre plusieurs instances de l'API. Utilisez un fournisseur cloud en production."
+		},
+		"CHECK": {
+			"BUTTON": "Vérifier la configuration",
+			"OK": "Tous les champs obligatoires sont remplis et les URL sont valides. Les clés elles-mêmes ne sont vérifiées que par le fournisseur.",
+			"OK_LOCAL": "Le stockage local ne nécessite aucune configuration.",
+			"MISSING": "Manquant :",
+			"INVALID_URL": "URL http(s) non valide :"
+		},
 		"S3": {
 			"HEADER": "Configuration S3",
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Identifiant d'accès clé",
+				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Configuration Wasabi",
+			"SUBTITLE": "Stockez les fichiers envoyés dans un bucket Wasabi via son API compatible S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Identifiants",
+				"CREDENTIALS_HINT": "Une paire de clés d'accès issue de la console Wasabi.",
+				"BUCKET": "Bucket et point de terminaison",
+				"BUCKET_HINT": "Où les fichiers envoyés sont écrits.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La partie publique de la paire de clés.",
+				"SECRET_ACCESS_KEY": "Affichée une seule fois, à la création de la clé. Les valeurs enregistrées sont renvoyées masquées.",
+				"REGION": "La région du bucket, par ex. us-east-1 ou eu-central-1.",
+				"SERVICE_URL": "Le point de terminaison S3 de cette région.",
+				"BUCKET": "Lettres minuscules, chiffres, points et tirets. Les noms sont uniques sur tout Wasabi.",
+				"FORCE_PATH_STYLE": "Adresse les fichiers sous la forme endpoint/bucket/fichier au lieu de bucket.endpoint/fichier. Laissez activé sauf besoin d'URL de type virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Point de terminaison pour cette région :",
+			"USE_SUGGESTION": "L'utiliser",
+			"SAVE_NOTE": "À l'enregistrement, Gauzy utilise ces identifiants pour créer le bucket dans Wasabi. Si Wasabi refuse la requête, les paramètres ne sont pas enregistrés.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Identifiant de clé d'accès",
+				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau",
-				"SERVICE_URL": "URL de service"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL du service",
+				"FORCE_PATH_STYLE": "Forcer les URL de type chemin"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "ID de la clé d'accès",
+				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau",
+				"BUCKET": "Bucket",
 				"SERVICE_URL": "URL du service"
 			}
 		},
 		"CLOUDINARY": {
 			"HEADER": "Configuration Cloudinary",
 			"LABELS": {
-				"CLOUD_NAME": "Nom de Cloudinary",
-				"ACCESS_API_KEY": "Identifiant de clé d'accès",
-				"ACCESS_API_SECRET": "Clé d'accès secrète",
-				"DELIVERY_URL": "URL de livraison",
-				"SECURE": "Sécurisé"
+				"CLOUD_NAME": "Nom du cloud",
+				"ACCESS_API_KEY": "Clé API",
+				"ACCESS_API_SECRET": "Secret API",
+				"DELIVERY_URL": "URL de diffusion",
+				"SECURE": "Sécurisé (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Le nom de Cloudinary",
-				"ACCESS_API_KEY": "Clé d'accès identifiant",
-				"ACCESS_API_SECRET": "Clé d'accès secrète",
-				"DELIVERY_URL": "URL de livraison",
-				"SECURE": "Sécurisé"
+				"CLOUD_NAME": "Nom du cloud",
+				"ACCESS_API_KEY": "Clé API",
+				"ACCESS_API_SECRET": "Secret API",
+				"DELIVERY_URL": "URL de diffusion",
+				"SECURE": "Sécurisé (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Configuration DigitalOcean",
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID de clé d'accès",
+				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
+				"REGION": "Région",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL du service",
+				"CDN_URL": "URL du CDN",
+				"FORCE_PATH_STYLE": "Forcer les URL de type chemin"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID de clé d'accès",
+				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
+				"REGION": "Région",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL du service",
+				"CDN_URL": "URL du CDN"
 			}
 		}
 	},

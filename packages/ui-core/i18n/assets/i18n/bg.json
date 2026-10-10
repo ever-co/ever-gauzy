@@ -5392,36 +5392,144 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Доставчик на файлове",
+		"SHOW_SECRET": "Покажи тайната",
+		"HIDE_SECRET": "Скрий тайната",
+		"SUMMARY": {
+			"TITLE": "Текуща конфигурация",
+			"DESCRIPTION": "Последно запазени настройки — използват се за новите качвания.",
+			"PROVIDER": "Доставчик",
+			"BUCKET": "Бъкет / име на облака",
+			"REGION": "Регион",
+			"ENDPOINT": "Крайна точка",
+			"CREDENTIALS": "Идентификационни данни",
+			"CREDENTIALS_SAVED": "Запазени",
+			"CREDENTIALS_INCOMPLETE": "Непълни",
+			"CREDENTIALS_NONE": "Не са зададени",
+			"CREDENTIALS_NOT_NEEDED": "Не са нужни"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Откъде да вземете ключовете",
+			"LOCAL": {
+				"NAME": "Локален диск",
+				"DESCRIPTION": "файловете се записват във файловата система на API сървъра."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "файловете се записват в AWS S3 бъкет. Използвайте IAM ключ за достъп с права за четене и запис в бъкета."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-съвместимо облачно хранилище. Данните за достъп се проверяват в Wasabi при запазване."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "хостинг на изображения и видео. Името на облака и API ключовете са в конзолата на Cloudinary, в раздел API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-съвместимо обектно хранилище с незадължителен CDN. Създайте ключ за достъп до Spaces в контролния панел на DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Локално хранилище",
+			"WHERE": "Качените файлове се записват във файловата система на API сървъра.",
+			"NO_CONFIG": "Няма нищо за настройване — локалното хранилище работи веднага.",
+			"WARNING": "Файловете се губят, ако сървърът бъде преинсталиран без постоянен том, и не се споделят между няколко API инстанции. В продукция използвайте облачен доставчик."
+		},
+		"CHECK": {
+			"BUTTON": "Провери конфигурацията",
+			"OK": "Всички задължителни полета са попълнени и URL адресите са валидни. Самите ключове се проверяват само от доставчика.",
+			"OK_LOCAL": "Локалното хранилище не изисква настройка.",
+			"MISSING": "Липсва:",
+			"INVALID_URL": "Невалиден http(s) URL:"
+		},
 		"S3": {
-			"HEADER": "S3 Конфигурация",
+			"HEADER": "Конфигурация на S3",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Конфигурация",
+			"HEADER": "Конфигурация на Wasabi",
+			"SUBTITLE": "Съхранявайте качените файлове в Wasabi бъкет чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Двойка ключове за достъп от конзолата на Wasabi.",
+				"BUCKET": "Бъкет и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "Регионът на бъкета, напр. us-east-1 или eu-central-1.",
+				"SERVICE_URL": "S3 крайната точка за този регион.",
+				"BUCKET": "Малки букви, цифри, точки и тирета. Имената са уникални в целия Wasabi.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/бъкет/файл вместо бъкет.endpoint/файл. Оставете включено, освен ако не ви трябват virtual-hosted адреси."
+			},
+			"SUGGESTED_ENDPOINT": "Крайна точка за този регион:",
+			"USE_SUGGESTION": "Използвай",
+			"SAVE_NOTE": "При запазване Gauzy използва тези данни, за да създаде бъкета в Wasabi. Ако Wasabi откаже заявката, настройките не се запазват.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
-				"SERVICE_URL": "URL на услугата"
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
+				"BUCKET": "Бъкет",
 				"SERVICE_URL": "URL на услугата"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Конфигурация на Cloudinary",
+			"LABELS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Конфигурация на DigitalOcean",
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN"
 			}
 		}
 	},

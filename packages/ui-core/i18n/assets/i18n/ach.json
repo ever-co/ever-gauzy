@@ -4697,6 +4697,57 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "crwdns8136:0crwdne8136:0",
+		"SHOW_SECRET": "Show secret",
+		"HIDE_SECRET": "Hide secret",
+		"SUMMARY": {
+			"TITLE": "Current configuration",
+			"DESCRIPTION": "Last saved settings — what new uploads use right now.",
+			"PROVIDER": "Provider",
+			"BUCKET": "Bucket / cloud name",
+			"REGION": "Region",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Credentials",
+			"CREDENTIALS_SAVED": "Saved",
+			"CREDENTIALS_INCOMPLETE": "Incomplete",
+			"CREDENTIALS_NONE": "Not set",
+			"CREDENTIALS_NOT_NEEDED": "Not needed"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Where to get the keys",
+			"LOCAL": {
+				"NAME": "Local disk",
+				"DESCRIPTION": "files are saved on the API server's own file system."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "files are saved to an AWS S3 bucket. Use an IAM access key that can read and write the bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-compatible cloud storage. The credentials are verified with Wasabi when you save."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "image and video hosting. The cloud name and API keys are in the Cloudinary console under API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-compatible object storage with an optional CDN. Create a Spaces access key in the DigitalOcean control panel."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Local storage",
+			"WHERE": "Uploaded files are written to the API server's file system.",
+			"NO_CONFIG": "Nothing to configure — local storage works out of the box.",
+			"WARNING": "Files are lost if the server is redeployed without a persistent volume, and they are not shared between several API instances. Use a cloud provider in production."
+		},
+		"CHECK": {
+			"BUTTON": "Check configuration",
+			"OK": "All required fields are filled in and the URLs are valid. The keys themselves are only verified by the provider.",
+			"OK_LOCAL": "Local storage needs no configuration.",
+			"MISSING": "Missing:",
+			"INVALID_URL": "Not a valid http(s) URL:"
+		},
 		"S3": {
 			"HEADER": "crwdns10956:0crwdne10956:0",
 			"LABELS": {
@@ -4714,12 +4765,32 @@
 		},
 		"WASABI": {
 			"HEADER": "crwdns10974:0crwdne10974:0",
+			"SUBTITLE": "Store uploaded files in a Wasabi bucket through its S3-compatible API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "An access key pair from the Wasabi console.",
+				"BUCKET": "Bucket & endpoint",
+				"BUCKET_HINT": "Where uploaded files are written.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"REGION": "The region the bucket lives in, e.g. us-east-1 or eu-central-1.",
+				"SERVICE_URL": "The S3 endpoint for that region.",
+				"BUCKET": "Lowercase letters, numbers, dots and hyphens. Names are unique across all of Wasabi.",
+				"FORCE_PATH_STYLE": "Address files as endpoint/bucket/file instead of bucket.endpoint/file. Leave on unless you need virtual-hosted URLs."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint for this region:",
+			"USE_SUGGESTION": "Use it",
+			"SAVE_NOTE": "When you save, Gauzy uses these credentials to create the bucket in Wasabi. If Wasabi rejects the request, the settings are not saved.",
 			"LABELS": {
 				"ACCESS_KEY_ID": "crwdns10976:0crwdne10976:0",
 				"SECRET_ACCESS_KEY": "crwdns10978:0crwdne10978:0",
 				"REGION": "crwdns10980:0crwdne10980:0",
 				"BUCKET": "crwdns10982:0crwdne10982:0",
-				"SERVICE_URL": "crwdns10984:0crwdne10984:0"
+				"SERVICE_URL": "crwdns10984:0crwdne10984:0",
+				"FORCE_PATH_STYLE": "Force path-style URLs"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "crwdns10986:0crwdne10986:0",
@@ -4727,6 +4798,43 @@
 				"REGION": "crwdns10990:0crwdne10990:0",
 				"BUCKET": "crwdns10992:0crwdne10992:0",
 				"SERVICE_URL": "crwdns10994:0crwdne10994:0"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Cloudinary Configuration",
+			"LABELS": {
+				"CLOUD_NAME": "Cloud name",
+				"ACCESS_API_KEY": "API key",
+				"ACCESS_API_SECRET": "API secret",
+				"DELIVERY_URL": "Delivery URL",
+				"SECURE": "Secure (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Cloud name",
+				"ACCESS_API_KEY": "API key",
+				"ACCESS_API_SECRET": "API secret",
+				"DELIVERY_URL": "Delivery URL",
+				"SECURE": "Secure (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "DigitalOcean Configuration",
+			"LABELS": {
+				"ACCESS_KEY_ID": "Access key ID",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service URL",
+				"CDN_URL": "CDN URL",
+				"FORCE_PATH_STYLE": "Force path-style URLs"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Access key ID",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service URL",
+				"CDN_URL": "CDN URL"
 			}
 		}
 	},

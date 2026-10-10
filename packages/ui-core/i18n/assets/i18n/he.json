@@ -5355,36 +5355,144 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "ספק קבצים",
+		"SHOW_SECRET": "הצג סוד",
+		"HIDE_SECRET": "הסתר סוד",
+		"SUMMARY": {
+			"TITLE": "תצורה נוכחית",
+			"DESCRIPTION": "ההגדרות האחרונות שנשמרו — בשימוש בהעלאות חדשות.",
+			"PROVIDER": "ספק",
+			"BUCKET": "באקט / שם ענן",
+			"REGION": "אזור",
+			"ENDPOINT": "נקודת קצה",
+			"CREDENTIALS": "פרטי גישה",
+			"CREDENTIALS_SAVED": "נשמרו",
+			"CREDENTIALS_INCOMPLETE": "חלקיים",
+			"CREDENTIALS_NONE": "לא הוגדרו",
+			"CREDENTIALS_NOT_NEEDED": "לא נדרשים"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "היכן להשיג את המפתחות",
+			"LOCAL": {
+				"NAME": "דיסק מקומי",
+				"DESCRIPTION": "הקבצים נשמרים במערכת הקבצים של שרת ה-API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "הקבצים נשמרים בבאקט AWS S3. השתמשו במפתח גישה של IAM עם הרשאות קריאה וכתיבה לבאקט."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "אחסון ענן תואם S3. פרטי הגישה נבדקים מול Wasabi בעת השמירה."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "אירוח תמונות ווידאו. שם הענן ומפתחות ה-API נמצאים בקונסולת Cloudinary תחת API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "אחסון אובייקטים תואם S3 עם CDN אופציונלי. צרו מפתח גישה ל-Spaces בלוח הבקרה של DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "אחסון מקומי",
+			"WHERE": "קבצים שהועלו נכתבים למערכת הקבצים של שרת ה-API.",
+			"NO_CONFIG": "אין מה להגדיר — האחסון המקומי עובד מיד.",
+			"WARNING": "הקבצים יאבדו אם השרת ייפרס מחדש ללא נפח קבוע, והם אינם משותפים בין כמה מופעי API. בסביבת ייצור השתמשו בספק ענן."
+		},
+		"CHECK": {
+			"BUTTON": "בדוק תצורה",
+			"OK": "כל השדות הנדרשים מולאו וכתובות ה-URL תקינות. המפתחות עצמם נבדקים רק על ידי הספק.",
+			"OK_LOCAL": "אחסון מקומי אינו דורש הגדרה.",
+			"MISSING": "חסר:",
+			"INVALID_URL": "כתובת http(s) לא תקינה:"
+		},
 		"S3": {
-			"HEADER": "S3 Configuration",
+			"HEADER": "תצורת S3",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Configuration",
+			"HEADER": "תצורת Wasabi",
+			"SUBTITLE": "אחסנו קבצים שהועלו בבאקט של Wasabi דרך ה-API התואם S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "פרטי גישה",
+				"CREDENTIALS_HINT": "זוג מפתחות גישה מקונסולת Wasabi.",
+				"BUCKET": "באקט ונקודת קצה",
+				"BUCKET_HINT": "לאן נכתבים הקבצים שהועלו.",
+				"OPTIONS": "אפשרויות"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "החלק הציבורי של זוג המפתחות.",
+				"SECRET_ACCESS_KEY": "מוצג פעם אחת בלבד, בעת יצירת המפתח. ערכים שמורים חוזרים מוסתרים.",
+				"REGION": "האזור של הבאקט, למשל us-east-1 או eu-central-1.",
+				"SERVICE_URL": "נקודת הקצה של S3 עבור אותו אזור.",
+				"BUCKET": "אותיות קטנות, ספרות, נקודות ומקפים. השמות ייחודיים בכל Wasabi.",
+				"FORCE_PATH_STYLE": "פנייה לקבצים בתבנית endpoint/bucket/file במקום bucket.endpoint/file. השאירו מופעל אלא אם אתם צריכים כתובות virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "נקודת קצה לאזור זה:",
+			"USE_SUGGESTION": "השתמש",
+			"SAVE_NOTE": "בעת השמירה, Gauzy משתמש בפרטי הגישה האלה כדי ליצור את הבאקט ב-Wasabi. אם Wasabi דוחה את הבקשה, ההגדרות אינן נשמרות.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket",
-				"SERVICE_URL": "Service URL"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות",
+				"FORCE_PATH_STYLE": "אילוץ כתובות URL בסגנון נתיב"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket",
-				"SERVICE_URL": "Service URL"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "תצורת Cloudinary",
+			"LABELS": {
+				"CLOUD_NAME": "שם הענן",
+				"ACCESS_API_KEY": "מפתח API",
+				"ACCESS_API_SECRET": "סוד API",
+				"DELIVERY_URL": "כתובת URL למסירה",
+				"SECURE": "מאובטח (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "שם הענן",
+				"ACCESS_API_KEY": "מפתח API",
+				"ACCESS_API_SECRET": "סוד API",
+				"DELIVERY_URL": "כתובת URL למסירה",
+				"SECURE": "מאובטח (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "תצורת DigitalOcean",
+			"LABELS": {
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות",
+				"CDN_URL": "כתובת URL של ה-CDN",
+				"FORCE_PATH_STYLE": "אילוץ כתובות URL בסגנון נתיב"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות",
+				"CDN_URL": "כתובת URL של ה-CDN"
 			}
 		}
 	},
