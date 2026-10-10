@@ -134,6 +134,10 @@ jest.mock('@gauzy/core', () => {
 		// Every resolver class carries the platform's feature guard, so the double provides the class the
 		// resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
 		FeatureFlagGuard: class FeatureFlagGuard {},
+		// The payment lifecycle events the subscription fields stream extend the kernel's event class, and the
+		// two resolvers that serve them inject the bus.
+		BaseEvent: class BaseEvent {},
+		EventBus: class EventBus {},
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		VisibleWith: decorator,
 		FieldVisibility: class FieldVisibility {},
