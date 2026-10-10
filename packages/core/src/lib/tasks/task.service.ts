@@ -392,7 +392,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 *
 	 * The route also admits ORG_TASK_EDIT so that a team manager, whose role holds no task-delete
 	 * permission, reaches this check. Without ALL_ORG_EDIT or ORG_TASK_DELETE, the caller must manage one
-	 * of the teams the task belongs to.
+	 * of the task's teams that belongs to the task's organization.
 	 *
 	 * @param id - The task to delete
 	 * @returns The result of the deletion
@@ -401,13 +401,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async deleteTask(id: ID): Promise<DeleteResult> {
 		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
 			const employeeId = RequestContext.currentEmployeeId();
-			const { teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
+			const { organizationId, teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
+
+			// Task writes only check that a linked team is in the same tenant, so a task can reference a team
+			// of another organization. Only teams of the task's own organization count, and a task without
+			// an organization grants nothing.
+			const teamIds = isNotEmpty(organizationId)
+				? teams.filter((team) => team.organizationId === organizationId).map((team) => team.id)
+				: [];
 			const isTeamManager =
 				isNotEmpty(employeeId) &&
-				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(
-					employeeId,
-					teams.map((team) => team.id)
-				));
+				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
 
 			if (!isTeamManager) {
 				throw new ForbiddenException('You can only delete a task of a team you manage.');
