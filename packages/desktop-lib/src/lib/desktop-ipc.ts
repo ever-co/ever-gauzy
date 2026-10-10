@@ -1679,12 +1679,17 @@ const SYNC_SETTLE_MS = 10_000;
 
 /*
  * Offline sync reads the local timers only once the timer jobs stored so far have been applied: a stored duration update
- * that ran after the upload would leave the API with the timer as it was before it. Bounded, and logged when it runs out.
+ * that ran after the upload would leave the API with the timer as it was before it. While they are still pending the
+ * attempt is skipped (the lock released) and made again on the next trigger; `TimerHandler.readyForOfflineSync` bounds
+ * how many attempts in a row are skipped.
  */
-async function settleStoredTimerJobs(knex): Promise<void> {
-	if (!(await getTimerHandler().settleQueuedTimerJobs(knex, SYNC_SETTLE_MS))) {
-		log.warn(`Offline sync: stored timer jobs were not all applied within ${SYNC_SETTLE_MS} ms`);
+async function readyForOfflineSync(knex): Promise<boolean> {
+	if (await getTimerHandler().readyForOfflineSync(knex, SYNC_SETTLE_MS)) {
+		return true;
 	}
+	log.warn(`Offline sync deferred: stored timer jobs were not all applied within ${SYNC_SETTLE_MS} ms`);
+	isQueueThreadTimerLocked = false;
+	return false;
 }
 
 let isScreenshotTreadLocked = false;
@@ -1706,7 +1711,7 @@ async function sequentialSyncQueue(window: BrowserWindow, knex?) {
 
 		isQueueThreadTimerLocked = true;
 
-		await settleStoredTimerJobs(knex);
+		if (!(await readyForOfflineSync(knex))) return;
 
 		const sequences = await getTimerService().findToSynced();
 
@@ -1812,7 +1817,7 @@ async function sequentialSyncInterruptionsQueue(window: BrowserWindow, knex?) {
 
 		isQueueThreadTimerLocked = true;
 
-		await settleStoredTimerJobs(knex);
+		if (!(await readyForOfflineSync(knex))) return;
 
 		const sequences = await getTimerService().interruptions();
 

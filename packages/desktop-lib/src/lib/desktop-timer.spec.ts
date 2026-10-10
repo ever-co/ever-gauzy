@@ -378,6 +378,23 @@ describe('TimerHandler', () => {
 			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
 		});
 
+		it('keeps a job it could not store behind the stored jobs ahead of it, even past one 5 s wait', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			timerService.hold((write) => write.duration === 1000);
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			const queue = await asyncQueueOf(handler);
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_FULL: database or disk is full'));
+
+			const fallback = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+			await sleep(6_000);
+			expect(timerService.writes).toEqual([]);
+			timerService.release();
+			await fallback;
+
+			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
+		}, 20_000);
+
 		it('with the setting turned back off, keeps running what the asynchronous session left behind — however long it takes — ahead of new jobs, then moves to the in-memory queue', async () => {
 			const stuck = await crashedSession(duration(1, 1000), duration(1, 2000));
 			stuck.release();
@@ -440,9 +457,32 @@ describe('TimerHandler', () => {
 			expect(timerService.syncedOf(1)).toBeUndefined();
 		});
 
+		it('skips offline sync while stored jobs are pending, and goes ahead after three skipped attempts in a row', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			timerService.hold((write) => write.duration !== undefined);
+			const handler = newHandler();
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+
+			expect(await handler.readyForOfflineSync(knex, 20)).toBe(false);
+			expect(await handler.readyForOfflineSync(knex, 20)).toBe(false);
+			expect(await handler.readyForOfflineSync(knex, 20)).toBe(false);
+			// A store that never settles cannot hold offline sync back for good.
+			expect(await handler.readyForOfflineSync(knex, 20)).toBe(true);
+			expect(audit.timerAuditError).toHaveBeenCalledWith(
+				'[readyForOfflineSync] Stored timer jobs still pending after 3 skipped attempts; offline sync goes ahead'
+			);
+			// The count starts again: the next attempt is skipped too.
+			expect(await handler.readyForOfflineSync(knex, 20)).toBe(false);
+
+			timerService.release();
+			expect(await handler.readyForOfflineSync(knex, 2_000)).toBe(true);
+			expect(timerService.writes).toContainEqual(expect.objectContaining({ id: 1, duration: 1000 }));
+		});
+
 		it('does not wait for anything with the in-memory queue', async () => {
 			const handler = newHandler();
 
+			expect(await handler.readyForOfflineSync(knex, 50)).toBe(true);
 			expect(await handler.settleQueuedTimerJobs(knex, 50)).toBe(true);
 			expect(fs.readdirSync(userData)).toEqual([]);
 		});
@@ -531,6 +571,28 @@ describe('TimerHandler', () => {
 			expect(await (await asyncQueueOf(handler)).drain()).toBe(true);
 
 			expect(activityTable.rows).toEqual([{ eventId: 2, timerId: 7, table: 'window_events' }]);
+		});
+
+		it('empties the tables only after the saves ahead when the reset cannot be stored', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			let release: () => void = () => undefined;
+			activityTable.held = new Promise<void>((resolve) => (release = resolve));
+			await handler.processWithQueue('gauzy-queue', windowEvents(7, 1), knex);
+			const queue = await asyncQueueOf(handler);
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_FULL: database or disk is full'));
+
+			const reset = handler.clearActivityEvents(knex);
+			await sleep(50);
+			activityTable.held = null;
+			release();
+			await reset;
+
+			// The save was written first, then the reset emptied the tables: nothing is left for the next slot.
+			expect(activityTable.rows).toEqual([]);
+			expect(audit.timerAuditError).toHaveBeenCalledWith(
+				expect.stringContaining('[clearActivityEvents] Could not queue the activity reset')
+			);
 		});
 
 		it('empties the tables right away with the in-memory queue, as before', async () => {

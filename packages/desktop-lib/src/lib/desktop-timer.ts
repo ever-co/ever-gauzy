@@ -34,6 +34,10 @@ import { ITimerQueueJob, TimerQueueJobType, TimerQueueProcessor } from './queues
 const ACTIVITY_SETTLE_MS = 5_000;
 /** How long a job that could not be stored waits for the stored jobs ahead of it before running in memory. */
 const FALLBACK_SETTLE_MS = 5_000;
+/** The longest that work bypassing the persistent queue keeps waiting, in rounds of `FALLBACK_SETTLE_MS`, for the jobs stored ahead. */
+const FALLBACK_MAX_WAIT_MS = 60_000;
+/** How many offline sync attempts in a row are skipped while stored timer jobs are still pending, before one goes ahead. */
+const MAX_DEFERRED_SYNCS = 3;
 /** How long quitting waits for the stored jobs to be applied, then for the running one; the rest runs on the next start. */
 const QUIT_SETTLE_MS = 3_000;
 const QUIT_CLOSE_MS = 1_000;
@@ -76,6 +80,7 @@ export default class TimerHandler {
 	// The setting is off but an earlier asynchronous session left jobs behind: new jobs queue behind them until none is
 	// left, then the session moves to the in-memory queue.
 	private _drainingLeftovers = false;
+	private _deferredSyncs = 0;
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
 	private readonly _userService: UserService;
@@ -799,8 +804,10 @@ export default class TimerHandler {
 				return;
 			} catch (error) {
 				await this._auditLogHandler.timerAuditError(
-					`[clearActivityEvents] Could not queue the activity reset, emptying the tables now: ${error?.message ?? error}`
+					`[clearActivityEvents] Could not queue the activity reset, emptying the tables once the saves ahead are written: ${error?.message ?? error}`
 				);
+				// Not before the event saves stored ahead of it: one written after the reset would land in the next time slot.
+				await this.waitForStoredJobs(queue, 'clearActivityEvents');
 			}
 		}
 		if (!tables?.length) {
@@ -818,6 +825,63 @@ export default class TimerHandler {
 	 */
 	public settleQueuedTimerJobs(knex, timeoutMs: number): Promise<boolean> {
 		return this.settleTimerJobs(knex, timeoutMs);
+	}
+
+	/*
+	 * Whether offline sync may read what to upload now. It waits (up to `timeoutMs`) for the timer jobs stored so far; while
+	 * they are still pending it answers false, so that this sync attempt is skipped and made again on its next trigger,
+	 * rather than upload a timer a pending job is about to change. After `MAX_DEFERRED_SYNCS` skipped attempts in a row it
+	 * answers true anyway, so that a store that never settles cannot hold offline sync back for good. Always true with the
+	 * in-memory queue.
+	 */
+	public async readyForOfflineSync(knex, timeoutMs: number): Promise<boolean> {
+		if (await this.settleTimerJobs(knex, timeoutMs)) {
+			this._deferredSyncs = 0;
+			return true;
+		}
+		if (this._deferredSyncs < MAX_DEFERRED_SYNCS) {
+			this._deferredSyncs++;
+			await this._auditLogHandler.timerAuditInfo(
+				`[readyForOfflineSync] Stored timer jobs still pending after ${timeoutMs} ms; offline sync skipped (${this._deferredSyncs}/${MAX_DEFERRED_SYNCS})`
+			);
+			return false;
+		}
+		this._deferredSyncs = 0;
+		await this._auditLogHandler.timerAuditError(
+			`[readyForOfflineSync] Stored timer jobs still pending after ${MAX_DEFERRED_SYNCS} skipped attempts; offline sync goes ahead`
+		);
+		return true;
+	}
+
+	/*
+	 * Waits for the jobs stored ahead before work that bypasses the persistent queue (a job, or a reset, it could not
+	 * store), so that this work cannot overtake them: in rounds of `FALLBACK_SETTLE_MS`, until they have run or the queue
+	 * is closed — or until `FALLBACK_MAX_WAIT_MS` has passed, so that a store that never settles cannot stall the timer for
+	 * good (audited). Answers whether the stored jobs ahead were all applied.
+	 */
+	private async waitForStoredJobs(queue: AsyncTimerSyncQueue, caller: string): Promise<boolean> {
+		const deadline = Date.now() + FALLBACK_MAX_WAIT_MS;
+		while (!queue.isClosed) {
+			let settled: boolean;
+			try {
+				settled = await queue.settle(FALLBACK_SETTLE_MS);
+			} catch (error) {
+				await this._auditLogHandler.timerAuditError(
+					`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
+				);
+				return false;
+			}
+			if (settled) {
+				return true;
+			}
+			if (Date.now() >= deadline) {
+				await this._auditLogHandler.timerAuditError(
+					`[${caller}] Stored timer jobs still pending after ${FALLBACK_MAX_WAIT_MS} ms; going ahead without them`
+				);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/*
@@ -881,7 +945,7 @@ export default class TimerHandler {
 					await this._auditLogHandler.timerAuditError(
 						`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${error?.message ?? error}`
 					);
-					await asyncTimerSync.settle(FALLBACK_SETTLE_MS).catch(() => false);
+					await this.waitForStoredJobs(asyncTimerSync, 'processWithQueue');
 				}
 			}
 		}
