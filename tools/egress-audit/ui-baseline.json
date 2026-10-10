@@ -1,8 +1,92 @@
 {
-	"description": "Links to Ever hosts the Gauzy web app renders that predate the Ever Platform modules (the product website, its documentation and legal pages, the company website), recorded with both modules off from the web app image built from base_commit. The sidebar and footer links are listed for every route, since a route that redirects may be captured before or after its redirect. May only shrink (check-baseline-shrink); an entry excuses that link on that route only, never a lookup or a request.",
+	"description": "Links to Ever hosts the Gauzy web app renders that predate the Ever Platform modules (the product website, its documentation and legal pages, the company website), recorded with both modules off from the web app image built from base_commit. Links on the signed-out pages are recorded under the path /. The sidebar and footer links are listed for every route, since a route that redirects may be captured before or after its redirect. May only shrink (check-baseline-shrink); an entry excuses that link on that route only, never a lookup or a request.",
 	"base_commit": "65c127cc62f27a4053b838bb2a0b297424d0d471",
 	"entries": [
 		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/",
+			"reason": "link to the Gauzy documentation (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/aup",
+			"reason": "link to a Gauzy legal page (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/cookies",
+			"reason": "link to a Gauzy legal page (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/privacy",
+			"reason": "link to a Gauzy legal page (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/security",
+			"reason": "link to a Gauzy legal page (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/subprocessors",
+			"reason": "link to a Gauzy legal page (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "https://gauzy.co/tos",
+			"reason": "link to a Gauzy legal page (signed-out pages)"
+		},
+		{
+			"route": "/",
+			"attribute": "href",
+			"url": "mailto:[redacted]@gauzy.co",
+			"reason": "contact e-mail address on the signed-out pages (legal pages)"
+		},
+		{
 			"route": "/ai-chat/window",
 			"attribute": "href",
 			"url": "https://docs.gauzy.co/features/ai-agent-chat",
@@ -9544,42 +9628,6 @@
 		},
 		{
 			"route": "/sign-in/success",
-			"attribute": "href",
-			"url": "https://gauzy.co/",
-			"reason": "link to the Gauzy website (logo and footer of every page)"
-		},
-		{
-			"route": "/",
-			"attribute": "href",
-			"url": "https://docs.gauzy.co/features/ai-agent-chat",
-			"reason": "link to the Gauzy documentation"
-		},
-		{
-			"route": "/",
-			"attribute": "href",
-			"url": "https://docs.gauzy.co/features/dashboard-widgets",
-			"reason": "link to the Gauzy documentation"
-		},
-		{
-			"route": "/",
-			"attribute": "href",
-			"url": "https://docs.gauzy.co/features/documents/overview",
-			"reason": "link to the Gauzy documentation"
-		},
-		{
-			"route": "/",
-			"attribute": "href",
-			"url": "https://docs.gauzy.co/reference/faq",
-			"reason": "link to the Gauzy documentation"
-		},
-		{
-			"route": "/",
-			"attribute": "href",
-			"url": "https://ever.co/",
-			"reason": "link to the company website (footer of every page)"
-		},
-		{
-			"route": "/",
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "link to the Gauzy website (logo and footer of every page)"
