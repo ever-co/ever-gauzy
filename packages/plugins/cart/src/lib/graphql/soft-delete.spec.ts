@@ -85,6 +85,8 @@ jest.mock('@gauzy/core', () => {
 		},
 		UUIDValidationPipe: class {},
 		ColumnIndex: decorator,
+		// The export mark the cart's token digest carries; nothing is exported here.
+		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
 		MultiORMOneToMany: decorator,
