@@ -896,10 +896,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		try {
 			const displays: { id: number; label?: string; bounds: { width: number; height: number } }[] =
 				await this.electronService.ipcRenderer.invoke('GET_ALL_DISPLAYS');
-			this.notificationDisplays = displays.map((display, index) => ({
-				id: display.id,
-				label: `${display.label || `Display ${index + 1}`} (${display.bounds.width}×${display.bounds.height})`
-			}));
+			this.notificationDisplays = displays.map((display, index) => {
+				const name = display.label || `Display ${index + 1}`;
+				return { id: display.id, label: `${name} (${display.bounds.width}×${display.bounds.height})` };
+			});
 		} catch (error) {
 			console.error('Could not list the displays:', error);
 			this.notificationDisplays = [];
