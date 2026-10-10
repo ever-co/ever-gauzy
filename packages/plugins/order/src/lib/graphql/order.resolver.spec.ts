@@ -137,6 +137,7 @@ const MIRRORED: Array<{ route: any; mutation: any }> = [
 	{ route: OrderController.prototype.archive, mutation: OrderResolver.prototype.archiveOrder },
 	{ route: OrderController.prototype.recalculate, mutation: OrderResolver.prototype.recalculateOrder },
 	{ route: OrderController.prototype.invoice, mutation: OrderResolver.prototype.generateOrderInvoice },
+	{ route: OrderController.prototype.sendQuote, mutation: OrderResolver.prototype.sendOrderQuote },
 	{ route: OrderController.prototype.createChange, mutation: OrderResolver.prototype.requestOrderEdit },
 	{ route: OrderController.prototype.declineChange, mutation: OrderChangeResolver.prototype.declineOrderChange },
 	{ route: OrderController.prototype.cancelChange, mutation: OrderChangeResolver.prototype.cancelOrderChange }
@@ -161,7 +162,7 @@ describe('The order mutations mirror the order routes', () => {
 
 		// A control: the routes that adopted the convention are the ones compared, not two tables of
 		// `undefined`.
-		expect(MIRRORED.filter(({ route }) => retryOf(route) !== undefined).length).toBe(5);
+		expect(MIRRORED.filter(({ route }) => retryOf(route) !== undefined).length).toBe(6);
 	});
 
 	it('carries the same versioned resource on the mutation as on the route it mirrors', () => {

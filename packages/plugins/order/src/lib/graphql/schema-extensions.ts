@@ -10,10 +10,11 @@ import { gql } from 'graphql-tag';
  * Money is `Decimal`, never `Float`: the value is the exact decimal string a `numeric(20,6)` column
  * carries, so a value read over GraphQL and the same value read over REST are string-identical.
  *
- * The root fields declared here are the ones this package resolves. The invoice mutation is resolved here
- * too: the document itself is the core invoice row, issued through the port the installation binds to the
- * core invoice service, and a process that binds nothing answers the field with the domain's own
- * `ORDER_INVOICING_UNAVAILABLE` rather than with a field that does not exist.
+ * The root fields declared here are the ones this package resolves. The invoice and quote mutations are
+ * resolved here too: the documents themselves are core invoice rows (an estimate, for a quote), issued
+ * through the port the installation binds to the core invoice service, and a process that binds nothing
+ * answers those fields with the domain's own `ORDER_INVOICING_UNAVAILABLE` rather than with a field that
+ * does not exist.
  */
 export const orderSchemaExtensions = gql`
 	"An order: the immutable commercial record."
@@ -577,6 +578,13 @@ export const orderSchemaExtensions = gql`
 		test order, or is a draft, cancelled or archived.
 		"""
 		generateOrderInvoice(id: ID!, version: Int, idempotencyKey: String): Order!
+		"""
+		Sends the buyer a quote for a draft or placed-but-unconfirmed order: the platform's own estimate, built
+		from the order as it stands and linked through \`quoteInvoiceId\`, e-mailed with its accept and decline
+		links. An earlier unanswered quote is voided as superseded. The quote is recorded whether or not the
+		e-mail goes; \`delivery\` says which.
+		"""
+		sendOrderQuote(id: ID!, version: Int, idempotencyKey: String): OrderQuoteSendPayload!
 		"Create a change: the only way a placed order is modified."
 		requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
 		"""
@@ -687,6 +695,31 @@ export const orderSchemaExtensions = gql`
 		amount: Decimal!
 		"Currency of the amount; checked against the order the line belongs to."
 		currency: String!
+	}
+
+	"What sending an order's quote did: the order, the estimate the quote is, and whether the e-mail went."
+	type OrderQuoteSendPayload {
+		"The order, stamped with its quote."
+		order: Order!
+		"The order's version after the quote was recorded: the version the next write states back."
+		version: Int!
+		"The estimate the quote is."
+		quoteInvoiceId: ID!
+		"The estimate's number."
+		quoteNumber: Int!
+		delivery: OrderQuoteDelivery!
+	}
+
+	"Whether the estimate e-mail was handed to the mail transport, to whom, and when it was not, why."
+	type OrderQuoteDelivery {
+		sent: Boolean!
+		recipient: String
+		"""
+		Why it was not sent: NO_RECIPIENT (the order carries no e-mail), EMAIL_NOT_PREPARED,
+		DOCUMENT_NOT_GENERATED, or EMAIL_NOT_SENT (the mail transport refused it — typically an installation
+		with no mail server configured).
+		"""
+		reason: String
 	}
 
 	"What removing a link did."

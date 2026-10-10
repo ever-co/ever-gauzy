@@ -300,6 +300,11 @@ function invoicingPort() {
 		}),
 		voidDocument: jest.fn(async (invoiceId: string, reason: string) => {
 			Object.assign(documents.get(invoiceId) ?? {}, { status: 'VOID', voidReason: reason });
+		}),
+		sendEstimate: jest.fn(async (invoiceId: string, recipient: string) => {
+			Object.assign(documents.get(invoiceId) ?? {}, { status: 'SENT', sentTo: recipient });
+
+			return { sent: true, recipient };
 		})
 	};
 }
@@ -657,5 +662,167 @@ describe('OrderInvoicingService.generateInvoice — the invoice that bills an or
 
 		expect(built.order()).toMatchObject({ invoiceId: 'invoice-from-elsewhere', version: 4 });
 		expect(built.port.voidDocument).toHaveBeenCalledWith('invoice-201', expect.stringMatching(/refused/));
+	});
+});
+
+describe('OrderInvoicingService.sendQuote — the estimate an order is offered with', () => {
+	it('issues an estimate from the order’s figures, links it, and e-mails it — without moving the order', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT, isDraft: true } });
+
+		const sent = await built.service.sendQuote('order-1', at(3));
+
+		const document = built.port.issue.mock.calls[0][0];
+
+		// The same document an invoice would be, as an estimate: the quote offers exactly what the order is.
+		expect(document).toMatchObject({
+			isEstimate: true,
+			discountTotal: '0.05',
+			taxTotal: '0.57',
+			grandTotal: '6.18'
+		});
+		expect(document.items.map((item: any) => [item.key, item.totalValue])).toEqual([
+			['line-1', '0.3'],
+			['line-2', '0.36'],
+			['shipping-1', '5']
+		]);
+
+		expect(sent).toMatchObject({
+			version: 4,
+			quoteInvoiceId: 'invoice-101',
+			quoteNumber: 101,
+			delivery: { sent: true, recipient: 'buyer@example.com' }
+		});
+		expect(sent.order).toMatchObject({ quoteInvoiceId: 'invoice-101', status: OrderStatus.DRAFT, version: 4 });
+		expect(built.port.sendEstimate).toHaveBeenCalledWith('invoice-101', 'buyer@example.com');
+		expect(built.tables.order_summary.map((row: any) => [row.version, row.reason])).toEqual([[4, 'QUOTE_SENT']]);
+		expect(timelineOf(built)).toEqual(['ORDER_QUOTE_SENT']);
+		expect(built.tables.order_history[0].metadata).toMatchObject({ quoteInvoiceId: 'invoice-101', sent: true });
+	});
+
+	it('records the quote when the e-mail cannot go, and reports why instead of failing the write', async () => {
+		const built = fixture({ order: { status: OrderStatus.PENDING } });
+		built.port.sendEstimate.mockResolvedValueOnce({
+			sent: false,
+			recipient: 'buyer@example.com',
+			reason: 'EMAIL_NOT_SENT'
+		});
+
+		const sent = await built.service.sendQuote('order-1', at(3));
+
+		expect(sent.delivery).toEqual({ sent: false, recipient: 'buyer@example.com', reason: 'EMAIL_NOT_SENT' });
+		expect(built.order()).toMatchObject({ quoteInvoiceId: 'invoice-101', version: 4 });
+		expect(built.tables.order_history[0].metadata).toMatchObject({ sent: false, reason: 'EMAIL_NOT_SENT' });
+
+		// A transport that throws is reported the same way, and so is an order with nobody to send it to.
+		built.port.sendEstimate.mockRejectedValueOnce(new Error('no transport'));
+		await expect(built.service.sendQuote('order-1', at(4))).resolves.toMatchObject({
+			delivery: { sent: false, reason: 'EMAIL_NOT_PREPARED' }
+		});
+
+		const anonymous = fixture({ order: { status: OrderStatus.DRAFT, email: null } });
+		await expect(anonymous.service.sendQuote('order-1', at(3))).resolves.toMatchObject({
+			quoteInvoiceId: 'invoice-101',
+			delivery: { sent: false, reason: 'NO_RECIPIENT' }
+		});
+		expect(anonymous.port.sendEstimate).not.toHaveBeenCalled();
+	});
+
+	it('supersedes an unanswered earlier quote by voiding it, and leaves a declined one as the buyer answered it', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT, quoteInvoiceId: 'quote-open' } });
+		built.port.documents.set('quote-open', {
+			isEstimate: true,
+			isAccepted: null,
+			status: 'SENT',
+			invoiceNumber: 50
+		});
+
+		const sent = await built.service.sendQuote('order-1', at(3));
+
+		expect(built.port.documents.get('quote-open')).toMatchObject({ status: 'VOID' });
+		expect(sent.order.quoteInvoiceId).toBe('invoice-101');
+		expect(built.tables.order_history[0].metadata).toMatchObject({ supersededQuoteInvoiceId: 'quote-open' });
+
+		const revised = fixture({ order: { status: OrderStatus.DRAFT, quoteInvoiceId: 'quote-declined' } });
+		revised.port.documents.set('quote-declined', { isEstimate: true, isAccepted: false, status: 'REJECTED' });
+
+		await revised.service.sendQuote('order-1', at(3));
+
+		expect(revised.port.documents.get('quote-declined')).toMatchObject({ status: 'REJECTED' });
+		expect(revised.port.voidDocument).not.toHaveBeenCalled();
+	});
+
+	it('refuses to send a new quote over one the buyer accepted, with 409', async () => {
+		const built = fixture({ order: { status: OrderStatus.PENDING, quoteInvoiceId: 'quote-accepted' } });
+		built.port.documents.set('quote-accepted', { isEstimate: true, isAccepted: true, status: 'ACCEPTED' });
+
+		await expect(built.service.sendQuote('order-1', at(3))).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'ORDER_QUOTE_ALREADY_ACCEPTED' }
+		});
+		expect(built.port.issue).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[OrderStatus.CONFIRMED, /already agreed/],
+		[OrderStatus.REQUIRES_ACTION, /waiting on its payment/],
+		[OrderStatus.COMPLETED, /complete/],
+		[OrderStatus.CANCELED, /cancelled/],
+		[OrderStatus.ARCHIVED, /read-only/]
+	])('refuses an order in %s with 409 and says why', async (status, why) => {
+		const built = fixture({ order: { status } });
+
+		const refusal = await built.service.sendQuote('order-1', at(3)).catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(refusal.getResponse()).toMatchObject({ code: 'ORDER_NOT_QUOTABLE', details: { status } });
+		expect(refusal.getResponse().details.reason).toMatch(why);
+		expect(built.port.issue).not.toHaveBeenCalled();
+	});
+
+	it('refuses an order that is already invoiced with 409', async () => {
+		const built = fixture({ order: { status: OrderStatus.PENDING, invoiceId: 'invoice-7' } });
+
+		await expect(built.service.sendQuote('order-1', at(3))).rejects.toMatchObject({
+			response: { code: 'ORDER_ALREADY_INVOICED' }
+		});
+		expect(built.port.issue).not.toHaveBeenCalled();
+	});
+
+	it('requires the estimate grant as well as the order grant, before anything is written', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT } });
+		mockCaller.permissions = new Set([PermissionsEnum.INVOICES_EDIT]);
+
+		await expect(built.service.sendQuote('order-1', at(3))).rejects.toBeInstanceOf(ForbiddenException);
+		expect(built.port.issue).not.toHaveBeenCalled();
+	});
+
+	it('does not find another tenant’s order', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT } });
+		mockCaller.tenantId = 'tenant-2';
+
+		await expect(built.service.sendQuote('order-1', at(3))).rejects.toBeInstanceOf(NotFoundException);
+		expect(built.port.issue).not.toHaveBeenCalled();
+		expect(built.port.sendEstimate).not.toHaveBeenCalled();
+	});
+
+	it('voids the new estimate and sends nothing when the stated version is stale; the earlier quote stands', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT, quoteInvoiceId: 'quote-open' } });
+		built.port.documents.set('quote-open', { isEstimate: true, isAccepted: null, status: 'SENT' });
+
+		await expect(built.service.sendQuote('order-1', at(2))).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		expect(built.port.documents.get('invoice-101')).toMatchObject({ status: 'VOID' });
+		expect(built.port.documents.get('quote-open')).toMatchObject({ status: 'SENT' });
+		expect(built.port.sendEstimate).not.toHaveBeenCalled();
+		expect(built.order()).toMatchObject({ quoteInvoiceId: 'quote-open', version: 3 });
+	});
+
+	it('answers ORDER_INVOICING_UNAVAILABLE when no invoicing capability is registered', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT }, port: false });
+
+		await expect(built.service.sendQuote('order-1', at(3))).rejects.toBeInstanceOf(ServiceUnavailableException);
+		expect(built.order().version).toBe(3);
 	});
 });

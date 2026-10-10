@@ -330,6 +330,33 @@ export interface IOrderInvoicingPort {
 	 * @param reason Why, recorded on the document's internal note.
 	 */
 	voidDocument(invoiceId: ID, reason: string): Promise<void>;
+
+	/**
+	 * Sends an estimate to the buyer through the platform's estimate e-mail — the message that carries the
+	 * PDF and the accept and decline links — and marks it sent when the mail transport accepted it.
+	 *
+	 * Never raises: a send that could not be made is an outcome the caller reports, because the quote it
+	 * belongs to has already been recorded.
+	 *
+	 * @param invoiceId The estimate.
+	 * @param recipient The address it is sent to.
+	 * @returns Whether the message was handed to the mail transport, and when it was not, why.
+	 */
+	sendEstimate(invoiceId: ID, recipient: string): Promise<IOrderEstimateDelivery>;
+}
+
+/** What sending an estimate to the buyer did. */
+export interface IOrderEstimateDelivery {
+	/** Whether the message was handed to the mail transport. */
+	readonly sent: boolean;
+	/** The address it was sent to, when there was one. */
+	readonly recipient?: string;
+	/**
+	 * Why it was not sent: `NO_RECIPIENT` (the order carries no e-mail), `EMAIL_NOT_PREPARED`,
+	 * `DOCUMENT_NOT_GENERATED` or `EMAIL_NOT_SENT` (the mail transport refused it — typically an
+	 * installation with no mail server configured).
+	 */
+	readonly reason?: string;
 }
 
 /** Token the invoicing capability is injected under. */

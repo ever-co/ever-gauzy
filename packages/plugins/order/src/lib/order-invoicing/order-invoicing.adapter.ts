@@ -7,8 +7,9 @@ import {
 	InvoiceStatusTypesEnum,
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
-import { InvoiceService, isValidDecimalString } from '@gauzy/core';
+import { InvoiceService, RequestContext, isValidDecimalString } from '@gauzy/core';
 import {
+	IOrderEstimateDelivery,
 	IOrderInvoiceDocument,
 	IOrderInvoiceDocumentState,
 	IOrderInvoiceIssued,
@@ -183,5 +184,50 @@ export class OrderInvoicingAdapter implements IOrderInvoicingPort {
 			status: InvoiceStatusTypesEnum.VOID,
 			internalNote: reason
 		} as never);
+	}
+
+	/**
+	 * Sends an estimate through the platform's estimate e-mail, and marks it sent when it went.
+	 *
+	 * The message is the one the finance screens send: the estimate's PDF, and the accept and decline links
+	 * the estimate e-mail record carries. The language and the origin the links are built from are read off
+	 * the request, exactly as the finance module's own field reads them, so the message is the same over
+	 * either protocol. The send itself never raises — the finance service logs a failure and answers which
+	 * step failed — and neither does this method: the quote it belongs to has already been recorded, so a
+	 * send that could not be made is an outcome to report, not a write to undo.
+	 *
+	 * @param invoiceId The estimate.
+	 * @param recipient The address it is sent to.
+	 * @returns Whether the message was handed to the mail transport, and when it was not, why.
+	 */
+	public async sendEstimate(invoiceId: ID, recipient: string): Promise<IOrderEstimateDelivery> {
+		try {
+			const estimate = await this.invoiceService.findOneByIdString(invoiceId);
+			const request = RequestContext.currentRequest() as { headers?: Record<string, unknown> } | null;
+			const origin =
+				typeof request?.headers?.['origin'] === 'string' ? (request.headers['origin'] as string) : undefined;
+			const outcome = await this.invoiceService.sendEmail(
+				RequestContext.getLanguageCode(),
+				recipient,
+				estimate.invoiceNumber,
+				estimate.id,
+				true,
+				origin,
+				estimate.organizationId
+			);
+
+			if (!outcome?.sent) {
+				return { sent: false, recipient, reason: outcome?.reason ?? 'EMAIL_NOT_SENT' };
+			}
+
+			// The message went; a status the finance list then shows wrongly is not a reason to report it did not.
+			await this.invoiceService
+				.update(invoiceId, { status: EstimateStatusTypesEnum.SENT, sentTo: recipient } as never)
+				.catch(() => undefined);
+
+			return { sent: true, recipient };
+		} catch {
+			return { sent: false, recipient, reason: 'EMAIL_NOT_PREPARED' };
+		}
 	}
 }
