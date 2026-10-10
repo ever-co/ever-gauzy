@@ -5351,7 +5351,7 @@
 			"CREDENTIALS_INCOMPLETE": "Incomplets",
 			"CREDENTIALS_NONE": "Non définis",
 			"CREDENTIALS_NOT_NEEDED": "Non requis",
-			"SERVER_DEFAULT": "Valeur du serveur"
+			"SERVER_DEFAULT": "Valeur par défaut du serveur"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Où obtenir les clés",
@@ -5388,7 +5388,8 @@
 			"OK_LOCAL": "Le stockage local ne nécessite aucune configuration.",
 			"OK_SERVER_DEFAULTS": "Rien ne manque. Laissés vides, ces champs utilisent la configuration du serveur :",
 			"MISSING": "Manquant :",
-			"INVALID_URL": "URL http(s) non valide :"
+			"INVALID_URL": "URL http(s) non valide :",
+			"HTTPS_REQUIRED": "Doit utiliser https:// — les clés sont envoyées à cette adresse :"
 		},
 		"S3": {
 			"HEADER": "Configuration S3",

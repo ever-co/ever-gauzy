@@ -5397,7 +5397,8 @@
 			"OK_LOCAL": "L'archiviazione locale non richiede configurazione.",
 			"OK_SERVER_DEFAULTS": "Non manca nulla. Questi campi vuoti usano la configurazione del server:",
 			"MISSING": "Mancante:",
-			"INVALID_URL": "URL http(s) non valido:"
+			"INVALID_URL": "URL http(s) non valido:",
+			"HTTPS_REQUIRED": "Deve usare https://: le chiavi vengono inviate a questo indirizzo:"
 		},
 		"S3": {
 			"HEADER": "Configurazione S3",

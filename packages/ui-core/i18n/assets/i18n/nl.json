@@ -5397,7 +5397,8 @@
 			"OK_LOCAL": "Lokale opslag heeft geen configuratie nodig.",
 			"OK_SERVER_DEFAULTS": "Er ontbreekt niets. Deze lege velden gebruiken de configuratie van de server:",
 			"MISSING": "Ontbreekt:",
-			"INVALID_URL": "Geen geldige http(s)-URL:"
+			"INVALID_URL": "Geen geldige http(s)-URL:",
+			"HTTPS_REQUIRED": "Moet https:// gebruiken — de sleutels worden naar dit adres verzonden:"
 		},
 		"S3": {
 			"HEADER": "S3-configuratie",

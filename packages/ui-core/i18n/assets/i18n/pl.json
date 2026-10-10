@@ -5359,7 +5359,7 @@
 			"CREDENTIALS_INCOMPLETE": "Niekompletne",
 			"CREDENTIALS_NONE": "Nie ustawiono",
 			"CREDENTIALS_NOT_NEEDED": "Niewymagane",
-			"SERVER_DEFAULT": "Domyślne serwera"
+			"SERVER_DEFAULT": "Domyślne ustawienie serwera"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Skąd wziąć klucze",
@@ -5396,7 +5396,8 @@
 			"OK_LOCAL": "Magazyn lokalny nie wymaga konfiguracji.",
 			"OK_SERVER_DEFAULTS": "Niczego nie brakuje. Te puste pola używają konfiguracji serwera:",
 			"MISSING": "Brakuje:",
-			"INVALID_URL": "Nieprawidłowy adres URL http(s):"
+			"INVALID_URL": "Nieprawidłowy adres URL http(s):",
+			"HTTPS_REQUIRED": "Wymagany https:// — klucze są wysyłane na ten adres:"
 		},
 		"S3": {
 			"HEADER": "Konfiguracja S3",

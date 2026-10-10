@@ -5397,7 +5397,8 @@
 			"OK_LOCAL": "本地存储无需配置。",
 			"OK_SERVER_DEFAULTS": "没有缺失项。以下留空的字段将使用服务器自身的配置：",
 			"MISSING": "缺少：",
-			"INVALID_URL": "无效的 http(s) URL："
+			"INVALID_URL": "无效的 http(s) URL：",
+			"HTTPS_REQUIRED": "必须使用 https://——密钥会发送到此地址："
 		},
 		"S3": {
 			"HEADER": "S3 配置",

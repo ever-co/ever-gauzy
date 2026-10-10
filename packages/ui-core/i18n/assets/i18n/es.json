@@ -5399,7 +5399,8 @@
 			"OK_LOCAL": "El almacenamiento local no necesita configuración.",
 			"OK_SERVER_DEFAULTS": "No falta nada. Estos campos vacíos usan la configuración del servidor:",
 			"MISSING": "Falta:",
-			"INVALID_URL": "URL http(s) no válida:"
+			"INVALID_URL": "URL http(s) no válida:",
+			"HTTPS_REQUIRED": "Debe usar https://: las claves se envían a esta dirección:"
 		},
 		"S3": {
 			"HEADER": "Configuración de S3",

@@ -5993,7 +5993,8 @@
 			"OK_LOCAL": "Local storage needs no configuration.",
 			"OK_SERVER_DEFAULTS": "Nothing is missing. Left empty, so the server's own configuration is used:",
 			"MISSING": "Missing:",
-			"INVALID_URL": "Not a valid http(s) URL:"
+			"INVALID_URL": "Not a valid http(s) URL:",
+			"HTTPS_REQUIRED": "Must use https:// — the keys are sent to this address:"
 		},
 		"S3": {
 			"HEADER": "S3 Configuration",

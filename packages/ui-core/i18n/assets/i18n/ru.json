@@ -5376,7 +5376,7 @@
 			"CREDENTIALS_INCOMPLETE": "Неполные",
 			"CREDENTIALS_NONE": "Не заданы",
 			"CREDENTIALS_NOT_NEEDED": "Не требуются",
-			"SERVER_DEFAULT": "Настройка сервера"
+			"SERVER_DEFAULT": "Настройки сервера по умолчанию"
 		},
 		"PROVIDERS": {
 			"DOCS_LINK": "Где получить ключи",
@@ -5413,7 +5413,8 @@
 			"OK_LOCAL": "Локальному хранилищу не нужна настройка.",
 			"OK_SERVER_DEFAULTS": "Ничего не упущено. Эти пустые поля берутся из конфигурации сервера:",
 			"MISSING": "Не заполнено:",
-			"INVALID_URL": "Некорректный http(s) URL:"
+			"INVALID_URL": "Некорректный http(s) URL:",
+			"HTTPS_REQUIRED": "Нужен https:// — ключи отправляются на этот адрес:"
 		},
 		"S3": {
 			"HEADER": "Конфигурация S3",

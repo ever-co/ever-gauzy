@@ -5393,7 +5393,8 @@
 			"OK_LOCAL": "Lokaler Speicher erfordert keine Konfiguration.",
 			"OK_SERVER_DEFAULTS": "Nichts fehlt. Diese leeren Felder verwenden die Konfiguration des Servers:",
 			"MISSING": "Fehlt:",
-			"INVALID_URL": "Keine gültige http(s)-URL:"
+			"INVALID_URL": "Keine gültige http(s)-URL:",
+			"HTTPS_REQUIRED": "Muss https:// verwenden — die Schlüssel werden an diese Adresse gesendet:"
 		},
 		"S3": {
 			"HEADER": "S3-Konfiguration",
