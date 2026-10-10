@@ -4981,7 +4981,11 @@
 			"invoice": "crwdns10178:0crwdne10178:0",
 			"estimate": "crwdns10180:0crwdne10180:0",
 			"receipt": "crwdns10236:0crwdne10236:0"
-		}
+		},
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Full preview",
+		"SAVED": "Template '{{ templateName }}' was saved"
 	},
 	"LOGIN_PAGE": {
 		"TITLE": "crwdns10825:0crwdne10825:0",

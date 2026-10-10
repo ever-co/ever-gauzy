@@ -5632,7 +5632,11 @@
 			"invoice": "Fattura",
 			"estimate": "Stima",
 			"receipt": "Ricevuta"
-		}
+		},
+		"VIEW_GRID": "Griglia",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Anteprima completa",
+		"SAVED": "Il modello '{{ templateName }}' è stato salvato"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registra",

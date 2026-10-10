@@ -5677,7 +5677,11 @@
 			"invoice": "Фактура",
 			"estimate": "Оферта",
 			"receipt": "Касова бележка"
-		}
+		},
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"SAVED": "Шаблонът '{{ templateName }}' беше запазен"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",

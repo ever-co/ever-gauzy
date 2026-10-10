@@ -6299,7 +6299,11 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
-		}
+		},
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Full preview",
+		"SAVED": "Template '{{ templateName }}' was saved"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Register",

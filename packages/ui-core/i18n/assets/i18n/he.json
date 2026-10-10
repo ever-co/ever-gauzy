@@ -5640,7 +5640,11 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
-		}
+		},
+		"VIEW_GRID": "רשת",
+		"VIEW_EDITOR": "עורך",
+		"FULL_PREVIEW": "תצוגה מלאה",
+		"SAVED": "התבנית '{{ templateName }}' נשמרה"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "הרשמה",

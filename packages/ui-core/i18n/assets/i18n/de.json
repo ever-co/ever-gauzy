@@ -5628,7 +5628,11 @@
 			"invoice": "Rechnung",
 			"estimate": "Schätzung",
 			"receipt": "Quittung"
-		}
+		},
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Vollständige Vorschau",
+		"SAVED": "Vorlage '{{ templateName }}' wurde gespeichert"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrieren",

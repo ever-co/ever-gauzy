@@ -5647,7 +5647,11 @@
 			"invoice": "Счет",
 			"estimate": "Оценить",
 			"receipt": "Квитанция"
-		}
+		},
+		"VIEW_GRID": "Сетка",
+		"VIEW_EDITOR": "Редактор",
+		"FULL_PREVIEW": "Полный просмотр",
+		"SAVED": "Шаблон '{{ templateName }}' сохранён"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",

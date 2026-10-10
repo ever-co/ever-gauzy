@@ -9,9 +9,8 @@
  * Settings → Email History: 12px body, 500 titles / 400 everything else, gauzy-*
  * surface tokens, hairline insets, no shadows.
  *
- * Accounting Templates used to `@use` this sheet for its own layout; it now carries
- * that sheet as `accounting-templates/_template-editor.scss`, so nothing here leaks
- * into it.
+ * Accounting Templates used to `@use` this sheet for its own layout; it now has its
+ * own self-contained sheet, so nothing here leaks into it.
  */
 
 $hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));

@@ -5632,7 +5632,11 @@
 			"invoice": "发票",
 			"estimate": "估计",
 			"receipt": "收据"
-		}
+		},
+		"VIEW_GRID": "网格",
+		"VIEW_EDITOR": "编辑器",
+		"FULL_PREVIEW": "完整预览",
+		"SAVED": "模板“{{ templateName }}”已保存"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "注册",

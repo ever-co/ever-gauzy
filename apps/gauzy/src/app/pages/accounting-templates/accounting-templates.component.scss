@@ -1,78 +1,770 @@
-// The `template-editor` sheet `@use`s the theme module, which keeps it private to
-// that file — `@use`ing that sheet here re-emits its CSS but does NOT bring
-// `nb-theme` into this file's scope. Sass passes an unknown function through as
-// plain CSS, so the two rules at the bottom of this file shipped as the literal
-// text `nb-theme(...)` and the browser dropped them: the language/template
-// selects lost their background, and — the visible one — the rendered template
-// preview never had `color: text-basic-color` applied, so it kept the seeded
-// HTML's own near-black text on the dark themes' dark panel. Hence `@use
-// 'themes'` as well; the `template-editor` `@use` is here purely for its CSS (it
-// exports no Sass members) and must stay.
-@use 'themes' as *;
-@use 'template-editor' as *;
+@use 'gauzy/_gauzy-overrides' as *;
+@use 'sass:map';
 
-// This page carried two `!important` height overrides — `calc($height + 3.5rem)`
-// on the Ace editor and `calc($height + 1.3rem)` on the preview box — which
-// added even more to a `100vh` constant that already ignored the footer, which
-// is why the overlap showed up worst here. Both are gone: email-templates.scss
-// now sizes the two panels from the content column via flex, and that shared
-// chain also covers this page's one-editor layout.
+/*
+ * Settings → Accounting Templates.
+ *
+ * Same layout as Settings → Email Templates: the language / template picker on top,
+ * the Handlebars source on the start side and the rendered invoice, estimate or
+ * receipt on the end side, plus a grid of all three. 12px body, 500 titles / 400
+ * everything else, gauzy-* surface tokens, hairline insets, no shadows.
+ *
+ * Self-contained: this page used to `@use` the Email Templates sheet for its layout,
+ * so restyling that page also changed this one.
+ */
+
+$hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+$radius: var(--gauzy-radius-sm, 0.5rem);
+$control-height: 2rem;
+
+// Same frame as Email History: the card fills the page height and each pane scrolls
+// inside it, so no scrollbar lands on the page itself. A definite height all the way
+// down is also what Ace needs — its DOM is absolutely positioned, so an editor in an
+// auto-height box measures 0 tall.
+//
+// The height comes from the parent, not the viewport: the page renders inside the
+// settings shell's `.settings-content` (`height: 100%`), so `height: 100%` on the host
+// and the form hands the card exactly the content area. A `100vh - header - footer`
+// guess also had to count the layout column's padding, and was taller than the area
+// whenever it missed some — leaving a page scrollbar next to the pane scrollbars.
 :host {
-  // A settings page CANNOT set its own `display`. `pages.component.scss` carries a
-  // deep-scoped rule on the adjacent sibling of a router-outlet, forcing it to
-  // display block and giving it the page fade animation. Being deep-scoped, that
-  // rule leaks into NESTED outlets, so it also matches this page's
-  // host inside the settings shell. Its specificity is (0,1,1) —
-  // `[_nghost-pages] router-outlet + *` — against (0,1,0) for a component's own
-  // `:host`, so `display: flex` here loses. Confirmed with CDP
-  // `CSS.getMatchedStylesForNode`: both `:host` rules declare `display: flex`
-  // and the winning declaration is `display: block` from that shared rule.
-  // (Only `display` was overridden, which is why `flex-direction`/`min-height`
-  // from the same block appeared to work and made this look like a build issue.)
-  //
-  // That rule is deliberately left alone: nested routed hosts are unknown
-  // elements and default to `display: inline`, so dropping it would risk every
-  // nested-router page in the app.
-  //
-  // So instead of fighting for the host's display, give it a definite height and
-  // let the page's ROOT ELEMENT carry the frame (see `:host > form` below). A
-  // block box with a definite height resolves a percentage height on its child
-  // perfectly well — the flex container simply starts one level lower.
-  //
-  // This component declares no `selector`, so its host renders as `<ng-component>` —
-  // worth knowing when reading a DOM dump and looking for a page-named element.
+  display: block;
   height: 100%;
+}
+
+.main-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+}
+
+.accounting-templates-card {
+  flex: 1 1 auto;
   min-height: 0;
+  margin-bottom: 0;
+  background: var(--gauzy-card-2, var(--background-basic-color-2));
+}
+
+.page-header {
+  h4 {
+    margin: 0;
+  }
+}
+
+// Sits at the end of the picker row; wraps under the pickers on a narrow card.
+.save-button {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+// "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits
+// that component's size, and only the weight makes it recede.
+.menu-setting {
+  font-weight: 400;
+}
+
+nb-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  padding: 1rem;
+  overflow: hidden;
+  background: var(--gauzy-card-2, var(--background-basic-color-2));
+  font-size: 0.75rem;
+  // The panes stack on the card's own width, not the window's: the sidebar and the
+  // AI assistant panel can leave the card narrow on a wide screen.
+  container: accounting-templates / inline-size;
+}
+
+// ── Template picker ─────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.toolbar-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+
+  &.language .toolbar-control {
+    width: 11rem;
+  }
+
+  &.template .toolbar-control {
+    width: 15rem;
+  }
+}
+
+.toolbar-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  white-space: nowrap;
+  color: var(--text-hint-color);
+}
+
+.toolbar-control {
+  display: block;
+  max-width: 100%;
+}
+
+// Both pickers share one control recipe with the Email History filters: 2rem tall,
+// recessed surface, hairline instead of a border. ng-select ships its own white theme,
+// loaded after the app styles, so it needs the host for one step more specificity.
+:host ::ng-deep {
+  @include nb-select-overrides($control-height, $radius, none);
+  @include ng-select-overrides($control-height, $radius, none);
+
+  .toolbar .ng-select {
+    font-size: 0.75rem;
+
+    .ng-select-container {
+      min-height: $control-height;
+      height: $control-height;
+      border: 0;
+      border-radius: $radius;
+      background-color: var(--background-basic-color-3);
+      box-shadow: inset 0 0 0 1px $hairline;
+      color: var(--text-basic-color);
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: inset 0 0 0 1px var(--border-basic-color-5, $hairline);
+      }
+    }
+
+    &.ng-select-focused .ng-select-container,
+    &.ng-select-opened > .ng-select-container {
+      box-shadow: inset 0 0 0 1px var(--color-primary-default) !important;
+    }
+  }
+
+  .toolbar nb-select .select-button {
+    min-height: $control-height;
+    height: $control-height;
+    padding-block: 0;
+    border: 0;
+    border-radius: $radius;
+    background-color: var(--background-basic-color-3);
+    box-shadow: inset 0 0 0 1px $hairline;
+    color: var(--text-basic-color);
+    font-size: 0.75rem;
+    font-weight: 400;
+
+    &:hover {
+      box-shadow: inset 0 0 0 1px var(--border-basic-color-5, $hairline);
+    }
+
+    &:focus {
+      box-shadow: inset 0 0 0 1px var(--color-primary-default);
+    }
+  }
+}
+
+// ── View toggle ─────────────────────────────────────────────────────────
+// Segmented Grid | Editor switch, same 2rem recessed surface as the pickers.
+.view-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  height: $control-height;
+  margin: 0;
+  padding: 0.125rem;
+  border: 0;
+  border-radius: $radius;
+  background-color: var(--background-basic-color-3);
+  box-shadow: inset 0 0 0 1px $hairline;
+}
+
+.view-toggle-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: calc(#{$radius} - 0.125rem);
+  background: transparent;
+  color: var(--text-hint-color);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  cursor: pointer;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: var(--text-basic-color);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--color-primary-default);
+  }
+
+  &.active {
+    background: var(--gauzy-card-1, var(--background-basic-color-1));
+    box-shadow: inset 0 0 0 1px $hairline;
+    color: var(--text-basic-color);
+    font-weight: 500;
+  }
+}
+
+// `display` on these classes would otherwise beat the `hidden` attribute.
+.workspace[hidden],
+.save-button[hidden] {
+  display: none !important;
+}
+
+// ── Template grid ───────────────────────────────────────────────────────
+.template-grid {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  grid-auto-rows: max-content;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow: auto;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: $radius;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px $hairline;
+  color: inherit;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px var(--border-basic-color-5, $hairline);
+
+    .template-meta {
+      background: var(--gauzy-hover-tint, transparent);
+    }
+  }
+
+  &:focus-visible,
+  &.active {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--color-primary-default);
+  }
+}
+
+// A 640px-wide render of the template shrunk to fit, top-aligned so the header of
+// the document shows. Inset by 1px so the card's hairline stays visible around it.
+$thumb-width: 640px;
+$thumb-scale: 0.34;
+
+.template-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  height: 11rem;
+  margin: 1px 1px 0;
+  overflow: hidden;
+  border-radius: calc(#{$radius} - 1px) calc(#{$radius} - 1px) 0 0;
+  // Same surface the themed thumbnail document paints, so no white edge shows.
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+}
+
+.template-thumb-frame {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: $thumb-width;
+  height: calc(11rem / #{$thumb-scale});
+  margin-left: calc(#{$thumb-width} / -2);
+  border: 0;
+  transform: scale($thumb-scale);
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.template-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--background-basic-color-2);
+  color: var(--text-hint-color);
+
+  nb-icon {
+    font-size: 1.5rem;
+    opacity: 0.5;
+  }
+
+  &:not(.failed):not(.empty) {
+    animation: template-thumb-pulse 1.2s ease-in-out infinite;
+  }
+
+  &.failed nb-icon {
+    color: var(--color-danger-default);
+  }
+}
+
+@keyframes template-thumb-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.template-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  padding: 0.5rem 0.75rem 0.625rem;
+  border-top: 1px solid $hairline;
+}
+
+.template-name {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-basic-color);
+}
+
+
+// ── Workspace ───────────────────────────────────────────────────────────
+// A pane never gets shorter than $pane-min-height: its header, the field label and
+// the 10rem minimum of the editor. When the card is too short for that the
+// workspace scrolls, instead of the editor's frame clipping the bottom of Ace (and
+// its scrollbar) out of sight.
+$pane-min-height: 16rem;
+
+.workspace {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax($pane-min-height, 1fr);
+  gap: 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
+
+  // Narrow card: editor on top, preview below, each half the height.
+  @container accounting-templates (max-width: 48rem) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax($pane-min-height, 1fr) minmax($pane-min-height, 1fr);
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: $radius;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px $hairline;
+}
+
+.pane-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid $hairline;
+
+  nb-icon {
+    font-size: 1rem;
+    color: var(--text-hint-color);
+  }
+}
+
+.pane-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-basic-color);
+}
+
+.pane-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-height: 0;
+}
+
+.body-field {
+  flex: 1 1 auto;
+}
+
+.field-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+}
+
+// ── Code editors ────────────────────────────────────────────────────────
+// The frame owns the border and the corner clipping; the active Ace syntax theme
+// (`sqlserver` light / `tomorrow_night` dark, picked in the component) paints inside it.
+.code-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: $radius;
+  box-shadow: inset 0 0 0 1px $hairline;
+
+  &:focus-within {
+    box-shadow: inset 0 0 0 1px var(--color-primary-default);
+  }
+
+  .body-field & {
+    flex: 1 1 auto;
+  }
+}
+
+.ace-editor {
+  display: block;
+  // Inset by the frame's hairline so the theme's background does not paint over it.
+  margin: 1px;
+  width: calc(100% - 2px);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  font-variant-ligatures: none;
+}
+
+
+// Takes what the frame leaves; Ace scrolls the document inside itself.
+.body-editor {
+  flex: 1 1 0;
+  min-height: 10rem;
+}
+
+// ── Editor palette ──────────────────────────────────────────────────────
+// Our own syntax colours on top of whichever Ace theme the component loads: GitHub's
+// light and dark palettes, tuned for MJML + Handlebars. Tags, attributes and values
+// read as three clear layers, and every `{{ variable }}` sits on a soft pill so the
+// dynamic parts of an email stand out from the markup. Colours only — no padding or
+// weight changes, which would break Ace's character-width measurement.
+//
+// The palette is chosen by the Ace theme class (`ace-sqlserver` light /
+// `ace-tomorrow-night` dark), which the component already sets from the app theme.
+@mixin editor-palette($p) {
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  color: map.get($p, text);
 
   ::ng-deep {
-    .ng-select .ng-select-container {
-      background-color: nb-theme(select-outline-basic-background-color);
+    .ace_scroller,
+    .ace_content {
+      background: transparent;
+    }
+
+    .ace_cursor {
+      color: map.get($p, cursor);
+      border-left-width: 2px;
+    }
+
+    .ace_marker-layer {
+      .ace_active-line {
+        background: map.get($p, active-line);
+      }
+
+      .ace_selection {
+        background: map.get($p, selection);
+        border-radius: 2px;
+      }
+
+      .ace_selected-word {
+        background: map.get($p, selected-word);
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .ace_bracket {
+        margin: 0;
+        border: 1px solid map.get($p, bracket);
+        border-radius: 2px;
+      }
+    }
+
+    .ace_gutter {
+      background: transparent;
+      box-shadow: inset -1px 0 0 $hairline;
+      color: map.get($p, gutter);
+    }
+
+    .ace_gutter-active-line {
+      background: map.get($p, active-line);
+      color: map.get($p, gutter-active);
+    }
+
+    .ace_indent-guide {
+      background: none;
+      box-shadow: inset 1px 0 0 map.get($p, indent-guide);
+    }
+
+    .ace_invisible {
+      color: map.get($p, gutter);
+    }
+
+    // HTML / MJML
+    .ace_meta.ace_tag {
+      color: map.get($p, punctuation);
+    }
+
+    .ace_meta.ace_tag.ace_tag-name {
+      color: map.get($p, tag);
+    }
+
+    .ace_entity.ace_other.ace_attribute-name {
+      color: map.get($p, attribute);
+    }
+
+    .ace_keyword.ace_operator.ace_attribute-equals {
+      color: map.get($p, punctuation);
+    }
+
+    .ace_string,
+    .ace_string.ace_attribute-value {
+      color: map.get($p, string);
+    }
+
+    .ace_constant.ace_numeric {
+      color: map.get($p, number);
+    }
+
+    .ace_constant.ace_language.ace_escape {
+      color: map.get($p, escape);
+    }
+
+    .ace_comment {
+      color: map.get($p, comment);
+      font-style: italic;
+    }
+
+    // Handlebars: `{{`, `{{#`, `{{/`, `}}` and the variable between them form one pill.
+    .ace_storage.ace_type,
+    .ace_support.ace_function,
+    .ace_variable.ace_parameter {
+      background: map.get($p, hbs-bg);
+    }
+
+    .ace_storage.ace_type,
+    .ace_support.ace_function {
+      color: map.get($p, hbs-brace);
+    }
+
+    .ace_variable.ace_parameter {
+      color: map.get($p, hbs-variable);
+    }
+
+    .ace_storage.ace_type.ace_start {
+      border-radius: 3px 0 0 3px;
+    }
+
+    .ace_storage.ace_type.ace_end {
+      border-radius: 0 3px 3px 0;
+    }
+
+    // Thin, theme-coloured scrollbars.
+    .ace_scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: map.get($p, scrollbar) transparent;
+    }
+
+    .ace_scrollbar-h {
+      height: 8px !important;
+    }
+
+    .ace_scrollbar-v {
+      width: 8px !important;
     }
   }
+}
 
-  // The frame the host cannot carry. A deliberate LOCAL RESTATEMENT: the shared
-  // sheet pulled in by the `@use` above now declares the same height on its own
-  // `> form`, so this is redundant today — it is kept so this page keeps a
-  // definite height even if that shared chain is later re-scoped to selectors
-  // this page's markup does not match. Without a definite height the form sized to
-  // content (991px) inside an 806px host and the excess painted over the footer.
-  // `height: 100%` of a block host with a definite height fixes that, and the
-  // existing `min-height: 0` chain below it then scrolls internally as intended.
-  //
-  // `:host > form` is (0,1,1) but targets a DIFFERENT element than the
-  // `router-outlet + *` rule, so there is no specificity fight to lose here.
-  > form {
-    height: 100%;
-    min-height: 0;
+$editor-light: (
+  text: #1f2328,
+  cursor: #0969da,
+  active-line: rgba(9, 105, 218, 0.05),
+  selection: rgba(9, 105, 218, 0.18),
+  selected-word: rgba(9, 105, 218, 0.1),
+  bracket: rgba(9, 105, 218, 0.45),
+  gutter: #8c959f,
+  gutter-active: #1f2328,
+  indent-guide: rgba(31, 35, 40, 0.08),
+  punctuation: #6e7781,
+  tag: #116329,
+  attribute: #0550ae,
+  string: #0a3069,
+  number: #0550ae,
+  escape: #8250df,
+  comment: #6e7781,
+  hbs-bg: rgba(130, 80, 223, 0.1),
+  hbs-brace: #8250df,
+  hbs-variable: #953800,
+  scrollbar: rgba(31, 35, 40, 0.25)
+);
+
+$editor-dark: (
+  text: #e6edf3,
+  cursor: #58a6ff,
+  active-line: rgba(110, 118, 129, 0.12),
+  selection: rgba(56, 139, 253, 0.3),
+  selected-word: rgba(56, 139, 253, 0.16),
+  bracket: rgba(88, 166, 255, 0.55),
+  gutter: #6e7681,
+  gutter-active: #e6edf3,
+  indent-guide: rgba(240, 246, 252, 0.08),
+  punctuation: #8b949e,
+  tag: #7ee787,
+  attribute: #79c0ff,
+  string: #a5d6ff,
+  number: #79c0ff,
+  escape: #d2a8ff,
+  comment: #8b949e,
+  hbs-bg: rgba(210, 168, 255, 0.12),
+  hbs-brace: #d2a8ff,
+  hbs-variable: #ffa657,
+  scrollbar: rgba(240, 246, 252, 0.2)
+);
+
+.ace-editor.ace-sqlserver {
+  @include editor-palette($editor-light);
+}
+
+.ace-editor.ace-tomorrow-night {
+  @include editor-palette($editor-dark);
+}
+
+
+
+.preview-canvas {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+  overflow: auto;
+  border-radius: $radius;
+  background: var(--gauzy-card-2, var(--background-basic-color-2));
+  box-shadow: inset 0 0 0 1px $hairline;
+}
+
+// The rendered invoice / estimate / receipt, on a sheet that follows the app theme:
+// the card surface and theme text colour in light mode and in dark mode.
+.template-paper {
+  max-width: 42rem;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+  overflow-x: auto;
+  border-radius: $radius;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px $hairline;
+  color: var(--text-basic-color);
+  font-size: 0.875rem;
+
+  // The global theme paints every `tr` with the card colour (`!important`); keep the
+  // sheet's own surface showing through the template's layout tables instead.
+  ::ng-deep tr {
+    background-color: transparent !important;
   }
 
-  .custom-preview-template {
-    width: 100%;
+  // Follow the app theme. MJML writes its default `color:#000000` inline on every text
+  // block, so only `!important` lets the theme text colour through — without it the
+  // invoice stays black on the dark sheet. Only that default is replaced: a colour the
+  // user writes into the template is kept, as it will appear in the sent document. The
+  // leading `;` keeps `background-color:#000000` out. Links without their own colour
+  // take the theme's link colour.
+  ::ng-deep [style^='color:#000000'],
+  ::ng-deep [style*=';color:#000000'] {
+    color: var(--text-basic-color) !important;
   }
 
-  .custom-preview-template ::ng-deep {
-    * {
-      color: nb-theme(text-basic-color);
-    }
+  ::ng-deep a:not([style*='color']) {
+    color: var(--text-primary-color, var(--color-primary-default)) !important;
   }
+
+  // The seeded templates rule their item rows with a light grey (#ecedee) that glares
+  // on the dark sheet; draw any inline border in the theme's hairline instead.
+  ::ng-deep [style*='border'] {
+    border-color: $hairline !important;
+  }
+}
+
+// ── Full-size preview popup ─────────────────────────────────────────────
+.full-preview-button {
+  margin-inline-start: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+}
+
+// Declared in this component's template, so the encapsulated styles still reach
+// it inside the dialog overlay.
+.full-preview-card {
+  display: flex;
+  flex-direction: column;
+  width: min(56rem, calc(100vw - 2rem));
+  height: calc(100vh - 4rem);
+  margin: 0;
+  border-radius: $radius;
+}
+
+.full-preview-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+
+.full-preview-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-basic-color);
+}
+
+
+// Block, not the component-wide flex column on `nb-card-body`: a long document would
+// otherwise shrink inside it and scroll in a second, nested scrollbar.
+.full-preview-body {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+  overflow: auto;
+  background: var(--gauzy-card-2, var(--background-basic-color-2));
+}
+
+.full-preview-paper {
+  max-width: 48rem;
+  min-height: auto;
 }
