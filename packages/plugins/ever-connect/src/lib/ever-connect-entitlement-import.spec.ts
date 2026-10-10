@@ -61,17 +61,32 @@ function setup(options: { connected?: boolean; storedSeq?: number | null; link?:
 				entitlementJwsEncrypted: null as string | null,
 				entitlementFetchedAt: null,
 				everHandle: null,
-				integrationTenantId: null
+				integrationTenantId: 'it-1' as string | null
 			}
 		: null;
 	const store = {
 		connection: jest.fn(async () => connection),
-		updateConnection: jest.fn(async (values: Record<string, unknown>) => Object.assign(connection, values)),
+		updateConnection: jest.fn(async (values: Record<string, unknown>, where: Record<string, unknown> = {}) => {
+			if (
+				'instanceEntitlementSeq' in where &&
+				where['instanceEntitlementSeq'] !== connection.instanceEntitlementSeq
+			) {
+				return 0;
+			}
+			Object.assign(connection, values);
+			return 1;
+		}),
 		linkById: jest.fn(async (id: string) => (link && id === link.linkId ? link : null)),
 		linkOf: jest.fn(async () => link),
-		updateLink: jest.fn(async (_id: string, values: Record<string, unknown>) => Object.assign(link ?? {}, values))
+		updateLink: jest.fn(async (_id: string, values: Record<string, unknown>) => Object.assign(link ?? {}, values)),
+		updateLinkIf: jest.fn(async (_id: string, values: Record<string, unknown>, where: Record<string, unknown>) => {
+			if (!link || where['entitlementSeq'] !== link.entitlementSeq) return false;
+			Object.assign(link, values);
+			return true;
+		}),
+		updateLinkRecordSettings: jest.fn(async () => undefined)
 	};
-	const audit = { record: jest.fn(async () => undefined) };
+	const audit = { record: jest.fn(async (_entry: unknown) => undefined) };
 	const platform = {
 		verify: jest.fn(async (jws: string, subject: string) => {
 			if (options.verifyError) throw options.verifyError;
@@ -129,7 +144,9 @@ describe('EverConnectEntitlementService.importDocument', () => {
 		const { service, store, audit } = setup();
 		const result = await service.importDocument(jwsOf(claimsFor(`instance:${INSTANCE}`, 7)), operator);
 		expect(result).toEqual({ subject: 'instance', seq: 7, status: 'stored' });
-		expect(store.updateConnection).toHaveBeenCalledWith(expect.objectContaining({ instanceEntitlementSeq: 7 }));
+		expect(store.updateConnection).toHaveBeenCalledWith(expect.objectContaining({ instanceEntitlementSeq: 7 }), {
+			instanceEntitlementSeq: null
+		});
 		expect(audit.record).toHaveBeenCalledWith(
 			expect.objectContaining({
 				action: 'entitlement.refresh',
@@ -144,7 +161,11 @@ describe('EverConnectEntitlementService.importDocument', () => {
 		const { service, store } = setup({ link: true });
 		const result = await service.importDocument(jwsOf(claimsFor(`link:${LINK}`, 3)), operator);
 		expect(result).toEqual({ subject: 'link', seq: 3, status: 'stored' });
-		expect(store.updateLink).toHaveBeenCalledWith(LINK, expect.objectContaining({ entitlementSeq: 3 }));
+		expect(store.updateLinkIf).toHaveBeenCalledWith(LINK, expect.objectContaining({ entitlementSeq: 3 }), {
+			entitlementSeq: null
+		});
+		// The link record's handle follows the document, as on a refresh.
+		expect(store.updateLinkRecordSettings).toHaveBeenCalledWith('it-1', { EVER_HANDLE: 'acme' });
 	});
 
 	it('answers 409 not_connected before a connection exists, and changes nothing', async () => {
@@ -203,6 +224,33 @@ describe('EverConnectEntitlementService.importDocument', () => {
 		expect(result).toEqual({ subject: 'instance', seq: 5, status: 'unchanged' });
 		expect(store.updateConnection).not.toHaveBeenCalled();
 		expect(audit.record).not.toHaveBeenCalled();
+	});
+
+	it('answers 409 entitlement_changed when another document was stored while this one was verified', async () => {
+		const { service, platform, connection, audit } = setup({ storedSeq: 5 });
+		platform.verify.mockImplementationOnce(async (jws: string) => {
+			// A refresh stores document #8 meanwhile.
+			connection.instanceEntitlementSeq = 8;
+			const claims = JSON.parse(Buffer.from(jws.split('.')[1], 'base64url').toString('utf8'));
+			return { jws, seq: claims.ever.seq, claims };
+		});
+		const answer = await answerOf(service.importDocument(jwsOf(claimsFor(`instance:${INSTANCE}`, 6)), operator));
+		expect(answer).toMatchObject({ status: 409, body: { code: 'entitlement_changed' } });
+		expect(connection.instanceEntitlementSeq).toBe(8);
+		expect(audit.record).not.toHaveBeenCalledWith(
+			expect.objectContaining({ details: expect.objectContaining({ status: 'stored' }) })
+		);
+	});
+
+	it('audits an empty or oversized upload as refused, without the input', async () => {
+		const { service, audit } = setup();
+		await answerOf(service.importDocument('', operator));
+		await answerOf(service.importDocument('y'.repeat(ENTITLEMENT_FILE_MAX_BYTES + 1), operator));
+		const reasons = audit.record.mock.calls.map(
+			(call) => (call[0] as { details: { reason: string } }).details.reason
+		);
+		expect(reasons).toEqual(['malformed', 'too_large']);
+		expect(JSON.stringify(audit.record.mock.calls)).not.toContain('yyyy');
 	});
 
 	it('refuses something that is not a document', async () => {

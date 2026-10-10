@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import { HttpException, HttpStatus, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ActorLabel, EverConnectAuditService } from './ever-connect-audit.service';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_ENV, ENTITLEMENT_REFRESHES_PER_HOUR } from './ever-connect.constants';
@@ -161,17 +161,47 @@ export class EverConnectEntitlementService {
 		return this.platform.verify(answer.document, `link:${linkId}`);
 	}
 
-	/** Stores the installation's verified document (encrypted). */
-	async storeInstanceDocument(verified: VerifiedEntitlement): Promise<void> {
-		await this.store.updateConnection({
-			instanceEntitlementJwsEncrypted: this.secrets.seal(verified.jws),
-			instanceEntitlementSeq: verified.seq,
-			instanceEntitlementIat: verified.claims.iat,
-			instanceEntitlementExp: verified.claims.exp,
-			instanceEntitlementFetchedAt: this.now(),
-			ownerOrgId: verified.claims.ever.org_id,
-			ownerHandle: verified.claims.ever.handle
+	/**
+	 * Stores the installation's verified document (encrypted). With `expectedSeq` (the sequence read
+	 * before verifying, `null` for none), only while the stored one is still that (compare and set):
+	 * answers whether it was stored, so a document verified concurrently never replaces a newer one.
+	 */
+	async storeInstanceDocument(verified: VerifiedEntitlement, expectedSeq?: number | null): Promise<boolean> {
+		const where = expectedSeq === undefined ? {} : { instanceEntitlementSeq: expectedSeq };
+		const changed = await this.store.updateConnection(
+			{
+				instanceEntitlementJwsEncrypted: this.secrets.seal(verified.jws),
+				instanceEntitlementSeq: verified.seq,
+				instanceEntitlementIat: verified.claims.iat,
+				instanceEntitlementExp: verified.claims.exp,
+				instanceEntitlementFetchedAt: this.now(),
+				ownerOrgId: verified.claims.ever.org_id,
+				ownerHandle: verified.claims.ever.handle
+			},
+			where
+		);
+		return changed !== 0;
+	}
+
+	/** Stores a link's verified document only while its stored sequence is still `expectedSeq` (compare and set). */
+	private async storeLinkDocument(
+		link: LinkRecord,
+		verified: VerifiedEntitlement,
+		expectedSeq: number | null
+	): Promise<boolean> {
+		const previousHandle = link.everHandle;
+		const stored = await this.store.updateLinkIf(link.linkId, this.linkDocumentColumns(verified), {
+			entitlementSeq: expectedSeq
 		});
+		if (!stored) {
+			return false;
+		}
+		if (link.integrationTenantId && verified.claims.ever.handle && verified.claims.ever.handle !== previousHandle) {
+			await this.store.updateLinkRecordSettings(link.integrationTenantId, {
+				EVER_HANDLE: verified.claims.ever.handle
+			});
+		}
+		return true;
 	}
 
 	/** The columns of a link row that hold its verified document. */
@@ -255,7 +285,10 @@ export class EverConnectEntitlementService {
 					`instance:${connection.platformInstanceId}`,
 					cached
 				);
-				await this.storeInstanceDocument(verified);
+				// Another process (or an import) stored a document meanwhile: keep it; the next refresh compares.
+				if (!(await this.storeInstanceDocument(verified, connection.instanceEntitlementSeq))) {
+					return;
+				}
 				await this.audit.record({
 					action: 'entitlement.refresh',
 					actorLabel: actor.actorLabel,
@@ -288,15 +321,9 @@ export class EverConnectEntitlementService {
 			try {
 				const verified = await this.platform.verify(answer.document, `link:${link.linkId}`, cached);
 				checkLinkBinding(verified, link);
-				await this.store.updateLink(link.linkId, this.linkDocumentColumns(verified));
-				if (
-					link.integrationTenantId &&
-					verified.claims.ever.handle &&
-					verified.claims.ever.handle !== link.everHandle
-				) {
-					await this.store.updateLinkRecordSettings(link.integrationTenantId, {
-						EVER_HANDLE: verified.claims.ever.handle
-					});
+				// Another process (or an import) stored a document meanwhile: keep it; the next refresh compares.
+				if (!(await this.storeLinkDocument(link, verified, link.entitlementSeq))) {
+					return;
 				}
 				await this.audit.record({
 					action: 'entitlement.refresh',
@@ -351,13 +378,14 @@ export class EverConnectEntitlementService {
 	 * Imports a downloaded entitlement document (for an installation without a route to Ever
 	 * Platform): the same checks as a refresh (issuer, key, signature, schema, this installation, a
 	 * subject of this installation, never older than the stored one), then stored as a refresh stores
-	 * it. Throws an `HttpException`: 409 `not_connected`, 413 `too_large`, 422 `entitlement_invalid`.
+	 * it. Throws an `HttpException`: 409 `not_connected` (or `entitlement_changed` when a document was
+	 * stored meanwhile), 413 `too_large`, 422 `entitlement_invalid`.
 	 */
 	async importDocument(
 		jws: unknown,
 		actor: { actorLabel: ActorLabel; actorUserId?: string | null }
 	): Promise<EntitlementImportResult> {
-		const document = this.checkImportInput(jws);
+		const document = await this.checkImportInput(jws, actor);
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected' || !connection.platformInstanceId) {
 			throw new HttpException(
@@ -381,10 +409,19 @@ export class EverConnectEntitlementService {
 			await this.importRefused('entitlement_stale', actor, link);
 			throw importInvalid('entitlement_stale');
 		}
-		if (link) {
-			await this.store.updateLink(link.linkId, this.linkDocumentColumns(verified));
-		} else {
-			await this.storeInstanceDocument(verified);
+		const stored = link
+			? await this.storeLinkDocument(link, verified, storedSeq)
+			: await this.storeInstanceDocument(verified, storedSeq);
+		if (!stored) {
+			// A document was stored while this one was verified: it may be newer, so this one is not.
+			throw new HttpException(
+				{
+					statusCode: 409,
+					code: 'entitlement_changed',
+					message: 'Another entitlement document was stored meanwhile; import again to compare with it.'
+				},
+				HttpStatus.CONFLICT
+			);
 		}
 		await this.audit.record({
 			action: 'entitlement.refresh',
@@ -403,13 +440,18 @@ export class EverConnectEntitlementService {
 		return { subject, seq: verified.seq, status: 'stored' };
 	}
 
-	/** The document of an import, trimmed: 422 when there is none, 413 above 16 KiB. */
-	private checkImportInput(jws: unknown): string {
+	/** The document of an import, trimmed: 422 when there is none, 413 above 16 KiB (both audited, never the input). */
+	private async checkImportInput(
+		jws: unknown,
+		actor: { actorLabel: ActorLabel; actorUserId?: string | null }
+	): Promise<string> {
 		if (typeof jws !== 'string' || jws.trim() === '') {
+			await this.importRefused('malformed', actor);
 			throw importInvalid('malformed');
 		}
 		const document = jws.trim();
 		if (Buffer.byteLength(document, 'utf8') > ENTITLEMENT_FILE_MAX_BYTES) {
+			await this.importRefused('too_large', actor);
 			throw new HttpException(
 				{ statusCode: 413, code: 'too_large', message: 'An entitlement document is at most 16 KiB.' },
 				HttpStatus.PAYLOAD_TOO_LARGE
@@ -476,12 +518,20 @@ export class EverConnectEntitlementService {
 		}
 		let document: string;
 		try {
-			const bytes = await readFile(path);
-			if (bytes.length > ENTITLEMENT_FILE_MAX_BYTES) {
+			// At most the limit and one byte are read, whatever the file is.
+			const file = await open(path, 'r');
+			const buffer = Buffer.alloc(ENTITLEMENT_FILE_MAX_BYTES + 1);
+			let length = 0;
+			try {
+				length = (await file.read(buffer, 0, buffer.length, 0)).bytesRead;
+			} finally {
+				await file.close();
+			}
+			if (length > ENTITLEMENT_FILE_MAX_BYTES) {
 				this.logger.warn('EVER_ENTITLEMENT_FILE is larger than 16 KiB; it is not imported.');
 				return null;
 			}
-			document = bytes.toString('utf8');
+			document = buffer.subarray(0, length).toString('utf8');
 		} catch {
 			this.logger.warn('EVER_ENTITLEMENT_FILE could not be read; it is not imported.');
 			return null;
