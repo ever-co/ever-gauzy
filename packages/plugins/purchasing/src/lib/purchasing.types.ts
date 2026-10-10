@@ -1,3 +1,4 @@
+import type { EntityManager } from 'typeorm';
 import { CurrencyCode, DecimalString, IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
 
 /**
@@ -170,6 +171,8 @@ export interface IPutAwayRequest {
 	readonly quantity: DecimalString;
 	/** The receipt line's movement, which is what the walk is recorded against. */
 	readonly stockMovementId?: ID;
+	/** Concept that asked for the put-away, e.g. `GOODS_RECEIPT`; the ledger records every movement under one. */
+	readonly referenceType?: string;
 	/** Row that asked for the put-away. */
 	readonly referenceId: ID;
 	/** Free-text explanation kept beside the walk. */
@@ -192,8 +195,18 @@ export interface IPutAwayResult {
  * level itself, because this plugin must never write an inventory table.
  */
 export interface IInventoryPort {
-	recordMovement(request: IStockMovementRequest): Promise<IStockMovementResult>;
-	putAway(request: IPutAwayRequest): Promise<IPutAwayResult>;
+	/**
+	 * @param request The movement.
+	 * @param transaction The caller's open transaction on the platform's relational connection. Stated,
+	 * the movement is written on it, so it commits with the receipt it belongs to or not at all; the
+	 * ledger's own engine already runs every movement on that connection, under either ORM.
+	 */
+	recordMovement(request: IStockMovementRequest, transaction?: EntityManager): Promise<IStockMovementResult>;
+	/**
+	 * @param request The walk.
+	 * @param transaction The caller's open transaction, as for {@link recordMovement}.
+	 */
+	putAway(request: IPutAwayRequest, transaction?: EntityManager): Promise<IPutAwayResult>;
 }
 
 /** One request to raise the platform's approval request for a purchase order. */

@@ -1,4 +1,6 @@
 import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import {
 	ApiErrorCode,
@@ -572,6 +574,22 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 	public async assertReceivable(id: ID, expectedVersion?: number): Promise<PurchaseOrder> {
 		const purchaseOrder = await this.findOneScoped(id);
 
+		this.assertReceivableState(purchaseOrder, expectedVersion);
+
+		return purchaseOrder;
+	}
+
+	/**
+	 * Checks that goods may still be received against an order already read — the same predicate
+	 * {@link assertReceivable} applies, for a caller that read the order under its row lock and has to
+	 * decide on that read rather than on an earlier one.
+	 *
+	 * @param purchaseOrder The order as the caller read it.
+	 * @param expectedVersion The version the caller read, when it stated one.
+	 * @throws ConflictException when the order is not in a receivable status, or has moved past the
+	 * version the caller stated.
+	 */
+	public assertReceivableState(purchaseOrder: PurchaseOrder, expectedVersion?: number): void {
 		this.assertVersion(purchaseOrder, expectedVersion);
 
 		if (purchaseOrder.status === PurchaseOrderStatus.DRAFT) {
@@ -594,8 +612,41 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 				`PURCHASE_ORDER_INVALID_STATE: purchase order '${purchaseOrder.number}' cannot be received in status ${purchaseOrder.status}.`
 			);
 		}
+	}
 
-		return purchaseOrder;
+	/**
+	 * Locks the orders a receiving operation moves, on the caller's transaction, in identifier order.
+	 *
+	 * **This is the point a receipt and a reversal serialise on.** Each one moves its orders' line
+	 * counters and then derives each order's status from all of its lines, inside one transaction; two
+	 * of them against one order that interleaved would each derive the status from lines the other had
+	 * not committed yet, and two that locked the order and its lines in different orders could wait on
+	 * each other for ever. Taking every order row first, always in the same order, makes the operations
+	 * on one order run one after the other and leaves those on different orders free to run side by
+	 * side. Postgres and MySQL take `FOR UPDATE`; SQLite's single writer is the lock there.
+	 *
+	 * @param manager The caller's open transaction.
+	 * @param ids The orders the operation moves.
+	 * @returns The orders, read under their locks, keyed by id.
+	 * @throws NotFoundException when an order is not the caller's.
+	 */
+	public async lockForReceiving(manager: EntityManager, ids: ID[]): Promise<Map<ID, PurchaseOrder>> {
+		const locked = new Map<ID, PurchaseOrder>();
+
+		for (const id of [...new Set(ids.map((one) => String(one)))].sort()) {
+			const purchaseOrder = (await manager.findOne(PurchaseOrder, {
+				where: { id, ...this.writeScope } as never,
+				...(this.takesRowLocks(manager) ? { lock: { mode: 'pessimistic_write' as const } } : {})
+			})) as PurchaseOrder | null;
+
+			if (!purchaseOrder) {
+				throw new NotFoundException(`PURCHASE_ORDER_NOT_FOUND: purchase order '${id}' could not be found.`);
+			}
+
+			locked.set(purchaseOrder.id, purchaseOrder);
+		}
+
+		return locked;
 	}
 
 	/**
@@ -606,10 +657,20 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 	 * with some of its quantity in is `PARTIALLY_RECEIVED`, and one whose receipts were all reversed
 	 * falls back to what the supplier last confirmed.
 	 *
+	 * Inside a caller's transaction (`manager`) the status is derived from the lines as that transaction
+	 * sees them, and written on it, so the status commits with the receipt or reversal that moved the
+	 * counters or not at all; the caller has already locked the order ({@link lockForReceiving}), so the
+	 * conditional write is measured against the version read under that lock.
+	 *
 	 * @param id The order to refresh.
+	 * @param manager The caller's open transaction, when it holds one.
 	 * @returns The refreshed order.
 	 */
-	public async refreshReceiptState(id: ID): Promise<PurchaseOrder> {
+	public async refreshReceiptState(id: ID, manager?: EntityManager): Promise<PurchaseOrder> {
+		if (manager) {
+			return await this.refreshReceiptStateOn(manager, id);
+		}
+
 		return await this.commitDerived(id, async (purchaseOrder) => {
 			if (
 				purchaseOrder.status === PurchaseOrderStatus.CANCELED ||
@@ -629,6 +690,80 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 				receivedAt: status === PurchaseOrderStatus.RECEIVED ? new Date() : null
 			};
 		});
+	}
+
+	/**
+	 * {@link refreshReceiptState} on the caller's transaction.
+	 *
+	 * @param manager The caller's open transaction.
+	 * @param id The order to refresh.
+	 * @returns The refreshed order, as the transaction now holds it.
+	 * @throws ConflictException with `PURCHASE_ORDER_VERSION_CONFLICT` when the order moved past the
+	 * version the transaction read, which the caller's lock makes impossible on Postgres and MySQL.
+	 */
+	private async refreshReceiptStateOn(manager: EntityManager, id: ID): Promise<PurchaseOrder> {
+		const purchaseOrder = (await manager.findOne(PurchaseOrder, {
+			where: { id, ...this.writeScope } as never
+		})) as PurchaseOrder | null;
+
+		if (!purchaseOrder) {
+			throw new NotFoundException(`PURCHASE_ORDER_NOT_FOUND: purchase order '${id}' could not be found.`);
+		}
+
+		if (purchaseOrder.status === PurchaseOrderStatus.CANCELED || purchaseOrder.status === PurchaseOrderStatus.CLOSED) {
+			return purchaseOrder;
+		}
+
+		const lines = (await manager.find(PurchaseOrderLine, {
+			where: { purchaseOrderId: id, ...this.writeScope } as never
+		})) as PurchaseOrderLine[];
+		const status = this.statusFromLines(lines, purchaseOrder);
+		// The same patch the standalone refresh writes: see `refreshReceiptState`.
+		const patch = { status, receivedAt: status === PurchaseOrderStatus.RECEIVED ? new Date() : null };
+		const read = purchaseOrder.version ?? 1;
+
+		try {
+			const committed = await commitVersionedUpdate(this.versionedWriterOn(manager), {
+				id,
+				expectation: { wildcard: true, versions: [] },
+				where: this.writeScope,
+				patch,
+				readVersion: async () => read
+			});
+
+			return Object.assign(purchaseOrder, patch, { version: committed.version });
+		} catch (error) {
+			throw this.asDomainConflict(error, id, read);
+		}
+	}
+
+	/**
+	 * The kernel's conditional write, said to the caller's transaction: the same surface
+	 * {@link versionedWriter} hands `commitVersionedUpdate`, bound to `manager` so the statement, the
+	 * conflict and the increment stay the kernel's while the transaction stays the caller's — the adapter
+	 * the stock engine binds its level writes with.
+	 *
+	 * @param manager The caller's open transaction.
+	 * @returns The storage surface `commitVersionedUpdate` writes through.
+	 */
+	private versionedWriterOn(manager: EntityManager): Parameters<typeof commitVersionedUpdate>[0] {
+		const writer = {
+			update: (criteria: Record<string, unknown>, patch: Record<string, unknown>) =>
+				manager.update(PurchaseOrder, criteria as never, patch as never),
+			findOneByIdString: (id: ID) => manager.findOne(PurchaseOrder, { where: { id } as never })
+		};
+
+		return writer as unknown as Parameters<typeof commitVersionedUpdate>[0];
+	}
+
+	/**
+	 * @param manager An open transaction.
+	 * @returns Whether the dialect behind it has row locks to take; SQLite's single writer is its lock.
+	 */
+	private takesRowLocks(manager: EntityManager): boolean {
+		const type = manager.connection?.options?.type as string | undefined;
+
+		return type === DatabaseTypeEnum.postgres || type === DatabaseTypeEnum.mysql;
 	}
 
 	/**

@@ -93,8 +93,14 @@ export interface IPurchaseOrderLineClaim extends IPurchaseOrderLineDelta {
 /** How many times a counter move is decided again when its conditional write matched no row. */
 const COUNTER_MOVE_ATTEMPTS = 3;
 
-/** A conditional counter write that matched no row: another writer moved the line first. */
-class ReceivedCountersMovedError extends Error {}
+/**
+ * A conditional counter write that matched no row: another writer moved the line first.
+ *
+ * Raised as it is to a caller that handed its own transaction in, because only the owner of a
+ * transaction can run it again from the start: a re-read inside it is not guaranteed to see what
+ * overtook it.
+ */
+export class ReceivedCountersMovedError extends Error {}
 
 /**
  * The lines of a purchase order.
@@ -742,14 +748,19 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 	 *
 	 * @param purchaseOrderId The order being received against.
 	 * @param deltas The signed changes, per order line.
+	 * @param manager The caller's open transaction, when the move belongs to it.
 	 * @returns The updated lines.
 	 * @throws NotFoundException when a line does not belong to the order.
 	 */
 	public async applyReceiptDeltas(
 		purchaseOrderId: ID,
-		deltas: IPurchaseOrderLineDelta[]
+		deltas: IPurchaseOrderLineDelta[],
+		manager?: EntityManager
 	): Promise<PurchaseOrderLine[]> {
-		return await this.claimReceiptDeltas(deltas.map((delta) => ({ ...delta, purchaseOrderId })));
+		return await this.claimReceiptDeltas(
+			deltas.map((delta) => ({ ...delta, purchaseOrderId })),
+			manager
+		);
 	}
 
 	/**
@@ -773,15 +784,30 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 	 * names, across orders, so a line refused by its ceiling leaves no other line of the delivery moved.
 	 * The lines are locked in a fixed order, so two deliveries naming the same lines cannot deadlock.
 	 *
+	 * **Inside a caller's transaction the move is part of it.** A receipt and a reversal hand theirs in, so
+	 * the counters commit with the receipt, its lines and its stock movements or not at all; a write that
+	 * matched nothing there raises {@link ReceivedCountersMovedError} for the caller to run its whole
+	 * transaction again, because a re-read inside it is not guaranteed to see what overtook it. The row
+	 * locks make that impossible on Postgres and MySQL, and SQLite runs one writer at a time.
+	 *
 	 * @param claims The signed changes, with the order each line belongs to and its ceiling.
+	 * @param manager The caller's open transaction, when the move belongs to it.
 	 * @returns The moved lines, as written.
 	 * @throws NotFoundException when a line is not the caller's or does not belong to the order named.
 	 * @throws BadRequestException when a change would take a counter below zero.
 	 * @throws ConflictException with `RECEIPT_OVER_TOLERANCE` when a line would pass its ceiling, or with
 	 * `PURCHASE_ORDER_LINE_CONFLICT` when the line kept moving under every attempt.
+	 * @throws ReceivedCountersMovedError inside a caller's transaction, when a line moved under it.
 	 */
-	public async claimReceiptDeltas(claims: IPurchaseOrderLineClaim[]): Promise<PurchaseOrderLine[]> {
+	public async claimReceiptDeltas(
+		claims: IPurchaseOrderLineClaim[],
+		manager?: EntityManager
+	): Promise<PurchaseOrderLine[]> {
 		const grouped = this.groupClaims(claims);
+
+		if (manager) {
+			return await this.claimOn(manager, grouped);
+		}
 
 		for (let attempt = 1; ; attempt++) {
 			try {

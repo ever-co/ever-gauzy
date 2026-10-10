@@ -25,6 +25,12 @@ jest.mock('@gauzy/core', () => {
 			protected readonly mikroOrmRepository?: any
 		) {}
 
+		// The graph guard `create()` runs; the receipt services run it themselves before a transactional
+		// write. Nothing in these fixtures names a row of another tenant, so it has nothing to refuse.
+		async assertNestedGraphNotForeign(): Promise<void> {
+			return undefined;
+		}
+
 		get ormType(): string {
 			return 'typeorm';
 		}
@@ -156,7 +162,9 @@ import { PurchaseOrderLineService } from '../purchase-order-line/purchase-order-
 import { PurchaseOrderLine } from '../purchase-order-line/purchase-order-line.entity';
 import { PurchaseOrderService } from '../purchase-order/purchase-order.service';
 import { PurchaseOrder } from '../purchase-order/purchase-order.entity';
+import { GoodsReceiptLine } from '../goods-receipt-line/goods-receipt-line.entity';
 import { GoodsReceiptLineService } from '../goods-receipt-line/goods-receipt-line.service';
+import { GoodsReceipt } from './goods-receipt.entity';
 import { GoodsReceiptService } from './goods-receipt.service';
 
 /**
@@ -228,8 +236,13 @@ interface ITables {
  * a few lines later read the caller's untouched one. Under the alias the two were the same object and
  * the suite saw a link that production never made.
  */
-function repository(tables: ITables, tableName: keyof ITables, options: { detached?: boolean } = {}) {
+function repository(
+	tables: ITables,
+	tableName: keyof ITables,
+	options: { detached?: boolean; onWrite?: (table: keyof ITables) => void } = {}
+) {
 	const detached = options.detached ?? true;
+	const wrote = () => options.onWrite?.(tableName);
 	let sequence = 0;
 	const rows = () => tables[tableName].filter((row) => !row.deletedAt);
 	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
@@ -242,6 +255,10 @@ function repository(tables: ITables, tableName: keyof ITables, options: { detach
 
 			if (expected instanceof FindOperator && expected.type === 'isNull') {
 				return row[field] === null || row[field] === undefined;
+			}
+
+			if (expected instanceof FindOperator && expected.type === 'in') {
+				return (expected.value as unknown[]).some((candidate) => same(row[field], candidate));
 			}
 
 			if (Array.isArray(expected)) {
@@ -320,6 +337,8 @@ function repository(tables: ITables, tableName: keyof ITables, options: { detach
 			...partial
 		}),
 		save: async (rowOrRows: any) => {
+			wrote();
+
 			const list = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
 
 			for (const entity of list) {
@@ -343,6 +362,8 @@ function repository(tables: ITables, tableName: keyof ITables, options: { detach
 			// A conditional write is a WHERE, not an id: `commitVersionedUpdate` predicates its statement on
 			// the version and the tenant scope too, and a double that matched on the id alone would report
 			// every conditional write as landing.
+			wrote();
+
 			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
 			const matching = tables[tableName].filter((row) => matches(row, where));
 
@@ -458,9 +479,34 @@ function receiptFixture(
 		numberSeries?: boolean;
 		dialect?: 'postgres' | 'sqlite';
 		failMovement?: boolean;
+		crashAt?: string;
 	} = {}
 ) {
 	const dialect = options.dialect ?? 'postgres';
+
+	/**
+	 * A process that stops part way through.
+	 *
+	 * `crashAt` names a step — `write:<table>` for the first write to a table, `movement:<KIND>` for the
+	 * first stock movement of a kind, `put-away` — and the process stops there: that step throws, and so
+	 * does every step after it, so no in-process `catch` can repair anything on the way out, which is
+	 * exactly what a process that died cannot do. A transaction that was open is rolled back, as the
+	 * database rolls back the transaction of a connection that went away. `restart()` is the next process.
+	 */
+	const crash = { at: options.crashAt, stopped: false };
+	const checkpoint = (step: string): void => {
+		if (crash.stopped) {
+			throw new Error(`PROCESS_STOPPED: ${step} was never reached`);
+		}
+
+		if (crash.at === step) {
+			crash.stopped = true;
+			crash.at = undefined;
+
+			throw new Error(`PROCESS_STOPPED at ${step}`);
+		}
+	};
+	const writeTo = (table: keyof ITables) => checkpoint(`write:${String(table)}`);
 	const tables: ITables = {
 		goods_receipt: [...(options.receipts ?? [])],
 		goods_receipt_line: [...(options.receiptLines ?? [])],
@@ -504,95 +550,154 @@ function receiptFixture(
 	 * never takes back what another one committed meanwhile. A conditional write is a WHERE: every member
 	 * of its criteria has to hold for the row to change.
 	 */
-	const managerFor = (undo: Array<() => void> = [], held: Array<() => void> = []): any => ({
-		connection: { options: { type: dialect } },
-		transaction: async (run: (transactional: any) => Promise<any>) => {
-			const ownUndo: Array<() => void> = [];
-			const ownHeld: Array<() => void> = [];
+	/** The tables the purchasing entities are stored in, as a transaction's manager is handed them. */
+	const tableOf = (entity: unknown): keyof ITables | undefined =>
+		entity === PurchaseOrderLine
+			? 'purchase_order_line'
+			: entity === PurchaseOrder
+				? 'purchase_order'
+				: entity === GoodsReceipt
+					? 'goods_receipt'
+					: entity === GoodsReceiptLine
+						? 'goods_receipt_line'
+						: undefined;
+	let transactionalSequence = 0;
 
-			try {
-				return await run(managerFor(ownUndo, ownHeld));
-			} catch (error) {
-				ownUndo.reverse().forEach((step) => step());
-
-				throw error;
-			} finally {
-				ownHeld.forEach((releaseLock) => releaseLock());
-			}
-		},
-		update: async (entity: unknown, criteria: any, partial: Row) => {
-			if (entity !== PurchaseOrderLine) {
-				throw new Error('the in-memory double was handed an entity it does not know');
-			}
-
-			const row = tables.purchase_order_line.find(
-				(one) => !one.deletedAt && Object.entries(criteria ?? {}).every(([field, expected]) =>
-					expected instanceof FindOperator && expected.type === 'isNull'
-						? one[field] === null || one[field] === undefined
-						: String(one[field] ?? '') === String(expected ?? '')
-				)
-			);
-
-			if (!row) {
-				return { affected: 0 };
-			}
-
+	const managerFor = (undo: Array<() => void> = [], held: Array<() => void> = []): any => {
+		const restore = (row: Row) => {
 			const before = { ...row };
 
-			Object.assign(row, partial);
 			undo.push(() => {
 				Object.keys(row).forEach((key) => delete row[key]);
 				Object.assign(row, before);
 			});
+		};
+		const manager: any = {
+			connection: { options: { type: dialect } },
+			// What a ledger that joins this transaction registers, so its writes roll back with it.
+			onRollback: (step: () => void) => undo.push(step),
+			transaction: async (run: (transactional: any) => Promise<any>) => {
+				const ownUndo: Array<() => void> = [];
+				const ownHeld: Array<() => void> = [];
 
-			return { affected: 1 };
-		},
-		findOne: async (entity: unknown, findOptions: any = {}) => {
-			if (entity === PurchaseOrderLine) {
-				if (findOptions.lock?.mode === 'pessimistic_write' && dialect === 'postgres') {
-					await acquire(`purchase_order_line:${String(findOptions.where?.id)}`, held);
+				try {
+					return await run(managerFor(ownUndo, ownHeld));
+				} catch (error) {
+					ownUndo.reverse().forEach((step) => step());
+
+					throw error;
+				} finally {
+					ownHeld.forEach((releaseLock) => releaseLock());
+				}
+			},
+			create: (_entity: unknown, partial: Row) => ({ ...partial }),
+			save: async (entity: unknown, row: Row) => {
+				const table = tableOf(entity);
+
+				if (!table) {
+					throw new Error('the in-memory double was handed an entity it does not know');
 				}
 
-				return repository(tables, 'purchase_order_line').findOne(findOptions);
-			}
-			if (entity === OrganizationVendor) {
-				return repository(tables, 'organization_vendor').findOne(findOptions);
-			}
-			if (entity === ProductVariant) {
-				return repository(tables, 'product_variant').findOne(findOptions);
-			}
-			if (entity === ProductVariantPrice) {
-				return null;
-			}
-			if (entity === Organization) {
-				return repository(tables, 'organization').findOne(findOptions);
-			}
-			if (entity === PurchaseOrder) {
-				return repository(tables, 'purchase_order').findOne(findOptions);
-			}
+				writeTo(table);
 
-			throw new Error('the in-memory double was handed an entity it does not know');
-		},
-		count: async (entity: unknown, findOptions: any = {}) => {
-			if (entity !== PurchaseOrderLine) {
+				const existing = row.id ? tables[table].find((one) => String(one.id) === String(row.id)) : undefined;
+
+				if (existing) {
+					restore(existing);
+					Object.assign(existing, row);
+
+					return { ...existing };
+				}
+
+				const inserted = { ...row, id: `${String(table)}-tx-${++transactionalSequence}` };
+
+				tables[table].push(inserted);
+				undo.push(() => tables[table].splice(tables[table].indexOf(inserted), 1));
+
+				return { ...inserted };
+			},
+			// A conditional write is a WHERE: every member of its criteria has to hold for the row to change.
+			update: async (entity: unknown, criteria: any, partial: Row) => {
+				const table = tableOf(entity);
+
+				if (!table) {
+					throw new Error('the in-memory double was handed an entity it does not know');
+				}
+
+				writeTo(table);
+
+				const matching = repository(tables, table, { detached: false }).rows().filter((one) =>
+					Object.entries(criteria ?? {}).every(([field, expected]) =>
+						expected instanceof FindOperator && expected.type === 'isNull'
+							? one[field] === null || one[field] === undefined
+							: expected === undefined || String(one[field] ?? '') === String(expected ?? '')
+					)
+				);
+
+				for (const row of matching) {
+					restore(row);
+					Object.assign(row, partial);
+				}
+
+				return { affected: matching.length };
+			},
+			find: async (entity: unknown, findOptions: any = {}) => {
+				const table = tableOf(entity);
+
+				if (!table) {
+					throw new Error('the in-memory double was handed an entity it does not know');
+				}
+
+				return repository(tables, table).find(findOptions);
+			},
+			findOne: async (entity: unknown, findOptions: any = {}) => {
+				const table = tableOf(entity);
+
+				if (table) {
+					if (findOptions.lock?.mode === 'pessimistic_write' && dialect === 'postgres') {
+						await acquire(`${String(table)}:${String(findOptions.where?.id)}`, held);
+					}
+
+					return repository(tables, table).findOne(findOptions);
+				}
+				if (entity === OrganizationVendor) {
+					return repository(tables, 'organization_vendor').findOne(findOptions);
+				}
+				if (entity === ProductVariant) {
+					return repository(tables, 'product_variant').findOne(findOptions);
+				}
+				if (entity === ProductVariantPrice) {
+					return null;
+				}
+				if (entity === Organization) {
+					return repository(tables, 'organization').findOne(findOptions);
+				}
+
 				throw new Error('the in-memory double was handed an entity it does not know');
-			}
+			},
+			count: async (entity: unknown, findOptions: any = {}) => {
+				if (entity !== PurchaseOrderLine) {
+					throw new Error('the in-memory double was handed an entity it does not know');
+				}
 
-			return repository(tables, 'purchase_order_line').count(findOptions);
-		}
-	});
+				return repository(tables, 'purchase_order_line').count(findOptions);
+			}
+		};
+
+		return manager;
+	};
 
 	const termRepository = repository(tables, 'vendor_product_term');
 
 	Object.assign(termRepository, { manager: managerFor() });
 
 	const termService = new VendorProductTermService(termRepository as never, {} as never);
-	const lineRepository = repository(tables, 'purchase_order_line');
+	const lineRepository = repository(tables, 'purchase_order_line', { onWrite: writeTo });
 
 	Object.assign(lineRepository, { manager: managerFor() });
 
 	const orderLineService = new PurchaseOrderLineService(lineRepository as never, {} as never, termService);
-	const orderRepository = repository(tables, 'purchase_order');
+	const orderRepository = repository(tables, 'purchase_order', { onWrite: writeTo });
 
 	Object.assign(orderRepository, { manager: managerFor() });
 
@@ -618,7 +723,7 @@ function receiptFixture(
 		sequenceService as never
 	);
 
-	const receiptLineRepository = repository(tables, 'goods_receipt_line');
+	const receiptLineRepository = repository(tables, 'goods_receipt_line', { onWrite: writeTo });
 	const receiptLineService = new GoodsReceiptLineService(receiptLineRepository as never, {} as never);
 	const settingsAsked: string[][] = [];
 	const tenantSettingService = {
@@ -638,23 +743,33 @@ function receiptFixture(
 		options.withLedger === false
 			? undefined
 			: {
-					recordMovement: async (request: IMovement) => {
+					// Like the real ledger, a movement handed a transaction is written on it, and goes when it rolls back.
+					recordMovement: async (request: IMovement, transaction?: any) => {
+						checkpoint(`movement:${request.kind}`);
+
 						if (options.failMovement) {
 							throw new Error('the ledger refused the movement');
 						}
 
 						movements.push(request);
+						transaction?.onRollback?.(() => movements.splice(movements.indexOf(request), 1));
 
 						return { movementId: `movement-${movements.length}`, quantityAfter: request.quantity };
 					},
-					putAway: async (request: IPutAway) => {
+					putAway: async (request: IPutAway, transaction?: any) => {
+						checkpoint('put-away');
 						putAways.push(request);
+						transaction?.onRollback?.(() => putAways.splice(putAways.indexOf(request), 1));
 
 						return { transferOutMovementId: 'out-1', transferInMovementId: 'in-1' };
 					}
 			  };
+	const receiptRepository = repository(tables, 'goods_receipt', { onWrite: writeTo });
+
+	Object.assign(receiptRepository, { manager: managerFor() });
+
 	const service = new GoodsReceiptService(
-		repository(tables, 'goods_receipt') as never,
+		receiptRepository as never,
 		{} as never,
 		receiptLineService,
 		orderService,
@@ -672,6 +787,11 @@ function receiptFixture(
 		movements,
 		putAways,
 		settingsAsked,
+		/** The next process: the stopped one is gone, and nothing it held is held any more. */
+		restart: () => {
+			crash.stopped = false;
+			crash.at = undefined;
+		},
 		order: (id: string = ORDER) => tables.purchase_order.find((row) => row.id === id),
 		orderLine: (id: string) => tables.purchase_order_line.find((row) => row.id === id),
 		linesOf: (id: string) => tables.goods_receipt_line.filter((row) => row.receiptId === id && !row.deletedAt),
@@ -695,15 +815,17 @@ describe('GoodsReceiptService — receiving goods (doc 09 §9.4)', () => {
 	 * reads what the writer hands the base class instead.
 	 */
 	it('writes every receipt line with the receipt’s tenant and organization', async () => {
+		// The lines are written on the receipt's transaction rather than through the base class's `create`,
+		// so what is read is the row as it was stored: a line the writer handed no organization would be
+		// stored with none, whatever a base class would have stamped.
 		const fixture = receiptFixture();
-		const create = jest.spyOn(Object.getPrototypeOf(GoodsReceiptLineService.prototype), 'create');
 
 		await fixture.service.receive({
 			purchaseOrderId: ORDER,
 			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '8', damagedQuantity: '1' }]
 		});
 
-		const lines = create.mock.calls.map(([row]) => row as Record<string, unknown>).filter((row) => 'receiptId' in row);
+		const lines = fixture.liveLines();
 
 		expect(lines).toHaveLength(1);
 		expect(lines[0]).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
@@ -1815,4 +1937,133 @@ describe('GoodsReceiptService — what one delivery, or two at once, may bring t
 			expect(fixture.tables.goods_receipt[0]).toMatchObject({ status: GoodsReceiptStatus.CANCELED, version: 2 });
 		}
 	);
+});
+
+/**
+ * A process that stops part way through a receipt or a reversal, and the next one that retries it
+ * (PR #10254 review: "Interrupted receipts stay half-finished").
+ *
+ * A receipt claimed its order lines' counters in a transaction of its own and then wrote the receipt,
+ * its lines and its stock movements one after the other; a reversal saved `CANCELED` and then took the
+ * stock back. Their `catch` blocks gave a claim back or handed a receipt back as `POSTED` — but only
+ * for an error the running process caught. A process that stopped in between left quantities "received"
+ * with no receipt, or a cancelled receipt whose stock was never taken back, and the retry then failed the
+ * ceiling or returned at once without finishing. Each case stops the process at one step (every later
+ * step fails too, so nothing is repaired on the way out), restarts it and retries, and asserts that the
+ * retry completed the operation exactly once.
+ */
+describe('GoodsReceiptService — a receipt or a reversal interrupted half way, and retried', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(RECEIVER);
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const delivery = { purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6', damagedQuantity: '1' }] };
+
+	it.each([
+		['the stock movement of the good units', 'movement:RECEIPT'],
+		['the stock movement of the damaged units', 'movement:DAMAGE'],
+		['stamping the movement on the receipt line', 'write:goods_receipt_line'],
+		['the order status, after everything else', 'write:purchase_order']
+	])('receives a delivery exactly once when the process stopped at %s', async (_step, crashAt) => {
+		const fixture = receiptFixture({ crashAt });
+
+		await expect(fixture.service.receive(delivery)).rejects.toThrow(/PROCESS_STOPPED/);
+
+		fixture.restart();
+
+		const retried = await fixture.service.receive(delivery);
+
+		expect(fixture.tables.goods_receipt).toHaveLength(1);
+		expect(fixture.tables.goods_receipt[0]).toMatchObject({ id: retried.id, status: GoodsReceiptStatus.POSTED });
+		expect(fixture.liveLines()).toHaveLength(1);
+		expect(fixture.movements.map((movement) => [movement.kind, movement.quantity])).toEqual([
+			[StockMovementKind.RECEIPT, '6.000000'],
+			[StockMovementKind.DAMAGE, '1.000000']
+		]);
+		expect(fixture.liveLines()[0].stockMovementId).toBeDefined();
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '6.000000', damagedQuantity: '1.000000' });
+		expect(fixture.order()).toMatchObject({ status: PurchaseOrderStatus.PARTIALLY_RECEIVED });
+	});
+
+	it('receives a delivery exactly once when the process stopped at its put-away', async () => {
+		const fixture = receiptFixture({ crashAt: 'put-away' });
+		const binned = { purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6', warehouseBinId: 'bin-1' }] };
+
+		await expect(fixture.service.receive(binned)).rejects.toThrow(/PROCESS_STOPPED/);
+
+		fixture.restart();
+		await fixture.service.receive(binned);
+
+		expect(fixture.tables.goods_receipt).toHaveLength(1);
+		expect(fixture.movements.map((movement) => movement.kind)).toEqual([StockMovementKind.RECEIPT]);
+		expect(fixture.putAways).toEqual([expect.objectContaining({ binId: 'bin-1', quantity: '6.000000', referenceType: 'GOODS_RECEIPT' })]);
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '6.000000' });
+	});
+
+	it('adds a further line exactly once when the process stopped at its stock movement', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '4' }] });
+		const stopping = receiptFixture({
+			crashAt: 'movement:RECEIPT',
+			receipts: fixture.tables.goods_receipt.map((row) => ({ ...row })),
+			receiptLines: fixture.tables.goods_receipt_line.map((row) => ({ ...row })),
+			lines: fixture.tables.purchase_order_line.map((row) => ({ ...row })),
+			orders: fixture.tables.purchase_order.map((row) => ({ ...row }))
+		});
+
+		await expect(stopping.service.recordLine(receipt.id, { purchaseOrderLineId: ORDER_LINE, quantity: '3' })).rejects.toThrow(
+			/PROCESS_STOPPED/
+		);
+
+		stopping.restart();
+		await stopping.service.recordLine(receipt.id, { purchaseOrderLineId: ORDER_LINE, quantity: '3' });
+
+		expect(stopping.linesOf(receipt.id)).toHaveLength(2);
+		expect(stopping.movements.map((movement) => [movement.kind, movement.quantity])).toEqual([
+			[StockMovementKind.RECEIPT, '3.000000']
+		]);
+		expect(stopping.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '7.000000' });
+	});
+
+	it.each([
+		['the compensating stock movement', 'movement:WRITE_OFF'],
+		['the order line counters', 'write:purchase_order_line'],
+		['the order status', 'write:purchase_order']
+	])('reverses a receipt exactly once when the process stopped at %s', async (_step, crashAt) => {
+		const posting = receiptFixture();
+		const receipt = await posting.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '4' }] });
+		const fixture = receiptFixture({
+			crashAt,
+			receipts: posting.tables.goods_receipt.map((row) => ({ ...row })),
+			receiptLines: posting.tables.goods_receipt_line.map((row) => ({ ...row })),
+			lines: posting.tables.purchase_order_line.map((row) => ({ ...row })),
+			orders: posting.tables.purchase_order.map((row) => ({ ...row }))
+		});
+
+		await expect(fixture.service.reverse(receipt.id, 'wrong delivery')).rejects.toThrow(/PROCESS_STOPPED/);
+
+		// Nothing of the stopped reversal stands: the receipt is still posted, and so reversible.
+		expect(fixture.tables.goods_receipt[0].status).toBe(GoodsReceiptStatus.POSTED);
+
+		fixture.restart();
+
+		const reversed = await fixture.service.reverse(receipt.id, 'wrong delivery');
+
+		expect(reversed).toMatchObject({ status: GoodsReceiptStatus.CANCELED, version: 2 });
+		expect(fixture.movements.map((movement) => [movement.kind, movement.quantity])).toEqual([
+			[StockMovementKind.WRITE_OFF, '-4.000000']
+		]);
+		expect(Number(fixture.orderLine(ORDER_LINE)?.receivedQuantity)).toBe(0);
+		expect(fixture.order()).toMatchObject({ status: PurchaseOrderStatus.SENT });
+
+		// And a second retry finds it done.
+		await fixture.service.reverse(receipt.id, 'wrong delivery');
+
+		expect(fixture.movements).toHaveLength(1);
+	});
 });
