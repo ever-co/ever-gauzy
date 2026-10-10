@@ -324,6 +324,38 @@ export class OrderController extends CrudController<Order> {
 	}
 
 	/**
+	 * Records the buyer's refusal of an order's quote.
+	 *
+	 * The estimate is marked declined and the order is left where it is — a draft stays a draft — so the
+	 * seller can revise it and send a new quote. The order's version still advances, in a write predicated on
+	 * the version the caller states, because its quote is no longer open. The estimate also requires the
+	 * finance module's own `ESTIMATES_EDIT`, which the service checks.
+	 *
+	 * @param id The order.
+	 * @param body Why the buyer declined, recorded on the timeline.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The order, in the status it was in.
+	 */
+	@ApiOperation({ summary: 'Decline the quote of an order, leaving the order where it is' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Quote declined; the order keeps its status' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order has no open quote to decline, or its quote was already answered or voided'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Post(':id/quote/decline')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async declineQuote(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: { reason?: string },
+		@Req() request: Request
+	): Promise<IOrder> {
+		return this.invoicingService.declineQuote(id, body?.reason, versionExpectationOf(request));
+	}
+
+	/**
 	 * Recomputes an order's totals from its lines and the money ledgers.
 	 *
 	 * @param id The order.

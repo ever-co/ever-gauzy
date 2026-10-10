@@ -133,6 +133,8 @@ interface IPair {
 	scope?: string;
 	service: 'invoicing' | 'order';
 	method: string;
+	/** What the service method receives between the order and the version, when it receives anything. */
+	args?: unknown[];
 	/** How the field is called: the order, the version, and the retry key when the field takes one. */
 	call: (resolver: any, context: any) => Promise<unknown>;
 	/** How the route is called. */
@@ -177,6 +179,18 @@ const PAIRS: IPair[] = [
 		call: (resolver, context) => resolver.acceptOrderQuote(ID, 3, context),
 		invoke: (controller, request) => controller.acceptQuote(ID, request),
 		declaration: 'acceptOrderQuote(id: ID!, version: Int): Order!'
+	},
+	{
+		field: 'declineOrderQuote',
+		route: 'declineQuote',
+		path: ':id/quote/decline',
+		permission: ORDER_PERMISSIONS.ORDERS_EDIT,
+		service: 'invoicing',
+		method: 'declineQuote',
+		args: ['changed our minds'],
+		call: (resolver, context) => resolver.declineOrderQuote(ID, 'changed our minds', 3, context),
+		invoke: (controller, request) => controller.declineQuote(ID, { reason: 'changed our minds' }, request),
+		declaration: 'declineOrderQuote(id: ID!, reason: String, version: Int): Order!'
 	}
 ];
 
@@ -259,8 +273,8 @@ describe('The order’s document and approval verbs — one capability, two surf
 			await pair.call(resolver, { req: request });
 
 			expect(service[pair.method].mock.calls).toEqual([
-				[ID, STATED],
-				[ID, STATED]
+				[ID, ...(pair.args ?? []), STATED],
+				[ID, ...(pair.args ?? []), STATED]
 			]);
 		}
 	);

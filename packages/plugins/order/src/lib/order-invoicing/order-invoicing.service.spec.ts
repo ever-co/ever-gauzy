@@ -1010,3 +1010,123 @@ describe('OrderInvoicingService.acceptQuote — the buyer accepts, and the order
 		expect(foreign.port.answerEstimate).not.toHaveBeenCalled();
 	});
 });
+
+describe('OrderInvoicingService.declineQuote — the buyer declines, and the order stays where it is', () => {
+	/** An order of the given status with an open quote. */
+	const quoted = (status: OrderStatus, quote: Record<string, unknown> = {}) => {
+		const built = fixture({ order: { status, isDraft: status === OrderStatus.DRAFT, quoteInvoiceId: 'quote-1' } });
+
+		built.port.documents.set('quote-1', {
+			isEstimate: true,
+			isAccepted: null,
+			status: 'SENT',
+			invoiceNumber: 77,
+			...quote
+		});
+
+		return built;
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('marks the estimate declined and leaves a draft a draft, at its next version', async () => {
+		const built = quoted(OrderStatus.DRAFT);
+		const transition = jest.spyOn(OrderStateMachine, 'transition');
+
+		const declined = await built.service.declineQuote('order-1', 'Too expensive', at(3));
+
+		expect(built.port.answerEstimate).toHaveBeenCalledWith('quote-1', false);
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: false, status: 'REJECTED' });
+
+		// No status move at all: the state machine is not asked, and the order is the draft it was.
+		expect(transition).not.toHaveBeenCalled();
+		expect(declined).toMatchObject({
+			status: OrderStatus.DRAFT,
+			isDraft: true,
+			quoteInvoiceId: 'quote-1',
+			version: 4
+		});
+		expect(built.tables.order_summary.map((row: any) => [row.version, row.reason])).toEqual([
+			[4, 'QUOTE_DECLINED']
+		]);
+		expect(timelineOf(built)).toEqual(['ORDER_QUOTE_DECLINED']);
+		expect(built.tables.order_history[0].metadata).toEqual({
+			quoteInvoiceId: 'quote-1',
+			quoteNumber: 77,
+			reason: 'Too expensive'
+		});
+		// Nothing is announced: declining an offer is not a lifecycle move of the order.
+		expect(built.outbox.append).not.toHaveBeenCalled();
+	});
+
+	it('leaves a placed order placed', async () => {
+		const built = quoted(OrderStatus.PENDING);
+
+		await expect(built.service.declineQuote('order-1', undefined, at(3))).resolves.toMatchObject({
+			status: OrderStatus.PENDING,
+			version: 4
+		});
+	});
+
+	it('refuses a stale version with nothing written — the quote stays open', async () => {
+		const built = quoted(OrderStatus.DRAFT);
+
+		await expect(built.service.declineQuote('order-1', undefined, at(2))).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+		expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		expect(built.order()).toMatchObject({ status: OrderStatus.DRAFT, version: 3 });
+	});
+
+	it('declines on a retry when the estimate could not be answered the first time', async () => {
+		const built = quoted(OrderStatus.DRAFT);
+		built.port.answerEstimate.mockRejectedValueOnce(new Error('finance store unavailable'));
+
+		await expect(built.service.declineQuote('order-1', undefined, at(3))).rejects.toThrow(
+			/finance store unavailable/
+		);
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: null });
+
+		await expect(built.service.declineQuote('order-1', undefined, at(4))).resolves.toMatchObject({ version: 5 });
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: false, status: 'REJECTED' });
+	});
+
+	it('refuses an accepted quote, an already declined one, a voided one and an order with none — each with 409', async () => {
+		const cases: Array<[ReturnType<typeof fixture>, string]> = [
+			[quoted(OrderStatus.PENDING, { isAccepted: true, status: 'ACCEPTED' }), 'ORDER_QUOTE_ALREADY_ACCEPTED'],
+			[quoted(OrderStatus.DRAFT, { isAccepted: false, status: 'REJECTED' }), 'ORDER_QUOTE_ALREADY_DECLINED'],
+			[quoted(OrderStatus.DRAFT, { status: 'VOID' }), 'ORDER_QUOTE_VOID'],
+			[fixture({ order: { status: OrderStatus.DRAFT } }), 'ORDER_QUOTE_NOT_SENT'],
+			[quoted(OrderStatus.CONFIRMED), 'ORDER_QUOTE_NOT_ANSWERABLE']
+		];
+
+		for (const [built, code] of cases) {
+			await expect(built.service.declineQuote('order-1', undefined, at(3))).rejects.toMatchObject({
+				status: 409,
+				response: { code }
+			});
+			expect(built.order().version).toBe(3);
+			expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		}
+	});
+
+	it('requires the estimate grant and does not find another tenant’s order', async () => {
+		const forbidden = quoted(OrderStatus.DRAFT);
+		mockCaller.permissions = new Set([PermissionsEnum.INVOICES_EDIT]);
+		await expect(forbidden.service.declineQuote('order-1', undefined, at(3))).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+
+		mockCaller.permissions = new Set([PermissionsEnum.ESTIMATES_EDIT]);
+		mockCaller.tenantId = 'tenant-2';
+		const foreign = quoted(OrderStatus.DRAFT);
+		await expect(foreign.service.declineQuote('order-1', undefined, at(3))).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+
+		for (const built of [forbidden, foreign]) {
+			expect(built.order().version).toBe(3);
+			expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		}
+	});
+});

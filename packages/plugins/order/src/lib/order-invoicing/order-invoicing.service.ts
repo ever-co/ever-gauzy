@@ -432,6 +432,73 @@ export class OrderInvoicingService {
 		return this.orderService.confirm(order.id, 'STAFF', confirmUnder);
 	}
 
+	/**
+	 * Records the buyer's refusal of an order's quote.
+	 *
+	 * The estimate is marked declined — the finance document's own accept flag set to false, its status
+	 * REJECTED — and **the order is left where it is: a draft stays a draft**, and a placed order stays
+	 * placed. A declined offer is not a cancelled order; the seller may revise the order and send a new quote,
+	 * which leaves this one as the record of the buyer's answer.
+	 *
+	 * **It is version-predicated like every write of the order.** The order's own write — which moves no
+	 * status and changes no column, and whose summary row records `QUOTE_DECLINED` as the reason the version
+	 * advanced — is committed first, under the version the caller stated, so a decline reasoned about from an
+	 * order that has moved on is refused with nothing written. The estimate is answered after it; a failure
+	 * there leaves the quote open, and the same call made again (with the order's new version) declines it.
+	 *
+	 * @param orderId The order.
+	 * @param reason Why the buyer declined, recorded on the order's timeline.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The order, at its new version and in the status it was in.
+	 * @throws ForbiddenException when the caller lacks `ESTIMATES_EDIT`.
+	 * @throws NotFoundException when the order is not the caller's.
+	 * @throws ConflictException with `ORDER_QUOTE_NOT_ANSWERABLE`, `ORDER_QUOTE_NOT_SENT`, `ORDER_QUOTE_VOID`,
+	 * `ORDER_QUOTE_ALREADY_ACCEPTED` or `ORDER_QUOTE_ALREADY_DECLINED`.
+	 * @throws ServiceUnavailableException with `ORDER_INVOICING_UNAVAILABLE` when no invoicing capability is
+	 * registered.
+	 */
+	public async declineQuote(
+		orderId: ID,
+		reason?: string,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<Order> {
+		this.assertDocumentGrant(PermissionsEnum.ESTIMATES_EDIT, 'the answer to a quote');
+
+		const order = await this.readOrder(orderId);
+		const { invoicing, quote } = await this.answerableQuote(order);
+
+		if (quote.isAccepted === true) {
+			throw new ConflictException({
+				message: `The quote for order ${order.number} was accepted, and an accepted quote is not declined afterwards.`,
+				code: 'ORDER_QUOTE_ALREADY_ACCEPTED',
+				details: { orderId: order.id, quoteInvoiceId: quote.invoiceId }
+			});
+		}
+
+		if (quote.isAccepted === false || quote.status === EstimateStatusTypesEnum.REJECTED) {
+			throw new ConflictException({
+				message: `The quote for order ${order.number} was already declined.`,
+				code: 'ORDER_QUOTE_ALREADY_DECLINED',
+				details: { orderId: order.id, quoteInvoiceId: quote.invoiceId }
+			});
+		}
+
+		const declined = await this.totalsService.recompute(order.id, 'QUOTE_DECLINED', {
+			expectation: this.heldTo(order, expectation)
+		});
+
+		await invoicing.answerEstimate(quote.invoiceId, false);
+		await this.historyService.record(
+			order.id,
+			'ORDER_QUOTE_DECLINED',
+			'Quote declined',
+			{ quoteInvoiceId: quote.invoiceId, quoteNumber: quote.invoiceNumber ?? null, reason: reason ?? null },
+			scopeOfOrderRow(order)
+		);
+
+		return declined;
+	}
+
 	/*
 	|--------------------------------------------------------------------------
 	| The document
