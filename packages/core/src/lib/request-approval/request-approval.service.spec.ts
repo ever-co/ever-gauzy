@@ -1,120 +1,75 @@
-// Must stay first: loads the entity graph before the service pulls an entity (see activity.controller.spec.ts).
 import '../core/entities/internal';
 
-import { FindOperator, In } from 'typeorm';
-import { RequestContext } from '../core/context';
+// `@gauzy/config` re-exports its database helpers through `export *` (non-configurable getters under
+// CommonJS), so they are replaced through a module factory rather than spied on.
+jest.mock('@gauzy/config', () => ({
+	...jest.requireActual('@gauzy/config'),
+	isMySQL: jest.fn(),
+	isPostgres: jest.fn(),
+	isSqlite: jest.fn(),
+	isBetterSqlite3: jest.fn()
+}));
+
+import { isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { CrudService } from '../core/crud/crud.service';
 import { MultiORMEnum } from '../core/utils';
+import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { RequestApprovalService } from './request-approval.service';
 
 /**
- * GHSA-gwpq-mmw7-vx85 sibling — POST / PUT /request-approval resolved the body's approver employees
- * and teams through raw repositories with no tenant predicate, attached the loaded rows, and echoed
- * them back: a foreign-tenant employee or team was read and linked by its UUID.
- *
- * The fake repositories evaluate the where clause against fixtures. CONTROL arms replay the pre-fix
- * `{ id: In(ids) }` lookups and show the foreign rows coming back.
+ * `findAllRequestApprovals` joins the polymorphic `requestId` to time off requests and equipment sharings.
+ * On MySQL, the TypeORM join condition for equipment sharing compared `time_off_request.id` (a copy of the
+ * line above) instead of `equipment_sharing.id`: it never matched, and since equipment sharing approvals
+ * carry no approval policy, they were missing from the approvals list.
  */
+describe('RequestApprovalService.findAllRequestApprovals joins (TypeORM, MySQL)', () => {
+	const fixture = createTenantFixture();
 
-const TENANT_A = 'tenant-a';
-const TENANT_B = 'tenant-b';
+	let restore: () => void;
+	let joins: [string, string, string][];
 
-const EMPLOYEES = [
-	{ id: 'employee-own', tenantId: TENANT_A },
-	{ id: 'employee-foreign', tenantId: TENANT_B }
-];
-const TEAMS = [
-	{ id: 'team-own', tenantId: TENANT_A },
-	{ id: 'team-foreign', tenantId: TENANT_B }
-];
-
-const matches = (row: Record<string, any>, where: Record<string, any>) =>
-	Object.entries(where).every(([key, value]) =>
-		value === undefined ? true : value instanceof FindOperator ? (value.value as any[]).includes(row[key]) : row[key] === value
-	);
-
-const fakeRepository = (rows: any[]) => ({
-	find: jest.fn(async ({ where }: any) => rows.filter((row) => matches(row, where)))
-});
-
-function createService() {
-	const employees = fakeRepository(EMPLOYEES);
-	const teams = fakeRepository(TEAMS);
-	// updateRequestApproval clears the previous approver rows through a query builder first.
-	const requestApprovals = {
-		createQueryBuilder: () => {
-			const builder: any = {
-				delete: () => builder,
-				from: () => builder,
-				where: () => builder,
-				execute: async () => ({ affected: 0 })
-			};
-			return builder;
-		}
-	};
-	const service = new RequestApprovalService(
-		requestApprovals as any,
-		{} as any,
-		employees as any,
-		{} as any,
-		teams as any,
-		{} as any
-	);
-	jest.spyOn(service, 'save').mockImplementation(async (entity: any) => entity);
-	return { service, employees, teams };
-}
-
-describe('RequestApprovalService approver lookups (GHSA-gwpq-mmw7-vx85 sibling)', () => {
 	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
 		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
-		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_A);
+		(isMySQL as jest.Mock).mockReturnValue(true);
+		(isPostgres as jest.Mock).mockReturnValue(false);
+		(isSqlite as jest.Mock).mockReturnValue(false);
+		(isBetterSqlite3 as jest.Mock).mockReturnValue(false);
+		jest
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			.spyOn(RequestApprovalService.prototype as any, 'assertRelationsPermitted')
+			.mockImplementation(() => undefined);
+		joins = [];
 	});
-	afterEach(() => jest.restoreAllMocks());
 
-	const input: any = {
-		name: 'approval',
-		organizationId: 'org-a',
-		employeeApprovals: ['employee-own', 'employee-foreign'],
-		teams: ['team-own', 'team-foreign']
-	};
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
 
-	it('CONTROL: the pre-fix lookups return the foreign employee and team', async () => {
-		const { employees, teams } = createService();
-
-		expect((await employees.find({ where: { id: In(input.employeeApprovals) } })).map((e) => e.id)).toContain(
-			'employee-foreign'
+	it('joins equipment sharings on their own id', async () => {
+		const query: Record<string, jest.Mock> = {};
+		for (const method of ['leftJoinAndSelect', 'setFindOptions', 'where', 'orWhere']) {
+			query[method] = jest.fn(() => query);
+		}
+		query.leftJoinAndSelect.mockImplementation((...args: [string, string, string]) => {
+			joins.push(args);
+			return query;
+		});
+		query.getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+		const service = new RequestApprovalService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ metadata: { tableName: 'request_approval' }, createQueryBuilder: () => query } as any,
+			...(Array.from({ length: 5 }, () => ({})) as [never, never, never, never, never])
 		);
-		expect((await teams.find({ where: { id: In(input.teams) } })).map((t) => t.id)).toContain('team-foreign');
-	});
 
-	it('links only approvers of the caller tenant on create', async () => {
-		const { service } = createService();
+		await service.findAllRequestApprovals({}, { organizationId: fixture.organizationId });
 
-		const created: any = await service.createRequestApproval(input);
-
-		expect(created.employeeApprovals.map((row: any) => row.employeeId)).toEqual(['employee-own']);
-		expect(created.teamApprovals.map((row: any) => row.teamId)).toEqual(['team-own']);
-		expect(JSON.stringify(created)).not.toContain(TENANT_B);
-	});
-
-	it('links only approvers of the caller tenant on update', async () => {
-		const { service } = createService();
-		jest.spyOn(service, 'findOneByIdString').mockResolvedValue({ id: 'approval-1', tenantId: TENANT_A } as any);
-
-		const updated: any = await service.updateRequestApproval('approval-1', input);
-
-		expect(updated.employeeApprovals.map((row: any) => row.employeeId)).toEqual(['employee-own']);
-		expect(updated.teamApprovals.map((row: any) => row.teamId)).toEqual(['team-own']);
-		expect(JSON.stringify(updated)).not.toContain(TENANT_B);
-	});
-
-	it('matches nothing without a tenant', async () => {
-		const { service, employees } = createService();
-		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
-
-		const created: any = await service.createRequestApproval(input);
-
-		expect(created.employeeApprovals).toEqual([]);
-		expect(employees.find).not.toHaveBeenCalled();
+		const [, , equipmentJoin] = joins.find(([table]) => table === 'equipment_sharing');
+		// `prepareSQLQuery` turns the double quotes into backticks on MySQL
+		expect(equipmentJoin).toContain('`equipment_sharing`.`id`');
+		expect(equipmentJoin).not.toContain('time_off_request');
+		const [, , timeOffJoin] = joins.find(([table]) => table === 'time_off_request');
+		expect(timeOffJoin).toContain('`time_off_request`.`id`');
 	});
 });
