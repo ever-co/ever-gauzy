@@ -3,18 +3,19 @@
 # `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
-# **The resource serves one route and the surface states one field.** `TenantApiKeyController` is a
-# single handler — `POST /api/tenant-api-key/generate-key-pair` — and there is no list route, no node
-# route and no count route for a key row anywhere in the delivered API. So this domain contributes no
-# query at all: a `tenantApiKeys` connection or a `tenantApiKey` node here would be a read that the
-# REST surface does not serve and, worse, a read that the stored row cannot honestly answer, because
-# the secret column holds a hash and the entity excludes the key material from every answer.
+# **The resource serves three writes and the surface states three fields.** `TenantApiKeyController`
+# issues a pair (`POST /api/tenant-api-key/generate-key-pair`), renames the tenant's key (`PUT`) and
+# revokes it (`DELETE`), so a leaked pair can be revoked and a new one generated. There is no list route,
+# no node route and no count route for a key row anywhere in the delivered API, so this domain contributes
+# no query at all: a read here would be one the REST surface does not serve and, worse, one the stored row
+# cannot honestly answer, because the secret column holds a hash and the entity excludes the key material
+# from every answer. The rename answers `TenantApiKeySummary`, which carries neither the key nor the secret.
 #
 # **The permission is the route's own, and the guard chain is the controller's.** The controller
-# carries `TenantPermissionGuard` and `PermissionGuard` on the class and states
-# `TENANT_API_KEY_CREATE` on its one handler, so the resolver carries the same two guards on its class
-# and the field states the same permission — no narrower and no wider than the route that issues a
-# pair.
+# carries `TenantPermissionGuard` and `PermissionGuard` on the class and states a permission on each
+# handler — `TENANT_API_KEY_CREATE` to issue or rename, `TENANT_API_KEY_DELETE` to revoke — so the resolver
+# carries the same two guards on its class and each field states its route's permission, no narrower and
+# no wider.
 #
 # **The tenant is not an argument, and that is the route's own contract rather than a simplification.**
 # The delivered body carries a `tenantId` member which the delivered DTO validates against the
@@ -39,4 +40,18 @@ extend type Mutation {
 	route refuses it: the resource issues a pair for a tenant that has none.
 	"""
 	generateTenantApiKeyPair(input: GenerateTenantApiKeyInput!): TenantApiKeyPair!
+
+	"""
+	Renames the caller's tenant's API key. The name is the only member that changes after issuance; the
+	answer carries neither the key nor the secret. Mirrors `PUT /tenant-api-key`, under
+	`TENANT_API_KEY_CREATE`.
+	"""
+	updateTenantApiKey(input: UpdateTenantApiKeyInput!): TenantApiKeySummary!
+
+	"""
+	Revokes the caller's tenant's API key: it stops authenticating at once, and a new pair can then be
+	generated. The key is withdrawn rather than erased, so its record is kept. Answers `false` when the
+	tenant held no key. Mirrors `DELETE /tenant-api-key`, under `TENANT_API_KEY_DELETE`.
+	"""
+	revokeTenantApiKey: Boolean!
 }

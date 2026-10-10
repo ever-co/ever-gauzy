@@ -8,17 +8,19 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { RequestContext } from '../core/context';
 import { FeatureModule } from '../feature/feature.module';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TenantApiKeyController } from './tenant-api-key.controller';
 import { TenantApiKeyModule } from './tenant-api-key.module';
 import { TenantApiKeyResolver } from './tenant-api-key.resolver';
+import { TenantApiKeyService } from './tenant-api-key.service';
 
 /**
  * The tenant API key over GraphQL.
@@ -52,9 +54,21 @@ const PAIR = {
 	apiSecret: 'A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6'
 };
 
+/** What a scripted rename answers: the key without its key material. */
+const SUMMARY = {
+	id: 'key-1',
+	tenantId: '00000000-0000-4000-8000-000000000001',
+	name: 'Storefront v2',
+	isActive: true
+};
+
 /** The resolver, over a scripted service. */
 function surfaces() {
-	const tenantApiKeyService = { generateApiKey: jest.fn().mockResolvedValue(PAIR) };
+	const tenantApiKeyService = {
+		generateApiKey: jest.fn().mockResolvedValue(PAIR),
+		renameApiKey: jest.fn().mockResolvedValue(SUMMARY),
+		revokeApiKey: jest.fn().mockResolvedValue(true)
+	};
 
 	return { tenantApiKeyService, resolver: new TenantApiKeyResolver(tenantApiKeyService as never) };
 }
@@ -146,8 +160,12 @@ function permissionOfField(): unknown {
 }
 
 describe('TenantApiKeyResolver — the SDL declares the capability the REST route serves', () => {
-	it('declares the issuance as the one mutation, and no read beside it', () => {
-		expect(ownedRootFields('Mutation')).toEqual(['generateTenantApiKeyPair']);
+	it('declares the issuance, the rename and the revocation, and no read beside them', () => {
+		expect(ownedRootFields('Mutation')).toEqual([
+			'generateTenantApiKeyPair',
+			'revokeTenantApiKey',
+			'updateTenantApiKey'
+		]);
 		// The resource serves no list, no node and no count route, so there is no read for a query
 		// field to mirror — and the stored row could not honestly answer one anyway: its secret column
 		// holds a hash.
@@ -181,6 +199,137 @@ describe('TenantApiKeyResolver — the SDL declares the capability the REST rout
 		// exactly one legal value over REST — and the service falls back to that value when it is
 		// absent, which is what this field states.
 		expect(declaresMember('GenerateTenantApiKeyInput', 'tenantId')).toBe(false);
+	});
+});
+
+describe('TenantApiKeyResolver — renaming and revoking, never reading the key material', () => {
+	it('answers the rename with a summary that carries neither the key nor the secret', () => {
+		expect(printed).toMatch(/updateTenantApiKey\(input: UpdateTenantApiKeyInput!\): TenantApiKeySummary!/);
+		expect(printed).toMatch(/revokeTenantApiKey: Boolean!/);
+		expect(declaresMember('TenantApiKeySummary', 'name')).toBe(true);
+		expect(declaresMember('TenantApiKeySummary', 'apiKey')).toBe(false);
+		expect(declaresMember('TenantApiKeySummary', 'apiSecret')).toBe(false);
+		// The rename names nothing but the label: no tenant, no key, no secret.
+		expect(declaresMember('UpdateTenantApiKeyInput', 'name')).toBe(true);
+		expect(declaresMember('UpdateTenantApiKeyInput', 'tenantId')).toBe(false);
+		expect(declaresMember('UpdateTenantApiKeyInput', 'apiKey')).toBe(false);
+	});
+
+	it('renames and revokes through the same service methods the routes call', async () => {
+		const { resolver, tenantApiKeyService } = surfaces();
+
+		expect(await resolver.updateTenantApiKey({ name: 'Storefront v2' })).toBe(SUMMARY);
+		expect(tenantApiKeyService.renameApiKey).toHaveBeenCalledWith('Storefront v2');
+		expect(await resolver.revokeTenantApiKey()).toBe(true);
+		expect(tenantApiKeyService.revokeApiKey).toHaveBeenCalledWith();
+
+		const controller = new TenantApiKeyController(tenantApiKeyService as never);
+		expect(await controller.rename({ name: 'Storefront v3' })).toBe(SUMMARY);
+		expect(tenantApiKeyService.renameApiKey).toHaveBeenLastCalledWith('Storefront v3');
+		tenantApiKeyService.revokeApiKey.mockResolvedValueOnce(false);
+		expect(await controller.revoke()).toBe(false);
+	});
+
+	it('states each route’s own grant on its field: create to rename, delete to revoke', () => {
+		const handlers = TenantApiKeyController.prototype as unknown as Record<string, object>;
+		const fields = TenantApiKeyResolver.prototype as unknown as Record<string, object>;
+
+		for (const [field, handler, grant] of [
+			['updateTenantApiKey', 'rename', PermissionsEnum.TENANT_API_KEY_CREATE],
+			['revokeTenantApiKey', 'revoke', PermissionsEnum.TENANT_API_KEY_DELETE]
+		] as const) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fields[field])).toEqual([grant]);
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlers[handler])).toEqual([grant]);
+			expect([...guardsOfRoute(handler), FeatureFlagGuard].sort()).toEqual(
+				[...(Reflect.getMetadata('__guards__', TenantApiKeyResolver) ?? [])].sort()
+			);
+		}
+	});
+});
+
+describe('TenantApiKeyService — a leaked key can be revoked, and a new pair generated', () => {
+	const TENANT = '00000000-0000-4000-8000-000000000001';
+	const KEY = {
+		id: 'key-1',
+		tenantId: TENANT,
+		name: 'Storefront',
+		apiKey: 'public-half',
+		apiSecret: 'digest-of-secret',
+		isActive: true,
+		createdAt: new Date('2026-01-01T00:00:00.000Z')
+	};
+
+	/** The service over spied CRUD reads and writes. */
+	function service(keys: unknown[] = [KEY]) {
+		const instance = new TenantApiKeyService({} as never, {} as never);
+		const find = jest.spyOn(instance, 'find').mockResolvedValue(keys as never);
+		const findOneByOptions = jest.spyOn(instance, 'findOneByOptions').mockImplementation(async () => {
+			if (!keys.length) {
+				throw new NotFoundException();
+			}
+
+			return keys[0] as never;
+		});
+		const update = jest.spyOn(instance, 'update').mockResolvedValue({ affected: 1 } as never);
+		const softRemove = jest.spyOn(instance, 'softRemove').mockResolvedValue(KEY as never);
+		const countBy = jest.spyOn(instance, 'countBy');
+		const create = jest.spyOn(instance, 'create').mockImplementation(async (row) => row as never);
+
+		return { instance, find, findOneByOptions, update, softRemove, countBy, create };
+	}
+
+	beforeEach(() => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('revokes every live key of the caller’s tenant: inactive first, then withdrawn', async () => {
+		const { instance, find, update, softRemove } = service();
+
+		expect(await instance.revokeApiKey()).toBe(true);
+		expect(find).toHaveBeenCalledWith({ where: { tenantId: TENANT } });
+		expect(update).toHaveBeenCalledWith('key-1', { isActive: false });
+		expect(softRemove).toHaveBeenCalledWith('key-1');
+	});
+
+	it('answers false for a tenant that holds no key, and writes nothing', async () => {
+		const { instance, update, softRemove } = service([]);
+
+		expect(await instance.revokeApiKey()).toBe(false);
+		expect(update).not.toHaveBeenCalled();
+		expect(softRemove).not.toHaveBeenCalled();
+	});
+
+	it('generates a new pair once the old one is revoked, because only live keys count', async () => {
+		const { instance, countBy, create } = service();
+		// The CRUD count reads live rows only; after a revocation the tenant has none.
+		countBy.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+
+		await expect(instance.generateApiKey({ name: 'Second' } as never)).rejects.toThrow(/already exists/);
+		const pair = await instance.generateApiKey({ name: 'Replacement' } as never);
+
+		expect(countBy).toHaveBeenLastCalledWith({ tenantId: TENANT });
+		expect(create).toHaveBeenCalledTimes(1);
+		expect(pair.name).toBe('Replacement');
+		expect(pair.apiSecret).toEqual(expect.any(String));
+	});
+
+	it('renames the live key and answers it without the key or the secret', async () => {
+		const { instance, update } = service();
+
+		const summary = await instance.renameApiKey('  Storefront v2  ');
+
+		expect(update).toHaveBeenCalledWith('key-1', { name: 'Storefront v2' });
+		expect(summary).toEqual(expect.objectContaining({ id: 'key-1', name: 'Storefront v2', tenantId: TENANT }));
+		expect(summary).not.toHaveProperty('apiKey');
+		expect(summary).not.toHaveProperty('apiSecret');
+	});
+
+	it('refuses an empty name, a tenant with no live key, and a request with no tenant', async () => {
+		await expect(service().instance.renameApiKey('   ')).rejects.toBeInstanceOf(BadRequestException);
+		await expect(service([]).instance.renameApiKey('Storefront')).rejects.toBeInstanceOf(NotFoundException);
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
+		await expect(service().instance.renameApiKey('Storefront')).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(service().instance.revokeApiKey()).rejects.toBeInstanceOf(ForbiddenException);
 	});
 });
 

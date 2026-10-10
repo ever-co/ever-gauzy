@@ -1,4 +1,4 @@
-import { HttpStatus, HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpStatus, HttpException, Injectable } from '@nestjs/common';
 import { createHash, timingSafeEqual } from 'crypto';
 import { ID, IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
 import { generatePassword, generateSha256Hash } from '@gauzy/utils';
@@ -7,6 +7,19 @@ import { TenantAwareCrudService } from '../core/crud';
 import { TenantApiKey } from './tenant-api-key.entity';
 import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tenant-api-key.repository';
 import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-key.repository';
+
+/**
+ * A tenant's API key as an administrator may read it back: which pair it is and what it is called — never
+ * the key or the secret. The secret is shown once, at issuance, and stored only as a digest.
+ */
+export interface ITenantApiKeyView {
+	id: ID;
+	tenantId: ID;
+	name?: string;
+	isActive?: boolean;
+	createdAt?: Date;
+	updatedAt?: Date;
+}
 
 @Injectable()
 export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
@@ -76,7 +89,86 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	}
 
 	/**
+	 * Renames the caller's tenant's API key. The name is the only member that may change: the key and the
+	 * secret are a pair issued together, and a new pair is had by revoking this one and generating again.
+	 *
+	 * @param name The new label, 1 to 255 characters.
+	 * @returns The key as an administrator may read it back — without the key or the secret.
+	 * @throws ForbiddenException when the request carries no tenant.
+	 * @throws NotFoundException when the tenant holds no live key.
+	 */
+	async renameApiKey(name: string): Promise<ITenantApiKeyView> {
+		const tenantId = this.tenantOfCaller();
+		const label = typeof name === 'string' ? name.trim() : '';
+
+		if (!label || label.length > 255) {
+			throw new BadRequestException('A key name must be 1 to 255 characters.');
+		}
+
+		// The tenant-scoped read: a revoked (soft-deleted) key is not found, so it cannot be renamed back.
+		const key = await this.findOneByOptions({ where: { tenantId }, order: { createdAt: 'DESC' } } as never);
+
+		await this.update(key.id, { name: label });
+
+		return this.view({ ...key, name: label });
+	}
+
+	/**
+	 * Revokes the caller's tenant's API key, so that a leaked pair stops authenticating and a new pair can
+	 * be generated.
+	 *
+	 * The row is marked inactive — the check every authenticating read makes — and then withdrawn by soft
+	 * delete, so it no longer counts as the tenant's key (`findByTenantId`, which refuses a second key,
+	 * reads live rows only) while the record of it is kept. Every live key of the tenant is revoked: there
+	 * should be one, and a second one left by an old race must not survive a revocation either.
+	 *
+	 * @returns `true` when a key was revoked, `false` when the tenant held none.
+	 * @throws ForbiddenException when the request carries no tenant.
+	 */
+	async revokeApiKey(): Promise<boolean> {
+		const tenantId = this.tenantOfCaller();
+		const keys = await this.find({ where: { tenantId } } as never);
+
+		if (!keys?.length) {
+			return false;
+		}
+
+		for (const key of keys) {
+			await this.update(key.id, { isActive: false });
+			await this.softRemove(key.id);
+		}
+
+		return true;
+	}
+
+	/** The credential's tenant, or a refusal: a key is always the caller's own tenant's. */
+	private tenantOfCaller(): ID {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			throw new ForbiddenException();
+		}
+
+		return tenantId;
+	}
+
+	/** The members an administrator may read back; built member by member so no secret can ride along. */
+	private view(key: TenantApiKey): ITenantApiKeyView {
+		return {
+			id: key.id,
+			tenantId: key.tenantId,
+			name: key.name,
+			isActive: key.isActive,
+			createdAt: key.createdAt,
+			updatedAt: key.updatedAt
+		};
+	}
+
+	/**
 	 * Checks whether an API key exists for the given tenant ID.
+	 *
+	 * Live keys only: a revoked key is soft-deleted, and the CRUD count reads live rows only, so a revoked
+	 * key never blocks generating a new pair.
 	 *
 	 * @param tenantId - The unique identifier of the tenant.
 	 * @returns A promise resolving to `true` if an API key exists for the tenant, otherwise `false`.
