@@ -1,28 +1,34 @@
 name: Egress audit
 # cspell:words corepack println DOTENV readdir nomock pcaps
 
-# Proves at runtime, with the published API image, what the anonymous usage statistics module may
-# send: nothing at all when it is switched off, and only the documented report when it is on. The
-# API runs with a throw-away PostgreSQL on Docker networks with no route out; CoreDNS is its only resolver and a
-# capture sees every connection attempt and DNS query from before the process starts. Modes
-# (tools/egress-audit/README.md):
+# Proves at runtime, with the published API and web app images, what the Ever Platform modules
+# (anonymous usage statistics, connection) may send: nothing at all when they are switched off or
+# loaded but idle, and only the documented report when the statistics are on. The API runs with a
+# throw-away PostgreSQL on Docker networks with no route out; CoreDNS is its only resolver and a
+# capture sees every connection attempt and DNS query from before the process starts. The browser
+# leg does the same for the web app: a real browser in its own sniffed namespace signs in, opens
+# every route of the Angular router (tools/egress-audit/ui-routes.json) and fails the run when the
+# UI looks up, requests or links an Ever host. Modes (tools/egress-audit/README.md):
 #
-#   off             EVER_STATS_ENABLED=false in the container environment: no Ever host looked
-#                   up, no connection attempt out, every statistics route 404
-#   off_env_file    the same switch written ONLY in the API's .env.local file
-#   positive_stats  module on against the mock platform: reports accepted (202), and no call
-#                   other than the statistics report
-#   control         positive_stats without the mock must FAIL, so a green run is not a blind one
+#   off             both modules off (EVER_STATS_ENABLED=false in the container environment): no
+#                   Ever host looked up or requested by the API or the browser, no connection
+#                   attempt out, every statistics route 404, no new Ever link in the UI
+#   off_env_file    the statistics switch written ONLY in the API's .env.local file (API leg)
+#   loaded_off      both modules loaded (statistics on by configuration, then switched off by the
+#                   operator in Settings; connection on, not connected): no call at all, in both legs
+#   positive_stats  statistics on against the mock platform: reports accepted (202), no other call;
+#                   the settings page's status request seen from the browser
+#   control         positive_stats without the mock platform must FAIL, so a green run is not a
+#                   blind one
 #
-# "Switched off in Settings" (module loaded, no call at all, Send now 409) is proven by the plugin
-# suite against the same mock platform in build.yml (build-api).
-#
-# The harness is the egress audit of the SDK's dev tools (`ever-egress-audit` of `@ever-co/connect-tools`,
-# the exact version the statistics plugin pins in its package.json), installed from npm for this run;
+# The harness is the egress audit of the SDK's dev tools (`ever-egress-audit` of
+# `@ever-co/connect-tools`), installed with `npm ci` from tools/egress-audit/package-lock.json;
 # nothing of it is copied into this repository.
 #
-# Runs every day on the newest published develop API image (the demo image), and on demand with
-# any API image. The configuration comes from the default branch; no code of a pull request runs.
+# Runs every day on the newest published develop images (the demo images), on demand with any
+# images, and on pull requests: the route list and baseline checks on every change to the UI's
+# routes, the audit itself when its inputs change. The audit runs the published images: no code of
+# a pull request runs in it.
 on:
   schedule:
     - cron: '30 6 * * *'
@@ -32,57 +38,200 @@ on:
         description: 'The Gauzy API image to audit'
         required: true
         default: 'ghcr.io/ever-co/gauzy-api-demo:latest'
+      webapp_image:
+        description: 'The Gauzy web app image to audit'
+        required: true
+        default: 'ghcr.io/ever-co/gauzy-webapp-demo:latest'
+  pull_request:
+    paths:
+      - '.github/workflows/egress-audit.yml'
+      - 'tools/egress-audit/**'
+      - 'apps/gauzy/src/**'
+      - 'packages/ui-*/**'
+      - 'packages/plugin-ui/**'
+      - 'packages/plugins/*-ui/**'
+      - 'tools/ever-platform/**'
+      - '**/package.json'
+      - '**/yarn.lock'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
+  AUDIT_DIR: tools/egress-audit
   AUDIT_CONFIG: tools/egress-audit/egress-audit.config.json
   AUDIT_ARTIFACTS: egress-audit-artifacts
+  # The baseline of Ever links the UI rendered before the modules (tools/egress-audit/ui-baseline.json)
+  # may only shrink. It was adopted (--first-version) by the change that added it; from then on every
+  # pull request compares it with its base. 'true' only in a change that adds a new baseline file.
+  BASELINE_FIRST_VERSION: 'false'
 
 jobs:
+  inputs:
+    name: egress-audit inputs
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs, the
+    # schedule and manual runs still run. GitHub-hosted: nothing here needs the self-hosted fleet.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      audit: ${{ steps.scope.outputs.audit }}
+    steps:
+      - name: Checkout (full history, for the baseline check)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+
+      - name: Install the harness (tools/egress-audit/package-lock.json)
+        run: npm ci --prefix "$AUDIT_DIR" --ignore-scripts --no-audit --no-fund
+
+      - name: The route list is in step with the Angular router
+        run: |
+          node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" ui-routes \
+            --framework angular --entry apps/gauzy/src/app/app.routes.ts --out "$AUDIT_DIR/ui-routes.json" --check
+
+      - name: The baseline of Ever links only shrinks
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          flag=""
+          if [ "$BASELINE_FIRST_VERSION" = "true" ]; then flag="--first-version"; fi
+          node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
+            --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag
+
+      - name: No dependency on a private ever-co repository (the default branch must build for anyone)
+        if: ${{ github.event_name != 'pull_request' || github.base_ref == 'develop' }}
+        run: |
+          node --test tools/ever-platform/check-private-deps.test.mjs
+          node tools/ever-platform/check-private-deps.mjs
+
+      - name: Run the audit?
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # On a pull request the audit runs only when its own inputs change: it audits the published
+          # images, so a change elsewhere is audited once it is merged and built.
+          audit=true
+          if [ "$EVENT" = "pull_request" ]; then
+            if git diff --quiet "origin/$BASE_REF...HEAD" -- "$AUDIT_DIR" .github/workflows/egress-audit.yml; then audit=false; fi
+          fi
+          echo "audit=$audit" | tee -a "$GITHUB_OUTPUT"
+
   egress-audit:
-    name: egress-audit
+    name: egress-audit (${{ matrix.mode }})
+    needs: inputs
+    if: ${{ !cancelled() && needs.inputs.result == 'success' && needs.inputs.outputs.audit == 'true' }}
     # GitHub-hosted on purpose: the capture needs Docker with NET_RAW and NET_ADMIN.
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: 'off'
+            run: off
+            dotenv: api-empty.env
+            expect: 0
+          - mode: off_env_file
+            run: off_env_file
+            dotenv: api-stats-off.env
+            expect: 0
+          - mode: loaded_off
+            run: loaded_off
+            dotenv: api-empty.env
+            expect: 0
+          - mode: positive_stats
+            run: positive_stats
+            dotenv: api-empty.env
+            expect: 0
+          # positive_stats without the mock platform must report a violation (exit 1), so a green
+          # run is never a blind one.
+          - mode: control
+            run: positive_stats
+            args: --no-mock
+            dotenv: api-empty.env
+            expect: 1
     steps:
-      - name: Free disk space for the API image
+      - name: Free disk space for the images
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
           df -h /
 
+      - name: Docker Hub images through Google's public mirror (Docker Hub falls back when it lacks one)
+        run: |
+          # The modes pull the same Docker Hub images in parallel from shared runner addresses, which
+          # Docker Hub rate-limits; every image of the audit is pinned by digest, so the mirror serves
+          # the same bytes.
+          cfg=/etc/docker/daemon.json
+          if [ -s "$cfg" ]; then current=$(cat "$cfg"); else current='{}'; fi
+          echo "$current" | jq '. + {"registry-mirrors": ["https://mirror.gcr.io"]}' | sudo tee "$cfg" > /dev/null
+          sudo systemctl restart docker
+          docker info --format '{{json .RegistryConfig.Mirrors}}'
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: 26
 
-      - name: Install the harness (@ever-co/connect-tools, the version the statistics plugin pins)
+      - name: Install the harness (tools/egress-audit/package-lock.json)
         run: |
-          version=$(node -p "require('./packages/plugins/ever-stats/package.json').devDependencies['@ever-co/connect-tools']")
-          npm install --prefix "$RUNNER_TEMP/egress-audit" --no-save --no-audit --no-fund --ignore-scripts "@ever-co/connect-tools@$version"
-          harness="$RUNNER_TEMP/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs"
+          npm ci --prefix "$AUDIT_DIR" --ignore-scripts --no-audit --no-fund
+          harness="$PWD/$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs"
           node "$harness" --help > /dev/null
           echo "EGRESS_AUDIT=$harness" >> "$GITHUB_ENV"
 
-      - name: Pull the API image
+      - name: Pull the images
         env:
           IMAGE: ${{ github.event.inputs.image || 'ghcr.io/ever-co/gauzy-api-demo:latest' }}
+          WEBAPP_IMAGE: ${{ github.event.inputs.webapp_image || 'ghcr.io/ever-co/gauzy-webapp-demo:latest' }}
         run: |
-          docker pull "$IMAGE"
-          docker pull postgres:18-alpine
+          pull() { for attempt in 1 2 3 4 5; do docker pull -q "$1" && return 0; sleep $((attempt * 20)); done; return 1; }
+          pull "$IMAGE"
+          pull "$WEBAPP_IMAGE"
+          pull public.ecr.aws/docker/library/postgres:18-alpine
+          # The harness's own images (CoreDNS, the sniffer, the namespace holder, the driver and the
+          # browser), read from the installed harness so they follow its pins.
+          dist="$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist"
+          for ref in $(grep -rhoE '[a-z0-9./_-]+:[a-z0-9._-]+@sha256:[a-f0-9]{64}' "$dist/egress-audit/lib" "$dist/egress-audit/compose.audit.yml" | sort -u); do pull "$ref"; done
+          for ref in $(sed -n 's/^FROM \([^ ]*\).*/\1/p' "$dist/mock-platform/Dockerfile" | sort -u); do pull "$ref"; done
           echo "GAUZY_API_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          echo "GAUZY_WEBAPP_IMAGE=$WEBAPP_IMAGE" >> "$GITHUB_ENV"
           commit=$(docker image inspect "$IMAGE" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^GAUZY_APP_COMMIT=//p')
-          echo "The image was built from commit ${commit:-<unknown>}." | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "The API image was built from commit ${commit:-<unknown>}." | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "The web app image is $(docker image inspect "$WEBAPP_IMAGE" --format '{{index .RepoDigests 0}}')." | tee -a "$GITHUB_STEP_SUMMARY"
+          df -h /
+
+      - name: The web app image serves its page (outside the audit, so a broken image is named here)
+        run: |
+          docker run -d --name webapp-smoke -e API_BASE_URL=http://api:3000 -e CLIENT_BASE_URL=http://webapp:4200 -p 127.0.0.1:4299:4200 "$GAUZY_WEBAPP_IMAGE" > /dev/null
+          ok=false
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4299/; then ok=true; break; fi
+            sleep 3
+          done
+          docker logs webapp-smoke 2>&1 | grep -v '^+ ' | tail -20 || true
+          docker rm -f webapp-smoke > /dev/null
+          if [ "$ok" != true ]; then echo "::error::the web app image did not serve its page within 3 minutes (port 4200 of the container, published as 127.0.0.1:4299)"; exit 1; fi
+          echo "The web app image serves its page."
 
       - name: Write the API .env.local files of the modes, and a secret for this run
         run: |
@@ -91,62 +240,56 @@ jobs:
           echo "GAUZY_AUDIT_SECRET=$secret" >> "$GITHUB_ENV"
           : > "$RUNNER_TEMP/api-empty.env"
           printf 'EVER_STATS_ENABLED=false\n' > "$RUNNER_TEMP/api-stats-off.env"
-          df -h /
 
-      - name: 'off: EVER_STATS_ENABLED=false in the container environment'
-        if: ${{ !cancelled() }}
+      - name: 'Audit: ${{ matrix.mode }}'
         env:
-          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
-        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode off --artifacts "$AUDIT_ARTIFACTS" --verbose
-
-      - name: 'off_env_file: EVER_STATS_ENABLED=false only in the API .env.local file'
-        if: ${{ !cancelled() }}
-        env:
-          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-stats-off.env
-        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode off_env_file --artifacts "$AUDIT_ARTIFACTS" --verbose
-
-      - name: 'positive_stats: on, against the mock platform'
-        if: ${{ !cancelled() }}
-        env:
-          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
-        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode positive_stats --artifacts "$AUDIT_ARTIFACTS" --verbose
-
-      - name: 'control: positive_stats without the mock platform must fail'
-        if: ${{ !cancelled() }}
-        env:
-          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
+          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/${{ matrix.dotenv }}
+          RUN_MODE: ${{ matrix.run }}
+          RUN_ARGS: ${{ matrix.args }}
+          EXPECT: ${{ matrix.expect }}
+          # Names added to the never-allowed list for this run, kept out of the public files: from a
+          # secret, so the logs mask them, and the reports name them extra#<n>. Empty when unset.
+          EVER_EGRESS_EXTRA_HOSTS: ${{ secrets.EVER_EGRESS_EXTRA_HOSTS }}
         run: |
           set +e
-          node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode positive_stats --no-mock --artifacts "$AUDIT_ARTIFACTS" --verbose
+          node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode "$RUN_MODE" $RUN_ARGS --artifacts "$AUDIT_ARTIFACTS" --verbose
           code=$?
           set -e
-          if [ "$code" -ne 1 ]; then
-            echo "::error::without the mock platform the audit must report a violation (exit 1); it exited $code, so a green run could be a blind one"
+          if [ "$code" -ne "$EXPECT" ]; then
+            if [ "$EXPECT" -eq 1 ]; then
+              echo "::error::without the mock platform the audit must report a violation (exit 1); it exited $code, so a green run could be a blind one"
+            else
+              echo "::error::the audit exited $code (1: a violation, 2: a fault that proves nothing); see report.json in the artifact"
+            fi
             exit 1
           fi
-          echo "The control failed as it must (exit 1)."
+          if [ "$EXPECT" -eq 1 ]; then echo "The control failed as it must (exit 1)."; fi
 
       - name: Summary
         if: ${{ !cancelled() }}
+        env:
+          MODE: ${{ matrix.mode }}
         run: |
           node -e '
             const fs = require("fs"), path = require("path");
             const dir = process.env.AUDIT_ARTIFACTS;
-            const rows = ["| Mode | Exit | Violations | DNS queries | Connection attempts | Calls |", "|---|---|---|---|---|---|"];
-            for (const mode of fs.existsSync(dir) ? fs.readdirSync(dir).sort() : []) {
-              const file = path.join(dir, mode, "report.json");
+            const rows = ["| Run | Exit | Violations | Faults | DNS queries | Connection attempts | Calls | Browser: routes loaded, HAR entries, DOM refs (baselined) |", "|---|---|---|---|---|---|---|---|"];
+            for (const run of fs.existsSync(dir) ? fs.readdirSync(dir).sort() : []) {
+              const file = path.join(dir, run, "report.json");
               if (!fs.existsSync(file)) continue;
               const r = JSON.parse(fs.readFileSync(file, "utf8"));
-              const rules = Object.entries(r.summary.rules).map(([k, v]) => `${k}: ${v}`).join(", ") || "none";
-              rows.push(`| ${mode} | ${r.exit} | ${rules} | ${r.summary.dns_queries} | ${r.summary.connection_attempts} | ${r.summary.calls ? r.summary.calls.join(", ") || "none" : "-"} |`);
+              const rules = Object.entries(r.summary.rules ?? {}).map(([k, v]) => `${k}: ${v}`).join(", ") || "none";
+              const b = r.summary.browser;
+              const browser = b ? (b.leg === "ran" ? `${b.loaded}/${b.visits}, ${b.checks.f.entries}, ${b.checks.g.refs} (${b.checks.g.baselined})` : b.leg ?? "-") : "-";
+              rows.push(`| ${run} | ${r.exit} | ${rules} | ${(r.faults ?? []).length} | ${r.summary.dns_queries} | ${r.summary.connection_attempts} | ${r.summary.calls ? r.summary.calls.join(", ") || "none" : "-"} | ${browser} |`);
             }
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Egress audit\n\n${rows.join("\n")}\n\nThe positive_stats-nomock row is the control and must exit 1.\n`);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Egress audit: ${process.env.MODE}\n\n${rows.join("\n")}\n\nThe control (positive_stats-nomock) must exit 1.\n`);
           '
 
-      - name: Upload the evidence (pcaps, DNS logs, reports)
+      - name: Upload the evidence (pcaps, DNS logs, HAR, reports)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: egress-audit
+          name: egress-audit-${{ matrix.mode }}
           path: ${{ env.AUDIT_ARTIFACTS }}
           retention-days: 14

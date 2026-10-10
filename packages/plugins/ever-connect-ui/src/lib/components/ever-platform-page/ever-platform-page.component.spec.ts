@@ -1,3 +1,4 @@
+// cspell:ignore abcdefghijk
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
@@ -132,5 +133,61 @@ describe('EverPlatformPageComponent', () => {
 		expect(component.canAskConsent({ instance_wide: false, state: 'coming_soon' } as never)).toBe(false);
 		expect(component.canAskConsent({ instance_wide: false, state: 'denied_by_policy' } as never)).toBe(false);
 		expect(component.canAskConsent({ instance_wide: false, state: 'enabled' } as never)).toBe(false);
+	});
+	it('the Entitlements tab shows each licence as active, the grace notice, and the import for the operator only', () => {
+		const document = {
+			subject: 'link',
+			status: 'stale',
+			ladder: 'grace',
+			licence_ids: ['EVER-GAUZY-SB-1A2B3C4D'],
+			seq: 4,
+			issued_at: '2026-10-01T00:00:00.000Z',
+			expires_at: '2026-10-08T00:00:00.000Z',
+			fetched_at: '2026-10-02T00:00:00.000Z',
+			handle: 'acme',
+			tier: 'paid',
+			plan: 'gauzy-team',
+			features: { discoverability: true },
+			limits: {},
+			meters: {}
+		};
+		api.entitlement.mockReturnValue(of({ instance: null, link: document }));
+		api.status.mockReturnValue(of(STATUS));
+		const { el, find } = render();
+		const licences = Array.from(el.querySelectorAll('[data-test="licence"]'));
+		expect(licences.map((node) => node.getAttribute('data-licence'))).toEqual(['EVER-GAUZY-SB-1A2B3C4D']);
+		expect(licences[0].textContent).toContain('EVER_CONNECT.ENTITLEMENTS.LICENCE_ACTIVE');
+		expect(el.textContent?.toLowerCase()).not.toContain('licence key');
+		expect(find('entitlement-grace')).not.toBeNull();
+		expect(find('entitlement-paused')).toBeNull();
+		expect(find('import-entitlement')).not.toBeNull();
+	});
+
+	it('another administrator gets no import, and a paused document says so', () => {
+		api.entitlement.mockReturnValue(
+			of({
+				instance: null,
+				link: {
+					subject: 'link',
+					status: 'paused',
+					ladder: 'paused',
+					licence_ids: [],
+					seq: 1,
+					issued_at: null,
+					expires_at: null,
+					fetched_at: null,
+					handle: null,
+					tier: null,
+					plan: null,
+					features: {},
+					limits: {},
+					meters: {}
+				}
+			})
+		);
+		api.status.mockReturnValue(of({ ...STATUS, operator: false, connection: null }));
+		const { find } = render();
+		expect(find('entitlement-paused')).not.toBeNull();
+		expect(find('import-entitlement')).toBeNull();
 	});
 });

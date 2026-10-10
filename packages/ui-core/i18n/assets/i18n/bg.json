@@ -5341,7 +5341,10 @@
 			"payment-receipt": "Касова бележка",
 			"reject-candidate": "Отхвърли кандидат"
 		},
-		"HTML_EDITOR": "HTML редактор"
+		"HTML_EDITOR": "HTML редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Тръбопроводи",

@@ -96,7 +96,11 @@
 		"FEATURES": "Features",
 		"EXPIRES": "Valid until",
 		"NONE": "No entitlement document yet.",
-		"REFRESH": "Refresh"
+		"REFRESH": "Refresh",
+		"LICENCE_ACTIVE": "Licence {{ id }} active",
+		"GRACE": "Entitlements could not be refreshed since {{ date }}. Ever Platform features keep working during the grace period.",
+		"PAUSED": "Ever Platform features paused. Reconnect to Ever Platform.",
+		"IMPORT": "Import file"
 	},
 	"AUDIT": {
 		"MORE": "Show more"
@@ -112,7 +116,9 @@
 		"CONSENT_OPENED": "app.ever.co opened in a new tab. Reopen this page afterwards to see the result.",
 		"DISABLED": "Disabled.",
 		"DISABLED_OFFLINE": "Disabled here. Ever Platform has not taken it yet; it is told again until it does.",
-		"KEY_ROTATED": "The connection key was replaced."
+		"KEY_ROTATED": "The connection key was replaced.",
+		"ENTITLEMENT_IMPORTED": "Entitlement document #{{ seq }} imported.",
+		"ENTITLEMENT_UNCHANGED": "This entitlement document (#{{ seq }}) is already the current one."
 	},
 	"ERRORS": {
 		"key_material_missing": "Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) on the API first. Nothing was sent.",
@@ -131,6 +137,7 @@
 		"entitlement_unverifiable": "Ever Platform's entitlement document could not be verified. The installation was not connected.",
 		"platform_unreachable": "Ever Platform could not be reached. Please try again later.",
 		"rate_limited": "Too many requests. Please try again later.",
-		"generic": "The request failed ({{ code }})."
+		"generic": "The request failed ({{ code }}).",
+		"entitlement_invalid": "The entitlement document was refused: it does not name this installation, it is older than the current one, or it does not verify."
 	}
 }
