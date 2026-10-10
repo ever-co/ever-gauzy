@@ -165,6 +165,42 @@
 					</nb-card>
 				</div>
 			</div>
+			@if (!isAgent && notificationDisplays.length > 1) {
+				<div class="row mt-2">
+					<div class="col-12">
+						<h6>
+							{{ 'TIMER_TRACKER.SETTINGS.NOTIFICATION_DISPLAY' | translate }}
+						</h6>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-12">
+						<p>
+							{{ 'TIMER_TRACKER.SETTINGS.SHOW_NOTIF_ON_DISPLAY' | translate }}
+						</p>
+					</div>
+				</div>
+				<div class="row notification">
+					<div class="col-10">
+						<nb-card>
+							<nb-card-body>
+								<nb-select
+									[placeholder]="'TIMER_TRACKER.SETTINGS.PRIMARY_DISPLAY' | translate"
+									[(ngModel)]="screenshotNotificationDisplayId"
+									(ngModelChange)="selectNotificationDisplay($event)"
+								>
+									<nb-option [value]="null">
+										{{ 'TIMER_TRACKER.SETTINGS.PRIMARY_DISPLAY' | translate }}
+									</nb-option>
+									@for (display of notificationDisplays; track display.id) {
+										<nb-option [value]="display.id">{{ display.label }}</nb-option>
+									}
+								</nb-select>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+			}
 			<div class="row mt-2">
 				<div class="col-12">
 					<h6>
