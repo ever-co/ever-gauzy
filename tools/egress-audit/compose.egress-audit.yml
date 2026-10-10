@@ -7,9 +7,9 @@
 #   audit's browser opens it by its service name and it calls the API by its service name).
 # - GAUZY_AUDIT_SECRET: a random value the workflow makes per run (never committed); the production
 #   image refuses to start without its token and session secrets.
-# - The seeded accounts get addresses under example.com and a password of the audit's own (the
-#   browser signs in as the Super Admin with it; see adapter.mjs). They exist only in this
-#   throw-away database, on networks with no route out.
+# - The seeded accounts get addresses under example.com; the Super Admin's password is made per run
+#   by the adapter (the browser signs in with it). They exist only in this throw-away database, on
+#   networks with no route out.
 # - GAUZY_AUDIT_DOTENV: the API's .env.local of the mode (empty, or EVER_STATS_ENABLED=false for
 #   `off_env_file`), mounted in the API's working directory.
 # - PostgreSQL (throw-away, on the sealed networks): the migrations of a new database run far faster
@@ -35,7 +35,8 @@ services:
             EXPRESS_SESSION_SECRET: ${GAUZY_AUDIT_SECRET}-session
             # The first start seeds the default accounts, which production refuses with known passwords.
             DEMO_SUPER_ADMIN_EMAIL: admin@example.com
-            DEMO_SUPER_ADMIN_PASSWORD: egress-audit-seed-only
+            # The audit's adapter gives each run its own (see adapter.mjs); this is the fallback.
+            DEMO_SUPER_ADMIN_PASSWORD: ${GAUZY_AUDIT_SECRET}-super-admin
             DEMO_ADMIN_EMAIL: local.admin@example.com
             DEMO_ADMIN_PASSWORD: ${GAUZY_AUDIT_SECRET}-admin
             DEMO_EMPLOYEE_EMAIL: employee@example.com

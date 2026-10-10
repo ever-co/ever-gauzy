@@ -11,12 +11,25 @@
 // - loaded_off: the Super Admin (the instance operator) switches the statistics off in Settings.
 // - browser leg: sign in through the real sign-in page, and keep checking that the session holds.
 
-/**
- * The seeded Super Admin of the audit's throw-away database (compose.egress-audit.yml). Not a
- * secret: the database lives only inside the sealed audit network for one run.
- */
+import { randomBytes } from 'node:crypto';
+
+/** The seeded Super Admin of the audit's throw-away database (compose.egress-audit.yml). */
 const SEED_EMAIL = 'admin@example.com';
-const SEED_PASSWORD = 'egress-audit-seed-only';
+
+/**
+ * Its password, made for this run where the harness reads the adapter's `env` (the runner) and
+ * handed to the API (which seeds it) and to the hooks as `ctx.env.DEMO_SUPER_ADMIN_PASSWORD`. The
+ * driver and the browser import this file too; there the value below is unused.
+ */
+const RUN_SEED = { DEMO_SUPER_ADMIN_PASSWORD: `audit-${randomBytes(18).toString('hex')}` };
+const seedPassword = (ctx) => {
+	const value = ctx.env?.DEMO_SUPER_ADMIN_PASSWORD;
+	if (!value) throw new Error('no seed password in the mode environment (DEMO_SUPER_ADMIN_PASSWORD)');
+	return value;
+};
+
+/** The route of a web app URL: its fragment without the query (`#/pages/settings`). */
+const routeOf = (url) => new URL(url).hash.split('?')[0] || '/';
 
 /**
  * A value for a route parameter that names something the seed does not have: the page still
@@ -74,11 +87,12 @@ const LOADED_OFF = {
 };
 
 /** Signs in through the API as the seeded Super Admin; answers the bearer headers and the user. */
-async function apiLogin({ baseUrl, fetch }) {
+async function apiLogin(ctx) {
+	const { baseUrl, fetch } = ctx;
 	const response = await fetch(`${baseUrl}/api/auth/login`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ email: SEED_EMAIL, password: SEED_PASSWORD })
+		body: JSON.stringify({ email: SEED_EMAIL, password: seedPassword(ctx) })
 	});
 	if (response.status !== 200 && response.status !== 201) {
 		throw new Error(`the seeded Super Admin could not sign in through the API (${response.status})`);
@@ -100,9 +114,13 @@ function organizationOf(token) {
 
 export default {
 	env: {
-		off: LOADED_BY_MISTAKE_WOULD_SHOW,
-		off_env_file: LOADED_BY_MISTAKE_WOULD_SHOW,
-		loaded_off: LOADED_OFF
+		off: { ...LOADED_BY_MISTAKE_WOULD_SHOW, ...RUN_SEED },
+		off_env_file: { ...LOADED_BY_MISTAKE_WOULD_SHOW, ...RUN_SEED },
+		loaded_off: { ...LOADED_OFF, ...RUN_SEED },
+		positive_stats: RUN_SEED,
+		positive_connect: RUN_SEED,
+		every_trigger: RUN_SEED,
+		positive_managed: RUN_SEED
 	},
 
 	/** Ids for the browser's routes (the user, the organization, the employee): never a token. */
@@ -165,7 +183,7 @@ export default {
 		await page.goto(`${ctx.baseUrl}/auth/login`);
 		try {
 			await page.fill('#input-email', SEED_EMAIL, { timeout: 120_000 });
-			await page.fill('#input-password', SEED_PASSWORD);
+			await page.fill('#input-password', seedPassword(ctx));
 			await Promise.all([
 				page.waitForURL((url) => /^#\/(pages|onboarding)(\/|$)/.test(new URL(url).hash), { timeout: 120_000 }),
 				page.click('form button[type=submit]')
@@ -175,7 +193,7 @@ export default {
 			// page's route and visible text.
 			await page.screenshot({ path: '/out/sign-in-failed.png', fullPage: true }).catch(() => {});
 			const text = await page.evaluate(() => document.body?.innerText ?? '').catch(() => '');
-			ctx.log(`adapter: the sign-in did not complete at ${new URL(page.url()).hash.replace(/\?.*$/, '') || '/'}; the page reads: ${text.replace(/\s+/g, ' ').slice(0, 300)}`);
+			ctx.log(`adapter: the sign-in did not complete at ${routeOf(page.url())}; the page reads: ${text.split(/\s/).filter(Boolean).join(' ').slice(0, 300)}`);
 			throw error;
 		}
 		const signedIn = await page
@@ -183,7 +201,7 @@ export default {
 			.then(() => true)
 			.catch(() => false);
 		if (!signedIn) throw new Error('the sign-in page left no session (no token in the web app store)');
-		ctx.log(`adapter: signed in, landed on ${new URL(page.url()).hash.replace(/\?.*$/, '')}`);
+		ctx.log(`adapter: signed in, landed on ${routeOf(page.url())}`);
 
 		const watch = setInterval(async () => {
 			if (page.isClosed()) return clearInterval(watch);
@@ -195,7 +213,7 @@ export default {
 			}
 			if (!held) {
 				clearInterval(watch);
-				ctx.log(`adapter: the session did not hold (no token at ${new URL(page.url()).hash.replace(/\?.*$/, '')}): closing the page, so the rest of the walk faults`);
+				ctx.log(`adapter: the session did not hold (no token at ${routeOf(page.url())}): closing the page, so the rest of the walk faults`);
 				await page.close().catch(() => {});
 			}
 		}, 2000);
