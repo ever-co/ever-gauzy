@@ -9,9 +9,12 @@ import {
 } from '@gauzy/plugin-fulfillment';
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
 import {
+	ORDER_INVOICING,
+	OrderInvoicingAdapter,
 	OrderLineFulfillmentService,
 	OrderLineService,
 	OrderModule,
+	OrderPlatformAdaptersModule,
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
@@ -83,6 +86,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// that moves it. It also answers how much of a line has been fulfilled, which is what a return
 		// is measured against.
 		OrderModule,
+		// The order package's adapters onto the platform's own documents: the finance document an order is
+		// invoiced and quoted with. A module of its own because the order module is also hosted by the worker,
+		// which builds none of the e-mail, PDF and translation providers the finance module needs.
+		OrderPlatformAdaptersModule,
 		// The pricing package owns what a variant costs, including what it costs again every period.
 		PricingModule,
 		// The purchasing package owns the approval request a purchase order files, and its module
@@ -160,7 +167,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// the failure the binding exists to prevent. (ADR-26's "inside the same transaction" half is unmet on
 		// this path — `recompute` takes no entity manager and this side opens no transaction — and that is
 		// recorded rather than hidden; what the binding buys is that the recompute happens at all.)
-		{ provide: RETURNS_ORDER_TOTALS, useExisting: OrderTotalsService }
+		{ provide: RETURNS_ORDER_TOTALS, useExisting: OrderTotalsService },
+		// An order is billed and quoted with the platform's own invoice and estimate: the order package builds
+		// the document from the order's computed figures, and the core invoice service writes and sends it.
+		{ provide: ORDER_INVOICING, useExisting: OrderInvoicingAdapter }
 	],
 	exports: [
 		PAYMENT_ORDER_LINE_REFUND,
@@ -179,7 +189,8 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		PURCHASING_INVENTORY,
 		WAREHOUSE_FULFILLMENT,
 		RETURNS_SHIPMENT_GATEWAY,
-		RETURNS_REFUND_GATEWAY
+		RETURNS_REFUND_GATEWAY,
+		ORDER_INVOICING
 	]
 })
 export class PluginCompositionModule {}

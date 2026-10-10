@@ -21,6 +21,7 @@ import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChangeService } from '../order-change/order-change.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderHistoryService } from '../order-history/order-history.service';
+import { OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
 import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
@@ -84,7 +85,8 @@ export class OrderResolver {
 		private readonly shippingMethodService: OrderShippingMethodService,
 		private readonly creditLineService: OrderCreditLineService,
 		private readonly historyService: OrderHistoryService,
-		private readonly changeService: OrderChangeService
+		private readonly changeService: OrderChangeService,
+		private readonly invoicingService: OrderInvoicingService
 	) {}
 
 	/**
@@ -309,6 +311,29 @@ export class OrderResolver {
 		@Context() context?: any
 	): Promise<Order> {
 		return this.orderService.archive(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Issues the invoice that bills an order.
+	 *
+	 * The mirror of `POST /orders/:id/invoice`: the same service method, the same grant, the same retry scope
+	 * and the same versioned resource. The order answered carries the invoice in `invoiceId`.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, stamped with its invoice.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.invoice', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'generateOrderInvoice' })
+	async generateOrderInvoice(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.generateInvoice(id, versionExpectationOf(context?.req));
 	}
 
 	/**

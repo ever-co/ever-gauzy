@@ -40,6 +40,7 @@ import { OrderHistoryService } from '../order-history/order-history.service';
 import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
+import { OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
 import { CreateOrderChangeDTO } from '../order-change/dto';
 import { CreateOrderCreditLineDTO } from '../order-credit-line/dto';
 
@@ -76,7 +77,8 @@ export class OrderController extends CrudController<Order> {
 		private readonly creditLineService: OrderCreditLineService,
 		private readonly transactionService: OrderTransactionService,
 		private readonly summaryService: OrderSummaryService,
-		private readonly historyService: OrderHistoryService
+		private readonly historyService: OrderHistoryService,
+		private readonly invoicingService: OrderInvoicingService
 	) {
 		super(orderService);
 	}
@@ -229,6 +231,37 @@ export class OrderController extends CrudController<Order> {
 	@HttpCode(HttpStatus.OK)
 	async archive(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
 		return this.orderService.archive(id, versionExpectationOf(request));
+	}
+
+	/**
+	 * Issues the invoice that bills an order.
+	 *
+	 * The invoice is the platform's own finance document, built from the order — one item per billable line
+	 * and per delivery choice, the order's discount and tax as the order computed them — and the order is
+	 * stamped with it in a write predicated on the version the caller states. Each line's link to the item
+	 * that billed it is recorded in the order's invoice register.
+	 *
+	 * The route states the order grant; issuing the document also requires the finance module's own
+	 * `INVOICES_EDIT`, which the service checks, because the platform's guard reads a route's grants as
+	 * alternatives.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The order, stamped with its invoice.
+	 */
+	@ApiOperation({ summary: 'Invoice an order' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Order invoiced' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order is already invoiced, is a test order, or is in a status that cannot be invoiced'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.invoice', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/invoice')
+	@HttpCode(HttpStatus.OK)
+	async invoice(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.invoicingService.generateInvoice(id, versionExpectationOf(request));
 	}
 
 	/**

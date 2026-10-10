@@ -70,6 +70,7 @@ import { OrderTotalsReconciliationScheduler } from './order-totals/order-totals-
 import { OrderUnitOfWork } from './order-totals/order-unit-of-work';
 import { OrderChangeStalenessScheduler } from './order-change/order-change-staleness.scheduler';
 import { SubscriptionOrderService } from './subscription-order/subscription-order.service';
+import { OrderInvoicingService } from './order-invoicing/order-invoicing.service';
 
 /**
  * The order module.
@@ -148,6 +149,10 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		OrderUnitOfWork,
 		OrderCheckoutHandler,
 		SubscriptionOrderService,
+		// The bridge to the accounting documents that bill an order. The documents themselves are the
+		// platform's finance rows, reached through the `ORDER_INVOICING` port, which this module does not
+		// bind: the binding is the installation's (see `OrderPlatformAdaptersModule`).
+		OrderInvoicingService,
 		OrderLineService,
 		TypeOrmOrderLineRepository,
 		MikroOrmOrderLineRepository,
@@ -211,7 +216,8 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		OrderCreditLineService,
 		OrderHistoryService,
 		OrderCheckoutHandler,
-		SubscriptionOrderService
+		SubscriptionOrderService,
+		OrderInvoicingService
 	]
 })
 export class OrderModule {}
