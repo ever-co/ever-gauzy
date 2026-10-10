@@ -33,7 +33,28 @@ export function entitlementLadder(
 		return 'paused';
 	}
 	const status = entitlementStatus(claims as never, nowS);
-	return status === 'valid' ? 'valid' : status === 'stale' ? 'grace' : 'paused';
+	if (status === 'valid') {
+		return 'valid';
+	}
+	return status === 'stale' ? 'grace' : 'paused';
+}
+
+/** The 422 of a refused import, with the verifier's reason. */
+function importInvalid(reason: string): HttpException {
+	return new HttpException(
+		{ statusCode: 422, code: 'entitlement_invalid', reason, message: 'The entitlement document was refused.' },
+		HttpStatus.UNPROCESSABLE_ENTITY
+	);
+}
+
+/** The `sub` claim of a document, read only to route it (the verifier then requires it), or null. */
+function subjectOf(document: string): string | null {
+	try {
+		const sub = (claimsOfVerifiedJws(document) as { sub?: unknown } | null)?.sub;
+		return typeof sub === 'string' ? sub : null;
+	} catch {
+		return null;
+	}
 }
 
 /** The largest entitlement document accepted from a file (the operator's upload or EVER_ENTITLEMENT_FILE). */
@@ -336,26 +357,7 @@ export class EverConnectEntitlementService {
 		jws: unknown,
 		actor: { actorLabel: ActorLabel; actorUserId?: string | null }
 	): Promise<EntitlementImportResult> {
-		const invalid = (reason: string) =>
-			new HttpException(
-				{
-					statusCode: 422,
-					code: 'entitlement_invalid',
-					reason,
-					message: 'The entitlement document was refused.'
-				},
-				HttpStatus.UNPROCESSABLE_ENTITY
-			);
-		if (typeof jws !== 'string' || jws.trim() === '') {
-			throw invalid('malformed');
-		}
-		const document = jws.trim();
-		if (Buffer.byteLength(document, 'utf8') > ENTITLEMENT_FILE_MAX_BYTES) {
-			throw new HttpException(
-				{ statusCode: 413, code: 'too_large', message: 'An entitlement document is at most 16 KiB.' },
-				HttpStatus.PAYLOAD_TOO_LARGE
-			);
-		}
+		const document = this.checkImportInput(jws);
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected' || !connection.platformInstanceId) {
 			throw new HttpException(
@@ -367,50 +369,17 @@ export class EverConnectEntitlementService {
 				HttpStatus.CONFLICT
 			);
 		}
-		// The subject only routes the document; the verifier then requires exactly that subject.
-		let sub: unknown = null;
-		try {
-			sub = (claimsOfVerifiedJws(document) as { sub?: unknown } | null)?.sub ?? null;
-		} catch {
-			sub = null;
-		}
-		let link: LinkRecord | null = null;
-		if (typeof sub === 'string' && sub.startsWith('link:')) {
-			link = await this.store.linkById(sub.slice('link:'.length));
-			if (!link || link.status === 'unlinked') {
-				await this.importRefused('subject_mismatch', actor);
-				throw invalid('subject_mismatch');
-			}
-		} else if (sub !== `instance:${connection.platformInstanceId}`) {
-			const reason = typeof sub === 'string' ? 'subject_mismatch' : 'malformed';
-			await this.importRefused(reason, actor);
-			throw invalid(reason);
-		}
+		const link = await this.importSubject(document, connection.platformInstanceId, actor);
 		const subject = link ? 'link' : 'instance';
 		const storedSeq = link ? link.entitlementSeq : connection.instanceEntitlementSeq;
 		const storedIat = (link ? link.entitlementIat : connection.instanceEntitlementIat) ?? 0;
-		let verified: VerifiedEntitlement;
-		try {
-			// No cached floor here: the same document again (a restart with the same file) is answered
-			// `unchanged` below, an older one `entitlement_stale`.
-			verified = await this.platform.verify(
-				document,
-				link ? `link:${link.linkId}` : `instance:${connection.platformInstanceId}`
-			);
-			if (link) checkLinkBinding(verified, link);
-		} catch (error) {
-			if (error instanceof EntitlementError || error instanceof LinkBindingError) {
-				await this.importRefused(error.code, actor, link);
-				throw invalid(error.code);
-			}
-			throw error;
-		}
+		const verified = await this.verifyImported(document, connection.platformInstanceId, link, actor);
 		if (storedSeq !== null && verified.seq === storedSeq && verified.claims.iat === storedIat) {
 			return { subject, seq: verified.seq, status: 'unchanged' };
 		}
 		if (storedSeq !== null && (verified.seq <= storedSeq || verified.claims.iat < storedIat)) {
 			await this.importRefused('entitlement_stale', actor, link);
-			throw invalid('entitlement_stale');
+			throw importInvalid('entitlement_stale');
 		}
 		if (link) {
 			await this.store.updateLink(link.linkId, this.linkDocumentColumns(verified));
@@ -432,6 +401,67 @@ export class EverConnectEntitlementService {
 			}
 		});
 		return { subject, seq: verified.seq, status: 'stored' };
+	}
+
+	/** The document of an import, trimmed: 422 when there is none, 413 above 16 KiB. */
+	private checkImportInput(jws: unknown): string {
+		if (typeof jws !== 'string' || jws.trim() === '') {
+			throw importInvalid('malformed');
+		}
+		const document = jws.trim();
+		if (Buffer.byteLength(document, 'utf8') > ENTITLEMENT_FILE_MAX_BYTES) {
+			throw new HttpException(
+				{ statusCode: 413, code: 'too_large', message: 'An entitlement document is at most 16 KiB.' },
+				HttpStatus.PAYLOAD_TOO_LARGE
+			);
+		}
+		return document;
+	}
+
+	/**
+	 * Which stored document an import replaces: `null` for the installation's, else the link it names.
+	 * The subject only routes the document; the verifier then requires exactly that subject. Anything
+	 * else (another installation, a link this installation does not have) is refused and audited.
+	 */
+	private async importSubject(
+		document: string,
+		platformInstanceId: string,
+		actor: { actorLabel: ActorLabel; actorUserId?: string | null }
+	): Promise<LinkRecord | null> {
+		const sub = subjectOf(document);
+		if (sub === `instance:${platformInstanceId}`) {
+			return null;
+		}
+		const link = sub?.startsWith('link:') ? await this.store.linkById(sub.slice('link:'.length)) : null;
+		if (link && link.status !== 'unlinked') {
+			return link;
+		}
+		const reason = sub === null ? 'malformed' : 'subject_mismatch';
+		await this.importRefused(reason, actor);
+		throw importInvalid(reason);
+	}
+
+	/** Verifies an imported document for its subject (no cached floor: the caller compares with the stored one). */
+	private async verifyImported(
+		document: string,
+		platformInstanceId: string,
+		link: LinkRecord | null,
+		actor: { actorLabel: ActorLabel; actorUserId?: string | null }
+	): Promise<VerifiedEntitlement> {
+		try {
+			const verified = await this.platform.verify(
+				document,
+				link ? `link:${link.linkId}` : `instance:${platformInstanceId}`
+			);
+			if (link) checkLinkBinding(verified, link);
+			return verified;
+		} catch (error) {
+			if (error instanceof EntitlementError || error instanceof LinkBindingError) {
+				await this.importRefused(error.code, actor, link);
+				throw importInvalid(error.code);
+			}
+			throw error;
+		}
 	}
 
 	/**
@@ -467,9 +497,9 @@ export class EverConnectEntitlementService {
 			return result;
 		} catch (error) {
 			const answer =
-				error instanceof HttpException ? (error.getResponse() as { reason?: string; code?: string }) : {};
+				error instanceof HttpException ? (error.getResponse() as { reason?: string; code?: string }) : null;
 			this.logger.warn(
-				`EVER_ENTITLEMENT_FILE was not imported (${answer.reason ?? answer.code ?? 'error'}, ${digest}).`
+				`EVER_ENTITLEMENT_FILE was not imported (${answer?.reason ?? answer?.code ?? 'error'}, ${digest}).`
 			);
 			return null;
 		}

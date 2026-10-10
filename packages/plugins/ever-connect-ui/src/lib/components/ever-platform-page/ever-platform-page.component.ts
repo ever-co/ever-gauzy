@@ -783,16 +783,18 @@ export class EverPlatformPageComponent implements OnInit {
 			this.say('EVER_CONNECT.ERRORS.entitlement_invalid', {}, 'danger');
 			return;
 		}
-		file.text().then((jws) =>
-			this.run(this.api.importEntitlement(jws), (result) =>
-				this.say(
-					result.status === 'stored'
-						? 'EVER_CONNECT.NOTICES.ENTITLEMENT_IMPORTED'
-						: 'EVER_CONNECT.NOTICES.ENTITLEMENT_UNCHANGED',
-					{ seq: result.seq }
+		file.text()
+			.then((jws) =>
+				this.run(this.api.importEntitlement(jws), (result) =>
+					this.say(
+						result.status === 'stored'
+							? 'EVER_CONNECT.NOTICES.ENTITLEMENT_IMPORTED'
+							: 'EVER_CONNECT.NOTICES.ENTITLEMENT_UNCHANGED',
+						{ seq: result.seq }
+					)
 				)
 			)
-		);
+			.catch(() => this.say('EVER_CONNECT.ERRORS.entitlement_invalid', {}, 'danger'));
 	}
 
 	moreAudit(): void {
