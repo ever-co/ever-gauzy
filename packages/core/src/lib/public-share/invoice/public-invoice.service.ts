@@ -55,7 +55,7 @@ export class PublicInvoiceService {
 
 		try {
 			// Get invoice
-			const invoice = await this.typeOrmInvoiceRepository.findOneOrFail({
+			let invoice = await this.typeOrmInvoiceRepository.findOneOrFail({
 				select: {
 					tenant: {
 						name: true,
