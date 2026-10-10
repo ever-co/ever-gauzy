@@ -55,10 +55,12 @@ This directory holds only Gauzy's inputs:
   site, legal pages, downloads), recorded with both modules off from `base_commit`. It may only
   shrink, and an entry excuses that one link on that one route, never a lookup or a request.
 
-`allowed_external_hosts` names the two third-party hosts the web app loads by default whatever the
-modules do: Google Fonts (`fonts.googleapis.com`, the stylesheet of the app's fonts) and Google Maps
-(`maps.googleapis.com`, the maps script). They may be looked up (in the sealed networks they reach
-nothing); an Ever host can never be allowed.
+`allowed_external_hosts` names the third-party hosts the web app reaches by default whatever the
+modules do, none of them Ever's: Google Fonts (`fonts.googleapis.com`, the fonts' stylesheet), Google
+Maps (`maps.googleapis.com`, the maps script), OpenStreetMap tiles (`a.`, `b.`,
+`c.tile.openstreetmap.org`, the location maps), `dummyimage.com` (placeholder images of records
+without one) and `github.com` (the GitHub integration page opens the GitHub App installation). They
+may be looked up (in the sealed networks they reach nothing); an Ever host can never be allowed.
 
 The web app routes in the URL fragment (`/#/pages/...`), so the config's `web_url` ends in `/#` and
 the browser opens each route as `http://webapp:4200/#/<route>`.

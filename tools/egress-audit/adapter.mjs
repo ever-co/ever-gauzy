@@ -24,6 +24,18 @@ const SEED_PASSWORD = 'egress-audit-seed-only';
  */
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
+/**
+ * Whether the web app holds a session: its persisted store (localStorage `_gauzyStore`) has a token.
+ * Runs in the page.
+ */
+const HAS_SESSION = () => {
+	try {
+		return Boolean(JSON.parse(window.localStorage.getItem('_gauzyStore') || '{}')?.persist?.token);
+	} catch {
+		return false;
+	}
+};
+
 /** Every statistics route, with the method the settings page (or the paired Ever Teams) uses. */
 const STATS_ROUTES = [
 	['GET', '/api/ever-stats/status'],
@@ -145,8 +157,8 @@ export default {
 	 * Browser leg: the real sign-in page. The web app routes in the URL fragment (`/#/auth/login`),
 	 * so the config's web_url ends in `/#` and every route is opened as `/#/<route>`.
 	 *
-	 * The session is checked during the whole walk: the web app keeps its token in localStorage
-	 * under `token`, and a walk that lost it (a sign-out, a token refused) closes the page, so every
+	 * The session is checked during the whole walk: the web app keeps its token in its persisted
+	 * store (localStorage `_gauzyStore`, `persist.token`), and a walk that lost it (a sign-out, a token refused) closes the page, so every
 	 * route after that faults instead of passing on the sign-in page.
 	 */
 	async uiLogin(page, ctx) {
@@ -166,15 +178,18 @@ export default {
 			ctx.log(`adapter: the sign-in did not complete at ${new URL(page.url()).hash.replace(/\?.*$/, '') || '/'}; the page reads: ${text.replace(/\s+/g, ' ').slice(0, 300)}`);
 			throw error;
 		}
-		const signedIn = await page.evaluate(() => Boolean(window.localStorage.getItem('token')));
-		if (!signedIn) throw new Error('the sign-in page left no session (no token in localStorage)');
+		const signedIn = await page
+			.waitForFunction(HAS_SESSION, undefined, { timeout: 30_000 })
+			.then(() => true)
+			.catch(() => false);
+		if (!signedIn) throw new Error('the sign-in page left no session (no token in the web app store)');
 		ctx.log(`adapter: signed in, landed on ${new URL(page.url()).hash.replace(/\?.*$/, '')}`);
 
 		const watch = setInterval(async () => {
 			if (page.isClosed()) return clearInterval(watch);
 			let held = true;
 			try {
-				held = await page.evaluate(() => Boolean(window.localStorage.getItem('token')));
+				held = await page.evaluate(HAS_SESSION);
 			} catch {
 				return; // a navigation in flight; the next tick reads again
 			}
