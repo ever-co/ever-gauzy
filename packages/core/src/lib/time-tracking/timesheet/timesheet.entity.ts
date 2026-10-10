@@ -101,7 +101,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@IsOptional()
 	@IsString()
 	@MultiORMColumn({ type: 'text', nullable: true })
-	reason?: string;
+	reason?: string | null;
 
 	/** Additional virtual columns */
 
