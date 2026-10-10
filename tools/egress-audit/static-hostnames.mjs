@@ -81,7 +81,7 @@ export function allowed(file, patterns = ALLOWED) {
 
 /** The Ever hosts and base URL variables a text names, with their counts. */
 export function occurrences(text, lists = loadEverHosts()) {
-	const counts = {};
+	let counts = {};
 	const add = (key) => (counts[key] = (counts[key] ?? 0) + 1);
 	for (const host of hostsInText(text)) if (isEverOwned(host, lists)) add(normaliseHost(host));
 	for (const variable of VARIABLES)

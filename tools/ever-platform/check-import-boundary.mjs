@@ -60,8 +60,16 @@ export function specifiers(text) {
 
 /** The specifiers an entry point re-exports (`export * from`, `export { a } from`). */
 export function reexports(text) {
-	const pattern = /^[ \t]*export\s+(?:type\s+)?(?:\*(?:\s+as\s+\w+)?|\{[^}]*\})\s*from\s*['"]([^'"]+)['"]/gm;
-	return [...text.matchAll(pattern)].map((m) => ({ specifier: m[1], line: lineAt(text, m.index) }));
+	// Parsed, so a re-export written over several lines or with comments is still found.
+	const source = ts.createSourceFile('entry.ts', text, ts.ScriptTarget.Latest, true);
+	return source.statements
+		.filter(
+			(node) => ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
+		)
+		.map((node) => ({
+			specifier: node.moduleSpecifier.text,
+			line: source.getLineAndCharacterOfPosition(node.moduleSpecifier.getStart(source)).line + 1
+		}));
 }
 
 const lineAt = (text, index) => text.slice(0, index).split('\n').length;

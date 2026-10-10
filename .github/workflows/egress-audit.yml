@@ -70,6 +70,10 @@ on:
       - 'apps/**'
       - 'eslint.config.js'
       - '.env.sample'
+      # The static checks read every text file of the tree (deploy files, environment files,
+      # scripts): any change runs the inputs job; the audit itself still runs only when its own
+      # inputs change (see "Run the audit?").
+      - '**'
       - '**/package.json'
       - '**/yarn.lock'
       - '.github/workflows/**'
@@ -150,8 +154,16 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          git show "origin/$BASE_REF:$AUDIT_DIR/static-hostnames.baseline.json" > "$RUNNER_TEMP/static-hostnames.base.json" 2> /dev/null || : > "$RUNNER_TEMP/static-hostnames.base.json"
-          node tools/egress-audit/static-hostnames.mjs --check-shrink "$RUNNER_TEMP/static-hostnames.base.json"
+          base_ref="origin/$BASE_REF"
+          base_path="$AUDIT_DIR/static-hostnames.baseline.json"
+          base_file="$RUNNER_TEMP/static-hostnames.base.json"
+          git rev-parse --verify --quiet "$base_ref^{commit}" > /dev/null || { echo "::error::the base $base_ref is not available"; exit 1; }
+          if git cat-file -e "$base_ref:$base_path" 2> /dev/null; then
+            git show "$base_ref:$base_path" > "$base_file"
+          else
+            : > "$base_file" # the baseline is new in this change
+          fi
+          node tools/egress-audit/static-hostnames.mjs --check-shrink "$base_file"
 
       - name: The import boundary of the Ever Platform modules (scanner and ESLint rule)
         env:
@@ -387,7 +399,8 @@ jobs:
         env:
           WEBAPP_IMAGE: ${{ github.event.inputs.webapp_image || 'ghcr.io/ever-co/gauzy-webapp-demo:latest' }}
         run: |
-          for attempt in 1 2 3 4 5; do docker pull -q "$WEBAPP_IMAGE" && break; sleep $((attempt * 20)); done
+          pull() { for attempt in 1 2 3 4 5; do docker pull -q "$1" && return 0; sleep $((attempt * 20)); done; echo "::error::could not pull $1"; return 1; }
+          pull "$WEBAPP_IMAGE"
           echo "The web app image is $(docker image inspect "$WEBAPP_IMAGE" --format '{{index .RepoDigests 0}}')." | tee -a "$GITHUB_STEP_SUMMARY"
           id=$(docker create "$WEBAPP_IMAGE")
           docker cp "$id:/srv/gauzy" "$RUNNER_TEMP/webapp"

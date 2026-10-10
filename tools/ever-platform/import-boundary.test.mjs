@@ -23,7 +23,7 @@ const EXPECTED = {
 	'packages/plugins/ever-stats/src/stats-imports-connect.ts': [2, 3],
 	'packages/plugins/ever-instance/src/instance-http.ts': [2],
 	'packages/plugins/auth-zitadel/src/zitadel-imports-connect.ts': [2],
-	'packages/plugins/ever-connect/src/index.ts': [3],
+	'packages/plugins/ever-connect/src/index.ts': [6],
 	'packages/plugins/ever-connect-ui/src/ui-imports-server.ts': [2],
 	'apps/api/src/plugins.ts': [],
 	'apps/gauzy/src/app/deep-import.ts': [2, 3]

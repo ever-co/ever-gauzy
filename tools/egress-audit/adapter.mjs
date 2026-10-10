@@ -160,13 +160,31 @@ async function until(what, probe, seconds = 180) {
 /** Signs in and waits until the installation is connected (EVER_CONNECT_CODE at boot); answers the context. */
 async function connected(ctx) {
 	const { headers, token, user } = await apiLogin(ctx);
-	const session = { ...ctx, auth: headers, organizationId: user.lastOrganizationId ?? organizationOf(token) };
-	if (!session.organizationId) throw new Error('the seeded Super Admin has no organization');
+	let session = { ...ctx, auth: { ...headers, ...(user.tenantId ? { 'tenant-id': user.tenantId } : {}) } };
+	// The organization: the one the sign-in names, else the first the Super Admin is an active member of.
+	const memberships = await api(
+		session,
+		'GET',
+		`/api/user-organization?where[userId]=${user.id}&where[isActive]=true&take=20`
+	);
+	const candidates = [
+		user.lastOrganizationId,
+		organizationOf(token),
+		...((memberships.body?.items ?? []).map((m) => m.organizationId) ?? [])
+	].filter((id, index, all) => typeof id === 'string' && all.indexOf(id) === index);
+	if (!candidates.length)
+		throw new Error(`the seeded Super Admin has no organization (memberships: ${memberships.status})`);
 	await until('the connection with EVER_CONNECT_CODE', async () => {
-		const status = await api(session, 'GET', `/api/ever-connect/status?organizationId=${session.organizationId}`);
-		if (status.status !== 200) throw new Error(`status ${status.status}`);
-		if (!status.body?.operator) throw new Error('the seeded Super Admin is not the operator');
-		return status.body.connected ? status.body : null;
+		const answers = [];
+		for (const organizationId of candidates) {
+			const status = await api(session, 'GET', `/api/ever-connect/status?organizationId=${organizationId}`);
+			answers.push(`${organizationId}: ${status.status} ${JSON.stringify(status.body?.message ?? '')}`);
+			if (status.status !== 200) continue;
+			if (!status.body?.operator) throw new Error('the seeded Super Admin is not the operator');
+			session.organizationId = organizationId;
+			return status.body.connected ? status.body : null;
+		}
+		throw new Error(`no organization of the Super Admin answers the status: ${answers.join('; ')}`);
 	});
 	const state = await mock(session, 'state');
 	session.instanceId = state.instances?.[0]?.id;
@@ -182,7 +200,7 @@ async function coreRoutes(session) {
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ email: SEED_EMAIL, password: seedPassword(session) })
 	});
-	const answers = {
+	let answers = {
 		'GET /api/health': (await api(session, 'GET', '/api/health')).status,
 		'POST /api/auth/login': login.status
 	};
@@ -374,8 +392,17 @@ export default {
 		const org = session.organizationId;
 		const before = await coreRoutes(session);
 		ctx.log(`adapter: Gauzy's routes before: ${JSON.stringify(before)}`);
+		const failing = Object.entries(before).filter(([, status]) => status < 200 || status >= 300);
+		if (failing.length) {
+			throw new Error(
+				`Gauzy's own routes must answer before the ladder starts: ${failing.map(([route, status]) => `${route} ${status}`).join('; ')}`
+			);
+		}
 		const realNow = () => Math.floor(Date.now() / 1000);
 		const day = 86_400;
+		// The mock issues documents valid for 7 days (exp = iat + 7 d) with a 30-day grace: issued 8 days
+		// ago it expired a day ago (grace), issued 38 days ago it expired 31 days ago (paused).
+		const LIFETIME_DAYS = 7;
 		const steps = [
 			{
 				name: 'issued 600 s in the future (refused, the stored one kept)',
@@ -383,8 +410,18 @@ export default {
 				ladder: 'valid',
 				newSeq: false
 			},
-			{ name: 'expired a day ago (grace)', at: () => realNow() - 8 * day, ladder: 'grace', newSeq: true },
-			{ name: 'expired 31 days ago (paused)', at: () => realNow() - 38 * day, ladder: 'paused', newSeq: true },
+			{
+				name: `issued ${LIFETIME_DAYS + 1} days ago, expired a day ago (grace)`,
+				at: () => realNow() - (LIFETIME_DAYS + 1) * day,
+				ladder: 'grace',
+				newSeq: true
+			},
+			{
+				name: `issued ${LIFETIME_DAYS + 31} days ago, expired 31 days ago (paused)`,
+				at: () => realNow() - (LIFETIME_DAYS + 31) * day,
+				ladder: 'paused',
+				newSeq: true
+			},
 			{ name: 'issued 200 s ahead (accepted)', at: () => realNow() + 200, ladder: 'valid', newSeq: true }
 		];
 		let seq =
@@ -392,10 +429,15 @@ export default {
 			null;
 		if (seq === null) throw new Error('no entitlement document was stored at connect');
 		for (const step of steps) {
+			let refreshed;
 			await mock(session, 'clock', { set: step.at() });
-			await mock(session, 'entitlement/reissue', { instance_id: session.instanceId });
-			const refreshed = await api(session, 'POST', `/api/ever-connect/entitlement/refresh?organizationId=${org}`);
-			await mock(session, 'clock', { set: realNow() });
+			try {
+				await mock(session, 'entitlement/reissue', { instance_id: session.instanceId });
+				refreshed = await api(session, 'POST', `/api/ever-connect/entitlement/refresh?organizationId=${org}`);
+			} finally {
+				// Back to real time whatever happened, so the rest of the run is recorded on the real clock.
+				await mock(session, 'clock', { set: realNow() });
+			}
 			if (refreshed.status !== 200)
 				throw new Error(
 					`${step.name}: the refresh answered ${refreshed.status} ${JSON.stringify(refreshed.body)}`

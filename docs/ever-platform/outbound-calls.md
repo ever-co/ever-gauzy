@@ -22,7 +22,8 @@ operator made. A call that is listed but whose trigger never happens is never ma
 
 The table is generated from the outbound-call rows of the Ever Platform contract, at the exact version
 the modules pin; a check in CI fails when the table, the modules' READMEs or the egress audit drift
-from it. The row number is the contract's.
+from it. The row number is the contract's. Where Gauzy calls on a schedule of its own (row 8), the
+"When" and "How often" columns give Gauzy's.
 
 <!-- generated:version (node tools/ever-platform/outbound-calls.mjs --write, from the pinned contract; do not edit by hand) -->
 
@@ -40,7 +41,7 @@ Contract version: `1.0.0-rc.6` (`@ever-co/connect-contracts` and `@ever-co/conne
 | 5 | connection | `POST /v1/instances/me/tenant-links`, `DELETE /v1/instances/me/tenant-links/{link}` | an organization admin submits a link code, removes a link, or a single-organization product moves its link to a new organization id | link_code, product, product_tenant_id, product_org_id?, display_name? of the tenant | on action | do not link |
 | 6 | connection | `POST /v1/instances/me/heartbeat`, `GET /v1/instances/me` | while connected; the status read also while an approval is pending and when an admin opens the connection page | version, module_version?, serves_products[]? (heartbeat); none (status read) | within 5 min of boot, then every 24 h | disconnect |
 | 7 | connection | `GET /v1/instances/me/events`, `POST /v1/instances/me/events/ack` | while connected | cursor only | continuous long-poll (wait=25), or one read every 15 min with EVER_CONNECT_FEED_MODE=interval | disconnect |
-| 8 | connection | `GET /v1/instances/me/entitlement`, `GET /v1/instances/me/tenant-links/{link}/entitlement` | while connected: every 6 h, at boot, on an entitlement notice, on demand | none (read; If-None-Match with the cached sequence number) | every 6 h; on boot; on a change notice; on demand | disconnect |
+| 8 | connection | `GET /v1/instances/me/entitlement`, `GET /v1/instances/me/tenant-links/{link}/entitlement` | while connected: at connect and at each link, with each heartbeat, on an entitlement notice on the event feed, on demand (Refresh, at most 6 an hour) | none (read; If-None-Match with the cached sequence number) | with the heartbeat (every 24 h); on a notice; on demand | disconnect |
 | 9 | connection | `GET /v1/instances/me/integrations`, `GET /v1/instances/me/consent-url` | after a consent notice; on return from app.ever.co; when an admin opens the integrations tab | integration, link, return (query) | on action or notice | disconnect |
 | 10 | connection | `PUT /v1/instances/me/integrations/{key}` | an admin disables an integration locally; an operator policy denies it | enabled: false, reason (instance or policy), tenant_link_id? | on action | none needed: this call only ever disables |
 | 11 | connection | `POST /v1/instances/me/stats-link` | integration stats_link enabled (self-hosted installations only) | stats_instance_id, stats_public_jwk, statement_sig: a statement signed with the separate statistics key, sent under the connect-key token, so app.ever.co can show the installation's last report | once; again after Reset instance identity | disable stats_link |

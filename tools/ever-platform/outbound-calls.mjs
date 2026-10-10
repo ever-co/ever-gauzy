@@ -84,8 +84,11 @@ export function renderUsed(rows, config = CONFIG) {
 		const requests = servedEndpoints(row)
 			.map((e) => `\`${e.method} ${e.path}\``)
 			.join(', ');
+		// Where Gauzy's schedule differs from the contract's description of the row, Gauzy's wins
+		// (outbound-calls.config.json `gauzy_rows`): the page says when this installation calls.
+		const own = { ...row, ...(config.gauzy_rows?.[String(row.row)] ?? {}) };
 		lines.push(
-			`| ${row.row} | ${config.module_names[module]} | ${requests} | ${cell(row.trigger)} | ${cell(row.payload)} | ${cell(row.cadence)} | ${cell(row.disable)} |`
+			`| ${row.row} | ${config.module_names[module]} | ${requests} | ${cell(own.trigger)} | ${cell(own.payload)} | ${cell(own.cadence)} | ${cell(own.disable)} |`
 		);
 	}
 	return lines.join('\n');
@@ -169,7 +172,9 @@ export function check({ rows, version }, config = CONFIG) {
 			for (const request of requests)
 				if (!endpoints.includes(request))
 					problems.push(`${readme}: row ${row} names ${request}, which is not one of its row's`);
-			if (requests.length === 0) problems.push(`${readme}: row ${row} names no request`);
+			for (const endpoint of endpoints)
+				if (!requests.includes(endpoint))
+					problems.push(`${readme}: row ${row} does not name ${endpoint}, which the module calls`);
 		}
 	}
 
