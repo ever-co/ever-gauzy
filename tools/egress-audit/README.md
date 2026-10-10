@@ -38,8 +38,8 @@ This directory holds only Gauzy's inputs:
 - `egress-audit.config.json`: the compose file, the API and web app services, the statistics routes
   probed in the off modes, the browser leg's settings and the Gauzy mode `off_env_file`;
 - `adapter.mjs`: signs in as the seeded Super Admin (through the API for the ids the browser needs,
-  never a token; through the sign-in page for the browser, which then checks that the session holds
-  for the whole walk); in the off modes calls every statistics route with its own method and requires
+  never a token; through the sign-in page for the browser, after the pages a person sees signed
+  out); in the off modes calls every statistics route with its own method and requires
   404 from each; in `loaded_off` switches the statistics off in Settings as the operator; points the
   statistics at an address on the audit network with a short day, so a module that sends when it
   should not is seen within the watched window;
@@ -62,8 +62,11 @@ Maps (`maps.googleapis.com`, the maps script), OpenStreetMap tiles (`a.`, `b.`,
 without one) and `github.com` (the GitHub integration page opens the GitHub App installation). They
 may be looked up (in the sealed networks they reach nothing); an Ever host can never be allowed.
 
-The web app routes in the URL fragment (`/#/pages/...`), so the config's `web_url` ends in `/#` and
-the browser opens each route as `http://webapp:4200/#/<route>`.
+The web app routes in the URL fragment (`/#/pages/...`), so the config says `"ui_routing": "hash"`
+(with `web_url` the bare address) and the browser opens each route as
+`http://webapp:4200/#/<route>`. The harness signs the walk in through the adapter's `uiLogin` and
+checks that the sign-in holds: `ui_sign_in_route` (`/auth/login`) is the sign-in page, and a route
+that ends on it faults the run.
 
 ## Modes
 

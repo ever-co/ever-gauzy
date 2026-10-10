@@ -4,7 +4,7 @@
 	"description": "The egress audit's harness for this directory's config (installed by .github/workflows/egress-audit.yml with npm ci; not a workspace).",
 	"type": "module",
 	"devDependencies": {
-		"@ever-co/connect-tools": "1.0.0-rc.5",
+		"@ever-co/connect-tools": "1.0.0-rc.6",
 		"typescript": "5.9.3"
 	}
 }

@@ -9631,6 +9631,1098 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
+			"route": "/auth/login-magic",
+			"attribute": "href",
+			"url": "mailto:[redacted]@gauzy.co",
+			"reason": "the same link as on the other signed-out pages (recorded under / before), now recorded under the route of its page"
+		},
+		{
+			"route": "/auth/register",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/",
+			"reason": "the same link as on the other signed-out pages (recorded under / before), now recorded under the route of its page"
+		},
+		{
+			"route": "/pages/candidates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/account",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/account",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/documents",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/documents",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/documents",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/documents",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/documents",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/documents",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/employment",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/employment",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/employment",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/employment",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/employment",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/employment",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/experience",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/experience",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/experience",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/experience",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/experience",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/experience",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/feedbacks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/feedbacks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/feedbacks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/feedbacks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/feedbacks",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/feedbacks",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/hiring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/hiring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/hiring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/hiring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/hiring",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/hiring",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/history",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/history",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/history",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/history",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/history",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/history",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/interview",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/interview",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/interview",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/interview",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/interview",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/interview",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/location",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/location",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/location",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/location",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/location",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/location",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/rates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/rates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/rates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/rates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/rates",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/rates",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/tasks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/tasks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/tasks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/tasks",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/tasks",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/edit/:id/profile/tasks",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/calendar",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/calendar",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/calendar",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/calendar",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/calendar",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/calendar",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/criterion",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/criterion",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/criterion",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/criterion",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/criterion",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/criterion",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/interview_panel",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/interview_panel",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/interview_panel",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/interview_panel",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/interview_panel",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/interviews/interview_panel",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/invites",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/invites",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/invites",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/invites",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/invites",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/invites",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/statistic",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/statistic",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/statistic",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/statistic",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/statistic",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/candidates/statistic",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/add",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/add",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/edit/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/edit/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/add",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/add",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/add",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/edit/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/edit/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/edit/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/estimates/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/payments/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/payments/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/payments/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/payments/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/payments/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/payments/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-estimates",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-estimates",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-estimates",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-invoices",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-invoices",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-invoices",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-invoices",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-invoices",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/received-invoices",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/recurring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/recurring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/recurring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/recurring",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/recurring",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/recurring",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/sales/invoices/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
 		}
 	]
 }
