@@ -191,6 +191,21 @@ const PAIRS: IPair[] = [
 		call: (resolver, context) => resolver.declineOrderQuote(ID, 'changed our minds', 3, context),
 		invoke: (controller, request) => controller.declineQuote(ID, { reason: 'changed our minds' }, request),
 		declaration: 'declineOrderQuote(id: ID!, reason: String, version: Int): Order!'
+	},
+	{
+		field: 'requestOrderApproval',
+		route: 'requestApproval',
+		path: ':id/request-approval',
+		// A request is a placement, so it states the place route's grant and a retry scope of its own.
+		permission: ORDER_PERMISSIONS.ORDERS_EDIT,
+		scope: 'order.approval.request',
+		service: 'order',
+		method: 'requestApproval',
+		args: ['please approve'],
+		call: (resolver, context) => resolver.requestOrderApproval(ID, 'please approve', 3, 'retry-key-1', context),
+		invoke: (controller, request) => controller.requestApproval(ID, { note: 'please approve' }, request),
+		declaration:
+			'requestOrderApproval(id: ID!, note: String, version: Int, idempotencyKey: String): OrderApprovalRequestPayload!'
 	}
 ];
 

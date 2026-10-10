@@ -31,7 +31,7 @@ import {
 	versionExpectationOf
 } from '@gauzy/core';
 import { Order } from './order.entity';
-import { OrderService } from './order.service';
+import { IOrderApprovalRequested, OrderService } from './order.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { CreateOrderDTO, UpdateOrderDTO } from './dto';
 import { OrderChangeService } from '../order-change/order-change.service';
@@ -173,6 +173,40 @@ export class OrderController extends CrudController<Order> {
 	@HttpCode(HttpStatus.OK)
 	async place(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
 		return this.orderService.place(id, {}, versionExpectationOf(request));
+	}
+
+	/**
+	 * Places a buyer's draft order for a staff member's approval.
+	 *
+	 * The order lifecycle has no status of its own for "awaiting approval", so the request is the move the
+	 * place route makes — `DRAFT -> PENDING` — plus an approval request filed against the order through the
+	 * platform's approval machinery. A staff member approves it with `POST /orders/:id/approve`, whose
+	 * confirmation decides the request. The grant is the place route's, `ORDERS_EDIT`, and so is the retry
+	 * scope's shape: a request is a placement.
+	 *
+	 * @param id The order.
+	 * @param body The buyer's note to the approver.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The placed order, and the approval request filed for it.
+	 */
+	@ApiOperation({ summary: "Place a buyer's draft order for a staff member's approval" })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Order placed and approval requested' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order is past placing, or a request already awaits a decision'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.approval.request', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/request-approval')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async requestApproval(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: { note?: string },
+		@Req() request: Request
+	): Promise<IOrderApprovalRequested> {
+		return this.orderService.requestApproval(id, body?.note, versionExpectationOf(request));
 	}
 
 	/**

@@ -34,5 +34,7 @@ export enum ApprovalPolicyTypesStringEnum {
 	TIME_OFF = 'TIME_OFF',
 	EQUIPMENT_SHARING = 'EQUIPMENT_SHARING',
 	BUSINESS_TRIP = 'BUSINESS_TRIP',
-	PURCHASE_ORDER = 'PURCHASE_ORDER'
+	PURCHASE_ORDER = 'PURCHASE_ORDER',
+	/** A sales order a B2B buyer placed for the seller's approval before it is confirmed. */
+	SALES_ORDER = 'SALES_ORDER'
 }

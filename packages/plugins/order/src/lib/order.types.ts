@@ -371,6 +371,66 @@ export interface IOrderEstimateDelivery {
 /** Token the invoicing capability is injected under. */
 export const ORDER_INVOICING = Symbol('ORDER_INVOICING');
 
+/*
+|--------------------------------------------------------------------------
+| The approval an order is placed for
+|--------------------------------------------------------------------------
+*/
+
+/** One request for a staff member's approval of an order a buyer placed. */
+export interface IOrderApprovalRequest {
+	/** The order the decision is about. */
+	readonly orderId: ID;
+	/** The organization the order belongs to, which the request is filed in. */
+	readonly organizationId?: ID;
+	/** What the approver's list shows: the order's number. */
+	readonly name: string;
+	/** The value being committed, so a threshold policy can be applied to it. */
+	readonly amount: DecimalString | number;
+	/** The currency of the amount. */
+	readonly currency: string;
+	/** The buyer's note to the approver. */
+	readonly note?: string;
+}
+
+/**
+ * The platform's approval machinery as the order sees it.
+ *
+ * Provided by the core `request_approval` row — the one place an approval lives on this platform — and
+ * injected under {@link ORDER_APPROVAL}. The request is attached to the order by the polymorphic
+ * `requestId` / `requestType = SALES_ORDER` pair rather than by a column on either side, which is what lets
+ * the decision live in the kernel while the order stays in this package. Unbound, a request for approval is
+ * answered `ORDER_APPROVAL_UNAVAILABLE` before the order moves, and a confirmation or cancellation settles
+ * nothing.
+ */
+export interface IOrderApprovalPort {
+	/**
+	 * Files one approval request for an order.
+	 *
+	 * @param request The order, its value and the buyer's note.
+	 * @returns The approval request row that was written.
+	 */
+	requestApproval(request: IOrderApprovalRequest): Promise<{ approvalId: ID }>;
+
+	/**
+	 * @param orderId The order.
+	 * @returns The order's request still awaiting a decision, or null when it has none.
+	 */
+	findOpen(orderId: ID): Promise<{ approvalId: ID } | null>;
+
+	/**
+	 * Records the decision on every request of the order still awaiting one.
+	 *
+	 * @param orderId The order.
+	 * @param approved True when the order was approved (confirmed), false when it was refused (cancelled).
+	 * @returns How many requests were decided.
+	 */
+	settle(orderId: ID, approved: boolean): Promise<number>;
+}
+
+/** Token the approval machinery is injected under. */
+export const ORDER_APPROVAL = Symbol('ORDER_APPROVAL');
+
 /**
  * What one line's counters say, and how the status follows from them.
  *
