@@ -9168,9 +9168,9 @@
   integrity sha512-SCCoMEJ6jdeI5h/N+KCVF1+pmg/hmEkNA5nHTS8Gvww7T/LCl4o1gFLinw2iQ60w7slFkszHcGLKGdazVI4F8A==
 
 "@nestjs/microservices@^11.1.26":
-  version "11.1.26"
-  resolved "https://registry.npmjs.org/@nestjs/microservices/-/microservices-11.1.26.tgz#71e16c043d76bab37ce855e758c07844317d4df4"
-  integrity sha512-ct0iMelBicwmmwG+PQwxqGq5/CTgPf6UBcyTTROuQ5hdMCcaw0X5fP2PKM2wvXidlWe2f9NhxjIxxe8CgDMvuQ==
+  version "11.2.5"
+  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-11.2.5.tgz#009a616e58df672eb5cadae19cbda23767ed9dcc"
+  integrity sha512-T45Lty24UJrnj6RD8oaKZ575PS/+QNdcQL7bvxwJERcn9VFli1kZCcbbJ35mDWSmjKoo/JM0YKPsWrMV0JMwUQ==
   dependencies:
     iterare "1.2.1"
     tslib "2.8.1"
