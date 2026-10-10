@@ -27,6 +27,18 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
  */
 export const NO_ACCESSIBLE_EMPLOYEE_ID: ID = '00000000-0000-0000-0000-000000000000';
 
+/**
+ * Where clause for a team or project membership that is still in effect.
+ *
+ * Both flags are nullable and their defaults only apply on insert, so a legacy or imported row can hold
+ * NULL. Strict equality would skip it and refuse a real manager or member. A fresh object is built per
+ * query because TypeORM may transform a FindOperator's value in place.
+ */
+const activeMembershipWhere = () => ({
+	isActive: Or(IsNull(), Equal(true)),
+	isArchived: Or(IsNull(), Equal(false))
+});
+
 @Injectable()
 export class ManagedEmployeeService {
 	constructor(
@@ -128,8 +140,7 @@ export class ManagedEmployeeService {
 				employeeId: currentEmployeeId,
 				organizationTeamId: In(teamIds),
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -144,8 +155,7 @@ export class ManagedEmployeeService {
 				employeeId: currentEmployeeId,
 				organizationProjectId: In(projectIds),
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -176,9 +186,7 @@ export class ManagedEmployeeService {
 			employeeId,
 			organizationTeamId,
 			tenantId,
-			// Both flags are nullable: a row that never had them set is still an active membership.
-			isActive: Or(IsNull(), Equal(true)),
-			isArchived: Or(IsNull(), Equal(false))
+			...activeMembershipWhere()
 		});
 	}
 
@@ -231,8 +239,7 @@ export class ManagedEmployeeService {
 				employeeId: currentEmployeeId,
 				organizationTeamId: organizationTeamId,
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -244,8 +251,7 @@ export class ManagedEmployeeService {
 			const isTargetMemberOfTeam = await this.typeOrmTeamEmployeeRepository.existsBy({
 				employeeId: targetEmployeeId,
 				organizationTeamId: organizationTeamId,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -421,8 +427,7 @@ export class ManagedEmployeeService {
 			where: {
 				employeeId: currentEmployeeId,
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId,
 				// Scoped through the team, whose organizationId is authoritative,
 				// rather than through the membership row where it may be null.
@@ -443,8 +448,7 @@ export class ManagedEmployeeService {
 		const isTargetMember = await this.typeOrmTeamEmployeeRepository.existsBy({
 			employeeId: targetEmployeeId,
 			organizationTeamId: In(managedTeamIds),
-			isActive: true,
-			isArchived: false,
+			...activeMembershipWhere(),
 			tenantId
 		});
 
@@ -471,8 +475,7 @@ export class ManagedEmployeeService {
 			const teamMembers = await this.typeOrmTeamEmployeeRepository.find({
 				where: {
 					organizationTeamId: In(teamIds),
-					isActive: true,
-					isArchived: false,
+					...activeMembershipWhere(),
 					tenantId
 				},
 				select: {
@@ -488,8 +491,7 @@ export class ManagedEmployeeService {
 			const projectMembers = await this.typeOrmProjectEmployeeRepository.find({
 				where: {
 					organizationProjectId: In(projectIds),
-					isActive: true,
-					isArchived: false,
+					...activeMembershipWhere(),
 					tenantId
 				},
 				select: {
