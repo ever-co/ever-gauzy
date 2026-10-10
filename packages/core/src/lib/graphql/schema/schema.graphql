@@ -10380,7 +10380,44 @@ type Mutation {
   archiveOrder(id: ID!, version: Int): Order!
   placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
   confirmOrder(id: ID!, version: Int): Order!
+
+  """
+  Places a buyer's draft order for a staff member's approval: the move `placeOrder` makes (DRAFT to
+  PENDING), plus an approval request filed against the order through the platform's approval machinery.
+  A staff member approves it with `confirmOrder`, which decides the request; a cancellation refuses it.
+  A placed order with no open request may also file one.
+  """
+  requestOrderApproval(id: ID!, note: String, version: Int, idempotencyKey: String): OrderApprovalRequestPayload!
   recalculateOrder(id: ID!, version: Int): Order!
+
+  """
+  Issues the invoice that bills an order — the platform's own invoice, one item per billable line and per
+  delivery choice, the discount and tax as the order computed them — stamps the order's `invoiceId` and
+  records each line's link to the item that billed it. Refused when the order is already invoiced, is a
+  test order, or is a draft, cancelled or archived.
+  """
+  generateOrderInvoice(id: ID!, version: Int, idempotencyKey: String): Order!
+
+  """
+  Sends the buyer a quote for a draft or placed-but-unconfirmed order: the platform's own estimate, built
+  from the order as it stands and linked through `quoteInvoiceId`, e-mailed with its accept and decline
+  links. An earlier unanswered quote is voided as superseded. The quote is recorded whether or not the
+  e-mail goes; `delivery` says which.
+  """
+  sendOrderQuote(id: ID!, version: Int, idempotencyKey: String): OrderQuoteSendPayload!
+
+  """
+  Records the buyer's acceptance of an order's quote — the estimate's own accept flag — and confirms the
+  order through its lifecycle: a draft is placed, then confirmed. Requires the approve grant, because it
+  confirms the order.
+  """
+  acceptOrderQuote(id: ID!, version: Int): Order!
+
+  """
+  Records the buyer's refusal of an order's quote — the estimate is marked declined — and leaves the order
+  where it is: a draft stays a draft. The order's version advances, because its quote is no longer open.
+  """
+  declineOrderQuote(id: ID!, reason: String, version: Int): Order!
 
   """Create a change: the only way a placed order is modified."""
   requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
@@ -49175,6 +49212,57 @@ input OrderLineRefundInput {
 
   """Currency of the amount; checked against the order the line belongs to."""
   currency: String!
+}
+
+"""
+What requesting an order's approval did: the order, placed, and the approval request filed for it.
+"""
+type OrderApprovalRequestPayload {
+  """The order, placed and awaiting a decision."""
+  order: Order!
+
+  """
+  The order's version after the request: the version the next write states back.
+  """
+  version: Int!
+
+  """The approval request the decision is recorded on."""
+  approvalId: ID!
+}
+
+"""
+What sending an order's quote did: the order, the estimate the quote is, and whether the e-mail went.
+"""
+type OrderQuoteSendPayload {
+  """The order, stamped with its quote."""
+  order: Order!
+
+  """
+  The order's version after the quote was recorded: the version the next write states back.
+  """
+  version: Int!
+
+  """The estimate the quote is."""
+  quoteInvoiceId: ID!
+
+  """The estimate's number."""
+  quoteNumber: Int!
+  delivery: OrderQuoteDelivery!
+}
+
+"""
+Whether the estimate e-mail was handed to the mail transport, to whom, and when it was not, why.
+"""
+type OrderQuoteDelivery {
+  sent: Boolean!
+  recipient: String
+
+  """
+  Why it was not sent: NO_RECIPIENT (the order carries no e-mail), EMAIL_NOT_PREPARED,
+  DOCUMENT_NOT_GENERATED, or EMAIL_NOT_SENT (the mail transport refused it — typically an installation
+  with no mail server configured).
+  """
+  reason: String
 }
 
 """What removing a link did."""
