@@ -50,6 +50,10 @@ on:
       - 'packages/ui-*/**'
       - 'packages/plugin-ui/**'
       - 'packages/plugins/*-ui/**'
+      - 'tools/ever-platform/**'
+      - '**/package.json'
+      - '**/yarn.lock'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -106,6 +110,12 @@ jobs:
           if [ "$BASELINE_FIRST_VERSION" = "true" ]; then flag="--first-version"; fi
           node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
             --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag
+
+      - name: No dependency on a private ever-co repository (the default branch must build for anyone)
+        if: ${{ github.event_name != 'pull_request' || github.base_ref == 'develop' }}
+        run: |
+          node --test tools/ever-platform/check-private-deps.test.mjs
+          node tools/ever-platform/check-private-deps.mjs
 
       - name: Run the audit?
         id: scope
