@@ -38,9 +38,9 @@ export class ManagedEmployeeService {
 	 * Filters the requested employeeIds based on the current user's permissions and manager status.
 	 *
 	 * Logic:
-	 * 1. If user has CHANGE_SELECTED_EMPLOYEE permission → Return requested employeeIds as-is
-	 * 2. If user explicitly requests "onlyMe" → Return only current user's employeeId
-	 * 3. If teamIds or projectIds are provided → Check if user is manager and filter accordingly
+	 * 1. If user explicitly requests "onlyMe" → Return only current user's employeeId
+	 * 2. If user has CHANGE_SELECTED_EMPLOYEE permission → Return requested employeeIds as-is
+	 * 3. If teamIds or projectIds are provided → Keep the members of the ones the user manages
 	 * 4. Otherwise → Return only current user's employeeId
 	 *
 	 * @param requestedEmployeeIds - The employeeIds requested by the client
@@ -58,14 +58,15 @@ export class ManagedEmployeeService {
 		const user = RequestContext.currentUser();
 		const currentEmployeeId = user?.employeeId;
 
-		// Case 1: User has global permission to change selected employee
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return requestedEmployeeIds;
-		}
-
-		// Case 2: User explicitly requests "onlyMe"
+		// Case 1: User explicitly requests "onlyMe". It wins over CHANGE_SELECTED_EMPLOYEE, as in the timesheet,
+		// time log and expense reads: a caller allowed to pick anyone still asked for their own data.
 		if (onlyMe && currentEmployeeId) {
 			return [currentEmployeeId];
+		}
+
+		// Case 2: User has global permission to change selected employee
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedEmployeeIds;
 		}
 
 		// Case 3: An authenticated caller whose token carries no employee identity — after switching to an
@@ -81,21 +82,23 @@ export class ManagedEmployeeService {
 			return requestedEmployeeIds;
 		}
 
-		// Case 4: Check if user is manager of the specified teams/projects
+		// Case 4: Members of the specified teams/projects the user manages
 		if (isNotEmpty(teamIds) || isNotEmpty(projectIds)) {
-			const isManager = await this.isManagerOfTeamsOrProjects(currentEmployeeId, teamIds, projectIds);
+			// Only the teams and projects the user manages: managing one of the selected groups gives no access
+			// to the members of the others.
+			const managed = await this.getManagedTeamsAndProjects(currentEmployeeId, teamIds, projectIds);
 
-			if (isManager) {
-				// User is manager → Get all members of the specified teams/projects
-				const managedEmployeeIds = await this.getMembersOfTeamsAndProjects(teamIds, projectIds);
+			if (isNotEmpty(managed.teamIds) || isNotEmpty(managed.projectIds)) {
+				const managedEmployeeIds = await this.getMembersOfTeamsAndProjects(managed.teamIds, managed.projectIds);
 
-				// Filter requested employeeIds to only include managed employees
-				if (isNotEmpty(requestedEmployeeIds)) {
-					return requestedEmployeeIds.filter((id) => managedEmployeeIds.includes(id));
-				}
+				// Filter requested employeeIds to only include managed employees, or take all of them
+				const accessibleEmployeeIds = isNotEmpty(requestedEmployeeIds)
+					? requestedEmployeeIds.filter((id) => managedEmployeeIds.includes(id))
+					: managedEmployeeIds;
 
-				// No specific employeeIds requested → Return all managed employees
-				return managedEmployeeIds;
+				// An empty list would drop the employee predicate and read every employee of the selected teams or
+				// projects, so a selection with no managed employee in it matches nothing instead.
+				return isNotEmpty(accessibleEmployeeIds) ? accessibleEmployeeIds : [NO_ACCESSIBLE_EMPLOYEE_ID];
 			}
 		}
 
@@ -424,6 +427,53 @@ export class ManagedEmployeeService {
 		});
 
 		return isTargetMember;
+	}
+
+	/**
+	 * Keeps, among the specified teams and projects, the ones the current employee manages.
+	 *
+	 * @param currentEmployeeId - The employeeId to check
+	 * @param teamIds - The teamIds to narrow
+	 * @param projectIds - The projectIds to narrow
+	 * @returns The teamIds and projectIds the employee is an active manager of
+	 */
+	private async getManagedTeamsAndProjects(
+		currentEmployeeId: ID,
+		teamIds: ID[] = [],
+		projectIds: ID[] = []
+	): Promise<{ teamIds: ID[]; projectIds: ID[] }> {
+		const tenantId = RequestContext.currentTenantId();
+		const managed = { teamIds: [] as ID[], projectIds: [] as ID[] };
+
+		if (!tenantId) {
+			return managed;
+		}
+
+		const asManager = {
+			employeeId: currentEmployeeId,
+			isManager: true,
+			isActive: true,
+			isArchived: false,
+			tenantId
+		};
+
+		if (isNotEmpty(teamIds)) {
+			const teams = await this.typeOrmTeamEmployeeRepository.find({
+				where: { ...asManager, organizationTeamId: In(teamIds) },
+				select: { organizationTeamId: true }
+			});
+			managed.teamIds = teams.map((team) => team.organizationTeamId);
+		}
+
+		if (isNotEmpty(projectIds)) {
+			const projects = await this.typeOrmProjectEmployeeRepository.find({
+				where: { ...asManager, organizationProjectId: In(projectIds) },
+				select: { organizationProjectId: true }
+			});
+			managed.projectIds = projects.map((project) => project.organizationProjectId);
+		}
+
+		return managed;
 	}
 
 	/**
