@@ -10,6 +10,8 @@
 		"recno",
 		"blackhole",
 		"baselined",
+		"rewalk",
+		"hostnames",
 		"counterparty",
 		"discoverability",
 		"licence",

@@ -30,16 +30,63 @@
 	"ui_baseline": "ui-baseline.json",
 	"idle_pages": ["/pages/settings/usage-statistics", "/pages/integrations", "/pages/integrations/ever-connect"],
 	"ui_page_timeout_s": 90,
-	"ui_skip_routes": [{ "path": "/auth/logout", "reason": "signs the walk out; the sign-in page itself is opened by the sign-in" }],
-	"ui_expected_requests": { "positive_stats": ["GET /api/ever-stats/status"] },
+	"ui_skip_routes": [
+		{
+			"path": "/auth/logout",
+			"reason": "signs the walk out; the sign-in page itself is opened by the sign-in"
+		}
+	],
+	"ui_expected_requests": {
+		"positive_stats": ["GET /api/ever-stats/status"]
+	},
 	"modes": {
 		"off_env_file": {
 			"description": "Statistics switched off ONLY in the API's .env.local file (in the API's working directory), nothing about them in the container environment: the module is not loaded, no call, no Ever host looked up, every module route 404.",
-			"env": { "EVER_STATS_SEND_INTERVAL_S": "5" },
+			"env": {
+				"EVER_STATS_SEND_INTERVAL_S": "5"
+			},
 			"mock": false,
 			"module_routes": "404",
 			"allowed_rows": [],
 			"required_rows": []
+		},
+		"connect_off_sign_in_on": {
+			"description": "The connection off (EVER_CONNECT_ENABLED unset) and the Ever ID sign-in plugin on (ZITADEL_ENABLED=true) with an issuer on an Ever host on a self-hosted installation: the plugin leaves that issuer unused, so nothing is looked up or sent, in the API or the browser; every statistics route 404.",
+			"env": {
+				"EVER_CONNECT_ENABLED": null,
+				"EVER_STATS_ENABLED": "false",
+				"EVER_STATS_SEND_INTERVAL_S": "5",
+				"ZITADEL_ENABLED": "true"
+			},
+			"mock": false,
+			"prepare": "probeSignIn",
+			"module_routes": "404",
+			"browser": "negative",
+			"allowed_rows": [],
+			"required_rows": []
+		},
+		"entitlement_ladder": {
+			"description": "The connection on against the mock platform, with entitlement documents dated so the stored one is in grace, then paused, one issued in the future (refused, the stored one kept) and one slightly ahead (accepted): the ladder follows each, Gauzy's own routes answer the same at every step, and only the connection's documented calls are made.",
+			"env": {
+				"EVER_CONNECT_ENABLED": "true",
+				"EVER_CONNECT_CODE": "EVC-TEST-0000-0001",
+				"EVER_PLATFORM_API_URL": "__MOCK_URL__",
+				"EVER_PLATFORM_ISSUER": "__MOCK_ISSUER__",
+				"EVER_STATS_ENABLED": "false",
+				"EVER_PLATFORM_ROOT_KEYS_FILE": "/ever-audit/roots.json"
+			},
+			"mock": true,
+			"mock_config": {
+				"limits": {
+					"entitlement_reads_per_hour": 60
+				}
+			},
+			"trigger": "entitlementLadder",
+			"module_routes": "any",
+			"allowed_rows": [1, 3, 4, 6, 7, 8, 9],
+			"required_rows": [1, 3, 4, 8]
 		}
-	}
+	},
+	"phase": 2,
+	"every_trigger_exclude_rows": [2, 14, 18, 19, 20, 22, 23, 25, 27, 30, 33]
 }
