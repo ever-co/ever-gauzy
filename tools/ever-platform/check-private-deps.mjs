@@ -32,7 +32,10 @@ export function dependencyFiles(root) {
 		encoding: 'utf8',
 		maxBuffer: 64 * 1024 * 1024
 	});
-	return out.split('\0').filter((f) => f && !f.includes('node_modules/'));
+	// The check's own fixtures name a private repository on purpose.
+	return out
+		.split('\0')
+		.filter((f) => f && !f.includes('node_modules/') && !f.startsWith('tools/ever-platform/fixtures/'));
 }
 
 /** Every reference to an ever-co repository in one file: [{repo, file, line}]. */
