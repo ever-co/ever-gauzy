@@ -516,9 +516,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			} catch (error) {
 				// A concurrent request for the same task can commit between the read above and this write,
 				// and the (dailyPlanId, taskId) primary key then rejects this insert. The plan holds the
-				// task either way, which is what the caller asked for.
-				const currentPlan = await this.getManagedDailyPlanOrThrow(planId, employeeId, tenantId, organizationId);
-				if (hasTask(currentPlan, taskId)) {
+				// task either way, which is what the caller asked for. If the re-read fails too, the save
+				// error is the one that explains the failure, so it is the one rethrown.
+				const currentPlan = await this.getManagedDailyPlanOrThrow(
+					planId,
+					employeeId,
+					tenantId,
+					organizationId
+				).catch((): IDailyPlan => null);
+				if (currentPlan && hasTask(currentPlan, taskId)) {
 					return currentPlan;
 				}
 				throw error;
