@@ -19,6 +19,148 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { FileStorageService, TenantService } from '@gauzy/ui-core/core';
 
+/**
+ * Where each cloud provider keeps the values the summary and the configuration check look at.
+ * Field names are the form control names, which are also the tenant setting names.
+ */
+interface IProviderFieldMap {
+	bucket?: string;
+	region?: string;
+	endpoint?: string;
+	credentials: string[];
+	/** Fields the check looks at; with `serverFallback`, an empty one is not an error. */
+	required: { control: string; label: string }[];
+	/**
+	 * The API provider keeps the server's own configuration (environment) for every field the
+	 * tenant leaves empty, so empty here means "use the server default", not "missing".
+	 * Not so for Wasabi: saving validates the submitted values alone.
+	 */
+	serverFallback: boolean;
+	/** URL fields; `httpsOnly` where the access keys are sent to that address (an S3 endpoint). */
+	urls: { control: string; label: string; httpsOnly?: boolean }[];
+	docsUrl: string;
+}
+
+const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap>> = {
+	[FileStorageProviderEnum.S3]: {
+		bucket: 'aws_bucket',
+		region: 'aws_default_region',
+		credentials: ['aws_access_key_id', 'aws_secret_access_key'],
+		required: [
+			{ control: 'aws_access_key_id', label: 'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' },
+			{ control: 'aws_secret_access_key', label: 'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' },
+			{ control: 'aws_default_region', label: 'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' },
+			{ control: 'aws_bucket', label: 'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' }
+		],
+		urls: [],
+		serverFallback: true,
+		docsUrl: 'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html'
+	},
+	[FileStorageProviderEnum.WASABI]: {
+		bucket: 'wasabi_aws_bucket',
+		region: 'wasabi_aws_default_region',
+		endpoint: 'wasabi_aws_service_url',
+		credentials: ['wasabi_aws_access_key_id', 'wasabi_aws_secret_access_key'],
+		required: [
+			{ control: 'wasabi_aws_access_key_id', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.ACCESS_KEY_ID' },
+			{ control: 'wasabi_aws_secret_access_key', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SECRET_ACCESS_KEY' },
+			{ control: 'wasabi_aws_default_region', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.REGION' },
+			{ control: 'wasabi_aws_service_url', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' },
+			{ control: 'wasabi_aws_bucket', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' }
+		],
+		urls: [
+			{ control: 'wasabi_aws_service_url', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL', httpsOnly: true }
+		],
+		serverFallback: false,
+		docsUrl: 'https://docs.wasabi.com/'
+	},
+	[FileStorageProviderEnum.CLOUDINARY]: {
+		bucket: 'cloudinary_cloud_name',
+		endpoint: 'cloudinary_delivery_url',
+		credentials: ['cloudinary_api_key', 'cloudinary_api_secret'],
+		required: [
+			{ control: 'cloudinary_cloud_name', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.CLOUD_NAME' },
+			{ control: 'cloudinary_api_key', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_KEY' },
+			{ control: 'cloudinary_api_secret', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_SECRET' },
+			{ control: 'cloudinary_delivery_url', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' }
+		],
+		urls: [{ control: 'cloudinary_delivery_url', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' }],
+		serverFallback: true,
+		docsUrl: 'https://cloudinary.com/documentation'
+	},
+	[FileStorageProviderEnum.DIGITALOCEAN]: {
+		bucket: 'digitalocean_s3_bucket',
+		region: 'digitalocean_default_region',
+		endpoint: 'digitalocean_service_url',
+		credentials: ['digitalocean_access_key_id', 'digitalocean_secret_access_key'],
+		required: [
+			{ control: 'digitalocean_access_key_id', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.ACCESS_KEY_ID' },
+			{
+				control: 'digitalocean_secret_access_key',
+				label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SECRET_ACCESS_KEY'
+			},
+			{ control: 'digitalocean_service_url', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' },
+			{ control: 'digitalocean_s3_bucket', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' }
+		],
+		urls: [
+			{
+				control: 'digitalocean_service_url',
+				label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL',
+				httpsOnly: true
+			},
+			{ control: 'digitalocean_cdn_url', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' }
+		],
+		serverFallback: true,
+		docsUrl: 'https://docs.digitalocean.com/products/spaces/how-to/manage-access/'
+	}
+};
+
+/**
+ * Wasabi regions offered as suggestions on the region input (free text is still accepted).
+ * Each region's endpoint is `https://s3.<region>.wasabisys.com`; us-east-1 keeps the
+ * historical `https://s3.wasabisys.com`, which is also the form default.
+ */
+const WASABI_REGIONS = [
+	'us-east-1',
+	'us-east-2',
+	'us-central-1',
+	'us-west-1',
+	'ca-central-1',
+	'eu-central-1',
+	'eu-central-2',
+	'eu-west-1',
+	'eu-west-2',
+	'eu-south-1',
+	'ap-northeast-1',
+	'ap-northeast-2',
+	'ap-southeast-1',
+	'ap-southeast-2'
+];
+
+/**
+ * The last saved configuration, as shown in the summary strip. A value is '' when the provider
+ * has no such field (rendered —) and null when it is empty and the server's default applies.
+ */
+export interface IFileStorageSummary {
+	provider: FileStorageProviderEnum;
+	bucket: string | null;
+	region: string | null;
+	endpoint: string | null;
+	credentials: 'saved' | 'incomplete' | 'none' | 'server_default' | 'not_needed';
+}
+
+/**
+ * Result of the client-side configuration check, as field labels: required but empty, holding
+ * an invalid URL, or empty and so left to the server's own configuration.
+ */
+export interface IFileStorageCheck {
+	missing: string[];
+	invalidUrls: string[];
+	/** Valid http:// URLs where https:// is required. */
+	insecureUrls: string[];
+	serverDefaults: string[];
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-file-storage',
@@ -32,11 +174,20 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		{ label: SMTPSecureEnum.TRUE, value: 'true' },
 		{ label: SMTPSecureEnum.FALSE, value: 'false' }
 	];
+	readonly wasabiRegions = WASABI_REGIONS;
 	PermissionsEnum = PermissionsEnum;
 	FileStorageProviderEnum = FileStorageProviderEnum;
 	user: IUser;
 	settings: ITenantSetting = new Object();
 	loading: boolean = false;
+	/** True while a save request is in flight. */
+	saving: boolean = false;
+	/** What the tenant is saved with right now — not what is being edited in the form. */
+	summary: IFileStorageSummary | null = null;
+	/** Result of the last "Check configuration"; cleared whenever the form changes. */
+	check: IFileStorageCheck | null = null;
+	/** Secret inputs the user has chosen to reveal, by control name. */
+	revealed: Record<string, boolean> = {};
 
 	public readonly form: UntypedFormGroup = FileStorageComponent.buildForm(this._fb);
 
@@ -98,6 +249,13 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		return this.form.get('fileStorageProvider').value;
 	}
 
+	/*
+	 * Documentation link for the selected provider (none for LOCAL)
+	 */
+	get providerDocsUrl(): string | null {
+		return PROVIDER_FIELDS[this.fileStorageProvider as FileStorageProviderEnum]?.docsUrl ?? null;
+	}
+
 	constructor(
 		public readonly translate: TranslateService,
 		private readonly _fb: UntypedFormBuilder,
@@ -120,16 +278,28 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		])
 			.pipe(untilDestroyed(this))
 			.subscribe();
+
+		// A check result describes the values it was run on; any edit makes it stale.
+		this.form.valueChanges
+			.pipe(
+				tap(() => (this.check = null)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
 	 * Retrieves the current tenant's file storage settings.
 	 * If settings are available, updates the file storage provider accordingly.
 	 * If no settings are available, uses the default file storage provider from the environment.
+	 *
+	 * @param patchForm - false to refresh only the saved settings and summary, leaving the form as edited.
+	 *   Even when true, the form is left alone if it was edited while the request was pending.
 	 */
-	async getSetting(): Promise<void> {
+	async getSetting(patchForm: boolean = true): Promise<void> {
 		try {
 			this.loading = true; // Set loading state to true while fetching settings
+			const formBeforeFetch = JSON.stringify(this.form.getRawValue());
 
 			// Fetch tenant settings
 			const settings = (this.settings = await this._tenantService.getSettings());
@@ -142,7 +312,11 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 			const fileStorageProvider = isNotEmpty(settings)
 				? settings.fileStorageProvider
 				: defaultFileStorageProvider;
-			this.setFileStorageProvider(fileStorageProvider);
+			// An edit made while the request was pending wins over the fetched values.
+			if (patchForm && JSON.stringify(this.form.getRawValue()) === formBeforeFetch) {
+				this.setFileStorageProvider(fileStorageProvider);
+			}
+			this.summary = this.buildSummary(fileStorageProvider || defaultFileStorageProvider, settings);
 		} catch (error) {
 			console.error('Error fetching tenant settings:', error); // Log the error
 			// You can add more specific error handling here if needed
@@ -155,13 +329,20 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	 * SAVE current tenant file storage setting
 	 */
 	async submit() {
-		try {
-			if (this.form.invalid) {
-				return;
-			}
+		if (this.form.invalid || this.saving) {
+			return;
+		}
 
+		this.saving = true;
+		// What is being saved. An edit made while the request is pending must stay unsaved and
+		// must not be overwritten by the refresh that follows.
+		const submitted = JSON.stringify(this.form.getRawValue());
+		const editedSinceSubmit = () => JSON.stringify(this.form.getRawValue()) !== submitted;
+		let saved = false;
+
+		try {
 			// Extract the file storage provider and settings from the form data
-			const { fileStorageProvider = FileStorageProviderEnum.LOCAL, ...filesystem } = this.form.getRawValue();
+			const { fileStorageProvider = FileStorageProviderEnum.LOCAL, ...filesystem } = JSON.parse(submitted);
 
 			// Construct the settings object with the extracted data
 			const settings: ITenantSetting = {
@@ -186,12 +367,20 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 			// Saves the tenant settings and displays a success message upon successful saving.
 			await this._tenantService.saveSettings(settings);
+			saved = true;
+			if (!editedSinceSubmit()) {
+				this.form.markAsPristine(); // clears the footer's "Unsaved changes"
+			}
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error while submitting tenant settings:', error);
 			this._toastrService.danger('An error occurred while saving settings. Please try again.');
 		} finally {
-			this.subject$.next(true);
+			this.saving = false;
+			// Reload what is saved. Patch it into the form only after a successful save of exactly
+			// what the form holds: a failed save keeps the attempted values for correction, and
+			// newer edits are never overwritten (getSetting re-checks when the fetch resolves).
+			await this.getSetting(saved && !editedSinceSubmit());
 		}
 	}
 
@@ -210,6 +399,129 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		if (providerControl) {
 			providerControl.patchValue({ ...this.settings });
 			providerControl.updateValueAndValidity();
+		}
+	}
+
+	/**
+	 * The Wasabi endpoint that matches the entered region, or null when the region is not a
+	 * known Wasabi region or the service URL already matches it.
+	 */
+	get wasabiSuggestedEndpoint(): string | null {
+		const group = this.form.get(FileStorageProviderEnum.WASABI);
+		const region = `${group.get('wasabi_aws_default_region').value ?? ''}`.trim().toLowerCase();
+		if (!WASABI_REGIONS.includes(region)) {
+			return null;
+		}
+
+		const endpoint = region === 'us-east-1' ? 'https://s3.wasabisys.com' : `https://s3.${region}.wasabisys.com`;
+		let current = `${group.get('wasabi_aws_service_url').value ?? ''}`.trim();
+		while (current.endsWith('/')) {
+			current = current.slice(0, -1);
+		}
+		return current === endpoint ? null : endpoint;
+	}
+
+	/**
+	 * Put the suggested Wasabi endpoint in the service URL field
+	 */
+	useWasabiSuggestedEndpoint(): void {
+		const endpoint = this.wasabiSuggestedEndpoint;
+		if (endpoint) {
+			const control = this.form.get(FileStorageProviderEnum.WASABI).get('wasabi_aws_service_url');
+			control.setValue(endpoint);
+			control.markAsDirty(); // a programmatic change is still unsaved
+		}
+	}
+
+	/**
+	 * Show or hide the value of a secret input
+	 *
+	 * @param control - The form control name of the secret input.
+	 */
+	toggleSecret(control: string): void {
+		this.revealed[control] = !this.revealed[control];
+	}
+
+	/**
+	 * Check the selected provider's configuration in the browser: every URL field holds an http(s)
+	 * URL (https where the keys are sent to it), and every field is filled — or, for providers that
+	 * fall back to the server's own configuration, list the empty ones as left to it. Nothing is
+	 * sent to the server; Wasabi credentials are still verified by the API when the settings are saved.
+	 */
+	checkConfiguration(): void {
+		const fields = PROVIDER_FIELDS[this.fileStorageProvider as FileStorageProviderEnum];
+		if (!fields) {
+			this.check = { missing: [], invalidUrls: [], insecureUrls: [], serverDefaults: [] };
+			return;
+		}
+
+		const values = this.form.get(this.fileStorageProvider).getRawValue();
+		const isBlank = (value: unknown) =>
+			value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+
+		const empty = fields.required.filter(({ control }) => isBlank(values[control])).map(({ label }) => label);
+
+		const filledUrls = fields.urls.filter(({ control }) => !isBlank(values[control]));
+		const invalidUrls = filledUrls
+			.filter(({ control }) => !this.isHttpUrl(`${values[control]}`.trim()))
+			.map(({ label }) => label);
+		// The keys are signed into requests to this address: plain http would expose them.
+		const insecureUrls = filledUrls
+			.filter(({ control, httpsOnly }) => {
+				const value = `${values[control]}`.trim();
+				return httpsOnly && this.isHttpUrl(value) && new URL(value).protocol !== 'https:';
+			})
+			.map(({ label }) => label);
+
+		// Where the API falls back to the server's configuration, an empty field is a choice, not an error.
+		this.check = fields.serverFallback
+			? { missing: [], invalidUrls, insecureUrls, serverDefaults: empty }
+			: { missing: empty, invalidUrls, insecureUrls, serverDefaults: [] };
+	}
+
+	/**
+	 * Summarize the saved settings for the status strip.
+	 *
+	 * @param provider - The saved (or default) file storage provider.
+	 * @param settings - The tenant settings as returned by the API (secrets arrive masked).
+	 */
+	private buildSummary(provider: FileStorageProviderEnum, settings: ITenantSetting): IFileStorageSummary {
+		const fields = PROVIDER_FIELDS[provider];
+		const values = (settings ?? {}) as Record<string, any>;
+		// '' when the provider has no such field; null when empty and the server's default applies.
+		const read = (name?: string): string | null => {
+			if (!name) return '';
+			if (isNotEmpty(values[name])) return `${values[name]}`;
+			return fields?.serverFallback ? null : '';
+		};
+
+		let credentials: IFileStorageSummary['credentials'] = 'not_needed';
+		if (fields) {
+			const saved = fields.credentials.filter((name) => isNotEmpty(values[name])).length;
+			if (saved === fields.credentials.length) {
+				credentials = 'saved';
+			} else if (saved > 0) {
+				credentials = 'incomplete';
+			} else {
+				credentials = fields.serverFallback ? 'server_default' : 'none';
+			}
+		}
+
+		return {
+			provider,
+			bucket: read(fields?.bucket),
+			region: read(fields?.region),
+			endpoint: read(fields?.endpoint),
+			credentials
+		};
+	}
+
+	private isHttpUrl(value: string): boolean {
+		try {
+			const { protocol } = new URL(value);
+			return protocol === 'http:' || protocol === 'https:';
+		} catch {
+			return false;
 		}
 	}
 }

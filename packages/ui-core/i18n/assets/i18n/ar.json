@@ -5333,54 +5333,192 @@
 		"QUICK_ACTIONS": "إجراءات سريعة"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "مزود الملفات",
+		"FILE_PROVIDER": "مزوّد الملفات",
+		"SHOW_SECRET": "إظهار السر",
+		"HIDE_SECRET": "إخفاء السر",
+		"SUMMARY": {
+			"TITLE": "الإعداد الحالي",
+			"DESCRIPTION": "آخر إعدادات محفوظة — تستخدمها عمليات الرفع الجديدة.",
+			"PROVIDER": "المزوّد",
+			"BUCKET": "الحاوية / اسم السحابة",
+			"REGION": "المنطقة",
+			"ENDPOINT": "نقطة النهاية",
+			"CREDENTIALS": "بيانات الاعتماد",
+			"CREDENTIALS_SAVED": "محفوظة",
+			"CREDENTIALS_INCOMPLETE": "غير مكتملة",
+			"CREDENTIALS_NONE": "غير معيّنة",
+			"CREDENTIALS_NOT_NEEDED": "غير مطلوبة",
+			"SERVER_DEFAULT": "الإعداد الافتراضي للخادم"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "أين تحصل على المفاتيح",
+			"LOCAL": {
+				"NAME": "القرص المحلي",
+				"DESCRIPTION": "تُحفظ الملفات في نظام ملفات خادم API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "تُحفظ الملفات في حاوية AWS S3. استخدم مفتاح وصول IAM يملك صلاحية القراءة والكتابة على الحاوية."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "تخزين سحابي متوافق مع S3. يتم التحقق من بيانات الاعتماد مع Wasabi عند الحفظ."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "استضافة الصور والفيديو. تجد اسم السحابة ومفاتيح API في لوحة Cloudinary ضمن API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "تخزين كائنات متوافق مع S3 مع شبكة CDN اختيارية. أنشئ مفتاح وصول Spaces من لوحة تحكم DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "التخزين المحلي",
+			"WHERE": "تُكتب الملفات المرفوعة في نظام ملفات خادم API.",
+			"NO_CONFIG": "لا شيء لإعداده — التخزين المحلي يعمل مباشرة.",
+			"WARNING": "تُفقد الملفات إذا أُعيد نشر الخادم بدون وحدة تخزين دائمة، ولا تتم مشاركتها بين عدة نسخ من API. استخدم مزوّدًا سحابيًا في بيئة الإنتاج."
+		},
+		"CHECK": {
+			"BUTTON": "التحقق من الإعداد",
+			"OK": "جميع الحقول المطلوبة مملوءة وعناوين URL صالحة. المفاتيح نفسها يتحقق منها المزوّد فقط.",
+			"OK_LOCAL": "التخزين المحلي لا يحتاج إلى إعداد.",
+			"OK_SERVER_DEFAULTS": "لا شيء ناقص. هذه الحقول الفارغة تستخدم إعدادات الخادم:",
+			"MISSING": "ناقص:",
+			"INVALID_URL": "عنوان http(s) غير صالح:",
+			"HTTPS_REQUIRED": "يجب استخدام https:// — تُرسل المفاتيح إلى هذا العنوان:"
+		},
 		"S3": {
-			"HEADER": "تكوين S3",
+			"HEADER": "إعداد S3",
+			"SUBTITLE": "خزّن الملفات المرفوعة في حاوية Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "بيانات الاعتماد",
+				"CREDENTIALS_HINT": "مفتاح وصول IAM يملك صلاحية القراءة والكتابة على الحاوية.",
+				"BUCKET": "الحاوية",
+				"BUCKET_HINT": "مكان كتابة الملفات المرفوعة."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "الجزء العام من زوج المفاتيح.",
+				"SECRET_ACCESS_KEY": "يُعرض مرة واحدة فقط عند إنشاء المفتاح. تعود القيم المحفوظة مقنّعة.",
+				"REGION": "منطقة AWS التي توجد فيها الحاوية، مثل us-east-1 أو eu-west-1.",
+				"BUCKET": "اسم الحاوية تمامًا كما يظهر في لوحة S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "معرّف مفتاح الوصول",
 				"SECRET_ACCESS_KEY": "مفتاح الوصول السري",
 				"REGION": "المنطقة",
-				"BUCKET": "دلو"
+				"BUCKET": "الحاوية"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "معرف مفتاح الوصول",
+				"ACCESS_KEY_ID": "معرّف مفتاح الوصول",
 				"SECRET_ACCESS_KEY": "مفتاح الوصول السري",
 				"REGION": "المنطقة",
-				"BUCKET": "دلو"
+				"BUCKET": "الحاوية"
 			}
 		},
 		"WASABI": {
-			"HEADER": "تكوين واسابي",
+			"HEADER": "إعداد Wasabi",
+			"SUBTITLE": "خزّن الملفات المرفوعة في حاوية Wasabi عبر واجهة API المتوافقة مع S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "بيانات الاعتماد",
+				"CREDENTIALS_HINT": "زوج مفاتيح وصول من لوحة Wasabi.",
+				"BUCKET": "الحاوية ونقطة النهاية",
+				"BUCKET_HINT": "مكان كتابة الملفات المرفوعة.",
+				"OPTIONS": "خيارات"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "الجزء العام من زوج المفاتيح.",
+				"SECRET_ACCESS_KEY": "يُعرض مرة واحدة فقط عند إنشاء المفتاح. تعود القيم المحفوظة مقنّعة.",
+				"REGION": "منطقة الحاوية، مثل us-east-1 أو eu-central-1.",
+				"SERVICE_URL": "نقطة نهاية S3 لتلك المنطقة.",
+				"BUCKET": "أحرف صغيرة وأرقام ونقاط وشرطات. الأسماء فريدة على مستوى Wasabi بالكامل.",
+				"FORCE_PATH_STYLE": "عنونة الملفات بصيغة endpoint/bucket/file بدلًا من bucket.endpoint/file. اتركه مفعّلًا ما لم تحتج إلى عناوين virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "نقطة النهاية لهذه المنطقة:",
+			"USE_SUGGESTION": "استخدمها",
+			"SAVE_NOTE": "عند الحفظ، يستخدم Gauzy بيانات الاعتماد هذه لإنشاء الحاوية في Wasabi. إذا رفضت Wasabi الطلب، فلن تُحفظ الإعدادات.",
 			"LABELS": {
 				"ACCESS_KEY_ID": "معرّف مفتاح الوصول",
-				"SECRET_ACCESS_KEY": "المفتاح السري للوصول",
-				"REGION": "المنطقة",
-				"BUCKET": "دلو",
-				"SERVICE_URL": "عنوان URL للخدمة"
-			},
-			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "مُعرّف المفتاح الوصول",
 				"SECRET_ACCESS_KEY": "مفتاح الوصول السري",
 				"REGION": "المنطقة",
-				"BUCKET": "دلو",
+				"BUCKET": "الحاوية",
+				"SERVICE_URL": "عنوان URL للخدمة",
+				"FORCE_PATH_STYLE": "فرض عناوين URL بنمط المسار"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "معرّف مفتاح الوصول",
+				"SECRET_ACCESS_KEY": "مفتاح الوصول السري",
+				"REGION": "المنطقة",
+				"BUCKET": "الحاوية",
 				"SERVICE_URL": "عنوان URL للخدمة"
 			}
 		},
 		"CLOUDINARY": {
-			"HEADER": "تكوين كلاوديناري",
+			"HEADER": "إعداد Cloudinary",
+			"SUBTITLE": "خزّن الملفات المرفوعة في Cloudinary وقدّمها عبر شبكة التوزيع الخاصة به.",
+			"SECTIONS": {
+				"ACCOUNT": "الحساب",
+				"ACCOUNT_HINT": "القيم الثلاث موجودة في لوحة Cloudinary ضمن API Keys.",
+				"DELIVERY": "التسليم",
+				"DELIVERY_HINT": "كيفية إنشاء روابط الملفات المرفوعة."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "الاسم الظاهر أعلى لوحة Cloudinary.",
+				"ACCESS_API_KEY": "يحدد الحساب؛ يُستخدم مع سر API.",
+				"ACCESS_API_SECRET": "تعود القيم المحفوظة مقنّعة.",
+				"DELIVERY_URL": "العنوان الأساسي لروابط الملفات. احتفظ بـ https://res.cloudinary.com ما لم تستخدم نطاقًا مخصصًا.",
+				"SECURE": "إنشاء روابط الملفات باستخدام https://. اتركه على True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "اسم كلاوديناري",
-				"ACCESS_API_KEY": "معرف مفتاح الوصول",
-				"ACCESS_API_SECRET": "مفتاح الوصول السري",
-				"DELIVERY_URL": "عنوان التسليم",
-				"SECURE": "آمن"
+				"CLOUD_NAME": "اسم السحابة",
+				"ACCESS_API_KEY": "مفتاح API",
+				"ACCESS_API_SECRET": "سر API",
+				"DELIVERY_URL": "عنوان URL للتسليم",
+				"SECURE": "آمن (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "اسم كلاوديناري",
-				"ACCESS_API_KEY": "معرّف مفتاح الوصول",
-				"ACCESS_API_SECRET": "مفتاح الوصول السري",
-				"DELIVERY_URL": "رابط التوصيل",
-				"SECURE": "آمن"
+				"CLOUD_NAME": "اسم السحابة",
+				"ACCESS_API_KEY": "مفتاح API",
+				"ACCESS_API_SECRET": "سر API",
+				"DELIVERY_URL": "عنوان URL للتسليم",
+				"SECURE": "آمن (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "إعداد DigitalOcean",
+			"SUBTITLE": "خزّن الملفات المرفوعة في DigitalOcean Space عبر واجهة API المتوافقة مع S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "بيانات الاعتماد",
+				"CREDENTIALS_HINT": "مفتاح وصول Spaces من لوحة تحكم DigitalOcean.",
+				"BUCKET": "Space ونقطة النهاية",
+				"BUCKET_HINT": "مكان كتابة الملفات المرفوعة.",
+				"OPTIONS": "خيارات"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "الجزء العام من زوج المفاتيح.",
+				"SECRET_ACCESS_KEY": "يُعرض مرة واحدة فقط عند إنشاء المفتاح. تعود القيم المحفوظة مقنّعة.",
+				"SERVICE_URL": "نقطة نهاية مركز البيانات الخاص بـ Space، مثل https://fra1.digitaloceanspaces.com.",
+				"REGION": "مثبّتة على us-east-1 كما يتطلب Spaces؛ ويُحدَّد مركز البيانات من نقطة النهاية.",
+				"BUCKET": "اسم الـ Space.",
+				"CDN_URL": "اختياري. نقطة نهاية CDN الخاصة بالـ Space إذا كانت CDN مفعّلة.",
+				"FORCE_PATH_STYLE": "عنونة الملفات بصيغة endpoint/space/file بدلًا من space.endpoint/file."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "معرّف مفتاح الوصول",
+				"SECRET_ACCESS_KEY": "مفتاح الوصول السري",
+				"REGION": "المنطقة",
+				"BUCKET": "الحاوية",
+				"SERVICE_URL": "عنوان URL للخدمة",
+				"CDN_URL": "عنوان URL لشبكة CDN",
+				"FORCE_PATH_STYLE": "فرض عناوين URL بنمط المسار"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "معرّف مفتاح الوصول",
+				"SECRET_ACCESS_KEY": "مفتاح الوصول السري",
+				"REGION": "المنطقة",
+				"BUCKET": "الحاوية",
+				"SERVICE_URL": "عنوان URL للخدمة",
+				"CDN_URL": "عنوان URL لشبكة CDN"
 			}
 		}
 	},

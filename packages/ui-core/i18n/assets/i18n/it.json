@@ -5348,54 +5348,192 @@
 		"QUICK_ACTIONS": "Azioni rapide"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "Fornitore di file",
+		"FILE_PROVIDER": "Provider di file",
+		"SHOW_SECRET": "Mostra segreto",
+		"HIDE_SECRET": "Nascondi segreto",
+		"SUMMARY": {
+			"TITLE": "Configurazione attuale",
+			"DESCRIPTION": "Ultime impostazioni salvate: quelle usate dai nuovi caricamenti.",
+			"PROVIDER": "Provider",
+			"BUCKET": "Bucket / nome cloud",
+			"REGION": "Regione",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Credenziali",
+			"CREDENTIALS_SAVED": "Salvate",
+			"CREDENTIALS_INCOMPLETE": "Incomplete",
+			"CREDENTIALS_NONE": "Non impostate",
+			"CREDENTIALS_NOT_NEEDED": "Non necessarie",
+			"SERVER_DEFAULT": "Predefinito del server"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Dove ottenere le chiavi",
+			"LOCAL": {
+				"NAME": "Disco locale",
+				"DESCRIPTION": "i file vengono salvati nel file system del server API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "i file vengono salvati in un bucket AWS S3. Usa una chiave di accesso IAM con permessi di lettura e scrittura sul bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "storage cloud compatibile con S3. Le credenziali vengono verificate con Wasabi al salvataggio."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hosting di immagini e video. Il nome cloud e le chiavi API si trovano nella console Cloudinary, in API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "object storage compatibile con S3 con CDN opzionale. Crea una chiave di accesso Spaces nel pannello di controllo DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Archiviazione locale",
+			"WHERE": "I file caricati vengono scritti nel file system del server API.",
+			"NO_CONFIG": "Niente da configurare: l'archiviazione locale funziona subito.",
+			"WARNING": "I file vanno persi se il server viene ridistribuito senza un volume persistente e non sono condivisi tra più istanze dell'API. In produzione usa un provider cloud."
+		},
+		"CHECK": {
+			"BUTTON": "Verifica configurazione",
+			"OK": "Tutti i campi obbligatori sono compilati e gli URL sono validi. Le chiavi vengono verificate solo dal provider.",
+			"OK_LOCAL": "L'archiviazione locale non richiede configurazione.",
+			"OK_SERVER_DEFAULTS": "Non manca nulla. Questi campi vuoti usano la configurazione del server:",
+			"MISSING": "Mancante:",
+			"INVALID_URL": "URL http(s) non valido:",
+			"HTTPS_REQUIRED": "Deve usare https://: le chiavi vengono inviate a questo indirizzo:"
+		},
 		"S3": {
 			"HEADER": "Configurazione S3",
+			"SUBTITLE": "Archivia i file caricati in un bucket Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenziali",
+				"CREDENTIALS_HINT": "Una chiave di accesso IAM con permessi di lettura e scrittura sul bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Dove vengono scritti i file caricati."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pubblica della coppia di chiavi.",
+				"SECRET_ACCESS_KEY": "Mostrata una sola volta, alla creazione della chiave. I valori salvati tornano mascherati.",
+				"REGION": "La regione AWS del bucket, ad es. us-east-1 o eu-west-1.",
+				"BUCKET": "Il nome del bucket esattamente come appare nella console S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID chiave di accesso",
 				"SECRET_ACCESS_KEY": "Chiave di accesso segreta",
 				"REGION": "Regione",
-				"BUCKET": "Secchio"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "ID chiave di accesso",
 				"SECRET_ACCESS_KEY": "Chiave di accesso segreta",
 				"REGION": "Regione",
-				"BUCKET": "Secchio"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Configurazione di Wasabi",
+			"HEADER": "Configurazione Wasabi",
+			"SUBTITLE": "Archivia i file caricati in un bucket Wasabi tramite la sua API compatibile con S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenziali",
+				"CREDENTIALS_HINT": "Una coppia di chiavi di accesso dalla console Wasabi.",
+				"BUCKET": "Bucket ed endpoint",
+				"BUCKET_HINT": "Dove vengono scritti i file caricati.",
+				"OPTIONS": "Opzioni"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pubblica della coppia di chiavi.",
+				"SECRET_ACCESS_KEY": "Mostrata una sola volta, alla creazione della chiave. I valori salvati tornano mascherati.",
+				"REGION": "La regione del bucket, ad es. us-east-1 o eu-central-1.",
+				"SERVICE_URL": "L'endpoint S3 di quella regione.",
+				"BUCKET": "Lettere minuscole, numeri, punti e trattini. I nomi sono unici in tutto Wasabi.",
+				"FORCE_PATH_STYLE": "Indirizza i file come endpoint/bucket/file invece di bucket.endpoint/file. Lascia attivo a meno che non servano URL virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint per questa regione:",
+			"USE_SUGGESTION": "Usalo",
+			"SAVE_NOTE": "Al salvataggio, Gauzy usa queste credenziali per creare il bucket in Wasabi. Se Wasabi rifiuta la richiesta, le impostazioni non vengono salvate.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Identificazione chiave di accesso",
+				"ACCESS_KEY_ID": "ID chiave di accesso",
 				"SECRET_ACCESS_KEY": "Chiave di accesso segreta",
 				"REGION": "Regione",
-				"BUCKET": "Secchio",
-				"SERVICE_URL": "URL del servizio"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servizio",
+				"FORCE_PATH_STYLE": "Forza URL in stile percorso"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "ID chiave di accesso",
 				"SECRET_ACCESS_KEY": "Chiave di accesso segreta",
 				"REGION": "Regione",
-				"BUCKET": "Secchio",
-				"SERVICE_URL": "URL del Servizio"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servizio"
 			}
 		},
 		"CLOUDINARY": {
-			"HEADER": "Configurazione di Cloudinary",
+			"HEADER": "Configurazione Cloudinary",
+			"SUBTITLE": "Archivia i file caricati in Cloudinary e distribuiscili tramite la sua rete di delivery.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "Tutti e tre i valori si trovano nella console Cloudinary, in API Keys.",
+				"DELIVERY": "Distribuzione",
+				"DELIVERY_HINT": "Come vengono costruiti i link ai file caricati."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Il nome mostrato in alto nella console Cloudinary.",
+				"ACCESS_API_KEY": "Identifica l'account; si usa insieme al segreto API.",
+				"ACCESS_API_SECRET": "I valori salvati tornano mascherati.",
+				"DELIVERY_URL": "Indirizzo base dei link. Mantieni https://res.cloudinary.com a meno che tu non usi un dominio personalizzato.",
+				"SECURE": "Genera i link con https://. Lascia su True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Nome di Cloudinary",
-				"ACCESS_API_KEY": "ID chiave di accesso",
-				"ACCESS_API_SECRET": "Chiave di accesso segreta",
-				"DELIVERY_URL": "URL di consegna",
-				"SECURE": "Sicuro"
+				"CLOUD_NAME": "Nome cloud",
+				"ACCESS_API_KEY": "Chiave API",
+				"ACCESS_API_SECRET": "Segreto API",
+				"DELIVERY_URL": "URL di distribuzione",
+				"SECURE": "Sicuro (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Nome di Cloudinary",
-				"ACCESS_API_KEY": "ID chiave di accesso",
-				"ACCESS_API_SECRET": "Chiave di accesso segreta",
-				"DELIVERY_URL": "URL di consegna",
-				"SECURE": "Sicuro"
+				"CLOUD_NAME": "Nome cloud",
+				"ACCESS_API_KEY": "Chiave API",
+				"ACCESS_API_SECRET": "Segreto API",
+				"DELIVERY_URL": "URL di distribuzione",
+				"SECURE": "Sicuro (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Configurazione DigitalOcean",
+			"SUBTITLE": "Archivia i file caricati in uno Space DigitalOcean tramite la sua API compatibile con S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenziali",
+				"CREDENTIALS_HINT": "Una chiave di accesso Spaces dal pannello di controllo DigitalOcean.",
+				"BUCKET": "Space ed endpoint",
+				"BUCKET_HINT": "Dove vengono scritti i file caricati.",
+				"OPTIONS": "Opzioni"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pubblica della coppia di chiavi.",
+				"SECRET_ACCESS_KEY": "Mostrata una sola volta, alla creazione della chiave. I valori salvati tornano mascherati.",
+				"SERVICE_URL": "L'endpoint del datacenter del tuo Space, ad es. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fissata su us-east-1, come richiesto da Spaces; il datacenter è determinato dall'endpoint.",
+				"BUCKET": "Il nome dello Space.",
+				"CDN_URL": "Facoltativo. L'endpoint CDN dello Space, se la CDN è attiva.",
+				"FORCE_PATH_STYLE": "Indirizza i file come endpoint/space/file invece di space.endpoint/file."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID chiave di accesso",
+				"SECRET_ACCESS_KEY": "Chiave di accesso segreta",
+				"REGION": "Regione",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servizio",
+				"CDN_URL": "URL della CDN",
+				"FORCE_PATH_STYLE": "Forza URL in stile percorso"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID chiave di accesso",
+				"SECRET_ACCESS_KEY": "Chiave di accesso segreta",
+				"REGION": "Regione",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servizio",
+				"CDN_URL": "URL della CDN"
 			}
 		}
 	},
