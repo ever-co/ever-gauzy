@@ -1,3 +1,4 @@
+// cspell:ignore abcdefghijk
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
