@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
 import { isUUID } from 'class-validator';
+import * as moment from 'moment';
 import {
 	ID,
 	IDailyPlan,
@@ -89,8 +90,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
 					query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
 					query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
-					query.andWhere(p(`DATE("dailyPlan"."date") = :dailyPlanDate`), {
-						dailyPlanDate: `${dailyPlanDate}`
+					// Any time on that day. Unlike DATE("date"), a range on the bare column lets the
+					// (employeeId, organizationTeamId, date) index narrow the lookup to that day.
+					query.andWhere(p(`"dailyPlan"."date" >= :dailyPlanDate AND "dailyPlan"."date" < :nextDayDate`), {
+						dailyPlanDate,
+						nextDayDate: moment.utc(dailyPlanDate).add(1, 'day').format('YYYY-MM-DD')
 					});
 					query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
 					dailyPlan = await query.getOne();
@@ -617,7 +621,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 
 					// Find condition must include only today and future plans
-					query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
+					query.andWhere(p(`"${query.alias}"."date" >= :currentDate`), { currentDate });
 
 					if (plansIds.length > 0) {
 						query.andWhere(p(`${query.alias}.id IN (:...plansIds)`), { plansIds });
