@@ -5408,6 +5408,19 @@
 		},
 		"S3": {
 			"HEADER": "תצורת S3",
+			"SUBTITLE": "אחסנו קבצים שהועלו בבאקט של Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "פרטי גישה",
+				"CREDENTIALS_HINT": "מפתח גישה של IAM עם הרשאות קריאה וכתיבה לבאקט.",
+				"BUCKET": "באקט",
+				"BUCKET_HINT": "לאן נכתבים הקבצים שהועלו."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "החלק הציבורי של זוג המפתחות.",
+				"SECRET_ACCESS_KEY": "מוצג פעם אחת בלבד, בעת יצירת המפתח. ערכים שמורים חוזרים מוסתרים.",
+				"REGION": "אזור ה-AWS של הבאקט, למשל us-east-1 או eu-west-1.",
+				"BUCKET": "שם הבאקט בדיוק כפי שהוא מופיע בקונסולת S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "מזהה מפתח גישה",
 				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
@@ -5460,6 +5473,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "תצורת Cloudinary",
+			"SUBTITLE": "אחסנו קבצים שהועלו ב-Cloudinary והגישו אותם דרך רשת ההפצה שלו.",
+			"SECTIONS": {
+				"ACCOUNT": "חשבון",
+				"ACCOUNT_HINT": "שלושת הערכים נמצאים בקונסולת Cloudinary תחת API Keys.",
+				"DELIVERY": "הפצה",
+				"DELIVERY_HINT": "כיצד נבנים הקישורים לקבצים שהועלו."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "השם המוצג בראש קונסולת Cloudinary.",
+				"ACCESS_API_KEY": "מזהה את החשבון; משמש יחד עם סוד ה-API.",
+				"ACCESS_API_SECRET": "ערכים שמורים חוזרים מוסתרים.",
+				"DELIVERY_URL": "כתובת הבסיס של הקישורים. השאירו https://res.cloudinary.com אלא אם אתם משתמשים בדומיין מותאם.",
+				"SECURE": "יצירת קישורים עם https://. השאירו על True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "שם הענן",
 				"ACCESS_API_KEY": "מפתח API",
@@ -5477,6 +5504,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "תצורת DigitalOcean",
+			"SUBTITLE": "אחסנו קבצים שהועלו ב-DigitalOcean Space דרך ה-API התואם S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "פרטי גישה",
+				"CREDENTIALS_HINT": "מפתח גישה ל-Spaces מלוח הבקרה של DigitalOcean.",
+				"BUCKET": "Space ונקודת קצה",
+				"BUCKET_HINT": "לאן נכתבים הקבצים שהועלו.",
+				"OPTIONS": "אפשרויות"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "החלק הציבורי של זוג המפתחות.",
+				"SECRET_ACCESS_KEY": "מוצג פעם אחת בלבד, בעת יצירת המפתח. ערכים שמורים חוזרים מוסתרים.",
+				"SERVICE_URL": "נקודת הקצה של מרכז הנתונים של ה-Space, למשל https://fra1.digitaloceanspaces.com.",
+				"REGION": "קבוע על us-east-1, כפי ש-Spaces מצפה; מרכז הנתונים נקבע לפי נקודת הקצה.",
+				"BUCKET": "שם ה-Space.",
+				"CDN_URL": "אופציונלי. נקודת הקצה של ה-CDN של ה-Space, אם ה-CDN מופעל.",
+				"FORCE_PATH_STYLE": "פנייה לקבצים בתבנית endpoint/space/file במקום space.endpoint/file."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "מזהה מפתח גישה",
 				"SECRET_ACCESS_KEY": "מפתח גישה סודי",

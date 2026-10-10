@@ -5399,6 +5399,19 @@
 		},
 		"S3": {
 			"HEADER": "S3-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een Amazon S3-bucket.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een IAM-toegangssleutel met lees- en schrijfrechten op de bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"REGION": "De AWS-regio van de bucket, bijv. us-east-1 of eu-west-1.",
+				"BUCKET": "De bucketnaam precies zoals in de S3-console."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
@@ -5451,6 +5464,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Cloudinary-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in Cloudinary en lever ze via het leveringsnetwerk.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "Alle drie de waarden staan in de Cloudinary-console onder API Keys.",
+				"DELIVERY": "Levering",
+				"DELIVERY_HINT": "Hoe links naar geüploade bestanden worden opgebouwd."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "De naam bovenaan uw Cloudinary-console.",
+				"ACCESS_API_KEY": "Identificeert het account; wordt samen met het API-geheim gebruikt.",
+				"ACCESS_API_SECRET": "Opgeslagen waarden komen gemaskeerd terug.",
+				"DELIVERY_URL": "Basisadres van bestandslinks. Houd https://res.cloudinary.com aan, tenzij u een eigen domein gebruikt.",
+				"SECURE": "Bouw bestandslinks met https://. Laat op True staan."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Cloudnaam",
 				"ACCESS_API_KEY": "API-sleutel",
@@ -5468,6 +5495,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "DigitalOcean-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een DigitalOcean Space via de S3-compatibele API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een Spaces-toegangssleutel uit het DigitalOcean-controlepaneel.",
+				"BUCKET": "Space en endpoint",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven.",
+				"OPTIONS": "Opties"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"SERVICE_URL": "Het endpoint van het datacenter van uw Space, bijv. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Vast op us-east-1, zoals Spaces verwacht; het datacenter volgt uit het endpoint.",
+				"BUCKET": "De naam van de Space.",
+				"CDN_URL": "Optioneel. Het CDN-endpoint van de Space, als het CDN is ingeschakeld.",
+				"FORCE_PATH_STYLE": "Adresseer bestanden als endpoint/space/bestand in plaats van space.endpoint/bestand."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",

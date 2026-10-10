@@ -5395,6 +5395,19 @@
 		},
 		"S3": {
 			"HEADER": "S3-Konfiguration",
+			"SUBTITLE": "Hochgeladene Dateien in einem Amazon-S3-Bucket speichern.",
+			"SECTIONS": {
+				"CREDENTIALS": "Zugangsdaten",
+				"CREDENTIALS_HINT": "Ein IAM-Zugriffsschlüssel mit Lese- und Schreibrechten für den Bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Wohin hochgeladene Dateien geschrieben werden."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Der öffentliche Teil des Schlüsselpaars.",
+				"SECRET_ACCESS_KEY": "Wird nur einmal beim Erstellen des Schlüssels angezeigt. Gespeicherte Werte kommen maskiert zurück.",
+				"REGION": "Die AWS-Region des Buckets, z. B. us-east-1 oder eu-west-1.",
+				"BUCKET": "Der Bucket-Name genau wie in der S3-Konsole."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Zugriffsschlüssel-ID",
 				"SECRET_ACCESS_KEY": "Geheimer Zugriffsschlüssel",
@@ -5447,6 +5460,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Cloudinary-Konfiguration",
+			"SUBTITLE": "Hochgeladene Dateien in Cloudinary speichern und über dessen Auslieferungsnetz bereitstellen.",
+			"SECTIONS": {
+				"ACCOUNT": "Konto",
+				"ACCOUNT_HINT": "Alle drei Werte finden Sie in der Cloudinary-Konsole unter API Keys.",
+				"DELIVERY": "Auslieferung",
+				"DELIVERY_HINT": "Wie Links zu hochgeladenen Dateien gebildet werden."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Der Name oben in Ihrer Cloudinary-Konsole.",
+				"ACCESS_API_KEY": "Identifiziert das Konto; wird zusammen mit dem API-Secret verwendet.",
+				"ACCESS_API_SECRET": "Gespeicherte Werte kommen maskiert zurück.",
+				"DELIVERY_URL": "Basisadresse der Datei-Links. Behalten Sie https://res.cloudinary.com, sofern Sie keine eigene Domain nutzen.",
+				"SECURE": "Datei-Links mit https:// erzeugen. Auf True lassen."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Cloud-Name",
 				"ACCESS_API_KEY": "API-Schlüssel",
@@ -5464,6 +5491,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "DigitalOcean-Konfiguration",
+			"SUBTITLE": "Hochgeladene Dateien in einem DigitalOcean Space über dessen S3-kompatible API speichern.",
+			"SECTIONS": {
+				"CREDENTIALS": "Zugangsdaten",
+				"CREDENTIALS_HINT": "Ein Spaces-Zugriffsschlüssel aus dem DigitalOcean-Control-Panel.",
+				"BUCKET": "Space und Endpunkt",
+				"BUCKET_HINT": "Wohin hochgeladene Dateien geschrieben werden.",
+				"OPTIONS": "Optionen"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Der öffentliche Teil des Schlüsselpaars.",
+				"SECRET_ACCESS_KEY": "Wird nur einmal beim Erstellen des Schlüssels angezeigt. Gespeicherte Werte kommen maskiert zurück.",
+				"SERVICE_URL": "Der Endpunkt des Rechenzentrums Ihres Space, z. B. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fest auf us-east-1, wie von Spaces erwartet; das Rechenzentrum ergibt sich aus dem Endpunkt.",
+				"BUCKET": "Der Name des Space.",
+				"CDN_URL": "Optional. Der CDN-Endpunkt des Space, falls das CDN aktiviert ist.",
+				"FORCE_PATH_STYLE": "Dateien als Endpunkt/Space/Datei statt Space.Endpunkt/Datei adressieren."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Zugriffsschlüssel-ID",
 				"SECRET_ACCESS_KEY": "Geheimer Zugriffsschlüssel",

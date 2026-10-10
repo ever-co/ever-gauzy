@@ -5445,6 +5445,19 @@
 		},
 		"S3": {
 			"HEADER": "Конфигурация на S3",
+			"SUBTITLE": "Съхранявайте качените файлове в Amazon S3 бъкет.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "IAM ключ за достъп с права за четене и запис в бъкета.",
+				"BUCKET": "Бъкет",
+				"BUCKET_HINT": "Къде се записват качените файлове."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "AWS регионът на бъкета, напр. us-east-1 или eu-west-1.",
+				"BUCKET": "Името на бъкета точно както е в конзолата на S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
@@ -5497,6 +5510,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Конфигурация на Cloudinary",
+			"SUBTITLE": "Съхранявайте качените файлове в Cloudinary и ги доставяйте чрез неговата мрежа.",
+			"SECTIONS": {
+				"ACCOUNT": "Акаунт",
+				"ACCOUNT_HINT": "И трите стойности са в конзолата на Cloudinary, в раздел API Keys.",
+				"DELIVERY": "Доставка",
+				"DELIVERY_HINT": "Как се изграждат връзките към качените файлове."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Името, показано в горната част на конзолата на Cloudinary.",
+				"ACCESS_API_KEY": "Идентифицира акаунта; използва се заедно с API тайната.",
+				"ACCESS_API_SECRET": "Запазените стойности се връщат маскирани.",
+				"DELIVERY_URL": "Базов адрес на връзките. Оставете https://res.cloudinary.com, освен ако не ползвате собствен домейн.",
+				"SECURE": "Създава връзките с https://. Оставете True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Име на облака",
 				"ACCESS_API_KEY": "API ключ",
@@ -5514,6 +5541,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "Конфигурация на DigitalOcean",
+			"SUBTITLE": "Съхранявайте качените файлове в DigitalOcean Space чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Ключ за достъп до Spaces от контролния панел на DigitalOcean.",
+				"BUCKET": "Space и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"SERVICE_URL": "Крайната точка на центъра за данни на вашия Space, напр. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Фиксиран на us-east-1, както изисква Spaces; центърът за данни се определя от крайната точка.",
+				"BUCKET": "Името на Space.",
+				"CDN_URL": "По избор. CDN крайната точка на Space, ако CDN е включен.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/space/файл вместо space.endpoint/файл."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",

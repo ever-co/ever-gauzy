@@ -5390,6 +5390,19 @@
 		},
 		"S3": {
 			"HEADER": "Configuration S3",
+			"SUBTITLE": "Stockez les fichiers envoyés dans un bucket Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Identifiants",
+				"CREDENTIALS_HINT": "Une clé d'accès IAM pouvant lire et écrire dans le bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Où les fichiers envoyés sont écrits."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La partie publique de la paire de clés.",
+				"SECRET_ACCESS_KEY": "Affichée une seule fois, à la création de la clé. Les valeurs enregistrées sont renvoyées masquées.",
+				"REGION": "La région AWS du bucket, par ex. us-east-1 ou eu-west-1.",
+				"BUCKET": "Le nom du bucket tel qu'il apparaît dans la console S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
@@ -5442,6 +5455,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Configuration Cloudinary",
+			"SUBTITLE": "Stockez les fichiers envoyés dans Cloudinary et diffusez-les via son réseau de distribution.",
+			"SECTIONS": {
+				"ACCOUNT": "Compte",
+				"ACCOUNT_HINT": "Ces trois valeurs se trouvent dans la console Cloudinary, sous API Keys.",
+				"DELIVERY": "Diffusion",
+				"DELIVERY_HINT": "Comment les liens vers les fichiers sont construits."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Le nom affiché en haut de votre console Cloudinary.",
+				"ACCESS_API_KEY": "Identifie le compte ; utilisée avec le secret API.",
+				"ACCESS_API_SECRET": "Les valeurs enregistrées sont renvoyées masquées.",
+				"DELIVERY_URL": "Adresse de base des liens. Gardez https://res.cloudinary.com sauf si vous utilisez un domaine personnalisé.",
+				"SECURE": "Construit les liens en https://. Laissez sur True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Nom du cloud",
 				"ACCESS_API_KEY": "Clé API",
@@ -5459,6 +5486,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "Configuration DigitalOcean",
+			"SUBTITLE": "Stockez les fichiers envoyés dans un Space DigitalOcean via son API compatible S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Identifiants",
+				"CREDENTIALS_HINT": "Une clé d'accès Spaces issue du panneau de contrôle DigitalOcean.",
+				"BUCKET": "Space et point de terminaison",
+				"BUCKET_HINT": "Où les fichiers envoyés sont écrits.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La partie publique de la paire de clés.",
+				"SECRET_ACCESS_KEY": "Affichée une seule fois, à la création de la clé. Les valeurs enregistrées sont renvoyées masquées.",
+				"SERVICE_URL": "Le point de terminaison du datacenter de votre Space, par ex. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fixé à us-east-1, comme l'attend Spaces ; le datacenter est déterminé par le point de terminaison.",
+				"BUCKET": "Le nom du Space.",
+				"CDN_URL": "Facultatif. Le point de terminaison CDN du Space, si le CDN est activé.",
+				"FORCE_PATH_STYLE": "Adresse les fichiers sous la forme endpoint/space/fichier au lieu de space.endpoint/fichier."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",

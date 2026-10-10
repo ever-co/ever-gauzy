@@ -5398,6 +5398,19 @@
 		},
 		"S3": {
 			"HEADER": "Konfiguracja S3",
+			"SUBTITLE": "Przechowuj przesłane pliki w buckecie Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Klucz dostępu IAM z prawem odczytu i zapisu do bucketu.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"REGION": "Region AWS bucketu, np. us-east-1 lub eu-west-1.",
+				"BUCKET": "Nazwa bucketu dokładnie taka jak w konsoli S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
@@ -5450,6 +5463,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Konfiguracja Cloudinary",
+			"SUBTITLE": "Przechowuj przesłane pliki w Cloudinary i udostępniaj je przez jego sieć dostarczania.",
+			"SECTIONS": {
+				"ACCOUNT": "Konto",
+				"ACCOUNT_HINT": "Wszystkie trzy wartości znajdziesz w konsoli Cloudinary w sekcji API Keys.",
+				"DELIVERY": "Dostarczanie",
+				"DELIVERY_HINT": "Jak budowane są linki do przesłanych plików."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Nazwa widoczna u góry konsoli Cloudinary.",
+				"ACCESS_API_KEY": "Identyfikuje konto; używany razem z sekretem API.",
+				"ACCESS_API_SECRET": "Zapisane wartości wracają zamaskowane.",
+				"DELIVERY_URL": "Bazowy adres linków. Zostaw https://res.cloudinary.com, chyba że używasz własnej domeny.",
+				"SECURE": "Twórz linki z https://. Pozostaw True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Nazwa chmury",
 				"ACCESS_API_KEY": "Klucz API",
@@ -5467,6 +5494,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "Konfiguracja DigitalOcean",
+			"SUBTITLE": "Przechowuj przesłane pliki w DigitalOcean Space przez jego API zgodne z S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Klucz dostępu Spaces z panelu sterowania DigitalOcean.",
+				"BUCKET": "Space i punkt końcowy",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki.",
+				"OPTIONS": "Opcje"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"SERVICE_URL": "Punkt końcowy centrum danych Twojego Space, np. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Ustawiony na us-east-1, zgodnie z wymaganiami Spaces; centrum danych wynika z punktu końcowego.",
+				"BUCKET": "Nazwa Space.",
+				"CDN_URL": "Opcjonalnie. Punkt końcowy CDN Space, jeśli CDN jest włączony.",
+				"FORCE_PATH_STYLE": "Adresuj pliki jako endpoint/space/plik zamiast space.endpoint/plik."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",

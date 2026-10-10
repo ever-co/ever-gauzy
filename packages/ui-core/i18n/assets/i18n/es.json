@@ -5401,6 +5401,19 @@
 		},
 		"S3": {
 			"HEADER": "Configuración de S3",
+			"SUBTITLE": "Guarde los archivos subidos en un bucket de Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciales",
+				"CREDENTIALS_HINT": "Una clave de acceso de IAM que pueda leer y escribir en el bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Dónde se escriben los archivos subidos."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pública del par de claves.",
+				"SECRET_ACCESS_KEY": "Se muestra una sola vez, al crear la clave. Los valores guardados vuelven enmascarados.",
+				"REGION": "La región de AWS del bucket, p. ej. us-east-1 o eu-west-1.",
+				"BUCKET": "El nombre del bucket tal como aparece en la consola de S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clave de acceso",
 				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
@@ -5453,6 +5466,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Configuración de Cloudinary",
+			"SUBTITLE": "Guarde los archivos subidos en Cloudinary y sírvalos desde su red de distribución.",
+			"SECTIONS": {
+				"ACCOUNT": "Cuenta",
+				"ACCOUNT_HINT": "Los tres valores están en la consola de Cloudinary, en API Keys.",
+				"DELIVERY": "Entrega",
+				"DELIVERY_HINT": "Cómo se construyen los enlaces a los archivos subidos."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "El nombre que aparece en la parte superior de su consola de Cloudinary.",
+				"ACCESS_API_KEY": "Identifica la cuenta; se usa junto con el secreto de API.",
+				"ACCESS_API_SECRET": "Los valores guardados vuelven enmascarados.",
+				"DELIVERY_URL": "Dirección base de los enlaces. Mantenga https://res.cloudinary.com salvo que use un dominio propio.",
+				"SECURE": "Genera los enlaces con https://. Déjelo en True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Nombre de la nube",
 				"ACCESS_API_KEY": "Clave de API",
@@ -5470,6 +5497,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "Configuración de DigitalOcean",
+			"SUBTITLE": "Guarde los archivos subidos en un Space de DigitalOcean mediante su API compatible con S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciales",
+				"CREDENTIALS_HINT": "Una clave de acceso de Spaces del panel de control de DigitalOcean.",
+				"BUCKET": "Space y endpoint",
+				"BUCKET_HINT": "Dónde se escriben los archivos subidos.",
+				"OPTIONS": "Opciones"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pública del par de claves.",
+				"SECRET_ACCESS_KEY": "Se muestra una sola vez, al crear la clave. Los valores guardados vuelven enmascarados.",
+				"SERVICE_URL": "El endpoint del centro de datos de su Space, p. ej. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fijado en us-east-1, como espera Spaces; el centro de datos lo determina el endpoint.",
+				"BUCKET": "El nombre del Space.",
+				"CDN_URL": "Opcional. El endpoint CDN del Space, si el CDN está activado.",
+				"FORCE_PATH_STYLE": "Direcciona los archivos como endpoint/space/archivo en lugar de space.endpoint/archivo."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clave de acceso",
 				"SECRET_ACCESS_KEY": "Clave de acceso secreta",

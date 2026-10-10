@@ -5415,6 +5415,19 @@
 		},
 		"S3": {
 			"HEADER": "Конфигурация S3",
+			"SUBTITLE": "Храните загруженные файлы в бакете Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Учётные данные",
+				"CREDENTIALS_HINT": "Ключ доступа IAM с правами на чтение и запись в бакет.",
+				"BUCKET": "Бакет",
+				"BUCKET_HINT": "Куда записываются загруженные файлы."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Открытая часть пары ключей.",
+				"SECRET_ACCESS_KEY": "Показывается только один раз — при создании ключа. Сохранённые значения возвращаются замаскированными.",
+				"REGION": "Регион AWS, в котором находится бакет, например us-east-1 или eu-west-1.",
+				"BUCKET": "Имя бакета точно как в консоли S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID ключа доступа",
 				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
@@ -5467,6 +5480,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Конфигурация Cloudinary",
+			"SUBTITLE": "Храните загруженные файлы в Cloudinary и отдавайте их через его сеть доставки.",
+			"SECTIONS": {
+				"ACCOUNT": "Аккаунт",
+				"ACCOUNT_HINT": "Все три значения есть в консоли Cloudinary в разделе API Keys.",
+				"DELIVERY": "Доставка",
+				"DELIVERY_HINT": "Как формируются ссылки на загруженные файлы."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Имя, показанное вверху консоли Cloudinary.",
+				"ACCESS_API_KEY": "Идентифицирует аккаунт; используется вместе с API-секретом.",
+				"ACCESS_API_SECRET": "Сохранённые значения возвращаются замаскированными.",
+				"DELIVERY_URL": "Базовый адрес ссылок. Оставьте https://res.cloudinary.com, если не используете свой домен.",
+				"SECURE": "Формировать ссылки с https://. Оставьте True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Имя облака",
 				"ACCESS_API_KEY": "API-ключ",
@@ -5484,6 +5511,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "Конфигурация DigitalOcean",
+			"SUBTITLE": "Храните загруженные файлы в DigitalOcean Space через его S3-совместимый API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Учётные данные",
+				"CREDENTIALS_HINT": "Ключ доступа Spaces из панели управления DigitalOcean.",
+				"BUCKET": "Space и эндпоинт",
+				"BUCKET_HINT": "Куда записываются загруженные файлы.",
+				"OPTIONS": "Параметры"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Открытая часть пары ключей.",
+				"SECRET_ACCESS_KEY": "Показывается только один раз — при создании ключа. Сохранённые значения возвращаются замаскированными.",
+				"SERVICE_URL": "Эндпоинт дата-центра вашего Space, например https://fra1.digitaloceanspaces.com.",
+				"REGION": "Всегда us-east-1, как требует Spaces; дата-центр определяется эндпоинтом.",
+				"BUCKET": "Имя Space.",
+				"CDN_URL": "Необязательно. CDN-эндпоинт Space, если CDN включён.",
+				"FORCE_PATH_STYLE": "Адресовать файлы как эндпоинт/space/файл вместо space.эндпоинт/файл."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID ключа доступа",
 				"SECRET_ACCESS_KEY": "Секретный ключ доступа",

@@ -4750,6 +4750,19 @@
 		},
 		"S3": {
 			"HEADER": "crwdns10956:0crwdne10956:0",
+			"SUBTITLE": "Store uploaded files in an Amazon S3 bucket.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "An IAM access key that can read and write the bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Where uploaded files are written."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"REGION": "The AWS region the bucket lives in, e.g. us-east-1 or eu-west-1.",
+				"BUCKET": "The bucket name exactly as it appears in the S3 console."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "crwdns10958:0crwdne10958:0",
 				"SECRET_ACCESS_KEY": "crwdns10960:0crwdne10960:0",
@@ -4802,6 +4815,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Cloudinary Configuration",
+			"SUBTITLE": "Store uploaded files in Cloudinary and serve them from its delivery network.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "All three values are in the Cloudinary console under API Keys.",
+				"DELIVERY": "Delivery",
+				"DELIVERY_HINT": "How links to uploaded files are built."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "The name shown at the top of your Cloudinary console.",
+				"ACCESS_API_KEY": "Identifies the account; used together with the API secret.",
+				"ACCESS_API_SECRET": "Saved values come back masked.",
+				"DELIVERY_URL": "Base address of file links. Keep https://res.cloudinary.com unless you use a custom domain.",
+				"SECURE": "Build file links with https://. Leave on True."
+			},
 			"LABELS": {
 				"CLOUD_NAME": "Cloud name",
 				"ACCESS_API_KEY": "API key",
@@ -4819,6 +4846,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "DigitalOcean Configuration",
+			"SUBTITLE": "Store uploaded files in a DigitalOcean Space through its S3-compatible API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "A Spaces access key from the DigitalOcean control panel.",
+				"BUCKET": "Space & endpoint",
+				"BUCKET_HINT": "Where uploaded files are written.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"SERVICE_URL": "The endpoint of your Space's datacenter, e.g. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fixed to us-east-1, as Spaces expects; the datacenter comes from the endpoint.",
+				"BUCKET": "The name of the Space.",
+				"CDN_URL": "Optional. The Space's CDN endpoint, if the CDN is enabled.",
+				"FORCE_PATH_STYLE": "Address files as endpoint/space/file instead of space.endpoint/file."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",

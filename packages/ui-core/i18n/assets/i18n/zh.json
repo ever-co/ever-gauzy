@@ -5399,6 +5399,19 @@
 		},
 		"S3": {
 			"HEADER": "S3 配置",
+			"SUBTITLE": "将上传的文件存储到 Amazon S3 存储桶中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "对该存储桶具有读写权限的 IAM 访问密钥。",
+				"BUCKET": "存储桶",
+				"BUCKET_HINT": "上传文件的写入位置。"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"REGION": "存储桶所在的 AWS 区域，例如 us-east-1 或 eu-west-1。",
+				"BUCKET": "与 S3 控制台中完全一致的存储桶名称。"
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
@@ -5451,6 +5464,20 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Cloudinary 配置",
+			"SUBTITLE": "将上传的文件存储到 Cloudinary，并通过其分发网络提供访问。",
+			"SECTIONS": {
+				"ACCOUNT": "账户",
+				"ACCOUNT_HINT": "这三项均可在 Cloudinary 控制台的 API Keys 中找到。",
+				"DELIVERY": "分发",
+				"DELIVERY_HINT": "上传文件链接的生成方式。"
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Cloudinary 控制台顶部显示的名称。",
+				"ACCESS_API_KEY": "用于识别账户；与 API Secret 配合使用。",
+				"ACCESS_API_SECRET": "已保存的值会以掩码形式返回。",
+				"DELIVERY_URL": "文件链接的基础地址。除非使用自定义域名，否则保持 https://res.cloudinary.com。",
+				"SECURE": "使用 https:// 生成文件链接。保持为 True。"
+			},
 			"LABELS": {
 				"CLOUD_NAME": "云名称",
 				"ACCESS_API_KEY": "API Key",
@@ -5468,6 +5495,23 @@
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "DigitalOcean 配置",
+			"SUBTITLE": "通过兼容 S3 的 API 将上传的文件存储到 DigitalOcean Space 中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "来自 DigitalOcean 控制面板的 Spaces 访问密钥。",
+				"BUCKET": "Space 与端点",
+				"BUCKET_HINT": "上传文件的写入位置。",
+				"OPTIONS": "选项"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"SERVICE_URL": "Space 所在数据中心的端点，例如 https://fra1.digitaloceanspaces.com。",
+				"REGION": "按 Spaces 的要求固定为 us-east-1；数据中心由端点决定。",
+				"BUCKET": "Space 的名称。",
+				"CDN_URL": "可选。若已启用 CDN，填写该 Space 的 CDN 端点。",
+				"FORCE_PATH_STYLE": "以 endpoint/space/file 而非 space.endpoint/file 的形式访问文件。"
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
