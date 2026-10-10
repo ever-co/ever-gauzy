@@ -352,7 +352,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise resolving to daily plans for the current employee.
 	 */
 	async getMyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		const currentEmployeeId = RequestContext.currentEmployeeId();
+		// Read from the user: `currentEmployeeId()` is null for a CHANGE_SELECTED_EMPLOYEE holder even when
+		// they have an employee record, and this route only ever reads the caller's own plans.
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
 
 		// A caller without an employee record owns no plans. Passing no owner on would read the whole
 		// organization for the callers that skip the team check.
