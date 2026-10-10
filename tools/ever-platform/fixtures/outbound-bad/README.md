@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 MD043 -->
+
 # A known-bad README for outbound-calls.test.mjs
 
 | #   | Request                                 | When       |

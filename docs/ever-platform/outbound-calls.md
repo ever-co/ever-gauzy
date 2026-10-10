@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 MD043 -->
+
 # What Ever Gauzy sends to Ever Platform
 
 Ever Gauzy has two optional modules that talk to Ever Platform: the **anonymous usage statistics**
