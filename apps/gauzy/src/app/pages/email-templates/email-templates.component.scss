@@ -791,6 +791,9 @@ $editor-dark: (
 }
 
 .full-preview-body {
+  // The component-wide `nb-card-body` flex column above also matches the dialog body, which made the
+  // paper shrink to the body height and scroll inside it: a plain block body scrolls once.
+  display: block;
   flex: 1 1 auto;
   min-height: 0;
   padding: 1rem;
