@@ -592,12 +592,20 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 					);
 				}
 
+				// **The units are taken out of the position the receipt put them in.** A line that names a bin had
+				// its units put away there in the receipt's own transaction, so that bin is where they are; a line
+				// that names none left them at the location's unaddressed position. A write-off with no bin used to
+				// be written for both, so cancelling six units put into a bin took the location to zero while the
+				// bin still reported six.
+				const binId = line.warehouseBinId ?? undefined;
+
 				await this.inventory.recordMovement(
 					{
 						warehouseId,
 						variantId: line.variantId,
 						quantity: negateQuantity(line.quantity),
 						kind: StockMovementKind.WRITE_OFF,
+						...(binId ? { binId } : {}),
 						referenceType: MOVEMENT_REFERENCE,
 						referenceId: line.id,
 						reason: reason ?? RECEIPT_CANCELED,
@@ -607,6 +615,8 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 					},
 					manager
 				);
+
+				await this.assertPositionHeld(manager, receipt, line, warehouseId, binId);
 			}
 
 			return true;
@@ -913,6 +923,52 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 				anchoredOrderId && String(anchoredOrderId) === String(order.id) ? expectedVersion : undefined
 			);
 		}
+	}
+
+	/**
+	 * Refuses a reversal whose write-off took a position below nothing: the units the receipt put there
+	 * are no longer all there.
+	 *
+	 * **Units that moved on are not taken out of somewhere else.** A warehouse that relocated part of a
+	 * receipt to another bin, put an unaddressed delivery away, or picked from it since has the units at
+	 * a position the receipt does not name, and nothing here can tell which of them are this receipt's.
+	 * Writing them off from the receipt's position anyway would leave that position negative and the
+	 * other one holding goods the location no longer has; picking a different position would be a guess.
+	 * The reversal is refused instead, the whole of it, and the operator moves the units back (or adjusts
+	 * them) before reversing. The read runs on the reversal's transaction, after its own write-off took
+	 * the level lock, so no other movement of the variant at the location can pass between the two.
+	 *
+	 * @param manager The reversal's transaction.
+	 * @param receipt The receipt being reversed.
+	 * @param line The line just written off.
+	 * @param warehouseId The receipt's location.
+	 * @param binId The position the write-off was taken from: the line's bin, or none.
+	 * @throws ConflictException with `RECEIPT_STOCK_MOVED`.
+	 */
+	private async assertPositionHeld(
+		manager: EntityManager,
+		receipt: GoodsReceipt,
+		line: GoodsReceiptLine,
+		warehouseId: ID,
+		binId?: ID
+	): Promise<void> {
+		const left = await this.inventory.readPositionBalance({ warehouseId, variantId: line.variantId, binId }, manager);
+
+		if (toQuantityUnits(left) >= 0n) {
+			return;
+		}
+
+		const held = sumQuantity([left, line.quantity]);
+		const position = binId ? `bin '${binId}'` : 'the receiving area (no bin)';
+
+		throw new ConflictException({
+			message:
+				`RECEIPT_STOCK_MOVED: receipt '${receipt.number}' put ${line.quantity} of variant '${line.variantId}' into ${position}, ` +
+				`which now holds ${held}; the rest has been moved or used since. Move the units back to ${position}, or adjust ` +
+				`the stock, before reversing the receipt. Nothing was written.`,
+			code: 'RECEIPT_STOCK_MOVED',
+			details: { goodsReceiptId: receipt.id, goodsReceiptLineId: line.id, variantId: line.variantId, binId: binId ?? null, held, required: line.quantity }
+		});
 	}
 
 	/**
@@ -1367,6 +1423,11 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 					variantId: line.variantId,
 					quantity: line.damagedQuantity,
 					kind: StockMovementKind.DAMAGE,
+					// The units never entered sellable stock, so the movement is an event: the ledger keeps the
+					// quantity in the row's note and leaves the level, and every bin, where they were. Stated
+					// without it, the ledger applies a `DAMAGE` like any other delta, and a unit that arrived
+					// broken was counted as stock the location could sell.
+					eventOnly: true,
 					referenceType: MOVEMENT_REFERENCE,
 					referenceId: line.id,
 					reason: `Damaged on receipt against purchase order ${purchaseOrderNumber} (${currency ?? ''}).`,

@@ -137,6 +137,17 @@ export interface IStockMovementRequest {
 	readonly quantity: DecimalString;
 	/** What kind of movement this is. */
 	readonly kind: StockMovementKind;
+	/**
+	 * The bin the movement physically happened in. Absent, the movement is at the location's unaddressed
+	 * position, which is where a receipt records units before they are put away.
+	 */
+	readonly binId?: ID;
+	/**
+	 * Whether the movement records an event about units that never entered sellable stock — damaged on
+	 * arrival — rather than a change of the level. The ledger keeps the stated quantity in the row's note
+	 * and leaves the level, and every bin, where they were.
+	 */
+	readonly eventOnly?: boolean;
 	/** Concept that asked for the movement, e.g. `GOODS_RECEIPT`. */
 	readonly referenceType: string;
 	/** Row that asked for the movement. */
@@ -207,6 +218,19 @@ export interface IInventoryPort {
 	 * @param transaction The caller's open transaction, as for {@link recordMovement}.
 	 */
 	putAway(request: IPutAwayRequest, transaction?: EntityManager): Promise<IPutAwayResult>;
+	/**
+	 * What one position of a location holds of a variant: a bin, or with no bin the unaddressed position
+	 * a receipt records units at. Read on the caller's transaction when it states one, so it counts what
+	 * that transaction wrote.
+	 *
+	 * @param query The location, the variant and the bin, or no bin.
+	 * @param transaction The caller's open transaction, as for {@link recordMovement}.
+	 * @returns The position's balance; zero for a position nothing was recorded at.
+	 */
+	readPositionBalance(
+		query: { warehouseId: ID; variantId: ID; binId?: ID | null },
+		transaction?: EntityManager
+	): Promise<DecimalString>;
 }
 
 /** One request to raise the platform's approval request for a purchase order. */

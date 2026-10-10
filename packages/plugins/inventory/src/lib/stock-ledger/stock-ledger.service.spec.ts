@@ -284,6 +284,9 @@ function movementMatches(store: IStore, row: IMovementRow, conditions: IConditio
 		if (/movement\.binId IN/.test(sql)) {
 			return (params.binIds ?? []).some((binId: unknown) => same(row.binId, binId));
 		}
+		if (/movement\.binId IS NULL/.test(sql)) {
+			return row.binId === null || row.binId === undefined;
+		}
 		if (/movement\.binId/.test(sql)) {
 			return same(row.binId, params.binId);
 		}
@@ -1539,5 +1542,66 @@ describe('StockLedgerService — a write that belongs to the caller’s transact
 		expect(movementsOf(store, 'GOODS_RECEIPT').map((movement) => movement.__transaction)).toEqual([CALLERS, CALLERS]);
 		expect(store.levels[0].binId).toBe(BIN);
 		expect(store.transactions).toHaveLength(0);
+	});
+});
+
+/**
+ * What one position holds (PR #10254 review: "Canceled goods remain in bins").
+ *
+ * A reversal of a receipt takes its units out of the position the receipt put them in, and has to know
+ * whether that position still holds them. A read with no bin used to mean the whole location, which a
+ * move between bins leaves unchanged; the position read answers for exactly one bin, or for the
+ * unaddressed position a receipt records units at.
+ */
+describe('StockLedgerService — what one position of a location holds', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('answers for one bin, or for the unaddressed position, and never for the whole location', async () => {
+		const { service, store } = fixture(stocked(6));
+
+		await service.putAway({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			binId: BIN,
+			quantity: '6',
+			referenceType: 'GOODS_RECEIPT',
+			referenceId: REFERENCE
+		});
+
+		expect(await service.readPositionBalance({ warehouseId: WAREHOUSE, variantId: VARIANT, binId: BIN })).toBe('6.000000');
+		expect(await service.readPositionBalance({ warehouseId: WAREHOUSE, variantId: VARIANT })).toBe('0.000000');
+		// The location-wide read is a different question, and keeps its own answer.
+		expect((await service.readBinBalance({ warehouseId: WAREHOUSE, variantId: VARIANT }))?.quantity).toBe('6.000000');
+		expect(store.levels[0].quantity).toBe(6);
+	});
+
+	it('answers zero for a position nothing was recorded at', async () => {
+		const { service } = fixture(stocked(6));
+
+		expect(await service.readPositionBalance({ warehouseId: WAREHOUSE, variantId: VARIANT, binId: 'bin-empty' })).toBe(
+			'0.000000'
+		);
+	});
+
+	it('reads on the transaction it is handed', async () => {
+		const { service, store } = fixture(stocked(6));
+		const asked: unknown[] = [];
+		const transaction = {
+			createQueryBuilder: (target: unknown) => {
+				asked.push(target);
+
+				return queryBuilder(store, target);
+			}
+		};
+
+		expect(await service.readPositionBalance({ warehouseId: WAREHOUSE, variantId: VARIANT }, transaction as never)).toBe(
+			'6.000000'
+		);
+		expect(asked).toEqual([StockMovement]);
 	});
 });

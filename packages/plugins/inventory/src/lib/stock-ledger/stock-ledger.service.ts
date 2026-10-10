@@ -166,6 +166,53 @@ export class StockLedgerService {
 	}
 
 	/**
+	 * Reads what one position of a location holds of a variant: one bin, or — with no bin — the
+	 * unaddressed position a receipt records units at before they are put away.
+	 *
+	 * Unlike {@link readBinBalance}, a read with no bin is not the whole location: it is the movements
+	 * recorded with no bin at all, which is the position a write with no bin moves. That is the question
+	 * a caller asks before or after taking units out of a position — whether the position still holds
+	 * them — and the location-wide sum cannot answer it, because units moved between bins leave it
+	 * unchanged.
+	 *
+	 * **A caller that holds a transaction reads on it**, so the answer counts what that transaction has
+	 * already written, and — read after a movement of the same variant at the location — is taken under
+	 * the level lock that movement holds, which no other writer of that level can pass until the
+	 * transaction ends. Without one, the read runs on the platform's relational connection.
+	 *
+	 * @param query The location, the variant and the bin, or no bin for the unaddressed position.
+	 * @param manager The caller's open transaction, when the read belongs to it.
+	 * @returns The position's balance as an exact decimal; zero for a position the ledger recorded
+	 * nothing at.
+	 * @throws BadRequestException when the location or the variant is not stated.
+	 */
+	public async readPositionBalance(
+		query: { warehouseId: ID; variantId: ID; binId?: ID | null },
+		manager?: EntityManager
+	): Promise<DecimalString> {
+		this.assertStated(query, ['warehouseId', 'variantId']);
+
+		const read = (manager ?? this.typeOrmStockMovementRepository.manager)
+			.createQueryBuilder(StockMovement, 'movement')
+			.innerJoin('movement.warehouseProduct', 'aggregate')
+			.select('SUM(movement.quantity)', 'quantity')
+			.where('movement.warehouseId = :warehouseId', { warehouseId: query.warehouseId })
+			.andWhere('movement.variantId = :variantId', { variantId: query.variantId });
+
+		if (query.binId) {
+			read.andWhere('movement.binId = :binId', { binId: query.binId });
+		} else {
+			read.andWhere('movement.binId IS NULL');
+		}
+
+		this.scopeToCaller(read);
+
+		const raw = await read.getRawOne();
+
+		return this.quantityText(raw?.quantity ?? 0) as DecimalString;
+	}
+
+	/**
 	 * Reads every derived balance the ledger holds for a set of bins.
 	 *
 	 * One entry per bin and variant the ledger recorded a movement for, with the movements summed in
