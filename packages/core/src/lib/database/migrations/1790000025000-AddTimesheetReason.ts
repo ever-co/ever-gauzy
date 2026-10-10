@@ -1,0 +1,72 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from 'chalk';
+import { DatabaseTypeEnum } from '@gauzy/config';
+
+/**
+ * Adds `timesheet.reason`: why a timesheet was denied. `PUT /timesheet/status` writes it when the status
+ * becomes DENIED, so the employee can see why their timesheet was refused.
+ *
+ * Nullable with no default: existing timesheets keep NULL. No existing row is read or written.
+ *
+ * Safe to run on a live database: on Postgres a nullable column without a default is a catalog-only
+ * change. Running `up` twice is harmless (`IF NOT EXISTS` on Postgres, a column check elsewhere), and a
+ * transaction-scoped advisory lock makes two API processes that boot at the same time against one
+ * database run it one after the other.
+ *
+ * `down` drops the column.
+ */
+export class AddTimesheetReason1790000025000 implements MigrationInterface {
+	name = 'AddTimesheetReason1790000025000';
+
+	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
+	private readonly advisoryLockKey = 1790000025000;
+
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
+			case DatabaseTypeEnum.postgres:
+				if (queryRunner.isTransactionActive) {
+					await queryRunner.query(`SELECT pg_advisory_xact_lock($1)`, [this.advisoryLockKey]);
+				}
+				await queryRunner.query(`ALTER TABLE "timesheet" ADD COLUMN IF NOT EXISTS "reason" text`);
+				break;
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				if (!(await queryRunner.hasColumn('timesheet', 'reason'))) {
+					await queryRunner.query(`ALTER TABLE "timesheet" ADD COLUMN "reason" text`);
+				}
+				break;
+			case DatabaseTypeEnum.mysql:
+				if (!(await queryRunner.hasColumn('timesheet', 'reason'))) {
+					await queryRunner.query('ALTER TABLE `timesheet` ADD `reason` text NULL');
+				}
+				break;
+			default:
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' reverting changes!'));
+
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
+			case DatabaseTypeEnum.postgres:
+				await queryRunner.query(`ALTER TABLE "timesheet" DROP COLUMN IF EXISTS "reason"`);
+				break;
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				if (await queryRunner.hasColumn('timesheet', 'reason')) {
+					await queryRunner.query(`ALTER TABLE "timesheet" DROP COLUMN "reason"`);
+				}
+				break;
+			case DatabaseTypeEnum.mysql:
+				if (await queryRunner.hasColumn('timesheet', 'reason')) {
+					await queryRunner.query('ALTER TABLE `timesheet` DROP COLUMN `reason`');
+				}
+				break;
+			default:
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+}

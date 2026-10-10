@@ -34,6 +34,8 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	editedAt?: Date;
 	isBilled?: boolean;
 	status: TimesheetStatus;
+	/** Why the timesheet was last denied. Written when its status is set to DENIED. */
+	reason?: string;
 	isEdited?: boolean;
 	/** Project change requests raised against this timesheet (newest first). */
 	projectChangeRequests?: ITimesheetProjectChangeRequest[];
@@ -133,6 +135,8 @@ export interface IUpdateTimesheetProjectChangeStatus extends IBasePerTenantAndOr
 export interface IUpdateTimesheetStatusInput extends IBasePerTenantAndOrganizationEntityModel {
 	ids: ID | ID[];
 	status?: TimesheetStatus;
+	/** Why the timesheets are denied. Only stored when `status` is DENIED. */
+	reason?: string;
 }
 
 export interface ISubmitTimesheetInput extends IBasePerTenantAndOrganizationEntityModel {
