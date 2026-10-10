@@ -1,7 +1,13 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination, ITaskMetadataBootstrapResponse, TaskMetadataSection } from '@gauzy/contracts';
+import {
+	ID as Id,
+	IPagination,
+	ITaskMetadataBootstrapResponse,
+	PermissionsEnum,
+	TaskMetadataSection
+} from '@gauzy/contracts';
 import {
 	ConnectionFieldKind,
 	ConnectionFilter,
@@ -13,7 +19,8 @@ import {
 } from '../api/graphql-connection';
 import { API_QUERY_LIMITS } from '../api/query-ast';
 import { RequestContext } from '../core/context';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TagService } from '../tags/tag.service';
 import { Tag } from '../tags/tag.entity';
@@ -206,8 +213,8 @@ const ISSUE_TYPE_SORTABLE = ['createdAt', 'updatedAt', 'name', 'value', 'isDefau
  * controllers extends the same `CrudFactory` with the same five DTO slots, every one of the six
  * services extends the same `TaskMetadataService`, and every one of the six answers the same nine
  * routes — the list, the paginated spelling of it, the count, the row, and the five writes. They
- * carry one guard chain (`TenantPermissionGuard` alone, with no class-level and no handler-level
- * permission on any of the six) and one read: the reader that falls back to the installation's own
+ * carry one guard chain (`TenantPermissionGuard` on the class, with no class-level permission, and
+ * `ORG_TASK_SETTING` on the soft delete and the recover of every one of the six) and one read: the reader that falls back to the installation's own
  * system rows when the scope a caller named holds none. Splitting them across six resolver classes
  * would state that one declaration six times and would let five of the six drift; keeping them in one
  * class is what makes the shared connection order, the shared filterable vocabulary and — most of all
@@ -218,11 +225,12 @@ const ISSUE_TYPE_SORTABLE = ['createdAt', 'updatedAt', 'name', 'value', 'isDefau
  * is named `task-metadata` because a board needs the whole vocabulary before it can render a task
  * form.
  *
- * **The guard chain is the controllers', and no field states a permission.** All six controllers
- * carry the tenant guard on the class and nothing else: not a class-level permission and not a
- * handler-level one. The permission guard is not part of their chain at all, so it is not part of
- * this one either — a field that demanded a permission here would refuse a caller every one of those
- * six routes serves.
+ * **The guard chain is the controllers', field for field.** All six controllers carry the tenant
+ * guard on the class and no class-level permission, so no field here states one either — a field that
+ * demanded a permission its route does not would refuse a caller that route serves. The one exception
+ * is the controllers' own: their soft delete and recover state `ORG_TASK_SETTING` behind
+ * `PermissionGuard` (GHSA-v79w-54p2-wmh5), so `softDelete<Type>` and `recover<Type>` state the same
+ * grant here — otherwise GraphQL would retire or restore a row the REST route refuses to.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -330,12 +338,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Withdraws a status without removing it. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('softDeleteTaskStatus')
 	async softDeleteTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<TaskStatus> {
 		return (await this.taskStatusService.softRemove(id)) as TaskStatus;
 	}
 
 	/** Puts a withdrawn status back. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('recoverTaskStatus')
 	async recoverTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<TaskStatus> {
 		return (await this.taskStatusService.softRecover(id)) as TaskStatus;
@@ -438,12 +450,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Withdraws a size without removing it. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('softDeleteTaskSize')
 	async softDeleteTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<TaskSize> {
 		return (await this.taskSizeService.softRemove(id)) as TaskSize;
 	}
 
 	/** Puts a withdrawn size back. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('recoverTaskSize')
 	async recoverTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<TaskSize> {
 		return (await this.taskSizeService.softRecover(id)) as TaskSize;
@@ -516,12 +532,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Withdraws a priority without removing it. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('softDeleteTaskPriority')
 	async softDeleteTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<TaskPriority> {
 		return (await this.taskPriorityService.softRemove(id)) as TaskPriority;
 	}
 
 	/** Puts a withdrawn priority back. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('recoverTaskPriority')
 	async recoverTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<TaskPriority> {
 		return (await this.taskPriorityService.softRecover(id)) as TaskPriority;
@@ -594,12 +614,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Withdraws a version without removing it. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('softDeleteTaskVersion')
 	async softDeleteTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<TaskVersion> {
 		return (await this.taskVersionService.softRemove(id)) as TaskVersion;
 	}
 
 	/** Puts a withdrawn version back. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('recoverTaskVersion')
 	async recoverTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<TaskVersion> {
 		return (await this.taskVersionService.softRecover(id)) as TaskVersion;
@@ -676,12 +700,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Withdraws a related-issue type without removing it. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('softDeleteTaskRelatedIssueType')
 	async softDeleteTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<TaskRelatedIssueType> {
 		return (await this.taskRelatedIssueTypeService.softRemove(id)) as TaskRelatedIssueType;
 	}
 
 	/** Puts a withdrawn related-issue type back. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('recoverTaskRelatedIssueType')
 	async recoverTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<TaskRelatedIssueType> {
 		return (await this.taskRelatedIssueTypeService.softRecover(id)) as TaskRelatedIssueType;
@@ -763,12 +791,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Withdraws an issue type without removing it. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('softDeleteIssueType')
 	async softDeleteIssueType(@Args('id', { type: () => ID }) id: Id): Promise<IssueType> {
 		return (await this.issueTypeService.softRemove(id)) as IssueType;
 	}
 
 	/** Puts a withdrawn issue type back. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('recoverIssueType')
 	async recoverIssueType(@Args('id', { type: () => ID }) id: Id): Promise<IssueType> {
 		return (await this.issueTypeService.softRecover(id)) as IssueType;

@@ -11,6 +11,7 @@ import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
@@ -619,37 +620,39 @@ describe('TaskMetadataResolver — the guard stack and the permission are the co
 		}
 	});
 
-	it('states no permission anywhere, because not one of the six controllers states one', () => {
-		// The whole grouping claim rests on this: the six controllers carry the tenant guard and
-		// nothing else — no class-level permission and no handler-level one — so the six resources
-		// have one chain, and a field that demanded a permission would refuse a caller every one of
-		// those routes serves.
+	it('states the permission its own route states, field for field, and none on the class', () => {
+		// The six controllers carry the tenant guard and no class-level permission, so the resolver states
+		// none on the class either. Their one handler-level permission is ORG_TASK_SETTING on the soft
+		// delete and the recover (GHSA-v79w-54p2-wmh5); the matching fields must demand the same grant,
+		// or GraphQL would retire or restore a row the REST route refuses to.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskMetadataResolver)).toBeUndefined();
 
 		for (const resource of RESOURCES) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, resource.controller)).toBeUndefined();
 
-			for (const handler of ['findAll', 'findById', 'getCount', 'create', 'update', 'delete', 'softRemove', 'softRecover']) {
+			for (const handler of ['findAll', 'findById', 'getCount', 'create', 'update', 'delete']) {
 				expect(permissionOfRoute(resource.controller, handler)).toBeUndefined();
+			}
+			for (const handler of ['softRemove', 'softRecover']) {
+				expect(permissionOfRoute(resource.controller, handler)).toEqual([PermissionsEnum.ORG_TASK_SETTING]);
+			}
+
+			const pairs: ReadonlyArray<readonly [string, string]> = [
+				[resource.plural, 'findAll'],
+				[resource.node, 'findById'],
+				[resource.count, 'getCount'],
+				[resource.create, 'create'],
+				[resource.update, 'update'],
+				[resource.remove, 'delete'],
+				[resource.softRemove, 'softRemove'],
+				[resource.recover, 'softRecover']
+			];
+			for (const [field, handler] of pairs) {
+				expect(permissionOfField(field)).toEqual(permissionOfRoute(resource.controller, handler));
 			}
 		}
 
-		for (const field of [
-			'taskStatuses',
-			'taskStatus',
-			'taskStatusCount',
-			'createTaskStatus',
-			'updateTaskStatus',
-			'deleteTaskStatus',
-			'softDeleteTaskStatus',
-			'recoverTaskStatus',
-			'reorderTaskStatuses',
-			'markTaskStatusAsDefault',
-			'issueTypes',
-			'createIssueType',
-			'markIssueTypeAsDefault',
-			'taskMetadata'
-		]) {
+		for (const field of ['reorderTaskStatuses', 'markTaskStatusAsDefault', 'markIssueTypeAsDefault', 'taskMetadata']) {
 			expect(permissionOfField(field)).toBeUndefined();
 		}
 	});

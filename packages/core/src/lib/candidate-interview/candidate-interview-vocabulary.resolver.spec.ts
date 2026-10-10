@@ -676,19 +676,24 @@ describe('CandidateInterviewVocabularyResolver — the guard stack is the contro
 	});
 
 	it('restates the role guard and the same three roles on the routes that state them, and nowhere else', () => {
-		// The role guard is on the handlers the two controllers declare, and the inherited CRUD routes —
-		// the count, the node, the edit and the two lifecycle routes — carry neither it nor the roles. That
-		// asymmetry is the controllers' own, and it is why the guard is per field rather than on the class.
+		// The role guard is on the handlers the two controllers declare — the two lifecycle routes included,
+		// which they now override only to state the roles — and the inherited CRUD routes still left (the
+		// count, the node and the edit) carry neither it nor the roles. That asymmetry is the controllers'
+		// own, and it is why the guard is per field rather than on the class.
 		for (const field of [
 			'candidateTechnologies',
 			'createCandidateTechnology',
 			'deleteCandidateTechnology',
+			'softDeleteCandidateTechnology',
+			'recoverCandidateTechnology',
 			'createCandidateTechnologiesBulk',
 			'updateCandidateTechnologiesBulk',
 			'deleteCandidateTechnologiesBulk',
 			'candidatePersonalQualities',
 			'createCandidatePersonalQuality',
 			'deleteCandidatePersonalQuality',
+			'softDeleteCandidatePersonalQuality',
+			'recoverCandidatePersonalQuality',
 			'createCandidatePersonalQualitiesBulk',
 			'deleteCandidatePersonalQualitiesBulk'
 		]) {
@@ -700,13 +705,9 @@ describe('CandidateInterviewVocabularyResolver — the guard stack is the contro
 			'candidateTechnology',
 			'candidateTechnologyCount',
 			'updateCandidateTechnology',
-			'softDeleteCandidateTechnology',
-			'recoverCandidateTechnology',
 			'candidatePersonalQuality',
 			'candidatePersonalQualityCount',
-			'updateCandidatePersonalQuality',
-			'softDeleteCandidatePersonalQuality',
-			'recoverCandidatePersonalQuality'
+			'updateCandidatePersonalQuality'
 		]) {
 			expect(guardsOfField(field)).not.toContain(RoleGuard);
 			expect(rolesOfField(field)).toBeUndefined();
