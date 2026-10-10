@@ -1,6 +1,6 @@
 import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID, IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
 import { isBetterSqlite3 } from '@gauzy/config';
 import { Employee, TenantOrganizationBaseEntity, User } from './../../core/entities/internal';
@@ -93,6 +93,15 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@ColumnIndex()
 	@MultiORMColumn({ default: TimesheetStatus.PENDING })
 	status: TimesheetStatus;
+
+	/**
+	 * Why the timesheet was last denied, so the employee can see it.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ type: 'text', nullable: true })
+	reason?: string | null;
 
 	/** Additional virtual columns */
 

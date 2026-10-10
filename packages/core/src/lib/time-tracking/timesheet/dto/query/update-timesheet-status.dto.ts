@@ -8,7 +8,7 @@ import { Timesheet } from '../../timesheet.entity';
  * Update timesheets status request DTO validation
  */
 export class UpdateTimesheetStatusDTO
-	extends IntersectionType(TenantOrganizationBaseDTO, PickType(Timesheet, ['status'] as const))
+	extends IntersectionType(TenantOrganizationBaseDTO, PickType(Timesheet, ['status', 'reason'] as const))
 	implements IUpdateTimesheetStatusInput
 {
 	@ApiProperty({ type: () => Array })
