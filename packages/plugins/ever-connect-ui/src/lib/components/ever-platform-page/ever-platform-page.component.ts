@@ -477,8 +477,11 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 											<dt>{{ 'EVER_CONNECT.ENTITLEMENTS.EXPIRES' | translate }}</dt>
 											<dd>{{ document.expires_at | date: 'medium' }} (#{{ document.seq }})</dd>
 											@for (licence of document.licence_ids ?? []; track licence) {
-												<dd class="licence" data-test="licence">
-													{{ 'EVER_CONNECT.ENTITLEMENTS.LICENCE_ACTIVE' | translate: { id: licence } }}
+												<dd class="licence" data-test="licence" [attr.data-licence]="licence">
+													{{
+														'EVER_CONNECT.ENTITLEMENTS.LICENCE_ACTIVE'
+															| translate: { id: licence }
+													}}
 												</dd>
 											}
 										</dl>
@@ -486,7 +489,12 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 											<p class="hint" data-test="entitlement-grace">
 												{{
 													'EVER_CONNECT.ENTITLEMENTS.GRACE'
-														| translate: { date: (document.fetched_at | date: 'mediumDate') ?? '—' }
+														| translate
+															: {
+																	date:
+																		(document.fetched_at | date: 'mediumDate') ??
+																		'—'
+															  }
 												}}
 											</p>
 										}
@@ -787,7 +795,7 @@ export class EverPlatformPageComponent implements OnInit {
 		);
 	}
 
-		moreAudit(): void {
+	moreAudit(): void {
 		if (!this.organizationId) return;
 		this.api.audit(this.organizationId, this.auditPage + 1).subscribe((page) => {
 			this.auditPage += 1;

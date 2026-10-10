@@ -338,7 +338,12 @@ export class EverConnectEntitlementService {
 	): Promise<EntitlementImportResult> {
 		const invalid = (reason: string) =>
 			new HttpException(
-				{ statusCode: 422, code: 'entitlement_invalid', reason, message: 'The entitlement document was refused.' },
+				{
+					statusCode: 422,
+					code: 'entitlement_invalid',
+					reason,
+					message: 'The entitlement document was refused.'
+				},
 				HttpStatus.UNPROCESSABLE_ENTITY
 			);
 		if (typeof jws !== 'string' || jws.trim() === '') {
@@ -354,7 +359,11 @@ export class EverConnectEntitlementService {
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected' || !connection.platformInstanceId) {
 			throw new HttpException(
-				{ statusCode: 409, code: 'not_connected', message: 'Connect this installation to Ever Platform first.' },
+				{
+					statusCode: 409,
+					code: 'not_connected',
+					message: 'Connect this installation to Ever Platform first.'
+				},
 				HttpStatus.CONFLICT
 			);
 		}
@@ -451,12 +460,17 @@ export class EverConnectEntitlementService {
 		try {
 			const result = await this.importDocument(document, { actorLabel: 'system' });
 			if (result.status === 'stored') {
-				this.logger.log(`EVER_ENTITLEMENT_FILE imported (${result.subject} document #${result.seq}, ${digest}).`);
+				this.logger.log(
+					`EVER_ENTITLEMENT_FILE imported (${result.subject} document #${result.seq}, ${digest}).`
+				);
 			}
 			return result;
 		} catch (error) {
-			const answer = error instanceof HttpException ? (error.getResponse() as { reason?: string; code?: string }) : {};
-			this.logger.warn(`EVER_ENTITLEMENT_FILE was not imported (${answer.reason ?? answer.code ?? 'error'}, ${digest}).`);
+			const answer =
+				error instanceof HttpException ? (error.getResponse() as { reason?: string; code?: string }) : {};
+			this.logger.warn(
+				`EVER_ENTITLEMENT_FILE was not imported (${answer.reason ?? answer.code ?? 'error'}, ${digest}).`
+			);
 			return null;
 		}
 	}

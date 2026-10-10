@@ -226,14 +226,16 @@ export class EverConnectUiService {
 	}
 
 	/** Operator only: imports a downloaded entitlement document (`.jws`). */
-	importEntitlement(jws: string): Observable<{ subject: 'instance' | 'link'; seq: number; status: 'stored' | 'unchanged' }> {
+	importEntitlement(
+		jws: string
+	): Observable<{ subject: 'instance' | 'link'; seq: number; status: 'stored' | 'unchanged' }> {
 		return this.http.post<{ subject: 'instance' | 'link'; seq: number; status: 'stored' | 'unchanged' }>(
 			`${BASE}/entitlement/import`,
 			{ jws }
 		);
 	}
 
-		audit(organizationId: string, page: number): Observable<{ items: EverConnectAuditRow[]; total: number }> {
+	audit(organizationId: string, page: number): Observable<{ items: EverConnectAuditRow[]; total: number }> {
 		return this.http.get<{ items: EverConnectAuditRow[]; total: number }>(`${BASE}/audit`, {
 			params: new HttpParams().set('organizationId', organizationId).set('page', String(page)).set('limit', '20')
 		});

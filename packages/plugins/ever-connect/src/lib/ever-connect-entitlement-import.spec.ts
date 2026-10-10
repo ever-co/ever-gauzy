@@ -95,7 +95,8 @@ const answerOf = async (promise: Promise<unknown>) => {
 	try {
 		await promise;
 	} catch (error) {
-		if (error instanceof HttpException) return { status: error.getStatus(), body: error.getResponse() as Record<string, unknown> };
+		if (error instanceof HttpException)
+			return { status: error.getStatus(), body: error.getResponse() as Record<string, unknown> };
 		throw error;
 	}
 	throw new Error('expected an HttpException');
@@ -162,7 +163,10 @@ describe('EverConnectEntitlementService.importDocument', () => {
 	it('refuses a document of another installation (422) and audits the refusal', async () => {
 		const { service, store, audit } = setup();
 		const answer = await answerOf(service.importDocument(jwsOf(claimsFor('instance:ins_other', 9)), operator));
-		expect(answer).toMatchObject({ status: 422, body: { code: 'entitlement_invalid', reason: 'subject_mismatch' } });
+		expect(answer).toMatchObject({
+			status: 422,
+			body: { code: 'entitlement_invalid', reason: 'subject_mismatch' }
+		});
 		expect(store.updateConnection).not.toHaveBeenCalled();
 		expect(audit.record).toHaveBeenCalledWith(
 			expect.objectContaining({ details: expect.objectContaining({ status: 'refused', source: 'file' }) })
@@ -263,9 +267,9 @@ describe('EverConnectEntitlementService.features and the summary', () => {
 
 	it('shows the licence ids and the ladder in the summary', async () => {
 		const { service, link } = setup({ link: true });
-		link!.entitlementJwsEncrypted = (service as unknown as { secrets: { seal: (v: string) => string } }).secrets.seal(
-			jwsOf(claimsFor(`link:${LINK}`, 1))
-		);
+		link!.entitlementJwsEncrypted = (
+			service as unknown as { secrets: { seal: (v: string) => string } }
+		).secrets.seal(jwsOf(claimsFor(`link:${LINK}`, 1)));
 		const summary = await service.summary('tenant-1', 'org-1', false);
 		expect(summary.link).toMatchObject({ ladder: 'valid', licence_ids: ['EVER-GAUZY-SB-1A2B3C4D'] });
 		expect(summary.instance).toBeNull();
