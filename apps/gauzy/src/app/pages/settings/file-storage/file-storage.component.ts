@@ -36,7 +36,7 @@ interface IProviderFieldMap {
 	 * Not so for Wasabi: saving validates the submitted values alone.
 	 */
 	serverFallback: boolean;
-	/** URL fields; `httpsOnly` where credentials are sent to that address (Wasabi validation). */
+	/** URL fields; `httpsOnly` where the access keys are sent to that address (an S3 endpoint). */
 	urls: { control: string; label: string; httpsOnly?: boolean }[];
 	docsUrl: string;
 }
@@ -103,7 +103,11 @@ const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap
 			{ control: 'digitalocean_s3_bucket', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' }
 		],
 		urls: [
-			{ control: 'digitalocean_service_url', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' },
+			{
+				control: 'digitalocean_service_url',
+				label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL',
+				httpsOnly: true
+			},
 			{ control: 'digitalocean_cdn_url', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' }
 		],
 		serverFallback: true,
@@ -440,9 +444,9 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 	/**
 	 * Check the selected provider's configuration in the browser: every URL field holds an http(s)
-	 * URL (https where keys are sent to it), and every field is filled — or, for providers that fall back to the server's own
-	 * configuration, list the empty ones as left to it. Nothing is sent to the server; Wasabi
-	 * credentials are still verified by the API when the settings are saved.
+	 * URL (https where the keys are sent to it), and every field is filled — or, for providers that
+	 * fall back to the server's own configuration, list the empty ones as left to it. Nothing is
+	 * sent to the server; Wasabi credentials are still verified by the API when the settings are saved.
 	 */
 	checkConfiguration(): void {
 		const fields = PROVIDER_FIELDS[this.fileStorageProvider as FileStorageProviderEnum];
