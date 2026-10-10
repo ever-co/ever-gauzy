@@ -515,6 +515,19 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"The next billing a subscription is due, previewed: computed exactly as the bill will be, and written nowhere."
+	type UpcomingSubscriptionBilling {
+		subscriptionId: ID!
+		"What the cycle will bill: the amount billSubscription records on the cycle and raises its order for."
+		amount: Decimal!
+		currency: String!
+		periodStart: DateTime!
+		"The end of the period the cycle covers, exclusive."
+		periodEnd: DateTime!
+		"The instant the cycle is due to bill — the start of the period it covers."
+		nextBillingAt: DateTime!
+	}
+
 	"What one billing pass did."
 	type SubscriptionBillingRunPayload {
 		examined: Int!
@@ -536,6 +549,8 @@ export const schemaExtensions = gql`
 		subscriptions(filter: SubscriptionFilter, page: PageInput, withDeleted: Boolean): CustomerSubscriptionConnection!
 		"One subscription, with its lines and its billing history."
 		subscription(id: ID!): CustomerSubscription
+		"The next billing of a subscription, previewed without writing anything; null when it will not bill again as it stands."
+		upcomingSubscriptionBilling(id: ID!): UpcomingSubscriptionBilling
 		"The recurring lines of a subscription."
 		subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
 		"One recurring line."
