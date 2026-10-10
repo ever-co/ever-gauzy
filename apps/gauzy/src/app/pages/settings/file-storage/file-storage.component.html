@@ -36,15 +36,30 @@
 						</div>
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.BUCKET' | translate }}</dt>
-							<dd class="mono" [attr.title]="summary?.bucket || null">{{ summary?.bucket || '—' }}</dd>
+							<!-- null: left empty, so the server's own configuration applies -->
+							@if (summary?.bucket === null) {
+								<dd><span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span></dd>
+							} @else {
+								<dd class="mono" [attr.title]="summary?.bucket || null">{{ summary?.bucket || '—' }}</dd>
+							}
 						</div>
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.REGION' | translate }}</dt>
-							<dd class="mono">{{ summary?.region || '—' }}</dd>
+							<!-- null: left empty, so the server's own configuration applies -->
+							@if (summary?.region === null) {
+								<dd><span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span></dd>
+							} @else {
+								<dd class="mono">{{ summary?.region || '—' }}</dd>
+							}
 						</div>
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.ENDPOINT' | translate }}</dt>
-							<dd class="mono" [attr.title]="summary?.endpoint || null">{{ summary?.endpoint || '—' }}</dd>
+							<!-- null: left empty, so the server's own configuration applies -->
+							@if (summary?.endpoint === null) {
+								<dd><span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span></dd>
+							} @else {
+								<dd class="mono" [attr.title]="summary?.endpoint || null">{{ summary?.endpoint || '—' }}</dd>
+							}
 						</div>
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.CREDENTIALS' | translate }}</dt>
@@ -61,6 +76,9 @@
 									@case ('none') {
 										<span class="status-dot danger"></span>
 										{{ 'SETTINGS_FILE_STORAGE.SUMMARY.CREDENTIALS_NONE' | translate }}
+									}
+									@case ('server_default') {
+										<span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span>
 									}
 									@case ('not_needed') {
 										{{ 'SETTINGS_FILE_STORAGE.SUMMARY.CREDENTIALS_NOT_NEEDED' | translate }}
@@ -134,14 +152,24 @@
 					<div class="check-result" [class.ok]="!check.missing.length && !check.invalidUrls.length">
 						@if (!check.missing.length && !check.invalidUrls.length) {
 							<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
-							<span>
-								{{
-									(fileStorageProvider === FileStorageProviderEnum.LOCAL
-										? 'SETTINGS_FILE_STORAGE.CHECK.OK_LOCAL'
-										: 'SETTINGS_FILE_STORAGE.CHECK.OK'
-									) | translate
-								}}
-							</span>
+							@if (check.serverDefaults.length) {
+								<!-- Empty fields the API fills from the server's own configuration -->
+								<div>
+									{{ 'SETTINGS_FILE_STORAGE.CHECK.OK_SERVER_DEFAULTS' | translate }}
+									@for (label of check.serverDefaults; track label; let last = $last) {
+										<strong>{{ label | translate }}</strong>{{ last ? '' : ', ' }}
+									}
+								</div>
+							} @else {
+								<span>
+									{{
+										(fileStorageProvider === FileStorageProviderEnum.LOCAL
+											? 'SETTINGS_FILE_STORAGE.CHECK.OK_LOCAL'
+											: 'SETTINGS_FILE_STORAGE.CHECK.OK'
+										) | translate
+									}}
+								</span>
+							}
 						} @else {
 							<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
 							<div>
@@ -176,7 +204,7 @@
 					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 					{{ 'SETTINGS_FILE_STORAGE.CHECK.BUTTON' | translate }}
 				</button>
-				<button type="submit" nbButton size="small" status="primary" [disabled]="loading">
+				<button type="submit" nbButton size="small" status="primary" [disabled]="loading || saving">
 					<nb-icon icon="save-outline"></nb-icon>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>

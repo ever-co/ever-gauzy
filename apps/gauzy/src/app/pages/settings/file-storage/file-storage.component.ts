@@ -28,7 +28,14 @@ interface IProviderFieldMap {
 	region?: string;
 	endpoint?: string;
 	credentials: string[];
+	/** Fields the check looks at; with `serverFallback`, an empty one is not an error. */
 	required: { control: string; label: string }[];
+	/**
+	 * The API provider keeps the server's own configuration (environment) for every field the
+	 * tenant leaves empty, so empty here means "use the server default", not "missing".
+	 * Not so for Wasabi: saving validates the submitted values alone.
+	 */
+	serverFallback: boolean;
 	urls: { control: string; label: string }[];
 	docsUrl: string;
 }
@@ -45,6 +52,7 @@ const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap
 			{ control: 'aws_bucket', label: 'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' }
 		],
 		urls: [],
+		serverFallback: true,
 		docsUrl: 'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html'
 	},
 	[FileStorageProviderEnum.WASABI]: {
@@ -60,6 +68,7 @@ const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap
 			{ control: 'wasabi_aws_bucket', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' }
 		],
 		urls: [{ control: 'wasabi_aws_service_url', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' }],
+		serverFallback: false,
 		docsUrl: 'https://docs.wasabi.com/'
 	},
 	[FileStorageProviderEnum.CLOUDINARY]: {
@@ -73,6 +82,7 @@ const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap
 			{ control: 'cloudinary_delivery_url', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' }
 		],
 		urls: [{ control: 'cloudinary_delivery_url', label: 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' }],
+		serverFallback: true,
 		docsUrl: 'https://cloudinary.com/documentation'
 	},
 	[FileStorageProviderEnum.DIGITALOCEAN]: {
@@ -93,6 +103,7 @@ const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap
 			{ control: 'digitalocean_service_url', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' },
 			{ control: 'digitalocean_cdn_url', label: 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' }
 		],
+		serverFallback: true,
 		docsUrl: 'https://docs.digitalocean.com/products/spaces/how-to/manage-access/'
 	}
 };
@@ -119,19 +130,26 @@ const WASABI_REGIONS = [
 	'ap-southeast-2'
 ];
 
-/** The last saved configuration, as shown in the summary strip. Empty values stay empty and render as —. */
+/**
+ * The last saved configuration, as shown in the summary strip. A value is '' when the provider
+ * has no such field (rendered —) and null when it is empty and the server's default applies.
+ */
 export interface IFileStorageSummary {
 	provider: FileStorageProviderEnum;
-	bucket: string;
-	region: string;
-	endpoint: string;
-	credentials: 'saved' | 'incomplete' | 'none' | 'not_needed';
+	bucket: string | null;
+	region: string | null;
+	endpoint: string | null;
+	credentials: 'saved' | 'incomplete' | 'none' | 'server_default' | 'not_needed';
 }
 
-/** Result of the client-side configuration check: field labels that are empty or hold an invalid URL. */
+/**
+ * Result of the client-side configuration check, as field labels: required but empty, holding
+ * an invalid URL, or empty and so left to the server's own configuration.
+ */
 export interface IFileStorageCheck {
 	missing: string[];
 	invalidUrls: string[];
+	serverDefaults: string[];
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -153,6 +171,8 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	user: IUser;
 	settings: ITenantSetting = new Object();
 	loading: boolean = false;
+	/** True while a save request is in flight. */
+	saving: boolean = false;
 	/** What the tenant is saved with right now — not what is being edited in the form. */
 	summary: IFileStorageSummary | null = null;
 	/** Result of the last "Check configuration"; cleared whenever the form changes. */
@@ -263,8 +283,10 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	 * Retrieves the current tenant's file storage settings.
 	 * If settings are available, updates the file storage provider accordingly.
 	 * If no settings are available, uses the default file storage provider from the environment.
+	 *
+	 * @param patchForm - false to refresh only the saved settings and summary, leaving the form as edited.
 	 */
-	async getSetting(): Promise<void> {
+	async getSetting(patchForm: boolean = true): Promise<void> {
 		try {
 			this.loading = true; // Set loading state to true while fetching settings
 
@@ -279,7 +301,9 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 			const fileStorageProvider = isNotEmpty(settings)
 				? settings.fileStorageProvider
 				: defaultFileStorageProvider;
-			this.setFileStorageProvider(fileStorageProvider);
+			if (patchForm) {
+				this.setFileStorageProvider(fileStorageProvider);
+			}
 			this.summary = this.buildSummary(fileStorageProvider || defaultFileStorageProvider, settings);
 		} catch (error) {
 			console.error('Error fetching tenant settings:', error); // Log the error
@@ -293,13 +317,19 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	 * SAVE current tenant file storage setting
 	 */
 	async submit() {
-		try {
-			if (this.form.invalid) {
-				return;
-			}
+		if (this.form.invalid || this.saving) {
+			return;
+		}
 
+		this.saving = true;
+		// What is being saved. An edit made while the request is pending must stay unsaved and
+		// must not be overwritten by the refresh that follows.
+		const submitted = JSON.stringify(this.form.getRawValue());
+		const editedSinceSubmit = () => JSON.stringify(this.form.getRawValue()) !== submitted;
+
+		try {
 			// Extract the file storage provider and settings from the form data
-			const { fileStorageProvider = FileStorageProviderEnum.LOCAL, ...filesystem } = this.form.getRawValue();
+			const { fileStorageProvider = FileStorageProviderEnum.LOCAL, ...filesystem } = JSON.parse(submitted);
 
 			// Construct the settings object with the extracted data
 			const settings: ITenantSetting = {
@@ -324,13 +354,21 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 			// Saves the tenant settings and displays a success message upon successful saving.
 			await this._tenantService.saveSettings(settings);
-			this.form.markAsPristine(); // clears the footer's "Unsaved changes"
+			if (!editedSinceSubmit()) {
+				this.form.markAsPristine(); // clears the footer's "Unsaved changes"
+			}
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error while submitting tenant settings:', error);
 			this._toastrService.danger('An error occurred while saving settings. Please try again.');
 		} finally {
-			this.subject$.next(true);
+			this.saving = false;
+			if (editedSinceSubmit()) {
+				// Keep the newer edits in the form; only refresh what the summary shows as saved.
+				this.getSetting(false);
+			} else {
+				this.subject$.next(true);
+			}
 		}
 	}
 
@@ -374,7 +412,9 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	useWasabiSuggestedEndpoint(): void {
 		const endpoint = this.wasabiSuggestedEndpoint;
 		if (endpoint) {
-			this.form.get(FileStorageProviderEnum.WASABI).get('wasabi_aws_service_url').setValue(endpoint);
+			const control = this.form.get(FileStorageProviderEnum.WASABI).get('wasabi_aws_service_url');
+			control.setValue(endpoint);
+			control.markAsDirty(); // a programmatic change is still unsaved
 		}
 	}
 
@@ -388,27 +428,31 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	}
 
 	/**
-	 * Check the selected provider's configuration in the browser: every required field is filled
-	 * and every URL field holds an http(s) URL. Nothing is sent to the server — Wasabi credentials
-	 * are still verified by the API when the settings are saved.
+	 * Check the selected provider's configuration in the browser: every URL field holds an http(s)
+	 * URL, and every field is filled — or, for providers that fall back to the server's own
+	 * configuration, list the empty ones as left to it. Nothing is sent to the server; Wasabi
+	 * credentials are still verified by the API when the settings are saved.
 	 */
 	checkConfiguration(): void {
 		const fields = PROVIDER_FIELDS[this.fileStorageProvider as FileStorageProviderEnum];
 		if (!fields) {
-			this.check = { missing: [], invalidUrls: [] };
+			this.check = { missing: [], invalidUrls: [], serverDefaults: [] };
 			return;
 		}
 
 		const values = this.form.get(this.fileStorageProvider).getRawValue();
 		const isBlank = (value: unknown) => value === null || value === undefined || `${value}`.trim() === '';
 
-		const missing = fields.required.filter(({ control }) => isBlank(values[control])).map(({ label }) => label);
+		const empty = fields.required.filter(({ control }) => isBlank(values[control])).map(({ label }) => label);
 
 		const invalidUrls = fields.urls
 			.filter(({ control }) => !isBlank(values[control]) && !this.isHttpUrl(`${values[control]}`.trim()))
 			.map(({ label }) => label);
 
-		this.check = { missing, invalidUrls };
+		// Where the API falls back to the server's configuration, an empty field is a choice, not an error.
+		this.check = fields.serverFallback
+			? { missing: [], invalidUrls, serverDefaults: empty }
+			: { missing: empty, invalidUrls, serverDefaults: [] };
 	}
 
 	/**
@@ -420,12 +464,18 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	private buildSummary(provider: FileStorageProviderEnum, settings: ITenantSetting): IFileStorageSummary {
 		const fields = PROVIDER_FIELDS[provider];
 		const values = (settings ?? {}) as Record<string, any>;
-		const read = (name?: string): string => (name && isNotEmpty(values[name]) ? `${values[name]}` : '');
+		// '' when the provider has no such field; null when empty and the server's default applies.
+		const read = (name?: string): string | null => {
+			if (!name) return '';
+			if (isNotEmpty(values[name])) return `${values[name]}`;
+			return fields?.serverFallback ? null : '';
+		};
 
 		let credentials: IFileStorageSummary['credentials'] = 'not_needed';
 		if (fields) {
 			const saved = fields.credentials.filter((name) => isNotEmpty(values[name])).length;
-			credentials = saved === fields.credentials.length ? 'saved' : saved > 0 ? 'incomplete' : 'none';
+			const empty = fields.serverFallback ? 'server_default' : 'none';
+			credentials = saved === fields.credentials.length ? 'saved' : saved > 0 ? 'incomplete' : empty;
 		}
 
 		return {

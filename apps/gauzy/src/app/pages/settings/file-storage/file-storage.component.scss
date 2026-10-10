@@ -162,6 +162,12 @@
         }
     }
 
+    // Empty tenant field: the API uses the server's own configuration. Muted, not a warning.
+    .server-default {
+        color: var(--text-hint-color);
+        font-style: italic;
+    }
+
     .status-dot {
         flex: 0 0 auto;
         width: 0.5rem;
