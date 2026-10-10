@@ -39,7 +39,7 @@ function fixtureFiles() {
 		}
 	};
 	visit(FIXTURES);
-	return out.sort();
+	return out.sort((a, b) => a.localeCompare(b));
 }
 
 test('the tree crosses no boundary', () => {
@@ -47,7 +47,10 @@ test('the tree crosses no boundary', () => {
 });
 
 test('every fixture is listed with its expected lines', () => {
-	assert.deepEqual(fixtureFiles(), Object.keys(EXPECTED).sort());
+	assert.deepEqual(
+		fixtureFiles(),
+		Object.keys(EXPECTED).sort((a, b) => a.localeCompare(b))
+	);
 });
 
 test('the scanner fails each known-bad fixture on exactly its lines', () => {
@@ -58,7 +61,11 @@ test('the scanner fails each known-bad fixture on exactly its lines', () => {
 		(got[file] ??= []).push(Number(line));
 	}
 	for (const [file, lines] of Object.entries(EXPECTED))
-		assert.deepEqual((got[file] ?? []).sort(), lines, `${file}: ${findings.join('; ')}`);
+		assert.deepEqual(
+			(got[file] ?? []).sort((a, b) => a - b),
+			lines,
+			`${file}: ${findings.join('; ')}`
+		);
 });
 
 test('the plugin lists may import the modules through their entry points, nobody their files', () => {
@@ -128,7 +135,7 @@ test(
 				messages
 					.filter((m) => m.ruleId === 'ever-platform/import-boundary')
 					.map((m) => m.line)
-					.sort(),
+					.sort((a, b) => a - b),
 				lines,
 				`${file}: ${messages.map((m) => `${m.line} ${m.message}`).join('; ')}`
 			);

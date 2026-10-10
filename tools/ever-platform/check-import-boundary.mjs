@@ -114,7 +114,7 @@ export function check(root = REPO_ROOT) {
 			if (reason) findings.push(`${file}:${line} ${reason}`);
 		}
 	}
-	return [...new Set(findings)].sort();
+	return [...new Set(findings)].sort((a, b) => a.localeCompare(b));
 }
 
 export function main(argv) {

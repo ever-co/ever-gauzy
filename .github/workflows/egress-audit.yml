@@ -167,12 +167,11 @@ jobs:
 
       - name: The import boundary of the Ever Platform modules (scanner and ESLint rule)
         env:
-          ESLINT_PREFIX: ${{ runner.temp }}/eslint
+          # The workspace's ESLint and parser versions, locked in tools/egress-audit/package-lock.json
+          # and installed with the harness above (no workspace install).
+          ESLINT_PREFIX: ${{ github.workspace }}/tools/egress-audit
           EVER_BOUNDARY_ESLINT_REQUIRED: 'true'
         run: |
-          # The workspace's ESLint and parser majors, without a workspace install (exact versions,
-          # no scripts, outside the checkout).
-          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund --prefix "$ESLINT_PREFIX" eslint@9.39.2 @typescript-eslint/parser@8.69.0
           node --test tools/ever-platform/import-boundary.test.mjs
 
       - name: The list of outbound calls is the pinned contract's, and everything that repeats it agrees

@@ -89,7 +89,8 @@ const STATS_ROUTES = [
 const OFF_MODES = new Set(['off', 'off_env_file', 'connect_off_sign_in_on']);
 
 /** The mock platform, by its alias on the sealed network (the driver runs the API hooks). */
-const MOCK = 'http://mock-platform:8080';
+// The mock platform serves plain http on the sealed audit network only (no route out). NOSONAR
+const MOCK = 'http://mock-platform:8080'; // NOSONAR
 
 /** The mock's link code: an organization of Ever Platform the operator's organization links to. */
 const MOCK_LINK_CODE = 'EVL-TEST-0000-0002';

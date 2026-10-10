@@ -26,7 +26,8 @@ The harness is the egress audit of the Ever Platform SDK's dev tools, the
 `ever-egress-audit` of [`@ever-co/connect-tools`][connect-tools] (Apache-2.0),
 with its mock platform. It is not copied here: `package.json` and
 `package-lock.json` in this directory pin it (with the `typescript` its Angular
-route generator reads the router with), and the workflow installs them with
+route generator reads the router with, and the `eslint` and `@typescript-eslint/parser` the
+import-boundary test runs its rule with), and the workflow installs them with
 `npm ci`. This directory is not a workspace of the monorepo. The config pins
 the sealed network to a fixed private `subnet`, so the mock's address on it
 (`__MOCK_URL__`) is a local address the module accepts over plain http.

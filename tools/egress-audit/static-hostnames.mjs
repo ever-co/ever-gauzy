@@ -85,8 +85,15 @@ export function occurrences(text, lists = loadEverHosts()) {
 	const add = (key) => (counts[key] = (counts[key] ?? 0) + 1);
 	for (const host of hostsInText(text)) if (isEverOwned(host, lists)) add(normaliseHost(host));
 	for (const variable of VARIABLES)
-		for (const _ of text.matchAll(new RegExp(`\\b${variable}\\b`, 'g'))) add(variable);
+		for (let n = text.split(new RegExp(String.raw`\b${variable}\b`)).length - 1; n > 0; n--) add(variable);
 	return counts;
+}
+
+/** Code-unit order (what Array#sort does without a compare function), stated explicitly. */
+export function byCodeUnit(a, b) {
+	if (a < b) return -1;
+	if (a > b) return 1;
+	return 0;
 }
 
 /** Directories that hold no source of the product: dependencies, build output, caches. */
@@ -115,7 +122,7 @@ function walk(root, skip = SKIP_DIRS) {
 		}
 	};
 	visit(root);
-	return out.sort();
+	return out.sort(byCodeUnit);
 }
 
 /** `{file: {host: count}}` of the core code under `root` (outside ALLOWED). */
@@ -144,7 +151,7 @@ export function scanBundle(dir) {
 		if (!/\.(m?js|html?|css|json|txt|webmanifest|svg)$/.test(file)) continue;
 		for (const key of Object.keys(occurrences(readFileSync(join(dir, file), 'utf8'), lists))) hosts.add(key);
 	}
-	return [...hosts].sort();
+	return [...hosts].sort(byCodeUnit);
 }
 
 /** What `found` has beyond `baseline` (both `{file: {host: count}}`): `file host now (recorded n)`. */
@@ -173,13 +180,16 @@ const DESCRIPTION =
 function writeBaseline(next, file = BASELINE_FILE) {
 	const sorted = Object.fromEntries(
 		Object.keys(next.code)
-			.sort()
-			.map((f) => [f, Object.fromEntries(Object.entries(next.code[f]).sort(([a], [b]) => a.localeCompare(b)))])
+			.sort(byCodeUnit)
+			.map((f) => [f, Object.fromEntries(Object.entries(next.code[f]).sort(([a], [b]) => byCodeUnit(a, b)))])
 	);
 	const body = {
 		description: DESCRIPTION,
 		code: sorted,
-		bundle: { ...(next.bundle.image ? { image: next.bundle.image } : {}), hosts: [...next.bundle.hosts].sort() }
+		bundle: {
+			...(next.bundle.image ? { image: next.bundle.image } : {}),
+			hosts: [...next.bundle.hosts].sort(byCodeUnit)
+		}
 	};
 	writeFileSync(file, `${JSON.stringify(body, null, '\t')}\n`);
 }
