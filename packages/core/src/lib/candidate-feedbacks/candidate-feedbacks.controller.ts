@@ -1,15 +1,16 @@
-import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param, Delete, HttpCode, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
-import { PermissionsEnum, ICandidateFeedbackCreateInput, IPagination, ICandidateFeedback } from '@gauzy/contracts';
+import { PermissionsEnum, ICandidateFeedbackCreateInput, IPagination, ICandidateFeedback, ID } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe, AbstractValidationPipe } from './../shared/pipes';
 import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
+import { TenantOrganizationBaseDTO } from '../core/dto';
 
 @ApiTags('CandidateFeedback')
 @UseGuards(TenantPermissionGuard)
@@ -183,5 +184,55 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		@Body() body: ICandidateFeedbackCreateInput
 	): Promise<ICandidateFeedback> {
 		return this.commandBus.execute(new FeedbackUpdateCommand(id, body));
+	}
+
+	/**
+	 * Soft deletes a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could retire the row. It now states `ORG_CANDIDATES_FEEDBACK_EDIT`: the grant its create,
+	 * update and delete-by-interview routes state (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states
+	 * the same.
+	 *
+	 * @param id The record to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted record.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<CandidateFeedback> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could restore the row. It now states `ORG_CANDIDATES_FEEDBACK_EDIT`: the grant its create,
+	 * update and delete-by-interview routes state (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states
+	 * the same.
+	 *
+	 * @param id The record to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored record.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<CandidateFeedback> {
+		return await super.softRecover(id, ...options);
 	}
 }

@@ -1,0 +1,103 @@
+# The role permission's object type, its connection, its sorts and its filters.
+#
+# A role permission is one row of a role's catalogue: the permission the role carries and whether it
+# is switched on for that role. The row's own facts are the permission, the flag and the role it
+# belongs to, and everything else the type carries is what the platform stamps on every row it writes.
+#
+# `permission` is carried as its string value rather than declared as a schema enum, and that is a
+# decision rather than an omission. The vocabulary is the platform's own permission catalogue, which
+# lives in the contracts package and grows with every capability and every plugin that registers one;
+# an enum declared here would be a second copy of it, would have to be edited in step with the
+# catalogue for a caller to be able to name a newly registered permission at all, and would fail
+# where a string succeeds — silently, at request time, for the one permission somebody forgot.
+#
+# The role the row belongs to is carried as `roleId` and never as the role itself. The relation is
+# loaded only when a REST caller names it in `relations`, and no read this surface answers asks for
+# it, so a `role` member here would be null on every row this surface returns — a member whose
+# presence depends on whether a relation happened to be joined is worse than no member. The role is
+# reachable on its own terms, as `role(id)` and through `tenantRoles`.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes: the withdrawal marks
+# this column and leaves the row in the table, so without it the answer to the write that withdrew a
+# role permission could not say that it had.
+
+type RolePermission {
+	id: ID!
+	"The permission this row grants or withholds, named exactly as the platform's catalogue names it."
+	permission: String!
+	"Whether the role carries the permission. A row exists for every permission of the catalogue."
+	enabled: Boolean!
+	"Free text an administrator may keep beside the row."
+	description: String
+	"The role the row belongs to."
+	roleId: ID!
+	tenantId: ID
+	"When the row was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of role permissions.
+"""
+type RolePermissionEdge {
+	node: RolePermission!
+	cursor: String!
+}
+
+"""
+One page of role permissions, with the total the filters select and the boundary cursors.
+"""
+type RolePermissionConnection {
+	nodes: [RolePermission!]!
+	edges: [RolePermissionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a role permission list may be sorted by.
+"""
+enum RolePermissionSortField {
+	createdAt
+	updatedAt
+	permission
+	enabled
+}
+
+"""
+The order the role permissions are returned in. At most three keys are accepted.
+"""
+input RolePermissionSort {
+	field: RolePermissionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a role permission list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`roleId` is the member a caller reaches for: the permissions of one role are the rows of that role,
+and the delivered list route expresses the same narrowing through the `roleId` its own query string
+binds to the store. `permission` and `enabled` are here because a client that renders a role's
+catalogue filters it by what the row grants and by what it names.
+
+`tenantId` is deliberately absent, although it is a column: the tenant a read runs under comes from
+the credential and never from a filter, and the read this connection is built over is already scoped
+by it.
+"""
+input RolePermissionFilter {
+	id: IDFilter
+	permission: StringFilter
+	enabled: BooleanFilter
+	roleId: IDFilter
+	description: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [RolePermissionFilter!]
+	or: [RolePermissionFilter!]
+	not: RolePermissionFilter
+}

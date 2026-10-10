@@ -1,0 +1,44 @@
+{
+	"name": "plugin-marketplace",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/marketplace/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+		}
+	},
+	"tags": [],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "utils"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/marketplace",
+				"tsConfig": "packages/plugins/marketplace/tsconfig.lib.json",
+				"packageJson": "packages/plugins/marketplace/package.json",
+				"main": "packages/plugins/marketplace/src/index.ts",
+				"assets": ["packages/plugins/marketplace/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/marketplace/jest.config.ts"
+			}
+		}
+	}
+}

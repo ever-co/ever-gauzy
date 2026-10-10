@@ -1,0 +1,47 @@
+# The email check domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The controller is mounted at `/api/auth` and serves one route, `POST /api/auth/email-check`. It is a
+# `POST` because it carries the address in a body, not because it changes anything: nothing is written and
+# nothing is stored, so the field below is a read of `Query` and a client that must not repeat a write
+# reads it on the operation whose whole contract is that it has no effect.
+#
+# **The guards are the controller's, and the openness is the handler's.** The controller carries
+# `ApiKeyAuthGuard` on its class — a machine caller authenticates with an identifier and a secret in the
+# request headers rather than with a session — and its handler carries the platform's public marker, which
+# is what exempts the route from the application-wide authentication guard. Both are mirrored below: the
+# class here carries the API-key guard beside the gate, and the field states the same public marker, so a
+# caller holding a key pair and no session reaches the same capability over either protocol. A field
+# without that marker would demand a credential the delivered route does not, which is exactly the
+# asymmetry the two-protocol rule forbids.
+#
+# **No permission is stated, because the controller states none.** The grant an API-key caller holds is
+# the key pair itself: its validity is what authorises the call, the guard establishes the tenant from it,
+# and no role permission is consulted on the delivered route. A permission here would demand a grant the
+# route never asks for.
+#
+# **One field, and no other.** The controller serves no list, no node route, no count and no write, so
+# this surface declares none of them: there is no account row for a caller to page or count, and the
+# operation answers a question about one address rather than a resource.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class. Here the guard's scope is the
+# one the API-key guard establishes from the key pair, so the capability resolves against the tenant the
+# key belongs to rather than against a scope with no tenant — which is what makes the gate meaningful on
+# a route that requires no session. The REST route is not gated by that code, so an installation that
+# switched the capability off answers `Cannot query field emailCheck` here while that route carries on.
+
+extend type Query {
+	"""
+	Whether an account with the given address exists on this installation.
+
+	The answer is one boolean: which account it is, and anything about it, is not answered and not asked
+	for — the delivered read counts matching rows rather than reading one.
+	"""
+	emailCheck(
+		"The address to check."
+		email: String!
+	): EmailCheckResult!
+}

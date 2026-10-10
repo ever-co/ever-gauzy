@@ -1,0 +1,234 @@
+# The income's object types.
+#
+# An income is one row per amount the organization earned: what it earned, when it belonged to the book,
+# who earned it and which party it was billed to. It is the expense book's other half — the same shape
+# with the sign reversed, and filed against a client rather than a vendor — so the two domains read alike
+# on purpose, and a client that has learned one has learned the other.
+#
+# **The amount is `Decimal`, never `Float`.** `amount` is a `numeric` column read through the platform's
+# numeric transformer, and an income added up or compared as a binary fraction is an income that is a
+# cent out. Nothing here rescales, rounds or reformats it: the arithmetic over the amounts is the
+# platform's money layer's, and this surface performs none.
+#
+# **The currency is the row's own three-letter code.** It is carried as its value rather than as a schema
+# enum because the vocabulary is the contracts' own `CurrenciesEnum`, shared with every other row on the
+# platform that states an amount.
+#
+# **`isBonus` is the flag that separates a bonus from ordinary income.** The platform computes an
+# employee's average income and average bonus from the two sets separately, so the flag is carried rather
+# than left to a reader to infer from a category that may not exist.
+#
+# **The related rows are carried as the identifiers the columns hold, and never as objects.** An income
+# names an employee and a client, and no read behind this surface joins either: the list read is handed
+# its `relations` from a query string this surface has no spelling for, the node read states none, and the
+# write answers the row it stored. A member carrying a related row would therefore be absent from exactly
+# the rows this surface answers while looking like a fact about the income, so `employeeId` and `clientId`
+# are carried instead, and each row is read from the resource that owns it. The tags are absent for the
+# same reason: the pivot is a relation, and these rows carry no membership.
+
+"""
+One amount the organization earned.
+"""
+type Income {
+	id: ID!
+	"The amount earned, in the row's own `currency`."
+	amount: Decimal!
+	"The ISO 4217 code `amount` is expressed in."
+	currency: String!
+	"The date the income belongs to. Null on a row written without one, which is a row no book order can place."
+	valueDate: DateTime
+	"The note kept with the income, for the operator rather than for the ledger."
+	notes: String
+	"""
+	Whether the platform records this amount as a bonus rather than as ordinary income. The two are
+	averaged separately for the employee the row names, so the flag is what tells them apart.
+	"""
+	isBonus: Boolean
+	"The human reference for the income, such as the document it was billed through."
+	reference: String
+	"The party the income is billed to, as the identifier of the party's own row."
+	clientId: ID
+	"The employee the income is recorded against, as the identifier of the employee's own row."
+	employeeId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered routes —
+	the two removals this resource serves — and this column is the whole of what they write, so without it
+	a caller could not tell a live row from a withdrawn one on the answer to the write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of incomes.
+"""
+type IncomeEdge {
+	node: Income!
+	cursor: String!
+}
+
+"""
+One page of incomes, with the total the filters select and the boundary cursors.
+"""
+type IncomeConnection {
+	nodes: [Income!]!
+	edges: [IncomeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an income list may be sorted by.
+
+`valueDate` is the book's own order, which is the order an earnings report is read in; the two timestamps
+are how a change is found again; and `amount` is what a list of earnings is taken by. The flags and the
+identifiers are not sort keys: a boolean or an identifier order is not an order a book is read in, and
+the questions those columns answer are filters.
+"""
+enum IncomeSortField {
+	createdAt
+	updatedAt
+	valueDate
+	amount
+}
+
+"""
+The order the incomes are returned in. At most three keys are accepted.
+"""
+input IncomeSort {
+	field: IncomeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an income list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is: the delivered list read answers
+those columns, so each one narrows rows the connection was handed. The amount is stated through the
+decimal family, which is the family money is compared in; **the value is the row's own**, so an equality
+states the amount as the read produces it (`1200.5`, not a padded string), while the range operators —
+which are what a book is actually searched with — need no such care. The pattern the paginated spelling
+of the list interprets is stated here in the connection's own vocabulary: `ilike` on `notes`.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set. The tenant and the
+organization are absent for a different reason — both are applied to the criterion from the credential
+rather than from the caller, so a member here would suggest a scope decision the caller does not have.
+The tags are absent for a third: the delivered list read loads no relations, so a condition on them could
+only ever select the empty set. Which incomes are the caller's own is the `myIncomes` root field's
+question rather than a filter's, because that read narrows by who is asking.
+"""
+input IncomeFilter {
+	id: IDFilter
+	valueDate: DateTimeFilter
+	amount: DecimalFilter
+	currency: StringFilter
+	notes: StringFilter
+	isBonus: BooleanFilter
+	reference: StringFilter
+	clientId: IDFilter
+	employeeId: IDFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IncomeFilter!]
+	or: [IncomeFilter!]
+	not: IncomeFilter
+}
+
+# The write surface.
+#
+# `CreateIncomeInput` and `UpdateIncomeInput` declare what the delivered write paths store, and nothing
+# else. Three consequences are deliberate:
+#
+# - The party the income is billed to is stated as an identifier, because the schema declares no object
+#   type for a party — it belongs to the resource that owns it — and the identifier is what the write
+#   persists. It is required, because the delivered body validation requires it on the create and on the
+#   edit alike.
+# - The facets are stated as identifiers, because the pivot row is a pair of identifiers: the delivered
+#   path writes the membership, never a tag row beside it.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant onto
+#   the row and refuses a row that belongs to another one, so a member here would promise a scope the
+#   write refuses.
+#
+# The employee is a member of the create and not of the edit, for the same reason the delivered edit DTO
+# drops it: the delivered create passes the employee through and may stamp the caller's own onto the row,
+# and the edit body carries none at all.
+
+"""
+What a caller states when it records an income.
+
+`amount`, `clientId` and `currency` are the members the delivered body validation requires; a body
+without any of them is refused, which is why none of them is nullable here. The amount is stated as the
+exact decimal: the column is `numeric`, and a JSON number — which is what the REST body carries the same
+quantity as — is a binary fraction that cannot hold a cent.
+
+The organization is stated as an identifier and is *not* required, because the delivered validation
+requires an organization only when the body names neither the organization object nor a `sentTo` — and
+the object spelling is a type this schema does not declare, so the identifier is what this surface offers
+and the condition stays the delivered validator's rather than being restated as a non-null member that
+would refuse a body the route serves.
+"""
+input CreateIncomeInput {
+	"The amount earned, in the currency below."
+	amount: Decimal!
+	"The party the income is billed to."
+	clientId: ID!
+	"The ISO 4217 code the amount is expressed in."
+	currency: String!
+	"The date the income belongs to."
+	valueDate: DateTime
+	"The note kept with the income."
+	notes: String
+	"Whether the amount is a bonus rather than ordinary income."
+	isBonus: Boolean
+	"The human reference for the income."
+	reference: String
+	"The organization the income is filed under."
+	organizationId: ID
+	"The employee the income is recorded against."
+	employeeId: ID
+	"The facets attached to the income, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes an income that exists.
+
+**The delivered edit is the platform's own upsert, and it is reached through the same write the create
+is.** The route reads the row's identifier from the path, spreads the body beside it and calls the
+delivered create, so a member the caller leaves out is left as it is — and an identifier that names no row
+at all is **stored as a new row** rather than refused, because an upsert is what the delivered write is. A
+client that means "change this income" reads it first, or reaches for the mutation above only with an
+identifier it obtained from this surface.
+
+`employeeId` is not a member, because the delivered edit body does not carry it — the delivered DTO drops
+that member on the edit and keeps it on the create.
+"""
+input UpdateIncomeInput {
+	id: ID!
+	"The amount earned, in the currency below."
+	amount: Decimal!
+	"The party the income is billed to."
+	clientId: ID!
+	"The ISO 4217 code the amount is expressed in."
+	currency: String!
+	"The date the income belongs to."
+	valueDate: DateTime
+	"The note kept with the income."
+	notes: String
+	"Whether the amount is a bonus rather than ordinary income."
+	isBonus: Boolean
+	"The human reference for the income."
+	reference: String
+	"The organization the income is filed under."
+	organizationId: ID
+	"The facets attached to the income, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}

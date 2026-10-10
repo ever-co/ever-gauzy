@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CommandHandlers } from './commands/handlers';
 import { OrganizationRecurringExpenseController } from './organization-recurring-expense.controller';
+import { OrganizationRecurringExpenseResolver } from './organization-recurring-expense.resolver';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { QueryHandlers } from './queries/handlers';
@@ -25,6 +26,9 @@ import { MikroOrmOrganizationRecurringExpenseRepository } from './repository/mik
 	controllers: [OrganizationRecurringExpenseController],
 	providers: [
 		OrganizationRecurringExpenseService,
+		// The GraphQL surface is declared beside the service it calls, so the host that scans this
+		// module for resolvers reaches everything the resolver injects.
+		OrganizationRecurringExpenseResolver,
 		TypeOrmOrganizationRecurringExpenseRepository, MikroOrmOrganizationRecurringExpenseRepository,
 		...QueryHandlers,
 		...CommandHandlers

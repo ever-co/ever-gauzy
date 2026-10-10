@@ -1,4 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { isJSON } from 'class-validator';
 import { RequestMethodEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
@@ -6,14 +7,25 @@ import { RequestContext } from './../../core/context';
 @Injectable()
 export class TenantBaseGuard implements CanActivate {
 	/**
+	 * Authorises a request against the tenant the caller authenticated as.
+	 *
+	 * A REST request states its tenant in a header, a query parameter or the payload, and the guard
+	 * compares that statement with the authenticated tenant. A GraphQL operation states nothing of
+	 * the kind — it carries no query string and its payload is shaped by the operation — and asking
+	 * the execution context for an HTTP request throws, so the two are handled separately.
 	 *
 	 * @param context
 	 * @returns
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		const currentTenantId = RequestContext.currentTenantId();
+
+		if (context.getType<string>() === 'graphql') {
+			return this.canActivateGraphqlOperation(context, currentTenantId);
+		}
+
 		console.log('TenantBaseGuard canActivate called');
 
-		const currentTenantId = RequestContext.currentTenantId();
 		const request: any = context.switchToHttp().getRequest();
 		const method: RequestMethodEnum = request.method;
 		const { query, headers, rawHeaders } = request;
@@ -83,5 +95,33 @@ export class TenantBaseGuard implements CanActivate {
 			console.log('Guard TenantBase: Access Allowed. TenantId:', headerTenantId);
 		}
 		return isAuthorized;
+	}
+
+	/**
+	 * Authorises a GraphQL operation.
+	 *
+	 * The operation is scoped by the tenant the caller authenticated as. A caller that additionally
+	 * states a tenant, through the same header the REST surface uses, must state its own; a caller
+	 * that states nothing is authorised on the strength of its authentication alone, because the
+	 * only tenant it can reach is the one carried by its own token.
+	 *
+	 * @param context The execution context of the operation.
+	 * @param currentTenantId The tenant carried by the caller's credentials.
+	 * @returns True when the operation may proceed.
+	 */
+	private canActivateGraphqlOperation(context: ExecutionContext, currentTenantId?: string): boolean {
+		if (!currentTenantId) {
+			return false;
+		}
+
+		const gqlContext = GqlExecutionContext.create(context).getContext();
+		const request = gqlContext?.req ?? gqlContext?.request ?? gqlContext;
+		const headerTenantId = request?.headers?.['tenant-id'];
+
+		if (headerTenantId) {
+			return currentTenantId === headerTenantId;
+		}
+
+		return true;
 	}
 }

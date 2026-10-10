@@ -7,7 +7,7 @@
 */
 import { RelationId, JoinColumn, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsEnum, IsOptional, IsUUID, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsEnum, IsOptional, IsUUID, IsObject, Length } from 'class-validator';
 import {
 	IRequestApproval,
 	ApprovalPolicyTypesStringEnum,
@@ -15,6 +15,8 @@ import {
 	IRequestApprovalEmployee,
 	IRequestApprovalTeam,
 	ITag,
+	CurrencyCode,
+	DecimalString,
 	ID
 } from '@gauzy/contracts';
 import {
@@ -33,6 +35,7 @@ import {
 	MultiORMOneToMany
 } from './../core/decorators/entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @MultiORMEntity('request_approval', { mikroOrmRepository: () => MikroOrmRequestApprovalRepository })
 export class RequestApproval extends TenantOrganizationBaseEntity implements IRequestApproval {
@@ -65,6 +68,36 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@IsEnum(ApprovalPolicyTypesStringEnum)
 	@MultiORMColumn({ nullable: true })
 	requestType: ApprovalPolicyTypesStringEnum;
+
+	/**
+	 * The value the request commits, as an exact decimal, so an approval threshold can be applied to
+	 * it. Null for a request that commits no money — a time-off request, for instance.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		precision: 20,
+		scale: 6,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	amount?: DecimalString;
+
+	/** ISO 4217 code `amount` is stated in. Null exactly when `amount` is null. */
+	@ApiPropertyOptional({ type: () => String, maxLength: 3 })
+	@IsOptional()
+	@IsString()
+	@Length(3, 3)
+	@MultiORMColumn({ nullable: true, type: 'varchar', length: 3 })
+	currency?: CurrencyCode;
+
+	/** Free text kept beside the request, for the approver to read. */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ nullable: true })
+	note?: string;
 
 	/*
 	|--------------------------------------------------------------------------

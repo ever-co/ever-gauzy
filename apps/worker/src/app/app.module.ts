@@ -1,8 +1,18 @@
-import { ActivityLogModule, DatabaseModule, MentionModule, TokenModule } from '@gauzy/core';
+import {
+	ActivityLogModule,
+	DatabaseModule,
+	EventOutboxDispatchScheduleModule,
+	IdempotencyMaintenanceModule,
+	JobExecutionModule,
+	MentionModule,
+	TokenModule,
+	WebhookMaintenanceModule
+} from '@gauzy/core';
 import { PluginModule } from '@gauzy/plugin';
 import { SchedulerModule } from '@gauzy/scheduler';
 import { Module } from '@nestjs/common';
 import { WorkerJobsModule } from './worker-jobs.module';
+import { SchedulerLedgerBootstrap } from './scheduler-ledger.bootstrap';
 import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } from './worker.constants';
 
 @Module({
@@ -34,6 +44,52 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		}),
 		WorkerJobsModule,
 		/**
+		 * The two platform schedules, registered in the process that actually ticks them.
+		 *
+		 * 🛑 **A `@ScheduledJob` only registers where `SchedulerModule.forRoot({ enabled: true })`.**
+		 * `SchedulerDiscoveryService` skips every job when the module option is false
+		 * (`scheduler-discovery.service.ts`), and core's own `AppModule` registers the root with
+		 * `enabled: false` on purpose — the API hosts the queue and the workers that consume it, and
+		 * this process is the one that fires the schedules. So a maintenance module imported only by
+		 * core's `AppModule` contributes its worker and never its cron: nothing is ever enqueued, the
+		 * worker idles, and every piece looks healthy.
+		 *
+		 * That is what had happened to the retry-key sweep — `IdempotencyMaintenanceModule` was
+		 * registered in exactly one place, under `enabled: false`, so the hourly sweep had never once
+		 * fired and `idempotency_key` could only grow. The outbox dispatch pass would have inherited
+		 * the same silence, and with far worse consequences: nothing would hand appended events to
+		 * their consumers, so GraphQL subscriptions, the search index, every entitlement grant and
+		 * every outbound webhook stay quiet while `event_outbox` grows, and no writer anywhere sees an
+		 * error.
+		 *
+		 * Both are imported behind `WORKER_QUEUE_ENABLED` for the same reason core gates them behind
+		 * `isSchedulerQueueRootEnabled()`: the jobs travel on a queue, a queue needs a root, and
+		 * registering a worker where there is no root is not a degraded schedule — it is a boot that
+		 * fails on `Worker requires a connection`.
+		 *
+		 * 🛑 **The outbox is the schedule only: this process fires the dispatch pass and never runs it.**
+		 * The pass hands each event to the consumers registered in the process that runs it, and marks
+		 * the row published once those have settled. The registry is process-local, and this process
+		 * does not host every consumer — the entitlement and search plugins are not loaded here, and
+		 * GraphQL subscribers are connected to the API — so a pass taken here published `order.placed`
+		 * without `EntitlementGrantConsumer` or the search index ever seeing it. The API imports the
+		 * full `EventOutboxMaintenanceModule` (its scheduler root is `enabled: false`, so there it is the
+		 * consumer only); this process imports `EventOutboxDispatchScheduleModule`, which registers the
+		 * queue and the per-minute job that enqueues onto it and no consumer of that queue.
+		 */
+		...(WORKER_QUEUE_ENABLED
+			? [IdempotencyMaintenanceModule, EventOutboxDispatchScheduleModule, WebhookMaintenanceModule]
+			: []),
+		/**
+		 * The ledger a scheduled pass is recorded in.
+		 *
+		 * This process is the one that ticks the schedules, so it is the one that has something to
+		 * record; `SchedulerLedgerBootstrap` below attaches the recorder to the scheduler's single run
+		 * funnel once the graph is up. An installation that does not want the rows simply does not
+		 * import this module — the recorder is optional and off by default on the scheduler's side.
+		 */
+		JobExecutionModule,
+		/**
 		 * Instantiates every plugin listed in `src/plugins.ts` and runs its `onPluginBootstrap`.
 		 *
 		 * 🛑 `registerPluginConfig({ plugins })` in `main.ts` is NOT enough on its own: it only
@@ -48,6 +104,7 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 * exists when a plugin registers its own queue.
 		 */
 		PluginModule.init()
-	]
+	],
+	providers: [SchedulerLedgerBootstrap]
 })
 export class AppModule {}

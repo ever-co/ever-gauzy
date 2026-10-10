@@ -1,0 +1,148 @@
+# The tenant setting's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The domain is served by two controllers**, and every field below mirrors one of their routes. The
+# settings themselves are `TenantSettingController` (`/api/tenant-setting`); the tenant's UI flavour is
+# `TenantUiPreferencesController` (`/api/tenant-ui-preferences`), which is deliberately a separate
+# controller because the preference is READABLE by every signed-in user of the tenant while only an
+# administrator may change it. Both are mirrored here, because leaving one of a domain's controllers
+# without its GraphQL counterpart is the gap this delivery exists to close.
+#
+# **The permission is stated per field, and it is the route's own.** `TenantSettingController` carries
+# `TENANT_SETTING` on the class and `GLOBAL_SETTING` on its two global routes; the UI preferences
+# controller carries no class-level permission at all and states `TENANT_SETTING` on its write alone.
+# One resolver cannot state both class-level permissions, so each field below states the permission its
+# own route's metadata resolves to — which is strictly *more* precise than a class-level statement, and
+# is asserted field by field in the resolver's spec by reading that metadata rather than by restating a
+# list. The guard chain is the same on both controllers, so that part is stated once on the class.
+#
+# **The GraphQL view is behind the capability the catalogue declares for GraphQL.** `FEATURE_GRAPHQL`
+# is the code the commerce catalogue introduces for "the GraphQL endpoint and its resolvers, under the
+# same guards and permissions as REST", and the resolver carries `FeatureFlagGuard` with it on the
+# class. The REST routes of this resource are not gated by that code — they are the door that stays
+# open, which is what keeps a tenant that switched GraphQL off able to switch it back on — so a
+# disabled capability is answered `Cannot query field <name>` here while REST answers as it always did.
+#
+# **The settings are read twice, and the two reads are not the same read.** `tenantSettingValues` is
+# the delivered document route: a key/value map, with the secret-bearing keys masked by the platform's
+# own wrapper, which is what the settings cache, the file-storage middleware and the UI consume.
+# `tenantSettings` is the row list: every row with its scope columns, its structured value and its
+# `isEncrypted` marker, which the document cannot express because a map has no room for a scope or a
+# marker. The second is not a spelling of the first — a document cannot be narrowed by organization or
+# paged by cursor — so it is a connection of its own rather than a second root field for one list.
+#
+# **A sub-route is a filter, never a root field.** The settings document's own narrowing (a key set) and
+# the global document's selection (`tenantId IS NULL`) belong to the fields that answer them; the rows
+# are narrowed by `filter`, and `organizationId: { isNull: true }` is the tenant-wide selection stated
+# as what it is.
+#
+# `tenantSettingCount` takes no argument, and that is a statement rather than an omission: the
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak, and it answers with a bare number — a count is an aggregate a
+# resource may legitimately have no answer for, which is why the field is nullable rather than a
+# fabricated zero. `totalCount` on the connection is the other number: the rows the filters selected.
+
+extend type Query {
+	"""
+	The setting rows of the caller's tenant and organization, tenant-wide rows included.
+	"""
+	tenantSettings(
+		filter: TenantSettingFilter
+		sort: [TenantSettingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): TenantSettingConnection!
+
+	"""
+	One setting row of the caller's tenant, or null when there is none.
+	"""
+	tenantSetting(id: ID!): TenantSetting
+
+	"""
+	How many setting rows the caller's tenant holds.
+	"""
+	tenantSettingCount: Int
+
+	"""
+	The caller's tenant's settings as the delivered document route answers them: a value per key, with
+	the secret-bearing keys masked.
+	"""
+	tenantSettingValues: JSON!
+
+	"""
+	The installation-wide defaults (`tenantId IS NULL`) as the delivered global route answers them,
+	masked the same way. A tenant's own row overrides the default for that tenant only.
+	"""
+	globalTenantSettingValues: JSON!
+
+	"""
+	The UI flavour this tenant's users are served.
+	"""
+	tenantUiPreferences: TenantUiPreferences!
+}
+
+extend type Mutation {
+	"""
+	Saves the tenant's settings document: the file storage provider and the provider credentials the
+	caller states. The answer is the document as it now stands, which is what the delivered route
+	answers with.
+	"""
+	updateTenantSetting(input: UpdateTenantSettingInput!): JSON!
+
+	"""
+	Saves settings the caller names itself, as key/value pairs — the same write the delivered dynamic
+	route performs, through the same command.
+	"""
+	updateDynamicTenantSetting(input: UpdateDynamicTenantSettingInput!): JSON!
+
+	"""
+	Saves the installation-wide defaults (`tenantId IS NULL`). This is the one write of the resource
+	that is not scoped to the caller's tenant, which is why it is the one that asks for
+	`GLOBAL_SETTING`.
+	"""
+	saveGlobalTenantSetting(input: UpdateDynamicTenantSettingInput!): JSON!
+
+	"""
+	Replaces the writable columns of one settings row. The delivered edit is the CRUD base's own — the
+	row is read, then written under the verified identifier — so a caller naming a row that is not
+	there is answered with the miss rather than with a write that recreates it.
+	"""
+	updateTenantSettingRow(input: UpdateTenantSettingRowInput!): TenantSetting!
+
+	"""
+	Removes a settings row outright: nothing reads it back, and a row that is not there is the
+	service's own miss rather than a false answered from here.
+	"""
+	deleteTenantSetting(id: ID!): Boolean!
+
+	"""
+	Withdraws a settings row without removing it, so the resolution falls back to the next scope. The
+	answer is the row as it now stands, which is what the delivered route answers with.
+	"""
+	softDeleteTenantSetting(id: ID!): TenantSetting!
+
+	"""
+	Puts a withdrawn settings row back.
+	"""
+	recoverTenantSetting(id: ID!): TenantSetting!
+
+	"""
+	Asks the platform to verify a Wasabi configuration by using it. The delivered route answers with the
+	provider's own report and refuses with a 400 when the credentials are missing, so this field
+	answers the report as a document and surfaces the refusal as an error.
+	"""
+	validateWasabiFileStorage(input: WasabiFileStorageConfigInput!): JSON!
+
+	"""
+	Changes the UI flavour this tenant's users are served.
+	"""
+	updateTenantUiPreferences(input: UpdateTenantUiPreferencesInput!): TenantUiPreferences!
+}

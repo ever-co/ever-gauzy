@@ -1,6 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
 	BaseEntityEnum,
@@ -644,22 +645,54 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	async findSyncedProjects(options?: BaseQueryDTO<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
+				// The TypeORM branch below reads a project's link from the GitHub plugin's custom fields: it
+				// inner-joins `customFields.repository` (filtered on the tenant and on every key of `where`, like
+				// the project) and requires the row's `repositoryId` column. This branch used to name that column
+				// as a property of the entity, `{ repositoryId: { $ne: null } }`, but under MikroORM it is a member
+				// of the `customFields` embeddable, so every call failed with "Trying to query by not existing
+				// property OrganizationProject.repositoryId" — the GraphQL field `syncedOrganizationProjects` and
+				// `GET /organization-projects/synced` alike. Where MikroORM maps the plugin's relation, it is
+				// filtered and loaded the way TypeORM joins it; where it does not (no GitHub plugin, or custom
+				// fields registered after MikroORM discovered the entities), the column is read directly, which is
+				// what TypeORM does when there is no `repository` custom field to join.
 				const tenantId = RequestContext.currentTenantId();
-				const where: any = { tenantId };
-
-				if (options?.where) {
-					for (const key of Object.keys(options.where)) {
-						where[key] = options.where[key];
-					}
+				if (!tenantId) {
+					// No credential tenant, no rows: a criterion `{ tenantId: undefined }` would scope nothing.
+					return { items: [], total: 0 };
 				}
 
-				// Match TypeORM's repositoryId IS NOT NULL filter
-				where.repositoryId = { $ne: null };
+				// The caller's keys first and the credential's tenant last, so a stated `tenantId` cannot widen
+				// the read. Each key is compared for equality, as TypeORM binds it: a MikroORM criterion would
+				// read an object value as operators (`{ $ne: … }`), which TypeORM never does.
+				const criteria: Record<string, unknown> = {};
+				for (const [key, value] of Object.entries(options?.where ?? {})) {
+					if (value !== null && typeof value === 'object') {
+						throw new BadRequestException(`Invalid value for where.${key}`);
+					}
+					criteria[key] = value;
+				}
+				criteria['tenantId'] = tenantId;
 
-				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
-					limit: options?.take || 10,
-					offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0
-				});
+				const joinsRepository = this.mikroOrmMapsCustomField('repository');
+				let where: Record<string, unknown>;
+				if (joinsRepository) {
+					where = { ...criteria, customFields: { repository: { ...criteria } } };
+				} else {
+					const column = this.mikroOrmRepository
+						.getEntityManager()
+						.getPlatform()
+						.quoteIdentifier('repositoryId');
+					where = { ...criteria, [raw((alias: string) => `${alias}.${column}`)]: { $ne: null } };
+				}
+
+				const [items, total] = await this.mikroOrmRepository.findAndCount(
+					where as FilterQuery<OrganizationProject>,
+					{
+						...(joinsRepository ? { populate: ['customFields.repository'] as never } : {}),
+						limit: options?.take || 10,
+						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0
+					}
+				);
 				return { items: items.map((e) => this.serialize(e)) as OrganizationProject[], total };
 			}
 			case MultiORMEnum.TypeORM:
@@ -685,6 +718,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				return { items, total };
 			}
 		}
+	}
+
+	/**
+	 * Whether MikroORM maps a custom field of the project's `customFields` embeddable.
+	 *
+	 * The TypeORM branch of {@link findSyncedProjects} asks the configuration whether a plugin declared the field.
+	 * MikroORM has to be asked itself: a custom field reaches its metadata only when it was registered before
+	 * MikroORM discovered the entities, and a criterion naming a member it does not map is refused
+	 * ("property 'repository' does not exist in embeddable 'MikroOrmOrganizationProjectEntityCustomFields'").
+	 *
+	 * @param name - The custom field's name, e.g. `repository`.
+	 * @returns `true` when MikroORM maps `customFields.<name>` of `OrganizationProject`.
+	 */
+	private mikroOrmMapsCustomField(name: string): boolean {
+		const meta = this.mikroOrmRepository
+			.getEntityManager()
+			.getMetadata()
+			.find(this.mikroOrmRepository.getEntityName());
+		const customFields = meta?.properties?.['customFields' as never] as EntityProperty | undefined;
+
+		return !!customFields?.embeddedProps?.[name];
 	}
 
 	/**

@@ -1,0 +1,130 @@
+# The key result update domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/key-result-updates` routes already serve, under the same
+# guard and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other.
+# `KeyResultUpdateController` carries `TenantPermissionGuard` on the class and states no permission at
+# all — not on the four routes it declares and not on any of the five it inherits from the CRUD base —
+# so every field here runs under the same tenant guard and demands no permission. The resolver's spec
+# reads those two facts off the controller's own metadata and compares them with the resolver's.
+#
+# **The controller's own read is a by-key-result list, and it is this connection narrowed.**
+# `GET /key-result-updates/:id` hands the list reader `{ where: { keyResultId: id } }` and answers the
+# updates *of one key result* rather than one update — the path segment names the key result, not the
+# row. `keyResultId` is a column of this row, so the narrowing is stated as a filter and the route is
+# not a root field of its own. The relation that read joins is the parent, whose identifier the row
+# already carries.
+#
+# **One fact about the delivered router is stated here rather than left to be discovered.** A router
+# walks a class's own methods before the base class's, so the controller's own `GET /:id` is registered
+# ahead of the inherited `GET /count` and `GET /pagination`, and a single-segment pattern matches both
+# of those paths: on REST they answer a by-key-result list. This surface states each capability where
+# the controller declares it — the count as `keyResultUpdateCount`, the node as `keyResultUpdate(id)`,
+# and the by-key-result read as the connection's `keyResultId` filter — because the capability is what
+# the controller declares and a registration order is not a narrowing anybody designed. The resolver's
+# spec asserts the ordering that makes the shadowing real.
+#
+# **The list is the connection.** The controller serves its list twice — the inherited `GET /` and the
+# inherited `GET /pagination` — and the two answer the same rows under the same filters. That is one
+# capability, so it is one field, and the connection's own `limit`/`offset` already are the page the
+# paginated spelling performs.
+#
+# **The bulk removal is a field of its own, and it is not the list narrowed.** `DELETE
+# /key-result-updates/deleteBulkByKeyResultId` removes every update of one key result in one write and
+# answers nothing at all; the inherited `DELETE /:id` removes one row by its own identifier. The two
+# are different capabilities — one is scoped to a key result, the other to a row — so the bulk removal
+# is `deleteKeyResultUpdates`, whose answer is whether the write ran.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Removals, withdrawals and restorations are all delivered routes, so
+# all three are fields, and the object type carries `deletedAt` because that column is the whole of
+# what the withdrawal writes.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The updates of the caller's tenant, newest first. One key result's updates are this connection
+	narrowed by `keyResultId`, which is the read the delivered by-key-result route performs.
+	"""
+	keyResultUpdates(
+		filter: KeyResultUpdateFilter
+		sort: [KeyResultUpdateSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): KeyResultUpdateConnection!
+
+	"""
+	One update of the caller's tenant, or null when there is none.
+
+	This is the capability the CRUD base's `GET /:id` route declares. On the delivered router that path
+	is answered by the controller's own by-key-result read instead, for the ordering reason stated above;
+	the capability is unchanged, so it is stated here under its own name.
+	"""
+	keyResultUpdate(id: ID!): KeyResultUpdate
+
+	"""
+	How many updates the caller's tenant holds.
+	"""
+	keyResultUpdateCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records a move against a key result, and answers the row it wrote.
+	"""
+	createKeyResultUpdate(input: CreateKeyResultUpdateInput!): KeyResultUpdate!
+
+	"""
+	Corrects a move that was recorded, and answers the row the write produced.
+
+	The delivered route catches whatever the write threw and answers an empty body, which a field that
+	promises a row cannot do — an empty answer is indistinguishable from a row that is not there. This
+	field lets the write's own refusal travel instead, which is the same fact stated where a caller can
+	read it. A member the caller leaves out is left as it is; see `UpdateKeyResultUpdateInput`.
+	"""
+	updateKeyResultUpdate(input: UpdateKeyResultUpdateInput!): KeyResultUpdate!
+
+	"""
+	Removes one update outright, by its own identifier. The delivered route answers the store's delete
+	result rather than a row, so this field answers whether the removal was performed.
+	"""
+	deleteKeyResultUpdate(id: ID!): Boolean!
+
+	"""
+	Removes every update of one key result in a single write — the delivered bulk removal — with the
+	rows withdrawn and live alike taken, because the delivered handler deletes by identifier without
+	regard to the withdrawal column. It answers whether the write ran; a caller that needs the rows
+	themselves reads them back through the connection.
+	"""
+	deleteKeyResultUpdates(keyResultId: ID!): Boolean!
+
+	"""
+	Withdraws one update without removing it. The answer is the withdrawn row, whose `deletedAt` says
+	when it happened.
+	"""
+	softDeleteKeyResultUpdate(id: ID!): KeyResultUpdate!
+
+	"""
+	Puts a withdrawn update back.
+	"""
+	recoverKeyResultUpdate(id: ID!): KeyResultUpdate!
+}

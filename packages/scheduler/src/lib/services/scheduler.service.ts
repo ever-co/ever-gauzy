@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SchedulerJobDescriptor, SchedulerJobScheduleType } from '../interfaces/scheduler-job-descriptor.interface';
 import { SchedulerQueueJobInput } from '../interfaces/scheduler-queue-job.interface';
+import { SchedulerRunRecorder } from '../interfaces/scheduler-run-recorder.interface';
 import { SchedulerJobRegistryService } from './scheduler-job-registry.service';
 import { SchedulerJobRunnerService } from './scheduler-job-runner.service';
 import { SchedulerQueueService } from './scheduler-queue.service';
@@ -12,6 +13,26 @@ export class SchedulerService {
 		private readonly jobRunner: SchedulerJobRunnerService,
 		private readonly queueService: SchedulerQueueService
 	) {}
+
+	/**
+	 * Attaches the run ledger every run of every job passes through, or detaches it with `null`.
+	 *
+	 * This is the scheduler's whole integration surface for a ledger. The host process — the one that
+	 * owns a database — injects this service, which the scheduler module exports, and hands in its
+	 * recorder at boot; nothing else in this package changes, and a process that never calls this
+	 * records nothing and behaves exactly as before. It lives here rather than on the runner because
+	 * `SchedulerService` is the exported control surface and the runner is an implementation detail.
+	 *
+	 * @param recorder The ledger, or null to record nothing.
+	 */
+	attachRunRecorder(recorder: SchedulerRunRecorder | null): void {
+		this.jobRunner.setRunRecorder(recorder);
+	}
+
+	/** Whether this process currently records its runs. */
+	hasRunRecorder(): boolean {
+		return this.jobRunner.hasRunRecorder();
+	}
 
 	listJobs(): SchedulerJobDescriptor[] {
 		return this.jobRegistry.getAll().map((job) => ({

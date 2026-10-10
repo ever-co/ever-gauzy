@@ -1,0 +1,262 @@
+# The request approval's GraphQL types.
+#
+# An approval request is the row a document raises when somebody has to say yes to it: the policy that
+# governs the answer, the document the request is about, the people and the teams whose consent it
+# needs, and — when the document commits money — the value being committed. The row is polymorphic by
+# design: `requestId` and `requestType` are a pair rather than a foreign key, because the documents an
+# approval can be raised for are owned by domains that know nothing about approvals, and none of them
+# carries a column on this one.
+#
+# **The collections are absent, and each for the reason the reads give.** `approvalPolicy` is joined by
+# the list read, but only as the row the organization scope is evaluated through — the delivered list
+# answers the request rows and leaves the policy to be read where it is maintained. `employeeApprovals`
+# and `teamApprovals` are the two pivots the request owns, and `tags` is the labelling pivot: the list
+# read joins none of them, and the by-employee read loads all four per request it appends, which is a
+# read of one employee's queue rather than of the register. A field for any of them would therefore be
+# absent on every row the connection answers and present on the rows of one other field, which is the
+# worst of both: a client would read null and conclude the request has no approvers. `approvalPolicyId`
+# is carried instead, because it is a column of this row and travels with every read of it; the
+# approvers of a request are read through the request-approval-employee and request-approval-team
+# resources, and the policy through the approval-policy domain.
+#
+# **`status` is carried as its value rather than declared as a schema enum.** The vocabulary is the
+# kernel extension's `RequestApprovalStatusTypesEnum` — `1` requested, `2` approved, `3` refused — and
+# the same numbers type the status column of the approvals an employee and a team carry, so declaring
+# the set here would claim a vocabulary this domain does not own; the contract that defines it is where
+# a client reads what the numbers mean.
+#
+# **`amount` is a `Decimal` and never a `Float`.** The column is a `numeric(20,6)`, and money that has
+# been through a binary fraction is money that has lost a cent: the same row read over REST and read
+# here is the same string, which is what the kernel's decimal scalar exists for. `currency` is the ISO
+# 4217 code that string is stated in, and it is null exactly when the request commits no money.
+
+"""
+One request for approval, as the delivered reads answer it.
+"""
+type RequestApproval {
+	id: ID!
+	"The name the request is known by, as the document that raised it wrote it."
+	name: String!
+	"""
+	The state of the request: `1` while it is waiting for its approvers, `2` once enough of them have
+	approved, `3` once one has refused. The vocabulary is the contracts' own
+	`RequestApprovalStatusTypesEnum` — see the file comment for why it is carried as its value.
+	"""
+	status: Int
+	"Free text kept beside the request, for the approver to read."
+	note: String
+	"""
+	The value the request commits, as an exact decimal string, so a threshold policy can be applied to
+	it. Null for a request that commits no money — a time-off request, for instance.
+	"""
+	amount: Decimal
+	"The ISO 4217 code `amount` is stated in. Null exactly when `amount` is null."
+	currency: String
+	"""
+	The document the request is about, by identifier. The pair `requestId` and `requestType` is
+	polymorphic rather than a foreign key, so the document itself is read on the domain that owns it.
+	"""
+	requestId: ID
+	"""
+	What kind of document `requestId` names — the vocabulary is the contracts'
+	`ApprovalPolicyTypesStringEnum`, carried as its value for the same reason `status` is.
+	"""
+	requestType: String
+	"""
+	How many approvals the request needs before it is approved. Null when the policy states no
+	threshold, which the delivered writer treats as no threshold at all rather than as zero.
+	"""
+	min_count: Int
+	"""
+	The approval policy that governs the request, by identifier. The row is joined by the delivered
+	list read only as the scope it is evaluated through and is not carried here; it is read on the
+	approval-policy domain.
+	"""
+	approvalPolicyId: ID
+	"The tenant the request belongs to, by identifier."
+	tenantId: ID
+	"The organization the request belongs to, by identifier."
+	organizationId: ID
+	"When the request was raised."
+	createdAt: DateTime
+	"When the row last changed."
+	updatedAt: DateTime
+	"""
+	When the request was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	"""
+	When the request was archived, as opposed to withdrawn. A flag an operator sets, not a statement
+	about the row's lifecycle.
+	"""
+	archivedAt: DateTime
+	"Whether the request is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the request is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of requests.
+"""
+type RequestApprovalEdge {
+	node: RequestApproval!
+	cursor: String!
+}
+
+"""
+One page of requests, with the total the filters select and the boundary cursors.
+"""
+type RequestApprovalConnection {
+	nodes: [RequestApproval!]!
+	edges: [RequestApprovalEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a request list may be sorted by.
+"""
+enum RequestApprovalSortField {
+	id
+	name
+	status
+	min_count
+	amount
+	currency
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the requests are returned in. At most three keys are accepted.
+"""
+input RequestApprovalSort {
+	field: RequestApprovalSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a request list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the request row, which is why the set is what it is: the connection
+narrows the rows the service returned, so a condition on a collection the reader never loaded could
+only ever match the empty set. `status` and `min_count` take the whole-number comparison family rather
+than an operator set of their own, because the vocabulary of the first is numeric and the second is a
+count; `amount` takes the decimal family, whose values are decimal strings for the same reason the
+output is.
+"""
+input RequestApprovalFilter {
+	id: IDFilter
+	name: StringFilter
+	status: NumberFilter
+	min_count: NumberFilter
+	requestId: IDFilter
+	requestType: StringFilter
+	amount: DecimalFilter
+	currency: StringFilter
+	note: StringFilter
+	approvalPolicyId: IDFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [RequestApprovalFilter!]
+	or: [RequestApprovalFilter!]
+	not: RequestApprovalFilter
+}
+
+"""
+What a caller states when it raises a request.
+
+**Every member here is one the delivered create reads**, and the set is short for that reason: the
+delivered method builds the row member by member rather than spreading the body into it, so a member
+it does not name is not written at all. `status` is the sharpest case and is deliberately absent — the
+delivered writer stamps `1` onto every request it raises, so a caller that could state a state would be
+stating one the write overwrites; the state a request is in is the approvers' answer, not the raiser's.
+
+The two collections are stated as identifiers because the delivered write resolves them to rows itself:
+it reads the employees and the teams the caller names and builds one pivot row per resolved row, so
+what it wants from the body is the identifiers and not the rows. The tags are stated the same way — the
+tag domain serves them, and this surface names them by identifier rather than restating that domain's
+object.
+
+There is no member for the tenant: the delivered write stamps the caller's own tenant onto the row and
+overwrites whatever a body states, so a member here would promise a scope the write refuses. The
+organization is stated, because the write takes it from the body — the request belongs to the
+organization that raised it, and the delivered reads are scoped to the organization the caller is
+acting in.
+"""
+input CreateRequestApprovalInput {
+	"The name the request is known by."
+	name: String!
+	"The policy that governs the answer. Omit for a request no policy applies to."
+	approvalPolicyId: ID
+	"How many approvals the request needs. Omit for no threshold."
+	min_count: Int
+	"The document the request is about. Omit only for a request that is about nothing."
+	requestId: ID
+	"What kind of document that is, in the platform's own vocabulary."
+	requestType: String
+	"The value the request commits, as a decimal string. Omit for a request that commits no money."
+	amount: Decimal
+	"The ISO 4217 code the value is stated in. State it whenever an amount is stated."
+	currency: String
+	"Free text kept beside the request, for the approver to read."
+	note: String
+	"The employees whose approval is asked for, by identifier. The pivots are written from these."
+	employeeApprovals: [ID!]
+	"The teams whose approval is asked for, by identifier. The pivots are written from these."
+	teams: [ID!]
+	"The facets to attach to the request, by identifier. The pivot is written from these."
+	tags: [ID!]
+	"The organization the request belongs to. Omit only when the caller is acting in one organization."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a request that exists.
+
+**The delivered update reads the row, assigns the members it acts on, and saves it** — it is neither a
+replacement of the row nor a partial column update, and which members it acts on is worth stating
+exactly, because the two halves behave differently:
+
+- `name`, `min_count`, `approvalPolicyId`, `organizationId` and `tags` are assigned from the body, so a
+  member the caller leaves out is written as the column's default rather than left as it was;
+- `employeeApprovals` and `teams` are read only when the body states them: the delivered writer removes
+  every existing pivot row first and writes the stated set in its place, so omitting one of the two
+  withdraws every approver of that kind;
+- `requestId`, `requestType`, `amount`, `currency` and `note` are read from no part of the body at all.
+  They are offered here because the delivered route's own body type carries them, and a member this
+  surface withheld would be a write a client can make over one protocol and not over the other; a
+  caller that states one is answered the row it already had, which is the honest reading of a write
+  that does not name it.
+
+The state is not a member for the same reason it is not one of the create: the delivered update stamps
+`1` back onto every request it rewrites, so a request that had been answered returns to waiting when it
+is edited. That is the delivered behaviour rather than this surface's, and stating it here is what
+keeps a client from reading the edit as a way to answer a request.
+"""
+input UpdateRequestApprovalInput {
+	id: ID!
+	name: String
+	approvalPolicyId: ID
+	min_count: Int
+	requestId: ID
+	requestType: String
+	amount: Decimal
+	currency: String
+	note: String
+	employeeApprovals: [ID!]
+	teams: [ID!]
+	tags: [ID!]
+	organizationId: ID
+}

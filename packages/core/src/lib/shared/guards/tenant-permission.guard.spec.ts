@@ -70,6 +70,7 @@ function contextFor(
 	};
 
 	return {
+		getType: () => 'http',
 		getHandler: () => handler,
 		getClass: () => Controller,
 		switchToHttp: () => ({ getRequest: () => httpRequest })

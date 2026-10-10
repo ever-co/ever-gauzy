@@ -1,0 +1,133 @@
+# The goal time frame's object type.
+#
+# A time frame is the period an objective is set for — the quarter, the half, the year — with the
+# state it is in. It is what a caller reads first when it asks "which objectives are for the period we
+# are in", and it is the only resource in this tree whose rows are bounded by two instants rather than
+# by a deadline written as text.
+#
+# The two instants are `DateTime!` because the columns are not nullable and the delivered DTO requires
+# them: a period without a beginning or an end is not a period, so the surface states that rather than
+# answering a row that cannot exist. `status` is carried as its value rather than declared here as an
+# enum, for the reason every value set on this surface is: the vocabulary belongs to the domain's own
+# contract, and a set declared here could not be reused by the next resource that needs it.
+
+"""
+One period an objective can be set for.
+"""
+type GoalTimeFrame {
+	id: ID!
+	"The period's name: the quarter, the half, the year."
+	name: String!
+	"""
+	The state the period is in. The value set belongs to the domain's own contract, so it is carried as
+	its value rather than declared here as an enum.
+	"""
+	status: String!
+	"When the period opens."
+	startDate: DateTime!
+	"When the period closes."
+	endDate: DateTime!
+	"""
+	When the period was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the period belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the period is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of periods.
+"""
+type GoalTimeFrameEdge {
+	node: GoalTimeFrame!
+	cursor: String!
+}
+
+"""
+One page of periods, with the total the filters select and the boundary cursors.
+"""
+type GoalTimeFrameConnection {
+	nodes: [GoalTimeFrame!]!
+	edges: [GoalTimeFrameEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a period list may be sorted by.
+"""
+enum GoalTimeFrameSortField {
+	createdAt
+	updatedAt
+	name
+	status
+	startDate
+	endDate
+}
+
+"""
+The order the periods are returned in. At most three keys are accepted.
+"""
+input GoalTimeFrameSort {
+	field: GoalTimeFrameSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a period list may be narrowed by. Every member is a column of the time-frame row.
+"""
+input GoalTimeFrameFilter {
+	id: IDFilter
+	name: StringFilter
+	status: StringFilter
+	startDate: DateTimeFilter
+	endDate: DateTimeFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [GoalTimeFrameFilter!]
+	or: [GoalTimeFrameFilter!]
+	not: GoalTimeFrameFilter
+}
+
+"""
+What a caller states when it opens a period.
+
+The delivered DTO requires all four of these, and so does this input: a period with no name, no state
+or no boundary is not a row the delivered validation accepts. The tenant is never a member — the
+service stamps it from the credential — and `organizationId` is, because it is the row's own column
+and the delivered validation does not strip it.
+"""
+input CreateGoalTimeFrameInput {
+	name: String!
+	status: String!
+	startDate: DateTime!
+	endDate: DateTime!
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a period.
+
+**A member that is absent is left as it is.** The delivered edit is an update-through-create: the
+stated members are merged onto the row the store holds, and the identifiers the row carries are
+untouched. See `CreateGoalTimeFrameInput` for why all four members are stated here too — the input is
+the delivered DTO's own shape, made partial by the identifier the path carries.
+"""
+input UpdateGoalTimeFrameInput {
+	id: ID!
+	name: String
+	status: String
+	startDate: DateTime
+	endDate: DateTime
+	organizationId: ID
+}

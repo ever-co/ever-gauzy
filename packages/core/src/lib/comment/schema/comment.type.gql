@@ -1,0 +1,254 @@
+# The comment's object type.
+#
+# A comment is a note attached to a row of another resource: `entity` names the resource type and
+# `entityId` the row, `comment` is the text as the author wrote it, `employeeId` is the author, and
+# `parentId` makes it a reply to another comment. The two moderation columns — `resolved`/`resolvedAt`
+# and `editedAt` — are the lifecycle the reader writes, and the remaining members are the base row.
+# That is the whole of what the delivered reads answer, which is why the object type below is exactly
+# those members and nothing else.
+#
+# **The relations are carried as their identifiers, and the collections are carried nowhere at all.**
+# The delivered list read names no relation and the delivered one-row read passes through whatever its
+# REST caller states, so neither read joins anything: `employee`, `resolvedByEmployee` and `parent`
+# would be absent on every row this surface answers, and a field that always reads null is worse than
+# no field. They are carried as `employeeId`, `resolvedByEmployeeId` and `parentId` — the columns the
+# rows themselves carry — and a client that needs the employee behind one of those identifiers reads it
+# from the employee domain, which owns that row and answers it whole.
+#
+# `replies`, `members` and `teams` are absent for the same reason, and each has a read that answers it
+# instead. A REST caller names a collection in `relations` and the delivered read joins it; this
+# surface's read names none, so no collection is ever loaded here. The replies of a comment are the
+# connection narrowed to them — `comments(filter: { parentId: { eq: … } })`, which is the same
+# parent/child column the tree is built on. The members and the teams of a comment are two pivots
+# (`comment_employee` and `comment_team`) that no read behind this connection loads, so nothing here
+# could answer them; both are written and read over the REST routes, which name the pivot they mean.
+#
+# `actorType` is carried as its string value rather than declared as a schema enum: the vocabulary is
+# the kernel's own `ActorTypeEnum`, shared with every other row that records whether a person or the
+# system acted, and declaring it here would claim a vocabulary this domain does not own.
+
+"""
+One comment: a note attached to a row of another resource, with the author and the reply it answers.
+"""
+type Comment {
+	id: ID!
+	"The text of the comment, as the author wrote it."
+	comment: String!
+	"Whether a person or the system acted, as the kernel's own `ActorTypeEnum` value."
+	actorType: String
+	"Whether the conversation this comment belongs to has been resolved."
+	resolved: Boolean
+	"When the conversation was resolved, or null while it is open."
+	resolvedAt: DateTime
+	"When the text was last edited, or null while it stands as first written."
+	editedAt: DateTime
+	"The resource type the comment is attached to, as the kernel's own `BaseEntityEnum` value."
+	entity: String!
+	"The row of that resource the comment is attached to."
+	entityId: ID!
+	"""
+	The comment this one answers, by identifier. Null on a comment that starts a conversation. The
+	comment behind the identifier is not joined by this read; it is another node of this connection.
+	"""
+	parentId: ID
+	"The employee who resolved the conversation, by identifier. The employee row is not joined here."
+	resolvedByEmployeeId: ID
+	"The employee who wrote the comment, by identifier. The employee row is not joined here."
+	employeeId: ID
+	"The tenant the comment belongs to, by identifier."
+	tenantId: ID
+	"The organization the comment was posted in, by identifier."
+	organizationId: ID
+	"Whether the comment is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the comment is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the comment was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the comment was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	"When the comment was posted."
+	createdAt: DateTime
+	"When the comment was last changed."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of comments.
+"""
+type CommentEdge {
+	node: Comment!
+	cursor: String!
+}
+
+"""
+One page of comments, with the total the filters select and the boundary cursors.
+"""
+type CommentConnection {
+	nodes: [Comment!]!
+	edges: [CommentEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a comment list may be sorted by.
+"""
+enum CommentSortField {
+	id
+	entity
+	entityId
+	resolved
+	editedAt
+	resolvedAt
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the comments are returned in. At most three keys are accepted.
+"""
+input CommentSort {
+	field: CommentSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a comment list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the comment row, because the delivered list read answers the row itself
+and joins only what its REST caller names in `relations` — which this surface does not name. The
+parent/child column is among them on purpose: narrowing by `parentId` is how the replies of one
+comment are read here, and `parentId: { isNull: true }` is how the comments that start a conversation
+are read. The tenant comes from the credential on every read, so the two identifier members narrow the
+row's own columns rather than restating a scope decision the caller does not have.
+"""
+input CommentFilter {
+	id: IDFilter
+	comment: StringFilter
+	actorType: StringFilter
+	resolved: BooleanFilter
+	resolvedAt: DateTimeFilter
+	editedAt: DateTimeFilter
+	entity: StringFilter
+	entityId: IDFilter
+	parentId: IDFilter
+	resolvedByEmployeeId: IDFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [CommentFilter!]
+	or: [CommentFilter!]
+	not: CommentFilter
+}
+
+"""
+What a caller states when it posts a comment.
+
+The row the comment is attached to is stated as the pair the delivered write stores: the resource type
+in `entity` and the row in `entityId`, both required because both columns are. The organization is
+stated because the delivered create does not derive one — the tenant is stamped from the credential,
+never from an argument, but the organization is a member the caller names and the delivered route
+validates against the caller's own memberships. There is no member for the tenant, for the same reason
+there is none on any other write here.
+
+The author is the credential's employee wherever the credential carries one, so `employeeId` is what a
+caller holding the kernel's change-selected-employee permission states on behalf of somebody else, and
+what the delivered write falls back to when the credential names no employee at all.
+
+`parentId` makes the comment a reply. `mentionEmployeeIds` is the one member the delivered write reads
+without storing it on the row: each identifier named there is published a mention against the comment
+this call creates. A collection is not a member — `replies`, `members` and `teams` are relations this
+write does not build, for the reason the object type states.
+"""
+input CreateCommentInput {
+	"The text of the comment."
+	comment: String!
+	"The resource type the comment is attached to."
+	entity: String!
+	"The row of that resource the comment is attached to."
+	entityId: ID!
+	"The organization the comment is posted in."
+	organizationId: ID!
+	"Whether a person or the system acted. Omit for the delivered default."
+	actorType: String
+	"Whether the conversation is already resolved."
+	resolved: Boolean
+	"When the conversation was resolved."
+	resolvedAt: DateTime
+	"When the text was last edited. Omit while it stands as first written."
+	editedAt: DateTime
+	"The employee to record as the author. Omit to record the caller's own employee."
+	employeeId: ID
+	"The employee to record as the one who resolved the conversation."
+	resolvedByEmployeeId: ID
+	"The comment this one answers. Omit to start a conversation."
+	parentId: ID
+	"The employees to mention in the comment. Each is published a mention; none is stored on the row."
+	mentionEmployeeIds: [ID!]
+	"A denormalised name for the attached row, read by the mention publisher and not stored."
+	entityName: String
+	"Whether the comment is active."
+	isActive: Boolean
+	"Whether the comment is archived."
+	isArchived: Boolean
+	"When the comment was archived."
+	archivedAt: DateTime
+}
+
+"""
+What a caller states when it edits a comment that exists.
+
+**The row the comment is attached to is deliberately not a member.** The delivered update DTO omits
+`entity` and `entityId` — `OmitType(CreateCommentDTO, ['entity', 'entityId'])` — so the route refuses a
+body stating them rather than moving a comment to another resource, and a member here would promise a
+move neither protocol performs. Everything else the create accepts is accepted here, and every one of
+them is optional: the delivered update saves the row it is given, so a member the caller leaves out is
+left as it is.
+
+There is no member for the tenant either, for the reason the create states. The put body carries the
+path identifier, and that is why `id` is the one required member.
+"""
+input UpdateCommentInput {
+	id: ID!
+	"The text of the comment."
+	comment: String
+	"The organization the comment is posted in."
+	organizationId: ID
+	"Whether a person or the system acted."
+	actorType: String
+	"Whether the conversation is resolved."
+	resolved: Boolean
+	"When the conversation was resolved."
+	resolvedAt: DateTime
+	"When the text was last edited."
+	editedAt: DateTime
+	"The employee recorded as the author."
+	employeeId: ID
+	"The employee recorded as the one who resolved the conversation."
+	resolvedByEmployeeId: ID
+	"The comment this one answers."
+	parentId: ID
+	"The employees to mention in the comment. Each is published a mention; none is stored on the row."
+	mentionEmployeeIds: [ID!]
+	"A denormalised name for the attached row, read by the mention publisher and not stored."
+	entityName: String
+	"Whether the comment is active."
+	isActive: Boolean
+	"Whether the comment is archived."
+	isArchived: Boolean
+	"When the comment was archived."
+	archivedAt: DateTime
+}

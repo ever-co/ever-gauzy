@@ -1,0 +1,158 @@
+# The employee level's object type.
+#
+# A level is the vocabulary an administration screen offers for the seniority label an employee row
+# stores as text: the label itself, the organization whose vocabulary it belongs to, and the pivot that
+# labels it. It is a small row, which is what makes this object type the label, the identifiers and the
+# base row.
+#
+# **`tags` is deliberately not a member.** The row owns the `tag_employee_level` pivot, but the
+# delivered reads join a pivot only when the REST caller names it: the list route binds the relations
+# out of its `data` query parameter and the individual read passes none, so the read this surface
+# performs — which names no relation at all — never loads it. A `tags` member would therefore be absent
+# on every row answered here, whichever row it was asked about, and a field that always reads null is
+# worse than no field.
+#
+# The tags of a level are read from the resource's own REST list route, which joins the pivot when its
+# caller names it — `GET /api/employee-level?data={"relations":["tags"]}`, the read the employee-level
+# screen performs — and written the same way, with the pivot named on that route's body. That is why
+# `tags` is a member of neither write input below: a write member here would promise a relation this
+# call does not build, and the two protocols would then disagree about what one body means.
+
+"""
+One label in the vocabulary an organization offers for employee seniority.
+"""
+type EmployeeLevel {
+	id: ID!
+	"The label the level is known by, as the organization wrote it."
+	level: String!
+	"The organization whose vocabulary this level belongs to, by identifier."
+	organizationId: ID
+	"The tenant the level belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the level was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the level was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the level was filed."
+	createdAt: DateTime
+	"When the level was last changed."
+	updatedAt: DateTime
+	"Whether the level is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the level is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the level, by identifier. The account behind it is not joined by this read."
+	createdByUserId: ID
+	"The person who last changed the level, by identifier. The account behind it is not joined here."
+	updatedByUserId: ID
+	"The person who withdrew the level, by identifier. The account behind it is not joined here."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of levels.
+"""
+type EmployeeLevelEdge {
+	node: EmployeeLevel!
+	cursor: String!
+}
+
+"""
+One page of levels, with the total the filters select and the boundary cursors.
+"""
+type EmployeeLevelConnection {
+	nodes: [EmployeeLevel!]!
+	edges: [EmployeeLevelEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a level list may be sorted by.
+"""
+enum EmployeeLevelSortField {
+	id
+	level
+	tenantId
+	organizationId
+	isActive
+	isArchived
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the levels are returned in. At most three keys are accepted.
+"""
+input EmployeeLevelSort {
+	field: EmployeeLevelSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a level list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the level row, because the delivered list read answers the row itself and
+joins only what its REST caller names: the pivot this row owns is not among the members, since no read
+behind this connection loads it, and a condition on a collection that is never loaded could only ever
+match the empty set.
+
+No member narrows by the relation behind an identifier either. The tenant comes from the credential on
+every read, so the two identifier members above narrow the row's own columns rather than restating a
+scope decision the caller does not have.
+"""
+input EmployeeLevelFilter {
+	id: IDFilter
+	level: StringFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [EmployeeLevelFilter!]
+	or: [EmployeeLevelFilter!]
+	not: EmployeeLevelFilter
+}
+
+"""
+What a caller states when it files a level.
+
+The label is required because the column is: the delivered route performs no validation of its own, so
+the one member a filing cannot succeed without is the one stated as required here, and the failure a
+body omitting it would otherwise meet is the store's own. The organization is stated because the level
+is one organization's vocabulary and the column is nullable — a level filed without one belongs to the
+tenant's whole vocabulary, which is what the delivered write does with a body that omits it.
+
+There is no member for the tenant: the delivered write stamps the caller's own tenant onto the row and
+overwrites whatever a body states, so a member here would promise a scope the write refuses.
+"""
+input CreateEmployeeLevelInput {
+	"The label the level is known by."
+	level: String!
+	"The organization whose vocabulary the level belongs to. Omit for the whole tenant's."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a level that exists.
+
+**A member the caller leaves out is left as it is.** The delivered route is an upsert rather than a
+replacement: the service loads the row the identifier names and assigns the members the body states to
+it, so omitting `level` keeps the label and omitting `organizationId` keeps the organization. The
+identifier is the one required member, and it is stated because the delivered route carries it in the
+path.
+"""
+input UpdateEmployeeLevelInput {
+	id: ID!
+	"The label the level is known by."
+	level: String
+	"The organization whose vocabulary the level belongs to."
+	organizationId: ID
+}

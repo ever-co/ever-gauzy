@@ -1,0 +1,102 @@
+# The employee notification setting domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/employee-notification-setting` routes already serve,
+# under the same guard and with the same scope, so a client that reaches a capability over one
+# protocol is not given a narrower or a wider one than the client that reaches it over the other.
+#
+# **The scope is the permission guard with an empty permission list, and that is a statement rather
+# than an omission.** `EmployeeNotificationSettingController` carries `TenantPermissionGuard` and
+# `PermissionGuard` at class level and states `@Permissions()` naming no permission; no handler adds a
+# guard or a permission of its own. The permission guard reads an empty list as "no permission
+# required" and authorises the request before it looks anything up, so every route this resource
+# serves runs under the tenant guard and that empty list. No field below states a permission for the
+# same reason the controller states none — there is no permission on these routes to mirror — and
+# requiring one here would make GraphQL the narrower door for this resource.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. The delivered list read states no order of its own,
+# so the connection applies the platform's: newest first, the identifier last so the order is total and
+# a walk over it is stable. `withDeleted` is offered because the delivered list route offers it:
+# `BaseQueryDTO` carries it and that route hands its query string straight to the same read, so a REST
+# caller can ask for withdrawn notification settings and a connection that could not would hide them.
+#
+# **`GET /pagination` has no root field.** It answers the same rows under the same narrowing as
+# `GET /` — one of them sliced by `take`/`skip` and the other not — and the connection's own
+# `limit`/`offset` already are that slice. A second root field for the paginated spelling would be a
+# second surface that could disagree with this one about the same rows.
+#
+# **The count route gets a field of its own, and it takes no argument.** A bare number is not a
+# connection, and `totalCount` is not that number: it is the count of the rows the connection narrowed
+# to, while `GET /count` counts the caller's own rows. That route binds its query string to the store's
+# own `where`, a shape the connection protocol does not speak, so a `filter` argument here would either
+# be handed to a call that cannot accept it or be evaluated over a second code path that could disagree
+# with the connection's own total. The field is nullable because a count is an aggregate a resource may
+# have no answer for, and a non-null field would turn "not answered" into a fabricated zero.
+#
+# **The two removals are not the same operation, so both are stated.** `DELETE /:id` removes the row
+# outright; `DELETE /:id/soft` withdraws it, keeping the identifier; `PUT /:id/recover` puts a
+# withdrawn row back. Three operations, three fields, because a client that could not tell them apart
+# could not tell whether the preferences it wrote survived.
+
+extend type Query {
+	"""
+	The notification settings of the caller's tenant, newest first.
+	"""
+	employeeNotificationSettings(
+		filter: EmployeeNotificationSettingFilter
+		sort: [EmployeeNotificationSettingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): EmployeeNotificationSettingConnection!
+
+	"""
+	One notification setting of the caller's tenant, or null when there is none.
+	"""
+	employeeNotificationSetting(id: ID!): EmployeeNotificationSetting
+
+	"""
+	How many notification settings the caller's tenant holds.
+	"""
+	employeeNotificationSettingCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an employee's notification preferences.
+	"""
+	createEmployeeNotificationSetting(input: CreateEmployeeNotificationSettingInput!): EmployeeNotificationSetting!
+
+	"""
+	Changes a notification setting that exists. A member the caller leaves out is left as it is,
+	because the delivered update writes the members the body states over the row it verified rather
+	than replacing it — see `UpdateEmployeeNotificationSettingInput`.
+	"""
+	updateEmployeeNotificationSetting(input: UpdateEmployeeNotificationSettingInput!): EmployeeNotificationSetting!
+
+	"""
+	Removes a notification setting outright: the row is gone and nothing reads it back.
+	"""
+	deleteEmployeeNotificationSetting(id: ID!): Boolean!
+
+	"""
+	Withdraws a notification setting without removing it: the row keeps its identifier, and the
+	delivered list stops answering it.
+	"""
+	softDeleteEmployeeNotificationSetting(id: ID!): EmployeeNotificationSetting!
+
+	"""
+	Puts a withdrawn notification setting back.
+	"""
+	recoverEmployeeNotificationSetting(id: ID!): EmployeeNotificationSetting!
+}

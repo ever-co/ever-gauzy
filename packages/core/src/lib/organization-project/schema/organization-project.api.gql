@@ -1,0 +1,221 @@
+# The project domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-projects` routes already serve, under the
+# same guard chain and with the same permission — read from the controller's own metadata rather than
+# restated by hand — so a client that reaches a capability over one protocol is not given a narrower
+# or a wider one than the client that reaches it over the other. That parity is field by field and it
+# is not uniform, which is the point: the list, the one row, the count, the employee look-up and the
+# manager question state the view pair their own routes state, the create states the add permission
+# its route states, the removal states the delete permission its route states, and the fields that
+# mirror routes declaring nothing of their own — the synced page, the setting write and the two
+# lifecycle moves the controller inherits from the CRUD base — state the controller's class-level pair.
+#
+# **The connection is both list routes.** The controller serves its list twice — `GET /` and
+# `GET /pagination` — and the two answer the same rows under the same filters, one of them sliced by
+# `take`/`skip` and the other not. That is one capability, so it is one root field:
+# `organizationProjects`, mirroring `GET /`, which is the route that reads the filtered set the
+# connection protocol is applied to. A second root field for the paginated spelling would be a second
+# surface that could disagree with this one, and the connection's own `limit` and `offset` already are
+# the page that route performs.
+#
+# `organizationProjectCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route binds its query string to the store's own `where`, a shape no schema can
+# state; a `filter` argument here would either be handed to a call that cannot accept it or evaluated
+# over a second code path that could disagree with the connection's own `totalCount`.
+#
+# **Two sub-routes are root fields of their own rather than filters on the connection**, and both are
+# decisions about the delivered read rather than second spellings of the same one. `GET /employee/…`
+# joins the project-member pivot the list read does not join and answers a projection of the row, so
+# the employees a project is worked by are not a member of the row this connection carries and no
+# filter on this connection could state the question. `GET /synced` narrows on a repository custom
+# field and joins the custom-field relation, neither of which a row of this connection carries, so no
+# filter could state that question either — and it answers a bounded page of its own rather than the
+# whole filtered set.
+#
+# **The manager question is a field and not a row.** `GET /:projectId/is-manager/:employeeId` answers
+# whether an employee manages a project: a question about a pivot rather than a project, so it is a
+# `Boolean` field rather than a member of the type or a filter on the connection.
+#
+# **Every write dispatches the command its route dispatches rather than reaching for the service.**
+# Filing a project is more than an insert — the handler provisions the project's task statuses,
+# priorities, sizes and issue types — and the edits read the row, move the member pivot and answer
+# with the row read back, so a field that wrote the row itself would produce a project the rest of the
+# platform never finished setting up.
+
+extend type Query {
+	"""
+	The projects of the caller's organization, in the order the list reads them.
+
+	`GET /organization-projects/pagination` has no field of its own: it is the same rows under the
+	same filters, and the page it slices by `take`/`skip` is what this connection's `limit` and
+	`offset` state.
+	"""
+	organizationProjects(
+		filter: OrganizationProjectFilter
+		sort: [OrganizationProjectSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationProjectConnection!
+
+	"""
+	One project of the caller's organization, or null when there is none.
+
+	The read behind this field also records the caller's recent visit to the project, which is what
+	the delivered route does: reading one project is the same operation on both surfaces, side effect
+	included, rather than a second read that would leave the caller's history disagreeing with the
+	protocol it was built over.
+	"""
+	organizationProject(id: ID!): OrganizationProject
+
+	"""
+	How many projects the caller's organization holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds
+	its query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	organizationProjectCount: Int
+
+	"""
+	The projects one employee works, as the delivered route answers them.
+
+	Two things make this a root field of its own rather than a filter on the connection. The read
+	behind it **inner-joins the project-member pivot**, which the list read does not join, so the
+	employees a project is worked by are not a member of the rows the connection carries and a filter
+	on them could not be evaluated. And it **answers a projection of the row** rather than the row: it
+	selects the identifier, the name, the avatar URL, the currency, the billing basis, the public flag,
+	the owner basis and the task list type, and joins the project's teams beside them. Every other
+	member of the type is therefore absent on these answers, and a caller that needs one reads the
+	project by its identifier.
+
+	`organizationId` is required because the route's query DTO requires it and the read is scoped by
+	it; `organizationContactId` and `organizationTeamId` narrow the set the way the same DTO's members
+	do, and a caller that states neither gets every project the employee works in the organization.
+	"""
+	organizationProjectsByEmployee(
+		employeeId: ID!
+		organizationId: ID!
+		organizationContactId: ID
+		organizationTeamId: ID
+	): [OrganizationProject!]!
+
+	"""
+	The projects linked to a repository, as the delivered read answers them.
+
+	**This is a root field of its own rather than a filter on the connection.** The read narrows on a
+	repository custom field and joins the custom-field relation, and it reads only the rows whose
+	repository link is set: neither is a member of a row this connection carries, so no filter could
+	state the question — and narrowing the connection by `organizationId` would answer a different set
+	of rows rather than these.
+
+	**The read answers a bounded page of its own.** It takes ten rows unless the caller states
+	otherwise, and its `skip` is a one-based page number rather than an offset, so an unstated request
+	is the first ten linked projects in the store's own order. The connection then applies `filter`,
+	`sort` and its page **over the rows that read returned**, which is why `totalCount` here is the
+	count of those rows rather than of every linked project in the store: the total is the size of the
+	set the filters selected, and a number that pretended to count beyond the set the delivered read
+	answers would be a second, disagreeing count of the same question.
+	"""
+	syncedOrganizationProjects(
+		filter: OrganizationProjectFilter
+		sort: [OrganizationProjectSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationProjectConnection!
+
+	"""
+	Whether one employee manages one project.
+
+	A question rather than a row, so it is a field of its own: the answer is read from the
+	project-member pivot, and it is what the delivered route refuses or admits the caller by.
+	"""
+	isOrganizationProjectManager(projectId: ID!, employeeId: ID!): Boolean!
+}
+
+extend type Mutation {
+	"""
+	Files a project, together with the task statuses, priorities, sizes and issue types its first
+	tasks need.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller. The organization is stated, because the delivered body validates it against the caller's
+	own memberships and the handler files the row under it.
+	"""
+	createOrganizationProject(input: CreateOrganizationProjectInput!): OrganizationProject!
+
+	"""
+	Changes a project that exists.
+
+	The identifier is the criterion and is not repeated in the payload, which is the shape the route
+	itself has: `:id` names the row and the body carries the facts. The handler reads the row before it
+	writes, so a project of another organization, or one that is not there, is answered with the miss
+	rather than with a write under an identifier the caller does not own — and the member lists it
+	carries replace the project's member pivot rather than adding to it.
+	"""
+	updateOrganizationProject(input: UpdateOrganizationProjectInput!): OrganizationProject!
+
+	"""
+	Changes which view a project's tasks open in.
+
+	The same command the delivered route dispatches, with the same body: the list type and the
+	organization that scopes the row. A caller that states a list type the column does not know is
+	refused by the write, exactly as the route refuses it.
+	"""
+	updateOrganizationProjectTaskViewMode(
+		id: ID!
+		input: OrganizationProjectTaskViewModeInput!
+	): OrganizationProject!
+
+	"""
+	Changes how a project's tasks synchronise.
+
+	The same command the delivered route dispatches, with the same body. The delivered route states no
+	permission of its own, so this field resolves to the controller's class-level pair — the setting
+	write is governed by the same grant as the edit beside it, on both protocols.
+	"""
+	updateOrganizationProjectSetting(id: ID!, input: OrganizationProjectSettingInput!): OrganizationProject!
+
+	"""
+	Moves a set of projects into or out of one employee's list, in one call.
+
+	Both directions are one operation because they are one fact about one employee, and the delivered
+	command applies both lists together; the answer is the write's own success, which is what the route
+	answers with.
+	"""
+	updateOrganizationProjectByEmployee(input: UpdateOrganizationProjectByEmployeeInput!): Boolean!
+
+	"""
+	Removes a project outright.
+
+	The store's own constraints are what refuse a row other records still point at; this field does not
+	pre-empt them, so a project a task or an invoice line still names is answered with the same refusal
+	the REST route answers with.
+	"""
+	deleteOrganizationProject(id: ID!): Boolean!
+
+	"""
+	Withdraws a project without removing it: the row keeps its identifier, the tasks and the records
+	filed under it keep pointing at it, and the list stops answering it.
+	"""
+	softDeleteOrganizationProject(id: ID!): OrganizationProject!
+
+	"""
+	Puts a withdrawn project back, clearing the marker the withdrawal set.
+	"""
+	recoverOrganizationProject(id: ID!): OrganizationProject!
+}

@@ -5,6 +5,7 @@ import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/to
 import { ITokenPayload, IValidatedToken, TokenStatus } from '../../interfaces/token.interface';
 import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { TokenHasher } from '../../shared/token-hasher';
+import { tokenWithRules } from '../../shared/token-rules';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { ValidateTokenQuery } from '../validate-token.query';
 
@@ -55,7 +56,9 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 		// rotated, or purged since the JWT was issued.
 		// -----------------------------------------------------------------------
 		const tokenHash = this.tokenHasher.hashToken(rawToken);
-		const tokenRecord = await this.tokenReadRepository.findByHash(tokenHash);
+		const stored = await this.tokenReadRepository.findByHash(tokenHash);
+		// The rules below are the record's own methods; a MikroORM read answers the row without them, see `tokenWithRules`.
+		const tokenRecord = stored ? tokenWithRules(stored) : stored;
 
 		if (!tokenRecord) {
 			this.logger.warn(`Token not found in database [tokenId=${payload.tokenId}]`);

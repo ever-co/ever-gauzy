@@ -19,7 +19,7 @@ export class ScreeningTask extends TenantOrganizationBaseEntity implements IScre
 	@IsNotEmpty()
 	@IsEnum(ScreeningTaskStatusEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	status: ScreeningTaskStatusEnum;
 
 	/**

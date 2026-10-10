@@ -1,0 +1,174 @@
+# The variant price's object type.
+#
+# A price row is what one unit of a variant costs the operator and what it is sold for, each paired
+# with the currency it is expressed in. It is a row of its own rather than four columns on the variant
+# because the pairing is the fact: an amount without the currency it is stated in is a number, and this
+# platform never writes one.
+#
+# **The two amounts are `Decimal`, never `Float`, and the two currencies are `String`.** Money is an
+# exact quantity and a binary fraction cannot hold a cent: an amount a client reads as a `Float` is an
+# amount that will not add up. The platform's exact-decimal scalar is therefore what each amount is
+# carried as, and the object type below is where that is stated.
+#
+# **The delivered shape is genuinely a pair, and it is mirrored as one rather than reinterpreted.** The
+# table declares `"unitCost" integer NOT NULL DEFAULT 0` beside `"unitCostCurrency" varchar NOT NULL
+# DEFAULT 'USD'`, and `retailPrice`/`retailPriceCurrency` the same way: an integer amount in a column
+# the entity leaves to the ORM's inference from `number`, next to the ISO 4217 code of the currency it
+# is expressed in. The schema states the same two members under the same two names and invents no
+# second representation — no major-unit conversion, no minor-unit rescaling, no formatted string and no
+# scale the entity does not state. A caller that wants the pair rendered differently holds both halves
+# and can render it; a schema that chose one rendering would have thrown the other away.
+
+"""
+What one unit of a variant costs and what it is sold for, each with the currency it is stated in.
+"""
+type ProductVariantPrice {
+	id: ID!
+	"""
+	The unit cost: what one unit of the variant costs the operator.
+
+	The column is an integer, and the amount is carried as the platform's exact-decimal scalar because
+	the family money is compared in is the exact one. Nothing is rescaled or converted on the way out:
+	this is the value the column stores, in the currency named beside it.
+	"""
+	unitCost: Decimal!
+	"The ISO 4217 code of the currency `unitCost` is expressed in."
+	unitCostCurrency: String!
+	"The retail price: what one unit of the variant is sold for."
+	retailPrice: Decimal!
+	"The ISO 4217 code of the currency `retailPrice` is expressed in."
+	retailPriceCurrency: String!
+	"""
+	The variant this row prices, as the identifier.
+
+	Nullable, and genuinely so: the foreign key is nullable in the table and the delivered generator
+	relies on that — it writes the price row first and attaches it to the variant afterwards.
+	"""
+	productVariantId: ID
+	"The variant named above, when the row was read with it."
+	productVariant: ProductVariant
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of prices.
+"""
+type ProductVariantPriceEdge {
+	node: ProductVariantPrice!
+	cursor: String!
+}
+
+"""
+One page of prices, with the total the filters select and the boundary cursors.
+"""
+type ProductVariantPriceConnection {
+	nodes: [ProductVariantPrice!]!
+	edges: [ProductVariantPriceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a price list may be sorted by.
+
+The two timestamps and the two amounts. A price list ordered by what a unit costs is the read the
+columns exist for, and one ordered by when the row was written is how a change is found again.
+
+The two currency codes are not sort keys: the order of a currency code is the order of its spelling,
+which is not a fact about a price. A list of one currency is that currency stated as a filter.
+"""
+enum ProductVariantPriceSortField {
+	createdAt
+	updatedAt
+	unitCost
+	retailPrice
+}
+
+"""
+The order the prices are returned in. At most three keys are accepted.
+"""
+input ProductVariantPriceSort {
+	field: ProductVariantPriceSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a price list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+The two amounts are stated through the decimal family, which is the family money is compared in: a
+bound a caller writes is an exact amount and is compared as one rather than through a binary fraction.
+**The columns are integers**, so an equality states the amount as the column holds it — a whole number,
+which is what every row this platform writes carries; the range operators are the ones a price list is
+searched with and need no such care.
+
+`unitCostCurrency` and `retailPriceCurrency` are stated as text rather than as an enum. The vocabulary
+is the platform's own currency list, which the entity types the columns with; re-declaring it here
+would claim a vocabulary this domain does not own, and the two declarations would diverge the day a
+currency is added.
+
+`productVariantId` is stated as a filter rather than served as a root field of its own: the price of
+one variant is one of these rows narrowed to that variant, and a second root field for it would be a
+second surface that could disagree with this one.
+"""
+input ProductVariantPriceFilter {
+	id: IDFilter
+	unitCost: DecimalFilter
+	unitCostCurrency: StringFilter
+	retailPrice: DecimalFilter
+	retailPriceCurrency: StringFilter
+	productVariantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductVariantPriceFilter!]
+	or: [ProductVariantPriceFilter!]
+	not: ProductVariantPriceFilter
+}
+
+"""
+What a caller states when it prices a variant.
+
+Every member is optional, because every column behind them either carries a default or is nullable:
+the amounts default to zero and the currencies to the platform's own, and the variant and the
+organization are nullable. A create that names nothing is therefore the row of zeros in the default
+currency that the delivered default-price operation writes, and requiring a member here would refuse a
+caller the delivered route serves.
+
+`productVariantId` is among the members and optional for the same reason the column is: the delivered
+generator writes the price row first and attaches it to the variant afterwards, so a schema that
+required the variant here would refuse the order the platform itself writes in.
+
+The tenant is not among the members. The delivered route stamps the tenant of the credential onto the
+row it writes, so a caller cannot state a scope it is not acting in.
+"""
+input CreateProductVariantPriceInput {
+	unitCost: Decimal
+	unitCostCurrency: String
+	retailPrice: Decimal
+	retailPriceCurrency: String
+	productVariantId: ID
+	organizationId: ID
+}
+
+"""
+What a caller may change on a price that exists. A member that is absent is left as it is.
+
+That is the delivered update's own behaviour rather than a promise made here: the route writes the
+members the body states and touches no others, so "absent" and "unchanged" coincide. An amount stated
+as the same number in a different currency is a different price and not an edit of this one — both
+halves of the pair are members, so a caller that means to move a price to another currency states both.
+"""
+input UpdateProductVariantPriceInput {
+	id: ID!
+	unitCost: Decimal
+	unitCostCurrency: String
+	retailPrice: Decimal
+	retailPriceCurrency: String
+	productVariantId: ID
+	organizationId: ID
+}

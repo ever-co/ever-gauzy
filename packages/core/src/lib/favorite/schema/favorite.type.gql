@@ -1,0 +1,185 @@
+# The favorite's object type.
+#
+# A favorite is a marker rather than a record of its own: it names one row of another domain — `entity`
+# is that domain's name and `entityId` the row — and files it under one employee's own list. Those two
+# members and the employee the marker belongs to are the whole of what the row says, so the object type
+# is that pair, the identifiers and the base row: there is no third fact to carry.
+#
+# **`entity` is carried as its string value rather than declared as a schema enum.** The vocabulary is
+# the contract's own `BaseEntityEnum`, which every per-entity-type row on the platform shares — the
+# notification and the recent visit name the same set — so declaring it here would claim a vocabulary
+# this domain does not own, and the next domain that needs the same value set would collide with this
+# file rather than reuse it. The value is the one the delivered create validates a body against, so a
+# client that reads it here reads exactly the string the REST surface accepts and returns.
+#
+# **`employee` is deliberately not a member.** The row owns the many-to-one, but the delivered reads
+# join a relation only when a REST caller names it in `relations`, and the reads behind this surface
+# name none — the employee-scoped read below resolves the caller's own employee from the credential
+# rather than loading it. A member here would therefore read null on every row this surface answers,
+# whichever row it was asked about, and a field that always reads null is worse than no field. The
+# employee is carried as `employeeId`, and the person behind it is reachable as `Employee.id`.
+#
+# `isActive` and `isArchived` are flags an operator sets, not the row's lifecycle. `archivedAt` and
+# `deletedAt` are the lifecycle: withdrawing and restoring are delivered routes — the two removals this
+# resource serves — and `deletedAt` is the whole of what withdrawal writes, so without it a caller
+# could not tell a live marker from a withdrawn one on the answer to the write that withdrew it.
+
+"""
+One row of another domain, marked as a favorite of one employee.
+"""
+type Favorite {
+	id: ID!
+	"The name of the domain the marked row belongs to, as the contract's own vocabulary states it."
+	entity: String!
+	"The marked row, by identifier. The row itself is not joined by this read."
+	entityId: ID!
+	"""
+	The employee whose list the marker sits in, by identifier. An organization-level favorite has none,
+	which is what the delivered create writes when the caller has no employee identity of its own. The
+	employee row is not joined by this read.
+	"""
+	employeeId: ID
+	"The tenant the marker belongs to, by identifier."
+	tenantId: ID
+	"The organization whose list the marker sits in, by identifier."
+	organizationId: ID
+	"Whether the marker is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the marker is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the marker was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the marker was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the row was marked."
+	createdAt: DateTime
+	"When the row was last changed."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of favorites.
+"""
+type FavoriteEdge {
+	node: Favorite!
+	cursor: String!
+}
+
+"""
+One page of favorites, with the total the filters select and the boundary cursors.
+"""
+type FavoriteConnection {
+	nodes: [Favorite!]!
+	edges: [FavoriteEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a favorite list may be sorted by.
+"""
+enum FavoriteSortField {
+	id
+	entity
+	entityId
+	employeeId
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the favorites are returned in. At most three keys are accepted.
+"""
+input FavoriteSort {
+	field: FavoriteSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a favorite list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the favorite row, because the delivered list read answers the row itself
+and joins only the relations a REST caller names in its query string — which this surface never names.
+A condition on the marked row or on the employee behind `employeeId` is therefore not a member: neither
+is loaded by the read this connection is built over, and a condition on a relation that is never
+loaded could only ever match the empty set.
+
+The tenant comes from the credential on every read, so `tenantId` narrows the row's own column rather
+than restating a scope decision the caller does not have. `deletedAt` is a member for the same reason
+the object type carries it — it is the column the withdrawal routes write — and because the delivered
+list read answers live rows only, `isNull: true` selects every row this connection can return.
+"""
+input FavoriteFilter {
+	id: IDFilter
+	entity: StringFilter
+	entityId: IDFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [FavoriteFilter!]
+	or: [FavoriteFilter!]
+	not: FavoriteFilter
+}
+
+"""
+What a caller states when it marks a row as a favorite.
+
+`entity` and `entityId` are required because they are what the marker names: the delivered column pair
+is non-null, and a marker that named nothing could not be de-duplicated against the row it marks — the
+delivered create looks for an existing marker on the same entity, entity identifier, organization and
+employee before it files a new one.
+
+`employeeId` is optional, and omitting it is a statement rather than an omission. The delivered create
+prefers the caller's own employee record from the credential and falls back to the member a body
+states; a caller with no employee identity at all — an administrator acting for the organization
+rather than for a person — files a marker that belongs to no employee, which is what an
+organization-level favorite is. The de-duplication pins that case to the rows whose employee column is
+absent, so an organization-level marker is never the same row as somebody's personal one.
+
+There is no member for the tenant: the delivered create reads it from the credential and stamps it,
+overwriting whatever a body states, so a member here would promise a scope the write refuses.
+"""
+input CreateFavoriteInput {
+	"The domain the marked row belongs to."
+	entity: String!
+	"The row to mark, by identifier."
+	entityId: ID!
+	"The employee whose list to file the marker in. Omit for an organization-level marker."
+	employeeId: ID
+	"The organization whose list to file the marker in."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a marker that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit is a partial update rather
+than a replacement: the service reads the row the identifier names — which is how a marker of another
+tenant, or one that is not there, is answered with the miss rather than with a write — and then
+persists only the members a body states. Stating this here is what keeps a client from reading
+"absent" as "written as the column's default".
+
+The identifier is required and is stated because the delivered route carries it in the path, and the
+same member is what the write is keyed on.
+"""
+input UpdateFavoriteInput {
+	id: ID!
+	"The domain the marked row belongs to."
+	entity: String
+	"The row to mark, by identifier."
+	entityId: ID
+	"The employee whose list the marker sits in."
+	employeeId: ID
+	"The organization whose list the marker sits in."
+	organizationId: ID
+}

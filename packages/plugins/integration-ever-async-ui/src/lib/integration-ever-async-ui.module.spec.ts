@@ -5,25 +5,17 @@ import { IntegrationEverAsyncUiModule } from './integration-ever-async-ui.module
 
 // Exercise the actual shared registry and registration helper without loading
 // the entire application barrel or unrelated plugin services.
-jest.mock(
-	'@gauzy/ui-core/core',
-	() => ({
-		...jest.requireActual('../../../../ui-core/core/src/lib/services/page/page-route-registry.service'),
-		LoggerService: class {},
-		NavMenuBuilderService: class {},
-		PermissionsGuard: class {}
-	}),
-	{ virtual: true }
-);
-jest.mock(
-	'@gauzy/plugin-ui',
-	() => ({
-		...jest.requireActual('../../../../plugin-ui/src/lib/plugin-ui.helper'),
-		...jest.requireActual('../../../../plugin-ui/src/lib/plugin-ui.types')
-	}),
-	{ virtual: true }
-);
-jest.mock('@gauzy/contracts', () => ({ PermissionsEnum: { INTEGRATION_VIEW: 'view' } }), { virtual: true });
+jest.mock('@gauzy/ui-core/core', () => ({
+	...jest.requireActual('../../../../ui-core/core/src/lib/services/page/page-route-registry.service'),
+	LoggerService: class {},
+	NavMenuBuilderService: class {},
+	PermissionsGuard: class {}
+}));
+jest.mock('@gauzy/plugin-ui', () => ({
+	...jest.requireActual('../../../../plugin-ui/src/lib/plugin-ui.helper'),
+	...jest.requireActual('../../../../plugin-ui/src/lib/plugin-ui.types')
+}));
+jest.mock('@gauzy/contracts', () => ({ PermissionsEnum: { INTEGRATION_VIEW: 'view' } }));
 jest.mock('./components/ever-async-connect/ever-async-connect.component', () => ({
 	EverAsyncConnectComponent: class {}
 }));

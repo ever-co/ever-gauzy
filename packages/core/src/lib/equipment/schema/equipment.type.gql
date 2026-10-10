@@ -1,0 +1,226 @@
+# The equipment domain's object type.
+#
+# An equipment row is one tracked asset of an organization: what it is, what it cost, and the terms
+# the organization shares it under. The row owns the sharing rows that hand it out — a share is a
+# period of one asset — so the two resources are read together and written apart, and the sharing
+# surface is the one that files, approves and refuses a period.
+#
+# The three numeric columns are carried in the exact family they are stored in rather than as whole
+# numbers. `initialCost` is money and a binary fraction cannot hold a cent; `manufacturedYear` and
+# `maxSharePeriod` are `numeric` columns that the delivered reader hands over as the numbers the
+# column parses to, so a schema that claimed `Int` for either would claim a precision the column does
+# not have — and a filter over them would then refuse the very values the column can hold.
+#
+# Three relations are deliberately absent, and the reason is the same for all three: no read behind
+# this surface joins one.
+#
+# - `image` and its identifier are both absent. The delivered list and node reads are handed no
+#   `relations` by this surface — the REST spellings take theirs from a query string — so the relation
+#   is never loaded, and the entity declares no `@RelationId` column beside it, so the row the read
+#   answers carries no identifier for it either. A member for either would be absent from exactly the
+#   rows this surface answers while looking like a fact about the equipment. The identifier is stated
+#   on the write inputs instead, which is where it is what the write persists.
+# - `equipmentSharings` is absent for the same reason, and reaching it is not a loss: a sharing is a
+#   resource of its own with its own lifecycle, and this schema serves it as one.
+# - `tags` is absent because the pivot is loaded only when a REST caller names it in `relations`. The
+#   facets a row carries are stated as identifiers on the write inputs, which is the pair the pivot is
+#   written from.
+
+"""
+One tracked asset of an organization.
+"""
+type Equipment {
+	id: ID!
+	"The name the organization tracks the asset under."
+	name: String!
+	"The kind of asset, as the organization's own vocabulary spells it."
+	type: String!
+	"The manufacturer's serial number, which is how the asset is identified in the field."
+	serialNumber: String!
+	"The year the asset was manufactured."
+	manufacturedYear: Decimal
+	"The amount the asset cost when it was acquired, in `currency`."
+	initialCost: Decimal
+	"The ISO 4217 code `initialCost` is expressed in."
+	currency: String!
+	"The longest period, in days, the asset may be shared for. Null means the organization caps nothing."
+	maxSharePeriod: Decimal
+	"Whether a sharing request for this asset is approved without an approver acting on it."
+	autoApproveShare: Boolean!
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of equipment.
+"""
+type EquipmentEdge {
+	node: Equipment!
+	cursor: String!
+}
+
+"""
+One page of equipment, with the total the filters select and the boundary cursors.
+"""
+type EquipmentConnection {
+	nodes: [Equipment!]!
+	edges: [EquipmentEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an equipment list may be sorted by.
+
+The name and the kind are how a stock list is scanned; the two numbers are what it is taken by when an
+operator is looking for the expensive or the oldest assets; and the two timestamps are how a change is
+found again. The identifier of the organization is not a sort key: it groups the list rather than
+ordering it, and the questions it answers are filters.
+"""
+enum EquipmentSortField {
+	createdAt
+	updatedAt
+	name
+	type
+	manufacturedYear
+	initialCost
+}
+
+"""
+The order the equipment is returned in. At most three keys are accepted.
+"""
+input EquipmentSort {
+	field: EquipmentSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an equipment list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, because the connection narrows the rows the delivered read
+returned. `name`, `type` and `serialNumber` are the three columns the delivered paginated spelling
+turns into a partial match before it queries, and that narrowing survives the fold as `ilike` on the
+same three members. The three numeric columns are stated through the decimal family, which is the
+family they are stored and compared in.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set, and an argument that
+cannot be honoured is worse than an argument that is not offered. The tenant is absent for a different
+reason — it is applied to the criterion from the credential, so a member here would suggest a scope
+decision the caller does not have. The organization is present, because the delivered list route hands
+its own criterion through and a caller may legitimately narrow to one organization of its tenant.
+"""
+input EquipmentFilter {
+	id: IDFilter
+	name: StringFilter
+	type: StringFilter
+	serialNumber: StringFilter
+	manufacturedYear: DecimalFilter
+	initialCost: DecimalFilter
+	currency: StringFilter
+	maxSharePeriod: DecimalFilter
+	autoApproveShare: BooleanFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EquipmentFilter!]
+	or: [EquipmentFilter!]
+	not: EquipmentFilter
+}
+
+# The write surface.
+#
+# `CreateEquipmentDTO` is the intersection of the row's own body, the facet relation and the currency,
+# and the edit body is that same DTO with the identifier added, so the two inputs declare the same
+# members and the resolver states the shape once.
+#
+# Three decisions are deliberate:
+#
+# - The image is stated as the identifier of the asset row. The delivered body accepts the asset object
+#   beside the identifier, but what a write of this row persists is the foreign key — and this schema
+#   declares `ImageAsset` for reading, not as a body member.
+# - The facets are stated as identifiers, because the pivot row is a pair of identifiers: the delivered
+#   write stores the membership, never a tag row beside it.
+# - `equipmentSharings` is not a member of either input although the delivered DTO carries the member.
+#   The relation is a `OneToMany` the delivered save does not cascade, so a body stating it would be
+#   accepted and then dropped; a sharing is filed through the equipment-sharing surface, which is what
+#   writes the request-approval row beside it.
+#
+# There is no member for the tenant. The delivered write stamps the caller's own tenant onto the row and
+# refuses a row that belongs to another one, so a member here would promise a scope the write refuses.
+
+"""
+What a caller states when it files an asset.
+
+`name` and `currency` are the two members the delivered body validation requires: the name is what the
+asset is tracked under and the currency is what `initialCost` is expressed in.
+"""
+input CreateEquipmentInput {
+	"The name the organization tracks the asset under."
+	name: String!
+	"The kind of asset."
+	type: String
+	"The asset to show for the equipment, by identifier."
+	imageId: ID
+	"The manufacturer's serial number."
+	serialNumber: String
+	"The year the asset was manufactured, as the exact decimal the column stores."
+	manufacturedYear: Decimal
+	"The amount the asset cost when it was acquired."
+	initialCost: Decimal
+	"The longest period, in days, the asset may be shared for."
+	maxSharePeriod: Decimal
+	"Whether a sharing request for this asset is approved without an approver acting on it."
+	autoApproveShare: Boolean
+	"The ISO 4217 code `initialCost` is expressed in."
+	currency: String!
+	"The organization the asset is filed under."
+	organizationId: ID!
+	"The facets attached to the asset, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes an asset that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit spreads the body beside the
+identifier the route read from its path and hands the result to the same save the create uses, and that
+save merges what it is given onto the row the store holds rather than replacing the row — so omitting
+`serialNumber` keeps the serial number and omitting `initialCost` keeps the cost. The three members the
+delivered body validation requires are the exception in the other direction: a body that states no
+`name`, no `currency` and no organization is refused before the write runs, so those are effectively
+always stated.
+
+An identifier that names a row of another tenant is refused outright, which is the ownership guard the
+delivered write applies before it persists anything. An identifier that names no row at all is left to
+the store: the write is a save, and what a save does with an identifier it has never seen is the store's
+own behaviour rather than this surface's promise.
+"""
+input UpdateEquipmentInput {
+	id: ID!
+	name: String!
+	type: String
+	imageId: ID
+	serialNumber: String
+	manufacturedYear: Decimal
+	initialCost: Decimal
+	maxSharePeriod: Decimal
+	autoApproveShare: Boolean
+	currency: String!
+	organizationId: ID!
+	tagIds: [ID!]
+}

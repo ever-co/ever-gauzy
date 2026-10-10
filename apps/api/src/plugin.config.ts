@@ -10,6 +10,7 @@ import {
 } from '@gauzy/config';
 import { SentryService } from '@gauzy/plugin-sentry';
 import { PosthogService } from '@gauzy/plugin-posthog';
+import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SentryTracing as SentryPlugin } from './sentry';
 import { version } from '../version';
@@ -117,5 +118,13 @@ export const pluginConfig: ApplicationPluginConfig = {
 			};
 		}
 	})(),
-	plugins
+	// The configured list, ordered so every declared prerequisite loads before the plugin that
+	// requires it. A plugin states what it needs with `dependsOn`; until this call existed that
+	// declaration was inert and the order was whatever this file happened to list, which meant a
+	// plugin could be mounted before the package whose tables it references. The resolver keeps the
+	// configured order for every plugin that declares nothing, so enabling a dependency never
+	// reshuffles unrelated plugins, and it refuses a list whose prerequisite is absent — naming the
+	// plugin and the dependency as they were written — rather than letting the omission surface as a
+	// missing provider at the first request.
+	plugins: resolvePluginLoadOrder(plugins)
 };

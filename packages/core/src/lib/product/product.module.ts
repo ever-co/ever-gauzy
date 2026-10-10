@@ -2,8 +2,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { FieldVisibility } from '../api/field-visibility.service';
 import { Product } from './product.entity';
 import { ProductController } from './product.controller';
+import { ProductResolver } from './product.resolver';
 import { ProductService } from './product.service';
 import { ProductVariantModule } from './../product-variant/product-variant.module';
 import { ProductVariantPriceModule } from './../product-variant-price/product-variant-price-module';
@@ -17,6 +20,21 @@ import { MikroOrmProductRepository } from './repository/mikro-orm-product.reposi
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
 
+/**
+ * The catalogue's sellable thing.
+ *
+ * `CqrsModule` is re-exported, not merely imported, and that is what makes the resolver's two
+ * dependencies resolvable from the module the Apollo configuration names: a resolver is a provider of
+ * whichever module hosts the handler, so a module that imports this one receives `ProductService` and
+ * the command bus only if this module hands them on. The REST controller beside the resolver resolves
+ * both from this module's own imports, which is why the service was the only export needed until the
+ * GraphQL view of the same resource existed.
+ *
+ * The batch executor is declared here for the same reason and handed on beside them: both surfaces
+ * apply a batch with it, and it decides what a caller may do from the field visibility the platform
+ * reads everywhere else — so the product resource adopts the platform's bulk contract rather than
+ * assembling a runner of its own.
+ */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Product, ProductTranslation]),
@@ -29,7 +47,19 @@ import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-pro
 		forwardRef(() => ProductVariantModule)
 	],
 	controllers: [ProductController],
-	providers: [ProductService, TypeOrmProductRepository, MikroOrmProductRepository, TypeOrmProductTranslationRepository, MikroOrmProductTranslationRepository, ...CommandHandlers],
-	exports: [ProductService]
+	providers: [
+		ProductService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them.
+		ProductResolver,
+		BulkExecutor,
+		FieldVisibility,
+		TypeOrmProductRepository,
+		MikroOrmProductRepository,
+		TypeOrmProductTranslationRepository,
+		MikroOrmProductTranslationRepository,
+		...CommandHandlers
+	],
+	exports: [ProductService, CqrsModule, BulkExecutor]
 })
 export class ProductModule {}

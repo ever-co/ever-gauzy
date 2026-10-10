@@ -1,0 +1,106 @@
+# The OAuth client registry's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/oauth/clients` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. Nothing here decides
+# anything: each field calls the same `OAuthClientService` method the route behind it calls, with the
+# same payload and the same request facts, which is the whole of what a resolver on this platform owns.
+#
+# **The guard chain is the controller's, and no permission is stated above it.** The delivered
+# controller carries `TenantPermissionGuard` and `PermissionGuard` on the class and states no
+# class-level `@Permissions` at all — every handler states its own — so the class here carries the same
+# two guards with the gate appended, and each field states the permission its own route runs under:
+# `OAUTH_CLIENT_VIEW` for the two reads, `OAUTH_CLIENT_EDIT` for the four writes. Reading the registry
+# and rotating a secret are different grants on this resource; that is the delivered scope, and widening
+# either here would be a decision this delivery has no business making.
+#
+# **The list is a connection, and it is the whole registry read.** The controller serves its rows once —
+# `GET /` — under `OAUTH_CLIENT_VIEW`, with an optional `skip`/`take` the admin UI passes. The
+# connection states that read and applies the page itself: the route's `take` is a page size, not a
+# narrowing, so folding it in is what keeps one capability one field. `withDeleted` is deliberately
+# absent: the delivered list read answers live rows only, and offering an argument that cannot be
+# honoured would be worse than not offering it. The action the route names — "list OAuth clients for the
+# current tenant" — is answered by the service from the credential, so which rows a caller sees is
+# decided there and is not an argument here.
+#
+# **There is no count field.** The controller serves no count route, and this surface does not invent
+# one: a count is a capability, and a capability a client can reach here but not over REST is exactly
+# the asymmetry the two-protocol rule forbids. The connection's own `totalCount` answers how many rows
+# the filters selected, which is the only count the delivered resource states.
+#
+# **The rotation is a mutation of its own.** `POST /:id/rotate-secret` is not an edit of a field: it
+# generates a fresh secret, hashes it into the row and answers the plaintext once, and the delivered
+# edit route explicitly cannot change a secret. Folding it into `updateOAuthClient` would either lose
+# the answer or let a caller believe an update rotated something.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open,
+# which is what keeps an administrator able to revoke a client without the GraphQL surface — so a
+# disabled capability is answered `Cannot query field <name>` here while those routes answer as they
+# always did.
+
+extend type Query {
+	"""
+	The OAuth clients the caller's credential may see: its tenant's own rows, and — for a super
+	administrator — the installation-wide rows beside them.
+	"""
+	oauthClients(
+		filter: OAuthClientFilter
+		sort: [OAuthClientSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OAuthClientConnection!
+
+	"""
+	One OAuth client, or null when there is none the caller may see.
+
+	A client that is not there — or that belongs to another tenant and is not installation-wide — answers
+	`null` rather than a refusal: GraphQL has one answer for "no such row" on a field that may have none,
+	and the REST route's `404` is that same fact stated in the other protocol's vocabulary. Which rows a
+	caller may see is the delivered lookup's decision, taken from the credential, not an argument here.
+	"""
+	oauthClient(id: ID!): OAuthClient
+}
+
+extend type Mutation {
+	"""
+	Registers a client. The identifier, the client secret and the code-signing secret are generated
+	server-side, and the plaintext secret is answered here exactly once.
+	"""
+	createOAuthClient(input: CreateOAuthClientInput!): OAuthClientSecret!
+
+	"""
+	Changes a client that exists. `clientId` and both secrets are outside this operation — the rotation
+	below is the only route that replaces a secret — and a member the caller leaves out is left as it is.
+	"""
+	updateOAuthClient(input: UpdateOAuthClientInput!): OAuthClient!
+
+	"""
+	Generates a fresh client secret, stores its hash and answers the plaintext once. Access tokens
+	already issued under the previous secret stay valid until they expire; only new token exchanges are
+	affected. The code-signing secret is not rotated, so an authorization code already in flight stays
+	verifiable — which is the delivered operation's own boundary rather than a simplification here.
+
+	The answer is the same shape the creation answers, because it is the same fact: one plaintext secret,
+	once.
+	"""
+	rotateOAuthClientSecret(id: ID!): OAuthClientSecret!
+
+	"""
+	Revokes a client. The delivered route performs a withdrawal rather than a removal — the row keeps its
+	identifier and its audit trail, and the lookup the authorization and token endpoints use stops
+	resolving it — so a revoked third party can obtain no new authorization code and exchange no new
+	token. The delivered route answers no content; this field answers the fact of the revocation, which is
+	the one member of that answer a caller reads.
+	"""
+	deleteOAuthClient(id: ID!): Boolean!
+}

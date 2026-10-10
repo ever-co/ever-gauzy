@@ -1,0 +1,315 @@
+# The organization recurring expense's object types.
+#
+# A recurring expense is a standing arrangement rather than a cost: it says that from one month onward,
+# and until an end that may be open, the organization carries a cost of one amount under one category.
+# The platform reads the arrangement — never a stored row per month — when it computes what a month
+# cost, which is why the row carries both ends twice: as a date, and as the day, month and year the
+# delivered date arithmetic reads.
+#
+# **The amount is `Decimal`, never `Float`.** `value` is the standing cost, a `numeric` column read
+# through the platform's numeric transformer, and a standing cost added up over twelve months as a binary
+# fraction is a ledger that is cents out. Nothing here rescales, rounds or reformats it.
+#
+# **The currency is the row's own three-letter code.** It is carried as its value rather than as a schema
+# enum because the vocabulary is the contracts' own `CurrenciesEnum`, shared with every other row on the
+# platform that states an amount.
+#
+# **The beginning and the end are carried as the columns hold them.** The delivered edit and the
+# delivered removal both work on the day, month and year rather than on the instant — the edit compares
+# months, and the removal moves an end date to the last day of a month — so a client that wants to
+# propose a change needs the same three members the write reads, and `startDate` beside them is the
+# instant the arrangement itself is dated to.
+#
+# **`splitExpense` is the flag that makes an arrangement a shared cost.** It is what the share read
+# selects on and what tells a divided amount from a stored one, so it is carried rather than left to a
+# reader to infer.
+
+"""
+One standing cost the organization carries from one month until an end that may be open.
+"""
+type OrganizationRecurringExpense {
+	id: ID!
+	"The day of the month the arrangement begins, from 1 to 31."
+	startDay: Int!
+	"The month the arrangement begins, from 1 to 12."
+	startMonth: Int!
+	"The four-digit year the arrangement begins in."
+	startYear: Int!
+	"The instant the arrangement is dated to, which is the beginning above as a date."
+	startDate: DateTime!
+	"The day of the month the arrangement ends; null while the end is open."
+	endDay: Int
+	"The month the arrangement ends; null while the end is open."
+	endMonth: Int
+	"The year the arrangement ends; null while the end is open."
+	endYear: Int
+	"The instant the arrangement ends; null while the end is open, which is what makes the cost standing."
+	endDate: DateTime
+	"The category the standing cost is filed under, in the tenant's own vocabulary."
+	categoryName: String!
+	"The standing cost, in the row's own `currency`."
+	value: Decimal!
+	"The ISO 4217 code `value` is expressed in."
+	currency: String!
+	"""
+	Whether the platform divides this cost among the organization's employees. A shared arrangement is
+	what the share read below answers a quotient of, and the flag is what tells a quotient from a stored
+	amount.
+	"""
+	splitExpense: Boolean
+	"""
+	The arrangement this row belongs to. The delivered creation sets it to the row's own identifier, so a
+	standing arrangement is a family of rows whose later members are the ones an edit opened when it moved
+	the beginning forward — which is what the verdict read below looks a conflict up among.
+	"""
+	parentRecurringExpenseId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered routes
+	— the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of standing costs.
+"""
+type OrganizationRecurringExpenseEdge {
+	node: OrganizationRecurringExpense!
+	cursor: String!
+}
+
+"""
+One page of standing costs, with the total the filters select and the boundary cursors.
+"""
+type OrganizationRecurringExpenseConnection {
+	nodes: [OrganizationRecurringExpense!]!
+	edges: [OrganizationRecurringExpenseEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+What moving one arrangement's beginning would mean, and the arrangements in the way.
+
+**This is a computed verdict rather than a row.** The delivered read compares the beginning the caller
+proposes with the one the arrangement has, and when the change would move the beginning forward or
+backward it reads the sibling arrangements of the same parent that fall inside the gap. So the answer has
+two parts that belong together: what the change would be, and the rows that make it that.
+
+`value` is the contracts' own verdict rather than a schema enum, because the vocabulary is shared with
+the employee's own arrangements: `NO_CHANGE`, `WITHIN_MONTH`, `REDUCE_SAFE`, `REDUCE_CONFLICT`,
+`INCREASE_SAFE_WITHIN_LIMIT`, `INCREASE_SAFE_OUTSIDE_LIMIT` or `INCREASE_CONFLICT`. The delivered edit
+asks this same question of itself and refuses the last of the seven outright.
+"""
+type OrganizationRecurringExpenseStartDateUpdateType {
+	"What moving the beginning would be, as the contracts' own verdict."
+	value: String!
+	"The sibling arrangements of the same parent that fall inside the gap the change would leave."
+	conflicts: [OrganizationRecurringExpense!]!
+}
+
+"""
+One shared arrangement as a single employee's share of it, for one month.
+
+The read behind `organizationRecurringExpenseShares` selects the arrangements the organization shares
+and that are in force in the month, counts the people it employs, and divides each arrangement's amount
+by that count. **The quotient is not a stored figure**: the read replaces the arrangement's own amount
+with it before it answers, which is why the row below carries the share under the arrangement and the
+whole it came from beside it. Every member is present on every row this type is answered for — the read
+selects only shared arrangements, so a row that was not divided is not one of its answers.
+"""
+type OrganizationRecurringExpenseShare {
+	"""
+	The arrangement, as the share read answered it: its `value` is the employee's share of the standing
+	cost rather than the stored amount, and `originalValue` below is the stored amount it was divided
+	from.
+	"""
+	recurringExpense: OrganizationRecurringExpense!
+	"The standing cost before it was divided, which is the amount the arrangement stores."
+	originalValue: Decimal!
+	"How many people the standing cost was divided among, which is the organization's head count."
+	employeeCount: Int!
+}
+
+"""
+The fields a standing-cost list may be sorted by.
+
+`startDate` is the ledger's own order, which is the column the delivered month route narrows on; the two
+timestamps are how a change is found again; `value` is what a list of standing costs is taken by; and
+`categoryName` is offered because a ledger is read in category groups.
+"""
+enum OrganizationRecurringExpenseSortField {
+	createdAt
+	updatedAt
+	startDate
+	endDate
+	value
+	categoryName
+}
+
+"""
+The order the standing costs are returned in. At most three keys are accepted.
+"""
+input OrganizationRecurringExpenseSort {
+	field: OrganizationRecurringExpenseSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a standing-cost list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row, and the four that describe the beginning and the end are what makes
+the delivered month route a filter of this list rather than a read of its own:
+
+```
+filter: {
+  or: [
+    { startDate: { between: [$start, $end] }, endDate: { isNull: true } },
+    { startDate: { lte: $end }, endDate: { gte: $start } }
+  ]
+}
+```
+
+That is the delivered criterion exactly — an arrangement that begins inside the range and has no end
+yet, or one that begins no later than the range's start and ends no earlier than its end — stated in the
+connection's own vocabulary, with the two bounds being the instants the delivered handler computes from
+the range its route was given (one month's bounds, as the delivered clients send them). The shared
+arrangements alone are the same disjunction with `splitExpense: { eq: true }` beside it, and a family of
+rows is `parentRecurringExpenseId: { eq: … }`.
+
+The amount is stated through the decimal family, which is the family money is compared in. `deletedAt`
+is deliberately absent although the object carries it: the delivered list read answers live rows only, so
+a condition on that column could only ever match the empty set. The tenant is absent because it is
+applied to the criterion from the credential rather than from the caller.
+"""
+input OrganizationRecurringExpenseFilter {
+	id: IDFilter
+	startDay: NumberFilter
+	startMonth: NumberFilter
+	startYear: NumberFilter
+	startDate: DateTimeFilter
+	endDay: NumberFilter
+	endMonth: NumberFilter
+	endYear: NumberFilter
+	endDate: DateTimeFilter
+	categoryName: StringFilter
+	value: DecimalFilter
+	currency: StringFilter
+	splitExpense: BooleanFilter
+	parentRecurringExpenseId: IDFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [OrganizationRecurringExpenseFilter!]
+	or: [OrganizationRecurringExpenseFilter!]
+	not: OrganizationRecurringExpenseFilter
+}
+
+# The write surface.
+#
+# `CreateOrganizationRecurringExpenseInput` declares what the delivered creation stores; the edit input
+# declares the smaller set the delivered edit reads. The difference is the delivered handler's, not a
+# preference here: the creation stores the row it is handed, and the edit writes the beginning, the value
+# and the category while taking the currency and the parent from the row it replaces.
+#
+# The tenant is not a member of either input: the delivered write stamps the caller's own tenant onto the
+# row and refuses a row that belongs to another one.
+
+"""
+What a caller states when it records a standing cost.
+
+The delivered creation binds the row itself as its body — the controller declares no DTO and no
+validation pipe — so these are the entity's own columns and nothing beside them. `value`, `currency`,
+`categoryName` and the two beginnings are what a standing arrangement cannot be read without; the three
+the delivered creation stores are the amount, the currency and the category, and the beginning written
+as both the date and the day, month and year.
+
+`splitExpense` is a member because the delivered creation stores it: whether the cost is shared is the
+caller's decision when it records the arrangement, not a figure the platform derives.
+"""
+input CreateOrganizationRecurringExpenseInput {
+	"The standing cost, in the currency below."
+	value: Decimal!
+	"The ISO 4217 code the value is expressed in."
+	currency: String!
+	"The category the standing cost is filed under."
+	categoryName: String!
+	"The day of the month the arrangement begins, from 1 to 31."
+	startDay: Int!
+	"The month the arrangement begins, from 1 to 12."
+	startMonth: Int!
+	"The four-digit year the arrangement begins in."
+	startYear: Int!
+	"The instant the arrangement is dated to."
+	startDate: DateTime!
+	"The day of the month the arrangement ends, where the caller states one."
+	endDay: Int
+	"The month the arrangement ends, where the caller states one."
+	endMonth: Int
+	"The year the arrangement ends, where the caller states one."
+	endYear: Int
+	"The instant the arrangement ends, where the caller states one. Omit it and the cost is standing."
+	endDate: DateTime
+	"Whether the platform divides this cost among the organization's employees."
+	splitExpense: Boolean
+	"The arrangement this row belongs to, where the caller states one. The delivered creation sets it to the row's own identifier."
+	parentRecurringExpenseId: ID
+	"The organization the standing cost is filed under."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a standing cost.
+
+**These are the members the delivered edit reads, and nothing else.** Its body also accepts a currency —
+the contract's own edit input requires one — and the delivered handler never writes it: the plain edit
+writes the beginning, the value and the category, and the branch that closes one arrangement and opens
+its successor takes the currency and the parent from the row it replaces. An input member the write
+ignores would be worse than no member at all, so it is not offered.
+
+The verdict member the delivered handler computes is not a member of this input either: it asks the
+`organizationRecurringExpenseStartDateUpdateType` field's question of itself and overwrites whatever a
+body carried.
+"""
+input UpdateOrganizationRecurringExpenseInput {
+	id: ID!
+	"The day of the month the arrangement now begins, from 1 to 31."
+	startDay: Int!
+	"The month the arrangement now begins, from 1 to 12."
+	startMonth: Int!
+	"The four-digit year the arrangement now begins in."
+	startYear: Int!
+	"The category the standing cost is filed under."
+	categoryName: String!
+	"The standing cost."
+	value: Decimal!
+}
+
+"""
+How much of a standing arrangement a removal takes out.
+
+**This is this domain's own spelling of a shape the platform states once**, because the contracts'
+`IRecurringExpenseDeleteInput` is what both standing-cost resources' removals read and a document
+declares the concepts it serves rather than reaching into a neighbour's for one: the employee's own
+arrangements declare the same three members under their own name.
+
+`deletionType` is the contracts' own value: `all` removes every row of the arrangement, `future` moves
+its end back to the month before the one named so that nothing later remains, and `current` takes the
+named month out of the middle — closing the arrangement before it and opening its successor after it.
+`month` and `year` name the month all three are measured from; `all` is the one that does not read them.
+"""
+input OrganizationRecurringExpenseDeleteInput {
+	"Which of the three removals this is: `all`, `future` or `current`."
+	deletionType: String!
+	"The month the removal is measured from, from 1 to 12."
+	month: Int!
+	"The four-digit year the removal is measured from."
+	year: Int!
+}

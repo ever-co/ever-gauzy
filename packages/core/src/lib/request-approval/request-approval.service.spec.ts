@@ -108,6 +108,20 @@ describe('RequestApprovalService approver lookups (GHSA-gwpq-mmw7-vx85 sibling)'
 		expect(JSON.stringify(updated)).not.toContain(TENANT_B);
 	});
 
+	it('keeps a requestId only when it is an identifier', async () => {
+		const { service } = createService();
+		const RECORD = '0f7c1a2e-0000-4000-8000-00000000f001';
+
+		const named: any = await service.createRequestApproval({ ...input, requestId: RECORD, requestType: 'TIME_OFF' });
+		expect(named.requestId).toBe(RECORD);
+		expect(named.requestType).toBe('TIME_OFF');
+
+		// A free-text value is left out, as every value was before the field was stored: the equipment-sharing
+		// list joins on `uuid("requestId")`, which one non-identifier row makes fail for every tenant.
+		const freeText: any = await service.createRequestApproval({ ...input, requestId: 'PO-2026-0001' });
+		expect(freeText.requestId).toBeUndefined();
+	});
+
 	it('matches nothing without a tenant', async () => {
 		const { service, employees } = createService();
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);

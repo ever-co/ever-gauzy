@@ -79,7 +79,8 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_event_type',
-		joinColumn: 'tagEventId',
+		// The column the migrations created (`tagEventId` does not exist: every MikroORM tag read or write failed).
+		joinColumn: 'eventTypeId',
 		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({

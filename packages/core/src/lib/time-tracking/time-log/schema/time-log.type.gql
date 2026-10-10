@@ -1,0 +1,542 @@
+# The time log's object types, its list vocabulary, its report answers and its write bodies.
+#
+# A time log is one interval of recorded work: the instant it started and the instant it stopped, the
+# employee it belongs to, and whatever project, task, client and team the work was attributed to. The
+# concept stays in the domain that owns the entity.
+#
+# **A duration is a whole number of seconds and is never money.** `duration` is the entity's own
+# computed member — it is filled on load as `stoppedAt.diff(startedAt, 'seconds')` — and every figure
+# below that counts time states `Int` in seconds and says so where it is declared. The hours a chart
+# draws are `Float`, because that is what the delivered calculation produces: the seconds divided by
+# three thousand six hundred and rounded to one decimal. Money is the exact-decimal family and never a
+# binary fraction, which is why the amounts of the two reports are `Decimal`.
+#
+# **No relation is an object member, and each is carried as the identifier that always travels.** The
+# delivered reads do not agree on what they join: the list read selects a handful of columns of the
+# employee (the two presence flags and the account's first and last name and image), of the project
+# (its name, image and member count), of the task (a projection of the task's own row and its status)
+# and of the client (its name and image); the node read joins only what its query string names; and a
+# report read selects a third subset again, of the employee's rate and account. An object member here
+# would therefore be filled on one of this domain's fields and empty on the others, which is a member
+# that looks like a row and answers nulls for most of one. The identifiers below are what every one of
+# those reads does return, and each row behind them is complete in the domain that owns it.
+#
+# The two vocabularies a log carries — the log type (`TRACKED`, `MANUAL`, `IDLE`, `RESUMED`) and the
+# source (`BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION`, `HUBSTAFF`, `UPWORK`, `TEAMS`, `CLOC`)
+# — are carried as their values rather than declared as schema enums. The value sets belong to the
+# contracts package and are shared with the tracking routes, so declaring them here would claim a
+# vocabulary this domain does not own, and the next domain that needs the same values would collide
+# with this file rather than reuse them.
+
+"""
+One interval of recorded work.
+"""
+type TimeLog {
+	id: ID!
+	"The instant the interval starts."
+	startedAt: DateTime
+	"The instant the interval stops, or null while no end has been recorded."
+	stoppedAt: DateTime
+	"When the log was last edited by hand. Null on a log nobody has edited."
+	editedAt: DateTime
+	"""
+	How long the interval ran, **in seconds**: the entity fills this member on load from the two
+	instants, and a running log is measured against the present moment. It is a duration and never an
+	amount.
+	"""
+	duration: Int
+	"""
+	How the time was recorded: `TRACKED`, `MANUAL`, `IDLE` or `RESUMED`. Carried as its value rather
+	than declared as a schema enum, because the vocabulary belongs to the contracts package.
+	"""
+	logType: String
+	"""
+	Where the time came from: `BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION`, `HUBSTAFF`,
+	`UPWORK`, `TEAMS` or `CLOC`, carried as its value for the same reason as `logType`.
+	"""
+	source: String
+	"What was worked on, as the tracker or the person wrote it."
+	description: String
+	"Why a hand-recorded interval was recorded."
+	reason: String
+	"Whether the interval is billed for."
+	isBillable: Boolean
+	"Whether a timer is still running against this row."
+	isRunning: Boolean
+	"The version of the client that recorded the interval, where one did."
+	version: String
+	"""
+	Whether the log has been edited since it was recorded. The delivered list read narrows by this
+	member, which is why it is carried: without it a caller could not read back which of the rows it
+	asked about were the edited ones.
+	"""
+	isEdited: Boolean
+	"The employee the interval belongs to. The engagement is read from the employee surface by this identifier."
+	employeeId: ID
+	"The payroll period the interval was filed into. The period is read from the timesheet surface by this identifier."
+	timesheetId: ID
+	"The project the work was attributed to. The project is read from the project surface by this identifier."
+	projectId: ID
+	"The task the work was attributed to. The task is read from the task surface by this identifier."
+	taskId: ID
+	"The client the work was attributed to. The client is read from the contact surface by this identifier."
+	organizationContactId: ID
+	"The team the work was attributed to. The team is read from the team surface by this identifier."
+	organizationTeamId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived."
+	archivedAt: DateTime
+	"When the row was withdrawn. The delete field below writes this member, which is why it is carried."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of time logs.
+"""
+type TimeLogEdge {
+	node: TimeLog!
+	cursor: String!
+}
+
+"""
+One page of time logs, with the total the filters select and the boundary cursors.
+"""
+type TimeLogConnection {
+	nodes: [TimeLog!]!
+	edges: [TimeLogEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a time-log list may be sorted by.
+"""
+enum TimeLogSortField {
+	startedAt
+	stoppedAt
+	duration
+	createdAt
+	updatedAt
+	logType
+	source
+	isBillable
+}
+
+"""
+The order the time logs are returned in. At most three keys are accepted.
+"""
+input TimeLogSort {
+	field: TimeLogSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a time-log list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read returns, and `duration` is the row's own
+computed member. The relation identifiers are here and the relations themselves are not: the rows
+carry the identifiers, so a filter on one narrows by a value every row has, while a filter on a
+relation would narrow by a value the connection never sees.
+"""
+input TimeLogFilter {
+	id: IDFilter
+	startedAt: DateTimeFilter
+	stoppedAt: DateTimeFilter
+	editedAt: DateTimeFilter
+	"The interval's length in seconds, which is the row's own computed member."
+	duration: NumberFilter
+	logType: StringFilter
+	source: StringFilter
+	description: StringFilter
+	reason: StringFilter
+	isBillable: BooleanFilter
+	isRunning: BooleanFilter
+	version: StringFilter
+	isEdited: BooleanFilter
+	employeeId: IDFilter
+	timesheetId: IDFilter
+	projectId: IDFilter
+	taskId: IDFilter
+	organizationContactId: IDFilter
+	organizationTeamId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimeLogFilter!]
+	or: [TimeLogFilter!]
+	not: TimeLogFilter
+}
+
+"""
+The activity window a read may be narrowed to.
+
+Both bounds are a percentage of activity between 0 and 100, which is the scale the delivered read
+takes them on: it converts each to the ten-minute scale the tracked slot records its overall activity
+on before it compares them. A log whose slots fall inside the window is answered; a log with no
+recorded activity is not.
+"""
+input TimeLogActivityLevelInput {
+	"The lower bound, as a percentage between 0 and 100."
+	start: Int!
+	"The upper bound, as a percentage between 0 and 100."
+	end: Int!
+}
+
+"""
+One day of the daily report's chart: how much of the day was tracked, recorded by hand, idle and
+resumed.
+
+All four figures are **in hours**, which is what the delivered calculation produces — the summed
+seconds of each kind divided by three thousand six hundred and rounded to one decimal. A day on which
+nothing was recorded is answered as four zeroes rather than dropped, so a chart drawn from this answer
+has a point for every date in the range.
+"""
+type TimeLogDurationBreakdown {
+	"Hours recorded by a tracker."
+	tracked: Float!
+	"Hours recorded by hand."
+	manual: Float!
+	"Hours the tracker counted as idle."
+	idle: Float!
+	"Hours recorded after an idle period was resumed."
+	resumed: Float!
+}
+
+"""
+One day of the daily chart.
+"""
+type TimeLogDailyReportChartPoint {
+	"The day, as `YYYY-MM-DD` in the time zone the caller named."
+	date: String!
+	"The day's four figures."
+	value: TimeLogDurationBreakdown!
+}
+
+"""
+One line of a daily report's leaf: the work one employee did on one task.
+
+`duration` is **in seconds**. `clientId` is the client the line was attributed to — the log's own
+client where it has one, and otherwise the client behind the project the work was booked to.
+"""
+type TimeLogDailyReportTask {
+	"The task the line describes. The task is read from the task surface by this identifier."
+	taskId: ID
+	"What was worked on, as the log recorded it."
+	description: String
+	"The line's duration, **in seconds**."
+	duration: Int
+	"The client the line was attributed to. The client is read from the contact surface by this identifier."
+	clientId: ID
+}
+
+"""
+One leaf of a daily report: one employee's task lines within the level above them.
+
+The delivered answer names this leaf `employeeLogs` in three of its four groupings and `projectLogs` in
+the fourth, and it carries the same figures under either name — which is why one type is declared for
+both fields rather than two a client could not tell apart, and why the type is named for what it is
+rather than for one of the two names.
+
+`sum` is **in seconds**, and it is the delivered calculation's own sum of the durations below it.
+`activity` is a percentage of the tracked activity over that time. `employeeId` and `projectId` are
+present where the grouping that produced the leaf was grouped by the other one.
+"""
+type TimeLogDailyReportGroup {
+	"The employee the lines belong to, where the grouping did not already name them."
+	employeeId: ID
+	"The project the lines were booked to, where the grouping did not already name it."
+	projectId: ID
+	"The summed duration of the lines, **in seconds**."
+	sum: Int
+	"The tracked activity over that duration, as a percentage."
+	activity: Float
+	"The lines themselves, one per log."
+	tasks: [TimeLogDailyReportTask!]!
+}
+
+"""
+One level of a daily report.
+
+**The answer's shape is chosen by `groupBy`, and this type states all four shapes.** Grouped by date a
+level carries the date and the projects of that date; grouped by employee it carries the employee and
+the dates they worked; grouped by project it carries the project and the dates; grouped by client it
+carries the client, then the projects, then the dates. The four trees are the same node with a
+different dimension filled in, so one recursive type states them rather than four a client would have
+to tell apart by asking which grouping it requested — and every member a level does not carry is null
+rather than absent, which is what makes the recursion total.
+
+`date` is the day as `YYYY-MM-DD` in the time zone the caller named. `sum` is **in seconds**.
+"""
+type TimeLogDailyReportEntry {
+	"The day this level covers, where the grouping is by date."
+	date: String
+	"The employee this level covers, where the grouping is by employee."
+	employeeId: ID
+	"The project this level covers, where the grouping is by project."
+	projectId: ID
+	"The client this level covers, where the grouping is by client."
+	clientId: ID
+	"The summed duration of everything below this level, **in seconds**."
+	sum: Int
+	"The tracked activity over that duration, as a percentage."
+	activity: Float
+	"The levels below this one. Empty at a leaf."
+	logs: [TimeLogDailyReportEntry!]!
+	"The employee lines of this level, under the name the grouping that produced them uses. Empty where this level carries `projectLogs` instead."
+	employeeLogs: [TimeLogDailyReportGroup!]!
+	"The employee lines of this level, under the name one of the four groupings uses. Empty where this level carries `employeeLogs` instead."
+	projectLogs: [TimeLogDailyReportGroup!]!
+}
+
+"""
+One employee's line of an owed-amount day.
+
+`duration` is **in seconds** and `amount` is **money**: the delivered calculation prices the summed
+duration at the rate the read selected for that employee, and the value travels as the exact decimal
+the `numeric` column it was read from is carried as.
+"""
+type TimeLogOwedAmountReportEmployee {
+	"The employee the line belongs to. The engagement is read from the employee surface by this identifier."
+	employeeId: ID
+	"The employee's summed duration on that day, **in seconds**."
+	duration: Int!
+	"What the organization owes for it. Money."
+	amount: Decimal!
+}
+
+"""
+One day of the owed-amount report, with the lines it is made of.
+"""
+type TimeLogOwedAmountReportEntry {
+	"The day, as `YYYY-MM-DD` in the time zone the caller named."
+	date: String!
+	"One line per employee who recorded time that day."
+	employees: [TimeLogOwedAmountReportEmployee!]!
+}
+
+"""
+One day of the owed-amount chart: the whole day's total in one figure.
+"""
+type TimeLogOwedAmountReportChartPoint {
+	"The day, as `YYYY-MM-DD` in the time zone the caller named."
+	date: String!
+	"What the organization owes for that day, over every employee. Money."
+	value: Decimal!
+}
+
+"""
+One log of a weekly report's day.
+
+The weekly read projects four columns of each log and no more — its identifier, the employee behind
+it and the two instants — so this type states exactly those: a member for a column the read did not
+select would answer null on every row it carries.
+"""
+type TimeLogWeeklyReportLog {
+	id: ID!
+	"The employee who recorded the interval. The engagement is read from the employee surface by this identifier."
+	employeeId: ID
+	"The instant the interval starts."
+	startedAt: DateTime
+	"The instant the interval stops."
+	stoppedAt: DateTime
+}
+
+"""
+One day of a weekly report.
+
+`sum` is **in seconds**. The delivered calculation answers the range's days as a map keyed by their own
+date strings — a day nothing was recorded on being the bare number zero rather than a group — and this
+surface answers the same days as a list with the key moved into the entry, so a day nothing was
+recorded on is an entry whose sum is zero and whose log list is empty.
+"""
+type TimeLogWeeklyReportDay {
+	"The day, as `YYYY-MM-DD` in the time zone the caller named."
+	date: String!
+	"The summed duration recorded on that day, **in seconds**."
+	sum: Int!
+	"The logs of that day, projected to the four columns the weekly read selected."
+	logs: [TimeLogWeeklyReportLog!]!
+}
+
+"""
+One employee's week.
+
+`sum` is **in seconds** and is null where the range holds no log of that employee at all, which is the
+delivered answer rather than a fabricated zero. `activity` is a percentage of the tracked activity of
+the week over its tracked time.
+"""
+type TimeLogWeeklyReport {
+	"The employee the week belongs to. The engagement is read from the employee surface by this identifier."
+	employeeId: ID
+	"One entry per day of the range, in the range's own order."
+	dates: [TimeLogWeeklyReportDay!]!
+	"The employee's summed duration over the week, **in seconds**."
+	sum: Int
+	"The week's tracked activity, as a percentage."
+	activity: Float
+}
+
+"""
+One employee's line of a time-limit period.
+
+`duration` and `limit` are both **in seconds**: the limit is the employee's weekly limit converted to
+whichever of the three durations the caller asked about — a day, a week or a month — and it is zero
+where the employee states no limit at all.
+
+`durationPercentage` is the percentage of that limit the duration represents, rendered to two decimals
+by the delivered calculation, and the bare number zero where there is no limit to divide by. It is a
+percentage and never an amount.
+"""
+type TimeLogTimeLimitReportEmployee {
+	"The employee the line belongs to. The engagement is read from the employee surface by this identifier."
+	employeeId: ID
+	"The duration recorded in the period, **in seconds**."
+	duration: Int!
+	"The percentage of `limit` the duration represents, to two decimals."
+	durationPercentage: Float!
+	"The employee's limit for the period, **in seconds**."
+	limit: Int!
+}
+
+"""
+One period of the time-limit report, with the lines it is made of.
+"""
+type TimeLogTimeLimitReportEntry {
+	"The first day of the period, as `YYYY-MM-DD` in the time zone the caller named."
+	date: String!
+	"One line per employee who recorded time in the period."
+	employees: [TimeLogTimeLimitReportEmployee!]!
+}
+
+"""
+How much of one project's budget a range consumed.
+
+`budget`, `spent` and `remainingBudget` are **money**, and `spent` counts hours instead where the
+project's budget is stated in hours. `spentPercentage` is a percentage of the budget and is never an
+amount. `remainingBudget` is floored at zero by the delivered calculation: a project over its budget
+reports nothing remaining rather than a negative remainder, and the overrun is what `spentPercentage`
+above a hundred says.
+"""
+type ProjectBudgetLimit {
+	"The project the budget belongs to. The project is read from the project surface by this identifier."
+	projectId: ID!
+	"""
+	What the budget is measured in: the delivered vocabulary is `hours` or `cost`, carried as its value
+	because it is shared with the client's own budget column rather than owned here.
+	"""
+	budgetType: String
+	"The budget itself. Money, or a number of hours where `budgetType` says so."
+	budget: Decimal!
+	"What the range consumed against it. Money, or hours, on the same terms."
+	spent: Decimal!
+	"What is left of the budget. Never negative."
+	remainingBudget: Decimal!
+	"What share of the budget was consumed, as a percentage."
+	spentPercentage: Float!
+}
+
+"""
+How much of one client's budget a range consumed.
+
+`spent` counts hours instead where the client's budget is stated in hours, and the three amounts are
+money on the same terms as the project report's.
+"""
+type ClientBudgetLimit {
+	"The client the budget belongs to. The client is read from the contact surface by this identifier."
+	organizationContactId: ID!
+	"""
+	What the budget is measured in: the delivered vocabulary is `hours` or `cost`.
+	"""
+	budgetType: String
+	"The budget itself. Money, or a number of hours where `budgetType` says so."
+	budget: Decimal!
+	"What the range consumed against it. Money, or hours, on the same terms."
+	spent: Decimal!
+	"What is left of the budget. Never negative."
+	remainingBudget: Decimal!
+	"What share of the budget was consumed, as a percentage."
+	spentPercentage: Float!
+}
+
+"""
+What a caller states when it records time by hand.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names. The
+employee is stated and is the caller's own unless the caller may change the selected employee — the
+delivered pipe rewrites it, and this surface restates that rule rather than trusting the body.
+
+Neither the log type nor the source is a member. The delivered body's own transform states both for
+itself — `MANUAL` and `BROWSER` — whatever a caller sends, so an input carrying them would be offering
+two values the write ignores.
+"""
+input CreateManualTimeLogInput {
+	organizationId: ID!
+	"The employee the interval belongs to. A caller that may not choose one records against itself."
+	employeeId: ID!
+	"The instant the interval starts."
+	startedAt: DateTime!
+	"The instant the interval stops."
+	stoppedAt: DateTime!
+	"The project to attribute the work to."
+	projectId: ID
+	"The task to attribute the work to."
+	taskId: ID
+	"The client to attribute the work to."
+	organizationContactId: ID
+	"What was worked on."
+	description: String
+	"Why the interval is being recorded by hand."
+	reason: String
+	"Whether the interval is billed for."
+	isBillable: Boolean
+}
+
+"""
+What a caller states when it edits a hand-recorded interval.
+
+The same body as the create with the row's own identifier beside it, and without the two members the
+create stamps for itself: the delivered update carries neither a log type nor a source, so the ones
+the row already has are left as they are.
+"""
+input UpdateManualTimeLogInput {
+	id: ID!
+	organizationId: ID!
+	employeeId: ID!
+	startedAt: DateTime!
+	stoppedAt: DateTime!
+	projectId: ID
+	taskId: ID
+	organizationContactId: ID
+	description: String
+	reason: String
+	isBillable: Boolean
+}
+
+"""
+What a caller states when it removes time logs.
+
+`logIds` is required and must not be empty, which is the delivered body's own validation: a removal
+that names no row is refused by the read before anything is written. `forceDelete` decides whether the
+rows are deleted outright or withdrawn; an absent flag is read as `false`, which is both the delivered
+body's transform and the delivered handler's default.
+"""
+input DeleteTimeLogsInput {
+	"The rows to remove."
+	logIds: [ID!]!
+	"The organization the rows must belong to."
+	organizationId: ID!
+	"Whether to delete the rows outright rather than withdraw them."
+	forceDelete: Boolean
+}

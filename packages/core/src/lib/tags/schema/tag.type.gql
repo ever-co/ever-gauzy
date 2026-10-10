@@ -1,0 +1,189 @@
+# The tag domain's object type.
+#
+# One `tag` table serves the whole platform: the same rows label tasks, issues, employees,
+# equipment, event types, candidates and products. The commerce packages attach facets to a
+# catalogue variant with the product-variant pivot the catalogue owns and never introduce a second
+# labelling table, which is what keeps "the facets of a product" and "the labels of a task" one
+# vocabulary and one administration screen.
+#
+# The type is declared here and nowhere else; the catalogue refers to it (`Product.tags`). This file
+# also carries everything the resource's own root fields answer with — the connection, its edge, the
+# order and the narrowing a tag list takes, and the two write inputs — so the domain's list surface
+# extends this document rather than starting a second declaration of `Tag`.
+#
+# Two members the delivered readers produce are deliberately not carried, each for its own reason:
+#
+# - the usage counters (`candidate_counter`, `employee_counter`, `product_counter`, …) and
+#   `tagTypeName` are produced by one branch of the list reader — the one that counts the pivot rows
+#   in SQL and selects the group's name beside them. The other branch answers the rows themselves and
+#   carries neither, so a declared counter would be present on one installation and absent on another,
+#   which is worse than a member that is not offered at all. How many rows point at a tag is a fact
+#   about those rows rather than about the tag.
+# - `tagType` is not exposed as a relation. The group is loaded only when a REST caller names it in
+#   `relations`, and no read this surface performs does, so the member would always be absent here.
+#   `tagTypeId` is a column of the row and is answered by every read, and the group itself is served
+#   as the resource of its own — see `tag-type.type.gql`.
+
+"""
+A label the platform can attach to many kinds of record.
+"""
+type Tag {
+	id: ID!
+	"The label text."
+	name: String!
+	"The chip's background colour, as the platform's colour string."
+	color: String!
+	"The chip's text colour, when the background needs one."
+	textColor: String
+	"What the label means, for the operator."
+	description: String
+	"An icon name the clients resolve."
+	icon: String
+	"Whether the tag is maintained by the platform rather than by an operator."
+	isSystem: Boolean
+	"The icon resolved to a URL, for clients that render it directly."
+	fullIconUrl: String
+	"The tag's grouping, when it has one."
+	tagTypeId: ID
+	"""
+	When the tag was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live tag from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of tags.
+"""
+type TagEdge {
+	node: Tag!
+	cursor: String!
+}
+
+"""
+One page of tags, with the total the filters select and the boundary cursors.
+"""
+type TagConnection {
+	nodes: [Tag!]!
+	edges: [TagEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a tag list may be sorted by.
+"""
+enum TagSortField {
+	createdAt
+	updatedAt
+	name
+	color
+	isSystem
+}
+
+"""
+The order the tags are returned in. At most three keys are accepted.
+"""
+input TagSort {
+	field: TagSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a tag list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member here is a column of the tag row, which is why the set is what it is: the two readers
+behind this connection answer those columns, so each one narrows the rows the connection was handed
+rather than a collection the reader would have had to load. `organizationTeamId` and `tagTypeId` are
+identifiers of the two groupings a tag may carry, and `isNull` on either is the question "is this tag
+grouped at all", which is a question the tag screen asks.
+
+No member narrows by tenant or organization. The readers build that part of their criterion themselves:
+the tenant comes from the credential on every read, and the organization is the one the caller is
+acting in — which this surface takes from the credential and the routes' own clients send with their
+request — so a filter on either would suggest a scope decision the caller does not have. Which rows a
+caller may see is decided before the connection is handed them.
+
+`deletedAt` is not filterable either, although it is carried on the object. Both readers answer live
+rows only, so a condition on that column could only ever match the empty set — an argument that
+cannot be honoured is worse than an argument that is not offered.
+"""
+input TagFilter {
+	id: IDFilter
+	name: StringFilter
+	color: StringFilter
+	textColor: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	isSystem: BooleanFilter
+	tagTypeId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TagFilter!]
+	or: [TagFilter!]
+	not: TagFilter
+}
+
+"""
+What a caller states when it files a tag.
+
+The organization is optional here, and it is worth stating why: this resource's create route binds a
+body whose organization members are partial, so a tag may be filed at the tenant level, where every
+organization of the tenant sees it. The tag type's own create is stricter — see
+`CreateTagTypeInput` — and that asymmetry is the controllers', not this surface's invention.
+
+There is no member for the tenant: the delivered write stamps the caller's own tenant onto the row and
+overwrites whatever a body states, so a member here would promise a scope the write refuses.
+
+`isSystem` is not a member. The column is the platform's own mark on the tags it maintains, the
+delivered create route does not accept it, and the readers leave those rows out — so a caller that
+could set it would file a tag that disappears from every list the moment it is written.
+"""
+input CreateTagInput {
+	"The label text."
+	name: String!
+	"The chip's background colour, as the platform's colour string."
+	color: String!
+	"What the label means, for the operator."
+	description: String
+	"The chip's text colour, when the background needs one."
+	textColor: String
+	"An icon name the clients resolve."
+	icon: String
+	"The group to file the tag under. Omit for an ungrouped tag."
+	tagTypeId: ID
+	"The team the tag belongs to. Omit for a tag of the whole organization."
+	organizationTeamId: ID
+	"The organization the tag belongs to. Omit for a tenant-level tag."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a tag that exists.
+
+**A member the caller leaves out is left as it is.** The delivered write reads the row, proves it is
+the caller's, and then updates the columns the body states — a primitive `UPDATE`, never a
+replacement of the row — so omitting `color` keeps the colour and omitting `tagTypeId` keeps the
+grouping. A caller that means to clear an optional member states it as null.
+"""
+input UpdateTagInput {
+	id: ID!
+	name: String
+	color: String
+	description: String
+	textColor: String
+	icon: String
+	tagTypeId: ID
+	organizationTeamId: ID
+	organizationId: ID
+}

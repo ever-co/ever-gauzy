@@ -1,0 +1,126 @@
+# The employee recent-visit's object type.
+#
+# One row is one thing one employee opened: `employeeId` names who, `entity`/`entityId` name the record
+# they opened, and `visitedAt` says when. The delivered writes keep a single row per employee and record
+# — opening the same thing again moves `visitedAt` forward rather than filing a second row — which is
+# what makes the set a history of places rather than a log of visits.
+#
+# `entity` is carried as its value rather than declared as a schema enum. It holds the platform's own
+# entity-type vocabulary, which types the column of every entity-linked row in the schema, so an enum
+# declared here would claim a vocabulary this domain does not own and the next domain that needs the same
+# value set would collide with this file instead of reusing it.
+#
+# **`employee` is not a member, and the identifier beside it is.** The delivered read asks the service for
+# its rows without naming `relations`, so the relation is never joined on the rows this surface answers; a
+# member for it would be absent on every row, which is worse than no member. What always travels is the
+# foreign key, and the employee behind it is read from the employee surface by that identifier.
+#
+# `data` is the document the visit carries and travels through the kernel's `JSON` scalar unchanged, so
+# what the writer stored is what a reader receives — including the shape it has when a record stores
+# nothing at all, which is the `isNull` case a filter states rather than an error.
+
+"""
+One record an employee recently opened.
+"""
+type EmployeeRecentVisit {
+	id: ID!
+	"When the employee opened it. This is the order the delivered read answers in, most recent first."
+	visitedAt: DateTime!
+	"The document the visit carries, as the row stores it."
+	data: JSON
+	"The kind of record the employee opened."
+	entity: String
+	"The record the employee opened, by identifier."
+	entityId: ID
+	"The employee who opened it. The relation is not joined; the employee is read from the employee surface."
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the row was withdrawn, or null while it is live. The delivered surface has no route that
+	withdraws a visit, so this column is not written by anything this domain serves — it is carried
+	because it is a column of the row, and a reader that could not see it could not tell a live row from
+	one a migration or a neighbouring domain withdrew.
+	"""
+	deletedAt: DateTime
+}
+
+"""
+The boundary of one page of recent visits.
+"""
+type EmployeeRecentVisitEdge {
+	node: EmployeeRecentVisit!
+	cursor: String!
+}
+
+"""
+One page of recent visits, with the total the filters select and the boundary cursors.
+
+**The total is the count of the rows the delivered read answered, not of every visit in the store.** That
+read fixes its own page — a hundred rows unless the caller states otherwise — so the connection is applied
+to exactly that set, and a total that counted beyond it would be a second, disagreeing count of the same
+question. A caller that needs the whole history pages through it with the read's own parameters over REST
+or narrows this connection by `visitedAt`.
+"""
+type EmployeeRecentVisitConnection {
+	nodes: [EmployeeRecentVisit!]!
+	edges: [EmployeeRecentVisitEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a recent-visit list may be sorted by.
+"""
+enum EmployeeRecentVisitSortField {
+	visitedAt
+	createdAt
+	updatedAt
+	entity
+}
+
+"""
+The order the recent visits are returned in. At most three keys are accepted.
+
+The order the caller states none in is the delivered read's own — `visitedAt` descending, then the
+identifier — so a walk that states no sort resumes over the sequence the REST route answers.
+"""
+input EmployeeRecentVisitSort {
+	field: EmployeeRecentVisitSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a recent-visit list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+The first six are the parameters the delivered route binds from its query string — `organizationId`,
+`entity`, `entityId`, `employeeId`, `isActive` and `isArchived` — stated as filters so that each of them
+narrows this one connection rather than claiming a root field of its own. `skip`, `take` and `relations`,
+the rest of what that route binds, are not members: the first two are the page and the last is the join,
+and both are what a connection answers with rather than what it narrows by.
+"""
+input EmployeeRecentVisitFilter {
+	id: IDFilter
+	visitedAt: DateTimeFilter
+	"An operator over the document column, for example `contains` on a value the payload carries."
+	data: JSONFilter
+	entity: StringFilter
+	entityId: IDFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeRecentVisitFilter!]
+	or: [EmployeeRecentVisitFilter!]
+	not: EmployeeRecentVisitFilter
+}

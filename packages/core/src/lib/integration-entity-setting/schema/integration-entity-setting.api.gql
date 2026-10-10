@@ -1,0 +1,68 @@
+# The integration entity setting's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **Two routes, two fields.** `IntegrationEntitySettingController` serves
+# `GET /api/integration-entity-setting/integration/:id` — the decisions of one configured integration,
+# with the tied rows loaded — and `PUT` on the same path — the write that replaces them. There is no
+# count route, so the surface states no count field, and the list the read answers is stated as the
+# connection every list on this platform is stated as.
+#
+# **The integration is an argument of the read, not a filter of the connection.** The delivered read
+# resolves the decisions *of one integration* — that identifier is its path parameter, and the service
+# loads the integration and the tied rows beside each row it answers. The connection protocol narrows
+# the rows a read returned and cannot name a read's own parameter, so the field states `integrationId`
+# where the route states it in the path, and `filter`/`sort`/the page are applied to what came back.
+#
+# **The permissions are the controller's, per route.** The controller carries `INTEGRATION_ADD` and
+# `INTEGRATION_EDIT` on the class, its read states nothing of its own — so the read runs under the
+# class-level pair — and its write states `INTEGRATION_EDIT`, which the reflector resolves in place of
+# the class pair. Each field therefore states the permission its own route runs under: the read states
+# the pair, the write states the edit alone. A single class-level statement here could not be both, and
+# stating the pair on the write would give GraphQL a scope that route does not have.
+#
+# **The write takes the list the delivered body may be.** The delivered route binds one decision or an
+# array of them and stores what it is given, folding a single object into a list on the way; a GraphQL
+# input is one shape, so the field states the list, which is the shape the delivered handler reaches
+# either way. The field answers the rows the delivered write answers.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so both fields below are behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open —
+# so a tenant that switched the capability off is answered `Cannot query field <name>` here and served
+# as it always was there.
+
+extend type Query {
+	"""
+	The synchronisation decisions of one configured integration, with the tied rows the delivered read
+	loads beside them.
+	"""
+	integrationEntitySettings(
+		"The configured integration whose decisions are read. The delivered route takes it in the path."
+		integrationId: ID!
+		filter: IntegrationEntitySettingFilter
+		sort: [IntegrationEntitySettingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): IntegrationEntitySettingConnection!
+}
+
+extend type Mutation {
+	"""
+	Stores the synchronisation decisions of one configured integration: the rows the caller states, with
+	the tied rows underneath them. The delivered write is a replacement of what it is given rather than
+	a merge, so a row type the caller leaves out is a row type the integration no longer synchronises.
+	"""
+	updateIntegrationEntitySettings(
+		"The configured integration whose decisions are written. The delivered route takes it in the path."
+		integrationId: ID!
+		"The decisions to store, one member per row type."
+		input: [IntegrationEntitySettingInput!]!
+	): [IntegrationEntitySetting!]!
+}

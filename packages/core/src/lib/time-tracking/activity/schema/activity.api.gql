@@ -1,0 +1,193 @@
+# The tracked-activity domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/timesheet/activity` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other. Neither of those routes states
+# a permission of its own, so all four fields run under the two the controller states for the whole class.
+#
+# **The list is the connection, and the route's own page is documented beside it.** The delivered
+# `GET /` fills `{ page: 0, limit: 30 }` into its query before it calls its reader, so a REST caller that
+# states no page is answered thirty rows. That is the *route's* page, and this surface does not hand it to
+# the read: the connection protocol states the page itself, in `first`/`after`/`last`/`before` and in
+# `limit`/`offset`, with the platform's own default of twenty rows and a ceiling of a hundred. The two are
+# therefore two spellings of one idea rather than two windows stacked on each other, and a caller that
+# wants the REST default exactly states `limit: 30`. What the read is handed is the narrowing and nothing
+# else, which is what makes the connection's `totalCount` the count of everything the narrowing selects
+# rather than the count of one page — a total that stopped at thirty would be a total no caller could walk
+# past.
+#
+# The narrowing the REST query string carries is stated here in two places, and the division is the
+# doctrine's own: what a *row* can be tested for arrives in `filter`, and what the delivered read tests
+# against the rows it joins — the slot's activity band, the log's source and type — arrives as arguments,
+# because a row carries none of them for a filter to evaluate.
+#
+# **`GET /daily` and `GET /report` are root fields of their own, and neither is a filter on the list.**
+# This is the exception the doctrine allows, and it is the case it exists for:
+#
+# - the daily read does not answer activity rows at all. It groups by day, title and engagement, counts
+#   the rows it folded and sums their duration, and answers five computed columns. A connection cannot
+#   state that, because a connection's rows are the resource's rows and these are not rows of it.
+# - the report read answers the report rows *grouped*, and the grouping nests them three different ways
+#   depending on what the caller asks for. It is one computation with one grouping argument rather than
+#   three fields recomputing the same rows: the delivered route reads the rows once and nests them, and
+#   three root fields would be three reads that could disagree with each other.
+#
+# Both computed reads take the same narrowing the list does, and for the same reason: their readers build
+# their criterion from the same delivered input.
+#
+# **`POST /bulk` is the one write this resource serves**, and it is stated as one mutation answering the
+# rows the delivered handler persisted, in the order it persisted them.
+
+extend type Query {
+	"""
+	The activities of one organization, in the order the delivered list read means: longest first.
+
+	Ordered by duration descending because that is the order the delivered reader hands its rows over in,
+	and the connection restates it rather than inventing one — a connection's order is what its cursors
+	walk, so it has to be the order the rows arrived in.
+	"""
+	activities(
+		"The organization the activities are read from. The delivered query requires it."
+		organizationId: ID!
+		"Narrows to the activities recorded in this range, both bounds included."
+		startDate: DateTime
+		"Narrows to the activities recorded up to this instant, both bounds included."
+		endDate: DateTime
+		"""
+		Narrows to these engagements. A caller that may not change the selected employee is answered its
+		own activities whatever it states here — that branch is the delivered read's, not this surface's.
+		"""
+		employeeIds: [ID!]
+		"Narrows to these projects."
+		projectIds: [ID!]
+		"Narrows to these activity titles, exactly as stated."
+		titles: [String!]
+		"Narrows to these activity kinds: `APP` and `URL`."
+		types: [String!]
+		"""
+		Narrows to the activities whose slot belongs to a log tracked from these sources —
+		`BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION` and the integrations the platform ships.
+		This is the *log's* source, not the activity's own column, which `filter` narrows by.
+		"""
+		source: [String!]
+		"""
+		Narrows to the activities whose slot belongs to a log of these kinds — `TRACKED`, `MANUAL`,
+		`IDLE` or `RESUMED`.
+		"""
+		logType: [String!]
+		"Narrows to the activities whose slot falls inside this activity band."
+		activityLevel: ActivityLevelInput
+		"The fields the returned rows are narrowed by, applied to the rows the read answered."
+		filter: ActivityFilter
+		"The order the returned rows are put in. At most three keys are accepted."
+		sort: [ActivitySort!]
+		"The cursor page."
+		page: PageInput
+		"The page size, walking forwards from `after`."
+		first: Int
+		"Resume after this cursor. Exclusive."
+		after: String
+		"The page size, walking backwards from `before`."
+		last: Int
+		"Resume before this cursor. Exclusive."
+		before: String
+		"The offset page size. State this or the cursor style, never both."
+		limit: Int
+		"The offset to start at. State this or the cursor style, never both."
+		offset: Int
+	): ActivityConnection!
+
+	"""
+	One day's tracked time per engagement and title — a computation over the activities, not a list of
+	them.
+
+	The delivered read groups by day, title and engagement and folds the rows: it counts how many
+	activities each group holds and sums how long they lasted. Nothing it answers is a column of an
+	activity, which is why this is a root field of its own rather than a connection over activities.
+	"""
+	dailyActivities(
+		"The organization the days are computed for. The delivered query requires it."
+		organizationId: ID!
+		"The first day of the range, both bounds included."
+		startDate: DateTime
+		"The last day of the range, both bounds included."
+		endDate: DateTime
+		"""
+		Computes the days of these engagements. A caller that may not change the selected employee is
+		answered its own days whatever it states here.
+		"""
+		employeeIds: [ID!]
+		"Computes the days of these projects."
+		projectIds: [ID!]
+		"Computes the days of these activity titles, exactly as stated."
+		titles: [String!]
+		"Computes the days of these activity kinds."
+		types: [String!]
+		"Computes the days of the activities whose slot belongs to a log tracked from these sources."
+		source: [String!]
+		"Computes the days of the activities whose slot belongs to a log of these kinds."
+		logType: [String!]
+		"Computes the days of the activities whose slot falls inside this activity band."
+		activityLevel: ActivityLevelInput
+	): [DailyActivity!]!
+
+	"""
+	The report of tracked time, grouped the way the caller asks — a computation over the activities.
+
+	The delivered route reads the report rows once, and then nests them one of three ways when the caller
+	states a grouping. This is one field rather than three because it is one computation: `groupBy` states
+	how the same rows are nested, and exactly one member of `DailyActivityReport` is filled by it. A caller
+	that states no grouping is answered the rows unnested, which is what the delivered route does with a
+	request that states none.
+
+	The share each row carries — `durationPercentage` — is computed against the group the row is nested
+	under, so the same activity carries a different share under two groupings. That is the delivered
+	mapper's arithmetic and is stated on the row rather than re-derived here.
+	"""
+	dailyActivitiesReport(
+		"The organization the report is computed for. The delivered query requires it."
+		organizationId: ID!
+		"""
+		How to nest the report rows. Omit it for the rows themselves; a value the delivered route does not
+		group by is not offered, because the route would answer the rows unnested for it and an argument
+		whose effect is "no grouping" is stated by omitting the argument.
+		"""
+		groupBy: DailyActivityReportGrouping
+		"The first day of the range, both bounds included."
+		startDate: DateTime
+		"The last day of the range, both bounds included."
+		endDate: DateTime
+		"""
+		Reports on these engagements. A caller that may not change the selected employee is answered its
+		own activity whatever it states here.
+		"""
+		employeeIds: [ID!]
+		"Reports on these projects."
+		projectIds: [ID!]
+		"Reports on these activity titles, exactly as stated."
+		titles: [String!]
+		"Reports on these activity kinds."
+		types: [String!]
+		"Reports on the activities whose slot belongs to a log tracked from these sources."
+		source: [String!]
+		"Reports on the activities whose slot belongs to a log of these kinds."
+		logType: [String!]
+		"Reports on the activities whose slot falls inside this activity band."
+		activityLevel: ActivityLevelInput
+	): DailyActivityReport!
+}
+
+extend type Mutation {
+	"""
+	Files several activities in one call, and answers the rows the write persisted.
+
+	The delivered write dispatches a command that stamps the organization, the tenant, the engagement and
+	the project of the request onto every row before it saves them, so the envelope's members win over
+	anything a row states — which is why the rows do not state them. The rows come back in the order they
+	were saved, and a body that states no activity files none rather than failing.
+	"""
+	bulkSaveActivities(input: ActivityBulkInput!): [Activity!]!
+}

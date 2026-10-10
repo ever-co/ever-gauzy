@@ -1,0 +1,231 @@
+# The mention's object type.
+#
+# A mention is the record that one employee named another inside a piece of text belonging to one
+# entity. The row therefore carries two facts that are easy to conflate and are kept apart here: which
+# entity the text sits on (`entity` and `entityId`), and which record the mention is *about* when the
+# text sits one level below it (`parentEntityType` and `parentEntityId`) — the comment that named
+# somebody on a task carries the comment in `entityId` and the task in `parentEntityId`, and it is the
+# parent a subscription and a notification are raised against. Both pairs are carried because the
+# delivered filing and the subscription it publishes read both: without the parent pair a client could
+# not tell which record the mention actually concerns.
+#
+# **Neither employee is an object member.** The reads behind this surface join no relation at all — the
+# delivered CRUD list route loads only the relations its own query string names, and the read this
+# connection performs names none — so `mentionedEmployee` and `employee` would be absent on every row
+# answered here, whichever row was asked about, and a member that always reads null is worse than no
+# member. They are carried as the identifiers the row stores, and the employee behind either identifier
+# is read from the employee resource, which is where that relation belongs.
+#
+# `actorType` is carried as its string value rather than declared as a schema enum. The column is an
+# integer with a transformer that answers the `ActorTypeEnum` name on the way out — `System` or `User` —
+# and the value set belongs to the contract two other per-entity tables already share with this one.
+# Declaring it here would claim a vocabulary this domain does not own, and the next domain that needs
+# the same two values would collide with this file instead of reusing it.
+#
+# `entity` and `parentEntityType` are carried as their value for the same reason: the vocabulary is the
+# platform's own list of entity types, written into this row as text rather than as a reference to a
+# table, so a schema enum here would be a closed copy of a list this domain cannot keep current.
+
+"""
+One employee named another in the text of one entity.
+"""
+type Mention {
+	id: ID!
+	"""
+	Who performed the mentioning, as the contract's own name for it: `System` or `User`. Nullable
+	because the column is — a row written before the actor was recorded carries neither.
+	"""
+	actorType: String
+	"""
+	The type of the entity the text belongs to, as the platform's own entity-type value. It is stored
+	on this row as text, so it is carried as text rather than as a declared enum.
+	"""
+	entity: String!
+	"The entity the text belongs to, by identifier."
+	entityId: ID!
+	"""
+	The record the mention is about when the text sits one level below it — the task a comment was
+	written on, for instance — by identifier. Null on a mention written directly on its entity.
+	"""
+	parentEntityId: ID
+	"The type of that parent record, as the platform's own entity-type value."
+	parentEntityType: String
+	"""
+	The employee who was named, by identifier. This is the one relation the row cannot be written
+	without, which is what makes it the member a filing is stated for. The account behind it is not
+	joined by this read.
+	"""
+	mentionedEmployeeId: ID!
+	"""
+	The employee who did the naming, by identifier. The delivered filing stamps it from the credential
+	rather than from the body, and it is nullable for rows written outside a request. The account behind
+	it is not joined by this read.
+	"""
+	employeeId: ID
+	"The tenant the mention belongs to, by identifier."
+	tenantId: ID
+	"The organization the mention belongs to, by identifier."
+	organizationId: ID
+	"Whether the mention is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the mention is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the mention was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the mention was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — two of the nine this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	"When the mention was filed."
+	createdAt: DateTime
+	"When the mention was last changed."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of mentions.
+"""
+type MentionEdge {
+	node: Mention!
+	cursor: String!
+}
+
+"""
+One page of mentions, with the total the filters select and the boundary cursors.
+"""
+type MentionConnection {
+	nodes: [Mention!]!
+	edges: [MentionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a mention list may be sorted by.
+"""
+enum MentionSortField {
+	id
+	entity
+	entityId
+	parentEntityType
+	mentionedEmployeeId
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the mentions are returned in. At most three keys are accepted.
+"""
+input MentionSort {
+	field: MentionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a mention list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the mention row, because the delivered list read answers the row itself
+and joins only the relations its REST caller names — and this connection's read names none. The two
+employee members are therefore identifiers rather than relation paths: narrowing by who was mentioned,
+or by who did the mentioning, is a condition on the identifier this row stores.
+
+No member narrows by the tenant on the caller's behalf. The tenant comes from the credential on every
+read, so the identifier member above narrows the row's own column rather than restating a scope
+decision the caller does not have.
+"""
+input MentionFilter {
+	id: IDFilter
+	actorType: StringFilter
+	entity: StringFilter
+	entityId: IDFilter
+	parentEntityId: IDFilter
+	parentEntityType: StringFilter
+	mentionedEmployeeId: IDFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [MentionFilter!]
+	or: [MentionFilter!]
+	not: MentionFilter
+}
+
+"""
+What a caller states when it files a mention.
+
+The four members beside the parent pair are the ones a mention cannot be filed without, and each is
+required for its own reason. `entity` and `entityId` say which text the mention belongs to, and both
+are written into columns the row cannot be stored without. `mentionedEmployeeId` is the relation the
+row is *for* — the one relation column that is not nullable — so a filing without it is not a mention
+at all. `organizationId` is required because the delivered filing threads it through the two effects
+it raises beside the row: the subscription it publishes for the mentioned employee and the
+notification it raises for them, each of which is addressed to that organization. A body that omitted
+it would file a mention nobody is notified of, which is not a filing this surface offers.
+
+The parent pair is optional and is what makes a mention about a record other than the one its text sits
+on: state it when the text is one level below the record the subscription belongs to.
+
+There is no member for the tenant, and none for the employee who did the mentioning: the delivered
+service stamps both from the credential and overwrites whatever a body states, so a member here would
+promise a scope and an authorship the write refuses.
+
+`entityName` is a member although it is no column of this row: the delivered filing reads it off the
+input to title the notification it raises, so a caller that wants the notification to name the thing
+being discussed states it here.
+"""
+input CreateMentionInput {
+	"The type of the entity the mention's text belongs to, as the platform's own entity-type value."
+	entity: String!
+	"The entity the mention's text belongs to, by identifier."
+	entityId: ID!
+	"The employee who was named, by identifier."
+	mentionedEmployeeId: ID!
+	"The organization the mention — and the subscription and notification it raises — belongs to."
+	organizationId: ID!
+	"The record the mention is about, when the text sits one level below it."
+	parentEntityId: ID
+	"The type of that parent record."
+	parentEntityType: String
+	"Who performed the mentioning, as the contract's own name for it: `System` or `User`."
+	actorType: String
+	"The name the notification shows for the entity being discussed."
+	entityName: String
+}
+
+"""
+What a caller states when it changes a mention that exists.
+
+**A member the caller leaves out is left as it is.** The delivered route reads the row the identifier
+names — proving it is the caller's own — and then writes the members the body states to it, so this is
+a column update and not a replacement of the row. The identifier is the one required member, and it is
+stated because the delivered route carries it in the path rather than in the body.
+
+`entityName` is deliberately absent here, although the filing states it: the delivered update never
+reads it, so a member here could only be accepted and dropped.
+"""
+input UpdateMentionInput {
+	id: ID!
+	"The type of the entity the mention's text belongs to."
+	entity: String
+	"The entity the mention's text belongs to, by identifier."
+	entityId: ID
+	"The employee who was named, by identifier."
+	mentionedEmployeeId: ID
+	"The organization the mention belongs to."
+	organizationId: ID
+	"The record the mention is about, when the text sits one level below it."
+	parentEntityId: ID
+	"The type of that parent record."
+	parentEntityType: String
+	"Who performed the mentioning, as the contract's own name for it: `System` or `User`."
+	actorType: String
+}

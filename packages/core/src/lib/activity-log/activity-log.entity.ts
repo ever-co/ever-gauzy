@@ -18,7 +18,7 @@ export class ActivityLog extends BasePerEntityType implements IActivityLog {
 	@IsNotEmpty()
 	@IsEnum(ActionTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	action: ActionTypeEnum;
 
 	// Indicate the actor type

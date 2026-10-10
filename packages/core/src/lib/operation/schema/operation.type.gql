@@ -1,0 +1,100 @@
+# The durable-operation resource's GraphQL types.
+#
+# `Operation` and `OperationStep` are **not declared here, and must not be**: they are kernel types,
+# declared by `graphql/schema/common.type.gql`, because an async capability anywhere in the platform
+# answers with one. A domain references a kernel type; it never redeclares one, and it may not extend
+# one either — the composition pass refuses both, deliberately, since two declarations diverge the
+# moment one of them is edited. What this domain contributes is everything the *resource* adds around
+# them: the connection, its edge, the sort and filter inputs, and nothing else.
+#
+# The consequence is worth stating rather than discovering: the kernel type carries the operator's
+# view of an operation — its status, its progress, its steps, its deadline and why it failed — and the
+# operation's *documents* (`input`, the mutable `state`, and the terminal `result`) are not members of
+# it. They are reachable over REST, where the node route answers the row as the store holds it, and
+# they are absent here by construction of the kernel schema rather than by omission.
+#
+# `steps` is `[OperationStep!]!` on that type, so a connection of operations resolves each row's plan
+# through this domain's field resolvers — batched per GraphQL operation, one query for the page.
+
+"""
+The boundary of one page of operations.
+
+The cursor is the platform's own: it is produced and consumed by the same codec the REST list route
+uses, so a cursor obtained over one surface resumes on the other.
+"""
+type OperationEdge {
+	node: Operation!
+	cursor: String!
+}
+
+"""
+One page of operations, with the total the filters select and the boundary cursors.
+"""
+type OperationConnection {
+	nodes: [Operation!]!
+	edges: [OperationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an operation may be sorted by.
+"""
+enum OperationSortField {
+	createdAt
+	updatedAt
+	startedAt
+	finishedAt
+	deadlineAt
+	type
+	status
+}
+
+"""
+The order the operations are returned in. At most three keys are accepted.
+"""
+input OperationSort {
+	field: OperationSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on a status.
+"""
+input OperationStatusFilter {
+	eq: OperationStatus
+	ne: OperationStatus
+	in: [OperationStatus!]
+	nin: [OperationStatus!]
+	isNull: Boolean
+}
+
+"""
+The fields an operation list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+The lease columns are deliberately absent: `lockedBy` is an internal worker identity and
+`leaseExpiresAt` answers "is this operation stuck", which the deadline and the status already say in
+the vocabulary an operator reads. The tenant is absent for the reason every resource's filter omits
+it — it is applied to the criterion from the credential, never from the caller — and the
+organization is absent because the reads are not scoped by one: an operation a step of another
+operation started carries no organization, and the resource's scope is the tenant's.
+"""
+input OperationFilter {
+	id: IDFilter
+	type: StringFilter
+	status: OperationStatusFilter
+	aggregateType: StringFilter
+	aggregateId: IDFilter
+	parentOperationId: IDFilter
+	correlationId: IDFilter
+	idempotencyKey: StringFilter
+	deadlineAt: DateTimeFilter
+	startedAt: DateTimeFilter
+	finishedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [OperationFilter!]
+	or: [OperationFilter!]
+	not: OperationFilter
+}

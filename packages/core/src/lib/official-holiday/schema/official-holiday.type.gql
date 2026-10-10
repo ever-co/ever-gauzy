@@ -1,0 +1,168 @@
+# The official holiday's GraphQL types.
+#
+# An official holiday is one publicly recognised day off for a country, kept per organization so the
+# "add holidays" dialog can offer the predefined list and pre-fill the dates once one is picked.
+#
+# **`date` and `endDate` are calendar days carried as `DateTime`.** The columns are `date` rather than
+# `timestamp`, deliberately: a public holiday is a day, and a day stored with a time component lands
+# on the wrong date for anybody in another timezone. The kernel offers no calendar-day scalar, so the
+# instant is what the wire carries and the day is what the value means — the read answers midnight of
+# the stored day, and `endDate` is null on a holiday that lasts one day rather than repeated.
+#
+# `archivedAt` is deliberately not a member: no delivered route of this resource writes it. The create
+# and the edit bodies carry the row's other base columns, which is why `isActive` and `isArchived` are
+# here, but nothing in the delivered pair moves the archive date, and a member with no operation
+# behind it is a fact a client cannot act on. `deletedAt` is carried even though this resource serves
+# no withdrawal: the edit body can write it, and a caller reading the row has to be able to see it.
+
+"""
+One publicly recognised day off, for a country, kept per organization.
+"""
+type OfficialHoliday {
+	id: ID!
+	"The holiday's display name, for example `Christmas Day`."
+	name: String!
+	"The ISO 3166-1 alpha-2 code of the country the holiday belongs to, for example `US`."
+	countryCode: String!
+	"""
+	The holiday's date, or the first day of a multi-day holiday. A calendar day: the columns are
+	`date` rather than `timestamp`, so no timezone shifts it.
+	"""
+	date: DateTime!
+	"The last day of a multi-day holiday, or null when it lasts one day."
+	endDate: DateTime
+	"Whether the holiday falls on the same date every year."
+	isRecurring: Boolean
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"""
+	When the row was marked as removed, or null while it is live. This resource serves no withdrawal
+	route — its controller is not a CRUD controller and declares no lifecycle pair — so the column is
+	carried because the delivered edit body can write it rather than because a route of this domain
+	moves it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of holidays.
+"""
+type OfficialHolidayEdge {
+	node: OfficialHoliday!
+	cursor: String!
+}
+
+"""
+One page of holidays, with the total the filters select and the boundary cursors.
+"""
+type OfficialHolidayConnection {
+	nodes: [OfficialHoliday!]!
+	edges: [OfficialHolidayEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a holiday list may be sorted by.
+"""
+enum OfficialHolidaySortField {
+	createdAt
+	updatedAt
+	name
+	countryCode
+	date
+	endDate
+}
+
+"""
+The order the holidays are returned in. At most three keys are accepted.
+"""
+input OfficialHolidaySort {
+	field: OfficialHolidaySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a holiday list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+**The delivered calendar-year narrowing is a filter rather than an argument, and the `or` group is
+what states it.** The delivered query DTO carries a `year` member, which the read turns into a
+disjunction: the holiday falls inside that year, **or** the holiday recurs. That is not a column and
+cannot be an equality, but it is exactly what the connection protocol's `or` means, so a caller asks
+the same question the route answers with:
+
+```graphql
+filter: { or: [{ date: { between: ["2026-01-01", "2026-12-31"] } }, { isRecurring: { eq: true } }] }
+```
+
+The delivered `countryCode` narrowing upper-cases what it is given before it matches, so a caller
+matching a stored code matches the code as it is stored — `eq: "DE"`, or `ilike: "de"` for the
+case-insensitive spelling of the same question.
+"""
+input OfficialHolidayFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	countryCode: StringFilter
+	date: DateTimeFilter
+	endDate: DateTimeFilter
+	isRecurring: BooleanFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [OfficialHolidayFilter!]
+	or: [OfficialHolidayFilter!]
+	not: OfficialHolidayFilter
+}
+
+"""
+What a caller states when it files a holiday.
+
+The organization is required because the delivered create validates it: `POST /official-holiday`
+binds a DTO that intersects the organization base, and that base refuses a body naming neither an
+organization nor a sent-to destination. The name, the country code and the date are required for the
+same reason — the DTO marks all three non-empty. There is no member for the tenant, because the
+service stamps the caller's own tenant onto the row.
+
+A holiday that is not recurring is stored once, against whatever year it was entered for; a recurring
+one is stored once and read by every year. That is the delivered read's own rule rather than a member
+of this input — see the filter above for how a year narrows a list.
+"""
+input CreateOfficialHolidayInput {
+	organizationId: ID!
+	name: String!
+	countryCode: String!
+	"The holiday's date, or the first day of a multi-day holiday."
+	date: DateTime!
+	"The last day of a multi-day holiday. Omit for a holiday that lasts one day."
+	endDate: DateTime
+	isRecurring: Boolean
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+What a caller states when it changes a holiday that exists.
+
+**Every member but the identifier is optional**, because the delivered edit binds a partial type: a
+member the caller leaves out is left as it is, and the delivered write is the CRUD base's partial
+column update rather than a replacement of the row.
+"""
+input UpdateOfficialHolidayInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	countryCode: String
+	date: DateTime
+	endDate: DateTime
+	isRecurring: Boolean
+	isActive: Boolean
+	isArchived: Boolean
+}

@@ -59,14 +59,13 @@ export function MultiORMManyToMany<T>(
 		// Determine which ORM is in use
 		const ormType = getORMType();
 
-		// Apply TypeORM decorator when using TypeORM
-		if (ormType === MultiORMEnum.TypeORM) {
-			TypeOrmManyToMany(
-				typeFunctionOrTarget as TypeORMTarget<T>,
-				inverseSideProperty as TypeORMInverseSide<T>,
-				options as TypeORMRelationOptions
-			)(target, propertyKey);
-		}
+		// TypeORM's relation under every ORM, MikroORM's only under `DB_ORM=mikro-orm`: the TypeORM
+		// DataSource runs in both modes (see `MultiORMColumn`).
+		TypeOrmManyToMany(
+			typeFunctionOrTarget as TypeORMTarget<T>,
+			inverseSideProperty as TypeORMInverseSide<T>,
+			options as TypeORMRelationOptions
+		)(target, propertyKey);
 
 		// Apply MikroORM decorator when using MikroORM
 		if (ormType === MultiORMEnum.MikroORM) {

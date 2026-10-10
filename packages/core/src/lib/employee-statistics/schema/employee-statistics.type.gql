@@ -1,0 +1,168 @@
+# The employee-statistics object types.
+#
+# Every type in this file is a **computed answer**, and none of them is a row. The platform stores no
+# statistics: each of these is calculated on the request, out of the incomes, the expenses, the
+# recurring expenses and the split expenses the platform does store, plus the bonus policy the
+# organization states. That is why the domain has an object type of its own rather than a resource —
+# an answer that is derived has no identifier, no lifecycle and nothing to withdraw.
+#
+# All four are also read-only: the controller serves four `GET` routes and no write at all, so this
+# file declares no input type. A statistic is not something a client states; it is what the platform
+# answers when asked.
+#
+# **Money is `Decimal` and never `Float`.** Every amount below — an income, an expense, a profit, a
+# bonus, a split share — is added up out of `numeric` columns whose wire format is an exact decimal
+# string, and the arithmetic is done to two places. A binary fraction cannot hold a cent exactly, and a
+# total that is off by a hundredth is a total a finance operator has to reconcile by hand.
+#
+# **A count is `Int`.** `EmployeeStatisticsSplitExpense.employeeCount` is a number of people, and
+# `EmployeeMonthlyStatistic.month` and `.year` are a calendar position rather than a quantity.
+#
+# **The account behind a row is carried as its identifier, never as an object.** An aggregate row's
+# delivered answer nests the account it belongs to, but the read behind it selects four columns of that
+# account and nothing else, so a `User` member here would be a partially filled account — the kind of
+# member that looks like an account and answers nulls for most of one. The account is read from the
+# user surface by the identifier, which is complete there.
+
+"""
+One sum of money over a period: what came in, what went out, what was left and what is owed on it.
+"""
+type EmployeeStatisticTotals {
+	"The income recorded over the period. Money."
+	income: Decimal!
+	"The expenses recorded over the period, the employee's own and the organization's split share alike. Money."
+	expense: Decimal!
+	"The bonus the organization's policy computes over the period. Money."
+	bonus: Decimal!
+	"Income less expense over the period. Money, and negative when the period cost more than it earned."
+	profit: Decimal!
+}
+
+"""
+One employee's sum over the period, as the aggregate answers it.
+"""
+type EmployeeStatisticByEmployee {
+	"The employee the sum belongs to. The account behind it is read from the user surface by this identifier."
+	employeeId: ID!
+	"The income recorded against this employee over the period. Money."
+	income: Decimal!
+	"The expenses recorded against this employee over the period. Money."
+	expense: Decimal!
+	"The bonus computed for this employee over the period. Money."
+	bonus: Decimal!
+	"Income less expense for this employee over the period. Money."
+	profit: Decimal!
+}
+
+"""
+One day of the aggregate's chart, with the whole organization's sum for it.
+"""
+type EmployeeStatisticChartPoint {
+	"The day, formatted by the delivered answer in its own locale-aware spelling."
+	dates: String!
+	"The organization's sum for that day."
+	statistics: EmployeeStatisticTotals!
+}
+
+"""
+What the aggregate route answers for one organization over one range: the total, the same figures per
+employee, and the same figures per day.
+"""
+type EmployeeStatisticsAggregate {
+	"The organization's total over the range."
+	total: EmployeeStatisticTotals!
+	"The same total, once per employee the range's read considered working."
+	employees: [EmployeeStatisticByEmployee!]!
+	"The same total, once per day of the range."
+	chart: [EmployeeStatisticChartPoint!]!
+}
+
+"""
+One employee's twelve-month series, as the per-employee route answers them.
+
+The four lists are **parallel**: they are indexed by the same month walk, so the fourth entry of
+`incomeStatistics` and the fourth of `expenseStatistics` are the same month. The delivered answer does
+not carry the month names beside them, and this type does not invent any: the walk starts at the
+current month and runs forward eleven, which is what makes the lists readable positionally.
+"""
+type EmployeeStatisticsSeries {
+	"Expenses, one entry per month of the walk. Money."
+	expenseStatistics: [Decimal!]!
+	"Income, one entry per month of the walk. Money."
+	incomeStatistics: [Decimal!]!
+	"Income less expense, one entry per month of the walk. Money."
+	profitStatistics: [Decimal!]!
+	"The bonus computed from the organization's policy, one entry per month of the walk. Money."
+	bonusStatistics: [Decimal!]!
+}
+
+"""
+One month of an employee's statistics, as the monthly route answers them.
+
+`month` is the calendar month's zero-based position — January is `0` — which is the value the
+delivered answer carries rather than a name, and it is zero-based because the store's own month
+arithmetic is.
+"""
+type EmployeeMonthlyStatistic {
+	"The month, zero-based: January is `0`."
+	month: Int!
+	"The year, as a four-digit calendar year."
+	year: Int!
+	"The income recorded in the month. Money."
+	income: Decimal!
+	"Every expense of the month, the employee's own, the recurring ones and the organization's split share alike. Money."
+	expense: Decimal!
+	"The month's expenses less the recurring salary lines, which are the part of a payroll an operator reads the run-rate without. Money."
+	expenseWithoutSalary: Decimal!
+	"Income less expense for the month. Money."
+	profit: Decimal!
+	"The bonus computed for the month. Money."
+	bonus: Decimal!
+	"The part of `bonus` that came from income the platform recorded as a bonus directly, rather than from the organization's policy. Money."
+	directIncomeBonus: Decimal!
+}
+
+"""
+One split expense an entry was divided from, kept beside the entry so a reader can see why the amount
+is what it is.
+"""
+type EmployeeStatisticsSplitExpense {
+	"The whole expense before it was divided. Money."
+	originalValue: Decimal!
+	"How many people it was divided among."
+	employeeCount: Int!
+}
+
+"""
+One line of an employee's income or expense history.
+
+The lines are heterogeneous on purpose, and the flags are what tell them apart: an entry may be an
+income or an expense, it may have come from the employee's own record or from the organization's split
+of a shared cost, and it may be recurring, a bonus or a salary line. That is the delivered answer's own
+shape rather than a normalisation of it — the four sources are aggregated differently and a client that
+wanted them merged would lose the ability to ask which one a line came from.
+"""
+type EmployeeStatisticsHistoryEntry {
+	"The instant the line is dated to."
+	valueDate: DateTime
+	"The amount, as the source recorded it. `amount` is already the employee's share for a split expense, and `splitExpense` carries the whole it was divided from. Money."
+	amount: Decimal
+	"What the source recorded about the line."
+	notes: String
+	"The vendor on an expense line. Present on an employee's own expense and absent on the other three sources."
+	vendorName: String
+	"The client on an income line. Present on an income and absent on an expense; the client row is read from the party surface by this identifier."
+	clientId: ID
+	"The expense or income category. Present on the lines that carry one."
+	categoryName: String
+	"Whether the line came from a recurring expense rather than a one-off one."
+	isRecurring: Boolean
+	"Whether the line is income the platform recorded as a bonus."
+	isBonus: Boolean
+	"Whether the line is a recurring salary line, which is what `EXPENSES_WITHOUT_SALARY` filters out."
+	isSalary: Boolean
+	"Which of the four sources the line came from: the employee's own record, or the organization's split of a shared cost. Carried as its value rather than declared as a schema enum because the vocabulary belongs to the contracts package."
+	source: String
+	"The split the line was divided from, present only on the two sources that divide a shared cost."
+	splitExpense: EmployeeStatisticsSplitExpense
+}

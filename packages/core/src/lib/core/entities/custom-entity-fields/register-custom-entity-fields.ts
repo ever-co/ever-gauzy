@@ -58,8 +58,17 @@ const defineColumn = (
 			applyMikroOrmIndex(instance, name as never, undefined, undefined, {});
 		}
 
+		// A relation-id custom field (the GitHub plugin's `repositoryId`, beside its `repository`) names the
+		// relation's own join column. TypeORM reads it through the `@RelationId` its branch above applies; under
+		// MikroORM it has to be the `persist: false` mirror `MultiORMColumn({ relationId: true })` makes of such
+		// a column, the relation writing the column. Mapped as a second persisted property, the embeddable names
+		// `repositoryId` twice and discovery refuses it: "Duplicate fieldNames are not allowed:
+		// OrganizationProject.customFields.repository (fieldName: 'repositoryId'),
+		// OrganizationProject.customFields.repositoryId (fieldName: 'repositoryId')".
 		const type = resolveDbType((options as ColumnOptions<any>).type);
-		MikroORMProperty(parseMikroOrmColumnOptions({ type, options: options as ColumnOptions<any> }))(instance, name);
+		MikroORMProperty(
+			parseMikroOrmColumnOptions({ type, options: { ...(options as ColumnOptions<any>), relationId } })
+		)(instance, name);
 	}
 };
 
@@ -84,6 +93,14 @@ export const registerFields = async (
 	if (customField.type === 'relation') {
 		switch (customField.relationType) {
 			case 'many-to-many': {
+				// MikroORM holds no collection in an embeddable: a many-to-many custom field registered on the
+				// MikroORM embeddable fails discovery ("MikroOrmEmployeeEntityCustomFields.jobPresets has wrong
+				// 'mappedBy' reference type: Employee instead of MikroOrmEmployeeEntityCustomFields"). Under
+				// MikroORM it therefore stays unmapped — as it always was, while this registration ran only
+				// after MikroORM had discovered the entities. TypeORM's registration is unchanged.
+				if (ormType === 'mikro-orm') {
+					break;
+				}
 				const options = {
 					...(customField.pivotTable && { pivotTable: customField.pivotTable }),
 					...(customField.joinColumn && { joinColumn: customField.joinColumn }),

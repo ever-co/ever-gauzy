@@ -1,0 +1,419 @@
+# The invite's GraphQL types.
+#
+# An invitation is the row between a tenant and a person who is not in it yet: an address is invited
+# into one organization, one role, and whichever teams, projects, departments and contacts the inviter
+# named; the platform mails the address a credential; and the person spends that credential once — to
+# register, to join a team, or to take up a contact — or refuses it. The row is therefore the state of
+# an offer, and almost everything this file has to say is about the difference between the offer and
+# the credential that redeems it.
+#
+# **`token` and `code` are deliberately not carried, and that is the one narrowing this type makes.**
+# The token is the credential the accept route consumes and the code is the other half of the same
+# single-use pair — a pair the entity itself already excludes from the answers it is serialised into,
+# because `code` carries `@Exclude({ toPlainOnly: true })`. This surface answers an invitation's state
+# and whose it is; it does not answer its credential. A member that put a live acceptance credential on
+# every row of an administration list would be a capability neither surface's routes intend: the list
+# route is a register a manager reads, and the credential is mailed to the invited address rather than
+# handed to whoever is looking at the register. The entity's omission of `code` is the entity's own
+# decision, and this delivery follows it rather than widening it — and it extends the same reasoning to
+# `token`, which travels the same path for the same single use.
+#
+# **The collections are absent, and each because a REST caller has to name it.** `role`, `user`,
+# `invitedByUser`, `projects`, `organizationContacts`, `departments` and `teams` are joined only when a
+# REST caller names them in the `relations` of its query string, and no read this surface performs names
+# any: the register's read is handed an empty query document, the caller's own queue selects its
+# columns explicitly, and the two public validation reads select an address, a name and an organization
+# name. A field for one of them would therefore read null on every row answered here, whichever row was
+# asked about, and a client would conclude the invitation names nobody. The three identifiers that are
+# columns of this row are carried instead — `roleId`, `userId` and `invitedByUserId` — and each
+# collection is read on the domain that owns it: the role on the role domain, the two people on the user
+# domain, the projects on the organization-project domain, the contacts on the organization-contact
+# domain, the departments on the organization-department domain and the teams on the organization-team
+# domain. The queues and registers that do join them are `GET /api/invite?data={"relations":[…]}` and
+# `GET /api/invite/me`, which selects its teams explicitly.
+
+"""
+One invitation, as the delivered reads answer it.
+"""
+type Invite {
+	id: ID!
+	"The address the invitation was mailed to, and the address the credential is checked against."
+	email: String!
+	"The name the inviter stated for the invited person. Null when none was stated."
+	fullName: String
+	"""
+	The state of the invitation, in the contracts' own `InviteStatusEnum` vocabulary: `INVITED` while
+	the credential may still be spent, and `ACCEPTED`, `REJECTED` or `EXPIRED` once it may not.
+	Carried as its value rather than declared as a schema enum, because the same vocabulary types the
+	column on the row and the transitions the delivered writers make on it.
+	"""
+	status: String!
+	"""
+	When the invitation lapses. Null means it does not lapse, which is the delivered vocabulary's own
+	`Never` rather than a missing value — the entity's load subscriber turns the two cases into the
+	liveness flag below.
+	"""
+	expireDate: DateTime
+	"""
+	The instant the invitation was answered, or the date the invited person is to start work on: the
+	delivered write stores the stated start date in this column, so an invitation read before it is
+	answered may already carry one.
+	"""
+	actionDate: DateTime
+	"""
+	Whether the invitation has lapsed. Derived on load by the entity's own subscriber from the instant
+	above, which is the liveness fact a manager reads — an invitation that has lapsed is one no
+	credential can spend.
+	"""
+	isExpired: Boolean
+	"""
+	The role the invited person is given on acceptance, by identifier. The row is joined only when a
+	REST caller names it, and is read on the role domain.
+	"""
+	roleId: ID
+	"""
+	The account the invitation produced, by identifier. Null while the invitation is pending, and read
+	on the user domain.
+	"""
+	userId: ID
+	"The person who issued the invitation, by identifier. The account is read on the user domain."
+	invitedByUserId: ID
+	"The tenant the invitation belongs to, by identifier. Stamped by the delivered write."
+	tenantId: ID
+	"The organization the invitation is into, by identifier."
+	organizationId: ID
+	"When the invitation was issued."
+	createdAt: DateTime
+	"When the row last changed."
+	updatedAt: DateTime
+	"""
+	When the invitation was withdrawn, or null while it is live. A removal this resource serves is a
+	withdrawal rather than an erasure, and this column is the whole of what it writes.
+	"""
+	deletedAt: DateTime
+	"When the invitation was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"Whether the invitation is active. A flag an operator sets, not a statement about its lifecycle."
+	isActive: Boolean
+	"Whether the invitation is archived. A flag an operator sets, not a statement about its lifecycle."
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of invitations.
+"""
+type InviteEdge {
+	node: Invite!
+	cursor: String!
+}
+
+"""
+One page of invitations, with the total the filters select and the boundary cursors.
+"""
+type InviteConnection {
+	nodes: [Invite!]!
+	edges: [InviteEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an invitation list may be sorted by.
+"""
+enum InviteSortField {
+	id
+	email
+	fullName
+	status
+	expireDate
+	actionDate
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the invitations are returned in. At most three keys are accepted.
+"""
+input InviteSort {
+	field: InviteSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an invitation list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+**The narrowing the delivered register performs on its own is stated nowhere here.** That read always
+adds the caller's tenant to its criterion, and it reads `isExpired` — a flag the entity derives on load
+rather than a column — as a range on `expireDate`, treating an absent instant as an invitation that
+never lapses. Both belong to the read rather than to the caller: the tenant comes from the credential,
+so a filter naming another one narrows to nothing rather than reading across tenants, and a caller that
+wants only the live rows states the range on `expireDate` that means so. Every member below is
+therefore a column of the row the read actually answers, which is what keeps a filter that silently
+selects the empty set out of the schema.
+"""
+input InviteFilter {
+	id: IDFilter
+	email: StringFilter
+	fullName: StringFilter
+	status: StringFilter
+	expireDate: DateTimeFilter
+	actionDate: DateTimeFilter
+	roleId: IDFilter
+	userId: IDFilter
+	invitedByUserId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [InviteFilter!]
+	or: [InviteFilter!]
+	not: InviteFilter
+}
+
+"""
+What the bulk send answers: the invitations it wrote, how many there were, and how many addresses it
+left alone.
+
+This is a type of its own rather than the `Invite` type, because that is what the delivered handler
+produces — `ICreateEmailInvitesOutput` is an envelope of the rows it saved beside a count of the
+addresses it skipped, and flattening it into a list of invitations would lose the count, which is the
+only way a caller learns that an address it named was already invited.
+"""
+type InviteSendOutcome {
+	"The invitations this call wrote. An address already invited to every team it names is not here."
+	items: [Invite!]!
+	"How many invitations were written."
+	total: Int!
+	"""
+	How many addresses were left alone because the invitation for them had already been sent and none
+	of the teams named was still to be joined. They are not failures: each is an address the register
+	already covers.
+	"""
+	ignored: Int!
+}
+
+"""
+The kind of invitation being issued. The vocabulary is the contracts' own `InvitationTypeEnum`, and it
+decides which message is composed: an account invitation, an employee invitation, a candidate
+invitation or a team membership.
+"""
+enum InvitationType {
+	USER
+	EMPLOYEE
+	CANDIDATE
+	TEAM
+}
+
+"""
+The three claims that make a password reset possible on an account whose address nobody has confirmed.
+"""
+input TermsAcceptanceClaimInput {
+	"The stable document identifier, `<document>:<product>`."
+	documentId: String!
+	"The published version of the document the person was shown."
+	version: String!
+	"The lowercase hex sha256 of the exact document text that was rendered."
+	sha256: String!
+	"The BCP-47 locale of the rendering that was shown."
+	locale: String!
+}
+
+"""
+What a caller states when it sends invitations to a list of addresses.
+
+**Every member here is one the delivered write reads**, and the members it does not read are absent
+rather than accepted and discarded: the delivered body type carries a `sentTo` member that no part of
+the write touches, and an organization that may be stated as a row instead of an identifier — this
+surface states the identifier, which is the member the write actually resolves.
+
+The collections are stated as identifiers because the delivered write resolves them to rows itself: it
+reads the teams, the projects, the departments and the contacts the caller names, keeps only those of
+the caller's own tenant and organization, and files the resolved rows onto the invitation. The
+addresses are addresses rather than identifiers — `emailIds` is a list of e-mail addresses, and it is
+required and non-empty, because a send that names no address has nothing to send.
+
+`invitationExpirationPeriod` is stated as text because the delivered vocabulary mixes the two: four
+counts of days and the word `Never`. An enum here would have to spell members the delivered write does
+not recognise, and a number could not carry the word, so the member is the wire form the write reads.
+
+There is no member for the tenant: the delivered write stamps the caller's own and overwrites whatever
+a body states.
+"""
+input CreateInvitesInput {
+	"The addresses to invite. Required, and never empty."
+	emailIds: [String!]!
+	"The kind of invitation to issue. The write composes its message from it."
+	inviteType: InvitationType!
+	"The role the invited people are given on acceptance. Required by the delivered body."
+	roleId: ID!
+	"The organization the invitations are into."
+	organizationId: ID!
+	"The teams to invite into. Required when the kind is `TEAM`, which no input type can state."
+	teamIds: [ID!]
+	"The projects the invited people are filed under on acceptance."
+	projectIds: [ID!]
+	"The departments the invited people are filed under on acceptance."
+	departmentIds: [ID!]
+	"The contacts the invited people are attached to on acceptance."
+	organizationContactIds: [ID!]
+	"The date the invited person is to start work on, stored in the invitation's action column."
+	startedWorkOn: DateTime
+	"The date an invited candidate applied, stored the same way when no start date is stated."
+	appliedDate: DateTime
+	"""
+	How long the invitation stays valid: a count of days as text, or `Never` for one that does not
+	lapse. Omit to take the organization's own expiry period.
+	"""
+	invitationExpirationPeriod: String
+	"The name to greet the invited people by. Omit to greet the address alone."
+	fullName: String
+	"""
+	The link the message points at instead of the platform's own acceptance page. When it is stated the
+	message carries this address with the invitation's own query parameters appended.
+	"""
+	callbackUrl: String
+	"""
+	The query parameters the callback link is composed with, as a document: each key is the parameter
+	to append and each value names an invitation member to take it from.
+	"""
+	queryParams: JSON
+}
+
+"""
+What a caller states when it mails a fresh credential for an invitation that is still pending.
+
+The identifier is the only required member and names the row; the kind selects the message, and the
+callback link is the same override the send states. The organization members the delivered body type
+carries are absent because the delivered write reads neither: the row already belongs to an
+organization, and it is the invitation's own that the message is composed with.
+"""
+input ResendInviteInput {
+	"The invitation to mail again."
+	inviteId: ID!
+	"The kind of message to compose. The row states what was invited; the caller states how to say it."
+	inviteType: InvitationType!
+	"The link the message points at instead of the platform's own acceptance page."
+	callbackUrl: String
+}
+
+"""
+What a caller states when it refuses an invitation.
+
+The address and the credential that was mailed to it — both halves of the pair, because the delivered
+reader matches on the address and then verifies the credential against it. A miss is a refusal rather
+than an empty answer on the route this mirrors, for the same reason the two validation reads refuse
+one: telling "no such invitation" apart from "the credential was wrong" would confirm which
+credentials are live.
+"""
+input RejectInviteInput {
+	"The address the invitation was mailed to."
+	email: String!
+	"The token from the message's link."
+	token: String!
+	"The code from the message."
+	code: String!
+}
+
+"""
+The account an acceptance registers, as much of it as the caller may state.
+
+**Five members of the user body are deliberately absent, and the delivered handler is why.** It
+overwrites the invited address, the role and its identifier, the tenant and the tenant's identifier
+from the invitation before it registers anything — this route is public, and a body-supplied address
+would let an invitee register an account for somebody else's address, a body-supplied role would let
+one grant itself an administrator's, and a body-supplied tenant would let one register into a tenant
+the invitation does not name. The registration then strips the members that identify or privilege an
+*existing* account before it persists — an identifier, a password hash, the verification marks and the
+refresh token — so none of those is offered either.
+
+What remains is what the account is: the two name parts, an avatar and the language the person reads.
+The password is not here but beside it on the acceptance inputs, because that is where the delivered
+registration reads it from.
+"""
+input AcceptInviteUserInput {
+	"The given name of the person the account is for."
+	firstName: String
+	"The family name of the person the account is for."
+	lastName: String
+	"A URL the account's avatar is taken from."
+	imageUrl: String
+	"The language the account's interface is shown in, in the platform's own vocabulary."
+	preferredLanguage: String
+}
+
+"""
+What a caller states when it accepts an invitation and registers.
+
+The address and one of the two credentials the message carried — the token its link carries, or the
+code a person retypes. **Exactly one of `token` and `code` is required**, which is the rule the
+delivered reader applies: it branches on which of the two the body carries, the token first and the
+code second, so neither can be non-null here — a caller that stated both would take the token's branch
+whatever it meant, and the code's branch would be a path no caller could reach over this protocol. A
+body stating neither reaches neither branch and is refused before anything is matched, which is why
+neither is stated as required and the field's own description carries the rule.
+
+The account body is the one the registration creates. `password` is optional because the delivered
+contract marks it so: an acceptance by a person who already has an account in the invited tenant does
+not register one, and a password stated for that case is simply not read.
+
+Four members of the delivered body are absent, each because the delivered handler settles it before the
+write: `inviteId` is pinned to the invitation the credential was validated against — the delivered
+reader resolves it and overwrites whatever the body says, so a caller cannot accept one invitation
+while naming another; `originalUrl` is taken from the request's own origin header, which the transport
+supplies rather than the caller; `organizationId` is overridden with the invitation's own organization;
+and `createdByUserId` is deleted outright unless it names the authenticated caller, which on a public
+route it never does. `confirmPassword` is absent as well, because no part of the delivered registration
+reads it — the confirmation is the form's check, not the server's.
+"""
+input AcceptInviteInput {
+	"The address the invitation was mailed to, and the address the credential is checked against."
+	email: String!
+	"The token from the message's link. Required when no code is stated."
+	token: String
+	"The code from the message. Required when no token is stated."
+	code: String
+	"The account to register for the invited person."
+	user: AcceptInviteUserInput!
+	"The password the new account signs in with. Hashed by the service before it is stored."
+	password: String
+	"Whether the acceptance also files the new account as an employee of the organization."
+	featureAsEmployee: Boolean
+	"""
+	The documents the person ticked the box for, exactly as they were shown. Absent for a
+	machine-driven acceptance, where a checkbox never existed.
+	"""
+	terms: [TermsAcceptanceClaimInput!]
+	"Whether the registration is part of an import, which records its source beside the new account."
+	isImporting: Boolean
+	"The identifier the imported row had in the system it came from."
+	sourceId: ID
+}
+
+"""
+What a caller states when it takes up a contact invitation and provisions the contact's own workspace.
+
+This is the one acceptance that builds a tenant: the delivered handler creates the tenant the contact
+is named by, the roles and features that belong to it, the organization described here, and the
+account that administers it. The identifier names the invitation, the account body is the
+administrator, and `contactOrganization` is the workspace itself — typed by the organization domain's
+own create input rather than restated here, because the delivered write hands that body straight to
+that domain's create and the two have to agree member for member.
+
+`originalUrl` is absent for the same reason it is absent above: the transport's origin header supplies
+it, and the delivered handler overwrites a stated one.
+"""
+input AcceptOrganizationContactInviteInput {
+	"The invitation to take up."
+	inviteId: ID!
+	"The workspace the contact is accepting: the tenant's name and the organization built under it."
+	contactOrganization: CreateOrganizationInput!
+	"The account that administers the new workspace."
+	user: AcceptInviteUserInput!
+	"The password the new account signs in with. Hashed by the service before it is stored."
+	password: String!
+}

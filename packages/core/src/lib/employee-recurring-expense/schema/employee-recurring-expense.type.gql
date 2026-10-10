@@ -1,0 +1,303 @@
+# The employee recurring expense's object types.
+#
+# A recurring expense is a standing arrangement rather than a cost: it says that from one month onward,
+# and until an end that may be open, an employee carries a cost of one amount under one category. The
+# platform reads the arrangement — never a stored row per month — when it computes what a month cost,
+# which is why the row carries both ends twice: as a date, and as the day, month and year the delivered
+# date arithmetic reads.
+#
+# **The amount is `Decimal`, never `Float`.** `value` is the standing cost, a `numeric` column read
+# through the platform's numeric transformer, and a standing cost added up over twelve months as a
+# binary fraction is a payroll that is cents out. Nothing here rescales, rounds or reformats it.
+#
+# **The currency is the row's own three-letter code.** It is carried as its value rather than as a
+# schema enum because the vocabulary is the contracts' own `CurrenciesEnum`, shared with every other row
+# on the platform that states an amount.
+#
+# **The beginning and the end are carried as the columns hold them.** The delivered edit and the
+# delivered removal both work on the day, month and year rather than on the instant — the edit compares
+# months, and the removal moves an end date to the last day of a month — so a client that wants to
+# propose a change needs the same three members the write reads, and `startDate` beside them is the
+# instant the arrangement itself is dated to.
+#
+# **The employee is carried as an identifier, and it may be absent.** No read behind this surface joins
+# the employee row: the list read is handed its relations from no query string at all, the node read
+# states none, and the delivered handlers answer the row as they stored it. An absent identifier is not
+# a missing fact either — a standing cost the whole organization carries has no employee at all, which
+# is the "All Employees" arrangement the delivered validation accepts — so the member is nullable and
+# means both things the row means.
+
+"""
+One standing cost an employee carries from one month until an end that may be open.
+"""
+type EmployeeRecurringExpense {
+	id: ID!
+	"The day of the month the arrangement begins, from 1 to 31."
+	startDay: Int!
+	"The month the arrangement begins, from 1 to 12."
+	startMonth: Int!
+	"The four-digit year the arrangement begins in."
+	startYear: Int!
+	"The instant the arrangement is dated to, which is the beginning above as a date."
+	startDate: DateTime!
+	"The day of the month the arrangement ends; null while the end is open."
+	endDay: Int
+	"The month the arrangement ends; null while the end is open."
+	endMonth: Int
+	"The year the arrangement ends; null while the end is open."
+	endYear: Int
+	"The instant the arrangement ends; null while the end is open, which is what makes the cost standing."
+	endDate: DateTime
+	"The category the standing cost is filed under, in the tenant's own vocabulary."
+	categoryName: String!
+	"The standing cost, in the row's own `currency`."
+	value: Decimal!
+	"The ISO 4217 code `value` is expressed in."
+	currency: String!
+	"""
+	The arrangement this row belongs to. The delivered creation sets it to the row's own identifier, so
+	a standing arrangement is a family of rows whose later members are the ones an edit opened when it
+	moved the beginning forward — which is what the verdict read below looks a conflict up among.
+	"""
+	parentRecurringExpenseId: ID
+	"The employee the standing cost is recorded against; null on an arrangement the whole organization carries."
+	employeeId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of standing costs.
+"""
+type EmployeeRecurringExpenseEdge {
+	node: EmployeeRecurringExpense!
+	cursor: String!
+}
+
+"""
+One page of standing costs, with the total the filters select and the boundary cursors.
+"""
+type EmployeeRecurringExpenseConnection {
+	nodes: [EmployeeRecurringExpense!]!
+	edges: [EmployeeRecurringExpenseEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+What moving one arrangement's beginning would mean, and the arrangements in the way.
+
+**This is a computed verdict rather than a row.** The delivered read compares the beginning the caller
+proposes with the one the arrangement has, and when the change would move the beginning forward or
+backward it reads the sibling arrangements of the same parent that fall inside the gap. So the answer
+has two parts that belong together: what the change would be, and the rows that make it that.
+
+`value` is the contracts' own verdict rather than a schema enum, because the vocabulary is shared with
+the organization's own arrangements: `NO_CHANGE` when the two beginnings are the same instant,
+`WITHIN_MONTH` when they fall in one month, `REDUCE_SAFE` and `REDUCE_CONFLICT` when the change moves the
+beginning backward with and without a sibling in the way, `INCREASE_SAFE_WITHIN_LIMIT` and
+`INCREASE_SAFE_OUTSIDE_LIMIT` when it moves forward without a conflict, and `INCREASE_CONFLICT` when a
+sibling stands between the two. The delivered edit asks this same question of itself and refuses the
+last of the seven outright.
+"""
+type EmployeeRecurringExpenseStartDateUpdateType {
+	"What moving the beginning would be, as the contracts' own verdict."
+	value: String!
+	"The sibling arrangements of the same parent that fall inside the gap the change would leave."
+	conflicts: [EmployeeRecurringExpense!]!
+}
+
+"""
+The fields a standing-cost list may be sorted by.
+
+`startDate` is the payroll's own order, which is the column the delivered month route narrows on; the
+two timestamps are how a change is found again; `value` is what a list of standing costs is taken by;
+and `categoryName` is offered because a payroll is read in category groups.
+"""
+enum EmployeeRecurringExpenseSortField {
+	createdAt
+	updatedAt
+	startDate
+	endDate
+	value
+	categoryName
+}
+
+"""
+The order the standing costs are returned in. At most three keys are accepted.
+"""
+input EmployeeRecurringExpenseSort {
+	field: EmployeeRecurringExpenseSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a standing-cost list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row, and the four that describe the beginning and the end are what
+makes the delivered month route a filter of this list rather than a read of its own:
+
+```
+filter: {
+  or: [
+    { startDate: { between: [$start, $end] }, endDate: { isNull: true } },
+    { startDate: { lte: $end }, endDate: { gte: $start } }
+  ]
+}
+```
+
+That is the delivered criterion exactly — an arrangement that begins inside the range and has no end
+yet, or one that begins no later than the range's start and ends no earlier than its end — stated in the
+connection's own vocabulary, with the two bounds being the instants the delivered handler computes from
+the range its route was given (one month's bounds, as the delivered clients send them). An employee's own
+arrangements are the same disjunction with `employeeId: { eq: … }` beside it, and a family of rows is
+`parentRecurringExpenseId: { eq: … }`.
+
+The amount is stated through the decimal family, which is the family money is compared in. `deletedAt`
+is deliberately absent although the object carries it: the delivered list read answers live rows only,
+so a condition on that column could only ever match the empty set. The tenant is absent because it is
+applied to the criterion from the credential rather than from the caller.
+"""
+input EmployeeRecurringExpenseFilter {
+	id: IDFilter
+	startDay: NumberFilter
+	startMonth: NumberFilter
+	startYear: NumberFilter
+	startDate: DateTimeFilter
+	endDay: NumberFilter
+	endMonth: NumberFilter
+	endYear: NumberFilter
+	endDate: DateTimeFilter
+	categoryName: StringFilter
+	value: DecimalFilter
+	currency: StringFilter
+	parentRecurringExpenseId: IDFilter
+	employeeId: IDFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeRecurringExpenseFilter!]
+	or: [EmployeeRecurringExpenseFilter!]
+	not: EmployeeRecurringExpenseFilter
+}
+
+# The write surface.
+#
+# `CreateEmployeeRecurringExpenseInput` declares what the delivered creation stores; the edit input
+# declares the smaller set the delivered edit reads. The difference is the delivered handler's, not a
+# preference here: the creation stores everything the body validates, and the edit writes the beginning
+# and the value while taking the currency and the parent from the row it is replacing.
+#
+# The tenant is not a member of either input: the delivered write stamps the caller's own tenant onto
+# the row and refuses a row that belongs to another one.
+
+"""
+What a caller states when it records a standing cost.
+
+`value`, `categoryName`, the two beginnings — the date and the day, month and year — and the currency
+are the members the delivered body validation requires; a body without the currency is refused, which is
+why the member is non-null here.
+
+The employee is optional, and its absence is meaningful rather than incomplete: an arrangement the whole
+organization carries has no employee at all. The delivered handler additionally stamps the caller's own
+employee onto the row when the caller has no permission to choose one, so the member a caller states is
+not always the member the row ends up with — which is the delivered creation's own scope rule and is not
+narrowed here.
+"""
+input CreateEmployeeRecurringExpenseInput {
+	"The standing cost, in the currency below."
+	value: Decimal!
+	"The ISO 4217 code the value is expressed in."
+	currency: String!
+	"The category the standing cost is filed under."
+	categoryName: String!
+	"The day of the month the arrangement begins, from 1 to 31."
+	startDay: Int!
+	"The month the arrangement begins, from 1 to 12."
+	startMonth: Int!
+	"The four-digit year the arrangement begins in."
+	startYear: Int!
+	"The instant the arrangement is dated to."
+	startDate: DateTime!
+	"The day of the month the arrangement ends, where the caller states one."
+	endDay: Int
+	"The month the arrangement ends, where the caller states one."
+	endMonth: Int
+	"The year the arrangement ends, where the caller states one."
+	endYear: Int
+	"The instant the arrangement ends, where the caller states one. Omit it and the cost is standing."
+	endDate: DateTime
+	"The arrangement this row belongs to, where the caller states one. The delivered creation sets it to the row's own identifier."
+	parentRecurringExpenseId: ID
+	"The organization the standing cost is filed under."
+	organizationId: ID
+	"The employee the standing cost is recorded against. Omit it for an arrangement the whole organization carries."
+	employeeId: ID
+}
+
+"""
+What a caller states when it changes a standing cost.
+
+**These are the members the delivered edit reads, and nothing else.** Its body validates more — the end
+of the arrangement, the parent, the currency — and the delivered handler writes none of them: the plain
+edit writes the beginning and the value, and the branch that closes one arrangement and opens its
+successor takes the currency and the parent from the row it replaces. An input member the write ignores
+would be worse than no member at all, so they are not offered.
+
+An absent `employeeId` is not "leave it as it is" in every case: the delivered handler reads an absent
+member, an explicit `null` and an identifier as three different instructions — leave the assignment
+alone, switch the arrangement to the whole organization, and assign it to the named employee — and a
+caller without permission to choose an employee has their own stamped on instead. Stating that here
+rather than narrowing it is the delivered edit's own rule.
+
+The verdict member the delivered handler computes is not a member of this input: it asks the
+`employeeRecurringExpenseStartDateUpdateType` field's question of itself and overwrites whatever a body
+carried.
+"""
+input UpdateEmployeeRecurringExpenseInput {
+	id: ID!
+	"The day of the month the arrangement now begins, from 1 to 31."
+	startDay: Int!
+	"The month the arrangement now begins, from 1 to 12."
+	startMonth: Int!
+	"The four-digit year the arrangement now begins in."
+	startYear: Int!
+	"The category the standing cost is filed under."
+	categoryName: String!
+	"The standing cost."
+	value: Decimal!
+	"The employee the standing cost is recorded against; `null` switches it to the whole organization."
+	employeeId: ID
+}
+
+"""
+How much of a standing arrangement a removal takes out.
+
+**This is this domain's own spelling of a shape the platform states once**, because the contracts'
+`IRecurringExpenseDeleteInput` is what both standing-cost resources' removals read and a document
+declares the concepts it serves rather than reaching into a neighbour's for one: the organization's own
+arrangements declare the same three members under their own name.
+
+`deletionType` is the contracts' own value: `all` removes every row of the arrangement, `future` moves
+its end back to the month before the one named so that nothing later remains, and `current` takes the
+named month out of the middle — closing the arrangement before it and opening its successor after it.
+`month` and `year` name the month all three are measured from; `all` is the one that does not read them.
+"""
+input EmployeeRecurringExpenseDeleteInput {
+	"Which of the three removals this is: `all`, `future` or `current`."
+	deletionType: String!
+	"The month the removal is measured from, from 1 to 12."
+	month: Int!
+	"The four-digit year the removal is measured from."
+	year: Int!
+}

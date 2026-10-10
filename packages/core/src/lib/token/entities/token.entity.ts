@@ -3,6 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { Index, JoinColumn, RelationId, VersionColumn } from 'typeorm';
+import { Property as MikroOrmProperty } from '@mikro-orm/core';
 import {
 	ColumnIndex,
 	JsonColumn,
@@ -13,6 +14,32 @@ import {
 import { BaseEntity, User } from '../../core/entities/internal';
 import { ExportRedacted } from '../../export-import/export-redact.decorator';
 import { IToken, ITokenConfig, ITokenHealthReport, TokenStatus } from '../interfaces';
+import { MultiORMEnum, getORMType } from '../../core/utils';
+
+/**
+ * MikroORM's mapping of the optimistic-lock version, which `@VersionColumn` gives TypeORM alone.
+ *
+ * Without it MikroORM had no `version` property at all: a token it inserted left the NOT NULL column out
+ * (`NOT NULL constraint failed: tokens.version` — every MikroORM login), and nothing it wrote ever moved the
+ * version the status transitions compare-and-set on.
+ *
+ * It is an ordinary integer that starts at 1, as TypeORM's does, rather than MikroORM's `version: true`:
+ * MikroORM leaves a version property out of the INSERT and reads back the column's default, and the
+ * migrations give the column none, because TypeORM writes the 1 itself. `CrudService.update` increments it in
+ * the statement, as TypeORM's update does, which is what the `{ id, version }` compare-and-set relies on.
+ * Applied under `DB_ORM=mikro-orm` only, like every MikroORM property decorator on the platform (see
+ * `MultiORMColumn`).
+ */
+function MikroOrmVersionProperty(): PropertyDecorator {
+	return (target, propertyKey) => {
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			MikroOrmProperty({ type: 'integer', onCreate: (token: Token) => token.version ?? 1 })(
+				target,
+				propertyKey as string
+			);
+		}
+	};
+}
 
 @Index(['tokenHash'], { unique: true })
 @Index(['tokenHash', 'status'])
@@ -213,6 +240,7 @@ export class Token extends BaseEntity implements IToken {
 		readOnly: true
 	})
 	@VersionColumn()
+	@MikroOrmVersionProperty()
 	version: number;
 
 	@ApiProperty({

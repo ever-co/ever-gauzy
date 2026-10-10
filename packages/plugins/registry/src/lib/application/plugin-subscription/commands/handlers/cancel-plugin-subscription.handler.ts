@@ -79,7 +79,8 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 				...cancelledSubscription.metadata,
 				cancelledChildCount: cancelledChildren.length,
 				cancelledBy: subscriberId,
-				cancellationType: subscription.isInherited() ? 'parent' : 'child'
+				// An inherited subscription is a child of another; a subscription that is not is the parent.
+				cancellationType: subscription.isInherited() ? 'child' : 'parent'
 			};
 
 			return this.pluginSubscriptionService.save(cancelledSubscription);

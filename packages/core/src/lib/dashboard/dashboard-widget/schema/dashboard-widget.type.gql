@@ -1,0 +1,176 @@
+# The dashboard widget's GraphQL types.
+#
+# A widget is a **placement** rather than a definition: it names the registry key a client renders, the
+# dashboard it sits on, and the size, colour, ordering and visibility that make it one arrangement
+# rather than another. The same widget can therefore appear on many dashboards, and two rows on one
+# dashboard are two placements rather than one row read twice — which is why the identifier is the
+# row's own and the dashboard is a column of it.
+#
+# `options` is the per-placement configuration and is carried as `JSON`, exactly as the dashboard's own
+# layout document is: its shape depends on the registry entry the placement renders, so a type here
+# would freeze one widget's settings and answer `null` for every other widget's. The column is a
+# document the platform stores and hands back unchanged, which is what `JSON` is for.
+#
+# The four relations are absent and their identifiers are carried instead. `dashboard`, `employee`,
+# `project` and `organizationTeam` are each loaded only when a REST caller names them in `relations`,
+# and no delivered read this surface mirrors names any — so a relation field would be null on every row
+# answered here. The identifiers are columns, they are what a client filters a placement by, and the
+# rows behind them are their own domains' to answer.
+#
+# `isArchived`, `archivedAt` and the audit-user columns are not carried: no route of this resource reads
+# or writes them, and the two lifecycle routes move `deletedAt` alone.
+
+"""
+One widget placed on a dashboard: what it renders, where it sits and how it is configured.
+"""
+type DashboardWidget {
+	id: ID!
+	"The widget's display name, as the dashboard prints it."
+	name: String!
+	"The placement's position among the dashboard's widgets."
+	order: Int
+	"The placement's size, in the units the dashboard's own grid uses."
+	size: Int
+	"The colour the placement is rendered in."
+	color: String
+	"Whether the placement is shown. A hidden placement keeps its row and its configuration."
+	isVisible: Boolean
+	"""
+	The placement's own settings. Its shape belongs to the widget the placement renders, so it travels
+	as the document it is.
+	"""
+	options: JSON
+	"The dashboard the placement sits on."
+	dashboardId: ID
+	"The employee the placement is scoped to, stamped from the credential when the caller names none."
+	employeeId: ID
+	"The project the placement reports on, when it reports on one."
+	projectId: ID
+	"The team the placement reports on, when it reports on one."
+	organizationTeamId: ID
+	tenantId: ID
+	organizationId: ID
+	"Whether the row is active. A removal sets `deletedAt`; it does not clear this flag."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+	"When the placement was withdrawn, or null while it is live. The two lifecycle routes write this alone."
+	deletedAt: DateTime
+}
+
+"""
+The boundary of one page of dashboard widgets.
+"""
+type DashboardWidgetEdge {
+	node: DashboardWidget!
+	cursor: String!
+}
+
+"""
+One page of dashboard widgets, with the total the filters select and the boundary cursors.
+"""
+type DashboardWidgetConnection {
+	nodes: [DashboardWidget!]!
+	edges: [DashboardWidgetEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a widget list may be sorted by.
+"""
+enum DashboardWidgetSortField {
+	createdAt
+	updatedAt
+	name
+	order
+	isVisible
+}
+
+"""
+The order the widgets are returned in. At most three keys are accepted.
+"""
+input DashboardWidgetSort {
+	field: DashboardWidgetSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a widget list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+`dashboardId` is the member a client assembles a dashboard's canvas with, which is the read this
+resource exists for: the widgets of one dashboard are this connection narrowed by that column rather
+than a second root field over the same rows.
+"""
+input DashboardWidgetFilter {
+	id: IDFilter
+	name: StringFilter
+	order: NumberFilter
+	size: NumberFilter
+	color: StringFilter
+	isVisible: BooleanFilter
+	options: JSONFilter
+	dashboardId: IDFilter
+	employeeId: IDFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [DashboardWidgetFilter!]
+	or: [DashboardWidgetFilter!]
+	not: DashboardWidgetFilter
+}
+
+"""
+What a caller states when it places a widget.
+
+The members are the ones the delivered create DTO declares. The employee is stated only to place a
+widget for somebody else: the delivered write stamps the caller's own employee when the member is
+absent. The tenant is not a member — the write stamps the caller's own — and neither are the audit
+columns, which the platform's own bookkeeping owns.
+"""
+input CreateDashboardWidgetInput {
+	"The widget's display name."
+	name: String!
+	"The position among the dashboard's widgets."
+	order: Int
+	size: Int
+	color: String
+	"Whether the placement is shown."
+	isVisible: Boolean
+	"The placement's own settings, as the widget's own document."
+	options: JSON
+	"The dashboard to place the widget on."
+	dashboardId: ID
+	"The employee to place the widget for. Defaults to the caller's own employee."
+	employeeId: ID
+	projectId: ID
+	organizationTeamId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a placement that exists.
+
+The identifier is the path's, so it is stated once and only here. Every other member is optional, and
+**a member the caller leaves out is left as it is**: the delivered edit is the create's own service
+call carrying the identifier, which updates the columns the body names rather than replacing the row.
+"""
+input UpdateDashboardWidgetInput {
+	id: ID!
+	name: String
+	order: Int
+	size: Int
+	color: String
+	isVisible: Boolean
+	options: JSON
+	dashboardId: ID
+	employeeId: ID
+	projectId: ID
+	organizationTeamId: ID
+	organizationId: ID
+}

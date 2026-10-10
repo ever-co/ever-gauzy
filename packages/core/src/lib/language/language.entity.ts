@@ -9,17 +9,15 @@ import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repo
 import { MultiORMEnum, getORMType } from '../core/utils';
 
 /**
- * Conditionally applies the appropriate Unique decorator based on the active ORM.
- * This prevents MikroORM metadata validation errors when TypeORM is the active ORM
- * (and vice versa), since MultiORMColumn only registers properties for the active ORM.
+ * Applies TypeORM's Unique decorator under every ORM, like `MultiORMColumn` registers TypeORM's columns,
+ * and MikroORM's only under `DB_ORM=mikro-orm`: MikroORM validates the properties registered for it, and
+ * MultiORMColumn registers MikroORM properties only when MikroORM is active.
  */
 function ConditionalUnique(properties: string[]): ClassDecorator {
 	return (target: any) => {
-		const ormType = getORMType();
-		if (ormType === MultiORMEnum.TypeORM) {
-			TypeOrmUnique(properties)(target);
-		}
-		if (ormType === MultiORMEnum.MikroORM) {
+		TypeOrmUnique(properties)(target);
+
+		if (getORMType() === MultiORMEnum.MikroORM) {
 			MikroOrmUnique({ properties } as any)(target);
 		}
 	};

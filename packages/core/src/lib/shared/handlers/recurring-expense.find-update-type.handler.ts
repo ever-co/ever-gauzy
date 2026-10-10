@@ -6,7 +6,8 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { Between, FindOptionsWhere, Not } from 'typeorm';
-import { CrudService, getLastDayOfMonth } from '../../core';
+import { CrudService } from '../../core/crud';
+import { getLastDayOfMonth } from '../../core/utils';
 
 /**
  * Finds the start date update type.

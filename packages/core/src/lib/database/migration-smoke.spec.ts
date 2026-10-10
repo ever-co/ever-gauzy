@@ -136,6 +136,27 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 		);
 		expect(employeeForeignKeys.some((fk) => fk.table === 'tenant')).toBe(true);
 	});
+
+	it('schema consistency: both idempotency locks carry the tenant at the end of the chain', async () => {
+		// `ScopeIdempotencyKeyByTenant1791000000557` replaces two unique indexes that folded the organization
+		// but not the tenant, so two tenants with no organization selected shared one tuple. What must hold
+		// once the whole chain has run is the replacement, not merely that the migration ran: the old names
+		// are gone, the new ones fold `tenantId`, and the live-aggregate rule is left as it was.
+		const uniqueIndexSql: Array<{ name: string; sql: string | null }> = await dataSource.query(
+			"SELECT name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name IN ('idempotency_key', 'operation') AND sql LIKE 'CREATE UNIQUE INDEX%' ORDER BY name"
+		);
+		const byName = new Map(uniqueIndexSql.map((row) => [row.name, row.sql ?? '']));
+
+		expect([...byName.keys()]).toEqual([
+			'UQ_idempotency_tenant_org_scope_key',
+			'UQ_operation_aggregate_live',
+			'UQ_operation_tenant_idem'
+		]);
+		expect(byName.get('UQ_idempotency_tenant_org_scope_key')).toContain('COALESCE("tenantId"');
+		expect(byName.get('UQ_operation_tenant_idem')).toContain('COALESCE("tenantId"');
+		expect(byName.get('UQ_operation_tenant_idem')).toContain('WHERE "idempotencyKey" IS NOT NULL');
+		expect(byName.get('UQ_operation_aggregate_live')).not.toContain('tenantId');
+	});
 });
 
 /**

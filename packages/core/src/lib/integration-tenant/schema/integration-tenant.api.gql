@@ -1,0 +1,129 @@
+# The configured integration's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The domain is served by one CRUD controller, and the surface mirrors every route it serves,
+# inherited ones included.** `IntegrationTenantController` extends the platform's CRUD base, so the
+# delivered resource is a list, a node, a count, a creation, an edit, a removal and the two lifecycle
+# moves — and, on top of them, one read of its own that resolves a connection by provider. Every one of
+# those is a field below.
+#
+# **The permission is stated per field, because the controller states a different one per route.** The
+# class carries `INTEGRATION_ADD` and `INTEGRATION_EDIT`; the list, the node and the by-provider read
+# state `INTEGRATION_VIEW` on themselves; the edit states `INTEGRATION_EDIT`; and the removal states
+# `INTEGRATION_DELETE`. The inherited routes — the count, the creation and the two lifecycle moves —
+# state nothing of their own, so they run under the class-level pair. One class-level statement here
+# could not be all four, so each field states what its own route's metadata resolves to, and the spec
+# reads those values rather than restating them.
+#
+# **The list is the route that reads the whole filtered set.** The delivered resource serves its rows
+# twice — `GET /` and `GET /pagination` — and the service's own list method is the one that applies the
+# resource's criterion (a connection with no catalogue entry is not a connection). The connection field
+# reaches that method and applies the page itself, so the paginated spelling folds into it rather than
+# becoming a second root field that could disagree with the first.
+#
+# **A sub-route is not a second list, but the by-provider read is not a narrowing either.** `GET
+# /integration` resolves *one* connection — the active one for a provider and an organization, most
+# recently updated first — and answers nothing when there is none. That is a node selection by a key
+# other than the identifier, so it is a root field of its own; the connection could not express it,
+# because its `filter` narrows a set rather than resolving a most-recent row. The delivered route
+# answers `false` for "no such connection"; a field that may have no row answers `null`, which is the
+# same fact in this protocol's vocabulary.
+#
+# **The count takes no argument.** The delivered count route passes its query string through as the
+# store's own criterion, which the connection protocol does not speak, and it answers with a bare
+# number that a resource may legitimately have no answer for — which is why the field is a nullable
+# `Int` rather than a fabricated zero. `totalCount` on the connection is the other number: the rows the
+# filters selected.
+#
+# **The removal is the controller's own and it is stricter than the base's.** `DELETE /:id` here is not
+# the CRUD base's removal: it requires the organization in its query string — the delivered handler
+# refuses a call without one — and it publishes the platform event a provider's own cleanup listens
+# for. The field states the same requirement, so a caller cannot reach a removal REST would refuse.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open —
+# so a tenant that switched the capability off is answered `Cannot query field <name>` here and served
+# as it always was there.
+
+extend type Query {
+	"""
+	The integrations the caller's tenant has connected, in the resource's own selection: a row with no
+	catalogue entry is not a connection.
+	"""
+	integrationTenants(
+		filter: IntegrationTenantFilter
+		sort: [IntegrationTenantSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): IntegrationTenantConnection!
+
+	"""
+	One connected integration, or null when there is none.
+	"""
+	integrationTenant(
+		id: ID!
+		"""
+		The relations to load with the row, as the delivered node route takes them from its query
+		string. `integration` and `settings` are the two the type carries.
+		"""
+		relations: [String!]
+	): IntegrationTenant
+
+	"""
+	How many connections the caller's tenant holds.
+	"""
+	integrationTenantCount: Int
+
+	"""
+	The connection for one provider and organization, most recently updated first, or null when the
+	tenant has none. This is the read a caller makes before it synchronises.
+	"""
+	integrationTenantByOptions(
+		"The provider to resolve, in the contract's own provider vocabulary."
+		name: String
+		"The organization the connection belongs to. Omit for the tenant-wide one."
+		organizationId: ID
+		"The relations to load with the row, as the delivered route takes them from its query string."
+		relations: [String!]
+	): IntegrationTenant
+}
+
+extend type Mutation {
+	"""
+	Connects an integration: the delivered creation, which stamps the caller's tenant and files the
+	credentials and decisions the caller states with it.
+	"""
+	createIntegrationTenant(input: CreateIntegrationTenantInput!): IntegrationTenant!
+
+	"""
+	Changes a connection that exists. A member the caller leaves out is left as it is, because the
+	delivered edit is a partial column update rather than a replacement of the row.
+	"""
+	updateIntegrationTenant(input: UpdateIntegrationTenantInput!): IntegrationTenant!
+
+	"""
+	Removes a connection outright, with the credentials and decisions that belong to it. The
+	organization is required, as it is on the delivered route.
+	"""
+	deleteIntegrationTenant(id: ID!, organizationId: ID!, tenantId: ID): Boolean!
+
+	"""
+	Withdraws a connection without removing it: the row keeps its identifier and its synchronisation
+	history, and the delivered reads stop answering it.
+	"""
+	softDeleteIntegrationTenant(id: ID!): IntegrationTenant!
+
+	"""
+	Puts a withdrawn connection back.
+	"""
+	recoverIntegrationTenant(id: ID!): IntegrationTenant!
+}

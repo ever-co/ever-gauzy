@@ -1,0 +1,138 @@
+# The skill's GraphQL types.
+#
+# A skill is one thing a person can do, kept per organization: the row is what an employee's own skill
+# set and an organization's own skill list both point at, so a rename is one write rather than one per
+# reader.
+#
+# **`employees` and `organizations` are absent, and they are absent because nothing on this row
+# carries their identifier.** Both are `@ManyToMany` pivots — `skill_employee` and `skill_organization`
+# hold the foreign keys — so this table has no column for either, and the delivered reads join them
+# only when a REST caller names them. The rows that use a skill are reached from the pivot, and this
+# surface states the skill rather than the join.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes and this column is the
+# whole of what they write; without it the answer to the write that withdrew a skill could not say so.
+
+"""
+One thing a person can do, kept per organization.
+"""
+type Skill {
+	id: ID!
+	"The name of the skill, as entered. Read by the delivered name route and by the connection's own filter."
+	name: String!
+	description: String
+	"""
+	The colour the skill is shown in. The column is `NOT NULL` and carries no default, so a skill
+	cannot be filed without one — which is why the create input requires it rather than treating it as
+	a presentation detail.
+	"""
+	color: String!
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the skill was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of skills.
+"""
+type SkillEdge {
+	node: Skill!
+	cursor: String!
+}
+
+"""
+One page of skills, with the total the filters select and the boundary cursors.
+"""
+type SkillConnection {
+	nodes: [Skill!]!
+	edges: [SkillEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a skill list may be sorted by.
+"""
+enum SkillSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the skills are returned in. At most three keys are accepted.
+"""
+input SkillSort {
+	field: SkillSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a skill list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned rather than translating the filter into a query. `deletedAt` is
+filterable so a caller can ask which rows have been withdrawn, while the read itself answers live rows
+only.
+"""
+input SkillFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	description: StringFilter
+	color: StringFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [SkillFilter!]
+	or: [SkillFilter!]
+	not: SkillFilter
+}
+
+"""
+What a caller states when it files a skill.
+
+The organization is optional, which is the delivered route's own contract rather than a relaxation:
+the creation is inherited from the CRUD base and binds its body to a partial entity, so nothing
+validates a member the row does not itself require. The name and the colour are the two the store
+does require — the columns are `NOT NULL` and carry no default — and the tenant is never a member,
+because the service stamps the caller's own tenant and overwrites whatever a body states.
+"""
+input CreateSkillInput {
+	organizationId: ID
+	name: String!
+	description: String
+	color: String!
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+What a caller states when it changes a skill that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit is the CRUD base's partial
+column update — it hands the store the members the body carries and writes them — so the identifier
+is the only required member and the rest are stated only when they change.
+"""
+input UpdateSkillInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	description: String
+	color: String
+	isActive: Boolean
+	isArchived: Boolean
+}

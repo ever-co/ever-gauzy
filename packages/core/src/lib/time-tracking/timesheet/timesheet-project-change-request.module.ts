@@ -10,6 +10,7 @@ import { Timesheet } from './timesheet.entity';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
 import { TimesheetProjectChangeRequest } from './timesheet-project-change-request.entity';
 import { TimesheetProjectChangeRequestController } from './timesheet-project-change-request.controller';
+import { TimesheetProjectChangeRequestResolver } from './timesheet-project-change-request.resolver';
 import { TimesheetProjectChangeRequestService } from './timesheet-project-change-request.service';
 import { MikroOrmTimesheetProjectChangeRequestRepository } from './repository/mikro-orm-timesheet-project-change-request.repository';
 import { TypeOrmTimesheetProjectChangeRequestRepository } from './repository/type-orm-timesheet-project-change-request.repository';
@@ -30,6 +31,11 @@ import { TypeOrmTimesheetProjectChangeRequestRepository } from './repository/typ
 	controllers: [TimesheetProjectChangeRequestController],
 	providers: [
 		TimesheetProjectChangeRequestService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them. It needs the
+		// service alone — neither write dispatches through a bus — which is why nothing beside the
+		// service is re-exported for it.
+		TimesheetProjectChangeRequestResolver,
 		TypeOrmTimesheetProjectChangeRequestRepository,
 		MikroOrmTimesheetProjectChangeRequestRepository,
 		TypeOrmTimesheetRepository,

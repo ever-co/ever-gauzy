@@ -26,10 +26,9 @@ jest.mock(
 			}
 		},
 		prepareSQLQuery: (sql: string) => sql
-	}),
-	{ virtual: true }
+	})
 );
-jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }), { virtual: true });
+jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }));
 jest.mock('../entities/document-link.entity', () => ({ DocumentLink: class {} }));
 jest.mock('../repositories/type-orm-document-link.repository', () => ({ TypeOrmDocumentLinkRepository: class {} }));
 jest.mock('../repositories/mikro-orm-document-link.repository', () => ({ MikroOrmDocumentLinkRepository: class {} }));

@@ -1,0 +1,131 @@
+# The income domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/income` routes already serve, under the same guard chain
+# and with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. Nothing here decides anything:
+# each field calls the same `IncomeService` method or dispatches the same command the route behind it
+# does, with the same payload and the same request facts, which is the whole of what a resolver on this
+# platform owns.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list route
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
+# surface resumes on the other. `withDeleted` is deliberately absent: the delivered list read answers live
+# rows only, and offering an argument that cannot be honoured would be worse than not offering it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same rows
+# under the same filters, one of them sliced by `take`/`skip` and the other not. That is one capability,
+# so it is one root field: `incomes`, mirroring `GET /`, which is the route that reads the whole filtered
+# set the connection protocol is applied to. Two of the three narrowings the paginated spelling
+# interprets on the way are stated in the connection's own vocabulary — the note pattern as `ilike` on
+# `notes`, the date window as `between` on `valueDate` — so no caller loses those questions by asking them
+# here. The third is a tag membership, and it is not offered: the delivered list read loads no relations,
+# so a condition on a tags collection could only ever match the empty set.
+#
+# `myIncomes` mirrors `GET /me`, and it is a root field of its own rather than a filter on the connection
+# because the delivered read narrows by *who is asking*: it resolves the employee row from the caller's
+# user identifier and reads that employee's incomes, refusing a caller who has no employee row. A filter
+# can state an employee identifier only if the caller already knows its own, so folding the read in would
+# lose the question rather than answer it. The list reads carry the view permission, which is what their
+# routes state.
+#
+# `income` and `incomeCount` carry the view permission too, as their delivered routes do. Every write
+# carries the class-level edit permission instead, because that is the permission its own route runs
+# under: the create, the edit and the removal are declared on the controller without a permission of
+# their own, and the withdrawal and the restoration are inherited from the CRUD base, which states none
+# either. Stating anything else here would give GraphQL a scope REST does not have. `incomeCount` takes no
+# filter, and that is a statement rather than an omission: the delivered count route passes its query
+# string through as the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a service call that cannot accept it or be evaluated over a
+# second code path that could disagree with the connection's `totalCount`. It is nullable because a count
+# is an aggregate a resource may legitimately have no answer for, and a non-null field would turn "not
+# answered" into a fabricated zero.
+
+extend type Query {
+	"""
+	The incomes of the caller's tenant, newest first.
+	"""
+	incomes(
+		filter: IncomeFilter
+		sort: [IncomeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): IncomeConnection!
+
+	"""
+	One income of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such row"
+	on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	income(id: ID!): Income
+
+	"""
+	How many incomes the caller's tenant holds.
+	"""
+	incomeCount: Int
+
+	"""
+	The caller's own incomes.
+
+	The employee is resolved from the credential, as the delivered route resolves it, so a caller cannot
+	ask this question about anyone else — and one with no employee row is refused rather than answered an
+	empty list, which is the delivered read's own behaviour. `filterDate` is the date whose month narrows
+	the read, which is the value the route reads out of its `data` parameter; omit it and the read answers
+	every month.
+	"""
+	myIncomes(filterDate: DateTime): [Income!]!
+}
+
+extend type Mutation {
+	"""
+	Records an income.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller, so
+	an income cannot be written into a tenant the caller is not acting in. The amount is the exact decimal
+	the column stores, and it, the party and the currency are the members the delivered body validation
+	requires.
+	"""
+	createIncome(input: CreateIncomeInput!): Income!
+
+	"""
+	Changes an income that exists.
+
+	The delivered edit reaches the same write the create does, carrying the identifier in the path and the
+	body together, so a member the caller leaves out is left as it is — see `UpdateIncomeInput`, which also
+	states what an identifier naming no row does.
+	"""
+	updateIncome(input: UpdateIncomeInput!): Income!
+
+	"""
+	Removes an income outright.
+
+	This is the hard removal, and it is the one to reach for only for a row recorded in error: an amount a
+	document already accounts for is withdrawn instead. The employee is the optional query member the
+	delivered route reads, and the row it names is the one whose recorded averages the delivered handler
+	refreshes beside the removal; a caller that states none gets the removal without the refresh.
+	"""
+	deleteIncome(id: ID!, employeeId: ID): Boolean!
+
+	"""
+	Withdraws an income without removing the row.
+
+	The delivered list stops answering it and the rows that reference it keep resolving the identifier they
+	hold. The answer is the withdrawn row; it is recoverable until it is removed outright.
+	"""
+	softDeleteIncome(id: ID!): Income!
+
+	"""
+	Puts a withdrawn income back.
+	"""
+	recoverIncome(id: ID!): Income!
+}

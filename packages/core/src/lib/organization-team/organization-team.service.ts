@@ -376,6 +376,61 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
+	 * Adds one employee to a team — or changes whether that member manages it — without restating the rest
+	 * of the team.
+	 *
+	 * The set-based edit (`update`, behind `PUT /organization-team/:id`) is the one path that writes team
+	 * membership: it checks the caller may edit the team (any team with `CHANGE_SELECTED_EMPLOYEE`, otherwise
+	 * only a team the caller manages), unassigns, subscribes and re-roles as it goes. This method reads the
+	 * team's current members, adds the one employee, and hands the whole set to that same edit — so the rules
+	 * are the edit's own, stated once. The employee must belong to the organization: the set-based edit drops
+	 * an outsider silently, and a single add that answered "done" for one would be a lie, so it is refused.
+	 *
+	 * `isManager` left out keeps an existing member's role (a new member joins as a member); `true` makes the
+	 * employee a manager and `false` makes them a plain member. Adding a member who is already on the team is
+	 * therefore a no-op unless the role is stated.
+	 *
+	 * @param id The team.
+	 * @param input The organization, the employee, and optionally whether they manage the team.
+	 * @returns The team, as the set-based edit answers it.
+	 * @throws NotFoundException when the employee is not an employee of the organization.
+	 */
+	async addMember(
+		id: ID,
+		input: { organizationId: ID; employeeId: ID; isManager?: boolean; tenantId?: ID }
+	): Promise<IOrganizationTeam> {
+		const tenantId = RequestContext.currentTenantId() || input?.tenantId;
+		const { organizationId, employeeId, isManager } = input ?? ({} as never);
+
+		if (!tenantId || !organizationId || !employeeId) {
+			throw new BadRequestException('A team member is added within one organization, by its employee.');
+		}
+
+		const [employee] = await this.retrieveEmployees([employeeId], [], organizationId, tenantId);
+
+		if (!employee) {
+			throw new NotFoundException(`Employee with id '${employeeId}' was not found in this organization`);
+		}
+
+		const current = await this.organizationTeamEmployeeService.findMemberSets(id, organizationId);
+		const memberIds = Array.from(new Set([...current.memberIds, employeeId]));
+		let managerIds = current.managerIds;
+
+		if (isManager === true) {
+			managerIds = Array.from(new Set([...managerIds, employeeId]));
+		} else if (isManager === false) {
+			managerIds = managerIds.filter((managerId) => managerId !== employeeId);
+		}
+
+		return await this.update(id, {
+			organizationId,
+			tenantId,
+			memberIds,
+			managerIds
+		} as IOrganizationTeamUpdateInput);
+	}
+
+	/**
 	 * Find teams associated with the current user.
 	 *
 	 * @param options - Pagination options.
@@ -431,6 +486,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
+
+		// Whether retired (soft-deleted) teams are answered too. Both surfaces reach this read: the GraphQL
+		// field hands a boolean, while the REST list route mounts its validation pipe without `transform`,
+		// so its query string arrives as the text 'true' / 'false' — and a truthiness test reads 'false' as
+		// a request for the retired rows. It is read once, as a boolean, so both ORM branches answer the
+		// same request the same way. Lifting the soft-delete predicate never lifts the tenant scope: each
+		// branch still pins `tenantId` itself below.
+		const withDeleted = parseToBoolean(options?.withDeleted);
 
 		// Initialize variables to store the retrieved items and total count.
 		let items: OrganizationTeam[]; // Array to store retrieved items
@@ -498,10 +561,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					options.where.id = In(organizationTeamIds);
 				}
 
-				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>(
-					options as FindManyOptions
-				);
+				// Converts TypeORM find options to a format compatible with MikroORM for a given entity. The
+				// normalised `withDeleted` replaces the raw one, so the converter disables MikroORM's
+				// soft-delete filter (and only that filter) exactly when the caller asked for retired teams.
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>({
+					...options,
+					withDeleted
+				} as FindManyOptions);
 				// Retrieve the items and total count
 				const [entities, totalEntities] = await this.mikroOrmOrganizationTeamRepository.findAndCount(
 					enhanceWhereWithTenantId(tenantId, where), // Add a condition for the tenant ID
@@ -576,7 +642,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
 						...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 						...(options.where ? { where: options.where } : {}),
-						...(options.order ? { order: options.order } : {})
+						...(options.order ? { order: options.order } : {}),
+						// A query builder adds `deletedAt IS NULL` to every read of a soft-deletable entity
+						// unless it is told otherwise, so without this the flag the MikroORM branch honours
+						// was dropped here and the two ORMs answered the same request differently.
+						...(withDeleted ? { withDeleted: true } : {})
 					});
 				}
 

@@ -60,8 +60,7 @@ jest.mock(
 		// receives; the real function's full behavior is covered separately in `packages/core`.
 		parseFindOptionsRelations: (relations: string[] = []) =>
 			Object.fromEntries(relations.map((relation) => [relation, true]))
-	}),
-	{ virtual: true }
+	})
 );
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../entities/document-link.entity', () => ({ DocumentLink: class {} }));

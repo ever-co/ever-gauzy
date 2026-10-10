@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { CurrencyCode, DecimalString } from './money.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
@@ -23,6 +24,12 @@ export interface IBaseRequestApprovalProperties extends IBasePerTenantAndOrganiz
 	min_count: number;
 	approvalPolicyId?: ID;
 	approvalPolicy?: IApprovalPolicy;
+	/** The value being committed, as an exact decimal, so a threshold policy can be applied to it. */
+	amount?: DecimalString;
+	/** The ISO currency `amount` is stated in. */
+	currency?: CurrencyCode;
+	/** Free text kept beside the request, for the approver's list. */
+	note?: string;
 }
 
 interface IRequestApprovalAssociations extends ITaggable {
@@ -40,6 +47,10 @@ export interface IRequestApproval extends IBaseRequestApprovalProperties, IReque
 
 export interface IRequestApprovalCreateInput extends IBaseRequestApprovalProperties, IRequestApprovalAssociations {
 	status?: number;
+	/** The document the request is about. Polymorphic together with `requestType`. */
+	requestId?: ID;
+	/** What kind of document `requestId` names. */
+	requestType?: ApprovalPolicyTypesStringEnum;
 }
 
 export interface IRequestApprovalFindInput extends IBasePerTenantAndOrganizationEntityModel {}

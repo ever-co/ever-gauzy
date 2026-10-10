@@ -29,7 +29,7 @@ import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
 import { Expense } from './expense.entity';
-import { ExpenseService } from './expense.service';
+import { ExpenseService, IExpenseStatistics } from './expense.service';
 import { RequestContext } from '../core/context';
 import { FindSplitExpenseQuery } from './queries';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -174,6 +174,27 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getDailyReportChartData(@Query() options: ExpenseReportQueryDTO) {
 		return this.expenseService.getDailyReportChartData(options);
+	}
+
+	/**
+	 * The report's figures as exact totals.
+	 *
+	 * Reads the same rows `GET /expense/report` reads, under the same selectors and the same view grant, and
+	 * answers them summed per currency and per day, employee and project — as decimal strings, so no figure
+	 * is a rounded float. `groupBy` is accepted (it is a member of the shared query) and ignored: every
+	 * grouping is answered at once.
+	 *
+	 * @param options The report's own selectors: organization, window, employees, projects, category.
+	 * @returns The count, the totals per currency, and the totals per day, employee and project.
+	 */
+	@ApiOperation({ summary: 'Expense statistics: exact totals per currency, day, employee and project.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The totals of the selected expenses.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid selectors.' })
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('statistics')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getStatistics(@Query() options: ExpenseReportQueryDTO): Promise<IExpenseStatistics> {
+		return this.expenseService.getStatistics(options);
 	}
 
 	@ApiOperation({ summary: 'Find all expense.' })

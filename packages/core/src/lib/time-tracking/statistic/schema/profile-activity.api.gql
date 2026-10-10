@@ -1,0 +1,60 @@
+# The profile-activity domain's root field.
+#
+# `Query` is declared by the kernel and extended here: a root operation type exists once for the whole
+# platform, so a domain adds fields to it and never declares its own.
+#
+# **This is one field in a file of its own because it mirrors a second controller.** The routes under
+# `/timesheet/statistics` are served by two classes: `StatisticController`, which carries a class-level
+# permission list, and `ProfileActivityController`, which carries `TenantPermissionGuard` and states no
+# `@Permissions` anywhere. A resolver's class-level guard chain and permission are one statement each,
+# so one class cannot mirror both truths — and a permission invented here would refuse a caller the
+# REST route serves. The two domains therefore have two resolvers, and this is the one with no
+# permission at all.
+#
+# **The field is a computed answer, not a resource.** It summarizes one employee's authorized tracked
+# time over a period of local calendar days: how many days carried activity, how long that activity
+# lasted, and which days were the first and the last. The platform stores no such row, so there is no
+# identifier to read one by, nothing to withdraw and nothing to state — which is why this file extends
+# `Query` and never `Mutation`, declares no node field, and declares no count field beside the
+# `activeDays` member the answer itself carries.
+#
+# **The period is a half-open span of local days, and the two dates say so.** `startDate` is inclusive
+# and `endDate` exclusive, both are calendar dates in `YYYY-MM-DD` with no time and no offset, and both
+# are resolved against `timeZone` — so the same request answers the same local days wherever it is
+# served from, while the instants behind those days differ. A date-time is not an alternative spelling
+# here: the delivered validation refuses anything that is not a strict local date, and the delivered
+# read refuses a span longer than 366 local days, which is why the two arguments are `String` rather
+# than the kernel's `DateTime` — the instant is not what the answer is computed from.
+#
+# **The scope the route enforces is per request and per target.** The delivered read refuses the
+# request when the caller has no tenant, when the named engagement is not an active, unarchived
+# engagement of that organization, or when the caller may not view that employee's profile — a manager
+# may view the people they manage and nobody else. `organizationTeamId` is part of that decision rather
+# than a filter over the answer, so it is an argument here too and its absence is a different request.
+
+extend type Query {
+	"""
+	One authorized employee's activity over a period of local calendar days: how many days carried
+	activity, how long it lasted, which days were the first and the last, and — when asked — the
+	per-day breakdown.
+
+	A caller that may not view this employee's profile is refused by the delivered read, which is why
+	this field answers a non-null summary rather than an empty one.
+	"""
+	timeTrackingProfileActivity(
+		"The organization the read is scoped to, and the organization the named engagement must belong to."
+		organizationId: ID!
+		"The engagement whose activity is summarized."
+		employeeId: ID!
+		"The first local calendar date of the period, inclusive, in `YYYY-MM-DD`. Resolved against `timeZone`."
+		startDate: String!
+		"The local calendar date the period ends on, exclusive, in `YYYY-MM-DD`. It must be after `startDate`, and the span must not exceed 366 local days."
+		endDate: String!
+		"The IANA time zone the two local dates are resolved against, for example `Europe/Madrid`. An instant that falls on a different local day in another zone is counted on the day this zone puts it on."
+		timeZone: String!
+		"The team the caller's access is evaluated with, where the caller states one. It can refuse the request where omitting it would serve it, because the delivered policy reads it."
+		organizationTeamId: ID
+		"Whether to answer the per-day breakdown. The delivered read answers it only for `true`, and the route's own default is `false`."
+		includeDaily: Boolean
+	): ProfileActivity!
+}

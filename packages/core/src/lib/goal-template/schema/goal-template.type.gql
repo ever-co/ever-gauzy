@@ -1,0 +1,138 @@
+# The goal template's object type.
+#
+# A goal template is the catalogue row an objective is authored from: the level the objective is
+# normally taken at, and the category the catalogue files it under so a caller can offer the shapes
+# that fit the objective it is writing. The key-result templates that hang off it are the sibling
+# catalogue's rows and name their goal template by `goalId`.
+#
+# **The collection the delivered list read joins is not a member here.** That reader names
+# `keyResults` and `keyResults.kpi` among the relations it loads, but the node read, the count and the
+# five writes answer rows that carry neither — and a collection is not a column of this row, so the
+# filtering the connection protocol performs could not narrow by it either. A member present on one
+# read of nine would be worse than none; the templates of a goal template are read from their own
+# surface with `goalId` in `filter`.
+#
+# `level` and `category` are carried as their values rather than declared here as enums, for the
+# reason every value set on this surface is: the vocabulary belongs to the domain's own contract, and
+# declaring it here would claim a set this file does not own — and the next domain that needs the same
+# values would then collide with this file rather than reuse it.
+
+"""
+One catalogue entry an objective can be authored from.
+"""
+type GoalTemplate {
+	id: ID!
+	"The name of the shape this entry offers."
+	name: String!
+	"""
+	The level the objective is normally taken at. The value set belongs to the domain's own contract,
+	so it is carried as its value rather than declared here as an enum.
+	"""
+	level: String!
+	"""
+	The category the catalogue files the objective under. Carried as its value for the same reason
+	`level` is.
+	"""
+	category: String!
+	"""
+	When the entry was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the entry belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the entry is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of catalogue entries.
+"""
+type GoalTemplateEdge {
+	node: GoalTemplate!
+	cursor: String!
+}
+
+"""
+One page of catalogue entries, with the total the filters select and the boundary cursors.
+"""
+type GoalTemplateConnection {
+	nodes: [GoalTemplate!]!
+	edges: [GoalTemplateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a catalogue list may be sorted by.
+"""
+enum GoalTemplateSortField {
+	createdAt
+	updatedAt
+	name
+	level
+	category
+}
+
+"""
+The order the catalogue is returned in. At most three keys are accepted.
+"""
+input GoalTemplateSort {
+	field: GoalTemplateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a catalogue list may be narrowed by. Every member is a column of the template row.
+"""
+input GoalTemplateFilter {
+	id: IDFilter
+	name: StringFilter
+	level: StringFilter
+	category: StringFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [GoalTemplateFilter!]
+	or: [GoalTemplateFilter!]
+	not: GoalTemplateFilter
+}
+
+"""
+What a caller states when it files a catalogue entry.
+
+The delivered creation takes the row's own shape rather than a DTO, so the members the store requires
+are the members the columns require: a name, a level and a category. The tenant is never a member —
+the service stamps it from the credential — and `organizationId` is, because it is the row's own
+column and the delivered validation does not strip it.
+
+The key-result templates the entry holds are not members. They are the sibling catalogue's rows, and
+they name this entry by their own `goalId`, so they are filed from their own surface.
+"""
+input CreateGoalTemplateInput {
+	name: String!
+	level: String!
+	category: String!
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a catalogue entry.
+
+**A member that is absent is left as it is.** The delivered edit is the CRUD base's partial column
+update rather than a replacement: it reads the row first — so an entry of another tenant, or one that
+is not there, is a miss rather than a write — and then updates the stated columns and no others.
+"""
+input UpdateGoalTemplateInput {
+	id: ID!
+	name: String
+	level: String
+	category: String
+	organizationId: ID
+}

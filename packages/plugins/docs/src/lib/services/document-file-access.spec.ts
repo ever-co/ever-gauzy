@@ -14,27 +14,23 @@ const providerStub = {
 	getFile: jest.fn(async () => Buffer.from('bytes'))
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FileStorage: class {
-			setProvider() {
-				return this;
-			}
-			getProvider() {
-				return providerStub;
-			}
-			getProviderInstance() {
-				return providerStub;
-			}
-		},
-		RequestContext: {
-			currentTenantId: () => requestContext.tenantId,
-			currentOrganizationId: () => requestContext.organizationId
+jest.mock('@gauzy/core', () => ({
+	FileStorage: class {
+		setProvider() {
+			return this;
 		}
-	}),
-	{ virtual: true }
-);
+		getProvider() {
+			return providerStub;
+		}
+		getProviderInstance() {
+			return providerStub;
+		}
+	},
+	RequestContext: {
+		currentTenantId: () => requestContext.tenantId,
+		currentOrganizationId: () => requestContext.organizationId
+	}
+}));
 jest.mock('../docs.config', () => ({ getDocsConfig: () => ({ maxFileSize: 1024 }) }));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));

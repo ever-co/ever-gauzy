@@ -6,10 +6,23 @@
  * so callers get full autocomplete and type-safety — no `Record<string, unknown>` escape hatch.
  *
  * Environment variables:
- *   ORM_TYPE = 'typeorm' | 'mikro-orm'                           (default: 'typeorm')
+ *   DB_ORM   = 'typeorm' | 'mikro-orm'                           (default: 'typeorm', read by `getORMType()`)
  *   DB_TYPE  = 'postgres' | 'mysql' | 'mariadb' | 'sqlite' | …  (default: 'sqlite')
+ *
+ * The ORM is the one every other entity decorator follows — `getORMType()`, which reads `DB_ORM`. This file
+ * used to read `ORM_TYPE`, which nothing sets, so under `DB_ORM=mikro-orm` every JSON column still got a
+ * TypeORM `@Column` and no MikroORM property: `Operation.state`, `input` and `result`, and every other JSON
+ * column on the platform, were unmapped on the ORM that was actually running. Under `DB_ORM=typeorm` (or
+ * unset) the TypeORM path is chosen exactly as before. Under `DB_ORM=mikro-orm` the TypeORM column is
+ * registered too, as `@MultiORMColumn` does, because the TypeORM DataSource (migrations, seeder, the services
+ * still on TypeORM) runs in both modes.
+ *
+ * One difference between the two paths is MikroORM's, not this file's: its hydrator assigns a SQL `NULL`
+ * straight to the property without consulting the type, so `defaultValue` (and `@JsonArrayColumn`'s `[]`)
+ * replaces a stored `NULL` on TypeORM reads only. A non-null stored value reads the same on both.
  */
 
+import { MultiORMEnum, getORMType } from '../../utils';
 import { ColumnOptions } from './column-options.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,8 +31,6 @@ import { ColumnOptions } from './column-options.types';
 
 type DbDriver = 'postgres' | 'mysql' | 'mariadb' | 'sqlite' | 'better-sqlite3' | 'mssql' | 'default';
 
-type OrmKind = 'typeorm' | 'mikro-orm';
-
 export type JsonStorageType = 'jsonb' | 'json' | 'simple-json' | 'text';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27,7 +38,7 @@ export type JsonStorageType = 'jsonb' | 'json' | 'simple-json' | 'text';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Options accepted when ORM_TYPE=typeorm.
+ * Options accepted when DB_ORM=typeorm.
  * Extends TypeORM's `ColumnOptions` minus the fields we control internally
  * (`type` and `transformer` are managed by the decorator itself).
  */
@@ -37,7 +48,7 @@ export type TypeOrmJsonColumnOptions<T> = ColumnOptions<T> & {
 };
 
 /**
- * Options accepted when ORM_TYPE=mikro-orm.
+ * Options accepted when DB_ORM=mikro-orm.
  * Extends MikroORM's `PropertyOptions` minus the fields we control internally
  * (`type` / `customType` are managed by the decorator itself).
  */
@@ -58,10 +69,6 @@ export type JsonColumnOptions<T> = TypeOrmJsonColumnOptions<T> | MikroOrmJsonCol
 
 function getDbDriver(): DbDriver {
 	return (process.env.DB_TYPE as DbDriver) ?? 'default';
-}
-
-function getOrmKind(): OrmKind {
-	return (process.env.ORM_TYPE as OrmKind) ?? 'typeorm';
 }
 
 function resolveStorageType(db: DbDriver): JsonStorageType {
@@ -166,6 +173,17 @@ function buildMikroOrmDecorator<T>(opts: MikroOrmJsonColumnOptions<T>): Property
 			return 'string';
 		}
 
+		// What the value is at runtime, which is not what it is compared as. A MikroORM `Type` answers its compare
+		// type here unless it says otherwise, so `compareAsType()` above made every JSON column a `string` property
+		// to MikroORM, and its assigner — `em.assign`, which `CrudService.save` writes a stored row with — refused
+		// every object and array such a column holds: `Trying to set IdempotencyKey.responseBody of type 'string'
+		// to { … }`, so no idempotency key was ever settled. `any` is what MikroORM's own `JsonType` answers: the
+		// value is not validated against a scalar type, as TypeORM does not validate it either. A property declared
+		// with a TypeScript type the metadata can read (`string[]`, `string`) keeps that type, as before.
+		get runtimeType(): string {
+			return 'any';
+		}
+
 		toJSON(value: T): T {
 			return value;
 		}
@@ -201,16 +219,32 @@ function buildMikroOrmDecorator<T>(opts: MikroOrmJsonColumnOptions<T>): Property
  * ```
  */
 export function JsonColumn<T = unknown>(options: JsonColumnOptions<T> = {}): PropertyDecorator {
-	return getOrmKind() === 'mikro-orm'
-		? buildMikroOrmDecorator<T>(options as MikroOrmJsonColumnOptions<T>)
-		: buildTypeOrmDecorator<T>(options as TypeOrmJsonColumnOptions<T>);
+	// Like `@MultiORMColumn`: TypeORM's column under every ORM, because its DataSource runs in both modes, and
+	// MikroORM's property only under `DB_ORM=mikro-orm` (`getORMType()` answers TypeORM when `DB_ORM` is unset
+	// or unrecognised). Neither builder mutates the options, so both may read the same object.
+	const typeOrm = buildTypeOrmDecorator<T>(options as TypeOrmJsonColumnOptions<T>);
+
+	if (getORMType() !== MultiORMEnum.MikroORM) return typeOrm;
+
+	const mikroOrm = buildMikroOrmDecorator<T>(options as MikroOrmJsonColumnOptions<T>);
+
+	return (target: object, propertyKey: string | symbol) => {
+		typeOrm(target, propertyKey);
+		mikroOrm(target, propertyKey);
+	};
 }
 
 /**
  * `@JsonbColumn<T>(options?)`
  *
- * Forces `jsonb` storage (PostgreSQL).
+ * Forces `jsonb` storage on PostgreSQL, and takes the dialect's own JSON storage everywhere else.
  * Accepts all native ORM column options directly.
+ *
+ * **`jsonb` is forced on Postgres only.** It used to be forced on every dialect, and TypeORM refuses the
+ * type outright on MySQL (`Data type "jsonb" … is not supported by "mysql" database`), so an entity declaring
+ * one — `SearchDocument.attributes` — stopped the API from booting on MySQL at all. The migrations already
+ * create the column as `jsonb` on Postgres, `json` on MySQL and `text` on SQLite, which is exactly what
+ * {@link JsonColumn} resolves for those dialects, so the entity now agrees with the table on every dialect.
  *
  * ```ts
  * @JsonbColumn<Payload>({ nullable: true })
@@ -218,7 +252,7 @@ export function JsonColumn<T = unknown>(options: JsonColumnOptions<T> = {}): Pro
  * ```
  */
 export function JsonbColumn<T = unknown>(options: Omit<JsonColumnOptions<T>, 'forceType'> = {}): PropertyDecorator {
-	return JsonColumn<T>({ ...options, forceType: 'jsonb' });
+	return JsonColumn<T>(getDbDriver() === 'postgres' ? { ...options, forceType: 'jsonb' } : { ...options });
 }
 
 /**

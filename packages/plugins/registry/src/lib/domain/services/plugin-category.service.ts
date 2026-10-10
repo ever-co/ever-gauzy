@@ -1,13 +1,14 @@
-import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Not } from 'typeorm';
 import { IPluginCategoryFindInput, IPluginCategoryTree } from '../../shared/models';
 import { PluginCategory } from '../entities/plugin-category.entity';
 import { MikroOrmPluginCategoryRepository } from '../repositories/mikro-orm-plugin-category.repository';
 import { TypeOrmPluginCategoryRepository } from '../repositories/type-orm-plugin-category.repository';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginCategoryService extends TenantAwareCrudService<PluginCategory> {
+export class PluginCategoryService extends RegistryTenantAwareCrudService<PluginCategory> {
 	constructor(
 		public readonly typeOrmPluginCategoryRepository: TypeOrmPluginCategoryRepository,
 		public readonly mikroOrmPluginCategoryRepository: MikroOrmPluginCategoryRepository

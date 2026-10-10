@@ -1,0 +1,150 @@
+# The shared entity's GraphQL types.
+#
+# A shared entity is a **capability** rather than a record: it is the row that says "this one record
+# of this one type may be read by whoever holds this token, and only these of its members". The token
+# is minted at creation and never editable; the rules decide which members of the target are in the
+# answer and how far a reader may walk its relations.
+#
+# **The target is carried as its two identifiers and never as an object.** A share is polymorphic —
+# `entity` names the table and `entityId` names the row — so there is no relation to join and no
+# single type a `target` member could have. The pair is the address, and the record behind it is
+# reached through the token read below rather than through a relation.
+#
+# **`shareRules` and `sharedOptions` are `JSON`.** The rules are a document whose shape is the
+# sharing layer's own — a list of member names plus a nested map for the relations a reader may
+# follow — and on the production dialects the column is a document too. The token is carried as the
+# text it is; it is a bearer capability, which is why the delivered list is tenant-guarded and why
+# nothing here makes it readable to anybody the credential does not already answer for.
+
+"""
+The capability that lets one record be read by whoever holds the token, within the stated rules.
+"""
+type SharedEntity {
+	id: ID!
+	"""
+	The bearer capability itself. Anyone holding it may read the record the share points at through
+	`sharedEntityByToken`, which is why this member travels only to a caller the tenant guard admitted.
+	"""
+	token: String!
+	"What the share points at, as the platform's own entity vocabulary names it."
+	entity: String
+	"The record the share points at, within the entity named beside it."
+	entityId: ID
+	"Which members of the target are shared, and how far a reader may walk its relations."
+	shareRules: JSON
+	"Additional options for this share, as the sharing layer states them."
+	sharedOptions: JSON
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the share was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the lifecycle pair this resource serves — and this column is the whole of what they write.
+	A withdrawn share's token no longer resolves: the token read answers the same miss it answers for a
+	token that never existed.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of shares.
+"""
+type SharedEntityEdge {
+	node: SharedEntity!
+	cursor: String!
+}
+
+"""
+One page of shares, with the total the filters select and the boundary cursors.
+"""
+type SharedEntityConnection {
+	nodes: [SharedEntity!]!
+	edges: [SharedEntityEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a share list may be sorted by.
+"""
+enum SharedEntitySortField {
+	createdAt
+	updatedAt
+	entity
+}
+
+"""
+The order the shares are returned in. At most three keys are accepted.
+"""
+input SharedEntitySort {
+	field: SharedEntitySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a share list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+A share's own token is filterable, and that is deliberate rather than a leak: the list is
+tenant-guarded, its rows are the caller's own, and the token is already a member of every row it
+answers. What it is *not* is a way to resolve the shared record — that is the token read, and its
+answer is the target rather than a `SharedEntity`.
+"""
+input SharedEntityFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	token: StringFilter
+	entity: StringFilter
+	entityId: IDFilter
+	shareRules: JSONFilter
+	sharedOptions: JSONFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [SharedEntityFilter!]
+	or: [SharedEntityFilter!]
+	not: SharedEntityFilter
+}
+
+"""
+What a caller states when it creates a share.
+
+The organization, the target pair and the rules are required because the delivered create validates
+all four — the DTO marks the entity, the record identifier and the rules non-empty and intersects the
+organization base. There is no member for the token: it is minted by the delivered service, and a
+caller that could state one could choose a token somebody else's client already holds.
+
+The delivered service refuses a target that does not belong to the caller's own tenant before it
+writes anything, so a share cannot be minted over another tenant's record, and it refuses a target
+whose own table carries no tenancy column at all — there would be nothing to scope the read by.
+"""
+input CreateSharedEntityInput {
+	organizationId: ID!
+	entity: String!
+	entityId: ID!
+	shareRules: JSON!
+	sharedOptions: JSON
+}
+
+"""
+What a caller states when it changes a share.
+
+**The target is not a member, and neither is the token.** Both are pinned at creation: a share whose
+target could move would be a token that reads a different record than the one it was issued for, and
+the delivered edit body excludes both. The rules are the part that changes, and they are re-validated
+against the target's own metadata when they do — the same check the creation performs, so a share
+cannot be widened into a traversal the tenant boundary would not allow.
+"""
+input UpdateSharedEntityInput {
+	id: ID!
+	organizationId: ID!
+	shareRules: JSON!
+	sharedOptions: JSON
+}
