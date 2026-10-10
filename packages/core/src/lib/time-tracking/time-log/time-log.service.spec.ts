@@ -308,6 +308,9 @@ describe('TimeLogService', () => {
 					if (token === CommandBus) {
 						return { execute };
 					}
+					if (token === ManagedEmployeeService) {
+						return { canManageEmployee: jest.fn().mockResolvedValue(true) };
+					}
 					if (token === TypeOrmTimeLogRepository) {
 						return { metadata: { tableName: 'time_log' }, createQueryBuilder: () => builder };
 					}

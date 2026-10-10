@@ -20,6 +20,20 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	}
 
 	/**
+	 * Runs the timesheet bookkeeping of a time log write for that log's employee, whoever the caller is.
+	 *
+	 * The write has already cleared the caller for that employee. Under the caller's employee filter, a
+	 * team manager adding time for a member would create the member's timesheet as their own, and the
+	 * recalculation would not find the member's timesheet at all.
+	 *
+	 * @param callback - The timesheet reads and writes to run.
+	 * @returns The callback's result.
+	 */
+	public async forTimeLogEmployee<R>(callback: () => Promise<R>): Promise<R> {
+		return await this.withoutEmployeeFilter(callback);
+	}
+
+	/**
 	 * GET timesheets count in date range for the same tenant
 	 *
 	 * @param request
