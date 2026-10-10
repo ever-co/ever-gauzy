@@ -66,9 +66,9 @@ env:
   AUDIT_CONFIG: tools/egress-audit/egress-audit.config.json
   AUDIT_ARTIFACTS: egress-audit-artifacts
   # The baseline of Ever links the UI rendered before the modules (tools/egress-audit/ui-baseline.json)
-  # may only shrink. The change that adds it adopts it once with --first-version; remove this flag
-  # in the next change (with the file on the base branch the flag fails, as it must).
-  BASELINE_FIRST_VERSION: 'true'
+  # may only shrink. It was adopted (--first-version) by the change that added it; from then on every
+  # pull request compares it with its base. 'true' only in a change that adds a new baseline file.
+  BASELINE_FIRST_VERSION: 'false'
 
 jobs:
   inputs:

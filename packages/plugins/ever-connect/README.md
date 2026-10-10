@@ -75,6 +75,14 @@ The definitions (what each one moves, why, how often, what Ever Platform keeps) 
 - **Replace key** (Connection tab) makes a new connection key and installs it on Ever Platform with two proofs, one signed with each key; the installation stays connected.
 - When `ENCRYPTION_KEY` or `JWT_SECRET` changes, the connection key can no longer be read: nothing can be sent, and the Connection tab says so. Disconnect, then connect again with a new code: a new key is made.
 
+### Entitlements
+
+Ever Platform signs an entitlement document for the installation and one for each linked organization; the module verifies each one (issuer, key, signature, schema, this installation and the expected organization link, never older than the stored one) before it stores it, and refreshes them with the heartbeat, on the feed's entitlement events and on demand (*Refresh*, at most 6 an hour).
+
+- **Grace ladder**: a document is *valid* until it expires (7 days after it was issued), then in *grace* for 30 days (or the `grace_s` it names): its Ever Platform features still apply and the Entitlements tab says since when it could not be refreshed. After that, or without a document, or once the installation was revoked, the Ever Platform features of that organization are *paused*. Nothing else of Gauzy depends on a document: every other feature, route and setting works the same with or without one.
+- **Licence line**: each licence certificate id a document names is shown as "Licence EVER-… active". It is shown, never checked by any feature.
+- **Offline import**: an installation without a route to Ever Platform imports a downloaded document, from the Entitlements tab (the operator, `POST /api/ever-connect/entitlement/import` with `{ "jws": "…" }`, at most 16 KiB) or with `EVER_ENTITLEMENT_FILE` at start. The same checks apply; the document must name this installation or one of its organization links (otherwise 422), and the installation must have been connected once (otherwise 409). A document is stored only if no other was stored while it was verified (compare and set; otherwise 409 `entitlement_changed`, import again). Stored and refused documents are audited, never the document itself.
+
 ### What is stored
 
 Tables `ever_connect_connection`, `ever_connect_link`, `ever_connect_integration`, `ever_connect_policy`, `ever_connect_audit` and `ever_connect_lookup_cache` (see [MIGRATIONS.md](MIGRATIONS.md)); a link is also recorded as an `integration_tenant` named `Ever_Connect`. The connection key (in `ever_instance`) and the entitlement documents are stored encrypted (AES-256-GCM, from `ENCRYPTION_KEY`, else from a non-default `JWT_SECRET`); connecting is refused without one of them. The audit holds ids and states only. None of it is included in export archives.
@@ -91,6 +99,7 @@ Tables `ever_connect_connection`, `ever_connect_link`, `ever_connect_integration
 | `EVER_CONNECT_CODE`                                    | unset                 | a connect code used once at the first start; any answer uses it up, only a network failure is retried                                 |
 | `EVER_CONNECT_INTEGRATIONS_DENY`                       | unset                 | integration keys denied for every organization (comma separated, or `*`)                                                              |
 | `EVER_CONNECT_FEED_MODE`                               | `longpoll`            | `interval`: one read of the event feed every 15 minutes                                                                               |
+| `EVER_ENTITLEMENT_FILE`                                | unset                 | a downloaded entitlement document (`.jws`), imported once when the connection starts, for an installation without a route to Ever Platform; the operator can also import one on the Entitlements tab |
 | `EVER_INSTALL_SOURCE`                                  | `self-hosted`         | how the installation is deployed, declared by the operator; `cloud` means Ever operates it                                            |
 | `EVER_OPERATOR_USER_IDS`, `EVER_OPERATOR_EMAILS`       | unset                 | the operators of the installation (shared with the statistics module)                                                                 |
 | `ENCRYPTION_KEY`                                       | unset                 | the key the connection key and documents are stored under (else a non-default `JWT_SECRET`)                                           |
