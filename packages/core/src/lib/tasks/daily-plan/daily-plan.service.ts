@@ -147,7 +147,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
-		const organizationTeamId = await this.resolveReadableTeam(options?.where?.organizationTeamId, employeeId);
+		const organizationTeamId = await this.resolveReadableTeam(options, employeeId);
 
 		try {
 			const { where } = options;
@@ -240,7 +240,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
 		// The query below already filters on the team from `where`, which is the one checked here.
-		await this.resolveReadableTeam(options?.where?.organizationTeamId);
+		await this.resolveReadableTeam(options);
 
 		try {
 			// Apply optional find options if provided
@@ -308,12 +308,14 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * reading their own plans skips it too. A team these callers name still limits the read, so both ORM
 	 * branches return the same plans. Anyone else must name a team they are an active member or manager of.
 	 *
-	 * @param organizationTeamId - The team named in the request's `where`, as the client sent it
+	 * @param options - The request's query options, whose `where` names the team as the client sent it
 	 * @param ownerId - The employee whose plans are read, when the route is limited to one
 	 * @returns The team to filter on, or undefined when no usable team was named and the caller needs none
 	 * @throws ForbiddenException when the caller may not read those plans
 	 */
-	private async resolveReadableTeam(organizationTeamId: unknown, ownerId?: ID): Promise<ID | undefined> {
+	private async resolveReadableTeam(options: BaseQueryDTO | undefined, ownerId?: ID): Promise<ID | undefined> {
+		const organizationTeamId: unknown = options?.where?.organizationTeamId;
+
 		// A repeated or nested query value is not a string, and a malformed id would make the uuid
 		// comparison fail: neither names a team, so neither reaches the membership query.
 		const requestedTeamId =
@@ -739,7 +741,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of plans and total count
 	 */
 	async getDailyPlansByTask(options: BaseQueryDTO, taskId: ID): Promise<IPagination<IDailyPlan>> {
-		const organizationTeamId = await this.resolveReadableTeam(options?.where?.organizationTeamId);
+		const organizationTeamId = await this.resolveReadableTeam(options);
 
 		try {
 			const { where } = options;
