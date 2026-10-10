@@ -889,8 +889,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	/**
 	 * Lists the connected displays for the notification display setting. Reloaded whenever the main
-	 * process reports a display change. A chosen display that is later disconnected is handled in the
-	 * main process, which falls back to the primary display.
+	 * process reports a display change.
+	 *
+	 * The saved choice is left as it is on purpose when its display is disconnected: the selector then
+	 * shows the primary-display placeholder, which matches what the main process does (it falls back to
+	 * the primary display), and the choice applies again as soon as that display is plugged back in.
 	 */
 	async loadNotificationDisplays(): Promise<void> {
 		try {
