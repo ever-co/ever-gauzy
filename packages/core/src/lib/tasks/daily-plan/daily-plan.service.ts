@@ -31,6 +31,8 @@ import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 
+const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
+
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
@@ -118,7 +120,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				if (!task) {
 					throw new BadRequestException('Task not found');
 				}
-				dailyPlan.tasks.push(task);
+				if (!hasTask(dailyPlan, taskId)) {
+					dailyPlan.tasks.push(task);
+				}
 			}
 
 			await this.save(dailyPlan); // Save changes
@@ -498,11 +502,27 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				where: { organizationId, tenantId }
 			});
 
+			// A retried request or a double click: the plan already holds the task, nothing to write.
+			if (hasTask(dailyPlan, taskId)) {
+				return dailyPlan;
+			}
+
 			// Add the new task to the daily plan's tasks array
 			dailyPlan.tasks.push(taskToAdd);
 
 			// Save the updated daily plan
-			return await this.save(dailyPlan);
+			try {
+				return await this.save(dailyPlan);
+			} catch (error) {
+				// A concurrent request for the same task can commit between the read above and this write,
+				// and the (dailyPlanId, taskId) primary key then rejects this insert. The plan holds the
+				// task either way, which is what the caller asked for.
+				const currentPlan = await this.getManagedDailyPlanOrThrow(planId, employeeId, tenantId, organizationId);
+				if (hasTask(currentPlan, taskId)) {
+					return currentPlan;
+				}
+				throw error;
+			}
 		} catch (error) {
 			// Preserve HTTP exceptions (NotFoundException, etc.), only wrap non-HTTP errors
 			if (error instanceof HttpException) {
