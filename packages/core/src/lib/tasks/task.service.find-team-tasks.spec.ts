@@ -21,9 +21,9 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 	let createQueryBuilder: jest.Mock;
 	let service: TaskService;
 
-	const teamTasks = (members?: { id: string }) =>
+	const teamTasks = (members?: { id: string }, filters?: Record<string, string[]>) =>
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		service.findTeamTasks({ where: { organizationId: employee.organizationId, members } } as any);
+		service.findTeamTasks({ where: { organizationId: employee.organizationId, members }, filters } as any);
 	const where = () => findAndCount.mock.calls[0][0];
 
 	beforeEach(() => {
@@ -87,6 +87,42 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 
 			await expect(teamTasks({ id: 'someone-else' })).resolves.toEqual({ items: [], total: 0 });
 			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * The advanced `filters` (projects, tags, statuses, ...) were only applied by the TypeORM branch; the
+	 * MikroORM branch read them and dropped them, so a filtered team board listed every team task.
+	 */
+	describe('advanced filters', () => {
+		it('translates the column and relation filters into the MikroORM where', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+
+			await teamTasks(undefined, { projects: ['project-1'], tags: ['tag-1', 'tag-2'], statusIds: ['status-1'] });
+
+			expect(where()).toEqual(
+				expect.objectContaining({
+					projectId: { $in: ['project-1'] },
+					tags: { id: { $in: ['tag-1', 'tag-2'] } },
+					taskStatusId: { $in: ['status-1'] }
+				})
+			);
+		});
+
+		it('keeps the employee team scoping next to a teams filter', async () => {
+			({ restore } = asTenantUser(employee));
+
+			await teamTasks(undefined, { teams: ['team-1'] });
+
+			expect(where().teams).toEqual({ members: { employeeId: 'employee-1' }, id: { $in: ['team-1'] } });
+		});
+
+		it('applies nothing without filters', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+
+			await teamTasks();
+
+			expect(where()).toEqual({ tenantId: employee.tenantId, organizationId: employee.organizationId, isScreeningTask: false });
 		});
 	});
 
