@@ -214,7 +214,8 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User,
 				updatedSprint.id,
-				updatedSprint.name,
+				// A partial update may not carry the name
+				updatedSprint.name ?? organizationSprint.name,
 				updatedSprint,
 				organizationId,
 				tenantId,

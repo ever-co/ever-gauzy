@@ -30,7 +30,7 @@ describe('OrganizationSprintService.update', () => {
 		const stub = {};
 		service = new OrganizationSprintService(
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'organization_sprint' } } as any,
+			{ metadata: { tableName: 'organization_sprint', hasColumnWithPropertyPath: () => false } } as any,
 			...(Array.from({ length: 4 }, () => stub) as [never, never, never, never]),
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{ publish: jest.fn() } as any,
@@ -57,7 +57,8 @@ describe('OrganizationSprintService.update', () => {
 			expect.objectContaining({ id: 'sprint-1', isActive: false, tenantId: fixture.tenantId })
 		);
 		expect(updateMembers).not.toHaveBeenCalled();
-		expect(activityLogService.logActivity).toHaveBeenCalled();
+		// Logged under the stored name, which the partial update does not carry
+		expect(activityLogService.logActivity.mock.calls[0][4]).toBe('Sprint 1');
 		expect(updated).toMatchObject({ id: 'sprint-1', isActive: false });
 	});
 
