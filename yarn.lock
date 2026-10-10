@@ -35080,14 +35080,14 @@ moo@^0.5.1:
   integrity sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==
 
 morgan@^1.10.0, morgan@^1.9.1:
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/morgan/-/morgan-1.10.1.tgz#4e02e6a4465a48e26af540191593955d17f61570"
-  integrity sha512-223dMRJtI/l25dJKWpgij2cMtywuG/WiUKXdvwfbhGKBhy1puASqXwFzmWZ7+K73vUPoR7SS2Qz2cI/g9MKw0A==
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/morgan/-/morgan-1.12.1.tgz#a6b29a9db7edf55256c560a1ae614c1c03619217"
+  integrity sha512-tljKC0ex20AjO58Ob/eZ53JloycbVswbVNCHx6V6VLGzqt/w8dIynVGL0G8qVjNKwiA7sYSogCrN6QtJ82IV+g==
   dependencies:
     basic-auth "~2.0.1"
     debug "2.6.9"
     depd "~2.0.0"
-    on-finished "~2.3.0"
+    on-finished "~2.4.1"
     on-headers "~1.1.0"
 
 mqtt-packet@^6.8.0:
