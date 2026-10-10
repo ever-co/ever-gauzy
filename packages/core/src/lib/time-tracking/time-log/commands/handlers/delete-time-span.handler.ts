@@ -1,14 +1,15 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { Between } from 'typeorm';
 import { omit } from 'underscore';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
+import { getDateRangeFormat } from '../../../../core/utils';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeLog } from './../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
-import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { getStartEndIntervals } from './../../../time-slot/utils';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
@@ -19,8 +20,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-		private readonly _commandBus: CommandBus,
-		private readonly _timeSlotService: TimeSlotService
+		private readonly _commandBus: CommandBus
 	) {}
 
 	/**
@@ -440,25 +440,28 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 *
 	 * This method calculates the start and end intervals based on the `startedAt` and `stoppedAt`
 	 * values from the provided time log. It then retrieves the corresponding time slots for the
-	 * specified employee and organization within that time range. The time slot synchronization
-	 * is triggered with the `syncSlots` flag set to true.
+	 * specified employee and organization within that time range.
 	 *
 	 * @param timeLog - The time log containing the data used to synchronize time slots (start, stop, employeeId, organizationId).
 	 * @returns A promise that resolves to the retrieved time slots within the specified range for the employee and organization.
 	 */
 	private async syncTimeSlots(timeLog: ITimeLog): Promise<ITimeSlot[]> {
-		const { startedAt, stoppedAt, employeeId, organizationId } = timeLog;
+		const { startedAt, stoppedAt, employeeId, organizationId, tenantId } = timeLog;
 
 		// Calculate start and end intervals based on the time log's start and stop times
 		const { start, end } = getStartEndIntervals(moment(startedAt), moment(stoppedAt));
+		const range = getDateRangeFormat(moment.utc(start), moment.utc(end));
 
-		// Retrieve and return the corresponding time slots within the interval for the given employee and organization
-		return await this._timeSlotService.getTimeSlots({
-			startDate: moment(start).toDate(),
-			endDate: moment(end).toDate(),
-			organizationId,
-			employeeIds: [employeeId],
-			syncSlots: true
+		// Not TimeSlotService.getTimeSlots: it swaps the employee for the caller's own when the caller lacks
+		// CHANGE_SELECTED_EMPLOYEE, so a team manager's slots would be moved onto the member's log.
+		return await this.typeOrmTimeSlotRepository.find({
+			where: {
+				employeeId,
+				organizationId,
+				tenantId,
+				startedAt: Between(range.start as Date, range.end as Date),
+				timeLogs: { employeeId, organizationId, tenantId }
+			}
 		});
 	}
 }

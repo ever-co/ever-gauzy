@@ -1583,8 +1583,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			}
 
-			// Create the new time log entry
-			return await this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }));
+			// Create the new time log entry. The handler reads it back through this service, whose employee
+			// filter would not find a log written for a member the caller manages.
+			return await this.withoutEmployeeFilter(() =>
+				this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }))
+			);
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
