@@ -59,7 +59,7 @@
  */
 import { Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import {
 	RequestContext,
@@ -294,14 +294,23 @@ export class StockLedgerService {
 	 * invariants against the locked values and writes the append-only row beside the level update —
 	 * one transaction, so the two are never apart.
 	 *
+	 * **A caller that holds a transaction hands it in**, and the movement is written on it: a goods
+	 * receipt posts its movements in the transaction that writes the receipt and moves its order's
+	 * counters, so a receipt is either recorded with its stock or not at all. Without one, the engine
+	 * opens its own, as it always has.
+	 *
 	 * @param request The movement the caller states.
+	 * @param manager The caller's open transaction, when the movement belongs to it.
 	 * @returns The movement row that was written and the level it produced, both exact decimals. The
 	 * answer is the shape both consuming seams state, field for field.
 	 * @throws BadRequestException when the request does not name its location, variant, quantity, kind
 	 * or document, or when the kind is not one the ledger has. A movement the ledger cannot place is
 	 * refused before anything is written.
 	 */
-	public async recordMovement(request: IStockLedgerMovementRequest): Promise<IStockLedgerMovementResult> {
+	public async recordMovement(
+		request: IStockLedgerMovementRequest,
+		manager?: EntityManager
+	): Promise<IStockLedgerMovementResult> {
 		const type = this.typeOf(request);
 
 		this.assertStated(request, ['warehouseId', 'variantId', 'referenceType', 'referenceId']);
@@ -323,7 +332,7 @@ export class StockLedgerService {
 			// event was about; the quantity the caller stated is kept.
 			...(delta === stated ? {} : { note: this.eventNoteOf(type, stated) }),
 			occurredAt: request.occurredAt
-		});
+		}, manager);
 
 		return this.resultOf(applied.movementId, applied.quantityBefore, delta);
 	}
@@ -439,12 +448,16 @@ export class StockLedgerService {
 	 * that really is receiving and addressing in one call states `receiving`, and then the arrival is
 	 * the only leg written — which is the shape this method had, kept for the caller it is right for.
 	 *
+	 * A caller that holds a transaction hands it in, and both legs and the home bin are written on it,
+	 * for the reason {@link recordMovement} gives; without one the walk opens its own.
+	 *
 	 * @param request The location, the variant, the target bin, the quantity and its provenance.
+	 * @param manager The caller's open transaction, when the walk belongs to it.
 	 * @returns The movements that were written, the bin now named as home, and the level after the walk.
 	 * @throws BadRequestException when a member is missing or the quantity is not positive, or when the
 	 * put-away names the receiving bin as the target — a walk that arrives where it started.
 	 */
-	public async putAway(request: IStockLedgerPutAway): Promise<IStockLedgerPutAwayResult> {
+	public async putAway(request: IStockLedgerPutAway, manager?: EntityManager): Promise<IStockLedgerPutAwayResult> {
 		this.assertStated(request, ['warehouseId', 'variantId', 'binId', 'referenceType', 'referenceId']);
 
 		const stated = this.quantityText(request.quantity);
@@ -465,7 +478,7 @@ export class StockLedgerService {
 			);
 		}
 
-		return await this.typeOrmStockMovementRepository.manager.transaction(async (manager) => {
+		const walk = async (manager: EntityManager): Promise<IStockLedgerPutAwayResult> => {
 			const reference = {
 				referenceType: request.referenceType as StockMovementReferenceType,
 				referenceId: request.stockMovementId ?? request.referenceId,
@@ -519,7 +532,9 @@ export class StockLedgerService {
 					addDecimalStrings(inbound.quantityBefore ?? 0, stated)
 				) as DecimalString
 			};
-		});
+		};
+
+		return manager ? await walk(manager) : await this.typeOrmStockMovementRepository.manager.transaction(walk);
 	}
 
 	/**

@@ -96,6 +96,15 @@ inventory capability, injected under `PURCHASING_INVENTORY`. A good unit is a
 unchanged, and reversing a receipt is a `WRITE_OFF` of exactly what the receipt
 added. Put-away — a line that names a bin — goes through the same seam.
 
+**A receipt, a further line and a reversal are each one transaction.** The
+orders they touch are locked first (always in id order), then the order lines'
+counters are claimed against their ceilings, the receipt and its lines written,
+the stock movements and put-aways posted — the port takes the caller's
+transaction and the ledger writes on it — and each order's status derived, all
+on that one transaction on the platform's relational connection (under either
+`DB_ORM`). A delivery or a reversal that stops part way, for whatever reason,
+leaves nothing behind, so a retry starts from the state the first attempt found.
+
 ## The agreement
 
 `vendor_product_term` is the row a purchase line is priced and dated from, and

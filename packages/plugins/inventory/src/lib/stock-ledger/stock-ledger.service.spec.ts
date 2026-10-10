@@ -1482,3 +1482,62 @@ describe('StockLedgerService — the put-away that walks received units into a b
 		expect(store.transactions).toEqual([]);
 	});
 });
+
+/**
+ * A caller that holds a transaction hands it in, and the ledger writes on it (PR #10254 review:
+ * "Interrupted receipts stay half-finished").
+ *
+ * A goods receipt posts its stock in the transaction that writes the receipt and moves its order's
+ * counters, so that a receipt is either recorded with its stock or not at all. The ledger used to open a
+ * transaction of its own for every write, which committed the stock apart from the receipt.
+ */
+describe('StockLedgerService — a write that belongs to the caller’s transaction', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const CALLERS = 'the-receipt-transaction';
+
+	it('writes a movement on the transaction it is handed', async () => {
+		const { service, store } = fixture(stocked(6));
+
+		await service.recordMovement(
+			{
+				warehouseId: WAREHOUSE,
+				variantId: VARIANT,
+				quantity: '4',
+				kind: StockMovementType.RECEIPT,
+				referenceType: 'GOODS_RECEIPT',
+				referenceId: REFERENCE
+			},
+			CALLERS as never
+		);
+
+		expect(movementsOf(store, 'GOODS_RECEIPT').map((movement) => movement.__transaction)).toEqual([CALLERS]);
+		// No transaction of the ledger's own was opened.
+		expect(store.transactions).toHaveLength(0);
+	});
+
+	it('walks units into a bin on the transaction it is handed, both legs and the home bin', async () => {
+		const { service, store } = fixture(stocked(6));
+
+		await service.putAway(
+			{
+				warehouseId: WAREHOUSE,
+				variantId: VARIANT,
+				binId: BIN,
+				quantity: '6',
+				referenceType: 'GOODS_RECEIPT',
+				referenceId: REFERENCE
+			},
+			CALLERS as never
+		);
+
+		expect(movementsOf(store, 'GOODS_RECEIPT').map((movement) => movement.__transaction)).toEqual([CALLERS, CALLERS]);
+		expect(store.levels[0].binId).toBe(BIN);
+		expect(store.transactions).toHaveLength(0);
+	});
+});

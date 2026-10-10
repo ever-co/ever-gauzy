@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { EntityManager, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
@@ -114,17 +114,51 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 	/**
 	 * Writes the lines of a receipt.
 	 *
+	 * **Inside a caller's transaction the lines are written on it**, so they commit with the receipt
+	 * header, the order lines' counters and the stock movements they explain, or not at all. The graph
+	 * guard `create()` runs is run here too, against the caller's tenant, so writing through the
+	 * transaction does not skip it.
+	 *
 	 * @param receiptId The receipt being written.
 	 * @param inputs The lines that arrived.
 	 * @param tenancy The receipt's tenant and organization; the caller's when omitted.
+	 * @param manager The caller's open transaction, when the lines belong to it.
 	 * @returns The written lines, in the order they were supplied.
 	 */
 	public async writeLines(
 		receiptId: ID,
 		inputs: IGoodsReceiptLineWrite[],
-		tenancy: { tenantId?: ID; organizationId?: ID } = {}
+		tenancy: { tenantId?: ID; organizationId?: ID } = {},
+		manager?: EntityManager
 	): Promise<GoodsReceiptLine[]> {
 		const lines: GoodsReceiptLine[] = [];
+
+		if (manager) {
+			const rows = inputs.map((input) => ({
+				receiptId,
+				purchaseOrderLineId: input.purchaseOrderLineId,
+				variantId: input.variantId,
+				quantity: input.quantity,
+				damagedQuantity: input.damagedQuantity,
+				unitCost: input.unitCost,
+				batchNumber: input.batchNumber,
+				expiresAt: input.expiresAt,
+				warehouseBinId: input.warehouseBinId,
+				note: input.note,
+				tenantId: tenancy.tenantId ?? RequestContext.currentTenantId(),
+				organizationId: tenancy.organizationId ?? RequestContext.currentOrganizationId()
+			}));
+
+			await this.assertNestedGraphNotForeign(rows as never, RequestContext.currentTenantId());
+
+			for (const row of rows) {
+				lines.push(
+					(await manager.save(GoodsReceiptLine, manager.create(GoodsReceiptLine, row as never))) as GoodsReceiptLine
+				);
+			}
+
+			return lines;
+		}
 
 		for (const input of inputs) {
 			lines.push(
@@ -162,17 +196,19 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 	 *
 	 * @param lineId The receipt line.
 	 * @param stockMovementId The movement the ledger wrote for its good units.
+	 * @param manager The caller's open transaction, when the line was written on it.
 	 * @returns The updated line.
 	 * @throws NotFoundException when the line is not the caller's.
 	 */
-	public async stampMovement(lineId: ID, stockMovementId: ID): Promise<GoodsReceiptLine> {
-		const line = await this.typeOrmGoodsReceiptLineRepository.findOne({
-			where: {
-				id: lineId,
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId()
-			}
-		});
+	public async stampMovement(lineId: ID, stockMovementId: ID, manager?: EntityManager): Promise<GoodsReceiptLine> {
+		const where = {
+			id: lineId,
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+		const line = manager
+			? ((await manager.findOne(GoodsReceiptLine, { where: where as never })) as GoodsReceiptLine | null)
+			: await this.typeOrmGoodsReceiptLineRepository.findOne({ where });
 
 		if (!line) {
 			throw new NotFoundException(`Goods-receipt line '${lineId}' could not be found.`);
@@ -180,7 +216,9 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 
 		line.stockMovementId = stockMovementId;
 
-		return await this.typeOrmGoodsReceiptLineRepository.save(line);
+		return manager
+			? ((await manager.save(GoodsReceiptLine, line)) as GoodsReceiptLine)
+			: await this.typeOrmGoodsReceiptLineRepository.save(line);
 	}
 
 	/**
