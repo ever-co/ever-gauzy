@@ -36,7 +36,7 @@ test('a published npm version and a public ever-co repository pass', async () =>
 	assert.equal((await check(refs, isPublic)).exit, 0);
 });
 
-test('every dependency form is recognised', () => {
+test('every dependency form is recognized', () => {
 	const forms = {
 		'github:ever-co/one#main': 'one',
 		'ever-co/two': 'two',

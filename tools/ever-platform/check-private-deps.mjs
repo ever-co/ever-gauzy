@@ -8,7 +8,7 @@
 // GitHub WITHOUT credentials whether each repository is public (its page answers 404 when it is
 // private). A published npm version never matches; a `repository` or `bugs` link is not read.
 //
-// Dependency forms recognised: `github:ever-co/<repo>`, the shorthand `ever-co/<repo>`,
+// Dependency forms recognized: `github:ever-co/<repo>`, the shorthand `ever-co/<repo>`,
 // `git+https://github.com/ever-co/<repo>`, `https://github.com/ever-co/<repo>.git`,
 // `git+ssh://git@github.com[:/]ever-co/<repo>`, `git@github.com:ever-co/<repo>`,
 // `git://github.com/ever-co/<repo>`, and GitHub tarballs (`https://codeload.github.com/ever-co/<repo>/...`,
