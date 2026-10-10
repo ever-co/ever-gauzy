@@ -19,7 +19,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
+import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, IEmployeePresence, ID } from '@gauzy/contracts';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
@@ -41,7 +41,8 @@ import {
 	CreateEmployeeDTO,
 	UpdateEmployeeDTO,
 	UpdateProfileDTO,
-	FindMembersInputDTO
+	FindMembersInputDTO,
+	EmployeePresenceDTO
 } from './dto';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
@@ -230,6 +231,31 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseValidationPipe()
 	async getMembers(@Query() options: FindMembersInputDTO): Promise<IPagination<IEmployee>> {
 		return await this._employeeService.findMembers(options);
+	}
+
+	/**
+	 * Records a presence heartbeat for the signed-in employee.
+	 *
+	 * Open to any authenticated employee, for their own record only: the employee is taken from the
+	 * request context, never from the request. Calling it again only moves `lastSeenAt` forward.
+	 *
+	 * @param input - Whether the client saw no user input for a while.
+	 * @returns The presence as stored.
+	 */
+	@ApiOperation({ summary: 'Record a presence heartbeat for the signed-in employee' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Presence recorded.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'The signed-in user has no employee record.'
+	})
+	@Permissions()
+	@Put('/me/presence')
+	@UseValidationPipe({ whitelist: true })
+	async updatePresence(@Body() input: EmployeePresenceDTO): Promise<IEmployeePresence> {
+		return await this._employeeService.updatePresence(input);
 	}
 
 	/**

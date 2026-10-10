@@ -341,6 +341,9 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'CommentController.update',
 	// EmailVerificationController: re-sends the confirmation link to the address of the caller
 	'EmailVerificationController.resendConfirmationLink',
+	// EmployeeController: own presence: the employee comes from RequestContext.currentUser().employeeId, never from the
+	// request, and the body only carries isIdle (employee.service.ts updatePresence)
+	'EmployeeController.updatePresence',
 	// EmployeeNotificationController: own notifications: EmployeeNotificationService pins the receiver to the employee of the caller and
 	// the rows are employee scoped (employee-notification.service.ts:126)
 	'EmployeeNotificationController.create',
