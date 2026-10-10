@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { check, findRefs, isPublicOnGitHub } from './check-private-deps.mjs';
+import { check, findRefs, isPublicOnGitHub, repoOfSpec } from './check-private-deps.mjs';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/private-deps/${name}`, import.meta.url), 'utf8');
 
@@ -36,28 +36,66 @@ test('a published npm version and a public ever-co repository pass', async () =>
 	assert.equal((await check(refs, isPublic)).exit, 0);
 });
 
-test('every reference form is found: github:, git+https, git+ssh, git:// and workflow uses', () => {
-	const text = [
-		'"a": "github:ever-co/one#main"',
-		'"b": "git+https://github.com/ever-co/two.git"',
-		'"c": "git+ssh://git@github.com:ever-co/three.git"',
-		'"d": "git://github.com/ever-co/four"',
-		'      uses: ever-co/five/.github/actions/x@abc',
-		'"e": "github:other-org/six"'
+test('every dependency form is recognised', () => {
+	const forms = {
+		'github:ever-co/one#main': 'one',
+		'ever-co/two': 'two',
+		'ever-co/three#v1': 'three',
+		'git+https://github.com/ever-co/four.git': 'four',
+		'https://github.com/ever-co/five.git#main': 'five',
+		'git+ssh://git@github.com:ever-co/six.git': 'six',
+		'git+ssh://git@github.com/ever-co/seven.git': 'seven',
+		'git@github.com:ever-co/eight.git': 'eight',
+		'git://github.com/ever-co/nine': 'nine'
+	};
+	for (const [spec, repo] of Object.entries(forms)) assert.equal(repoOfSpec(spec), repo, spec);
+	for (const spec of ['1.2.3', '^1.0.0', 'npm:@ever-co/x@1', 'github:other-org/x', 'file:../x', 'https://github.com/ever-co/x'])
+		assert.equal(repoOfSpec(spec), null, spec);
+});
+
+test('only dependency fields are read: repository and bugs links are not dependencies', () => {
+	const text = JSON.stringify({
+		repository: 'github:ever-co/platform',
+		bugs: { url: 'https://github.com/ever-co/platform/issues' },
+		dependencies: { a: '1.0.0' },
+		overrides: { b: { c: 'ever-co/nested' } },
+		resolutions: { d: 'git+https://github.com/ever-co/resolved.git' }
+	});
+	assert.deepEqual(
+		findRefs(text, 'package.json').map((r) => r.repo),
+		['resolved', 'nested']
+	);
+});
+
+test('yarn.lock entries and workflow uses are found; other workflow text is not', () => {
+	const lock = [
+		'"@nestjs/axios@github:ever-co/nestjs-axios#master":',
+		'  resolved "https://codeload.github.com/ever-co/nestjs-axios/tar.gz/abc"',
+		'"@ever-co/legal@^0.1.0":',
+		'  resolved "https://registry.npmjs.org/@ever-co/legal/-/legal-0.1.2.tgz"'
 	].join('\n');
 	assert.deepEqual(
-		findRefs(text, 'f').map((r) => r.repo),
-		['one', 'two', 'three', 'four', 'five']
+		findRefs(lock, 'yarn.lock').map((r) => r.repo),
+		['nestjs-axios', 'nestjs-axios']
+	);
+	const workflow = [
+		'      - uses: ever-co/five/.github/actions/x@abc',
+		'        uses: ever-co/six@v1',
+		'        with: { repository: ever-co/other }',
+		'      # see https://github.com/ever-co/seven'
+	].join('\n');
+	assert.deepEqual(
+		findRefs(workflow, '.github/workflows/x.yml').map((r) => r.repo),
+		['five', 'six']
 	);
 });
 
 test('an answer other than 200 or 404 is inconclusive (exit 2), never a pass', async () => {
 	const result = await check([{ repo: 'x', file: 'f', line: 1 }], async () => null);
 	assert.equal(result.exit, 2);
-	const rateLimited = async () => ({ status: 403 });
-	assert.equal(await isPublicOnGitHub('x', rateLimited), null);
-	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 404 })), false);
-	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 200 })), true);
+	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 403 }), 1), null);
+	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 404 }), 1), false);
+	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 200 }), 1), true);
 });
 
 test('the request carries no credentials', async () => {
@@ -67,5 +105,8 @@ test('the request carries no credentials', async () => {
 		return { status: 200 };
 	});
 	assert.equal(seen.url, 'https://github.com/ever-co/x');
-	assert.equal(Object.keys(seen.headers).some((h) => h.toLowerCase() === 'authorization'), false);
+	assert.equal(
+		Object.keys(seen.headers).some((h) => h.toLowerCase() === 'authorization'),
+		false
+	);
 });

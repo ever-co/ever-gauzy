@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 // No dependency of the public default branch on a private ever-co repository.
 //
-// Anyone who clones `develop` must be able to install and build it. This scans every tracked
-// package.json, yarn.lock and workflow for git dependencies on ever-co repositories
-// (`github:ever-co/<repo>`, `git+https://github.com/ever-co/<repo>`, `git+ssh://git@github.com/ever-co/<repo>`,
-// `git://github.com/ever-co/<repo>`) and workflow `uses: ever-co/<repo>/...` steps, and asks GitHub,
-// WITHOUT credentials, whether each repository is public (its page answers 404 when private), and the
-// check fails naming every file and line that refers to it. A published npm version never matches.
+// Anyone who clones `develop` must be able to install and build it. This reads every tracked
+// package.json (its dependency fields only: dependencies, devDependencies, optionalDependencies,
+// peerDependencies, resolutions, overrides), yarn.lock (entry specs and `resolved` URLs) and workflow
+// (`uses:` values only), finds the ones that install from an ever-co GitHub repository, and asks
+// GitHub WITHOUT credentials whether each repository is public (its page answers 404 when it is
+// private). A published npm version never matches; a `repository` or `bugs` link is not read.
+//
+// Dependency forms recognised: `github:ever-co/<repo>`, the shorthand `ever-co/<repo>`,
+// `git+https://github.com/ever-co/<repo>`, `https://github.com/ever-co/<repo>.git`,
+// `git+ssh://git@github.com[:/]ever-co/<repo>`, `git@github.com:ever-co/<repo>`,
+// `git://github.com/ever-co/<repo>`.
 //
 //   node tools/ever-platform/check-private-deps.mjs [--root <dir>]
 //
@@ -15,39 +20,106 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const OWNER = 'ever-co';
-const PATTERNS = [
-	/github:ever-co\/([A-Za-z0-9._-]+)/g,
-	/git\+https:\/\/(?:[^@/\s"']+@)?github\.com\/ever-co\/([A-Za-z0-9._-]+)/g,
-	/git\+ssh:\/\/git@github\.com[:/]ever-co\/([A-Za-z0-9._-]+)/g,
-	/git:\/\/github\.com\/ever-co\/([A-Za-z0-9._-]+)/g,
-	/uses:\s*["']?ever-co\/([A-Za-z0-9._-]+)/g
+const REPO = '([A-Za-z0-9._-]+)';
+/** A dependency specification that installs from an ever-co GitHub repository (whole value). */
+const SPEC_FORMS = [
+	new RegExp(`^github:${OWNER}/${REPO}`),
+	new RegExp(`^${OWNER}/${REPO}(?:#.*)?$`),
+	new RegExp(`^git\\+https://(?:[^@/\\s]+@)?github\\.com/${OWNER}/${REPO}`),
+	new RegExp(`^https://(?:[^@/\\s]+@)?github\\.com/${OWNER}/${REPO}\\.git(?:#.*)?$`),
+	new RegExp(`^git\\+ssh://git@github\\.com[:/]${OWNER}/${REPO}`),
+	new RegExp(`^git@github\\.com:${OWNER}/${REPO}`),
+	new RegExp(`^git://github\\.com/${OWNER}/${REPO}`)
+];
+/** The same forms inside a yarn.lock line (entry specs like `"pkg@github:ever-co/x#ref"`, `resolved` URLs). */
+const LOCK_FORMS = [
+	new RegExp(`github:${OWNER}/${REPO}`, 'g'),
+	new RegExp(`git\\+https://(?:[^@/\\s"]+@)?github\\.com/${OWNER}/${REPO}`, 'g'),
+	new RegExp(`git\\+ssh://git@github\\.com[:/]${OWNER}/${REPO}`, 'g'),
+	new RegExp(`git://github\\.com/${OWNER}/${REPO}`, 'g'),
+	new RegExp(`https://(?:codeload\\.)?github\\.com/${OWNER}/${REPO}(?:\\.git|/tar\\.gz/)`, 'g')
+];
+const USES = new RegExp(`^\\s*-?\\s*uses:\\s*["']?${OWNER}/${REPO}`);
+const DEPENDENCY_FIELDS = [
+	'dependencies',
+	'devDependencies',
+	'optionalDependencies',
+	'peerDependencies',
+	'resolutions',
+	'overrides'
 ];
 
-/** The tracked files that can declare a dependency. */
+const normalise = (repo) => repo.replace(/\.git$/, '').toLowerCase();
+
+/** The tracked files that can declare a dependency (the check's own fixtures excepted). */
 export function dependencyFiles(root) {
-	const out = execFileSync('git', ['ls-files', '-z', '--', '*package.json', '*yarn.lock', '.github/workflows/*.yml', '.github/workflows/*.yaml'], {
-		cwd: root,
-		encoding: 'utf8',
-		maxBuffer: 64 * 1024 * 1024
-	});
-	// The check's own fixtures name a private repository on purpose.
+	const out = execFileSync(
+		'git',
+		['ls-files', '-z', '--', '*package.json', '*yarn.lock', '.github/workflows/*.yml', '.github/workflows/*.yaml'],
+		{ cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+	);
 	return out
 		.split('\0')
 		.filter((f) => f && !f.includes('node_modules/') && !f.startsWith('tools/ever-platform/fixtures/'));
 }
 
+/** The ever-co repository a dependency specification installs from, or null. */
+export function repoOfSpec(spec) {
+	if (typeof spec !== 'string') return null;
+	const value = spec.trim();
+	for (const form of SPEC_FORMS) {
+		const match = form.exec(value);
+		if (match) return normalise(match[1]);
+	}
+	return null;
+}
+
+/** The 1-based line of the first occurrence of `needle` in `text` (1 when not found). */
+function lineOf(text, needle) {
+	const at = text.indexOf(needle);
+	return at < 0 ? 1 : text.slice(0, at).split('\n').length;
+}
+
+/** Every dependency value of a package.json (nested `overrides` included): [[name, value]]. */
+function dependencyValues(manifest) {
+	let values = [];
+	const walk = (node, prefix) => {
+		for (const [name, value] of Object.entries(node ?? {})) {
+			if (typeof value === 'string') values.push([`${prefix}${name}`, value]);
+			else if (value && typeof value === 'object') walk(value, `${prefix}${name}/`);
+		}
+	};
+	for (const field of DEPENDENCY_FIELDS) walk(manifest?.[field], `${field}.`);
+	return values;
+}
+
 /** Every reference to an ever-co repository in one file: [{repo, file, line}]. */
 export function findRefs(text, file) {
-	const refs = [];
+	let refs = [];
+	if (file.endsWith('package.json')) {
+		let manifest;
+		try {
+			manifest = JSON.parse(text);
+		} catch {
+			return refs;
+		}
+		for (const [, value] of dependencyValues(manifest)) {
+			const repo = repoOfSpec(value);
+			if (repo) refs.push({ repo, file, line: lineOf(text, JSON.stringify(value)) });
+		}
+		return refs;
+	}
 	const lines = text.split('\n');
 	for (const [index, line] of lines.entries()) {
-		for (const pattern of PATTERNS) {
-			for (const match of line.matchAll(pattern)) {
-				const repo = match[1].replace(/\.git$/, '').toLowerCase();
-				refs.push({ repo, file, line: index + 1 });
-			}
+		if (file.endsWith('yarn.lock')) {
+			for (const form of LOCK_FORMS)
+				for (const match of line.matchAll(form)) refs.push({ repo: normalise(match[1]), file, line: index + 1 });
+		} else {
+			const match = USES.exec(line);
+			if (match) refs.push({ repo: normalise(match[1]), file, line: index + 1 });
 		}
 	}
 	return refs;
@@ -58,8 +130,10 @@ export function findRefs(text, file) {
  * to anyone when it is public and 404 when it is private (the web page, not the REST API, whose
  * anonymous rate limit shared CI addresses exhaust). true, false (404), or null (could not tell).
  */
-export async function isPublicOnGitHub(repo, fetchImpl = fetch) {
+export async function isPublicOnGitHub(repo, fetchImpl = fetch, waitMs = 2000) {
 	for (let attempt = 1; attempt <= 3; attempt += 1) {
+		// One question at a time, with a pause between retries: this is a polite, anonymous check.
+		// eslint-disable-next-line no-await-in-loop
 		const response = await fetchImpl(`https://github.com/${OWNER}/${encodeURIComponent(repo)}`, {
 			method: 'HEAD',
 			headers: { 'user-agent': 'ever-gauzy-private-deps-check' },
@@ -67,18 +141,34 @@ export async function isPublicOnGitHub(repo, fetchImpl = fetch) {
 		});
 		if (response.status === 200) return true;
 		if (response.status === 404) return false;
-		if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * attempt));
+		// eslint-disable-next-line no-await-in-loop
+		if (attempt < 3) await new Promise((r) => setTimeout(r, waitMs * attempt));
 	}
 	return null;
 }
 
-/** The verdict for a set of references: {exit, privateRefs[], unknown[]}. */
+/** The exit code of a verdict: 1 a private repository, 2 inconclusive, 0 all public. */
+function exitOf(privateRefs, unknown) {
+	if (privateRefs.length) return 1;
+	if (unknown.length) return 2;
+	return 0;
+}
+
+/** The verdict for a set of references: {exit, privateRefs[], unknown[], repos[]}. */
 export async function check(refs, isPublic) {
-	const verdicts = new Map();
-	for (const repo of new Set(refs.map((r) => r.repo))) verdicts.set(repo, await isPublic(repo));
+	const repos = [...new Set(refs.map((r) => r.repo))];
+	const answers = await Promise.all(repos.map((repo) => isPublic(repo)));
+	let verdicts = new Map(repos.map((repo, i) => [repo, answers[i]]));
 	const privateRefs = refs.filter((r) => verdicts.get(r.repo) === false);
-	const unknown = [...verdicts].filter(([, v]) => v === null).map(([repo]) => repo);
-	return { exit: privateRefs.length ? 1 : unknown.length ? 2 : 0, privateRefs, unknown, repos: [...verdicts.keys()] };
+	const unknown = repos.filter((repo) => verdicts.get(repo) === null);
+	return { exit: exitOf(privateRefs, unknown), privateRefs, unknown, repos };
+}
+
+function summary(result, count) {
+	let verdict = 'all public';
+	if (result.exit === 1) verdict = 'a private repository is referenced';
+	if (result.exit === 2) verdict = 'inconclusive';
+	return `check-private-deps: ${count} reference(s) to ${result.repos.length} ever-co repositories (${result.repos.join(', ') || 'none'}); ${verdict}\n`;
 }
 
 async function main(argv) {
@@ -90,20 +180,15 @@ async function main(argv) {
 		process.stdout.write(`${r.file}:${r.line}: depends on the private repository ${OWNER}/${r.repo}\n`);
 	for (const repo of result.unknown)
 		process.stdout.write(`could not tell whether ${OWNER}/${repo} is public (GitHub did not answer 200 or 404)\n`);
-	process.stdout.write(
-		`check-private-deps: ${refs.length} reference(s) to ${result.repos.length} ever-co repositories (${result.repos.join(', ') || 'none'}); ${
-			result.exit === 0 ? 'all public' : result.exit === 1 ? 'a private repository is referenced' : 'inconclusive'
-		}\n`
-	);
+	process.stdout.write(summary(result, refs.length));
 	return result.exit;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))) {
-	main(process.argv.slice(2)).then(
-		(code) => process.exit(code),
-		(error) => {
-			process.stderr.write(`check-private-deps: ${error.message}\n`);
-			process.exit(2);
-		}
-	);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+	try {
+		process.exitCode = await main(process.argv.slice(2));
+	} catch (error) {
+		process.stderr.write(`check-private-deps: ${error.message}\n`);
+		process.exitCode = 2;
+	}
 }

@@ -52,7 +52,8 @@ on:
       - 'packages/plugins/*-ui/**'
       - 'tools/ever-platform/**'
       - '**/package.json'
-      - 'yarn.lock'
+      - '**/yarn.lock'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
