@@ -302,43 +302,45 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * Refuses a plan read unless the caller belongs to the team it names, and returns the team the read
 	 * must then be limited to.
 	 *
-	 * A caller with CHANGE_SELECTED_EMPLOYEE still reads any team, or the whole organization when no team
-	 * is named, and so does an organization-wide viewer without an employee record, the same exception
-	 * `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. An employee reading their own plans keeps
-	 * every team. Anyone else must name a team they are an active member or manager of.
+	 * A caller with CHANGE_SELECTED_EMPLOYEE skips the membership check and reads any team, or the whole
+	 * organization when no team is named, and so does an organization-wide viewer without an employee
+	 * record, the same exception `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. An employee
+	 * reading their own plans skips it too. A team these callers name still limits the read, so both ORM
+	 * branches return the same plans. Anyone else must name a team they are an active member or manager of.
 	 *
 	 * @param organizationTeamId - The team named in the request's `where`, as the client sent it
 	 * @param ownerId - The employee whose plans are read, when the route is limited to one
-	 * @returns The team to filter on, or undefined when the read needs no team limit
+	 * @returns The team to filter on, or undefined when no usable team was named and the caller needs none
 	 * @throws ForbiddenException when the caller may not read those plans
 	 */
 	private async resolveReadableTeam(organizationTeamId: unknown, ownerId?: ID): Promise<ID | undefined> {
+		// A repeated or nested query value is not a string, and a malformed id would make the uuid
+		// comparison fail: neither names a team, so neither reaches the membership query.
+		const requestedTeamId =
+			typeof organizationTeamId === 'string' && isUUID(organizationTeamId) ? organizationTeamId : undefined;
+
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return undefined;
+			return requestedTeamId;
 		}
 
 		const employeeId = RequestContext.currentEmployeeId();
 
 		if (!employeeId && RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
-			return undefined;
+			return requestedTeamId;
 		}
 
 		if (employeeId && ownerId === employeeId) {
-			return undefined;
+			return requestedTeamId;
 		}
 
-		// A repeated or nested query value is not a string, and a malformed id would make the uuid
-		// comparison fail: both are refused here instead of reaching the membership query.
 		const isMember =
-			typeof organizationTeamId === 'string' &&
-			isUUID(organizationTeamId) &&
-			(await this._managedEmployeeService.isMemberOfTeam(employeeId, organizationTeamId));
+			!!requestedTeamId && (await this._managedEmployeeService.isMemberOfTeam(employeeId, requestedTeamId));
 
 		if (!isMember) {
 			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
 		}
 
-		return organizationTeamId;
+		return requestedTeamId;
 	}
 
 	/**
