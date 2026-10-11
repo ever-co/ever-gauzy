@@ -29,6 +29,8 @@ const JITSU_SETTINGS = {
 	WRITE_KEY: 'jitsuWriteKey'
 };
 
+type MonitoringService = 'posthog' | 'sentry' | 'jitsu';
+
 /**
  * Scope enumeration for settings
  */
@@ -123,24 +125,54 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	}
 
 	/**
+	 * Scope tab currently shown for each service. nb-tabset emits `changeTab` for
+	 * its initial tab too, so this follows the visible tab from the first render.
+	 */
+	protected readonly activeScope = signal<Record<MonitoringService, SettingsScope>>({
+		posthog: SettingsScope.TENANT,
+		sentry: SettingsScope.TENANT,
+		jitsu: SettingsScope.TENANT
+	});
+
+	/**
 	 * Handle PostHog tab change
 	 */
 	onPosthogTabChange(tab: NbTabComponent): void {
-		// Tab change is handled by nb-tabset, data is already loaded
+		this._setScope('posthog', tab);
 	}
 
 	/**
 	 * Handle Sentry tab change
 	 */
 	onSentryTabChange(tab: NbTabComponent): void {
-		// Tab change is handled by nb-tabset, data is already loaded
+		this._setScope('sentry', tab);
 	}
 
 	/**
 	 * Handle Jitsu tab change
 	 */
 	onJitsuTabChange(tab: NbTabComponent): void {
-		// Tab change is handled by nb-tabset, data is already loaded
+		this._setScope('jitsu', tab);
+	}
+
+	/**
+	 * Whether the service is switched on in the scope tab currently shown.
+	 */
+	isEnabled(service: MonitoringService): boolean {
+		const global = this.activeScope()[service] === SettingsScope.GLOBAL;
+		switch (service) {
+			case 'posthog':
+				return !!(global ? this.globalPosthogForm : this.tenantPosthogForm).get('posthogEnabled').value;
+			case 'sentry':
+				return !!(global ? this.globalSentryForm : this.tenantSentryForm).get('sentryEnabled').value;
+			case 'jitsu':
+				return !!(global ? this.globalJitsuForm : this.tenantJitsuForm).get('jitsuEnabled').value;
+		}
+	}
+
+	private _setScope(service: MonitoringService, tab: NbTabComponent): void {
+		const scope = tab?.tabId === SettingsScope.GLOBAL ? SettingsScope.GLOBAL : SettingsScope.TENANT;
+		this.activeScope.update((scopes) => ({ ...scopes, [service]: scope }));
 	}
 
 	/**
@@ -237,6 +269,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[POSTHOG_SETTINGS.FLUSH_INTERVAL]: String(formValue.posthogFlushInterval)
 			};
 			await this._tenantService.saveGlobalSettings(settings);
+			this.globalPosthogForm.markAsPristine();
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global PostHog settings:', error);
@@ -262,6 +295,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[POSTHOG_SETTINGS.FLUSH_INTERVAL]: String(formValue.posthogFlushInterval)
 			};
 			await this._tenantService.saveDynamicSettings(settings);
+			this.tenantPosthogForm.markAsPristine();
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant PostHog settings:', error);
@@ -285,6 +319,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[SENTRY_SETTINGS.DSN]: formValue.sentryDsn
 			};
 			await this._tenantService.saveGlobalSettings(settings);
+			this.globalSentryForm.markAsPristine();
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global Sentry settings:', error);
@@ -308,6 +343,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[SENTRY_SETTINGS.DSN]: formValue.sentryDsn
 			};
 			await this._tenantService.saveDynamicSettings(settings);
+			this.tenantSentryForm.markAsPristine();
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Sentry settings:', error);
@@ -332,6 +368,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
 			};
 			await this._tenantService.saveGlobalSettings(settings);
+			this.globalJitsuForm.markAsPristine();
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global Jitsu settings:', error);
@@ -356,6 +393,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
 			};
 			await this._tenantService.saveDynamicSettings(settings);
+			this.tenantJitsuForm.markAsPristine();
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Jitsu settings:', error);
