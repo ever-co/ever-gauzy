@@ -176,6 +176,18 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	}
 
 	/**
+	 * Clear the unsaved-changes state after a save — but only if the form still
+	 * holds what was submitted. The inputs stay editable while the request is in
+	 * flight, and an edit made meanwhile was not saved, so it must stay dirty.
+	 */
+	private _markPristineIfUnchanged(form: UntypedFormGroup, submitted: Record<string, unknown>): void {
+		const current = form.getRawValue();
+		if (Object.keys(submitted).every((key) => current[key] === submitted[key])) {
+			form.markAsPristine();
+		}
+	}
+
+	/**
 	 * Load all settings for both services and both scopes
 	 */
 	private async _loadAllSettings(): Promise<void> {
@@ -269,7 +281,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[POSTHOG_SETTINGS.FLUSH_INTERVAL]: String(formValue.posthogFlushInterval)
 			};
 			await this._tenantService.saveGlobalSettings(settings);
-			this.globalPosthogForm.markAsPristine();
+			this._markPristineIfUnchanged(this.globalPosthogForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global PostHog settings:', error);
@@ -295,7 +307,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[POSTHOG_SETTINGS.FLUSH_INTERVAL]: String(formValue.posthogFlushInterval)
 			};
 			await this._tenantService.saveDynamicSettings(settings);
-			this.tenantPosthogForm.markAsPristine();
+			this._markPristineIfUnchanged(this.tenantPosthogForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant PostHog settings:', error);
@@ -319,7 +331,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[SENTRY_SETTINGS.DSN]: formValue.sentryDsn
 			};
 			await this._tenantService.saveGlobalSettings(settings);
-			this.globalSentryForm.markAsPristine();
+			this._markPristineIfUnchanged(this.globalSentryForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global Sentry settings:', error);
@@ -343,7 +355,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[SENTRY_SETTINGS.DSN]: formValue.sentryDsn
 			};
 			await this._tenantService.saveDynamicSettings(settings);
-			this.tenantSentryForm.markAsPristine();
+			this._markPristineIfUnchanged(this.tenantSentryForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Sentry settings:', error);
@@ -368,7 +380,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
 			};
 			await this._tenantService.saveGlobalSettings(settings);
-			this.globalJitsuForm.markAsPristine();
+			this._markPristineIfUnchanged(this.globalJitsuForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global Jitsu settings:', error);
@@ -393,7 +405,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
 			};
 			await this._tenantService.saveDynamicSettings(settings);
-			this.tenantJitsuForm.markAsPristine();
+			this._markPristineIfUnchanged(this.tenantJitsuForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Jitsu settings:', error);

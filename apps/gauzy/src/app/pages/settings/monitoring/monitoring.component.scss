@@ -410,6 +410,13 @@ nb-accordion {
     box-shadow: none;
   }
 
+  // The projected label text is visually hidden (it names the checkbox for
+  // assistive tech); drop the padding Nebular gives non-empty toggle text so
+  // the switch stays flush with the row's end edge.
+  .text {
+    padding: 0 !important;
+  }
+
   .toggle.toggle .toggle-switcher {
     background-color: var(--text-hint-color);
   }

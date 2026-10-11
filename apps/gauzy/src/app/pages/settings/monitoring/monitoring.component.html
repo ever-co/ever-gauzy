@@ -323,7 +323,9 @@
 				<span class="field-label">{{ 'SETTINGS_MONITORING.POSTHOG.ENABLED' | translate }}</span>
 			</div>
 			<div class="field-control toggle">
-				<nb-toggle formControlName="posthogEnabled" status="primary"></nb-toggle>
+				<nb-toggle formControlName="posthogEnabled" status="primary">
+					<span class="visually-hidden">{{ 'SETTINGS_MONITORING.POSTHOG.ENABLED' | translate }}</span>
+				</nb-toggle>
 			</div>
 		</div>
 		<div class="field-row">
@@ -340,6 +342,7 @@
 					autocomplete="new-password"
 					spellcheck="false"
 					formControlName="posthogKey"
+					[attr.aria-label]="'SETTINGS_MONITORING.POSTHOG.API_KEY' | translate"
 					[placeholder]="'SETTINGS_MONITORING.POSTHOG.API_KEY_PLACEHOLDER' | translate"
 				/>
 			</div>
@@ -357,6 +360,7 @@
 					autocomplete="off"
 					spellcheck="false"
 					formControlName="posthogHost"
+					[attr.aria-label]="'SETTINGS_MONITORING.POSTHOG.HOST' | translate"
 					[placeholder]="'SETTINGS_MONITORING.POSTHOG.HOST_PLACEHOLDER' | translate"
 				/>
 			</div>
@@ -374,6 +378,7 @@
 					class="mono"
 					type="number"
 					formControlName="posthogFlushInterval"
+					[attr.aria-label]="'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL' | translate"
 					[placeholder]="'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL_PLACEHOLDER' | translate"
 				/>
 			</div>
@@ -389,7 +394,9 @@
 				<span class="field-label">{{ 'SETTINGS_MONITORING.SENTRY.ENABLED' | translate }}</span>
 			</div>
 			<div class="field-control toggle">
-				<nb-toggle formControlName="sentryEnabled" status="primary"></nb-toggle>
+				<nb-toggle formControlName="sentryEnabled" status="primary">
+					<span class="visually-hidden">{{ 'SETTINGS_MONITORING.SENTRY.ENABLED' | translate }}</span>
+				</nb-toggle>
 			</div>
 		</div>
 		<div class="field-row">
@@ -406,6 +413,7 @@
 					autocomplete="new-password"
 					spellcheck="false"
 					formControlName="sentryDsn"
+					[attr.aria-label]="'SETTINGS_MONITORING.SENTRY.DSN' | translate"
 					[placeholder]="'SETTINGS_MONITORING.SENTRY.DSN_PLACEHOLDER' | translate"
 				/>
 			</div>
@@ -421,7 +429,9 @@
 				<span class="field-label">{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}</span>
 			</div>
 			<div class="field-control toggle">
-				<nb-toggle formControlName="jitsuEnabled" status="primary"></nb-toggle>
+				<nb-toggle formControlName="jitsuEnabled" status="primary">
+					<span class="visually-hidden">{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}</span>
+				</nb-toggle>
 			</div>
 		</div>
 		<div class="field-row">
@@ -437,6 +447,7 @@
 					autocomplete="off"
 					spellcheck="false"
 					formControlName="jitsuHost"
+					[attr.aria-label]="'SETTINGS_MONITORING.JITSU.HOST' | translate"
 					[placeholder]="'SETTINGS_MONITORING.JITSU.HOST_PLACEHOLDER' | translate"
 				/>
 			</div>
@@ -455,6 +466,7 @@
 					autocomplete="new-password"
 					spellcheck="false"
 					formControlName="jitsuWriteKey"
+					[attr.aria-label]="'SETTINGS_MONITORING.JITSU.WRITE_KEY' | translate"
 					[placeholder]="'SETTINGS_MONITORING.JITSU.WRITE_KEY_PLACEHOLDER' | translate"
 				/>
 			</div>
