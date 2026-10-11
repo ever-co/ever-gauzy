@@ -60,6 +60,16 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	SettingsScope = SettingsScope;
 
 	/**
+	 * Scope tab currently shown for each service. nb-tabset emits `changeTab` for
+	 * its initial tab too, so this follows the visible tab from the first render.
+	 */
+	protected readonly activeScope = signal<Record<MonitoringService, SettingsScope>>({
+		posthog: SettingsScope.TENANT,
+		sentry: SettingsScope.TENANT,
+		jitsu: SettingsScope.TENANT
+	});
+
+	/**
 	 * Nebular Accordion Item Components
 	 */
 	@ViewChild('posthog') protected readonly posthog: NbAccordionItemComponent;
@@ -123,16 +133,6 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			)
 			.subscribe();
 	}
-
-	/**
-	 * Scope tab currently shown for each service. nb-tabset emits `changeTab` for
-	 * its initial tab too, so this follows the visible tab from the first render.
-	 */
-	protected readonly activeScope = signal<Record<MonitoringService, SettingsScope>>({
-		posthog: SettingsScope.TENANT,
-		sentry: SettingsScope.TENANT,
-		jitsu: SettingsScope.TENANT
-	});
 
 	/**
 	 * Handle PostHog tab change

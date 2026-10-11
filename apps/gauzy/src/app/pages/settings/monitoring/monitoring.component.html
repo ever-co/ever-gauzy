@@ -318,15 +318,12 @@
 <!-- PostHog Fields Template -->
 <ng-template #posthogFields let-form="form">
 	<div class="fields" [formGroup]="form">
-		<div class="field-row">
-			<div class="field-copy">
+		<!-- The visible text is the toggle's own label: it names the switch and
+		     clicking it toggles. `start` puts the text before the switch. -->
+		<div class="field-row toggle-row">
+			<nb-toggle class="row-toggle" formControlName="posthogEnabled" status="primary" labelPosition="start">
 				<span class="field-label">{{ 'SETTINGS_MONITORING.POSTHOG.ENABLED' | translate }}</span>
-			</div>
-			<div class="field-control toggle">
-				<nb-toggle formControlName="posthogEnabled" status="primary">
-					<span class="visually-hidden">{{ 'SETTINGS_MONITORING.POSTHOG.ENABLED' | translate }}</span>
-				</nb-toggle>
-			</div>
+			</nb-toggle>
 		</div>
 		<div class="field-row">
 			<div class="field-copy">
@@ -389,15 +386,12 @@
 <!-- Sentry Fields Template -->
 <ng-template #sentryFields let-form="form">
 	<div class="fields" [formGroup]="form">
-		<div class="field-row">
-			<div class="field-copy">
+		<!-- The visible text is the toggle's own label: it names the switch and
+		     clicking it toggles. `start` puts the text before the switch. -->
+		<div class="field-row toggle-row">
+			<nb-toggle class="row-toggle" formControlName="sentryEnabled" status="primary" labelPosition="start">
 				<span class="field-label">{{ 'SETTINGS_MONITORING.SENTRY.ENABLED' | translate }}</span>
-			</div>
-			<div class="field-control toggle">
-				<nb-toggle formControlName="sentryEnabled" status="primary">
-					<span class="visually-hidden">{{ 'SETTINGS_MONITORING.SENTRY.ENABLED' | translate }}</span>
-				</nb-toggle>
-			</div>
+			</nb-toggle>
 		</div>
 		<div class="field-row">
 			<div class="field-copy">
@@ -424,15 +418,12 @@
 <!-- Jitsu Fields Template -->
 <ng-template #jitsuFields let-form="form">
 	<div class="fields" [formGroup]="form">
-		<div class="field-row">
-			<div class="field-copy">
+		<!-- The visible text is the toggle's own label: it names the switch and
+		     clicking it toggles. `start` puts the text before the switch. -->
+		<div class="field-row toggle-row">
+			<nb-toggle class="row-toggle" formControlName="jitsuEnabled" status="primary" labelPosition="start">
 				<span class="field-label">{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}</span>
-			</div>
-			<div class="field-control toggle">
-				<nb-toggle formControlName="jitsuEnabled" status="primary">
-					<span class="visually-hidden">{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}</span>
-				</nb-toggle>
-			</div>
+			</nb-toggle>
 		</div>
 		<div class="field-row">
 			<div class="field-copy">

@@ -321,15 +321,6 @@ nb-accordion {
   gap: 0.375rem;
   min-width: 0;
 
-  &.toggle {
-    align-items: flex-end;
-    padding-top: 0.25rem;
-
-    @media (max-width: 767.98px) {
-      align-items: flex-start;
-    }
-  }
-
   input[nbInput] {
     width: 100%;
     max-width: none;
@@ -400,21 +391,38 @@ nb-accordion {
 }
 
 // ── Toggle ─────────────────────────────────────────────────────────────────
+// The enable switch spans its row: the label text sits on the start side and
+// the switch on the end side, both inside Nebular's own <label>, so the text
+// names the checkbox and clicking anywhere on the row toggles it.
+.toggle-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 // Off, the theme painted the knob in the page colour on a near-black track, so
 // the switch read as an empty outline. Give each state a visible knob: muted on
 // a neutral track when off, white on the accent track when on.
-:host .field-control ::ng-deep nb-toggle {
+:host ::ng-deep nb-toggle.row-toggle {
+  display: flex;
+  width: 100%;
+
+  .toggle-label {
+    width: 100%;
+    justify-content: space-between;
+    gap: 1.5rem;
+    cursor: pointer;
+  }
+
+  // The row gap spaces text and switch; Nebular's own text padding would add to it.
+  .text {
+    min-width: 0;
+    padding: 0 !important;
+    line-height: 1.125rem;
+  }
+
   .toggle.toggle {
     background-color: var(--background-basic-color-3);
     border-color: var(--border-basic-color-5, var(--text-hint-color));
     box-shadow: none;
-  }
-
-  // The projected label text is visually hidden (it names the checkbox for
-  // assistive tech); drop the padding Nebular gives non-empty toggle text so
-  // the switch stays flush with the row's end edge.
-  .text {
-    padding: 0 !important;
   }
 
   .toggle.toggle .toggle-switcher {
