@@ -121,7 +121,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	/**
 	 * Finds the employee's plan for a UTC day in a team, with its tasks. Tenant, organization, employee,
 	 * team and day are the key of the unique index `IDX_daily_plan_employee_team_day_unique`, so there is
-	 * at most one. Without a team, it is the employee's plan that has no team either.
+	 * at most one that is not soft-deleted, and only those are read. Without a team, it is the employee's
+	 * plan that has no team either.
 	 *
 	 * @param tenantId - The tenant of the plan
 	 * @param organizationId - The organization of the plan

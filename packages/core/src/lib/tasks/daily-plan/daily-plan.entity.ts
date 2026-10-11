@@ -20,11 +20,11 @@ import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.r
  * upcoming plans reads the employee's plans from today on: `(employeeId, organizationTeamId, date)`
  * serves both. Created by `AddDailyPlanEmployeeTeamDateIndex1790000023000`.
  *
- * An employee has at most one plan per team and UTC day of `date`, the plans without a team forming
- * a team of their own: the unique index `IDX_daily_plan_employee_team_day_unique` on (tenantId,
- * organizationId, employeeId, COALESCE(organizationTeamId, nil uuid), day of `date`), created by
- * `AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000`. It indexes expressions, which the ORM
- * decorators cannot declare, so only the migration creates it.
+ * An employee has at most one live plan per team and UTC day of `date`, the plans without a team
+ * forming a team of their own: the unique index `IDX_daily_plan_employee_team_day_unique` on (tenantId,
+ * organizationId, employeeId, COALESCE(organizationTeamId, nil uuid), day of `date`, NULL once
+ * soft-deleted), created by `AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000`. It indexes
+ * expressions, which the ORM decorators cannot declare, so only the migration creates it.
  */
 @ColumnIndex('IDX_daily_plan_employee_team_date', ['employeeId', 'organizationTeamId', 'date'])
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })

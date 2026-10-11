@@ -24,13 +24,20 @@ const PLAN_DAY: Record<Dialect, string> = {
 const PLAN_TEAM = `COALESCE("organizationTeamId", '00000000-0000-0000-0000-000000000000')`;
 
 /**
+ * The day of a plan in the index, NULL once the plan is soft-deleted. Every dialect treats NULLs as distinct
+ * in a unique index, so a soft-deleted plan, which `DailyPlanService` no longer finds, never blocks a new one.
+ * MySQL has no partial index, hence the same expression everywhere.
+ */
+const LIVE_PLAN_DAY = (dialect: Dialect): string => `CASE WHEN "deletedAt" IS NULL THEN ${PLAN_DAY[dialect]} END`;
+
+/**
  * The key of the unique index. MySQL keeps the ids in varchar(255) columns, and four of them exceed the
  * 3072 bytes of an InnoDB key: there each id is indexed on its first 36 characters, a whole uuid.
  */
 const UNIQUE_KEY: Record<Dialect, string> = {
-	postgres: `"tenantId", "organizationId", "employeeId", (${PLAN_TEAM}), (${PLAN_DAY.postgres})`,
-	mysql: `"tenantId"(36), "organizationId"(36), "employeeId"(36), (CAST(${PLAN_TEAM} AS CHAR(36))), (${PLAN_DAY.mysql})`,
-	sqlite: `"tenantId", "organizationId", "employeeId", (${PLAN_TEAM}), (${PLAN_DAY.sqlite})`
+	postgres: `"tenantId", "organizationId", "employeeId", (${PLAN_TEAM}), (${LIVE_PLAN_DAY('postgres')})`,
+	mysql: `"tenantId"(36), "organizationId"(36), "employeeId"(36), (CAST(${PLAN_TEAM} AS CHAR(36))), (${LIVE_PLAN_DAY('mysql')})`,
+	sqlite: `"tenantId", "organizationId", "employeeId", (${PLAN_TEAM}), (${LIVE_PLAN_DAY('sqlite')})`
 };
 
 /** Rows per statement, so no statement binds more than the 999 parameters older SQLite builds accept. */
@@ -44,15 +51,15 @@ const BATCH_SIZE = 400;
  * It also compared `organizationTeamId = NULL` when no team was sent, which matches nothing, so each such
  * request created another plan.
  *
- * Existing duplicates are merged first. Plans with the same tenant, organization, employee, team and UTC
- * day form a group, plans without a team forming their own group, and the plan kept is a live one before
- * a soft-deleted one, then the one with the most tasks, then the oldest. It receives the task links of the
- * others that it does not already have, and the largest `workTimePlanned` of the group; the others are then
- * deleted. Plans of two different teams are never merged. Plans without a tenant, an organization or an
- * employee are left alone: the index treats NULLs in those columns as distinct, so they cannot break it.
+ * Existing duplicates are merged first. Live plans with the same tenant, organization, employee, team and
+ * UTC day form a group, plans without a team forming their own group, and the plan kept is the one with the
+ * most tasks, then the oldest. It receives the task links of the others that it does not already have, and
+ * the largest `workTimePlanned` of the group; the others are then deleted. Plans of two different teams are
+ * never merged. Soft-deleted plans, and plans without a tenant, an organization or an employee, are left
+ * alone: the index gives them a NULL key part, and NULLs are distinct in it, so they cannot break it.
  *
- * Then a unique index on (tenantId, organizationId, employeeId, team, day of `date`) is built. The stored
- * dates are not rewritten. MySQL needs 8.0.13 or later for the functional key parts.
+ * Then a unique index on (tenantId, organizationId, employeeId, team, day of `date`) is built over the live
+ * plans. The stored dates are not rewritten. MySQL needs 8.0.13 or later for the functional key parts.
  *
  * `down()` drops the index only. The merge cannot be undone: the deleted plans are gone, and their tasks
  * stay on the plan that was kept.
@@ -125,18 +132,18 @@ export class AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000 implements Migr
 				dialect,
 				`SELECT "id", "keptId", "workTimePlanned", "groupWorkTimePlanned" FROM (
 					SELECT "id", "workTimePlanned",
-						FIRST_VALUE("id") OVER (${group} ORDER BY "isDeleted", "taskCount" DESC, "createdAt", "id") AS "keptId",
+						FIRST_VALUE("id") OVER (${group} ORDER BY "taskCount" DESC, "createdAt", "id") AS "keptId",
 						MAX("workTimePlanned") OVER (${group}) AS "groupWorkTimePlanned",
 						COUNT(*) OVER (${group}) AS "groupSize"
 					FROM (
 						SELECT p."id", p."tenantId", p."organizationId", p."employeeId", p."createdAt", p."workTimePlanned",
-							CASE WHEN p."deletedAt" IS NULL THEN 0 ELSE 1 END AS "isDeleted",
 							${PLAN_TEAM} AS "team", ${PLAN_DAY[dialect]} AS "day", COALESCE(t."taskCount", 0) AS "taskCount"
 						FROM "daily_plan" p
 						LEFT JOIN (
 							SELECT "dailyPlanId", COUNT(*) AS "taskCount" FROM "daily_plan_task" GROUP BY "dailyPlanId"
 						) t ON t."dailyPlanId" = p."id"
-						WHERE p."tenantId" IS NOT NULL AND p."organizationId" IS NOT NULL AND p."employeeId" IS NOT NULL
+						WHERE p."deletedAt" IS NULL
+							AND p."tenantId" IS NOT NULL AND p."organizationId" IS NOT NULL AND p."employeeId" IS NOT NULL
 					) "plan"
 				) "ranked"
 				WHERE "groupSize" > 1`
