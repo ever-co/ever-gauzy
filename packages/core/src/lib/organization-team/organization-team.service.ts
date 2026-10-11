@@ -133,42 +133,36 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				...(parseToBoolean(withLastWorkedTask) ? { relations: ['task'] } : {})
 			});
 
+			// The task statistics of all members at once, so the number of queries does not grow with the team.
+			const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
+				this.statisticService.getTasksByEmployee({ organizationId, tenantId, organizationTeamId, employeeIds }),
+				this.statisticService.getTasksByEmployee({
+					organizationId,
+					tenantId,
+					organizationTeamId,
+					employeeIds,
+					startDate,
+					endDate
+				})
+			]);
+
 			//
-			const memberPromises = members.map(async (member: IOrganizationTeamEmployee) => {
+			return members.map((member: IOrganizationTeamEmployee) => {
 				const { employeeId } = member;
 				//
 				const timerWorkedStatus = statistics.find(
 					(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
 				);
-				//
-				const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
-					this.statisticService.getTasks({
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						employeeIds: [employeeId]
-					}),
-					this.statisticService.getTasks({
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						employeeIds: [employeeId],
-						startDate,
-						endDate
-					})
-				]);
 				return {
 					...member,
 					lastWorkedTask: parseToBoolean(withLastWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
 					running: timerWorkedStatus?.running,
 					duration: timerWorkedStatus?.duration,
 					timerStatus: timerWorkedStatus?.timerStatus,
-					totalWorkedTasks,
-					totalTodayTasks
+					totalWorkedTasks: totalWorkedTasks.get(employeeId),
+					totalTodayTasks: totalTodayTasks.get(employeeId)
 				};
 			});
-
-			return await Promise.all(memberPromises);
 		} catch (error) {
 			console.error('Error while retrieving team members last worked task', error);
 			return []; // or handle the error in an appropriate way
