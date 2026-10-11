@@ -962,7 +962,8 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
  * Reads the page a client asked for on a list that is returned whole by default.
  *
  * `skip` is a 1-based page number, as everywhere `BaseQueryDTO` is read (see `CrudService.paginate`).
- * The values may still be query strings, since some routes validate without transforming.
+ * The values may still be query strings, since some routes validate without transforming, so they are
+ * parsed as `BaseQueryDTO` parses them: the page served is the one that was validated.
  *
  * @param options The client query, holding `take` and `skip`
  * @returns The row limit and offset, or `undefined` when no positive `take` was sent, in which case
@@ -972,12 +973,13 @@ export function resolveRequestedPage(options: {
 	take?: unknown;
 	skip?: unknown;
 }): { limit: number; offset: number } | undefined {
-	const limit = Number(options?.take);
-	if (!Number.isInteger(limit) || limit < 1) {
+	const limit = Number.parseInt(String(options?.take), 10);
+	if (!Number.isSafeInteger(limit) || limit < 1) {
 		return undefined;
 	}
-	const page = Number(options?.skip);
-	return { limit, offset: Number.isInteger(page) && page > 1 ? limit * (page - 1) : 0 };
+	const page = Number.parseInt(String(options?.skip), 10);
+	// A page past any possible row count still gets a valid SQL offset, and so comes back empty
+	return { limit, offset: page > 1 ? Math.min(limit * (page - 1), Number.MAX_SAFE_INTEGER) : 0 };
 }
 
 /**
