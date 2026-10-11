@@ -92,6 +92,11 @@ export class AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000 implements Migr
 		}
 
 		await this.mergeDuplicatePlans(queryRunner, dialect);
+		// MySQL commits the index on its own, before the migration is recorded. A run stopped in between
+		// leaves the index in place, so the retry finds it instead of failing on `Duplicate key name`.
+		if (dialect === 'mysql' && (await this.mysqlIndexExists(queryRunner))) {
+			return;
+		}
 		await queryRunner.query(
 			this.sql(dialect, `CREATE UNIQUE INDEX "${INDEX_NAME}" ON "daily_plan" (${UNIQUE_KEY[dialect]})`)
 		);
@@ -232,9 +237,18 @@ export class AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000 implements Migr
 		}
 	}
 
+	/** Whether the unique index is already on `daily_plan`, looked up in MySQL's catalog. */
+	private async mysqlIndexExists(queryRunner: QueryRunner): Promise<boolean> {
+		const rows: unknown[] = await queryRunner.query(
+			'SELECT `INDEX_NAME` FROM `information_schema`.`STATISTICS` WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = ? AND `INDEX_NAME` = ? LIMIT 1',
+			['daily_plan', INDEX_NAME]
+		);
+		return rows.length > 0;
+	}
+
 	/** Writes identifiers with MySQL's backticks instead of double quotes. */
 	private sql(dialect: Dialect, text: string): string {
-		return dialect === 'mysql' ? text.replace(/"/g, '`') : text;
+		return dialect === 'mysql' ? text.replaceAll('"', '`') : text;
 	}
 
 	/** `count` bind placeholders starting after `offset`: `$n` on Postgres, `?` elsewhere. */
