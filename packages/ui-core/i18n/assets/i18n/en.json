@@ -4575,7 +4575,8 @@
 		"ROLES_PERMISSIONS": "Roles & Permissions",
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4673,6 +4674,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central hub for company documents: uploads, wiki pages, review, and AI knowledge"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5887,7 +5891,10 @@
 			"payment-receipt": "Payment Receipt",
 			"reject-candidate": "Reject Candidate"
 		},
-		"HTML_EDITOR": "HTML Editor"
+		"HTML_EDITOR": "HTML Editor",
+		"FULL_PREVIEW": "Full preview",
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
@@ -5938,16 +5945,83 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "File provider",
+		"SHOW_SECRET": "Show secret",
+		"HIDE_SECRET": "Hide secret",
+		"SUMMARY": {
+			"TITLE": "Current configuration",
+			"DESCRIPTION": "Last saved settings — what new uploads use right now.",
+			"PROVIDER": "Provider",
+			"BUCKET": "Bucket / cloud name",
+			"REGION": "Region",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Credentials",
+			"CREDENTIALS_SAVED": "Saved",
+			"CREDENTIALS_INCOMPLETE": "Incomplete",
+			"CREDENTIALS_NONE": "Not set",
+			"CREDENTIALS_NOT_NEEDED": "Not needed",
+			"SERVER_DEFAULT": "Server default"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Where to get the keys",
+			"LOCAL": {
+				"NAME": "Local disk",
+				"DESCRIPTION": "files are saved on the API server's own file system."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "files are saved to an AWS S3 bucket. Use an IAM access key that can read and write the bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-compatible cloud storage. The credentials are verified with Wasabi when you save."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "image and video hosting. The cloud name and API keys are in the Cloudinary console under API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-compatible object storage with an optional CDN. Create a Spaces access key in the DigitalOcean control panel."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Local storage",
+			"WHERE": "Uploaded files are written to the API server's file system.",
+			"NO_CONFIG": "Nothing to configure — local storage works out of the box.",
+			"WARNING": "Files are lost if the server is redeployed without a persistent volume, and they are not shared between several API instances. Use a cloud provider in production."
+		},
+		"CHECK": {
+			"BUTTON": "Check configuration",
+			"OK": "All required fields are filled in and the URLs are valid. The keys themselves are only verified by the provider.",
+			"OK_LOCAL": "Local storage needs no configuration.",
+			"OK_SERVER_DEFAULTS": "Nothing is missing. Left empty, so the server's own configuration is used:",
+			"MISSING": "Missing:",
+			"INVALID_URL": "Not a valid http(s) URL:",
+			"HTTPS_REQUIRED": "Must use https:// — the keys are sent to this address:"
+		},
 		"S3": {
 			"HEADER": "S3 Configuration",
+			"SUBTITLE": "Store uploaded files in an Amazon S3 bucket.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "An IAM access key that can read and write the bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Where uploaded files are written."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"REGION": "The AWS region the bucket lives in, e.g. us-east-1 or eu-west-1.",
+				"BUCKET": "The bucket name exactly as it appears in the S3 console."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket"
@@ -5955,16 +6029,35 @@
 		},
 		"WASABI": {
 			"HEADER": "Wasabi Configuration",
+			"SUBTITLE": "Store uploaded files in a Wasabi bucket through its S3-compatible API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "An access key pair from the Wasabi console.",
+				"BUCKET": "Bucket & endpoint",
+				"BUCKET_HINT": "Where uploaded files are written.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"REGION": "The region the bucket lives in, e.g. us-east-1 or eu-central-1.",
+				"SERVICE_URL": "The S3 endpoint for that region.",
+				"BUCKET": "Lowercase letters, numbers, dots and hyphens. Names are unique across all of Wasabi.",
+				"FORCE_PATH_STYLE": "Address files as endpoint/bucket/file instead of bucket.endpoint/file. Leave on unless you need virtual-hosted URLs."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint for this region:",
+			"USE_SUGGESTION": "Use it",
+			"SAVE_NOTE": "When you save, Gauzy uses these credentials to create the bucket in Wasabi. If Wasabi rejects the request, the settings are not saved.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
 				"SERVICE_URL": "Service URL",
-				"FORCE_PATH_STYLE": "Force path style URLs"
+				"FORCE_PATH_STYLE": "Force path-style URLs"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
@@ -5973,34 +6066,65 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Cloudinary Configuration",
+			"SUBTITLE": "Store uploaded files in Cloudinary and serve them from its delivery network.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "All three values are in the Cloudinary console under API Keys.",
+				"DELIVERY": "Delivery",
+				"DELIVERY_HINT": "How links to uploaded files are built."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "The name shown at the top of your Cloudinary console.",
+				"ACCESS_API_KEY": "Identifies the account; used together with the API secret.",
+				"ACCESS_API_SECRET": "Saved values come back masked.",
+				"DELIVERY_URL": "Base address of file links. Keep https://res.cloudinary.com unless you use a custom domain.",
+				"SECURE": "Build file links with https://. Leave on True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Cloudinary name",
-				"ACCESS_API_KEY": "Access key id",
-				"ACCESS_API_SECRET": "Secret access key",
+				"CLOUD_NAME": "Cloud name",
+				"ACCESS_API_KEY": "API key",
+				"ACCESS_API_SECRET": "API secret",
 				"DELIVERY_URL": "Delivery URL",
-				"SECURE": "Secure"
+				"SECURE": "Secure (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Cloudinary name",
-				"ACCESS_API_KEY": "Access key id",
-				"ACCESS_API_SECRET": "Secret access key",
+				"CLOUD_NAME": "Cloud name",
+				"ACCESS_API_KEY": "API key",
+				"ACCESS_API_SECRET": "API secret",
 				"DELIVERY_URL": "Delivery URL",
-				"SECURE": "Secure"
+				"SECURE": "Secure (HTTPS)"
 			}
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "DigitalOcean Configuration",
+			"SUBTITLE": "Store uploaded files in a DigitalOcean Space through its S3-compatible API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "A Spaces access key from the DigitalOcean control panel.",
+				"BUCKET": "Space & endpoint",
+				"BUCKET_HINT": "Where uploaded files are written.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"SERVICE_URL": "The endpoint of your Space's datacenter, e.g. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fixed to us-east-1, as Spaces expects; the datacenter comes from the endpoint.",
+				"BUCKET": "The name of the Space.",
+				"CDN_URL": "Optional. The Space's CDN endpoint, if the CDN is enabled.",
+				"FORCE_PATH_STYLE": "Address files as endpoint/space/file instead of space.endpoint/file."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
 				"SERVICE_URL": "Service URL",
 				"CDN_URL": "CDN URL",
-				"FORCE_PATH_STYLE": "Force path style URLs"
+				"FORCE_PATH_STYLE": "Force path-style URLs"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
@@ -6146,7 +6270,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "Recipient",
+				"TEMPLATE": "Template",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "All recipients",
+				"ALL_TEMPLATES": "All templates",
+				"ALL_STATUSES": "All statuses",
+				"SENT": "Sent",
+				"FAILED": "Failed",
+				"ARCHIVED": "Archived",
+				"SHOWING": "Showing {{ count }} of {{ total }}",
+				"NO_MATCH": "No emails match these filters."
 			}
 		}
 	},
@@ -6164,7 +6299,11 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
-		}
+		},
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Full preview",
+		"SAVED": "Template '{{ templateName }}' was saved"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Register",

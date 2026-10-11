@@ -8,3 +8,4 @@ export * from './lib/i-kb-mouse';
 export * from './lib/activity-window';
 export * from './lib/desktop-queue';
 export * from './lib/i-queue';
+export * from './lib/persistent-queue';

@@ -4009,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Rollen & Machtigingen",
 		"TIME_TRACKING": "Tijdregistratie",
 		"ESTIMATE": "Schatting",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documenten"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4107,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ga naar het dashboard, Beheer personeelsstatistieken, Tijdregistratie-dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centrale plek voor bedrijfsdocumenten: uploads, wikipagina's, beoordeling en AI-kennis"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5291,7 +5295,10 @@
 			"payment-receipt": "Betalingsbewijs",
 			"reject-candidate": "Kandidaat Afwijzen"
 		},
-		"HTML_EDITOR": "HTML-editor"
+		"HTML_EDITOR": "HTML-editor",
+		"FULL_PREVIEW": "Volledig voorbeeld",
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pijpleidingen",
@@ -5341,54 +5348,192 @@
 		"QUICK_ACTIONS": "Snelle acties"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "Bestandsaanbieder",
+		"FILE_PROVIDER": "Bestandsprovider",
+		"SHOW_SECRET": "Geheim tonen",
+		"HIDE_SECRET": "Geheim verbergen",
+		"SUMMARY": {
+			"TITLE": "Huidige configuratie",
+			"DESCRIPTION": "Laatst opgeslagen instellingen — gebruikt voor nieuwe uploads.",
+			"PROVIDER": "Provider",
+			"BUCKET": "Bucket / cloudnaam",
+			"REGION": "Regio",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Inloggegevens",
+			"CREDENTIALS_SAVED": "Opgeslagen",
+			"CREDENTIALS_INCOMPLETE": "Onvolledig",
+			"CREDENTIALS_NONE": "Niet ingesteld",
+			"CREDENTIALS_NOT_NEEDED": "Niet nodig",
+			"SERVER_DEFAULT": "Serverstandaard"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Waar u de sleutels krijgt",
+			"LOCAL": {
+				"NAME": "Lokale schijf",
+				"DESCRIPTION": "bestanden worden opgeslagen op het bestandssysteem van de API-server."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "bestanden worden opgeslagen in een AWS S3-bucket. Gebruik een IAM-toegangssleutel met lees- en schrijfrechten op de bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-compatibele cloudopslag. De inloggegevens worden bij het opslaan bij Wasabi gecontroleerd."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hosting van afbeeldingen en video's. De cloudnaam en API-sleutels staan in de Cloudinary-console onder API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-compatibele objectopslag met optioneel CDN. Maak een Spaces-toegangssleutel aan in het DigitalOcean-controlepaneel."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Lokale opslag",
+			"WHERE": "Geüploade bestanden worden naar het bestandssysteem van de API-server geschreven.",
+			"NO_CONFIG": "Niets te configureren — lokale opslag werkt direct.",
+			"WARNING": "Bestanden gaan verloren als de server opnieuw wordt uitgerold zonder persistent volume, en ze worden niet gedeeld tussen meerdere API-instanties. Gebruik in productie een cloudprovider."
+		},
+		"CHECK": {
+			"BUTTON": "Configuratie controleren",
+			"OK": "Alle verplichte velden zijn ingevuld en de URL's zijn geldig. De sleutels zelf worden alleen door de provider gecontroleerd.",
+			"OK_LOCAL": "Lokale opslag heeft geen configuratie nodig.",
+			"OK_SERVER_DEFAULTS": "Er ontbreekt niets. Deze lege velden gebruiken de configuratie van de server:",
+			"MISSING": "Ontbreekt:",
+			"INVALID_URL": "Geen geldige http(s)-URL:",
+			"HTTPS_REQUIRED": "Moet https:// gebruiken — de sleutels worden naar dit adres verzonden:"
+		},
 		"S3": {
 			"HEADER": "S3-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een Amazon S3-bucket.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een IAM-toegangssleutel met lees- en schrijfrechten op de bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"REGION": "De AWS-regio van de bucket, bijv. us-east-1 of eu-west-1.",
+				"BUCKET": "De bucketnaam precies zoals in de S3-console."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Toegangssleutel-id",
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Wasabi-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een Wasabi-bucket via de S3-compatibele API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een toegangssleutelpaar uit de Wasabi-console.",
+				"BUCKET": "Bucket en endpoint",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven.",
+				"OPTIONS": "Opties"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"REGION": "De regio van de bucket, bijv. us-east-1 of eu-central-1.",
+				"SERVICE_URL": "Het S3-endpoint voor die regio.",
+				"BUCKET": "Kleine letters, cijfers, punten en koppeltekens. Namen zijn uniek binnen heel Wasabi.",
+				"FORCE_PATH_STYLE": "Adresseer bestanden als endpoint/bucket/bestand in plaats van bucket.endpoint/bestand. Laat aan tenzij u virtual-hosted URL's nodig hebt."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint voor deze regio:",
+			"USE_SUGGESTION": "Gebruiken",
+			"SAVE_NOTE": "Bij het opslaan maakt Gauzy met deze inloggegevens de bucket aan in Wasabi. Als Wasabi het verzoek weigert, worden de instellingen niet opgeslagen.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Toegangs sleutel ID",
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer",
-				"SERVICE_URL": "Service URL"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL",
+				"FORCE_PATH_STYLE": "Padstijl-URL's afdwingen"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Toegangssleutel-id",
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer",
-				"SERVICE_URL": "Service URL"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL"
 			}
 		},
 		"CLOUDINARY": {
-			"HEADER": "Cloudinary Configuratie",
+			"HEADER": "Cloudinary-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in Cloudinary en lever ze via het leveringsnetwerk.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "Alle drie de waarden staan in de Cloudinary-console onder API Keys.",
+				"DELIVERY": "Levering",
+				"DELIVERY_HINT": "Hoe links naar geüploade bestanden worden opgebouwd."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "De naam bovenaan uw Cloudinary-console.",
+				"ACCESS_API_KEY": "Identificeert het account; wordt samen met het API-geheim gebruikt.",
+				"ACCESS_API_SECRET": "Opgeslagen waarden komen gemaskeerd terug.",
+				"DELIVERY_URL": "Basisadres van bestandslinks. Houd https://res.cloudinary.com aan, tenzij u een eigen domein gebruikt.",
+				"SECURE": "Bouw bestandslinks met https://. Laat op True staan."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Cloudinary naam",
-				"ACCESS_API_KEY": "Toegangssleutel-ID",
-				"ACCESS_API_SECRET": "Geheime toegangssleutel",
+				"CLOUD_NAME": "Cloudnaam",
+				"ACCESS_API_KEY": "API-sleutel",
+				"ACCESS_API_SECRET": "API-geheim",
 				"DELIVERY_URL": "Leverings-URL",
-				"SECURE": "Beveiligd"
+				"SECURE": "Beveiligd (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Cloudinary naam",
-				"ACCESS_API_KEY": "Toegangssleutel-ID",
-				"ACCESS_API_SECRET": "Geheime toegangssleutel",
-				"DELIVERY_URL": "Afleverings-URL",
-				"SECURE": "Beveiligen"
+				"CLOUD_NAME": "Cloudnaam",
+				"ACCESS_API_KEY": "API-sleutel",
+				"ACCESS_API_SECRET": "API-geheim",
+				"DELIVERY_URL": "Leverings-URL",
+				"SECURE": "Beveiligd (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "DigitalOcean-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een DigitalOcean Space via de S3-compatibele API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een Spaces-toegangssleutel uit het DigitalOcean-controlepaneel.",
+				"BUCKET": "Space en endpoint",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven.",
+				"OPTIONS": "Opties"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"SERVICE_URL": "Het endpoint van het datacenter van uw Space, bijv. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Vast op us-east-1, zoals Spaces verwacht; het datacenter volgt uit het endpoint.",
+				"BUCKET": "De naam van de Space.",
+				"CDN_URL": "Optioneel. Het CDN-endpoint van de Space, als het CDN is ingeschakeld.",
+				"FORCE_PATH_STYLE": "Adresseer bestanden als endpoint/space/bestand in plaats van space.endpoint/bestand."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
+				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
+				"REGION": "Regio",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL",
+				"CDN_URL": "CDN-URL",
+				"FORCE_PATH_STYLE": "Padstijl-URL's afdwingen"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
+				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
+				"REGION": "Regio",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL",
+				"CDN_URL": "CDN-URL"
 			}
 		}
 	},
@@ -5458,7 +5603,18 @@
 			"SYSTEM": "Systeem",
 			"FILTERS": {
 				"TO": "Naar",
-				"TEMPLATE_LANGUAGE": "Sjabloon/Taal"
+				"TEMPLATE_LANGUAGE": "Sjabloon/Taal",
+				"RECIPIENT": "Ontvanger",
+				"TEMPLATE": "Sjabloon",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "Alle ontvangers",
+				"ALL_TEMPLATES": "Alle sjablonen",
+				"ALL_STATUSES": "Alle statussen",
+				"SENT": "Verzonden",
+				"FAILED": "Mislukt",
+				"ARCHIVED": "Gearchiveerd",
+				"SHOWING": "{{ count }} van {{ total }} weergegeven",
+				"NO_MATCH": "Geen e-mails komen overeen met deze filters."
 			}
 		}
 	},
@@ -5476,7 +5632,11 @@
 			"invoice": "Factuur",
 			"estimate": "Schatting",
 			"receipt": "Ontvangstbewijs"
-		}
+		},
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Volledig voorbeeld",
+		"SAVED": "Sjabloon '{{ templateName }}' is opgeslagen"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registreren",

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { IEmailHistory, IPagination } from '@gauzy/contracts';
+import { isUUID } from 'class-validator';
+import { EmailStatusEnum, IEmailHistory, IPagination } from '@gauzy/contracts';
+import { parseToBoolean } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum } from '../core/utils';
@@ -31,7 +33,7 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 						organizationId: mOrgId,
 						tenantId: mTenantId,
 						isActive: true,
-						isArchived: false
+						...this.buildListFilters(filter.where)
 					} as any,
 					{
 						populate: ['user', 'emailTemplate'] as any[],
@@ -57,7 +59,7 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 					organizationId,
 					tenantId,
 					isActive: true,
-					isArchived: false
+					...this.buildListFilters(filter.where)
 				});
 
 				query.take(filter.take ? (filter.take as number) : 20);
@@ -72,5 +74,27 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
+	}
+
+	/**
+	 * The Email History list filters, read from the request's `where`.
+	 *
+	 * This route runs without `transform`, so the values arrive as raw query strings
+	 * (`isArchived` is `"true"` / `"false"`). Only these four columns are taken from the
+	 * client, each one checked, so nothing else in `where` reaches the query. Without an
+	 * `isArchived` value the list stays on non-archived emails, as before.
+	 *
+	 * @param where - The raw `where` object of the request.
+	 * @returns The column conditions to add to the list query.
+	 */
+	private buildListFilters(where: Record<string, any> = {}): Partial<IEmailHistory> {
+		const { email, emailTemplateId, status, isArchived } = where;
+
+		return {
+			isArchived: parseToBoolean(isArchived),
+			...(typeof email === 'string' && email ? { email } : {}),
+			...(typeof emailTemplateId === 'string' && isUUID(emailTemplateId) ? { emailTemplateId } : {}),
+			...(Object.values(EmailStatusEnum).includes(status) ? { status } : {})
+		};
 	}
 }

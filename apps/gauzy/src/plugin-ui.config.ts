@@ -8,6 +8,7 @@ import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
+import { EverConnectUiPlugin } from '@gauzy/plugin-ever-connect-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
 import { AuthZitadelUiPlugin } from '@gauzy/plugin-auth-zitadel-ui';
@@ -81,6 +82,9 @@ export const uiPluginConfig: PluginUiConfig = {
 		IntegrationUpworkPlugin,
 		IntegrationPlanePlugin,
 		IntegrationEverAsyncPlugin,
+		// Integrations > Ever Platform. Where the API's Ever Platform module is not loaded (the
+		// default) the page only says so.
+		EverConnectUiPlugin,
 
 		// Job Plugins
 		JobsPlugin.init({

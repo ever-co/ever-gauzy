@@ -4061,7 +4061,8 @@
 		"ROLES_PERMISSIONS": "Роли и права",
 		"TIME_TRACKING": "Проследяване на време",
 		"ESTIMATE": "Оценка",
-		"DASHBOARD": "Табло"
+		"DASHBOARD": "Табло",
+		"DOCUMENTS": "Документи"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4159,6 +4160,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Централно място за фирмените документи: качване, уики страници, преглед и знания за ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5337,7 +5341,10 @@
 			"payment-receipt": "Касова бележка",
 			"reject-candidate": "Отхвърли кандидат"
 		},
-		"HTML_EDITOR": "HTML редактор"
+		"HTML_EDITOR": "HTML редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Тръбопроводи",
@@ -5388,36 +5395,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Доставчик на файлове",
+		"SHOW_SECRET": "Покажи тайната",
+		"HIDE_SECRET": "Скрий тайната",
+		"SUMMARY": {
+			"TITLE": "Текуща конфигурация",
+			"DESCRIPTION": "Последно запазени настройки — използват се за новите качвания.",
+			"PROVIDER": "Доставчик",
+			"BUCKET": "Бъкет / име на облака",
+			"REGION": "Регион",
+			"ENDPOINT": "Крайна точка",
+			"CREDENTIALS": "Идентификационни данни",
+			"CREDENTIALS_SAVED": "Запазени",
+			"CREDENTIALS_INCOMPLETE": "Непълни",
+			"CREDENTIALS_NONE": "Не са зададени",
+			"CREDENTIALS_NOT_NEEDED": "Не са нужни",
+			"SERVER_DEFAULT": "По подразбиране от сървъра"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Откъде да вземете ключовете",
+			"LOCAL": {
+				"NAME": "Локален диск",
+				"DESCRIPTION": "файловете се записват във файловата система на API сървъра."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "файловете се записват в AWS S3 бъкет. Използвайте IAM ключ за достъп с права за четене и запис в бъкета."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-съвместимо облачно хранилище. Данните за достъп се проверяват в Wasabi при запазване."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "хостинг на изображения и видео. Името на облака и API ключовете са в конзолата на Cloudinary, в раздел API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-съвместимо обектно хранилище с незадължителен CDN. Създайте ключ за достъп до Spaces в контролния панел на DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Локално хранилище",
+			"WHERE": "Качените файлове се записват във файловата система на API сървъра.",
+			"NO_CONFIG": "Няма нищо за настройване — локалното хранилище работи веднага.",
+			"WARNING": "Файловете се губят, ако сървърът бъде преинсталиран без постоянен том, и не се споделят между няколко API инстанции. В продукция използвайте облачен доставчик."
+		},
+		"CHECK": {
+			"BUTTON": "Провери конфигурацията",
+			"OK": "Всички задължителни полета са попълнени и URL адресите са валидни. Самите ключове се проверяват само от доставчика.",
+			"OK_LOCAL": "Локалното хранилище не изисква настройка.",
+			"OK_SERVER_DEFAULTS": "Нищо не липсва. Тези празни полета използват конфигурацията на сървъра:",
+			"MISSING": "Липсва:",
+			"INVALID_URL": "Невалиден http(s) URL:",
+			"HTTPS_REQUIRED": "Изисква се https:// — ключовете се изпращат на този адрес:"
+		},
 		"S3": {
-			"HEADER": "S3 Конфигурация",
+			"HEADER": "Конфигурация на S3",
+			"SUBTITLE": "Съхранявайте качените файлове в Amazon S3 бъкет.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "IAM ключ за достъп с права за четене и запис в бъкета.",
+				"BUCKET": "Бъкет",
+				"BUCKET_HINT": "Къде се записват качените файлове."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "AWS регионът на бъкета, напр. us-east-1 или eu-west-1.",
+				"BUCKET": "Името на бъкета точно както е в конзолата на S3."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Конфигурация",
+			"HEADER": "Конфигурация на Wasabi",
+			"SUBTITLE": "Съхранявайте качените файлове в Wasabi бъкет чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Двойка ключове за достъп от конзолата на Wasabi.",
+				"BUCKET": "Бъкет и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "Регионът на бъкета, напр. us-east-1 или eu-central-1.",
+				"SERVICE_URL": "S3 крайната точка за този регион.",
+				"BUCKET": "Малки букви, цифри, точки и тирета. Имената са уникални в целия Wasabi.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/бъкет/файл вместо бъкет.endpoint/файл. Оставете включено, освен ако не ви трябват virtual-hosted адреси."
+			},
+			"SUGGESTED_ENDPOINT": "Крайна точка за този регион:",
+			"USE_SUGGESTION": "Използвай",
+			"SAVE_NOTE": "При запазване Gauzy използва тези данни, за да създаде бъкета в Wasabi. Ако Wasabi откаже заявката, настройките не се запазват.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
-				"SERVICE_URL": "URL на услугата"
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
+				"BUCKET": "Бъкет",
 				"SERVICE_URL": "URL на услугата"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Конфигурация на Cloudinary",
+			"SUBTITLE": "Съхранявайте качените файлове в Cloudinary и ги доставяйте чрез неговата мрежа.",
+			"SECTIONS": {
+				"ACCOUNT": "Акаунт",
+				"ACCOUNT_HINT": "И трите стойности са в конзолата на Cloudinary, в раздел API Keys.",
+				"DELIVERY": "Доставка",
+				"DELIVERY_HINT": "Как се изграждат връзките към качените файлове."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Името, показано в горната част на конзолата на Cloudinary.",
+				"ACCESS_API_KEY": "Идентифицира акаунта; използва се заедно с API тайната.",
+				"ACCESS_API_SECRET": "Запазените стойности се връщат маскирани.",
+				"DELIVERY_URL": "Базов адрес на връзките. Оставете https://res.cloudinary.com, освен ако не ползвате собствен домейн.",
+				"SECURE": "Създава връзките с https://. Оставете True."
+			},
+			"LABELS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Конфигурация на DigitalOcean",
+			"SUBTITLE": "Съхранявайте качените файлове в DigitalOcean Space чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Ключ за достъп до Spaces от контролния панел на DigitalOcean.",
+				"BUCKET": "Space и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"SERVICE_URL": "Крайната точка на центъра за данни на вашия Space, напр. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Фиксиран на us-east-1, както изисква Spaces; центърът за данни се определя от крайната точка.",
+				"BUCKET": "Името на Space.",
+				"CDN_URL": "По избор. CDN крайната точка на Space, ако CDN е включен.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/space/файл вместо space.endpoint/файл."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN"
 			}
 		}
 	},
@@ -5486,7 +5648,18 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "До",
-				"TEMPLATE_LANGUAGE": "Шаблон/Език"
+				"TEMPLATE_LANGUAGE": "Шаблон/Език",
+				"RECIPIENT": "Получател",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Всички получатели",
+				"ALL_TEMPLATES": "Всички шаблони",
+				"ALL_STATUSES": "Всички статуси",
+				"SENT": "Изпратен",
+				"FAILED": "Неуспешен",
+				"ARCHIVED": "Архивирани",
+				"SHOWING": "Показани {{ count }} от {{ total }}",
+				"NO_MATCH": "Няма имейли, отговарящи на тези филтри."
 			}
 		}
 	},
@@ -5504,7 +5677,11 @@
 			"invoice": "Фактура",
 			"estimate": "Оферта",
 			"receipt": "Касова бележка"
-		}
+		},
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"SAVED": "Шаблонът '{{ templateName }}' беше запазен"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",

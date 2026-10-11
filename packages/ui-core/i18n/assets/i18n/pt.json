@@ -4009,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Funções e Permissões",
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"ESTIMATE": "Estimativa",
-		"DASHBOARD": "Painel de Controle"
+		"DASHBOARD": "Painel de Controle",
+		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4107,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel de controle, Gerenciar Estatísticas dos Funcionários, Painel de Controle de Rastreamento de Tempo."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5291,7 +5295,10 @@
 			"payment-receipt": "Recibo de pagamento",
 			"reject-candidate": "Rejeitar Candidato"
 		},
-		"HTML_EDITOR": "Editor HTML"
+		"HTML_EDITOR": "Editor HTML",
+		"FULL_PREVIEW": "Pré-visualização completa",
+		"VIEW_GRID": "Grade",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
@@ -5341,54 +5348,192 @@
 		"QUICK_ACTIONS": "Ações rápidas"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "Fornecedor de arquivos",
+		"FILE_PROVIDER": "Provedor de arquivos",
+		"SHOW_SECRET": "Mostrar segredo",
+		"HIDE_SECRET": "Ocultar segredo",
+		"SUMMARY": {
+			"TITLE": "Configuração atual",
+			"DESCRIPTION": "Últimas configurações salvas — usadas pelos novos envios.",
+			"PROVIDER": "Provedor",
+			"BUCKET": "Bucket / nome da nuvem",
+			"REGION": "Região",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Credenciais",
+			"CREDENTIALS_SAVED": "Salvas",
+			"CREDENTIALS_INCOMPLETE": "Incompletas",
+			"CREDENTIALS_NONE": "Não definidas",
+			"CREDENTIALS_NOT_NEEDED": "Não necessárias",
+			"SERVER_DEFAULT": "Padrão do servidor"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Onde obter as chaves",
+			"LOCAL": {
+				"NAME": "Disco local",
+				"DESCRIPTION": "os arquivos são salvos no sistema de arquivos do servidor da API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "os arquivos são salvos em um bucket do AWS S3. Use uma chave de acesso do IAM com permissão de leitura e escrita no bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "armazenamento em nuvem compatível com S3. As credenciais são verificadas com a Wasabi ao salvar."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hospedagem de imagens e vídeos. O nome da nuvem e as chaves de API ficam no console do Cloudinary, em API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "armazenamento de objetos compatível com S3 com CDN opcional. Crie uma chave de acesso do Spaces no painel de controle da DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Armazenamento local",
+			"WHERE": "Os arquivos enviados são gravados no sistema de arquivos do servidor da API.",
+			"NO_CONFIG": "Nada a configurar — o armazenamento local funciona imediatamente.",
+			"WARNING": "Os arquivos são perdidos se o servidor for reimplantado sem um volume persistente e não são compartilhados entre várias instâncias da API. Use um provedor em nuvem em produção."
+		},
+		"CHECK": {
+			"BUTTON": "Verificar configuração",
+			"OK": "Todos os campos obrigatórios estão preenchidos e as URLs são válidas. As chaves em si só são verificadas pelo provedor.",
+			"OK_LOCAL": "O armazenamento local não precisa de configuração.",
+			"OK_SERVER_DEFAULTS": "Nada está faltando. Estes campos vazios usam a configuração do servidor:",
+			"MISSING": "Faltando:",
+			"INVALID_URL": "URL http(s) inválida:",
+			"HTTPS_REQUIRED": "Deve usar https:// — as chaves são enviadas para este endereço:"
+		},
 		"S3": {
 			"HEADER": "Configuração do S3",
+			"SUBTITLE": "Armazene os arquivos enviados em um bucket do Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciais",
+				"CREDENTIALS_HINT": "Uma chave de acesso do IAM com permissão de leitura e escrita no bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Onde os arquivos enviados são gravados."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "A parte pública do par de chaves.",
+				"SECRET_ACCESS_KEY": "Exibida apenas uma vez, quando a chave é criada. Os valores salvos voltam mascarados.",
+				"REGION": "A região da AWS do bucket, por exemplo us-east-1 ou eu-west-1.",
+				"BUCKET": "O nome do bucket exatamente como aparece no console do S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID da chave de acesso",
 				"SECRET_ACCESS_KEY": "Chave de acesso secreta",
 				"REGION": "Região",
-				"BUCKET": "Balde"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Chave de acesso ID",
+				"ACCESS_KEY_ID": "ID da chave de acesso",
 				"SECRET_ACCESS_KEY": "Chave de acesso secreta",
 				"REGION": "Região",
-				"BUCKET": "Balde"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Configuração do Wasabi",
-			"LABELS": {
-				"ACCESS_KEY_ID": "Chave de acesso",
-				"SECRET_ACCESS_KEY": "Chave de acesso secreta.",
-				"REGION": "Região",
-				"BUCKET": "Balde",
-				"SERVICE_URL": "URL de serviço"
+			"SUBTITLE": "Armazene os arquivos enviados em um bucket da Wasabi pela API compatível com S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciais",
+				"CREDENTIALS_HINT": "Um par de chaves de acesso do console da Wasabi.",
+				"BUCKET": "Bucket e endpoint",
+				"BUCKET_HINT": "Onde os arquivos enviados são gravados.",
+				"OPTIONS": "Opções"
 			},
-			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Id da chave de acesso",
+			"HINTS": {
+				"ACCESS_KEY_ID": "A parte pública do par de chaves.",
+				"SECRET_ACCESS_KEY": "Exibida apenas uma vez, quando a chave é criada. Os valores salvos voltam mascarados.",
+				"REGION": "A região do bucket, por exemplo us-east-1 ou eu-central-1.",
+				"SERVICE_URL": "O endpoint S3 dessa região.",
+				"BUCKET": "Letras minúsculas, números, pontos e hífens. Os nomes são únicos em toda a Wasabi.",
+				"FORCE_PATH_STYLE": "Endereça os arquivos como endpoint/bucket/arquivo em vez de bucket.endpoint/arquivo. Deixe ativado, a menos que precise de URLs virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint para esta região:",
+			"USE_SUGGESTION": "Usar",
+			"SAVE_NOTE": "Ao salvar, o Gauzy usa essas credenciais para criar o bucket na Wasabi. Se a Wasabi recusar a solicitação, as configurações não são salvas.",
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID da chave de acesso",
 				"SECRET_ACCESS_KEY": "Chave de acesso secreta",
 				"REGION": "Região",
-				"BUCKET": "Balde",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL do serviço",
+				"FORCE_PATH_STYLE": "Forçar URLs no estilo de caminho"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID da chave de acesso",
+				"SECRET_ACCESS_KEY": "Chave de acesso secreta",
+				"REGION": "Região",
+				"BUCKET": "Bucket",
 				"SERVICE_URL": "URL do serviço"
 			}
 		},
 		"CLOUDINARY": {
 			"HEADER": "Configuração do Cloudinary",
+			"SUBTITLE": "Armazene os arquivos enviados no Cloudinary e entregue-os pela rede de distribuição dele.",
+			"SECTIONS": {
+				"ACCOUNT": "Conta",
+				"ACCOUNT_HINT": "Os três valores ficam no console do Cloudinary, em API Keys.",
+				"DELIVERY": "Entrega",
+				"DELIVERY_HINT": "Como os links dos arquivos enviados são montados."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "O nome exibido no topo do seu console do Cloudinary.",
+				"ACCESS_API_KEY": "Identifica a conta; usada junto com o segredo de API.",
+				"ACCESS_API_SECRET": "Os valores salvos voltam mascarados.",
+				"DELIVERY_URL": "Endereço base dos links. Mantenha https://res.cloudinary.com, a menos que use um domínio próprio.",
+				"SECURE": "Gera os links com https://. Deixe em True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Nome do Cloudinary",
-				"ACCESS_API_KEY": "ID da chave de acesso",
-				"ACCESS_API_SECRET": "Chave de acesso secreta",
+				"CLOUD_NAME": "Nome da nuvem",
+				"ACCESS_API_KEY": "Chave de API",
+				"ACCESS_API_SECRET": "Segredo de API",
 				"DELIVERY_URL": "URL de entrega",
-				"SECURE": "Seguro"
+				"SECURE": "Seguro (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "nome Cloudinary",
-				"ACCESS_API_KEY": "ID da chave de acesso",
-				"ACCESS_API_SECRET": "Chave de acesso secreta",
+				"CLOUD_NAME": "Nome da nuvem",
+				"ACCESS_API_KEY": "Chave de API",
+				"ACCESS_API_SECRET": "Segredo de API",
 				"DELIVERY_URL": "URL de entrega",
-				"SECURE": "Seguro"
+				"SECURE": "Seguro (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Configuração do DigitalOcean",
+			"SUBTITLE": "Armazene os arquivos enviados em um Space da DigitalOcean pela API compatível com S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciais",
+				"CREDENTIALS_HINT": "Uma chave de acesso do Spaces do painel de controle da DigitalOcean.",
+				"BUCKET": "Space e endpoint",
+				"BUCKET_HINT": "Onde os arquivos enviados são gravados.",
+				"OPTIONS": "Opções"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "A parte pública do par de chaves.",
+				"SECRET_ACCESS_KEY": "Exibida apenas uma vez, quando a chave é criada. Os valores salvos voltam mascarados.",
+				"SERVICE_URL": "O endpoint do datacenter do seu Space, por exemplo https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fixada em us-east-1, como o Spaces espera; o datacenter vem do endpoint.",
+				"BUCKET": "O nome do Space.",
+				"CDN_URL": "Opcional. O endpoint de CDN do Space, se a CDN estiver ativada.",
+				"FORCE_PATH_STYLE": "Endereça os arquivos como endpoint/space/arquivo em vez de space.endpoint/arquivo."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID da chave de acesso",
+				"SECRET_ACCESS_KEY": "Chave de acesso secreta",
+				"REGION": "Região",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL do serviço",
+				"CDN_URL": "URL da CDN",
+				"FORCE_PATH_STYLE": "Forçar URLs no estilo de caminho"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID da chave de acesso",
+				"SECRET_ACCESS_KEY": "Chave de acesso secreta",
+				"REGION": "Região",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL do serviço",
+				"CDN_URL": "URL da CDN"
 			}
 		}
 	},
@@ -5458,7 +5603,18 @@
 			"SYSTEM": "Sistema",
 			"FILTERS": {
 				"TO": "Para",
-				"TEMPLATE_LANGUAGE": "Modelo / Idioma"
+				"TEMPLATE_LANGUAGE": "Modelo / Idioma",
+				"RECIPIENT": "Destinatário",
+				"TEMPLATE": "Modelo",
+				"STATUS": "Estado",
+				"ALL_RECIPIENTS": "Todos os destinatários",
+				"ALL_TEMPLATES": "Todos os modelos",
+				"ALL_STATUSES": "Todos os estados",
+				"SENT": "Enviado",
+				"FAILED": "Falhou",
+				"ARCHIVED": "Arquivados",
+				"SHOWING": "A mostrar {{ count }} de {{ total }}",
+				"NO_MATCH": "Nenhum email corresponde a estes filtros."
 			}
 		}
 	},
@@ -5476,7 +5632,11 @@
 			"invoice": "Fatura",
 			"estimate": "Estimativa",
 			"receipt": "Recibo"
-		}
+		},
+		"VIEW_GRID": "Grade",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Pré-visualização completa",
+		"SAVED": "O modelo '{{ templateName }}' foi salvo"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrar",

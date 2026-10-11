@@ -23,6 +23,14 @@ import { CountryService } from '@gauzy/ui-core/core';
 import { convertPrecisionFloatDigit } from '@gauzy/ui-core/common';
 import { FormHelpers } from '../helpers';
 
+/**
+ * Whether the Google Maps script was loaded. It may not be (no internet access, a blocked host): the
+ * form then works without geocoding and address suggestions, and the address is entered by hand.
+ */
+function isGoogleMapsLoaded(): boolean {
+	return typeof google !== 'undefined' && !!google?.maps;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-location-form',
@@ -251,6 +259,9 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 		if (newAddress !== this._lastUsedAddressText) {
 			this._lastUsedAddressText = newAddress;
 
+			if (!isGoogleMapsLoaded()) {
+				return;
+			}
 			const geocoder = new google.maps.Geocoder();
 			geocoder.geocode(
 				{
@@ -281,6 +292,9 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 			return;
 		}
 
+		if (!isGoogleMapsLoaded()) {
+			return;
+		}
 		const geocoder = new google.maps.Geocoder();
 		geocoder.geocode(
 			{
@@ -452,7 +466,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 * Initializes the Google Autocomplete API on the specified DOM element.
 	 */
 	private _initGoogleAutocompleteApi() {
-		if (this.searchElement) {
+		if (this.searchElement && isGoogleMapsLoaded()) {
 			const autocomplete = new google.maps.places.Autocomplete(this.searchElement.nativeElement);
 			this._setupGoogleAutocompleteOptions(autocomplete);
 			this._listenForGoogleAutocompleteAddressChanges(autocomplete);

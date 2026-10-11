@@ -38,7 +38,13 @@ import { isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
-import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect,
+	parseTypeORMFindToMikroOrm
+} from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -780,8 +786,40 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(teams)) {
 						mikroWhere.teams = { id: { $in: teams as ID[] } };
 					}
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId: members['id'] } };
+					// Same rule as the TypeORM branch: only a CHANGE_SELECTED_EMPLOYEE holder may pick the
+					// employee; everyone else is limited to the teams they are a member of.
+					const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+					let employeeId: ID | null = RequestContext.currentEmployeeId();
+					if (canChangeEmployee) {
+						employeeId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+					}
+					// A caller who may not act for other employees and has no employee record belongs to no
+					// team: without this, the missing filter listed every team task of the organization. An
+					// organization-wide viewer keeps the access their role gives them (same carve-out as
+					// ManagedEmployeeService.filterAccessibleEmployeeIds, #10249).
+					if (
+						!canChangeEmployee &&
+						!isNotEmpty(employeeId) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
+						return { items: [], total: 0 };
+					}
+					if (isNotEmpty(employeeId)) {
+						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
+					}
+
+					// The advanced filters (projects, tags, statuses, members, ...) were only applied by the
+					// TypeORM branch; here they were read and dropped. Build the same TypeORM where and
+					// translate it, merging the `teams` predicate with the team scoping above.
+					if (filters) {
+						const { where: advancedWhere } = parseTypeORMFindToMikroOrm<Task>({
+							where: this.buildAdvancedWhereCondition(filters, where)
+						});
+						const { teams: advancedTeams, ...advancedRest } = advancedWhere as any;
+						Object.assign(mikroWhere, advancedRest);
+						if (advancedTeams) {
+							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
+						}
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
@@ -811,6 +849,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} = where;
 					const { organizationId, projectId, members } = where;
 
+					// See the MikroORM branch: no employee record and no CHANGE_SELECTED_EMPLOYEE means no team,
+					// unless the caller is an organization-wide viewer
+					if (
+						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+						!isNotEmpty(RequestContext.currentEmployeeId()) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
+						return { items: [], total: 0 };
+					}
+
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.leftJoin(`${query.alias}.teams`, 'teams');
 
@@ -837,7 +885,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						query.setFindOptions({ where: advancedWhere });
 					}
 
-					query.andWhere((qb: SelectQueryBuilder<Task>) => {
+					const teamTasksCondition = (qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 						subQuery.leftJoin(
@@ -868,7 +916,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							});
 						}
 						return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
-					});
+					};
+					// With a project and teams, the project's tasks are listed alongside the team's. Keeping both
+					// in one bracket makes the tenant and filter conditions below apply to each.
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(teamTasksCondition);
+							if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+								web.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+							}
+						})
+					);
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							const tenantId = RequestContext.currentTenantId();
@@ -876,9 +934,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						})
 					);
-					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-						query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							if (isNotEmpty(projectId) && isEmpty(teams)) {

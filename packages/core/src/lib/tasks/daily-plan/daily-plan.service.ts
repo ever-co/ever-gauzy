@@ -1,5 +1,14 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { SelectQueryBuilder, UpdateResult } from 'typeorm';
+import {
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { isUUID } from 'class-validator';
+import * as moment from 'moment';
 import {
 	ID,
 	IDailyPlan,
@@ -14,7 +23,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -81,8 +90,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
 					query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
 					query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
-					query.andWhere(p(`DATE("dailyPlan"."date") = :dailyPlanDate`), {
-						dailyPlanDate: `${dailyPlanDate}`
+					// Any time on that day. Unlike DATE("date"), a range on the bare column lets the
+					// (employeeId, organizationTeamId, date) index narrow the lookup to that day.
+					query.andWhere(p(`"dailyPlan"."date" >= :dailyPlanDate AND "dailyPlan"."date" < :nextDayDate`), {
+						dailyPlanDate,
+						nextDayDate: moment.utc(dailyPlanDate).add(1, 'day').format('YYYY-MM-DD')
 					});
 					query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
 					dailyPlan = await query.getOne();
@@ -212,6 +224,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		await this.assertCanReadTeamPlans(options?.where?.organizationTeamId);
 
 		try {
 			// Apply optional find options if provided
@@ -266,6 +279,40 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		} catch (error) {
 			console.log('Error while fetching daily plans for team');
 			throw new HttpException(`Failed to fetch daily plans for team: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Refuses a team read unless the caller belongs to that team.
+	 *
+	 * A caller with CHANGE_SELECTED_EMPLOYEE still reads any team, or the whole organization when no team
+	 * is named, and so does an organization-wide viewer without an employee record, the same exception
+	 * `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. Anyone else must name a team they are an
+	 * active member or manager of.
+	 *
+	 * @param organizationTeamId - The team named in the request's `where`, as the client sent it
+	 * @throws ForbiddenException when the caller may not read that team's plans
+	 */
+	private async assertCanReadTeamPlans(organizationTeamId: unknown): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+
+		if (!employeeId && RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return;
+		}
+
+		// A repeated or nested query value is not a string, and a malformed id would make the uuid
+		// comparison fail: both are refused here instead of reaching the membership query.
+		const isMember =
+			typeof organizationTeamId === 'string' &&
+			isUUID(organizationTeamId) &&
+			(await this._managedEmployeeService.isMemberOfTeam(employeeId, organizationTeamId));
+
+		if (!isMember) {
+			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
 		}
 	}
 
@@ -371,6 +418,67 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Deletes a daily plan the caller owns or manages.
+	 *
+	 * The inherited implementation narrows the criteria to the caller's own employeeId, so a manager
+	 * deleting a member's plan matched no row and the route answered 200 with `{ affected: 0 }`.
+	 *
+	 * @param criteria - The plan id, or find conditions when called internally
+	 * @param options - Additional find options forwarded to the base implementation
+	 * @returns The delete result
+	 * @throws NotFoundException if the plan does not exist or the caller may not act on its owner
+	 * @throws BadRequestException if an id is given together with additional where conditions
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<DailyPlan>,
+		options?: LegacyFindOneOptions<DailyPlan>
+	): Promise<DeleteResult> {
+		// Only the route passes a plain id. Anything else keeps the inherited behaviour, so the bypass
+		// below can never combine with a condition object and widen the deletion to the whole tenant.
+		if (typeof criteria !== 'string') {
+			return await super.delete(criteria, options);
+		}
+
+		// The inherited implementation merges options.where over the criteria, so a where carrying an id
+		// would replace the one authorized below and delete another plan inside the bypass. No caller
+		// needs that combination, so it is refused rather than silently narrowed.
+		if (options?.where) {
+			throw new BadRequestException('Deleting a daily plan by id does not accept where conditions');
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+
+		// This read must run without the automatic employee filter, otherwise a plan owned by anyone
+		// else is never found and the check below could never run. It covers this single read only.
+		const { success, record: plan } = await this.withoutEmployeeFilter(() =>
+			this.findOneOrFailByOptions({ where: { id: criteria, tenantId } })
+		);
+
+		// The owner, the team and the organization come from the stored plan, never from the request.
+		// The error does not say whether the plan exists, so plan ids stay unguessable.
+		const canManage =
+			success &&
+			!!plan &&
+			(await this._managedEmployeeService.canManageEmployee(
+				plan.employeeId,
+				plan.organizationTeamId,
+				plan.organizationId
+			));
+
+		if (!canManage) {
+			throw new NotFoundException('Daily plan not found or you do not have permission to access it');
+		}
+
+		const result = await this.withoutEmployeeFilter(() => super.delete(criteria, options));
+
+		if (!result.affected) {
+			throw new NotFoundException('Daily plan not found');
+		}
+
+		return result;
+	}
+
+	/**
 	 * Add a task to a specified daily plan.
 	 *
 	 * @param planId - The unique identifier of the daily plan to which the task will be added.
@@ -457,6 +565,18 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
 
+			// The employee comes from the request body, so the caller must be allowed to act on them.
+			// The message matches the not-found case below, so a probe cannot tell the two apart.
+			const canManage = await this._managedEmployeeService.canManageEmployee(
+				employeeId,
+				organizationTeamId,
+				organizationId
+			);
+
+			if (!canManage) {
+				throw new BadRequestException('Daily plans not found');
+			}
+
 			// Initial query for finding daily plans
 			let dailyPlansToUpdate: DailyPlan[];
 
@@ -501,7 +621,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 
 					// Find condition must include only today and future plans
-					query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
+					query.andWhere(p(`"${query.alias}"."date" >= :currentDate`), { currentDate });
 
 					if (plansIds.length > 0) {
 						query.andWhere(p(`${query.alias}.id IN (:...plansIds)`), { plansIds });

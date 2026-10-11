@@ -1,0 +1,143 @@
+{
+	"TITLE": "Ever Platform",
+	"UNAVAILABLE": "The Ever Platform connection is not switched on for this installation. Its operator can switch it on with EVER_CONNECT_ENABLED=true; until then nothing is sent to Ever Platform.",
+	"ERROR": "Ever Platform settings could not be loaded. Please try again.",
+	"CANCEL": "Cancel",
+	"TABS": {
+		"CONNECTION": "Connection",
+		"LINK": "Organization link",
+		"INTEGRATIONS": "Integrations & data",
+		"ENTITLEMENTS": "Entitlements",
+		"AUDIT": "Audit"
+	},
+	"CONNECTION": {
+		"EVER_CLOUD": "Operated by Ever Cloud. The connection of this installation is managed by Ever.",
+		"KEY_MATERIAL": "Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) on the API before connecting: the connection key and the documents of the connection are stored encrypted with it.",
+		"NOTICE": "Connecting sends Ever Platform: the product (Ever Gauzy) and its version, how it is installed (EVER_INSTALL_SOURCE), whether this API also serves Ever Teams, the public part of a key this installation makes for the connection, the address of this web app so app.ever.co can send you back here (https only; Ever Platform keeps only a fingerprint of it) and, if you choose, the ids of this organization and its tenant to link it at once. No address of this installation's API, no name and no e-mail address is sent. Paste the connect code you created in app.ever.co.",
+		"SECRET_SHORT": "The secret that protects the keys of this connection (ENCRYPTION_KEY, or JWT_SECRET) is shorter than 32 characters. Use a long, random one.",
+		"KEY_UNREADABLE": "The connection key of this installation cannot be read since ENCRYPTION_KEY or JWT_SECRET changed, so nothing can be sent. Disconnect, then connect again with a new connect code.",
+		"RETURN_UNUSABLE": "The address of this web app (CLIENT_BASE_URL) is plain http outside this computer, so it is not sent: after a consent in app.ever.co, come back to this page yourself.",
+		"ROTATE_KEY": "Replace key",
+		"LINK_ORGANIZATION": "Link this organization too",
+		"CONNECT": "Connect this installation",
+		"STATE": "State",
+		"CONNECTED": "Connected, linked to ever.co/{{ handle }}",
+		"PENDING": "Waiting for approval in app.ever.co",
+		"CHECK": "Check again",
+		"REVOKED": "Ever Platform revoked this installation's connection. Create a new connect code in app.ever.co to connect again.",
+		"KEY": "Key fingerprint",
+		"LAST_SEEN": "Last heartbeat",
+		"FEED": "Event feed",
+		"LAST_ERROR": "Last error"
+	},
+	"APPROVALS": {
+		"TITLE": "Approvals requested",
+		"REQUESTED_BY": "Approval requested by ever.co/{{ handle }}",
+		"ACCEPT": "Accept",
+		"DECLINE": "Decline",
+		"ACCEPT_CONFIRM": "Accepting starts moving, for the whole installation:",
+		"DECLINE_CONFIRM": "Declining withdraws the consent. Nothing is sent."
+	},
+	"POLICY": {
+		"TITLE": "Instance policy",
+		"DESCRIPTION": "A denied integration is off for every organization of this installation, and no administrator can enable it.",
+		"ALLOWED": "Allowed",
+		"DENIED": "Denied",
+		"DENIED_BY_ENV": "Denied by EVER_CONNECT_INTEGRATIONS_DENY"
+	},
+	"DISCONNECT": {
+		"TITLE": "Disconnect",
+		"EFFECTS": "Disconnecting stops every integration, removes the organization links and the entitlement documents, and stops the heartbeat and the event feed. Ever Platform is told when it can be reached. The anonymous usage statistics are not affected.",
+		"CONFIRM": "Disconnect this installation"
+	},
+	"LINK": {
+		"DESCRIPTION": "Link this organization to an Ever organization: paste a link code created in app.ever.co. Ever Platform then knows the ids of this organization and its tenant, and the name of the product.",
+		"NOT_CONNECTED": "This installation is not connected to Ever Platform yet.",
+		"LINK": "Link this organization",
+		"LINKED": "Linked to ever.co/{{ handle }}",
+		"REMOVE": "Remove link"
+	},
+	"INTEGRATIONS": {
+		"DESCRIPTION": "Nothing moves for an integration until an owner or administrator of the linked Ever organization enables it in app.ever.co. You can disable any integration here at any time; it stops at once, even when Ever Platform cannot be reached.",
+		"ENABLE": "Enable in app.ever.co…",
+		"DISABLE": "Disable",
+		"SHOW_SCOPE": "Show scope",
+		"REVOKED_AT": "Revoked in app.ever.co on {{ date }}",
+		"CONSENTED_AT": "Enabled in app.ever.co on {{ date }}",
+		"WAITING_OPERATOR": "Waiting for the instance operator",
+		"OPERATOR_ONLY": "This integration acts for the whole installation: only its operator manages it."
+	},
+	"STATE": {
+		"available": "Available",
+		"enabled": "Enabled",
+		"disabled": "Disabled",
+		"denied_by_policy": "Denied by policy",
+		"revoked_remote": "Revoked in app.ever.co",
+		"coming_soon": "Coming soon",
+		"pending_operator": "Waiting for the operator",
+		"not_linked": "Link this organization first"
+	},
+	"SCOPE": {
+		"FIELD": "What leaves this installation",
+		"FORM": "Form",
+		"WHEN": "How often",
+		"PURPOSE": "Why",
+		"RETENTION": "What Ever Platform keeps"
+	},
+	"ENTITLEMENTS": {
+		"ORGANIZATION": "This organization",
+		"INSTALLATION": "This installation",
+		"STATUS": {
+			"valid": "valid",
+			"stale": "could not be refreshed lately",
+			"paused": "expired"
+		},
+		"PLAN": "Plan",
+		"FEATURES": "Features",
+		"EXPIRES": "Valid until",
+		"NONE": "No entitlement document yet.",
+		"REFRESH": "Refresh",
+		"LICENCE_ACTIVE": "Licence {{ id }} active",
+		"GRACE": "Entitlements could not be refreshed since {{ date }}. Ever Platform features keep working during the grace period.",
+		"PAUSED": "Ever Platform features paused. Reconnect to Ever Platform.",
+		"IMPORT": "Import file"
+	},
+	"AUDIT": {
+		"MORE": "Show more"
+	},
+	"NOTICES": {
+		"CONNECTED": "This installation is connected to Ever Platform.",
+		"PENDING": "Connected, waiting for approval in app.ever.co.",
+		"DISCONNECTED": "This installation is disconnected from Ever Platform.",
+		"ACCEPTED": "Accepted: the integration is enabled.",
+		"DECLINED": "Declined: nothing is sent.",
+		"LINKED": "This organization is linked.",
+		"UNLINKED": "The link was removed.",
+		"CONSENT_OPENED": "app.ever.co opened in a new tab. Reopen this page afterwards to see the result.",
+		"DISABLED": "Disabled.",
+		"DISABLED_OFFLINE": "Disabled here. Ever Platform has not taken it yet; it is told again until it does.",
+		"KEY_ROTATED": "The connection key was replaced.",
+		"ENTITLEMENT_IMPORTED": "Entitlement document #{{ seq }} imported.",
+		"ENTITLEMENT_UNCHANGED": "This entitlement document (#{{ seq }}) is already the current one."
+	},
+	"ERRORS": {
+		"key_material_missing": "Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) on the API first. Nothing was sent.",
+		"key_unreadable": "The connection key cannot be read since ENCRYPTION_KEY or JWT_SECRET changed. Disconnect, then connect again with a new code.",
+		"consent_url_invalid": "Ever Platform answered a link that cannot be opened. Nothing was opened.",
+		"redeem_unverifiable": "Ever Platform's answer could not be verified. The installation was not connected.",
+		"rotation_not_installed": "The new key could not be installed. Try again.",
+		"code_invalid": "This code is not valid. Create a new one in app.ever.co.",
+		"product_mismatch": "This code was created for another product.",
+		"already_connected": "This installation is already connected.",
+		"already_linked": "This organization is already linked.",
+		"not_connected": "This installation is not connected to Ever Platform.",
+		"denied_by_policy": "The operator of this installation does not allow this integration.",
+		"not_available": "This integration is not available yet.",
+		"keys_unverifiable": "Ever Platform's keys could not be verified for this address. Nothing was sent.",
+		"entitlement_unverifiable": "Ever Platform's entitlement document could not be verified. The installation was not connected.",
+		"platform_unreachable": "Ever Platform could not be reached. Please try again later.",
+		"rate_limited": "Too many requests. Please try again later.",
+		"generic": "The request failed ({{ code }}).",
+		"entitlement_invalid": "The entitlement document was refused: it does not name this installation, it is older than the current one, or it does not verify."
+	}
+}

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { Equal, In, IsNull, Or } from 'typeorm';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
@@ -26,6 +26,18 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
  * the nil UUID, which is a valid value to compare against a uuid column.
  */
 export const NO_ACCESSIBLE_EMPLOYEE_ID: ID = '00000000-0000-0000-0000-000000000000';
+
+/**
+ * Where clause for a team or project membership that is still in effect.
+ *
+ * Both flags are nullable and their defaults only apply on insert, so a legacy or imported row can hold
+ * NULL. Strict equality would skip it and refuse a real manager or member. A fresh object is built per
+ * query because TypeORM may transform a FindOperator's value in place.
+ */
+const activeMembershipWhere = () => ({
+	isActive: Or(IsNull(), Equal(true)),
+	isArchived: Or(IsNull(), Equal(false))
+});
 
 @Injectable()
 export class ManagedEmployeeService {
@@ -142,8 +154,7 @@ export class ManagedEmployeeService {
 				employeeId: currentEmployeeId,
 				organizationTeamId: In(teamIds),
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -158,8 +169,7 @@ export class ManagedEmployeeService {
 				employeeId: currentEmployeeId,
 				organizationProjectId: In(projectIds),
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -169,6 +179,29 @@ export class ManagedEmployeeService {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if an employee is an active member of a team, whether or not they manage it.
+	 *
+	 * @param employeeId - The employee to look for
+	 * @param organizationTeamId - The team to check
+	 * @returns true if the employee belongs to the team in the current tenant
+	 */
+	async isMemberOfTeam(employeeId: ID, organizationTeamId: ID): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fail closed: an undefined key is dropped from the query, which would then match any membership.
+		if (!tenantId || !employeeId || !organizationTeamId) {
+			return false;
+		}
+
+		return await this.typeOrmTeamEmployeeRepository.existsBy({
+			employeeId,
+			organizationTeamId,
+			tenantId,
+			...activeMembershipWhere()
+		});
 	}
 
 	/**
@@ -220,8 +253,7 @@ export class ManagedEmployeeService {
 				employeeId: currentEmployeeId,
 				organizationTeamId: organizationTeamId,
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -233,8 +265,7 @@ export class ManagedEmployeeService {
 			const isTargetMemberOfTeam = await this.typeOrmTeamEmployeeRepository.existsBy({
 				employeeId: targetEmployeeId,
 				organizationTeamId: organizationTeamId,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId
 			});
 
@@ -410,8 +441,7 @@ export class ManagedEmployeeService {
 			where: {
 				employeeId: currentEmployeeId,
 				isManager: true,
-				isActive: true,
-				isArchived: false,
+				...activeMembershipWhere(),
 				tenantId,
 				// Scoped through the team, whose organizationId is authoritative,
 				// rather than through the membership row where it may be null.
@@ -432,8 +462,7 @@ export class ManagedEmployeeService {
 		const isTargetMember = await this.typeOrmTeamEmployeeRepository.existsBy({
 			employeeId: targetEmployeeId,
 			organizationTeamId: In(managedTeamIds),
-			isActive: true,
-			isArchived: false,
+			...activeMembershipWhere(),
 			tenantId
 		});
 
@@ -460,17 +489,15 @@ export class ManagedEmployeeService {
 			return managed;
 		}
 
-		const asManager = {
-			employeeId: currentEmployeeId,
-			isManager: true,
-			isActive: true,
-			isArchived: false,
-			tenantId
-		};
-
 		if (isNotEmpty(teamIds)) {
 			const teams = await this.typeOrmTeamEmployeeRepository.find({
-				where: { ...asManager, organizationTeamId: In(teamIds) },
+				where: {
+					employeeId: currentEmployeeId,
+					organizationTeamId: In(teamIds),
+					isManager: true,
+					...activeMembershipWhere(),
+					tenantId
+				},
 				select: { organizationTeamId: true }
 			});
 			managed.teamIds = teams.map((team) => team.organizationTeamId);
@@ -478,7 +505,13 @@ export class ManagedEmployeeService {
 
 		if (isNotEmpty(projectIds)) {
 			const projects = await this.typeOrmProjectEmployeeRepository.find({
-				where: { ...asManager, organizationProjectId: In(projectIds) },
+				where: {
+					employeeId: currentEmployeeId,
+					organizationProjectId: In(projectIds),
+					isManager: true,
+					...activeMembershipWhere(),
+					tenantId
+				},
 				select: { organizationProjectId: true }
 			});
 			managed.projectIds = projects.map((project) => project.organizationProjectId);
@@ -507,8 +540,7 @@ export class ManagedEmployeeService {
 			const teamMembers = await this.typeOrmTeamEmployeeRepository.find({
 				where: {
 					organizationTeamId: In(teamIds),
-					isActive: true,
-					isArchived: false,
+					...activeMembershipWhere(),
 					tenantId
 				},
 				select: {
@@ -524,8 +556,7 @@ export class ManagedEmployeeService {
 			const projectMembers = await this.typeOrmProjectEmployeeRepository.find({
 				where: {
 					organizationProjectId: In(projectIds),
-					isActive: true,
-					isArchived: false,
+					...activeMembershipWhere(),
 					tenantId
 				},
 				select: {

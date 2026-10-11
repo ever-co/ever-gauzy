@@ -1,0 +1,12 @@
+{
+	"name": "@gauzy/egress-audit-inputs",
+	"private": true,
+	"description": "The egress audit harness for this directory's config, and the ESLint the import-boundary test runs its rule with (installed by .github/workflows/egress-audit.yml with npm ci; not a workspace).",
+	"type": "module",
+	"devDependencies": {
+		"@ever-co/connect-tools": "1.0.0-rc.6",
+		"@typescript-eslint/parser": "8.69.0",
+		"eslint": "9.39.2",
+		"typescript": "5.9.3"
+	}
+}
