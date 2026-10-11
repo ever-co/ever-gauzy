@@ -2,8 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
+import { isPostgres } from '@gauzy/config';
 import { DailyPlanStatusEnum, ID, IDailyPlan, IEmployee, IOrganizationTeam, ITask } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -43,6 +44,17 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@IsString()
 	@MultiORMColumn()
 	status: DailyPlanStatusEnum;
+
+	/**
+	 * Task ids in the order the owner arranged them. Stored as sent: `tasks` is not sorted by it, and
+	 * may hold tasks missing from it or have lost some of its ids, so clients reconcile the two.
+	 */
+	@ApiPropertyOptional({ type: () => [String] })
+	@IsOptional()
+	@IsArray()
+	@IsUUID('all', { each: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : 'json', nullable: true })
+	taskOrder?: ID[] | null;
 
 	/*
 	|--------------------------------------------------------------------------
