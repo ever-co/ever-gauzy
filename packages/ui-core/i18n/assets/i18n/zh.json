@@ -5584,7 +5584,11 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS 供应商",
-		"TWILIO": "Twilio (提供雲端通信服務的公司)"
+		"TWILIO": "Twilio (提供雲端通信服務的公司)",
+		"TWILIO_DESCRIPTION": "通过 Twilio Programmable Messaging 发送短信通知和邀请。",
+		"INTRO": "选择 Gauzy 用于发送短信（例如邀请和通知）的服务商。",
+		"DOCUMENTATION": "文档",
+		"NOTE": "同一时间只能启用一个短信服务商。短信将从为该服务商配置的发件号码发送。"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "管理'{{ name }}'的特性"

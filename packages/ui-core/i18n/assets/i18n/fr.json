@@ -5575,7 +5575,11 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Fournisseur de SMS",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Envoyez des notifications et des invitations par SMS via Twilio Programmable Messaging.",
+		"INTRO": "Choisissez le fournisseur utilisé par Gauzy pour envoyer des SMS, comme les invitations et les notifications.",
+		"DOCUMENTATION": "Documentation",
+		"NOTE": "Un seul fournisseur de SMS peut être actif à la fois. Les messages sont envoyés depuis le numéro d'expéditeur configuré pour ce fournisseur."
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Gérer les fonctionnalités pour '{{ name }}'"

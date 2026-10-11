@@ -5584,7 +5584,11 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS-aanbieder",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Verstuur sms-meldingen en uitnodigingen via Twilio Programmable Messaging.",
+		"INTRO": "Kies de provider die Gauzy gebruikt om sms-berichten te versturen, zoals uitnodigingen en meldingen.",
+		"DOCUMENTATION": "Documentatie",
+		"NOTE": "Er kan maar één sms-provider tegelijk actief zijn. Berichten worden verzonden vanaf het afzendernummer dat voor die provider is ingesteld."
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Beheer functies voor '{{ name }}'"

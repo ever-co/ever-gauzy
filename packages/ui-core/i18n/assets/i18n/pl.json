@@ -5583,7 +5583,11 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Dostawca SMS",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Wysyłaj powiadomienia i zaproszenia SMS przez Twilio Programmable Messaging.",
+		"INTRO": "Wybierz dostawcę, którego Gauzy używa do wysyłania wiadomości SMS, takich jak zaproszenia i powiadomienia.",
+		"DOCUMENTATION": "Dokumentacja",
+		"NOTE": "Jednocześnie może być aktywny tylko jeden dostawca SMS. Wiadomości są wysyłane z numeru nadawcy skonfigurowanego dla tego dostawcy."
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Zarządzaj funkcjami dla '{{ name }}'"

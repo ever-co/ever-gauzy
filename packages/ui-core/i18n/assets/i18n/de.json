@@ -5580,7 +5580,11 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS-Anbieter",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "SMS-Benachrichtigungen und Einladungen über Twilio Programmable Messaging senden.",
+		"INTRO": "Wählen Sie den Anbieter, über den Gauzy SMS-Nachrichten wie Einladungen und Benachrichtigungen sendet.",
+		"DOCUMENTATION": "Dokumentation",
+		"NOTE": "Es kann jeweils nur ein SMS-Anbieter aktiv sein. Nachrichten werden von der für diesen Anbieter konfigurierten Absendernummer gesendet."
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Verwalte Funktionen für '{{ name }}'"
