@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "مفعّل",
+		"DISABLED": "معطّل",
 		"PAY": "دفع",
 		"ADD_EXISTING_USER": "إضافة مستخدم موجود",
 		"ADD_NEW": "إضافة جديدة",

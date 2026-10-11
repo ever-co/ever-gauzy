@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "已启用",
+		"DISABLED": "已停用",
 		"PAY": "支付",
 		"ADD_EXISTING_USER": "添加现有用户",
 		"ADD_NEW": "添加新的",

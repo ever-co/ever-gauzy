@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Activé",
+		"DISABLED": "Désactivé",
 		"PAY": "Payer",
 		"ADD_EXISTING_USER": "Ajouter un utilisateur existant",
 		"ADD_NEW": "Ajouter Nouveau",

@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",

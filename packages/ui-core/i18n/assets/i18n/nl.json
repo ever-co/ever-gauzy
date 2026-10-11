@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Ingeschakeld",
+		"DISABLED": "Uitgeschakeld",
 		"PAY": "Betalen",
 		"ADD_EXISTING_USER": "Voeg bestaande gebruiker toe",
 		"ADD_NEW": "Voeg Nieuw Toe",
