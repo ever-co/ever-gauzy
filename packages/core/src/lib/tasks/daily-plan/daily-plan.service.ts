@@ -19,6 +19,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
@@ -30,6 +31,27 @@ import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
+
+/**
+ * Whether plan dates are stored in UTC. TypeORM writes a SQLite datetime as a UTC string, while on
+ * PostgreSQL and MySQL it hands the Date to the driver, which writes it in the API process's local time.
+ */
+const storesDatesInUtc = (): boolean => isSqlite() || isBetterSqlite3();
+
+/**
+ * The day a plan dated `date` is stored under, as `YYYY-MM-DD`: the date part of the stored value, which is
+ * what the unique index keys on. It is the UTC day on SQLite and on a process running in UTC, the usual
+ * deployment, and the process's local day otherwise.
+ */
+const storedPlanDay = (date: Date | string): string =>
+	(storesDatesInUtc() ? moment.utc(date) : moment(date)).format('YYYY-MM-DD');
+
+/**
+ * The instant a stored day starts, for a bound passed to the database as a Date, which the driver writes the
+ * same way as the plan dates.
+ */
+const storedDayStart = (day: string): Date =>
+	(storesDatesInUtc() ? moment.utc(day, 'YYYY-MM-DD') : moment(day, 'YYYY-MM-DD')).toDate();
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
@@ -56,7 +78,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const organizationTeamId = partialEntity.organizationTeamId ?? partialEntity.organizationTeam?.id;
 			const tenantId = RequestContext.currentTenantId() ?? partialEntity.tenantId;
 
-			const dailyPlanDate = new Date(partialEntity.date).toISOString().split('T')[0];
+			const dailyPlanDate = storedPlanDay(partialEntity.date);
 
 			// Validate employee existence
 			const employee = await this._employeeService.findOneByIdString(employeeId);
@@ -91,7 +113,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					await this.save(newPlan);
 					return newPlan;
 				} catch (error) {
-					// Only one plan per employee, team and UTC day can exist. When a concurrent request created
+					// Only one plan per employee, team and day can exist. When a concurrent request created
 					// it after the lookup above, this insert is refused and the task goes to that plan.
 					dailyPlan = await this.findEmployeeDayPlan(
 						tenantId,
@@ -119,7 +141,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * Finds the employee's plan for a UTC day in a team, with its tasks. Tenant, organization, employee,
+	 * Finds the employee's plan for a stored day in a team, with its tasks. Tenant, organization, employee,
 	 * team and day are the key of the unique index `IDX_daily_plan_employee_team_day_unique`, so there is
 	 * at most one that is not soft-deleted, and only those are read. Without a team, it is the employee's
 	 * plan that has no team either.
@@ -128,7 +150,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param organizationId - The organization of the plan
 	 * @param employeeId - The employee who owns the plan
 	 * @param organizationTeamId - The team of the plan, if any
-	 * @param dailyPlanDate - The UTC day, as `YYYY-MM-DD`
+	 * @param dailyPlanDate - The stored day, as `YYYY-MM-DD` (see storedPlanDay)
 	 * @returns The plan, or null when the employee has none that day in that team
 	 */
 	private async findEmployeeDayPlan(
@@ -148,7 +170,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						organizationId,
 						organizationTeamId: organizationTeamId ?? null,
 						employeeId,
-						date: { $gte: new Date(dailyPlanDate), $lt: new Date(nextDayDate) }
+						date: { $gte: storedDayStart(dailyPlanDate), $lt: storedDayStart(nextDayDate) }
 					} as any,
 					{
 						populate: ['tasks'] as any[]

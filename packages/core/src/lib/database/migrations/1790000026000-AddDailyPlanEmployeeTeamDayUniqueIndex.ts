@@ -44,7 +44,7 @@ const UNIQUE_KEY: Record<Dialect, string> = {
 const BATCH_SIZE = 400;
 
 /**
- * One daily plan per employee, team and UTC day.
+ * One daily plan per employee, team and day of the stored date.
  *
  * `POST /daily-plan` adds the task to the employee's plan for that day in that team when there is one,
  * but it looked that plan up in a separate query, so two concurrent requests could both create a plan.
@@ -52,7 +52,7 @@ const BATCH_SIZE = 400;
  * request created another plan.
  *
  * Existing duplicates are merged first. Live plans with the same tenant, organization, employee, team and
- * UTC day form a group, plans without a team forming their own group, and the plan kept is the one with the
+ * day form a group, plans without a team forming their own group, and the plan kept is the one with the
  * most tasks, then the oldest. It receives the task links of the others that it does not already have, and
  * the largest `workTimePlanned` of the group; the others are then deleted. Plans of two different teams are
  * never merged. Soft-deleted plans, and plans without a tenant, an organization or an employee, are left
@@ -119,7 +119,7 @@ export class AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000 implements Migr
 	}
 
 	/**
-	 * Merges every group of plans sharing a tenant, an organization, an employee, a team and a UTC day
+	 * Merges every group of plans sharing a tenant, an organization, an employee, a team and a day
 	 * into the plan kept for it, as described on the class.
 	 *
 	 * @param queryRunner
