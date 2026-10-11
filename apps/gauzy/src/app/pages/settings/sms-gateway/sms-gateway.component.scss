@@ -118,6 +118,12 @@
     }
 }
 
+// The global `label { margin-bottom: 0.5rem }` reaches nb-toggle's inner label
+// and lifts the track 4px above the row's centre line, off the status text.
+:host .sms-provider-row nb-toggle ::ng-deep label {
+    margin-bottom: 0;
+}
+
 .sms-provider-status {
     flex: 0 0 auto;
     font-size: nb-theme(text-caption-font-size);
