@@ -2223,10 +2223,10 @@ export class StatisticService {
 				: []
 		);
 
-		// The scope getTasks gives a request for one employee, resolved for each of them. Without a team it
-		// needs no query.
+		// The scope getTasks gives a request for one employee, resolved for each of them. A member already
+		// readable through the team needs no query.
 		const scopes = await Promise.all(
-			employeeIds.map((employeeId) =>
+			employeeIds.map(async (employeeId) =>
 				readableInTeam.has(employeeId)
 					? [employeeId]
 					: this._managedEmployeeService.filterAccessibleEmployeeIds([employeeId])
