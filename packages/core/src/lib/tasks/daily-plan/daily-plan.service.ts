@@ -73,50 +73,46 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				dailyPlanDate
 			);
 
-			// Create or update DailyPlan
+			// If a taskId is provided, the task goes to the DailyPlan
+			const task = taskId ? await this._taskService.findOneByIdString(taskId) : null;
+			if (taskId && !task) {
+				throw new BadRequestException('Task not found');
+			}
+
+			// Create the DailyPlan with the task
 			if (!dailyPlan) {
-				dailyPlan = new DailyPlan({
+				const newPlan = new DailyPlan({
 					...partialEntity,
 					employeeId: employee.id,
 					employee: { id: employee.id },
-					tasks: []
+					tasks: task ? [task] : []
 				});
+				try {
+					await this.save(newPlan);
+					return newPlan;
+				} catch (error) {
+					// Only one plan per employee, team and UTC day can exist. When a concurrent request created
+					// it after the lookup above, this insert is refused and the task goes to that plan.
+					dailyPlan = await this.findEmployeeDayPlan(
+						tenantId,
+						organizationId,
+						employeeId,
+						organizationTeamId,
+						dailyPlanDate
+					);
+					if (!dailyPlan) {
+						throw error;
+					}
+				}
 			}
 
-			// If a taskId is provided, add the task to the DailyPlan
-			if (taskId) {
-				const task = await this._taskService.findOneByIdString(taskId);
-				if (!task) {
-					throw new BadRequestException('Task not found');
-				}
+			// Add the task to the existing DailyPlan
+			if (task && !dailyPlan.tasks.some(({ id }) => id === task.id)) {
+				await this.addTaskLink(dailyPlan.id, task.id);
 				dailyPlan.tasks.push(task);
 			}
 
-			try {
-				await this.save(dailyPlan); // Save changes
-			} catch (error) {
-				// Only one plan per employee, team and UTC day can exist. When a concurrent request created
-				// it after the lookup above, this insert is refused and the task goes to that plan.
-				const currentPlan = dailyPlan.id
-					? null
-					: await this.findEmployeeDayPlan(
-							tenantId,
-							organizationId,
-							employeeId,
-							organizationTeamId,
-							dailyPlanDate
-						);
-				if (!currentPlan) {
-					throw error;
-				}
-				currentPlan.tasks.push(
-					...dailyPlan.tasks.filter((task) => !currentPlan.tasks.some(({ id }) => id === task.id))
-				);
-				await this.save(currentPlan);
-				return currentPlan;
-			}
-
-			return dailyPlan; // Return the created/updated DailyPlan
+			return dailyPlan;
 		} catch (error) {
 			throw new BadRequestException(error); // Clearer error messaging
 		}
@@ -179,6 +175,37 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				query.andWhere(p('"dailyPlan"."employeeId" = :employeeId'), { employeeId });
 				return await query.getOne();
 			}
+		}
+	}
+
+	/**
+	 * Links a task to a plan with one insert into `daily_plan_task`, which does nothing when the link
+	 * already exists. Saving the plan would write its whole task list instead, and drop any link another
+	 * request added since the plan was read: TypeORM removes the links missing from the list, and
+	 * MikroORM rewrites them all.
+	 *
+	 * @param dailyPlanId - The plan to link the task to
+	 * @param taskId - The task to link
+	 */
+	private async addTaskLink(dailyPlanId: ID, taskId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmDailyPlanRepository
+					.getKnex()('daily_plan_task')
+					.insert({ dailyPlanId, taskId })
+					.onConflict(['dailyPlanId', 'taskId'])
+					.ignore();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmDailyPlanRepository
+					.createQueryBuilder()
+					.insert()
+					.into('daily_plan_task')
+					.values({ dailyPlanId, taskId })
+					.orIgnore()
+					.execute();
+				break;
 		}
 	}
 

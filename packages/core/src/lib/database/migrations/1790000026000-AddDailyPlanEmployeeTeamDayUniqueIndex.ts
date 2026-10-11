@@ -76,6 +76,13 @@ export class AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000 implements Migr
 			await queryRunner.query(`SET LOCAL lock_timeout = '5s'`);
 			await queryRunner.query(`LOCK TABLE "daily_plan", "daily_plan_task" IN SHARE ROW EXCLUSIVE MODE`);
 		}
+		if (dialect === 'mysql' && queryRunner.isTransactionActive) {
+			// LOCK TABLES would end the migration's transaction, so the plan rows are locked instead, until
+			// CREATE INDEX commits the merge. Linking a task to a plan takes a shared lock on that plan for the
+			// foreign key check, so such a write waits, then fails on a plan the merge deleted instead of being
+			// lost. A duplicate plan created meanwhile fails the build, and the next start merges again.
+			await queryRunner.query('SELECT COUNT(*) FROM `daily_plan` FOR UPDATE');
+		}
 
 		await this.mergeDuplicatePlans(queryRunner, dialect);
 		await queryRunner.query(
