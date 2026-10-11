@@ -5586,9 +5586,7 @@
 		"HEADER": "Fornecedor de SMS",
 		"TWILIO": "Twilio",
 		"TWILIO_DESCRIPTION": "Envie notificações e convites por SMS através do Twilio Programmable Messaging.",
-		"INTRO": "Escolha o provedor que o Gauzy usa para enviar mensagens SMS, como convites e notificações.",
-		"DOCUMENTATION": "Documentação",
-		"NOTE": "Apenas um provedor de SMS pode estar ativo por vez. As mensagens são enviadas a partir do número de remetente configurado para esse provedor."
+		"DOCUMENTATION": "Documentação"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Gerenciar recursos para '{{ name }}'"

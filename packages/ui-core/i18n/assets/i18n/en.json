@@ -6251,9 +6251,7 @@
 		"HEADER": "SMS Provider",
 		"TWILIO": "Twilio",
 		"TWILIO_DESCRIPTION": "Send SMS notifications and invites through Twilio Programmable Messaging.",
-		"INTRO": "Choose the provider Gauzy uses to send SMS messages, such as invites and notifications.",
-		"DOCUMENTATION": "Documentation",
-		"NOTE": "Only one SMS provider can be active at a time. Messages are sent from the sender number configured for that provider."
+		"DOCUMENTATION": "Documentation"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"

@@ -5594,9 +5594,7 @@
 		"HEADER": "SMS Provider",
 		"TWILIO": "Twilio",
 		"TWILIO_DESCRIPTION": "שליחת התראות והזמנות SMS באמצעות Twilio Programmable Messaging.",
-		"INTRO": "בחרו את הספק ש-Gauzy משתמש בו לשליחת הודעות SMS, כמו הזמנות והתראות.",
-		"DOCUMENTATION": "תיעוד",
-		"NOTE": "רק ספק SMS אחד יכול להיות פעיל בכל פעם. ההודעות נשלחות ממספר השולח שהוגדר עבור ספק זה."
+		"DOCUMENTATION": "תיעוד"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"
