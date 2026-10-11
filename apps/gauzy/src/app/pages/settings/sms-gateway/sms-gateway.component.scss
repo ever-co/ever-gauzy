@@ -31,13 +31,6 @@
 //
 // Provider cards follow the HR dashboard's identity bar: a card-1 surface with a
 // hairline border on the card-2 page, 12px text, three weights at most.
-.sms-intro {
-    margin: 0 0 0.75rem;
-    font-size: 0.75rem;
-    line-height: 1.25rem;
-    color: var(--gauzy-text-color-2);
-}
-
 .sms-provider-list {
     display: flex;
     flex-direction: column;
@@ -118,55 +111,10 @@
     }
 }
 
-// The global `label { margin-bottom: 0.5rem }` reaches nb-toggle's inner label
-// and lifts the track 4px above the row's centre line, off the status text.
-:host .sms-provider-row nb-toggle ::ng-deep label {
-    margin-bottom: 0;
-}
-
-.sms-provider-status {
+// nb-toggle's inner label keeps the global `label { margin-bottom: 0.5rem }`, which
+// makes the host 0.5rem taller than its track. Cancel it on the host (our own
+// element, so no ::ng-deep) to keep the track on the row's centre line.
+.sms-provider-row nb-toggle {
     flex: 0 0 auto;
-    font-size: nb-theme(text-caption-font-size);
-    font-weight: 400;
-    color: var(--gauzy-text-color-2);
-}
-
-.sms-provider-card.is-enabled {
-    .sms-provider-icon,
-    .sms-provider-status {
-        color: nb-theme(text-success-color);
-    }
-}
-
-.sms-note {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.375rem;
-    margin: 0.75rem 0 0;
-    font-size: nb-theme(text-caption-font-size);
-    line-height: 1rem;
-    color: var(--gauzy-text-color-2);
-
-    nb-icon {
-        flex: 0 0 auto;
-        width: 0.875rem;
-        height: 0.875rem;
-        font-size: 0.875rem;
-        margin-top: 0.0625rem;
-    }
-}
-
-@media (max-width: 575.98px) {
-    .sms-provider-row {
-        flex-wrap: wrap;
-    }
-
-    .sms-provider-text {
-        flex-basis: calc(100% - 2.75rem);
-    }
-
-    .sms-provider-status {
-        margin-left: 2.75rem;
-        margin-right: auto;
-    }
+    margin-bottom: -0.5rem;
 }

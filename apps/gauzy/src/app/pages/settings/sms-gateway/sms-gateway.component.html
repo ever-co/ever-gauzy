@@ -14,11 +14,9 @@
         `calc(100vh - 18rem)` height — a page-tall blank panel under the provider
         toggles as soon as those styles applied. Both are gone.
       -->
-      <p class="sms-intro">{{ 'SMS_GATEWAY_PAGE.INTRO' | translate }}</p>
-
       <div class="sms-provider-list">
         @for (provider of smsProviders; track provider) {
-          <div class="sms-provider-card" [class.is-enabled]="isEnabled(provider)">
+          <div class="sms-provider-card">
             <div class="sms-provider-row">
               <span class="sms-provider-icon">
                 <nb-icon icon="message-square-outline"></nb-icon>
@@ -35,9 +33,6 @@
                   </a>
                 }
               </div>
-              <span class="sms-provider-status">
-                {{ (isEnabled(provider) ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
-              </span>
               <nb-toggle
                 [checked]="isEnabled(provider)"
                 (checkedChange)="providerChanged(provider, $event)"
@@ -48,10 +43,5 @@
           </div>
         }
       </div>
-
-      <p class="sms-note">
-        <nb-icon icon="info-outline"></nb-icon>
-        <span>{{ 'SMS_GATEWAY_PAGE.NOTE' | translate }}</span>
-      </p>
     </nb-card-body>
   </nb-card>

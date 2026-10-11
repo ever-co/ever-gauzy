@@ -14,8 +14,8 @@ export class SmsGatewayComponent implements OnInit {
 		[SMSProviderEnum.TWILIO]: 'https://www.twilio.com/docs/messaging'
 	};
 
-	// Local only: there is no SMS settings endpoint yet, so this drives the
-	// row's status label and resets on reload.
+	// Local only: there is no SMS settings endpoint yet, so this only keeps
+	// the toggle's state for the session and resets on reload.
 	private readonly enabledProviders = new Set<string>();
 
 	constructor() {}
