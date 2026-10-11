@@ -2195,6 +2195,8 @@ export class StatisticService {
 	 *
 	 * The entry of each employee holds what {@link getTasks} returns for `employeeIds: [employeeId]` with the
 	 * same organization, team and date range, employee scope included, read with a fixed number of queries.
+	 * A member the caller may read through the team, as its manager, gets their own tasks: scoped without the
+	 * team, a caller without CHANGE_SELECTED_EMPLOYEE got their own tasks under every member.
 	 *
 	 * @param request - The employees, their organization and team, and an optional date range
 	 * @returns The task statistics of each requested employee, keyed by employee id
@@ -2214,9 +2216,21 @@ export class StatisticService {
 			return new Map();
 		}
 
-		// The scope getTasks gives a request for one employee, resolved for each of them.
+		// The members the caller may read through the team, resolved once for all of them.
+		const readableInTeam = new Set(
+			organizationTeamId
+				? await this._managedEmployeeService.filterAccessibleEmployeeIds(employeeIds, [organizationTeamId])
+				: []
+		);
+
+		// The scope getTasks gives a request for one employee, resolved for each of them. Without a team it
+		// needs no query.
 		const scopes = await Promise.all(
-			employeeIds.map((employeeId) => this._managedEmployeeService.filterAccessibleEmployeeIds([employeeId]))
+			employeeIds.map((employeeId) =>
+				readableInTeam.has(employeeId)
+					? [employeeId]
+					: this._managedEmployeeService.filterAccessibleEmployeeIds([employeeId])
+			)
 		);
 
 		// A row counts for every requested employee whose scope holds the employee who logged it.
@@ -2226,6 +2240,10 @@ export class StatisticService {
 				requestedBy.set(scopedEmployeeId, [...(requestedBy.get(scopedEmployeeId) ?? []), employeeId]);
 			}
 		});
+		// No employee left in any scope: an empty employee filter would read the whole team for nothing.
+		if (!requestedBy.size) {
+			return new Map(employeeIds.map((employeeId) => [employeeId, []]));
+		}
 		const splitByRequestedEmployee = <T extends { employeeId?: ID }>(rows: T[]): Map<ID, T[]> => {
 			const split = new Map<ID, T[]>(employeeIds.map((employeeId) => [employeeId, []]));
 			for (const row of rows) {
