@@ -156,7 +156,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				id,
 				mentionEmployeeIds,
 				updatedComment.entityId,
-				updatedComment.entity
+				updatedComment.entity,
+				comment.organizationId
 			);
 
 			return updatedComment;
