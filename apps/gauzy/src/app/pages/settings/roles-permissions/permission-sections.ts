@@ -1,0 +1,316 @@
+import { PermissionsEnum as P } from '@gauzy/contracts';
+
+/**
+ * Display-only grouping of the Roles & Permissions lists into titled sections.
+ *
+ * `PermissionGroups` (contracts) decides WHICH permissions sit in General and
+ * Administration; this only decides how each list is broken up on screen. A
+ * permission that is in a group but not listed here is shown under "Other", so
+ * a new permission added to the contracts can never disappear from the page.
+ *
+ * `key` maps to `ORGANIZATIONS_PAGE.PERMISSIONS.SECTIONS.<key>`.
+ */
+export interface IPermissionSection {
+	key: string;
+	permissions: P[];
+}
+
+export const OTHER_PERMISSION_SECTION = 'OTHER';
+
+export const GENERAL_PERMISSION_SECTIONS: IPermissionSection[] = [
+	{
+		key: 'DASHBOARDS',
+		permissions: [
+			P.ADMIN_DASHBOARD_VIEW,
+			P.TEAM_DASHBOARD,
+			P.PROJECT_MANAGEMENT_DASHBOARD,
+			P.TIME_TRACKING_DASHBOARD,
+			P.ACCOUNTING_DASHBOARD,
+			P.HUMAN_RESOURCE_DASHBOARD,
+			P.DASHBOARD_CREATE,
+			P.DASHBOARD_READ,
+			P.DASHBOARD_UPDATE,
+			P.DASHBOARD_DELETE
+		]
+	},
+	{
+		key: 'SELECTION',
+		permissions: [
+			P.SELECT_EMPLOYEE,
+			P.CHANGE_SELECTED_EMPLOYEE,
+			P.CHANGE_SELECTED_CANDIDATE,
+			P.CHANGE_SELECTED_ORGANIZATION
+		]
+	},
+	{
+		key: 'INTEGRATIONS_AI',
+		permissions: [
+			P.INTEGRATION_ADD,
+			P.INTEGRATION_VIEW,
+			P.INTEGRATION_EDIT,
+			P.INTEGRATION_DELETE,
+			P.AI_CHAT_ACCESS,
+			P.AI_CHAT_SETTINGS
+		]
+	},
+	{
+		key: 'JOBS',
+		permissions: [
+			P.ORG_JOB_APPLY,
+			P.ORG_JOB_SEARCH,
+			P.ORG_JOB_EDIT,
+			P.ORG_JOB_EMPLOYEE_VIEW,
+			P.ORG_JOB_MATCHING_VIEW
+		]
+	},
+	{
+		key: 'FINANCE',
+		permissions: [
+			P.ORG_PAYMENT_VIEW,
+			P.ORG_PAYMENT_ADD_EDIT,
+			P.ORG_PAYROLL_VIEW,
+			P.ORG_PAYROLL_EDIT,
+			P.ORG_PAYROLL_APPROVE,
+			P.ORG_EXPENSES_VIEW,
+			P.ORG_EXPENSES_EDIT,
+			P.EMPLOYEE_EXPENSES_VIEW,
+			P.EMPLOYEE_EXPENSES_EDIT,
+			P.ORG_INCOMES_VIEW,
+			P.ORG_INCOMES_EDIT,
+			P.INVOICES_VIEW,
+			P.INVOICES_EDIT,
+			P.ESTIMATES_VIEW,
+			P.ESTIMATES_EDIT,
+			P.VIEW_ALL_ACCOUNTING_TEMPLATES
+		]
+	},
+	{
+		key: 'SALES',
+		permissions: [
+			P.ORG_PROPOSALS_VIEW,
+			P.ORG_PROPOSALS_EDIT,
+			P.ORG_PROPOSAL_TEMPLATES_VIEW,
+			P.ORG_PROPOSAL_TEMPLATES_EDIT,
+			P.VIEW_SALES_PIPELINES,
+			P.EDIT_SALES_PIPELINES,
+			P.ORG_CONTACT_VIEW,
+			P.ORG_CONTACT_EDIT,
+			P.ORG_CONTRACT_EDIT
+		]
+	},
+	{
+		key: 'EMPLOYEES_TEAMS',
+		permissions: [
+			P.ORG_EMPLOYEES_ADD,
+			P.ORG_EMPLOYEES_VIEW,
+			P.ORG_EMPLOYEES_DELETE,
+			P.ORG_INVITE_VIEW,
+			P.ORG_INVITE_EDIT,
+			P.ORG_TEAM_ADD,
+			P.ORG_TEAM_VIEW,
+			P.ORG_TEAM_EDIT,
+			P.ORG_TEAM_DELETE,
+			P.ORG_TEAM_EDIT_ACTIVE_TASK,
+			P.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
+			P.ORG_TEAM_JOIN_REQUEST_VIEW,
+			P.ORG_TEAM_JOIN_REQUEST_EDIT,
+			P.EMPLOYEE_AVAILABILITY_CREATE,
+			P.EMPLOYEE_AVAILABILITY_READ,
+			P.EMPLOYEE_AVAILABILITY_UPDATE,
+			P.EMPLOYEE_AVAILABILITY_DELETE,
+			P.ORG_MEMBER_LAST_LOG_VIEW,
+			P.EVENT_TYPES_VIEW
+		]
+	},
+	{
+		key: 'CANDIDATES',
+		permissions: [
+			P.ORG_CANDIDATES_DOCUMENTS_VIEW,
+			P.ORG_CANDIDATES_TASK_EDIT,
+			P.ORG_CANDIDATES_INTERVIEW_VIEW,
+			P.ORG_CANDIDATES_INTERVIEW_EDIT,
+			P.ORG_CANDIDATES_INTERVIEWERS_VIEW,
+			P.ORG_CANDIDATES_INTERVIEWERS_EDIT,
+			P.ORG_CANDIDATES_FEEDBACK_EDIT
+		]
+	},
+	{
+		key: 'TIME_OFF_APPROVALS',
+		permissions: [
+			P.TIME_OFF_POLICY_ADD,
+			P.TIME_OFF_POLICY_VIEW,
+			P.TIME_OFF_POLICY_EDIT,
+			P.TIME_OFF_POLICY_DELETE,
+			P.TIME_OFF_ADD,
+			P.TIME_OFF_VIEW,
+			P.TIME_OFF_EDIT,
+			P.TIME_OFF_DELETE,
+			P.APPROVAL_POLICY_VIEW,
+			P.APPROVAL_POLICY_EDIT,
+			P.REQUEST_APPROVAL_VIEW,
+			P.REQUEST_APPROVAL_EDIT
+		]
+	},
+	{
+		key: 'TIME_TRACKING',
+		permissions: [
+			P.TIME_TRACKER,
+			P.TIMESHEET_EDIT_TIME,
+			P.CAN_APPROVE_TIMESHEET,
+			P.ALLOW_MANUAL_TIME,
+			P.ALLOW_MODIFY_TIME,
+			P.ALLOW_DELETE_TIME,
+			P.DELETE_SCREENSHOTS
+		]
+	},
+	{
+		key: 'PROJECTS_TASKS',
+		permissions: [
+			P.ORG_PROJECT_ADD,
+			P.ORG_PROJECT_VIEW,
+			P.ORG_PROJECT_EDIT,
+			P.ORG_PROJECT_DELETE,
+			P.ACCESS_PRIVATE_PROJECTS,
+			P.PROJECT_MODULE_CREATE,
+			P.PROJECT_MODULE_READ,
+			P.PROJECT_MODULE_UPDATE,
+			P.PROJECT_MODULE_DELETE,
+			P.ORG_TASK_ADD,
+			P.ORG_TASK_VIEW,
+			P.ORG_TASK_EDIT,
+			P.ORG_TASK_DELETE,
+			P.ORG_TASK_SETTING,
+			P.ORG_SPRINT_ADD,
+			P.ORG_SPRINT_VIEW,
+			P.ORG_SPRINT_EDIT,
+			P.ORG_SPRINT_DELETE,
+			P.DAILY_PLAN_CREATE,
+			P.DAILY_PLAN_READ,
+			P.DAILY_PLAN_UPDATE,
+			P.DAILY_PLAN_DELETE,
+			P.ORG_STRATEGIC_INITIATIVE_READ
+		]
+	},
+	{
+		key: 'INVENTORY_EQUIPMENT',
+		permissions: [
+			P.ORG_INVENTORY_VIEW,
+			P.ORG_INVENTORY_PRODUCT_EDIT,
+			P.ORG_PRODUCT_TYPES_VIEW,
+			P.ORG_PRODUCT_CATEGORIES_VIEW,
+			P.ORG_PRODUCT_CATEGORIES_EDIT,
+			P.INVENTORY_GALLERY_VIEW,
+			P.INVENTORY_GALLERY_EDIT,
+			P.ORG_EQUIPMENT_VIEW,
+			P.ORG_EQUIPMENT_EDIT,
+			P.ORG_EQUIPMENT_SHARING_VIEW,
+			P.ORG_EQUIPMENT_SHARING_EDIT,
+			P.EQUIPMENT_MAKE_REQUEST,
+			P.EQUIPMENT_APPROVE_REQUEST,
+			P.EQUIPMENT_SHARING_POLICY_ADD,
+			P.EQUIPMENT_SHARING_POLICY_VIEW,
+			P.EQUIPMENT_SHARING_POLICY_EDIT,
+			P.EQUIPMENT_SHARING_POLICY_DELETE
+		]
+	},
+	{
+		key: 'CONTENT_COMMUNICATION',
+		permissions: [
+			P.DOCS_READ,
+			P.DOCS_CREATE,
+			P.DOCS_UPDATE,
+			P.VIEW_ALL_EMAILS,
+			P.VIEW_ALL_EMAIL_TEMPLATES,
+			P.BROADCAST_CREATE,
+			P.BROADCAST_READ,
+			P.BROADCAST_UPDATE,
+			P.BROADCAST_DELETE,
+			P.MEDIA_GALLERY_ADD,
+			P.MEDIA_GALLERY_VIEW,
+			P.MEDIA_GALLERY_EDIT,
+			P.MEDIA_GALLERY_DELETE,
+			P.PUBLIC_PAGE_EDIT,
+			P.ORG_HELP_CENTER_EDIT
+		]
+	},
+	{
+		key: 'TAGS',
+		permissions: [
+			P.ORG_TAGS_ADD,
+			P.ORG_TAGS_VIEW,
+			P.ORG_TAGS_EDIT,
+			P.ORG_TAGS_DELETE,
+			P.ORG_TAG_TYPES_ADD,
+			P.ORG_TAG_TYPES_VIEW,
+			P.ORG_TAG_TYPES_EDIT,
+			P.ORG_TAG_TYPES_DELETE
+		]
+	},
+	{
+		key: 'ACCOUNT',
+		permissions: [P.ACCESS_DELETE_ACCOUNT]
+	}
+];
+
+export const ADMINISTRATION_PERMISSION_SECTIONS: IPermissionSection[] = [
+	{
+		key: 'USERS_ORGANIZATIONS',
+		permissions: [
+			P.ORG_USERS_VIEW,
+			P.ORG_USERS_EDIT,
+			P.TENANT_ADD_EXISTING_USER,
+			P.CHANGE_ROLES_PERMISSIONS,
+			P.ORG_EMPLOYEES_EDIT,
+			P.ORG_CANDIDATES_VIEW,
+			P.ORG_CANDIDATES_EDIT,
+			P.ALL_ORG_VIEW,
+			P.ALL_ORG_EDIT
+		]
+	},
+	{
+		key: 'SETTINGS_INTEGRATIONS',
+		permissions: [
+			P.TENANT_SETTING,
+			P.FILE_STORAGE_VIEW,
+			P.PAYMENT_GATEWAY_VIEW,
+			P.SMS_GATEWAY_VIEW,
+			P.CUSTOM_SMTP_VIEW,
+			P.TENANT_API_KEY_CREATE,
+			P.TENANT_API_KEY_VIEW,
+			P.TENANT_API_KEY_DELETE,
+			P.OAUTH_CLIENT_VIEW,
+			P.OAUTH_CLIENT_EDIT
+		]
+	},
+	{
+		key: 'DATA_LOGS',
+		permissions: [P.IMPORT_ADD, P.EXPORT_ADD, P.ACCESS_DELETE_ALL_DATA, P.API_CALL_LOG_READ, P.API_CALL_LOG_DELETE]
+	},
+	{
+		key: 'DOCUMENTS',
+		permissions: [P.DOCS_DELETE, P.DOCS_MANAGE, P.DOCS_REVIEW, P.DOCS_AI_IMPORT]
+	}
+];
+
+/**
+ * Splits a (possibly search-filtered) permission list into its sections, in
+ * section order; empty sections are dropped and unlisted permissions go last
+ * under "Other".
+ */
+export function toPermissionSections(permissions: P[], sections: IPermissionSection[]): IPermissionSection[] {
+	const visible = new Set(permissions);
+	const placed = new Set<P>();
+	const result: IPermissionSection[] = [];
+	for (const section of sections) {
+		const items = section.permissions.filter((permission) => visible.has(permission));
+		items.forEach((permission) => placed.add(permission));
+		if (items.length) {
+			result.push({ key: section.key, permissions: items });
+		}
+	}
+	const other = permissions.filter((permission) => !placed.has(permission));
+	if (other.length) {
+		result.push({ key: OTHER_PERMISSION_SECTION, permissions: other });
+	}
+	return result;
+}
