@@ -1,8 +1,16 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { filter } from 'rxjs';
 import { DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	deliverPayloadAsIs,
+	EventBus,
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	tenantScopedEventStream
+} from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
 import { ICampaign, ICoupon, IPromotion, IPromotionAction, IPromotionUsage } from '../../promotion.types';
@@ -33,7 +41,6 @@ import {
 	SoftDeletePromotionPayload,
 	UpdatePromotionPayload,
 	cursorOffset,
-	toAsyncIterable,
 	toConnection,
 	toOrder,
 	toWindow
@@ -395,15 +402,26 @@ export class PromotionResolver {
 	 * a subscriber that caches a promotion set purges on this event, so a promotion that expired stops
 	 * applying at the instant it expired.
 	 *
+	 * 🛑 **Held to the subscriber's tenant.** The stream used to read the bus and narrow on the id argument
+	 * alone, so a subscriber holding the view grant was handed every tenant's events. The kernel's
+	 * tenant-scoped stream admits only an event of the subscriber's tenant (captured when the subscription
+	 * opened, never read from the publisher's request the bus calls back in) and organization, and
+	 * `deliverPayloadAsIs` hands graphql-js the event itself as the field's value.
+	 *
 	 * @param promotionId The promotion to narrow the stream to, when the caller wants one.
 	 * @returns The stream.
 	 */
 	@Permissions(PromotionPermission.PROMOTIONS_VIEW as PermissionsEnum)
-	@Subscription('promotionChanged')
+	@Subscription('promotionChanged', { resolve: deliverPayloadAsIs })
 	promotionChanged(@Args('promotionId') promotionId?: ID): AsyncIterable<IPromotionChangedPayload> {
-		const source = this.eventBus.ofType(PromotionChangedEvent);
-
-		return toAsyncIterable(promotionId ? source.pipe(filter((event) => event.promotionId === promotionId)) : source);
+		return tenantScopedEventStream<PromotionChangedEvent, IPromotionChangedPayload>(
+			this.eventBus.ofType(PromotionChangedEvent),
+			{
+				narrow: (event) => !promotionId || event.promotionId === promotionId,
+				tenantOf: (event) => event.tenantId,
+				organizationOf: (event) => event.organizationId
+			}
+		);
 	}
 
 	/**

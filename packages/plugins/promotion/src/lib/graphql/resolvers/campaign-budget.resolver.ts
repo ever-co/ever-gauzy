@@ -1,8 +1,16 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { filter } from 'rxjs';
 import { DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	deliverPayloadAsIs,
+	EventBus,
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	tenantScopedEventStream
+} from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
 import { ICampaign, ICampaignBudget, ICampaignBudgetUsage } from '../../promotion.types';
@@ -18,7 +26,6 @@ import {
 	RecoverCampaignBudgetPayload,
 	SoftDeleteCampaignBudgetPayload,
 	cursorOffset,
-	toAsyncIterable,
 	toConnection,
 	toOrder,
 	toWindow
@@ -153,25 +160,30 @@ export class CampaignBudgetResolver {
 	 * operator can still act: a budget reported as spent at the end of the month cannot be topped up in
 	 * time.
 	 *
+	 * 🛑 **Held to the subscriber's tenant.** The stream used to read the bus and narrow on the id argument
+	 * alone, so a subscriber holding the view grant was handed every tenant's events. The kernel's
+	 * tenant-scoped stream admits only an event of the subscriber's tenant (captured when the subscription
+	 * opened, never read from the publisher's request the bus calls back in) and organization, and
+	 * `deliverPayloadAsIs` hands graphql-js the event itself as the field's value.
+	 *
 	 * @param promotionId The promotion to narrow the stream to, when the caller wants one.
 	 * @param budgetId The budget to narrow the stream to, when the caller wants one.
 	 * @returns The stream.
 	 */
 	@Permissions(PromotionPermission.PROMOTIONS_VIEW as PermissionsEnum)
-	@Subscription('promotionBudgetExhausted')
+	@Subscription('promotionBudgetExhausted', { resolve: deliverPayloadAsIs })
 	promotionBudgetExhausted(
 		@Args('promotionId') promotionId?: ID,
 		@Args('budgetId') budgetId?: ID
 	): AsyncIterable<IPromotionBudgetExhaustedPayload> {
-		const source = this.eventBus.ofType(PromotionBudgetExhaustedEvent);
-
-		return toAsyncIterable(
-			source.pipe(
-				filter(
-					(event) =>
-						(!promotionId || event.promotionId === promotionId) && (!budgetId || event.budgetId === budgetId)
-				)
-			)
+		return tenantScopedEventStream<PromotionBudgetExhaustedEvent, IPromotionBudgetExhaustedPayload>(
+			this.eventBus.ofType(PromotionBudgetExhaustedEvent),
+			{
+				narrow: (event) =>
+					(!promotionId || event.promotionId === promotionId) && (!budgetId || event.budgetId === budgetId),
+				tenantOf: (event) => event.tenantId,
+				organizationOf: (event) => event.organizationId
+			}
 		);
 	}
 
