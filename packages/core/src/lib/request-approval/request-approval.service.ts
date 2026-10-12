@@ -139,7 +139,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 						? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
 						: isMySQL()
 						? p(
-								`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`
+								`CAST(CONVERT("equipment_sharing"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`
 						  )
 						: '"equipment_sharing"."id" = "request_approval"."requestId"'
 				}`;
