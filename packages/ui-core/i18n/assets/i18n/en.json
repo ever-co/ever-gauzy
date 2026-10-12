@@ -6241,12 +6241,12 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Manage SMTP for '{{ name }}'",
-		"DESCRIPTION_TENANT": "Used for emails sent by every organization that has no SMTP of its own (invites, invoices, password resets, verification codes). Without one, the server's default mail settings apply.",
+		"DESCRIPTION_TENANT": "Used for emails from every organization that has no SMTP of its own, such as invites, invoices and timesheet notices. Without one, the server's default mail settings apply. Account verification and password reset emails always use the server's settings.",
 		"DESCRIPTION_ORGANIZATION": "Used for this organization's emails instead of the tenant SMTP. Validate the connection, then save.",
 		"HINTS": {
 			"FROM_ADDRESS": "The sender address recipients see in their inbox.",
 			"HOST": "Your SMTP server address, e.g. smtp.gmail.com.",
-			"PORT": "Leave blank for 587. 465 uses SSL; 587 uses STARTTLS.",
+			"PORT": "Usually 587 (STARTTLS) or 465 (SSL).",
 			"SECURE": "Only applies to other ports: 465 always uses SSL and 587 always uses STARTTLS.",
 			"USERNAME": "The account used to sign in to the SMTP server. Saved values come back masked; re-enter the username and password to change these settings.",
 			"PASSWORD": "The password or app password for that account."

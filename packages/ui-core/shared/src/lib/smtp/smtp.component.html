@@ -39,11 +39,12 @@
 							<label class="field-label" for="fromAddress">
 								{{ 'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate }}
 							</label>
-							<span class="field-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.FROM_ADDRESS' | translate }}</span>
+							<span class="field-hint" id="fromAddress-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.FROM_ADDRESS' | translate }}</span>
 						</div>
 						<div class="field-control">
 							<input
 								id="fromAddress"
+								aria-describedby="fromAddress-hint"
 								nbInput
 								fullWidth
 								fieldSize="small"
@@ -59,11 +60,12 @@
 							<label class="field-label" for="host">
 								{{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}
 							</label>
-							<span class="field-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.HOST' | translate }}</span>
+							<span class="field-hint" id="host-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.HOST' | translate }}</span>
 						</div>
 						<div class="field-control">
 							<input
 								id="host"
+								aria-describedby="host-hint"
 								nbInput
 								fullWidth
 								fieldSize="small"
@@ -81,11 +83,12 @@
 							<label class="field-label" for="port">
 								{{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}
 							</label>
-							<span class="field-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.PORT' | translate }}</span>
+							<span class="field-hint" id="port-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.PORT' | translate }}</span>
 						</div>
 						<div class="field-control">
 							<input
 								id="port"
+								aria-describedby="port-hint"
 								nbInput
 								fullWidth
 								fieldSize="small"
@@ -101,10 +104,10 @@
 							<label class="field-label" for="secure">
 								{{ 'CUSTOM_SMTP_PAGE.SECURE' | translate }}
 							</label>
-							<span class="field-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.SECURE' | translate }}</span>
+							<span class="field-hint" id="secure-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.SECURE' | translate }}</span>
 						</div>
 						<div class="field-control">
-							<nb-select id="secure" size="medium" fullWidth formControlName="secure">
+							<nb-select #secureSelect id="secure" aria-describedby="secure-hint" size="medium" fullWidth formControlName="secure">
 								@for (secure of secureOptions; track secure) {
 									<nb-option [value]="secure.value">
 										{{ secure.label | titlecase }}
@@ -118,7 +121,7 @@
 							<label class="field-label" for="username">
 								{{ 'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate }}
 							</label>
-							<span class="field-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.USERNAME' | translate }}</span>
+							<span class="field-hint" id="username-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.USERNAME' | translate }}</span>
 						</div>
 						<div class="field-control">
 							<input
@@ -129,6 +132,7 @@
 								spellcheck="false"
 								[placeholder]="'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate"
 								id="username"
+								aria-describedby="username-hint"
 								formControlName="username"
 								[status]="FormHelpers.isInvalidControl(form, 'username') ? 'danger' : 'basic'"
 							/>
@@ -139,7 +143,7 @@
 							<label class="field-label" for="password">
 								{{ 'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate }}
 							</label>
-							<span class="field-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.PASSWORD' | translate }}</span>
+							<span class="field-hint" id="password-hint">{{ 'CUSTOM_SMTP_PAGE.HINTS.PASSWORD' | translate }}</span>
 						</div>
 						<div class="field-control">
 							<input
@@ -151,6 +155,7 @@
 								spellcheck="false"
 								[placeholder]="'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate"
 								id="password"
+								aria-describedby="password-hint"
 								formControlName="password"
 								[status]="FormHelpers.isInvalidControl(form, 'password') ? 'danger' : 'basic'"
 							/>

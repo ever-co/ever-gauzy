@@ -5573,12 +5573,12 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Gerenciar o SMTP para '{{ name }}'",
-		"DESCRIPTION_TENANT": "Usado nos e-mails de cada organização sem SMTP próprio (convites, faturas, redefinições de senha, códigos de verificação). Sem ele, aplicam-se as configurações de e-mail padrão do servidor.",
+		"DESCRIPTION_TENANT": "Usado nos e-mails de cada organização sem SMTP próprio, como convites, faturas e avisos de folhas de horas. Sem ele, aplicam-se as configurações de e-mail padrão do servidor. Os e-mails de verificação de conta e de redefinição de senha sempre usam as configurações do servidor.",
 		"DESCRIPTION_ORGANIZATION": "Usado nos e-mails desta organização em vez do SMTP do locatário. Valide a conexão e depois salve.",
 		"HINTS": {
 			"FROM_ADDRESS": "O endereço do remetente que os destinatários veem na caixa de entrada.",
 			"HOST": "O endereço do seu servidor SMTP, por ex. smtp.gmail.com.",
-			"PORT": "Deixe em branco para 587. 465 usa SSL; 587 usa STARTTLS.",
+			"PORT": "Normalmente 587 (STARTTLS) ou 465 (SSL).",
 			"SECURE": "Só se aplica a outras portas: 465 sempre usa SSL e 587 sempre usa STARTTLS.",
 			"USERNAME": "A conta usada para entrar no servidor SMTP. Os valores salvos voltam mascarados; digite novamente o usuário e a senha para alterar estas configurações.",
 			"PASSWORD": "A senha ou senha de app dessa conta."

@@ -5569,12 +5569,12 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Verwalte SMTP für '{{ name }}'",
-		"DESCRIPTION_TENANT": "Wird für die E-Mails jeder Organisation ohne eigenen SMTP-Server verwendet (Einladungen, Rechnungen, Passwort-Zurücksetzungen, Bestätigungscodes). Ohne ihn gelten die Standard-Mail-Einstellungen des Servers.",
+		"DESCRIPTION_TENANT": "Wird für die E-Mails jeder Organisation ohne eigenen SMTP-Server verwendet, etwa Einladungen, Rechnungen und Stundenzettel-Hinweise. Ohne ihn gelten die Standard-Mail-Einstellungen des Servers. E-Mails zur Kontobestätigung und Passwort-Zurücksetzung verwenden immer die Server-Einstellungen.",
 		"DESCRIPTION_ORGANIZATION": "Wird für die E-Mails dieser Organisation statt des Mandanten-SMTP verwendet. Verbindung prüfen, dann speichern.",
 		"HINTS": {
 			"FROM_ADDRESS": "Die Absenderadresse, die Empfänger in ihrem Posteingang sehen.",
 			"HOST": "Die Adresse Ihres SMTP-Servers, z. B. smtp.gmail.com.",
-			"PORT": "Leer lassen für 587. 465 verwendet SSL; 587 verwendet STARTTLS.",
+			"PORT": "Meist 587 (STARTTLS) oder 465 (SSL).",
 			"SECURE": "Gilt nur für andere Ports: 465 verwendet immer SSL und 587 immer STARTTLS.",
 			"USERNAME": "Das Konto für die Anmeldung am SMTP-Server. Gespeicherte Werte werden maskiert angezeigt; geben Sie Benutzername und Passwort erneut ein, um die Einstellungen zu ändern.",
 			"PASSWORD": "Das Passwort oder App-Passwort dieses Kontos."

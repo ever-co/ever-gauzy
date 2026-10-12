@@ -5572,12 +5572,12 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Zarządzaj SMTP dla '{{ name }}'",
-		"DESCRIPTION_TENANT": "Używany do wiadomości każdej organizacji bez własnego SMTP (zaproszenia, faktury, resetowanie haseł, kody weryfikacyjne). Bez niego obowiązują domyślne ustawienia poczty serwera.",
+		"DESCRIPTION_TENANT": "Używany do wiadomości każdej organizacji bez własnego SMTP, takich jak zaproszenia, faktury i powiadomienia o kartach czasu pracy. Bez niego obowiązują domyślne ustawienia poczty serwera. Wiadomości weryfikacji konta i resetowania hasła zawsze używają ustawień serwera.",
 		"DESCRIPTION_ORGANIZATION": "Używany do wiadomości tej organizacji zamiast SMTP najemcy. Zweryfikuj połączenie, a następnie zapisz.",
 		"HINTS": {
 			"FROM_ADDRESS": "Adres nadawcy widoczny dla odbiorców w skrzynce odbiorczej.",
 			"HOST": "Adres Twojego serwera SMTP, np. smtp.gmail.com.",
-			"PORT": "Pozostaw puste dla 587. 465 używa SSL; 587 używa STARTTLS.",
+			"PORT": "Zwykle 587 (STARTTLS) lub 465 (SSL).",
 			"SECURE": "Dotyczy tylko innych portów: 465 zawsze używa SSL, a 587 zawsze STARTTLS.",
 			"USERNAME": "Konto używane do logowania na serwerze SMTP. Zapisane wartości są zwracane zamaskowane; wpisz ponownie nazwę użytkownika i hasło, aby zmienić te ustawienia.",
 			"PASSWORD": "Hasło lub hasło aplikacji dla tego konta."
