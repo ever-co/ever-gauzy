@@ -50,8 +50,8 @@ export class ManagedEmployeeService {
 	 * Filters the requested employeeIds based on the current user's permissions and manager status.
 	 *
 	 * Logic:
-	 * 1. If user has CHANGE_SELECTED_EMPLOYEE permission → Return requested employeeIds as-is
-	 * 2. If user explicitly requests "onlyMe" → Return only current user's employeeId
+	 * 1. If user explicitly requests "onlyMe" → Return only current user's employeeId
+	 * 2. If user has CHANGE_SELECTED_EMPLOYEE permission → Return requested employeeIds as-is
 	 * 3. If teamIds or projectIds are provided → Keep the members of the ones the user manages
 	 * 4. Otherwise → Return only current user's employeeId
 	 *
@@ -70,14 +70,15 @@ export class ManagedEmployeeService {
 		const user = RequestContext.currentUser();
 		const currentEmployeeId = user?.employeeId;
 
-		// Case 1: User has global permission to change selected employee
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return requestedEmployeeIds;
-		}
-
-		// Case 2: User explicitly requests "onlyMe"
+		// Case 1: User explicitly requests "onlyMe". It wins over CHANGE_SELECTED_EMPLOYEE, as in the timesheet,
+		// time log and expense reads: a caller allowed to pick anyone still asked for their own data.
 		if (onlyMe && currentEmployeeId) {
 			return [currentEmployeeId];
+		}
+
+		// Case 2: User has global permission to change selected employee
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedEmployeeIds;
 		}
 
 		// Case 3: An authenticated caller whose token carries no employee identity — after switching to an
