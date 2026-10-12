@@ -80,6 +80,11 @@ export default class TimerHandler {
 	// The setting is off but an earlier asynchronous session left jobs behind: new jobs queue behind them until none is
 	// left, then the session moves to the in-memory queue.
 	private _drainingLeftovers = false;
+	// Work that could not go through the persistent queue, in submission order (see `inOrderBehindStoredJobs`).
+	private _bypass: Promise<void> = Promise.resolve();
+	// Submissions on `_bypass` not yet handed on. While any is, newer work joins `_bypass` rather than being stored
+	// ahead of it: the older work would otherwise run last and overwrite the newer (e.g. an older timer duration).
+	private _bypassPending = 0;
 	private _deferredSyncs = 0;
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
@@ -795,21 +800,32 @@ export default class TimerHandler {
 	public async clearActivityEvents(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
 		const queue = await this.asyncTimerSync(knex);
 		if (queue) {
-			try {
-				await queue.processWithQueue(
+			const store = () =>
+				queue.processWithQueue(
 					DEFAULT_TIMER_QUEUE,
 					{ type: TimerQueueJobType.CLEAR_ACTIVITY_EVENTS, data: tables?.length ? { tables } : {} },
 					knex
 				);
-				return;
-			} catch (error) {
-				await this._auditLogHandler.timerAuditError(
-					`[clearActivityEvents] Could not queue the activity reset, emptying the tables once the saves ahead are written: ${error?.message ?? error}`
-				);
-				// Not before the event saves stored ahead of it: one written after the reset would land in the next time slot.
-				await this.waitForStoredJobs(queue, 'clearActivityEvents');
+			if (this._bypassPending === 0) {
+				try {
+					await store();
+					return;
+				} catch (error) {
+					await this._auditLogHandler.timerAuditError(
+						`[clearActivityEvents] Could not queue the activity reset, emptying the tables once the saves ahead are written: ${error?.message ?? error}`
+					);
+				}
 			}
+			// Not before the event saves queued ahead of it: one written after the reset would land in the next time slot.
+			return this.inOrderBehindStoredJobs(queue, 'clearActivityEvents', store, () =>
+				this.resetActivityTables(knex, tables)
+			);
 		}
+		await this.resetActivityTables(knex, tables);
+	}
+
+	/* Empties the ActivityWatch event tables (`tables`, all five when absent) right away. */
+	private async resetActivityTables(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
 		if (!tables?.length) {
 			await this._activityWatchService.clearAllEvents();
 			return;
@@ -885,6 +901,53 @@ export default class TimerHandler {
 	}
 
 	/*
+	 * Runs work that could not be stored — and any work submitted while such work is still waiting — strictly in
+	 * submission order, so an older job can never run after a newer one and overwrite it. At its turn each submission:
+	 *  1. tries the persistent queue again: stored, it runs after everything stored before it, which is the right order
+	 *     (everything submitted before it on this path has run or been stored by then);
+	 *  2. otherwise waits for the jobs stored ahead of it to be applied, then runs right here, in memory, so it has
+	 *     finished before the next submission's turn;
+	 *  3. if those stored jobs are still pending after `FALLBACK_MAX_WAIT_MS`, tries the persistent queue once more
+	 *     rather than run ahead of them (they would overwrite it when they run), and runs in memory only if that fails
+	 *     too, so that a store that neither accepts nor settles cannot stall the timer for good.
+	 * A closed queue (quitting) runs the work in memory straight away.
+	 */
+	private inOrderBehindStoredJobs(
+		queue: AsyncTimerSyncQueue,
+		caller: string,
+		store: () => Promise<void>,
+		runInMemory: () => Promise<void>
+	): Promise<void> {
+		const tryStore = async (): Promise<boolean> => {
+			try {
+				await store();
+				return true;
+			} catch {
+				return false;
+			}
+		};
+		this._bypassPending++;
+		const run = this._bypass.then(async () => {
+			if (!queue.isClosed) {
+				if (await tryStore()) {
+					return;
+				}
+				const applied = await this.waitForStoredJobs(queue, caller);
+				if (!applied && !queue.isClosed && (await tryStore())) {
+					return;
+				}
+			}
+			await runInMemory();
+		});
+		this._bypass = run
+			.catch(() => undefined)
+			.finally(() => {
+				this._bypassPending--;
+			});
+		return run;
+	}
+
+	/*
 	 * Resolves once the timer jobs queued so far have been applied to the local database (false after `timeoutMs`).
 	 * Always true with the in-memory queue, which is not waited for, as before.
 	 */
@@ -936,20 +999,34 @@ export default class TimerHandler {
 		const asyncTimerSync = await this.asyncTimerSync(knex);
 
 		if (asyncTimerSync) {
-			try {
-				return await asyncTimerSync.processWithQueue(type, data, knex);
-			} catch (error) {
-				// The job was not stored: run it on the in-memory queue below rather than lose it — once the stored jobs
-				// ahead of it have run, so it does not overtake them. A closed queue (quitting) needs neither.
-				if (!asyncTimerSync.isClosed) {
+			const store = () => asyncTimerSync.processWithQueue(type, data, knex);
+			if (this._bypassPending === 0) {
+				try {
+					return await store();
+				} catch (error) {
+					// The job was not stored: it runs in memory rather than being lost — behind the stored jobs ahead of
+					// it, so it does not overtake them, and ahead of the jobs that come after it (see below).
+					// A closed queue (quitting) needs neither.
+					if (asyncTimerSync.isClosed) {
+						return this.processInMemory(type, data, knex);
+					}
 					await this._auditLogHandler.timerAuditError(
 						`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${error?.message ?? error}`
 					);
-					await this.waitForStoredJobs(asyncTimerSync, 'processWithQueue');
 				}
 			}
+			// Either this job could not be stored, or an older one that could not is still waiting its turn: this one
+			// must not reach the persistent queue ahead of it, so it takes the same ordered path.
+			return this.inOrderBehindStoredJobs(asyncTimerSync, 'processWithQueue', store, () =>
+				this.ProcessQueueMessage({ data }, knex)
+			);
 		}
 
+		return this.processInMemory(type, data, knex);
+	}
+
+	/* The in-memory queue: used when the persistent queue is off or closed. */
+	private async processInMemory(type, data, knex): Promise<void> {
 		const queName = `${type}-${this.appName}`;
 		console.log(`processWithQueue Called for ${queName}`);
 

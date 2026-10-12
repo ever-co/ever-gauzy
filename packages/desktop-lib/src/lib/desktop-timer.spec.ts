@@ -357,13 +357,13 @@ describe('TimerHandler', () => {
 			expect(timerService.writes.map((write) => write.duration)).toEqual([1000]);
 		});
 
-		it('runs a job it could not store on the in-memory queue, after the stored jobs ahead of it', async () => {
+		it('runs a job it cannot store in memory, after the stored jobs ahead of it', async () => {
 			appSetting = { asyncTimerDataSync: true };
 			const handler = newHandler();
 			timerService.hold((write) => write.duration === 1000);
 			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
 			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_FULL: database or disk is full'));
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
 
 			const fallback = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
 			await sleep(50);
@@ -374,7 +374,83 @@ describe('TimerHandler', () => {
 			expect(audit.timerAuditError).toHaveBeenCalledWith(
 				'[processWithQueue] Could not store queue job (type: update-duration-timer), processing it in memory: SQLITE_FULL: database or disk is full'
 			);
-			expect(embedded.jobs).toHaveLength(1);
+			// Run right there rather than handed to the in-memory queue, so it has finished before newer work runs.
+			expect(embedded.createQueue).not.toHaveBeenCalled();
+			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
+		});
+
+		it('stores a job that failed to store once when the store accepts it at its turn, behind the jobs ahead', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			timerService.hold((write) => write.duration === 1000);
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			const queue = await asyncQueueOf(handler);
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+
+			await handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+			timerService.release();
+
+			expect(await queue.drain()).toBe(true);
+			expect(embedded.createQueue).not.toHaveBeenCalled();
+			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
+		});
+
+		it.each([
+			['the store accepts it again', 'once'],
+			['the store still refuses everything', 'always']
+		])(
+			'never lets a newer job overtake an older one that could not be stored (%s)',
+			async (_label, refusal) => {
+				appSetting = { asyncTimerDataSync: true };
+				const handler = newHandler();
+				timerService.hold((write) => write.duration === 1000);
+				await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+				const queue = await asyncQueueOf(handler);
+				const refused = jest.spyOn(queue, 'processWithQueue');
+				if (refusal === 'once') {
+					refused.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+				} else {
+					refused.mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+				}
+
+				// The 2000 ms update is refused and waits behind the held 1000 ms one…
+				const older = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+				await sleep(20);
+				// …while the timer goes on: the 3000 ms update must still land after it.
+				const newer = handler.processWithQueue('gauzy-queue', duration(1, 3000), knex);
+				await sleep(20);
+				timerService.release();
+				await Promise.all([older, newer]);
+				expect(await queue.drain()).toBe(true);
+
+				expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000, 3000]);
+			},
+			20_000
+		);
+
+		it('stores a refused job behind stored jobs still pending at the cut-off, rather than run ahead of them', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			timerService.hold((write) => write.duration === 1000);
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			const queue = await asyncQueueOf(handler);
+			// Refused when submitted and again at its turn; accepted at the cut-off.
+			jest.spyOn(queue, 'processWithQueue')
+				.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'))
+				.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+			// The stored 1000 ms job never settles in time, and the cut-off has passed.
+			jest.spyOn(queue, 'settle').mockResolvedValue(false);
+			let clock = Date.now();
+			jest.spyOn(Date, 'now').mockImplementation(() => (clock += 61_000));
+
+			await handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+			(Date.now as jest.Mock).mockRestore();
+			(queue.settle as jest.Mock).mockRestore();
+			expect(timerService.writes).toEqual([]);
+			timerService.release();
+
+			expect(await queue.drain()).toBe(true);
+			expect(embedded.createQueue).not.toHaveBeenCalled();
 			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
 		});
 
@@ -384,7 +460,7 @@ describe('TimerHandler', () => {
 			timerService.hold((write) => write.duration === 1000);
 			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
 			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_FULL: database or disk is full'));
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
 
 			const fallback = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
 			await sleep(6_000);
@@ -580,7 +656,7 @@ describe('TimerHandler', () => {
 			activityTable.held = new Promise<void>((resolve) => (release = resolve));
 			await handler.processWithQueue('gauzy-queue', windowEvents(7, 1), knex);
 			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_FULL: database or disk is full'));
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
 
 			const reset = handler.clearActivityEvents(knex);
 			await sleep(50);
