@@ -1,8 +1,8 @@
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { filter, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, deliverPayloadAsIs, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard, tenantScopedEventStream } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { PublicationStatus } from '../../catalog.types';
@@ -11,7 +11,6 @@ import { ProductChannel } from '../../product-channel/product-channel.entity';
 import { ProductChannelService } from '../../product-channel/product-channel.service';
 import { ProductVariantChannel } from '../../product-variant-channel/product-variant-channel.entity';
 import { ProductVariantChannelService } from '../../product-variant-channel/product-variant-channel.service';
-import { toAsyncIterable } from '../async-iterable';
 
 /**
  * Product and variant publication over GraphQL.
@@ -321,54 +320,72 @@ export class ProductPublicationResolver {
 	}
 
 	/**
-	 * Streams products going live, optionally narrowed to one product or one channel.
+	 * Streams the subscriber's tenant's products going live, optionally narrowed to one product or one
+	 * channel.
+	 *
+	 * 🛑 Like `collectionChanged`, the stream used to deliver every tenant's publications; it is now the
+	 * kernel's tenant-scoped stream, and each event is re-read as the subscriber — see `publications`.
+	 *
+	 * @param productId The product to narrow to, when one is named.
+	 * @param channelId The channel to narrow to, when one is named.
+	 * @returns The publications that went live, as the subscriber may read them.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
-	@Subscription('productPublished')
+	@Subscription('productPublished', { resolve: deliverPayloadAsIs })
 	productPublished(
 		@Args('productId') productId?: ID,
 		@Args('channelId') channelId?: ID
-	): AsyncIterable<ProductPublishedEvent> {
-		return toAsyncIterable(this.filterPublications(this.eventBus.ofType(ProductPublishedEvent), productId, channelId));
+	): AsyncIterableIterator<ProductChannel> {
+		return this.publications(this.eventBus.ofType(ProductPublishedEvent), productId, channelId);
 	}
 
 	/**
-	 * Streams products being withdrawn, optionally narrowed to one product or one channel.
+	 * Streams the subscriber's tenant's products being withdrawn, optionally narrowed to one product or
+	 * one channel.
+	 *
+	 * @param productId The product to narrow to, when one is named.
+	 * @param channelId The channel to narrow to, when one is named.
+	 * @returns The publications that were withdrawn, as the subscriber may read them.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
-	@Subscription('productUnpublished')
+	@Subscription('productUnpublished', { resolve: deliverPayloadAsIs })
 	productUnpublished(
 		@Args('productId') productId?: ID,
 		@Args('channelId') channelId?: ID
-	): AsyncIterable<ProductUnpublishedEvent> {
-		return toAsyncIterable(
-			this.filterPublications(this.eventBus.ofType(ProductUnpublishedEvent), productId, channelId)
-		);
+	): AsyncIterableIterator<ProductChannel> {
+		return this.publications(this.eventBus.ofType(ProductUnpublishedEvent), productId, channelId);
 	}
 
 	/**
+	 * One publication stream, scoped to the subscriber and narrowed to what it asked for.
+	 *
+	 * The tenant and the organization are decided against the subscriber captured when the stream opened
+	 * — the bus calls back inside the publisher's request, so nothing here may read the request context —
+	 * and the publication row the event names is re-read with the subscriber's tenant stated. The SDL
+	 * types the field as `ProductPublication!`, which is the row rather than the event, and a row the
+	 * subscriber cannot read drops the event instead of delivering an empty frame.
+	 *
 	 * @param source The publication event stream.
 	 * @param productId An optional product to narrow to.
 	 * @param channelId An optional channel to narrow to.
-	 * @returns The narrowed stream.
+	 * @returns The stream.
 	 */
-	private filterPublications<T extends ProductPublishedEvent | ProductUnpublishedEvent>(
+	private publications<T extends ProductPublishedEvent | ProductUnpublishedEvent>(
 		source: Observable<T>,
 		productId?: ID,
 		channelId?: ID
-	): Observable<T> {
-		if (productId && channelId) {
-			return source.pipe(filter((event) => event.productId === productId && event.channelId === channelId));
-		}
-
-		if (productId) {
-			return source.pipe(filter((event) => event.productId === productId));
-		}
-
-		if (channelId) {
-			return source.pipe(filter((event) => event.channelId === channelId));
-		}
-
-		return source;
+	): AsyncIterableIterator<ProductChannel> {
+		return tenantScopedEventStream<T, ProductChannel>(source, {
+			narrow: (event) =>
+				(!productId || event.productId === productId) && (!channelId || event.channelId === channelId),
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event, scope) =>
+				this.productChannelService.findOneByWhereOptions({
+					productId: event.productId,
+					channelId: event.channelId,
+					tenantId: scope.tenantId
+				})
+		});
 	}
 }

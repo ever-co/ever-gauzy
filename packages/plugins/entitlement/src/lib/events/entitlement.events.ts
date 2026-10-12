@@ -21,10 +21,12 @@ export class EntitlementChangedEvent extends BaseEvent {
 	/**
 	 * @param entitlementId The right that changed.
 	 * @param organizationId The organization it belongs to, which scopes the stream.
+	 * @param tenantId The tenant the right belongs to: the stream drops another tenant's event before buffering it.
 	 */
 	constructor(
 		public readonly entitlementId: ID,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -34,7 +36,7 @@ export class EntitlementChangedEvent extends BaseEvent {
 	 * @returns The event describing it.
 	 */
 	static from(entitlement: Entitlement): EntitlementChangedEvent {
-		return new EntitlementChangedEvent(entitlement.id, entitlement.organizationId);
+		return new EntitlementChangedEvent(entitlement.id, entitlement.organizationId, entitlement.tenantId);
 	}
 }
 
@@ -50,12 +52,14 @@ export class EntitlementActivatedEvent extends BaseEvent {
 	 * @param activationId The activation that took the slot.
 	 * @param deviceId The device that took it.
 	 * @param organizationId The organization the right belongs to.
+	 * @param tenantId The tenant the right belongs to: the stream drops another tenant's event before buffering it.
 	 */
 	constructor(
 		public readonly entitlementId: ID,
 		public readonly activationId: ID,
 		public readonly deviceId: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -70,7 +74,8 @@ export class EntitlementActivatedEvent extends BaseEvent {
 			entitlement.id,
 			activation.id,
 			activation.deviceId,
-			entitlement.organizationId
+			entitlement.organizationId,
+			entitlement.tenantId
 		);
 	}
 }
@@ -86,11 +91,13 @@ export class EntitlementRevokedEvent extends BaseEvent {
 	 * @param entitlementId The right that was withdrawn.
 	 * @param revokedReason Why.
 	 * @param organizationId The organization the right belongs to.
+	 * @param tenantId The tenant the right belongs to: the stream drops another tenant's event before buffering it.
 	 */
 	constructor(
 		public readonly entitlementId: ID,
 		public readonly revokedReason: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -103,7 +110,8 @@ export class EntitlementRevokedEvent extends BaseEvent {
 		return new EntitlementRevokedEvent(
 			entitlement.id,
 			entitlement.revokedReason ?? '',
-			entitlement.organizationId
+			entitlement.organizationId,
+			entitlement.tenantId
 		);
 	}
 }

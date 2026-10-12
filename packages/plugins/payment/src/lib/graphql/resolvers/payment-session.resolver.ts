@@ -1,7 +1,9 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
+	deliverPayloadAsIs,
+	EventBus,
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	Idempotent,
@@ -9,11 +11,14 @@ import {
 	Permissions,
 	TenantPermissionGuard,
 	IConnectionPageSelection,
-	resolveConnectionWindow
+	resolveConnectionWindow,
+	tenantScopedEventStream
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
+import { PaymentCanceledEvent, PaymentCapturedEvent, PaymentFailedEvent, PaymentAuthorizedEvent } from '../../events';
+import { PaymentCaptureService } from '../../payment-capture/payment-capture.service';
 import { PaymentSessionService } from '../../payment-session/payment-session.service';
-import { IPaymentSession } from '../../payment.types';
+import { IPaymentCapture, IPaymentSession } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
 import { rejection, toConnection, toOrder } from '../types/connection';
 import {
@@ -62,7 +67,11 @@ import {
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class PaymentSessionResolver {
-	constructor(private readonly paymentSessionService: PaymentSessionService) {}
+	constructor(
+		private readonly paymentSessionService: PaymentSessionService,
+		private readonly paymentCaptureService?: PaymentCaptureService,
+		private readonly eventBus?: EventBus
+	) {}
 
 	/**
 	 * Lists the attempts of the caller's organization, superseded ones included.
@@ -278,5 +287,96 @@ export class PaymentSessionResolver {
 		} catch (error) {
 			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
 		}
+	}
+
+	/**
+	 * Streams the attempts of the subscriber's tenant that a provider authorised.
+	 *
+	 * The SDL declared the field and nothing served it. The stream is the kernel's tenant-scoped stream
+	 * over the event the service publishes when an attempt is authorised: the event states its tenant, and
+	 * an event of another tenant — or of none — is dropped against the subscriber captured when the
+	 * subscription opened; the attempt it names is then re-read through `findSessionOrFail`, the read
+	 * `GET /payment-sessions/:id` answers with, as the subscriber, so the row delivered is one the
+	 * subscriber may read and an attempt it may not read is not delivered at all.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The authorised attempts.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentAuthorized', { resolve: deliverPayloadAsIs })
+	paymentAuthorized(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentSession> {
+		return this.sessionStream(PaymentAuthorizedEvent, organizationId);
+	}
+
+	/**
+	 * Streams the attempts of the subscriber's tenant that failed or expired.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The failed attempts.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentFailed', { resolve: deliverPayloadAsIs })
+	paymentFailed(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentSession> {
+		return this.sessionStream(PaymentFailedEvent, organizationId);
+	}
+
+	/**
+	 * Streams the attempts of the subscriber's tenant that were voided.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The voided attempts.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentCanceled', { resolve: deliverPayloadAsIs })
+	paymentCanceled(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentSession> {
+		return this.sessionStream(PaymentCanceledEvent, organizationId);
+	}
+
+	/**
+	 * Streams the captures the subscriber's tenant took.
+	 *
+	 * **Served here rather than by the capture resolver**, whose files another workstream was holding when
+	 * it was written; the field states the grant `GET /payment-captures/:id` states and re-reads through the
+	 * same method.
+	 *
+	 * **Two checks hold it to the tenant**, as for the attempt streams: the event states the tenant the
+	 * capture service wrote it under, and an event of another tenant — or of none — is dropped; each
+	 * capture that remains is re-read through `findCaptureOrFail` — scoped to the caller's tenant and
+	 * organization — inside the subscriber's context, and the row that comes back is checked against the
+	 * subscriber's tenant again. A capture of another tenant is not found and is dropped.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The captures, as the subscriber may read them.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentCaptured', { resolve: deliverPayloadAsIs })
+	paymentCaptured(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentCapture> {
+		const captures = this.eventBus.ofType(PaymentCapturedEvent);
+
+		return tenantScopedEventStream<PaymentCapturedEvent, IPaymentCapture>(captures, {
+			narrow: (event) => !organizationId || event.organizationId === organizationId,
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event) => this.paymentCaptureService.findCaptureOrFail(event.captureId)
+		});
+	}
+
+	/**
+	 * One attempt stream, scoped to the subscriber and narrowed to the organization it named.
+	 *
+	 * @param type The event the stream carries.
+	 * @param organizationId The organization to narrow to, when one is named.
+	 * @returns The attempts the events name, re-read as the subscriber.
+	 */
+	private sessionStream<T extends PaymentAuthorizedEvent | PaymentFailedEvent | PaymentCanceledEvent>(
+		type: new (...args: never[]) => T,
+		organizationId?: ID
+	): AsyncIterableIterator<IPaymentSession> {
+		return tenantScopedEventStream<T, IPaymentSession>(this.eventBus.ofType(type), {
+			narrow: (event) => !organizationId || event.organizationId === organizationId,
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event) => this.paymentSessionService.findSessionOrFail(event.sessionId)
+		});
 	}
 }

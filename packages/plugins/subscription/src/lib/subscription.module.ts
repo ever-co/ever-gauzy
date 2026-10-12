@@ -1,7 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AdjustmentModule, EventOutboxModule, FeatureModule, IdempotencyModule, RolePermissionModule } from '@gauzy/core';
+import {
+	AdjustmentModule,
+	EventOutboxModule,
+	FeatureModule,
+	GraphqlSubscriptionModule,
+	IdempotencyModule,
+	RolePermissionModule
+} from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
 import { SubscriptionPlan } from './subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanController } from './subscription-plan/subscription-plan.controller';
@@ -23,6 +30,7 @@ import { SubscriptionBillingController } from './subscription-billing/subscripti
 import { SubscriptionBillingService } from './subscription-billing/subscription-billing.service';
 import { MikroOrmSubscriptionBillingRepository } from './subscription-billing/repository/mikro-orm-subscription-billing.repository';
 import { TypeOrmSubscriptionBillingRepository } from './subscription-billing/repository/type-orm-subscription-billing.repository';
+import { SubscriptionStreamedEvents } from './subscription-streamed-events';
 
 /** Every entity this plugin owns, in dependency order, as one array. */
 export const ALL_SUBSCRIPTION_ENTITIES = [SubscriptionPlan, Subscription, SubscriptionItem, SubscriptionBilling];
@@ -65,10 +73,13 @@ export const ALL_SUBSCRIPTION_ENTITIES = [SubscriptionPlan, Subscription, Subscr
 		RolePermissionModule,
 		IdempotencyModule,
 		AdjustmentModule,
-		EventOutboxModule
+		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `SubscriptionStreamedEvents`.
+		GraphqlSubscriptionModule
 	],
 	providers: [
 		SubscriptionPlanService,
+		SubscriptionStreamedEvents,
 		SubscriptionService,
 		SubscriptionItemService,
 		SubscriptionBillingService,

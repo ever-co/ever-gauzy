@@ -16,13 +16,16 @@ export class PaymentAuthorizedEvent extends BaseEvent {
 	 * @param currency The currency of the authorisation.
 	 * @param collectionId The collection the authorisation was reserved on.
 	 * @param organizationId The organization the session belongs to.
+	 * @param tenantId The tenant the session belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly sessionId: ID,
 		public readonly amount: DecimalString,
 		public readonly currency: string,
 		public readonly collectionId: ID,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -42,13 +45,16 @@ export class PaymentCapturedEvent extends BaseEvent {
 	 * @param amount The amount captured.
 	 * @param currency The currency of the capture.
 	 * @param organizationId The organization the payment belongs to.
+	 * @param tenantId The tenant the payment belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly captureId: ID,
 		public readonly paymentId: ID,
 		public readonly amount: DecimalString,
 		public readonly currency: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -69,6 +75,8 @@ export class PaymentFailedEvent extends BaseEvent {
 	 * @param currency The currency of the attempt.
 	 * @param reason The code the failure was recorded with.
 	 * @param organizationId The organization the session belongs to.
+	 * @param tenantId The tenant the session belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly sessionId: ID,
@@ -76,7 +84,8 @@ export class PaymentFailedEvent extends BaseEvent {
 		public readonly amount: DecimalString,
 		public readonly currency: string,
 		public readonly reason: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -92,13 +101,16 @@ export class PaymentCanceledEvent extends BaseEvent {
 	 * @param amount The amount released, which is zero when nothing had been authorised yet.
 	 * @param currency The currency of the attempt.
 	 * @param organizationId The organization the session belongs to.
+	 * @param tenantId The tenant the session belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly sessionId: ID,
 		public readonly collectionId: ID,
 		public readonly amount: DecimalString,
 		public readonly currency: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -118,13 +130,16 @@ export class PaymentRefundedEvent extends BaseEvent {
 	 * @param amount The amount refunded.
 	 * @param currency The currency of the refund.
 	 * @param organizationId The organization the refund belongs to.
+	 * @param tenantId The tenant the refund belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly refundId: ID,
 		public readonly paymentId: ID | undefined,
 		public readonly amount: DecimalString,
 		public readonly currency: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -144,13 +159,16 @@ export class RefundCreatedEvent extends BaseEvent {
 	 * @param amount The amount requested.
 	 * @param currency The currency of the refund.
 	 * @param organizationId The organization the refund belongs to.
+	 * @param tenantId The tenant the refund belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly refundId: ID,
 		public readonly orderId: ID,
 		public readonly amount: DecimalString,
 		public readonly currency: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}

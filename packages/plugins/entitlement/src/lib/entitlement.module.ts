@@ -5,6 +5,7 @@ import {
 	EventBusModule,
 	EventOutboxModule,
 	FeatureModule,
+	GraphqlSubscriptionModule,
 	RolePermissionModule,
 	RuleModule,
 	SequenceModule
@@ -28,6 +29,7 @@ import { MikroOrmEntitlementKeyRepository } from './entitlement-key/repository/m
 import { TypeOrmEntitlementKeyRepository } from './entitlement-key/repository/type-orm-entitlement-key.repository';
 import { EntitlementCheckService } from './entitlement-check/entitlement-check.service';
 import { EntitlementRequiredGuard } from './entitlement-check/entitlement-check.guard';
+import { EntitlementStreamedEvents } from './entitlement-streamed-events';
 
 /** Every entity this plugin owns, in dependency order, as one array. */
 export const ALL_ENTITLEMENT_ENTITIES = [Entitlement, EntitlementKey, EntitlementActivation];
@@ -58,10 +60,13 @@ export const ALL_ENTITLEMENT_ENTITIES = [Entitlement, EntitlementKey, Entitlemen
 		SequenceModule,
 		RuleModule,
 		EventBusModule,
-		EventOutboxModule
+		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `EntitlementStreamedEvents`.
+		GraphqlSubscriptionModule
 	],
 	providers: [
 		EntitlementService,
+		EntitlementStreamedEvents,
 		EntitlementActivationService,
 		EntitlementKeyService,
 		EntitlementCheckService,

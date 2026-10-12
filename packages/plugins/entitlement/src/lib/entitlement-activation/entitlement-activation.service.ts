@@ -244,7 +244,8 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 					outcome.entitlement.id,
 					outcome.activation.id,
 					outcome.activation.deviceId,
-					outcome.entitlement.organizationId
+					outcome.entitlement.organizationId,
+					outcome.entitlement.tenantId
 				)
 			);
 		}
@@ -543,7 +544,9 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 
 		const closed = await this.findOneScoped(id);
 
-		await this.eventBus.publish(new EntitlementChangedEvent(closed.entitlementId, closed.organizationId));
+		await this.eventBus.publish(
+			new EntitlementChangedEvent(closed.entitlementId, closed.organizationId, closed.tenantId)
+		);
 
 		return closed;
 	}
