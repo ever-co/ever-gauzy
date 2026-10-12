@@ -29,6 +29,8 @@ const JITSU_SETTINGS = {
 	WRITE_KEY: 'jitsuWriteKey'
 };
 
+type MonitoringService = 'posthog' | 'sentry' | 'jitsu';
+
 /**
  * Scope enumeration for settings
  */
@@ -56,6 +58,16 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	user: IUser;
 	PermissionsEnum = PermissionsEnum;
 	SettingsScope = SettingsScope;
+
+	/**
+	 * Scope tab currently shown for each service. nb-tabset emits `changeTab` for
+	 * its initial tab too, so this follows the visible tab from the first render.
+	 */
+	protected readonly activeScope = signal<Record<MonitoringService, SettingsScope>>({
+		posthog: SettingsScope.TENANT,
+		sentry: SettingsScope.TENANT,
+		jitsu: SettingsScope.TENANT
+	});
 
 	/**
 	 * Nebular Accordion Item Components
@@ -126,21 +138,53 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	 * Handle PostHog tab change
 	 */
 	onPosthogTabChange(tab: NbTabComponent): void {
-		// Tab change is handled by nb-tabset, data is already loaded
+		this._setScope('posthog', tab);
 	}
 
 	/**
 	 * Handle Sentry tab change
 	 */
 	onSentryTabChange(tab: NbTabComponent): void {
-		// Tab change is handled by nb-tabset, data is already loaded
+		this._setScope('sentry', tab);
 	}
 
 	/**
 	 * Handle Jitsu tab change
 	 */
 	onJitsuTabChange(tab: NbTabComponent): void {
-		// Tab change is handled by nb-tabset, data is already loaded
+		this._setScope('jitsu', tab);
+	}
+
+	/**
+	 * Whether the service is switched on in the scope tab currently shown.
+	 */
+	isEnabled(service: MonitoringService): boolean {
+		const global = this.activeScope()[service] === SettingsScope.GLOBAL;
+		switch (service) {
+			case 'posthog':
+				return !!(global ? this.globalPosthogForm : this.tenantPosthogForm).get('posthogEnabled').value;
+			case 'sentry':
+				return !!(global ? this.globalSentryForm : this.tenantSentryForm).get('sentryEnabled').value;
+			case 'jitsu':
+				return !!(global ? this.globalJitsuForm : this.tenantJitsuForm).get('jitsuEnabled').value;
+		}
+	}
+
+	private _setScope(service: MonitoringService, tab: NbTabComponent): void {
+		const scope = tab?.tabId === SettingsScope.GLOBAL ? SettingsScope.GLOBAL : SettingsScope.TENANT;
+		this.activeScope.update((scopes) => ({ ...scopes, [service]: scope }));
+	}
+
+	/**
+	 * Clear the unsaved-changes state after a save — but only if the form still
+	 * holds what was submitted. The inputs stay editable while the request is in
+	 * flight, and an edit made meanwhile was not saved, so it must stay dirty.
+	 */
+	private _markPristineIfUnchanged(form: UntypedFormGroup, submitted: Record<string, unknown>): void {
+		const current = form.getRawValue();
+		if (Object.keys(submitted).every((key) => current[key] === submitted[key])) {
+			form.markAsPristine();
+		}
 	}
 
 	/**
@@ -237,6 +281,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[POSTHOG_SETTINGS.FLUSH_INTERVAL]: String(formValue.posthogFlushInterval)
 			};
 			await this._tenantService.saveGlobalSettings(settings);
+			this._markPristineIfUnchanged(this.globalPosthogForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global PostHog settings:', error);
@@ -262,6 +307,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[POSTHOG_SETTINGS.FLUSH_INTERVAL]: String(formValue.posthogFlushInterval)
 			};
 			await this._tenantService.saveDynamicSettings(settings);
+			this._markPristineIfUnchanged(this.tenantPosthogForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant PostHog settings:', error);
@@ -285,6 +331,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[SENTRY_SETTINGS.DSN]: formValue.sentryDsn
 			};
 			await this._tenantService.saveGlobalSettings(settings);
+			this._markPristineIfUnchanged(this.globalSentryForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global Sentry settings:', error);
@@ -308,6 +355,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[SENTRY_SETTINGS.DSN]: formValue.sentryDsn
 			};
 			await this._tenantService.saveDynamicSettings(settings);
+			this._markPristineIfUnchanged(this.tenantSentryForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Sentry settings:', error);
@@ -332,6 +380,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
 			};
 			await this._tenantService.saveGlobalSettings(settings);
+			this._markPristineIfUnchanged(this.globalJitsuForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Global Jitsu settings:', error);
@@ -356,6 +405,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
 			};
 			await this._tenantService.saveDynamicSettings(settings);
+			this._markPristineIfUnchanged(this.tenantJitsuForm, formValue);
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Jitsu settings:', error);
