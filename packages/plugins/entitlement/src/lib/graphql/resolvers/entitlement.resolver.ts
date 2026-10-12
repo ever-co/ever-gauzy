@@ -674,6 +674,9 @@ export class EntitlementResolver {
 	): AsyncIterableIterator<Entitlement> {
 		return tenantScopedEventStream(source, {
 			narrow: (event) => !entitlementId || event.entitlementId === entitlementId,
+			// Another tenant's event is dropped here, before it is buffered or re-read: without it, a burst of
+			// another tenant's changes filled this subscriber's queue and could end its stream.
+			tenantOf: (event) => event.tenantId,
 			organizationOf: (event) => event.organizationId,
 			read: (event, scope) =>
 				this.entitlementService.findOneScoped(event.entitlementId, {

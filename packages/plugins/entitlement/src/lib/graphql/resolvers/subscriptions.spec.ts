@@ -163,6 +163,16 @@ describe('the entitlement subscriptions, scoped to the subscriber', () => {
 		expect(service.findOneScoped).toHaveBeenCalledWith('right-a', { tenantId: TENANT_A, organizationId: ORG_A });
 	});
 
+	it("drops another tenant's event before re-reading it, so it never occupies this subscriber's queue", async () => {
+		const stream = subscribe(TENANT_A, ORG_A, () => resolver.entitlementChanged());
+
+		await as(TENANT_B, ORG_B, () => bus.publish(EntitlementChangedEvent.from(RIGHTS[2] as never)));
+
+		expect(await delivered(stream)).toEqual([]);
+		// The event names its tenant, so the stream refuses it on arrival rather than buffering it for a read.
+		expect(service.findOneScoped).not.toHaveBeenCalled();
+	});
+
 	it("keeps another organization's right of the same tenant from a subscriber acting in its own", async () => {
 		const stream = subscribe(TENANT_A, ORG_A, () => resolver.entitlementChanged());
 
