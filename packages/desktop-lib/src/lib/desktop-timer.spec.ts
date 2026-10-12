@@ -485,6 +485,43 @@ describe('TimerHandler', () => {
 			}
 		});
 
+		it('keeps waiting for the stored jobs ahead when a wait round cannot read the store', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			timerService.hold((write) => write.duration === 1000);
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			const queue = await asyncQueueOf(handler);
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+			let clock = Date.now();
+			jest.spyOn(Date, 'now').mockImplementation(() => clock);
+			const realSettle = queue.settle.bind(queue);
+			const settle = jest
+				.spyOn(queue, 'settle')
+				// The first round fails at once, close to the cut-off (so that the pause after it is short)...
+				.mockImplementationOnce(async () => {
+					clock += 60_000 - 20;
+					throw new Error('SQLITE_IOERR: disk I/O error');
+				})
+				// ...and the stored job is applied during the next one.
+				.mockImplementationOnce(async (ms?: number) => {
+					timerService.release();
+					return realSettle(ms);
+				});
+
+			try {
+				await handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+
+				expect(settle.mock.calls.length).toBeGreaterThanOrEqual(2);
+				expect(
+					audit.timerAuditError.mock.calls.filter(([message]) => message.includes('Could not wait for'))
+				).toHaveLength(1);
+				// The refused job ran in memory only after the stored one, so it was not overwritten.
+				expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
+			} finally {
+				timerService.release();
+			}
+		});
+
 		it('stores a refused job behind stored jobs still pending at the cut-off, rather than run ahead of them', async () => {
 			appSetting = { asyncTimerDataSync: true };
 			const handler = newHandler();

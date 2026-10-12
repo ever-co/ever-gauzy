@@ -870,9 +870,11 @@ export default class TimerHandler {
 	 * Waits for the jobs stored ahead before work that bypasses the persistent queue (a job, or a reset, it could not
 	 * store), so that this work cannot overtake them: in rounds of `FALLBACK_SETTLE_MS`, until they have run or the queue
 	 * is closed — or until `deadline`, so that a store that never settles cannot stall the timer for good (audited once
-	 * per fallback episode). Answers whether the stored jobs ahead were all applied.
+	 * per fallback episode). A round that cannot read the store (audited once per wait) pauses and keeps waiting: giving
+	 * up early would let this work overtake the jobs stored ahead. Answers whether the stored jobs ahead were all applied.
 	 */
 	private async waitForStoredJobs(queue: AsyncTimerSyncQueue, caller: string, deadline: number): Promise<boolean> {
+		let errorAudited = false;
 		while (!queue.isClosed) {
 			const remaining = deadline - Date.now();
 			if (remaining <= 0) {
@@ -888,10 +890,18 @@ export default class TimerHandler {
 			try {
 				settled = await queue.settle(Math.min(FALLBACK_SETTLE_MS, remaining));
 			} catch (error) {
-				await this._auditLogHandler.timerAuditError(
-					`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
-				);
-				return false;
+				if (!errorAudited) {
+					errorAudited = true;
+					await this._auditLogHandler.timerAuditError(
+						`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
+					);
+				}
+				// The round failed at once rather than waiting: pause for what it would have waited, then try again.
+				const pause = Math.min(FALLBACK_SETTLE_MS, Math.max(0, deadline - Date.now()));
+				if (pause > 0) {
+					await new Promise((resolve) => setTimeout(resolve, pause));
+				}
+				continue;
 			}
 			if (settled) {
 				return true;
