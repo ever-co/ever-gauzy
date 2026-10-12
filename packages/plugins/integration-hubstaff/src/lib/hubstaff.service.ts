@@ -716,9 +716,12 @@ export class HubstaffService {
 		timeSlots: IHubstaffTimeSlotActivity[]
 	): Promise<any> {
 		try {
-			return timeSlots
-				.filter(async (timeslot: IHubstaffTimeSlotActivity) => {
-					return !!(await this._commandBus.execute(
+			// Wait for every slot mapping. `Array.filter` does not await its callback: the promise it got was
+			// always truthy, so every slot was kept, the mappings ran unawaited after the time log was saved,
+			// and their failures escaped this try / catch as unhandled rejections.
+			const mapped = await Promise.all(
+				timeSlots.map((timeslot: IHubstaffTimeSlotActivity) =>
+					this._commandBus.execute(
 						new IntegrationMapSyncTimeSlotCommand({
 							entity: {
 								...timeslot,
@@ -728,8 +731,11 @@ export class HubstaffService {
 							integrationId,
 							organizationId
 						})
-					));
-				})
+					)
+				)
+			);
+			return timeSlots
+				.filter((_timeslot: IHubstaffTimeSlotActivity, index: number) => !!mapped[index])
 				.map(({ keyboard, mouse, overall, tracked, time_slot }) => ({
 					keyboard,
 					mouse,
