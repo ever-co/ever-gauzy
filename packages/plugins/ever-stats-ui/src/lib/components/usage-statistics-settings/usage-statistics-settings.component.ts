@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbToggleModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LastPayloadViewerComponent } from '../last-payload-viewer/last-payload-viewer.component';
 import {
 	EVER_STATS_SCHEMA_URL,
@@ -30,7 +30,7 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 @Component({
 	selector: 'ngx-ever-stats-usage-statistics-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbAlertModule, NbButtonModule, NbCardModule, NbToggleModule, TranslateModule, LastPayloadViewerComponent],
+	imports: [DatePipe, NbAlertModule, NbButtonModule, NbCardModule, NbToggleModule, TranslatePipe, LastPayloadViewerComponent],
 	template: `
 		<nb-card>
 			<nb-card-header>{{ 'EVER_STATS.TITLE' | translate }}</nb-card-header>
@@ -59,7 +59,7 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 							@if (notice) {
 								<nb-alert [status]="noticeStatus" role="status" data-test="notice">{{ notice | translate }}</nb-alert>
 							}
-							<nb-toggle data-test="toggle" [checked]="status?.enabled" [disabled]="busy" (checkedChange)="toggle($event)">
+							<nb-toggle data-test="toggle" [checked]="$safeNavigationMigration(status?.enabled)" [disabled]="busy" (checkedChange)="toggle($event)">
 								{{ 'EVER_STATS.ENABLED' | translate }}
 							</nb-toggle>
 							<dl class="facts">

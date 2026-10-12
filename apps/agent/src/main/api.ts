@@ -363,7 +363,8 @@ export class ApiService {
 			})
 		});
 		if (res.ok) {
-			const resJson: { token: string } = await res.json();
+			// node-fetch 3 types a JSON body as unknown
+			const resJson = (await res.json()) as { token: string };
 			if (resJson?.token) {
 				updateAuthConfig(resJson.token);
 				return resJson.token;
@@ -468,7 +469,8 @@ export class ApiService {
 			if (this.isLogout) {
 				this.isLogout = false;
 			}
-			const respJson = await response.json();
+			// node-fetch 3 types a JSON body as unknown
+			const respJson = (await response.json()) as Record<string, unknown>;
 			return respJson;
 		} catch (err) {
 			this.agentLogger.error(`Error API call, ${err.message}`);

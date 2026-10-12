@@ -49,7 +49,7 @@ export class EmailTemplateUtils {
 		// Proceed only if there are files to migrate
 		if (files.length > 0) {
 			// Convert files to template objects
-			const templates = EmailTemplateUtils.filesToTemplates(files);
+			const templates = await EmailTemplateUtils.filesToTemplates(files);
 
 			// Create or update the templates in the database
 			await EmailTemplateUtils.createOrUpdateTemplates(queryRunner, templates);
@@ -113,7 +113,7 @@ export class EmailTemplateUtils {
 	 * @param path The file path to convert.
 	 * @returns The template object or undefined if the conversion fails.
 	 */
-	public static pathToTemplate(filePath: string): Record<string, any> | undefined {
+	public static async pathToTemplate(filePath: string): Promise<Record<string, any> | undefined> {
 		try {
 			const template: Record<string, any> = {};
 			const normalizedPath = filePath.replace(/\\/g, '/');
@@ -138,7 +138,7 @@ export class EmailTemplateUtils {
 			switch (extension) {
 				case 'mjml':
 					template['mjml'] = fileContent;
-					template['hbs'] = compileMjml(fileContent).html;
+					template['hbs'] = (await compileMjml(fileContent)).html;
 					break;
 				case 'hbs':
 					template['hbs'] = fileContent;
@@ -167,11 +167,11 @@ export class EmailTemplateUtils {
 	 * @param files Array of file paths.
 	 * @returns Array of template objects.
 	 */
-	public static filesToTemplates(files: string[] = []): Array<Record<string, any>> {
+	public static async filesToTemplates(files: string[] = []): Promise<Array<Record<string, any>>> {
 		const templates: Array<Record<string, any>> = [];
 
 		for (const file of files) {
-			const template = EmailTemplateUtils.pathToTemplate(file);
+			const template = await EmailTemplateUtils.pathToTemplate(file);
 
 			// Only add the template if it was successfully created
 			if (template) {

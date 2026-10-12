@@ -86,7 +86,7 @@ const pathToAccountingTemplate = async (
 		const fileNameWithoutExtension = fileName[0];
 		template.name = `${templatePath[templatePath.length - 3]}`;
 		template.mjml = fileContent;
-		template.hbs = compileMjml(fileContent).html;
+		template.hbs = (await compileMjml(fileContent)).html;
 		template.templateType = fileNameWithoutExtension;
 		return template;
 	} catch (error) {

@@ -224,7 +224,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
-	onError(error, versions, submitIssue) {
+	onError({ error, versions, createIssue: submitIssue }) {
 		// Set user information, as well as tags and further extras
 		const scope = new Sentry.Scope();
 		scope.setExtra('Version', versions.app);
@@ -847,14 +847,12 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		case 'win32':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
 					? ['--processStart', `"${executableName}"`, '--process-start-args', `"--hidden"`]
@@ -863,8 +861,7 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		default:

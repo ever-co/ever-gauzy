@@ -37,7 +37,7 @@ import {
 	NbToastrModule,
 	NbWindowModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
@@ -70,8 +70,6 @@ const dialogRefStub: Partial<NbDialogRef<unknown>> = {
 beforeEach(() => {
 	TestBed.configureTestingModule({
 		imports: [
-			// No loader: `translate` returns the key, which is all a unit test should depend on.
-			TranslateModule.forRoot(),
 			NbThemeModule.forRoot({ name: 'default' }),
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
@@ -86,6 +84,8 @@ beforeEach(() => {
 			TablerIconsModule
 		],
 		providers: [
+			// No loader: `translate` returns the key, which is all a unit test should depend on.
+			provideTranslateService(),
 			provideHttpClient(),
 			// Requests are recorded, never sent; nothing is flushed unless a spec does it.
 			provideHttpClientTesting(),

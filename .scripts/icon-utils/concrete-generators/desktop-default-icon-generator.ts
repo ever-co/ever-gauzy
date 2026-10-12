@@ -1,9 +1,13 @@
 import { IIconGeneratorBase } from '../interfaces/i-icon-generator-base';
 import * as fs from 'fs';
-import { argv } from 'yargs';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { env } from '../../env';
 import * as path from 'path';
 import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
+
+// yargs 18 has no `argv` singleton: the process arguments are parsed explicitly.
+const argv = yargs(hideBin(process.argv)).parseSync();
 
 export class DesktopDefaultIconGenerator implements IIconGeneratorBase {
 	private readonly desktop: string;

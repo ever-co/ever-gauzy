@@ -1,6 +1,5 @@
 import * as chalk from 'chalk';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 import { DataSource } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
@@ -11,7 +10,7 @@ import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
 import { getApiPublicPath } from '../core/util';
-import { copyAssets } from '../core/seeds/utils';
+import { copyAssets, removeGeneratedFiles } from '../core/seeds/utils';
 
 /**
  * Creates default reports and their categories for a tenant.
@@ -203,8 +202,7 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
 		console.log('Report Cleaner -> assetPublicPath: ' + dir);
 
 		// delete old generated report image
-		rimraf(
-			`${dir}/!(rimraf|.gitkeep)`,
+		removeGeneratedFiles(dir).then(
 			() => {
 				console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
 				resolve(null);

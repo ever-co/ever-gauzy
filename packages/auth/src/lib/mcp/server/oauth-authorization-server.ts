@@ -374,21 +374,24 @@ export class OAuth2AuthorizationServer {
 		// Session management
 		// IMPORTANT: For environments proxy (Cloudflare, etc), we need to use 'auto' for secure
 		// This allows Express to determine secure based on req.secure (which respects X-Forwarded-Proto)
+		// Kept as its own value: express-session 1.19 types `cookie` as options or a per-request function, and the
+		// configuration logged below reads these options directly.
+		const cookieOptions: session.CookieOptions = {
+			// Use 'auto' to let express-session determine secure based on req.secure
+			// This works correctly with trust proxy and X-Forwarded-Proto header
+			secure: isHttps ? 'auto' : false,
+			httpOnly: true,
+			maxAge: 1000 * 60 * 60 * 24, // 24 hours
+			sameSite: 'lax',
+			// Only set domain for HTTPS if we have a valid, non-proxy domain
+			...(sessionCookieDomain && isHttps ? { domain: sessionCookieDomain } : {})
+		};
 		const sessionConfig: session.SessionOptions = {
 			secret: this.config.sessionSecret,
 			name: 'mcp-oauth-session',
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				// Use 'auto' to let express-session determine secure based on req.secure
-				// This works correctly with trust proxy and X-Forwarded-Proto header
-				secure: isHttps ? 'auto' : false,
-				httpOnly: true,
-				maxAge: 1000 * 60 * 60 * 24, // 24 hours
-				sameSite: 'lax',
-				// Only set domain for HTTPS if we have a valid, non-proxy domain
-				...(sessionCookieDomain && isHttps ? { domain: sessionCookieDomain } : {}),
-			},
+			cookie: cookieOptions,
 			rolling: true,
 			proxy: isHttps || serverConfig.environment === 'production' // Trust proxy for session
 		};
@@ -397,16 +400,17 @@ export class OAuth2AuthorizationServer {
 		const redisUrl = serverConfig.redisUrl;
 		if (redisUrl) {
 			try {
-				const RedisStore = require('connect-redis').default;
-				const Redis = require('ioredis');
-				const redisClient = new Redis(redisUrl, {
-					// Production-ready Redis configuration
-					retryDelayOnFailover: 100,
-					enableReadyCheck: false,
-					maxRetriesPerRequest: 3,
-					lazyConnect: true,
+				// connect-redis 9+ exports the store by name and talks to a node-redis client only (it dropped ioredis).
+				const { RedisStore } = require('connect-redis');
+				const { createClient } = require('redis');
+				const redisClient = createClient({
+					url: redisUrl,
 					// Log connection events for better monitoring
-					connectionName: 'mcp-oauth-session-store'
+					name: 'mcp-oauth-session-store',
+					socket: {
+						// Bounded retries, as the ioredis client had (maxRetriesPerRequest: 3)
+						reconnectStrategy: (retries: number) => Math.min(100 * Math.pow(2, retries), 5000)
+					}
 				});
 
 				// Handle Redis connection events
@@ -418,6 +422,12 @@ export class OAuth2AuthorizationServer {
 				});
 				redisClient.on('ready', () => {
 					this.securityLogger.info('Redis session store ready');
+				});
+
+				// node-redis connects explicitly (ioredis connected lazily on first use); a failure is logged by the
+				// 'error' handler above and the client keeps reconnecting.
+				redisClient.connect().catch((error: unknown) => {
+					this.securityLogger.error('Redis session store connection failed:', error as Error);
 				});
 
 				sessionConfig.store = new RedisStore({
@@ -472,9 +482,9 @@ export class OAuth2AuthorizationServer {
 		this.securityLogger.info('Session configuration initialized', {
 			cookieName: sessionConfig.name,
 			cookieDomain: sessionCookieDomain || 'not-set',
-			secure: sessionConfig.cookie?.secure,
-			sameSite: sessionConfig.cookie?.sameSite,
-			httpOnly: sessionConfig.cookie?.httpOnly,
+			secure: cookieOptions.secure,
+			sameSite: cookieOptions.sameSite,
+			httpOnly: cookieOptions.httpOnly,
 			hasStore: !!sessionConfig.store,
 			domainSet: !!sessionCookieDomain,
 			isHttps,

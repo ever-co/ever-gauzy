@@ -243,7 +243,8 @@ export class AuthService extends SocialAuthService {
 		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
 		let value: string | null;
 		if (this.redisClient) {
-			value = await this.redisClient.get(cacheKey);
+			// node-redis 6 types a reply as string | Buffer.
+			value = (await this.redisClient.get(cacheKey))?.toString() ?? null;
 		} else {
 			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
 		}
@@ -403,7 +404,7 @@ export class AuthService extends SocialAuthService {
 
 		if (this.redisClient) {
 			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
-			codeState = await this.redisClient.getDel(cacheKey);
+			codeState = (await this.redisClient.getDel(cacheKey))?.toString() ?? null;
 		} else if (this.consumedOAuthCodes.has(payload.jti)) {
 			// Already claimed by an exchange that is still in flight, or by one that completed.
 			codeState = null;

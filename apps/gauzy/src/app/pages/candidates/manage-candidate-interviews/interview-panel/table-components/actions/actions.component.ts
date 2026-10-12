@@ -1,4 +1,4 @@
-import { Component, Input, EventEmitter, Output, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ICandidateInterview } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 			</div>
 			<span class="title"> updated: </span>
 			<span class="title">
-				{{ rowData?.updatedAt | date : 'short' }}
+				{{ $safeNavigationMigration(rowData?.updatedAt) | date : 'short' }}
 			</span>
 			@if (!rowData.hideActions) {
 			<div class="btn">
@@ -128,6 +128,7 @@ import { TranslateService } from '@ngx-translate/core';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InterviewActionsTableComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

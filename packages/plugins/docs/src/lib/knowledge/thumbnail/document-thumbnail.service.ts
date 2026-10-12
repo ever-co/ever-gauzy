@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as sharp from 'sharp';
+import * as sharpModule from 'sharp';
 import { DocumentKindEnum } from '@gauzy/contracts';
 import { FileStorage } from '@gauzy/core';
 import { Document } from '../../entities/document.entity';
@@ -13,6 +13,11 @@ import {
 	THUMBNAILABLE_PDF_MIME_TYPE,
 	thumbnailKeyFor
 } from './thumbnail.constants';
+
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
 
 /** Why one thumbnail run ended — logged by the pipeline, never surfaced to the user. */
 export type ThumbnailOutcome =

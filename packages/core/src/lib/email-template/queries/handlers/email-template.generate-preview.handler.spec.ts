@@ -22,7 +22,7 @@ describe('EmailTemplateGeneratePreviewHandler (GHSA-48h9-vwf5-h8m7)', () => {
 	let handler: EmailTemplateGeneratePreviewHandler;
 
 	const payload = () =>
-		`<mjml><mj-body><mj-section><mj-column><mj-text>Hello {{name}}</mj-text><mj-include path="${secretFile}" type="html" /></mj-column></mj-section></mj-body></mjml>`;
+		`<mjml><mj-body><mj-section><mj-column><mj-text>Hello {{name}}</mj-text><mj-include path="${path.relative(process.cwd(), secretFile)}" type="html" /></mj-column></mj-section></mj-body></mjml>`;
 
 	beforeAll(() => {
 		dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gauzy-preview-'));
@@ -48,7 +48,10 @@ describe('EmailTemplateGeneratePreviewHandler (GHSA-48h9-vwf5-h8m7)', () => {
 	});
 
 	it('CONTROL: with the pre-fix compiler call the same request leaks the file', async () => {
-		jest.spyOn(compileMjmlModule, 'compileMjml').mockImplementation((source: unknown) => rawMjml2html(source));
+		jest.spyOn(compileMjmlModule, 'compileMjml').mockImplementation((source: unknown) =>
+			// mjml 5 ignores includes unless asked: the CONTROL asks, as the pre-fix call shape effectively did.
+			rawMjml2html(source, { ignoreIncludes: false, includePath: dir })
+		);
 
 		const { html } = await handler.execute(new EmailTemplateGeneratePreviewQuery(payload()));
 

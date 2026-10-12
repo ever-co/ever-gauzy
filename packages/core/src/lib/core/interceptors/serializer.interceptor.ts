@@ -14,7 +14,8 @@ export class SerializerInterceptor extends ClassSerializerInterceptor implements
 	 * @param next - The call handler.
 	 * @returns An observable that represents the intercepted response.
 	 */
-	intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
+	// Async because NestJS 12's ClassSerializerInterceptor.intercept resolves to the stream (Nest awaits it either way).
+	async intercept(ctx: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
 		// The role the caller holds in the database, attached to the request by JwtStrategy. The token's
 		// `role` claim would keep exposing a demoted user's former serialization groups (and decoding it
 		// here threw outright on a request that carries no bearer token).

@@ -1,8 +1,8 @@
-import * as Jimp from 'jimp';
+import { Jimp, ResizeStrategy } from 'jimp';
 import * as fs from 'fs';
 import * as path from 'path';
 import { IconGenerator } from '../interfaces/icon-generator';
-import { IDesktopIconGenerator } from '../interfaces/i-desktop-icon-generator';
+import { IDesktopIconGenerator, JimpImage } from '../interfaces/i-desktop-icon-generator';
 import { IconFactory } from '../icon-factory';
 import { env } from '../../env';
 import * as PngIco from 'png-to-ico';
@@ -48,7 +48,7 @@ export class DesktopIconGenerator
 		);
 	}
 
-	public async generateLinuxIcons(originalImage: Jimp): Promise<void> {
+	public async generateLinuxIcons(originalImage: JimpImage): Promise<void> {
 		const linuxIconSizes = [512, 256, 128, 64, 32, 16];
 		const linuxDestination = path.join(this.destination, 'linux');
 		if (!fs.existsSync(linuxDestination)) {
@@ -60,31 +60,29 @@ export class DesktopIconGenerator
 				linuxDestination,
 				`${iconSize}x${iconSize}.png`
 			);
-			await new Promise((resolve) =>
-				originalImage
-					.clone()
-					.resize(iconSize, iconSize)
-					.write(linuxIconFilePath, () => {
-						console.log(
-							`✔ linux ${iconSize}x${iconSize}.png icon generated.`
-						);
-						resolve(true);
-					})
-			);
+			// jimp 1: `write` is promise-based and needs a path with a known extension.
+			await originalImage
+				.clone()
+				.resize({ w: iconSize, h: iconSize })
+				.write(linuxIconFilePath as `${string}.png`);
+			console.log(`✔ linux ${iconSize}x${iconSize}.png icon generated.`);
 		}
 	}
 
-	public async generateMacIcon(originalImage: Jimp): Promise<void> {
+	public async generateMacIcon(originalImage: JimpImage): Promise<void> {
 		const macIconFilePath = path.join(this.destination, 'icon.icns');
-		await new Promise((resolve) =>
-			originalImage.clone().write(macIconFilePath, () => {
-				console.log('✔ macOS icon.icns generated.');
-				resolve(true);
-			})
-		);
+		// jimp has no ICNS encoder: jimp 0.x reported that to a callback that ignored it, so no icon.icns was ever
+		// written here and the build went on. Kept as it was (attempted, and a failure does not stop the build), only
+		// now the failure is logged.
+		try {
+			await originalImage.clone().write(macIconFilePath as `${string}.png`);
+			console.log('✔ macOS icon.icns generated.');
+		} catch (error) {
+			console.warn(`macOS icon.icns not generated: ${error?.message ?? error}`);
+		}
 	}
 
-	public async generateWindowsIcon(originalImage: Jimp): Promise<void> {
+	public async generateWindowsIcon(originalImage: JimpImage): Promise<void> {
 		const ICON_SIZE = 256;
 		const png = `icon_${ICON_SIZE}x${ICON_SIZE}.png`;
 		const ico = 'icon.ico';
@@ -92,15 +90,15 @@ export class DesktopIconGenerator
 		const windowsIconFilePath = path.join(this.destination, ico);
 		await originalImage
 			.clone()
-			.resize(ICON_SIZE, Jimp.AUTO, Jimp.RESIZE_NEAREST_NEIGHBOR)
-			.writeAsync(windowsTempIconFilePath);
+			.resize({ w: ICON_SIZE, mode: ResizeStrategy.NEAREST_NEIGHBOR })
+			.write(windowsTempIconFilePath as `${string}.png`);
 		const buffer = await PngIco([windowsTempIconFilePath]);
 		fs.writeFileSync(windowsIconFilePath, buffer);
 		await this.remove(windowsTempIconFilePath, true);
 		console.log(`✔ window ${ico} generated.`);
 	}
 
-	public async generateTrayIcon(originalImage: Jimp): Promise<void> {
+	public async generateTrayIcon(originalImage: JimpImage): Promise<void> {
 		const REF_SIZE = 16;
 		const colors = ['gray', 'normal'];
 		const grayColor = '#999999';
@@ -120,31 +118,25 @@ export class DesktopIconGenerator
 				const scalePart = scale === scales[0] ? '' : `@${scale}x`;
 
 				const icon = `icon${scalePart}${suffix}.png`;
-				await new Promise((resolve) => {
-					const imgJimp = originalImage
-						.clone()
-						.resize(size, size)
-					if (color === 'gray') {
-						imgJimp.color([{
+				const imgJimp = originalImage.clone().resize({ w: size, h: size });
+				if (color === 'gray') {
+					imgJimp.color([
+						{
 							apply: 'mix' as any,
 							params: [grayColor, 60]
-						}])
-						imgJimp.grayscale();
-						imgJimp.brightness(-0.1);
-					}
-					return imgJimp.write(path.join(pngFilePath, icon), () => {
-						console.log(
-							`✔ tray icon ${icon} generated successfully.`
-						);
-						resolve(true);
-					})
-				});
+						}
+					]);
+					imgJimp.greyscale();
+					imgJimp.brightness(-0.1);
+				}
+				await imgJimp.write(path.join(pngFilePath, icon) as `${string}.png`);
+				console.log(`✔ tray icon ${icon} generated successfully.`);
 			}
 		}
 
 	}
 
-	public async generateMenuIcon(originalImage: Jimp): Promise<void> {
+	public async generateMenuIcon(originalImage: JimpImage): Promise<void> {
 		const iconSizes = [512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
 		// Remove 512x512 pixels for windows apps
 		if (process.platform === 'win32') {
@@ -163,8 +155,8 @@ export class DesktopIconGenerator
 			const menuIconFilePath = path.join(destination, png);
 			await originalImage
 				.clone()
-				.resize(iconSize, Jimp.AUTO, Jimp.RESIZE_NEAREST_NEIGHBOR)
-				.writeAsync(menuIconFilePath);
+				.resize({ w: iconSize, mode: ResizeStrategy.NEAREST_NEIGHBOR })
+				.write(menuIconFilePath as `${string}.png`);
 			console.log(`✔ menu ${png} generated.`);
 		}
 	}
@@ -173,17 +165,11 @@ export class DesktopIconGenerator
 		const image = await Jimp.read(filePath);
 
 		const pngFilePath = path.join(this.destination, 'icon.png');
-		await new Promise((resolve) =>
-			image
-				.clone()
-				.resize(512, 512)
-				.write(pngFilePath, () => {
-					console.log(
-						'✔ image converted to PNG format successfully.'
-					);
-					resolve(true);
-				})
-		);
+		await image
+			.clone()
+			.resize({ w: 512, h: 512 })
+			.write(pngFilePath as `${string}.png`);
+		console.log('✔ image converted to PNG format successfully.');
 
 		await this.generateLinuxIcons(image);
 		await this.generateMacIcon(image);

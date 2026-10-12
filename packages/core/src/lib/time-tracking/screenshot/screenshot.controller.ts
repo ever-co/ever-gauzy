@@ -14,7 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as Jimp from 'jimp';
+import { Jimp, JimpMime } from 'jimp';
 import { ID, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
@@ -118,9 +118,8 @@ export class ScreenshotController {
 		}
 
 		try {
-			// Create temporary files for input and output of thumbnail processing
+			// Create a temporary file for the input of thumbnail processing
 			const inputFile = await tempFile('screenshot-thumb');
-			const outputFile = await tempFile('screenshot-thumb');
 
 			// Write the file content to the input temporary file
 			await fs.promises.writeFile(inputFile, fileContent);
@@ -128,19 +127,16 @@ export class ScreenshotController {
 			// Resize the image using Jimp library
 			const image = await Jimp.read(inputFile);
 
-			// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
-			image.resize(250, Jimp.AUTO);
+			// Only the width is given, so the height follows the aspect ratio (jimp 0.x's Jimp.AUTO)
+			image.resize({ w: 250 });
 
-			// Write the resized image to the output temporary file
-			await image.writeAsync(outputFile);
-
-			// Read the resized image data from the output temporary file
-			const data = await fs.promises.readFile(outputFile);
+			// jimp 1 picks the output format from a file name's extension, and nothing here has one: encode in the
+			// image's own format, as jimp 0.x's writeAsync did, straight to a buffer.
+			const data = await image.getBuffer((image.mime ?? JimpMime.png) as typeof JimpMime.png);
 
 			try {
-				// Remove the temporary input and output files
+				// Remove the temporary input file
 				await fs.promises.unlink(inputFile);
-				await fs.promises.unlink(outputFile);
 			} catch (error) {
 				this.logger.error('Error while unlinking temp files');
 			}

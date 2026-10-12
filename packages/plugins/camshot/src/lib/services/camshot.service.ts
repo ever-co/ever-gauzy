@@ -10,7 +10,7 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IPreparedFile } from '../models/prepare.model';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as Jimp from 'jimp';
+import { Jimp, JimpMime } from 'jimp';
 
 
 @Injectable()
@@ -74,10 +74,11 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 
 			// Read and resize the image using Jimp
 			const image = await Jimp.read(inputFile);
-			image.resize(250, Jimp.AUTO);
+			// Only the width is given, so the height follows the aspect ratio (jimp 0.x's Jimp.AUTO)
+			image.resize({ w: 250 });
 
 			// Get the resized image as a buffer (default to PNG)
-			const data = await image.getBufferAsync(Jimp.MIME_PNG);
+			const data = await image.getBuffer(JimpMime.png);
 
 			// Define thumbnail file name and directory
 			const thumbName = `thumb-${file.filename}`;

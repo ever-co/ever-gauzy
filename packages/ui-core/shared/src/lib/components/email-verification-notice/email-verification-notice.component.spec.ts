@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService, TranslatePipe } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { AuthService, Store } from '@gauzy/ui-core/core';
@@ -37,14 +37,15 @@ describe('EmailVerificationNoticeComponent', () => {
 		};
 
 		TestBed.configureTestingModule({
-			imports: [EmailVerificationNoticeComponent, TranslateModule.forRoot()],
+			imports: [EmailVerificationNoticeComponent],
 			providers: [
+				provideTranslateService(),
 				{ provide: Store, useValue: store },
 				{ provide: AuthService, useValue: authService }
 			]
 		});
 		TestBed.overrideComponent(EmailVerificationNoticeComponent, {
-			set: { imports: [CommonModule, TranslateModule], schemas: [NO_ERRORS_SCHEMA] }
+			set: { imports: [CommonModule, TranslatePipe], schemas: [NO_ERRORS_SCHEMA] }
 		});
 
 		const fixture = TestBed.createComponent(EmailVerificationNoticeComponent);

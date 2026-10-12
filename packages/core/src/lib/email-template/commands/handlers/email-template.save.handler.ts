@@ -88,7 +88,7 @@ export class EmailTemplateSaveHandler
 					entity = {
 						...record,
 						mjml: content,
-						hbs: compileMjml(content).html
+						hbs: (await compileMjml(content)).html
 					};
 					break;
 			}
@@ -108,7 +108,7 @@ export class EmailTemplateSaveHandler
 					break;
 				case 'html':
 					entity.mjml = content;
-					entity.hbs = compileMjml(content).html;
+					entity.hbs = (await compileMjml(content)).html;
 					break;
 			}
 			await this.emailTemplateService.create(entity);

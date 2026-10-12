@@ -1,14 +1,13 @@
 import { DataSource } from 'typeorm';
 import * as chalk from 'chalk';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { IFeature, IFeatureOrganization, ITenant } from '@gauzy/contracts';
 import { DEFAULT_FEATURES } from './default-features';
 import { FeatureOrganization } from './feature-organization.entity';
 import { Feature } from './feature.entity';
-import { copyAssets } from '../core/seeds/utils';
+import { copyAssets, removeGeneratedFiles } from '../core/seeds/utils';
 import { getApiPublicPath } from '../core/util';
 
 /**
@@ -181,8 +180,7 @@ async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationP
 		console.log('Feature Cleaner -> dir: ' + dir);
 
 		// delete old generated report image
-		rimraf(
-			`${dir}/!(rimraf|.gitkeep)`,
+		removeGeneratedFiles(dir).then(
 			() => {
 				console.log(chalk.green(`CLEANED UP FEATURE IMAGES`));
 				resolve(null);

@@ -130,11 +130,13 @@ let displayListenersRegistered = false;
 function watchDisplays(): void {
 	if (displayListenersRegistered) return;
 	displayListenersRegistered = true;
-	for (const event of ['display-added', 'display-removed', 'display-metrics-changed'] as const) {
-		screen.on(event, () => {
-			getAppWindowManager().settingWindow?.webContents?.send?.('setting_page_ipc', { type: 'displays_changed' });
-		});
-	}
+	const notify = () => {
+		getAppWindowManager().settingWindow?.webContents?.send?.('setting_page_ipc', { type: 'displays_changed' });
+	};
+	// One call per event: Electron types `screen.on` with an overload per event name, which a union does not match.
+	screen.on('display-added', notify);
+	screen.on('display-removed', notify);
+	screen.on('display-metrics-changed', notify);
 }
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
