@@ -282,7 +282,7 @@ export class TaskController extends CrudController<Task> {
 	 * @param id The ID of the task to delete.
 	 * @returns The result of the deletion.
 	 */
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
 	@Delete('/:id')
 	@ApiOperation({ summary: 'Delete a task by ID.' })
 	@ApiResponse({
@@ -290,8 +290,12 @@ export class TaskController extends CrudController<Task> {
 		description: 'The task has been successfully deleted.'
 	})
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'Without a task-delete permission, only a manager of one of the task teams may delete it.'
+	})
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return this.taskService.delete(id);
+		return this.taskService.deleteTask(id);
 	}
 
 	/**

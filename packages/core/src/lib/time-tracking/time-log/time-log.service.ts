@@ -30,6 +30,7 @@ import {
 	IOrganizationContact,
 	IEmployee,
 	IOrganization,
+	IPaginationParam,
 	ID
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -50,6 +51,7 @@ import {
 	getDaysBetweenDates,
 	MultiORMEnum,
 	parseFindOptionsRelations,
+	resolveRequestedPage,
 	resolveTimeZone
 } from './../../core/utils';
 import { RequestContext } from '../../core/context';
@@ -89,13 +91,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	/**
 	 * Retrieves time logs based on the provided input.
-	 * @param request The input parameters for fetching time logs.
+	 * @param request The input parameters for fetching time logs, with an optional page (`take`, and
+	 * `skip` as a 1-based page number). Without `take` every matching log is returned.
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
-	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
+	async getTimeLogs(request: IGetTimeLogReportInput & Pick<IPaginationParam, 'take' | 'skip'>): Promise<ITimeLog[]> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(request);
+
+		const page = resolveRequestedPage(request);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -110,7 +115,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						'organizationContact',
 						...(request.relations || [])
 					] as any[],
-					orderBy: { startedAt: 'ASC' as any }
+					orderBy: { startedAt: 'ASC' as any, ...(page ? { id: 'ASC' as const } : {}) },
+					...(page ? { limit: page.limit, offset: page.offset } : {})
 				});
 				return items.map((e) => this.serialize(e)) as ITimeLog[];
 			}
@@ -153,8 +159,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					relations: parseFindOptionsRelations([...(request.relations ? request.relations : [])]),
 					order: {
 						// Order results by the 'startedAt' field in ascending order
-						startedAt: 'ASC'
-					}
+						startedAt: 'ASC',
+						// On a page, the id breaks ties so that no log repeats or goes missing between pages
+						...(page ? { id: 'ASC' as const } : {})
+					},
+					...(page ? { skip: page.offset, take: page.limit } : {})
 				});
 
 				// Apply filters to the query
@@ -1440,9 +1449,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * times, description, source, plus any joined relation) over any date range they liked.
 	 *
 	 * This wrapper puts the same authorization the report and delete paths already use in front of
-	 * it, and is the ONLY entry point the controller should use. `addManualTime`, `updateManualTime`
-	 * and the timer service keep executing the command directly: their `employeeId` has already been
-	 * forced to the caller's own by `TimeLogBodyTransformPipe`.
+	 * it, and is the ONLY entry point the controller should use. `addManualTime` and `updateManualTime`
+	 * keep executing the command directly once `assertCanWriteTimeFor` has cleared their `employeeId`,
+	 * and the timer service only passes the employee of the log it is stopping.
 	 *
 	 * @param input The validated conflict query.
 	 * @returns The conflicting time logs the caller is allowed to see.
@@ -1504,6 +1513,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Refuses a manual time write for an employee the caller may not act for.
+	 *
+	 * `TimeLogBodyTransformPipe` only fills a missing `employeeId`, so a named one reaches the service
+	 * as sent. The caller must be that employee, hold CHANGE_SELECTED_EMPLOYEE, or manage them in a
+	 * team of their organization; anything else is a 403 rather than time booked to someone else.
+	 *
+	 * @param employeeId - The employee the time is written for, already resolved in the tenant.
+	 * @param organizationId - That employee's organization, which anchors the team lookup.
+	 */
+	private async assertCanWriteTimeFor(employeeId: ID, organizationId: ID): Promise<void> {
+		if (!(await this._managedEmployeeService.canManageEmployee(employeeId, undefined, organizationId))) {
+			throw new ForbiddenException('You do not have permission to log time for this employee');
+		}
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1527,6 +1552,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// judge the write by one organization's rules and then persist it — log, slots and timesheet —
 			// under another's. The body value is only a fallback for an employee without an organization.
 			const organizationId = employee.organizationId ?? request.organizationId;
+
+			await this.assertCanWriteTimeFor(employeeId, organizationId);
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
@@ -1565,8 +1592,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			}
 
-			// Create the new time log entry
-			return await this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }));
+			// Create the new time log entry. The handler reads it back through this service, whose employee
+			// filter would not find a log written for a member the caller manages.
+			return await this.withoutEmployeeFilter(() =>
+				this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }))
+			);
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
@@ -1600,6 +1630,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// which rows count as conflicting, i.e. which time slots this call is allowed to delete.
 			const organizationId = employee.organizationId ?? request.organizationId;
 
+			await this.assertCanWriteTimeFor(employeeId, organizationId);
+
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
@@ -1611,6 +1643,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Check for conflicts with existing time logs
 			const timeLog = await this.findOneByIdString(id);
+
+			// The update keeps the log's timesheet and time slots, while the conflict cleanup below deletes
+			// slots of `employeeId`: naming anyone but the log's owner would move the log without its time
+			// and erase that employee's overlapping work. Hence a refusal, before that cleanup runs.
+			if (
+				!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+				String(timeLog.employeeId) !== String(employeeId)
+			) {
+				throw new ForbiddenException('A time log cannot be moved to another employee');
+			}
 
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(

@@ -5316,6 +5316,9 @@
 			"DETAILED_NOTIF": "Detailed Notification",
 			"SHOW_NOTIF_CAPTURED_IMG": "Show notification with captured image",
 			"SHOW_NATIVE_OS_NOTIF": "Show native OS notification",
+			"NOTIFICATION_DISPLAY": "Notification Display",
+			"SHOW_NOTIF_ON_DISPLAY": "Show the screen capture notification on",
+			"PRIMARY_DISPLAY": "Primary display (default)",
 			"SOUND_NOTIF": "Sound Notifications",
 			"PLAY_SOUND": "Play sound on screen capture",
 			"SOUND_ENABLED": "Sound Enabled",
@@ -6249,7 +6252,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Send SMS notifications and invites through Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentation"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"
