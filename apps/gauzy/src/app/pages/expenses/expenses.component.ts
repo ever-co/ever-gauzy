@@ -718,6 +718,9 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				this.loading = false;
 			}
 		});
+		// The grid applies the Date column's default sort itself, but the cards layout never mounts
+		// the grid and kept the server's insertion order: ask for newest first here as well (#530).
+		this.smartTableSource.setSort([{ field: 'valueDate', direction: 'desc' }], false);
 	}
 
 	/**

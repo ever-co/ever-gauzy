@@ -118,9 +118,9 @@ const VOCABULARY_SORTABLE = ['createdAt', 'updatedAt', 'name', 'rating'] as cons
  * and no permission on either class or on any handler — so this resolver carries the tenant guard and
  * the gate alone, and a field that demanded a permission would refuse a caller every one of those routes
  * serves. What the controllers *do* state, per handler, is `RoleGuard` and the same three roles, so the
- * fields whose routes state them restate them, and the fields whose routes are inherited from the CRUD
- * base — the count, the node, the edit and the two lifecycle routes — state nothing, because those
- * routes state nothing. That asymmetry is the controllers' own, and it is the reason the role guard is
+ * fields whose routes state them restate them — the two lifecycle routes included, which the
+ * controllers override only to state the roles — and the fields whose routes are still inherited from
+ * the CRUD base — the count, the node and the edit — state nothing, because those routes state nothing. That asymmetry is the controllers' own, and it is the reason the role guard is
  * on the fields rather than on the class.
  *
  * **The interview-scoped read folds into the list.** It is the same reader with one more predicate over
@@ -215,12 +215,16 @@ export class CandidateInterviewVocabularyResolver {
 
 	/** Withdraws a technology without removing it. */
 	@Mutation('softDeleteCandidateTechnology')
+	@UseGuards(RoleGuard)
+	@Roles(...VOCABULARY_ROLES)
 	async softDeleteCandidateTechnology(@Args('id', { type: () => ID }) id: Id): Promise<CandidateTechnologies> {
 		return await this.candidateTechnologiesService.softRemove(id);
 	}
 
 	/** Puts a withdrawn technology back. */
 	@Mutation('recoverCandidateTechnology')
+	@UseGuards(RoleGuard)
+	@Roles(...VOCABULARY_ROLES)
 	async recoverCandidateTechnology(@Args('id', { type: () => ID }) id: Id): Promise<CandidateTechnologies> {
 		return await this.candidateTechnologiesService.softRecover(id);
 	}
@@ -364,6 +368,8 @@ export class CandidateInterviewVocabularyResolver {
 
 	/** Withdraws a personal quality without removing it. */
 	@Mutation('softDeleteCandidatePersonalQuality')
+	@UseGuards(RoleGuard)
+	@Roles(...VOCABULARY_ROLES)
 	async softDeleteCandidatePersonalQuality(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<CandidatePersonalQualities> {
@@ -372,6 +378,8 @@ export class CandidateInterviewVocabularyResolver {
 
 	/** Puts a withdrawn personal quality back. */
 	@Mutation('recoverCandidatePersonalQuality')
+	@UseGuards(RoleGuard)
+	@Roles(...VOCABULARY_ROLES)
 	async recoverCandidatePersonalQuality(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<CandidatePersonalQualities> {

@@ -12,8 +12,8 @@ import {
 import { RequestContext } from './../core/context';
 import { ApiErrorCode } from './../core/errors/api-error-codes';
 import { ApiException } from './../core/errors/api-exception';
-import { Permissions } from './../shared/decorators';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions, Roles } from './../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RoleService } from './role.service';
 
@@ -295,6 +295,22 @@ export class RoleEntityResolver {
 		// The tenant is taken from the request context by the service; the input's own `tenantId` is
 		// deliberately not passed on.
 		return this.roleService.create({ name } as any);
+	}
+
+	/**
+	 * Creates, in the caller's own tenant, every default role the tenant does not hold.
+	 *
+	 * The write `POST /roles/bulk` performs, through the same service method, under the same guards: the
+	 * class's chain and `CHANGE_ROLES_PERMISSIONS`, plus `RoleGuard` with `SUPER_ADMIN` on the field as the
+	 * route states it on the handler. It takes no argument because the route takes none: the tenant is the
+	 * credential's, so no caller can write roles into a tenant it does not belong to.
+	 */
+	@Mutation('bulkCreateTenantRoles')
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	async bulkCreateTenantRoles(): Promise<IRole[]> {
+		return await this.roleService.createMissingDefaultRoles();
 	}
 
 	/**

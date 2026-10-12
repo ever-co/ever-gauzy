@@ -24,7 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Invoice } from './invoice.entity';
-import { InvoiceService } from './invoice.service';
+import { IInvoiceStatistics, InvoiceService } from './invoice.service';
 import {
 	InvoiceCreateCommand,
 	InvoiceDeleteCommand,
@@ -338,6 +338,26 @@ export class InvoiceResolver {
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	async highestInvoiceNumber(): Promise<IInvoiceNumberSeries> {
 		return (await this.invoiceService.getHighestInvoiceNumber()) as unknown as IInvoiceNumberSeries;
+	}
+
+	/**
+	 * The caller's organization's invoices — or estimates — counted and totalled per currency and per status.
+	 *
+	 * The read `GET /invoices/statistics` performs, through the same service method and under the same view
+	 * grant. The tenant is the credential's and the organization is the credential's here (the route reads it
+	 * from its validated query string). It is not `getInvoiceStats`, which counts every tenant together and
+	 * feeds the platform-wide statistics; that read is left as it is.
+	 */
+	@Query('invoiceStatistics')
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	async invoiceStatistics(
+		@Args('isEstimate', { type: () => Boolean, nullable: true }) isEstimate?: boolean
+	): Promise<IInvoiceStatistics> {
+		return await this.invoiceService.getStatistics({
+			tenantId: RequestContext.currentTenantId() ?? undefined,
+			organizationId: RequestContext.currentOrganizationId() ?? undefined,
+			isEstimate: isEstimate === true
+		});
 	}
 
 	/**

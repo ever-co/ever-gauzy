@@ -240,3 +240,17 @@ input OrganizationTeamDeleteInput {
 	"The organization the removal is scoped to."
 	organizationId: ID!
 }
+
+"""
+What a caller states when it adds one employee to a team.
+"""
+input AddTeamMemberInput {
+	"The team."
+	organizationTeamId: ID!
+	"The organization the team belongs to."
+	organizationId: ID!
+	"The employee to add. Must be an employee of the same organization."
+	employeeId: ID!
+	"Whether the employee manages the team. Leave it out to keep an existing member's role."
+	isManager: Boolean
+}

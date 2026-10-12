@@ -150,6 +150,13 @@ export interface IEnvironment {
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;
+	/**
+	 * Whether a Super Admin may write the report catalogue (`report`, `report_category`). Those tables have no
+	 * tenant: a row one tenant writes is in every tenant's report menu, and every tenant owner is a Super Admin
+	 * of their own tenant, so authoring is off unless the deployment serves one organisation
+	 * (`REPORT_CATALOGUE_AUTHORING_ENABLED=true`).
+	 */
+	reportCatalogueAuthoring?: boolean;
 	gauzySeedPath?: string;
 	electronResourcesPath?: string;
 

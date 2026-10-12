@@ -5,7 +5,7 @@ import { ID as Id, IGenerateApiKey, IGenerateApiKeyResponse, PermissionsEnum } f
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { TenantApiKeyService } from './tenant-api-key.service';
+import { ITenantApiKeyView, TenantApiKeyService } from './tenant-api-key.service';
 
 /** The members `GenerateTenantApiKeyInput` declares in the schema. */
 export interface IGenerateTenantApiKeyInput {
@@ -77,5 +77,30 @@ export class TenantApiKeyResolver {
 		);
 
 		return pair as unknown as ITenantApiKeyPair;
+	}
+
+	/**
+	 * Renames the caller's tenant's API key.
+	 *
+	 * The write `PUT /tenant-api-key` performs, through the same service method and under the same grant.
+	 * The answer carries neither the key nor the secret: the secret is shown once, at issuance.
+	 */
+	@Mutation('updateTenantApiKey')
+	@Permissions(PermissionsEnum.TENANT_API_KEY_CREATE)
+	async updateTenantApiKey(@Args('input') input: { name: string }): Promise<ITenantApiKeyView> {
+		return await this.tenantApiKeyService.renameApiKey(input?.name);
+	}
+
+	/**
+	 * Revokes the caller's tenant's API key, so a leaked pair stops authenticating and a new one can be
+	 * generated.
+	 *
+	 * The write `DELETE /tenant-api-key` performs, through the same service method and under the same grant.
+	 * Answers `false` when the tenant held no key, rather than claiming a revocation that did not happen.
+	 */
+	@Mutation('revokeTenantApiKey')
+	@Permissions(PermissionsEnum.TENANT_API_KEY_DELETE)
+	async revokeTenantApiKey(): Promise<boolean> {
+		return await this.tenantApiKeyService.revokeApiKey();
 	}
 }

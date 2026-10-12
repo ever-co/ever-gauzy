@@ -10,26 +10,26 @@
 # `ReportCategoryController` under `/api/report/category` — and this surface states both, because a
 # client assembling a menu reads the headings and the reports together.
 #
-# **Neither controller declares a guard or a permission.** The report catalogue is reference data the
-# platform seeds and every authenticated screen reads, and the two controllers carry no `@UseGuards`,
-# no `@Permissions` and no `Public()` marker: nothing refuses a caller, and nothing in particular
-# admits one either. This surface mirrors exactly that — the resolver states no permission and no
-# authorization guard, and it does **not** state `@Public()` either, because `@Public()` is a
+# **Neither controller declares a guard or a permission on its reads.** The report catalogue is
+# reference data the platform seeds and every authenticated screen reads, and the read routes carry no
+# `@UseGuards`, no `@Permissions` and no `Public()` marker: nothing refuses a caller, and nothing in
+# particular admits one either. This surface mirrors exactly that — the read fields state no permission
+# and no authorization guard, and they do **not** state `@Public()` either, because `@Public()` is a
 # deliberate claim a route makes and inventing it here would state an openness decision the catalogue
 # has not taken. The one guard this surface adds is the GraphQL capability's own, and it is stated so
-# that the endpoint's switch reaches these fields like every other.
+# that the endpoint's switch reaches these fields like every other. The authoring writes below are the
+# exception, and they carry their routes' own guard and role on the field.
 #
 # The list is a connection rather than a bare array. It takes the same query protocol the REST surface
 # speaks — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
 # with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over
 # one surface resumes on the other.
 #
-# **The menu sub-route is a filter of this connection, not a second root field.** `GET
-# /api/report/menu-items` answers the reports of one organization that have an enabled menu row —
-# which is the same rows the list returns, narrowed. That narrowing is
-# `filter: { showInMenu: { eq: true } }`, evaluated over the very rows the delivered list computed the
-# flag on, so the two routes are one capability stated once rather than two surfaces that could come
-# to disagree about which reports a menu holds.
+# **The menu sub-route has its own field, `reportMenuItems`, and is also a filter of this connection.**
+# `GET /api/report/menu-items` answers the reports of one organization that have an enabled menu row —
+# the same rows the list returns narrowed by `filter: { showInMenu: { eq: true } }`. The design names the
+# route's own field, so it is served under that name too, through the route's own reader (the menu join),
+# and both answers select the same rows.
 #
 # **`organizationId` is an argument of the list, and it is the route's own query parameter rather than
 # an invention.** The delivered read joins the menu rows of one organization and sets `showInMenu` from
@@ -47,11 +47,13 @@
 # could disagree with this one. There is no count field either, for the same reason: neither controller
 # serves a `GET /count`.
 #
-# The one mutation is the menu write. Neither controller serves a create, an update or a removal for a
-# report or a category — those rows are the platform's own seeded reference data, and the path that
-# maintains them is the seeding and migration path that owns them — so this surface states no mutation
-# for them. A mutation here would be a capability the REST surface does not have, which is the one
-# thing this surface may not invent.
+# The menu write is open to any signed-in member, as its route is. **The catalogue's own rows are
+# authored by `SUPER_ADMIN` only**: `createReport`, `createReportCategory`, `updateReportCategory` and
+# `deleteReportCategory` mirror `POST /report`, `POST /report/category`, `PUT /report/category/:id` and
+# `DELETE /report/category/:id`, each under `TenantPermissionGuard` + `RoleGuard` with the
+# `SUPER_ADMIN` role on the handler and on the field alike. The tables have no tenant column — a row is
+# offered to every tenant — which is why no organization-level grant may author one. A category is
+# withdrawn by soft delete, never removed, and is refused while a live report is filed under it.
 
 extend type Query {
 	"""
@@ -93,6 +95,28 @@ extend type Query {
 		offset: Int
 		withDeleted: Boolean
 	): ReportCategoryConnection!
+
+	"""
+	The reports one organization's menu shows: those whose menu row for it is enabled, active and not
+	archived, under the caller's tenant. Every row answers `showInMenu: true`.
+
+	Mirrors `GET /report/menu-items` through the same reader, and like that route states no permission,
+	because every signed-in member loads its organization's menu. The organization is the argument when
+	stated and the credential's otherwise. The route takes no `withDeleted`, so neither does this field.
+	"""
+	reportMenuItems(
+		"The organization whose menu is read. Omit it for the credential's organization."
+		organizationId: ID
+		filter: ReportFilter
+		sort: [ReportSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ReportConnection!
 }
 
 extend type Mutation {
@@ -109,4 +133,34 @@ extend type Mutation {
 	request the route can only refuse.
 	"""
 	updateReportMenu(input: UpdateReportMenuInput!): ReportOrganization!
+
+	"""
+	Files one report into the platform-wide catalogue. `SUPER_ADMIN` only — the catalogue has no tenant,
+	so an entry is offered to every tenant's menu, where each organization still switches it on itself.
+
+	Mirrors `POST /report`. The slug must be lowercase words joined by hyphens and not taken by a live
+	report, and the category must be a live one.
+	"""
+	createReport(input: CreateReportInput!): Report!
+
+	"""
+	Files one heading of the platform-wide report catalogue. `SUPER_ADMIN` only. Mirrors
+	`POST /report/category`.
+	"""
+	createReportCategory(input: CreateReportCategoryInput!): ReportCategory!
+
+	"""
+	Edits one heading of the catalogue; a member left out is left as it is. `SUPER_ADMIN` only. Mirrors
+	`PUT /report/category/:id`.
+	"""
+	updateReportCategory(input: UpdateReportCategoryInput!): ReportCategory!
+
+	"""
+	Withdraws one heading of the catalogue by soft delete. `SUPER_ADMIN` only. Mirrors
+	`DELETE /report/category/:id`.
+
+	Refused while a live report is filed under the category. Answers `false` for a category that is not
+	there, rather than claiming a removal that did not happen.
+	"""
+	deleteReportCategory(id: ID!): Boolean!
 }

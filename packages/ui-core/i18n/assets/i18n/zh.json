@@ -5295,7 +5295,10 @@
 			"payment-receipt": "付款收据",
 			"reject-candidate": "拒绝候选人"
 		},
-		"HTML_EDITOR": "HTML编辑器"
+		"HTML_EDITOR": "HTML编辑器",
+		"FULL_PREVIEW": "完整预览",
+		"VIEW_GRID": "网格",
+		"VIEW_EDITOR": "编辑器"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "管道",
@@ -5345,54 +5348,192 @@
 		"QUICK_ACTIONS": "快速行动"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "文件提供者",
+		"FILE_PROVIDER": "文件存储提供商",
+		"SHOW_SECRET": "显示密钥",
+		"HIDE_SECRET": "隐藏密钥",
+		"SUMMARY": {
+			"TITLE": "当前配置",
+			"DESCRIPTION": "最近保存的设置——新上传的文件将使用此配置。",
+			"PROVIDER": "提供商",
+			"BUCKET": "存储桶 / 云名称",
+			"REGION": "区域",
+			"ENDPOINT": "端点",
+			"CREDENTIALS": "凭据",
+			"CREDENTIALS_SAVED": "已保存",
+			"CREDENTIALS_INCOMPLETE": "不完整",
+			"CREDENTIALS_NONE": "未设置",
+			"CREDENTIALS_NOT_NEEDED": "无需",
+			"SERVER_DEFAULT": "服务器默认值"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "如何获取密钥",
+			"LOCAL": {
+				"NAME": "本地磁盘",
+				"DESCRIPTION": "文件保存在 API 服务器自身的文件系统中。"
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "文件保存到 AWS S3 存储桶。请使用对该存储桶具有读写权限的 IAM 访问密钥。"
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "兼容 S3 的云存储。保存时会向 Wasabi 验证凭据。"
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "图片和视频托管。云名称和 API 密钥位于 Cloudinary 控制台的 API Keys 下。"
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "兼容 S3 的对象存储，可选 CDN。请在 DigitalOcean 控制面板中创建 Spaces 访问密钥。"
+			}
+		},
+		"LOCAL": {
+			"HEADER": "本地存储",
+			"WHERE": "上传的文件写入 API 服务器的文件系统。",
+			"NO_CONFIG": "无需配置——本地存储开箱即用。",
+			"WARNING": "如果服务器在没有持久卷的情况下重新部署，文件将丢失，且文件不会在多个 API 实例之间共享。生产环境请使用云存储提供商。"
+		},
+		"CHECK": {
+			"BUTTON": "检查配置",
+			"OK": "所有必填字段均已填写，URL 有效。密钥本身仅由提供商验证。",
+			"OK_LOCAL": "本地存储无需配置。",
+			"OK_SERVER_DEFAULTS": "没有缺失项。以下留空的字段将使用服务器自身的配置：",
+			"MISSING": "缺少：",
+			"INVALID_URL": "无效的 http(s) URL：",
+			"HTTPS_REQUIRED": "必须使用 https://——密钥会发送到此地址："
+		},
 		"S3": {
-			"HEADER": "S3配置",
+			"HEADER": "S3 配置",
+			"SUBTITLE": "将上传的文件存储到 Amazon S3 存储桶中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "对该存储桶具有读写权限的 IAM 访问密钥。",
+				"BUCKET": "存储桶",
+				"BUCKET_HINT": "上传文件的写入位置。"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"REGION": "存储桶所在的 AWS 区域，例如 us-east-1 或 eu-west-1。",
+				"BUCKET": "与 S3 控制台中完全一致的存储桶名称。"
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶"
+				"REGION": "区域",
+				"BUCKET": "存储桶"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶"
+				"REGION": "区域",
+				"BUCKET": "存储桶"
 			}
 		},
 		"WASABI": {
-			"HEADER": "山葵配置",
+			"HEADER": "Wasabi 配置",
+			"SUBTITLE": "通过兼容 S3 的 API 将上传的文件存储到 Wasabi 存储桶中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "来自 Wasabi 控制台的访问密钥对。",
+				"BUCKET": "存储桶与端点",
+				"BUCKET_HINT": "上传文件的写入位置。",
+				"OPTIONS": "选项"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"REGION": "存储桶所在区域，例如 us-east-1 或 eu-central-1。",
+				"SERVICE_URL": "该区域的 S3 端点。",
+				"BUCKET": "仅限小写字母、数字、点和连字符。名称在整个 Wasabi 中唯一。",
+				"FORCE_PATH_STYLE": "以 endpoint/bucket/file 而非 bucket.endpoint/file 的形式访问文件。除非需要虚拟主机式 URL，否则请保持开启。"
+			},
+			"SUGGESTED_ENDPOINT": "该区域的端点：",
+			"USE_SUGGESTION": "使用",
+			"SAVE_NOTE": "保存时，Gauzy 会使用这些凭据在 Wasabi 中创建存储桶。如果 Wasabi 拒绝请求，设置将不会保存。",
 			"LABELS": {
-				"ACCESS_KEY_ID": "访问密钥ID",
+				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶",
-				"SERVICE_URL": "服务网址"
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL",
+				"FORCE_PATH_STYLE": "强制使用路径样式 URL"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶",
-				"SERVICE_URL": "服务网址"
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL"
 			}
 		},
 		"CLOUDINARY": {
-			"HEADER": "云图片配置",
+			"HEADER": "Cloudinary 配置",
+			"SUBTITLE": "将上传的文件存储到 Cloudinary，并通过其分发网络提供访问。",
+			"SECTIONS": {
+				"ACCOUNT": "账户",
+				"ACCOUNT_HINT": "这三项均可在 Cloudinary 控制台的 API Keys 中找到。",
+				"DELIVERY": "分发",
+				"DELIVERY_HINT": "上传文件链接的生成方式。"
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Cloudinary 控制台顶部显示的名称。",
+				"ACCESS_API_KEY": "用于识别账户；与 API Secret 配合使用。",
+				"ACCESS_API_SECRET": "已保存的值会以掩码形式返回。",
+				"DELIVERY_URL": "文件链接的基础地址。除非使用自定义域名，否则保持 https://res.cloudinary.com。",
+				"SECURE": "使用 https:// 生成文件链接。保持为 True。"
+			},
 			"LABELS": {
-				"CLOUD_NAME": "云图名字",
-				"ACCESS_API_KEY": "访问密钥 ID",
-				"ACCESS_API_SECRET": "秘密访问密钥",
-				"DELIVERY_URL": "交付网址",
-				"SECURE": "安全"
+				"CLOUD_NAME": "云名称",
+				"ACCESS_API_KEY": "API Key",
+				"ACCESS_API_SECRET": "API Secret",
+				"DELIVERY_URL": "分发 URL",
+				"SECURE": "安全连接（HTTPS）"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Cloudinary名称",
-				"ACCESS_API_KEY": "访问密钥标识 (Fǎngwèn mìyào biāozhū)",
-				"ACCESS_API_SECRET": "秘密访问密钥",
-				"DELIVERY_URL": "交付URL",
-				"SECURE": "安全"
+				"CLOUD_NAME": "云名称",
+				"ACCESS_API_KEY": "API Key",
+				"ACCESS_API_SECRET": "API Secret",
+				"DELIVERY_URL": "分发 URL",
+				"SECURE": "安全连接（HTTPS）"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "DigitalOcean 配置",
+			"SUBTITLE": "通过兼容 S3 的 API 将上传的文件存储到 DigitalOcean Space 中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "来自 DigitalOcean 控制面板的 Spaces 访问密钥。",
+				"BUCKET": "Space 与端点",
+				"BUCKET_HINT": "上传文件的写入位置。",
+				"OPTIONS": "选项"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"SERVICE_URL": "Space 所在数据中心的端点，例如 https://fra1.digitaloceanspaces.com。",
+				"REGION": "按 Spaces 的要求固定为 us-east-1；数据中心由端点决定。",
+				"BUCKET": "Space 的名称。",
+				"CDN_URL": "可选。若已启用 CDN，填写该 Space 的 CDN 端点。",
+				"FORCE_PATH_STYLE": "以 endpoint/space/file 而非 space.endpoint/file 的形式访问文件。"
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "访问密钥 ID",
+				"SECRET_ACCESS_KEY": "秘密访问密钥",
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL",
+				"CDN_URL": "CDN URL",
+				"FORCE_PATH_STYLE": "强制使用路径样式 URL"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "访问密钥 ID",
+				"SECRET_ACCESS_KEY": "秘密访问密钥",
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL",
+				"CDN_URL": "CDN URL"
 			}
 		}
 	},
@@ -5491,7 +5632,11 @@
 			"invoice": "发票",
 			"estimate": "估计",
 			"receipt": "收据"
-		}
+		},
+		"VIEW_GRID": "网格",
+		"VIEW_EDITOR": "编辑器",
+		"FULL_PREVIEW": "完整预览",
+		"SAVED": "模板“{{ templateName }}”已保存"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "注册",

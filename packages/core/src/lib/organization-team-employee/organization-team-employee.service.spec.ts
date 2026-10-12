@@ -116,6 +116,15 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			)
 		);
 
+	it('reads every member for a single add, past the manager’s own employee filter', async () => {
+		// Read through the employee filter, a manager would see only their own row, and a set rebuilt from
+		// it would remove every other member when it is handed back to the set-based edit.
+		const sets = await requestStorage.run(new Map(), () => service.findMemberSets(teamId, manager.organizationId));
+
+		expect([...sets.memberIds].sort()).toEqual(['manager-employee', 'member-employee']);
+		expect(sets.managerIds).toEqual(['manager-employee']);
+	});
+
 	it('removes a member deselected while editing the team, and their team subscription', async () => {
 		await editTeam(['manager-employee'], []);
 

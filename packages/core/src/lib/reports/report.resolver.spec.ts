@@ -7,14 +7,16 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { environment as env } from '@gauzy/config';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
-import { ID as Id } from '@gauzy/contracts';
-import { FEATURE_METADATA, PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
+import { ID as Id, RolesEnum } from '@gauzy/contracts';
+import { FEATURE_METADATA, PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA, ROLES_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
-import { FeatureFlagGuard } from '../shared/guards';
+import { RequestContext } from '../core/context';
+import { FeatureFlagGuard, RoleGuard, TenantPermissionGuard } from '../shared/guards';
 import { ReportController } from './report.controller';
 import { ReportCategoryController } from './report-category.controller';
 import { ReportResolver } from './report.resolver';
@@ -115,10 +117,15 @@ const MENU = {
 function surfaces() {
 	const reportService = {
 		findAllReports: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
-		getMenuItems: jest.fn().mockResolvedValue([ROWS[0]])
+		// The menu reader answers the rows without the computed flag; the field states it.
+		getMenuItems: jest.fn().mockResolvedValue([{ ...ROWS[0], showInMenu: false }]),
+		createReport: jest.fn().mockResolvedValue(ROWS[1])
 	};
 	const reportCategoryService = {
-		findAll: jest.fn().mockResolvedValue({ items: CATEGORY_ROWS, total: CATEGORY_ROWS.length })
+		findAll: jest.fn().mockResolvedValue({ items: CATEGORY_ROWS, total: CATEGORY_ROWS.length }),
+		createCategory: jest.fn().mockResolvedValue(CATEGORY_ROWS[0]),
+		updateCategory: jest.fn().mockResolvedValue(CATEGORY_ROWS[0]),
+		withdrawCategory: jest.fn().mockResolvedValue(true)
 	};
 	const reportOrganizationService = {
 		updateReportMenu: jest.fn().mockResolvedValue(MENU)
@@ -288,8 +295,16 @@ function guardsOfField(field: string): unknown[] {
 const PARITY: ReadonlyArray<{ field: string; controller: object; route: string }> = [
 	{ field: 'reports', controller: ReportController, route: 'findAllReports' },
 	{ field: 'reportCategories', controller: ReportCategoryController, route: 'findAll' },
-	{ field: 'updateReportMenu', controller: ReportController, route: 'updateReportMenu' }
+	{ field: 'reportMenuItems', controller: ReportController, route: 'getMenuItems' },
+	{ field: 'updateReportMenu', controller: ReportController, route: 'updateReportMenu' },
+	{ field: 'createReport', controller: ReportController, route: 'create' },
+	{ field: 'createReportCategory', controller: ReportCategoryController, route: 'create' },
+	{ field: 'updateReportCategory', controller: ReportCategoryController, route: 'update' },
+	{ field: 'deleteReportCategory', controller: ReportCategoryController, route: 'delete' }
 ];
+
+/** The catalogue's authoring fields: the writes that reach the global tables. */
+const AUTHORING = ['createReport', 'createReportCategory', 'updateReportCategory', 'deleteReportCategory'];
 
 /** The code the commerce catalogue declares for this surface, as the guard's metadata carries it. */
 const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL';
@@ -330,11 +345,15 @@ describe('ReportResolver — the SDL declares the capabilities the REST routes s
 		expect(rootFields('Mutation')).toEqual(expect.arrayContaining(['updateReportMenu']));
 	});
 
-	it('declares the reads and the write the controllers serve, and no more', () => {
-		// The menu sub-route is the same list narrowed, and the catalogue's own reads are the two
-		// connections; anything else here would be a capability no delivered route has.
-		expect(ownedRootFields('Query')).toEqual(['reportCategories', 'reports']);
-		expect(ownedRootFields('Mutation')).toEqual(['updateReportMenu']);
+	it('declares the reads and the writes the controllers serve, and no more', () => {
+		expect(ownedRootFields('Query')).toEqual(['reportCategories', 'reportMenuItems', 'reports']);
+		expect(ownedRootFields('Mutation')).toEqual([
+			'createReport',
+			'createReportCategory',
+			'deleteReportCategory',
+			'updateReportCategory',
+			'updateReportMenu'
+		]);
 	});
 
 	it('declares no node field and no count field, because no route serves one', () => {
@@ -344,12 +363,33 @@ describe('ReportResolver — the SDL declares the capabilities the REST routes s
 		expect(printed).not.toMatch(/reportCount/);
 	});
 
-	it('declares no mutation for a report or a category, because the catalogue serves no write', () => {
-		// The rows are the platform's own seeded reference data; the menu write is the only write either
-		// controller serves, and it writes the membership rather than the report.
-		expect(ownedRootFields('Mutation')).not.toEqual(
-			expect.arrayContaining(['createReport', 'updateReport', 'deleteReport', 'softDeleteReport', 'recoverReport'])
-		);
+	it('declares the authoring writes the routes serve, and none they do not', () => {
+		// A report is filed and never edited or withdrawn over either protocol; a category is filed, edited
+		// and withdrawn. A field for a write no route serves would be a capability REST does not have.
+		expect(ownedRootFields('Mutation')).not.toEqual(expect.arrayContaining(['updateReport']));
+		expect(ownedRootFields('Mutation')).not.toEqual(expect.arrayContaining(['deleteReport']));
+		expect(printed).toMatch(/createReport\(input: CreateReportInput!\): Report!/);
+		expect(printed).toMatch(/createReportCategory\(input: CreateReportCategoryInput!\): ReportCategory!/);
+		expect(printed).toMatch(/updateReportCategory\(input: UpdateReportCategoryInput!\): ReportCategory!/);
+		expect(printed).toMatch(/deleteReportCategory\(id: ID!\): Boolean!/);
+		// `showInMenu` is computed per organization, never authored.
+		expect(inputMemberNames('CreateReportInput')).not.toContain('showInMenu');
+	});
+
+	it('declares the menu read with the route’s organization and the list’s protocol', () => {
+		expect(fieldArgs('Query', 'reportMenuItems')).toEqual([
+			'organizationId',
+			'filter',
+			'sort',
+			'page',
+			'first',
+			'after',
+			'last',
+			'before',
+			'limit',
+			'offset'
+		]);
+		expect(printed).toMatch(/reportMenuItems\([^)]*\): ReportConnection!/);
 	});
 
 	it('declares the connections, their edges, their filters and their sorts', () => {
@@ -581,6 +621,62 @@ describe('ReportResolver — one concept, two protocols, the same operations', (
 		});
 	});
 
+	it('reads the menu through the reader the menu route calls, with every row marked as a menu entry', async () => {
+		const { resolver, reportService } = surfaces();
+
+		const connection = await resolver.reportMenuItems(ORGANIZATION);
+
+		expect(reportService.getMenuItems).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
+		expect(connection.nodes.map((node) => node.id)).toEqual([MENU_REPORT]);
+		expect(connection.nodes.every((node) => node.showInMenu === true)).toBe(true);
+	});
+
+	it('reads the credential’s organization’s menu when the caller names none', async () => {
+		const { resolver, reportService } = surfaces();
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
+		try {
+			await resolver.reportMenuItems();
+			expect(reportService.getMenuItems).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
+		} finally {
+			organization.mockRestore();
+		}
+	});
+
+	it('authors the catalogue through the same service methods the routes call', async () => {
+		const { resolver, reportService, reportCategoryService } = surfaces();
+		const report = { name: 'Payments received', slug: 'payments-received', categoryId: CATEGORY };
+
+		expect(await resolver.createReport(report)).toBe(ROWS[1]);
+		expect(reportService.createReport).toHaveBeenCalledWith(report);
+
+		expect(await resolver.createReportCategory({ name: 'Finance' })).toBe(CATEGORY_ROWS[0]);
+		expect(reportCategoryService.createCategory).toHaveBeenCalledWith({ name: 'Finance' });
+
+		await resolver.updateReportCategory({ id: CATEGORY, iconClass: 'pie-chart-outline' });
+		expect(reportCategoryService.updateCategory).toHaveBeenCalledWith(CATEGORY, { iconClass: 'pie-chart-outline' });
+
+		expect(await resolver.deleteReportCategory(CATEGORY)).toBe(true);
+		expect(reportCategoryService.withdrawCategory).toHaveBeenCalledWith(CATEGORY);
+
+		// The routes reach the same methods with the same members.
+		const reports = new ReportController(reportService as never, {} as never);
+		const categories = new ReportCategoryController(reportCategoryService as never);
+		await reports.create(report as never);
+		expect(reportService.createReport).toHaveBeenLastCalledWith(report);
+		await categories.create({ name: 'Finance' } as never);
+		await categories.update(CATEGORY, { name: 'Money' } as never);
+		expect(reportCategoryService.updateCategory).toHaveBeenLastCalledWith(CATEGORY, { name: 'Money' });
+		expect(await categories.delete(CATEGORY)).toBe(true);
+	});
+
+	it('answers false for a category that is not there, which is what the service answers', async () => {
+		const { resolver, reportCategoryService } = surfaces();
+		reportCategoryService.withdrawCategory.mockResolvedValueOnce(false);
+
+		expect(await resolver.deleteReportCategory(OTHER_REPORT)).toBe(false);
+	});
+
 	it('surfaces a refusal as a 4xx that is not a 404', async () => {
 		const { resolver, reportOrganizationService } = surfaces();
 		const refusal = new Error('reportId and organizationId are required');
@@ -624,6 +720,25 @@ describe('ReportResolver — the guard stack and the permission are the controll
 		// The guard a field states of its own is the guard its route's handler states of its own: the
 		// class-level chains are compared above, and a handler that added one is caught here.
 		expect(guardsOfField(field)).toEqual(guardsOfHandler(controller, route));
+		// And so is the role a handler requires.
+		const fields = ReportResolver.prototype as unknown as Record<string, object>;
+		expect(Reflect.getMetadata(ROLES_METADATA, fields[field])).toEqual(
+			Reflect.getMetadata(ROLES_METADATA, handlersOf(controller)[route])
+		);
+	});
+
+	it('gates every authoring write to SUPER_ADMIN, because the catalogue has no tenant', () => {
+		const fields = ReportResolver.prototype as unknown as Record<string, object>;
+
+		for (const field of AUTHORING) {
+			expect(Reflect.getMetadata(ROLES_METADATA, fields[field])).toEqual([RolesEnum.SUPER_ADMIN]);
+			expect(guardsOfField(field)).toEqual([TenantPermissionGuard, RoleGuard]);
+		}
+
+		// The reads and the menu write stay open to every signed-in member, as their routes are.
+		for (const field of ['reports', 'reportCategories', 'reportMenuItems', 'updateReportMenu']) {
+			expect(Reflect.getMetadata(ROLES_METADATA, fields[field])).toBeUndefined();
+		}
 	});
 });
 
@@ -674,5 +789,161 @@ describe('ReportModule — the resolver is declared where its dependencies are r
 		expect(exported).toEqual(
 			expect.arrayContaining([ReportService, ReportCategoryService, ReportOrganizationService])
 		);
+	});
+});
+
+describe('Report authoring — the global catalogue, written only where it is safe to', () => {
+	const authoring = env.reportCatalogueAuthoring;
+	beforeEach(() => {
+		env.reportCatalogueAuthoring = true;
+	});
+	afterEach(() => {
+		env.reportCatalogueAuthoring = authoring;
+		jest.restoreAllMocks();
+	});
+
+	/** The report service over a scripted category read and a scripted store. */
+	function reports(options: { categoryLive?: boolean; slugTaken?: boolean } = {}) {
+		const categories = {
+			findOneByIdString: jest.fn().mockImplementation(async () => {
+				if (options.categoryLive === false) {
+					throw new NotFoundException();
+				}
+
+				return CATEGORY_ROWS[0];
+			})
+		};
+		const service = new ReportService({} as never, {} as never, categories as never);
+		const countBy = jest.spyOn(service, 'countBy').mockResolvedValue(options.slugTaken ? 1 : 0);
+		const create = jest
+			.spyOn(service, 'create')
+			.mockImplementation(async (row) => ({ id: OTHER_REPORT, ...row }) as never);
+
+		return { service, categories, countBy, create };
+	}
+
+	it('files a well-formed report under a live category, with the menu flag off', async () => {
+		const { service, categories, countBy, create } = reports();
+
+		await service.createReport({ name: ' Payments received ', slug: 'payments-received', categoryId: CATEGORY });
+
+		expect(categories.findOneByIdString).toHaveBeenCalledWith(CATEGORY);
+		expect(countBy).toHaveBeenCalledWith({ slug: 'payments-received' });
+		expect(create).toHaveBeenCalledWith(
+			expect.objectContaining({ name: 'Payments received', slug: 'payments-received', showInMenu: false })
+		);
+	});
+
+	it('refuses a malformed slug, an empty name and an oversized member before anything is written', async () => {
+		const { service, create } = reports();
+
+		for (const input of [
+			{ name: 'Payments', slug: 'Payments Received', categoryId: CATEGORY },
+			{ name: '   ', slug: 'payments', categoryId: CATEGORY },
+			{ name: 'Payments', slug: 'payments', categoryId: CATEGORY, description: 'x'.repeat(256) }
+		]) {
+			await expect(service.createReport(input)).rejects.toBeInstanceOf(BadRequestException);
+		}
+
+		expect(create).not.toHaveBeenCalled();
+	});
+
+	it('refuses a slug a live report already has, and a category that is not live', async () => {
+		const taken = reports({ slugTaken: true });
+		await expect(
+			taken.service.createReport({ name: 'Time', slug: 'time-and-activity', categoryId: CATEGORY })
+		).rejects.toBeInstanceOf(ConflictException);
+		expect(taken.create).not.toHaveBeenCalled();
+
+		const orphan = reports({ categoryLive: false });
+		await expect(
+			orphan.service.createReport({ name: 'Time', slug: 'time', categoryId: CATEGORY })
+		).rejects.toBeInstanceOf(NotFoundException);
+		expect(orphan.create).not.toHaveBeenCalled();
+	});
+
+	/** The category service over a scripted store. */
+	function categories(row: unknown | NotFoundException) {
+		const service = new ReportCategoryService({} as never, {} as never);
+		const read = jest.spyOn(service, 'findOneByIdString').mockImplementation(async () => {
+			if (row instanceof NotFoundException) {
+				throw row;
+			}
+
+			return row as never;
+		});
+		const softRemove = jest.spyOn(service, 'softRemove').mockResolvedValue(CATEGORY_ROWS[0] as never);
+		const update = jest.spyOn(service, 'update').mockResolvedValue({ affected: 1 } as never);
+		const create = jest.spyOn(service, 'create').mockImplementation(async (value) => value as never);
+
+		return { service, read, softRemove, update, create };
+	}
+
+	it('withdraws an empty category by soft delete and answers true', async () => {
+		const { service, read, softRemove } = categories({ ...CATEGORY_ROWS[0], reports: [] });
+
+		expect(await service.withdrawCategory(CATEGORY)).toBe(true);
+		expect(read).toHaveBeenCalledWith(CATEGORY, { relations: { reports: true } });
+		expect(softRemove).toHaveBeenCalledWith(CATEGORY);
+	});
+
+	it('answers false for a category that is not there, and withdraws nothing', async () => {
+		const { service, softRemove } = categories(new NotFoundException());
+
+		expect(await service.withdrawCategory(CATEGORY)).toBe(false);
+		expect(softRemove).not.toHaveBeenCalled();
+	});
+
+	it('refuses to withdraw a category a live report is still filed under', async () => {
+		const { service, softRemove } = categories({ ...CATEGORY_ROWS[0], reports: [ROWS[0]] });
+
+		await expect(service.withdrawCategory(CATEGORY)).rejects.toBeInstanceOf(ConflictException);
+		expect(softRemove).not.toHaveBeenCalled();
+	});
+
+	it('files and edits a category with its members checked, leaving unstated members as they are', async () => {
+		const { service, update, create } = categories(CATEGORY_ROWS[0]);
+
+		await service.createCategory({ name: ' Finance ' });
+		expect(create).toHaveBeenCalledWith({ name: 'Finance', iconClass: undefined });
+		await expect(service.createCategory({ name: '' })).rejects.toBeInstanceOf(BadRequestException);
+
+		await service.updateCategory(CATEGORY, { iconClass: 'pie-chart-outline' });
+		expect(update).toHaveBeenCalledWith(CATEGORY, { iconClass: 'pie-chart-outline' });
+		await expect(service.updateCategory(CATEGORY, { name: '  ' })).rejects.toBeInstanceOf(BadRequestException);
+	});
+});
+
+describe('Report authoring — off unless the deployment enables it', () => {
+	const authoring = env.reportCatalogueAuthoring;
+	afterEach(() => {
+		env.reportCatalogueAuthoring = authoring;
+		jest.restoreAllMocks();
+	});
+
+	it('is off by default, because every tenant owner is a Super Admin of their own tenant', () => {
+		delete process.env.REPORT_CATALOGUE_AUTHORING_ENABLED;
+		expect(Boolean(authoring)).toBe(false);
+	});
+
+	it('refuses every catalogue write, before anything is read or written, when the deployment has not enabled it', async () => {
+		env.reportCatalogueAuthoring = false;
+		const categories = { findOneByIdString: jest.fn() };
+		const service = new ReportService({} as never, {} as never, categories as never);
+		const create = jest.spyOn(service, 'create');
+		const categoryService = new ReportCategoryService({} as never, {} as never);
+		const categoryCreate = jest.spyOn(categoryService, 'create');
+
+		await expect(
+			service.createReport({ name: 'Time', slug: 'time-and-activity', categoryId: CATEGORY })
+		).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(categoryService.createCategory({ name: 'Finance' })).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(categoryService.updateCategory(CATEGORY, { name: 'Money' })).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		await expect(categoryService.withdrawCategory(CATEGORY)).rejects.toBeInstanceOf(ForbiddenException);
+		expect(categories.findOneByIdString).not.toHaveBeenCalled();
+		expect(create).not.toHaveBeenCalled();
+		expect(categoryCreate).not.toHaveBeenCalled();
 	});
 });

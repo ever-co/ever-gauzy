@@ -5297,7 +5297,10 @@
 			"payment-receipt": "Recibo de pago",
 			"reject-candidate": "Rechazar Candidato"
 		},
-		"HTML_EDITOR": "Editor HTML"
+		"HTML_EDITOR": "Editor HTML",
+		"FULL_PREVIEW": "Vista previa completa",
+		"VIEW_GRID": "Cuadrícula",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Tuberías.",
@@ -5348,53 +5351,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Proveedor de archivos",
+		"SHOW_SECRET": "Mostrar secreto",
+		"HIDE_SECRET": "Ocultar secreto",
+		"SUMMARY": {
+			"TITLE": "Configuración actual",
+			"DESCRIPTION": "Últimos ajustes guardados: los que usan las nuevas cargas.",
+			"PROVIDER": "Proveedor",
+			"BUCKET": "Bucket / nombre de la nube",
+			"REGION": "Región",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Credenciales",
+			"CREDENTIALS_SAVED": "Guardadas",
+			"CREDENTIALS_INCOMPLETE": "Incompletas",
+			"CREDENTIALS_NONE": "Sin definir",
+			"CREDENTIALS_NOT_NEEDED": "No necesarias",
+			"SERVER_DEFAULT": "Predeterminado del servidor"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Dónde obtener las claves",
+			"LOCAL": {
+				"NAME": "Disco local",
+				"DESCRIPTION": "los archivos se guardan en el sistema de archivos del servidor de la API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "los archivos se guardan en un bucket de AWS S3. Use una clave de acceso de IAM que pueda leer y escribir en el bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "almacenamiento en la nube compatible con S3. Las credenciales se verifican con Wasabi al guardar."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "alojamiento de imágenes y vídeos. El nombre de la nube y las claves de API están en la consola de Cloudinary, en API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "almacenamiento de objetos compatible con S3 con CDN opcional. Cree una clave de acceso de Spaces en el panel de control de DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Almacenamiento local",
+			"WHERE": "Los archivos subidos se escriben en el sistema de archivos del servidor de la API.",
+			"NO_CONFIG": "Nada que configurar: el almacenamiento local funciona de inmediato.",
+			"WARNING": "Los archivos se pierden si el servidor se vuelve a desplegar sin un volumen persistente y no se comparten entre varias instancias de la API. Use un proveedor en la nube en producción."
+		},
+		"CHECK": {
+			"BUTTON": "Comprobar configuración",
+			"OK": "Todos los campos obligatorios están completos y las URL son válidas. Las claves solo las verifica el proveedor.",
+			"OK_LOCAL": "El almacenamiento local no necesita configuración.",
+			"OK_SERVER_DEFAULTS": "No falta nada. Estos campos vacíos usan la configuración del servidor:",
+			"MISSING": "Falta:",
+			"INVALID_URL": "URL http(s) no válida:",
+			"HTTPS_REQUIRED": "Debe usar https://: las claves se envían a esta dirección:"
+		},
 		"S3": {
 			"HEADER": "Configuración de S3",
+			"SUBTITLE": "Guarde los archivos subidos en un bucket de Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciales",
+				"CREDENTIALS_HINT": "Una clave de acceso de IAM que pueda leer y escribir en el bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Dónde se escriben los archivos subidos."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pública del par de claves.",
+				"SECRET_ACCESS_KEY": "Se muestra una sola vez, al crear la clave. Los valores guardados vuelven enmascarados.",
+				"REGION": "La región de AWS del bucket, p. ej. us-east-1 o eu-west-1.",
+				"BUCKET": "El nombre del bucket tal como aparece en la consola de S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clave de acceso",
-				"SECRET_ACCESS_KEY": "Clave de acceso secreta.",
-				"REGION": "Región",
-				"BUCKET": "Cubo"
-			},
-			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id: Identificador de clave de acceso",
 				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
 				"REGION": "Región",
-				"BUCKET": "Cubo"
+				"BUCKET": "Bucket"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID de clave de acceso",
+				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
+				"REGION": "Región",
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Configuración de Wasabi",
+			"SUBTITLE": "Guarde los archivos subidos en un bucket de Wasabi mediante su API compatible con S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciales",
+				"CREDENTIALS_HINT": "Un par de claves de acceso de la consola de Wasabi.",
+				"BUCKET": "Bucket y endpoint",
+				"BUCKET_HINT": "Dónde se escriben los archivos subidos.",
+				"OPTIONS": "Opciones"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pública del par de claves.",
+				"SECRET_ACCESS_KEY": "Se muestra una sola vez, al crear la clave. Los valores guardados vuelven enmascarados.",
+				"REGION": "La región del bucket, p. ej. us-east-1 o eu-central-1.",
+				"SERVICE_URL": "El endpoint S3 de esa región.",
+				"BUCKET": "Minúsculas, números, puntos y guiones. Los nombres son únicos en todo Wasabi.",
+				"FORCE_PATH_STYLE": "Direcciona los archivos como endpoint/bucket/archivo en lugar de bucket.endpoint/archivo. Déjelo activado salvo que necesite URL de tipo virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint para esta región:",
+			"USE_SUGGESTION": "Usarlo",
+			"SAVE_NOTE": "Al guardar, Gauzy usa estas credenciales para crear el bucket en Wasabi. Si Wasabi rechaza la solicitud, la configuración no se guarda.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Identificador de clave de acceso.",
-				"SECRET_ACCESS_KEY": "Clave de acceso secreta.",
+				"ACCESS_KEY_ID": "ID de clave de acceso",
+				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
 				"REGION": "Región",
-				"BUCKET": "Cubo",
-				"SERVICE_URL": "URL de servicio"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servicio",
+				"FORCE_PATH_STYLE": "Forzar URL de estilo ruta"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "ID de clave de acceso",
 				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
 				"REGION": "Región",
-				"BUCKET": "Cubo",
+				"BUCKET": "Bucket",
 				"SERVICE_URL": "URL del servicio"
 			}
 		},
 		"CLOUDINARY": {
 			"HEADER": "Configuración de Cloudinary",
+			"SUBTITLE": "Guarde los archivos subidos en Cloudinary y sírvalos desde su red de distribución.",
+			"SECTIONS": {
+				"ACCOUNT": "Cuenta",
+				"ACCOUNT_HINT": "Los tres valores están en la consola de Cloudinary, en API Keys.",
+				"DELIVERY": "Entrega",
+				"DELIVERY_HINT": "Cómo se construyen los enlaces a los archivos subidos."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "El nombre que aparece en la parte superior de su consola de Cloudinary.",
+				"ACCESS_API_KEY": "Identifica la cuenta; se usa junto con el secreto de API.",
+				"ACCESS_API_SECRET": "Los valores guardados vuelven enmascarados.",
+				"DELIVERY_URL": "Dirección base de los enlaces. Mantenga https://res.cloudinary.com salvo que use un dominio propio.",
+				"SECURE": "Genera los enlaces con https://. Déjelo en True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "nombre de Cloudinary",
-				"ACCESS_API_KEY": "ID de clave de acceso",
-				"ACCESS_API_SECRET": "Clave de acceso secreta",
+				"CLOUD_NAME": "Nombre de la nube",
+				"ACCESS_API_KEY": "Clave de API",
+				"ACCESS_API_SECRET": "Secreto de API",
 				"DELIVERY_URL": "URL de entrega",
-				"SECURE": "Seguro"
+				"SECURE": "Seguro (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Nombre de Cloudinary",
-				"ACCESS_API_KEY": "Clave de acceso ID",
-				"ACCESS_API_SECRET": "Clave de acceso secreta",
+				"CLOUD_NAME": "Nombre de la nube",
+				"ACCESS_API_KEY": "Clave de API",
+				"ACCESS_API_SECRET": "Secreto de API",
 				"DELIVERY_URL": "URL de entrega",
-				"SECURE": "Seguro"
+				"SECURE": "Seguro (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Configuración de DigitalOcean",
+			"SUBTITLE": "Guarde los archivos subidos en un Space de DigitalOcean mediante su API compatible con S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credenciales",
+				"CREDENTIALS_HINT": "Una clave de acceso de Spaces del panel de control de DigitalOcean.",
+				"BUCKET": "Space y endpoint",
+				"BUCKET_HINT": "Dónde se escriben los archivos subidos.",
+				"OPTIONS": "Opciones"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La parte pública del par de claves.",
+				"SECRET_ACCESS_KEY": "Se muestra una sola vez, al crear la clave. Los valores guardados vuelven enmascarados.",
+				"SERVICE_URL": "El endpoint del centro de datos de su Space, p. ej. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fijado en us-east-1, como espera Spaces; el centro de datos lo determina el endpoint.",
+				"BUCKET": "El nombre del Space.",
+				"CDN_URL": "Opcional. El endpoint CDN del Space, si el CDN está activado.",
+				"FORCE_PATH_STYLE": "Direcciona los archivos como endpoint/space/archivo en lugar de space.endpoint/archivo."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID de clave de acceso",
+				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
+				"REGION": "Región",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servicio",
+				"CDN_URL": "URL del CDN",
+				"FORCE_PATH_STYLE": "Forzar URL de estilo ruta"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID de clave de acceso",
+				"SECRET_ACCESS_KEY": "Clave de acceso secreta",
+				"REGION": "Región",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL del servicio",
+				"CDN_URL": "URL del CDN"
 			}
 		}
 	},
@@ -5493,7 +5634,11 @@
 			"invoice": "Factura",
 			"estimate": "Estimado.",
 			"receipt": "Recibo"
-		}
+		},
+		"VIEW_GRID": "Cuadrícula",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Vista previa completa",
+		"SAVED": "La plantilla '{{ templateName }}' se ha guardado"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrarse",

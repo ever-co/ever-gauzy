@@ -69,6 +69,12 @@
 # place is not an amount the ledger holds, and `Float` is not a family money is carried in at all.
 # Delivering either would mean inventing types for other resources and stating money as something it is
 # not, so both are left to REST.
+#
+# **What both of them compute is served instead, typed, as `expenseStatistics`** — and over REST as
+# `GET /expense/statistics`, so neither protocol is wider. It reads the very rows the report route reads,
+# through the same reader and under the same view grant, and answers them as exact `Decimal` totals per
+# currency and per each of the report's groupings (day, employee, project), with identifiers rather than
+# nested employee and project rows. A total in two currencies is never added together.
 
 extend type Query {
 	"""
@@ -117,6 +123,23 @@ extend type Query {
 	above.
 	"""
 	mySplitExpenses(filterDate: DateTime): [ExpenseSplitRow!]!
+
+	"""
+	The expense report's figures as exact totals: per currency, and per day, employee and project.
+
+	Mirrors `GET /expense/statistics`, under the view grant. The rows are the ones the report route reads:
+	the credential's tenant and organization, the window stated (the current week when none is), the
+	employees, projects and category stated, and — for a caller without `CHANGE_SELECTED_EMPLOYEE`, or one
+	that sets `onlyMe` — the caller's own expenses only. Every amount is an exact decimal per currency.
+	"""
+	expenseStatistics(
+		startDate: DateTime
+		endDate: DateTime
+		employeeIds: [ID!]
+		projectIds: [ID!]
+		categoryId: ID
+		onlyMe: Boolean
+	): ExpenseStatistics!
 }
 
 extend type Mutation {

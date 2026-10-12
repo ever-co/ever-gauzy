@@ -1,12 +1,19 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
-import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
+import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { ID as Id, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
+import {
+	ConnectionFilter,
+	ConnectionPageRequest,
+	ConnectionSortKey,
+	GraphqlConnection,
+	buildConnection
+} from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { EmailResetService } from './email-reset.service';
+import { EmailResetService, IEmailResetView } from './email-reset.service';
 import { ResetEmailRequestDTO, VerifyEmailResetRequestDTO } from './dto';
 
 /** The members `RequestEmailResetInput` declares in the schema. */
@@ -24,6 +31,25 @@ export interface IEmailResetOutcome {
 	status: number;
 	message: string;
 }
+
+/** The fields a request list may be filtered and sorted by. The code and the token are not members at all. */
+const EMAIL_RESET_FILTERABLE = {
+	id: 'ID',
+	email: 'STRING',
+	oldEmail: 'STRING',
+	isExpired: 'BOOLEAN',
+	createdAt: 'DATE',
+	updatedAt: 'DATE'
+} as const;
+
+/** The fields the sort enum offers. */
+const EMAIL_RESET_SORTABLE = ['createdAt', 'updatedAt', 'email'] as const;
+
+/** Newest first — the read's own order — with the identifier as the key that makes it total. */
+const EMAIL_RESET_DEFAULT_SORT: readonly ConnectionSortKey[] = [
+	{ field: 'createdAt', direction: 'DESC' },
+	{ field: 'id', direction: 'DESC' }
+];
 
 /**
  * The email reset over GraphQL.
@@ -98,6 +124,41 @@ export class EmailResetResolver {
 		const request = { code: input.code } as VerifyEmailResetRequestDTO;
 
 		return (await this.emailResetService.verifyCode(request)) as IEmailResetOutcome;
+	}
+
+	/**
+	 * The address-change requests of one user of the caller's tenant, newest first, never with their code
+	 * or token.
+	 *
+	 * The read `GET /email-reset` performs, through the same service method and under the same pair the
+	 * class states — the route states no permission of its own. The caller's own requests by default;
+	 * another user's are refused unless the caller holds `ORG_USERS_EDIT`, which the service checks, so a
+	 * caller holding only `PROFILE_EDIT` reads only their own. No request is ever withdrawn, so there is no
+	 * `withDeleted` to offer.
+	 */
+	@Query('emailResets')
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
+	async emailResets(
+		@Args('userId', { type: () => ID, nullable: true }) userId?: Id,
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<IEmailResetView>> {
+		const rows = await this.emailResetService.findForUser(userId ?? undefined);
+
+		return buildConnection<IEmailResetView>({
+			rows: rows ?? [],
+			filterable: EMAIL_RESET_FILTERABLE,
+			sortable: EMAIL_RESET_SORTABLE,
+			defaultSort: EMAIL_RESET_DEFAULT_SORT,
+			request: { filter, sort, page, first, after, last, before, limit, offset }
+		});
 	}
 
 	/**

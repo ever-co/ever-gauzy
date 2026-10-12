@@ -5294,7 +5294,10 @@
 			"payment-receipt": "Wysłać potwierdzenie płatności",
 			"reject-candidate": "Odrzuć Kandydata"
 		},
-		"HTML_EDITOR": "Edytor HTML"
+		"HTML_EDITOR": "Edytor HTML",
+		"FULL_PREVIEW": "Pełny podgląd",
+		"VIEW_GRID": "Siatka",
+		"VIEW_EDITOR": "Edytor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Rurociekle",
@@ -5345,53 +5348,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Dostawca plików",
+		"SHOW_SECRET": "Pokaż sekret",
+		"HIDE_SECRET": "Ukryj sekret",
+		"SUMMARY": {
+			"TITLE": "Bieżąca konfiguracja",
+			"DESCRIPTION": "Ostatnio zapisane ustawienia — używane przez nowe przesyłane pliki.",
+			"PROVIDER": "Dostawca",
+			"BUCKET": "Bucket / nazwa chmury",
+			"REGION": "Region",
+			"ENDPOINT": "Punkt końcowy",
+			"CREDENTIALS": "Dane uwierzytelniające",
+			"CREDENTIALS_SAVED": "Zapisane",
+			"CREDENTIALS_INCOMPLETE": "Niekompletne",
+			"CREDENTIALS_NONE": "Nie ustawiono",
+			"CREDENTIALS_NOT_NEEDED": "Niewymagane",
+			"SERVER_DEFAULT": "Domyślne ustawienie serwera"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Skąd wziąć klucze",
+			"LOCAL": {
+				"NAME": "Dysk lokalny",
+				"DESCRIPTION": "pliki są zapisywane w systemie plików serwera API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "pliki są zapisywane w buckecie AWS S3. Użyj klucza dostępu IAM z prawem odczytu i zapisu do bucketu."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "magazyn w chmurze zgodny z S3. Dane uwierzytelniające są weryfikowane w Wasabi podczas zapisu."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hosting obrazów i wideo. Nazwa chmury i klucze API znajdują się w konsoli Cloudinary w sekcji API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "magazyn obiektów zgodny z S3 z opcjonalnym CDN. Utwórz klucz dostępu Spaces w panelu sterowania DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Magazyn lokalny",
+			"WHERE": "Przesłane pliki są zapisywane w systemie plików serwera API.",
+			"NO_CONFIG": "Nic do konfigurowania — magazyn lokalny działa od razu.",
+			"WARNING": "Pliki zostaną utracone, jeśli serwer zostanie ponownie wdrożony bez trwałego wolumenu, i nie są współdzielone między wieloma instancjami API. W produkcji użyj dostawcy chmurowego."
+		},
+		"CHECK": {
+			"BUTTON": "Sprawdź konfigurację",
+			"OK": "Wszystkie wymagane pola są wypełnione, a adresy URL są poprawne. Same klucze weryfikuje wyłącznie dostawca.",
+			"OK_LOCAL": "Magazyn lokalny nie wymaga konfiguracji.",
+			"OK_SERVER_DEFAULTS": "Niczego nie brakuje. Te puste pola używają konfiguracji serwera:",
+			"MISSING": "Brakuje:",
+			"INVALID_URL": "Nieprawidłowy adres URL http(s):",
+			"HTTPS_REQUIRED": "Wymagany https:// — klucze są wysyłane na ten adres:"
+		},
 		"S3": {
 			"HEADER": "Konfiguracja S3",
+			"SUBTITLE": "Przechowuj przesłane pliki w buckecie Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Klucz dostępu IAM z prawem odczytu i zapisu do bucketu.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"REGION": "Region AWS bucketu, np. us-east-1 lub eu-west-1.",
+				"BUCKET": "Nazwa bucketu dokładnie taka jak w konsoli S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
-				"SECRET_ACCESS_KEY": "Sekretny klucz dostępu",
+				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Konfiguracja Wasabi",
+			"SUBTITLE": "Przechowuj przesłane pliki w buckecie Wasabi przez jego API zgodne z S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Para kluczy dostępu z konsoli Wasabi.",
+				"BUCKET": "Bucket i punkt końcowy",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki.",
+				"OPTIONS": "Opcje"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"REGION": "Region bucketu, np. us-east-1 lub eu-central-1.",
+				"SERVICE_URL": "Punkt końcowy S3 dla tego regionu.",
+				"BUCKET": "Małe litery, cyfry, kropki i myślniki. Nazwy są unikalne w całym Wasabi.",
+				"FORCE_PATH_STYLE": "Adresuj pliki jako endpoint/bucket/plik zamiast bucket.endpoint/plik. Pozostaw włączone, chyba że potrzebujesz adresów virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Punkt końcowy dla tego regionu:",
+			"USE_SUGGESTION": "Użyj",
+			"SAVE_NOTE": "Podczas zapisu Gauzy używa tych danych, aby utworzyć bucket w Wasabi. Jeśli Wasabi odrzuci żądanie, ustawienia nie zostaną zapisane.",
 			"LABELS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro",
-				"SERVICE_URL": "Adres URL usługi"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Adres URL usługi",
+				"FORCE_PATH_STYLE": "Wymuś adresy URL w stylu ścieżki"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro",
+				"BUCKET": "Bucket",
 				"SERVICE_URL": "Adres URL usługi"
 			}
 		},
 		"CLOUDINARY": {
 			"HEADER": "Konfiguracja Cloudinary",
+			"SUBTITLE": "Przechowuj przesłane pliki w Cloudinary i udostępniaj je przez jego sieć dostarczania.",
+			"SECTIONS": {
+				"ACCOUNT": "Konto",
+				"ACCOUNT_HINT": "Wszystkie trzy wartości znajdziesz w konsoli Cloudinary w sekcji API Keys.",
+				"DELIVERY": "Dostarczanie",
+				"DELIVERY_HINT": "Jak budowane są linki do przesłanych plików."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Nazwa widoczna u góry konsoli Cloudinary.",
+				"ACCESS_API_KEY": "Identyfikuje konto; używany razem z sekretem API.",
+				"ACCESS_API_SECRET": "Zapisane wartości wracają zamaskowane.",
+				"DELIVERY_URL": "Bazowy adres linków. Zostaw https://res.cloudinary.com, chyba że używasz własnej domeny.",
+				"SECURE": "Twórz linki z https://. Pozostaw True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Nazwa Cloudinary",
-				"ACCESS_API_KEY": "Numer identyfikacyjny klucza dostępu",
-				"ACCESS_API_SECRET": "Sekretny klucz dostępu",
-				"DELIVERY_URL": "Adres dostawy",
-				"SECURE": "Bezpieczny"
+				"CLOUD_NAME": "Nazwa chmury",
+				"ACCESS_API_KEY": "Klucz API",
+				"ACCESS_API_SECRET": "Sekret API",
+				"DELIVERY_URL": "Adres URL dostarczania",
+				"SECURE": "Bezpieczne (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "nazwa Cloudinary",
-				"ACCESS_API_KEY": "Identyfikator klucza dostępu",
-				"ACCESS_API_SECRET": "Sekretny klucz dostępu",
-				"DELIVERY_URL": "Adres URL dostawy",
-				"SECURE": "Bezpieczny"
+				"CLOUD_NAME": "Nazwa chmury",
+				"ACCESS_API_KEY": "Klucz API",
+				"ACCESS_API_SECRET": "Sekret API",
+				"DELIVERY_URL": "Adres URL dostarczania",
+				"SECURE": "Bezpieczne (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Konfiguracja DigitalOcean",
+			"SUBTITLE": "Przechowuj przesłane pliki w DigitalOcean Space przez jego API zgodne z S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Klucz dostępu Spaces z panelu sterowania DigitalOcean.",
+				"BUCKET": "Space i punkt końcowy",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki.",
+				"OPTIONS": "Opcje"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"SERVICE_URL": "Punkt końcowy centrum danych Twojego Space, np. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Ustawiony na us-east-1, zgodnie z wymaganiami Spaces; centrum danych wynika z punktu końcowego.",
+				"BUCKET": "Nazwa Space.",
+				"CDN_URL": "Opcjonalnie. Punkt końcowy CDN Space, jeśli CDN jest włączony.",
+				"FORCE_PATH_STYLE": "Adresuj pliki jako endpoint/space/plik zamiast space.endpoint/plik."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
+				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Adres URL usługi",
+				"CDN_URL": "Adres URL CDN",
+				"FORCE_PATH_STYLE": "Wymuś adresy URL w stylu ścieżki"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
+				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Adres URL usługi",
+				"CDN_URL": "Adres URL CDN"
 			}
 		}
 	},
@@ -5490,7 +5631,11 @@
 			"invoice": "Faktura",
 			"estimate": "Szacunek",
 			"receipt": "Paragon"
-		}
+		},
+		"VIEW_GRID": "Siatka",
+		"VIEW_EDITOR": "Edytor",
+		"FULL_PREVIEW": "Pełny podgląd",
+		"SAVED": "Szablon '{{ templateName }}' został zapisany"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Zarejestruj się",

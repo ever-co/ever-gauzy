@@ -7,15 +7,16 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { METHOD_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { Kind, buildSchema, parse, printSchema } from 'graphql';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA, ROLES_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context';
 import { ApiException } from '../core/errors/api-exception';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, RoleGuard, TenantPermissionGuard } from '../shared/guards';
 import { RoleController } from './role.controller';
 import { RoleModule } from './role.module';
 import { RoleEntityResolver } from './role-entity.resolver';
@@ -260,6 +261,7 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 
 	it('declares one mutation per delivered write route', () => {
 		expect(contributedRootFields('role.api.gql').mutation).toEqual([
+			'bulkCreateTenantRoles',
 			'createRole',
 			'deleteRole',
 			'recoverRole',
@@ -285,6 +287,7 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 		// rather than written out here.
 		expect(routesOf(RoleController)).toEqual([
 			'create',
+			'createMissingDefaultRoles',
 			'delete',
 			'findAll',
 			'findById',
@@ -641,7 +644,8 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'updateRole', route: 'update' },
 	{ field: 'deleteRole', route: 'delete' },
 	{ field: 'softDeleteRole', route: 'softRemove' },
-	{ field: 'recoverRole', route: 'softRecover' }
+	{ field: 'recoverRole', route: 'softRecover' },
+	{ field: 'bulkCreateTenantRoles', route: 'createMissingDefaultRoles' }
 ];
 
 describe('RoleEntityResolver — the guard stack and the permission are the controller’s', () => {
@@ -661,8 +665,17 @@ describe('RoleEntityResolver — the guard stack and the permission are the cont
 		for (const handler of routesOf(RoleController)) {
 			// The controller's chain plus the gate on the endpoint itself is the same set as the
 			// resolver's, which is the whole parity claim: a route that added a guard of its own would
-			// narrow REST below GraphQL and is caught here.
-			expect([...guardsOfRoute(RoleController, handler), FeatureFlagGuard]).toEqual(stated);
+			// narrow REST below GraphQL and is caught here — unless the field that mirrors it states the
+			// same guard of its own, which is how the SUPER_ADMIN-only route is mirrored.
+			const field = ROUTE_PARITY.find((entry) => entry.route === handler)?.field;
+			const restated = field
+				? Reflect.getMetadata('__guards__', (RoleEntityResolver.prototype as never)[field]) ?? []
+				: [];
+			const names = (guards: unknown[]) => guards.map((guard) => (guard as { name: string }).name).sort();
+
+			expect(names([...guardsOfRoute(RoleController, handler), FeatureFlagGuard])).toEqual(
+				names(Array.from(new Set([...stated, ...restated])))
+			);
 		}
 	});
 
@@ -677,6 +690,23 @@ describe('RoleEntityResolver — the guard stack and the permission are the cont
 
 	it.each(ROUTE_PARITY)('$field states the permission $route runs under', ({ field, route }) => {
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(RoleController, route));
+		// And the role, where the route requires one.
+		expect(Reflect.getMetadata(ROLES_METADATA, (RoleEntityResolver.prototype as never)[field])).toEqual(
+			Reflect.getMetadata(ROLES_METADATA, handlersOf(RoleController)[route])
+		);
+	});
+
+	it('gates the bulk creation of default roles to SUPER_ADMIN on both surfaces', () => {
+		const field = (RoleEntityResolver.prototype as never)['bulkCreateTenantRoles'];
+
+		expect(Reflect.getMetadata(ROLES_METADATA, field)).toEqual([RolesEnum.SUPER_ADMIN]);
+		expect(Reflect.getMetadata('__guards__', field)).toEqual([RoleGuard]);
+		expect(guardsOfRoute(RoleController, 'createMissingDefaultRoles')).toEqual([
+			TenantPermissionGuard,
+			PermissionGuard,
+			RoleGuard
+		]);
+		expect(permissionOfField('bulkCreateTenantRoles')).toEqual([PermissionsEnum.CHANGE_ROLES_PERMISSIONS]);
 	});
 
 	it('permits the options look-up exactly as far as its route does, and no further', () => {
@@ -788,5 +818,68 @@ describe('RoleEntityResolver — a capability that is switched off is not served
 		const { guard } = gate(true);
 
 		await expect(guard.canActivate(graphqlContext('roles'))).resolves.toBe(true);
+	});
+});
+
+describe('RoleService.createMissingDefaultRoles — the default set, in the caller’s tenant only', () => {
+	const TENANT_OF_CALLER = '00000000-0000-4000-8000-0000000000aa';
+
+	/** The service over a scripted tenant-scoped read and a scripted bulk write. */
+	function service(held: string[]) {
+		const instance = Object.create(RoleService.prototype) as RoleService;
+		const find = jest.fn().mockResolvedValue(held.map((name) => ({ name })));
+		const save = jest.fn().mockImplementation(async (rows) => rows);
+		Object.assign(instance, { find, typeOrmRoleRepository: { save } });
+
+		return { instance, find, save };
+	}
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('creates exactly the default roles the tenant does not hold, in the credential’s tenant', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_OF_CALLER);
+		const { instance, find, save } = service([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE]);
+
+		const created = await instance.createMissingDefaultRoles();
+
+		// A withdrawn role counts as held, so it is recovered rather than duplicated.
+		expect(find).toHaveBeenCalledWith({ where: { tenantId: TENANT_OF_CALLER }, withDeleted: true });
+		expect(created.map((role) => role.name).sort()).toEqual(
+			[
+				RolesEnum.CANDIDATE,
+				RolesEnum.DATA_ENTRY,
+				RolesEnum.INTERVIEWER,
+				RolesEnum.MANAGER,
+				RolesEnum.VIEWER
+			].sort()
+		);
+		for (const role of save.mock.calls[0][0]) {
+			expect(role.tenant).toEqual({ id: TENANT_OF_CALLER });
+		}
+	});
+
+	it('creates nothing for a tenant that already holds every default role', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_OF_CALLER);
+		const { instance, save } = service(Object.values(RolesEnum));
+
+		expect(await instance.createMissingDefaultRoles()).toEqual([]);
+		expect(save).not.toHaveBeenCalled();
+	});
+
+	it('refuses a request that carries no tenant rather than writing roles without one', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
+		const { instance, find, save } = service([]);
+
+		await expect(instance.createMissingDefaultRoles()).rejects.toBeInstanceOf(ForbiddenException);
+		expect(find).not.toHaveBeenCalled();
+		expect(save).not.toHaveBeenCalled();
+	});
+
+	it('keeps the onboarding default: createBulk with no names still creates the whole set', async () => {
+		const { instance, save } = service([]);
+
+		await instance.createBulk([{ id: TENANT_OF_CALLER } as never]);
+
+		expect(save.mock.calls[0][0].map((role: { name: string }) => role.name)).toEqual(Object.values(RolesEnum));
 	});
 });

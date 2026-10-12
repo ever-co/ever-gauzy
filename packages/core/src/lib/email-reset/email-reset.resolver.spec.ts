@@ -8,12 +8,13 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmailResetController } from './email-reset.controller';
 import { EmailResetModule } from './email-reset.module';
@@ -43,10 +44,33 @@ const OUTCOME = { status: 200, message: 'OK' };
 const ADDRESS = 'changed@example.test';
 
 /** The resolver, over a scripted service. */
+/** The requests a scripted read answers with, without their secrets. */
+const VIEWS = [
+	{
+		id: 'reset-2',
+		email: 'new@example.com',
+		oldEmail: 'old@example.com',
+		userId: 'user-1',
+		tenantId: 'tenant-1',
+		isExpired: false,
+		createdAt: new Date('2026-09-02T10:00:00.000Z')
+	},
+	{
+		id: 'reset-1',
+		email: 'typo@example.com',
+		oldEmail: 'old@example.com',
+		userId: 'user-1',
+		tenantId: 'tenant-1',
+		isExpired: true,
+		createdAt: new Date('2026-09-01T10:00:00.000Z')
+	}
+];
+
 function surfaces() {
 	const emailResetService = {
 		requestChangeEmail: jest.fn().mockResolvedValue(OUTCOME),
-		verifyCode: jest.fn().mockResolvedValue(OUTCOME)
+		verifyCode: jest.fn().mockResolvedValue(OUTCOME),
+		findForUser: jest.fn().mockResolvedValue(VIEWS)
 	};
 
 	return {
@@ -158,13 +182,17 @@ describe('EmailResetResolver — the SDL declares the capabilities the REST rout
 		expect(ownedRootFields('Mutation')).toEqual(['requestEmailReset', 'verifyEmailReset']);
 	});
 
-	it('declares no read, because the controller serves none', () => {
-		// The delivered controller declares two `POST` routes, and neither the list nor the node nor the
-		// count of the reset row is one of them. A root field here would be a capability REST does not
-		// serve — the same defect as a route without a field, only in the other direction.
-		expect(ownedRootFields('Query')).toEqual([]);
-		expect(printed).not.toMatch(/emailReset[A-Za-z]*\(/);
+	it('declares the one read the controller serves, as a connection that never carries the secret', () => {
+		// The list route is the only read: there is no node and no count route, so no field for either.
+		expect(ownedRootFields('Query')).toEqual(['emailResets']);
 		expect(printed).not.toMatch(/emailResetCount/);
+		expect(printed).toMatch(/emailResets\([^)]*userId: ID[^)]*\): EmailResetConnection!/);
+		// The code and the token are what a request is proved with; neither is a member, nor filterable.
+		const body = typeBody('EmailReset');
+		expect(body).toMatch(/email: String!/);
+		expect(body).toMatch(/isExpired: Boolean!/);
+		expect(body).not.toMatch(/^\s*(code|token)\s*:/m);
+		expect(inputBody('EmailResetFilter')).not.toMatch(/^\s*(code|token)\s*:/m);
 	});
 
 	it('declares the acknowledgement both routes answer with', () => {
@@ -240,8 +268,96 @@ describe('EmailResetResolver — one concept, two protocols, the same operations
  */
 const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'requestEmailReset', route: 'requestChangeEmail' },
-	{ field: 'verifyEmailReset', route: 'verifyChangeEmail' }
+	{ field: 'verifyEmailReset', route: 'verifyChangeEmail' },
+	{ field: 'emailResets', route: 'findAll' }
 ];
+
+describe('EmailResetResolver — the requests, read without their secrets', () => {
+	it('reads through the same service method the list route calls', async () => {
+		const { resolver, emailResetService } = surfaces();
+
+		const own = await resolver.emailResets();
+		expect(emailResetService.findForUser).toHaveBeenCalledWith(undefined);
+		expect(own.nodes.map((node) => node.id)).toEqual(['reset-2', 'reset-1']);
+
+		const lapsed = await resolver.emailResets('user-1', { isExpired: { eq: true } });
+		expect(emailResetService.findForUser).toHaveBeenLastCalledWith('user-1');
+		expect(lapsed.nodes.map((node) => node.id)).toEqual(['reset-1']);
+
+		const controller = new EmailResetController(emailResetService as never);
+		expect(await controller.findAll({ userId: 'user-2' })).toBe(VIEWS);
+		expect(emailResetService.findForUser).toHaveBeenLastCalledWith('user-2');
+	});
+});
+
+describe('EmailResetService.findForUser — one user’s requests, never their code or token', () => {
+	const TENANT = 'tenant-1';
+	const CALLER = 'user-1';
+	const OTHER = 'user-2';
+
+	/** The service over a scripted tenant-scoped read that returns the secrets anyway. */
+	function service() {
+		const instance = Object.create(EmailResetService.prototype) as EmailResetService;
+		const find = jest.fn().mockResolvedValue([
+			{
+				id: 'reset-1',
+				email: 'new@example.com',
+				oldEmail: 'old@example.com',
+				userId: CALLER,
+				tenantId: TENANT,
+				code: '123456',
+				token: 'jwt.secret.token',
+				expiredAt: new Date(Date.now() - 60_000),
+				createdAt: new Date('2026-09-01T10:00:00.000Z')
+			}
+		]);
+		Object.assign(instance, { find });
+
+		return { instance, find };
+	}
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('reads the caller’s own requests by default, selecting neither the code nor the token', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(CALLER);
+		const { instance, find } = service();
+
+		const [view] = await instance.findForUser();
+
+		const options = find.mock.calls[0][0];
+		expect(options.where).toEqual({ tenantId: TENANT, userId: CALLER });
+		expect(options.select.code).toBeUndefined();
+		expect(options.select.token).toBeUndefined();
+		// Even a read that returned them could not pass them on: the view is built member by member.
+		expect(view).not.toHaveProperty('code');
+		expect(view).not.toHaveProperty('token');
+		expect(view.isExpired).toBe(true);
+	});
+
+	it('reads another user’s requests only for a caller who may edit users', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(CALLER);
+		const permission = jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+		const { instance, find } = service();
+
+		await expect(instance.findForUser(OTHER)).rejects.toBeInstanceOf(ForbiddenException);
+		expect(find).not.toHaveBeenCalled();
+
+		permission.mockReturnValue(true);
+		await instance.findForUser(OTHER);
+		expect(find.mock.calls[0][0].where).toEqual({ tenantId: TENANT, userId: OTHER });
+	});
+
+	it('refuses a request that carries no user or no tenant', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(CALLER);
+		const { instance, find } = service();
+
+		await expect(instance.findForUser()).rejects.toBeInstanceOf(UnauthorizedException);
+		expect(find).not.toHaveBeenCalled();
+	});
+});
 
 describe('EmailResetResolver — the guard stack and the permission are the controller’s', () => {
 	it('guards the resolver the way the controller is guarded', () => {

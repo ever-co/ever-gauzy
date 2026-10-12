@@ -470,6 +470,28 @@ type Query {
   emailHistories(filter: EmailHistoryFilter, sort: [EmailHistorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmailHistoryConnection!
 
   """
+  The address-change requests of one user of the caller's tenant, newest first — never with their
+  verification code or token.
+  
+  Mirrors `GET /email-reset`, under the class's pair. Omit `userId` for the caller's own requests; another
+  user's are refused unless the caller holds `ORG_USERS_EDIT`. At most a hundred are read. No request is
+  ever withdrawn, so there is no `withDeleted`.
+  """
+  emailResets(
+    """The user whose requests are read. Omit it for the caller."""
+    userId: ID
+    filter: EmailResetFilter
+    sort: [EmailResetSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): EmailResetConnection!
+
+  """
   The message parts of the caller's tenant, with the organization-less copies the whole tenant falls
   back to, in the order of the address they are read by.
   """
@@ -1038,6 +1060,16 @@ type Query {
   mySplitExpenses(filterDate: DateTime): [ExpenseSplitRow!]!
 
   """
+  The expense report's figures as exact totals: per currency, and per day, employee and project.
+  
+  Mirrors `GET /expense/statistics`, under the view grant. The rows are the ones the report route reads:
+  the credential's tenant and organization, the window stated (the current week when none is), the
+  employees, projects and category stated, and — for a caller without `CHANGE_SELECTED_EMPLOYEE`, or one
+  that sets `onlyMe` — the caller's own expenses only. Every amount is an exact decimal per currency.
+  """
+  expenseStatistics(startDate: DateTime, endDate: DateTime, employeeIds: [ID!], projectIds: [ID!], categoryId: ID, onlyMe: Boolean): ExpenseStatistics!
+
+  """
   The import ledger of the caller's tenant, newest import first: one entry per archive the platform
   took in, with the outcome recorded on it.
   """
@@ -1430,6 +1462,16 @@ type Query {
   The highest number the caller's tenant's series has reached, or zero when it has issued none.
   """
   highestInvoiceNumber: InvoiceNumberSeries!
+
+  """
+  The caller's organization's invoices — or, with `isEstimate: true`, its estimates — counted and totalled
+  per currency and per status, as exact decimals.
+  
+  Mirrors `GET /invoices/statistics`, under `INVOICES_VIEW`. The tenant and the organization are the
+  credential's; a withdrawn document is not counted, and amounts in different currencies are never added
+  together. This is not the platform-wide invoice count the global statistics read, which spans tenants.
+  """
+  invoiceStatistics(isEstimate: Boolean): InvoiceStatistics!
 
   """
   The document as a PDF, for the caller's own language.
@@ -2035,6 +2077,34 @@ type Query {
     organizationId: ID!
   ): [PayrollSummary!]!
 
+  """
+  The payroll lines of one organization across its runs, newest first, optionally narrowed to one run or
+  one employee.
+  
+  Mirrors `GET /payroll-run/items`. Read under the caller's tenant and the organization named, and paged at
+  the store as the run list is (at most 100 lines per read); the connection narrows and orders that page.
+  A line is removed outright rather than withdrawn, so there is no `withDeleted`.
+  """
+  payrollItems(
+    """The organization whose lines are read."""
+    organizationId: ID!
+
+    """Only the lines of this run."""
+    payrollRunId: ID
+
+    """Only the lines paid to this employee."""
+    employeeId: ID
+    filter: PayrollItemFilter
+    sort: [PayrollItemSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): PayrollItemConnection!
+
   """The pipelines of the caller's tenant, newest first."""
   pipelines(filter: PipelineFilter, sort: [PipelineSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): PipelineConnection!
 
@@ -2194,6 +2264,16 @@ type Query {
   """
   productCount: Int
 
+  """
+  The invoice a share link opens, read by the link's own identifier and token.
+  
+  The token must be an invoice-share token for exactly this invoice and must equal the link currently
+  stored on it, so regenerating the link revokes the old one. Every miss — a wrong token, a token of
+  another kind, another invoice's token, a revoked link — is the same refusal, so this field cannot be
+  used to learn which links are live. The internal note is always null here.
+  """
+  invoiceByToken(id: ID!, token: String!): Invoice
+
   """The reactions of the caller's tenant, newest first."""
   reactions(filter: ReactionFilter, sort: [ReactionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ReactionConnection!
 
@@ -2246,6 +2326,30 @@ type Query {
   The categories a report may be filed under, which is the other half of the menu a client assembles.
   """
   reportCategories(filter: ReportCategoryFilter, sort: [ReportCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ReportCategoryConnection!
+
+  """
+  The reports one organization's menu shows: those whose menu row for it is enabled, active and not
+  archived, under the caller's tenant. Every row answers `showInMenu: true`.
+  
+  Mirrors `GET /report/menu-items` through the same reader, and like that route states no permission,
+  because every signed-in member loads its organization's menu. The organization is the argument when
+  stated and the credential's otherwise. The route takes no `withDeleted`, so neither does this field.
+  """
+  reportMenuItems(
+    """
+    The organization whose menu is read. Omit it for the credential's organization.
+    """
+    organizationId: ID
+    filter: ReportFilter
+    sort: [ReportSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ReportConnection!
 
   """
   The approval requests of the caller's organization, newest first.
@@ -2560,6 +2664,17 @@ type Query {
   taskMaxNumber(projectId: ID): Int
 
   """
+  One task of the caller's organization by its human key — the project prefix and the number a person
+  reads off a board (`FUL-12`) — or null when no task carries it.
+  
+  The number is unique within a project, but the prefix is not unique across projects (it is the first
+  three characters of the project's name), so `projectId` disambiguates: a key that names more than one
+  task without it is refused rather than answered with whichever row the store returned first. The
+  organization and the tenant are read from the credential. Mirrors `GET /tasks/by-number/:prefix/:number`.
+  """
+  taskByNumber(prefix: String!, number: Int!, projectId: ID): Task
+
+  """
   The estimates the caller's tenant holds. One task's estimates are this connection with `taskId` in
   `filter`.
   """
@@ -2742,6 +2857,15 @@ type Query {
     """
     locale: String
   ): [TermsAcceptanceDocument!]!
+
+  """
+  The caller's own acceptances in the caller's tenant, newest first, integrity-checked.
+  
+  Mirrors `GET /terms/acceptances`, under `PROFILE_EDIT`. The person and the tenant are the credential's,
+  so this answers "what have I accepted here?" and never another user's evidence. The records are
+  append-only and carry no soft-delete marker, so there is no `withDeleted`.
+  """
+  termsAcceptances(filter: TermsAcceptanceFilter, sort: [TermsAcceptanceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TermsAcceptanceConnection!
 
   """
   The leave balances the caller may see, newest year first.
@@ -7848,6 +7972,17 @@ type Mutation {
   updateOrganizationTeam(input: UpdateOrganizationTeamInput!): OrganizationTeam!
 
   """
+  Adds one employee to a team, or changes whether that member manages it, without restating the rest of
+  the team.
+  
+  Mirrors `POST /organization-team/:id/members`, under the same permission as `updateOrganizationTeam`,
+  which it rides on: the team's current members plus this one are handed to that same edit, so the same
+  rules decide who may edit which team. An employee outside the organization is refused. Leaving
+  `isManager` out keeps an existing member's role; a new member joins as a member.
+  """
+  addTeamMember(input: AddTeamMemberInput!): OrganizationTeam!
+
+  """
   Removes a team outright, with the membership rows that belong to it.
   
   The delivered answer is the removal result — its signature admits the row beside it — and the one
@@ -8055,6 +8190,15 @@ type Mutation {
   which is the one member of that result a caller reads.
   """
   removePayrollRunItem(id: ID!, itemId: ID!, organizationId: ID!): Boolean!
+
+  """
+  Edits one line of a draft run and recomputes the run's totals from its lines, in integer cents.
+  
+  Mirrors `PUT /payroll-run/:id/items/:itemId`. The run and the line are identifiers, not input members. A
+  line of a run that is not a draft is refused, and a line moved to another employee must move to one of
+  the same organization. A member left out is left as it is.
+  """
+  updatePayrollItem(id: ID!, itemId: ID!, input: UpdatePayrollItemInput!): PayrollItem!
 
   """Files a pipeline, with the stages it starts with."""
   createPipeline(input: CreatePipelineInput!): Pipeline!
@@ -8415,6 +8559,36 @@ type Mutation {
   updateReportMenu(input: UpdateReportMenuInput!): ReportOrganization!
 
   """
+  Files one report into the platform-wide catalogue. `SUPER_ADMIN` only — the catalogue has no tenant,
+  so an entry is offered to every tenant's menu, where each organization still switches it on itself.
+  
+  Mirrors `POST /report`. The slug must be lowercase words joined by hyphens and not taken by a live
+  report, and the category must be a live one.
+  """
+  createReport(input: CreateReportInput!): Report!
+
+  """
+  Files one heading of the platform-wide report catalogue. `SUPER_ADMIN` only. Mirrors
+  `POST /report/category`.
+  """
+  createReportCategory(input: CreateReportCategoryInput!): ReportCategory!
+
+  """
+  Edits one heading of the catalogue; a member left out is left as it is. `SUPER_ADMIN` only. Mirrors
+  `PUT /report/category/:id`.
+  """
+  updateReportCategory(input: UpdateReportCategoryInput!): ReportCategory!
+
+  """
+  Withdraws one heading of the catalogue by soft delete. `SUPER_ADMIN` only. Mirrors
+  `DELETE /report/category/:id`.
+  
+  Refused while a live report is filed under the category. Answers `false` for a category that is not
+  there, rather than claiming a removal that did not happen.
+  """
+  deleteReportCategory(id: ID!): Boolean!
+
+  """
   Raises a request for approval.
   
   The same service method the delivered route calls, with the same body: the delivered create builds
@@ -8568,6 +8742,17 @@ type Mutation {
   recoverRole(id: ID!): Role!
 
   """
+  Creates, in the caller's own tenant, every default role the tenant does not hold, and answers the
+  roles it created — none when the tenant already holds them all.
+  
+  Mirrors `POST /roles/bulk`, the bulk write tenant onboarding performs, restricted to the credential's
+  tenant: there is no argument, so no caller can write roles into another tenant. `SUPER_ADMIN` only.
+  A withdrawn default role is left for `recoverRole` rather than duplicated, and a created role starts
+  with no permission rows.
+  """
+  bulkCreateTenantRoles: [Role!]!
+
+  """
   Opens a numbering series.
   
   `key` and the channel are the series' identity and are stated here once; the counter is stated here
@@ -8719,6 +8904,19 @@ type Mutation {
 
   """Removes a task outright."""
   deleteTask(id: ID!): Boolean!
+
+  """
+  Retires a task without removing it: it leaves every list and can be put back with `recoverTask`.
+  
+  Mirrors `DELETE /tasks/:id/soft`, under the permission that inherited route runs under. A task that is
+  not there, or belongs to another tenant, is refused rather than answered.
+  """
+  softDeleteTask(id: ID!): Task!
+
+  """
+  Puts a retired task back, clearing the marker `softDeleteTask` set. Mirrors `PUT /tasks/:id/recover`.
+  """
+  recoverTask(id: ID!): Task!
 
   """
   Takes one employee off every task of one team.
@@ -8954,6 +9152,20 @@ type Mutation {
   generateTenantApiKeyPair(input: GenerateTenantApiKeyInput!): TenantApiKeyPair!
 
   """
+  Renames the caller's tenant's API key. The name is the only member that changes after issuance; the
+  answer carries neither the key nor the secret. Mirrors `PUT /tenant-api-key`, under
+  `TENANT_API_KEY_CREATE`.
+  """
+  updateTenantApiKey(input: UpdateTenantApiKeyInput!): TenantApiKeySummary!
+
+  """
+  Revokes the caller's tenant's API key: it stops authenticating at once, and a new pair can then be
+  generated. The key is withdrawn rather than erased, so its record is kept. Answers `false` when the
+  tenant held no key. Mirrors `DELETE /tenant-api-key`, under `TENANT_API_KEY_DELETE`.
+  """
+  revokeTenantApiKey: Boolean!
+
+  """
   Files a tenant and onboards the caller into it: the delivered creation, which stamps the caller as
   the new tenant's owner. A caller that already belongs to a tenant is refused, as the delivered
   route refuses it.
@@ -9025,6 +9237,17 @@ type Mutation {
 
   """Changes the UI flavour this tenant's users are served."""
   updateTenantUiPreferences(input: UpdateTenantUiPreferencesInput!): TenantUiPreferences!
+
+  """
+  Records the caller's acceptance of the documents it was shown — the re-accept path for an account that
+  already exists, when a document it accepted at signup has been republished.
+  
+  Mirrors `POST /terms/accept`, under `PROFILE_EDIT`. The person is the credential's and is not a member of
+  the input, so an acceptance is always one's own. Every claim is checked against the published corpus
+  before anything is written (an unpublished digest is a `400`), and a repeated submission answers the
+  records already on file rather than writing a second one.
+  """
+  acceptTerms(input: AcceptTermsInput!): [TermsAcceptance!]!
 
   """
   Sets the accrued days of one employee's balance under one policy for one year, creating the row when
@@ -17655,6 +17878,77 @@ input VerifyEmailResetInput {
   code: String!
 }
 
+"""
+One request to change the address on an account, without its secrets.
+
+The verification code and the token are deliberately not members: they are what the request is proved
+with, so a reader who could see them could complete a change that is not theirs.
+"""
+type EmailReset {
+  id: ID!
+
+  """The address the account is to be changed to."""
+  email: String!
+
+  """The address the account had when the request was made."""
+  oldEmail: String!
+
+  """The user who asked."""
+  userId: ID
+
+  """Whether the code has lapsed and can no longer be presented."""
+  isExpired: Boolean!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of requests."""
+type EmailResetEdge {
+  node: EmailReset!
+  cursor: String!
+}
+
+"""
+One page of requests, with the total the filters select and the boundary cursors.
+"""
+type EmailResetConnection {
+  nodes: [EmailReset!]!
+  edges: [EmailResetEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a request list may be sorted by."""
+enum EmailResetSortField {
+  createdAt
+  updatedAt
+  email
+}
+
+"""
+The order the requests are returned in. At most three keys are accepted.
+"""
+input EmailResetSort {
+  field: EmailResetSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a request list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it. There is no member for the code or the token.
+"""
+input EmailResetFilter {
+  id: IDFilter
+  email: StringFilter
+  oldEmail: StringFilter
+  isExpired: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [EmailResetFilter!]
+  or: [EmailResetFilter!]
+  not: EmailResetFilter
+}
+
 """One part of one message, in one language."""
 type EmailTemplate {
   id: ID!
@@ -22507,6 +22801,65 @@ input UpdateExpenseInput {
 }
 
 """
+One total of expense amounts: how many rows, and their exact sum, in one currency.
+"""
+type ExpenseTotal {
+  """The currency every amount in this total is denominated in."""
+  currency: String!
+
+  """How many expenses the total sums."""
+  count: Int!
+
+  """The exact sum of their amounts."""
+  amount: Decimal!
+}
+
+"""
+One day's total in one currency. `date` is the UTC calendar day of the expenses' value date.
+"""
+type ExpenseDailyTotal {
+  """The day, `YYYY-MM-DD`."""
+  date: String!
+  currency: String!
+  count: Int!
+  amount: Decimal!
+}
+
+"""
+One employee's or one project's total in one currency. `id` is null for the expenses that name none.
+"""
+type ExpenseGroupTotal {
+  """The employee or the project, or null for the expenses that name none."""
+  id: ID
+  currency: String!
+  count: Int!
+  amount: Decimal!
+}
+
+"""
+The expense report's figures as exact totals.
+
+Every list is per currency as well as per its own key, because adding amounts denominated in different
+currencies produces a number that means nothing. `daily` names only the days that have expenses.
+"""
+type ExpenseStatistics {
+  """How many expenses the selectors select."""
+  count: Int!
+
+  """The totals per currency."""
+  totals: [ExpenseTotal!]!
+
+  """The totals per day and currency, oldest day first."""
+  daily: [ExpenseDailyTotal!]!
+
+  """The totals per employee and currency."""
+  byEmployee: [ExpenseGroupTotal!]!
+
+  """The totals per project and currency."""
+  byProject: [ExpenseGroupTotal!]!
+}
+
+"""
 One ledger entry for one import: the archive that was taken in, and what became of it.
 """
 type ImportHistory {
@@ -26442,6 +26795,47 @@ series is the column's own and a 32-bit integer would refuse a series the column
 type InvoiceNumberSeries {
   """The highest number issued, or zero when the tenant has issued none."""
   max: Decimal!
+}
+
+"""The invoices of one currency: how many, and their exact total."""
+type InvoiceCurrencyTotal {
+  """The currency every value in this total is denominated in."""
+  currency: String!
+
+  """How many documents the total sums."""
+  count: Int!
+
+  """
+  The exact sum of their totals. A document with no stored total counts and adds nothing.
+  """
+  totalValue: Decimal!
+}
+
+"""
+The invoices of one status in one currency: how many, and their exact total.
+"""
+type InvoiceStatusTotal {
+  """
+  The status, as the contracts' own value (`DRAFT`, `SENT`, `FULLY_PAID`, …), or null when none is stored.
+  """
+  status: String
+  currency: String!
+  count: Int!
+  totalValue: Decimal!
+}
+
+"""
+One organization's invoices (or estimates), counted and totalled per currency and per status.
+"""
+type InvoiceStatistics {
+  """How many documents the organization holds."""
+  count: Int!
+
+  """The totals per currency."""
+  totals: [InvoiceCurrencyTotal!]!
+
+  """The totals per status and currency."""
+  byStatus: [InvoiceStatusTotal!]!
 }
 
 """
@@ -32136,6 +32530,23 @@ input OrganizationTeamDeleteInput {
   organizationId: ID!
 }
 
+"""What a caller states when it adds one employee to a team."""
+input AddTeamMemberInput {
+  """The team."""
+  organizationTeamId: ID!
+
+  """The organization the team belongs to."""
+  organizationId: ID!
+
+  """The employee to add. Must be an employee of the same organization."""
+  employeeId: ID!
+
+  """
+  Whether the employee manages the team. Leave it out to keep an existing member's role.
+  """
+  isManager: Boolean
+}
+
 """One supplier an expense may be recorded against."""
 type OrganizationVendor {
   id: ID!
@@ -33859,6 +34270,95 @@ input CreatePayrollItemInput {
   Whether the amount is subject to tax. Omit for the delivered default, which is taxable.
   """
   taxable: Boolean
+}
+
+"""
+What a caller states when it edits one line of a draft run. A member left out is left as it is.
+"""
+input UpdatePayrollItemInput {
+  """The organization the run belongs to. The run is read under it."""
+  organizationId: ID!
+
+  """
+  The employee the line is paid to. Must be an employee of the same organization.
+  """
+  employeeId: ID
+
+  """
+  What the line represents. The delivered vocabulary is the platform's own.
+  """
+  type: String
+
+  """
+  Whether the line adds to or subtracts from net pay: `EARNING` or `DEDUCTION`.
+  """
+  category: String
+
+  """What the line is for."""
+  description: String
+
+  """Always a positive amount; the category decides the sign."""
+  amount: Decimal
+
+  """How many units the line covers, when it is a rate."""
+  quantity: Decimal
+
+  """The rate one unit is paid at, when it is a rate."""
+  unitPrice: Decimal
+
+  """Whether the amount is subject to tax."""
+  taxable: Boolean
+}
+
+"""The boundary of one page of payroll lines."""
+type PayrollItemEdge {
+  node: PayrollItem!
+  cursor: String!
+}
+
+"""
+One page of payroll lines, with the total the filters select and the boundary cursors.
+"""
+type PayrollItemConnection {
+  nodes: [PayrollItem!]!
+  edges: [PayrollItemEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a payroll line list may be sorted by."""
+enum PayrollItemSortField {
+  createdAt
+  updatedAt
+  amount
+  type
+  category
+}
+
+"""The order the lines are returned in. At most three keys are accepted."""
+input PayrollItemSort {
+  field: PayrollItemSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a payroll line list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it. The organization is an argument of the root field, not a filter.
+"""
+input PayrollItemFilter {
+  id: IDFilter
+  payrollRunId: IDFilter
+  employeeId: IDFilter
+  type: StringFilter
+  category: StringFilter
+  description: StringFilter
+  amount: DecimalFilter
+  taxable: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [PayrollItemFilter!]
+  or: [PayrollItemFilter!]
+  not: PayrollItemFilter
 }
 
 """An ordered set of stages a deal moves through."""
@@ -35942,10 +36442,9 @@ input ReportCategorySort {
 The fields a report list may be narrowed by. `and` is the default; `or` requires any of its members
 and `not` excludes the rows that match it.
 
-`showInMenu` is filterable because that is how the delivered menu sub-route is expressed here: the
-reports the menu shows are this one list narrowed to `showInMenu: { eq: true }`, which is the same
-selection the menu route performs with its own join rather than a second root field over the same
-rows.
+`showInMenu` is filterable because the reports the menu shows are this one list narrowed to
+`showInMenu: { eq: true }` — the same selection the menu route performs with its own join, which
+`reportMenuItems` serves under the route's own name.
 
 There is no member for the organization. The catalogue row carries no organization column — the
 organization is a dimension of the *menu* row — so an organization filter here could only be
@@ -36010,6 +36509,59 @@ input UpdateReportMenuInput {
   Whether the report is shown. Omit it to leave the row's own value as it is.
   """
   isEnabled: Boolean
+}
+
+"""
+What a `SUPER_ADMIN` states when it files a report into the platform-wide catalogue.
+
+`showInMenu` is not a member: it is computed per organization from that organization's menu rows.
+"""
+input CreateReportInput {
+  """The report's name, 1 to 255 characters."""
+  name: String!
+
+  """
+  The key a client routes by: lowercase words joined by single hyphens, not taken by a live report.
+  """
+  slug: String!
+
+  """What the report shows."""
+  description: String
+
+  """The image the catalogue shows for it."""
+  image: String
+
+  """The icon the menu shows for it."""
+  iconClass: String
+
+  """The live category the report is filed under."""
+  categoryId: ID!
+}
+
+"""
+What a `SUPER_ADMIN` states when it files a heading of the report catalogue.
+"""
+input CreateReportCategoryInput {
+  """The heading, 1 to 255 characters."""
+  name: String!
+
+  """The icon the menu shows for it."""
+  iconClass: String
+}
+
+"""
+What a `SUPER_ADMIN` states when it edits a heading of the report catalogue. A member left out is left
+as it is.
+"""
+input UpdateReportCategoryInput {
+  """The category to edit."""
+  id: ID!
+
+  """The heading, 1 to 255 characters."""
+  name: String
+
+  """The icon the menu shows for it."""
+  iconClass: String
 }
 
 """One request for approval, as the delivered reads answer it."""
@@ -39224,6 +39776,35 @@ input GenerateTenantApiKeyInput {
 }
 
 """
+A tenant's API key as an administrator may read it back: which pair it is and what it is called.
+
+Neither the key nor the secret is a member. The secret is shown once, at issuance (`TenantApiKeyPair`),
+and stored only as a digest; a new pair is had by revoking this one and generating again.
+"""
+type TenantApiKeySummary {
+  id: ID!
+
+  """The tenant the key authenticates as."""
+  tenantId: ID!
+
+  """The label the key carries."""
+  name: String
+
+  """
+  Whether the key authenticates. A revoked key is withdrawn and is not read back at all.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""What a caller states when it renames its tenant's key."""
+input UpdateTenantApiKeyInput {
+  """The new label, 1 to 255 characters."""
+  name: String!
+}
+
+"""
 One tenant: the customer record every other row of this installation is scoped by.
 """
 type Tenant {
@@ -39613,6 +40194,104 @@ type TermsAcceptanceDocument {
 
   """The date this version takes effect, when the corpus declares one."""
   effectiveDate: String
+}
+
+"""
+One acceptance on file: which document, which version of it, the digest of the exact text that was
+shown, and when and how consent was given.
+
+The record is evidence rather than a preference: the digest pins the wording, and the fingerprint is the
+recorder's integrity digest over every other member, so a row altered in storage is detectable. The
+salted address hash and the user-agent the recorder also keeps are not members here — they identify a
+device, and nothing a client does with this read needs them.
+"""
+type TermsAcceptance {
+  """The record's identifier."""
+  id: ID!
+
+  """The stable document identifier, `<document>:<product>`."""
+  documentId: String!
+
+  """The version of the document that was accepted."""
+  version: String!
+
+  """The lowercase hex digest of the exact document source that was shown."""
+  sha256: String!
+
+  """The locale of the text that was shown."""
+  locale: String!
+
+  """When the acceptance happened."""
+  acceptedAt: DateTime!
+
+  """
+  How consent was obtained: `signup-checkbox`, `invite-accept`, `api`, and the recorder's other methods.
+  """
+  method: String!
+
+  """The recorder's integrity digest over every other member of the record."""
+  fingerprint: String!
+}
+
+"""The boundary of one page of acceptances."""
+type TermsAcceptanceEdge {
+  node: TermsAcceptance!
+  cursor: String!
+}
+
+"""
+One page of the caller's acceptances, with the total the filters select and the boundary cursors.
+"""
+type TermsAcceptanceConnection {
+  nodes: [TermsAcceptance!]!
+  edges: [TermsAcceptanceEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields an acceptance history may be sorted by."""
+enum TermsAcceptanceSortField {
+  acceptedAt
+  documentId
+  version
+}
+
+"""
+The order the acceptances are returned in. At most three keys are accepted.
+"""
+input TermsAcceptanceSort {
+  field: TermsAcceptanceSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields an acceptance history may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it. The person and the tenant are not members: both are
+the credential's.
+"""
+input TermsAcceptanceFilter {
+  id: IDFilter
+  documentId: StringFilter
+  version: StringFilter
+  locale: StringFilter
+  method: StringFilter
+  acceptedAt: DateTimeFilter
+  and: [TermsAcceptanceFilter!]
+  or: [TermsAcceptanceFilter!]
+  not: TermsAcceptanceFilter
+}
+
+"""
+What a caller states when it accepts documents: the documents, and nothing that names a person.
+
+Each claim is the `TermsAcceptanceClaimInput` the invite-acceptance input already declares — one shape for
+"a document I was shown", whichever flow records it.
+"""
+input AcceptTermsInput {
+  """
+  The documents that were shown and accepted, exactly as `termsAcceptanceDocuments` published them. 1 to 20.
+  """
+  terms: [TermsAcceptanceClaimInput!]!
 }
 
 """

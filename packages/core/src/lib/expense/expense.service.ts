@@ -1,16 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
 import * as moment from 'moment';
 import { chain } from 'underscore';
-import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	DecimalString,
+	ID,
+	IDateRangePicker,
+	IExpense,
+	IGetExpenseInput,
+	IPagination,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { addDecimalStrings, normalizeDecimalString } from '../money/decimal';
 import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
+
+/** One total of expense amounts: how many rows, and their exact sum, in one currency. */
+export interface IExpenseTotal {
+	currency: string;
+	count: number;
+	amount: DecimalString;
+}
+
+/** One day's total in one currency. `date` is the UTC calendar day of the expense's value date. */
+export interface IExpenseDailyTotal extends IExpenseTotal {
+	date: string;
+}
+
+/** One employee's or one project's total in one currency; `id` is null for the rows that name none. */
+export interface IExpenseGroupTotal extends IExpenseTotal {
+	id: ID | null;
+}
+
+/**
+ * The expense report's figures as exact totals: the rows the report reads, summed per currency and per
+ * each of the report's three groupings (day, employee, project).
+ */
+export interface IExpenseStatistics {
+	count: number;
+	totals: IExpenseTotal[];
+	daily: IExpenseDailyTotal[];
+	byEmployee: IExpenseGroupTotal[];
+	byProject: IExpenseGroupTotal[];
+}
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
@@ -131,6 +169,82 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				return await query.getMany();
 			}
 		}
+	}
+
+	/**
+	 * The expense report's figures as exact totals.
+	 *
+	 * The rows are the ones `GET /expense/report` reads — the same reader, so the same tenant (the
+	 * credential's), the same organization, the same window (the current week when none is stated), the same
+	 * employee, project and category narrowing, and the same rule that a caller without
+	 * `CHANGE_SELECTED_EMPLOYEE` reads their own expenses only. What differs is the answer: the report nests
+	 * the rows by date, employee and project and the daily chart rounds each day to one decimal place, while
+	 * this sums them exactly — as decimal strings, never as binary floats — per currency, because adding two
+	 * currencies together produces a number that means nothing. The page the report reader accepts is not
+	 * applied: a total over a page is not a total.
+	 *
+	 * @param request The report's own selectors.
+	 * @returns The count, the totals per currency, and the totals per day, employee and project.
+	 */
+	async getStatistics(request: IGetExpenseInput): Promise<IExpenseStatistics> {
+		// The reader puts the organization into its criterion as stated; an absent one would drop out of a
+		// MikroORM criterion altogether and widen the totals to every organization of the tenant.
+		if (!request?.organizationId) {
+			throw new BadRequestException('EXPENSE_ORGANIZATION_REQUIRED: expense statistics are per organization.');
+		}
+
+		const rows = (await this.getExpense({ ...request, limit: undefined, page: undefined })) as IExpense[];
+
+		const totals = new Map<string, IExpenseTotal>();
+		const daily = new Map<string, IExpenseDailyTotal>();
+		const byEmployee = new Map<string, IExpenseGroupTotal>();
+		const byProject = new Map<string, IExpenseGroupTotal>();
+
+		/** Adds one amount to the bucket a key names, creating it on first use. */
+		const add = <B extends IExpenseTotal>(
+			buckets: Map<string, B>,
+			key: string,
+			seed: () => B,
+			amount: DecimalString
+		): void => {
+			const bucket = buckets.get(key) ?? seed();
+			bucket.count += 1;
+			bucket.amount = addDecimalStrings(bucket.amount, amount);
+			buckets.set(key, bucket);
+		};
+
+		for (const row of rows ?? []) {
+			const currency = row.currency;
+			// The column is numeric; a driver may hand it over as a number or as text. Either is read as the
+			// exact decimal it spells, which is what makes the sum below exact.
+			const amount = normalizeDecimalString(row.amount ?? 0);
+			const date = moment.utc(row.valueDate).format('YYYY-MM-DD');
+			const employeeId = row.employeeId ?? null;
+			const projectId = row.projectId ?? null;
+
+			const zero = { currency, count: 0, amount: '0' };
+
+			add(totals, currency, () => ({ ...zero }), amount);
+			add(daily, `${date}|${currency}`, () => ({ ...zero, date }), amount);
+			add(byEmployee, `${employeeId}|${currency}`, () => ({ ...zero, id: employeeId }), amount);
+			add(byProject, `${projectId}|${currency}`, () => ({ ...zero, id: projectId }), amount);
+		}
+
+		const normalized = <B extends IExpenseTotal>(buckets: Map<string, B>): B[] =>
+			Array.from(buckets.values()).map((bucket) => ({
+				...bucket,
+				amount: normalizeDecimalString(bucket.amount)
+			}));
+
+		return {
+			count: rows?.length ?? 0,
+			totals: normalized(totals),
+			daily: normalized(daily).sort(
+				(left, right) => left.date.localeCompare(right.date) || left.currency.localeCompare(right.currency)
+			),
+			byEmployee: normalized(byEmployee),
+			byProject: normalized(byProject)
+		};
 	}
 
 	/**

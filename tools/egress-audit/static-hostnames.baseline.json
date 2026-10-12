@@ -1,0 +1,870 @@
+{
+	"description": "Ever hosts (and Ever Platform base URL variables) that Gauzy code outside the Ever Platform modules named before the modules: the product site, legal pages, documentation, demo accounts, downloads. Written by `node tools/egress-audit/static-hostnames.mjs --write`; it may only shrink (checked against the base of every pull request). `code`: per tracked file and host, the occurrences; `bundle`: the hosts the built web app names.",
+	"code": {
+		".deploy/api/Dockerfile": {
+			"ever.co": 1,
+			"packages.ever.co": 13
+		},
+		".deploy/k8s/k8s-manifest.civo.demo.yaml": {
+			"apidemocivo.gauzy.co": 4,
+			"democivo.gauzy.co": 4
+		},
+		".deploy/k8s/k8s-manifest.civo.prod.yaml": {
+			"apicivo.gauzy.co": 4,
+			"appcivo.gauzy.co": 4
+		},
+		".deploy/k8s/k8s-manifest.civo.stage.yaml": {
+			"apistagecivo.gauzy.co": 4,
+			"stagecivo.gauzy.co": 4
+		},
+		".deploy/k8s/k8s-manifest.cw.demo.yaml": {
+			"apidemocw.gauzy.co": 4,
+			"democw.gauzy.co": 4
+		},
+		".deploy/k8s/k8s-manifest.cw.prod.yaml": {
+			"apicw.gauzy.co": 4,
+			"appcw.gauzy.co": 4
+		},
+		".deploy/k8s/k8s-manifest.cw.stage.yaml": {
+			"apistagecw.gauzy.co": 4,
+			"stagecw.gauzy.co": 4
+		},
+		".deploy/k8s/k8s-manifest.demo.yaml": {
+			"apidemo.gauzy.co": 5,
+			"demo.gauzy.co": 5
+		},
+		".deploy/k8s/k8s-manifest.mcp-auth.demo.yaml": {
+			"mcpauthdemo.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.mcp-auth.prod.yaml": {
+			"mcpauth.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.mcp-auth.stage.yaml": {
+			"mcpauthstage.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.mcp.demo.yaml": {
+			"mcpdemo.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.mcp.prod.yaml": {
+			"mcp.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.mcp.stage.yaml": {
+			"mcpstage.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.prod.yaml": {
+			"api.gauzy.co": 5,
+			"app.gauzy.co": 5,
+			"pm-space.gauzy.co": 2,
+			"pm.gauzy.co": 2
+		},
+		".deploy/k8s/k8s-manifest.stage.yaml": {
+			"apistage.gauzy.co": 5,
+			"stage.gauzy.co": 5
+		},
+		".deploy/mcp-auth/Dockerfile": {
+			"ever.co": 1,
+			"packages.ever.co": 12
+		},
+		".deploy/mcp/Dockerfile": {
+			"apidemo.gauzy.co": 1,
+			"auth.gauzy.co": 3,
+			"ever.co": 1,
+			"mcp.gauzy.co": 1,
+			"mcpdemo.gauzy.co": 1,
+			"packages.ever.co": 12
+		},
+		".deploy/ssh/with-cloudflare/demo/nginx.demo.pre.cloudflare.conf": {
+			"apidemodt.gauzy.co": 2
+		},
+		".deploy/ssh/with-cloudflare/prod/nginx.prod.pre.cloudflare.conf": {
+			"apidt.gauzy.co": 2
+		},
+		".deploy/ssh/with-cloudflare/stage/nginx.stage.pre.cloudflare.conf": {
+			"apistagedt.gauzy.co": 2
+		},
+		".deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.letsencrypt.pre.yml": {
+			"ever.co": 1
+		},
+		".deploy/ssh/with-letsencrypt/demo/nginx-certbot.env": {
+			"ever.co": 1
+		},
+		".deploy/ssh/with-letsencrypt/demo/user_conf.d/nginx.conf": {
+			"apidemodts.gauzy.co": 4
+		},
+		".deploy/ssh/with-letsencrypt/prod/docker-compose.api.prod.letsencrypt.pre.yml": {
+			"ever.co": 1
+		},
+		".deploy/ssh/with-letsencrypt/prod/nginx-certbot.env": {
+			"ever.co": 1
+		},
+		".deploy/ssh/with-letsencrypt/prod/user_conf.d/nginx.conf": {
+			"apidts.gauzy.co": 4
+		},
+		".deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.letsencrypt.pre.yml": {
+			"ever.co": 1
+		},
+		".deploy/ssh/with-letsencrypt/stage/nginx-certbot.env": {
+			"ever.co": 1
+		},
+		".deploy/ssh/with-letsencrypt/stage/user_conf.d/nginx.conf": {
+			"apistagedts.gauzy.co": 4
+		},
+		".deploy/webapp/Dockerfile": {
+			"api.gauzy.co": 1,
+			"app.gauzy.co": 1,
+			"ever.co": 2,
+			"gauzy.co": 10,
+			"packages.ever.co": 7
+		},
+		".deploy/worker/Dockerfile": {
+			"ever.co": 1,
+			"packages.ever.co": 13
+		},
+		".env.compose": {
+			"api.gauzy.co": 1,
+			"app.gauzy.co": 3,
+			"auth.gauzy.co": 9,
+			"ever.co": 6,
+			"gauzy.co": 12,
+			"mcp.gauzy.co": 3,
+			"mcpauth.gauzy.co": 1
+		},
+		".env.demo.compose": {
+			"api.gauzy.co": 1,
+			"app.gauzy.co": 3,
+			"authdemo.gauzy.co": 8,
+			"ever.co": 3,
+			"gauzy.co": 12,
+			"mcpauthdemo.gauzy.co": 1,
+			"mcpdemo.gauzy.co": 3
+		},
+		".env.docker": {
+			"api.gauzy.co": 1,
+			"app.gauzy.co": 3,
+			"ever.co": 3,
+			"gauzy.co": 12
+		},
+		".env.local": {
+			"app.gauzy.co": 2,
+			"ever.co": 3,
+			"gauzy.co": 11
+		},
+		".env.sample": {
+			"api.ever.co": 4,
+			"api.gauzy.co": 1,
+			"app.ever.co": 3,
+			"app.ever.team": 1,
+			"app.gauzy.co": 4,
+			"EVER_PLATFORM_API_URL": 2,
+			"EVER_STATS_API_URL": 2,
+			"ever.co": 7,
+			"gauzy.co": 12
+		},
+		".github/ISSUE_TEMPLATE/config.yml": {
+			"docs.gauzy.co": 1
+		},
+		".github/actions/configure-registry/action.yml": {
+			"packages.ever.co": 10
+		},
+		".github/workflows/agent-demo.yml": {
+			"gauzy.co": 2,
+			"packages.ever.co": 1
+		},
+		".github/workflows/agent-prod.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/agent-stage.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/deploy-do-app-platform-demo.yml": {
+			"apidemoda.gauzy.co": 2,
+			"demo.gauzy.co": 1
+		},
+		".github/workflows/deploy-do-app-platform-prod.yml": {
+			"apida.gauzy.co": 2,
+			"app.gauzy.co": 1
+		},
+		".github/workflows/deploy-do-app-platform-stage.yml": {
+			"apistageda.gauzy.co": 2,
+			"stage.gauzy.co": 1
+		},
+		".github/workflows/deploy-do-droplet-demo.yml": {
+			"apidemodt.gauzy.co": 1,
+			"apidemodts.gauzy.co": 1,
+			"demo.gauzy.co": 1
+		},
+		".github/workflows/deploy-do-droplet-prod.yml": {
+			"apidt.gauzy.co": 1,
+			"apidts.gauzy.co": 1,
+			"app.gauzy.co": 1
+		},
+		".github/workflows/deploy-do-droplet-stage.yml": {
+			"apistagedt.gauzy.co": 1,
+			"apistagedts.gauzy.co": 1,
+			"stage.gauzy.co": 1
+		},
+		".github/workflows/desktop-app-demo.yml": {
+			"gauzy.co": 2,
+			"packages.ever.co": 1
+		},
+		".github/workflows/desktop-app-prod.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/desktop-app-stage.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/desktop-timer-app-demo.yml": {
+			"gauzy.co": 2,
+			"packages.ever.co": 1
+		},
+		".github/workflows/desktop-timer-app-prod.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/desktop-timer-app-stage.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/external-uptime-monitor.yml": {
+			"api.gauzy.co": 2,
+			"apistage.gauzy.co": 1,
+			"app.gauzy.co": 2,
+			"gauzy.co": 2,
+			"stage.gauzy.co": 1
+		},
+		".github/workflows/mirror-releases-to-r2.yml": {
+			"cdn.ever.co": 1,
+			"downloads.ever.co": 2,
+			"gauzy.co": 1
+		},
+		".github/workflows/server-api-demo.yml": {
+			"gauzy.co": 2,
+			"packages.ever.co": 1
+		},
+		".github/workflows/server-api-prod.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/server-api-stage.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/server-demo.yml": {
+			"gauzy.co": 2,
+			"packages.ever.co": 1
+		},
+		".github/workflows/server-mcp-demo.yml": {
+			"gauzy.co": 2,
+			"packages.ever.co": 1
+		},
+		".github/workflows/server-mcp-prod.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/server-mcp-stage.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/server-prod.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".github/workflows/server-stage.yml": {
+			"gauzy.co": 5,
+			"packages.ever.co": 5
+		},
+		".scripts/env.ts": {
+			"app.gauzy.co": 3,
+			"ever.co": 4,
+			"gauzy.co": 10
+		},
+		"apps/agent/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/agent/src/main/init/menu.ts": {
+			"gauzy.co": 1
+		},
+		"apps/agent/src/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/api/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/desktop-api/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/desktop-timer/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/desktop-timer/src/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/desktop/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/desktop/src/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/gauzy/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/gauzy/proxy.demo.conf.json": {
+			"apidemo.gauzy.co": 1,
+			"demo.gauzy.co": 2
+		},
+		"apps/gauzy/src/app/pages/about/about.component.html": {
+			"docs.gauzy.co": 2,
+			"ever.co": 1,
+			"gauzy.co": 2
+		},
+		"apps/gauzy/src/app/pages/help/help.component.html": {
+			"docs.gauzy.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/mcp-auth/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/mcp/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/server-api/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/server-api/src/index.ts": {
+			"gauzy.co": 1
+		},
+		"apps/server-api/src/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/server-mcp/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/server-mcp/src/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/server/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/server/src/index.ts": {
+			"gauzy.co": 1
+		},
+		"apps/server/src/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"apps/worker/package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"okteto-pipeline.yml": {
+			"docs.ever.co": 1
+		},
+		"package.json": {
+			"ever.co": 2,
+			"gauzy.co": 1
+		},
+		"packages/auth/package.json": {
+			"ever.co": 3
+		},
+		"packages/common/package.json": {
+			"ever.co": 3
+		},
+		"packages/config/package.json": {
+			"ever.co": 3
+		},
+		"packages/config/src/lib/environments/environment.helper.ts": {
+			"app.gauzy.co": 1
+		},
+		"packages/config/src/lib/environments/environment.prod.ts": {
+			"api.gauzy.co": 1,
+			"app.gauzy.co": 2,
+			"ever.co": 4
+		},
+		"packages/config/src/lib/environments/environment.ts": {
+			"ever.co": 4
+		},
+		"packages/constants/package.json": {
+			"ever.co": 3
+		},
+		"packages/contracts/package.json": {
+			"ever.co": 3
+		},
+		"packages/core/package.json": {
+			"ever.co": 3
+		},
+		"packages/core/src/lib/app/app.service.ts": {
+			"ever.co": 1
+		},
+		"packages/core/src/lib/auth/auth.service.ts": {
+			"ever.co": 2
+		},
+		"packages/core/src/lib/auth/login-attempt.service.ts": {
+			"ever.co": 2
+		},
+		"packages/core/src/lib/bootstrap/index.ts": {
+			"app.gauzy.co": 1
+		},
+		"packages/core/src/lib/bootstrap/swagger.ts": {
+			"api.gauzy.co": 1,
+			"apidemo.gauzy.co": 1,
+			"docs.gauzy.co": 1,
+			"ever.co": 2
+		},
+		"packages/core/src/lib/bootstrap/validate-secrets.ts": {
+			"ever.co": 5
+		},
+		"packages/core/src/lib/database/migrations/1790000005000-RefreshChangelogContent.ts": {
+			"docs.gauzy.co": 5,
+			"gauzy.co": 2
+		},
+		"packages/core/src/lib/email-send/email-send.service.ts": {
+			"gauzy.co": 1
+		},
+		"packages/core/src/lib/shared/billing/billing-product.ts": {
+			"app.gauzy.co": 1,
+			"ever.co": 2
+		},
+		"packages/core/src/lib/shared/billing/billing.controller.ts": {
+			"app.gauzy.co": 1
+		},
+		"packages/core/src/lib/shared/billing/stripe-subscription.service.ts": {
+			"app.gauzy.co": 2,
+			"demo.gauzy.co": 1,
+			"ever.co": 1,
+			"stage.gauzy.co": 1
+		},
+		"packages/core/src/lib/shared/guards/subscription-required.guard.ts": {
+			"ever.co": 2
+		},
+		"packages/core/src/lib/user/dto/register-user.dto.ts": {
+			"ever.co": 1
+		},
+		"packages/core/src/lib/user/user.service.ts": {
+			"ever.co": 2
+		},
+		"packages/desktop-activity/package.json": {
+			"ever.co": 3
+		},
+		"packages/desktop-core/package.json": {
+			"ever.co": 3
+		},
+		"packages/desktop-lib/package.json": {
+			"ever.co": 3
+		},
+		"packages/desktop-lib/src/lib/desktop-menu.ts": {
+			"gauzy.co": 1
+		},
+		"packages/desktop-lib/src/lib/desktop-store.ts": {
+			"api.gauzy.co": 2
+		},
+		"packages/desktop-ui-lib/package.json": {
+			"ever.co": 3
+		},
+		"packages/desktop-ui-lib/src/lib/login/features/login-magic/login-magic.component.html": {
+			"gauzy.co": 1
+		},
+		"packages/desktop-ui-lib/src/lib/login/login.component.ts": {
+			"app.gauzy.co": 2
+		},
+		"packages/desktop-ui-lib/src/lib/settings/settings.component.ts": {
+			"api.gauzy.co": 3,
+			"gauzy.co": 1
+		},
+		"packages/desktop-ui-lib/src/lib/setup/setup.component.ts": {
+			"api.gauzy.co": 3
+		},
+		"packages/desktop-window/package.json": {
+			"ever.co": 3
+		},
+		"packages/mcp-server/package.json": {
+			"ever.co": 3
+		},
+		"packages/mcp-server/src/lib/common/security-config.ts": {
+			"api.gauzy.co": 1,
+			"apidemo.gauzy.co": 1,
+			"apistage.gauzy.co": 1,
+			"app.gauzy.co": 1,
+			"demo.gauzy.co": 1,
+			"stage.gauzy.co": 1
+		},
+		"packages/plugin-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugin/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-chat-react-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-chat/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-anthropic/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-deepgram/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-elevenlabs/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-gauzy-ai/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-gemini/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-grok/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-groq/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-localai/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-mistral/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-openai-compatible/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-openai/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-openrouter/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-speaches/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-vercel-gateway/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/ai-provider-whisper-cpp/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/auth-keycloak/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/auth-zitadel-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/auth-zitadel/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/auth-zitadel/src/lib/auth-zitadel.config.ts": {
+			"ever.co": 2
+		},
+		"packages/plugins/camshot/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/changelog/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/changelog/src/lib/initial-changelog-template.ts": {
+			"docs.gauzy.co": 5,
+			"gauzy.co": 2
+		},
+		"packages/plugins/dashboard-time-track-angular-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/dashboard-time-track-react-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/docs-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/docs/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/docs/src/lib/knowledge/extraction/__fixtures__/docx.fixture.ts": {
+			"ever.co": 1
+		},
+		"packages/plugins/docs/src/lib/knowledge/extraction/__fixtures__/odf.fixture.ts": {
+			"ever.co": 1
+		},
+		"packages/plugins/docs/src/lib/knowledge/extraction/__fixtures__/text.fixture.ts": {
+			"ever.co": 3
+		},
+		"packages/plugins/docs/src/lib/knowledge/extraction/__fixtures__/xlsx.fixture.ts": {
+			"ever.co": 1
+		},
+		"packages/plugins/integration-activepieces-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-activepieces/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-ai-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-ai/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-ever-async-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-ever-async-ui/src/lib/components/ever-async-connect/ever-async-connect.component.html": {
+			"docs-async.ever.co": 1
+		},
+		"packages/plugins/integration-ever-async-ui/src/lib/components/ever-async-connect/ever-async-connect.component.ts": {
+			"api-async.ever.co": 2
+		},
+		"packages/plugins/integration-ever-async/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-ever-async/src/lib/dto/configure-ever-async-integration.dto.ts": {
+			"api-async.ever.co": 1
+		},
+		"packages/plugins/integration-ever-async/src/lib/dto/verify-ever-async-connection.dto.ts": {
+			"api-async.ever.co": 1
+		},
+		"packages/plugins/integration-github-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-github/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-github/src/lib/github/github.module.ts": {
+			"api.gauzy.co": 1
+		},
+		"packages/plugins/integration-hubstaff-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-hubstaff/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-jira/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-make-com-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-make-com/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-plane-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-plane-ui/src/lib/components/plane-authorize/plane-authorize.component.ts": {
+			"pm-space.gauzy.co": 1,
+			"pm.gauzy.co": 1
+		},
+		"packages/plugins/integration-plane-ui/src/lib/components/plane-settings/plane-settings.component.ts": {
+			"pm.gauzy.co": 1
+		},
+		"packages/plugins/integration-plane/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-plane/src/lib/plane-integration.service.ts": {
+			"pm-space.gauzy.co": 1,
+			"pm.gauzy.co": 1
+		},
+		"packages/plugins/integration-sim-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-sim/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-upwork-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-upwork/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-wakatime/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-zapier-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/integration-zapier/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/jitsu-analytics/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/job-employee-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/job-matching-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/job-proposal-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/job-proposal/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/job-search-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/job-search/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/jobs-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/knowledge-base/package.json": {
+			"ever.co": 2
+		},
+		"packages/plugins/legal-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/legal-ui/scripts/sync-legal-content.mjs": {
+			"ever.co": 1,
+			"gauzy.co": 4
+		},
+		"packages/plugins/legal-ui/src/lib/content/cookies.en.generated.ts": {
+			"ever.co": 7,
+			"gauzy.co": 14
+		},
+		"packages/plugins/legal-ui/src/lib/content/index.ts": {
+			"ever.co": 1
+		},
+		"packages/plugins/legal-ui/src/lib/content/privacy.en.generated.ts": {
+			"api.gauzy.co": 1,
+			"app.gauzy.co": 3,
+			"docs.gauzy.co": 1,
+			"ever.co": 21,
+			"gauzy.co": 35
+		},
+		"packages/plugins/legal-ui/src/lib/content/tos.en.generated.ts": {
+			"ever.co": 22,
+			"gauzy.co": 21
+		},
+		"packages/plugins/legal-ui/src/lib/models/legal-document.model.ts": {
+			"gauzy.co": 1
+		},
+		"packages/plugins/maintenance-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/onboarding-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/posthog-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/posthog/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/product-reviews/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/public-layout-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/public-layout-ui/src/lib/components/workspace-actions/shared/email-code-form/email-code-form.component.ts": {
+			"gauzy.co": 1
+		},
+		"packages/plugins/registry/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/sentry-tracing/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/soundshot/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/videos-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/videos/package.json": {
+			"ever.co": 3
+		},
+		"packages/ui-auth/package.json": {
+			"ever.co": 3
+		},
+		"packages/ui-auth/src/lib/components/login-magic/login-magic.component.html": {
+			"gauzy.co": 1
+		},
+		"packages/ui-auth/src/lib/components/login/login.component.html": {
+			"ever.co": 3
+		},
+		"packages/ui-auth/src/lib/components/register/register.component.ts": {
+			"ever.co": 1
+		},
+		"packages/ui-config/package.json": {
+			"ever.co": 3
+		},
+		"packages/ui-core/core/src/lib/auth/cookie-helper.ts": {
+			"app.gauzy.co": 2,
+			"demo.gauzy.co": 2,
+			"gauzy.co": 1,
+			"staging.gauzy.co": 1
+		},
+		"packages/ui-core/core/src/lib/services/auth/checkout-session.ts": {
+			"ever.co": 2
+		},
+		"packages/ui-core/core/src/lib/services/auth/register-error.ts": {
+			"app.gauzy.co": 1
+		},
+		"packages/ui-core/core/src/lib/services/page/page-route-registry.service.ts": {
+			"demo.gauzy.co": 1
+		},
+		"packages/ui-core/package.json": {
+			"ever.co": 3
+		},
+		"packages/ui-core/theme/src/lib/components/header/header.component.html": {
+			"app.gauzy.co": 1
+		},
+		"packages/ui-core/theme/src/lib/components/theme-sidebar/theme-settings/theme-settings.component.ts": {
+			"docs.gauzy.co": 1
+		},
+		"packages/ui-react-components/package.json": {
+			"ever.co": 3
+		},
+		"packages/ui-react/package.json": {
+			"ever.co": 3
+		},
+		"packages/utils/package.json": {
+			"ever.co": 3
+		},
+		"scripts/mirror-releases-to-r2.mjs": {
+			"downloads.ever.co": 3,
+			"gauzy.co": 1
+		},
+		"tools/scripts/legacy-rich-text-audit.ts": {
+			"ever.co": 1
+		}
+	},
+	"bundle": {
+		"image": "ghcr.io/ever-co/gauzy-webapp-demo@sha256:b7ad958da853ce0947ac5f56a3d7fcbff20b12c500ee9841755512b3748266e5",
+		"hosts": [
+			"EVER_STATS_API_URL",
+			"api-async.ever.co",
+			"api.gauzy.co",
+			"app.ever.co",
+			"app.gauzy.co",
+			"demo.gauzy.co",
+			"docs-async.ever.co",
+			"docs.gauzy.co",
+			"ever.co",
+			"gauzy.co",
+			"pm-space.gauzy.co",
+			"pm.gauzy.co",
+			"staging.gauzy.co"
+		]
+	}
+}

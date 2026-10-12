@@ -104,7 +104,12 @@ const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'timeLogs', 'timeOffBalances', 'timeOffRequests',
 	'timeSlots', 'timesheetProjectChangeRequests', 'timesheets', 'userOrganizations',
 	'warehouseInventory', 'webhookDeliveries',
-	'webhookSubscriptions', 'workingEmployees'
+	'webhookSubscriptions', 'workingEmployees',
+	// Core reads whose rows are never soft-deleted, and whose REST twins take no `withDeleted` either:
+	// terms acceptances are append-only evidence with no `deletedAt` column; a menu item is a join over
+	// live menu rows (`GET /report/menu-items` binds no `BaseQueryDTO`); payroll lines are removed outright
+	// by `removeItem`; and no route withdraws an email-change request.
+	'termsAcceptances', 'reportMenuItems', 'payrollItems', 'emailResets'
 ]);
 
 /**

@@ -5,7 +5,7 @@ import { IIncome, ITag, IOrganization, ICurrency, ISelectedEmployee } from '@gau
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { OrganizationSettingService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers } from '../../forms/helpers';
@@ -102,10 +102,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent implements
 	}
 
 	selectedTagsHandler(tags: ITag[]) {
-		if (isNotEmpty(tags)) {
-			this.form.patchValue({ tags: tags });
-			this.form.updateValueAndValidity();
-		}
+		this.form.patchValue({ tags: tags });
+		this.form.updateValueAndValidity();
 	}
 
 	/**

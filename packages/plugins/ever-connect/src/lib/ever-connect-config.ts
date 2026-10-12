@@ -39,21 +39,23 @@ export interface EverConnectConfig {
 	 * only a digest of it.
 	 */
 	returnOrigin: string | null;
-	/** The web app address app.ever.co sends an administrator back to (no fragment), or `null`. */
+	/** The web app page app.ever.co sends an administrator back to (the Ever Platform page, in the fragment), or `null`. */
 	returnUrl: string | null;
 	/** `CLIENT_BASE_URL` is set but is not one that may be sent (plain http on another host). */
 	returnUnusable: boolean;
 	/**
 	 * `EVER_PLATFORM_ISSUER`: the issuer Ever Platform's documents name, when it differs from the
 	 * origin of `EVER_PLATFORM_API_URL` (a mock platform in tests). Honoured only when
-	 * `EVER_PLATFORM_API_URL` is a loopback address (`localhost`, `127.0.0.0/8`, `::1`).
+	 * `EVER_PLATFORM_API_URL` is a local address (see `localPlatform`).
 	 */
 	issuer: string | null;
 	/**
-	 * `EVER_PLATFORM_API_URL` is a loopback address: only then are `EVER_PLATFORM_ISSUER` and
-	 * `EVER_PLATFORM_ROOT_KEYS_FILE` (test keys) honoured.
+	 * `EVER_PLATFORM_API_URL` is a local address, one of the contract's `root_keys_file_hosts`
+	 * (`localhost`, `*.localhost`, `127.0.0.0/8`, `::1`, `10.0.0.0/8`, `172.16.0.0/12`,
+	 * `192.168.0.0/16`): only then are `EVER_PLATFORM_ISSUER` and `EVER_PLATFORM_ROOT_KEYS_FILE`
+	 * (test keys) honoured, as the SDK honours them. A public address never is.
 	 */
-	loopback: boolean;
+	localPlatform: boolean;
 }
 
 /** `localhost` (and `*.localhost`), `127.0.0.0/8` and `::1`. */
@@ -146,6 +148,9 @@ export function releaseVersion(raw: string | undefined): string {
 	return match ? `${Number(match[1])}.${Number(match[2])}.${Number(match[3])}` : '0.0.0';
 }
 
+/** The page of the web app a consent given in app.ever.co returns to (the web app routes in its fragment). */
+export const CONSENT_RETURN_FRAGMENT = '#/pages/integrations/ever-connect';
+
 /** The hosts plain http may return to (the contract's `return_origins`). */
 const HTTP_RETURN_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -169,9 +174,9 @@ function parseReturn(raw: string | undefined): { origin: string; url: string } |
 		return null;
 	}
 	const base = `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
-	// Ever Platform takes no fragment in a return address, and the web app routes in its fragment:
-	// the consent screen returns to the web app itself; the Ever Platform page reads the result.
-	return { origin: url.origin, url: `${base}/` };
+	// The web app routes in its fragment, and a return address may name a page there: the consent
+	// screen returns to the Ever Platform page, which reads the result.
+	return { origin: url.origin, url: `${base}/${CONSENT_RETURN_FRAGMENT}` };
 }
 
 /**
@@ -182,11 +187,11 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 	const installSource = parseInstallSource(env, warn);
 	const ret = parseReturn(env['CLIENT_BASE_URL']);
 	const apiUrl = parseApiUrl(env, warn);
-	const loopback = apiUrl !== null && isLoopbackHost(new URL(apiUrl).hostname);
+	const localPlatform = apiUrl !== null && isLocalHost(new URL(apiUrl).hostname);
 	const issuer = env['EVER_PLATFORM_ISSUER']?.trim() || null;
-	if (!loopback && (issuer || env['EVER_PLATFORM_ROOT_KEYS_FILE']?.trim())) {
+	if (!localPlatform && (issuer || env['EVER_PLATFORM_ROOT_KEYS_FILE']?.trim())) {
 		warn(
-			'EVER_PLATFORM_ISSUER and EVER_PLATFORM_ROOT_KEYS_FILE are for a test platform on a loopback address only; they are ignored.'
+			'EVER_PLATFORM_ISSUER and EVER_PLATFORM_ROOT_KEYS_FILE are for a test platform on a local or private address only; they are ignored.'
 		);
 	}
 	return {
@@ -201,8 +206,8 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		returnOrigin: ret?.origin ?? null,
 		returnUrl: ret?.url ?? null,
 		returnUnusable: Boolean(env['CLIENT_BASE_URL']?.trim()) && !ret,
-		issuer: loopback ? issuer : null,
-		loopback
+		issuer: localPlatform ? issuer : null,
+		localPlatform
 	};
 }
 

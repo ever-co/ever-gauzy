@@ -53,3 +53,29 @@ input GenerateTenantApiKeyInput {
 	"The label to store with the pair."
 	name: String
 }
+
+"""
+A tenant's API key as an administrator may read it back: which pair it is and what it is called.
+
+Neither the key nor the secret is a member. The secret is shown once, at issuance (`TenantApiKeyPair`),
+and stored only as a digest; a new pair is had by revoking this one and generating again.
+"""
+type TenantApiKeySummary {
+	id: ID!
+	"The tenant the key authenticates as."
+	tenantId: ID!
+	"The label the key carries."
+	name: String
+	"Whether the key authenticates. A revoked key is withdrawn and is not read back at all."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+What a caller states when it renames its tenant's key.
+"""
+input UpdateTenantApiKeyInput {
+	"The new label, 1 to 255 characters."
+	name: String!
+}

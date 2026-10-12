@@ -180,6 +180,41 @@ type InvoiceNumberSeries {
 }
 
 """
+The invoices of one currency: how many, and their exact total.
+"""
+type InvoiceCurrencyTotal {
+	"The currency every value in this total is denominated in."
+	currency: String!
+	"How many documents the total sums."
+	count: Int!
+	"The exact sum of their totals. A document with no stored total counts and adds nothing."
+	totalValue: Decimal!
+}
+
+"""
+The invoices of one status in one currency: how many, and their exact total.
+"""
+type InvoiceStatusTotal {
+	"The status, as the contracts' own value (`DRAFT`, `SENT`, `FULLY_PAID`, …), or null when none is stored."
+	status: String
+	currency: String!
+	count: Int!
+	totalValue: Decimal!
+}
+
+"""
+One organization's invoices (or estimates), counted and totalled per currency and per status.
+"""
+type InvoiceStatistics {
+	"How many documents the organization holds."
+	count: Int!
+	"The totals per currency."
+	totals: [InvoiceCurrencyTotal!]!
+	"The totals per status and currency."
+	byStatus: [InvoiceStatusTotal!]!
+}
+
+"""
 One rendered document: the bytes the delivered renderer produced, and what they are.
 
 The REST routes stream a PDF and state its media type and its length in the response headers. A

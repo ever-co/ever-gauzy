@@ -8,7 +8,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import {
@@ -20,9 +20,11 @@ import {
 } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { PayrollRunController } from './payroll-run.controller';
 import { PayrollRunResolver } from './payroll-run.resolver';
+import { PayrollRunService } from './payroll-run.service';
 
 /**
  * The payroll runs over GraphQL.
@@ -130,6 +132,8 @@ function surfaces() {
 				currency: 'USD'
 			}
 		]),
+		findItems: jest.fn().mockResolvedValue({ items: [ITEM_ROW], total: 1 }),
+		updateItem: jest.fn().mockResolvedValue({ ...ITEM_ROW, amount: 5100 }),
 		createRun: jest.fn().mockResolvedValue(RUNS[0]),
 		updateRun: jest.fn().mockResolvedValue(RUNS[0]),
 		submitForApproval: jest.fn().mockResolvedValue(RUNS[0]),
@@ -608,6 +612,161 @@ describe('PayrollRunResolver — one concept, two protocols, the same operations
 	});
 });
 
+describe('PayrollRunResolver — the lines across runs, and editing one', () => {
+	it('declares the cross-run line list as a connection and the edit as answering the line', () => {
+		expect(printed).toMatch(/payrollItems\([^)]*organizationId: ID![^)]*\): PayrollItemConnection!/);
+		expect(printed).toMatch(
+			/updatePayrollItem\(id: ID!, itemId: ID!, input: UpdatePayrollItemInput!\): PayrollItem!/
+		);
+		// The run and the line are identifiers, never input members, and no total can be stated.
+		expect(inputBody('UpdatePayrollItemInput')).not.toMatch(/payrollRunId|totalGross|totalNet/);
+		expect(inputBody('UpdatePayrollItemInput')).toMatch(/organizationId: ID!/);
+		expect(inputBody('UpdatePayrollItemInput')).toMatch(/amount: Decimal\n/);
+	});
+
+	it('reads the lines through the same service method the items route calls', async () => {
+		const { resolver, payrollRunService } = surfaces();
+
+		const none = undefined;
+		const connection = await resolver.payrollItems(ORGANIZATION, FEBRUARY, none, none, none, none, 20);
+
+		expect(payrollRunService.findItems).toHaveBeenCalledWith({
+			organizationId: ORGANIZATION,
+			payrollRunId: FEBRUARY,
+			limit: 20
+		});
+		expect(connection.nodes.map((node) => node.id)).toEqual([ITEM]);
+
+		const controller = new PayrollRunController(payrollRunService as never);
+		await controller.findItems({ organizationId: ORGANIZATION, employeeId: EMPLOYEE } as never);
+		expect(payrollRunService.findItems).toHaveBeenLastCalledWith({
+			organizationId: ORGANIZATION,
+			employeeId: EMPLOYEE
+		});
+	});
+
+	it('edits a line through the route’s service method, with the run and the line as identifiers', async () => {
+		const { resolver, payrollRunService } = surfaces();
+
+		await resolver.updatePayrollItem(FEBRUARY, ITEM, { organizationId: ORGANIZATION, amount: 5100 });
+		expect(payrollRunService.updateItem).toHaveBeenCalledWith(FEBRUARY, ITEM, ORGANIZATION, { amount: 5100 });
+
+		const controller = new PayrollRunController(payrollRunService as never);
+		const body = { organizationId: ORGANIZATION, description: 'Corrected' };
+		await controller.updateItem(FEBRUARY, ITEM, body as never);
+		expect(payrollRunService.updateItem).toHaveBeenLastCalledWith(
+			FEBRUARY,
+			ITEM,
+			ORGANIZATION,
+			expect.objectContaining({ description: 'Corrected', amount: undefined })
+		);
+	});
+
+	it('states the view grant on the list and the edit grant on the edit, as their routes do', () => {
+		expect(permissionOfField('payrollItems')).toEqual([PermissionsEnum.ORG_PAYROLL_VIEW]);
+		expect(permissionOfField('updatePayrollItem')).toEqual([PermissionsEnum.ORG_PAYROLL_EDIT]);
+	});
+});
+
+describe('PayrollRunService — a line changes only in a draft, and the totals follow it', () => {
+	/** The service over scripted repositories, with the totals recomputation observed. */
+	function service(
+		run: { status: string } & Record<string, unknown>,
+		options: { item?: unknown; employees?: number } = {}
+	) {
+		const instance = Object.create(PayrollRunService.prototype) as PayrollRunService;
+		const items = {
+			findOne: jest.fn().mockResolvedValue(options.item === undefined ? { ...ITEM_ROW } : options.item),
+			save: jest.fn().mockImplementation(async (row) => row),
+			findAndCount: jest.fn().mockResolvedValue([[ITEM_ROW], 1])
+		};
+		const manager = { count: jest.fn().mockResolvedValue(options.employees ?? 1) };
+		const recalculateTotals = jest.fn().mockResolvedValue(run);
+		Object.assign(instance, {
+			typeOrmPayrollItemRepository: items,
+			typeOrmRepository: { manager },
+			findOneRun: jest.fn().mockResolvedValue(run),
+			recalculateTotals
+		});
+
+		return { instance, items, manager, recalculateTotals };
+	}
+
+	beforeEach(() => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('edits a line of a draft run and recomputes the run from its lines', async () => {
+		const run = { ...RUNS[1], status: PayrollRunStatusEnum.DRAFT };
+		const { instance, items, recalculateTotals } = service(run);
+
+		const saved = await instance.updateItem(FEBRUARY, ITEM, ORGANIZATION, { amount: '5100.50' as never });
+
+		expect(items.findOne).toHaveBeenCalledWith({
+			where: { id: ITEM, payrollRunId: FEBRUARY, tenantId: TENANT, organizationId: ORGANIZATION }
+		});
+		expect(saved.amount).toBe(5100.5);
+		expect(recalculateTotals).toHaveBeenCalledWith(expect.anything(), run);
+	});
+
+	it('refuses to edit a line of a run that is no longer a draft, and writes nothing', async () => {
+		const { instance, items, recalculateTotals } = service({ ...RUNS[0], status: PayrollRunStatusEnum.APPROVED });
+
+		await expect(instance.updateItem(JANUARY, ITEM, ORGANIZATION, { amount: 1 })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(items.save).not.toHaveBeenCalled();
+		expect(recalculateTotals).not.toHaveBeenCalled();
+	});
+
+	it('refuses a line that is not in the run, and an employee outside the organization', async () => {
+		const draft = { ...RUNS[1], status: PayrollRunStatusEnum.DRAFT };
+
+		const missing = service(draft, { item: null });
+		await expect(missing.instance.updateItem(FEBRUARY, ITEM, ORGANIZATION, { amount: 1 })).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+
+		const stranger = service(draft, { employees: 0 });
+		await expect(
+			stranger.instance.updateItem(FEBRUARY, ITEM, ORGANIZATION, { employeeId: JANUARY })
+		).rejects.toBeInstanceOf(NotFoundException);
+		expect(stranger.items.save).not.toHaveBeenCalled();
+	});
+
+	it('refuses a member outside the vocabulary or a negative amount, which no DTO checks over GraphQL', async () => {
+		const { instance, items } = service({ ...RUNS[1], status: PayrollRunStatusEnum.DRAFT });
+
+		for (const input of [{ category: 'BONUS' }, { type: 'TIP' }, { amount: -1 }, { quantity: 'many' }]) {
+			await expect(instance.updateItem(FEBRUARY, ITEM, ORGANIZATION, input as never)).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+		}
+		expect(items.save).not.toHaveBeenCalled();
+	});
+
+	it('lists lines under the tenant and the organization, narrowed and paged at the store', async () => {
+		const { instance, items } = service({ status: PayrollRunStatusEnum.DRAFT });
+
+		const filter = { organizationId: ORGANIZATION, employeeId: EMPLOYEE, page: 2, limit: 500 };
+		const page = await instance.findItems(filter);
+
+		expect(page).toEqual({ items: [ITEM_ROW], total: 1 });
+		expect(items.findAndCount).toHaveBeenCalledWith({
+			where: { tenantId: TENANT, organizationId: ORGANIZATION, employeeId: EMPLOYEE },
+			order: { createdAt: 'DESC' },
+			skip: 100,
+			take: 100
+		});
+	});
+
+	it('refuses to list without an organization rather than reading the whole tenant', async () => {
+		const { instance, items } = service({ status: PayrollRunStatusEnum.DRAFT });
+
+		await expect(instance.findItems({} as never)).rejects.toBeInstanceOf(BadRequestException);
+		expect(items.findAndCount).not.toHaveBeenCalled();
+	});
+});
+
 describe('PayrollRunResolver — the guard stack and the permission are the controller’s', () => {
 	it('guards the resolver the way the controller is guarded', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', PayrollRunResolver) ?? [];
@@ -630,7 +789,9 @@ describe('PayrollRunResolver — the guard stack and the permission are the cont
 			'process',
 			'cancel',
 			'addItem',
-			'removeItem'
+			'removeItem',
+			'findItems',
+			'updateItem'
 		];
 
 		for (const handler of routes) {
@@ -660,7 +821,9 @@ describe('PayrollRunResolver — the guard stack and the permission are the cont
 			['processPayrollRun', 'process'],
 			['cancelPayrollRun', 'cancel'],
 			['addPayrollRunItem', 'addItem'],
-			['removePayrollRunItem', 'removeItem']
+			['removePayrollRunItem', 'removeItem'],
+			['payrollItems', 'findItems'],
+			['updatePayrollItem', 'updateItem']
 		];
 
 		const stated = Object.fromEntries(routes.map(([field]) => [field, permissionOfField(field)]));

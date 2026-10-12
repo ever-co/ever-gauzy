@@ -7,9 +7,8 @@
 # controller does not expose it on either protocol.
 #
 # So the type below is not an entity shape. It is what both routes answer, and it is the only thing they
-# answer: an acknowledgement. There is deliberately no `EmailReset` object type beside it — a resolver's
-# name labels the domain it serves, while the shape its fields answer is this one, and a type declared
-# for a row no route returns would be an entity the schema claims and no read can produce.
+# answer: an acknowledgement. The `EmailReset` type below is the one read's answer — the request without
+# its secrets — and is the only shape of the row either protocol exposes.
 #
 # **`status` is the member the delivered routes put in the body, not the transport's response code.**
 # Both handlers answer `200` there while the verify route's transport answers `202`, because the body is
@@ -55,4 +54,75 @@ address and identifier, so naming either of those would be naming something the 
 input VerifyEmailResetInput {
 	"The code mailed to the address the change was requested for."
 	code: String!
+}
+
+"""
+One request to change the address on an account, without its secrets.
+
+The verification code and the token are deliberately not members: they are what the request is proved
+with, so a reader who could see them could complete a change that is not theirs.
+"""
+type EmailReset {
+	id: ID!
+	"The address the account is to be changed to."
+	email: String!
+	"The address the account had when the request was made."
+	oldEmail: String!
+	"The user who asked."
+	userId: ID
+	"Whether the code has lapsed and can no longer be presented."
+	isExpired: Boolean!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of requests.
+"""
+type EmailResetEdge {
+	node: EmailReset!
+	cursor: String!
+}
+
+"""
+One page of requests, with the total the filters select and the boundary cursors.
+"""
+type EmailResetConnection {
+	nodes: [EmailReset!]!
+	edges: [EmailResetEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a request list may be sorted by.
+"""
+enum EmailResetSortField {
+	createdAt
+	updatedAt
+	email
+}
+
+"""
+The order the requests are returned in. At most three keys are accepted.
+"""
+input EmailResetSort {
+	field: EmailResetSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a request list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it. There is no member for the code or the token.
+"""
+input EmailResetFilter {
+	id: IDFilter
+	email: StringFilter
+	oldEmail: StringFilter
+	isExpired: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmailResetFilter!]
+	or: [EmailResetFilter!]
+	not: EmailResetFilter
 }
