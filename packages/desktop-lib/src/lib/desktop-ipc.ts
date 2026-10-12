@@ -120,6 +120,23 @@ export function setupAkitaStorageHandler() {
 	return new AkitaStorageHandler(new AkitaStorageEngine());
 }
 
+/** Whether the display listeners below are registered: `ipcMainHandler` may run more than once */
+let displayListenersRegistered = false;
+
+/**
+ * Tells the settings page when a display is added, removed or re-arranged, so the displays it offers for
+ * the screenshot notification stay current while the page is open.
+ */
+function watchDisplays(): void {
+	if (displayListenersRegistered) return;
+	displayListenersRegistered = true;
+	for (const event of ['display-added', 'display-removed', 'display-metrics-changed'] as const) {
+		screen.on(event, () => {
+			getAppWindowManager().settingWindow?.webContents?.send?.('setting_page_ipc', { type: 'displays_changed' });
+		});
+	}
+}
+
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	log.info('IPC Main Handler');
 
@@ -127,6 +144,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
+	watchDisplays();
 
 	ipcMain.handle('START_SERVER', async (event, arg: DesktopSetupConfig) => {
 		log.info('Handle Start Server');

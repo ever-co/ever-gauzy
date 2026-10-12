@@ -109,6 +109,8 @@ export interface IApplicationSetting {
 	SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer';
 	screenshotNotification: boolean;
 	simpleScreenshotNotification: boolean;
+	/** Display that shows the screenshot notification: an Electron display id, or `null` for the primary display */
+	screenshotNotificationDisplayId?: number | null;
 	mutedNotification: boolean;
 	autoLaunch: boolean;
 	visibleAwOption: boolean;

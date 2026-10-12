@@ -20,79 +20,85 @@
 // service list can stay put while the fields move. Fill the card body and clip
 // here; the accordion column does the scrolling. (At the `md` breakpoint the two
 // stack into a column and this becomes the scroll box instead — see below.)
+// No fill or inset of its own: like File Storage, the service list and cards
+// sit straight on the card body, drawn by their hairlines.
 :host .main-form {
   width: 100%;
-  background-color: nb-theme(gauzy-card-2);
+  background-color: transparent;
   display: flex;
   justify-content: space-between;
-  padding: 20px;
-  @include nb-ltr(padding-right, 8px);
-  @include nb-rtl(padding-left, 8px);
+  padding: 0;
   height: 100%;
   min-height: 0;
   overflow: hidden;
 }
 
+// Same vocabulary as Settings > File Storage: 12px body, transparent surfaces
+// drawn by a hairline inset, `--gauzy-radius-sm`, no drop shadows.
+$hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+
 .aside-nav {
   width: 220px;
   min-width: 200px;
-  background-color: nb-theme(gauzy-card-3);
-  padding: 13px 18px;
-  border-radius: nb-theme(border-radius);
+  padding: 0.75rem;
+  border-radius: var(--gauzy-radius-sm, 0.5rem);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px $hairline;
   height: fit-content;
+  font-size: 0.75rem;
 
   & .settings-section-header {
-    font-size: 14px;
-    font-style: normal;
+    margin: 0 0 0.5rem;
+    padding: 0 0.5rem;
+    font-size: 0.6875rem;
     font-weight: 600;
-    line-height: 17px;
-    letter-spacing: 0em;
-    text-align: left;
-    margin-bottom: 18px;
+    line-height: 1.125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-hint-color);
   }
 
   ul {
-    padding-left: 0;
-    padding-right: 0;
-    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    display: flex;
     flex-direction: column;
+    gap: 0.125rem;
     height: fit-content;
 
     & li {
-      display: inline-flex;
-      padding: 10px 15px;
-      margin-bottom: 10px;
-      font-size: 13px;
-      font-style: normal;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      font-size: 0.75rem;
       font-weight: 400;
-      line-height: 16px;
-      letter-spacing: 0em;
-      text-align: left;
-      background: nb-theme(gauzy-sidebar-background-3);
-      border-radius: nb-theme(button-rectangle-border-radius);
+      line-height: 1.125rem;
+      color: var(--text-basic-color);
+      border-radius: var(--gauzy-radius-sm, 0.5rem);
       list-style: none;
       cursor: pointer;
-      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+
+      &:hover {
+        background: var(--gauzy-hover-tint, var(--color-basic-transparent-hover));
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 1px var(--color-primary-default);
+      }
 
       &.active {
-        background: nb-theme(background-basic-color-1);
-        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
+        font-weight: 500;
+        color: var(--color-primary-default);
+        background: var(--color-primary-transparent-default, rgba(51, 102, 255, 0.08));
       }
     }
   }
 }
 
-.actions {
-  margin-bottom: 20px;
-}
-
 .fields-section {
-  width: calc(100% - 260px);
-}
-
-// Scope tabset styles
-.scope-tabset {
-  padding: 0;
+  width: calc(100% - 240px);
 }
 
 // The page's one scroll box. The `- 3rem` in `max-height` cut the box short of
@@ -102,118 +108,346 @@
 :host .accordion-section {
   overflow: auto;
   max-height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-basic-color-4, rgba(128, 128, 128, 0.4)) transparent;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
 }
 // end of main sections.
 
-// misc
-.form-group {
-  margin-bottom: 0;
-}
-
-.col-6 {
-  padding-left: 10px;
-  padding-right: 10px;
-  max-width: 49% !important;
-}
-
-// NOTE: a bare `.active { background: #ffffff }` used to sit here. The only
-// elements in this template that take `.active` are the service rows in
-// `.aside-nav`, which the rule above already paints with a theme token — so all
-// this one could ever do was drop a literal white block into the seven themes
-// where white is the wrong surface. Removed rather than mapped to a token: there is
-// nothing left for it to style.
-
-// start of nb-overrides
+// ── Service list (accordion) ──────────────────────────────────────────────
+// One grouped list, like File Storage's sectioned card: a single hairline
+// outline, a hairline between services, rows inside, action bar at the foot.
 nb-accordion {
-  box-shadow: none;
+  overflow: hidden;
+  border-radius: var(--gauzy-radius-sm, 0.5rem);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px $hairline;
 
-  & nb-accordion-item-header {
+  nb-accordion-item {
+    margin: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+
+    & + nb-accordion-item {
+      border-top: 1px solid $hairline;
+    }
+  }
+
+  // The trigger row: icon mark, title over a scope caption, status, chevron.
+  nb-accordion-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+    padding: 0.625rem 1rem;
     border-bottom: none;
-    border-radius: 0.5rem;
-    padding-left: 20px;
-    padding-right: 20px;
+    background: transparent;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+    color: var(--text-basic-color);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 
-    & ::ng-deep nb-icon {
-      border-radius: 6px;
-      width: 23px;
-      height: 23px;
-      // Was `rgba(66, 66, 66, 0.2)` — 20% of the LIGHT theme's body colour, so
-      // the expand/collapse chevron lost its box entirely on the dark canvas.
-      // The shared hairline token darkens a light surface and lightens a dark
-      // one, which is the only way one value works in all eight themes.
-      border: 1px solid nb-theme(gauzy-border-default-color);
-    }
-  }
+    &:hover {
+      background: var(--gauzy-hover-tint, var(--color-basic-transparent-hover));
 
-  & nb-accordion-item-header,
-  nb-accordion-item-body,
-  nb-accordion-item {
-    background-color: nb-theme(gauzy-card-3);
-  }
-
-  & nb-accordion-item-body {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-
-  nb-accordion-item {
-    border-radius: 0.5rem;
-    margin-bottom: 20px;
-
-    & .item-body {
-      padding: 15px;
-    }
-
-    .fields {
-      width: 75%;
-
-      @include respond(md) {
-        width: 100%;
+      & ::ng-deep nb-icon.expansion-indicator {
+        color: var(--text-basic-color);
       }
     }
 
-    .row {
-      align-items: center;
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--color-primary-default);
+    }
+
+    // Nebular pins the chevron absolutely, 1rem in from the end edge. Give it
+    // a small square hit area so it reads as a control, not a stray glyph.
+    & ::ng-deep nb-icon.expansion-indicator {
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0.25rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--gauzy-radius-sm, 0.375rem);
+      color: var(--text-hint-color);
+      transition: color 0.15s ease;
     }
   }
-}
-// end of nb-overrides
 
-// start of ::ng-deep selectors
-:host ::ng-deep nb-select {
-  & ::ng-deep button {
-    margin-right: 10px;
-    background-color: nb-theme(background-basic-color-1) !important;
-    border-radius: nb-theme(border-radius) !important;
+  nb-accordion-item.expanded nb-accordion-item-header {
+    border-bottom: 1px solid $hairline;
   }
-}
 
-:host ::ng-deep nb-toggle {
-  padding: 10px;
-  border: 1px solid nb-theme(gauzy-border-default-color);
-  border-radius: nb-theme(border-radius);
+  nb-accordion-item-body {
+    background: transparent;
 
-  & > label {
-    margin-bottom: 0;
-  }
-}
-
-:host ::ng-deep .toggle {
-  border: 1px solid #7e7e8f !important;
-  background-color: #7e7e8f !important;
-
-  &.checked {
-    background-color: nb-theme(text-primary-color) !important;
-    border: 1px solid nb-theme(text-primary-color) !important;
-
-    & + span {
-      color: nb-theme(text-primary-color);
+    & ::ng-deep .item-body {
+      padding: 0;
+      font-size: 0.75rem;
     }
   }
 }
 
+.service-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--gauzy-radius-sm, 0.5rem);
+  background: var(--color-primary-transparent-default, rgba(51, 102, 255, 0.08));
+  color: var(--color-primary-default);
+
+  nb-icon {
+    font-size: 1rem;
+  }
+}
+
+.service-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.service-title {
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+}
+
+// Clear of the absolutely-positioned chevron (1rem inset + 1.5rem box).
+.service-status {
+  margin-inline-end: 2rem;
+}
+
+// Global / Tenant scope tabs: 12px tab titles over a hairline. `:host` and the
+// full `.tabset .tab a.tab-link` chain are needed to out-rank the app-wide tab
+// typography in `_gauzy-overrides.scss` (it pins every tab link to 14px).
+:host .scope-tabset {
+  padding: 0;
+
+  ::ng-deep ul.tabset {
+    padding: 0 1rem;
+    border-bottom: 1px solid $hairline;
+  }
+
+  ::ng-deep .tabset .tab a.tab-link {
+    padding: 0.625rem 0.25rem;
+    margin-inline-end: 1rem;
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    text-transform: none;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  // Active scope: a 2px accent underline sitting on the hairline, no chip.
+  ::ng-deep .tabset .tab.active a.tab-link {
+    background: transparent;
+    box-shadow: inset 0 -2px 0 var(--color-primary-default);
+  }
+
+  ::ng-deep nb-tab {
+    padding: 0;
+    font-size: 0.75rem;
+  }
+}
+
+// ── Field rows ─────────────────────────────────────────────────────────────
+.fields {
+  width: 100%;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  align-items: start;
+  gap: 0.5rem 1.5rem;
+  padding: 0.625rem 1rem;
+
+  & + .field-row {
+    border-top: 1px solid $hairline;
+  }
+
+  @media (max-width: 767.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  padding-top: 0.375rem;
+}
+
+.field-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-basic-color);
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--text-hint-color);
+}
+
+.field-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+
+  input[nbInput] {
+    width: 100%;
+    max-width: none;
+  }
+
+  input.mono {
+    font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+}
+
+// Action bar: same shape as File Storage's footer — hairline above, small
+// button on the end side.
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid $hairline;
+
+  .form-status {
+    margin-inline-end: auto;
+    font-size: 0.75rem;
+    color: var(--text-hint-color);
+  }
+
+  button[nbButton] {
+    margin: 0;
+    text-transform: none;
+
+    nb-icon {
+      font-size: 1rem;
+    }
+  }
+}
+
+// ── Status ─────────────────────────────────────────────────────────────────
+// Same dot as File Storage's summary strip: green when the service is on in the
+// scope tab being shown, a muted hollow dot when it is off.
+.status-dot {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--text-hint-color);
+
+  &.on {
+    background: var(--color-success-default);
+    box-shadow: none;
+  }
+}
+
+.service-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+  color: var(--text-hint-color);
+
+  &.on {
+    color: var(--text-basic-color);
+  }
+}
+
+// ── Toggle ─────────────────────────────────────────────────────────────────
+// The enable switch spans its row: the label text sits on the start side and
+// the switch on the end side, both inside Nebular's own <label>, so the text
+// names the checkbox and clicking anywhere on the row toggles it.
+.toggle-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+// Off, the theme painted the knob in the page colour on a near-black track, so
+// the switch read as an empty outline. Give each state a visible knob: muted on
+// a neutral track when off, white on the accent track when on.
+:host ::ng-deep nb-toggle.row-toggle {
+  display: flex;
+  width: 100%;
+
+  .toggle-label {
+    width: 100%;
+    justify-content: space-between;
+    gap: 1.5rem;
+    cursor: pointer;
+  }
+
+  // The row gap spaces text and switch; Nebular's own text padding would add to it.
+  .text {
+    min-width: 0;
+    padding: 0 !important;
+    line-height: 1.125rem;
+  }
+
+  .toggle.toggle {
+    background-color: var(--background-basic-color-3);
+    border-color: var(--border-basic-color-5, var(--text-hint-color));
+    box-shadow: none;
+  }
+
+  .toggle.toggle .toggle-switcher {
+    background-color: var(--text-hint-color);
+  }
+
+  .toggle.toggle.checked {
+    background-color: var(--color-primary-default);
+    border-color: var(--color-primary-default);
+
+    .toggle-switcher {
+      background-color: var(--text-control-color, #fff);
+    }
+  }
+}
+
+// Placeholders follow the 12px body, not the theme's larger input text.
+.field-control input[nbInput]::placeholder {
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--text-hint-color);
+}
+
+// The accordion body animates with `overflow: hidden`; let focus rings and
+// select panels inside it show.
 :host ::ng-deep .ng-trigger {
   overflow: visible !important;
 
@@ -223,17 +457,8 @@ nb-accordion {
   }
 }
 
-:host ::ng-deep .select-button {
-  margin: 0;
-}
-// end of ::ng-deep
-
 // media queries
 @include respond(md) {
-  .col-6 {
-    padding-right: 0;
-  }
-
   // Stacked, the service list is no longer a column beside the fields, so the
   // accordion column has no cross-axis height to bound its own scroll box. The
   // whole pane scrolls as one instead — which is also what you want on a narrow
@@ -247,46 +472,15 @@ nb-accordion {
 
   .aside-nav {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
 
     ul {
-      display: inline;
-      height: auto;
-
-      & li {
-        margin-right: 7px;
-      }
+      flex-direction: row;
+      flex-wrap: wrap;
     }
   }
 
   .fields-section {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
   }
-
-  .actions {
-    order: 2;
-    margin-bottom: 0;
-  }
-}
-
-@include respond(sm) {
-  .col-6 {
-    max-width: 100%;
-    width: 100%;
-    min-width: 100%;
-    margin-bottom: 5px;
-  }
-
-  .row {
-    width: 100%;
-  }
-}
-
-.text-hint {
-  font-size: 12px;
-  color: nb-theme(text-hint-color);
-  margin-top: 4px;
 }

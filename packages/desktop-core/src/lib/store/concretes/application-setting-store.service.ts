@@ -20,6 +20,7 @@ export class ApplicationSettingStoreService extends StoreService implements ISto
 			SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
 			screenshotNotification: true,
 			simpleScreenshotNotification: false,
+			screenshotNotificationDisplayId: null, // the primary display
 			mutedNotification: false,
 			autoLaunch: true,
 			visibleAwOption: true,

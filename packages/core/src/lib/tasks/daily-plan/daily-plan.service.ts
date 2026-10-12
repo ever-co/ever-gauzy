@@ -19,17 +19,39 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations, resolveRequestedPage } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
+
+/**
+ * Whether plan dates are stored in UTC. TypeORM writes a SQLite datetime as a UTC string, while on
+ * PostgreSQL and MySQL it hands the Date to the driver, which writes it in the API process's local time.
+ */
+const storesDatesInUtc = (): boolean => isSqlite() || isBetterSqlite3();
+
+/**
+ * The day a plan dated `date` is stored under, as `YYYY-MM-DD`: the date part of the stored value, which is
+ * what the unique index keys on. It is the UTC day on SQLite and on a process running in UTC, the usual
+ * deployment, and the process's local day otherwise.
+ */
+const storedPlanDay = (date: Date | string): string =>
+	(storesDatesInUtc() ? moment.utc(date) : moment(date)).format('YYYY-MM-DD');
+
+/**
+ * The instant a stored day starts, for a bound passed to the database as a Date, which the driver writes the
+ * same way as the plan dates.
+ */
+const storedDayStart = (day: string): Date =>
+	(storesDatesInUtc() ? moment.utc(day, 'YYYY-MM-DD') : moment(day, 'YYYY-MM-DD')).toDate();
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
@@ -52,10 +74,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 */
 	async createDailyPlan(partialEntity: IDailyPlanCreateInput): Promise<IDailyPlan> {
 		try {
-			const { employeeId, organizationId, organizationTeamId, taskId } = partialEntity;
+			const { employeeId, organizationId, taskId } = partialEntity;
+			const organizationTeamId = partialEntity.organizationTeamId ?? partialEntity.organizationTeam?.id;
 			const tenantId = RequestContext.currentTenantId() ?? partialEntity.tenantId;
 
-			const dailyPlanDate = new Date(partialEntity.date).toISOString().split('T')[0];
+			const dailyPlanDate = storedPlanDay(partialEntity.date);
 
 			// Validate employee existence
 			const employee = await this._employeeService.findOneByIdString(employeeId);
@@ -64,68 +87,148 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Check for existing DailyPlan
-			let dailyPlan: DailyPlan;
+			let dailyPlan = await this.findEmployeeDayPlan(
+				tenantId,
+				organizationId,
+				employeeId,
+				organizationTeamId,
+				dailyPlanDate
+			);
 
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const item = await this.mikroOrmDailyPlanRepository.findOne(
-						{
-							tenantId,
-							organizationId,
-							organizationTeamId,
-							employeeId,
-							date: new Date(dailyPlanDate)
-						} as any,
-						{
-							populate: ['tasks'] as any[]
-						}
-					);
-					dailyPlan = item ? (this.serialize(item) as DailyPlan) : null;
-					break;
-				}
-				case MultiORMEnum.TypeORM:
-				default: {
-					const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
-					query.setFindOptions({ relations: { tasks: true } });
-					query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
-					query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
-					query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
-					// Any time on that day. Unlike DATE("date"), a range on the bare column lets the
-					// (employeeId, organizationTeamId, date) index narrow the lookup to that day.
-					query.andWhere(p(`"dailyPlan"."date" >= :dailyPlanDate AND "dailyPlan"."date" < :nextDayDate`), {
-						dailyPlanDate,
-						nextDayDate: moment.utc(dailyPlanDate).add(1, 'day').format('YYYY-MM-DD')
-					});
-					query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
-					dailyPlan = await query.getOne();
-					break;
-				}
+			// If a taskId is provided, the task goes to the DailyPlan
+			const task = taskId ? await this._taskService.findOneByIdString(taskId) : null;
+			if (taskId && !task) {
+				throw new BadRequestException('Task not found');
 			}
 
-			// Create or update DailyPlan
+			// Create the DailyPlan with the task
 			if (!dailyPlan) {
-				dailyPlan = new DailyPlan({
+				const newPlan = new DailyPlan({
 					...partialEntity,
 					employeeId: employee.id,
 					employee: { id: employee.id },
-					tasks: []
+					tasks: task ? [task] : []
 				});
+				try {
+					await this.save(newPlan);
+					return newPlan;
+				} catch (error) {
+					// Only one plan per employee, team and day can exist. When a concurrent request created
+					// it after the lookup above, this insert is refused and the task goes to that plan.
+					dailyPlan = await this.findEmployeeDayPlan(
+						tenantId,
+						organizationId,
+						employeeId,
+						organizationTeamId,
+						dailyPlanDate
+					);
+					if (!dailyPlan) {
+						throw error;
+					}
+				}
 			}
 
-			// If a taskId is provided, add the task to the DailyPlan
-			if (taskId) {
-				const task = await this._taskService.findOneByIdString(taskId);
-				if (!task) {
-					throw new BadRequestException('Task not found');
-				}
+			// Add the task to the existing DailyPlan
+			if (task && !dailyPlan.tasks.some(({ id }) => id === task.id)) {
+				await this.addTaskLink(dailyPlan.id, task.id);
 				dailyPlan.tasks.push(task);
 			}
 
-			await this.save(dailyPlan); // Save changes
-
-			return dailyPlan; // Return the created/updated DailyPlan
+			return dailyPlan;
 		} catch (error) {
 			throw new BadRequestException(error); // Clearer error messaging
+		}
+	}
+
+	/**
+	 * Finds the employee's plan for a stored day in a team, with its tasks. Tenant, organization, employee,
+	 * team and day are the key of the unique index `IDX_daily_plan_employee_team_day_unique`, so there is
+	 * at most one that is not soft-deleted, and only those are read. Without a team, it is the employee's
+	 * plan that has no team either.
+	 *
+	 * @param tenantId - The tenant of the plan
+	 * @param organizationId - The organization of the plan
+	 * @param employeeId - The employee who owns the plan
+	 * @param organizationTeamId - The team of the plan, if any
+	 * @param dailyPlanDate - The stored day, as `YYYY-MM-DD` (see storedPlanDay)
+	 * @returns The plan, or null when the employee has none that day in that team
+	 */
+	private async findEmployeeDayPlan(
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		organizationTeamId: ID | undefined,
+		dailyPlanDate: string
+	): Promise<DailyPlan | null> {
+		const nextDayDate = moment.utc(dailyPlanDate).add(1, 'day').format('YYYY-MM-DD');
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const item = await this.mikroOrmDailyPlanRepository.findOne(
+					{
+						tenantId,
+						organizationId,
+						organizationTeamId: organizationTeamId ?? null,
+						employeeId,
+						date: { $gte: storedDayStart(dailyPlanDate), $lt: storedDayStart(nextDayDate) }
+					} as any,
+					{
+						populate: ['tasks'] as any[]
+					}
+				);
+				return item ? (this.serialize(item) as DailyPlan) : null;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
+				query.setFindOptions({ relations: { tasks: true } });
+				query.where(p('"dailyPlan"."tenantId" = :tenantId'), { tenantId });
+				query.andWhere(p('"dailyPlan"."organizationId" = :organizationId'), { organizationId });
+				if (organizationTeamId) {
+					query.andWhere(p('"dailyPlan"."organizationTeamId" = :organizationTeamId'), { organizationTeamId });
+				} else {
+					query.andWhere(p('"dailyPlan"."organizationTeamId" IS NULL'));
+				}
+				// Any time on that day. Unlike DATE("date"), a range on the bare column lets the
+				// (employeeId, organizationTeamId, date) index narrow the lookup to that day.
+				query.andWhere(p(`"dailyPlan"."date" >= :dailyPlanDate AND "dailyPlan"."date" < :nextDayDate`), {
+					dailyPlanDate,
+					nextDayDate
+				});
+				query.andWhere(p('"dailyPlan"."employeeId" = :employeeId'), { employeeId });
+				return await query.getOne();
+			}
+		}
+	}
+
+	/**
+	 * Links a task to a plan with one insert into `daily_plan_task`, which does nothing when the link
+	 * already exists. Saving the plan would write its whole task list instead, and drop any link another
+	 * request added since the plan was read: TypeORM removes the links missing from the list, and
+	 * MikroORM rewrites them all.
+	 *
+	 * @param dailyPlanId - The plan to link the task to
+	 * @param taskId - The task to link
+	 */
+	private async addTaskLink(dailyPlanId: ID, taskId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmDailyPlanRepository
+					.getKnex()('daily_plan_task')
+					.insert({ dailyPlanId, taskId })
+					.onConflict(['dailyPlanId', 'taskId'])
+					.ignore();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmDailyPlanRepository
+					.createQueryBuilder()
+					.insert()
+					.into('daily_plan_task')
+					.values({ dailyPlanId, taskId })
+					.orIgnore()
+					.execute();
+				break;
 		}
 	}
 
@@ -154,7 +257,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (employeeId) mikroWhere.employeeId = employeeId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						...(options?.relations ? { populate: options.relations as any[] } : {})
+						...(options?.relations ? { populate: options.relations as any[] } : {}),
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -187,6 +291,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (employeeId) {
 						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 					}
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
@@ -241,7 +347,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						populate: ['employee', 'tasks', ...(relations as any[])]
+						populate: ['employee', 'tasks', ...(relations as any[])],
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -268,6 +375,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							organizationTeamId
 						});
 					}
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
@@ -314,6 +423,39 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		if (!isMember) {
 			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
 		}
+	}
+
+	/**
+	 * Limits a plan list to the page the client asked for, only when it sent `take`: the clients that
+	 * sort plans into today, upcoming and past days read the whole list.
+	 *
+	 * Pages follow the plan date, and the id breaks ties so that no plan repeats or goes missing from one
+	 * page to the next.
+	 *
+	 * @param query The plan list query, filters already applied
+	 * @param options The client query
+	 */
+	private applyRequestedPage(query: SelectQueryBuilder<DailyPlan>, options: BaseQueryDTO): void {
+		const page = resolveRequestedPage(options);
+		if (!page) {
+			return;
+		}
+		query.orderBy(`${query.alias}.date`, 'ASC').addOrderBy(`${query.alias}.id`, 'ASC');
+		query.skip(page.offset).take(page.limit);
+	}
+
+	/**
+	 * The MikroORM find options for the page the client asked for, in the same order as
+	 * `applyRequestedPage`, or none when it sent no `take`.
+	 *
+	 * @param options The client query
+	 */
+	private mikroOrmRequestedPage(options: BaseQueryDTO) {
+		const page = resolveRequestedPage(options);
+		if (!page) {
+			return {};
+		}
+		return { orderBy: { date: 'ASC', id: 'ASC' } as const, limit: page.limit, offset: page.offset };
 	}
 
 	/**
@@ -726,7 +868,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					};
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						populate: ['employee', 'tasks', 'employee.user'] as any[]
+						populate: ['employee', 'tasks', 'employee.user'] as any[],
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -753,6 +896,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 						return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
 					});
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieves results and total count
 					const [items, total] = await query.getManyAndCount();
