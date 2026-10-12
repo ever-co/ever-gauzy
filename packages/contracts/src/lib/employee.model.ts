@@ -138,7 +138,18 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isTrackingTime?: boolean;
 	// True mean active, false away
 	isAway?: boolean;
+	/** When the last presence heartbeat was received, by the server clock. Null until the first one. */
+	lastSeenAt?: Date;
+	/** Whether the last presence heartbeat reported no keyboard, mouse or touch input for a while. */
+	isIdle?: boolean;
 }
+
+/** Body of a presence heartbeat sent by a client for the signed-in employee. */
+export interface IEmployeePresenceInput {
+	isIdle: boolean;
+}
+
+export type IEmployeePresence = Pick<IEmployee, 'lastSeenAt' | 'isIdle'>;
 
 export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
 
