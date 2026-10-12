@@ -27,17 +27,20 @@ export class TimesheetCreateHandler
 		} = input;
 
 		try {
-			return await this._timesheetService.create({
-				employeeId,
-				duration,
-				keyboard,
-				mouse,
-				overall,
-				startedAt,
-				stoppedAt,
-				organizationId,
-				tenantId: RequestContext.currentTenantId()
-			});
+			// Only dispatched by TimesheetFirstOrCreateHandler, for the employee of the time log being written
+			return await this._timesheetService.forTimeLogEmployee(() =>
+				this._timesheetService.create({
+					employeeId,
+					duration,
+					keyboard,
+					mouse,
+					overall,
+					startedAt,
+					stoppedAt,
+					organizationId,
+					tenantId: RequestContext.currentTenantId()
+				})
+			);
 		} catch (error) {
 			throw new BadRequestException(
 				`Can\'t create timesheet for employee-${employeeId} of organization-${organizationId}`
