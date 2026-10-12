@@ -5573,13 +5573,14 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "SMTP beheren voor '{{ name }}'",
-		"DESCRIPTION": "Verstuur Gauzy-e-mails (uitnodigingen, meldingen, rapporten) via uw eigen mailserver in plaats van de standaardserver.",
+		"DESCRIPTION_TENANT": "Gebruikt voor de e-mails van elke organisatie zonder eigen SMTP (uitnodigingen, facturen, wachtwoordherstel, verificatiecodes). Zonder deze gelden de standaard mailinstellingen van de server.",
+		"DESCRIPTION_ORGANIZATION": "Gebruikt voor de e-mails van deze organisatie in plaats van de tenant-SMTP. Valideer de verbinding en sla daarna op.",
 		"HINTS": {
 			"FROM_ADDRESS": "Het afzenderadres dat ontvangers in hun inbox zien.",
 			"HOST": "Het adres van uw SMTP-server, bijv. smtp.gmail.com.",
-			"PORT": "Meestal 587 voor TLS of 465 voor SSL.",
-			"SECURE": "True voor SSL op poort 465; False voor TLS (STARTTLS) op poort 587.",
-			"USERNAME": "Het account waarmee wordt aangemeld bij de SMTP-server.",
+			"PORT": "Laat leeg voor 587. 465 gebruikt SSL; 587 gebruikt STARTTLS.",
+			"SECURE": "Geldt alleen voor andere poorten: 465 gebruikt altijd SSL en 587 altijd STARTTLS.",
+			"USERNAME": "Het account waarmee wordt aangemeld bij de SMTP-server. Opgeslagen waarden worden gemaskeerd teruggegeven; voer gebruikersnaam en wachtwoord opnieuw in om deze instellingen te wijzigen.",
 			"PASSWORD": "Het wachtwoord of app-wachtwoord van dat account."
 		},
 		"FROM_ADDRESS": "Van e-mailadres",

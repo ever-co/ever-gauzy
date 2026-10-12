@@ -16,7 +16,15 @@
 								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: user?.tenant?.name } }}
 							}
 						</h6>
-						<p class="smtp-subtitle">{{ 'CUSTOM_SMTP_PAGE.DESCRIPTION' | translate }}</p>
+						<!-- Sending looks up the organization's SMTP, then the tenant's, then the server default. -->
+						<p class="smtp-subtitle">
+							{{
+								(isOrganization
+									? 'CUSTOM_SMTP_PAGE.DESCRIPTION_ORGANIZATION'
+									: 'CUSTOM_SMTP_PAGE.DESCRIPTION_TENANT'
+								) | translate
+							}}
+						</p>
 					</div>
 				</header>
 				<form
