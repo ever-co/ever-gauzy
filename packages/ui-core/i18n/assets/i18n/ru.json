@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Включено",
+		"DISABLED": "Отключено",
 		"PAY": "Оплатить",
 		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ADD_NEW": "Добавить новый",
@@ -5597,7 +5599,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Поставщик SMS",
-		"TWILIO": "Твилио"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Отправляйте SMS-уведомления и приглашения через Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Документация"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Управление функциями для '{{ name }}'"

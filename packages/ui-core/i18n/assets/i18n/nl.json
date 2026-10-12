@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Ingeschakeld",
+		"DISABLED": "Uitgeschakeld",
 		"PAY": "Betalen",
 		"ADD_EXISTING_USER": "Voeg bestaande gebruiker toe",
 		"ADD_NEW": "Voeg Nieuw Toe",
@@ -5582,7 +5584,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS-aanbieder",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Verstuur sms-meldingen en uitnodigingen via Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentatie"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Beheer functies voor '{{ name }}'"

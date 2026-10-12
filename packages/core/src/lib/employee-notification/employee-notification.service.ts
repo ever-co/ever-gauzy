@@ -7,10 +7,13 @@ import {
 	IEmployeeNotificationSetting,
 	NotificationActionTypeEnum,
 	EmployeeNotificationTypeEnum,
-	IMarkAllAsReadResponse
+	IMarkAllAsReadResponse,
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { Between, UpdateResult } from 'typeorm';
+import { Between, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { redactDatabaseError } from '../core/errors/database-error';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
@@ -51,6 +54,61 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	 * @returns The created notification entry.
 	 * @throws BadRequestException when the log creation fails.
 	 */
+	/**
+	 * The receiver a read is limited to.
+	 *
+	 * Notifications are personal: a caller without CHANGE_SELECTED_EMPLOYEE only sees the ones addressed
+	 * to their own employee, and one who also has no employee record sees none. Notifications key their
+	 * receiver as `receiverEmployeeId`, so the automatic employee filter of TenantAwareCrudService (which
+	 * looks for an `employeeId` column) never applied, and every read route listed the whole tenant's
+	 * notifications. A CHANGE_SELECTED_EMPLOYEE holder is not limited.
+	 */
+	private receiverScope(): FindOptionsWhere<EmployeeNotification> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return {};
+		}
+		const receiverEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+		// `In([])` matches no row
+		return { receiverEmployeeId: receiverEmployeeId ?? In([]) };
+	}
+
+	/**
+	 * Applies {@link receiverScope} to the where of a read, whatever the client asked for.
+	 */
+	private scopeToReceiver<F extends LegacyFindOneOptions<EmployeeNotification>>(filter?: F): F {
+		const scope = this.receiverScope();
+		const where = filter?.where;
+		// An empty OR list has no clause to carry the receiver: it becomes the receiver alone
+		const scoped =
+			Array.isArray(where) && where.length > 0
+				? where.map((clause) => ({ ...clause, ...scope }))
+				: { ...(Array.isArray(where) ? {} : where), ...scope };
+		return { ...filter, where: scoped } as F;
+	}
+
+	public async findAll(
+		filter?: LegacyFindManyOptions<EmployeeNotification>
+	): Promise<IPagination<EmployeeNotification>> {
+		return await super.findAll(this.scopeToReceiver(filter));
+	}
+
+	public async paginate(
+		filter?: LegacyFindManyOptions<EmployeeNotification>
+	): Promise<IPagination<EmployeeNotification>> {
+		return await super.paginate(this.scopeToReceiver(filter));
+	}
+
+	public async countBy(options?: FindOptionsWhere<EmployeeNotification>): Promise<number> {
+		return await super.countBy({ ...options, ...this.receiverScope() });
+	}
+
+	public async findOneByIdString(
+		id: ID,
+		options?: LegacyFindOneOptions<EmployeeNotification>
+	): Promise<EmployeeNotification> {
+		return await super.findOneByIdString(id, this.scopeToReceiver(options));
+	}
+
 	async create(
 		input: IEmployeeNotificationCreateInput,
 		{ absorbRedelivery = false }: { absorbRedelivery?: boolean } = {}
@@ -64,15 +122,18 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// Search for the receiver notification setting
 			let employeeNotificationSetting: IEmployeeNotificationSetting;
 
+			// The RECEIVER's settings, whoever sends: the plain reads / writes of the setting service are
+			// limited to the caller's own employee, so an employee or manager sender used to be checked
+			// against their own settings row (and a missing row was created for them, not the receiver).
 			try {
-				employeeNotificationSetting = await this._employeeNotificationSettingService.findOneByWhereOptions({
+				employeeNotificationSetting = await this._employeeNotificationSettingService.findByEmployee({
 					employeeId,
 					organizationId,
 					tenantId
 				});
 			} catch (error) {
 				if (error instanceof NotFoundException) {
-					employeeNotificationSetting = await this._employeeNotificationSettingService.create({
+					employeeNotificationSetting = await this._employeeNotificationSettingService.createForEmployee({
 						assignment: true,
 						comment: true,
 						invitation: true,
