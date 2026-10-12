@@ -5573,6 +5573,15 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "SMTP beheren voor '{{ name }}'",
+		"DESCRIPTION": "Verstuur Gauzy-e-mails (uitnodigingen, meldingen, rapporten) via uw eigen mailserver in plaats van de standaardserver.",
+		"HINTS": {
+			"FROM_ADDRESS": "Het afzenderadres dat ontvangers in hun inbox zien.",
+			"HOST": "Het adres van uw SMTP-server, bijv. smtp.gmail.com.",
+			"PORT": "Meestal 587 voor TLS of 465 voor SSL.",
+			"SECURE": "True voor SSL op poort 465; False voor TLS (STARTTLS) op poort 587.",
+			"USERNAME": "Het account waarmee wordt aangemeld bij de SMTP-server.",
+			"PASSWORD": "Het wachtwoord of app-wachtwoord van dat account."
+		},
 		"FROM_ADDRESS": "Van e-mailadres",
 		"HOST": "Gastheer",
 		"PORT": "Haven",

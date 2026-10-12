@@ -5572,6 +5572,15 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Zarządzaj SMTP dla '{{ name }}'",
+		"DESCRIPTION": "Wysyłaj wiadomości Gauzy (zaproszenia, powiadomienia, raporty) przez własny serwer pocztowy zamiast domyślnego.",
+		"HINTS": {
+			"FROM_ADDRESS": "Adres nadawcy widoczny dla odbiorców w skrzynce odbiorczej.",
+			"HOST": "Adres Twojego serwera SMTP, np. smtp.gmail.com.",
+			"PORT": "Zwykle 587 dla TLS lub 465 dla SSL.",
+			"SECURE": "True dla SSL na porcie 465; False dla TLS (STARTTLS) na porcie 587.",
+			"USERNAME": "Konto używane do logowania na serwerze SMTP.",
+			"PASSWORD": "Hasło lub hasło aplikacji dla tego konta."
+		},
 		"FROM_ADDRESS": "Adres email nadawcy",
 		"HOST": "Gospodarz",
 		"PORT": "Port",

@@ -5573,6 +5573,15 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Gestisci SMTP per '{{ name }}'",
+		"DESCRIPTION": "Invia le email di Gauzy (inviti, notifiche, report) tramite il tuo server di posta invece di quello predefinito.",
+		"HINTS": {
+			"FROM_ADDRESS": "L'indirizzo del mittente che i destinatari vedono nella posta in arrivo.",
+			"HOST": "L'indirizzo del tuo server SMTP, ad es. smtp.gmail.com.",
+			"PORT": "Di solito 587 per TLS o 465 per SSL.",
+			"SECURE": "True per SSL sulla porta 465; False per TLS (STARTTLS) sulla porta 587.",
+			"USERNAME": "L'account usato per accedere al server SMTP.",
+			"PASSWORD": "La password o la password per app di quell’account."
+		},
 		"FROM_ADDRESS": "Dall'indirizzo email",
 		"HOST": "Host",
 		"PORT": "Porta",

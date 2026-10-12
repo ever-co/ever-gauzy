@@ -5573,6 +5573,15 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "管理SMTP邮件服务器的 '{{ name }}'",
+		"DESCRIPTION": "通过您自己的邮件服务器（而非默认服务器）发送 Gauzy 邮件（邀请、通知、报告）。",
+		"HINTS": {
+			"FROM_ADDRESS": "收件人在收件箱中看到的发件人地址。",
+			"HOST": "您的 SMTP 服务器地址，例如 smtp.gmail.com。",
+			"PORT": "通常 TLS 使用 587，SSL 使用 465。",
+			"SECURE": "True 表示在 465 端口使用 SSL；False 表示在 587 端口使用 TLS（STARTTLS）。",
+			"USERNAME": "用于登录 SMTP 服务器的账户。",
+			"PASSWORD": "该账户的密码或应用专用密码。"
+		},
 		"FROM_ADDRESS": "发件人电子邮件地址",
 		"HOST": "主人",
 		"PORT": "港口",

@@ -5582,6 +5582,15 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Manage SMTP for '{{ name }}'",
+		"DESCRIPTION": "שלחו הודעות דוא\"ל של Gauzy (הזמנות, התראות, דוחות) דרך שרת הדואר שלכם במקום שרת ברירת המחדל.",
+		"HINTS": {
+			"FROM_ADDRESS": "כתובת השולח שהנמענים רואים בתיבת הדואר הנכנס.",
+			"HOST": "כתובת שרת ה-SMTP שלכם, למשל smtp.gmail.com.",
+			"PORT": "בדרך כלל 587 עבור TLS או 465 עבור SSL.",
+			"SECURE": "True עבור SSL בפורט 465; False עבור TLS (STARTTLS) בפורט 587.",
+			"USERNAME": "החשבון המשמש להתחברות לשרת ה-SMTP.",
+			"PASSWORD": "הסיסמה או סיסמת האפליקציה של חשבון זה."
+		},
 		"HOST": "Host",
 		"PORT": "Port",
 		"SECURE": "Secure",
