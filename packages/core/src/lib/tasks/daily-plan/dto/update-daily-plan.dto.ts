@@ -1,6 +1,7 @@
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 import { IDailyPlanUpdateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../../core/dto';
+import { DailyPlan } from '../daily-plan.entity';
 import { CreateDailyPlanDTO } from './create-daily-plan.dto';
 
 /**
@@ -12,6 +13,7 @@ export class UpdateDailyPlanDTO
 		TenantOrganizationBaseDTO,
 		PartialType(
 			PickType(CreateDailyPlanDTO, ['date', 'workTimePlanned', 'status', 'employeeId', 'organizationTeamId'])
-		)
+		),
+		PickType(DailyPlan, ['taskOrder'])
 	)
 	implements IDailyPlanUpdateInput {}
