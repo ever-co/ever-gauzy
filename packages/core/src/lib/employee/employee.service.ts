@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -7,6 +7,8 @@ import {
 	ID,
 	IDateRangePicker,
 	IEmployee,
+	IEmployeePresence,
+	IEmployeePresenceInput,
 	IFindMembersInput,
 	IPagination,
 	PermissionsEnum,
@@ -62,6 +64,26 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			input.description = sanitizeRichHtml(input.description);
 		}
 		return await super.create(entity);
+	}
+
+	/**
+	 * Records a presence heartbeat for the employee of the signed-in user, and only that one: the id
+	 * never comes from the request. The time is taken from the server clock so a client with a wrong
+	 * clock cannot make itself look online.
+	 *
+	 * @param input - Whether the client saw no user input for a while.
+	 * @returns The presence as stored.
+	 */
+	public async updatePresence({ isIdle }: IEmployeePresenceInput): Promise<IEmployeePresence> {
+		const employeeId = RequestContext.currentUser()?.employeeId;
+		if (!employeeId) {
+			throw new ForbiddenException('Only an employee can report presence.');
+		}
+
+		const presence: IEmployeePresence = { lastSeenAt: new Date(), isIdle };
+		await this.update(employeeId, presence);
+
+		return presence;
 	}
 
 	/**

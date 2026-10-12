@@ -109,6 +109,8 @@ export interface IApplicationSetting {
 	SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer';
 	screenshotNotification: boolean;
 	simpleScreenshotNotification: boolean;
+	/** Display that shows the screenshot notification: an Electron display id, or `null` for the primary display */
+	screenshotNotificationDisplayId?: number | null;
 	mutedNotification: boolean;
 	autoLaunch: boolean;
 	visibleAwOption: boolean;
@@ -130,6 +132,12 @@ export interface IApplicationSetting {
 	alwaysOn: boolean;
 	enforced: boolean;
 	theme: 'light' | 'dark'; // Based on nativeTheme
+	/**
+	 * Asynchronous timer data sync: timer jobs (durations, time-slot links, ActivityWatch events) go through a
+	 * persistent SQLite queue that survives quits and crashes and retries failures, instead of the in-memory queue.
+	 * Off unless `true`; read when the first timer job of a session is queued, so a change applies from the next start.
+	 */
+	asyncTimerDataSync?: boolean;
 	[key: string]: any; // Allow for additional settings
 }
 

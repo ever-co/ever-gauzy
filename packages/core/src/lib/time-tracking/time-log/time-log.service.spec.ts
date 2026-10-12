@@ -10,6 +10,7 @@
  * bootstraps the entity graph before the service layer.
  */
 import '../../core/entities/internal';
+import { AsyncLocalStorage } from 'async_hooks';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus } from '@nestjs/cqrs';
 import { IGetTimeLogReportInput, IManualTimeInput } from '@gauzy/contracts';
@@ -24,7 +25,8 @@ import {
 } from '../testing/recording-query-builder';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
-import { TimeLogCreateCommand, IGetConflictTimeLogCommand } from './commands';
+import { RequestContext } from '../../core/context';
+import { TimeLogCreateCommand, IGetConflictTimeLogCommand, TimeLogUpdateCommand } from './commands';
 import { TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
@@ -308,6 +310,9 @@ describe('TimeLogService', () => {
 					if (token === CommandBus) {
 						return { execute };
 					}
+					if (token === ManagedEmployeeService) {
+						return { canManageEmployee: jest.fn().mockResolvedValue(true) };
+					}
 					if (token === TypeOrmTimeLogRepository) {
 						return { metadata: { tableName: 'time_log' }, createQueryBuilder: () => builder };
 					}
@@ -334,6 +339,68 @@ describe('TimeLogService', () => {
 			});
 			expect(commandsOfType(TimeLogCreateCommand)[0].input).toMatchObject({
 				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
+		});
+
+		describe("a team manager editing a member's log (no CHANGE_SELECTED_EMPLOYEE)", () => {
+			// Stand-in for the per-request store withoutEmployeeFilter() keeps its state in.
+			const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
+			const originalClsService = RequestContext['clsService'];
+			let memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID };
+			let readsWithFilter: number;
+
+			const inRequest = <R>(callback: () => Promise<R>) => requestStorage.run(new Map(), callback);
+
+			beforeEach(() => {
+				mockRequestContext({
+					tenantId: TENANT_ID,
+					user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+					canChangeSelectedEmployee: false
+				});
+				RequestContext['clsService'] = {
+					get: (key: string) => requestStorage.getStore()?.get(key),
+					set: (key: string, value: unknown) => requestStorage.getStore()?.set(key, value)
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any;
+				readsWithFilter = 0;
+				// The service's own-employee filter: with it on, the manager only ever finds their own logs.
+				jest.spyOn(manualService, 'findOneByIdString').mockImplementation(async () => {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					if ((manualService as any).getSkipEmployeeFilter()) return memberLog as any;
+					readsWithFilter++;
+					throw new Error('Record not found');
+				});
+			});
+
+			afterEach(() => {
+				RequestContext['clsService'] = originalClsService;
+			});
+
+			it("updates the member's log and reads it back", async () => {
+				const updated = await inRequest(() => manualService.updateManualTime('log-1', { ...request }));
+
+				expect(updated).toBe(memberLog);
+				expect(readsWithFilter).toBe(0);
+				expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(1);
+			});
+
+			it("CONTROL: a read under the employee filter does not find the member's log", async () => {
+				await expect(inRequest(() => manualService.findOneByIdString('log-1'))).rejects.toThrow(
+					'Record not found'
+				);
+				expect(readsWithFilter).toBe(1);
+			});
+
+			it('still refuses to move a log to another employee', async () => {
+				memberLog.employeeId = CURRENT_EMPLOYEE_ID;
+				try {
+					await expect(inRequest(() => manualService.updateManualTime('log-1', { ...request }))).rejects.toThrow(
+						'A time log cannot be moved to another employee'
+					);
+					expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+				} finally {
+					memberLog.employeeId = TARGET_EMPLOYEE_ID;
+				}
 			});
 		});
 

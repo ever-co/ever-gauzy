@@ -195,33 +195,36 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 				// Update nested entity (Organization Sprint Members)
 				await this.updateOrganizationSprintMembers(id, organizationId, sprintMembers, managerIds, memberIds);
-
-				// Update the organization sprint with the prepared members
-				const { id: organizationSprintId } = organizationSprint;
-				const updatedSprint = await super.create({
-					...input,
-					organizationId,
-					tenantId,
-					id: organizationSprintId
-				});
-
-				// Generate the activity log
-				this._activityLogService.logActivity<OrganizationSprint>(
-					BaseEntityEnum.OrganizationSprint,
-					ActionTypeEnum.Updated,
-					ActorTypeEnum.User,
-					updatedSprint.id,
-					updatedSprint.name,
-					updatedSprint,
-					organizationId,
-					tenantId,
-					organizationSprint,
-					input
-				);
-
-				// return updated sprint
-				return updatedSprint;
 			}
+
+			// Update the organization sprint itself. This used to happen only together with a member change,
+			// so an update without member ids (completing a sprint, editing its name or dates, moving a task
+			// into it) saved nothing while the request still succeeded.
+			const { id: organizationSprintId } = organizationSprint;
+			const updatedSprint = await super.create({
+				...input,
+				organizationId,
+				tenantId,
+				id: organizationSprintId
+			});
+
+			// Generate the activity log
+			this._activityLogService.logActivity<OrganizationSprint>(
+				BaseEntityEnum.OrganizationSprint,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedSprint.id,
+				// A partial update may not carry the name
+				updatedSprint.name ?? organizationSprint.name,
+				updatedSprint,
+				organizationId,
+				tenantId,
+				organizationSprint,
+				input
+			);
+
+			// return updated sprint
+			return updatedSprint;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to update organization sprint: ${error.message}`, HttpStatus.BAD_REQUEST);
