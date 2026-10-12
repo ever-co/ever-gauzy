@@ -1002,7 +1002,9 @@ export default class TimerHandler {
 
 	/*
 	 * When the app quits: applies what the persistent queue holds (bounded) and releases it; the rest runs on the next
-	 * start, and the jobs that still come (e.g. the last time-slot link) use the in-memory queue.
+	 * start, and the jobs that still come (e.g. the last time-slot link) use the in-memory queue. Work the store refused
+	 * and that was still waiting its turn runs in memory once the queue is closed: that is waited for too (bounded), so
+	 * that quitting does not drop it with the process.
 	 */
 	private async closeAsyncTimerSync(): Promise<void> {
 		const queue = await this._asyncTimerSync;
@@ -1015,6 +1017,23 @@ export default class TimerHandler {
 			this._drainingLeftovers = false;
 			this._asyncTimerSync = Promise.resolve(null);
 			await queue.close(QUIT_CLOSE_MS).catch((error) => console.error('Error closing the timer queue', error));
+			await this.settlePendingSubmissions(QUIT_CLOSE_MS);
+		}
+	}
+
+	/* Resolves once the submissions made so far have been stored or run (false after `timeoutMs`). */
+	private async settlePendingSubmissions(timeoutMs: number): Promise<boolean> {
+		if (this._submissionsPending === 0) {
+			return true;
+		}
+		let timer: ReturnType<typeof setTimeout>;
+		const timeout = new Promise<boolean>((resolve) => {
+			timer = setTimeout(() => resolve(false), timeoutMs);
+		});
+		try {
+			return await Promise.race([this._submissions.then(() => true), timeout]);
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 

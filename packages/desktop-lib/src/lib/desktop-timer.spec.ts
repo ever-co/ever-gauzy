@@ -551,6 +551,35 @@ describe('TimerHandler', () => {
 			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000]);
 		}, 20_000);
 
+		it('lets a refused job still waiting its turn finish in memory before quitting returns', async () => {
+			const { handler, queue } = await sessionWithHeldJob();
+			refuseEveryStore(queue);
+			handler.lastTimer = { id: 1 };
+			// Short wait rounds, so that the waiting job notices the queue closing at once.
+			jest.spyOn(queue, 'settle').mockImplementation(async (ms?: number) => {
+				await sleep(Math.min(ms ?? 0, 50));
+				return false;
+			});
+			// The in-memory run outlasts the queue's own shutdown (1 s, the held job being in flight).
+			const processInMemory = (handler as any).ProcessQueueMessage.bind(handler);
+			jest.spyOn(handler as any, 'ProcessQueueMessage').mockImplementation(async (...args: unknown[]) => {
+				await sleep(1_500);
+				return processInMemory(...args);
+			});
+
+			const refused = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+			await sleep(20);
+			try {
+				await handler.stopTimer(null, window, knex, true);
+
+				expect(queue.isClosed).toBe(true);
+				expect(timerService.writes.map((write) => write.duration)).toContain(2000);
+			} finally {
+				timerService.release();
+				await refused;
+			}
+		}, 20_000);
+
 		it('with the setting turned back off, keeps running what the asynchronous session left behind — however long it takes — ahead of new jobs, then moves to the in-memory queue', async () => {
 			const stuck = await crashedSession(duration(1, 1000), duration(1, 2000));
 			stuck.release();
