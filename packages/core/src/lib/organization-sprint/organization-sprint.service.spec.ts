@@ -73,3 +73,54 @@ describe('OrganizationSprintService.update', () => {
 		expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: 'sprint-1', name: 'Sprint 1 (renamed)' }));
 	});
 });
+
+/**
+ * Same unsubscribe bug as the projects: `member.employee.id` on rows loaded without the relation.
+ */
+describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
+	const fixture = createTenantFixture();
+
+	let restore: () => void;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	it("unsubscribes a removed member from the sprint, by the member row's employeeId", async () => {
+		const entitySubscriptionService = { deleteForEmployee: jest.fn(), delete: jest.fn() };
+		const self = {
+			_roleService: { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager' }) },
+			typeOrmOrganizationSprintEmployeeRepository: {
+				find: jest.fn().mockResolvedValue([
+					{ id: 'row-a', employeeId: 'employee-a', roleId: null },
+					{ id: 'row-b', employeeId: 'employee-b', roleId: null }
+				]),
+				update: jest.fn(),
+				save: jest.fn()
+			},
+			deleteMemberByIds: jest.fn(),
+			_entitySubscriptionService: entitySubscriptionService,
+			_eventBus: { publish: jest.fn() }
+		};
+
+		await OrganizationSprintService.prototype.updateOrganizationSprintMembers.call(
+			self,
+			'sprint-1',
+			fixture.organizationId,
+			[],
+			[],
+			['employee-a']
+		);
+
+		expect(self.deleteMemberByIds).toHaveBeenCalledWith(['row-b']);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledWith(
+			expect.objectContaining({ entityId: 'sprint-1', employeeId: 'employee-b' })
+		);
+		expect(entitySubscriptionService.delete).not.toHaveBeenCalled();
+	});
+});
