@@ -428,6 +428,59 @@ describe('TimerHandler', () => {
 			20_000
 		);
 
+		it('keeps a newer job behind an older one whose store attempt is still in flight', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			const queue = await asyncQueueOf(handler);
+			expect(await queue.drain()).toBe(true);
+			const store = queue.processWithQueue.bind(queue);
+			// The older job's first store attempt is slow, then refused; the retry is accepted.
+			jest.spyOn(queue, 'processWithQueue').mockImplementationOnce(async () => {
+				await sleep(50);
+				throw new Error('SQLITE_BUSY: database is locked');
+			});
+			jest.spyOn(queue, 'processWithQueue').mockImplementation(store);
+
+			const older = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+			// Submitted while the older job is still being stored: it must not reach the store first.
+			const newer = handler.processWithQueue('gauzy-queue', duration(1, 3000), knex);
+			await Promise.all([older, newer]);
+			expect(await queue.drain()).toBe(true);
+
+			expect(timerService.writes.map((write) => write.duration)).toEqual([1000, 2000, 3000]);
+		});
+
+		it('waits once for a stuck backlog, however many refused jobs queue behind it', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			timerService.hold((write) => write.duration === 1000);
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			const queue = await asyncQueueOf(handler);
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+			// The stored 1000 ms job never settles; each wait round advances the clock by what it waited.
+			let clock = Date.now();
+			jest.spyOn(Date, 'now').mockImplementation(() => clock);
+			const settle = jest.spyOn(queue, 'settle').mockImplementation(async (ms?: number) => {
+				clock += ms ?? 0;
+				return false;
+			});
+
+			await Promise.all([
+				handler.processWithQueue('gauzy-queue', duration(1, 2000), knex),
+				handler.processWithQueue('gauzy-queue', duration(1, 3000), knex)
+			]);
+
+			// One 60 s wait in 5 s rounds for the pair, not one per job.
+			expect(settle).toHaveBeenCalledTimes(12);
+			expect(
+				audit.timerAuditError.mock.calls.filter(([message]) => message.includes('still pending after'))
+			).toHaveLength(1);
+			// Both ran in memory, in order, once the wait was over.
+			expect(timerService.writes.map((write) => write.duration)).toEqual([2000, 3000]);
+			timerService.release();
+		});
+
 		it('stores a refused job behind stored jobs still pending at the cut-off, rather than run ahead of them', async () => {
 			appSetting = { asyncTimerDataSync: true };
 			const handler = newHandler();
