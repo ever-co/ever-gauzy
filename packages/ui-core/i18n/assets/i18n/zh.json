@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "已启用",
+		"DISABLED": "已停用",
 		"PAY": "支付",
 		"ADD_EXISTING_USER": "添加现有用户",
 		"ADD_NEW": "添加新的",
@@ -5582,7 +5584,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS 供应商",
-		"TWILIO": "Twilio (提供雲端通信服務的公司)"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "通过 Twilio Programmable Messaging 发送短信通知和邀请。",
+		"DOCUMENTATION": "文档"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "管理'{{ name }}'的特性"

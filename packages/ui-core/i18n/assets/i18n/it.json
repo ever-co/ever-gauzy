@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Attivato",
+		"DISABLED": "Disattivato",
 		"PAY": "Paga",
 		"ADD_EXISTING_USER": "Aggiungi Utente Esistente",
 		"ADD_NEW": "Aggiungi nuovo",
@@ -5582,7 +5584,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Fornitore di SMS",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Invia notifiche e inviti via SMS tramite Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentazione"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Gestire le funzionalità per '{{ name }}'"

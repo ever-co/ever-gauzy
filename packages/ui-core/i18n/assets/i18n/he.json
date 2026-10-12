@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
@@ -5590,7 +5592,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "שליחת התראות והזמנות SMS באמצעות Twilio Programmable Messaging.",
+		"DOCUMENTATION": "תיעוד"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"

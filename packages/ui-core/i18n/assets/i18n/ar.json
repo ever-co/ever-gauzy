@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "مفعّل",
+		"DISABLED": "معطّل",
 		"PAY": "دفع",
 		"ADD_EXISTING_USER": "إضافة مستخدم موجود",
 		"ADD_NEW": "إضافة جديدة",
@@ -5567,7 +5569,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "موفر خدمة الرسائل القصيرة",
-		"TWILIO": "تويليو"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "إرسال إشعارات ودعوات الرسائل القصيرة عبر Twilio Programmable Messaging.",
+		"DOCUMENTATION": "التوثيق"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "إدارة الميزات لـ '{{ name }}'"

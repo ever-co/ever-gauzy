@@ -6249,7 +6249,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Send SMS notifications and invites through Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentation"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"

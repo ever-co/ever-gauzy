@@ -5627,7 +5627,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Доставчик",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Изпращане на SMS известия и покани чрез Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Документация"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Управление на функции за '{{ name }}'"

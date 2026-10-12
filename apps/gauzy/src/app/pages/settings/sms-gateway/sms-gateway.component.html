@@ -7,21 +7,41 @@
       </ngx-header-title>
       </h4>
     </nb-card-header>
-    <nb-card-body class="permission-items-col">
-      @for (provider of smsProviders; track provider) {
-        <nb-toggle
-          (checkedChange)="providerChanged(provider, $event)"
-          labelPosition="start"
-          status="basic"
-          >
-          {{ 'SMS_GATEWAY_PAGE.' + provider | translate }}
-        </nb-toggle>
-      }
+    <nb-card-body>
       <!--
         An empty `<div class="content"></div>` used to close this body. Nothing
         ever rendered into it, and its stylesheet gave it a near-white fill and a
         `calc(100vh - 18rem)` height — a page-tall blank panel under the provider
         toggles as soon as those styles applied. Both are gone.
       -->
+      <div class="sms-provider-list">
+        @for (provider of smsProviders; track provider) {
+          <div class="sms-provider-card">
+            <div class="sms-provider-row">
+              <span class="sms-provider-icon">
+                <nb-icon icon="message-square-outline"></nb-icon>
+              </span>
+              <div class="sms-provider-text">
+                <span class="sms-provider-name">{{ 'SMS_GATEWAY_PAGE.' + provider | translate }}</span>
+                <span class="sms-provider-description">
+                  {{ 'SMS_GATEWAY_PAGE.' + provider + '_DESCRIPTION' | translate }}
+                </span>
+                @if (docsUrls[provider]) {
+                  <a class="sms-provider-docs" [href]="docsUrls[provider]" target="_blank" rel="noopener noreferrer">
+                    {{ 'SMS_GATEWAY_PAGE.DOCUMENTATION' | translate }}
+                    <nb-icon icon="external-link-outline"></nb-icon>
+                  </a>
+                }
+              </div>
+              <nb-toggle
+                [checked]="isEnabled(provider)"
+                (checkedChange)="providerChanged(provider, $event)"
+                [attr.aria-label]="'SMS_GATEWAY_PAGE.' + provider | translate"
+                status="basic"
+              ></nb-toggle>
+            </div>
+          </div>
+        }
+      </div>
     </nb-card-body>
   </nb-card>
