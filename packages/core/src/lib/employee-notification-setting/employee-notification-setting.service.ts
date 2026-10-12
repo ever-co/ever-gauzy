@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { IEmployeeNotificationSettingCreateInput } from '@gauzy/contracts';
+import { ID, IEmployeeNotificationSettingCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
@@ -34,5 +34,30 @@ export class EmployeeNotificationSettingService extends TenantAwareCrudService<E
 				HttpStatus.BAD_REQUEST
 			);
 		}
+	}
+
+	/**
+	 * The settings of the given employee, whoever the caller is.
+	 *
+	 * The plain reads limit a caller without CHANGE_SELECTED_EMPLOYEE to their own employee (the filter is
+	 * merged over the given `employeeId`), so a notification sent by an employee or a manager was checked
+	 * against the SENDER's settings. Callers resolve the employee themselves (the notification receiver).
+	 */
+	async findByEmployee(where: {
+		employeeId: ID;
+		organizationId?: ID;
+		tenantId?: ID;
+	}): Promise<EmployeeNotificationSetting> {
+		return await this.withoutEmployeeFilter(() => this.findOneByWhereOptions(where));
+	}
+
+	/**
+	 * Creates the settings of the given employee, whoever the caller is (see {@link findByEmployee}: the
+	 * plain create would have stored the row for the caller instead).
+	 */
+	async createForEmployee(
+		input: IEmployeeNotificationSettingCreateInput & { employeeId: ID }
+	): Promise<EmployeeNotificationSetting> {
+		return await this.withoutEmployeeFilter(() => this.create(input));
 	}
 }
