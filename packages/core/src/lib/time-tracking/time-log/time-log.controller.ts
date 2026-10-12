@@ -25,7 +25,7 @@ import {
 } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
-import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
+import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogListQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 
 @ApiTags('TimeLog')
@@ -245,7 +245,7 @@ export class TimeLogController {
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
+	async getLogs(@Query() options: TimeLogListQueryDTO): Promise<ITimeLog[]> {
 		return await this._timeLogService.getTimeLogs(options);
 	}
 
