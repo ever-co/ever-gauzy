@@ -94,7 +94,8 @@ $single-column-below: 575.98px;
 		grid-column: 1 / -1;
 	}
 
-	label.label {
+	// `<label>` for single controls, `<span>` for the list captions, which name a group.
+	.label {
 		display: block;
 		margin: 0 0 0.375rem;
 		font-size: $control-font-size;
