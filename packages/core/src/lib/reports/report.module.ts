@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ReportCategory } from './report-category.entity';
 import { Report } from './report.entity';
 import { ReportController } from './report.controller';
@@ -37,7 +38,10 @@ import { MikroOrmReportCategoryRepository } from './repository/mikro-orm-report-
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
-		MikroOrmModule.forFeature([Report, ReportCategory, ReportOrganization])
+		MikroOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
+		// For the guards: the controllers and the resolver apply `TenantPermissionGuard` and `PermissionGuard`,
+		// which inject `RolePermissionService`, and a guard is built in the module of the class it guards.
+		RolePermissionModule
 	],
 	controllers: [ReportCategoryController, ReportController],
 	providers: [
