@@ -33,6 +33,14 @@ import { SettingTitlesEnum } from '../integration-setting-card/integration-setti
 	standalone: false
 })
 export class IntegrationAIViewComponent extends TranslationBaseComponent implements OnInit {
+	/**
+	 * Stable permission array for the template's `*ngxPermissionsOnly` gate.
+	 * 🛑 Never inline `['INTEGRATION_EDIT']` in the binding: a literal is a NEW array on every
+	 * change-detection cycle, so the directive re-validates forever under default change detection
+	 * and pins the main thread.
+	 */
+	public readonly integrationEditPermission = Object.freeze(['INTEGRATION_EDIT']) as string[];
+
 	public organization: IOrganization;
 	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
 	public settings$: Observable<IIntegrationSetting[]>;

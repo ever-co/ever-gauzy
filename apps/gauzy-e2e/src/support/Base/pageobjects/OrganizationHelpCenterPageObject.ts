@@ -28,6 +28,8 @@ export const OrganizationHelpCenterPage = {
 	descOfTheArticleInputCss: 'input[formcontrolname="desc"]',
 	employeePlaceholderCss: 'ga-employee-multi-select nb-select',
 	employeeDropdownCss: 'ul.option-list > nb-option',
-	articleTextCss: 'div[id="cke_1_contents"] > iframe[class="cke_wysiwyg_frame cke_reset"]',
+	// Article body is the shared rich-text editor (<ga-rich-text-editor formControlName="data">) whose
+	// editable is a plain contenteditable div (.ProseMirror) in the MAIN frame — there is no iframe.
+	articleTextCss: 'ga-rich-text-editor .ProseMirror',
 	articleSaveBtnCss: 'div.save-button > button[status="success"]'
 };

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, HttpException, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IIntegrationSetting, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -32,6 +32,10 @@ export class IntegrationSettingController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'The setting is managed by the server and cannot be changed'
+	})
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
@@ -40,12 +44,13 @@ export class IntegrationSettingController {
 		@Body() input: UpdateIntegrationSettingDTO
 	): Promise<IIntegrationSetting> {
 		try {
-			await this.integrationSettingService.create({
-				...input,
-				id
-			});
-			return await this.integrationSettingService.findOneByIdString(id);
+			// Tenant-scoped, allowlisted, value-only update: see IntegrationSettingService.updateEditableSetting
+			// (GHSA-4rwq-65wh-45h4).
+			return await this.integrationSettingService.updateEditableSetting(id, input);
 		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

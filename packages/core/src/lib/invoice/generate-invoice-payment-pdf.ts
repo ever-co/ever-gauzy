@@ -1,6 +1,21 @@
 import { IPayment, IOrganization, IOrganizationContact, IInvoice } from '@gauzy/contracts';
 
 import * as moment from 'moment';
+import 'moment-timezone';
+import { formatCurrencyAmount } from './invoice-currency.util';
+
+/**
+ * Formats a stored date as a calendar day of the organization's time zone.
+ *
+ * The forms save a picked day as the browser's local midnight, so "5 October" picked in UTC+2 is
+ * stored as `2026-10-04T22:00:00Z`; formatting that on a UTC server printed 4 October. The
+ * organization's zone is the closest thing the server knows to the zone the day was picked in; an
+ * organization without one falls back to the server zone, as the reports do.
+ */
+const formatDay = (date: Date | string, organization: IOrganization): string => {
+	const timeZone = organization?.timeZone?.trim() || moment.tz.guess();
+	return moment.utc(date).tz(timeZone).format(organization?.dateFormat || 'YYYY-MM-DD');
+};
 
 export async function generateInvoicePaymentPdfDefinition(
 	invoice: IInvoice,
@@ -10,12 +25,17 @@ export async function generateInvoicePaymentPdfDefinition(
 	totalPaid: number,
 	translatedText?: any
 ) {
+	// Every amount follows the organization's "Currency Position" setting, like the web app does.
+	const amount = (value: number | string) =>
+		formatCurrencyAmount(value, invoice.currency, organization?.currencyPosition);
+
 	const body = [];
 
 	for (const payment of payments) {
 		const currentPayment = [
-			`${moment(invoice.dueDate).format(organization.dateFormat)}`,
-			`${payment.amount}`,
+			// The column is headed "Payment Date": print the payment's own date, not the invoice due date.
+			formatDay(payment.paymentDate ?? payment.createdAt, organization),
+			amount(payment.amount),
 			`${payment.createdByUser.name}`,
 			`${payment.note ? payment.note : '-'}`,
 			`${payment.overdue ? translatedText.overdue : translatedText.onTime}`
@@ -23,7 +43,8 @@ export async function generateInvoicePaymentPdfDefinition(
 		body.push(currentPayment);
 	}
 
-	const widths = ['30%', '10%', '20%', '20%', '20%'];
+	// The amount now carries its currency code ("USD 1500"), which a 10% column wraps from 3 digits on
+	const widths = ['25%', '20%', '20%', '20%', '15%'];
 	const tableHeader = [
 		translatedText.paymentDate,
 		translatedText.amount,
@@ -79,7 +100,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.dueDate}: `
 							},
-							`${moment(invoice.dueDate).format(organization.dateFormat)}`
+							formatDay(invoice.dueDate, organization)
 						]
 					}
 				]
@@ -93,7 +114,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.totalValue}: `
 							},
-							`${invoice.currency} ${invoice.totalValue}`
+							amount(invoice.totalValue)
 						]
 					}
 				]
@@ -107,7 +128,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.totalPaid}: `
 							},
-							` ${invoice.currency} ${totalPaid}`
+							amount(totalPaid)
 						]
 					}
 				]

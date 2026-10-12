@@ -20,6 +20,20 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	}
 
 	/**
+	 * Runs the timesheet bookkeeping of a time log write for that log's employee, whoever the caller is.
+	 *
+	 * The write has already cleared the caller for that employee. Under the caller's employee filter, a
+	 * team manager adding time for a member would create the member's timesheet as their own, and the
+	 * recalculation would not find the member's timesheet at all.
+	 *
+	 * @param callback - The timesheet reads and writes to run.
+	 * @returns The callback's result.
+	 */
+	public async forTimeLogEmployee<R>(callback: () => Promise<R>): Promise<R> {
+		return await this.withoutEmployeeFilter(callback);
+	}
+
+	/**
 	 * GET timesheets count in date range for the same tenant
 	 *
 	 * @param request
@@ -65,9 +79,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				query.innerJoin(`${query.alias}.employee`, 'employee');
 
 				// Apply filters to the query
-				query.where((query: SelectQueryBuilder<Timesheet>) => {
-					this.getFilterTimesheetQuery(query, request);
-				});
+				await this.getFilterTimesheetQuery(query, request);
 
 				// Return the total count of timesheets
 				return query.getCount();
@@ -82,6 +94,10 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns Promise<ITimesheet[]> - List of timesheets
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(request);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				let {
@@ -139,13 +155,11 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 							brandColor: true
 						}
 					},
-					...(request?.relations ? { relations: parseFindOptionsRelations(request.relations) } : {})
+					...(request.relations ? { relations: parseFindOptionsRelations(request.relations) } : {})
 				});
 
 				// Apply filters to the query
-				query.where((query: SelectQueryBuilder<Timesheet>) => {
-					this.getFilterTimesheetQuery(query, request);
-				});
+				await this.getFilterTimesheetQuery(query, request);
 
 				// Return the list of timesheets
 				return await query.getMany();

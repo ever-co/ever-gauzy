@@ -1,6 +1,6 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { UpdateResult, DeepPartial } from 'typeorm';
-import { TenantAwareCrudService, RequestContext } from '@gauzy/core';
+import { TenantAwareCrudService, RequestContext, sanitizeRichHtml } from '@gauzy/core';
 import { ID, IHelpCenterArticle } from '@gauzy/contracts';
 import { HelpCenterArticleVersion } from './help-center-article-version.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
@@ -52,8 +52,12 @@ export class HelpCenterArticleVersionService extends TenantAwareCrudService<Help
 		await this.create(snapshotInput);
 
 		// 5. Update the article with the version's content (including binary)
+		// A version may predate server-side sanitizing of `descriptionHtml`; never copy it back raw.
 		return await this.articleService.update(version.articleId, {
-			descriptionHtml: version.descriptionHtml,
+			descriptionHtml:
+				typeof version.descriptionHtml === 'string'
+					? sanitizeRichHtml(version.descriptionHtml)
+					: version.descriptionHtml,
 			descriptionJson: version.descriptionJson,
 			descriptionBinary: version.descriptionBinary
 		});

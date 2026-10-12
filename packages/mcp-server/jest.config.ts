@@ -1,5 +1,6 @@
 module.exports = {
 	displayName: 'mcp-server',
+	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
 	preset: '../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {

@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Delete,
+	ForbiddenException,
 	Get,
 	Headers,
 	HttpCode,
@@ -18,7 +19,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
+import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, IEmployeePresence, ID } from '@gauzy/contracts';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
@@ -35,12 +36,14 @@ import {
 } from './commands';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ManagedEmployeeService } from './managed-employee.service';
 import {
 	EmployeeBulkInputDTO,
 	CreateEmployeeDTO,
 	UpdateEmployeeDTO,
 	UpdateProfileDTO,
-	FindMembersInputDTO
+	FindMembersInputDTO,
+	EmployeePresenceDTO
 } from './dto';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
@@ -53,7 +56,11 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/employee')
 export class EmployeeController extends CrudController<Employee> {
-	constructor(private readonly _employeeService: EmployeeService, private readonly _commandBus: CommandBus) {
+	constructor(
+		private readonly _employeeService: EmployeeService,
+		private readonly _commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService
+	) {
 		super(_employeeService);
 	}
 
@@ -224,11 +231,56 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid query parameters. Please check your input.'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'Without an organization-wide view, organizationTeamId must be a team the caller belongs to.'
+	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
 	@Get('/members')
 	@UseValidationPipe()
 	async getMembers(@Query() options: FindMembersInputDTO): Promise<IPagination<IEmployee>> {
+		// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, only covers the caller's own teams: findMembers
+		// filters by team only when one is given, so without this check it returns the whole organization.
+		// isMemberOfTeam fails closed on a missing team id or a caller without an employee record.
+		const hasOrganizationWideView = RequestContext.hasAnyPermission([
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		]);
+		if (
+			!hasOrganizationWideView &&
+			!(await this._managedEmployeeService.isMemberOfTeam(
+				RequestContext.currentEmployeeId(),
+				options.organizationTeamId
+			))
+		) {
+			throw new ForbiddenException('You can only list the members of a team you belong to.');
+		}
 		return await this._employeeService.findMembers(options);
+	}
+
+	/**
+	 * Records a presence heartbeat for the signed-in employee.
+	 *
+	 * Open to any authenticated employee, for their own record only: the employee is taken from the
+	 * request context, never from the request. Calling it again only moves `lastSeenAt` forward.
+	 *
+	 * @param input - Whether the client saw no user input for a while.
+	 * @returns The presence as stored.
+	 */
+	@ApiOperation({ summary: 'Record a presence heartbeat for the signed-in employee' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Presence recorded.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'The signed-in user has no employee record.'
+	})
+	@Permissions()
+	@Put('/me/presence')
+	@UseValidationPipe({ whitelist: true })
+	async updatePresence(@Body() input: EmployeePresenceDTO): Promise<IEmployeePresence> {
+		return await this._employeeService.updatePresence(input);
 	}
 
 	/**
@@ -295,12 +347,17 @@ export class EmployeeController extends CrudController<Employee> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: FindOptionsQueryDTO<Employee>
 	): Promise<IEmployee> {
-		// Check permissions to determine the correct ID to retrieve
+		// Check permissions to determine the correct ID to retrieve. A caller without
+		// CHANGE_SELECTED_EMPLOYEE may only read their OWN employee record; a caller with no employee
+		// record has nothing to read (an empty id used to be dropped from the where and returned the
+		// first employee of the tenant).
+		const ownEmployeeId = RequestContext.currentEmployeeId();
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) && !ownEmployeeId) {
+			throw new ForbiddenException('You do not have permission to view this employee.');
+		}
 		const searchCriteria = {
 			where: {
-				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-					? { id }
-					: { id: RequestContext.currentEmployeeId() })
+				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? { id } : { id: ownEmployeeId })
 			},
 			...(params.relations ? { relations: params.relations } : {}),
 			withDeleted: true

@@ -5,8 +5,6 @@
 // fallbacks only.
 .color {
   position: static;
-  margin-top: var(--gauzy-table-chip-gap, 0.1875rem);
-  margin-right: var(--gauzy-table-chip-gap, 0.1875rem);
   display: inline-block;
   font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
   font-weight: 600;
@@ -16,20 +14,20 @@
 }
 
 .tags {
-  // display: flex;
-  // width: 100px;
+  // A flex row makes chip geometry deterministic: `gap` owns chip↔chip spacing
+  // (the chips carry no margins of their own), flex items blockify, and the
+  // old `line-height: 0` hack — which let chip descenders overflow the box and
+  // ride up into the value line above — is unnecessary.
+  display: flex;
   flex-wrap: wrap;
-  // The chips are inline-blocks, so each chip row is a line box and inherits
-  // the cell's 20px line-height as a minimum — 4px per row that nothing can
-  // see. Zeroing it here lets a chip row measure exactly the chip. Safe because
-  // this container only ever holds `nb-badge` chips, each of which sets its own
-  // `line-height` via `.color` above.
-  line-height: 0;
-  // The template tags this element with Bootstrap's `.mt-2` utility, which is
-  // `!important`, so this is one of the two places in the density pass where
-  // `!important` is unavoidable. The chips carry their own `margin-top`, so the
-  // extra 8px here was a second gap on top of the one that shows.
-  margin-top: 0 !important;
+  align-items: flex-start;
+  gap: var(--gauzy-table-chip-gap, 0.1875rem);
+  // Text→chips separation is its own token, NOT the chip↔chip gap: the density
+  // pass collapsed the two and the chips ended up 3px under the text. The
+  // template tags this element with Bootstrap's `.mt-2` utility, which is
+  // `!important`, so `!important` is unavoidable here to resolve the tug-of-war
+  // in the token's favor.
+  margin-top: var(--gauzy-table-chip-block-gap, 0.25rem) !important;
 }
 
 .tags-right {

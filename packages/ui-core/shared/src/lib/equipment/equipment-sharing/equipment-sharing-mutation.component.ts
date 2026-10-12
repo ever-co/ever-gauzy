@@ -54,6 +54,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 	equipmentSharing: IEquipmentSharing;
 	employees: IEmployee[] = [];
 	disabled: boolean;
+	/** True while the save request is in flight: the Save button is disabled so a second click cannot create the request twice. */
+	loading = false;
 	selectedOrganization: IOrganization;
 	requestStatus: number;
 	participants = EquipmentSharingParticipantEnum.EMPLOYEE;
@@ -160,6 +162,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 	}
 
 	async onSaveRequest() {
+		if (this.loading) {
+			return;
+		}
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
 			equipment: this.equipmentItems.find((eq) => eq.id === this.form.value['equipment']),
@@ -181,13 +186,19 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 
 		let equipmentSharing: IEquipmentSharingCreateInput | IEquipmentSharingUpdateInput;
 
-		if (this.equipmentSharing) {
-			equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
-		} else {
-			equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
-		}
+		this.loading = true;
+		try {
+			if (this.equipmentSharing) {
+				equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
+			} else {
+				equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
+			}
 
-		this.closeDialog(equipmentSharing);
+			this.closeDialog(equipmentSharing);
+		} finally {
+			// Re-enable the button whether the request succeeded or failed, so a failed save can be retried.
+			this.loading = false;
+		}
 	}
 
 	async closeDialog(equipmentSharing?: IEquipmentSharingCreateInput | IEquipmentSharingUpdateInput) {

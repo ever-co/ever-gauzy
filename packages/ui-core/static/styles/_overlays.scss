@@ -251,6 +251,24 @@ $overlay-item-padding-x: 0.625rem; // 10px
     }
   }
 
+  // The collapsed sidebar's sub-link flyout (`nbPopoverClass` on the rail row —
+  // see `sidebar-menu/menu-items/.../menu-item.component`). It is a NAVIGATION
+  // MENU that happens to be built on a popover, not a speech bubble hanging off
+  // a control: an arrow would point back into the 3.5rem icon rail and read as
+  // chrome on chrome. Everything else — hairline, shadow, radius, surface — it
+  // keeps from the rule above, so it stays the same panel as every other menu.
+  .cdk-overlay-container .gz-rail-flyout nb-popover {
+    // The panel's own list scrolls when a section has more sub-links than the
+    // viewport can take, and with the arrow gone nothing is meant to hang
+    // outside the box — so clip to the radius instead of letting a scrollbar
+    // ride over the rounded corners.
+    overflow: hidden;
+
+    .arrow {
+      display: none;
+    }
+  }
+
   // ── nb-select option lists ──────────────────────────────────────────────
   .cdk-overlay-container nb-option-list {
     @include gauzy-overlay-surface();
@@ -310,6 +328,28 @@ $overlay-item-padding-x: 0.625rem; // 10px
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+  }
+
+  // ── Overlays opened FROM a chrome panel ─────────────────────────────────
+  .cdk-overlay-container nb-option-list.gz-panel-options {
+    nb-option {
+      padding: 0.3125rem 0.5rem;
+      font-size: 0.75rem;
+      line-height: 0.875rem;
+    }
+
+    nb-option .flag-icon {
+      width: 0.875rem;
+      height: 0.625rem;
+    }
+  }
+
+  .cdk-overlay-container nb-popover.gz-theme-popover {
+    padding: #{$overlay-padding};
+
+    .arrow {
+      display: none;
+    }
   }
 
   // ── Separators ──────────────────────────────────────────────────────────

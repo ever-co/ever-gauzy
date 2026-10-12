@@ -75,10 +75,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 		try {
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
-			return await this.goalGeneralSettingService.create({
-				id,
-				...entity
-			});
+			return await this.goalGeneralSettingService.create({ ...entity, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

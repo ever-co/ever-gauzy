@@ -1,6 +1,7 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 nb-card-body {
   background: nb-theme(gauzy-card-2);
@@ -31,6 +32,20 @@ nb-card-body {
       .table-scroll-container {
         flex-grow: 10;
         max-height: unset;
+        // Against `card-list-page()`'s `min-height: 100%`. That default is for the
+        // pages whose container sits in a card body that is NOT a flex column,
+        // where nothing else would make a short list fill the card. This body IS
+        // one, and it holds the toolbar above the table: 100% of the body plus the
+        // toolbar's own height is more than the body has, so the surface ran past
+        // the bottom of the card. `flex-grow: 10` above already fills whatever the
+        // toolbar leaves, and `min-height: 0` is what lets a flex item shrink back
+        // to that — the default `auto` floors it at its content.
+        //
+        // Here rather than after the include: this selector is (0,5,3) against the
+        // mixin's (0,3,1), so it holds no matter where the include lands — which
+        // matters because the four sheets that `@forward` this file emit their own
+        // `card-list-page()` call after everything in it.
+        min-height: 0;
       }
       .grid {
         flex-grow: 10;
@@ -118,3 +133,34 @@ nb-card-body {
 nb-card {
   margin-bottom: 0.5rem;
 }
+
+// ── The list-page contract, for a table built by hand ────────────────────────
+//
+// Expense categories is the ORIGIN of the `nb-card > nb-card-body.custom-table`
+// row pattern — Vendors and Employment types `@forward` this file, and
+// Positions, Employee levels and Documents reach it through Vendors — and it was
+// the one page of the six still drawn the old way: every row its own card
+// (`gauzy-card-1`, a radius, a 0.5rem bottom margin) floating in an unbounded
+// scroll container, and a 6px rail that only exists while a row is selected, so
+// clicking one shifted it sideways.
+//
+// `card-list-page()` is the part of the list-page contract that does not depend
+// on `angular2-smart-table`: the density tokens, the toolbar scale, the bounded
+// table surface, and rows flattened onto it with one hairline between them and a
+// rail reserved at rest. Placed at the END of the file, after the `.custom-table`
+// paint above, because the mixin deliberately writes at that same specificity and
+// relies on source order to settle it.
+//
+// The five sheets that forward this one call `card-list-page()` themselves with
+// their own arguments; those calls are emitted after this one and still win, so
+// Vendors keeps its 1.125rem row gutter and Employment types keeps its card-body
+// toolbar. The cost is one duplicated block in each of those sheets — the same
+// declarations, immediately overridden — which is the price of the row treatment
+// finally reaching the page that defines the pattern.
+//
+// `$actions: '.gauzy-button-container'`, not the default `nb-card-header`: this
+// page's header holds the back arrow and the title and nothing else — the
+// toolbar is the first child of the card BODY, above the table. The default
+// named a block with no buttons in it, so the one thing the toolbar scale was
+// there to compact was the one thing it never reached.
+@include ga-hub.card-list-page('.gauzy-button-container');

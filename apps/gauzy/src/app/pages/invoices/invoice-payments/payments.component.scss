@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-table' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .date-and-value {
   display: flex;
@@ -71,3 +72,14 @@
   display: flex;
   justify-content: space-between;
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// An invoice's payments are the same table as `/pages/accounting/payments`, one
+// click in, so they take the same block: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills and the toolbar scale.
+//
+// `$actions` is `.custom-container` — the panel below the invoice summary that
+// holds both the toolbar and the table; this page's `nb-card-header` carries only
+// the invoice's title. There is no pager on this table, so the pager half of the
+// block simply matches nothing.
+@include ga-hub.list-page('.custom-container');

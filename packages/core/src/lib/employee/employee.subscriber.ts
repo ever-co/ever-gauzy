@@ -403,6 +403,11 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		isArchived: boolean,
 		ormType: MultiORM
 	): Promise<void> {
+		// Both keys must select the row: with a missing organizationId the (raw EntityManager) update
+		// used to lose that predicate and flip the flags on EVERY organization membership of the user.
+		if (!userId || !organizationId) {
+			return;
+		}
 		const criteria = { userId, organizationId };
 		const partialEntity = { isActive, isArchived };
 

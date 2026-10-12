@@ -9,7 +9,15 @@ import { DataSourceOptions } from 'typeorm';
 import { KnexModuleOptions } from 'nest-knexjs';
 import * as path from 'path';
 import * as chalk from 'chalk';
-import { DatabaseTypeEnum, getLoggingMikroOptions, getLoggingOptions, getTlsOptions } from './database-helpers';
+import {
+	assertValidDatabaseType,
+	DatabaseTypeEnum,
+	getLoggingMikroOptions,
+	getLoggingOptions,
+	getTlsOptions,
+	parseIntEnv,
+	TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+} from './database-helpers';
 
 /**
  * Type representing the ORM types.
@@ -41,7 +49,12 @@ console.log('NODE_ENV: %s', process.env.NODE_ENV);
 const dbORM: MultiORM = getORMType();
 console.log('DB ORM: %s', dbORM);
 
+// `||`, not `??`: an empty DB_TYPE falls back to better-sqlite3 exactly like an unset one, because
+// compose / k8s templates render an unset variable as ''.
 const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
+// Fail fast on a typo'd/unsupported DB_TYPE instead of letting the switch below fall through
+// silently and leave every connection config `undefined` (TASK 5 finding).
+assertValidDatabaseType(dbType);
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
@@ -50,46 +63,146 @@ let typeOrmConnectionConfig: TypeOrmModuleOptions;
 let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 let knexConnectionConfig: KnexModuleOptions;
 
-// We set default pool size as 40. Usually PG has 100 connections max by default.
-const dbPoolSize = process.env.DB_POOL_SIZE ? Number.parseInt(process.env.DB_POOL_SIZE) : 40;
+/**
+ * Connection pool sizes and timeouts of the networked databases (PostgreSQL / MySQL).
+ */
+interface ConnectionPoolSettings {
+	dbPoolSize: number;
+	dbPoolSizeKnex: number;
+	dbConnectionTimeout: number;
+	idleTimeoutMillis: number;
+	dbSlowQueryLoggingTimeout: number;
+}
 
-// For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
-const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? Number.parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
+/**
+ * Reads the connection pool sizes and timeouts from the environment. Only the PostgreSQL and MySQL
+ * branches below call this: SQLite never used any of these settings, so a value it ignored must not
+ * abort its startup.
+ *
+ * Each setting keeps the `Number.parseInt` semantics (see `parseIntEnv`). A value that does not parse
+ * (`NaN`) or is negative throws, and so does a 0 timeout that tarn refused at startup anyway (see
+ * below); every other number is passed on exactly as before.
+ *
+ * @param type - The networked database being configured.
+ * @returns The parsed settings.
+ * @throws {Error} naming the variable and its value when a setting is invalid.
+ */
+function readConnectionPoolSettings(type: DatabaseTypeEnum.postgres | DatabaseTypeEnum.mysql): ConnectionPoolSettings {
+	// We set default pool size as 40. Usually PG has 100 connections max by default.
+	// 0 stays valid: knex (which MikroORM runs on) creates no pool for max 0, pg-pool then falls back
+	// to 10 connections and mysql2 treats 0 as "no limit".
+	const poolSize = parseIntEnv('DB_POOL_SIZE', process.env.DB_POOL_SIZE, 40);
 
-// Reduce connection timeout in development to fail faster and avoid long startup delays
-const defaultDbConnectionTimeout = process.env.NODE_ENV === 'production' ? 5000 : 2000; // 2 seconds for dev, 5 seconds for prod
+	// For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
+	// 0 stays valid for the same reason: knex then creates no pool.
+	const knexPoolSize = parseIntEnv('DB_POOL_SIZE_KNEX', process.env.DB_POOL_SIZE_KNEX, 10);
 
-const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
-	? Number.parseInt(process.env.DB_CONNECTION_TIMEOUT)
-	: defaultDbConnectionTimeout;
+	// Reduce connection timeout in development to fail faster and avoid long startup delays
+	const defaultConnectionTimeout = process.env.NODE_ENV === 'production' ? 5000 : 2000; // 2 seconds for dev, 5 seconds for prod
 
-const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? Number.parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+	// tarn, the pool behind knex and MikroORM, refuses to start with a timeout that is not > 0. It only
+	// sees the timeouts when a pool is created: the Knex pool, or the MikroORM pool on PostgreSQL (the
+	// MySQL one gets no timeouts). With both of those disabled only pg-pool reads them, and there 0
+	// means "no timeout", so 0 stays valid in that case.
+	const timeoutsReachTarn = knexPoolSize !== 0 || (type === DatabaseTypeEnum.postgres && poolSize !== 0);
+	const minTimeout = timeoutsReachTarn ? 1 : 0;
 
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? Number.parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-	: 10000; // 10 seconds default
+	// With no tarn pool an unparsable or negative timeout never stopped startup (pg-pool ignored it), so it only
+	// warns there; where tarn sees it, it already crashed startup and now fails with a readable error instead.
+	const onInvalidTimeout = timeoutsReachTarn ? 'throw' : 'warn';
+
+	const connectionTimeout = parseIntEnv(
+		'DB_CONNECTION_TIMEOUT',
+		process.env.DB_CONNECTION_TIMEOUT,
+		defaultConnectionTimeout,
+		{ min: minTimeout, onInvalid: onInvalidTimeout }
+	);
+
+	const idleTimeout = parseIntEnv('DB_IDLE_TIMEOUT', process.env.DB_IDLE_TIMEOUT, 10000, {
+		min: minTimeout,
+		onInvalid: onInvalidTimeout
+	}); // 10 seconds
+
+	// 0 turns TypeORM's slow-query warning off: it only logs when maxQueryExecutionTime is truthy. An
+	// unparsable value also switched it off and a negative one logged every query, but neither stopped
+	// startup, so both only warn.
+	const slowQueryLoggingTimeout = parseIntEnv(
+		'DB_SLOW_QUERY_LOGGING_TIMEOUT',
+		process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT,
+		10000, // 10 seconds default
+		{ onInvalid: 'warn' }
+	);
+
+	console.log('DB ORM Pool Size: ' + poolSize);
+	console.log('DB Knex Pool Size: ' + knexPoolSize);
+
+	console.log('DB Connection Timeout: ' + connectionTimeout);
+	console.log('DB Idle Timeout: ' + idleTimeout);
+	console.log('DB Slow Query Logging Timeout: ' + slowQueryLoggingTimeout);
+
+	return {
+		dbPoolSize: poolSize,
+		dbPoolSizeKnex: knexPoolSize,
+		dbConnectionTimeout: connectionTimeout,
+		idleTimeoutMillis: idleTimeout,
+		dbSlowQueryLoggingTimeout: slowQueryLoggingTimeout
+	};
+}
+
+/**
+ * Prints the same five pool/timeout startup lines as `readConnectionPoolSettings` for SQLite, which never
+ * uses these settings. The values are parsed with plain `Number.parseInt` and are never validated, so a
+ * value SQLite ignores can never abort its startup: an unparsable one prints as `NaN`, as it always did.
+ */
+function logConnectionPoolSettingsUnvalidated(): void {
+	const poolSize = process.env.DB_POOL_SIZE ? Number.parseInt(process.env.DB_POOL_SIZE) : 40;
+	const knexPoolSize = process.env.DB_POOL_SIZE_KNEX ? Number.parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
+	const defaultConnectionTimeout = process.env.NODE_ENV === 'production' ? 5000 : 2000;
+	const connectionTimeout = process.env.DB_CONNECTION_TIMEOUT
+		? Number.parseInt(process.env.DB_CONNECTION_TIMEOUT)
+		: defaultConnectionTimeout;
+	const idleTimeout = process.env.DB_IDLE_TIMEOUT ? Number.parseInt(process.env.DB_IDLE_TIMEOUT) : 10000;
+	const slowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+		? Number.parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+		: 10000;
+
+	console.log('DB ORM Pool Size: ' + poolSize);
+	console.log('DB Knex Pool Size: ' + knexPoolSize);
+
+	console.log('DB Connection Timeout: ' + connectionTimeout);
+	console.log('DB Idle Timeout: ' + idleTimeout);
+	console.log('DB Slow Query Logging Timeout: ' + slowQueryLoggingTimeout);
+}
+
+// Assigned by the PostgreSQL / MySQL branches of the switch below (see readConnectionPoolSettings).
+let dbPoolSize: number;
+let dbPoolSizeKnex: number;
+let dbConnectionTimeout: number;
+let idleTimeoutMillis: number;
+let dbSlowQueryLoggingTimeout: number;
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
-console.log('DB ORM Pool Size: ' + dbPoolSize);
-console.log('DB Knex Pool Size: ' + dbPoolSizeKnex);
-
-console.log('DB Connection Timeout: ' + dbConnectionTimeout);
-console.log('DB Idle Timeout: ' + idleTimeoutMillis);
-console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
 console.log('DB SSL Mode: ' + process.env.DB_SSL_MODE);
 console.log('DB SSL MODE ENABLE: ' + dbSslMode);
 
 switch (dbType) {
 	case DatabaseTypeEnum.mongodb:
-		throw 'MongoDB not supported yet';
+		// A real Error, not a bare string: `throw`ing a string loses the stack trace and fails
+		// `instanceof Error` checks anywhere upstream that might otherwise handle this gracefully.
+		throw new Error('DB_TYPE=mongodb is not supported yet.');
 
 	case DatabaseTypeEnum.mysql:
+		// Read here rather than at module level so SQLite never validates them (see readConnectionPoolSettings).
+		// DB_PORT below accepts 0 as before: like an unset port, it makes every driver use its default port.
+		({ dbPoolSize, dbPoolSizeKnex, dbConnectionTimeout, idleTimeoutMillis, dbSlowQueryLoggingTimeout } =
+			readConnectionPoolSettings(dbType));
+
 		// MikroORM DB Config (MySQL)
 		const mikroOrmMySqlOptions: MikroOrmMySqlOptions = {
 			driver: MySqlDriver,
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
+			port: parseIntEnv('DB_PORT', process.env.DB_PORT, 3306, { radix: 10, onInvalid: 'warn' }),
 			dbName: process.env.DB_NAME || 'mysql',
 			user: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
@@ -116,11 +229,11 @@ switch (dbType) {
 		// TypeORM DB Config (MySQL)
 		const typeOrmMySqlOptions: DataSourceOptions = {
 			type: dbType,
-			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
-			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
+			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
+			port: parseIntEnv('DB_PORT', process.env.DB_PORT, 3306, { radix: 10, onInvalid: 'warn' }),
 			database: process.env.DB_NAME || 'mysql',
 			username: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
@@ -152,7 +265,7 @@ switch (dbType) {
 						? { ca: tlsMySqlOptions.ca, rejectUnauthorized: tlsMySqlOptions.rejectUnauthorized }
 						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
-					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306, // Database port (default: 3306)
+					port: parseIntEnv('DB_PORT', process.env.DB_PORT, 3306, { radix: 10, onInvalid: 'warn' }), // Database port (default: 3306)
 					database: process.env.DB_NAME || 'mysql', // Database name (default: mysql)
 					user: process.env.DB_USER || 'root', // Database username (default: mysql)
 					password: process.env.DB_PASS || 'root' // Database password (default: root)
@@ -177,11 +290,16 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.postgres:
+		// Read here rather than at module level so SQLite never validates them (see readConnectionPoolSettings).
+		// DB_PORT below accepts 0 as before: like an unset port, it makes every driver use its default port.
+		({ dbPoolSize, dbPoolSizeKnex, dbConnectionTimeout, idleTimeoutMillis, dbSlowQueryLoggingTimeout } =
+			readConnectionPoolSettings(dbType));
+
 		// MikroORM DB Config (PostgreSQL)
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 			driver: PostgreSqlDriver,
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
+			port: parseIntEnv('DB_PORT', process.env.DB_PORT, 5432, { radix: 10, onInvalid: 'warn' }),
 			dbName: process.env.DB_NAME || 'postgres',
 			user: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
@@ -213,11 +331,11 @@ switch (dbType) {
 		// TypeORM DB Config (PostgreSQL)
 		const typeOrmPostgresOptions: DataSourceOptions = {
 			type: dbType,
-			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
-			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
+			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
+			port: parseIntEnv('DB_PORT', process.env.DB_PORT, 5432, { radix: 10, onInvalid: 'warn' }),
 			database: process.env.DB_NAME || 'postgres',
 			username: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
@@ -258,7 +376,7 @@ switch (dbType) {
 						? { ca: tlsPostgresOptions.ca, rejectUnauthorized: tlsPostgresOptions.rejectUnauthorized }
 						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
-					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
+					port: parseIntEnv('DB_PORT', process.env.DB_PORT, 5432, { radix: 10, onInvalid: 'warn' }), // Database port (default: 5432)
 					database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
 					user: process.env.DB_USER || 'postgres', // Database username (default: postgres)
 					password: process.env.DB_PASS || 'root' // Database password (default: root)
@@ -284,6 +402,10 @@ switch (dbType) {
 
 	case DatabaseTypeEnum.sqlite:
 	case DatabaseTypeEnum.betterSqlite3:
+		// SQLite never uses the pool/timeout settings and must not validate them, but they are still printed
+		// at startup like for every other DB_TYPE (see logConnectionPoolSettingsUnvalidated).
+		logConnectionPoolSettingsUnvalidated();
+
 		// Determine if running from dist or source
 		const isDist = __dirname.includes('dist');
 
@@ -312,10 +434,10 @@ switch (dbType) {
 		// TypeORM DB Config (Better-SQLite3)
 		const typeOrmBetterSqliteConfig: DataSourceOptions = {
 			type: DatabaseTypeEnum.betterSqlite3,
-			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
-			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
+			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			database: sqlitePath,
-			logging: 'all',
+			logging: getLoggingOptions(process.env.DB_LOGGING),
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			prepareDatabase: (db) => {

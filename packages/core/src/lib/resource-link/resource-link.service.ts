@@ -39,16 +39,22 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			// Retrieve the tenantId from the request context or fall back to input value
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-			// Retrieve the employeeId from the request context or fall back to input value
-			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
+			// Retrieve the employeeId from the request context (the caller's own employee — also for
+			// CHANGE_SELECTED_EMPLOYEE holders, for whom currentEmployeeId() is null) or fall back to input value
+			const employeeId =
+				RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? input.employeeId;
 
 			// Destructure the input data to use in entity creation
 			const { ...entity } = input;
 
-			// Validate that the employee exists.
-			const employee = await this._employeeService.findOneByIdString(employeeId);
-			if (!employee) {
-				throw new NotFoundException(`Employee with id ${employeeId} not found`);
+			// Validate that the employee exists — only a real id can be looked up (an empty one used to
+			// match an arbitrary employee and pass vacuously); a caller with no employee identity keeps
+			// creating an employee-less link, as before.
+			if (employeeId) {
+				const employee = await this._employeeService.findOneByIdString(employeeId);
+				if (!employee) {
+					throw new NotFoundException(`Employee with id ${employeeId} not found`);
+				}
 			}
 
 			// Create and return the resource link, passing the necessary entity data

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -11,7 +11,8 @@ import {
 	IImageAsset,
 	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
-import { NbStepperComponent } from '@nebular/theme';
+import { NbStepChangeEvent, NbStepperComponent } from '@nebular/theme';
+import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
@@ -19,7 +20,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, FormHelpers, LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -98,6 +105,8 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	organization: IOrganization;
 	organizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 
+	private readonly employeesService = inject(EmployeesService);
+
 	/**
 	 * Main Content Stepper Form Group
 	 */
@@ -172,6 +181,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._patchForm()),
 				tap(() => this._getProjects()),
+				tap(() => this._getEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -194,6 +204,41 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		this.employees = employees;
 		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.selectedEmployeeIds);
 	}
+
+	/**
+	 * Loads the organization's employees for the members step.
+	 *
+	 * The step used to take them from `ga-employee-multi-select`, which fetched
+	 * them itself and handed them back through `onLoadEmployees`. The step now
+	 * uses a searchable `ng-select`, so it loads the list on its own.
+	 */
+	private async _getEmployees() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const organizationId = this.organization.id;
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], { organizationId, tenantId })
+			);
+			// The organization may have changed while this request was pending.
+			if (this.organization?.id !== organizationId) {
+				return;
+			}
+			this.onLoadEmployees(items ?? []);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Matches an employee in the members picker by name or email.
+	 */
+	searchEmployee = (term: string, employee: IEmployee): boolean => {
+		const needle = term.trim().toLowerCase();
+		return [employee.user?.name, employee.user?.email].some((value) => value?.toLowerCase().includes(needle));
+	};
 
 	/**
 	 * Fetches all projects associated with the current organization and user tenant, and updates the 'projects' property.
@@ -316,7 +361,21 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 
 	onMembersSelected(members: string[]) {
 		this.members = members;
+		// The picker binds to `selectedEmployeeIds`; keep it in step so clearing
+		// the last member does not fall back to the contact's original members.
+		this.selectedEmployeeIds = members;
 		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.members);
+	}
+
+	/**
+	 * Removes one member from the list below the picker, and feeds the new
+	 * selection back into the picker so the two never disagree.
+	 *
+	 * @param member
+	 */
+	removeMember(member: IEmployee) {
+		const ids = (this.selectedEmployeeIds ?? []).filter((id: string) => id !== member.id);
+		this.onMembersSelected(ids);
 	}
 
 	cancel() {
@@ -471,13 +530,19 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Progresses the stepper and adds a map marker on the second step.
+	 * Progresses the stepper. The map marker is placed by `onStepChange`.
 	 */
 	nextStep() {
 		this.stepper.next();
+	}
 
-		// Assuming the second step is related to map operations.
-		if (this.stepper.selectedIndex === 1) {
+	/**
+	 * Adds the map marker whenever the Address step opens, whether through the
+	 * Next button or a header click (header navigation is on in edit mode).
+	 */
+	onStepChange({ index }: NbStepChangeEvent) {
+		// The second step is the Address step with the map.
+		if (index === 1) {
 			// Directly destructure 'coordinates' from the location form value.
 			const {
 				loc: {

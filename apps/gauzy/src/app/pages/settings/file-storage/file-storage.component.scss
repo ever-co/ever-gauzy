@@ -14,20 +14,35 @@
         line-height: 13px;
         letter-spacing: -0.01em;
     }
+    // The page card is pinned to the page frame by `.card-scroll`, and the global
+    // `.card-scroll nb-card nb-card-body { overflow: hidden; height: 100% }` stops its
+    // body from scrolling. With the summary strip and provider notes above the
+    // provider form, the content is taller than the frame and spilled over the
+    // footer. The body is the one scroll area; the footer (Save) stays put.
+    nb-card.card-scroll > nb-card-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        overflow: auto;
+    }
+
     nb-card {
         nb-card-body {
             // The provider configuration card (S3 / Wasabi / Cloudinary / DigitalOcean).
             //
-            // `height` pinned it to a viewport-derived box regardless of how many
-            // fields the selected provider actually has — four rows for S3, seven
-            // for DigitalOcean — so short forms sat in a tall empty panel while the
-            // outer `.card-scroll` card, already bounded by the page frame, scrolled
-            // around it. As a MAX it still caps a long form (which then scrolls in
-            // its own body, as before) and lets a short one shrink to its content.
+            // Sized to its fields: the page body above scrolls, so a nested
+            // viewport-derived max-height (and a second scrollbar) is no longer
+            // needed — it was what pushed the card under the footer.
             nb-card {
                 background-color: nb-theme(gauzy-card-4);
-                max-height: calc(100vh - 24rem);
                 margin: 0;
+
+                // Redesigned cards (Wasabi, Local) have no fill of their own: they sit
+                // on the page surface, drawn by their hairline. Set here, not on
+                // `nb-card.provider-card` alone — this nested selector out-ranks that.
+                &.provider-card {
+                    background-color: transparent;
+                }
 
                 // Was 18px. `text-heading-6-font-size` is the 1rem step the density
                 // pass set for every theme; an 18px section title here was the only
@@ -41,7 +56,8 @@
 
                 nb-card-body {
                     background: unset;
-                    overflow: auto;
+                    height: auto;
+                    overflow: visible;
                 }
             }
 
@@ -49,6 +65,407 @@
         nb-card-footer {
             background-color: nb-theme(gauzy-card-2);
             padding-top: 0;
+        }
+
+        // Action bar: same shape as Settings > General's group footer — status
+        // text pushed to the start, small buttons grouped on the end, hairline above.
+        nb-card-footer.form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+
+            .form-status {
+                margin-inline-end: auto;
+                font-size: 0.75rem;
+                color: var(--text-hint-color);
+            }
+
+            button[nbButton] {
+                margin: 0;
+                text-transform: none;
+
+                nb-icon {
+                    font-size: 1rem;
+                }
+            }
+        }
+    }
+
+    // ── Current configuration strip ───────────────────────────────────────
+    // Same vocabulary as Settings > General: 12px body, hairline inset, no shadow.
+    .storage-summary {
+        margin-bottom: 1rem;
+        border-radius: var(--gauzy-radius-sm, 0.5rem);
+        background: transparent;
+        box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+        font-size: 0.75rem;
+    }
+
+    .summary-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.25rem 0.75rem;
+        padding: 0.75rem 1rem 0.625rem;
+    }
+
+    .summary-title {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .summary-hint {
+        color: var(--text-hint-color);
+    }
+
+    .summary-items {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+        margin: 0;
+        border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+    }
+
+    .summary-item {
+        min-width: 0;
+        padding: 0.625rem 1rem;
+
+        & + .summary-item {
+            border-inline-start: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+        }
+
+        dt {
+            margin-bottom: 0.125rem;
+            font-weight: 400;
+            color: var(--text-hint-color);
+        }
+
+        dd {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            margin: 0;
+            color: var(--text-basic-color);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            &.mono {
+                display: block;
+                font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+                font-size: 0.6875rem;
+            }
+        }
+    }
+
+    // Empty tenant field: the API uses the server's own configuration. Muted, not a warning.
+    .server-default {
+        color: var(--text-hint-color);
+        font-style: italic;
+    }
+
+    .status-dot {
+        flex: 0 0 auto;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+
+        &.success {
+            background: var(--color-success-default);
+        }
+        &.warning {
+            background: var(--color-warning-default);
+        }
+        &.danger {
+            background: var(--color-danger-default);
+        }
+    }
+
+    // ── Provider description + docs link ──────────────────────────────────
+    .provider-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.375rem;
+        margin: 0.5rem 0 1rem;
+        font-size: 0.75rem;
+        line-height: 1.125rem;
+        color: var(--text-hint-color);
+
+        > nb-icon {
+            flex: 0 0 auto;
+            margin-top: 0.125rem;
+            font-size: 0.875rem;
+        }
+
+        strong {
+            font-weight: 500;
+            color: var(--text-basic-color);
+        }
+
+        a {
+            white-space: nowrap;
+
+            nb-icon {
+                font-size: 0.75rem;
+                vertical-align: -0.1em;
+            }
+        }
+    }
+
+    // ── Local storage card ────────────────────────────────────────────────
+    // Same header as the provider forms; no fills of its own — the warning is
+    // a transparent tint, never a white/light panel.
+    .local-status,
+    .local-callout {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        line-height: 1.125rem;
+
+        nb-icon {
+            flex: 0 0 auto;
+            margin-top: 0.0625rem;
+            font-size: 1rem;
+        }
+    }
+
+    .local-status {
+        padding: 0.75rem 1rem;
+        color: var(--text-basic-color);
+    }
+
+    .local-callout {
+        margin: 0 1rem 1rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: var(--gauzy-radius-sm, 0.5rem);
+        background: var(--color-warning-transparent-default, rgba(255, 170, 0, 0.08));
+        box-shadow: inset 0 0 0 1px var(--color-warning-transparent-active, rgba(255, 170, 0, 0.24));
+        color: var(--text-basic-color);
+    }
+
+    // ── Check configuration result ────────────────────────────────────────
+    .check-result {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding: 0.625rem 1rem;
+        border-radius: var(--gauzy-radius-sm, 0.5rem);
+        box-shadow: inset 0 0 0 1px var(--color-warning-default);
+        font-size: 0.75rem;
+        line-height: 1.125rem;
+
+        &.ok {
+            box-shadow: inset 0 0 0 1px var(--color-success-default);
+        }
+
+        > nb-icon {
+            flex: 0 0 auto;
+            font-size: 1rem;
+        }
+
+        strong {
+            font-weight: 500;
+        }
+    }
+
+    // ── Provider card: sectioned form (Wasabi) ────────────────────────────
+    // Label + hint on the start side, control on the end side, hairline between
+    // rows — the Settings > General row vocabulary, inside the provider card.
+    // (Its transparent fill is set in the nested provider-card rule at the top.)
+    nb-card.provider-card {
+        overflow: hidden;
+
+        > nb-card-header,
+        > nb-card-body {
+            background: transparent;
+        }
+        border-radius: var(--gauzy-radius-sm, 0.5rem);
+        box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+    }
+
+    .provider-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        border-bottom: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+    }
+
+    .provider-mark {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: var(--gauzy-radius-sm, 0.5rem);
+        background: var(--color-primary-transparent-default, rgba(51, 102, 255, 0.08));
+        color: var(--color-primary-default);
+
+        nb-icon {
+            font-size: 1.125rem;
+        }
+    }
+
+    .provider-heading {
+        min-width: 0;
+
+        h6 {
+            margin: 0;
+        }
+    }
+
+    .provider-subtitle {
+        margin: 0.125rem 0 0;
+        font-size: 0.75rem;
+        line-height: 1.125rem;
+        color: var(--text-hint-color);
+    }
+
+    nb-card-body.provider-form {
+        padding: 0;
+        font-size: 0.75rem;
+    }
+
+    .provider-section + .provider-section {
+        border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+    }
+
+    .section-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.125rem 0.5rem;
+        padding: 0.75rem 1rem 0.25rem;
+    }
+
+    .section-title {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-hint-color);
+    }
+
+    .section-hint {
+        color: var(--text-hint-color);
+    }
+
+    .field-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+        align-items: start;
+        gap: 0.5rem 1.5rem;
+        padding: 0.625rem 1rem;
+
+        & + .field-row {
+            border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+        }
+
+        @media (max-width: 767.98px) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .field-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        min-width: 0;
+        padding-top: 0.375rem;
+    }
+
+    .field-label {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--text-basic-color);
+    }
+
+    .field-hint {
+        line-height: 1.125rem;
+        color: var(--text-hint-color);
+    }
+
+    .field-control {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        min-width: 0;
+
+        &.toggle {
+            align-items: flex-end;
+            padding-top: 0.25rem;
+
+            @media (max-width: 767.98px) {
+                align-items: flex-start;
+            }
+        }
+
+        nb-form-field,
+        nb-select,
+        input[nbInput] {
+            width: 100%;
+            max-width: none;
+        }
+
+        input.mono {
+            font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+    }
+
+    .field-suggestion {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--text-hint-color);
+
+        code {
+            font-size: 0.6875rem;
+            color: var(--text-basic-color);
+            background: none;
+            padding: 0;
+        }
+    }
+
+    .link-button {
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 500;
+        color: var(--text-primary-color, var(--color-primary-default));
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            text-decoration: underline;
+        }
+    }
+
+    .provider-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0.75rem 1rem;
+        border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+        background: transparent;
+        line-height: 1.125rem;
+        color: var(--text-hint-color);
+
+        nb-icon {
+            flex: 0 0 auto;
+            margin-top: 0.0625rem;
+            font-size: 0.875rem;
         }
     }
 }

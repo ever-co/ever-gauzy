@@ -1,13 +1,41 @@
-@use '@shared/_whats-new';
-@use 'gauzy/_gauzy-dialogs';
+@use 'themes' as *;
+@use '@shared/panel' as *;
 
-::ng-deep.changelog-sidebar {
-  .main-container {
-    width: 33rem !important;
-  }
+:host {
+  display: block;
+  width: 100%;
 }
-i {
-  position: absolute;
-  right: 0.75rem;
-  top: 0.75rem;
+
+.whats-new-panel {
+  display: flex;
+  flex-direction: column;
+  padding: $panel-pad;
+  box-sizing: border-box;
+  font-family: nb-theme(font-family-primary);
+  font-size: $panel-text-row;
+  line-height: 1.4;
+  color: nb-theme(text-basic-color);
+}
+
+.panel-header {
+  @include gauzy-panel-header();
+  flex: 0 0 auto;
+  position: sticky;
+  top: calc(-1 * #{$panel-pad});
+  z-index: 1;
+  background-color: nb-theme(background-basic-color-1);
+}
+
+.panel-title {
+  @include gauzy-panel-title();
+}
+
+.panel-close {
+  @include gauzy-panel-close();
+}
+
+.panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-top: $panel-pad;
 }

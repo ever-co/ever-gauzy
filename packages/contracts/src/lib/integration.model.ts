@@ -149,7 +149,9 @@ export enum IntegrationEnum {
 	ZAPIER = 'Zapier',
 	ACTIVE_PIECES = 'ActivePieces',
 	SIM = 'Sim',
-	PLANE = 'Plane'
+	PLANE = 'Plane',
+	EVER_ASYNC = 'Ever_Async',
+	EVER_CONNECT = 'Ever_Connect'
 }
 
 export enum IntegrationEntity {

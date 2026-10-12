@@ -185,6 +185,22 @@ export class FeatureToggleComponent extends TranslationBaseComponent implements 
 	}
 
 	getTranslationFormat(text: string) {
-		return text.replace(/ /g, '_').replace(/,|&/g, '').replace(/__/g, '_').toUpperCase();
+		return text.replace(/ /g, '_').replace(/,|&|:/g, '').replace(/__/g, '_').toUpperCase();
+	}
+
+	/**
+	 * Eva icon name for a feature. `nb-icon` only knows the Eva pack, so a Font Awesome class
+	 * stored on older rows (e.g. `fas fa-book`) is mapped to its Eva equivalent instead of
+	 * rendering an empty box.
+	 */
+	featureIcon(icon: string): string {
+		if (!icon || !/\bfa-/.test(icon)) {
+			return icon;
+		}
+		const faIcons: Record<string, string> = {
+			book: 'book-open-outline'
+		};
+		const name = icon.match(/fa-([\w-]+)/)?.[1];
+		return faIcons[name] ?? 'file-text-outline';
 	}
 }

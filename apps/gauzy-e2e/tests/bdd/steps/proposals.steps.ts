@@ -73,7 +73,7 @@ When('I add a new proposal', async () => {
 	await proposalsPage.selectTagFromDropdown(0);
 	await proposalsPage.clickCardBody();
 	// jobPostContent + proposalContent are Validators.required on the form; Save is [disabled] while
-	// the form is invalid, so both CKEditors must be filled before the Save button is clickable.
+	// the form is invalid, so both rich-text editors must be filled before the Save button is clickable.
 	await proposalsPage.enterJobPostContentData(jobPostContent);
 	await proposalsPage.enterProposalContentData(proposalContent);
 	await proposalsPage.saveProposalButtonVisible();

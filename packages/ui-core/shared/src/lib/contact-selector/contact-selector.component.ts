@@ -30,6 +30,13 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 	@Input() disabled = false;
 	@Input() multiple = false;
 
+	/**
+	 * Prompt shown while nothing is selected. Left null so the template keeps
+	 * falling back to the generic "Client", for the call sites that render the
+	 * selector without a label of its own.
+	 */
+	@Input() placeholder: string | null = null;
+
 	private _employeeId: IEmployee['id'];
 	public get employeeId(): IEmployee['id'] {
 		return this._employeeId;

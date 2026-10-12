@@ -1,5 +1,12 @@
 :host {
-	min-width: 200px;
+	// Was `min-width: 200px`. This select is also the Category column's FILTER
+	// widget in the expenses smart-table, and with `table-layout: auto` a floor
+	// on the widget IS a floor on the column: Vendor and Category were pinned to
+	// ~220px each whatever width the page asked for. The host takes the width
+	// its container gives it (a form column, a filter cell, the expenses report's
+	// `col-auto`, which sets its own floor) and lets the ng-select inside shrink.
+	min-width: 0;
+	width: 100%;
 	display: block;
 	.multiple-select {
 		width: 100%;

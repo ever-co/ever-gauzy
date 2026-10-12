@@ -3,7 +3,7 @@
 		<div class="row w-100">
 			<div [class]="isClassic ? 'col-5' : 'col-3'">
 				<div [class]="isClassic ? 'user-container' : 'row'">
-					<div class="col-3">
+					<div class="col-3 dot-column">
 						<div class="dot-container">
 							<div
 								[class.online]="member?.isRunningTimer"
@@ -12,7 +12,7 @@
 							></div>
 						</div>
 					</div>
-					<div class="col-9">
+					<div [class]="isClassic ? 'col-9' : 'col-12'">
 						<ngx-avatar
 							[class]="isClassic ? 'avatar-dashboard' : 'report-table'"
 							[id]="member?.employee?.id"

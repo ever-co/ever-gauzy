@@ -116,13 +116,15 @@
 												<span class="ml-1 caption-2">Generating Proposal ...</span>
 												}
 											</div>
-											<ckeditor
-												#ckeditor
+											<ga-rich-text-editor
+												#proposalEditor
 												id="proposal"
 												formControlName="proposal"
-												[config]="ckConfig"
-												(ngModelChange)="onEditorChange($event)"
-											></ckeditor>
+												preset="standard"
+												outputFormat="html"
+												minHeight="191px"
+												(changed)="onEditorChange($event)"
+											></ga-rich-text-editor>
 										</div>
 									</div>
 								</div>
@@ -142,11 +144,13 @@
 													[class.spin]="loading"
 												></nb-icon>
 											</div>
-											<ckeditor
+											<ga-rich-text-editor
 												id="details"
 												formControlName="details"
-												[config]="ckConfig"
-											></ckeditor>
+												preset="standard"
+												outputFormat="html"
+												minHeight="191px"
+											></ga-rich-text-editor>
 										</div>
 									</div>
 								</div>

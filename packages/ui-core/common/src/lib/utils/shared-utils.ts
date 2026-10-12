@@ -179,12 +179,12 @@ export function retrieveNameFromEmail(email: string): string {
 	return '';
 }
 
-// convert local time to another timezone
+// convert local time to another timezone (24-hour clock by default: `hh` without `A` dropped AM / PM)
 export function convertLocalToTimezone(
 	localDt: string | Date,
 	localDtFormat: string,
 	timeZone: string,
-	format = 'YYYY-MM-DD hh:mm:ss'
+	format = 'YYYY-MM-DD HH:mm:ss'
 ) {
 	return timezone(localDt, localDtFormat).tz(timeZone).format(format);
 }

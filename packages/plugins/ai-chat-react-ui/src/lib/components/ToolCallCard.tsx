@@ -40,10 +40,16 @@ const TOOL_LABELS: Record<string, string> = {
 /**
  * ToolCallCard
  *
- * Compact chip/card visualising one agent tool invocation inside the
- * message stream: spinner while running, check/cross when done, an
- * expandable detail area (input/output JSON), and Approve / Reject
- * buttons when the tool requires the user's explicit approval.
+ * One agent tool invocation inside the message stream: spinner while running,
+ * check/cross when done, an expandable detail area (input/output JSON), and
+ * Approve / Reject buttons when the tool requires the user's explicit approval.
+ *
+ * Deliberately chrome-less. As a bordered, filled card each step read as its own
+ * separate object stacked above the answer; the steps belong TO the answer, so
+ * they now sit on the panel with no box of their own, indented to the same left
+ * edge as the bubble text so the whole turn reads as one block. The only state
+ * that still draws itself is `approval-requested` — it is a decision the user has
+ * to notice, and a row that looks like all the others would not be noticed.
  */
 export function ToolCallCard({ toolName, state, input, output, errorText, onApprove, onReject }: ToolCallCardProps) {
 	const [expanded, setExpanded] = useState(false);
@@ -54,12 +60,18 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 	const isApproval = state === 'approval-requested';
 
 	const cardStyle: CSSProperties = {
-		border: `1px solid ${isApproval ? chatTheme.accent : chatTheme.border}`,
-		borderRadius: 8,
-		padding: '6px 10px',
-		margin: '4px 0',
-		backgroundColor: isApproval ? chatTheme.accentLight : chatTheme.surface,
-		fontSize: chatTheme.fontSizeSmall,
+		// Aligns the row with the text inside the assistant bubble beside it
+		// (11px of bubble padding + its 1px hairline).
+		padding: isApproval ? '7px 10px 7px 12px' : '3px 12px',
+		margin: isApproval ? '5px 0' : '2px 0 5px',
+		border: 'none',
+		// A left rule, not a box: the approval state keeps an edge to catch the eye
+		// without going back to a card.
+		borderLeft: isApproval ? `2px solid ${chatTheme.accent}` : 'none',
+		borderRadius: isApproval ? 6 : 0,
+		backgroundColor: isApproval ? chatTheme.accentLight : 'transparent',
+		fontSize: chatTheme.fontSizeMessage,
+		lineHeight: 1.6,
 		color: chatTheme.textSecondary,
 		animation: 'fadeIn 0.2s ease'
 	};
@@ -67,19 +79,23 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 	const headerStyle: CSSProperties = {
 		display: 'flex',
 		alignItems: 'center',
-		gap: 6,
+		gap: 7,
 		cursor: 'pointer',
 		userSelect: 'none'
 	};
 
 	const detailStyle: CSSProperties = {
-		marginTop: 6,
-		maxHeight: 160,
+		marginTop: 5,
+		maxHeight: 180,
 		overflow: 'auto',
 		backgroundColor: chatTheme.surfaceDeep,
-		borderRadius: 6,
-		padding: 8,
-		fontSize: '0.6875rem',
+		border: `1px solid ${chatTheme.borderSoft}`,
+		borderRadius: 8,
+		padding: '8px 9px',
+		fontFamily: chatTheme.fontFamilyMono,
+		fontSize: chatTheme.fontSizeMessage,
+		lineHeight: 1.65,
+		color: chatTheme.codeText,
 		whiteSpace: 'pre-wrap',
 		wordBreak: 'break-word'
 	};
@@ -92,13 +108,15 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 
 	const approveBtn: CSSProperties = {
 		flex: 1,
-		padding: '5px 10px',
-		borderRadius: 6,
-		border: 'none',
+		padding: '6px 10px',
+		borderRadius: chatTheme.controlRadius,
+		border: '1px solid transparent',
 		backgroundColor: chatTheme.green,
-		color: '#fff',
-		fontWeight: 600,
+		color: '#ffffff',
+		fontWeight: chatTheme.fontWeightSemibold,
 		fontSize: chatTheme.fontSizeSmall,
+		fontFamily: chatTheme.fontFamily,
+		lineHeight: 1.5,
 		cursor: 'pointer'
 	};
 
@@ -123,6 +141,7 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 	return (
 		<div style={cardStyle}>
 			<div
+				className="gz-ai-chat-tool-row"
 				style={headerStyle}
 				onClick={() => setExpanded((v) => !v)}
 				onKeyDown={(e) => {
@@ -136,9 +155,16 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 				aria-expanded={expanded}
 			>
 				{statusIcon}
-				<span style={{ color: chatTheme.textPrimary }}>{label}</span>
-				{isApproval && <span>— needs your approval</span>}
-				<span style={{ marginLeft: 'auto', opacity: 0.6 }}>{expanded ? '▾' : '▸'}</span>
+				<span
+					className="gz-ai-chat-tool-label"
+					style={{ color: chatTheme.link, fontWeight: chatTheme.fontWeightMedium }}
+				>
+					{label}
+				</span>
+				{isApproval && <span style={{ color: chatTheme.textSecondary }}>— needs your approval</span>}
+				{/* Beside the label, not flung to the far edge: it is the label's own
+				    disclosure marker, and across the panel width it read as unrelated. */}
+				<span style={{ marginLeft: -3, opacity: 0.5, fontSize: '0.625rem' }}>{expanded ? '▾' : '▸'}</span>
 			</div>
 
 			{isApproval && (

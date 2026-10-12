@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular';
 import moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -27,7 +26,6 @@ import {
 	Store,
 	TasksService
 } from '@gauzy/ui-core/core';
-import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,7 +43,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	selectedTask: ITask;
 	availableModules: IOrganizationProjectModule[] = [];
 	organization: IOrganization;
-	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() createTask = false;
 	/*
 	 * Payment Mutation Form
@@ -105,7 +102,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;

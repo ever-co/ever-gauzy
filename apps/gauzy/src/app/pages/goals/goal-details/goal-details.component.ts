@@ -77,7 +77,14 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		return Math.round(+weight * (100 / weightSum));
 	}
 
-	async keyResultDetails(index, selectedKeyResult) {
+	/**
+	 * Opens a key result's details.
+	 *
+	 * @param index Its position in this objective's `keyResults`, or `null` when it is not one of them — the
+	 * Alignments tab opens the key result this objective hangs from, which belongs to another objective.
+	 * @param selectedKeyResult The key result to show.
+	 */
+	async keyResultDetails(index: number | null, selectedKeyResult: IKeyResult) {
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -87,13 +94,18 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		});
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
+			// `index !== null` in both branches, not a truthy test: `splice(null, 1)` dropped the first key
+			// result whenever the Alignments tab deleted one, and `!!index` skipped the update for index 0 —
+			// the first key result in the list was the one that never refreshed.
 			if (response === 'deleted') {
-				this.goal.keyResults.splice(index, 1);
+				if (index !== null) {
+					this.goal.keyResults.splice(index, 1);
+				}
 				this.toastrService.danger(
 					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_DELETED'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
-			} else if (!!index) {
+			} else if (index !== null) {
 				this.goal.keyResults[index] = response;
 				this.goal.progress = this.calculateGoalProgress(this.goal.keyResults);
 			}

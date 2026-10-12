@@ -64,7 +64,7 @@
 						three slides would be unreadable slivers. Swiper's own arrows
 						stay off — the buttons above drive it.
 					-->
-					<swiper-container #swiperRef class="activity-swiper" slides-per-view="auto" space-between="12">
+					<swiper-container #swiperRef class="activity-swiper" slides-per-view="auto" space-between="8">
 						@for (timeSlot of employee.timeSlots; track timeSlot.id) {
 							<swiper-slide>
 								<ngx-screenshots-item

@@ -47,14 +47,17 @@
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
   <div class="actions">
-    <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
+    <!-- View carries the record's OWN guard (the one the route enforces), not
+         the edit guard it used to sit behind — it shows nothing a reader of
+         this page cannot already see in the grid. -->
+    <ng-template ngxPermissionsOnly="ALL_ORG_VIEW">
       <button
         nbButton
         [disabled]="!selectedItem && disableButton"
+        (click)="viewOrganization(selectedItem)"
         status="basic"
         class="action secondary"
         size="small"
-        underConstruction
         >
         <nb-icon class="mr-1" icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
       </button>
@@ -93,3 +96,16 @@
     </button>
   </ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each organization that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedOrganization"
+  heading="ORGANIZATIONS_PAGE.ORGANIZATIONS"
+  [subtitle]="viewedOrganization?.name"
+  (closed)="closeView()"
+  >
+  @if (viewedOrganization) {
+    <ngx-record-view [record]="viewedOrganization" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

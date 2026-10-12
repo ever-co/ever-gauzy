@@ -5,7 +5,13 @@ import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { map, shareReplay, startWith } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Store, WidgetCategory, WidgetRegistryConfig, WidgetRegistryService } from '@gauzy/ui-core/core';
+import {
+	Store,
+	widgetFootprint,
+	WidgetCategory,
+	WidgetRegistryConfig,
+	WidgetRegistryService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DASHBOARD_CANVAS_DROP_LIST_ID } from './dashboard-canvas.component';
 
@@ -16,6 +22,12 @@ export interface IWidgetPaletteItem {
 	description?: string;
 	icon: string;
 	category: WidgetCategory;
+	/**
+	 * Footprint this widget is added at, carried so the drag placeholder can
+	 * reserve the space the widget will really take on the canvas.
+	 */
+	w: number;
+	h: number;
 }
 
 /** Palette entries of one category. */
@@ -249,12 +261,15 @@ export class WidgetPaletteComponent extends TranslationBaseComponent {
 
 	/** Maps a registry entry to its palette view model. */
 	private _toItem(widget: WidgetRegistryConfig): IWidgetPaletteItem {
+		const { w, h } = widgetFootprint(widget.defaultSize);
 		return {
 			widgetId: widget.widgetId,
 			title: this._resolveText(widget.title) || widget.widgetId,
 			description: this._resolveText(widget.description),
 			icon: widget.icon || 'cube-outline',
-			category: widget.category ?? 'other'
+			category: widget.category ?? 'other',
+			w,
+			h
 		};
 	}
 

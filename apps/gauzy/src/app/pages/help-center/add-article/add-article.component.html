@@ -100,11 +100,13 @@
           </div>
           <div class="edit-node-field">
             <p class="label">{{ 'HELP_PAGE.ARTICLE_TEXT' | translate }}:</p>
-            <div class="ck-editor">
-              <ckeditor
+            <div class="rich-text-editor-wrap">
+              <ga-rich-text-editor
                 formControlName="data"
-                [config]="ckConfig"
-              ></ckeditor>
+                preset="standard"
+                outputFormat="html"
+                minHeight="100px"
+              ></ga-rich-text-editor>
             </div>
           </div>
           <div class="save-button">

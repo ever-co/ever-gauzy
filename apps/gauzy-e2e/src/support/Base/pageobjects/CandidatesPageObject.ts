@@ -1,10 +1,14 @@
 export const CandidatesPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	inviteButtonCss: 'span.show-button button[status="primary"]',
+	// The always-visible toolbar slot. #9975 rebuilt ngx-gauzy-button-action: the old wrapper was
+	// <span class="transition" [class.show-button]="isDisable()"> — a class applied only while the
+	// selection strip was CLOSED, which is this page's resting state, so it happened to match. That
+	// span is now <span class="visible-slot"> and carries the same projected Invite/Add buttons.
+	inviteButtonCss: 'ngx-gauzy-button-action span.visible-slot button[status="primary"]',
 	emailInputCss: '#emails',
 	dateInputCss: '[placeholder="Date"]',
 	sendInviteButtonCss: 'nb-card-footer button[status="success"]',
-	addButtonCss: 'span.show-button button[status="success"]',
+	addButtonCss: 'ngx-gauzy-button-action span.visible-slot button[status="success"]',
 	// The invite step posts to /api/invite/emails; on a server-side rejection (400) the
 	// invite-mutation dialog's add() catch does NOT closeDialog(), so ga-email-invite-form stays
 	// mounted while the add-candidate dialog opens. Both forms share id="appliedDate" (and the

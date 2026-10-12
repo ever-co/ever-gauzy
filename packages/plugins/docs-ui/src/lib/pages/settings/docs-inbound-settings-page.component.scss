@@ -1,0 +1,210 @@
+:host {
+	display: block;
+}
+
+.docs-inbound {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	min-height: 12rem;
+}
+
+.docs-inbound-header {
+	h4 {
+		margin: 0;
+	}
+}
+
+.muted {
+	color: var(--text-hint-color);
+	margin: 0;
+}
+
+.hint {
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+	margin-top: 0.25rem;
+
+	&.warn {
+		color: var(--text-warning-color);
+	}
+}
+
+.label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+
+.docs-inbound-card {
+	margin: 0;
+}
+
+.docs-inbound-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.docs-inbound-notice {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.docs-inbound-address-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.docs-inbound-address {
+	padding: 0.375rem 0.5rem;
+	border: 1px solid var(--divider-color);
+	border-radius: 0.25rem;
+	font-size: 0.875rem;
+	// An address can be long; wrap it rather than pushing the copy button off the card.
+	overflow-wrap: anywhere;
+}
+
+/**
+ * Inline status pill. Deliberately not `nb-badge`, which is absolutely positioned for
+ * overlaying a host element — this reads inline, next to the address it describes.
+ */
+.docs-inbound-status {
+	padding: 0.125rem 0.5rem;
+	border-radius: 0.75rem;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	border: 1px solid currentColor;
+
+	&.is-success {
+		color: var(--text-success-color);
+	}
+
+	&.is-warning {
+		color: var(--text-warning-color);
+	}
+
+	&.is-danger {
+		color: var(--text-danger-color);
+	}
+}
+
+.docs-inbound-domain {
+	padding: 1rem 0;
+
+	& + & {
+		border-top: 1px solid var(--divider-color);
+	}
+}
+
+.docs-inbound-verification {
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border: 1px solid var(--divider-color);
+	border-radius: 0.25rem;
+}
+
+.docs-inbound-record {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.25rem 1rem;
+	margin: 0 0 0.5rem;
+
+	dt {
+		color: var(--text-hint-color);
+		font-size: 0.75rem;
+		text-transform: uppercase;
+	}
+
+	dd {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		margin: 0;
+		min-width: 0;
+
+		code {
+			font-size: 0.8125rem;
+			overflow-wrap: anywhere;
+		}
+	}
+}
+
+.docs-inbound-meta {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.25rem 1rem;
+	margin: 0.75rem 0 0;
+
+	dt {
+		color: var(--text-hint-color);
+	}
+
+	dd {
+		margin: 0;
+	}
+}
+
+.docs-inbound-controls {
+	margin-top: 1rem;
+}
+
+.docs-inbound-row {
+	margin-top: 1rem;
+}
+
+.docs-inbound-allowlist {
+	margin-top: 1rem;
+}
+
+.docs-inbound-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+	margin-bottom: 0.5rem;
+}
+
+.docs-inbound-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.125rem 0.25rem 0.125rem 0.5rem;
+	border: 1px solid var(--divider-color);
+	border-radius: 1rem;
+
+	code {
+		font-size: 0.8125rem;
+	}
+}
+
+.docs-inbound-allowlist-field {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+
+	input {
+		flex: 1 1 16rem;
+		min-width: 12rem;
+	}
+}
+
+.docs-inbound-danger {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--divider-color);
+}
+
+.docs-inbound-confirm {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}

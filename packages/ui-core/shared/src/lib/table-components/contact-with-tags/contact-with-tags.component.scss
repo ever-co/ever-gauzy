@@ -1,7 +1,15 @@
 @use 'themes' as *;
 
+// Chip block under the contact name — same treatment as the rest of the
+// `NotesWithTagsComponent` family: the shared table-density tokens size the
+// chips, flex `gap` owns chip↔chip spacing (direction-agnostic, so the old
+// RTL/LTR margin pair goes), and the text→chips separation is its own token.
 .badges-block {
-  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--gauzy-table-chip-gap, 0.1875rem);
+  margin-top: var(--gauzy-table-chip-block-gap, 0.25rem);
 }
 
 .image-container {
@@ -13,21 +21,19 @@
 
 .color {
     position: static;
-    margin-top: 5px;
     display: inline-block;
-    @include nb-rtl(margin-left, 5px);
-    @include nb-ltr(margin-right, 5px);
-    font-size: 11px;
+    font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
     font-weight: 600;
-    line-height: 13px;
+    line-height: var(--gauzy-table-chip-line-height, 0.875rem);
     letter-spacing: 0em;
-    padding: 3px 8px;
+    padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 }
 
 .tags {
     display: flex;
     width: 200px;
     flex-wrap: wrap;
+    gap: var(--gauzy-table-chip-gap, 0.1875rem);
 }
 
 img {

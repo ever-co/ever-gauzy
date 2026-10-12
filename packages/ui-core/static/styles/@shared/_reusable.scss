@@ -168,6 +168,66 @@ $register-background-light-color: nb-theme(gauzy-card-1);
   }
 }
 
+// Auth error / success banner. Nebular's outline alert is a 1.25rem-padded box
+// carrying a shadow and 0.9375rem text, which dwarfs the 38px fields it sits
+// above and reads as a browser dialog dropped into the card. This keeps the
+// status colour but spends it on a faint tint and a quiet border, so the banner
+// sits inside the form's own type scale.
+@mixin auth-alert {
+  nb-alert {
+    display: block;
+    margin: 0;
+    padding: 10px 12px;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 8px;
+    box-shadow: none;
+    font-family: Inter;
+    font-size: 12px;
+    line-height: 16px;
+
+    .alert-title {
+      margin: 0 0 2px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 16px;
+      color: nb-theme(text-basic-color);
+      b {
+        font-weight: 600;
+      }
+    }
+
+    .alert-message-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .alert-message {
+      margin: 0;
+      font-size: 12px;
+      line-height: 16px;
+      color: nb-theme(text-hint-color);
+      & + .alert-message {
+        margin-top: 2px;
+      }
+    }
+
+    // `outline="danger"` / `outline="success"` put these classes on the host.
+    // The transparent-* tokens are pre-mixed by the theme: `nb-theme()` resolves
+    // to a CSS variable, so `rgba()` on it would not compile.
+    &.outline-danger {
+      border-color: nb-theme(color-danger-transparent-300);
+      background-color: nb-theme(color-danger-transparent-100);
+    }
+
+    &.outline-success {
+      border-color: nb-theme(color-success-transparent-300);
+      background-color: nb-theme(color-success-transparent-100);
+    }
+  }
+}
+
 @mixin input-fields-color {
   ::ng-deep .input-full-width {
     box-shadow: rgba(0, 0, 0, 0.1) 0px 0.5px 0.5px 0.5px inset;

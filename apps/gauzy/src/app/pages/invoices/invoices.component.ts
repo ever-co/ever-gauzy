@@ -35,6 +35,7 @@ import {
 	PermissionsEnum,
 	ICurrency,
 	IInvoiceItemCreateInput,
+	IUser,
 	InvoiceTabsEnum,
 	DiscountTaxTypeEnum,
 	IDateRangePicker
@@ -440,6 +441,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			tax2: tax2 ? tax2.originalValue : 0,
 			taxType: this.selectedInvoice.taxType,
 			tax2Type: this.selectedInvoice.tax2Type,
+			taxCalculationType: this.selectedInvoice.taxCalculationType,
 			terms: this.selectedInvoice.terms,
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
@@ -696,7 +698,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			this.getTranslation('INVOICES_PAGE.TAX_2'),
 			this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'),
 			this.getTranslation('INVOICES_PAGE.CONTACT')
-		].join(',');
+		];
 
 		generateCsv(data, headers, fileName);
 	}
@@ -796,6 +798,80 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		}
 	}
 
+	/**
+	 * The user the History tab composes comments as. Read through a getter rather
+	 * than a field so the avatar follows a mid-session user switch, and so the
+	 * template does not have to reach into the private `store`.
+	 */
+	get currentUser(): IUser {
+		return this.store.user;
+	}
+
+	/**
+	 * Whether a comment author's name should be a link to their profile.
+	 *
+	 * `/pages/users/edit/:id` is guarded by `ORG_USERS_EDIT`, and its guard
+	 * redirects to the dashboard rather than refusing — so without this check a
+	 * viewer who lacks the permission would click a name and silently land on a
+	 * different page. They get plain text instead.
+	 */
+	get canOpenUserProfile(): boolean {
+		return this.ngxPermissionsService.getPermission(PermissionsEnum.ORG_USERS_EDIT) != null;
+	}
+
+	/**
+	 * Initials fallback for a comment author with no `imageUrl`. The shared
+	 * `ngx-avatar` renders nothing at all when its `src` is empty, which left a
+	 * hole where the avatar should be for every user who never uploaded a photo —
+	 * the common case on a fresh workspace.
+	 *
+	 * @param name - the author's display name
+	 * @returns up to two upper-cased initials, or `?` when there is no name
+	 */
+	authorInitials(name: string): string {
+		const initials = (name || '')
+			.trim()
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part: string) => part.charAt(0))
+			.join('');
+		return initials ? initials.toUpperCase() : '?';
+	}
+
+	/**
+	 * Relative age of a comment ("3 hours ago"), the way every comment thread
+	 * dates its entries. The exact timestamp stays available on the tooltip, so
+	 * nothing is lost by not printing it inline.
+	 *
+	 * `createdAt` arrives here as the `Date.toString()` slice built in
+	 * `selectInvoice`, not as an ISO string, so it goes through `new Date` first
+	 * rather than moment's (deprecated) free-form string parser.
+	 *
+	 * A record with no usable date renders nothing rather than moment's literal
+	 * "Invalid date": the line is a subtitle beside the author's name, and a blank
+	 * one reads as "no timestamp" while that string reads as a broken comment. The
+	 * tooltip beside it is already empty in the same case.
+	 *
+	 * @param createdAt - the history record's creation date
+	 * @returns a humanized, locale-aware distance from now, or an empty string
+	 */
+	commentTimeAgo(createdAt: string | Date): string {
+		const parsed = new Date(createdAt);
+		return isNaN(parsed.getTime()) ? '' : moment(parsed).fromNow();
+	}
+
+	/**
+	 * Clears the comment composer without submitting it.
+	 *
+	 * @param historyFormDirective - the composer's `ngForm`, reset alongside the
+	 * form group so the controls drop their touched/dirty state too
+	 */
+	resetComment(historyFormDirective): void {
+		historyFormDirective.resetForm();
+		this.historyForm.reset();
+	}
+
 	async addComment(historyFormDirective) {
 		if (this.historyForm.invalid) {
 			return;
@@ -806,8 +882,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			const action = comment;
 			await this.createInvoiceHistory(action, title);
 
-			historyFormDirective.resetForm();
-			this.historyForm.reset();
+			this.resetComment(historyFormDirective);
 
 			const invoice = await this.invoicesService.getById(invoiceId, [
 				'invoiceItems',
@@ -901,6 +976,11 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				return +new Date(b.createdAt) - +new Date(a.createdAt);
 			});
 			this.histories = histories;
+		} else {
+			// Deselecting used to leave the previous invoice's comments standing in
+			// the History tab. The thread is now guarded on `selectedInvoice`, but
+			// dropping the records keeps the count badge honest either way.
+			this.histories = [];
 		}
 	}
 
@@ -1086,6 +1166,20 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		}
 	}
 
+	/**
+	 * The API matches the invoice / due date filters with `Between(startDate, endDate)` and falls back to
+	 * the current month when it receives a plain date, so send the whole selected day as a UTC range.
+	 *
+	 * @param date The day picked in the search form
+	 */
+	private _toDayRange(date: Date | string): { startDate: string; endDate: string } {
+		const day = moment(date);
+		return {
+			startDate: toUTC(day.clone().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(day.clone().endOf('day')).format('YYYY-MM-DD HH:mm:ss')
+		};
+	}
+
 	search() {
 		const {
 			dueDate,
@@ -1102,22 +1196,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
 		}
 		if (invoiceDate) {
-			this.setFilter(
-				{
-					field: 'invoiceDate',
-					search: moment(invoiceDate).format('YYYY-MM-DD')
-				},
-				false
-			);
+			this.setFilter({ field: 'invoiceDate', search: this._toDayRange(invoiceDate) }, false);
 		}
 		if (dueDate) {
-			this.setFilter(
-				{
-					field: 'dueDate',
-					search: moment(dueDate).format('YYYY-MM-DD')
-				},
-				false
-			);
+			this.setFilter({ field: 'dueDate', search: this._toDayRange(dueDate) }, false);
 		}
 		if (totalValue) {
 			this.setFilter({ field: 'totalValue', search: totalValue }, false);

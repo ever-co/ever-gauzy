@@ -5,7 +5,6 @@ import {
 	ViewChild,
 	inject
 } from '@angular/core';
-import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, EMPTY, from, Observable, Subject } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { chain, indexBy, pick, sortBy } from 'underscore';
@@ -33,6 +32,7 @@ import {
 import {
 	BaseSelectorFilterComponent,
 	DeleteConfirmationComponent,
+	GalleryItem,
 	GalleryService,
 	GauzyFiltersComponent,
 	TimeZoneService
@@ -43,15 +43,40 @@ export interface IScreenshotUrls {
 	fullUrl: string;
 }
 
+/**
+ * One cell of an hour row: a time slot's card, or a run of 10-minute positions
+ * without tracked time merged into a single block (`span` columns wide).
+ */
+export interface IHourSegment {
+	key: string;
+	slot?: ITimeSlot;
+	startTime?: string;
+	endTime?: string;
+	minutes?: number;
+	span?: number;
+}
+
+export interface IHourSlotGroup extends IScreenshotMap {
+	/** The hour's cards and gaps, in time order. */
+	segments: IHourSegment[];
+	/** Whether each of the six 10-minute positions has tracked time. */
+	filled: boolean[];
+	/** Minutes of tracked time in the hour. */
+	trackedMinutes: number;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-screenshots',
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss'],
-	standalone: false
+	standalone: false,
+	// As the dashboard's Recent Activities widget does: a screenshot store of this
+	// page's own, and the dialog service that hands it to the gallery (and View
+	// Info) dialogs. With the root dialog service they resolve the root store.
+	providers: [GalleryService, NbDialogService]
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
-	private readonly _router = inject(Router);
 	private readonly _timesheetService = inject(TimesheetService);
 	private readonly _timesheetFilterService = inject(TimesheetFilterService);
 	private readonly _nbDialogService = inject(NbDialogService);
@@ -60,10 +85,12 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 
 	private _slotIdsMap: Map<string, ID[]> = new Map();
+	/** Ids of the screenshots the last load fetched, so the next reload can drop them. */
+	private _galleryItemIds: Set<ID> = new Set();
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
 	filters: ITimeLogFilters = this.request;
-	timeSlots: IScreenshotMap[] = [];
+	timeSlots: IHourSlotGroup[] = [];
 	originalTimeSlots: ITimeSlot[] = [];
 	screenshotsUrls: IScreenshotUrls[] = [];
 	selectedIdsCount: number = 0;
@@ -109,15 +136,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			.pipe(
 				filter(() => !!this.organization && !isEmpty(this.request)),
 				switchMap(() => this.fetchTimeSlotsScreenshots()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		// Clear gallery on navigation away
-		this._router.events
-			.pipe(
-				filter((event) => event instanceof NavigationStart),
-				tap(() => this._galleryService.clearGallery()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -187,6 +205,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		return from(this._timesheetService.getTimeSlots(payloads)).pipe(
 			tap((timeSlots: ITimeSlot[]) => {
 				this.originalTimeSlots = timeSlots;
+				this._syncGallery(timeSlots);
 				this.timeSlots = this.groupTimeSlots(timeSlots);
 			}),
 			catchError((error) => {
@@ -317,7 +336,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 * @param slots An array of time slots to be grouped.
 	 * @returns An array of grouped time slots for display.
 	 */
-	private groupTimeSlots(slots: ITimeSlot[]): IScreenshotMap[] {
+	private groupTimeSlots(slots: ITimeSlot[]): IHourSlotGroup[] {
 		this.selectedIds = {};
 		this._slotIdsMap = new Map();
 		const timezone = this.filters?.timeZone;
@@ -339,11 +358,12 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 		const result = chain(slots)
 			.groupBy(getHour)
-			.mapObject((hourSlots: ITimeSlot[], hour): IScreenshotMap => {
+			.mapObject((hourSlots: ITimeSlot[], hour): IHourSlotGroup => {
 				const groupByMinutes = chain(hourSlots).groupBy(getMinute).value();
 				const byMinutes = indexBy(sortBy(hourSlots, 'screenshots'), getMinute);
 
-				const slotsByMinute = ['00', '10', '20', '30', '40', '50'].map((key) => {
+				const positions = ['00', '10', '20', '30', '40', '50'];
+				const slotsByMinute = positions.map((key) => {
 					if (!(key in byMinutes)) {
 						return null;
 					}
@@ -370,7 +390,23 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				const startTime = time.format('HH:mm');
 				const endTime = time.add(1, 'hour').format('HH:mm');
 
-				return { startTime, endTime, timeSlots: slotsByMinute };
+				// Tracked minutes: the longest slot of each position, so two people
+				// working the same 10 minutes do not count it twice. Only the six
+				// positions on screen count, so the total matches the strip and cards.
+				const trackedSeconds = positions.reduce(
+					(total: number, key: string) =>
+						total + Math.max(0, ...(groupByMinutes[key] ?? []).map((slot: ITimeSlot) => slot.duration || 0)),
+					0
+				);
+
+				return {
+					startTime,
+					endTime,
+					timeSlots: slotsByMinute,
+					segments: this.toHourSegments(startTime, slotsByMinute),
+					filled: slotsByMinute.map((slot: ITimeSlot) => !!slot),
+					trackedMinutes: Math.round(trackedSeconds / 60)
+				};
 			})
 			.values()
 			.sortBy(({ startTime }) => moment(startTime, 'HH:mm').toDate().getTime())
@@ -378,6 +414,45 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 		this.updateSelections();
 		return result;
+	}
+
+	/**
+	 * Turns an hour's six 10-minute positions into cards and gaps, merging each run
+	 * of empty positions into one gap that says how long nothing was tracked.
+	 *
+	 * @param hourStart The hour's start, as `HH:mm`.
+	 * @param slotsByMinute The slot at each position, or `null` where there is none.
+	 * @returns The hour's segments, in time order.
+	 */
+	private toHourSegments(hourStart: string, slotsByMinute: ITimeSlot[]): IHourSegment[] {
+		const at = (position: number) =>
+			moment(hourStart, 'HH:mm')
+				.add(position * 10, 'minutes')
+				.format('HH:mm');
+
+		const segments: IHourSegment[] = [];
+		slotsByMinute.forEach((slot: ITimeSlot, position: number) => {
+			if (slot) {
+				segments.push({ key: slot.id as string, slot });
+				return;
+			}
+
+			const previous = segments[segments.length - 1];
+			if (previous && !previous.slot) {
+				previous.span += 1;
+				previous.minutes += 10;
+				previous.endTime = at(position + 1);
+			} else {
+				segments.push({
+					key: `gap-${hourStart}-${position}`,
+					startTime: at(position),
+					endTime: at(position + 1),
+					minutes: 10,
+					span: 1
+				});
+			}
+		});
+		return segments;
 	}
 
 	/**
@@ -404,6 +479,30 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		if (screenshotsToRemove.length) {
 			this._galleryService.removeGalleryItems(screenshotsToRemove);
 		}
+	}
+
+	/**
+	 * Drops every screenshot the previous load put in the gallery store, then
+	 * tracks the ones just fetched for the next reload.
+	 *
+	 * Nothing from the previous load is kept. `fetchTimeSlotsScreenshots` empties
+	 * `timeSlots` before the request, so every card is rebuilt and its `ngxGallery`
+	 * directive appends its screenshots afresh. Keeping an item left behind the
+	 * screenshot of a slot that is no longer its minute's primary card, and because
+	 * the store keeps the first item per id, it also kept the old copy over the new.
+	 *
+	 * @param slots The time slots that were just fetched.
+	 */
+	private _syncGallery(slots: ITimeSlot[]): void {
+		if (this._galleryItemIds.size) {
+			this._galleryService.removeGalleryItems(
+				[...this._galleryItemIds].map((id: ID) => ({ id } as GalleryItem))
+			);
+		}
+
+		this._galleryItemIds = new Set<ID>(
+			slots.flatMap((slot: ITimeSlot) => (slot.screenshots ?? []).map((screenshot: IScreenshot) => screenshot.id))
+		);
 	}
 
 	ngOnDestroy(): void {

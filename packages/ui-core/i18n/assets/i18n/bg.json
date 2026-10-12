@@ -845,6 +845,7 @@
 		"SKILLS": "Умения",
 		"PRIVACY": "Приватност",
 		"SELECT_TIMEZONE": "Изберете часовата зона",
+		"SELECT_TIMEZONE_HINT": "Часовете на срещите се показват в тази часова зона.",
 		"SHOW_AVERAGE_BONUS": "Покажи среден бонус",
 		"SHOW_AVERAGE_INCOME": "Покажи среден доход",
 		"SHOW_PAYPERIOD": "Покажи период на плащане",
@@ -1183,7 +1184,71 @@
 		"APPLICATIONS": "Приложения",
 		"OPEN_GA_BROWSER": "Отвори Gauzy в браузъра",
 		"START_SERVER": "Стартирай Сървъра",
-		"STOP_SERVER": "Спри Сървъра"
+		"STOP_SERVER": "Спри Сървъра",
+		"DOCUMENTS": "Документи",
+		"BILLING": "Фактуриране",
+		"MONITORING": "Наблюдение",
+		"ADD_ITEM": "Добавете {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Само вие",
+			"TENANT": "Всички в този наемател"
+		},
+		"UNSAVED_CHANGES": "Незапазени промени",
+		"ACCOUNT": {
+			"TITLE": "Акаунт",
+			"DESCRIPTION": "Акаунтът, с който сте влезли.",
+			"MANAGE": "Управление на профила",
+			"ROLE": "Роля",
+			"MEMBER_SINCE": "Член от"
+		},
+		"PREFERENCES": {
+			"TITLE": "Предпочитания",
+			"DESCRIPTION": "Как изглежда и работи приложението за вас. Промените се прилагат веднага.",
+			"THEME": "Тема",
+			"THEME_HINT": "Цветова схема на цялото приложение.",
+			"LANGUAGE": "Език",
+			"LANGUAGE_HINT": "Език на менютата, етикетите и съобщенията.",
+			"LAYOUT": "Оформление по подразбиране",
+			"RESET_LAYOUTS": "Нулиране на оформленията на страниците",
+			"SAVE_ERROR": "Предпочитанието ви не можа да бъде запазено.",
+			"LAYOUTS_RESET": "Оформленията на страниците са върнати към подразбиращото се."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Квадратно изображение, поне 128 × 128 px.",
+			"NAME_HINT": "Показва се на всеки потребител на този наемател.",
+			"TENANT_ID": "ID на наемателя",
+			"TENANT_ID_HINT": "Посочете го, когато се свързвате с поддръжката или използвате API.",
+			"COPY_ERROR": "ID на наемателя не можа да бъде копиран.",
+			"TITLE": "Профил на наемателя",
+			"DESCRIPTION": "Името и логото на този наемател, показвани в превключвателя на работни пространства и страничната лента за всички потребители.",
+			"NAME": "Име на наемателя",
+			"NAME_PLACEHOLDER": "Въведете името на наемателя",
+			"NAME_REQUIRED": "Името на наемателя е задължително.",
+			"LOGO": "Лого на наемателя",
+			"LOGO_CHANGE": "Щракнете, за да качите ново лого",
+			"LOGO_REMOVE": "Премахване на логото",
+			"LOGO_UPLOAD_ERROR": "Логото не можа да бъде качено.",
+			"CREATED_AT": "Създаден на",
+			"SAVED": "Профилът на наемателя е запазен",
+			"SAVE_ERROR": "Профилът на наемателя не можа да бъде запазен.",
+			"LOAD_ERROR": "Профилът на наемателя не можа да бъде зареден."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "Интерфейс",
+			"TITLE": "Потребителски интерфейс",
+			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (по подразбиране)",
+				"REACT": "React (нов)"
+			},
+			"HINT": "Важи за целия наемател, на всяко устройство. Днес таблото за проследяване на времето е налично и в двата интерфейса; ще последват още страници.",
+			"READ_ONLY": "Само администраторите на наемателя могат да променят тази настройка.",
+			"SAVING": "Запазване…",
+			"SAVED": "Предпочитанието за интерфейс е запазено",
+			"SAVE_ERROR": "Предпочитанието за интерфейс не можа да бъде запазено."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -1217,7 +1282,9 @@
 		"CARDS_GRID": "Карти и мрежа",
 		"SPRINT_VIEW": "Визуализация на спринт",
 		"QUICK_SETTINGS": "Бързи настройки",
-		"NO_LAYOUT": "Няма наличен изглед за данни"
+		"NO_LAYOUT": "Няма наличен изглед за данни",
+		"PREFERENCES": "Предпочитания",
+		"SUPPORT": "Поддръжка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Какво ново?",
@@ -1813,6 +1880,19 @@
 		"TIME_TRACKING": "Проследяване на времето",
 		"PROJECT_MANAGEMENT": "Управление на проекти",
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "За {{ count }} служители",
+			"OF_INCOME": "{{ value }}% от приходите",
+			"MARGIN": "{{ value }}% марж",
+			"BREAKDOWN": "Приходи по служител",
+			"NO_DATA": "Няма финансова активност за този период",
+			"NO_DATA_HINT": "Приходите и разходите за този период ще се показват тук.",
+			"NO_EMPLOYEES": "Няма записи за служители за този период",
+			"SORT_BY": "Сортиране по {{ name }}",
+			"SORT_LABEL": "Сортиране по",
+			"SORT_ASCENDING": "Възходящо",
+			"SORT_DESCENDING": "Низходящо"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
 		"CHARTS": {
@@ -1999,7 +2079,90 @@
 			"PREVIOUS": "Previous"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "Период",
+			"PERIODS": {
+				"THIS_WEEK": "Тази седмица",
+				"THIS_MONTH": "Този месец",
+				"LAST_30_DAYS": "Последните 30 дни"
+			},
+			"TABS": {
+				"OVERVIEW": "Общ преглед",
+				"PROFILE": "Профил"
+			},
+			"PRESENCE": {
+				"TRACKING": "Отчита време",
+				"ONLINE": "На линия",
+				"AWAY": "Отсъства",
+				"OFFLINE": "Офлайн"
+			},
+			"LOCAL_TIME": "Местно време",
+			"MEMBER_SINCE": "Член от",
+			"WEEKLY_LIMIT": "Седмичен лимит",
+			"WORKED_TODAY": "Работено днес",
+			"WORKED_PERIOD": "Работено за периода",
+			"ACTIVITY_META": "{{ value }} активност",
+			"AVG_ACTIVITY": "Средна активност",
+			"OPEN_TASKS": "Отворени задачи",
+			"OPEN_TASKS_META": "{{ progress }} в процес · {{ overdue }} просрочени",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "спрямо миналата седмица",
+				"THIS_MONTH": "спрямо миналия месец",
+				"LAST_30_DAYS": "спрямо предходните 30 дни"
+			},
+			"HOURS_WORKED": "Изработени часове",
+			"HOURS_META": "{{ total }} общо · {{ average }} на работен ден",
+			"TRACKED": "Отчетено",
+			"MANUAL": "Ръчно",
+			"OPEN_TIMESHEET": "Отвори графика",
+			"PROJECTS": "Проекти",
+			"RECENT_SCREENSHOTS": "Последни екранни снимки",
+			"VIEW_ALL": "Виж всички",
+			"ASSIGNED_TASKS": "Възложени задачи",
+			"COLUMNS": {
+				"TASK": "Задача",
+				"PROJECT": "Проект",
+				"STATUS": "Статус",
+				"DUE": "Срок",
+				"TIME": "Време",
+				"NAME": "Име",
+				"PRIORITY": "Приоритет"
+			},
+			"TOP_TASKS": "Най-работени задачи",
+			"APPS_URLS": "Приложения и URL адреси",
+			"NO_TIME": "Няма отчетено време за този период",
+			"NO_TASKS": "Няма възложени задачи",
+			"NO_APPS": "Няма активност на приложения или URL за този период",
+			"NO_SCREENSHOTS": "Няма екранни снимки за този период",
+			"UNAVAILABLE": "Нямате достъп до тези данни",
+			"PROFILE": {
+				"ABOUT": "За служителя",
+				"CONTACT": "Контакти",
+				"SKILLS_TAGS": "Умения и етикети",
+				"TIME_ZONE": "Часова зона",
+				"NOT_PROVIDED": "Все още не е посочено",
+				"NO_DESCRIPTION": "Все още няма добавено описание"
+			},
+			"TASKS_HELP": "Задачи, в които участва този човек. Изберете поле, за да филтрирате списъка.",
+			"TASK_FILTERS": {
+				"OPEN": "Отворени",
+				"PROGRESS": "В процес",
+				"OVERDUE": "Просрочени",
+				"DONE": "Завършени"
+			},
+			"DUE": {
+				"NONE": "Без краен срок",
+				"WAS_DUE": "Срокът беше",
+				"OVERDUE_DAY": "1 ден просрочие",
+				"OVERDUE_DAYS": "{{ count }} дни просрочие",
+				"TODAY": "Срок днес",
+				"TOMORROW": "Срок утре",
+				"IN_DAYS": "След {{ count }} дни"
+			},
+			"SHOWING": "Показани {{ shown }} от {{ total }} задачи",
+			"NO_TASKS_IN_VIEW": "Няма задачи в този изглед"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -2015,6 +2178,7 @@
 		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
@@ -2031,6 +2195,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Служители",
 			"TEAMS": "Отбори",
@@ -2060,7 +2226,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
-			"NO_ALIGNMENT": "No Alignments yet."
+			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
@@ -2491,6 +2658,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Разреши на служителя да излезе от приложението агент. Когато е деактивирано, опцията за излизане ще бъде блокирана в приложението агент.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Разреши изход от профила в приложението агент",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Разреши на служителя да излезе от профила в приложението агент. Когато е деактивирано, опцията за изход от профила ще бъде блокирана в приложението агент.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Активна защита на служителите в ЕИП / Обединеното кралство",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "За организации и служители в ЕИП или Обединеното кралство служителите винаги могат да излязат и да се отпишат от десктоп агента. Наблюдение, което служителят не може да прекъсне, трудно се обосновава според GDPR и чл. 8 от ЕКПЧ, затова тези ограничения не са налични тук.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Потвърдете ограничаването на изхода или отписването от агента",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "С това ограничение служителят не може да спре наблюдението от десктоп агента. Потвърдете, че сте преценили това като законосъобразно и пропорционално за тези служители и поемате отговорност за него. Потвърждението ви се записва към вашия профил.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Проследяване на активността на клавиатурата и мишката",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Активирай пълно проследяване на активността на клавиатурата и мишката, включително натискания на клавиши и точни движения на мишката във всички настолни приложения и агент.",
 				"TRACK_ALL_DISPLAYS": "Проследяване на всички дисплеи",
@@ -2513,6 +2684,8 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Честота на снимки",
 				"SCREENSHOT_FREQUENCY_INFO": "Посочете честотата на актуализация или интервали на време за синхронизация.",
 				"RANDOM_SCREENSHOT": "Случайна снимка",
@@ -2745,7 +2918,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Щракнете или пуснете изображение за качване",
+		"SEARCH_EMPLOYEES": "Търсете служители по име или имейл",
+		"NO_MEMBERS": "Все още няма добавени членове"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -2778,7 +2954,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "За служителя",
+		"INACTIVE": "Неактивен",
+		"PER_HOUR": "/ час",
+		"MEMBER_SINCE": "Член от",
+		"NO_DESCRIPTION": "Все още няма добавено описание",
+		"NO_SKILLS": "Все още няма посочени умения",
+		"VIEW_COMPANY_PROFILE": "Виж профила на компанията",
+		"EDIT": {
+			"NO_AWARDS": "Все още няма награди",
+			"ADD_AWARD": "Добави награда",
+			"PRIVACY_HELP": "Изберете кои данни посетителите виждат в публичния профил."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
@@ -3368,7 +3556,11 @@
 		"STOP_TIMER": "Спиране на таймер",
 		"TIME_LOG": "Запис на времето",
 		"VIEW_APPOINTMENTS": "Преглед на срещи",
-		"VIEW_TIME_ACTIVITY": "Преглед на активността по време"
+		"VIEW_TIME_ACTIVITY": "Преглед на активността по време",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Нова страница",
+			"UPLOAD": "Качване"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Счетоводство",
@@ -3376,7 +3568,8 @@
 		"PROJECT_MANAGEMENT": "Управление на проекти",
 		"JOBS": "Работи",
 		"CONTACTS": "Контакти",
-		"TIME_TRACKING": "Следене на времето"
+		"TIME_TRACKING": "Следене на времето",
+		"DOCUMENTS": "Документи"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Име",
@@ -3427,6 +3620,9 @@
 		"BROWSE": "Прегледай",
 		"COMMENT": "Коментар",
 		"COMMENTS": "Коментари",
+		"COMMENT_PLACEHOLDER": "Напишете коментар…",
+		"NO_COMMENTS": "Все още няма коментари",
+		"NO_COMMENTS_HINT": "Коментарите се появяват тук, най-новите отгоре.",
 		"HEADER": "Фактури",
 		"INVOICE_NUMBER": "Номер на фактура",
 		"ESTIMATE_NUMBER": "Номер на оценка",
@@ -3690,7 +3886,9 @@
 		"SELECT_AN_ORGANIZATION": "Организация",
 		"SELECT_PROJECT": "Проект",
 		"SELECT_TEAM": "Отбор",
-		"AI_CHAT": "AI чат"
+		"AI_CHAT": "AI чат",
+		"COLLAPSE_SIDEBAR": "Свиване на страничната лента",
+		"EXPAND_SIDEBAR": "Разгъване на страничната лента"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI асистент",
@@ -3716,9 +3914,34 @@
 		"STOP": "Спиране на генерирането",
 		"ERROR": "Нещо се обърка.",
 		"RETRY": "Опитайте отново",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"DICTATION_FAILED": "Записът не можа да бъде транскрибиран.",
+		"DICTATION_NOT_CONFIGURED": "Диктовката се нуждае от гласов доставчик. Добавете такъв на страницата с настройки „Доставчици на ИИ“.",
+		"DICTATION_ASK_ADMIN": "Диктовката се нуждае от гласов доставчик — помолете администратор да добави такъв в Настройки → Доставчици на ИИ.",
+		"DICTATION_KEY_REJECTED": "Гласовият доставчик отхвърли своя API ключ. Актуализирайте го на страницата с настройки „Доставчици на ИИ“.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Гласовият доставчик отхвърли своя API ключ — помолете администратор да го актуализира в Настройки → Доставчици на ИИ.",
+		"DICTATION_OPEN_SETTINGS": "Отвори Доставчици на ИИ",
+		"RATE_LIMITED_SHARED": "Безплатното ниво на ИИ в момента е достигнало лимита на заявки. Свържете свой акаунт в OpenRouter или настройте друг доставчик на ИИ за непрекъснат достъп.",
+		"RATE_LIMITED_OWN": "Вашият доставчик на ИИ в момента ограничава заявките. Проверете плана и лимитите си при доставчика или настройте друг доставчик на ИИ.",
+		"RATE_LIMIT_RETRY_IN": "Можете да опитате отново след около {{seconds}} с.",
+		"OPEN_AI_SETTINGS": "Отвори Доставчици на ИИ",
+		"ERROR_NOT_CONFIGURED": "ИИ чатът се нуждае от настроен доставчик. Добавете такъв на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "ИИ чатът се нуждае от настроен доставчик — помолете администратор да добави такъв в Настройки → Доставчици на ИИ.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Избраният доставчик на ИИ не може да отговори в момента. Проверете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Избраният доставчик на ИИ не може да отговори в момента — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_MODEL_UNAVAILABLE": "Този модел не е достъпен с текущия API ключ. Изберете друг на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Този модел не е достъпен с текущия API ключ — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_KEY_REJECTED": "Доставчикът на ИИ отхвърли своя API ключ. Обновете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Доставчикът на ИИ отхвърли своя API ключ — помолете администратор да го обнови в Настройки → Доставчици на ИИ.",
+		"ERROR_RATE_LIMITED": "Доставчикът на ИИ ограничава заявките.",
+		"RECORDING": "Запис",
+		"PREVIEW": "Преглед",
+		"PREVIEW_PAGE": "Страница",
+		"PREVIEW_NEW_TAB": "Отваряне в нов раздел",
+		"PREVIEW_CLOSE": "Затваряне на прегледа",
+		"PREVIEW_UNAVAILABLE": "Няма наличен преглед за този файл.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Отваряне в Документи",
+		"ATTACH_UPLOADING": "Качване…",
+		"ATTACH_DOCUMENT": "Документ"
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",
@@ -3731,6 +3954,21 @@
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Намерете документация, получете отговори и се свържете с екипа зад Gauzy.",
+		"DOCUMENTATION": "Документация",
+		"DOCUMENTATION_DESC": "Ръководства и справочник за всяка функция на Gauzy.",
+		"FAQ": "Често задавани въпроси",
+		"FAQ_DESC": "Отговори на най-често задаваните въпроси.",
+		"SUPPORT_CHAT": "Чат за поддръжка",
+		"SUPPORT_CHAT_DESC": "Разговаряйте с нашия екип по поддръжка.",
+		"REPORT_ISSUE": "Докладвайте проблем",
+		"REPORT_ISSUE_DESC": "Открихте грешка? Отворете issue в GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Изходен код, версии и дискусии.",
+		"WEBSITE": "Уебсайт на Gauzy",
+		"WEBSITE_DESC": "Научете повече за платформата Gauzy.",
+		"ABOUT_LINK": "За Gauzy",
+		"ABOUT_LINK_DESC": "Данни за версията, лиценз и връзки.",
 		"HELP": "Помощ",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -3823,7 +4061,8 @@
 		"ROLES_PERMISSIONS": "Роли и права",
 		"TIME_TRACKING": "Проследяване на време",
 		"ESTIMATE": "Оценка",
-		"DASHBOARD": "Табло"
+		"DASHBOARD": "Табло",
+		"DOCUMENTS": "Документи"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3921,6 +4160,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Централно място за фирмените документи: качване, уики страници, преглед и знания за ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4035,6 +4277,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Всички права запазени.",
+		"DESCRIPTION": "Ever® Gauzy™ е отворена платформа за управление на бизнеса за споделена икономика и икономика при поискване — ERP, CRM, HRM, ATS и управление на проекти с вградено отчитане на времето.",
+		"LICENSE": "Отворен код, разпространяван под лиценз",
+		"VERSION_DETAILS": "Данни за версията",
+		"VERSION_MISMATCH": "Уеб приложението и API са изградени от различни комита — възможно е да тече внедряване.",
+		"WEB_APP": "Уеб приложение",
+		"API": "API",
+		"UNTAGGED": "билд без таг",
+		"API_UNAVAILABLE": "Версията на API не е налична",
+		"LEARN_MORE": "Научете повече",
 		"ABOUT": "За нас"
 	},
 	"FOOTER": {
@@ -4427,6 +4679,20 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Наблюдението е активно: записват се време и активност",
+		"MONITORING_IDLE": "Агентът е неактивен",
+		"MONITORING_TRAY_ACTIVE": "Наблюдението е активно, записва се: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Наблюдението е на пауза: нищо не се записва",
+		"MONITORING_CAPTURE_TIME": "време и активни приложения",
+		"MONITORING_CAPTURE_SCREENSHOTS": "екранни снимки",
+		"MONITORING_CAPTURE_INPUT": "активност на клавиатура и мишка",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Изберете клиент",
+			"SELECT_PROJECT": "Изберете проект",
+			"SELECT_TEAM": "Изберете отбор",
+			"SELECT_TASK": "Изберете задача",
+			"DESCRIPTION": "Добавете описание"
+		},
 		"IS_BILLABLE": "Is Billable",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Страртирай таймер",
@@ -4531,7 +4797,7 @@
 			"SELECT_DEFAULT_CDN": "Изберете сървър за актуализация по подразбиране",
 			"TOGGLE_UPDATE_LOCALLY": "Превключване за локално актуализиране",
 			"LOCAL_SERVER": "Локален сървър",
-			"LOCAL_SERVER_NOTE": "Избраната директория трябва задължително да съдържа манифестите <strong>latest.yml</strong> и/или <strong>latest-mac.yml</strong> за успешна валидация на актуализацията",
+			"LOCAL_SERVER_NOTE": "Избраната директория трябва да съдържа манифеста за актуализация за вашата система (Windows: <strong>latest-x64.yml</strong> или <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> или <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) и изброените в него файлове за актуализация за успешна валидация на актуализацията",
 			"OTHER_SETTINGS": "Други настройки",
 			"ALLOW_PRERELEASE_VERSIONS": "Разрешаване на предварителни версии",
 			"CHECK_UPDATE_APP_VERSION": "Проверете и актуализирайте версията на приложението",
@@ -4896,7 +5162,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Скрийншоти",
 			"OF": "от",
-			"TIME_LOG": "Времеви запис"
+			"TIME_LOG": "Времеви запис",
+			"TAKEN_AT": "Скрийншот, направен в {{ time }}",
+			"POSITION": "Скрийншот {{ position }} от {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Предупреждение. Таймерът работи, можете да премахнете скрийншоти само ако спрете таймера или вътре в приложението Таймер",
 		"DELETE_CONFIRM": "Сигурни ли сте, че искате да изтриете тези скрийншоти и времеви запис?",
@@ -4945,7 +5213,9 @@
 		"NO_SCREENSHOT": "Няма екранна снимка",
 		"NO_SCREENSHOTS": "Няма екранни снимки",
 		"NO_RECORD_FOUND": "Не са намерени записи. Моля, изберете диапазон от дати, служител или проект.",
-		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)"
+		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)",
+		"NO_TIME_TRACKED": "Няма проследено време",
+		"MINUTES_TRACKED": "Проследени {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",
@@ -4971,6 +5241,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "Подробности",
+		"PARTICIPANTS": "Участници",
+		"FORM_HINT": "Задайте темата на срещата, кога ще се проведе и кой ще участва.",
+		"DETAILS_HINT": "Дневен ред, място и бележки, видими за всички поканени.",
+		"SCHEDULE": "График",
+		"SCHEDULE_HINT": "Изберете дата и час, с незадължителен буфер и почивка.",
+		"BUFFER_TIME_HINT": "Оставете свободно време преди или след срещата.",
+		"BREAK_TIME_HINT": "Прекъснете срещата за кратка почивка.",
+		"BREAK_START": "Почивката започва в",
+		"PARTICIPANTS_HINT": "Хората, които получават поканата.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5015,7 +5295,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "Промяна",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "Изберете с кого искате да се срещнете, след това изберете удобен за вас час.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
@@ -5059,7 +5341,10 @@
 			"payment-receipt": "Касова бележка",
 			"reject-candidate": "Отхвърли кандидат"
 		},
-		"HTML_EDITOR": "HTML редактор"
+		"HTML_EDITOR": "HTML редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Тръбопроводи",
@@ -5110,36 +5395,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Доставчик на файлове",
+		"SHOW_SECRET": "Покажи тайната",
+		"HIDE_SECRET": "Скрий тайната",
+		"SUMMARY": {
+			"TITLE": "Текуща конфигурация",
+			"DESCRIPTION": "Последно запазени настройки — използват се за новите качвания.",
+			"PROVIDER": "Доставчик",
+			"BUCKET": "Бъкет / име на облака",
+			"REGION": "Регион",
+			"ENDPOINT": "Крайна точка",
+			"CREDENTIALS": "Идентификационни данни",
+			"CREDENTIALS_SAVED": "Запазени",
+			"CREDENTIALS_INCOMPLETE": "Непълни",
+			"CREDENTIALS_NONE": "Не са зададени",
+			"CREDENTIALS_NOT_NEEDED": "Не са нужни",
+			"SERVER_DEFAULT": "По подразбиране от сървъра"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Откъде да вземете ключовете",
+			"LOCAL": {
+				"NAME": "Локален диск",
+				"DESCRIPTION": "файловете се записват във файловата система на API сървъра."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "файловете се записват в AWS S3 бъкет. Използвайте IAM ключ за достъп с права за четене и запис в бъкета."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-съвместимо облачно хранилище. Данните за достъп се проверяват в Wasabi при запазване."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "хостинг на изображения и видео. Името на облака и API ключовете са в конзолата на Cloudinary, в раздел API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-съвместимо обектно хранилище с незадължителен CDN. Създайте ключ за достъп до Spaces в контролния панел на DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Локално хранилище",
+			"WHERE": "Качените файлове се записват във файловата система на API сървъра.",
+			"NO_CONFIG": "Няма нищо за настройване — локалното хранилище работи веднага.",
+			"WARNING": "Файловете се губят, ако сървърът бъде преинсталиран без постоянен том, и не се споделят между няколко API инстанции. В продукция използвайте облачен доставчик."
+		},
+		"CHECK": {
+			"BUTTON": "Провери конфигурацията",
+			"OK": "Всички задължителни полета са попълнени и URL адресите са валидни. Самите ключове се проверяват само от доставчика.",
+			"OK_LOCAL": "Локалното хранилище не изисква настройка.",
+			"OK_SERVER_DEFAULTS": "Нищо не липсва. Тези празни полета използват конфигурацията на сървъра:",
+			"MISSING": "Липсва:",
+			"INVALID_URL": "Невалиден http(s) URL:",
+			"HTTPS_REQUIRED": "Изисква се https:// — ключовете се изпращат на този адрес:"
+		},
 		"S3": {
-			"HEADER": "S3 Конфигурация",
+			"HEADER": "Конфигурация на S3",
+			"SUBTITLE": "Съхранявайте качените файлове в Amazon S3 бъкет.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "IAM ключ за достъп с права за четене и запис в бъкета.",
+				"BUCKET": "Бъкет",
+				"BUCKET_HINT": "Къде се записват качените файлове."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "AWS регионът на бъкета, напр. us-east-1 или eu-west-1.",
+				"BUCKET": "Името на бъкета точно както е в конзолата на S3."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Конфигурация",
+			"HEADER": "Конфигурация на Wasabi",
+			"SUBTITLE": "Съхранявайте качените файлове в Wasabi бъкет чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Двойка ключове за достъп от конзолата на Wasabi.",
+				"BUCKET": "Бъкет и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "Регионът на бъкета, напр. us-east-1 или eu-central-1.",
+				"SERVICE_URL": "S3 крайната точка за този регион.",
+				"BUCKET": "Малки букви, цифри, точки и тирета. Имената са уникални в целия Wasabi.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/бъкет/файл вместо бъкет.endpoint/файл. Оставете включено, освен ако не ви трябват virtual-hosted адреси."
+			},
+			"SUGGESTED_ENDPOINT": "Крайна точка за този регион:",
+			"USE_SUGGESTION": "Използвай",
+			"SAVE_NOTE": "При запазване Gauzy използва тези данни, за да създаде бъкета в Wasabi. Ако Wasabi откаже заявката, настройките не се запазват.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
-				"SERVICE_URL": "URL на услугата"
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
+				"BUCKET": "Бъкет",
 				"SERVICE_URL": "URL на услугата"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Конфигурация на Cloudinary",
+			"SUBTITLE": "Съхранявайте качените файлове в Cloudinary и ги доставяйте чрез неговата мрежа.",
+			"SECTIONS": {
+				"ACCOUNT": "Акаунт",
+				"ACCOUNT_HINT": "И трите стойности са в конзолата на Cloudinary, в раздел API Keys.",
+				"DELIVERY": "Доставка",
+				"DELIVERY_HINT": "Как се изграждат връзките към качените файлове."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Името, показано в горната част на конзолата на Cloudinary.",
+				"ACCESS_API_KEY": "Идентифицира акаунта; използва се заедно с API тайната.",
+				"ACCESS_API_SECRET": "Запазените стойности се връщат маскирани.",
+				"DELIVERY_URL": "Базов адрес на връзките. Оставете https://res.cloudinary.com, освен ако не ползвате собствен домейн.",
+				"SECURE": "Създава връзките с https://. Оставете True."
+			},
+			"LABELS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Конфигурация на DigitalOcean",
+			"SUBTITLE": "Съхранявайте качените файлове в DigitalOcean Space чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Ключ за достъп до Spaces от контролния панел на DigitalOcean.",
+				"BUCKET": "Space и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"SERVICE_URL": "Крайната точка на центъра за данни на вашия Space, напр. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Фиксиран на us-east-1, както изисква Spaces; центърът за данни се определя от крайната точка.",
+				"BUCKET": "Името на Space.",
+				"CDN_URL": "По избор. CDN крайната точка на Space, ако CDN е включен.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/space/файл вместо space.endpoint/файл."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN"
 			}
 		}
 	},
@@ -5187,7 +5627,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Доставчик",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Изпращане на SMS известия и покани чрез Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Документация"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Управление на функции за '{{ name }}'"
@@ -5208,7 +5650,18 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "До",
-				"TEMPLATE_LANGUAGE": "Шаблон/Език"
+				"TEMPLATE_LANGUAGE": "Шаблон/Език",
+				"RECIPIENT": "Получател",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Всички получатели",
+				"ALL_TEMPLATES": "Всички шаблони",
+				"ALL_STATUSES": "Всички статуси",
+				"SENT": "Изпратен",
+				"FAILED": "Неуспешен",
+				"ARCHIVED": "Архивирани",
+				"SHOWING": "Показани {{ count }} от {{ total }}",
+				"NO_MATCH": "Няма имейли, отговарящи на тези филтри."
 			}
 		}
 	},
@@ -5226,7 +5679,11 @@
 			"invoice": "Фактура",
 			"estimate": "Оферта",
 			"receipt": "Касова бележка"
-		}
+		},
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"SAVED": "Шаблонът '{{ templateName }}' беше запазен"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",
@@ -5258,7 +5715,8 @@
 				"TERMS_AND_CONDITIONS": "Общи условия",
 				"AND": " и ",
 				"PRIVACY_POLICY": "Политика за поверителност"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Паролата трябва да съдържа поне 4 знака"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5268,6 +5726,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Нямате акаунт?",
 		"FORGOT_PASSWORD_TITLE": "Забравена парола?",
 		"OR_SIGN_IN_WITH": "Или влезте с",
+		"SIGN_IN_WITH_EVER_ID": "Вход с Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Вход с Keycloak",
 		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магически код",
@@ -5367,7 +5827,15 @@
 		"HOTKEYS": "Hotkeys",
 		"HELP": "Помощ",
 		"SIGN_OUT": "Sign Out",
-		"PROFILE": "Profile"
+		"PROFILE": "Profile",
+		"ACCOUNT": "Акаунт",
+		"PREFERENCES": "Предпочитания",
+		"DOWNLOAD_APPS": "Изтегляне на приложения",
+		"DOWNLOAD_MACOS": "Изтегляне за macOS",
+		"DOWNLOAD_WINDOWS": "Изтегляне за Windows",
+		"DOWNLOAD_LINUX": "Изтегляне за Linux",
+		"DOWNLOAD_MOBILE": "Изтегляне на мобилното приложение",
+		"DOWNLOAD_BROWSER_EXTENSION": "Изтегляне на разширението за браузър"
 	},
 	"WORKSPACES": {
 		"MENUS": {

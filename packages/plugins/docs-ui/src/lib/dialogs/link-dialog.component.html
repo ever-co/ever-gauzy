@@ -1,0 +1,54 @@
+<nb-card class="docs-dialog docs-link-dialog">
+	<nb-card-header>{{ 'DOCS.LINKS.DIALOG_TITLE' | translate }}</nb-card-header>
+
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
+		<label class="label" for="docs-link-entity">{{ 'DOCS.LINKS.ENTITY_TYPE' | translate }}</label>
+		<nb-select
+			id="docs-link-entity"
+			size="small"
+			fullWidth
+			[selected]="entity"
+			[disabled]="saving"
+			(selectedChange)="onEntityChange($event)"
+		>
+			<nb-option *ngFor="let descriptor of entities" [value]="descriptor.entity">
+				<nb-icon [icon]="descriptor.icon" size="tiny"></nb-icon>
+				{{ descriptor.labelKey | translate }}
+			</nb-option>
+		</nb-select>
+
+		<label class="label" for="docs-link-search">{{ 'DOCS.LINKS.RECORD' | translate }}</label>
+		<input
+			id="docs-link-search"
+			nbInput
+			fullWidth
+			size="small"
+			type="text"
+			[placeholder]="'DOCS.LINKS.SEARCH_PLACEHOLDER' | translate"
+			[disabled]="saving"
+			[(ngModel)]="search"
+		/>
+
+		<p class="muted" *ngIf="!loading && !filtered.length">{{ 'DOCS.LINKS.NO_RECORDS' | translate }}</p>
+
+		<div class="docs-link-list" *ngIf="filtered.length">
+			<button
+				type="button"
+				class="docs-link-item"
+				*ngFor="let candidate of filtered; trackBy: trackCandidate"
+				[class.selected]="selectedId === candidate.id"
+				[disabled]="saving"
+				(click)="selectedId = candidate.id"
+			>
+				{{ candidate.label }}
+			</button>
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer class="docs-dialog-footer">
+		<button nbButton ghost [disabled]="saving" (click)="cancel()">{{ 'DOCS.UPLOAD.CANCEL' | translate }}</button>
+		<button nbButton status="primary" [disabled]="!canConfirm" (click)="confirm()">
+			{{ 'DOCS.LINKS.CONFIRM' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

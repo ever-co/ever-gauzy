@@ -1,4 +1,22 @@
 @use 'themes' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// The card layout is not a table row, so the table density contract stops here.
+//
+// The list pages that render both layouts declare `density-tokens()` on their
+// own `:host` (see `list-page()`), because the renderers that read them are
+// separate components and custom properties are the only thing that reaches
+// across. The card grid sits under that same `:host` and instantiates the SAME
+// `renderComponent` the table column does, so a `ContactWithTagsComponent` in a
+// card was being sized for a table row it is not in — chip text a step down,
+// its vertical inset gone.
+//
+// This hands every one of those tokens back to the app-wide `$gauzy-density`
+// value, so a renderer inside a card reads exactly what it reads on a page that
+// never included `list-page()` at all.
+:host {
+  @include ga-hub.reset-density-tokens();
+}
 
 :host .card-layout {
   display: grid;

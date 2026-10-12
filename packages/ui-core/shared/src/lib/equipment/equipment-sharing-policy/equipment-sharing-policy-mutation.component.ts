@@ -15,6 +15,8 @@ import { EquipmentSharingPolicyService } from '@gauzy/ui-core/core';
 export class EquipmentSharingPolicyMutationComponent extends TranslationBaseComponent implements OnInit {
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	selectedOrganization: IOrganization;
+	/** True while the save request is in flight: the Save button is disabled so a second click cannot create the policy twice. */
+	loading = false;
 	form: UntypedFormGroup = this.fb.group({
 		name: [null, Validators.required],
 		description: []
@@ -59,6 +61,9 @@ export class EquipmentSharingPolicyMutationComponent extends TranslationBaseComp
 	 * Determines whether to create a new policy or update an existing one based on the presence of an ID.
 	 */
 	async saveEquipmentSharingPolicy() {
+		if (this.loading) {
+			return;
+		}
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { name, description } = this.form.value;
 
@@ -72,16 +77,22 @@ export class EquipmentSharingPolicyMutationComponent extends TranslationBaseComp
 
 		let equipmentPolicy: IEquipmentSharingPolicy;
 
-		if (this.equipmentSharingPolicy) {
-			const { id } = this.equipmentSharingPolicy;
-			// Update existing policy
-			equipmentPolicy = await this.equipmentSharingPolicyService.update(id, equipmentSharingPolicy);
-		} else {
-			// Create new policy
-			equipmentPolicy = await this.equipmentSharingPolicyService.create(equipmentSharingPolicy);
-		}
+		this.loading = true;
+		try {
+			if (this.equipmentSharingPolicy) {
+				const { id } = this.equipmentSharingPolicy;
+				// Update existing policy
+				equipmentPolicy = await this.equipmentSharingPolicyService.update(id, equipmentSharingPolicy);
+			} else {
+				// Create new policy
+				equipmentPolicy = await this.equipmentSharingPolicyService.create(equipmentSharingPolicy);
+			}
 
-		// Close the dialog and pass the created/updated policy
-		this.closeDialog(equipmentPolicy);
+			// Close the dialog and pass the created/updated policy
+			this.closeDialog(equipmentPolicy);
+		} finally {
+			// Re-enable the button whether the request succeeded or failed, so a failed save can be retried.
+			this.loading = false;
+		}
 	}
 }

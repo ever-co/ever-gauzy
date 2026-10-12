@@ -1,76 +1,203 @@
-@use 'var' as *;
+@use 'var' as v;
 @use 'themes' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
 
+// NOTE: this stylesheet is not scoped to one template. `accounting.component.ts`
+// lists it in its own `styleUrls` alongside `accounting.component.scss`, so every
+// selector here is compiled a SECOND time carrying the Accounting template's
+// `_ngcontent` attribute. "Dead in edit-organization" therefore does not mean dead.
+//
+// Everything the header needs is nested under `.card-scroll`, a class the Accounting
+// card does not carry (its `nb-card` is `.card`), so the rewrite below cannot reach
+// that page. `.body-header` and `.sub-header` at the bottom are the two rules that
+// belong to Accounting rather than to this header — see the comment above them.
+
+// The shell already hands this page the right box: `styles/_overrides.scss` makes
+// `nb-layout-column` a flex column and gives `> router-outlet + *` — the routed
+// page component, i.e. this `:host` — `flex: 1 1 auto; min-height: 0`. So the host
+// is exactly the viewport less the header band, the footer and the column padding,
+// and nothing here needs to re-derive that from `100vh`.
+//
+// What it was NOT doing is passing that height on. `:host nb-card { height: unset }`
+// at the bottom of this file compiles to (0,2,1) and beat the global
+// `.card-scroll { height: calc(...) }` (0,1,0), so the card sized to its CONTENT:
+// header + tab strip + a tab body that measured ITSELF off `100vh` (see the three
+// tab stylesheets). The card therefore always came out shorter than the column it
+// sits in, which is the empty band between the card and the footer. The chain is
+// continuous now — column -> host -> card -> body -> tabset -> tab — and every
+// step below sizes off its parent rather than off the viewport.
+//
+// No `background-color` of its own, deliberately. This used to paint the card
+// `gauzy-card-2` — the exact colour the shared `nb-overrides()` paints the ACTIVE
+// route tab (`styles/_overrides.scss`), so the selected tab was the same colour as
+// the strip it sat in and the only thing marking it was its text weight. The
+// employee edit card takes the theme's own `card-background-color` (`gauzy-card-1`),
+// which is what makes the active tab there read as a folder tab lifted off the
+// header. This card does the same now; the `gauzy-card-2` tint still appears where
+// it belongs, painted by each tab on its own panel.
 :host .card-scroll {
-    background-color: nb-theme(gauzy-card-2);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 
-    & .header {
-        padding-left: 20px;
-        padding-right: 20px;
-        padding-top: 25px;
-        border-bottom: none;
+  & .header {
+    // Was `25px 20px 0`. The band above the tab strip was the single largest
+    // block of empty space on the page and it is chrome, not content.
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: none;
+    flex: 0 0 auto;
+  }
+
+  & .header-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .org-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .org-details {
+    min-width: 0;
+  }
+
+  img.org-image,
+  .org-image-placeholder {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    object-fit: cover;
+    border-radius: nb-theme(border-radius);
+    border: 1px solid var(--gauzy-border-default-color);
+  }
+
+  .org-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gauzy-sidebar-background-3);
+    color: nb-theme(text-hint-color);
+
+    nb-icon {
+      font-size: 1.375rem;
+      width: 1.375rem;
+      height: 1.375rem;
+    }
+  }
+
+  // Was 14px/600 — the same size as the supporting line beneath it, which left the
+  // organization's own name reading no louder than its metadata.
+  .org-name {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.375rem;
+    letter-spacing: -0.01em;
+    color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // The headcount used to be the only thing under the name, on its own line at
+  // body weight. It is now one item in a row of muted supporting copy.
+  .org-meta {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 0.5rem;
+    margin-top: 0.125rem;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    color: nb-theme(text-hint-color);
+    min-width: 0;
+  }
+
+  .org-meta__item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+
+    & + .org-meta__item::before {
+      content: '·';
+      margin-inline-end: 0.5rem;
+      color: nb-theme(text-disabled-color);
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+  }
+
+  // Was a `display: flex` span, so the control stretched the full width of the
+  // header and read as a banner rather than as an action. It is a real `<button>`
+  // now, with a hover state and a resting fill.
+  & .edit-public-page {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.375rem;
+    height: 2rem;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+    border-radius: nb-theme(button-rectangle-border-radius);
+    border: 1px solid nb-theme(color-primary-transparent-default);
+    background-color: nb-theme(color-primary-transparent-100);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    color: nb-theme(text-primary-color);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+
+    &:hover {
+      background-color: nb-theme(color-primary-transparent-200);
+      border-color: nb-theme(color-primary-transparent-focus);
     }
 
-    & .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    nb-icon {
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
     }
+  }
 
-    .org-image {
-        width: 48px;
-        height: 48px;
-        @include nb-ltr(margin-right, 17px !important);
-        @include nb-ltr(margin-left, 0px !important);
-        @include nb-rtl(margin-right, 0px !important);
-        @include nb-rtl(margin-left, 17px !important);
-    }
-    .org-name {
-        font-size: 14px !important;
-        font-style: normal;
-        font-weight: 600 !important;
-        line-height: 17px;
-        letter-spacing: 0em;
-        margin-bottom: 3px;
-    }
-    .org-position {
-        font-size: 12px !important;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 15px;
-        letter-spacing: 0em;
-    }
-
-    & .edit-public-page {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        padding: 2px 12px;
-        box-sizing: border-box;
-        border-radius: nb-theme(button-rectangle-border-radius);
-        border: 2px solid nb-theme(color-primary-transparent-default);
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 11px;
-        letter-spacing: 0em;
-        text-align: left;
-        color: nb-theme(text-primary-color);
-        cursor: pointer;
-    }
-
-    & nb-card-body {
-        padding: 0;
-    }
+  // `hidden`, matching the employee edit card (`nb-card_overrides(hidden, ...)` in
+  // `edit-employee.component.scss`). The tabs own the scrolling — each one has a
+  // scroll port over its own fields — so the card body has nothing to scroll, and
+  // Nebular's default `overflow: auto` here only ever produced a SECOND scrollbar:
+  // one down the full height of the card body, running alongside the tab strip, on
+  // top of the real one inside the panel. Which is the difference the employee page
+  // does not have. Below `lg` the media query at the bottom of this file hands the
+  // overflow back, so a stacked tab still cannot be clipped.
+  //
+  // `display: flex` so the settings component below can take its height from this
+  // box as a flex item, the way `ngx-edit-employee-profile` does.
+  & nb-card-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
-// Removed most of a block of old styles — but NOT all of it, because this
-// stylesheet is not scoped to one template. `accounting.component.ts` lists it in
-// its own `styleUrls` alongside `accounting.component.scss`, so every selector
-// here is compiled a SECOND time carrying the Accounting template's `_ngcontent`
-// attribute. "Dead in edit-organization" therefore does not mean dead.
+// Removed a block of old styles — but NOT all of it, because of the Accounting
+// second compile described at the top of this file.
 //
 // Checked against both templates. Dead in each, and gone: `.edit-icon`,
 // `.setting-name`, `.transparent`, `.settings-body`, `.header-content` (with its
@@ -87,35 +214,110 @@
 // so dropping these would have silently pulled 35px out from under the Accounting
 // page header and dropped the bold from its section headings.
 .body-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 35px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
 }
 
 .sub-header {
-    margin-bottom: 20px;
-    font-weight: bold;
+  margin-bottom: 20px;
+  font-weight: bold;
 }
 
-@include respond(sm) {
-    .header .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .org-image {
-        margin-bottom: 10px;
-    }
+// The tabs stack their panels below `lg` and grow past the viewport, so the card
+// stops being a fixed frame and the layout column scrolls it — `nb-layout-column`
+// is already a scroll port (`styles/_overrides.scss`).
+@media only screen and (max-width: v.$break-lg) {
+  :host .card-scroll {
+    height: auto;
+    min-height: 100%;
+  }
+
+  :host .card-scroll nb-card-body {
+    overflow: visible;
+  }
 }
 
-:host{
-    nb-card{
-        height: unset;
-    }
-    // `--gauzy-card-1` is not emitted by every registered theme, and a bare
-    // `var()` with no fallback drops the whole `background-color` declaration
-    // there, leaving every input on this page transparent. `--card-background-color`
-    // is a core Nebular token present in all of them, and it is exactly what
-    // `gauzy-card-1` is aliased to in most themes anyway.
-    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
+// Wraps the action under the identity rather than stacking the avatar above the
+// name, which is what the old `flex-direction: column` on `.header-container` did.
+@media only screen and (max-width: v.$break-md) {
+  :host .card-scroll .header-container {
+    flex-wrap: wrap;
+  }
+
+  :host .card-scroll .header-actions {
+    margin-inline-start: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+:host {
+  // Accounting's cards — the outer `.card` and the statistic cards nested inside
+  // it — still need this; that page has no flex chain to inherit a height from.
+  // The exclusion is what lets the page frame reach the card above: with a bare
+  // `nb-card` this rule is (0,2,1) and silently outranks `.card-scroll`'s own
+  // height. (Both selectors carry a content attribute, so each compile only ever
+  // sees the cards in its OWN template — Accounting's are untouched by the
+  // `.card-scroll` block, and this page has exactly one card, the excluded one.)
+  nb-card:not(.card-scroll) {
+    height: unset;
+  }
+  // `--gauzy-card-1` is not emitted by every registered theme, and a bare
+  // `var()` with no fallback drops the whole `background-color` declaration
+  // there, leaving every input on this page transparent. `--card-background-color`
+  // is a core Nebular token present in all of them, and it is exactly what
+  // `gauzy-card-1` is aliased to in most themes anyway.
+  //
+  // This call is ACCOUNTING's — see the note at the top of this file: that
+  // component lists this stylesheet in its own `styleUrls`, so everything here is
+  // compiled a second time against its template. Its fields sit directly on the
+  // card, so the card surface is the right fill for them and this stays as it is.
+  // The organization editor overrides it below.
+  @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
+}
+
+// ── The organization editor's own field surface ──────────────────────────────
+//
+// `gauzy-card-1` is the CARD's surface — the bottom of the elevation ramp. It is
+// the right fill for a field that sits on the card, which is what the call above
+// assumes. But none of this page's fields do: all three tabs put their fields on a
+// `gauzy-card-3` panel, which is two steps up that ramp (card-1 -> the `gauzy-card-2`
+// tab body -> the card-3 panel). So every input, select and `ng-select` on this
+// page was being painted two steps BELOW the surface it sits on.
+//
+// On the light themes that is invisible — card-1 is white and card-3 composites to
+// #fcfcfc, three values apart. On `gauzy-dark` it is the whole problem: card-1 is
+// an opaque `rgba(18, 18, 20, 1)` while the panel composites to about #202022, so
+// each field read as a black hole punched through its panel rather than as a
+// control resting on it.
+//
+// `gauzy-card-4` is the next step up from the panel, which is exactly what a
+// control resting on a card-3 surface should be — 6 % white over the panel's 4 % on
+// `gauzy-dark`, 75 % white over 50 % on the light themes, and it is already the
+// choice `job-search.component.scss` makes for the same situation. The old value
+// stays as the fallback for any theme that does not emit card-4.
+//
+// Scoped to `.card-scroll` deliberately: that class is on this page's `nb-card` and
+// NOT on Accounting's (which is `.card`), so this is the hook the rest of this file
+// already uses to say "the organization editor only". At (0,2,2) against the
+// (0,1,1) above it, this wins both arguments and leaves every other declaration the
+// mixin emits identical.
+//
+// The height is `$default-height` rather than the `42px` above, and that is a
+// reduction with a reason rather than a smaller number picked by eye. That variable
+// is `calc(select-medium-text-line-height + input-medium-padding-y * 2)` — one line
+// box plus both block insets, i.e. exactly the height `nb-select` computes for
+// ITSELF out of the density tokens, which is 2.375rem (38px) at the current preset.
+// `42px` is a hardcoded pixel from before that preset existed, so the mixin's
+// `min-height: … !important` was propping every field on this page 4px above the
+// box its own control had already worked out, and the two would drift further apart
+// the next time the density tokens move. Passing the shared value means the floor
+// and the natural height are the same number, and the fields follow the scale.
+:host .card-scroll {
+  @include ga-overrides.input-appearance(
+    ga-overrides.$default-height,
+    var(--gauzy-card-4, var(--gauzy-card-1, var(--card-background-color)))
+  );
 }

@@ -1,4 +1,11 @@
 @forward 'report';
+@use 'report-table' as *;
+
+// The shared row-table chrome - surface, hairlines, row padding and the 12px
+// type scale - so this grid reads the same as the other report tables. The
+// column widths below are left as they were: they are this report's own
+// proportions and are a separate job from the type scale.
+@include report-table(48px);
 
 :host {
   display: block;

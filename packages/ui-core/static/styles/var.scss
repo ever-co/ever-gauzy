@@ -17,6 +17,23 @@ $break-dsk: 1532px;
   @return #{$em}rem;
 }
 
+// ── Tab strip metrics ────────────────────────────────────────────────────────
+//
+// The `dsk` box of a `.tab-link`, in the one place both sheets that depend on it
+// can read it:
+//   * `includes/_tabset.scss` draws the box (`tab-strip()`);
+//   * `gauzy/_tabset-actions.scss` REPRODUCES its block value, because
+//     `tabset-action-row()` only stays vertically centred on the tab labels for
+//     as long as it is exactly as tall as the strip.
+//
+// Those two lived as a hand-copied `px2rem(16px)` in each file, which is the
+// drift `_tabset-actions.scss`'s own "WHY THIS EXISTS" note was written about:
+// change the strip alone and the action buttons silently lose their centring
+// again. Split by axis because only the BLOCK value carries that contract — the
+// action row zeroes its own inline padding.
+$tabset-dsk-tab-padding-block: px2rem(16px);
+$tabset-dsk-tab-padding-inline: px2rem(16px);
+
 @mixin respond($media) {
   @if $media==xs {
     @media only screen and (max-width: $break-xs) {

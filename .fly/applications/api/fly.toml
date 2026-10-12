@@ -18,15 +18,18 @@ primary_region = "lax"
   NODE_ENV="development"
   ADMIN_PASSWORD_RESET="true"
   LOG_LEVEL="info"
-  SENTRY_DSN="https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292"
+  # Your own Sentry DSN (https://docs.sentry.io/concepts/key-terms/dsn-explainer/). Leave it empty to disable Sentry: a DSN shipped here would send every install's errors to the Ever Gauzy project.
+  SENTRY_DSN=""
   SENTRY_HTTP_TRACING_ENABLED="false"
   SENTRY_PROFILING_ENABLED="false"
   SENTRY_POSTGRES_TRACKING_ENABLED="false"
   API_BASE_URL="https://ever-gauzy-api.fly.dev"
   CLIENT_BASE_URL="https://ever-gauzy-webapp.fly.dev"
-  EXPRESS_SESSION_SECRET="gauzy"
-  JWT_SECRET="secretKey"
-  JWT_REFRESH_TOKEN_SECRET="refreshSecretKey"
+  # Signing/session secrets are NOT set here: a value in this file is public (GHSA-39j7-x845-4w3c).
+  # Provide them as Fly secrets, e.g.
+  #   fly secrets set JWT_SECRET=... JWT_REFRESH_TOKEN_SECRET=... JWT_VERIFICATION_TOKEN_SECRET=... EXPRESS_SESSION_SECRET=...
+  # with each value from `openssl rand -hex 64`. Until they are set, this DEMO=true app still falls
+  # back to the published defaults in code (held, see resolveSecret in @gauzy/config).
   JWT_REFRESH_TOKEN_EXPIRATION_TIME="86400"
 
 [http_service]

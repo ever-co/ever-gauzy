@@ -9,7 +9,11 @@
   align-items: center;
   font-size: 12px;
   font-weight: 400;
-  line-height: 11px;
+  // A line box that is SHORTER than the font (the old 11px) hoists the glyphs above the
+  // row's centre line, so the copyright never looked vertically centred in the footer
+  // band even though every container says `align-items: center`. A normal line box
+  // centres them.
+  line-height: 1.25;
   letter-spacing: 0em;
   color: var(--gauzy-text-color-2);
   a {
@@ -28,9 +32,14 @@
         color: nb-theme(text-basic-color);
       }
     }
-    .ion-logo-gitlab svg {
+    // `1em` so these SVGs track `.socials` font-size (1.25rem desktop → 1rem
+    // on the narrow breakpoint), matching the Ionicons glyphs that size from
+    // the same font-size. Fixed rem left the X/GitLab icons oversized on mobile.
+    .ion-logo-gitlab svg,
+    .ion-logo-x svg {
       vertical-align: text-top;
-      width: 1.25rem;
+      width: 1em;
+      height: 1em;
     }
   }
   .right-side {

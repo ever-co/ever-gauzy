@@ -1,1 +1,10 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Invoices carries. The action row here is `ngx-gauzy-button-action`
+// inside `nb-card-header`, which the default `$actions` selector covers: the
+// tokens are custom properties, so they cross into that component on their own.
+@include ga-hub.list-page();

@@ -80,10 +80,15 @@ export const verifyChartOptionText = async (text: string) => {
 };
 
 export const clickCardByHeaderText = async (text: string) => {
-	// The (click)="handleClick()" handler sits on `.info-block`; clicking it emits openInfo, whose parent
-	// handler (openHistoryDialog/openProfitDialog) fetches records then opens an nb-dialog popup.
-	// .first() lands on the intended block (DOM order: Income, Expense-w/o-salary, Expenses, Profit;
-	// the Profit meta mentions the other titles but appears last).
+	// The (click) handler sits on the `.kpi` tile / `.stat-row` row itself (see `infoBlockCss`), calling
+	// openHistoryDialog/openProfitDialog, which fetch records then open an nb-dialog popup.
+	//
+	// The text match is scoped to the card's LABEL span (`infoTextCss`), not run over the card whole:
+	// every card also prints its arithmetic as body text, and that arithmetic quotes other cards'
+	// headings — the Profit tile's line contains both "Total Income" and "Total Expenses", so a
+	// whole-card `hasText` matches it for two of the four queried headings and `.first()` would be
+	// picking between them on DOM order alone. Scoped to the label, each heading identifies one card.
+	// See the note on `infoBlockCss` in HumanResourcesPageObject.ts.
 	//
 	// Round 4: a single dispatchEvent('click') was NOT reliably opening the dialog (failure DOM showed a
 	// clean HR dashboard, no popup), so open the dialog defensively: settle, then loop — try a real click
@@ -92,7 +97,10 @@ export const clickCardByHeaderText = async (text: string) => {
 	// popup to attach. Retry the click if it didn't open instead of failing on the first miss.
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => {});
-	const block = getPage().locator(HumanResourcesPage.infoBlockCss).filter({ hasText: text }).first();
+	const block = getPage()
+		.locator(HumanResourcesPage.infoBlockCss)
+		.filter({ has: getPage().locator(HumanResourcesPage.infoTextCss, { hasText: text }) })
+		.first();
 	await block.waitFor({ state: 'visible', timeout: 24_000 });
 
 	const popup = getPage().locator(HumanResourcesPage.popupAnyCss).first();
@@ -133,7 +141,7 @@ export const verifyPopupTableHeaderText = async (text: string) => {
 export const clickCardBody = async () => {
 	// Close the just-verified history popup before opening the next card. Press Escape (NbDialog
 	// closeOnEsc defaults to true) — more reliable than a backdrop coordinate click and it can't land on
-	// an info-block. Fall back to clicking outside, then wait for the popup AND its cdk-overlay backdrop
+	// another card. Fall back to clicking outside, then wait for the popup AND its cdk-overlay backdrop
 	// to detach so the next clickCardByHeaderText isn't intercepted by a fading backdrop.
 	await getPage().keyboard.press('Escape');
 	if (await getPage().locator(HumanResourcesPage.popupAnyCss).first().isVisible().catch(() => false)) {

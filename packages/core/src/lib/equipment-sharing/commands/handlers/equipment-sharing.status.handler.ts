@@ -39,7 +39,9 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 		// If a corresponding request approval exists, update its status as well.
 		await this._requestApprovalService.update({ requestId: id }, { status });
 
-		// Persist and return the updated equipment sharing record.
-		return await this._equipmentSharingService.update(id, { status });
+		// Persist and return the updated equipment sharing record. NOT update(): that one deletes the row
+		// and re-inserts the payload, so approving/refusing (a { status }-only body) replaced the record
+		// with a stub. updateStatusEquipmentSharingByAdmin loads the tenant-scoped row and saves it back.
+		return await this._equipmentSharingService.updateStatusEquipmentSharingByAdmin(id, status);
 	}
 }

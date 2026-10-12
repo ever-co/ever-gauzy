@@ -230,6 +230,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '15%',
+					// Newest income first by default: without an initial sort the API answered in
+					// insertion order, so an edited record moved to the last page (#530).
+					sortDirection: 'desc',
 					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -601,6 +604,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 				this.loading = false;
 			}
 		});
+		// The grid applies the Date column's default sort itself, but the cards layout never mounts
+		// the grid and kept the server's insertion order: ask for newest first here as well (#530).
+		this.smartTableSource.setSort([{ field: 'valueDate', direction: 'desc' }], false);
 	}
 
 	/**

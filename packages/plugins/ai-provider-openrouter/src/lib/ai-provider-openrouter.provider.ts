@@ -4,6 +4,7 @@ import {
 	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
@@ -217,7 +218,9 @@ export const openRouterProviderDefinition: IAiChatProviderDefinition = {
 			await importEsm<typeof import('@openrouter/ai-sdk-provider')>('@openrouter/ai-sdk-provider');
 		const provider = createOpenRouter({
 			apiKey: credentials.apiKey,
-			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {}),
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials)
 		});
 
 		// On the shared key, hand OpenRouter the other free slugs as server-side fallbacks. A model

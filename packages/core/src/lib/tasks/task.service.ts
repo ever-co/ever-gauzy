@@ -1,6 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, HttpStatus, HttpException } from '@nestjs/common';
 import {
+	DeleteResult,
 	IsNull,
 	SelectQueryBuilder,
 	Brackets,
@@ -18,6 +19,7 @@ import {
 	ActorTypeEnum,
 	ID,
 	IEmployee,
+	IUser,
 	IGetTaskOptions,
 	IGetTasksByViewFilters,
 	IPagination,
@@ -33,9 +35,17 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isSqlite } from '@gauzy/config';
+import { isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
-import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
+import { IPartialEntity } from './../core/crud/icrud.service';
+import { sanitizeRichHtml } from './../core/html-sanitizer';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect,
+	parseTypeORMFindToMikroOrm
+} from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -44,6 +54,7 @@ import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
+import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
@@ -66,9 +77,25 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _mentionService: MentionService,
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
-		private readonly _employeeRecentVisitService: EmployeeRecentVisitService
+		private readonly _employeeRecentVisitService: EmployeeRecentVisitService,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
+	}
+
+	/**
+	 * Creates a task, sanitizing the rich-text `description` HTML through the shared
+	 * server-side allowlist before persisting (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The task creation input
+	 * @returns The created task
+	 */
+	public async create(entity: IPartialEntity<Task>): Promise<Task> {
+		const input = entity as { description?: string };
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
+		return await super.create(entity);
 	}
 
 	/**
@@ -80,6 +107,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async update(id: ID, input: Partial<ITaskUpdateInput>): Promise<ITask> {
 		try {
+			// Sanitize the rich-text description HTML before it reaches the persistence path below.
+			if (typeof input.description === 'string') {
+				input.description = sanitizeRichHtml(input.description);
+			}
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const userId = RequestContext.currentUserId();
 
@@ -152,72 +183,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
-				try {
-					await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
-				} catch (error) {
-					console.error('Error synchronizing mentions:', error);
-				}
+				await this.syncTaskMentions(id, mentionEmployeeIds);
 			}
 
 			const { organizationId } = updatedTask;
 
 			// Unsubscribe members who were unassigned from task
-			if (removedMembers.length > 0) {
-				try {
-					await Promise.all(
-						removedMembers.map(
-							async (member) =>
-								await this._entitySubscriptionService.delete({
-									entity: BaseEntityEnum.Task,
-									entityId: updatedTask.id,
-									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId
-								})
-						)
-					);
-				} catch (error) {
-					console.error('Error unsubscribing members from the task:', error);
-				}
-			}
+			await this.unsubscribeRemovedMembers(removedMembers, updatedTask.id, organizationId, tenantId);
 
 			// Subscribe the new assignees to the task
-			if (newMembers.length) {
-				try {
-					await Promise.all(
-						newMembers.map((member: IEmployee) => {
-							this._eventBus.publish(
-								new CreateEntitySubscriptionEvent({
-									entity: BaseEntityEnum.Task,
-									entityId: updatedTask.id,
-									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId
-								})
-							);
-
-							this._employeeNotificationService.publishNotificationEvent(
-								{
-									entity: BaseEntityEnum.Task,
-									entityId: task.id,
-									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId,
-									receiverEmployeeId: member.id,
-									sentByEmployeeId: user?.employeeId
-								},
-								NotificationActionTypeEnum.Assigned,
-								task.title,
-								user?.name
-							);
-						})
-					);
-				} catch (error) {
-					console.error('Error publishing CreateSubscriptionEvent:', error);
-				}
-			}
+			await this.subscribeNewMembers(newMembers, task, updatedTask.id, organizationId, tenantId, user);
 
 			// Generate the activity log
 			this._activityLogService.logActivity<Task>(
@@ -238,6 +213,123 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			console.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Synchronizes the task's mention records with the employees mentioned in the update.
+	 *
+	 * Best-effort by design: the task itself is already persisted by the time this runs, so a
+	 * mention-sync failure is logged and swallowed instead of failing the update.
+	 *
+	 * @param taskId - The ID of the updated task
+	 * @param mentionEmployeeIds - The IDs of the employees mentioned in the description
+	 */
+	private async syncTaskMentions(taskId: ID, mentionEmployeeIds: ID[]): Promise<void> {
+		try {
+			await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, taskId, mentionEmployeeIds);
+		} catch (error) {
+			console.error('Error synchronizing mentions:', error);
+		}
+	}
+
+	/**
+	 * Unsubscribes the members who were unassigned from the task.
+	 *
+	 * Best-effort by design: failures are logged and swallowed so subscription cleanup can never
+	 * fail an update that already succeeded.
+	 *
+	 * @param members - The members that are no longer assigned to the task
+	 * @param taskId - The ID of the updated task
+	 * @param organizationId - The organization of the updated task
+	 * @param tenantId - The tenant of the updated task
+	 */
+	private async unsubscribeRemovedMembers(
+		members: IEmployee[],
+		taskId: ID,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<void> {
+		if (members.length === 0) {
+			return;
+		}
+
+		try {
+			await Promise.all(
+				members.map(
+					async (member) =>
+						await this._entitySubscriptionService.delete({
+							entity: BaseEntityEnum.Task,
+							entityId: taskId,
+							employeeId: member.id,
+							type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+							organizationId,
+							tenantId
+						})
+				)
+			);
+		} catch (error) {
+			console.error('Error unsubscribing members from the task:', error);
+		}
+	}
+
+	/**
+	 * Subscribes the newly assigned members to the task and notifies them of the assignment.
+	 *
+	 * Best-effort by design: failures are logged and swallowed so the subscription/notification
+	 * path can never fail an update that already succeeded.
+	 *
+	 * @param members - The members newly assigned to the task
+	 * @param task - The task as loaded BEFORE the update (source of the notified id and title)
+	 * @param updatedTaskId - The ID of the updated task (subscription target)
+	 * @param organizationId - The organization of the updated task
+	 * @param tenantId - The tenant of the updated task
+	 * @param user - The user performing the update
+	 */
+	private async subscribeNewMembers(
+		members: IEmployee[],
+		task: Task,
+		updatedTaskId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		user: IUser
+	): Promise<void> {
+		if (!members.length) {
+			return;
+		}
+
+		try {
+			await Promise.all(
+				members.map((member: IEmployee) => {
+					this._eventBus.publish(
+						new CreateEntitySubscriptionEvent({
+							entity: BaseEntityEnum.Task,
+							entityId: updatedTaskId,
+							employeeId: member.id,
+							type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+							organizationId,
+							tenantId
+						})
+					);
+
+					this._employeeNotificationService.publishNotificationEvent(
+						{
+							entity: BaseEntityEnum.Task,
+							entityId: task.id,
+							type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+							organizationId,
+							tenantId,
+							receiverEmployeeId: member.id,
+							sentByEmployeeId: user?.employeeId
+						},
+						NotificationActionTypeEnum.Assigned,
+						task.title,
+						user?.name
+					);
+				})
+			);
+		} catch (error) {
+			console.error('Error publishing CreateSubscriptionEvent:', error);
 		}
 	}
 
@@ -296,6 +388,40 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Deletes a task on behalf of the current user.
+	 *
+	 * The route also admits ORG_TASK_EDIT so that a team manager, whose role holds no task-delete
+	 * permission, reaches this check. Without ALL_ORG_EDIT or ORG_TASK_DELETE, the caller must manage one
+	 * of the task's teams that belongs to the task's organization.
+	 *
+	 * @param id - The task to delete
+	 * @returns The result of the deletion
+	 * @throws ForbiddenException when the caller may not delete that task
+	 */
+	async deleteTask(id: ID): Promise<DeleteResult> {
+		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
+			const employeeId = RequestContext.currentEmployeeId();
+			const { organizationId, teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
+
+			// Task writes only check that a linked team is in the same tenant, so a task can reference a team
+			// of another organization. Only teams of the task's own organization count, and a task without
+			// an organization grants nothing.
+			const teamIds = isNotEmpty(organizationId)
+				? teams.filter((team) => team.organizationId === organizationId).map((team) => team.id)
+				: [];
+			const isTeamManager =
+				isNotEmpty(employeeId) &&
+				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
+
+			if (!isTeamManager) {
+				throw new ForbiddenException('You can only delete a task of a team you manage.');
+			}
+		}
+
+		return await this.delete(id);
+	}
+
+	/**
 	 * Recursively searches for the parent epic of a given task (issue) using a SQL recursive query.
 	 *
 	 * @param issueId The ID of the task (issue) to start the search from.
@@ -328,12 +454,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
+				// TypeORM's `query()` hands the parameters straight to the driver, so the placeholder
+				// syntax is dialect-specific: PostgreSQL uses `$1`, while SQLite/better-sqlite3 and
+				// MySQL use `?`. `$1` on better-sqlite3 is parsed as a *named* parameter, so binding
+				// a positional array throws "RangeError: Too many parameter values were provided"
+				// and every `GET /tasks/:id?includeRootEpic=true` fails on SQLite (demo) instances.
+				const idPlaceholder = isPostgres() ? '$1' : '?';
+
 				// Define the recursive SQL query to find the parent epic
 				const query = p(`
 					WITH RECURSIVE IssueHierarchy AS (
 						SELECT *
 						FROM task
-						WHERE id = $1
+						WHERE id = ${idPlaceholder}
 					UNION ALL
 						SELECT i.*
 						FROM task i
@@ -365,6 +498,44 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Case-insensitive "contains" filters on task title / prefix for the MikroORM task list queries
+	 * (`$ilike` is PostgreSQL-only, see `mikroOrmContains`).
+	 */
+	private mikroOrmTitlePrefixFilters(title?: string, prefix?: string): Record<string, unknown> {
+		return {
+			...(isNotEmpty(title) ? { title: mikroOrmContains(title) } : {}),
+			...(isNotEmpty(prefix) ? { prefix: mikroOrmContains(prefix) } : {})
+		};
+	}
+
+	/**
+	 * Resolves the employee whose tasks a member-filtered list returns, or null for no member filter.
+	 *
+	 * A CHANGE_SELECTED_EMPLOYEE holder gets the `members.id` they asked for. Anyone else keeps their own
+	 * tasks, unless they ask for a member they manage in a team of the requested organization.
+	 *
+	 * @param where - The list query's where clause, as the client sent it
+	 * @returns The employee to filter the tasks by, or null
+	 */
+	private async resolveMemberFilter(where: FindOptionsWhere<Task>): Promise<ID | null> {
+		const { members, organizationId } = where;
+		const requestedId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedId;
+		}
+
+		// A repeated or nested query value is not an id: it is never looked up and the caller keeps their own tasks
+		const canManageRequested =
+			typeof requestedId === 'string' &&
+			isUUID(requestedId) &&
+			typeof organizationId === 'string' &&
+			(await this._managedEmployeeService.canManageEmployee(requestedId, undefined, organizationId));
+
+		return canManageRequested ? requestedId : RequestContext.currentEmployeeId();
+	}
+
+	/**
 	 * Find employee tasks
 	 *
 	 * @param options - Pagination options including limit, page, and sorting.
@@ -372,6 +543,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async getEmployeeTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -384,24 +559,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						isScreeningTask = false,
 						organizationSprintId = null
 					} = where;
-					const { organizationId, projectId, members } = where;
+					const { organizationId, projectId } = where;
 					const tenantId = RequestContext.currentTenantId();
 
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
 
-					const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-						? isNotEmpty(members) && isNotEmpty(members['id'])
-							? members['id']
-							: null
-						: RequestContext.currentEmployeeId();
+					const employeeId = await this.resolveMemberFilter(where);
 
 					if (isNotEmpty(employeeId)) {
 						mikroWhere.$or = [{ members: { id: employeeId } }, { teams: { members: { employeeId } } }];
@@ -429,7 +599,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						isScreeningTask = false,
 						organizationSprintId = null
 					} = where;
-					const { organizationId, projectId, members } = where;
+					const { organizationId, projectId } = where;
+					const employeeId = await this.resolveMemberFilter(where);
 
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.innerJoin(`${query.alias}.members`, 'members');
@@ -458,18 +629,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 
-						// If user have permission to change employee
-						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-								const employeeId = members['id'];
-								subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-							}
-						} else {
-							// If employee has login and don't have permission to change employee
-							const employeeId = RequestContext.currentEmployeeId();
-							if (isNotEmpty(employeeId)) {
-								subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-							}
+						if (isNotEmpty(employeeId)) {
+							subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
 						}
 						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
@@ -535,6 +696,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: BaseQueryDTO<Task> & IAdvancedTaskFiltering) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -641,6 +806,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async findTeamTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -661,16 +830,47 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
 					if (isNotEmpty(teams)) {
 						mikroWhere.teams = { id: { $in: teams as ID[] } };
 					}
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId: members['id'] } };
+					// Same rule as the TypeORM branch: only a CHANGE_SELECTED_EMPLOYEE holder may pick the
+					// employee; everyone else is limited to the teams they are a member of.
+					const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+					let employeeId: ID | null = RequestContext.currentEmployeeId();
+					if (canChangeEmployee) {
+						employeeId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+					}
+					// A caller who may not act for other employees and has no employee record belongs to no
+					// team: without this, the missing filter listed every team task of the organization. An
+					// organization-wide viewer keeps the access their role gives them (same carve-out as
+					// ManagedEmployeeService.filterAccessibleEmployeeIds, #10249).
+					if (
+						!canChangeEmployee &&
+						!isNotEmpty(employeeId) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
+						return { items: [], total: 0 };
+					}
+					if (isNotEmpty(employeeId)) {
+						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
+					}
+
+					// The advanced filters (projects, tags, statuses, members, ...) were only applied by the
+					// TypeORM branch; here they were read and dropped. Build the same TypeORM where and
+					// translate it, merging the `teams` predicate with the team scoping above.
+					if (filters) {
+						const { where: advancedWhere } = parseTypeORMFindToMikroOrm<Task>({
+							where: this.buildAdvancedWhereCondition(filters, where)
+						});
+						const { teams: advancedTeams, ...advancedRest } = advancedWhere as any;
+						Object.assign(mikroWhere, advancedRest);
+						if (advancedTeams) {
+							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
+						}
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
@@ -700,6 +900,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} = where;
 					const { organizationId, projectId, members } = where;
 
+					// See the MikroORM branch: no employee record and no CHANGE_SELECTED_EMPLOYEE means no team,
+					// unless the caller is an organization-wide viewer
+					if (
+						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+						!isNotEmpty(RequestContext.currentEmployeeId()) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
+						return { items: [], total: 0 };
+					}
+
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.leftJoin(`${query.alias}.teams`, 'teams');
 
@@ -726,7 +936,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						query.setFindOptions({ where: advancedWhere });
 					}
 
-					query.andWhere((qb: SelectQueryBuilder<Task>) => {
+					const teamTasksCondition = (qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 						subQuery.leftJoin(
@@ -757,7 +967,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							});
 						}
 						return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
-					});
+					};
+					// With a project and teams, the project's tasks are listed alongside the team's. Keeping both
+					// in one bracket makes the tenant and filter conditions below apply to each.
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(teamTasksCondition);
+							if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+								web.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+							}
+						})
+					);
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							const tenantId = RequestContext.currentTenantId();
@@ -765,9 +985,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						})
 					);
-					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-						query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							if (isNotEmpty(projectId) && isEmpty(teams)) {
@@ -838,8 +1055,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				});
 			}
 
-			// Apply filters for isDraft, setting null if not a boolean
-			if (where.isDraft !== undefined && !isBoolean(where.isDraft)) {
+			// Apply filters for isDraft, setting null if not a boolean. The query DTO only converts "true" /
+			// "false", so keep accepting the "1" / "0" encodings API clients may send.
+			const isDraft: unknown = where.isDraft; // typed as boolean, but the wire value may be '1' / '0'
+			if (isDraft === '1' || isDraft === '0') {
+				options.where.isDraft = isDraft === '1';
+			} else if (isDraft !== undefined && !isBoolean(isDraft)) {
 				options.where.isDraft = IsNull();
 			}
 
@@ -1071,6 +1292,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns A promise that resolves with pagination task items and total count.
 	 */
 	async findModuleTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -1092,8 +1317,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId) && isEmpty(modules)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = organizationSprintId;
 					}
@@ -1296,7 +1520,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(types.length && { issueType: In(types) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
 				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
-				organizationId: taskView.organizationId || organizationId,
+				// Only scope by organization when one is known: the view's organizationId is a nullable
+				// column and the stored query params may carry null (a null used to be dropped silently).
+				...(taskView.organizationId || organizationId
+					? { organizationId: taskView.organizationId || organizationId }
+					: {}),
 				tenantId
 			};
 
@@ -1322,6 +1550,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @throws {Error} Will throw an error if there is a problem with the database query.
 	 */
 	async getTasksByDateFilters(params: ITaskDateFilterInput): Promise<IPagination<ITask>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(params);
+
 		const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 		try {

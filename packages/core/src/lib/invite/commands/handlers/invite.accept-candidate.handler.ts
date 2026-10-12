@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
-import { IInvite, InviteStatusEnum, IUser, RolesEnum } from '@gauzy/contracts';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
@@ -42,61 +42,74 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 			throw Error('Organization no longer allows invites');
 		}
 
+		// Claim the invite BEFORE registering anyone — see InviteService.claimInvite. Everything
+		// above is a read, so two parallel acceptances are both still live at this point.
+		if (!(await this.inviteService.claimInvite(inviteId))) {
+			throw new ConflictException('Invite has already been accepted');
+		}
+
 		let user: IUser;
 		try {
-			const { tenantId, email } = invite;
+			// Inner try/catch is find-or-register control flow, not error handling.
+			try {
+				const { tenantId, email } = invite;
 
-			user = await this.typeOrmUserRepository.findOneOrFail({
-				where: {
-					email,
-					tenantId,
-					role: {
-						name: RolesEnum.CANDIDATE
-					}
-				},
-				order: {
-					createdAt: 'DESC'
-				}
-			});
-		} catch (error) {
-			const { id: organizationId, tenantId } = organization;
-			/**
-			 * User register after accept invitation
-			 */
-			user = await this.authService.register(
-				{
-					...input,
-					user: {
-						...input.user,
-						tenant: {
-							id: tenantId
+				user = await this.typeOrmUserRepository.findOneOrFail({
+					where: {
+						email,
+						tenantId,
+						role: {
+							name: RolesEnum.CANDIDATE
 						}
 					},
-					organizationId,
-					inviteId
-				},
-				languageCode
-			);
-			try {
-				/**
-				 * Create candidate after create user
-				 */
-				const create = this.typeOrmCandidateRepository.create({
-					user,
-					organization,
-					tenantId,
-					appliedDate: invite.actionDate || null,
-					organizationDepartments: invite.departments || []
+					order: {
+						createdAt: 'DESC'
+					}
 				});
-				await this.typeOrmCandidateRepository.save(create);
 			} catch (error) {
-				throw new BadRequestException(error);
+				const { id: organizationId, tenantId } = organization;
+				/**
+				 * User register after accept invitation
+				 */
+				user = await this.authService.register(
+					{
+						...input,
+						user: {
+							...input.user,
+							tenant: {
+								id: tenantId
+							}
+						},
+						organizationId,
+						inviteId
+					},
+					languageCode
+				);
+				try {
+					/**
+					 * Create candidate after create user
+					 */
+					const create = this.typeOrmCandidateRepository.create({
+						user,
+						organization,
+						tenantId,
+						appliedDate: invite.actionDate || null,
+						organizationDepartments: invite.departments || []
+					});
+					await this.typeOrmCandidateRepository.save(create);
+				} catch (error) {
+					throw new BadRequestException(error);
+				}
 			}
+		} catch (error) {
+			// Nothing consumed the invite after all — hand it back rather than stranding it as
+			// ACCEPTED with no candidate attached.
+			await this.inviteService.releaseInvite(inviteId);
+			throw error;
 		}
 
 		const { id } = user;
 		await this.inviteService.update(inviteId, {
-			status: InviteStatusEnum.ACCEPTED,
 			userId: id
 		});
 

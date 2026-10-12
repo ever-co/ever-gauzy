@@ -7,6 +7,7 @@ import { ISharedEntity, IShareRule, JsonData } from "@gauzy/contracts";
 import { BasePerEntityType } from "../core/entities/internal";
 import { ColumnIndex, MultiORMColumn, MultiORMEntity } from "../core/decorators/entity";
 import { MikroOrmSharedEntityRepository } from "./repository/mikro-orm-shared-entity.repository";
+import { ExportRedacted } from "../export-import/export-redact.decorator";
 
 @MultiORMEntity('shared_entity', { mikroOrmRepository: () => MikroOrmSharedEntityRepository })
 export class SharedEntity extends BasePerEntityType implements ISharedEntity {
@@ -15,6 +16,7 @@ export class SharedEntity extends BasePerEntityType implements ISharedEntity {
     /**
      * The token that is used to identify and access the shared entity.
      */
+    @ExportRedacted()
     @ApiProperty({ type: () => String })
     @IsString()
     @IsNotEmpty()

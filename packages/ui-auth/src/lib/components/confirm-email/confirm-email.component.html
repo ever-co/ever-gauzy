@@ -4,6 +4,9 @@
       @if (errorMessage) {
         <div>
           <h1>{{ errorMessage }}</h1>
+          @if (errorDetail) {
+            <p class="confirm-email-detail">{{ errorDetail }}</p>
+          }
         </div>
       }
       @if (successMessage) {
@@ -11,6 +14,9 @@
           <h1>{{ successMessage }}</h1>
         </div>
       }
+      <a nbButton status="primary" [routerLink]="continueLink">
+        {{ (signedIn ? 'EMAIL_VERIFICATION.GO_TO_DASHBOARD' : 'EMAIL_VERIFICATION.GO_TO_LOGIN') | translate }}
+      </a>
     </div>
   }
 </div>

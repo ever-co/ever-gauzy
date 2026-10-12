@@ -2,6 +2,7 @@ import {
 	Body,
 	ClassSerializerInterceptor,
 	Controller,
+	Get,
 	HttpCode,
 	HttpStatus,
 	Post,
@@ -9,6 +10,7 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
@@ -33,6 +35,9 @@ export class EmailVerificationController {
 	@HttpCode(HttpStatus.OK)
 	@Public()
 	@Post()
+	// Public token verification: without an explicit limit these routes inherited the global
+	// THROTTLE_LIMIT (60000/min) and were effectively not rate limited.
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	public async confirmEmail(@Body() body: ConfirmEmailByTokenDTO): Promise<Object> {
 		const user = await this.emailConfirmationService.decodeConfirmationToken(body.token);
@@ -51,12 +56,31 @@ export class EmailVerificationController {
 	@HttpCode(HttpStatus.OK)
 	@Public()
 	@Post('code')
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	public async confirmEmailByCode(@Body() body: ConfirmEmailByCodeDTO): Promise<Object> {
 		const user = await this.emailConfirmationService.confirmationByCode(body);
 		if (!!user) {
 			return await this.emailConfirmationService.confirmEmail(user);
 		}
+	}
+
+	/**
+	 * Whether the signed-in user still has to verify their email.
+	 *
+	 * The web app reads this before showing its "verify your email" notice. It is behind the same
+	 * feature flag as the rest of this controller, so a deployment with verification switched off
+	 * answers 404 and the notice never appears - `user.isEmailVerified` alone cannot tell the app
+	 * that, because on such a deployment nobody is ever verified. `verificationEmailSent` says
+	 * whether a still-valid verification email actually went out, so the notice only claims one did
+	 * when it is true.
+	 */
+	@ApiOperation({ summary: 'Email verification status of the signed-in user' })
+	@HttpCode(HttpStatus.OK)
+	@Get('status')
+	@Throttle({ default: { limit: 30, ttl: 60000 } })
+	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean; verificationEmailSent: boolean }> {
+		return await this.emailConfirmationService.getVerificationStatus();
 	}
 
 	/**
@@ -67,6 +91,7 @@ export class EmailVerificationController {
 	@ApiOperation({ summary: 'Resend email verification link' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('resend-link')
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	public async resendConfirmationLink(@Body() config: AppIntegrationConfigDTO): Promise<Object> {
 		return await this.emailConfirmationService.resendConfirmationLink(config);

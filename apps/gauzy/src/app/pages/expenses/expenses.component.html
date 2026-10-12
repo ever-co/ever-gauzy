@@ -1,11 +1,21 @@
 <nb-card>
   <nb-card-header class="card-custom-header">
+    <!-- Title block: the heading only (the breadcrumb trail is parked under it
+         at runtime by ngx-header-title). -->
     <div class="card-header-title">
       <h4>
         <ngx-header-title>
           {{ 'EXPENSES_PAGE.EXPENSES' | translate }}
         </ngx-header-title>
       </h4>
+    </div>
+    <!-- Action side of the one-line page header (see `.ga-page-header` in
+         ui-core/static/styles/_overrides.scss): the secondary "Manage Categories"
+         sits with `+ Add`, the action strip and the view selector, so all of them
+         are centred on the same axis as the title. It used to be a sibling of the
+         <h4> inside the title block, where it was centred on the title LINE while
+         the action row was centred on the two-line title+trail block. -->
+    <div class="gauzy-button-container">
       <button
         nbButton
         status="basic"
@@ -15,8 +25,6 @@
         >
         {{ 'BUTTONS.MANAGE_CATEGORIES' | translate }}
       </button>
-    </div>
-    <div class="gauzy-button-container">
       <ngx-gauzy-button-action
         [isDisable]="disableButton"
         [buttonTemplate]="actionButtons"

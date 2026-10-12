@@ -26,6 +26,7 @@
 
     .description {
       min-width: 0;
+      flex: 1 1 auto;
       // `.text` below adds a 10px side margin meant for the old two-line block.
       margin: 0;
 
@@ -33,10 +34,17 @@
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        width: fit-content;
+        // `auto`, not `fit-content`: the switcher is now sized to its content
+        // in the sidebar's brand row (one-column.layout.scss) and only shrinks
+        // when the rail is too narrow for `[avatar] name ⌄ 🤖`. A `fit-content`
+        // box never gets narrower than its nowrap text, so under pressure the
+        // name was CLIPPED by the parent instead of ellipsized; `auto` follows
+        // the shrinking `.description` (min-width: 0) and the ellipsis kicks in.
+        // Unpressured, both resolve to the same width (text, capped below).
+        width: auto;
         max-width: 150px;
-        font-size: 0.8125rem;
-        font-weight: 600;
+        font-size: 0.875rem;
+        font-weight: 400;
         color: nb-theme(text-basic-color);
       }
     }
@@ -49,7 +57,7 @@
   .item.footer {
     box-shadow: none;
     border-radius: 0 0 var(--border-radius) var(--border-radius);
-    ::ng-deep{
+    ::ng-deep {
       .item-body {
         padding: 5px;
       }
@@ -61,14 +69,19 @@
 // sit in its own bordered 1.75rem box, which together with the ring on the header
 // (below) drew a form control around something you cannot type into.
 nb-accordion-item-header ::ng-deep nb-icon {
-  border: none;
-  width: 1.75rem;
-  height: 1.75rem;
+  display: none;
+}
+
+.switch-indicator {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.25rem;
   color: nb-theme(text-hint-color);
 }
 
 nb-accordion-item-body ::ng-deep {
-  background-color: rgba(255, 255, 255, .05);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 nb-accordion-item-body.setting ::ng-deep {
@@ -87,19 +100,19 @@ nb-accordion-item-body.setting ::ng-deep {
 }
 
 .setting.action ::ng-deep {
-	ga-main-nav-menu {
-		ga-sidebar-menu {
-			nb-accordion-item  {
-				nb-accordion-item-header {
-					box-shadow: unset;
-					border-width: 0;
-					nb-icon {
-						display: none;
-					}
-				}
-			}
-		}
-	}
+  ga-main-nav-menu {
+    ga-sidebar-menu {
+      nb-accordion-item {
+        nb-accordion-item-header {
+          box-shadow: unset;
+          border-width: 0;
+          nb-icon {
+            display: none;
+          }
+        }
+      }
+    }
+  }
 }
 
 // GEOMETRY for the principal header is state-agnostic: identical height and
@@ -154,7 +167,7 @@ nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal:hover
 
 .text {
   margin: 0 10px;
-  font-size: 13px;
+  font-size: 0.875rem;
   font-style: normal;
   font-weight: 500;
   line-height: 16px;
@@ -162,11 +175,11 @@ nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal:hover
 }
 
 .logo {
-	img {
-		height: 22px;
-	}
-	object {
-		max-width: 128px;
-		max-height: 22px;
-	}
+  img {
+    height: 22px;
+  }
+  object {
+    max-width: 128px;
+    max-height: 22px;
+  }
 }

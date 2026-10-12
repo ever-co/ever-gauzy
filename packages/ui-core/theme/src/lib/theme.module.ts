@@ -36,6 +36,7 @@ import {
 } from '@gauzy/ui-core/core';
 import {
 	DirectivesModule,
+	EmailVerificationNoticeComponent,
 	SelectorsModule,
 	TimeTrackerModule,
 	TimeTrackerStatusModule,
@@ -99,7 +100,8 @@ const MODULES = [
 	CommonNavModule,
 	DirectivesModule,
 	TimeTrackerModule,
-	TimeTrackerStatusModule
+	TimeTrackerStatusModule,
+	EmailVerificationNoticeComponent
 ];
 
 const COMPONENTS = [

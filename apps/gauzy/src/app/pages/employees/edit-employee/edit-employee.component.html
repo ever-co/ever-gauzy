@@ -2,79 +2,68 @@
   <nb-card-header class="header">
     @if (selectedEmployeeFromHeader && selectedEmployeeFromHeader.id) {
       <div class="header-container">
-        <div class="d-flex align-items-start justify-content-between w-100">
-          <div class="d-flex align-items-start">
-            <ngx-back-navigation></ngx-back-navigation>
-            <div class="employee-info">
-              <!-- Guarded: the image used to render unconditionally, so an
-                   employee with no photo got a broken-image glyph. -->
-              @if (selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl; as avatarUrl) {
-                <img class="employee-image" [src]="avatarUrl" alt="Employee Avatar" />
-              } @else {
-                <div class="employee-image-placeholder" aria-hidden="true">
-                  <nb-icon icon="person-outline"></nb-icon>
-                </div>
-              }
-                <div class="employee-details flex-column align-items-start">
-                  @if (selectedEmployee?.isVerified) {
-                    <nb-icon
-                      class="icon-verified"
-                      icon="checkmark-circle-2"
-                      status="primary"
-                      >
-                    </nb-icon>
-                  }
-                  <span class="employee-name">
-                    {{ selectedEmployee?.user?.name }}
-                  </span>
-                  <!-- An em-dash rather than a blank line where no position is set. -->
-                  <div class="employee-position">
-                    {{ selectedEmployee?.organizationPosition?.name || '—' }}
-                  </div>
-                </div>
-              </div>
+        <ngx-back-navigation></ngx-back-navigation>
+
+        <div class="employee-info">
+          @if (avatarUrl && !avatarFailed) {
+            <img class="employee-image" [src]="avatarUrl" alt="" (error)="avatarFailed = true" />
+          } @else {
+            <div class="employee-image-placeholder" aria-hidden="true">
+              <nb-icon icon="person-outline"></nb-icon>
             </div>
-            @if (selectedEmployee) {
-              <ngx-favorite-toggle
-                [entityType]="'Employee'"
-                [entityId]="selectedEmployee.id"
-                [entityName]="selectedEmployee.user?.name"
-                size="small"
-                status="basic"
-                spacing="detail"
-                [showLabel]="false"
-                (favoriteToggled)="onFavoriteToggled($event)"
-              ></ngx-favorite-toggle>
-            }
-          </div>
-          <div class="employee-info">
-            <div class="employee-details">
-              <div class="edit-public-page">
-                <ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
-                  <span class="edit-public-button" (click)="editPublicPage()">
-                    <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-                    {{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
-                  </span>
-                </ng-template>
-              </div>
-              @if (selectedEmployee?.user?.username) {
-                <div class="transparent">
-                  {{ 'FORM.USERNAME' | translate }}:
-                  <strong>{{ selectedEmployee?.user?.username }}</strong>
-                </div>
+          }
+
+          <div class="employee-details">
+            <div class="employee-name-row">
+              <span class="employee-name">
+                {{ selectedEmployee?.user?.name }}
+              </span>
+              @if (selectedEmployee?.isVerified) {
+                <nb-icon class="icon-verified" icon="checkmark-circle-2" status="primary"></nb-icon>
               }
-              <div class="transparent">
-                {{ 'FORM.EMAIL' | translate }}:
-                <strong>{{ selectedEmployee?.user?.email }}</strong>
-              </div>
+            </div>
+
+            <div class="employee-meta">
+              @if (selectedEmployee?.organizationPosition?.name; as position) {
+                <span class="employee-meta__item">{{ position }}</span>
+              }
+              @if (selectedEmployee?.user?.username; as username) {
+                <span class="employee-meta__item">{{ '@' + username }}</span>
+              }
+              @if (selectedEmployee?.user?.email; as email) {
+                <span class="employee-meta__item">{{ email }}</span>
+              }
             </div>
           </div>
         </div>
-      } @else {
-        <h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
-      }
-    </nb-card-header>
-    <nb-card-body class="p-0">
-      <ngx-edit-employee-profile (updatedImage)="updateImage($event)"></ngx-edit-employee-profile>
-    </nb-card-body>
-  </nb-card>
+
+        <div class="header-actions">
+          <ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
+            <button type="button" class="edit-public-button" (click)="editPublicPage()">
+              <nb-icon icon="edit-outline"></nb-icon>
+              {{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
+            </button>
+          </ng-template>
+
+          @if (selectedEmployee) {
+            <ngx-favorite-toggle
+              [entityType]="'Employee'"
+              [entityId]="selectedEmployee.id"
+              [entityName]="selectedEmployee.user?.name"
+              size="small"
+              status="basic"
+              spacing="detail"
+              [showLabel]="false"
+              (favoriteToggled)="onFavoriteToggled($event)"
+            ></ngx-favorite-toggle>
+          }
+        </div>
+      </div>
+    } @else {
+      <h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
+    }
+  </nb-card-header>
+  <nb-card-body class="p-0">
+    <ngx-edit-employee-profile (updatedImage)="updateImage($event)"></ngx-edit-employee-profile>
+  </nb-card-body>
+</nb-card>

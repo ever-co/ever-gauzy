@@ -12,7 +12,9 @@
 
 /**
  * The three renderings of the monthly employee statistics offered by the legacy
- * `<ga-employee-charts>` switcher on the HR dashboard.
+ * chart switcher on the HR dashboard (the control lives in that page's
+ * "Employee Statistics" panel header; `<ga-employee-charts>` only draws the
+ * rendering it is handed).
  *
  * The string values are persisted inside a placement's `config` (the switcher
  * widget stores the user's pick under `chartType`), so treat them as a data

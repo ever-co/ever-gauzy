@@ -1,37 +1,91 @@
-@use 'var' as *;
 @forward 'report';
+@use 'var' as *;
+@use 'report-table' as *;
+
+// ═══ Weekly / Daily limits report ═══════════════════════════════════════════
+//
+// One component behind two routes — `reports/weekly-limits` and
+// `reports/daily-limits` — which differ only in the order of their columns, so
+// both are sized by the block below.
+//
+// The shared chrome (card, hairlines, row height, 12px type, progress bar)
+// lives in `report-table.scss` and is shared with Apps & URLs and the two
+// budget reports.
+
+@include report-table(44px);
 
 :host {
-  display: block;
+	display: block;
 }
 
+// ── Columns ─────────────────────────────────────────────────────────────────
+//
+// These were `width` values summing to 100% before the 10px margin `report.scss`
+// hangs off each one was counted, so every column was being shrunk — and the
+// `xxl` block below re-shrank two of them again to make room. As `flex-basis`
+// with one column absorbing the slack, nothing is shrunk and the breakpoint is
+// no longer needed.
+
+// The name column takes the slack, up to a point. Past its cap the leftover
+// goes back to `.table-inner-wrapper`'s `space-between`, which spreads it evenly
+// between all five columns rather than pooling several hundred px of emptiness
+// in whichever single column was left flexible.
 .employee-column {
-  width: 20%;
-  min-width: 165px;
-  max-width: 200px;
+	@include report-column(auto, $min: 170px, $max: 320px);
 }
-.limit-column {
-  width: 20%;
-}
+
+// The three numeric columns are sized by their HEADERS, not their values: every
+// value is a `00:00:00` about 58px wide, but the labels above them run to
+// "Remaining hours", which at 11px in caps needs ~118px and was wrapping onto a
+// second line and pushing the header row taller than any row under it.
+.limit-column,
 .spent-column {
-  width: 10%;
+	@include report-column(112px);
 }
-.activity-column {
-  width: 35%;
-}
+
 .remaining-column {
-  width: 15%;
+	@include report-column(128px);
 }
 
-.remaining-content {
-  text-align: right;
+// Was the column that took the remainder, which on a 1274px table made it 640px
+// wide — a bar longer than the four other columns put together, for a value that
+// is a proportion and reads no better for the length.
+.activity-column {
+	@include report-column(26%, $min: 190px);
 }
 
-@include respond(xxl) {
-  .spent-column {
-    width: 15%;
-  }
-  .activity-column {
-    width: 30%;
-  }
+// ── Cells ───────────────────────────────────────────────────────────────────
+
+// The three figure columns read from the START of their column, headers
+// included, so every value begins on the same edge as the label above it and
+// the row scans left to right without the eye jumping to a ragged right edge.
+// `tabular-nums` from the shared mixin is what keeps the digits under each
+// other; the alignment does not have to.
+.limit-column,
+.spent-column,
+.remaining-column {
+	justify-content: flex-start;
+	text-align: start;
+
+	.responsive-table-content {
+		justify-content: flex-start;
+		width: 100%;
+		color: nb-theme(text-basic-color);
+	}
+}
+
+@include respond(lg) {
+	// The stacked layout puts each label opposite its value, so the right-align
+	// above would push the two into each other.
+	.limit-column,
+	.spent-column,
+	.remaining-column {
+		justify-content: space-around;
+		text-align: left;
+
+		.responsive-table-content {
+			justify-content: flex-start;
+			width: 50%;
+		}
+	}
 }

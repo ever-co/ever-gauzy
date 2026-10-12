@@ -10,6 +10,13 @@ import {
 } from './model-catalogue';
 import type { IAiProviderCredentials } from './provider.types';
 
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('./ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 const model = (id: string): IAiChatModel => ({ id, label: id, providerId: 'test' });
 
 const CURATED: IAiChatModel[] = [model('curated-a'), model('curated-b')];
@@ -267,10 +274,49 @@ describe('fetchCatalogueJson', () => {
 		global.fetch = realFetch;
 	});
 
+	/** Answers the egress guard's DNS pre-flight without the network (`example.test` never resolves). */
+	const publicResolver = () => Promise.resolve(['93.184.215.14']);
+
+	it.each([
+		'http://169.254.169.254/latest/meta-data/',
+		'http://localhost:8080/v1/models',
+		'http://10.0.0.5/v1/models',
+		'http://[::1]:8000/v1/models'
+	])('refuses the internal target %s without making a request', async (url) => {
+		// The blind half of GHSA-w3mx-m5cr-3gxp: `GET {baseUrl}/models` for the self-hosted providers is
+		// built from a tenant-supplied base URL and had no host check at all.
+		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[]}']));
+		global.fetch = fetchMock as unknown as typeof fetch;
+
+		await expect(fetchCatalogueJson(url)).rejects.toThrow(/not allowed/i);
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('refuses to follow a redirect, which would otherwise hop to an internal host', async () => {
+		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[]}']));
+		global.fetch = fetchMock as unknown as typeof fetch;
+
+		await fetchCatalogueJson('https://example.test/models', { resolver: publicResolver });
+
+		expect(fetchMock.mock.calls[0][1].redirect).toBe('error');
+	});
+
+	it('fetches an internal target once the deployment opts in', async () => {
+		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[{"id":"a"}]}']));
+		global.fetch = fetchMock as unknown as typeof fetch;
+
+		await expect(
+			fetchCatalogueJson('http://localhost:8080/v1/models', { allowPrivateHost: true })
+		).resolves.toEqual({ data: [{ id: 'a' }] });
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
 	it('parses a chunked response that declares no length', async () => {
 		global.fetch = jest.fn().mockResolvedValue(streamed(['{"data":[{"id":"a"}', ',{"id":"b"}]}']));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).resolves.toEqual({
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).resolves.toEqual({
 			data: [{ id: 'a' }, { id: 'b' }]
 		});
 	});
@@ -281,7 +327,9 @@ describe('fetchCatalogueJson', () => {
 		const oneMegabyte = 'x'.repeat(1024 * 1024);
 		global.fetch = jest.fn().mockResolvedValue(streamed(Array.from({ length: 6 }, () => oneMegabyte)));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).rejects.toThrow(/too large/);
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).rejects.toThrow(/too large/);
 	});
 
 	it('rejects a declared length over the cap before reading anything', async () => {
@@ -289,7 +337,9 @@ describe('fetchCatalogueJson', () => {
 			.fn()
 			.mockResolvedValue(streamed(['{}'], { headers: { 'content-length': String(8 * 1024 * 1024) } }));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).rejects.toThrow(/too large/);
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).rejects.toThrow(/too large/);
 	});
 
 	it('never puts the error body in the message — these calls carry a credential', async () => {
@@ -297,7 +347,9 @@ describe('fetchCatalogueJson', () => {
 			.fn()
 			.mockResolvedValue(new Response('{"error":"invalid key sk-secret-abc"}', { status: 401 }));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).rejects.toThrow(
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).rejects.toThrow(
 			expect.objectContaining({ message: expect.not.stringContaining('sk-secret-abc') })
 		);
 	});

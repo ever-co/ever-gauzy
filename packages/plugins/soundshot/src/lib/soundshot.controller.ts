@@ -1,9 +1,14 @@
 import { ID, IPagination, ISoundshot, PermissionsEnum } from '@gauzy/contracts';
 import {
+	assertNotMarkupContent,
+	audioUploadFileFilter,
 	BaseQueryDTO,
+	FileStorage,
 	FileStorageFactory,
 	FindOptionsQueryDTO,
 	LazyFileInterceptor,
+	shouldScanForMarkup,
+	EmployeeTrackedDataGuard,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -91,6 +96,7 @@ export class SoundshotController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
 	public async list(@Query() params: GetSoundshotsQueryDTO): Promise<IPagination<ISoundshot>> {
 		return this.queryBus.execute(new GetSoundshotsQuery(params));
@@ -129,7 +135,11 @@ export class SoundshotController {
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => FileStorageFactory.create('soundshots')
+			storage: () => FileStorageFactory.create('soundshots'),
+			// Soundshots are served unauthenticated from `/public/<key>` with a Content-Type derived from
+			// the stored extension, and the DTO's `mimetype` is an unconstrained optional string — so an
+			// `.svg`/`.html` upload would execute script in the app origin (GHSA-p334-cm7f-php5 class).
+			fileFilter: audioUploadFileFilter
 		})
 	)
 	@Post()
@@ -137,6 +147,24 @@ export class SoundshotController {
 		// Check if the file key is empty
 		if (!file.key) {
 			throw new BadRequestException('Soundshot file key is empty');
+		}
+		// The fileFilter above only sees the MIME type and filename the client sent, both of which it controls.
+		// Re-check the stored bytes and drop the file before any record is created — `/public` serves
+		// straight from disk regardless of the DB row (GHSA-p334-cm7f-php5 class).
+		// Skipped for large uploads, which would have to be held in memory to read — see
+		// shouldScanForMarkup; the extension allowlist carries the protection on its own there.
+		const provider = new FileStorage().getProvider();
+		if (shouldScanForMarkup(file.size)) {
+			try {
+				assertNotMarkupContent(await provider.getFile(file.key));
+			} catch (error) {
+				try {
+					await provider.deleteFile(file.key);
+				} catch {
+					// best-effort cleanup; the rejection below is what matters
+				}
+				throw error;
+			}
 		}
 		// Try to create a new soundshot record
 		try {
@@ -174,6 +202,7 @@ export class SoundshotController {
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: 'An error occurred while retrieving the soundshot count.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('count')
 	@UseValidationPipe({
 		whitelist: true,
@@ -201,6 +230,7 @@ export class SoundshotController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,

@@ -102,6 +102,35 @@
     max-width: 20%;
   }
 
+  // Weekly tab only (Daily forwards this sheet): no text above 12px. The card and
+  // filter bar are set in the Calendar sheet's shared block; these are the pieces
+  // that size themselves — the project name (14px, and the whole column again at
+  // 14px below 1280px, see the media query at the end of this file) and the empty
+  // state's 18px heading and 14px message.
+  .weekly-card {
+    .content .project-name {
+      font-size: 12px;
+    }
+
+    ngx-project ::ng-deep .project-render .name {
+      font-size: 12px;
+      line-height: 15px;
+    }
+
+    // The day's total, the button that opens the Time Logs popover: 2px under
+    // the tab's 12px, and the same 10px the narrow-screen query below gives it.
+    .day-col [nbButton].appearance-ghost.status-basic {
+      font-size: 10px;
+    }
+
+    ngx-no-data-message ::ng-deep {
+      h5,
+      p {
+        font-size: 12px;
+      }
+    }
+  }
+
   nb-checkbox ::ng-deep .custom-checkbox {
     border-width: 2px;
   }

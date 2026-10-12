@@ -44,6 +44,10 @@ export class EmailSendService {
 				// Return an Email instance with the validated SMTP configuration
 				return this.getEmailConfig(smtpConfig);
 			}
+
+			// A transport that fails verification used to fall through and return `undefined`, so
+			// every caller then died on `instance.send` with a TypeError that said nothing about SMTP.
+			throw new Error('The default SMTP transport failed verification (check the MAIL_* settings).');
 		} catch (error) {
 			// Log and throw an internal server error
 			console.log('Error while retrieving default global smtp configuration: %s', error?.message);

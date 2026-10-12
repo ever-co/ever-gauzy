@@ -1,15 +1,16 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { verify } from 'jsonwebtoken';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
-import { environment as env } from '@gauzy/config';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+import { debugInDevelopment } from '../../logger';
 import { BaseGuard } from './base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
+
+const logger = new Logger('PermissionGuard');
 
 @Injectable()
 export class PermissionGuard extends BaseGuard implements CanActivate {
@@ -27,8 +28,6 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 	 * @returns A promise that resolves to a boolean indicating authorization status.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		console.log('PermissionGuard canActivate called');
-
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 		const permissions =
@@ -39,10 +38,10 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 			return true;
 		}
 
-		// Check user authorization
-		const token = RequestContext.currentToken();
-
-		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
+		// Identify the caller for the audit lines below from the request's DB-fresh user, never by
+		// decoding the bearer token again: its `role` claim is whatever the user was when it was issued.
+		const id = RequestContext.currentUserId();
+		const role = RequestContext.currentRoleName();
 
 		// Retrieve current role ID and tenant ID from RequestContext
 		const tenantId = RequestContext.currentTenantId();
@@ -50,14 +49,12 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 
 		const cacheKey = `userPermissions_${tenantId}_${roleId}_${permissions.join('_')}`;
 
-		console.log('Checking User Permissions from Cache with key:', cacheKey);
-
 		let isAuthorized = false;
 
 		const fromCache = await this._cacheManager.get<boolean | null>(cacheKey);
 
 		if (fromCache == null) {
-			console.log('User Permissions NOT loaded from Cache with key:', cacheKey);
+			debugInDevelopment(logger, () => `User Permissions NOT loaded from Cache with key: ${cacheKey}`);
 
 			// Check if user has the required permissions
 			isAuthorized = await this._rolePermissionService.checkRolePermission(tenantId, roleId, permissions, true);
@@ -69,22 +66,22 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 			);
 		} else {
 			isAuthorized = fromCache;
-			console.log(`User Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`);
+			debugInDevelopment(
+				logger,
+				() => `User Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`
+			);
 		}
 
-		// Log unauthorized access attempts
+		// Blocked access stays logged in every environment: it is the only trace of a denied request.
 		if (!isAuthorized) {
-			// Log unauthorized access attempts
-			console.log(
-				`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Tenant ID:', ${tenantId}, Permissions Checked: ${permissions.join(
-					', '
-				)}`
+			logger.warn(
+				`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Tenant ID: ${tenantId}, Permissions Checked: ${permissions.join(', ')}`
 			);
 		} else {
-			console.log(
-				`Access granted.  User ID: ${id}, Role: ${role}, Tenant ID:', ${tenantId}, Permissions Checked: ${permissions.join(
-					', '
-				)}`
+			debugInDevelopment(
+				logger,
+				() =>
+					`Access granted. User ID: ${id}, Role: ${role}, Tenant ID: ${tenantId}, Permissions Checked: ${permissions.join(', ')}`
 			);
 		}
 

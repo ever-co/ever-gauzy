@@ -1,0 +1,62 @@
+// Self-contained: this dialog is standalone and is opened from app pages where
+// `DocsUiModule`'s component styles are not loaded, so it cannot inherit the
+// sibling dialog stylesheets.
+.docs-attach-dialog {
+	width: 28rem;
+	max-width: 92vw;
+	margin: 0;
+}
+
+.muted {
+	margin: 0.75rem 0 0;
+	color: var(--text-hint-color);
+	font-size: 0.8125rem;
+}
+
+.docs-attach-list {
+	margin-top: 0.5rem;
+	max-height: 16rem;
+	overflow-y: auto;
+	border: 1px solid var(--divider-color);
+	border-radius: var(--border-radius);
+}
+
+.docs-attach-item {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	width: 100%;
+	padding: 0.375rem 0.625rem;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-size: 0.875rem;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover:not(:disabled) {
+		background: var(--background-basic-color-2);
+	}
+
+	&.selected {
+		background: var(--color-primary-transparent-200);
+		font-weight: 600;
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.6;
+	}
+}
+
+.docs-attach-item-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.docs-dialog-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}

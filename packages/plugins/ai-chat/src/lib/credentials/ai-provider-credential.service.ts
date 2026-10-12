@@ -13,6 +13,8 @@ import { AiProviderCredential } from './ai-provider-credential.entity';
 import { AiProviderCredentialEncryptionService } from './ai-provider-credential-encryption.service';
 import { MikroOrmAiProviderCredentialRepository } from './repositories/mikro-orm-ai-provider-credential.repository';
 import { TypeOrmAiProviderCredentialRepository } from './repositories/type-orm-ai-provider-credential.repository';
+import { assertSafeAiProviderBaseUrl } from './base-url.validator';
+import { getUnsafeAiProviderBaseUrlReason } from '../ssrf';
 
 /** OpenRouter's PKCE code→key exchange endpoint (see https://openrouter.ai/docs/use-cases/oauth-pke). */
 const OPENROUTER_KEY_EXCHANGE_URL = 'https://openrouter.ai/api/v1/auth/keys';
@@ -54,13 +56,60 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 	async getDecryptedCredential(
 		providerId: string,
 		tenantId: string
-	): Promise<{ apiKey: string; baseUrl?: string; defaultModel?: string; enabled: boolean; isDefault: boolean } | null> {
+	): Promise<{
+		apiKey: string;
+		baseUrl?: string;
+		defaultModel?: string;
+		speechModel?: string;
+		enabled: boolean;
+		isDefault: boolean;
+		isVoiceDefault: boolean;
+	} | null> {
 		const { success, record } = await this.findOneOrFailByOptions({
 			where: { providerId, tenantId } as FindOptionsWhere<AiProviderCredential>
 		});
 
-		if (!success || !record || !record.enabled || !record.apiKey) {
+		if (!success || !record || !record.enabled) {
 			return null;
+		}
+
+		// SSRF: re-validate the STORED base URL, not just the one on its way in. This method is the
+		// single choke point every sink goes through — `AiChatService.resolveCredentials` (chat,
+		// catalogue, dictation) and `DocsAiService.resolveCredentials` (indexing, classification, OCR)
+		// both read the tenant credential here — so a row written before this guard existed, or by an
+		// older release, is refused here rather than at each of those call sites. The whole credential
+		// is dropped rather than the URL alone: stripping the base URL would send a key issued for a
+		// proxy to the vendor's real host (GHSA-w3mx-m5cr-3gxp).
+		if (record.baseUrl) {
+			const reason = getUnsafeAiProviderBaseUrlReason(record.baseUrl);
+			if (reason) {
+				// Never logs the URL: this line ends up in shared log storage and the host is exactly
+				// what the tenant was probing for.
+				this.logger.warn(
+					`Ignoring stored credential for provider '${providerId}' (tenant '${tenantId}'): ` +
+						`its base URL is not an allowed outbound target (${reason}).`
+				);
+				return null;
+			}
+		}
+
+		// A row without a key is only usable for providers that run without one (local servers): the
+		// row then contributes its base URL and preferences and the resolver marks it configured with an
+		// EMPTY key. For every other provider a key-less row is as good as none.
+		if (!record.apiKey) {
+			const definition = AiProviderRegistry.get(providerId);
+			if (definition?.requiresApiKey !== false) {
+				return null;
+			}
+			return {
+				apiKey: '',
+				baseUrl: record.baseUrl ?? undefined,
+				defaultModel: record.defaultModel ?? undefined,
+				speechModel: record.speechModel ?? undefined,
+				enabled: record.enabled,
+				isDefault: !!record.isDefault,
+				isVoiceDefault: !!record.isVoiceDefault
+			};
 		}
 
 		let apiKey: string;
@@ -78,8 +127,10 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 			apiKey,
 			baseUrl: record.baseUrl ?? undefined,
 			defaultModel: record.defaultModel ?? undefined,
+			speechModel: record.speechModel ?? undefined,
 			enabled: record.enabled,
-			isDefault: !!record.isDefault
+			isDefault: !!record.isDefault,
+			isVoiceDefault: !!record.isVoiceDefault
 		};
 	}
 
@@ -101,6 +152,28 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 		return {
 			providerId: record.providerId,
 			...(record.defaultModel ? { defaultModel: record.defaultModel } : {})
+		};
+	}
+
+	/**
+	 * Resolve the tenant's default VOICE (dictation) provider — the enabled credential flagged
+	 * `isVoiceDefault`.
+	 *
+	 * @param tenantId - The tenant to resolve the voice default for.
+	 * @returns The voice-default provider id (and its preferred speech model, when set), or `null`.
+	 */
+	async getTenantVoiceDefault(tenantId: string): Promise<{ providerId: string; speechModel?: string } | null> {
+		const { success, record } = await this.findOneOrFailByOptions({
+			where: { tenantId, enabled: true, isVoiceDefault: true } as FindOptionsWhere<AiProviderCredential>
+		});
+
+		if (!success || !record) {
+			return null;
+		}
+
+		return {
+			providerId: record.providerId,
+			...(record.speechModel ? { speechModel: record.speechModel } : {})
 		};
 	}
 
@@ -195,8 +268,15 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 		});
 
 		if (!existing && !input.apiKey) {
-			throw new BadRequestException(`An API key is required to create a credential for provider '${providerId}'.`);
+			this.assertKeyOptional(providerId);
 		}
+		// SSRF: refuse an internal/metadata endpoint before it is ever persisted. Checked on the
+		// INCOMING value only — an existing row that fails is caught on read instead, so upgrading does
+		// not make an unrelated edit (renaming the default model) impossible to save.
+		if (input.baseUrl) {
+			assertSafeAiProviderBaseUrl(input.baseUrl);
+		}
+		this.assertBaseUrlSatisfied(providerId, input.baseUrl ?? existing?.baseUrl);
 
 		// Encrypt the incoming API key; keep the stored one when omitted.
 		const payload: Partial<AiProviderCredential> = { ...input, providerId, tenantId } as Partial<AiProviderCredential>;
@@ -206,9 +286,12 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 			delete payload.apiKey;
 		}
 
-		// Ensure at most one default credential per tenant.
+		// Ensure at most one default credential per tenant — separately for chat and for voice.
 		if (input.isDefault) {
 			await this.clearOtherDefaults(tenantId, existing?.id);
+		}
+		if (input.isVoiceDefault) {
+			await this.clearOtherVoiceDefaults(tenantId, existing?.id);
 		}
 
 		if (existing) {
@@ -217,6 +300,49 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 		}
 
 		return this.maskCredential(await super.create(payload));
+	}
+
+	/**
+	 * Throw a 400 unless the provider is registered as running WITHOUT an API key.
+	 *
+	 * Called only when a credential is being CREATED with no key. Cloud providers keep the historical
+	 * "API key is required" behaviour; local servers (`requiresApiKey: false`) may be saved with only
+	 * a base URL. An unregistered provider id is treated as requiring a key — the registry is the sole
+	 * authority on which providers work anonymously, and a typo must not open a key-less path.
+	 *
+	 * @param providerId - Registry id being configured.
+	 */
+	private assertKeyOptional(providerId: string): void {
+		const definition = AiProviderRegistry.get(providerId);
+		if (definition?.requiresApiKey === false) {
+			return;
+		}
+		throw new BadRequestException(
+			definition
+				? `An API key is required to create a credential for provider '${definition.label}'.`
+				: `An API key is required to create a credential for provider '${providerId}'.`
+		);
+	}
+
+	/**
+	 * Throw a 400 when a provider that cannot work without a base URL is saved without one — a
+	 * generic OpenAI-compatible gateway has no vendor host to fall back to, so a key-only credential
+	 * would report itself configured and then fail every request.
+	 *
+	 * @param providerId - Registry id being configured.
+	 * @param baseUrl - The base URL that would be stored (incoming, or the existing one on update).
+	 */
+	private assertBaseUrlSatisfied(providerId: string, baseUrl?: string): void {
+		const definition = AiProviderRegistry.get(providerId);
+		if (!definition?.requiresBaseUrl || baseUrl?.trim()) {
+			return;
+		}
+		if (definition.baseUrlEnvVar && process.env[definition.baseUrlEnvVar]) {
+			return;
+		}
+		throw new BadRequestException(
+			`A base URL is required for provider '${definition.label}' — enter the address of your server (e.g. http://localhost:8000/v1).`
+		);
 	}
 
 	/**
@@ -241,8 +367,22 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 			delete payload.apiKey;
 		}
 
+		// SSRF: same store-time guard as `upsert`. `null` clears the URL and needs no check.
+		if (input.baseUrl) {
+			assertSafeAiProviderBaseUrl(input.baseUrl);
+		}
+
+		// An explicit `null` CLEARS the URL — validate what will actually be stored, not the old value.
+		this.assertBaseUrlSatisfied(
+			existing.providerId,
+			input.baseUrl === undefined ? existing.baseUrl : (input.baseUrl ?? undefined)
+		);
+
 		if (input.isDefault) {
 			await this.clearOtherDefaults(existing.tenantId, existing.id);
+		}
+		if (input.isVoiceDefault) {
+			await this.clearOtherVoiceDefaults(existing.tenantId, existing.id);
 		}
 
 		await super.update(existing.id, payload as any);
@@ -279,6 +419,25 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 				continue;
 			}
 			await super.update(other.id, { isDefault: false } as any);
+		}
+	}
+
+	/**
+	 * Clear the `isVoiceDefault` flag on all of the tenant's other credentials, so at most one
+	 * provider is the tenant's dictation provider.
+	 *
+	 * @param tenantId - The tenant whose voice defaults are being cleared.
+	 * @param exceptId - Credential id to leave untouched (the new voice default), if any.
+	 */
+	async clearOtherVoiceDefaults(tenantId: string, exceptId?: ID): Promise<void> {
+		const others = await this.find({
+			where: { tenantId, isVoiceDefault: true } as FindOptionsWhere<AiProviderCredential>
+		});
+		for (const other of others) {
+			if (exceptId && other.id === exceptId) {
+				continue;
+			}
+			await super.update(other.id, { isVoiceDefault: false } as any);
 		}
 	}
 

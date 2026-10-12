@@ -1,4 +1,12 @@
 @use 'report' as *;
+@use 'report-table' as *;
+
+// The shared row-table chrome — surface, hairlines, row padding and the 12px
+// type scale. The column widths below are deliberately left as they were: this
+// grid resolves the same columns inside two different boxes (see the note on
+// the accordion header further down), and re-sizing them is a separate job from
+// bringing the type into line with the other report tables.
+@include report-table(44px);
 
 .group-by-wrapper {
   display: flex;
@@ -34,20 +42,59 @@
   width: 20%;
   min-width: 20%;
 }
+// Matches the two 30% columns the data rows carry (To Do and Notes). The
+// accordion header repeats the same pair as empty spacers, so both rows sum to
+// the same width and shrink by the same ratio — which is what keeps Time and
+// Activity in the header aligned with their columns in the table below.
 .todo-column {
   width: 30%;
-  &.header {
-    width: 28%;
-    &.client {
-      width: 22%;
-    }
-  }
 }
 .time-column {
   width: 15%;
 }
 .activity-column {
   width: 15%;
+}
+
+// The header and the data rows carry the same columns, but they resolve inside
+// different boxes: the rows sit inside `nb-accordion-item-body` and its inset,
+// while the header sits in the card and carries the expand chevron as an extra
+// flex item after the last column. Both leave the header's columns ending
+// further along than the rows', so its Time and Activity read as pushed right.
+// Inset the trailing edge to bring them back towards the columns the table below
+// uses. The value is set against the rendered result rather than derived: the two
+// boxes differ by the body's inset and the chevron both, so no single figure
+// follows from the stylesheet alone.
+:host ::ng-deep nb-accordion-item-header {
+  @include nb-ltr(padding-right, 40px);
+  @include nb-rtl(padding-left, 40px);
+}
+
+// This header is not a title, it is a summary ROW: the columns are its direct
+// children, not children of a `.table-inner-wrapper`. So it takes the row's own
+// metrics rather than the group-title padding the shared mixin gives every other
+// report, and the same column gap, so its figures line up with the table under
+// it instead of sitting on a different rhythm.
+:host .card nb-accordion-item-header.card-title {
+  @include nb-ltr(padding, $report-row-padding-y 40px $report-row-padding-y $report-row-gutter);
+  @include nb-rtl(padding, $report-row-padding-y $report-row-gutter $report-row-padding-y 40px);
+  gap: $report-column-gap;
+  font-size: $report-cell-font-size;
+  line-height: 16px;
+
+  // The group label here is a full date - "Monday, September 21, 2026" - sitting
+  // in a column capped at 200px for the avatar chips the BODY puts there. It
+  // wrapped onto two lines, which made the header taller than the row it
+  // summarises.
+  //
+  // It is allowed to run past the cap rather than the cap being raised: the two
+  // columns following it in this header are empty spacers, so the text has
+  // somewhere to go, and every column keeps its x - which is what holds the
+  // header's Time and Activity over the same columns in the table below.
+  .employee-column {
+    white-space: nowrap;
+    overflow: visible;
+  }
 }
 
 @include respond(lg) {

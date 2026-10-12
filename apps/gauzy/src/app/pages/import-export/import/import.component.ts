@@ -149,13 +149,24 @@ export class ImportComponent extends TranslationBaseComponent implements AfterVi
 	}
 
 	/**
-	 * Download Import History Files
+	 * Downloads the archive an import was made from, through the authenticated API.
 	 *
-	 * @param item
+	 * @param item - The import-history row whose archive to save.
 	 */
 	public download(item: IImportHistory) {
-		if (item) {
-			saveAs(item.fullUrl, item.file);
+		if (!item?.id) {
+			return;
 		}
+		this.importService
+			.downloadArchive(item.id)
+			.pipe(untilDestroyed(this))
+			.subscribe({
+				next: (blob: Blob) => saveAs(blob, item.file),
+				error: () =>
+					this.toastrService.danger(
+						this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					)
+			});
 	}
 }

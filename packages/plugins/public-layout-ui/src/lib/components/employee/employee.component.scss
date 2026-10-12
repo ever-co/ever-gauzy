@@ -1,225 +1,541 @@
-@use 'gauzy/_gauzy-table' as *;
+@use 'themes' as *;
 
-.employee-info-wrapper,
-.right-side {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-.right-side {
-  gap: 1rem;
-  padding: 1rem;
-  .employee-org-info {
-    padding: 10px;
-    background-color: var(--gauzy-card-2);
-    border-radius: var(--border-radius);
-    color: var(--gauzy-text-color-1);
-    height: 100%;
-    .employee-profile-item-title {
-      color: var(--gauzy-text-color-2);
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 15px;
-      letter-spacing: 0em;
-    }
-    .employee-profile-item-keys,
-    .employee-profile-item-value {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      gap: 6px;
-    }
-    .employee-profile-item-value {
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 17px;
-      letter-spacing: 0em;
-      gap: 4px;
-    }
-  }
+/*
+ * ── Public employee profile ──────────────────────────────────────────────────
+ *
+ * One page, read top-down like a public profile: a cover band with the avatar
+ * overlapping it, the name with the organization and status, a strip of the
+ * figures the employee chose to publish, then About / Skills / Awards beside an
+ * Organization card. Paints only with the shared gauzy-* and theme tokens, so
+ * the light and dark themes both follow.
+ */
+
+$gap-xl: 1.5rem;
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$gap-xs: 0.25rem;
+
+$avatar: 6rem;
+$cover-height: 7rem;
+$hairline: 1px solid var(--gauzy-border-default-color);
+$radius: var(--gauzy-radius-sm, 0.5rem);
+
+:host {
+	display: block;
 }
 
-.employee-photo-wrapper {
-  display: flex;
-  gap: 17px;
-  align-items: center;
-  padding: 1rem;
-  .employee-info {
-    .employee-name {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 17px;
-      letter-spacing: 0em;
-      color: var(--gauzy-text-color-1);
-    }
-    color: var(--gauzy-text-color-2);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    display: flex;
-    flex-flow: column;
-  }
+// A centred column of reading width, as public profiles are laid out — the
+// page does not stretch across a wide window.
+nb-card.profile-page {
+	width: 100%;
+	max-width: 56rem;
+	margin: $gap-xl auto;
+	border: 0;
+	background-color: transparent;
+	box-shadow: none;
 }
 
-img.employee-image {
-  object-fit: cover;
-  object-position: center;
-  width: 72px;
-  height: 72px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--gauzy-shadow);
+nb-card-body.profile-body {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	padding: 0;
+	overflow: visible;
+	background-color: transparent;
 }
 
-.employee-photo {
-  position: relative;
+/* ── Header ──────────────────────────────────────────────────────────────── */
 
-  div {
-    pointer-events: none;
-    background: black;
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    border-radius: var(--border-radius);
-  }
-
-  img {
-    width: 72px;
-    height: 72px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--gauzy-shadow);
-    object-fit: cover;
-  }
-
-  input {
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    position: absolute;
-    z-index: 3;
-    cursor: pointer;
-  }
-
-  svg {
-    z-index: 2;
-    transition: opacity 0.2s ease-in;
-    opacity: 0.3;
-    position: absolute;
-    width: 48px;
-    height: 48px;
-    top: calc(50% - 48px / 2);
-    left: calc(50% - 48px / 2);
-    g circle {
-      fill: var(--text-primary-color);
-    }
-  }
+.profile-header {
+	position: relative;
+	border-radius: $radius;
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
 }
 
-button.save-image {
-  bottom: -24px;
-  position: absolute;
-  left: -4px;
-  z-index: 9999;
-  font-size: 12px;
-  border: none;
-  box-shadow: var(--gauzy-shadow);
+// A quiet band in the theme's primary tint: enough to frame the avatar, never
+// loud enough to compete with the name.
+.cover {
+	height: $cover-height;
+	background:
+		radial-gradient(120% 140% at 0% 0%, nb-theme(color-primary-transparent-300) 0%, transparent 60%),
+		nb-theme(color-primary-transparent-100);
 }
 
-.employee-profile-item-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 5px 0;
-  color: #222b45;
+.identity-row {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-lg;
+	padding: 0 $gap-xl $gap-lg;
+	// The avatar rides up over the cover by half its size.
+	margin-top: calc(#{$avatar} / -2);
 }
 
-.employee-profile-item {
-  display: flex;
-  align-items: flex-start;
+.avatar-wrap {
+	flex: 0 0 auto;
 }
 
-.tag {
-  border-radius: 25px;
-  border: 1px solid #ced9ee;
-  color: #3c495a;
-  display: inline-block;
-  padding: 6px 12px 5px;
-  font-size: 12px;
+.avatar {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: $avatar;
+	height: $avatar;
+	border-radius: 50%;
+	background-color: var(--gauzy-active-tint);
+	// A ring in the card colour separates the photo from the cover behind it.
+	box-shadow: 0 0 0 4px var(--gauzy-card-1);
 
-  &:hover {
-    cursor: pointer;
-    color: #fff;
-    border-color: #007bff;
-    background-color: #007bff;
-    -webkit-box-shadow: 0 2px 4px #82bfff;
-    box-shadow: 0 2px 4px #82bfff;
-  }
+	// The photo is rounded itself rather than clipped by the avatar: an
+	// `overflow: hidden` here also cut the camera badge on the edge in half.
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
 }
 
-.tag.tag-sm {
-  font-weight: normal;
-  font-size: 12px;
-  margin-bottom: 15px;
+.avatar-initials {
+	font-size: 1.75rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--gauzy-text-color-1);
 }
 
-.o__p__s__t {
-  background-color: var(--gauzy-card-2);
-  border-radius: 0 var(--border-radius) var(--border-radius)
-    var(--border-radius);
-  overflow: auto;
-  height: calc(100vh - 16rem);
+// Editors: the uploader's file input covers the whole avatar, invisibly.
+.avatar--editable {
+	cursor: pointer;
+
+	::ng-deep ngx-image-uploader {
+		position: absolute;
+		inset: 0;
+		z-index: 3;
+
+		input {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100% !important;
+			opacity: 0;
+			cursor: pointer;
+		}
+	}
+
+	&.is-hover img {
+		filter: brightness(0.85);
+	}
 }
 
-nb-card {
-  margin: 0;
-  nb-card-body {
-    background-color: var(--gauzy-card-2);
-    border-radius: var(--border-radius);
-    padding: 0;
-  }
+// Camera badge on the avatar's edge: the affordance that the photo can be changed.
+.avatar-edit {
+	position: absolute;
+	right: 0;
+	bottom: 0.125rem;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 50%;
+	background-color: nb-theme(color-primary-500);
+	box-shadow: 0 0 0 2px var(--gauzy-card-1);
+	color: #fff;
+	pointer-events: none;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
 }
 
-.skill-items {
-  display: flex;
-  list-style: none;
-  padding: 0;
-  > li {
-    margin-right: 5px;
-  }
+.save-image {
+	position: absolute;
+	left: 50%;
+	bottom: 0.25rem;
+	z-index: 4;
+	transform: translateX(-50%);
 }
 
-.tab-employee-info {
-  .employee-profile-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    .employee-profile-item-title {
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 15px;
-      letter-spacing: 0em;
-      width: 8rem;
-      color: var(--gauzy-text-color-2);
-    }
-    .bill-rate {
-      background-color: var(--color-primary-transparent-100);
-      font-weight: 600;
-      border-radius: 4px;
-      padding: 4px 8px;
-      color: var(--text-primary-color);
-    }
-    .pay-period {
-      padding: 4px 8px;
-      background-color: var(--color-success-transparent-300);
-      font-weight: 600;
-      border-radius: 4px;
-      color: var(--color-success-600);
-    }
-    color: var(--gauzy-text-color-1);
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 17px;
-    letter-spacing: 0em;
-  }
+.identity {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	flex: 1 1 auto;
+	min-width: 0;
+	// Starts just below the cover's edge: only the avatar overlaps the band.
+	padding-top: calc(#{$avatar} / 2 + 0.75rem);
+}
+
+.name {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	line-height: 1.75rem;
+	letter-spacing: -0.01em;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+}
+
+.identity-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $gap-sm;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.meta-org {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-weight: 500;
+	color: var(--gauzy-text-color-1);
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.org-logo {
+	width: 1.25rem;
+	height: 1.25rem;
+	border-radius: 0.25rem;
+	object-fit: cover;
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	padding: 0.0625rem 0.5rem;
+	border-radius: 999px;
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-2);
+
+	&.is-active {
+		color: var(--gauzy-chart-revenue);
+
+		.status-dot {
+			background-color: var(--gauzy-chart-revenue);
+		}
+	}
+}
+
+.status-dot {
+	width: 0.4375rem;
+	height: 0.4375rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-text-color-2);
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.0625rem 0.5rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.actions {
+	flex: 0 0 auto;
+	padding-top: calc(#{$avatar} / 2 + 0.75rem);
+}
+
+/* Facts strip: label over value, divided by hairlines. */
+.facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	margin: 0;
+	border-top: $hairline;
+	overflow: hidden;
+
+	.fact {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1875rem;
+		min-width: 0;
+		padding: $gap-md $gap-xl;
+		// Leading hairline; the first of each row falls outside and is clipped.
+		box-shadow: -1px 0 0 0 var(--gauzy-border-default-color);
+	}
+
+	dt {
+		margin: 0;
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+
+	dd {
+		margin: 0;
+		font-size: 0.9375rem;
+		font-weight: 600;
+		line-height: 1.375rem;
+		color: var(--gauzy-text-color-1);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.fact-unit {
+		margin-inline-start: 0.125rem;
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+/* ── Content ─────────────────────────────────────────────────────────────── */
+
+.content {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+	gap: $gap-lg;
+	align-items: start;
+
+	@media screen and (max-width: 60rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.main,
+.side {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	min-width: 0;
+}
+
+.panel {
+	padding: $gap-lg $gap-xl $gap-xl;
+	border-radius: $radius;
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.panel-title {
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	margin: 0 0 $gap-md;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+
+	nb-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.375rem;
+	height: 1.25rem;
+	padding: 0 0.375rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--gauzy-text-color-2);
+}
+
+.about {
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+.empty {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-style: italic;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.skills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-sm;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+// Text in the text tokens; the swatch carries the skill's colour.
+.skill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.75rem;
+	border-radius: 999px;
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.swatch {
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-text-color-2);
+}
+
+.awards {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.award {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	padding: $gap-sm 0;
+
+	& + & {
+		border-top: $hairline;
+	}
+}
+
+.award-icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	background-color: nb-theme(color-primary-transparent-100);
+	color: nb-theme(color-primary-500);
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+}
+
+.award-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.award-year {
+	flex: 0 0 auto;
+	font-size: 0.8125rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Organization card */
+
+.org {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+}
+
+.org-avatar {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	border-radius: $radius;
+	overflow: hidden;
+	background-color: var(--gauzy-active-tint);
+	color: var(--gauzy-text-color-2);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.org-name {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+}
+
+.org-description {
+	margin: $gap-md 0 0;
+	font-size: 0.8125rem;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.org-link {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-xs;
+	margin-top: $gap-md;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: nb-theme(color-primary-500);
+	text-decoration: none;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 36rem) {
+	.identity-row {
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 0 $gap-lg $gap-lg;
+	}
+
+	// Stacked under the avatar, the text no longer needs to clear the cover.
+	.identity,
+	.actions {
+		padding-top: 0;
+	}
+
+	.facts .fact,
+	.panel {
+		padding-inline: $gap-lg;
+	}
 }

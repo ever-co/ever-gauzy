@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/integration-github-ui/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": ["constants", "contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {

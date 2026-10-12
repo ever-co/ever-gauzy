@@ -6,6 +6,7 @@ import {
 	Delete,
 	ForbiddenException,
 	Get,
+	HttpException,
 	HttpStatus,
 	Post,
 	Put,
@@ -67,7 +68,11 @@ export class TenantController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/')
-	@UseValidationPipe()
+	// `whitelist` strips anything the DTO does not declare, which the update route below has always
+	// done. Without it this route persisted whatever the body carried — and now that Tenant has a
+	// `stripeCustomerId`, a caller could have pointed their new tenant at somebody else's Stripe
+	// customer and then read or cancelled that customer's subscription through /billing.
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTenantDTO): Promise<ITenant> {
 		const user = RequestContext.currentUser();
 		if (user.tenantId || user.roleId) {
@@ -104,8 +109,12 @@ export class TenantController {
 	async update(@Body() entity: UpdateTenantDTO): Promise<ITenant | UpdateResult> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			return await this.tenantService.update(tenantId, entity);
+			return await this.tenantService.updateProfile(tenantId, entity);
 		} catch (error) {
+			// Keep a deliberate HTTP status (e.g. the 400 CrudService.update raises for an unknown image id).
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new ForbiddenException();
 		}
 	}

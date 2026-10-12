@@ -546,6 +546,24 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: true })
 	trackAllDisplays?: boolean;
 
+	/**
+	 * Indicates whether employees can see their own tracked data.
+	 *
+	 * @column
+	 * @default true
+	 * @type boolean
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Allow employees to see their own tracked data (screenshots, activity, app/url history, time logs).',
+		example: true
+	})
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	allowEmployeeToSeeTrackedData?: boolean;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

@@ -1,75 +1,123 @@
-<div class="gallery-inner" [@fadeInOut]>
-	<div class="gallery-header d-flex p-2">
-		<span class="spacer"></span>
-		<div class="ml-auto">
+<div class="gallery-inner" tabindex="-1" #galleryInner [@fadeInOut]>
+	@let recordedTime = item?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async);
+	<!-- When the active screenshot was taken, its place in the set, and the actions. -->
+	<header class="gallery-header">
+		<!-- Product images (Inventory) carry no recorded time; only the counter shows. -->
+		<div class="gallery-heading">
+			@if (item?.recordedAt) {
+			<span class="gallery-title">
+				{{ item?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+			</span>
+			}
+			<span class="gallery-subtitle">
+				@if (item?.recordedAt) {
+				{{ recordedTime }}
+				}
+				@if (active_index >= 0 && items.length > 0) {
+				<span class="gallery-counter">{{ active_index + 1 }} / {{ items.length }}</span>
+				}
+			</span>
+		</div>
+		<div class="gallery-actions">
 			@if (item?.description) {
-			<button status="info" nbButton [nbTooltip]="item?.description">
+			<button
+				type="button"
+				class="gallery-button"
+				[nbTooltip]="item?.description"
+				[attr.aria-label]="'REPORT_PAGE.DESCRIPTION' | translate"
+			>
 				<nb-icon icon="info-outline"></nb-icon>
 			</button>
 			}
 			<button
-				class="ml-2"
-				status="success"
-				nbButton
+				type="button"
+				class="gallery-button"
 				(click)="downloadFile(item?.fullUrl)"
 				[nbTooltip]="'BUTTONS.DOWNLOAD' | translate"
+				[attr.aria-label]="'BUTTONS.DOWNLOAD' | translate"
 			>
 				<nb-icon icon="download-outline"></nb-icon>
 			</button>
-			<button class="ml-2" status="danger" nbButton (click)="close()" [nbTooltip]="'BUTTONS.CLOSE' | translate">
+			<span class="gallery-actions-divider"></span>
+			<button
+				type="button"
+				class="gallery-button close"
+				(click)="close()"
+				[nbTooltip]="'BUTTONS.CLOSE' | translate"
+				[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			>
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
-	</div>
+	</header>
+
+	<!-- A click on the dark stage around the screenshot closes the viewer. -->
 	<div class="gallery-content" (click)="close()">
-		<div class="left-button">
-			<button
-				class="nav-button"
-				nbButton
-				status="primary"
-				[disabled]="active_index == 0"
-				(click)="previous($event)"
-			>
-				<nb-icon icon="arrow-left"></nb-icon>
-			</button>
-		</div>
-		<div
-			class="media-viewer"
-			(click)="$event.stopPropagation()"
-			[class.danger-bordered]="item?.isWorkRelated === false"
+		<button
+			type="button"
+			class="gallery-nav previous"
+			[disabled]="active_index == 0"
+			(click)="previous($event)"
+			[attr.aria-label]="'BUTTONS.PREVIOUS' | translate"
 		>
-			<img #imageMedia [src]="item?.fullUrl" />
-		</div>
-		<div class="right-button">
-			<button
-				class="nav-button"
-				nbButton
-				[disabled]="active_index == items.length - 1"
-				status="primary"
-				(click)="next($event)"
-			>
-				<nb-icon icon="arrow-right"></nb-icon>
-			</button>
-		</div>
-	</div>
-	<div class="gallery-footer">
-		<div class="thumb-items custom-scroll" #customScroll>
-			@for (thumb of items; track trackByThumbId(index, thumb); let index = $index) {
+			<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+		</button>
+		<div class="media-viewer">
+			<!-- A new <img> per screenshot, not one whose src changes: the shared img
+			     directive swaps in the fallback picture only for an element's first
+			     failed load, so the next broken screenshot showed a 16px broken icon. -->
+			@for (media of [item]; track media?.id) {
+			<!-- The frame carries the work-related ring, so dimming the placeholder
+			     picture inside it does not dim the ring too. -->
 			<div
-				class="thumb-item text-center"
-				[class.thumb-item-active]="item?.id === thumb?.id"
-				[class.danger-bordered]="thumb?.isWorkRelated === false"
-				(click)="setFocus(thumb)"
+				class="media-frame"
+				[class.not-work-related]="media?.isWorkRelated === false"
+				(click)="$event.stopPropagation()"
 			>
-				@if (thumb) {
-				<img [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
-				}
-				<span>
-					{{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
-					{{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
-				</span>
+				<img
+					class="media"
+					draggable="false"
+					[src]="media?.fullUrl"
+					[alt]="media?.description || ((media?.recordedAt ? 'TIMESHEET.SCREENSHOTS.TAKEN_AT' : 'TIMESHEET.SCREENSHOTS.POSITION') | translate : { time: recordedTime, position: active_index + 1, total: items.length })"
+				/>
 			</div>
 			}
 		</div>
+		<button
+			type="button"
+			class="gallery-nav next"
+			[disabled]="active_index == items.length - 1"
+			(click)="next($event)"
+			[attr.aria-label]="'BUTTONS.NEXT' | translate"
+		>
+			<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+		</button>
 	</div>
+
+	<footer class="gallery-footer">
+		<div class="thumb-items custom-scroll" #customScroll>
+			@for (thumb of items; track trackByThumbId(index, thumb); let index = $index) {
+			@let thumbTime = thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
+			<!-- Named by its place in the set, which stays unique when there is no time. -->
+			<button
+				type="button"
+				class="thumb-item"
+				[class.thumb-item-active]="item?.id === thumb?.id"
+				[class.not-work-related]="thumb?.isWorkRelated === false"
+				[attr.aria-pressed]="item?.id === thumb?.id"
+				[attr.aria-label]="('TIMESHEET.SCREENSHOTS.POSITION' | translate : { position: index + 1, total: items.length }) + (thumb?.recordedAt ? ', ' + thumbTime : '')"
+				(click)="setFocus(thumb)"
+			>
+				<span class="thumb-frame">
+					@if (thumb) {
+					<img draggable="false" [src]="thumb?.thumbUrl" alt="" />
+					}
+				</span>
+				@if (thumb?.recordedAt) {
+				<span class="thumb-time">{{ thumbTime }}</span>
+				}
+			</button>
+			}
+		</div>
+	</footer>
 </div>

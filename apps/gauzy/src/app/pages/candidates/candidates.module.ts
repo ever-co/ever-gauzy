@@ -36,6 +36,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CandidateCriterionCardModule,
 	CandidateInterviewFeedbackModule,
 	CandidateInterviewInfoModule,
 	CandidateInterviewMutationModule,
@@ -176,6 +177,7 @@ const COMPONENTS = [
 		TagsColorInputModule,
 		CandidateMutationModule,
 		CandidateInterviewMutationModule,
+		CandidateCriterionCardModule,
 		CandidateInterviewInfoModule,
 		InviteMutationModule,
 		InviteTableModule,

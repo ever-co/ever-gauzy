@@ -5,7 +5,7 @@
 				[id]="item?.id"
 				(selectedChange)="focusOn($event)"
 				[item]="item"
-				[selected]="item === selectedItem"
+				[selected]="isSelected(item)"
 			></ga-menu-item>
 		}
 	}

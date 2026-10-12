@@ -3,7 +3,7 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/ui-react-components/src",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:shared"],
 	"implicitDependencies": [],
 	"targets": {
 		"build": {

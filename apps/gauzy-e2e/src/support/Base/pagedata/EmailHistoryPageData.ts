@@ -1,5 +1,7 @@
 export const EmailHistoryPageData = {
 	header: 'Email History',
+	// The active-filter chip shows the template as "Title · Language"
+	appointmentCancellationBulgarianChip: 'Appointment Cancellation · Bulgarian',
 	appointmentCancellationBulgarian: 'Appointment Cancellation - Bulgarian',
 	appointmentCancellationEnglish: 'Appointment Cancellation - English',
 	appointmentCancellationHebrew: 'Appointment Cancellation - Hebrew',

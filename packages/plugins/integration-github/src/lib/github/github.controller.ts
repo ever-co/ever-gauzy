@@ -5,6 +5,8 @@ import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, Us
 import { GithubService } from './github.service';
 import { GithubOAuthStateService } from './github-oauth-state.service';
 import { GithubAppInstallDTO, GithubInstallStateDTO, GithubOAuthDTO } from './dto';
+import { isGithubInstallProofValid } from './github-install-proof';
+import { githubInstallationRefusedMessage } from './github-installation-ownership.messages';
 
 @ApiTags('GitHub Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -80,6 +82,13 @@ export class GitHubController {
 					'GitHub installation state does not belong to the current tenant.',
 					HttpStatus.FORBIDDEN
 				);
+			}
+			// The nonce proves which TENANT started the flow, not which GitHub installation it may bind:
+			// the id in this body can be anyone's. Bind only an installation the post-install callback
+			// proved the authorizing GitHub user is entitled to in full, via a proof signed for exactly
+			// this nonce and installation (GHSA-4rwq-65wh-45h4).
+			if (!isGithubInstallProofValid(input.install_proof, input.state, String(input.installation_id))) {
+				throw new HttpException(githubInstallationRefusedMessage(input.install_check), HttpStatus.FORBIDDEN);
 			}
 			// Add the GitHub installation using the service, bound to the nonce's tenant/organization.
 			return await this._githubService.addGithubAppInstallation({

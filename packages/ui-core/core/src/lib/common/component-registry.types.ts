@@ -35,6 +35,7 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'timesheet-details-sections': A sub-page under the timesheet section.
  * - 'integrations-sections': The integrations section of the application.
  * - 'accounting-sections': Children under /pages/accounting.
+ * - 'documents-sections': Children under /pages/documents.
  * - 'employees-sections': Children under /pages/employees.
  * - 'organization-sections': Children under /pages/organization.
  * - 'goals-sections': Children under /pages/goals.
@@ -57,6 +58,7 @@ export type PageRouteLocationId =
 	| 'timesheet-details-sections'
 	| 'integrations-sections'
 	| 'accounting-sections'
+	| 'documents-sections'
 	| 'employees-sections'
 	| 'organization-sections'
 	| 'goals-sections'
@@ -76,8 +78,14 @@ export type PageRouteLocationId =
  * - 'timesheet-page': The timesheet tab page.
  * - 'time-activity-page': The time and activity tab page.
  * - 'employee-edit-page': The employee edit tab page.
+ * - 'organization-edit-page': The organization edit tab page.
  */
-export type PageTabsetPageId = 'dashboard-page' | 'timesheet-page' | 'time-activity-page' | 'employee-edit-page';
+export type PageTabsetPageId =
+	| 'dashboard-page'
+	| 'timesheet-page'
+	| 'time-activity-page'
+	| 'employee-edit-page'
+	| 'organization-edit-page';
 
 /**
  * @description

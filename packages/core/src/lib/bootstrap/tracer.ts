@@ -24,6 +24,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { REDACTED_CREDENTIAL, redactKeyValueList, redactUrlCredentials } from '../core/util/redact-credentials';
 // import { PeriodicExportingMetricReader, ConsoleMetricExporter } from '@opentelemetry/sdk-metrics';
 
 const isConsole = false; // Set to true to use console exporter only (for debugging)
@@ -138,7 +139,8 @@ if (process.env.OTEL_ENABLED === 'true') {
 	if (process.env.OTEL_PROVIDER === 'honeycomb') {
 		if (!url) url = `https://api.honeycomb.io/v1/traces`;
 
-		console.log('Using Honeycomb API Key: ' + process.env.HONEYCOMB_API_KEY);
+		// Log only whether the key is present - never the key itself.
+		console.log('Using Honeycomb API Key: ' + (process.env.HONEYCOMB_API_KEY ? REDACTED_CREDENTIAL : '(not set)'));
 
 		const exporterOptions = {
 			url: url,
@@ -165,12 +167,13 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 		traceExporter = new ZipkinExporter(exporterOptions);
 
-		console.log('Tracing Enabled with Zipkin running on URL: ' + url);
+		console.log('Tracing Enabled with Zipkin running on URL: ' + redactUrlCredentials(url));
 	}
 
-	console.log('Tracing URL: ' + url);
+	console.log('Tracing URL: ' + (redactUrlCredentials(url) || '(not set)'));
 
-	console.log('Tracing Headers: ' + process.env.OTEL_EXPORTER_OTLP_HEADERS);
+	// OTEL_EXPORTER_OTLP_HEADERS carries ingestion keys (e.g. `signoz-access-token=<key>`): log the header names only.
+	console.log('Tracing Headers: ' + (redactKeyValueList(process.env.OTEL_EXPORTER_OTLP_HEADERS) || '(none)'));
 
 	let spanProcessor;
 

@@ -2,6 +2,7 @@ import * as http from 'node:http';
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { environment } from '@gauzy/config';
+import { isAccessTokenPayload, JWT_ALGORITHMS } from '@gauzy/core';
 import { verify } from 'jsonwebtoken';
 import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneIntegrationService } from './plane-integration.service';
@@ -285,7 +286,12 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		try {
-			const payload = verify(token, jwtSecret) as { tenantId?: string };
+			const payload = verify(token, jwtSecret, { algorithms: JWT_ALGORITHMS }) as { tenantId?: string };
+			// Only an access token is a session; other JWT_SECRET-signed tokens (invoice share,
+			// estimate, ...) carry a tenantId too (GHSA-28wv-vrxj-rp4q).
+			if (!isAccessTokenPayload(payload)) {
+				return undefined;
+			}
 			return payload.tenantId || undefined;
 		} catch (error) {
 			this.logger.debug(
@@ -352,7 +358,14 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		try {
-			const payload = verify(token, jwtSecret) as { tenantId?: string };
+			const payload = verify(token, jwtSecret, { algorithms: JWT_ALGORITHMS }) as { tenantId?: string };
+
+			// Only an access token authenticates a proxy request; other JWT_SECRET-signed tokens
+			// (invoice share, estimate, ...) carry a tenantId too (GHSA-28wv-vrxj-rp4q).
+			if (!isAccessTokenPayload(payload)) {
+				throw new Error('Bearer token is not an access token');
+			}
+
 			const tokenTenantId = payload.tenantId;
 
 			if (!tokenTenantId) {

@@ -8,7 +8,10 @@ import * as rolesPermissionsPage from '../../support/pages/RolesPermissions.po';
 // re-exports ~167 modules, some of which pull in @gauzy/constants, and it only resolves once the
 // package has been compiled in place — neither is a precondition of running the e2e suite.
 // `role-permission.model.ts` has type-only imports, so it costs nothing at runtime.
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+// Stale `@nrwl/nx` rule id fixed (TASK 8): the flat config (eslint.config.js) registers this rule
+// as `@nx`, so the old id was silently not suppressing anything — the disable directive must be
+// the line immediately above the suppressed import, not separated from it by more comment lines.
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import { PermissionGroups, PermissionsEnum } from '../../../../../packages/contracts/src/lib/role-permission.model';
 
 /**
@@ -223,7 +226,16 @@ const ENABLED_PERMISSIONS: Record<string, readonly PermissionsEnum[]> = {
 		PermissionsEnum.TENANT_API_KEY_VIEW,
 		PermissionsEnum.TENANT_API_KEY_DELETE,
 		PermissionsEnum.OAUTH_CLIENT_VIEW,
-		PermissionsEnum.OAUTH_CLIENT_EDIT
+		PermissionsEnum.OAUTH_CLIENT_EDIT,
+		/** Documents hub — GENERAL card */
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE,
+		/** Documents hub — ADMINISTRATION card */
+		PermissionsEnum.DOCS_DELETE,
+		PermissionsEnum.DOCS_MANAGE,
+		PermissionsEnum.DOCS_REVIEW,
+		PermissionsEnum.DOCS_AI_IMPORT
 	],
 	ADMIN: [
 		PermissionsEnum.ADMIN_DASHBOARD_VIEW,
@@ -397,7 +409,16 @@ const ENABLED_PERMISSIONS: Record<string, readonly PermissionsEnum[]> = {
 		PermissionsEnum.TENANT_API_KEY_VIEW,
 		PermissionsEnum.TENANT_API_KEY_DELETE,
 		PermissionsEnum.OAUTH_CLIENT_VIEW,
-		PermissionsEnum.OAUTH_CLIENT_EDIT
+		PermissionsEnum.OAUTH_CLIENT_EDIT,
+		/** Documents hub — GENERAL card */
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE,
+		/** Documents hub — ADMINISTRATION card */
+		PermissionsEnum.DOCS_DELETE,
+		PermissionsEnum.DOCS_MANAGE,
+		PermissionsEnum.DOCS_REVIEW,
+		PermissionsEnum.DOCS_AI_IMPORT
 	],
 	DATA_ENTRY: [
 		PermissionsEnum.SELECT_EMPLOYEE,
@@ -431,7 +452,10 @@ const ENABLED_PERMISSIONS: Record<string, readonly PermissionsEnum[]> = {
 		PermissionsEnum.DASHBOARD_READ,
 		PermissionsEnum.DASHBOARD_UPDATE,
 		PermissionsEnum.DASHBOARD_DELETE,
-		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ
+		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE
 	],
 	EMPLOYEE: [
 		PermissionsEnum.ADMIN_DASHBOARD_VIEW,
@@ -521,16 +545,29 @@ const ENABLED_PERMISSIONS: Record<string, readonly PermissionsEnum[]> = {
 		PermissionsEnum.BROADCAST_READ,
 		PermissionsEnum.BROADCAST_UPDATE,
 		PermissionsEnum.BROADCAST_DELETE,
-		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ
+		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE
 	],
 	CANDIDATE: [
+		// No DOCS_* — default-role-permissions.ts grants the candidate role none.
 		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ
 	],
 	MANAGER: [
-		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ
+		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		/** GENERAL card */
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE,
+		/** ADMINISTRATION card — the manager gets these but NOT DOCS_MANAGE */
+		PermissionsEnum.DOCS_DELETE,
+		PermissionsEnum.DOCS_REVIEW,
+		PermissionsEnum.DOCS_AI_IMPORT
 	],
 	VIEWER: [
-		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ
+		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		PermissionsEnum.DOCS_READ
 	]
 };
 

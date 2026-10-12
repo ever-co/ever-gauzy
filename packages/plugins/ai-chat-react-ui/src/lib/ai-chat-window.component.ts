@@ -29,6 +29,12 @@ import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
 				width: 100%;
 				min-width: 0;
 				overflow: hidden;
+				/* The docked chat gets --gz-chat-surface from its nb-sidebar wrapper (the layout
+				   publishes the themed sidebar background there). This window has no wrapper, so
+				   without a value the panel's overlays (history, attach picker) fall back to a
+				   blur over a transparent surface — readable-ish, but the conversation bleeds
+				   through. Publish the page background this window already renders on. */
+				--gz-chat-surface: var(--background-basic-color-1, Canvas);
 			}
 		`
 	],

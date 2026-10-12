@@ -107,3 +107,18 @@ $drawer-z-index: 1043;
   overflow-y: auto;
   padding: 0.75rem 1rem 1rem;
 }
+
+// The wide panel holds long-form reading content: more breathing room, with
+// header and body on the same 1.5rem side edge.
+.record-drawer.is-wide {
+  width: min(36rem, 94vw);
+
+  .record-drawer-header {
+    align-items: center;
+    padding: 0.875rem 1.5rem;
+  }
+
+  .record-drawer-body {
+    padding: 1.25rem 1.5rem 2rem;
+  }
+}

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindOptionsWhere, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { FilterQuery as MikroFilterQuery } from '@mikro-orm/core';
-import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import {
 	AccountingTemplateTypeEnum,
@@ -13,10 +12,17 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { AccountingTemplate } from './accounting-template.entity';
+import {
+	IAccountingTemplateLookup,
+	globalAccountingTemplateMikroWhere,
+	globalAccountingTemplateWhere,
+	tenantAccountingTemplateWhere
+} from './accounting-template.criteria';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { compileMjml, toTemplateSource } from './../email-template/compile-mjml';
 import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
 import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
@@ -30,10 +36,13 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	}
 
 	generatePreview(input) {
-		const { data, organization } = input.request;
+		const { organization } = input.request;
+		// Coerce first: both the MJML compiler and the Handlebars fallback below must only ever see a
+		// string — Handlebars.compile() also accepts a pre-parsed AST object (GHSA-48h9-vwf5-h8m7).
+		const data = toTemplateSource(input.request.data);
 		let textToHtml = data;
 		try {
-			const mjmlToHtml = mjml2html(data);
+			const mjmlToHtml = compileMjml(data);
 			textToHtml = mjmlToHtml.errors.length ? data : mjmlToHtml.html;
 		} catch (error) {}
 
@@ -154,6 +163,12 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 */
 	async saveTemplate(input: IAccountingTemplateUpdateInput) {
 		const tenantId = RequestContext.currentTenantId();
+		// Compile the SUBMITTED mjml: this used to compile the previously stored `record.mjml`, so the
+		// saved hbs always lagged one save behind the mjml stored next to it. Compiled OUTSIDE the
+		// try/catch below on purpose — that catch means "no template for this organization yet", and
+		// mjml throws on markup it cannot parse, so a compile failure must not be read as a missing
+		// record and turned into an insert.
+		const hbs = compileMjml(input.mjml).html;
 		try {
 			const record = await this.findOneByWhereOptions({
 				languageCode: input.languageCode,
@@ -163,7 +178,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			});
 			let entity: AccountingTemplate = {
 				...record,
-				hbs: mjml2html(record.mjml).html,
+				hbs,
 				mjml: input.mjml
 			};
 			return await this.update(record.id, entity);
@@ -173,7 +188,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			entity.templateType = input.templateType;
 			entity.name = input.templateType;
 			entity.mjml = input.mjml;
-			entity.hbs = mjml2html(input.mjml).html;
+			entity.hbs = hbs;
 			entity.organizationId = input.organizationId;
 			entity.tenantId = tenantId;
 			return await this.create(entity);
@@ -194,31 +209,34 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			organizationId,
 			languageCode = themeLanguage
 		} = options;
-		// Try each fallback in order: org+tenant -> null org+null tenant -> english org+tenant -> english null
-		const fallbacks = [
-			{ languageCode, templateType, organizationId, tenantId },
-			{ languageCode, templateType, organizationId: null as any, tenantId: null as any },
-			{ languageCode: LanguagesEnum.ENGLISH, templateType, organizationId, tenantId },
-			{ languageCode: LanguagesEnum.ENGLISH, templateType, organizationId: null as any, tenantId: null as any }
+		// Try each fallback in order:
+		//   requested language, this tenant  ->  requested language, GLOBAL
+		//   English, this tenant             ->  English, GLOBAL
+		// A "global" template is the seeded row with tenantId IS NULL AND organizationId IS NULL. It is
+		// looked up with explicit NULL criteria on the raw repository (bypassing TenantAwareCrudService,
+		// which would pin the caller's tenant) — never with a literal `null`, which TypeORM used to drop
+		// from the SQL and thereby match another tenant's template (GHSA-44pv-34gx-q9p4).
+		const fallbacks: Array<{ languageCode: string; global: boolean }> = [
+			{ languageCode, global: false },
+			{ languageCode, global: true },
+			{ languageCode: LanguagesEnum.ENGLISH, global: false },
+			{ languageCode: LanguagesEnum.ENGLISH, global: true }
 		];
 
-		for (const where of fallbacks) {
+		for (const fallback of fallbacks) {
 			try {
-				let record: any;
-				// For null-tenant fallbacks, bypass TenantAwareCrudService scoping
-				if (where.tenantId === null) {
-					switch (this.ormType) {
-						case MultiORMEnum.MikroORM:
-							record = await this.mikroOrmRepository.findOne(where as any);
-							if (record) record = this.serialize(record);
-							break;
-						case MultiORMEnum.TypeORM:
-						default:
-							record = await this.typeOrmRepository.findOneBy(where as any);
-							break;
-					}
+				let record: IAccountingTemplate | null;
+				if (fallback.global) {
+					record = await this.findGlobalTemplate({ languageCode: fallback.languageCode, templateType });
 				} else {
-					record = await this.findOneByWhereOptions(where);
+					record = await this.findOneByWhereOptions(
+						tenantAccountingTemplateWhere({
+							languageCode: fallback.languageCode,
+							templateType,
+							tenantId,
+							organizationId
+						}) as FindOptionsWhere<AccountingTemplate>
+					);
 				}
 				if (record) return record;
 			} catch (error) {
@@ -230,12 +248,42 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	}
 
 	/**
+	 * Finds the GLOBAL (tenant-less, organization-less) template for a language/type pair.
+	 *
+	 * Runs on the raw repositories on purpose: TenantAwareCrudService would scope the lookup to the
+	 * caller's tenant, and the global row has no tenant. Both ORM branches pin `tenantId` AND
+	 * `organizationId` to `IS NULL` — see accounting-template.criteria.ts.
+	 *
+	 * @param lookup - The language code and template type to look up.
+	 * @returns The global template, or null when none is seeded for that pair.
+	 */
+	private async findGlobalTemplate(lookup: IAccountingTemplateLookup): Promise<IAccountingTemplate | null> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const record = await this.mikroOrmRepository.findOne(
+					globalAccountingTemplateMikroWhere(lookup) as MikroFilterQuery<AccountingTemplate>
+				);
+				return record ? this.serialize(record) : null;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository.findOneBy(
+					globalAccountingTemplateWhere(lookup) as FindOptionsWhere<AccountingTemplate>
+				);
+		}
+	}
+
+	/**
 	 * Get Accounting Templates using pagination params
 	 *
 	 * @param params
 	 * @returns
 	 */
 	async findAll(params: BaseQueryDTO<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(params);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { organizationId: mOrgId, languageCode: mLangCode } = params.where;

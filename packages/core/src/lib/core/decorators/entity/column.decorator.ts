@@ -47,7 +47,10 @@ export function MultiORMColumn<T>(
 
 		// Apply TypeORM decorator when using TypeORM
 		if (ormType === MultiORMEnum.TypeORM) {
-			TypeORMColumn({ type, ...options })(target, propertyKey);
+			// `hidden` is MikroORM-only (it drops the property from `wrap(entity).toJSON()`); TypeORM has
+			// no such column option, so it is not forwarded there.
+			const { hidden: _hidden, ...typeOrmOptions } = options;
+			TypeORMColumn({ type, ...typeOrmOptions })(target, propertyKey);
 		}
 
 		// Apply MikroORM decorator when using MikroORM

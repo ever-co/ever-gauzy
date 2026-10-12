@@ -6,7 +6,10 @@
   }
 }
 :host {
+  // Same page surface as Employees → Appointments
   nb-card {
+    background-color: var(--gauzy-card-2);
+
     nb-card-body {
       overflow: unset;
       height: 100%;
@@ -31,4 +34,12 @@
   background-color: var(--gauzy-card-2);
   padding: 8px;
   border-radius: nb-theme(button-rectangle-border-radius);
+}
+
+// Title next to the back arrow: the global header rule spreads this row with
+// `space-between`, which pushed the heading away from the arrow once the
+// breadcrumb trail wrapped onto its own line
+:host nb-card-header .card-header-title {
+  justify-content: flex-start;
+  column-gap: 0.75rem;
 }

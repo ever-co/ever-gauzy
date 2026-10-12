@@ -19,6 +19,8 @@ export type RecordViewFieldType =
 	| 'text'
 	| 'multiline'
 	| 'html'
+	| 'markdown'
+	| 'status'
 	| 'date'
 	| 'datetime'
 	| 'boolean'
@@ -40,6 +42,23 @@ export interface IRecordViewPerson {
 	id?: string;
 	name: string;
 	imageUrl?: string;
+	/** Shown when there is no real photo (placeholders count as none). */
+	initials: string;
+	/** Stable per-name hue for the initials avatar. */
+	hue: number;
+	/** The employee this person came from, when it was one — enables the profile link. */
+	employee?: any;
+}
+
+/** Value of a `status` field: a coloured dot (or icon) in front of plain text. */
+export interface IRecordViewStatus {
+	text: string;
+	/** Theme tone used when there is no explicit colour. */
+	tone?: 'success' | 'danger' | 'warning' | 'info' | 'primary' | 'basic';
+	/** Tenant-defined colour, e.g. a task status row's own colour. Wins over `tone`. */
+	color?: string;
+	/** Eva icon in place of the dot, e.g. a priority arrow. */
+	icon?: string;
 }
 
 export interface IRecordViewField {
@@ -67,11 +86,32 @@ export interface IRecordViewField {
 	wide?: boolean;
 	/** `link` rows: href to open. Falls back to the value itself. */
 	href?: string;
+	/** Eva icon shown before the label. */
+	icon?: string;
+	/** Hairline above this row — splits one section into groups (people / planning). */
+	divider?: boolean;
+	/** Colour the value, e.g. `danger` for an overdue date. */
+	tone?: 'success' | 'danger' | 'warning' | 'info' | 'primary';
+	/** Render the value alone, without its label (the section title already says it). */
+	hideLabel?: boolean;
 }
+
+/**
+ * How a section is drawn:
+ * - `panel` (default): a bordered card; its title becomes the card header.
+ * - `plain`: a heading followed by the content, no frame — long-form text.
+ * - `meta`: small muted "label value" lines — created / updated stamps.
+ */
+export type RecordViewSectionVariant = 'panel' | 'plain' | 'meta';
 
 export interface IRecordViewSection {
 	/** i18n key (or literal) for the section heading; omit for an unlabelled block. */
 	title?: string;
+	/** Eva icon shown before the title. */
+	icon?: string;
+	variant?: RecordViewSectionVariant;
+	/** Panel header toggles the section open / closed. */
+	collapsible?: boolean;
 	fields: IRecordViewField[];
 }
 
@@ -88,9 +128,18 @@ export interface IRecordViewRow {
 	tagsHost?: { tags: any[] };
 	/** Normalized single person for the `person` renderer. */
 	person?: IRecordViewPerson;
+	/** Normalized list for the `people` renderer. */
+	people?: IRecordViewPerson[];
+	/** Normalized list for the `teams` renderer. */
+	teams?: { name: string; count: number }[];
+	/** Rendered HTML for the `markdown` renderer. */
+	html?: string;
 }
 
 export interface IRecordViewSectionRows {
 	title?: string;
+	icon?: string;
+	variant: RecordViewSectionVariant;
+	collapsible: boolean;
 	rows: IRecordViewRow[];
 }

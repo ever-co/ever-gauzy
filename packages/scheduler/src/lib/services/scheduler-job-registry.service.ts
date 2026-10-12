@@ -72,9 +72,25 @@ export class SchedulerJobRegistryService {
 			throw new Error(`Job "${jobId}" has invalid "intervalMs" value "${intervalMs}".`);
 		}
 
-		if (enabled && queueName && !this.moduleOptions.enableQueueing) {
-			throw new Error(`Job "${jobId}" targets queue "${queueName}" but queueing is disabled.`);
-		}
+		/**
+		 * A job that fans out to a queue in a process that has no queueing is a real problem, but
+		 * it is NOT a reason to abort the whole bootstrap — which is what throwing here did.
+		 *
+		 * `@ScheduledJob({ queueName })` is discovered in EVERY process that has a scheduler root,
+		 * including ones that legitimately have no Redis. `DocsRecoveryService` is the case that
+		 * exposed it: it is registered unconditionally (correctly — it also owns a startup recovery
+		 * scan that needs no queue), so `apps/worker` could not boot at all whenever `REDIS_ENABLED`
+		 * was not `true`. It threw even when `moduleOptions.enabled` was false and the job provably
+		 * could never fire.
+		 *
+		 * Marking it unschedulable instead keeps the guarantee that mattered — the job never fires
+		 * and then dies at enqueue — while letting the process start. `registerSchedules()` skips it
+		 * with a warning naming the job and queue, so it is loud, not silent.
+		 */
+		const unschedulableReason =
+			enabled && queueName && !this.moduleOptions.enableQueueing
+				? `targets queue "${queueName}" but queueing is disabled in this process`
+				: undefined;
 
 		const retries = this.toNonNegativeInteger(metadata.retries ?? this.moduleOptions.defaultJobOptions.retries, 'retries', jobId);
 		const retryDelayMs = this.toNonNegativeInteger(
@@ -105,7 +121,8 @@ export class SchedulerJobRegistryService {
 			maxRandomDelayMs,
 			queueName,
 			queueJobName: queueJobName && queueJobName.length > 0 ? queueJobName : undefined,
-			queueJobOptions: metadata.queueJobOptions
+			queueJobOptions: metadata.queueJobOptions,
+			unschedulableReason
 		};
 	}
 

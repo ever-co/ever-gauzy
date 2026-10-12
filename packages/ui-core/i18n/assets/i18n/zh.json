@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "已启用",
+		"DISABLED": "已停用",
 		"PAY": "支付",
 		"ADD_EXISTING_USER": "添加现有用户",
 		"ADD_NEW": "添加新的",
@@ -816,6 +818,7 @@
 		"SKILLS": "技能",
 		"PRIVACY": "隐私",
 		"SELECT_TIMEZONE": "选择时区",
+		"SELECT_TIMEZONE_HINT": "预约时间以此时区显示。",
 		"SHOW_AVERAGE_BONUS": "显示平均奖金",
 		"SHOW_AVERAGE_INCOME": "显示平均收入",
 		"SHOW_PAYPERIOD": "显示支付周期",
@@ -1154,7 +1157,71 @@
 		"APPLICATIONS": "应用程序",
 		"OPEN_GA_BROWSER": "在浏览器中打开 Gauzy",
 		"START_SERVER": "开始服务器",
-		"STOP_SERVER": "停止服务器"
+		"STOP_SERVER": "停止服务器",
+		"DOCUMENTS": "文件",
+		"BILLING": "计费",
+		"MONITORING": "监控",
+		"ADD_ITEM": "添加{{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "仅您自己",
+			"TENANT": "此租户中的所有人"
+		},
+		"UNSAVED_CHANGES": "未保存的更改",
+		"ACCOUNT": {
+			"TITLE": "账户",
+			"DESCRIPTION": "您当前登录使用的账户。",
+			"MANAGE": "管理个人资料",
+			"ROLE": "角色",
+			"MEMBER_SINCE": "加入时间"
+		},
+		"PREFERENCES": {
+			"TITLE": "偏好设置",
+			"DESCRIPTION": "应用对您的外观和行为。更改会立即生效。",
+			"THEME": "主题",
+			"THEME_HINT": "整个应用的配色方案。",
+			"LANGUAGE": "语言",
+			"LANGUAGE_HINT": "菜单、标签和消息使用的语言。",
+			"LAYOUT": "默认布局",
+			"RESET_LAYOUTS": "重置页面布局",
+			"SAVE_ERROR": "无法保存您的偏好设置。",
+			"LAYOUTS_RESET": "页面布局已重置为您的默认设置。"
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "方形图片，至少 128 × 128 像素。",
+			"NAME_HINT": "向此租户的所有用户显示。",
+			"TENANT_ID": "租户 ID",
+			"TENANT_ID_HINT": "联系支持或调用 API 时请提供此 ID。",
+			"COPY_ERROR": "无法复制租户 ID。",
+			"TITLE": "租户资料",
+			"DESCRIPTION": "此租户的名称和徽标，会在工作区切换器和侧边栏中向所有用户显示。",
+			"NAME": "租户名称",
+			"NAME_PLACEHOLDER": "输入租户名称",
+			"NAME_REQUIRED": "租户名称为必填项。",
+			"LOGO": "租户徽标",
+			"LOGO_CHANGE": "点击上传新徽标",
+			"LOGO_REMOVE": "移除徽标",
+			"LOGO_UPLOAD_ERROR": "无法上传徽标。",
+			"CREATED_AT": "创建于",
+			"SAVED": "租户资料已保存",
+			"SAVE_ERROR": "无法保存租户资料。",
+			"LOAD_ERROR": "无法加载租户资料。"
+		},
+		"PREFERRED_UI": {
+			"LABEL": "界面",
+			"TITLE": "用户界面",
+			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
+			"OPTIONS": {
+				"ANGULAR": "Angular（默认）",
+				"REACT": "React（新）"
+			},
+			"HINT": "适用于整个租户及所有设备。目前时间跟踪仪表板同时提供两种界面；更多页面即将推出。",
+			"READ_ONLY": "只有租户管理员可以更改此设置。",
+			"SAVING": "正在保存…",
+			"SAVED": "界面偏好已保存",
+			"SAVE_ERROR": "无法保存界面偏好。"
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "主题",
@@ -1188,7 +1255,9 @@
 		"CARDS_GRID": "卡片网格",
 		"SPRINT_VIEW": "Sprint View 时事回顾",
 		"QUICK_SETTINGS": "快捷设置",
-		"NO_LAYOUT": "没有可用的数据布局"
+		"NO_LAYOUT": "没有可用的数据布局",
+		"PREFERENCES": "偏好设置",
+		"SUPPORT": "支持"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "有什么新的吗？",
@@ -1735,6 +1804,19 @@
 		"TIME_TRACKING": "时间跟踪",
 		"PROJECT_MANAGEMENT": "项目管理",
 		"EMPLOYEE_STATISTICS": "员工统计",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",
+			"OF_INCOME": "占收入的 {{ value }}%",
+			"MARGIN": "利润率 {{ value }}%",
+			"BREAKDOWN": "按员工统计收入",
+			"NO_DATA": "此期间没有财务活动",
+			"NO_DATA_HINT": "此日期范围内记录的收入和支出将显示在这里。",
+			"NO_EMPLOYEES": "此期间没有员工记录",
+			"SORT_BY": "按 {{ name }} 排序",
+			"SORT_LABEL": "排序方式",
+			"SORT_ASCENDING": "升序",
+			"SORT_DESCENDING": "降序"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "请在上方的菜单中选择一个月份和员工。",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "未经身份验证的用户请插入文本。",
 		"CHARTS": {
@@ -1923,7 +2005,90 @@
 			"PREVIOUS": "以前"
 		},
 		"NOT_STARTED": "未开始",
-		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。"
+		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。",
+		"VIEW": {
+			"PERIOD": "期间",
+			"PERIODS": {
+				"THIS_WEEK": "本周",
+				"THIS_MONTH": "本月",
+				"LAST_30_DAYS": "最近 30 天"
+			},
+			"TABS": {
+				"OVERVIEW": "概览",
+				"PROFILE": "个人资料"
+			},
+			"PRESENCE": {
+				"TRACKING": "正在计时",
+				"ONLINE": "在线",
+				"AWAY": "离开",
+				"OFFLINE": "离线"
+			},
+			"LOCAL_TIME": "当地时间",
+			"MEMBER_SINCE": "加入时间",
+			"WEEKLY_LIMIT": "每周上限",
+			"WORKED_TODAY": "今日工作",
+			"WORKED_PERIOD": "期间工作",
+			"ACTIVITY_META": "{{ value }} 活跃度",
+			"AVG_ACTIVITY": "平均活跃度",
+			"OPEN_TASKS": "未完成任务",
+			"OPEN_TASKS_META": "{{ progress }} 进行中 · {{ overdue }} 已逾期",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "较上周",
+				"THIS_MONTH": "较上月",
+				"LAST_30_DAYS": "较前 30 天"
+			},
+			"HOURS_WORKED": "工作时长",
+			"HOURS_META": "共 {{ total }} · 每个工作日 {{ average }}",
+			"TRACKED": "已追踪",
+			"MANUAL": "手动",
+			"OPEN_TIMESHEET": "打开时间表",
+			"PROJECTS": "项目",
+			"RECENT_SCREENSHOTS": "最近截图",
+			"VIEW_ALL": "查看全部",
+			"ASSIGNED_TASKS": "已分配任务",
+			"COLUMNS": {
+				"TASK": "任务",
+				"PROJECT": "项目",
+				"STATUS": "状态",
+				"DUE": "截止日期",
+				"TIME": "时长",
+				"NAME": "名称",
+				"PRIORITY": "优先级"
+			},
+			"TOP_TASKS": "耗时最多的任务",
+			"APPS_URLS": "应用和网址",
+			"NO_TIME": "本期间未记录时间",
+			"NO_TASKS": "没有分配的任务",
+			"NO_APPS": "本期间没有应用或网址活动",
+			"NO_SCREENSHOTS": "本期间没有截图",
+			"UNAVAILABLE": "您无权访问这些数据",
+			"PROFILE": {
+				"ABOUT": "简介",
+				"CONTACT": "联系方式",
+				"SKILLS_TAGS": "技能和标签",
+				"TIME_ZONE": "时区",
+				"NOT_PROVIDED": "尚未填写",
+				"NO_DESCRIPTION": "尚未添加描述"
+			},
+			"TASKS_HELP": "此人参与的任务。点击方框筛选列表。",
+			"TASK_FILTERS": {
+				"OPEN": "未完成",
+				"PROGRESS": "进行中",
+				"OVERDUE": "已逾期",
+				"DONE": "已完成"
+			},
+			"DUE": {
+				"NONE": "无截止日期",
+				"WAS_DUE": "原定截止",
+				"OVERDUE_DAY": "逾期 1 天",
+				"OVERDUE_DAYS": "逾期 {{ count }} 天",
+				"TODAY": "今天到期",
+				"TOMORROW": "明天到期",
+				"IN_DAYS": "{{ count }} 天后到期"
+			},
+			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
+			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "所有目标",
@@ -1939,6 +2104,7 @@
 		"EXPECTED": "预期的",
 		"UPDATES": "更新",
 		"UPDATE": "更新",
+		"ALIGNMENTS": "对齐",
 		"COMMENTS": "评论",
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",
@@ -1955,6 +2121,8 @@
 		"GOAL_TEMPLATES": "目标模板",
 		"CREATE_NEW_MENU": "创建新的",
 		"CREATE_FROM_PRESET": "从预设创建",
+		"SELECT_A_PRESET": "选择预设",
+		"ADDITIONAL_DETAILS": "其他详情",
 		"OWNERSHIP": {
 			"EMPLOYEES": "员工",
 			"TEAMS": "团队",
@@ -1984,7 +2152,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "没有要显示的关键结果。",
 			"NO_UPDATES": "目前尚未有任何更新。",
-			"NO_ALIGNMENT": "尚无对齐。"
+			"NO_ALIGNMENT": "尚无对齐。",
+			"NO_PROGRESS_DATA": "尚无可绘制的进度数据。"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "组织",
@@ -2417,6 +2586,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "允许员工退出代理应用程序。禁用时，代理应用中的退出选项将被阻止。",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "允许从代理应用中注销",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "允许员工从代理应用程序注销。禁用时，代理应用中的注销选项将被阻止。",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "欧洲经济区 / 英国员工保护已启用",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "对于欧洲经济区或英国的组织和员工，员工始终可以退出并注销桌面代理。员工无法中断的采集很难依据 GDPR 和《欧洲人权公约》第 8 条证明其正当性，因此此处不提供这些限制。",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "确认限制退出或注销代理",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "启用此限制后，员工无法阻止桌面代理对其进行采集。请确认您已评估此做法对这些员工合法且适度，并愿意为此承担责任。您的确认将记录在您的账户下。",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "跟踪键盘和鼠标活动",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "启用完整的键盘和鼠标活动跟踪，包括在所有桌面应用和代理中的按键和精确鼠标移动。",
 				"TRACK_ALL_DISPLAYS": "跟踪所有显示器",
@@ -2440,6 +2613,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "活动持续时间证明倒计时对话框，它表示给予证明活动的分钟数。",
 				"ENABLE_DETECTION_INACTIVITY": "使员工的不活动能够被检测到",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "截图频率",
 				"SCREENSHOT_FREQUENCY_INFO": "指定更新频率或时间间隔同步。",
 				"RANDOM_SCREENSHOT": "随机截图",
@@ -2686,7 +2861,10 @@
 		"ADDRESS": "地址",
 		"ADDRESS_2": "地址2",
 		"MEMBERS": "成员",
-		"BUDGET": "预算"
+		"BUDGET": "预算",
+		"PHOTO_HINT": "点击或拖放图片以上传",
+		"SEARCH_EMPLOYEES": "按姓名或邮箱搜索员工",
+		"NO_MEMBERS": "尚未添加成员"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",
@@ -2719,7 +2897,19 @@
 		"EMPLOYEE_UPDATED": "员工已更新。",
 		"IMAGE_UPDATED": "图片已经更新。",
 		"FAIL_TO_UPDATE_IMAGE": "更新失败。",
-		"ANONYMOUS": "匿名"
+		"ANONYMOUS": "匿名",
+		"ABOUT": "简介",
+		"INACTIVE": "未激活",
+		"PER_HOUR": "/ 小时",
+		"MEMBER_SINCE": "加入时间",
+		"NO_DESCRIPTION": "尚未添加描述",
+		"NO_SKILLS": "尚未列出技能",
+		"VIEW_COMPANY_PROFILE": "查看公司简介",
+		"EDIT": {
+			"NO_AWARDS": "尚未添加奖项",
+			"ADD_AWARD": "添加奖项",
+			"PRIVACY_HELP": "选择访客可在公开资料中看到的信息。"
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "提案管理页面",
@@ -3315,7 +3505,11 @@
 		"STOP_TIMER": "停止计时器",
 		"TIME_LOG": "时间记录",
 		"VIEW_APPOINTMENTS": "查看预约",
-		"VIEW_TIME_ACTIVITY": "查看时间活动"
+		"VIEW_TIME_ACTIVITY": "查看时间活动",
+		"DOCUMENTS": {
+			"NEW_PAGE": "新建页面",
+			"UPLOAD": "上传"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "会计",
@@ -3323,7 +3517,8 @@
 		"PROJECT_MANAGEMENT": "项目管理",
 		"JOBS": "工作",
 		"CONTACTS": "联系人",
-		"TIME_TRACKING": "时间跟踪"
+		"TIME_TRACKING": "时间跟踪",
+		"DOCUMENTS": "文件"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "名字 (Míngzì)",
@@ -3369,6 +3564,9 @@
 		"BROWSE": "浏览",
 		"COMMENT": "评论",
 		"COMMENTS": "评论",
+		"COMMENT_PLACEHOLDER": "写下评论…",
+		"NO_COMMENTS": "暂无评论",
+		"NO_COMMENTS_HINT": "评论将显示在这里，最新的在前。",
 		"HEADER": "发票",
 		"INVOICE_NUMBER": "发票号码",
 		"ESTIMATE_NUMBER": "估计数字",
@@ -3632,7 +3830,9 @@
 		"SELECT_AN_ORGANIZATION": "组织",
 		"SELECT_PROJECT": "项目",
 		"SELECT_TEAM": "团队",
-		"AI_CHAT": "AI 聊天"
+		"AI_CHAT": "AI 聊天",
+		"COLLAPSE_SIDEBAR": "收起侧边栏",
+		"EXPAND_SIDEBAR": "展开侧边栏"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI 助手",
@@ -3658,9 +3858,34 @@
 		"STOP": "停止生成",
 		"ERROR": "出了点问题。",
 		"RETRY": "重试",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"DICTATION_FAILED": "无法转录录音。",
+		"DICTATION_NOT_CONFIGURED": "听写需要语音提供商。请在“AI 提供商”设置页面添加一个。",
+		"DICTATION_ASK_ADMIN": "听写需要语音提供商——请管理员在“设置 → AI 提供商”中添加。",
+		"DICTATION_KEY_REJECTED": "语音提供商拒绝了其 API 密钥。请在“AI 提供商”设置页面更新。",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "语音提供商拒绝了其 API 密钥——请管理员在“设置 → AI 提供商”中更新。",
+		"DICTATION_OPEN_SETTINGS": "打开 AI 提供商",
+		"RATE_LIMITED_SHARED": "免费 AI 套餐当前已达到请求上限。连接你自己的 OpenRouter 账户，或配置其他 AI 提供商，即可不间断使用。",
+		"RATE_LIMITED_OWN": "你的 AI 提供商当前正在限制请求。请向提供商确认你的套餐和限额，或配置其他 AI 提供商。",
+		"RATE_LIMIT_RETRY_IN": "大约 {{seconds}} 秒后可以重试。",
+		"OPEN_AI_SETTINGS": "打开 AI 提供商",
+		"ERROR_NOT_CONFIGURED": "AI 聊天需要已配置的提供商。请在“AI 提供商”设置页面添加一个。",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "AI 聊天需要已配置的提供商——请管理员在“设置 → AI 提供商”中添加。",
+		"ERROR_PROVIDER_UNAVAILABLE": "所选的 AI 提供商当前无法回答。请在“AI 提供商”设置页面检查。",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "所选的 AI 提供商当前无法回答——请管理员检查“设置 → AI 提供商”。",
+		"ERROR_MODEL_UNAVAILABLE": "当前 API 密钥无法使用此模型。请在“AI 提供商”设置页面选择其他模型。",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "当前 API 密钥无法使用此模型——请管理员检查“设置 → AI 提供商”。",
+		"ERROR_KEY_REJECTED": "AI 提供商拒绝了其 API 密钥。请在“AI 提供商”设置页面更新。",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "AI 提供商拒绝了其 API 密钥——请管理员在“设置 → AI 提供商”中更新。",
+		"ERROR_RATE_LIMITED": "AI 提供商正在限制请求。",
+		"RECORDING": "正在录音",
+		"PREVIEW": "预览",
+		"PREVIEW_PAGE": "页面",
+		"PREVIEW_NEW_TAB": "在新标签页中打开",
+		"PREVIEW_CLOSE": "关闭预览",
+		"PREVIEW_UNAVAILABLE": "此文件无法预览。",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "在文档中打开",
+		"ATTACH_UPLOADING": "正在上传…",
+		"ATTACH_DOCUMENT": "文档"
 	},
 	"HEADER_TITLE": {
 		"FOR": "为了",
@@ -3673,6 +3898,21 @@
 		"REDIRECT_TO_HOME": "您将很快被重定向到主页"
 	},
 	"HELP_PAGE": {
+		"INTRO": "查找文档、获取解答并联系 Gauzy 团队。",
+		"DOCUMENTATION": "文档",
+		"DOCUMENTATION_DESC": "涵盖 Gauzy 每项功能的指南与参考。",
+		"FAQ": "常见问题",
+		"FAQ_DESC": "最常见问题的解答。",
+		"SUPPORT_CHAT": "支持聊天",
+		"SUPPORT_CHAT_DESC": "与我们的支持团队交流。",
+		"REPORT_ISSUE": "报告问题",
+		"REPORT_ISSUE_DESC": "发现了 Bug？请在 GitHub 上提交 issue。",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "源代码、版本发布与讨论。",
+		"WEBSITE": "Gauzy 官网",
+		"WEBSITE_DESC": "进一步了解 Gauzy 平台。",
+		"ABOUT_LINK": "关于 Gauzy",
+		"ABOUT_LINK_DESC": "版本详情、许可证与链接。",
 		"HELP": "帮助",
 		"KNOWLEDGE_BASE": "知识库",
 		"CHOSE_ICON": "选择图标进行设置",
@@ -3771,7 +4011,8 @@
 		"ROLES_PERMISSIONS": "角色和权限",
 		"TIME_TRACKING": "时间跟踪",
 		"ESTIMATE": "估计",
-		"DASHBOARD": "仪表板"
+		"DASHBOARD": "仪表板",
+		"DOCUMENTS": "文档"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3869,6 +4110,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "前往仪表盘，管理员工统计数据，时间追踪仪表盘。"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "公司文档中心：上传、Wiki 页面、审阅和 AI 知识"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3983,6 +4227,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. 保留所有权利。",
+		"DESCRIPTION": "Ever® Gauzy™ 是一个面向协作、按需与共享经济的开放式业务管理平台 — 集 ERP、CRM、HRM、ATS 与项目管理于一体，并内置时间跟踪。",
+		"LICENSE": "开源软件，发布许可证为",
+		"VERSION_DETAILS": "版本详情",
+		"VERSION_MISMATCH": "Web 应用与 API 构建自不同的提交 — 部署可能正在进行中。",
+		"WEB_APP": "Web 应用",
+		"API": "API",
+		"UNTAGGED": "无标签构建",
+		"API_UNAVAILABLE": "API 版本不可用",
+		"LEARN_MORE": "了解更多",
 		"ABOUT": "关于"
 	},
 	"FOOTER": {
@@ -4378,6 +4632,20 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "监控已启用：正在记录时间和活动",
+		"MONITORING_IDLE": "代理空闲",
+		"MONITORING_TRAY_ACTIVE": "监控已启用，正在记录：{{captures}}",
+		"MONITORING_TRAY_PAUSED": "监控已暂停：未记录任何内容",
+		"MONITORING_CAPTURE_TIME": "时间和活动应用程序",
+		"MONITORING_CAPTURE_SCREENSHOTS": "屏幕截图",
+		"MONITORING_CAPTURE_INPUT": "键盘和鼠标活动",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "选择客户",
+			"SELECT_PROJECT": "选择项目",
+			"SELECT_TEAM": "选择团队",
+			"SELECT_TASK": "选择任务",
+			"DESCRIPTION": "添加描述"
+		},
 		"IS_BILLABLE": "可收费",
 		"STOP_TIMER": "停止计时器",
 		"START_TIMER": "开始计时器",
@@ -4483,7 +4751,7 @@
 			"SELECT_DEFAULT_CDN": "选择更新的默认 CDN 服务器",
 			"TOGGLE_UPDATE_LOCALLY": "切换以本地方式更新",
 			"LOCAL_SERVER": "本地服务器",
-			"LOCAL_SERVER_NOTE": "所选择的目录应该明确包含 <strong>latest.yml</strong> 和/或 <strong>latest-mac.yml</strong> 清单，以进行更新验证。",
+			"LOCAL_SERVER_NOTE": "所选目录必须包含适用于您系统的更新清单（Windows：<strong>latest-x64.yml</strong> 或 <strong>latest-arm64.yml</strong>；Linux：<strong>latest-x64-linux.yml</strong> 或 <strong>latest-arm64-linux-arm64.yml</strong>；macOS：<strong>latest-mac.yml</strong>）以及其中列出的更新文件，以进行更新验证。",
 			"OTHER_SETTINGS": "其他设置",
 			"ALLOW_PRERELEASE_VERSIONS": "允许预发布版本",
 			"CHECK_UPDATE_APP_VERSION": "检查并更新您的应用版本",
@@ -4847,7 +5115,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "截图",
 			"OF": "关于/关于/的/的",
-			"TIME_LOG": "时间日志"
+			"TIME_LOG": "时间日志",
+			"TAKEN_AT": "截图拍摄于 {{ time }}",
+			"POSITION": "第 {{ position }} 张截图，共 {{ total }} 张"
 		},
 		"RUNNING_TIMER_WARNING": "警告。计时器正在运行，只有在停止计时器或在计时器应用程序内才能删除屏幕截图。",
 		"DELETE_CONFIRM": "你确定要删除这些截图和时间记录吗？",
@@ -4896,7 +5166,9 @@
 		"NO_SCREENSHOT": "没有屏幕截图",
 		"NO_SCREENSHOTS": "不允许截屏",
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
-		"SCREEN_SELECTED": "{{ count }} 屏幕已选择"
+		"SCREEN_SELECTED": "{{ count }} 屏幕已选择",
+		"NO_TIME_TRACKED": "未记录时间",
+		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
@@ -4922,6 +5194,16 @@
 		"BUFFER_AT_START": "开始的缓冲",
 		"BUFFER_AT_END": "末端缓冲区",
 		"BREAK_TIME": "休息时间",
+		"DETAILS": "详情",
+		"PARTICIPANTS": "参与者",
+		"FORM_HINT": "设置会议主题、时间和参与者。",
+		"DETAILS_HINT": "所有受邀者都能看到的议程、地点和备注。",
+		"SCHEDULE": "日程",
+		"SCHEDULE_HINT": "选择日期和时间段，可选缓冲时间和休息时间。",
+		"BUFFER_TIME_HINT": "在会议前后预留空闲时间。",
+		"BREAK_TIME_HINT": "会议中安排短暂休息。",
+		"BREAK_START": "休息开始时间",
+		"PARTICIPANTS_HINT": "收到邀请的人员。",
 		"ARE_YOU_SURE": "你确定吗？这个行为是不可逆的。"
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4966,7 +5248,9 @@
 		"CANCEL": "取消预约",
 		"TIMEZONE": "您的时区：",
 		"CHANGE": "转变",
+		"CHANGE_TIMEZONE": "更改",
 		"SELECT_EMPLOYEE_ERROR": "请选择一个员工。",
+		"SELECT_EMPLOYEE_HINT": "选择您想见的人，然后选择适合您的时间。",
 		"EXPIRED_OR_CANCELLED": "该约会已过期或已取消。",
 		"EMAIL_SENT": "已经向主持人和所有参会人员发送了一封电子邮件。",
 		"NO_ACTIVE_EVENT_TYPES": "没有活动类型。",
@@ -5013,7 +5297,10 @@
 			"payment-receipt": "付款收据",
 			"reject-candidate": "拒绝候选人"
 		},
-		"HTML_EDITOR": "HTML编辑器"
+		"HTML_EDITOR": "HTML编辑器",
+		"FULL_PREVIEW": "完整预览",
+		"VIEW_GRID": "网格",
+		"VIEW_EDITOR": "编辑器"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "管道",
@@ -5063,54 +5350,192 @@
 		"QUICK_ACTIONS": "快速行动"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "文件提供者",
+		"FILE_PROVIDER": "文件存储提供商",
+		"SHOW_SECRET": "显示密钥",
+		"HIDE_SECRET": "隐藏密钥",
+		"SUMMARY": {
+			"TITLE": "当前配置",
+			"DESCRIPTION": "最近保存的设置——新上传的文件将使用此配置。",
+			"PROVIDER": "提供商",
+			"BUCKET": "存储桶 / 云名称",
+			"REGION": "区域",
+			"ENDPOINT": "端点",
+			"CREDENTIALS": "凭据",
+			"CREDENTIALS_SAVED": "已保存",
+			"CREDENTIALS_INCOMPLETE": "不完整",
+			"CREDENTIALS_NONE": "未设置",
+			"CREDENTIALS_NOT_NEEDED": "无需",
+			"SERVER_DEFAULT": "服务器默认值"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "如何获取密钥",
+			"LOCAL": {
+				"NAME": "本地磁盘",
+				"DESCRIPTION": "文件保存在 API 服务器自身的文件系统中。"
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "文件保存到 AWS S3 存储桶。请使用对该存储桶具有读写权限的 IAM 访问密钥。"
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "兼容 S3 的云存储。保存时会向 Wasabi 验证凭据。"
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "图片和视频托管。云名称和 API 密钥位于 Cloudinary 控制台的 API Keys 下。"
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "兼容 S3 的对象存储，可选 CDN。请在 DigitalOcean 控制面板中创建 Spaces 访问密钥。"
+			}
+		},
+		"LOCAL": {
+			"HEADER": "本地存储",
+			"WHERE": "上传的文件写入 API 服务器的文件系统。",
+			"NO_CONFIG": "无需配置——本地存储开箱即用。",
+			"WARNING": "如果服务器在没有持久卷的情况下重新部署，文件将丢失，且文件不会在多个 API 实例之间共享。生产环境请使用云存储提供商。"
+		},
+		"CHECK": {
+			"BUTTON": "检查配置",
+			"OK": "所有必填字段均已填写，URL 有效。密钥本身仅由提供商验证。",
+			"OK_LOCAL": "本地存储无需配置。",
+			"OK_SERVER_DEFAULTS": "没有缺失项。以下留空的字段将使用服务器自身的配置：",
+			"MISSING": "缺少：",
+			"INVALID_URL": "无效的 http(s) URL：",
+			"HTTPS_REQUIRED": "必须使用 https://——密钥会发送到此地址："
+		},
 		"S3": {
-			"HEADER": "S3配置",
+			"HEADER": "S3 配置",
+			"SUBTITLE": "将上传的文件存储到 Amazon S3 存储桶中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "对该存储桶具有读写权限的 IAM 访问密钥。",
+				"BUCKET": "存储桶",
+				"BUCKET_HINT": "上传文件的写入位置。"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"REGION": "存储桶所在的 AWS 区域，例如 us-east-1 或 eu-west-1。",
+				"BUCKET": "与 S3 控制台中完全一致的存储桶名称。"
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶"
+				"REGION": "区域",
+				"BUCKET": "存储桶"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶"
+				"REGION": "区域",
+				"BUCKET": "存储桶"
 			}
 		},
 		"WASABI": {
-			"HEADER": "山葵配置",
+			"HEADER": "Wasabi 配置",
+			"SUBTITLE": "通过兼容 S3 的 API 将上传的文件存储到 Wasabi 存储桶中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "来自 Wasabi 控制台的访问密钥对。",
+				"BUCKET": "存储桶与端点",
+				"BUCKET_HINT": "上传文件的写入位置。",
+				"OPTIONS": "选项"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"REGION": "存储桶所在区域，例如 us-east-1 或 eu-central-1。",
+				"SERVICE_URL": "该区域的 S3 端点。",
+				"BUCKET": "仅限小写字母、数字、点和连字符。名称在整个 Wasabi 中唯一。",
+				"FORCE_PATH_STYLE": "以 endpoint/bucket/file 而非 bucket.endpoint/file 的形式访问文件。除非需要虚拟主机式 URL，否则请保持开启。"
+			},
+			"SUGGESTED_ENDPOINT": "该区域的端点：",
+			"USE_SUGGESTION": "使用",
+			"SAVE_NOTE": "保存时，Gauzy 会使用这些凭据在 Wasabi 中创建存储桶。如果 Wasabi 拒绝请求，设置将不会保存。",
 			"LABELS": {
-				"ACCESS_KEY_ID": "访问密钥ID",
+				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶",
-				"SERVICE_URL": "服务网址"
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL",
+				"FORCE_PATH_STYLE": "强制使用路径样式 URL"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "访问密钥 ID",
 				"SECRET_ACCESS_KEY": "秘密访问密钥",
-				"REGION": "地区",
-				"BUCKET": "桶",
-				"SERVICE_URL": "服务网址"
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL"
 			}
 		},
 		"CLOUDINARY": {
-			"HEADER": "云图片配置",
+			"HEADER": "Cloudinary 配置",
+			"SUBTITLE": "将上传的文件存储到 Cloudinary，并通过其分发网络提供访问。",
+			"SECTIONS": {
+				"ACCOUNT": "账户",
+				"ACCOUNT_HINT": "这三项均可在 Cloudinary 控制台的 API Keys 中找到。",
+				"DELIVERY": "分发",
+				"DELIVERY_HINT": "上传文件链接的生成方式。"
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Cloudinary 控制台顶部显示的名称。",
+				"ACCESS_API_KEY": "用于识别账户；与 API Secret 配合使用。",
+				"ACCESS_API_SECRET": "已保存的值会以掩码形式返回。",
+				"DELIVERY_URL": "文件链接的基础地址。除非使用自定义域名，否则保持 https://res.cloudinary.com。",
+				"SECURE": "使用 https:// 生成文件链接。保持为 True。"
+			},
 			"LABELS": {
-				"CLOUD_NAME": "云图名字",
-				"ACCESS_API_KEY": "访问密钥 ID",
-				"ACCESS_API_SECRET": "秘密访问密钥",
-				"DELIVERY_URL": "交付网址",
-				"SECURE": "安全"
+				"CLOUD_NAME": "云名称",
+				"ACCESS_API_KEY": "API Key",
+				"ACCESS_API_SECRET": "API Secret",
+				"DELIVERY_URL": "分发 URL",
+				"SECURE": "安全连接（HTTPS）"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Cloudinary名称",
-				"ACCESS_API_KEY": "访问密钥标识 (Fǎngwèn mìyào biāozhū)",
-				"ACCESS_API_SECRET": "秘密访问密钥",
-				"DELIVERY_URL": "交付URL",
-				"SECURE": "安全"
+				"CLOUD_NAME": "云名称",
+				"ACCESS_API_KEY": "API Key",
+				"ACCESS_API_SECRET": "API Secret",
+				"DELIVERY_URL": "分发 URL",
+				"SECURE": "安全连接（HTTPS）"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "DigitalOcean 配置",
+			"SUBTITLE": "通过兼容 S3 的 API 将上传的文件存储到 DigitalOcean Space 中。",
+			"SECTIONS": {
+				"CREDENTIALS": "凭据",
+				"CREDENTIALS_HINT": "来自 DigitalOcean 控制面板的 Spaces 访问密钥。",
+				"BUCKET": "Space 与端点",
+				"BUCKET_HINT": "上传文件的写入位置。",
+				"OPTIONS": "选项"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "密钥对的公开部分。",
+				"SECRET_ACCESS_KEY": "仅在创建密钥时显示一次。已保存的值会以掩码形式返回。",
+				"SERVICE_URL": "Space 所在数据中心的端点，例如 https://fra1.digitaloceanspaces.com。",
+				"REGION": "按 Spaces 的要求固定为 us-east-1；数据中心由端点决定。",
+				"BUCKET": "Space 的名称。",
+				"CDN_URL": "可选。若已启用 CDN，填写该 Space 的 CDN 端点。",
+				"FORCE_PATH_STYLE": "以 endpoint/space/file 而非 space.endpoint/file 的形式访问文件。"
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "访问密钥 ID",
+				"SECRET_ACCESS_KEY": "秘密访问密钥",
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL",
+				"CDN_URL": "CDN URL",
+				"FORCE_PATH_STYLE": "强制使用路径样式 URL"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "访问密钥 ID",
+				"SECRET_ACCESS_KEY": "秘密访问密钥",
+				"REGION": "区域",
+				"BUCKET": "存储桶",
+				"SERVICE_URL": "服务 URL",
+				"CDN_URL": "CDN URL"
 			}
 		}
 	},
@@ -5159,7 +5584,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS 供应商",
-		"TWILIO": "Twilio (提供雲端通信服務的公司)"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "通过 Twilio Programmable Messaging 发送短信通知和邀请。",
+		"DOCUMENTATION": "文档"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "管理'{{ name }}'的特性"
@@ -5180,7 +5607,18 @@
 			"SYSTEM": "系统",
 			"FILTERS": {
 				"TO": "要",
-				"TEMPLATE_LANGUAGE": "模板/语言"
+				"TEMPLATE_LANGUAGE": "模板/语言",
+				"RECIPIENT": "收件人",
+				"TEMPLATE": "模板",
+				"STATUS": "状态",
+				"ALL_RECIPIENTS": "所有收件人",
+				"ALL_TEMPLATES": "所有模板",
+				"ALL_STATUSES": "所有状态",
+				"SENT": "已发送",
+				"FAILED": "失败",
+				"ARCHIVED": "已归档",
+				"SHOWING": "显示 {{ count }} / {{ total }}",
+				"NO_MATCH": "没有符合这些筛选条件的邮件。"
 			}
 		}
 	},
@@ -5198,7 +5636,11 @@
 			"invoice": "发票",
 			"estimate": "估计",
 			"receipt": "收据"
-		}
+		},
+		"VIEW_GRID": "网格",
+		"VIEW_EDITOR": "编辑器",
+		"FULL_PREVIEW": "完整预览",
+		"SAVED": "模板“{{ templateName }}”已保存"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "注册",
@@ -5230,7 +5672,8 @@
 				"TERMS_AND_CONDITIONS": "条款和条件",
 				"AND": " 和 ",
 				"PRIVACY_POLICY": "隐私政策"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "密码应至少包含 4 个字符"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5240,6 +5683,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "没有账号吗？",
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",
 		"OR_SIGN_IN_WITH": "或用以下方式登录",
+		"SIGN_IN_WITH_EVER_ID": "使用 Ever ID 登录",
+		"SIGN_IN_WITH_KEYCLOAK": "使用 Keycloak 登录",
 		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
 		"LOGIN_MAGIC": {
 			"TITLE": "使用魔法代码登录",
@@ -5340,7 +5785,15 @@
 		"HOTKEYS": "快捷键",
 		"HELP": "帮助",
 		"SIGN_OUT": "退出",
-		"PROFILE": "个人资料"
+		"PROFILE": "个人资料",
+		"ACCOUNT": "账户",
+		"PREFERENCES": "偏好设置",
+		"DOWNLOAD_APPS": "下载应用",
+		"DOWNLOAD_MACOS": "下载 macOS 版",
+		"DOWNLOAD_WINDOWS": "下载 Windows 版",
+		"DOWNLOAD_LINUX": "下载 Linux 版",
+		"DOWNLOAD_MOBILE": "下载移动应用",
+		"DOWNLOAD_BROWSER_EXTENSION": "下载浏览器扩展"
 	},
 	"WORKSPACES": {
 		"MENUS": {

@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Ingeschakeld",
+		"DISABLED": "Uitgeschakeld",
 		"PAY": "Betalen",
 		"ADD_EXISTING_USER": "Voeg bestaande gebruiker toe",
 		"ADD_NEW": "Voeg Nieuw Toe",
@@ -816,6 +818,7 @@
 		"SKILLS": "Vaardigheden",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Selecteer tijdzone",
+		"SELECT_TIMEZONE_HINT": "Afspraaktijden worden in deze tijdzone weergegeven.",
 		"SHOW_AVERAGE_BONUS": "Toon het gemiddelde bonus",
 		"SHOW_AVERAGE_INCOME": "Toon het gemiddelde inkomen",
 		"SHOW_PAYPERIOD": "Toon loonperiode",
@@ -1154,7 +1157,71 @@
 		"APPLICATIONS": "Toepassingen",
 		"OPEN_GA_BROWSER": "Open Gauzy in de browser",
 		"START_SERVER": "Start de server",
-		"STOP_SERVER": "Stop server"
+		"STOP_SERVER": "Stop server",
+		"DOCUMENTS": "Documenten",
+		"BILLING": "Facturatie",
+		"MONITORING": "Monitoring",
+		"ADD_ITEM": "{{ name }} toevoegen"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Alleen jij",
+			"TENANT": "Iedereen in deze tenant"
+		},
+		"UNSAVED_CHANGES": "Niet-opgeslagen wijzigingen",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "Het account waarmee je bent aangemeld.",
+			"MANAGE": "Profiel beheren",
+			"ROLE": "Rol",
+			"MEMBER_SINCE": "Lid sinds"
+		},
+		"PREFERENCES": {
+			"TITLE": "Voorkeuren",
+			"DESCRIPTION": "Hoe de app er voor jou uitziet en werkt. Wijzigingen gelden direct.",
+			"THEME": "Thema",
+			"THEME_HINT": "Kleurenschema van de hele app.",
+			"LANGUAGE": "Taal",
+			"LANGUAGE_HINT": "Taal van menu's, labels en berichten.",
+			"LAYOUT": "Standaardindeling",
+			"RESET_LAYOUTS": "Pagina-indelingen herstellen",
+			"SAVE_ERROR": "Je voorkeur kon niet worden opgeslagen.",
+			"LAYOUTS_RESET": "Pagina-indelingen hersteld naar je standaard."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Vierkante afbeelding, minimaal 128 × 128 px.",
+			"NAME_HINT": "Zichtbaar voor elke gebruiker van deze tenant.",
+			"TENANT_ID": "Tenant-ID",
+			"TENANT_ID_HINT": "Vermeld deze bij contact met support of bij API-aanroepen.",
+			"COPY_ERROR": "De tenant-ID kon niet worden gekopieerd.",
+			"TITLE": "Tenantprofiel",
+			"DESCRIPTION": "De naam en het logo van deze tenant, voor alle gebruikers zichtbaar in de werkruimtewisselaar en de zijbalk.",
+			"NAME": "Tenantnaam",
+			"NAME_PLACEHOLDER": "Voer de tenantnaam in",
+			"NAME_REQUIRED": "De tenantnaam is verplicht.",
+			"LOGO": "Tenantlogo",
+			"LOGO_CHANGE": "Klik om een nieuw logo te uploaden",
+			"LOGO_REMOVE": "Logo verwijderen",
+			"LOGO_UPLOAD_ERROR": "Het logo kon niet worden geüpload.",
+			"CREATED_AT": "Aangemaakt op",
+			"SAVED": "Tenantprofiel opgeslagen",
+			"SAVE_ERROR": "Het tenantprofiel kon niet worden opgeslagen.",
+			"LOAD_ERROR": "Het tenantprofiel kon niet worden geladen."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "Interface",
+			"TITLE": "Gebruikersinterface",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (standaard)",
+				"REACT": "React (nieuw)"
+			},
+			"HINT": "Geldt voor de hele tenant, op elk apparaat. Vandaag is het tijdregistratie-dashboard in beide interfaces beschikbaar; meer pagina's volgen.",
+			"READ_ONLY": "Alleen tenantbeheerders kunnen deze instelling wijzigen.",
+			"SAVING": "Opslaan…",
+			"SAVED": "Interfacevoorkeur opgeslagen",
+			"SAVE_ERROR": "De interfacevoorkeur kon niet worden opgeslagen."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thema's",
@@ -1188,7 +1255,9 @@
 		"CARDS_GRID": "Kaartenraster",
 		"SPRINT_VIEW": "Sprintweergave",
 		"QUICK_SETTINGS": "Snelle instellingen",
-		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar"
+		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar",
+		"PREFERENCES": "Voorkeuren",
+		"SUPPORT": "Ondersteuning"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Wat is er nieuw?",
@@ -1735,6 +1804,19 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"PROJECT_MANAGEMENT": "Projectmanagement",
 		"EMPLOYEE_STATISTICS": "Werknemersstatistieken",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
+			"OF_INCOME": "{{ value }}% van de inkomsten",
+			"MARGIN": "{{ value }}% marge",
+			"BREAKDOWN": "Inkomsten per werknemer",
+			"NO_DATA": "Geen financiële activiteit in deze periode",
+			"NO_DATA_HINT": "Inkomsten en uitgaven voor deze periode verschijnen hier.",
+			"NO_EMPLOYEES": "Geen werknemersgegevens voor deze periode",
+			"SORT_BY": "Sorteren op {{ name }}",
+			"SORT_LABEL": "Sorteren op",
+			"SORT_ASCENDING": "Oplopend",
+			"SORT_DESCENDING": "Aflopend"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Selecteer alstublieft een maand en medewerker uit het bovenstaande menu",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Voer tekst in voor niet-geregistreerde gebruikers.",
 		"CHARTS": {
@@ -1923,7 +2005,90 @@
 			"PREVIOUS": "Vorige"
 		},
 		"NOT_STARTED": "Niet begonnen",
-		"NOT_STARTED_HELP": "De begindatum van het werk is niet ingesteld voor deze werknemer. De werknemer wordt niet meegenomen in de boekhouding, gesplitste kosten, enz."
+		"NOT_STARTED_HELP": "De begindatum van het werk is niet ingesteld voor deze werknemer. De werknemer wordt niet meegenomen in de boekhouding, gesplitste kosten, enz.",
+		"VIEW": {
+			"PERIOD": "Periode",
+			"PERIODS": {
+				"THIS_WEEK": "Deze week",
+				"THIS_MONTH": "Deze maand",
+				"LAST_30_DAYS": "Laatste 30 dagen"
+			},
+			"TABS": {
+				"OVERVIEW": "Overzicht",
+				"PROFILE": "Profiel"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registreert tijd",
+				"ONLINE": "Online",
+				"AWAY": "Afwezig",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Lokale tijd",
+			"MEMBER_SINCE": "Lid sinds",
+			"WEEKLY_LIMIT": "Weeklimiet",
+			"WORKED_TODAY": "Vandaag gewerkt",
+			"WORKED_PERIOD": "Gewerkt in periode",
+			"ACTIVITY_META": "{{ value }} activiteit",
+			"AVG_ACTIVITY": "Gemiddelde activiteit",
+			"OPEN_TASKS": "Open taken",
+			"OPEN_TASKS_META": "{{ progress }} bezig · {{ overdue }} te laat",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "t.o.v. vorige week",
+				"THIS_MONTH": "t.o.v. vorige maand",
+				"LAST_30_DAYS": "t.o.v. vorige 30 dagen"
+			},
+			"HOURS_WORKED": "Gewerkte uren",
+			"HOURS_META": "{{ total }} totaal · {{ average }} per werkdag",
+			"TRACKED": "Geregistreerd",
+			"MANUAL": "Handmatig",
+			"OPEN_TIMESHEET": "Urenstaat openen",
+			"PROJECTS": "Projecten",
+			"RECENT_SCREENSHOTS": "Recente screenshots",
+			"VIEW_ALL": "Alles bekijken",
+			"ASSIGNED_TASKS": "Toegewezen taken",
+			"COLUMNS": {
+				"TASK": "Taak",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Deadline",
+				"TIME": "Tijd",
+				"NAME": "Naam",
+				"PRIORITY": "Prioriteit"
+			},
+			"TOP_TASKS": "Meest gewerkte taken",
+			"APPS_URLS": "Apps & URL's",
+			"NO_TIME": "Geen tijd geregistreerd in deze periode",
+			"NO_TASKS": "Geen taken toegewezen",
+			"NO_APPS": "Geen app- of URL-activiteit in deze periode",
+			"NO_SCREENSHOTS": "Geen screenshots in deze periode",
+			"UNAVAILABLE": "U hebt geen toegang tot deze gegevens",
+			"PROFILE": {
+				"ABOUT": "Over",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Vaardigheden & tags",
+				"TIME_ZONE": "Tijdzone",
+				"NOT_PROVIDED": "Nog niet opgegeven",
+				"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd"
+			},
+			"TASKS_HELP": "Taken waarvan deze persoon lid is. Kies een vak om de lijst te filteren.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "Bezig",
+				"OVERDUE": "Te laat",
+				"DONE": "Klaar"
+			},
+			"DUE": {
+				"NONE": "Geen deadline",
+				"WAS_DUE": "Deadline was",
+				"OVERDUE_DAY": "1 dag te laat",
+				"OVERDUE_DAYS": "{{ count }} dagen te laat",
+				"TODAY": "Vandaag",
+				"TOMORROW": "Morgen",
+				"IN_DAYS": "Over {{ count }} dagen"
+			},
+			"SHOWING": "{{ shown }} van {{ total }} taken getoond",
+			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Alle doelstellingen",
@@ -1939,6 +2104,7 @@
 		"EXPECTED": "Verwacht",
 		"UPDATES": "Updates",
 		"UPDATE": "Bijwerken",
+		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
@@ -1955,6 +2121,8 @@
 		"GOAL_TEMPLATES": "Doelsjablonen",
 		"CREATE_NEW_MENU": "Maak nieuw",
 		"CREATE_FROM_PRESET": "Maken vanuit voorinstelling",
+		"SELECT_A_PRESET": "Selecteer een voorinstelling",
+		"ADDITIONAL_DETAILS": "Aanvullende gegevens",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Werknemers",
 			"TEAMS": "Teams",
@@ -1984,7 +2152,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
-			"NO_ALIGNMENT": "Nog geen uitlijningen."
+			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organisatie",
@@ -2417,6 +2586,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Werknemer toestaan de Agent applicatie af te sluiten. Wanneer uitgeschakeld, wordt de afsluitoptie geblokkeerd in de Agent app.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Uitloggen uit de Agent-app toestaan",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Werknemer toestaan uit te loggen van de Agent applicatie. Wanneer uitgeschakeld, wordt de uitlogoptie geblokkeerd in de Agent app.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Bescherming voor werknemers in de EER / het VK actief",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Voor organisaties en werknemers in de EER of het VK kunnen werknemers de desktopagent altijd afsluiten en zich afmelden. Vastlegging die een werknemer niet kan onderbreken is onder de AVG en art. 8 EVRM moeilijk te rechtvaardigen, daarom zijn deze beperkingen hier niet beschikbaar.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Beperking van afsluiten of afmelden bevestigen",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Met deze beperking kan de werknemer niet voorkomen dat de desktopagent hem vastlegt. Bevestig dat u dit voor deze werknemers als rechtmatig en proportioneel hebt beoordeeld en dat u er de verantwoordelijkheid voor neemt. Uw bevestiging wordt op uw account vastgelegd.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Toetsenbord- en muisactiviteit volgen",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Volledige tracking van toetsenbord- en muisactiviteit inschakelen, inclusief toetsaanslagen en exacte muisbewegingen in alle desktop apps en agent.",
 				"TRACK_ALL_DISPLAYS": "Alle schermen volgen",
@@ -2440,6 +2613,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duur van de activiteitsbewijs countdown dialoog, het vertegenwoordigt een aantal minuten dat wordt gegeven om de activiteit te bewijzen.",
 				"ENABLE_DETECTION_INACTIVITY": "Mogelijkheid inschakelen om inactiviteit van werknemer te detecteren",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Ingeschakeld - het systeem detecteert inactiviteit en geeft een waarschuwing weer. Uitgeschakeld - er wordt geen waarschuwing weergegeven wanneer een werknemer inactief is.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequentie van schermafbeeldingen",
 				"SCREENSHOT_FREQUENCY_INFO": "Specificeer de updatefrequentie of tijdsinterval synchronisatie.",
 				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",
@@ -2686,7 +2861,10 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres 2",
 		"MEMBERS": "Leden",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden",
+		"SEARCH_EMPLOYEES": "Zoek medewerkers op naam of e-mail",
+		"NO_MEMBERS": "Nog geen leden toegevoegd"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",
@@ -2719,7 +2897,19 @@
 		"EMPLOYEE_UPDATED": "Werknemer is bijgewerkt.",
 		"IMAGE_UPDATED": "De afbeelding is bijgewerkt.",
 		"FAIL_TO_UPDATE_IMAGE": "Update mislukt.",
-		"ANONYMOUS": "Anoniem"
+		"ANONYMOUS": "Anoniem",
+		"ABOUT": "Over",
+		"INACTIVE": "Inactief",
+		"PER_HOUR": "/ uur",
+		"MEMBER_SINCE": "Lid sinds",
+		"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd",
+		"NO_SKILLS": "Nog geen vaardigheden vermeld",
+		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
+		"EDIT": {
+			"NO_AWARDS": "Nog geen onderscheidingen",
+			"ADD_AWARD": "Onderscheiding toevoegen",
+			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Pagina voor beheer van voorstellen",
@@ -3315,7 +3505,11 @@
 		"STOP_TIMER": "Stop timer",
 		"TIME_LOG": "Tijdregistratie",
 		"VIEW_APPOINTMENTS": "Afspraken bekijken",
-		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken"
+		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nieuwe pagina",
+			"UPLOAD": "Uploaden"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Boekhouding",
@@ -3323,7 +3517,8 @@
 		"PROJECT_MANAGEMENT": "Projectbeheer",
 		"JOBS": "Banen",
 		"CONTACTS": "Contacten",
-		"TIME_TRACKING": "Tijdregistratie"
+		"TIME_TRACKING": "Tijdregistratie",
+		"DOCUMENTS": "Documenten"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Voornaam",
@@ -3369,6 +3564,9 @@
 		"BROWSE": "Bladeren",
 		"COMMENT": "Opmerking",
 		"COMMENTS": "Reacties",
+		"COMMENT_PLACEHOLDER": "Schrijf een opmerking…",
+		"NO_COMMENTS": "Nog geen opmerkingen",
+		"NO_COMMENTS_HINT": "Opmerkingen verschijnen hier, de nieuwste eerst.",
 		"HEADER": "Facturen",
 		"INVOICE_NUMBER": "Factuurnummer",
 		"ESTIMATE_NUMBER": "Schattingnummer",
@@ -3632,7 +3830,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisatie",
 		"SELECT_PROJECT": "Project",
 		"SELECT_TEAM": "Team",
-		"AI_CHAT": "AI-chat"
+		"AI_CHAT": "AI-chat",
+		"COLLAPSE_SIDEBAR": "Zijbalk inklappen",
+		"EXPAND_SIDEBAR": "Zijbalk uitklappen"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",
@@ -3658,9 +3858,34 @@
 		"STOP": "Genereren stoppen",
 		"ERROR": "Er is iets misgegaan.",
 		"RETRY": "Opnieuw proberen",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"DICTATION_FAILED": "De opname kon niet worden getranscribeerd.",
+		"DICTATION_NOT_CONFIGURED": "Dicteren vereist een spraakprovider. Voeg er een toe op de instellingenpagina 'AI-providers'.",
+		"DICTATION_ASK_ADMIN": "Dicteren vereist een spraakprovider — vraag een beheerder er een toe te voegen onder Instellingen → AI-providers.",
+		"DICTATION_KEY_REJECTED": "De spraakprovider heeft de API-sleutel geweigerd. Werk deze bij op de instellingenpagina 'AI-providers'.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "De spraakprovider heeft de API-sleutel geweigerd — vraag een beheerder deze bij te werken onder Instellingen → AI-providers.",
+		"DICTATION_OPEN_SETTINGS": "AI-providers openen",
+		"RATE_LIMITED_SHARED": "De gratis AI-laag is nu beperkt. Koppel je eigen OpenRouter-account of stel een andere AI-provider in voor ononderbroken toegang.",
+		"RATE_LIMITED_OWN": "Je AI-provider beperkt op dit moment het aantal verzoeken. Controleer je abonnement en limieten bij de provider, of stel een andere AI-provider in.",
+		"RATE_LIMIT_RETRY_IN": "Je kunt het over ongeveer {{seconds}} s opnieuw proberen.",
+		"OPEN_AI_SETTINGS": "AI-providers openen",
+		"ERROR_NOT_CONFIGURED": "AI-chat heeft een ingestelde provider nodig. Voeg er een toe op de instellingenpagina 'AI-providers'.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "AI-chat heeft een ingestelde provider nodig — vraag een beheerder er een toe te voegen onder Instellingen → AI-providers.",
+		"ERROR_PROVIDER_UNAVAILABLE": "De geselecteerde AI-provider kan nu niet antwoorden. Controleer hem op de instellingenpagina 'AI-providers'.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "De geselecteerde AI-provider kan nu niet antwoorden — vraag een beheerder Instellingen → AI-providers te controleren.",
+		"ERROR_MODEL_UNAVAILABLE": "Dit model is niet beschikbaar met de huidige API-sleutel. Kies een ander model op de instellingenpagina 'AI-providers'.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Dit model is niet beschikbaar met de huidige API-sleutel — vraag een beheerder Instellingen → AI-providers te controleren.",
+		"ERROR_KEY_REJECTED": "De AI-provider heeft zijn API-sleutel geweigerd. Werk deze bij op de instellingenpagina 'AI-providers'.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "De AI-provider heeft zijn API-sleutel geweigerd — vraag een beheerder deze bij te werken onder Instellingen → AI-providers.",
+		"ERROR_RATE_LIMITED": "De AI-provider beperkt het aantal verzoeken.",
+		"RECORDING": "Opnemen",
+		"PREVIEW": "Voorbeeld",
+		"PREVIEW_PAGE": "Pagina",
+		"PREVIEW_NEW_TAB": "Openen in een nieuw tabblad",
+		"PREVIEW_CLOSE": "Voorbeeld sluiten",
+		"PREVIEW_UNAVAILABLE": "Er is geen voorbeeld beschikbaar voor dit bestand.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Openen in Documenten",
+		"ATTACH_UPLOADING": "Uploaden…",
+		"ATTACH_DOCUMENT": "Document"
 	},
 	"HEADER_TITLE": {
 		"FOR": "voor",
@@ -3673,6 +3898,21 @@
 		"REDIRECT_TO_HOME": "U wordt binnenkort doorgestuurd naar de startpagina"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Vind documentatie, krijg antwoorden en bereik het team achter Gauzy.",
+		"DOCUMENTATION": "Documentatie",
+		"DOCUMENTATION_DESC": "Handleidingen en referentie voor elke Gauzy-functie.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Antwoorden op de meest gestelde vragen.",
+		"SUPPORT_CHAT": "Supportchat",
+		"SUPPORT_CHAT_DESC": "Chat met ons supportteam.",
+		"REPORT_ISSUE": "Probleem melden",
+		"REPORT_ISSUE_DESC": "Bug gevonden? Open een issue op GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Broncode, releases en discussies.",
+		"WEBSITE": "Gauzy-website",
+		"WEBSITE_DESC": "Lees meer over het Gauzy-platform.",
+		"ABOUT_LINK": "Over Gauzy",
+		"ABOUT_LINK_DESC": "Versiedetails, licentie en links.",
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Kennisbank",
 		"CHOSE_ICON": "Kies een pictogram om in te stellen.",
@@ -3771,7 +4011,8 @@
 		"ROLES_PERMISSIONS": "Rollen & Machtigingen",
 		"TIME_TRACKING": "Tijdregistratie",
 		"ESTIMATE": "Schatting",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documenten"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3869,6 +4110,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ga naar het dashboard, Beheer personeelsstatistieken, Tijdregistratie-dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centrale plek voor bedrijfsdocumenten: uploads, wikipagina's, beoordeling en AI-kennis"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3983,6 +4227,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Alle rechten voorbehouden.",
+		"DESCRIPTION": "Ever® Gauzy™ is een open platform voor bedrijfsbeheer voor collaboratieve, on-demand en deeleconomieën — ERP, CRM, HRM, ATS en projectmanagement met geïntegreerde tijdregistratie.",
+		"LICENSE": "Open source, uitgebracht onder de licentie",
+		"VERSION_DETAILS": "Versiedetails",
+		"VERSION_MISMATCH": "De webapp en de API zijn gebouwd vanaf verschillende commits — mogelijk is er een deployment bezig.",
+		"WEB_APP": "Webapp",
+		"API": "API",
+		"UNTAGGED": "build zonder tag",
+		"API_UNAVAILABLE": "API-versie niet beschikbaar",
+		"LEARN_MORE": "Meer informatie",
 		"ABOUT": "Over"
 	},
 	"FOOTER": {
@@ -4378,6 +4632,20 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoring actief: tijd en activiteit worden vastgelegd",
+		"MONITORING_IDLE": "Agent inactief",
+		"MONITORING_TRAY_ACTIVE": "Monitoring actief, vastgelegd wordt: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitoring gepauzeerd: er wordt niets vastgelegd",
+		"MONITORING_CAPTURE_TIME": "tijd en actieve applicaties",
+		"MONITORING_CAPTURE_SCREENSHOTS": "schermafbeeldingen",
+		"MONITORING_CAPTURE_INPUT": "toetsenbord- en muisactiviteit",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Selecteer klant",
+			"SELECT_PROJECT": "Selecteer project",
+			"SELECT_TEAM": "Selecteer team",
+			"SELECT_TASK": "Selecteer taak",
+			"DESCRIPTION": "Voeg een beschrijving toe"
+		},
 		"IS_BILLABLE": "Is factureerbaar",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",
@@ -4483,7 +4751,7 @@
 			"SELECT_DEFAULT_CDN": "Selecteer de standaard CDN-server voor update",
 			"TOGGLE_UPDATE_LOCALLY": "Schakel om lokaal bij te werken",
 			"LOCAL_SERVER": "Lokale server",
-			"LOCAL_SERVER_NOTE": "De geselecteerde map moet zeker het <strong>latest.yml</strong>- en/of <strong>latest-mac.yml</strong>-manifest bevatten om de updatevalidatie mogelijk te maken.",
+			"LOCAL_SERVER_NOTE": "De geselecteerde map moet het updatemanifest voor uw systeem (Windows: <strong>latest-x64.yml</strong> of <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> of <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) en de daarin vermelde updatebestanden bevatten om de updatevalidatie mogelijk te maken.",
 			"OTHER_SETTINGS": "Andere instellingen",
 			"ALLOW_PRERELEASE_VERSIONS": "Sta voorlopige versies toe",
 			"CHECK_UPDATE_APP_VERSION": "Controleer en update uw app-versie",
@@ -4847,7 +5115,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshots",
 			"OF": "van",
-			"TIME_LOG": "Tijdregistratie"
+			"TIME_LOG": "Tijdregistratie",
+			"TAKEN_AT": "Screenshot gemaakt om {{ time }}",
+			"POSITION": "Screenshot {{ position }} van {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Waarschuwing. De timer loopt, je kunt alleen schermafbeeldingen verwijderen als je de timer stopt of de Inside Timer-app gebruikt.",
 		"DELETE_CONFIRM": "Weet u zeker dat u deze screenshots en tijdsregistratie wilt verwijderen?",
@@ -4896,7 +5166,9 @@
 		"NO_SCREENSHOT": "Geen schermafbeelding",
 		"NO_SCREENSHOTS": "Geen screenshots",
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",
-		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd"
+		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd",
+		"NO_TIME_TRACKED": "Geen tijd bijgehouden",
+		"MINUTES_TRACKED": "{{ minutes }} min bijgehouden"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",
@@ -4922,6 +5194,16 @@
 		"BUFFER_AT_START": "Buffer aan het begin",
 		"BUFFER_AT_END": "Buffer aan het einde",
 		"BREAK_TIME": "Pauzetijd",
+		"DETAILS": "Details",
+		"PARTICIPANTS": "Deelnemers",
+		"FORM_HINT": "Geef aan waar de vergadering over gaat, wanneer die is en wie meedoet.",
+		"DETAILS_HINT": "Agenda, locatie en notities die alle genodigden zien.",
+		"SCHEDULE": "Planning",
+		"SCHEDULE_HINT": "Kies de datum en het tijdslot, met optionele buffer en pauze.",
+		"BUFFER_TIME_HINT": "Houd vrije tijd vóór of na de vergadering.",
+		"BREAK_TIME_HINT": "Onderbreek de vergadering voor een korte pauze.",
+		"BREAK_START": "Pauze begint om",
+		"PARTICIPANTS_HINT": "Mensen die de uitnodiging ontvangen.",
 		"ARE_YOU_SURE": "Weet je het zeker? Deze actie is onomkeerbaar."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4966,7 +5248,9 @@
 		"CANCEL": "Afspraak annuleren",
 		"TIMEZONE": "Jouw tijdzone:",
 		"CHANGE": "(Wijzigen)",
+		"CHANGE_TIMEZONE": "Wijzigen",
 		"SELECT_EMPLOYEE_ERROR": "Selecteer alstublieft een medewerker.",
+		"SELECT_EMPLOYEE_HINT": "Kies met wie je wilt afspreken en daarna een tijd die jou uitkomt.",
 		"EXPIRED_OR_CANCELLED": "Deze afspraak is verlopen of geannuleerd.",
 		"EMAIL_SENT": "Er is een e-mail verzonden naar de gastheer en naar alle deelnemers voor deze vergadering.",
 		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen.",
@@ -5013,7 +5297,10 @@
 			"payment-receipt": "Betalingsbewijs",
 			"reject-candidate": "Kandidaat Afwijzen"
 		},
-		"HTML_EDITOR": "HTML-editor"
+		"HTML_EDITOR": "HTML-editor",
+		"FULL_PREVIEW": "Volledig voorbeeld",
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pijpleidingen",
@@ -5063,54 +5350,192 @@
 		"QUICK_ACTIONS": "Snelle acties"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "Bestandsaanbieder",
+		"FILE_PROVIDER": "Bestandsprovider",
+		"SHOW_SECRET": "Geheim tonen",
+		"HIDE_SECRET": "Geheim verbergen",
+		"SUMMARY": {
+			"TITLE": "Huidige configuratie",
+			"DESCRIPTION": "Laatst opgeslagen instellingen — gebruikt voor nieuwe uploads.",
+			"PROVIDER": "Provider",
+			"BUCKET": "Bucket / cloudnaam",
+			"REGION": "Regio",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Inloggegevens",
+			"CREDENTIALS_SAVED": "Opgeslagen",
+			"CREDENTIALS_INCOMPLETE": "Onvolledig",
+			"CREDENTIALS_NONE": "Niet ingesteld",
+			"CREDENTIALS_NOT_NEEDED": "Niet nodig",
+			"SERVER_DEFAULT": "Serverstandaard"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Waar u de sleutels krijgt",
+			"LOCAL": {
+				"NAME": "Lokale schijf",
+				"DESCRIPTION": "bestanden worden opgeslagen op het bestandssysteem van de API-server."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "bestanden worden opgeslagen in een AWS S3-bucket. Gebruik een IAM-toegangssleutel met lees- en schrijfrechten op de bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-compatibele cloudopslag. De inloggegevens worden bij het opslaan bij Wasabi gecontroleerd."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hosting van afbeeldingen en video's. De cloudnaam en API-sleutels staan in de Cloudinary-console onder API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-compatibele objectopslag met optioneel CDN. Maak een Spaces-toegangssleutel aan in het DigitalOcean-controlepaneel."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Lokale opslag",
+			"WHERE": "Geüploade bestanden worden naar het bestandssysteem van de API-server geschreven.",
+			"NO_CONFIG": "Niets te configureren — lokale opslag werkt direct.",
+			"WARNING": "Bestanden gaan verloren als de server opnieuw wordt uitgerold zonder persistent volume, en ze worden niet gedeeld tussen meerdere API-instanties. Gebruik in productie een cloudprovider."
+		},
+		"CHECK": {
+			"BUTTON": "Configuratie controleren",
+			"OK": "Alle verplichte velden zijn ingevuld en de URL's zijn geldig. De sleutels zelf worden alleen door de provider gecontroleerd.",
+			"OK_LOCAL": "Lokale opslag heeft geen configuratie nodig.",
+			"OK_SERVER_DEFAULTS": "Er ontbreekt niets. Deze lege velden gebruiken de configuratie van de server:",
+			"MISSING": "Ontbreekt:",
+			"INVALID_URL": "Geen geldige http(s)-URL:",
+			"HTTPS_REQUIRED": "Moet https:// gebruiken — de sleutels worden naar dit adres verzonden:"
+		},
 		"S3": {
 			"HEADER": "S3-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een Amazon S3-bucket.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een IAM-toegangssleutel met lees- en schrijfrechten op de bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"REGION": "De AWS-regio van de bucket, bijv. us-east-1 of eu-west-1.",
+				"BUCKET": "De bucketnaam precies zoals in de S3-console."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Toegangssleutel-id",
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Wasabi-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een Wasabi-bucket via de S3-compatibele API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een toegangssleutelpaar uit de Wasabi-console.",
+				"BUCKET": "Bucket en endpoint",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven.",
+				"OPTIONS": "Opties"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"REGION": "De regio van de bucket, bijv. us-east-1 of eu-central-1.",
+				"SERVICE_URL": "Het S3-endpoint voor die regio.",
+				"BUCKET": "Kleine letters, cijfers, punten en koppeltekens. Namen zijn uniek binnen heel Wasabi.",
+				"FORCE_PATH_STYLE": "Adresseer bestanden als endpoint/bucket/bestand in plaats van bucket.endpoint/bestand. Laat aan tenzij u virtual-hosted URL's nodig hebt."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint voor deze regio:",
+			"USE_SUGGESTION": "Gebruiken",
+			"SAVE_NOTE": "Bij het opslaan maakt Gauzy met deze inloggegevens de bucket aan in Wasabi. Als Wasabi het verzoek weigert, worden de instellingen niet opgeslagen.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Toegangs sleutel ID",
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer",
-				"SERVICE_URL": "Service URL"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL",
+				"FORCE_PATH_STYLE": "Padstijl-URL's afdwingen"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Toegangssleutel-id",
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
 				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
 				"REGION": "Regio",
-				"BUCKET": "Emmer",
-				"SERVICE_URL": "Service URL"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL"
 			}
 		},
 		"CLOUDINARY": {
-			"HEADER": "Cloudinary Configuratie",
+			"HEADER": "Cloudinary-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in Cloudinary en lever ze via het leveringsnetwerk.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "Alle drie de waarden staan in de Cloudinary-console onder API Keys.",
+				"DELIVERY": "Levering",
+				"DELIVERY_HINT": "Hoe links naar geüploade bestanden worden opgebouwd."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "De naam bovenaan uw Cloudinary-console.",
+				"ACCESS_API_KEY": "Identificeert het account; wordt samen met het API-geheim gebruikt.",
+				"ACCESS_API_SECRET": "Opgeslagen waarden komen gemaskeerd terug.",
+				"DELIVERY_URL": "Basisadres van bestandslinks. Houd https://res.cloudinary.com aan, tenzij u een eigen domein gebruikt.",
+				"SECURE": "Bouw bestandslinks met https://. Laat op True staan."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Cloudinary naam",
-				"ACCESS_API_KEY": "Toegangssleutel-ID",
-				"ACCESS_API_SECRET": "Geheime toegangssleutel",
+				"CLOUD_NAME": "Cloudnaam",
+				"ACCESS_API_KEY": "API-sleutel",
+				"ACCESS_API_SECRET": "API-geheim",
 				"DELIVERY_URL": "Leverings-URL",
-				"SECURE": "Beveiligd"
+				"SECURE": "Beveiligd (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Cloudinary naam",
-				"ACCESS_API_KEY": "Toegangssleutel-ID",
-				"ACCESS_API_SECRET": "Geheime toegangssleutel",
-				"DELIVERY_URL": "Afleverings-URL",
-				"SECURE": "Beveiligen"
+				"CLOUD_NAME": "Cloudnaam",
+				"ACCESS_API_KEY": "API-sleutel",
+				"ACCESS_API_SECRET": "API-geheim",
+				"DELIVERY_URL": "Leverings-URL",
+				"SECURE": "Beveiligd (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "DigitalOcean-configuratie",
+			"SUBTITLE": "Sla geüploade bestanden op in een DigitalOcean Space via de S3-compatibele API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Inloggegevens",
+				"CREDENTIALS_HINT": "Een Spaces-toegangssleutel uit het DigitalOcean-controlepaneel.",
+				"BUCKET": "Space en endpoint",
+				"BUCKET_HINT": "Waar geüploade bestanden worden weggeschreven.",
+				"OPTIONS": "Opties"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Het openbare deel van het sleutelpaar.",
+				"SECRET_ACCESS_KEY": "Wordt maar één keer getoond, bij het aanmaken van de sleutel. Opgeslagen waarden komen gemaskeerd terug.",
+				"SERVICE_URL": "Het endpoint van het datacenter van uw Space, bijv. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Vast op us-east-1, zoals Spaces verwacht; het datacenter volgt uit het endpoint.",
+				"BUCKET": "De naam van de Space.",
+				"CDN_URL": "Optioneel. Het CDN-endpoint van de Space, als het CDN is ingeschakeld.",
+				"FORCE_PATH_STYLE": "Adresseer bestanden als endpoint/space/bestand in plaats van space.endpoint/bestand."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
+				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
+				"REGION": "Regio",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL",
+				"CDN_URL": "CDN-URL",
+				"FORCE_PATH_STYLE": "Padstijl-URL's afdwingen"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Toegangssleutel-ID",
+				"SECRET_ACCESS_KEY": "Geheime toegangssleutel",
+				"REGION": "Regio",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service-URL",
+				"CDN_URL": "CDN-URL"
 			}
 		}
 	},
@@ -5159,7 +5584,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS-aanbieder",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Verstuur sms-meldingen en uitnodigingen via Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentatie"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Beheer functies voor '{{ name }}'"
@@ -5180,7 +5607,18 @@
 			"SYSTEM": "Systeem",
 			"FILTERS": {
 				"TO": "Naar",
-				"TEMPLATE_LANGUAGE": "Sjabloon/Taal"
+				"TEMPLATE_LANGUAGE": "Sjabloon/Taal",
+				"RECIPIENT": "Ontvanger",
+				"TEMPLATE": "Sjabloon",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "Alle ontvangers",
+				"ALL_TEMPLATES": "Alle sjablonen",
+				"ALL_STATUSES": "Alle statussen",
+				"SENT": "Verzonden",
+				"FAILED": "Mislukt",
+				"ARCHIVED": "Gearchiveerd",
+				"SHOWING": "{{ count }} van {{ total }} weergegeven",
+				"NO_MATCH": "Geen e-mails komen overeen met deze filters."
 			}
 		}
 	},
@@ -5198,7 +5636,11 @@
 			"invoice": "Factuur",
 			"estimate": "Schatting",
 			"receipt": "Ontvangstbewijs"
-		}
+		},
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Volledig voorbeeld",
+		"SAVED": "Sjabloon '{{ templateName }}' is opgeslagen"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registreren",
@@ -5230,7 +5672,8 @@
 				"TERMS_AND_CONDITIONS": "Algemene voorwaarden",
 				"AND": " en ",
 				"PRIVACY_POLICY": "Privacybeleid"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Wachtwoord moet minstens 4 tekens bevatten"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5240,6 +5683,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Heeft u geen account?",
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
+		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Inloggen met een magische code",
@@ -5340,7 +5785,15 @@
 		"HOTKEYS": "Sneltoetsen",
 		"HELP": "Help",
 		"SIGN_OUT": "Afmelden",
-		"PROFILE": "Profiel"
+		"PROFILE": "Profiel",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Voorkeuren",
+		"DOWNLOAD_APPS": "Apps downloaden",
+		"DOWNLOAD_MACOS": "Downloaden voor macOS",
+		"DOWNLOAD_WINDOWS": "Downloaden voor Windows",
+		"DOWNLOAD_LINUX": "Downloaden voor Linux",
+		"DOWNLOAD_MOBILE": "Mobiele app downloaden",
+		"DOWNLOAD_BROWSER_EXTENSION": "Browserextensie downloaden"
 	},
 	"WORKSPACES": {
 		"MENUS": {

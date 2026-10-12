@@ -13,6 +13,7 @@ import { MerchantService, ServerDataSource, Store, ToastrService } from '@gauzy/
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	InputFilterComponent,
 	PaginationFilterBaseComponent
 } from '@gauzy/ui-core/shared';
@@ -35,6 +36,13 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+
+	/*
+	 * Read-only View: a merchant is a small record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	viewedMerchant: IMerchant;
+	viewSections: IRecordViewSection[] = [];
 
 	public organization: IOrganization;
 	merchants$: Subject<any> = this.subject$;
@@ -202,6 +210,69 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 		this.router.navigate(['/pages/organization/inventory/merchants/create']);
 	}
 
+	/**
+	 * Opens the read-only View of a merchant in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	onViewStore(selectedItem?: IMerchant) {
+		if (selectedItem) {
+			this.selectStore({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		const merchant = selectedItem ?? this.selectedMerchant;
+		if (!merchant) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(merchant);
+		this.viewedMerchant = merchant;
+	}
+
+	closeView(): void {
+		this.viewedMerchant = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically,
+	 * followed by the contact/currency/warehouse details the grid has no room for.
+	 */
+	private buildViewSections(merchant: IMerchant): IRecordViewSection[] {
+		// Same reading as the grid's contact cell (ContactRowComponent): country, city, address.
+		const contact = merchant.contact
+			? [merchant.contact.country, merchant.contact.city, merchant.contact.address].filter(Boolean).join(', ')
+			: null;
+		const warehouses = (merchant.warehouses || []).map((warehouse: IWarehouse) => warehouse.name).join(', ');
+
+		return [
+			{
+				fields: [
+					{ label: 'INVENTORY_PAGE.NAME', key: 'name' },
+					{ label: 'INVENTORY_PAGE.CODE', key: 'code' },
+					{ label: 'INVENTORY_PAGE.CONTACT', value: contact },
+					{ label: 'INVENTORY_PAGE.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
+					{ label: 'INVENTORY_PAGE.ACTIVE', key: 'active', type: 'boolean' }
+				]
+			},
+			{
+				fields: [
+					{ label: 'INVENTORY_PAGE.EMAIL', key: 'email', type: 'email' },
+					{ label: 'INVENTORY_PAGE.PHONE', key: 'phone', type: 'phone' },
+					{ label: 'SM_TABLE.CURRENCY', key: 'currency' }
+				]
+			},
+			{
+				fields: [
+					{ label: 'INVENTORY_PAGE.TAGS', key: 'tags', type: 'tags', wide: true },
+					{ label: 'INVENTORY_PAGE.WAREHOUSES', value: warehouses }
+				]
+			}
+		];
+	}
+
 	onEditStore(selectedItem?: IMerchant) {
 		if (selectedItem) {
 			this.selectStore({
@@ -313,6 +384,9 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectStore({
 			isSelected: false,
 			data: null

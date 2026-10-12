@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/desktop-ui-lib/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:shared"],
 	"implicitDependencies": ["constants", "contracts", "ui-config", "ui-core"],
 	"generators": {
 		"@nx/angular:component": {

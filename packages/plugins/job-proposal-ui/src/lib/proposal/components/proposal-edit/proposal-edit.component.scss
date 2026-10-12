@@ -18,3 +18,41 @@
   }
   @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
 }
+
+// Every control on this screen at the app's 2rem / 12px set, the size the rest of
+// the Sales forms use. Fallbacks on the custom properties: `--gauzy-*` is
+// undefined in material-light / material-dark, where a `var()` without one is
+// dropped.
+:host {
+  ::ng-deep label.label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  input[nbInput] {
+    height: 2rem;
+    // `!important` against the shared `dialog()` mixin (`gauzy/_gauzy-dialogs`),
+    // which pins every input on the page to a 2.375rem `min-height` with
+    // `!important` of its own.
+    min-height: 2rem !important;
+    padding: 0 0.75rem;
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  ::ng-deep nb-select .select-button {
+    height: 2rem;
+    min-height: 2rem !important;
+    padding-block: 0;
+    padding-inline-start: 0.75rem !important;
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  ::ng-deep .ng-select .ng-select-container {
+    min-height: 2rem !important;
+    font-size: 12px;
+  }
+}

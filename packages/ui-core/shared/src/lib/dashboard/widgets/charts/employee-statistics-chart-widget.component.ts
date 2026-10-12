@@ -19,9 +19,9 @@ import {
  * Chart widget: the HR dashboard's chart switcher, canvas-hosted.
  *
  * One widget that renders any of the three employee-statistics charts and lets
- * the viewer flip between them — the same dropdown `<ga-employee-charts>` puts
- * above its chart, so a canvas does not have to spend three cells to offer all
- * three views.
+ * the viewer flip between them — the same choice the HR dashboard offers from
+ * its "Employee Statistics" panel header, so a canvas does not have to spend
+ * three cells to offer all three views.
  *
  * The dropdown is a VIEW state, not a persisted one: a canvas widget has no
  * write access to its own placement, so a pick lasts for the session. The

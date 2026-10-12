@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { Employee } from './../core/entities/internal';
 import { EntitySubscription } from './entity-subscription.entity';
 import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
 import { TypeOrmEntitySubscriptionRepository } from './repository/type-orm-entity-subscription.repository';
@@ -32,25 +33,41 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 		try {
 			// Extract the tenant ID from the request context
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			// Extract the user from the request context
-			const user = RequestContext.currentUser();
-			// Extract the employee ID from the user
-			const employeeId = user.employeeId;
+			// The subscription belongs to the employee named in the input (a mentioned or assigned employee);
+			// only when none is given does it fall back to the current user. It used to always take the
+			// current user, so every mention / assignment subscription went to the author instead.
+			const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+			const employeeId = input.employeeId ?? currentEmployeeId;
 			// Extract the entity ID and type from the input
 			const { entity, entityId, organizationId } = input;
 
+			// Mention ids come from request bodies: another employee may only be subscribed when they
+			// belong to the current tenant / organization
+			const forAnotherEmployee = !!employeeId && employeeId !== currentEmployeeId;
+			if (forAnotherEmployee) {
+				await this.assertEmployeeInScope(employeeId, tenantId, organizationId);
+			}
+
+			// For a caller without CHANGE_SELECTED_EMPLOYEE (EMPLOYEE / MANAGER roles) the employee filter (lookup)
+			// and TenantAwareCrudService.create (insert) both swap the named employee for the caller. The employee
+			// was checked above, so act for them explicitly.
+			const asNamedEmployee = <R>(callback: () => Promise<R>): Promise<R> =>
+				forAnotherEmployee ? this.withoutEmployeeFilter(callback) : callback();
+
 			// Check if the subscription already exists
 			try {
-				const entitySubscription = await this.findOneByOptions({
-					where: { employeeId, entity, entityId, organizationId, tenantId }
-				});
+				const entitySubscription = await asNamedEmployee(() =>
+					this.findOneByOptions({
+						where: { employeeId, entity, entityId, organizationId, tenantId }
+					})
+				);
 				if (entitySubscription) {
 					return entitySubscription;
 				}
 			} catch (e) {}
 
 			// Create a new subscription if none exists
-			const subscription = await super.create({ ...input, employeeId, tenantId });
+			const subscription = await asNamedEmployee(() => super.create({ ...input, employeeId, tenantId }));
 
 			/**
 			 * TODO : Optional subscription notification if needed
@@ -59,6 +76,20 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 		} catch (error) {
 			console.log('Error creating subscription:', error);
 			throw new BadRequestException('Failed to create subscription', error);
+		}
+	}
+
+	/**
+	 * Rejects an employee who is not part of the given tenant / organization.
+	 */
+	private async assertEmployeeInScope(employeeId: ID, tenantId: ID, organizationId?: ID): Promise<void> {
+		const exists = await this.typeOrmRepository.manager.getRepository(Employee).existsBy({
+			id: employeeId,
+			tenantId,
+			...(organizationId ? { organizationId } : {})
+		});
+		if (!exists) {
+			throw new ForbiddenException('The employee does not belong to this organization');
 		}
 	}
 
@@ -97,5 +128,24 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 			console.log(`Error unsubscribing employee from entity: ${error}`);
 			throw new BadRequestException('Failed to unsubscribing employee from entity', error);
 		}
+	}
+
+	/**
+	 * Deletes the subscriptions matching `where` for the employee named in it, whoever the caller is.
+	 *
+	 * `delete()` restricts a caller without CHANGE_SELECTED_EMPLOYEE to their own employee, and that
+	 * restriction is merged over the given `employeeId`. So a team manager removing another member never
+	 * reached that member's subscription: the delete was pointed at the manager's own row instead.
+	 * Callers must already have checked that they may act on that employee, as the team services do.
+	 *
+	 * @param where - The subscription to delete, including the `employeeId` it belongs to.
+	 */
+	async deleteForEmployee(where: IEntitySubscriptionFindInput & { employeeId: ID }): Promise<DeleteResult> {
+		// With the employee filter off, a missing employeeId would be dropped from the criteria and delete
+		// every member's subscription to the entity.
+		if (!where?.employeeId) {
+			throw new BadRequestException('An employee is required to delete their subscription');
+		}
+		return await this.withoutEmployeeFilter(() => this.delete(where));
 	}
 }

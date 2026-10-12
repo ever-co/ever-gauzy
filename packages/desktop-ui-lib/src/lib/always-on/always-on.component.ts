@@ -82,10 +82,12 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 						switch (state) {
 							case AlwaysOnStateEnum.STARTED:
 								this.start$.next(true);
+								this.running = true;
 								this.loading = false;
 								break;
 							case AlwaysOnStateEnum.STOPPED:
 								this.start$.next(false);
+								this.running = false;
 								this.loading = false;
 								break;
 							case AlwaysOnStateEnum.LOADING:
@@ -111,6 +113,8 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 		if (this.isExpandMode) {
+			// `timer_status` is only answered by the agent, whose widget opens in expand mode; asking
+			// for it from the compact desktop-timer widget would leave `loading` stuck on.
 			this._alwaysOnService.checkTimerStatus$
 				.pipe(
 					tap(() => {

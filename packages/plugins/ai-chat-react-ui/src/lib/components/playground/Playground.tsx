@@ -10,6 +10,7 @@ import { Store } from '@gauzy/ui-core/core';
 import { environment } from '@gauzy/ui-config';
 import type { IAiChatConfig } from '@gauzy/contracts';
 import { playgroundTheme as t } from '../../playground-theme';
+import { chatMarkdownCss } from '../../chat-markdown-css';
 import { PlaygroundHeader } from './PlaygroundHeader';
 import { PlaygroundSettings } from './PlaygroundSettings';
 import { PlaygroundChatPanel } from './PlaygroundChatPanel';
@@ -293,6 +294,8 @@ export function Playground({ title, settingsExtra, chatHeader, inputPlaceholder,
 					0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
 					40% { transform: scale(1); opacity: 1; }
 				}
+
+				${chatMarkdownCss}
 			`}</style>
 
 			<PlaygroundHeader

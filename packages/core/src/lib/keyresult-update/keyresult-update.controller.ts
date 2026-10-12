@@ -90,10 +90,7 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return await this.keyResultUpdateService.create({
-				id,
-				...entity
-			});
+			return await this.keyResultUpdateService.create({ ...entity, id });
 		} catch (error) {
 			console.log(error);
 			return;

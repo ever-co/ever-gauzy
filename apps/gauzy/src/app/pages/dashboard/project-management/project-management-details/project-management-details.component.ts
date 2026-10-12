@@ -109,7 +109,8 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 			where: {
 				organizationId,
 				tenantId,
-				...(this.selectedEmployeeId ? { employeeId: this.selectedEmployeeId } : {}),
+				// `/tasks/employee` reads the selected employee from `members.id` (as the Tasks page sends it)
+				...(this.selectedEmployeeId ? { members: { id: this.selectedEmployeeId } } : {}),
 				...(this.selectedProjectId ? { projectId: this.selectedProjectId } : {}),
 				...(this.filters.where ? this.filters.where : {})
 			}

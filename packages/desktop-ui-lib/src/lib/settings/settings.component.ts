@@ -377,6 +377,40 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			]
 		},
 		{
+			title: 'Anonymous usage statistics',
+			fields: [
+				{
+					// `false` switches the anonymous usage statistics off (applies on the next start).
+					name: 'EVER_STATS_ENABLED',
+					field: 'EVER_STATS_ENABLED',
+					value: ''
+				},
+				{
+					// Two-letter country to declare in the reports (empty: undeclared).
+					name: 'EVER_STATS_COUNTRY',
+					field: 'EVER_STATS_COUNTRY',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Ever Platform',
+			fields: [
+				{
+					// `true` loads the Ever Platform connection (applies on the next start; off otherwise).
+					name: 'EVER_CONNECT_ENABLED',
+					field: 'EVER_CONNECT_ENABLED',
+					value: ''
+				},
+				{
+					// `interval` reads Ever Platform events every 15 minutes instead of a long poll.
+					name: 'EVER_CONNECT_FEED_MODE',
+					field: 'EVER_CONNECT_FEED_MODE',
+					value: ''
+				}
+			]
+		},
+		{
 			title: 'Other',
 			fields: [
 				{
@@ -411,6 +445,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
 	screenshotNotification = null;
+	/** Display chosen for the screenshot notification; `null` is the primary display (the default) */
+	screenshotNotificationDisplayId: number | null = null;
+	/** The connected displays offered for that choice, loaded from the main process */
+	notificationDisplays: { id: number; label: string }[] = [];
 	config = {
 		/* Default Selected dialect	*/
 		db: 'better-sqlite',
@@ -612,6 +650,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				...this.config,
 				...config
 			};
+			this.rememberSettings(this.appSetting, this.persistedAppSetting);
+			this.rememberSettings(this.config, this.persistedServerConfig);
 			this.checkDatabaseConnectivity();
 			this.authSetting = auth;
 			this.mappingAdditionalSetting(additionalSetting || null);
@@ -629,6 +669,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.serverConnectivity();
 			this._monitorsOption = { value: setting?.monitor?.captured };
 			this.screenshotNotification = setting?.screenshotNotification;
+			this.screenshotNotificationDisplayId = setting?.screenshotNotificationDisplayId ?? null;
+			await this.loadNotificationDisplays();
 			this.muted = setting?.mutedNotification;
 			this.autoLaunch = setting?.autoLaunch;
 			this.minimizeOnStartup = setting?.minimizeOnStartup;
@@ -670,6 +712,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				this._ngZone.run(() => {
 					const { setting } = arg.data;
 					this.appSetting = setting;
+					this.rememberSettings(this.appSetting, this.persistedAppSetting);
 				});
 				break;
 			case 'update_not_available': {
@@ -798,6 +841,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				});
 				break;
 			}
+			case 'displays_changed': {
+				this._ngZone.run(() => this.loadNotificationDisplays());
+				break;
+			}
 			case 'show_about': {
 				this._ngZone.run(() => {
 					this._dialogService.open(AboutComponent);
@@ -840,6 +887,33 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		}
 	}
 
+	/**
+	 * Lists the connected displays for the notification display setting. Reloaded whenever the main
+	 * process reports a display change.
+	 *
+	 * The saved choice is left as it is on purpose when its display is disconnected: the selector then
+	 * shows the primary-display placeholder, which matches what the main process does (it falls back to
+	 * the primary display), and the choice applies again as soon as that display is plugged back in.
+	 */
+	async loadNotificationDisplays(): Promise<void> {
+		try {
+			const displays: { id: number; label?: string; bounds: { width: number; height: number } }[] =
+				await this.electronService.ipcRenderer.invoke('GET_ALL_DISPLAYS');
+			this.notificationDisplays = displays.map((display, index) => {
+				const name = display.label || `Display ${index + 1}`;
+				return { id: display.id, label: `${name} (${display.bounds.width}×${display.bounds.height})` };
+			});
+		} catch (error) {
+			console.error('Could not list the displays:', error);
+			this.notificationDisplays = [];
+		}
+	}
+
+	selectNotificationDisplay(displayId: number | null) {
+		this.screenshotNotificationDisplayId = displayId;
+		this.updateSetting(displayId, 'screenshotNotificationDisplayId');
+	}
+
 	selectMonitorOption(item) {
 		this._monitorsOption = item;
 		this.updateSetting({ captured: item?.value }, 'monitor');
@@ -865,7 +939,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	updateSetting(value, type: string, showNotification = true) {
+		// Re-selecting the current option used to toast again and stack alerts.
+		// Compare the last saved copy: some controls write appSetting before this runs.
+		if (this.isSameSettingValue(this.persistedAppSetting[type], value)) {
+			return;
+		}
 		this.appSetting[type] = value;
+		this.persistedAppSetting[type] = this.cloneSettingValue(value);
 		this.electronService.ipcRenderer.send('update_app_setting', {
 			values: this.appSetting
 		});
@@ -1396,12 +1476,56 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	public updateServerConfig(value, type: string, showNotification = true) {
+		// SSL and auto-start mutate config before this runs, so compare the last saved copy.
+		if (this.isSameSettingValue(this.persistedServerConfig[type], value)) {
+			return;
+		}
 		this.config[type] = value;
+		this.persistedServerConfig[type] = this.cloneSettingValue(value);
 		this.electronService.ipcRenderer.send('update_server_config', this.config);
 		if (showNotification) {
 			this._notifier.success(
 				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 			);
+		}
+	}
+
+	/** Last values sent to the desktop process. Forms may mutate appSetting/config before save. */
+	private persistedAppSetting: Record<string, unknown> = {};
+	private persistedServerConfig: Record<string, unknown> = {};
+
+	private rememberSettings(source: object | null | undefined, target: Record<string, unknown>): void {
+		if (!source) {
+			return;
+		}
+		for (const key of Object.keys(source)) {
+			target[key] = this.cloneSettingValue(source[key]);
+		}
+	}
+
+	private cloneSettingValue(value: unknown): unknown {
+		if (value == null || typeof value !== 'object') {
+			return value;
+		}
+		try {
+			return JSON.parse(JSON.stringify(value));
+		} catch {
+			return value;
+		}
+	}
+
+	/** True when a settings write would not change the stored value. */
+	private isSameSettingValue(current: unknown, next: unknown): boolean {
+		if (Object.is(current, next)) {
+			return true;
+		}
+		if (current == null || next == null || typeof current !== 'object' || typeof next !== 'object') {
+			return false;
+		}
+		try {
+			return JSON.stringify(current) === JSON.stringify(next);
+		} catch {
+			return false;
 		}
 	}
 

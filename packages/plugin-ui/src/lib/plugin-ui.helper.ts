@@ -494,12 +494,76 @@ export const PLUGIN_LIFECYCLE_METHOD_NAMES = [
 ] as const;
 
 /**
+ * Merges a plugin's `translations` into the host's ngx-translate bundle, under
+ * `translationNamespace` when one is declared.
+ *
+ * 🛑 Extracted so that **module** plugins can reach it. `defineDeclarativePlugin` builds a
+ * `bootstrap` callback that does this, but `PluginUiModule.bootstrapDeclarativePlugins()` only
+ * runs `bootstrap` for plugins with **no** `module`/`loadModule`
+ * (`bootstrapOnly = allFlat.filter((p) => !!p.bootstrap && !p.module && !p.loadModule)`), and
+ * `applyDeclarativeRegistrations()` — the entry point a module plugin calls from
+ * `ngOnPluginBootstrap` — handled routes/nav/tabs/extensions/widgets but never translations. A
+ * module plugin that shipped `translations` therefore rendered every one of its keys as the raw
+ * key at runtime.
+ *
+ * Timing is the reason this subscribes rather than merging once: calling `setTranslation()`
+ * before the core HTTP loader completes marks the language "available" in `TranslateStore` and
+ * makes ngx-translate skip the core load entirely. So merge for the language that is already
+ * settled (if any), then again on every `onLangChange`.
+ *
+ * The merge is additive only — `filterNewTranslationKeys()` drops any key the host already has,
+ * so a plugin can never override a core string.
+ *
+ * @param definition The plugin definition carrying `translations` / `translationNamespace`.
+ * @param translateService The host translate service; a nullish value makes this a no-op.
+ * @returns The `onLangChange` subscription, or `undefined` when nothing was wired up.
+ */
+export function applyPluginTranslations(
+	definition: Pick<PluginUiDefinition, 'translations' | 'translationNamespace'>,
+	translateService?: IPluginTranslateService | null
+): Subscription | undefined {
+	if (!definition.translations || !translateService) return undefined;
+
+	// Namespace isolation: wrap the bundle under the namespace key so plugins never
+	// collide with core or with each other.
+	const translations = definition.translationNamespace
+		? namespaceTranslations(definition.translationNamespace, definition.translations)
+		: definition.translations;
+
+	const mergeForLang = (lang: string): void => {
+		const fallbackLang = translateService.getFallbackLang() || 'en';
+		const data = translations[lang] ?? translations[fallbackLang];
+		if (!data) return;
+
+		const existing = translateService.getTranslations(lang);
+		// An empty bundle means core has not loaded yet — merging now would suppress its
+		// HTTP load. `onLangChange` fires again once it has, and this runs then.
+		if (existing && Object.keys(existing).length > 0) {
+			const newKeys = filterNewTranslationKeys(existing as Record<string, any>, data);
+			if (newKeys) {
+				translateService.setTranslation(lang, newKeys, true);
+			}
+		}
+	};
+
+	const currentLang = translateService.getCurrentLang();
+	if (currentLang) {
+		mergeForLang(currentLang);
+	}
+
+	return translateService.onLangChange.subscribe(({ lang }) => mergeForLang(lang));
+}
+
+/**
  * Applies declarative registrations from a plugin definition.
  * Call this in the plugin module constructor (or ngOnPluginBootstrap) after
  * injecting PLUGIN_DEFINITION, NavMenuBuilderService, and PageRouteRegistryService.
  *
  * @param definition The plugin definition (from inject(PLUGIN_DEFINITION)).
  * @param services Nav builder and/or page route registry. Omit services you don't need.
+ *   Pass `translateService` to also merge the plugin's `translations` — module plugins must,
+ *   since their auto-generated `bootstrap` callback (which does it for bootstrap-only plugins)
+ *   is never invoked. Omitting it preserves the previous behaviour exactly.
  *
  * @example
  * ```ts
@@ -520,9 +584,11 @@ export function applyDeclarativeRegistrations(
 		pageTabRegistry?: IDeclarativePageTabRegistry;
 		pageExtensionRegistry?: IDeclarativeExtensionRegistry;
 		widgetRegistry?: IDeclarativeWidgetRegistry;
+		translateService?: IPluginTranslateService | null;
 	}
 ): void {
-	const { navBuilder, pageRouteRegistry, pageTabRegistry, pageExtensionRegistry, widgetRegistry } = services;
+	const { navBuilder, pageRouteRegistry, pageTabRegistry, pageExtensionRegistry, widgetRegistry, translateService } =
+		services;
 
 	if (pageRouteRegistry && definition.routes?.length) {
 		for (const r of definition.routes) {
@@ -568,6 +634,12 @@ export function applyDeclarativeRegistrations(
 			}
 		}
 	}
+
+	// Opt-in: only a caller that passes `translateService` gets its translations merged, so
+	// every existing call site keeps its exact previous behaviour. The subscription is
+	// deliberately not retained — a module plugin lives for the application lifetime, which is
+	// the same lifetime `defineDeclarativePlugin` gives it when no `DestroyRef` is available.
+	applyPluginTranslations(definition, translateService);
 }
 
 /**
@@ -645,44 +717,15 @@ export function defineDeclarativePlugin(
 		// Also handle the case where the language was already loaded before
 		// plugin bootstrap (merge immediately for the current language).
 		if (plugin.translations) {
-			const translateService = injector.get(PLUGIN_TRANSLATE_SERVICE, null);
-			if (translateService) {
-				// Apply namespace isolation: wrap translations under the namespace key
-				// so plugins never collide with core or other plugins' keys.
-				const translations = plugin.translationNamespace
-					? namespaceTranslations(plugin.translationNamespace, plugin.translations)
-					: plugin.translations;
+			const langSub: Subscription | undefined = applyPluginTranslations(
+				plugin,
+				injector.get(PLUGIN_TRANSLATE_SERVICE, null)
+			);
 
-				const mergeForLang = (lang: string): void => {
-					const fallbackLang = translateService.getFallbackLang() || 'en';
-					const data = translations[lang] ?? translations[fallbackLang];
-					if (!data) return;
-
-					const existing = translateService.getTranslations(lang);
-					if (existing && Object.keys(existing).length > 0) {
-						const newKeys = filterNewTranslationKeys(existing as Record<string, any>, data);
-						if (newKeys) {
-							translateService.setTranslation(lang, newKeys, true);
-						}
-					}
-				};
-
-				// If a language is already active (core translations loaded),
-				// merge plugin translations immediately.
-				const currentLang = translateService.getCurrentLang();
-				if (currentLang) {
-					mergeForLang(currentLang);
-				}
-
-				// Subscribe to future language changes — merge whenever core
-				// translations are loaded for a new language.
-				const langSub: Subscription = translateService.onLangChange.subscribe(({ lang }) => {
-					mergeForLang(lang);
-				});
-
-				// Auto-unsubscribe when the injector is destroyed (e.g., dynamic plugin unload).
-				// For statically bootstrapped plugins, DestroyRef may not be available — in that
-				// case the subscription intentionally lives for the app lifetime.
+			// Auto-unsubscribe when the injector is destroyed (e.g., dynamic plugin unload).
+			// For statically bootstrapped plugins, DestroyRef may not be available — in that
+			// case the subscription intentionally lives for the app lifetime.
+			if (langSub) {
 				const destroyRef = injector.get(DestroyRef, null);
 				if (destroyRef) {
 					destroyRef.onDestroy(() => langSub.unsubscribe());

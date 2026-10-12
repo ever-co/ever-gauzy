@@ -9,6 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
 import {
 	CrudActionEnum,
+	FeatureEnum,
 	IDateRangePicker,
 	IEmployee,
 	IOrganization,
@@ -1206,6 +1207,39 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							badge: {
 								text: this.formatShortcut(this.defaultShortcuts.stopTimer),
 								status: 'control'
+							}
+						}
+					]
+				: []),
+			// Divider (Documents) — `@gauzy/plugin-docs-ui`, `01-ux-spec.md` §1. Both entries
+			// are one-shot deep links the hub consumes and strips from the URL on arrival.
+			// The hub's own route guards re-check the feature flag, but relying on that alone
+			// left a feature-disabled org staring at two live menu entries that bounce straight
+			// back to the dashboard — so the flag is checked here too. `_loadContextMenus()`
+			// already re-runs on organization change, which is when the flag can flip.
+			...(this.store.hasPermission(PermissionsEnum.DOCS_CREATE) &&
+			this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.DOCUMENTS.NEW_PAGE'),
+							icon: 'file-add-outline',
+							link: 'pages/documents',
+							queryParams: {
+								newPage: 1
+							},
+							data: {
+								action: 'newDocumentPage'
+							}
+						},
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.DOCUMENTS.UPLOAD'),
+							icon: 'upload-outline',
+							link: 'pages/documents',
+							queryParams: {
+								upload: 1
+							},
+							data: {
+								action: 'uploadDocuments'
 							}
 						}
 					]

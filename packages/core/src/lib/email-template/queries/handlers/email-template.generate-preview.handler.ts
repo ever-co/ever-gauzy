@@ -1,21 +1,23 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as Handlebars from 'handlebars';
-import * as mjml2html from 'mjml';
 import { ConfigService, environment } from '@gauzy/config';
 import { generateAlphaNumericCode } from '@gauzy/utils';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
+import { compileMjml, toTemplateSource } from '../../compile-mjml';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
 	constructor(private readonly configService: ConfigService) {}
 
 	public async execute(command: EmailTemplateGeneratePreviewQuery): Promise<{ html: string }> {
-		const { input } = command;
+		// Coerce first: both the MJML compiler and the Handlebars fallback below must only ever see a
+		// string — Handlebars.compile() also accepts a pre-parsed AST object (GHSA-48h9-vwf5-h8m7).
+		const input = toTemplateSource(command.input);
 		let textToHtml = input;
 
 		try {
-			const mjmlToHtml = mjml2html(input);
+			const mjmlToHtml = compileMjml(input);
 			textToHtml = mjmlToHtml.errors.length ? input : mjmlToHtml.html;
 		} catch (error) {
 			// ignore mjml conversion errors for non-mjml text such as subject

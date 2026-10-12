@@ -19,6 +19,8 @@ export class AvatarComponent implements OnInit {
 	@Input() caption: string;
 	@Input() id: ID;
 	@Input() isOption: boolean;
+	/** Which employee page a click opens: the edit form (default) or the read-only profile view. */
+	@Input() linkTo: 'edit' | 'view' = 'edit';
 
 	/**
 	 * A class member and getter/setter for managing an employee object.
@@ -62,13 +64,13 @@ export class AvatarComponent implements OnInit {
 	}
 
 	/**
-	 * Navigates to the employee edit page based on the provided employee ID.
+	 * Navigates to the employee edit page (or the profile view, per `linkTo`) for the provided employee ID.
 	 *
-	 * @param id - The ID of the employee to edit.
+	 * @param id - The ID of the employee to open.
 	 */
 	edit(id: ID): void {
 		if (id) {
-			this.router.navigate([`/pages/employees/edit/${id}`]);
+			this.router.navigate([`/pages/employees/${this.linkTo}/${id}`]);
 		}
 	}
 }

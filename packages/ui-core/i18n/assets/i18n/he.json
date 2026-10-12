@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
@@ -820,6 +822,7 @@
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Select Timezone",
+		"SELECT_TIMEZONE_HINT": "זמני הפגישות מוצגים באזור זמן זה.",
 		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
 		"SHOW_AVERAGE_INCOME": "Show Average Income",
 		"SHOW_PAYPERIOD": "Show Pay Period",
@@ -1158,7 +1161,71 @@
 		"APPLICATIONS": "Applications",
 		"OPEN_GA_BROWSER": "פתח את Gauzy בדפדפן",
 		"START_SERVER": "התחל את השרת",
-		"STOP_SERVER": "עצור את השרת"
+		"STOP_SERVER": "עצור את השרת",
+		"DOCUMENTS": "מסמכים",
+		"BILLING": "חיוב",
+		"MONITORING": "ניטור",
+		"ADD_ITEM": "הוסף {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "רק אתה",
+			"TENANT": "כל מי שבדייר הזה"
+		},
+		"UNSAVED_CHANGES": "שינויים שלא נשמרו",
+		"ACCOUNT": {
+			"TITLE": "חשבון",
+			"DESCRIPTION": "החשבון שאיתו התחברת.",
+			"MANAGE": "ניהול פרופיל",
+			"ROLE": "תפקיד",
+			"MEMBER_SINCE": "חבר מאז"
+		},
+		"PREFERENCES": {
+			"TITLE": "העדפות",
+			"DESCRIPTION": "איך האפליקציה נראית ומתנהגת עבורך. השינויים חלים מיד.",
+			"THEME": "ערכת נושא",
+			"THEME_HINT": "ערכת הצבעים של כל האפליקציה.",
+			"LANGUAGE": "שפה",
+			"LANGUAGE_HINT": "שפת התפריטים, התוויות וההודעות.",
+			"LAYOUT": "פריסת ברירת מחדל",
+			"RESET_LAYOUTS": "איפוס פריסות הדפים",
+			"SAVE_ERROR": "לא ניתן היה לשמור את ההעדפה שלך.",
+			"LAYOUTS_RESET": "פריסות הדפים אופסו לברירת המחדל שלך."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "תמונה ריבועית, לפחות 128 × 128 פיקסלים.",
+			"NAME_HINT": "מוצג לכל משתמשי הדייר הזה.",
+			"TENANT_ID": "מזהה הדייר",
+			"TENANT_ID_HINT": "ציין אותו בפנייה לתמיכה או בקריאה ל-API.",
+			"COPY_ERROR": "לא ניתן היה להעתיק את מזהה הדייר.",
+			"TITLE": "פרופיל הדייר",
+			"DESCRIPTION": "השם והלוגו של דייר זה, המוצגים לכל המשתמשים בבורר סביבות העבודה ובסרגל הצד.",
+			"NAME": "שם הדייר",
+			"NAME_PLACEHOLDER": "הזן את שם הדייר",
+			"NAME_REQUIRED": "שם הדייר הוא שדה חובה.",
+			"LOGO": "לוגו הדייר",
+			"LOGO_CHANGE": "לחץ כדי להעלות לוגו חדש",
+			"LOGO_REMOVE": "הסר לוגו",
+			"LOGO_UPLOAD_ERROR": "לא ניתן היה להעלות את הלוגו.",
+			"CREATED_AT": "נוצר בתאריך",
+			"SAVED": "פרופיל הדייר נשמר",
+			"SAVE_ERROR": "לא ניתן היה לשמור את פרופיל הדייר.",
+			"LOAD_ERROR": "לא ניתן היה לטעון את פרופיל הדייר."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "ממשק",
+			"TITLE": "ממשק משתמש",
+			"DESCRIPTION": "בחרו באיזה ממשק ישתמשו כל המשתמשים בדייר זה עבור דפים הזמינים בשתי הגרסאות.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (ברירת מחדל)",
+				"REACT": "React (חדש)"
+			},
+			"HINT": "חל על כל הדייר, בכל מכשיר. כיום לוח מעקב הזמן זמין בשני הממשקים; דפים נוספים יתווספו.",
+			"READ_ONLY": "רק מנהלי הדייר יכולים לשנות הגדרה זו.",
+			"SAVING": "שומר…",
+			"SAVED": "העדפת הממשק נשמרה",
+			"SAVE_ERROR": "לא ניתן היה לשמור את העדפת הממשק."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -1192,7 +1259,9 @@
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View",
 		"QUICK_SETTINGS": "Quick Settings",
-		"NO_LAYOUT": "אין פריסת נתונים זמינה"
+		"NO_LAYOUT": "אין פריסת נתונים זמינה",
+		"PREFERENCES": "העדפות",
+		"SUPPORT": "תמיכה"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
@@ -1779,6 +1848,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
+			"OF_INCOME": "{{ value }}% מההכנסה",
+			"MARGIN": "שולי רווח של {{ value }}%",
+			"BREAKDOWN": "הכנסות לפי עובד",
+			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
+			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
+			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
+			"SORT_BY": "מיון לפי {{ name }}",
+			"SORT_LABEL": "מיון לפי",
+			"SORT_ASCENDING": "סדר עולה",
+			"SORT_DESCENDING": "סדר יורד"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -1965,7 +2047,90 @@
 			"PREVIOUS": "Previous"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "תקופה",
+			"PERIODS": {
+				"THIS_WEEK": "השבוע",
+				"THIS_MONTH": "החודש",
+				"LAST_30_DAYS": "30 הימים האחרונים"
+			},
+			"TABS": {
+				"OVERVIEW": "סקירה",
+				"PROFILE": "פרופיל"
+			},
+			"PRESENCE": {
+				"TRACKING": "רושם זמן",
+				"ONLINE": "מחובר",
+				"AWAY": "לא ליד המחשב",
+				"OFFLINE": "לא מחובר"
+			},
+			"LOCAL_TIME": "שעה מקומית",
+			"MEMBER_SINCE": "חבר מאז",
+			"WEEKLY_LIMIT": "מגבלה שבועית",
+			"WORKED_TODAY": "עבד היום",
+			"WORKED_PERIOD": "עבד בתקופה",
+			"ACTIVITY_META": "{{ value }} פעילות",
+			"AVG_ACTIVITY": "פעילות ממוצעת",
+			"OPEN_TASKS": "משימות פתוחות",
+			"OPEN_TASKS_META": "{{ progress }} בתהליך · {{ overdue }} באיחור",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "לעומת השבוע שעבר",
+				"THIS_MONTH": "לעומת החודש שעבר",
+				"LAST_30_DAYS": "לעומת 30 הימים הקודמים"
+			},
+			"HOURS_WORKED": "שעות עבודה",
+			"HOURS_META": "{{ total }} סה״כ · {{ average }} ליום עבודה",
+			"TRACKED": "נרשם",
+			"MANUAL": "ידני",
+			"OPEN_TIMESHEET": "פתח גיליון שעות",
+			"PROJECTS": "פרויקטים",
+			"RECENT_SCREENSHOTS": "צילומי מסך אחרונים",
+			"VIEW_ALL": "הצג הכל",
+			"ASSIGNED_TASKS": "משימות שהוקצו",
+			"COLUMNS": {
+				"TASK": "משימה",
+				"PROJECT": "פרויקט",
+				"STATUS": "סטטוס",
+				"DUE": "תאריך יעד",
+				"TIME": "זמן",
+				"NAME": "שם",
+				"PRIORITY": "עדיפות"
+			},
+			"TOP_TASKS": "המשימות שעליהן עבדו הכי הרבה",
+			"APPS_URLS": "אפליקציות וכתובות URL",
+			"NO_TIME": "לא נרשם זמן בתקופה זו",
+			"NO_TASKS": "אין משימות שהוקצו",
+			"NO_APPS": "אין פעילות אפליקציות או URL בתקופה זו",
+			"NO_SCREENSHOTS": "אין צילומי מסך בתקופה זו",
+			"UNAVAILABLE": "אין לך גישה לנתונים אלה",
+			"PROFILE": {
+				"ABOUT": "אודות",
+				"CONTACT": "יצירת קשר",
+				"SKILLS_TAGS": "כישורים ותגיות",
+				"TIME_ZONE": "אזור זמן",
+				"NOT_PROVIDED": "טרם צוין",
+				"NO_DESCRIPTION": "עדיין לא נוסף תיאור"
+			},
+			"TASKS_HELP": "משימות שהאדם הזה משתתף בהן. בחרו תיבה כדי לסנן את הרשימה.",
+			"TASK_FILTERS": {
+				"OPEN": "פתוחות",
+				"PROGRESS": "בתהליך",
+				"OVERDUE": "באיחור",
+				"DONE": "הושלמו"
+			},
+			"DUE": {
+				"NONE": "ללא תאריך יעד",
+				"WAS_DUE": "היה אמור להסתיים",
+				"OVERDUE_DAY": "באיחור של יום",
+				"OVERDUE_DAYS": "באיחור של {{ count }} ימים",
+				"TODAY": "להיום",
+				"TOMORROW": "למחר",
+				"IN_DAYS": "בעוד {{ count }} ימים"
+			},
+			"SHOWING": "מוצגות {{ shown }} מתוך {{ total }} משימות",
+			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -1981,6 +2146,7 @@
 		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
@@ -1997,6 +2163,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "עובדים",
 			"TEAMS": "Teams",
@@ -2026,7 +2194,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
-			"NO_ALIGNMENT": "No Alignments yet."
+			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
@@ -2457,6 +2626,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "אפשר לעובד לצאת מאפליקציית הסוכן. כאשר מושבת, אפשרות היציאה תיחסם באפליקציית הסוכן.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "אפשר התנתקות מאפליקציית הסוכן",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "אפשר לעובד להתנתק מאפליקציית הסוכן. כאשר מושבת, אפשרות ההתנתקות תיחסם באפליקציית הסוכן.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "הגנת עובדים באזור הכלכלי האירופי / בבריטניה פעילה",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "עבור ארגונים ועובדים באזור הכלכלי האירופי או בבריטניה, עובדים יכולים תמיד לצאת מסוכן שולחן העבודה ולהתנתק ממנו. קשה להצדיק תיעוד שהעובד אינו יכול להפסיק לפי GDPR וסעיף 8 לאמנה האירופית לזכויות אדם, ולכן הגבלות אלה אינן זמינות כאן.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "אישור הגבלת יציאה או התנתקות מהסוכן",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "עם הגבלה זו העובד אינו יכול לעצור את התיעוד על ידי סוכן שולחן העבודה. אשרו שבדקתם שהדבר חוקי ומידתי עבור עובדים אלה ושאתם נוטלים עליו אחריות. האישור שלכם נרשם בחשבון שלכם.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "עקוב אחר פעילות המקלדת והעכבר",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "הפעל מעקב מלא אחר פעילות מקלדת ועכבר, כולל לחיצות מקשים ותנועות עכבר מדויקות בכל אפליקציות שולחן העבודה והסוכן.",
 				"TRACK_ALL_DISPLAYS": "עקוב אחר כל המסכים",
@@ -2479,6 +2652,8 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "תדירות צילומי מסך",
 				"SCREENSHOT_FREQUENCY_INFO": "ציין את תדירות העדכון או המרווחים הזמניים לסנכרון.",
 				"RANDOM_SCREENSHOT": "צילום מסך אקראי",
@@ -2711,7 +2886,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -2744,7 +2922,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "אודות",
+		"INACTIVE": "לא פעיל",
+		"PER_HOUR": "/ שעה",
+		"MEMBER_SINCE": "חבר מאז",
+		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
+		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
+		"EDIT": {
+			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"ADD_AWARD": "הוספת פרס",
+			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "הצעות - ניהול",
@@ -3333,7 +3523,11 @@
 		"STOP_TIMER": "עצור טיימר",
 		"TIME_LOG": "יומן זמן",
 		"VIEW_APPOINTMENTS": "צפייה בפגישות",
-		"VIEW_TIME_ACTIVITY": "צפייה בפעילות זמן"
+		"VIEW_TIME_ACTIVITY": "צפייה בפעילות זמן",
+		"DOCUMENTS": {
+			"NEW_PAGE": "עמוד חדש",
+			"UPLOAD": "העלה"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "חשבונאות",
@@ -3341,7 +3535,8 @@
 		"PROJECT_MANAGEMENT": "ניהול פרויקטים",
 		"JOBS": "משרות",
 		"CONTACTS": "אנשי קשר",
-		"TIME_TRACKING": "מעקב זמן"
+		"TIME_TRACKING": "מעקב זמן",
+		"DOCUMENTS": "מסמכים"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
@@ -3392,6 +3587,9 @@
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…",
+		"NO_COMMENTS": "אין עדיין תגובות",
+		"NO_COMMENTS_HINT": "תגובות יופיעו כאן, החדשות ביותר תחילה.",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -3655,7 +3853,9 @@
 		"SELECT_AN_ORGANIZATION": "Organization",
 		"SELECT_PROJECT": "Project",
 		"SELECT_TEAM": "קבוצה",
-		"AI_CHAT": "צ'אט AI"
+		"AI_CHAT": "צ'אט AI",
+		"COLLAPSE_SIDEBAR": "כווץ את סרגל הצד",
+		"EXPAND_SIDEBAR": "הרחב את סרגל הצד"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "עוזר AI",
@@ -3681,9 +3881,34 @@
 		"STOP": "עצירת היצירה",
 		"ERROR": "משהו השתבש.",
 		"RETRY": "נסה שוב",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"DICTATION_FAILED": "לא ניתן היה לתמלל את ההקלטה.",
+		"DICTATION_NOT_CONFIGURED": "ההכתבה זקוקה לספק קול. הוסיפו אחד בעמוד ההגדרות „ספקי AI”.",
+		"DICTATION_ASK_ADMIN": "ההכתבה זקוקה לספק קול — בקשו ממנהל מערכת להוסיף אחד בהגדרות ← ספקי AI.",
+		"DICTATION_KEY_REJECTED": "ספק הקול דחה את מפתח ה-API שלו. עדכנו אותו בעמוד ההגדרות „ספקי AI”.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "ספק הקול דחה את מפתח ה-API שלו — בקשו ממנהל מערכת לעדכן אותו בהגדרות ← ספקי AI.",
+		"DICTATION_OPEN_SETTINGS": "פתח ספקי AI",
+		"RATE_LIMITED_SHARED": "שכבת ה-AI החינמית מוגבלת כרגע בקצב הבקשות. חברו חשבון OpenRouter משלכם או הגדירו ספק AI אחר לשימוש ללא הפרעה.",
+		"RATE_LIMITED_OWN": "ספק ה-AI שלכם מגביל כרגע את הבקשות. בדקו את התוכנית והמגבלות שלכם אצל הספק, או הגדירו ספק AI אחר.",
+		"RATE_LIMIT_RETRY_IN": "אפשר לנסות שוב בעוד כ-{{seconds}} שניות.",
+		"OPEN_AI_SETTINGS": "פתח ספקי AI",
+		"ERROR_NOT_CONFIGURED": "צ'אט ה-AI זקוק לספק מוגדר. הוסיפו אחד בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "צ'אט ה-AI זקוק לספק מוגדר — בקשו ממנהל מערכת להוסיף אחד בהגדרות ← ספקי AI.",
+		"ERROR_PROVIDER_UNAVAILABLE": "ספק ה-AI שנבחר לא יכול לענות כרגע. בדקו אותו בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "ספק ה-AI שנבחר לא יכול לענות כרגע — בקשו ממנהל מערכת לבדוק את הגדרות ← ספקי AI.",
+		"ERROR_MODEL_UNAVAILABLE": "המודל הזה אינו זמין עם מפתח ה-API הנוכחי. בחרו מודל אחר בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "המודל הזה אינו זמין עם מפתח ה-API הנוכחי — בקשו ממנהל מערכת לבדוק את הגדרות ← ספקי AI.",
+		"ERROR_KEY_REJECTED": "ספק ה-AI דחה את מפתח ה-API שלו. עדכנו אותו בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "ספק ה-AI דחה את מפתח ה-API שלו — בקשו ממנהל מערכת לעדכן אותו בהגדרות ← ספקי AI.",
+		"ERROR_RATE_LIMITED": "ספק ה-AI מגביל את הבקשות.",
+		"RECORDING": "מקליט",
+		"PREVIEW": "תצוגה מקדימה",
+		"PREVIEW_PAGE": "דף",
+		"PREVIEW_NEW_TAB": "פתיחה בכרטיסייה חדשה",
+		"PREVIEW_CLOSE": "סגירת התצוגה המקדימה",
+		"PREVIEW_UNAVAILABLE": "אין תצוגה מקדימה זמינה לקובץ הזה.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "פתיחה במסמכים",
+		"ATTACH_UPLOADING": "מעלה…",
+		"ATTACH_DOCUMENT": "מסמך"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3696,6 +3921,21 @@
 		"REDIRECT_TO_HOME": "תופנה לדף הבית בקרוב"
 	},
 	"HELP_PAGE": {
+		"INTRO": "מצאו תיעוד, קבלו תשובות וצרו קשר עם הצוות שמאחורי Gauzy.",
+		"DOCUMENTATION": "תיעוד",
+		"DOCUMENTATION_DESC": "מדריכים ותיעוד לכל יכולת ב-Gauzy.",
+		"FAQ": "שאלות נפוצות",
+		"FAQ_DESC": "תשובות לשאלות הנפוצות ביותר.",
+		"SUPPORT_CHAT": "צ'אט תמיכה",
+		"SUPPORT_CHAT_DESC": "שוחחו עם צוות התמיכה שלנו.",
+		"REPORT_ISSUE": "דיווח על תקלה",
+		"REPORT_ISSUE_DESC": "מצאתם באג? פתחו issue ב-GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "קוד מקור, גרסאות ודיונים.",
+		"WEBSITE": "אתר Gauzy",
+		"WEBSITE_DESC": "מידע נוסף על פלטפורמת Gauzy.",
+		"ABOUT_LINK": "אודות Gauzy",
+		"ABOUT_LINK_DESC": "פרטי גרסה, רישיון וקישורים.",
 		"HELP": "עזרה",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -3788,7 +4028,8 @@
 		"ROLES_PERMISSIONS": "Roles & Permissions",
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
-		"DASHBOARD": "לוח מחוונים"
+		"DASHBOARD": "לוח מחוונים",
+		"DOCUMENTS": "מסמכים"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3886,6 +4127,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "מרכז למסמכי החברה: העלאות, דפי ויקי, סקירה וידע לבינה מלאכותית"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4000,6 +4244,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "‏Copyright © 2019-{{year}}, Ever Co. LTD. כל הזכויות שמורות.",
+		"DESCRIPTION": "‏Ever® Gauzy™ היא פלטפורמה פתוחה לניהול עסקי עבור כלכלות שיתופיות ולפי דרישה — ERP, CRM, HRM, ATS וניהול פרויקטים עם מעקב זמן מובנה.",
+		"LICENSE": "קוד פתוח, משוחרר תחת רישיון",
+		"VERSION_DETAILS": "פרטי גרסה",
+		"VERSION_MISMATCH": "אפליקציית הווב וה-API נבנו מקומיטים שונים — ייתכן שפריסה מתבצעת כעת.",
+		"WEB_APP": "אפליקציית ווב",
+		"API": "API",
+		"UNTAGGED": "גרסה ללא תג",
+		"API_UNAVAILABLE": "גרסת ה-API אינה זמינה",
+		"LEARN_MORE": "מידע נוסף",
 		"ABOUT": "עלינו"
 	},
 	"FOOTER": {
@@ -4391,6 +4645,20 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "הניטור פעיל: מתועדים זמן ופעילות",
+		"MONITORING_IDLE": "הסוכן במצב המתנה",
+		"MONITORING_TRAY_ACTIVE": "הניטור פעיל, מתועד: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "הניטור מושהה: שום דבר אינו מתועד",
+		"MONITORING_CAPTURE_TIME": "זמן ויישומים פעילים",
+		"MONITORING_CAPTURE_SCREENSHOTS": "צילומי מסך",
+		"MONITORING_CAPTURE_INPUT": "פעילות מקלדת ועכבר",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "בחר לקוח",
+			"SELECT_PROJECT": "בחר פרויקט",
+			"SELECT_TEAM": "בחר קבוצה",
+			"SELECT_TASK": "בחר משימה",
+			"DESCRIPTION": "הוסף תיאור"
+		},
 		"IS_BILLABLE": "ניתן לחיוב",
 		"STOP_TIMER": "עצור טיימר",
 		"START_TIMER": "התחל טיימר",
@@ -4495,7 +4763,7 @@
 			"SELECT_DEFAULT_CDN": "בחירת שרת CDN בררת מחדל לעדכון",
 			"TOGGLE_UPDATE_LOCALLY": "החלפה לתהליך עדכון מקומי",
 			"LOCAL_SERVER": "שרת מקומי",
-			"LOCAL_SERVER_NOTE": "הספרייה שנבחרה צריכה להכיל לפחות את המדף <strong>latest.yml</strong> ו/או <strong>latest-mac.yml</strong> כדי לבצע אימות עדכונים",
+			"LOCAL_SERVER_NOTE": "הספרייה שנבחרה חייבת להכיל את קובץ המניפסט של העדכון עבור המערכת שלך (Windows: <strong>latest-x64.yml</strong> או <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> או <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) ואת קובצי העדכון המפורטים בו, כדי לבצע אימות עדכונים",
 			"OTHER_SETTINGS": "הגדרות נוספות",
 			"ALLOW_PRERELEASE_VERSIONS": "אפשר גרסאות גרסה חשמלית",
 			"CHECK_UPDATE_APP_VERSION": "בדיקת ועדכון גרסת האפליקציה",
@@ -4860,7 +5128,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "תמונות מסך",
 			"OF": "של",
-			"TIME_LOG": "רשומת זמן"
+			"TIME_LOG": "רשומת זמן",
+			"TAKEN_AT": "צילום מסך שצולם ב-{{ time }}",
+			"POSITION": "צילום מסך {{ position }} מתוך {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "אזהרה. טיימר פועל, אתה יכול להסיר רק תמונות מסך אם תעצור את הטיימר או באמצעות אפליקציית Inside Timer",
 		"DELETE_CONFIRM": "האם אתה בטוח שברצונך למחוק את התמונות האלה ואת רשומת הזמן?",
@@ -4908,7 +5178,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
@@ -4934,6 +5206,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "פרטים",
+		"PARTICIPANTS": "משתתפים",
+		"FORM_HINT": "הגדירו את נושא הפגישה, מתי היא מתקיימת ומי משתתף.",
+		"DETAILS_HINT": "סדר יום, מקום והערות שמוצגים לכל המוזמנים.",
+		"SCHEDULE": "לוח זמנים",
+		"SCHEDULE_HINT": "בחרו תאריך וחלון זמן, עם זמן חיץ והפסקה אופציונליים.",
+		"BUFFER_TIME_HINT": "השאירו זמן פנוי לפני הפגישה או אחריה.",
+		"BREAK_TIME_HINT": "עצרו את הפגישה להפסקה קצרה.",
+		"BREAK_START": "ההפסקה מתחילה ב-",
+		"PARTICIPANTS_HINT": "האנשים שמקבלים את ההזמנה.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4978,7 +5260,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "שינוי",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "בחרו את מי תרצו לפגוש, ואז בחרו שעה שנוחה לכם.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
@@ -5022,7 +5306,10 @@
 			"payment-receipt": "קבלת תשלום",
 			"reject-candidate": "לדחות את המועמד"
 		},
-		"HTML_EDITOR": "HTML Editor"
+		"HTML_EDITOR": "HTML Editor",
+		"FULL_PREVIEW": "תצוגה מלאה",
+		"VIEW_GRID": "רשת",
+		"VIEW_EDITOR": "עורך"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
@@ -5073,36 +5360,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "ספק קבצים",
+		"SHOW_SECRET": "הצג סוד",
+		"HIDE_SECRET": "הסתר סוד",
+		"SUMMARY": {
+			"TITLE": "תצורה נוכחית",
+			"DESCRIPTION": "ההגדרות האחרונות שנשמרו — בשימוש בהעלאות חדשות.",
+			"PROVIDER": "ספק",
+			"BUCKET": "באקט / שם ענן",
+			"REGION": "אזור",
+			"ENDPOINT": "נקודת קצה",
+			"CREDENTIALS": "פרטי גישה",
+			"CREDENTIALS_SAVED": "נשמרו",
+			"CREDENTIALS_INCOMPLETE": "חלקיים",
+			"CREDENTIALS_NONE": "לא הוגדרו",
+			"CREDENTIALS_NOT_NEEDED": "לא נדרשים",
+			"SERVER_DEFAULT": "ברירת המחדל של השרת"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "היכן להשיג את המפתחות",
+			"LOCAL": {
+				"NAME": "דיסק מקומי",
+				"DESCRIPTION": "הקבצים נשמרים במערכת הקבצים של שרת ה-API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "הקבצים נשמרים בבאקט AWS S3. השתמשו במפתח גישה של IAM עם הרשאות קריאה וכתיבה לבאקט."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "אחסון ענן תואם S3. פרטי הגישה נבדקים מול Wasabi בעת השמירה."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "אירוח תמונות ווידאו. שם הענן ומפתחות ה-API נמצאים בקונסולת Cloudinary תחת API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "אחסון אובייקטים תואם S3 עם CDN אופציונלי. צרו מפתח גישה ל-Spaces בלוח הבקרה של DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "אחסון מקומי",
+			"WHERE": "קבצים שהועלו נכתבים למערכת הקבצים של שרת ה-API.",
+			"NO_CONFIG": "אין מה להגדיר — האחסון המקומי עובד מיד.",
+			"WARNING": "הקבצים יאבדו אם השרת ייפרס מחדש ללא נפח קבוע, והם אינם משותפים בין כמה מופעי API. בסביבת ייצור השתמשו בספק ענן."
+		},
+		"CHECK": {
+			"BUTTON": "בדוק תצורה",
+			"OK": "כל השדות הנדרשים מולאו וכתובות ה-URL תקינות. המפתחות עצמם נבדקים רק על ידי הספק.",
+			"OK_LOCAL": "אחסון מקומי אינו דורש הגדרה.",
+			"OK_SERVER_DEFAULTS": "לא חסר דבר. השדות הריקים האלה משתמשים בתצורת השרת:",
+			"MISSING": "חסר:",
+			"INVALID_URL": "כתובת http(s) לא תקינה:",
+			"HTTPS_REQUIRED": "חובה להשתמש ב-https:// — המפתחות נשלחים לכתובת זו:"
+		},
 		"S3": {
-			"HEADER": "S3 Configuration",
+			"HEADER": "תצורת S3",
+			"SUBTITLE": "אחסנו קבצים שהועלו בבאקט של Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "פרטי גישה",
+				"CREDENTIALS_HINT": "מפתח גישה של IAM עם הרשאות קריאה וכתיבה לבאקט.",
+				"BUCKET": "באקט",
+				"BUCKET_HINT": "לאן נכתבים הקבצים שהועלו."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "החלק הציבורי של זוג המפתחות.",
+				"SECRET_ACCESS_KEY": "מוצג פעם אחת בלבד, בעת יצירת המפתח. ערכים שמורים חוזרים מוסתרים.",
+				"REGION": "אזור ה-AWS של הבאקט, למשל us-east-1 או eu-west-1.",
+				"BUCKET": "שם הבאקט בדיוק כפי שהוא מופיע בקונסולת S3."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Configuration",
+			"HEADER": "תצורת Wasabi",
+			"SUBTITLE": "אחסנו קבצים שהועלו בבאקט של Wasabi דרך ה-API התואם S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "פרטי גישה",
+				"CREDENTIALS_HINT": "זוג מפתחות גישה מקונסולת Wasabi.",
+				"BUCKET": "באקט ונקודת קצה",
+				"BUCKET_HINT": "לאן נכתבים הקבצים שהועלו.",
+				"OPTIONS": "אפשרויות"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "החלק הציבורי של זוג המפתחות.",
+				"SECRET_ACCESS_KEY": "מוצג פעם אחת בלבד, בעת יצירת המפתח. ערכים שמורים חוזרים מוסתרים.",
+				"REGION": "האזור של הבאקט, למשל us-east-1 או eu-central-1.",
+				"SERVICE_URL": "נקודת הקצה של S3 עבור אותו אזור.",
+				"BUCKET": "אותיות קטנות, ספרות, נקודות ומקפים. השמות ייחודיים בכל Wasabi.",
+				"FORCE_PATH_STYLE": "פנייה לקבצים בתבנית endpoint/bucket/file במקום bucket.endpoint/file. השאירו מופעל אלא אם אתם צריכים כתובות virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "נקודת קצה לאזור זה:",
+			"USE_SUGGESTION": "השתמש",
+			"SAVE_NOTE": "בעת השמירה, Gauzy משתמש בפרטי הגישה האלה כדי ליצור את הבאקט ב-Wasabi. אם Wasabi דוחה את הבקשה, ההגדרות אינן נשמרות.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket",
-				"SERVICE_URL": "Service URL"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות",
+				"FORCE_PATH_STYLE": "אילוץ כתובות URL בסגנון נתיב"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
-				"SECRET_ACCESS_KEY": "Secret access key",
-				"REGION": "Region",
-				"BUCKET": "Bucket",
-				"SERVICE_URL": "Service URL"
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "תצורת Cloudinary",
+			"SUBTITLE": "אחסנו קבצים שהועלו ב-Cloudinary והגישו אותם דרך רשת ההפצה שלו.",
+			"SECTIONS": {
+				"ACCOUNT": "חשבון",
+				"ACCOUNT_HINT": "שלושת הערכים נמצאים בקונסולת Cloudinary תחת API Keys.",
+				"DELIVERY": "הפצה",
+				"DELIVERY_HINT": "כיצד נבנים הקישורים לקבצים שהועלו."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "השם המוצג בראש קונסולת Cloudinary.",
+				"ACCESS_API_KEY": "מזהה את החשבון; משמש יחד עם סוד ה-API.",
+				"ACCESS_API_SECRET": "ערכים שמורים חוזרים מוסתרים.",
+				"DELIVERY_URL": "כתובת הבסיס של הקישורים. השאירו https://res.cloudinary.com אלא אם אתם משתמשים בדומיין מותאם.",
+				"SECURE": "יצירת קישורים עם https://. השאירו על True."
+			},
+			"LABELS": {
+				"CLOUD_NAME": "שם הענן",
+				"ACCESS_API_KEY": "מפתח API",
+				"ACCESS_API_SECRET": "סוד API",
+				"DELIVERY_URL": "כתובת URL למסירה",
+				"SECURE": "מאובטח (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "שם הענן",
+				"ACCESS_API_KEY": "מפתח API",
+				"ACCESS_API_SECRET": "סוד API",
+				"DELIVERY_URL": "כתובת URL למסירה",
+				"SECURE": "מאובטח (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "תצורת DigitalOcean",
+			"SUBTITLE": "אחסנו קבצים שהועלו ב-DigitalOcean Space דרך ה-API התואם S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "פרטי גישה",
+				"CREDENTIALS_HINT": "מפתח גישה ל-Spaces מלוח הבקרה של DigitalOcean.",
+				"BUCKET": "Space ונקודת קצה",
+				"BUCKET_HINT": "לאן נכתבים הקבצים שהועלו.",
+				"OPTIONS": "אפשרויות"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "החלק הציבורי של זוג המפתחות.",
+				"SECRET_ACCESS_KEY": "מוצג פעם אחת בלבד, בעת יצירת המפתח. ערכים שמורים חוזרים מוסתרים.",
+				"SERVICE_URL": "נקודת הקצה של מרכז הנתונים של ה-Space, למשל https://fra1.digitaloceanspaces.com.",
+				"REGION": "קבוע על us-east-1, כפי ש-Spaces מצפה; מרכז הנתונים נקבע לפי נקודת הקצה.",
+				"BUCKET": "שם ה-Space.",
+				"CDN_URL": "אופציונלי. נקודת הקצה של ה-CDN של ה-Space, אם ה-CDN מופעל.",
+				"FORCE_PATH_STYLE": "פנייה לקבצים בתבנית endpoint/space/file במקום space.endpoint/file."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות",
+				"CDN_URL": "כתובת URL של ה-CDN",
+				"FORCE_PATH_STYLE": "אילוץ כתובות URL בסגנון נתיב"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "מזהה מפתח גישה",
+				"SECRET_ACCESS_KEY": "מפתח גישה סודי",
+				"REGION": "אזור",
+				"BUCKET": "באקט",
+				"SERVICE_URL": "כתובת URL של השירות",
+				"CDN_URL": "כתובת URL של ה-CDN"
 			}
 		}
 	},
@@ -5150,7 +5592,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "שליחת התראות והזמנות SMS באמצעות Twilio Programmable Messaging.",
+		"DOCUMENTATION": "תיעוד"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"
@@ -5171,7 +5615,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "נמען",
+				"TEMPLATE": "תבנית",
+				"STATUS": "סטטוס",
+				"ALL_RECIPIENTS": "כל הנמענים",
+				"ALL_TEMPLATES": "כל התבניות",
+				"ALL_STATUSES": "כל הסטטוסים",
+				"SENT": "נשלח",
+				"FAILED": "נכשל",
+				"ARCHIVED": "בארכיון",
+				"SHOWING": "מוצגים {{ count }} מתוך {{ total }}",
+				"NO_MATCH": "אין הודעות דוא\"ל התואמות למסננים אלה."
 			}
 		}
 	},
@@ -5189,7 +5644,11 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
-		}
+		},
+		"VIEW_GRID": "רשת",
+		"VIEW_EDITOR": "עורך",
+		"FULL_PREVIEW": "תצוגה מלאה",
+		"SAVED": "התבנית '{{ templateName }}' נשמרה"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "הרשמה",
@@ -5221,7 +5680,8 @@
 				"TERMS_AND_CONDITIONS": "תנאים והגבלות",
 				"AND": " וגם ",
 				"PRIVACY_POLICY": "מדיניות פרטיות"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "סיסמה צריכה להכיל לפחות 4 תווים"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5231,6 +5691,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
+		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",
@@ -5330,7 +5792,15 @@
 		"HOTKEYS": "Hotkeys",
 		"HELP": "עזרה",
 		"SIGN_OUT": "Sign Out",
-		"PROFILE": "Profile"
+		"PROFILE": "Profile",
+		"ACCOUNT": "חשבון",
+		"PREFERENCES": "העדפות",
+		"DOWNLOAD_APPS": "הורדת אפליקציות",
+		"DOWNLOAD_MACOS": "הורדה עבור macOS",
+		"DOWNLOAD_WINDOWS": "הורדה עבור Windows",
+		"DOWNLOAD_LINUX": "הורדה עבור Linux",
+		"DOWNLOAD_MOBILE": "הורדת אפליקציית המובייל",
+		"DOWNLOAD_BROWSER_EXTENSION": "הורדת תוסף הדפדפן"
 	},
 	"WORKSPACES": {
 		"MENUS": {

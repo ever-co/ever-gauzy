@@ -1,43 +1,127 @@
-@use 'gauzy/_gauzy-table' as *;
-@use 'gauzy/_gauzy-dialogs' as *;
+// The Weekly tab's "Time Logs" popover: a header, one row per time log, and an
+// Add Time footer. Every block shares one inset and one hairline, and all text is
+// 12px like the tab it opens from (its only caller).
+$inset-x: 1rem;
+$icon-button-size: 1.75rem;
+$divider: 1px solid var(--gauzy-border-default-color);
 
 :host {
-  .time-log-view-container {
-    width: 430px;
-    box-shadow: 0px 0px 0px 2px nb-theme(color-primary-transparent-default);
-    border-radius: nb-theme(border-radius);
+  display: block;
+
+  // The bottom padding gives the last section, the Add Time footer or the last
+  // row when there is no footer, a little more room above the popover's edge.
+  .time-log-popover {
+    width: 25rem;
+    max-width: calc(100vw - 2rem);
+    padding-bottom: 0.5rem;
   }
 
-  .time-log-text {
-    color: nb-theme(gauzy-text-color-1);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: center;
-  }
-
-  .time-log-action {
-    background-color: nb-theme(gauzy-card-2);
+  // The close button's own box provides the trailing inset, so its glyph lines up
+  // with the row actions' glyphs below it.
+  .time-log-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: nb-theme(button-rectangle-border-radius);
-    padding: 6px 8px;
-    width: fit-content;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem $inset-x;
+    border-bottom: $divider;
   }
 
-  nb-list {
+  .time-log-title {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--text-primary-color);
+  }
+
+  // One square for the close button and every row action.
+  .icon-button[nbButton] {
+    width: $icon-button-size;
+    height: $icon-button-size;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+
+    nb-icon {
+      width: 1rem;
+      height: 1rem;
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+
+  .time-log-list {
     max-height: 50vh;
     overflow-x: hidden;
     overflow-y: auto !important;
   }
 
-  nb-list-item {
-    cursor: pointer;
+  // Replaces Nebular's list-item padding and dividers (including the first item's
+  // top border) with the popover's own inset and hairline.
+  nb-list-item.time-log-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.5rem 0.625rem $inset-x;
+    border-top: none;
+    border-bottom: $divider;
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 
-  .cancel {
-    padding: 4px 4px 0;
+  .time-log-details {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+
+  .time-log-range {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-1);
+
+    // On a phone the popover narrows to the screen, and beside the duration and the
+    // actions the range no longer fits on one line; the list would clip its end.
+    @media (max-width: 30rem) {
+      white-space: normal;
+    }
+  }
+
+  .time-log-duration {
+    flex: none;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--border-radius);
+    background: var(--gauzy-sidebar-background-3);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .time-log-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .time-log-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem $inset-x;
+    border-top: $divider;
+
+    button {
+      margin: 0;
+    }
   }
 }

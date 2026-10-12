@@ -46,16 +46,7 @@
 			{
 				"provider": "github",
 				"repo": "ever-gauzy-desktop",
-				"releaseType": "release",
-				"channel": "latest-x64"
-			},
-			{
-				"provider": "spaces",
-				"name": "ever",
-				"region": "sfo3",
-				"path": "/ever-gauzy-desktop",
-				"acl": "public-read",
-				"channel": "latest-x64"
+				"releaseType": "release"
 			}
 		],
 		"mac": {
@@ -83,8 +74,7 @@
 		},
 		"win": {
 			"target": "nsis",
-			"icon": "icon.ico",
-			"verifyUpdateCodeSignature": false
+			"icon": "icon.ico"
 		},
 		"snap": {
 			"base": "core22"

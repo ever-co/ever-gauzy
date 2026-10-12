@@ -1,4 +1,5 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   .card-header-title {
@@ -15,3 +16,10 @@
     overflow: auto;
   }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block the Pipelines list this page drills into already carries:
+// density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager and the toolbar scale. Without it a pipeline's
+// deals were drawn a size larger than the pipeline list one click behind them.
+@include ga-hub.list-page();

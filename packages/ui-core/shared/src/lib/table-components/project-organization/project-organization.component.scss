@@ -1,7 +1,9 @@
 @use '../project/project.component' as *;
 
 nb-badge {
-    margin-top: 4px;
+    // Same text→chip separation token as the NotesWithTags family, so a
+    // density change moves every stacked-badge cell together.
+    margin-top: var(--gauzy-table-chip-block-gap, 0.25rem);
     position: relative;
 }
 

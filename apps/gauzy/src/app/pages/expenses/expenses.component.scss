@@ -22,3 +22,12 @@
 //     different height from its siblings and had back the problem the shared
 //     partial exists to solve (a gap under a short table, a clipped long one).
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager's
+// `<nav><ul><li>` and the toolbar scale. Markup is the standard list shape, so
+// the default `$actions` selector (`nb-card-header`) reaches this page's
+// `.gauzy-button-container` and its sibling filter buttons alike.
+@include ga-hub.list-page();

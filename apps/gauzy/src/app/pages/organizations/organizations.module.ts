@@ -22,6 +22,7 @@ import {
 	DirectivesModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
+	RecordViewModule,
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseHistoryModule,
@@ -37,7 +38,6 @@ import { OrganizationsComponent } from './organizations.component';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,
-	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
 
@@ -54,6 +54,7 @@ import {
 		NbIconModule,
 		NbDialogModule.forChild(),
 		OrganizationsMutationModule,
+		RecordViewModule,
 		UserFormsModule,
 		ImageUploaderModule,
 		NbSelectModule,
@@ -76,7 +77,6 @@ import {
 	],
 	declarations: [
 		OrganizationsComponent,
-		OrganizationsFullnameComponent,
 		OrganizationsStatusComponent,
 		OrganizationTotalEmployeesCountComponent,
 		OrganizationsCurrencyComponent

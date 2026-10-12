@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from './../core/file-storage';
+import { FileStorage } from './../core/file-storage/file-storage';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { Integration } from './integration.entity';
 

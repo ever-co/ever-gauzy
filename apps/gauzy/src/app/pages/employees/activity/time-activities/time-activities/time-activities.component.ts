@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ITimeLogFilters } from '@gauzy/contracts';
+import { ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
 import { GauzyFiltersComponent } from '@gauzy/ui-core/shared';
 
@@ -13,6 +13,9 @@ import { GauzyFiltersComponent } from '@gauzy/ui-core/shared';
 export class TimeActivitiesComponent implements OnInit {
 	filters: ITimeLogFilters;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	readonly ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 

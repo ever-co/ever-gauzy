@@ -10,8 +10,13 @@
 			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
-	"tags": [],
-	"implicitDependencies": ["constants", "contracts", "plugin", "plugin-ai-chat"],
+	"tags": ["type:plugin"],
+	"implicitDependencies": [
+		"constants",
+		"contracts",
+		"plugin",
+		"plugin-ai-chat"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

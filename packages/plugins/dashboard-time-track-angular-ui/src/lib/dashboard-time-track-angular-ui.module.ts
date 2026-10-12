@@ -9,7 +9,8 @@ import {
 	NbPopoverModule,
 	NbProgressBarModule,
 	NbSpinnerModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -37,7 +38,8 @@ const NB_MODULES = [
 	NbPopoverModule,
 	NbProgressBarModule,
 	NbSpinnerModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTooltipModule
 ];
 
 // Standalone Modules

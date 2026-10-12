@@ -34,22 +34,35 @@ yarn add @gauzy/ui-react
 
 ### `ReactHostDirective`
 
-Renders a React component synchronously inside any Angular template.
+Renders a React component synchronously inside any Angular template. Selector: **`[gaReactHost]`**.
 
 ```html
 <!-- host element receives the React tree -->
-<div [reactHost]="MyReactComponent" [props]="myProps"></div>
+<div [gaReactHost]="MyReactComponent" [props]="myProps"></div>
 
-<!-- with extra context values -->
-<div [reactHost]="MyReactComponent" [props]="myProps" [context]="{ theme: 'dark' }"></div>
+<!-- with extra context values (a component field, see below) -->
+<div [gaReactHost]="MyReactComponent" [props]="myProps" [context]="hostContext"></div>
 ```
+
+```ts
+// Both bound objects are built ONCE — never as inline literals in the template.
+readonly hostContext = { theme: 'dark' };
+myProps: MyProps = {};
+
+ngOnInit(): void {
+	// `@ViewChild(..., { static: true })` references exist here, not at field-initializer time.
+	this.myProps = { headerActionsHost: this.headerActions.nativeElement };
+}
+```
+
+Build the `props` and `context` objects **once** (e.g. as class fields or in `ngOnInit`), not inline in the template — the directive re-renders the React root whenever the `props` / `context` reference changes, so a fresh object literal per change-detection pass re-renders on every tick.
 
 ### `LazyReactHostDirective`
 
-Lazy-loads a React component via dynamic `import()` for code-splitting.
+Lazy-loads a React component via dynamic `import()` for code-splitting. Selector: **`[gaReactLazyHost]`**.
 
 ```html
-<div [reactLazyHost]="loadKanban" [props]="kanbanProps"></div>
+<div [gaReactLazyHost]="loadKanban" [props]="kanbanProps"></div>
 ```
 
 ```ts

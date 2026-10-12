@@ -1,1 +1,10 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Job Employees, Payments, Invoices, Pipelines, Tasks and Employees carry,
+// so this table reads as the same surface as the rest of the app rather than as
+// one still drawn a size larger than its neighbours.
+@include ga-hub.list-page();

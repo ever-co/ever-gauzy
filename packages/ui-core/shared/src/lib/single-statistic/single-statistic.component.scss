@@ -7,25 +7,25 @@
 	}
 
 	.title {
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 16px;
+		font-size: nb-theme(text-label-font-size);
+		font-weight: 500;
+		line-height: 1rem;
 		letter-spacing: -0.009em;
 		color: nb-theme(gauzy-text-color-2);
-		margin-bottom: 20px;
+		margin-bottom: 0.375rem;
 	}
 
 	.content {
-		font-size: 36px;
+		font-size: nb-theme(text-heading-4-font-size);
 		font-weight: 400;
-		line-height: 44px;
+		line-height: 2rem;
 		letter-spacing: 0em;
 		color: nb-theme(gauzy-text-color-1);
-		margin-bottom: 20px;
+		margin-bottom: 0;
 	}
 
 	.block-amount {
-		color: var(--color-success-default);
-		font-weight: 600;
+		color: var(--gauzy-action-success-text);
+		font-weight: 500;
 	}
 }

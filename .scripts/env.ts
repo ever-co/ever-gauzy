@@ -45,6 +45,10 @@ export type Env = Readonly<{
 
 	HUBSTAFF_REDIRECT_URL: string;
 
+	// Sign-in start URLs of the optional Ever ID and Keycloak sign-in plugins. Empty shows no button.
+	ZITADEL_AUTH_LINK: string;
+	KEYCLOAK_AUTH_LINK: string;
+
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
 	DEFAULT_CURRENCY: string;
@@ -214,6 +218,9 @@ export const env: Env = cleanEnv(
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
 
 		HUBSTAFF_REDIRECT_URL: str({ default: '' }),
+
+		ZITADEL_AUTH_LINK: str({ default: '' }),
+		KEYCLOAK_AUTH_LINK: str({ default: '' }),
 
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
@@ -420,11 +427,14 @@ export const env: Env = cleanEnv(
 		GAUZY_DESKTOP_TRAY_ICON: str({
 			default: 'assets/icons/default-tray-icon.png'
 		}),
+		// No published default (GHSA-39j7-x845-4w3c): these values were baked into every desktop build and
+		// used as the local API's signing keys. Left empty, each install generates and stores its own
+		// random secrets at first start (see ensureDesktopSecrets in @gauzy/desktop-lib).
 		DESKTOP_JWT_SECRET: str({
-			default: 'secretKey'
+			default: ''
 		}),
 		DESKTOP_JWT_REFRESH_TOKEN_SECRET: str({
-			default: 'refreshTokenSecretKey'
+			default: ''
 		}),
 
 		// Deployed release version (git tag) + commit SHA, embedded at build time.

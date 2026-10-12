@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ID, IUser, IUserUpdateInput } from '@gauzy/contracts';
+import { ID, IUser, IUserUiPreferences, IUserUiPreferencesUpdateInput, IUserUpdateInput } from '@gauzy/contracts';
 import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
@@ -91,5 +91,16 @@ export class UsersService {
 	 */
 	async updatePreferredComponentLayout(input: IUserUpdateInput): Promise<any> {
 		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-layout`, input));
+	}
+
+	/**
+	 * Merges a per-feature patch into the current user's server-side UI preferences
+	 * (`PUT /user/ui-preferences`, shallow merge per top-level feature key).
+	 *
+	 * @param patch - Feature-keyed objects to replace, e.g. `{ aiChat: { expanded: true } }`.
+	 * @returns A Promise resolving to the merged preferences as now stored.
+	 */
+	async updateUiPreferences(patch: IUserUiPreferencesUpdateInput): Promise<IUserUiPreferences> {
+		return await firstValueFrom(this.http.put<IUserUiPreferences>(`${API_PREFIX}/user/ui-preferences`, patch));
 	}
 }

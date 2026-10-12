@@ -20,8 +20,10 @@ import {
 	IGetWorkDiaryDto,
 	IGetContractsDto,
 	IEngagement,
-	IUpworkApiConfig,
+	IUpworkApiConfigStatus,
 	IUpworkClientSecretPair,
+	IUpworkSyncContractsDto,
+	IUpworkSyncContractsRelatedDataDto,
 	IPagination,
 	PermissionsEnum,
 	IIntegrationMap
@@ -63,15 +65,18 @@ export class UpworkController {
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file: Express.Multer.File, @Body() organizationDto: any): Promise<any> {
+		// The incomes and expenses land in the organization named by the body, so it must be one the caller may act on.
+		await this._upworkService.assertOrganizationAccess(organizationDto?.organizationId);
 		return await this._upworkTransactionService.handleTransactions(file, organizationDto);
 	}
 
 	/**
-	 * Authorizes Upwork by generating an access token and secret pair.
+	 * Starts the Upwork OAuth handshake, or names the integration that already completed it.
 	 *
-	 * @param config - The configuration containing client secret pair.
+	 * @param config - The Upwork consumer key and secret typed into the authorize form.
 	 * @param organizationId - The ID of the organization.
-	 * @returns A promise that resolves with the access token and secret pair.
+	 * @returns The authorization URL to send the operator to, or the existing integration id. Never
+	 *          a request-token secret or an access token (GHSA-3rqg-gpm9-gx84).
 	 */
 	@ApiOperation({ summary: 'Authorize Upwork' })
 	@ApiResponse({
@@ -95,11 +100,12 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the access token for the specified organization.
+	 * Completes the Upwork OAuth handshake for the specified organization.
 	 *
-	 * @param accessTokenDto - The DTO containing the access token information.
+	 * @param accessTokenDto - The request token and verifier Upwork's callback handed back.
 	 * @param organizationId - The ID of the organization.
-	 * @returns A promise that resolves with the access token.
+	 * @returns The id of the integration now holding the access token. The token itself stays on
+	 *          the server (GHSA-3rqg-gpm9-gx84).
 	 */
 	@ApiOperation({ summary: 'Get Access Token' })
 	@ApiResponse({
@@ -123,9 +129,10 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the work diary for the specified data.
+	 * Retrieves the work diary for the specified integration and contract.
 	 *
-	 * @param data - The DTO containing the query parameters for the work diary.
+	 * @param data - The integration, organization, contract and date to read. It carries no
+	 *               credentials: the server resolves those from the integration id.
 	 * @returns A promise that resolves with the work diary data.
 	 */
 	@ApiOperation({ summary: 'Get Work Diary' })
@@ -147,9 +154,10 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the contracts for the specified data.
+	 * Retrieves the freelancer contracts for the specified integration.
 	 *
-	 * @param data - The DTO containing the query parameters for the contracts.
+	 * @param data - The integration and organization to read the contracts for. It carries no
+	 *               credentials: the server resolves those from the integration id.
 	 * @returns A promise that resolves with the list of engagements.
 	 */
 	@ApiOperation({ summary: 'Get Contracts' })
@@ -171,11 +179,15 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the configuration for the specified integration ID.
+	 * Retrieves the non-secret configuration state of the specified Upwork integration.
+	 *
+	 * 🛑 This route must never answer with credential material. It reports whether the integration
+	 * is connected and usable; anything credential-derived that stays visible is masked
+	 * (GHSA-3rqg-gpm9-gx84).
 	 *
 	 * @param integrationId - The UUID of the integration.
-	 * @param data - The query parameters, parsed as JSON.
-	 * @returns A promise that resolves with the configuration data.
+	 * @param data - The query parameters, parsed as JSON. Only `filter.organizationId` is read.
+	 * @returns A promise that resolves with the secret-free configuration state.
 	 */
 	@ApiOperation({ summary: 'Get Config' })
 	@ApiResponse({
@@ -194,15 +206,16 @@ export class UpworkController {
 	async getConfig(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IUpworkApiConfig> {
-		const { filter } = data;
-		return await this._upworkService.getConfig(integrationId, filter);
+	): Promise<IUpworkApiConfigStatus> {
+		const { filter } = data ?? {};
+		return await this._upworkService.getConfig(integrationId, filter?.organizationId);
 	}
 
 	/**
-	 * Syncs contracts with the provided data.
+	 * Syncs Upwork contracts into projects of the specified organization.
 	 *
-	 * @param syncContractsDto - The data transfer object containing contract details to sync.
+	 * @param syncContractsDto - The integration, organization and contracts to sync. A tenant in the
+	 *                           body is ignored: the server takes it from the request context.
 	 * @returns A promise that resolves with the result of the synchronization process.
 	 */
 	@ApiOperation({ summary: 'Sync Contracts' })
@@ -219,14 +232,15 @@ export class UpworkController {
 		description: 'The request is invalid.'
 	})
 	@Post('/sync-contracts')
-	async syncContracts(@Body() syncContractsDto: any): Promise<IIntegrationMap[]> {
+	async syncContracts(@Body() syncContractsDto: IUpworkSyncContractsDto): Promise<IIntegrationMap[]> {
 		return await this._upworkService.syncContracts(syncContractsDto);
 	}
 
 	/**
 	 * Syncs contracts related data with the provided data transfer object.
 	 *
-	 * @param dto - The data transfer object containing details for contracts related data synchronization.
+	 * @param dto - The integration, organization, contracts and entities to sync. It carries no
+	 *              credentials: the server resolves those from the integration id.
 	 * @returns A promise that resolves with the result of the synchronization process.
 	 */
 	@ApiOperation({ summary: 'Sync Contracts Related Data' })
@@ -243,7 +257,7 @@ export class UpworkController {
 		description: 'The request is invalid.'
 	})
 	@Post('/sync-contracts-related-data')
-	async syncContractsRelatedData(@Body() dto: any): Promise<any> {
+	async syncContractsRelatedData(@Body() dto: IUpworkSyncContractsRelatedDataDto): Promise<any> {
 		return await this._upworkService.syncContractsRelatedData(dto);
 	}
 

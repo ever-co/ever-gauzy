@@ -51,7 +51,11 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			// Process and format the screenshots array
 			this.screenshots = sortBy(screenshots, 'recordedAt').map((screenshot: IScreenshot) => ({
 				employee: timeSlot.employee,
-				...screenshot
+				...screenshot,
+				// The slot fetched with relations returns its screenshots without
+				// `employeeId`. The gallery filters by it, so without this the screenshot
+				// clicked here was dropped from the viewer, which then had no active item.
+				employeeId: screenshot.employeeId ?? timeSlot.employeeId
 			}));
 
 			// Update the _timeSlot object with formatted timestamps and other properties

@@ -196,7 +196,11 @@
 
   .iub_container-fluid {
     position: relative;
-    min-width: 940px;
+    // Was `min-width: 940px` (iubenda's own boilerplate). This is a page inside
+    // the layout column, which loses up to 860px to the expanded AI chat; a
+    // fixed floor only overflowed the canvas. The document is running text —
+    // it reflows to any width.
+    min-width: 0;
     padding-left: 20px;
     padding-right: 20px;
     zoom: 1;

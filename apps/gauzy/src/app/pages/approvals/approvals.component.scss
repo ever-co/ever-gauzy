@@ -2,12 +2,14 @@
 // `@forward` re-exports to importers but does NOT bring members into this file,
 // so `nb-theme()` needs its own `@use`.
 @use 'themes' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-:host {
-  nb-card-body {
-    height: calc(100vh - 17.5rem) !important;
-  }
-}
+// REMOVED: `:host nb-card-body { height: calc(100vh - 17.5rem) !important }`.
+// A hand-tuned viewport constant that out-ranked the flex column `_pg-card`
+// gives every other list page, so this table stood at a different height from
+// its siblings and had back the problem the shared partial exists to solve — a
+// gap under a short table, a clipped long one. The same override was taken off
+// Expenses for the same reason.
 
 // Approve / Refuse are plain `[nbButton] status="success|danger"` buttons and
 // now take their colour from the theme like every other action in the app (see
@@ -26,4 +28,29 @@ ngx-request-approval-action {
   align-items: center;
   gap: 10px;
   padding: 0 5px;
+}
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale.
+//
+// The default `$actions` selector (`nb-card-header`) is the right one here
+// precisely because this page puts a SECOND button beside the title — "Approval
+// policy" — outside `.gauzy-button-container`. Naming the container alone would
+// have left that one at full size next to a compacted toolbar.
+@include ga-hub.list-page();
+
+// ── The Name cell ───────────────────────────────────────────────────────
+// `ga-picture-name-tags` renders `<ngx-avatar class="report-table">`, which pins
+// a 20px image inside a pill padded 3px: 26px of chip, 2px short of the 28px
+// `ngx-contact-links` costs the Invoices Contact column, and so 2px short of the
+// Invoices row. Only that inset is restated — the image and the name stay the
+// renderer's own 20px/12px — which takes the chip to the same 28px and the row
+// to the same height.
+//
+// Table-scoped: `ga-card-grid` instantiates the same `renderComponent` for the
+// card layout, which is not paying for a table row.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.avatar-chip();
 }

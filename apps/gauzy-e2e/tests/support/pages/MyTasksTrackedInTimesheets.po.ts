@@ -192,20 +192,21 @@ export const enterEstimateMinutesInputData = async (mins: string | number) => {
 };
 
 export const taskDescriptionTextareaVisible = async () =>
-	// Assert the CKEditor 4 host is present (the editable is inside its iframe).
+	// Assert the ga-rich-text-editor host is present (the .ProseMirror editable renders inside it).
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.descriptionTextareaCss);
 
 export const enterTaskDescriptionTextareaData = async (data: string) => {
-	// Description is a CKEditor 4 widget — the [formControlName="description"] host is not fillable
-	// (.fill()/.clear() throw "Element is not an <input>..."). Type into the editor body inside its wysiwyg
-	// iframe. Best-effort: description is optional (Save never depends on it) and the iframe attaches async.
+	// Description is a ga-rich-text-editor — the [formControlName="description"] host is not fillable
+	// (.fill()/.clear() throw "Element is not an <input>..."). Fill the .ProseMirror contenteditable
+	// instead (main frame — no iframe). Best-effort: description is optional (Save never depends on it)
+	// and the editor instantiates async (lazy preset chunk).
 	const page = getPage();
 	try {
-		const body = page.frameLocator(MyTasksTrackedInTimesheets.ckeditorIframeCss).first().locator('body');
-		await body.waitFor({ state: 'visible', timeout: 8000 });
-		await body.fill(String(data));
+		const editable = page.locator(MyTasksTrackedInTimesheets.richTextEditorCss).first();
+		await editable.waitFor({ state: 'visible', timeout: 8000 });
+		await editable.fill(String(data));
 	} catch {
-		// CKEditor iframe didn't attach in time — leave description empty and continue.
+		// Editor didn't attach in time — leave description empty and continue.
 	}
 };
 

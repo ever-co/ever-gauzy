@@ -1,4 +1,5 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // `@shared/_pg-card` forwards `gauzy/_gauzy-table`, so the shared `.action`,
 // `.actions`, `button`, `.gauzy-button-container` and `.card-custom-header`
@@ -44,4 +45,65 @@
 
 nb-card-body {
   overflow: unset;
+}
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the pager's `<nav><ul><li>` and the toolbar scale — the same block Job
+// Employees and the rest of the list pages carry.
+//
+// Emitted into all five sheets that take this file (product types, product
+// categories, merchants, warehouses, inventory items), which is the point: they
+// are the same card with the same `.table-scroll-container`,
+// `.pagination-container` and `.gauzy-button-container` five times over.
+@include ga-hub.list-page();
+
+// ── Cells that hard-code a box ───────────────────────────────────────────────
+// Table-scoped, not page-wide: `ga-card-grid` renders the very same components
+// for the card layout, where the full-size treatment belongs.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  // The Image / Logo / Icon column of all five tables: `ImageRowComponent`
+  // (74x60), `ItemImgTagsComponent` (70x64) and `IconRowComponent` (a 35px disc).
+  // The pictures keep their size; only the cell padding around them goes back to
+  // what it was before the density pass.
+  @include ga-hub.thumbnail-row-padding();
+
+  // ── Name and description ───────────────────────────────────────────────────
+  // `ItemImgTagsComponent` and `NameWithDescriptionComponent` both hard-code a
+  // 14px/17px name over a 12px/15px caption, so this one column went on reading a
+  // step louder than every other column in the row. Pointed at the table's own
+  // sizes instead — the name at the cell size, the caption at the secondary-chip
+  // size below it — which is a match rather than a reduction: these read whatever
+  // the density tokens on this page say.
+  //
+  // The `margin-bottom: 4px` between the two lines is deliberately left alone.
+  // It exists to separate them, and the picture beside them already sets the row
+  // height here, so there is no height to win by closing it up.
+  .name {
+    font-size: var(--gauzy-table-font-size, 0.8125rem);
+    line-height: var(--gauzy-table-line-height, 1.25rem);
+  }
+
+  .description {
+    font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+    line-height: var(--gauzy-table-chip-line-height, 0.875rem);
+  }
+
+  // ── Active / Inactive pill ─────────────────────────────────────────────────
+  // `EnabledStatusComponent` emits a bare `<div class="badge badge-success">`,
+  // so the only thing painting it was `bootstrap.css` (loaded whole in
+  // `project.json`) — a saturated fill with white text, i.e. the filled colour
+  // block the rest of the app has moved away from, and the inherited
+  // `color-success-default` measures 2.9:1 on white. Same accent-on-tint
+  // treatment `ga-status-badge` gets everywhere else.
+  @include ga-hub.status-badge-tints();
+
+  // Its counterpart was a literal `#ccc` fill with whatever text colour it
+  // inherited — the one chip in these tables that ignored the theme, and
+  // invisible against the light card. The neutral tint is what the rest of the
+  // app uses for a quiet fill and works on the near-black canvas too.
+  .badge-disabled {
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+    background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+  }
 }

@@ -8,50 +8,53 @@
   </nb-card-header>
   <nb-card-body class="content">
     @for (reportCategory of reportCategories; track reportCategory) {
-      <div>
+      <section class="report-category">
         <h5 class="report-category-name">
-          <span class="category-icon mr-2">
+          <span class="category-icon" aria-hidden="true">
             <i class="fa {{ reportCategory.iconClass }}"></i>
           </span>
           {{ reportCategory.name }}
         </h5>
         <div class="card-grid">
           @for (report of reportCategory.reports; track report) {
-            <div class="mb-0 card custom-view-report">
-              <nb-card class="border-0 m-0 card-nb">
-                <nb-card-header>
-                  <div class="row align-items-center">
-                    <h6 class="col report-name">{{ report?.name }}</h6>
-                    <div class="col-auto">
-                      <nb-toggle
-                        (click)="$event.stopPropagation()"
-                        [(ngModel)]="report.showInMenu"
-                        (checkedChange)="updateShowInMenu($event, report)"
-                      ></nb-toggle>
-                    </div>
-                  </div>
-                </nb-card-header>
-                <nb-card-body class="custom-view-report-content">
-                  <div class="caption">{{ report?.description}}</div>
+            <nb-card class="report-card">
+              <nb-card-header class="report-card-header">
+                <h6 class="report-name" [title]="report?.name">{{ report?.name }}</h6>
+                <nb-toggle
+                  (click)="$event.stopPropagation()"
+                  [(ngModel)]="report.showInMenu"
+                  (checkedChange)="updateShowInMenu($event, report)"
+                ></nb-toggle>
+              </nb-card-header>
+              <nb-card-body class="report-card-body">
+                <p class="report-description" [title]="report?.description">{{ report?.description }}</p>
+                <div class="report-preview">
                   @if (report.imageUrl) {
-                    <div class="image-container" >
-                      <img [src]="report.imageUrl" />
-                    </div>
+                    <!--
+                      Decorative: the card already names the report in its header,
+                      and the tile is a thumbnail of that report. An empty alt is
+                      what keeps a screen reader from reading the image URL out in
+                      its place.
+                    -->
+                    <img class="report-preview-image" [src]="report.imageUrl" alt="" />
                   }
-                  <button
-                    nbButton
-                    [routerLink]="['/pages/reports', report.slug]"
-                    class="custom-button"
-                    status="primary"
+                  <div class="report-preview-overlay">
+                    <button
+                      nbButton
+                      size="small"
+                      status="primary"
+                      class="report-preview-action"
+                      [routerLink]="['/pages/reports', report.slug]"
                     >
-                    {{'BUTTONS.VIEW_REPORT'| translate}}
-                  </button>
-                </nb-card-body>
-              </nb-card>
-            </div>
+                      {{ 'BUTTONS.VIEW_REPORT' | translate }}
+                    </button>
+                  </div>
+                </div>
+              </nb-card-body>
+            </nb-card>
           }
         </div>
-      </div>
+      </section>
     }
   </nb-card-body>
 </nb-card>

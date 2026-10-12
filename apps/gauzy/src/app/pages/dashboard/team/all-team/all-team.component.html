@@ -92,36 +92,23 @@
           </div>
           <div class="legend-container">
             <div class="legend">
-              <nb-badge
-                status="success"
-							[text]="
-								('DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate) + ' ' + team?.statistics?.countOnline
-							"
-              ></nb-badge>
+              <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate }}:</span>
+              <nb-badge status="success" [text]="'' + team?.statistics?.countOnline"></nb-badge>
             </div>
             <div class="legend">
+              <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate }}:</span>
               <nb-badge
                 status="warning"
-							[text]="
-								('DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate) +
-								' ' +
-								(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()
-							"
+                [text]="(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
               ></nb-badge>
             </div>
             <div class="legend">
-              <nb-badge
-                status="danger"
-							[text]="
-								('DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate) +
-								' ' +
-								team?.statistics?.countNotWorking
-							"
-              ></nb-badge>
+              <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate }}:</span>
+              <nb-badge status="danger" [text]="'' + team?.statistics?.countNotWorking"></nb-badge>
             </div>
           </div>
           <div>
-            <button (click)="onSelectTeam(team)" nbButton outline size="small" status="primary">
+            <button (click)="onSelectTeam(team)" nbButton ghost size="small" status="primary">
               <nb-icon icon="arrow-forward-outline"></nb-icon>
             </button>
           </div>
@@ -129,7 +116,7 @@
         <nb-card-body>
           <div class="d-flex flex-column">
             @for (member of team?.membersWorkingToday.concat(team?.membersNotWorkingToday); track member) {
-              <gauzy-team-member [member]="member" class="mt-2" isClassic="true"></gauzy-team-member>
+              <gauzy-team-member [member]="member" isClassic="true"></gauzy-team-member>
             }
           </div>
         </nb-card-body>

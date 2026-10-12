@@ -59,6 +59,42 @@ export class EmployeeComponent extends TranslationBaseComponent implements OnIni
 		);
 	}
 
+	/** Up to two initials for the avatar when the employee has no photo. */
+	initials(employee: IEmployee): string {
+		const name = employee?.user?.name || [employee?.user?.firstName, employee?.user?.lastName].join(' ');
+		return (name || '')
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part) => part[0].toUpperCase())
+			.join('');
+	}
+
+	/** "9 years" since the public start date. */
+	tenure(employee: IEmployee): string {
+		return employee?.startedWorkOn ? moment.duration(moment().diff(moment(employee.startedWorkOn))).humanize() : '';
+	}
+
+	/**
+	 * Whether any figure is public. The API strips every value whose `show_*`
+	 * flag is off, so the facts strip only renders what the employee opted in to.
+	 */
+	hasFacts(employee: IEmployee): boolean {
+		return !!(
+			(employee.show_billrate && employee.billRateValue) ||
+			(employee.show_payperiod && employee.payPeriod) ||
+			(employee.show_start_work_on && employee.startedWorkOn) ||
+			employee.show_average_income ||
+			employee.show_average_expenses ||
+			employee.show_average_bonus
+		);
+	}
+
+	/** Awards, most recent year first. */
+	sortedAwards(employee: IEmployee): IEmployeeAward[] {
+		return [...(employee?.awards || [])].sort((a, b) => Number(b.year || 0) - Number(a.year || 0));
+	}
+
 	/**
 	 * Upload organization image/avatar
 	 *

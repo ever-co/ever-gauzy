@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { ITimesheet } from '@gauzy/contracts';
+import { ID, ITimesheet } from '@gauzy/contracts';
 import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
 import { RequestContext } from './../../../../core/context';
@@ -41,6 +41,17 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 	 */
 	public async execute(command: TimesheetRecalculateCommand): Promise<ITimesheet> {
 		const { id } = command;
+		// TimeLog.timesheetId is nullable: a log without a timesheet has nothing to recalculate. An
+		// empty id used to be dropped from the lookup, so the FIRST timesheet of the tenant was loaded
+		// and overwritten with totals computed for a different employee window.
+		if (!id) {
+			return null;
+		}
+		// Every caller passes the timesheetId of a stored time log, never a request value.
+		return await this.timesheetService.forTimeLogEmployee(() => this.recalculate(id));
+	}
+
+	private async recalculate(id: ID): Promise<ITimesheet> {
 		const timesheet = await this.timesheetService.findOneByIdString(id);
 
 		const tenantId = RequestContext.currentTenantId();
@@ -69,6 +80,8 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 					})
 					.andWhere('startedAt', '>=', startedAt)
 					.andWhere('startedAt', '<', stoppedAt)
+					// Raw knex skips MikroORM's soft-delete filter: the slots of a deleted time log must not count
+					.whereNull('deletedAt')
 					.first();
 				break;
 			}

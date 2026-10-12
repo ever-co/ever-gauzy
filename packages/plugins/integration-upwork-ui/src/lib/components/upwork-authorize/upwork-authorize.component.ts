@@ -8,7 +8,8 @@ import {
 	IIntegrationTenant,
 	IOrganization,
 	IUpworkClientSecretPair,
-	IntegrationEnum
+	IntegrationEnum,
+	isUpworkExistingAuthorization
 } from '@gauzy/contracts';
 import { IntegrationsService, Store, UpworkService } from '@gauzy/ui-core/core';
 
@@ -109,9 +110,9 @@ export class UpworkAuthorizeComponent implements OnInit {
 	}
 
 	/**
+	 * Starts the Upwork OAuth handshake, or opens the integration that already completed it.
 	 *
-	 * @param config
-	 * @returns
+	 * @param config The Upwork consumer key and secret typed into the form.
 	 */
 	protected authorizeUpwork(config: IUpworkClientSecretPair) {
 		if (!this.organization || this.form.invalid) {
@@ -122,9 +123,13 @@ export class UpworkAuthorizeComponent implements OnInit {
 		token$
 			.pipe(
 				tap((token: IAccessTokenSecretPair) => {
-					token.accessToken
-						? this._redirectToUpworkIntegration(token.integrationId)
-						: window.location.replace(token.url);
+					// The API never returns the access token, so an already-authorized app is recognized
+					// by its integration id; it used to answer with nothing at all, which threw here.
+					if (isUpworkExistingAuthorization(token)) {
+						this._redirectToUpworkIntegration(token.integrationId);
+					} else if (token?.url) {
+						window.location.replace(token.url);
+					}
 				}),
 				untilDestroyed(this)
 			)

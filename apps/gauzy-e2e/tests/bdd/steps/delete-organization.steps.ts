@@ -39,12 +39,17 @@ When('I delete an organization', async () => {
 	await getPage().goto('/#/pages/organizations');
 	await deleteOrganizationPage.gridBtnExists();
 	await deleteOrganizationPage.gridBtnClick();
-	await deleteOrganizationPage.deleteBtnExists();
 	// The grid pages at 10 rows and accumulates organizations across the suite, so narrow it to the
 	// throwaway organization before selecting — otherwise its row is simply not rendered.
 	await deleteOrganizationPage.searchOrganizationByName(organizationTag);
 	// Selecting a row enables the (otherwise disabled) toolbar Delete button.
 	await deleteOrganizationPage.selectOrganization(organizationName);
+	// Assert the Delete button AFTER the selection that reveals it. This used to run before
+	// selectOrganization and passed anyway: the idle strip hid itself with translateX, which kept a
+	// non-empty bounding box, so Playwright reported the clipped button as visible. #9975 collapsed the
+	// idle strip to zero width (max-width/opacity/visibility), making the assertion honest — and
+	// exposing that it had been vacuous all along.
+	await deleteOrganizationPage.deleteBtnExists();
 	await deleteOrganizationPage.deleteBtnClick();
 	await deleteOrganizationPage.confirmBtnExists();
 	await deleteOrganizationPage.confirmBtnClick();

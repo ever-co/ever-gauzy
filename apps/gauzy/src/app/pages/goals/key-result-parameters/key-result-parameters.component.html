@@ -1,94 +1,66 @@
-<nb-card style="width: 645px; height: 390px">
-  <nb-card-header>
-    <span class="cancel"
-      ><i class="fas fa-times" (click)="closeDialog(null)"></i
-    ></span>
-    <h4 class="title">{{
-      'KEY_RESULT_PAGE.EDIT_KEY_RESULT_PARAMETERS'
-      | translate
-    }}</h4>
-  </nb-card-header>
-  <nb-card-body class="p-0">
-    <nb-tabset>
-      <nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}">
-        <p class="info">
-          {{ 'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate }}
-        </p>
-        <form [formGroup]="weightForm">
-          <div class="row mt-2">
-            <div class="col-md-6">
-              <label for="key-result-weight" class="label mt-3">
-                {{
-                'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT'
-                | translate
-                }}
-              </label>
-              <nb-select
-                id="key-result-weight"
-                fullWidth
-                formControlName="weight"
-                >
-                @for (
-                  weight of keyResultWeightEnum
-                  | keyvalue
-                  ; track
-                  weight) {
-                  <nb-option
-                    [value]="weight.value"
-                    >{{
-                    'KEY_RESULT_PAGE.WEIGHT.' + weight.key
-                    | translate
-                    }}</nb-option
-                    >
-                  }
-                </nb-select>
-              </div>
-              <div
-                class="col-md-6 d-flex flex-column justify-content-around"
-                >
-                <label
-                  for="goal-progress-comparison"
-                  class="label mt-3"
-                  >
-                  {{
-                  'KEY_RESULT_PAGE.WEIGHT.OBJECTIVE_PROGRESS'
-                  | translate: { weight: keyResultWeight }
-                  }}
-                </label>
-                <span class="w-100 d-flex align-items-center">
-                  <span class="mr-3">{{ keyResultWeight }}%</span>
-                  <nb-progress-bar
-                    id="goal-progress-comparison"
-                    [value]="keyResultWeight"
-                    status="primary"
-                    size="small"
-                    >
-                  </nb-progress-bar>
-                </span>
-              </div>
-            </div>
-          </form>
-        </nb-tab>
-        <nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.TYPE' | translate }}">
-          <form [formGroup]="typeForm">
-            <ga-keyresult-type-select
-              [enableHelperText]="false"
-              [parentFormGroup]="typeForm"
-              [orgId]="data.orgId"
-              [KPIs]="KPIs"
-              [settings]="data.settings"
-              [numberUnits]="numberUnitsEnum"
-            ></ga-keyresult-type-select>
-          </form>
-        </nb-tab>
-      </nb-tabset>
-    </nb-card-body>
-    <nb-card-footer class="text-left content">
-      <button class="mr-3" outline nbButton (click)="closeDialog(null)">
-        {{ 'BUTTONS.CANCEL' | translate }}
-      </button>
-      <button nbButton status="success" (click)="updateKeyResult()">
-        {{ 'BUTTONS.SAVE' | translate }}
-      </button>
-    </nb-card-footer>
-  </nb-card>
+<nb-card class="parameters-dialog">
+	<nb-card-header class="header">
+		<h4 class="title">{{ 'KEY_RESULT_PAGE.EDIT_KEY_RESULT_PARAMETERS' | translate }}</h4>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(null)">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-tabset>
+			<nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}">
+				<!-- What a weight does, as a quiet note rather than two lines of link-coloured text. -->
+				<p class="hint">{{ 'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate }}</p>
+				<form class="parameters-form" [formGroup]="weightForm">
+					<div class="field span-3">
+						<label for="key-result-weight" class="label">
+							{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}
+						</label>
+						<nb-select id="key-result-weight" fullWidth formControlName="weight">
+							@for (weight of keyResultWeightEnum | keyvalue; track weight) {
+							<nb-option [value]="weight.value">
+								{{ 'KEY_RESULT_PAGE.WEIGHT.' + weight.key | translate }}
+							</nb-option>
+							}
+						</nb-select>
+					</div>
+					<!-- What that weight comes to against the objective's other key results. -->
+					<div class="field span-3 share">
+						<label for="goal-progress-comparison" class="label">
+							{{ 'KEY_RESULT_PAGE.WEIGHT.OBJECTIVE_PROGRESS' | translate : { weight: keyResultWeight } }}
+						</label>
+						<div class="share-row">
+							<span class="share-value">{{ keyResultWeight }}%</span>
+							<nb-progress-bar
+								class="share-bar"
+								id="goal-progress-comparison"
+								[value]="keyResultWeight"
+								status="primary"
+								size="tiny"
+							>
+							</nb-progress-bar>
+						</div>
+					</div>
+				</form>
+			</nb-tab>
+			<nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.TYPE' | translate }}">
+				<form class="parameters-form" [formGroup]="typeForm">
+					<ga-keyresult-type-select
+						[parentFormGroup]="typeForm"
+						[orgId]="data.orgId"
+						[KPIs]="KPIs"
+						[settings]="data.settings"
+						[numberUnits]="numberUnitsEnum"
+					></ga-keyresult-type-select>
+				</form>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+	<nb-card-footer class="footer">
+		<button nbButton ghost status="basic" size="small" (click)="closeDialog(null)">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button nbButton status="success" size="small" (click)="updateKeyResult()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

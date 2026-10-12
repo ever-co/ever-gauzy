@@ -427,6 +427,11 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	}
 
 	async createObjective(isAdd?: boolean) {
+		// "Create New" in the Add Objective menu: close the menu as "Create from Preset" does, or it stays
+		// open behind the dialog and is still open once the dialog closes.
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
 		const goal = isAdd ? null : this.selectedGoal.data;
 		if (!goal && this.goalGeneralSettings && this.goalGeneralSettings.maxObjectives <= this.allGoals.length) {
 			this.toastrService.info(

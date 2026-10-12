@@ -1,14 +1,14 @@
 <form [formGroup]="form" (ngSubmit)="persist()">
   <nb-card style="width: 750px">
-    <nb-card-header>
-      <div class="cancel">
-        <span><i class="fas fa-times" (click)="closeDialog()"></i></span>
-      </div>
-      <h4 class="title">
+    <nb-card-header class="header">
+      <div class="title">
         {{
         (pipeline?.id ? 'PIPELINES_PAGE.HEADER_FORM_EDIT' : 'PIPELINES_PAGE.HEADER_FORM_CREATE') | translate
         }}
-      </h4>
+      </div>
+      <div class="cancel">
+        <span><i class="fas fa-times" (click)="closeDialog()"></i></span>
+      </div>
     </nb-card-header>
     <nb-card-body>
       <div class="row">
@@ -50,8 +50,8 @@
           </div>
         </div>
       </nb-card-body>
-      <nb-card-footer class="text-left">
-        <button nbButton type="button" (click)="closeDialog()" status="basic">
+      <nb-card-footer class="footer">
+        <button nbButton ghost type="button" (click)="closeDialog()" status="basic">
           <span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
         </button>
         @if (pipeline?.id) {
@@ -60,7 +60,6 @@
             nbButton
             status="info"
             [disabled]="form.invalid || form.disabled"
-            class="mr-3 ml-3"
             >
             <span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
           </button>
@@ -70,7 +69,6 @@
             nbButton
             status="primary"
             [disabled]="form.invalid || form.disabled"
-            class="mr-3 ml-3"
             >
             <span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
           </button>

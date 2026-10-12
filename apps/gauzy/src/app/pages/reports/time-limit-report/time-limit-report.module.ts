@@ -4,6 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	GauzyFiltersModule,
 	LineChartModule,
+	NoDataMessageModule,
 	ProgressStatusModule,
 	ProjectColumnViewModule,
 	SharedModule
@@ -24,7 +25,8 @@ import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.
 		LineChartModule,
 		ProgressStatusModule,
 		GauzyFiltersModule,
-		ProjectColumnViewModule
+		ProjectColumnViewModule,
+		NoDataMessageModule
 	]
 })
 export class TimeLimitReportModule {}

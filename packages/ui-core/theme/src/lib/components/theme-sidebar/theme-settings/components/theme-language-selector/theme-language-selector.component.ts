@@ -5,6 +5,7 @@ import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contra
 import { LanguagesService, UsersService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
+import { getLanguageFlagUrl } from '@gauzy/ui-core/shared';
 import { ThemeLanguageSelectorService } from './theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -103,6 +104,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 				.map((item) => {
 					return {
 						value: item.code,
+						code: item.code,
 						name: 'SETTINGS_MENU.' + item.name.toUpperCase()
 					};
 				});
@@ -124,6 +126,27 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 	 */
 	switchLanguage() {
 		this._store.preferredLanguage = this.preferredLanguage;
+	}
+
+	/**
+	 * Currently selected language (drives the flag + name shown in the closed trigger)
+	 */
+	public get selectedLanguage(): ILanguage {
+		return this.languages.find((language: ILanguage) => language.code === this.preferredLanguage);
+	}
+
+	/**
+	 * Flag asset URL for a language code (null when no flag is vendored)
+	 */
+	getFlagUrl(code: string): string | null {
+		return getLanguageFlagUrl(code);
+	}
+
+	/**
+	 * Hides a flag image that failed to load, leaving the plain language name
+	 */
+	onFlagError(event: Event) {
+		(event.target as HTMLImageElement).style.display = 'none';
 	}
 
 	/**

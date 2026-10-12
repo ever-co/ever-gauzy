@@ -36,6 +36,10 @@ export interface Environment {
 	TWITTER_AUTH_LINK: string;
 	MICROSOFT_AUTH_LINK: string;
 	AUTH0_AUTH_LINK: string;
+	/** Ever ID sign-in start URL. Empty (the default) shows no Ever ID button. */
+	ZITADEL_AUTH_LINK?: string;
+	/** Keycloak sign-in start URL. Empty (the default) shows no Keycloak button. */
+	KEYCLOAK_AUTH_LINK?: string;
 
 	NO_INTERNET_LOGO: string;
 

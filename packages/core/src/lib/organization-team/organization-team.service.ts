@@ -133,42 +133,36 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				...(parseToBoolean(withLastWorkedTask) ? { relations: ['task'] } : {})
 			});
 
+			// The task statistics of all members at once, so the number of queries does not grow with the team.
+			const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
+				this.statisticService.getTasksByEmployee({ organizationId, tenantId, organizationTeamId, employeeIds }),
+				this.statisticService.getTasksByEmployee({
+					organizationId,
+					tenantId,
+					organizationTeamId,
+					employeeIds,
+					startDate,
+					endDate
+				})
+			]);
+
 			//
-			const memberPromises = members.map(async (member: IOrganizationTeamEmployee) => {
+			return members.map((member: IOrganizationTeamEmployee) => {
 				const { employeeId } = member;
 				//
 				const timerWorkedStatus = statistics.find(
 					(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
 				);
-				//
-				const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
-					this.statisticService.getTasks({
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						employeeIds: [employeeId]
-					}),
-					this.statisticService.getTasks({
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						employeeIds: [employeeId],
-						startDate,
-						endDate
-					})
-				]);
 				return {
 					...member,
 					lastWorkedTask: parseToBoolean(withLastWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
 					running: timerWorkedStatus?.running,
 					duration: timerWorkedStatus?.duration,
 					timerStatus: timerWorkedStatus?.timerStatus,
-					totalWorkedTasks,
-					totalTodayTasks
+					totalWorkedTasks: totalWorkedTasks.get(employeeId),
+					totalTodayTasks: totalTodayTasks.get(employeeId)
 				};
 			});
-
-			return await Promise.all(memberPromises);
 		} catch (error) {
 			console.error('Error while retrieving team members last worked task', error);
 			return []; // or handle the error in an appropriate way
@@ -422,6 +416,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to an object containing paginated organization teams.
 	 */
 	public async findAll(options?: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+		// This method builds its own query instead of going through the CRUD read methods, so the
+		// sink-level check in `CrudService` never runs for it. Assert the sensitive-relation table
+		// here too: every tenant-scoped entity exposes an `organization` relation, so a client-supplied
+		// `relations` reaches the protected rows from any entity, not only from the ones whose
+		// controller mounts `SensitiveRelationsInterceptor`.
+		this.assertRelationsPermitted(options);
+
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
@@ -603,14 +604,23 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { organizationId } = options;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
+			// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team — which
+			// requires an employee identity. Fail closed when there is none: an empty employeeId used to
+			// be dropped from the where, degrading the check to "the team has any manager".
+			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const employeeId = RequestContext.currentEmployeeId();
+			if (!canChangeSelectedEmployee && !employeeId) {
+				throw new ForbiddenException('You do not have permission to delete this team.');
+			}
+
 			const team = await this.findOneByIdString(teamId, {
 				where: {
 					tenantId,
 					organizationId,
-					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					...(!canChangeSelectedEmployee
 						? {
 								members: {
-									employeeId: RequestContext.currentEmployeeId(),
+									employeeId,
 									role: {
 										name: RolesEnum.MANAGER
 									}

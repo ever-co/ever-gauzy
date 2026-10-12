@@ -1,14 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { DirectivesModule } from '@gauzy/ui-core/shared';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbIconModule,
-	NbListModule,
-	NbSelectModule,
-	NbTooltipModule
-} from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { LayoutSelectorModule } from './components/layout-selector/layout-selector.module';
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector/theme-language-selector.module';
@@ -27,7 +20,6 @@ import { ThemeSettingsComponent } from './theme-settings.component';
 		LayoutSelectorModule,
 		ThemeSelectorModule,
 		NbCardModule,
-		NbListModule,
 		DirectivesModule
 	],
 	exports: [ThemeSettingsComponent],

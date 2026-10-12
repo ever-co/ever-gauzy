@@ -5,3 +5,4 @@ export * from './employee';
 export * from './organization';
 export * from './project';
 export * from './team';
+export * from './entity-select-panel-class';

@@ -41,19 +41,25 @@ export const clickThemesDropdown = async (index: number) => {
 	await waitUntil(1200);
 };
 
+/**
+ * Language options carry no locale-invariant text anymore (they render as "[flag] Name"), so
+ * language entries in the page data are flag asset paths ("flags/gb.svg") matched against the
+ * option's <img src>; every other dropdown (theme, layout) still matches by visible text.
+ */
+const dropdownOption = (match: string) =>
+	match.includes('flags/')
+		? getPage()
+				.locator(SettingsButton.dropdownOptionCss)
+				.filter({ has: getPage().locator(`img[src*="${match}"]`) })
+		: getPage().locator(SettingsButton.dropdownOptionCss).filter({ hasText: match });
+
 export const verifyTextExist = async (text: string) => {
 	// The option list renders many nb-option nodes; assert the one matching `text`.
-	await expect(
-		getPage().locator(SettingsButton.dropdownOptionCss).filter({ hasText: text }).first()
-	).toBeVisible({ timeout: defaultCommandTimeout });
+	await expect(dropdownOption(text).first()).toBeVisible({ timeout: defaultCommandTimeout });
 };
 
 export const clickDropdownOption = async (text: string) => {
-	await getPage()
-		.locator(SettingsButton.dropdownOptionCss)
-		.filter({ hasText: text })
-		.first()
-		.click();
+	await dropdownOption(text).first().click();
 	await waitUntil(1500);
 };
 

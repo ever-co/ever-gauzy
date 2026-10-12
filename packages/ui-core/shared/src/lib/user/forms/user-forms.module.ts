@@ -15,6 +15,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '@gauzy/ui-core/core';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
+import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { SharedModule } from '../../shared.module';
 import { PasswordFormFieldModule, RoleFormFieldModule } from './fields';
@@ -51,6 +52,7 @@ const COMPONENTS = [
 		TranslateModule.forChild(),
 		SharedModule,
 		FileUploaderModule,
+		ImageUploaderModule,
 		TagsColorInputModule,
 		PasswordFormFieldModule,
 		RoleFormFieldModule

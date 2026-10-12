@@ -56,6 +56,14 @@ export enum SyncTabsEnum {
 	standalone: false
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateIntegrationEdit = Object.freeze(['INTEGRATION_EDIT']) as string[];
+
 	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;
 	public nbTab$: Subject<string> = new BehaviorSubject(SyncTabsEnum.AUTO_SYNC);
 	public page$: Observable<IPaginationBase>; // Observable for the organization project

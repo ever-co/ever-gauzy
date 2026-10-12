@@ -1,1 +1,47 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Job Employees, Payments, Invoices, Pipelines, Tasks and Employees carry,
+// so this table reads as the same surface as the rest of the app rather than as
+// one still drawn a size larger than its neighbours.
+@include ga-hub.list-page();
+
+// ── No step up from the shared cell box ──────────────────────────────────────
+//
+// This page used to raise `--gauzy-table-cell-padding-*` to 0.4375rem/0.625rem
+// and the header pair with it, because half its columns are people and, at the
+// time, a person was pinned to a 1rem avatar — a disc that came within 3px of
+// the rule above and the rule below it in ten consecutive rows.
+//
+// The height is in the chip now rather than in the cell: `ngx-people-list` is
+// back at a 1.25rem avatar with `--gauzy-people-chip-padding-y` around it, which
+// is the same 28px the Invoices Contact chip costs its row. So a `<td>` here is
+// the Invoices `<td>` — 0.1875rem/0.4375rem around it — and the row lands at the
+// same height from the same direction, instead of this one page holding a
+// padding value of its own to make up the difference.
+
+// ── The Tags cell ────────────────────────────────────────────────────────────
+//
+// `ga-only-tags` is built for a cell that renders a VALUE with its chips
+// underneath, so it pushes the chip row down by `--gauzy-table-chip-block-gap`
+// (0.5rem on a list page) to keep the chips from riding up into the text.
+//
+// This column has no text above its chips — it is chips and nothing else — so
+// that gap had nothing to separate: it dropped the chip off the row's centre
+// line and made the one row carrying a tag ~8px taller than the nine that do
+// not, which reads as a hitch in the row rhythm rather than as a tagged row.
+//
+// SPECIFICITY: the renderer's own `margin-top` is `!important` (it is resolving
+// a tug-of-war with Bootstrap's `.mt-2` utility in the template, which is
+// `!important` too), so the only way past it is a more specific `!important` —
+// `.tags[_ngcontent]` is (0,2,0) — a class and an attribute — and the block
+// below is (0,2,4): `::ng-deep` leaves no content attribute behind it, so what
+// counts is the host attribute and `.tags` over the four element names between
+// them.
+:host ::ng-deep angular2-smart-table table td ga-only-tags .tags {
+  margin-top: 0 !important;
+  align-items: center;
+}

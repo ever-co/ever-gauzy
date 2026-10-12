@@ -1,6 +1,62 @@
+// `@shared/_pg-card` is loaded for its CSS, not for a member: it emits the page
+// frame (the card chain, the scroll-container flex rules) and loading it FIRST is
+// what puts that frame ahead of everything below, so the two blocks in this file
+// are resolving a cascade they can see rather than one they hope for. The
+// `product-types` forward brings the shared inventory-table treatment, which five
+// tables take from one place.
 @use '@shared/_pg-card' as *;
 @forward '../manage-product-types/product-types.component';
 
-:host nb-card-body {
-  height: calc($card-height - 0.5rem) !important;
+// ── Fitting the column ───────────────────────────────────────────────────────
+// REMOVED from here: `:host nb-card-body { height: calc($card-height - 0.5rem)
+// !important }`.
+//
+// `gauzy/_gauzy-cards` already gives the body that same chrome estimate, but as a
+// FLEX BASIS — `flex: 1 1 auto` then grows or shrinks it to whatever the card
+// actually has, so the estimate being a guess never mattered. Restating it at
+// page level with `!important` turned a starting point into a floor and a
+// ceiling. `/pages/tasks/dashboard`, which fits, pins that height only on its
+// `.project` variant; with none selected its body is a plain flex child, and that
+// is the whole difference.
+//
+// The other half of the fit is not in this file: see `inventory.component.ts`'s
+// own note for the height chain that has to reach this page before `nb-card
+// { height: 100% }` can resolve at all.
+
+// ── The section buttons on the title's line ──────────────────────────────────
+// Merchants / Warehouses / Product categories / Product types are wrapped in ONE
+// block, so the title row's `justify-content: space-between`
+// (styles/_overrides.scss) pushes the four of them to the row's end as a group —
+// beside `+ Add` — instead of spreading them evenly across the row, which is what
+// four separate flex items would have got.
+//
+// Flex rather than a plain block, for the vertical axis: as inline-blocks in a
+// block box the buttons sit on a baseline, and the descender space under it makes
+// the box a few pixels taller than the buttons. The row centres that box, so the
+// group's own centre would land below the one `+ Add` is on — the offset this
+// change exists to remove, in miniature. A flex box is exactly the buttons' height.
+//
+// `flex-wrap` so a narrow viewport folds the group onto a second line rather than
+// squeezing the labels; `min-width: 0` so it may shrink at all, the flex default
+// being to refuse to go under the content's width.
+//
+// The two declarations that actually settle the vertical axis are `align-self`
+// and `min-height`, and they are the same pair `styles/_overrides.scss` puts on
+// `.ga-page-header-actions` — the block holding `+ Add`. Centring alone is not
+// enough, because the two blocks are centred in DIFFERENT boxes: the title row's
+// cross-size is whatever its tallest item is, and once `ngx-header-title` parks
+// the breadcrumb trail in this row the block runs two lines deep, so a centred
+// group lands ~12px below `+ Add`, which is centred on the title LINE. Anchoring
+// this group to the row's TOP and giving it `gauzy-page-title-row-height` — the
+// box the heading pads its line box out to — puts both groups in the same box,
+// at the same top edge, so they share one centre by construction rather than by
+// the two blocks happening to measure the same.
+:host nb-card-header .card-header-title > .sub-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-self: flex-start;
+  min-height: var(--gauzy-page-title-row-height, 2.125rem);
+  min-width: 0;
 }

@@ -31,12 +31,15 @@ import {
 	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('invite', { mikroOrmRepository: () => MikroOrmInviteRepository })
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	/**
 	 * Invite Token
 	 */
+	/** Live invite bearer token — anyone holding it can accept the invite. */
+	@ExportRedacted()
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -88,6 +91,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	/**
 	 * Invited Code
 	 */
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ nullable: true })
 	code?: string;

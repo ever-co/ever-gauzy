@@ -1,0 +1,399 @@
+<nb-card class="gz-page-editor" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<!-- ─── Header: breadcrumbs · autosave pill · actions ─────────────── -->
+	<nb-card-header class="gz-page-header">
+		<div class="gz-page-header-top">
+			<nav class="gz-breadcrumbs" [attr.aria-label]="'DOCS.TITLE' | translate">
+				<button nbButton ghost size="tiny" type="button" (click)="back()">
+					<nb-icon icon="arrow-back-outline"></nb-icon>
+					{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}
+				</button>
+				<ng-container *ngFor="let crumb of breadcrumbs; let i = index">
+					<!-- Middle segments collapse beyond 4 levels (UX spec §10.2) -->
+					<ng-container *ngIf="breadcrumbs.length <= 4 || i === 0 || i >= breadcrumbs.length - 2; else ellipsis">
+						<span class="gz-breadcrumb-sep">/</span>
+						<button nbButton ghost size="tiny" type="button" (click)="openBreadcrumb(crumb)">
+							{{ crumb.name }}
+						</button>
+					</ng-container>
+					<ng-template #ellipsis>
+						<ng-container *ngIf="i === 1"><span class="gz-breadcrumb-sep">/ …</span></ng-container>
+					</ng-template>
+				</ng-container>
+			</nav>
+
+			<div class="gz-page-header-actions">
+				<!-- Autosave pill (UX spec §10.6). `<output>` carries the implicit `status`
+				     role, so no explicit `role` attribute is needed. -->
+				<output
+					class="gz-save-pill"
+					[class.warning]="saveState === 'offline'"
+					[class.danger]="saveState === 'error' || saveState === 'conflict'"
+					[attr.aria-label]="'DOCS.A11Y.AUTOSAVE_STATUS' | translate"
+				>
+					<ng-container [ngSwitch]="saveState">
+						<ng-container *ngSwitchCase="'saving'">
+							<nb-icon icon="loader-outline" class="gz-spin"></nb-icon> {{ 'DOCS.EDITOR.SAVING' | translate }}
+						</ng-container>
+						<ng-container *ngSwitchCase="'dirty'">
+							<nb-icon icon="loader-outline"></nb-icon> {{ 'DOCS.EDITOR.SAVING' | translate }}
+						</ng-container>
+						<ng-container *ngSwitchCase="'offline'">
+							<nb-icon icon="wifi-off-outline"></nb-icon> {{ 'DOCS.EDITOR.OFFLINE_RETRYING' | translate }}
+						</ng-container>
+						<ng-container *ngSwitchCase="'error'">
+							<nb-icon icon="alert-circle-outline"></nb-icon> {{ 'DOCS.EDITOR.SAVE_FAILED' | translate }}
+							<button nbButton ghost size="tiny" type="button" (click)="editorComponent?.autosave?.retryNow()">
+								{{ 'DOCS.EDITOR.RETRY_SAVE' | translate }}
+							</button>
+						</ng-container>
+						<ng-container *ngSwitchDefault>
+							<nb-icon icon="checkmark-outline"></nb-icon> {{ 'DOCS.EDITOR.SAVED' | translate }}
+						</ng-container>
+					</ng-container>
+				</output>
+
+				<ngx-favorite-toggle
+					*ngIf="document"
+					[entityType]="favoriteEntity"
+					[entityId]="document.id"
+					[entityName]="document.name"
+					size="small"
+					spacing="list"
+				></ngx-favorite-toggle>
+
+				<!-- Lock/unlock is **own**-scoped below ADMIN (spec 08 §1.8), so the permission
+				     gate carries the ownership half with it. -->
+				<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
+					<button
+						*ngIf="canMutate"
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						[nbTooltip]="(isLocked ? 'DOCS.EDITOR.UNLOCK' : 'DOCS.EDITOR.LOCK') | translate"
+						(click)="toggleLock()"
+					>
+						<nb-icon [icon]="isLocked ? 'lock' : 'unlock-outline'"></nb-icon>
+					</button>
+				</ng-container>
+
+				<button
+					nbButton
+					ghost
+					size="small"
+					type="button"
+					[nbTooltip]="railOpen ? ('DOCS.TREE.COLLAPSE' | translate) : ('DOCS.TREE.EXPAND' | translate)"
+					(click)="railOpen = !railOpen"
+				>
+					<nb-icon icon="layout-outline"></nb-icon>
+				</button>
+
+				<!-- ⋯ overflow menu (UX spec §10.9) -->
+				<div class="gz-overflow">
+					<button nbButton ghost size="small" type="button" [class.active]="menuOpen" (click)="menuOpen = !menuOpen">
+						<nb-icon icon="more-horizontal-outline"></nb-icon>
+					</button>
+					<div class="gz-overflow-panel" *ngIf="menuOpen" role="menu">
+						<button type="button" role="menuitem" (click)="toggleFullWidth()">
+							<nb-icon icon="expand-outline"></nb-icon>{{ 'DOCS.EDITOR.FULL_WIDTH' | translate }}
+						</button>
+						<button type="button" role="menuitem" (click)="copyLink()">
+							<nb-icon icon="link-2-outline"></nb-icon>{{ 'DOCS.TREE.COPY_LINK' | translate }}
+						</button>
+						<button type="button" role="menuitem" [disabled]="!isPage" (click)="copyMarkdown()">
+							<nb-icon icon="clipboard-outline"></nb-icon>{{ 'DOCS.EDITOR.COPY_MARKDOWN' | translate }}
+						</button>
+						<!-- Export (spec 01 §10.9): Markdown file now, print-CSS PDF via the browser. -->
+						<button type="button" role="menuitem" [disabled]="!isPage" (click)="exportMarkdown()">
+							<nb-icon icon="download-outline"></nb-icon>{{ 'DOCS.EXPORT.MARKDOWN' | translate }}
+						</button>
+						<button type="button" role="menuitem" (click)="print()">
+							<nb-icon icon="printer-outline"></nb-icon>{{ 'DOCS.EXPORT.PRINT' | translate }}
+						</button>
+						<!-- Administering shares is creator-or-DOCS_MANAGE only (spec 08 §3.3 / §1.5). -->
+						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
+							<button *ngIf="canMutate" type="button" role="menuitem" (click)="openShareDialog()">
+								<nb-icon icon="share-outline"></nb-icon>{{ 'DOCS.SHARE.ACTION' | translate }}
+							</button>
+						</ng-container>
+						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
+							<ng-container *ngIf="canMutate">
+								<button type="button" role="menuitem" [disabled]="!editable" (click)="saveVersionNow()">
+									<nb-icon icon="save-outline"></nb-icon>{{ 'DOCS.EDITOR.SAVE_VERSION_NOW' | translate }}
+								</button>
+								<button type="button" role="menuitem" [disabled]="!editable" (click)="toggleInvisibles()">
+									<nb-icon icon="eye-outline"></nb-icon>{{ 'DOCS.EDITOR.INVISIBLES' | translate }}
+								</button>
+							</ng-container>
+						</ng-container>
+						<hr />
+						<button type="button" role="menuitem" (click)="openVersions()">
+							<nb-icon icon="clock-outline"></nb-icon>{{ 'DOCS.EDITOR.VERSION_HISTORY' | translate }}
+						</button>
+						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_CREATE">
+							<button type="button" role="menuitem" (click)="duplicate()">
+								<nb-icon icon="copy-outline"></nb-icon>{{ 'DOCS.TREE.DUPLICATE' | translate }}
+							</button>
+						</ng-container>
+						<!-- Move / request review / archive are all **own**-scoped below ADMIN (§1.8). -->
+						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
+							<ng-container *ngIf="canMutate">
+								<button type="button" role="menuitem" [disabled]="isLocked" (click)="openMoveDialog()">
+									<nb-icon icon="corner-down-right-outline"></nb-icon>{{ 'DOCS.TREE.MOVE' | translate }}
+								</button>
+								<!-- Manual review request (spec 01 §11) — the only route into the
+								     review queue when AI is disabled. Already-PENDING shows the
+								     state instead of an action the backend would no-op. -->
+								<button
+									*ngIf="canRequestReview; else pendingReviewItem"
+									type="button"
+									role="menuitem"
+									(click)="requestReview()"
+								>
+									<nb-icon icon="alert-circle-outline"></nb-icon>{{ 'DOCS.REVIEW.REQUEST' | translate }}
+								</button>
+								<ng-template #pendingReviewItem>
+									<button *ngIf="isPendingReview" type="button" role="menuitem" disabled>
+										<nb-icon icon="alert-circle-outline"></nb-icon>{{ 'DOCS.REVIEW.PENDING' | translate }}
+									</button>
+								</ng-template>
+								<button type="button" role="menuitem" class="danger" (click)="archive()">
+									<nb-icon icon="archive-outline"></nb-icon>{{ 'DOCS.TREE.ARCHIVE' | translate }}
+								</button>
+							</ng-container>
+						</ng-container>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ─── Icon + inline title row (UX spec §10.1) ─────────────────── -->
+		<div class="gz-title-row" *ngIf="document">
+			<div class="gz-icon-picker">
+				<button
+					nbButton
+					ghost
+					size="small"
+					type="button"
+					class="gz-doc-icon"
+					[disabled]="!canWrite"
+					(click)="iconPickerOpen = !iconPickerOpen"
+				>
+					<span *ngIf="document.icon; else defaultIcon">{{ document.icon }}</span>
+					<ng-template #defaultIcon><nb-icon icon="file-text-outline"></nb-icon></ng-template>
+				</button>
+				<div class="gz-icon-panel" *ngIf="iconPickerOpen">
+					<input
+						nbInput
+						fieldSize="small"
+						maxlength="4"
+						id="gz-doc-icon-input"
+						[placeholder]="'DOCS.EDITOR.ICON_PLACEHOLDER' | translate"
+						[attr.aria-label]="'DOCS.EDITOR.ICON_PLACEHOLDER' | translate"
+						[(ngModel)]="iconDraft"
+						(keydown.enter)="saveIcon()"
+					/>
+					<button nbButton size="tiny" status="primary" type="button" (click)="saveIcon()">
+						{{ 'DOCS.DIALOGS.CREATE_CONFIRM' | translate }}
+					</button>
+				</div>
+			</div>
+			<input
+				class="gz-title-input"
+				id="gz-doc-title-input"
+				[placeholder]="'DOCS.EDITOR.UNTITLED' | translate"
+				[attr.aria-label]="'DOCS.TABLE.COLUMNS.NAME' | translate"
+				[(ngModel)]="titleDraft"
+				[disabled]="!canWrite || isLocked"
+				(blur)="saveTitle()"
+				(keydown.enter)="saveTitle()"
+			/>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body class="gz-page-body">
+		<!-- ─── Banners ─────────────────────────────────────────────────── -->
+		<div class="gz-banner gz-banner-error" *ngIf="loadError">
+			{{ 'DOCS.ERRORS.EDITOR_LOAD' | translate }}
+			<button nbButton size="tiny" status="primary" type="button" (click)="load()">
+				{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
+			</button>
+			<button nbButton size="tiny" ghost type="button" (click)="back()">
+				{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}
+			</button>
+		</div>
+
+		<div class="gz-banner gz-banner-conflict" *ngIf="saveState === 'conflict'" role="alert">
+			{{ 'DOCS.EDITOR.SAVE.CONFLICT' | translate }}
+			<button nbButton size="tiny" status="primary" type="button" (click)="conflictReload()">
+				{{ 'DOCS.EDITOR.SAVE.CONFLICT_RELOAD' | translate }}
+			</button>
+			<button nbButton size="tiny" ghost type="button" (click)="conflictKeepCopy()">
+				{{ 'DOCS.EDITOR.SAVE.CONFLICT_KEEP_COPY' | translate }}
+			</button>
+		</div>
+
+		<div class="gz-banner gz-banner-locked" *ngIf="isLocked && !loadError">
+			<nb-icon icon="lock-outline"></nb-icon>
+			{{ 'DOCS.EDITOR.LOCKED_BANNER' | translate }}
+		</div>
+
+		<!-- Read-only covers both halves of the write rule: no DOCS_UPDATE, or DOCS_UPDATE on
+		     someone else's document without DOCS_MANAGE (spec 08 §1.7). -->
+		<div class="gz-banner gz-banner-readonly" *ngIf="!canWrite && !loadError && document">
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'DOCS.EDITOR.READ_ONLY_BANNER' | translate }}
+		</div>
+
+		<!-- Content written by a newer extension set (spec 05 §9.1 `metadata.schemaVersion`):
+		     saving from this build would silently drop node types it does not know. -->
+		<div class="gz-banner gz-banner-conflict" *ngIf="schemaAhead" role="alert">
+			<nb-icon icon="alert-triangle-outline"></nb-icon>
+			{{ 'DOCS.EDITOR.SCHEMA_AHEAD' | translate }}
+		</div>
+
+		<!-- ─── Editor canvas + right rail ──────────────────────────────── -->
+		<div class="gz-page-layout" *ngIf="document && !loadError">
+			<div class="gz-editor-canvas" [class.full-width]="fullWidth">
+				<!-- PAGE: live editor (read-only when locked / no permission) -->
+				<gz-document-editor
+					*ngIf="isPage"
+					[document]="document"
+					[editable]="editable"
+					(saveStateChanged)="onSaveStateChanged($event)"
+					(statsChanged)="onStatsChanged($event)"
+					(tocChanged)="onTocChanged($event)"
+					(commentRequested)="openCommentsFor($event)"
+					(schemaVersionChanged)="onSchemaVersionChanged($event)"
+				></gz-document-editor>
+
+				<!-- FILE: static extracted-text preview (spec 05 §9.1) -->
+				<gz-document-static-view
+					*ngIf="!isPage"
+					[markdown]="document.extractedText ?? null"
+					[contentHtml]="document.contentHtml ?? null"
+				></gz-document-static-view>
+			</div>
+
+			<aside class="gz-right-rail" *ngIf="railOpen">
+				<ng-container *ngIf="versionsOpen; else railTabs">
+					<gz-docs-version-history
+						[documentId]="document.id"
+						(closed)="versionsOpen = false"
+						(restored)="onVersionRestored($event)"
+					></gz-docs-version-history>
+				</ng-container>
+				<ng-template #railTabs>
+					<div class="gz-rail-tabs" role="tablist">
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							role="tab"
+							[attr.aria-selected]="railTab === 'toc'"
+							[class.active]="railTab === 'toc'"
+							(click)="railTab = 'toc'"
+						>
+							{{ 'DOCS.EDITOR.TOC' | translate }}
+						</button>
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							role="tab"
+							[attr.aria-selected]="railTab === 'info'"
+							[class.active]="railTab === 'info'"
+							(click)="railTab = 'info'"
+						>
+							{{ 'DOCS.EDITOR.INFO' | translate }}
+						</button>
+						<!-- Block-anchored comment threads (spec 01 §10.5 / spec 05 §8).
+						     PAGE only: a FILE has no editor blocks to anchor to. -->
+						<button
+							*ngIf="isPage"
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							role="tab"
+							[attr.aria-selected]="railTab === 'comments'"
+							[class.active]="railTab === 'comments'"
+							(click)="openCommentsTab()"
+						>
+							{{ 'DOCS.COMMENTS.TITLE' | translate }}
+						</button>
+					</div>
+
+					<!-- ToC panel (UX spec §10.3) -->
+					<div class="gz-rail-panel" *ngIf="railTab === 'toc'">
+						<div class="gz-toc-empty" *ngIf="!tocAnchors.length">
+							{{ 'DOCS.EDITOR.TOC_EMPTY' | translate }}
+						</div>
+						<ul class="gz-toc-list">
+							<li *ngFor="let anchor of tocAnchors">
+								<button
+									type="button"
+									[class.active]="anchor.isActive"
+									[style.padding-left.rem]="0.5 + (anchor.level - 1) * 0.75"
+									(click)="scrollToAnchor(anchor)"
+								>
+									{{ anchor.textContent }}
+								</button>
+							</li>
+						</ul>
+					</div>
+
+					<!-- Info panel (UX spec §10.4) -->
+					<div class="gz-rail-panel gz-info-panel" *ngIf="railTab === 'info'">
+						<dl>
+							<ng-container *ngIf="stats">
+								<dt>{{ 'DOCS.EDITOR.WORD_COUNT' | translate }}</dt>
+								<dd>{{ stats.words | number }}</dd>
+								<dt>{{ 'DOCS.EDITOR.CHAR_COUNT' | translate }}</dt>
+								<dd>{{ stats.characters | number }}</dd>
+								<dt>{{ 'DOCS.EDITOR.READ_TIME' | translate }}</dt>
+								<dd>{{ 'DOCS.EDITOR.READ_TIME_VALUE' | translate : { minutes: stats.readTimeMinutes } }}</dd>
+							</ng-container>
+							<dt>{{ 'DOCS.TABLE.COLUMNS.UPDATED' | translate }}</dt>
+							<dd>{{ document.updatedAt | date : 'medium' }}</dd>
+							<dt>{{ 'DOCS.FILTERS.CREATED_RANGE' | translate }}</dt>
+							<dd>{{ document.createdAt | date : 'medium' }}</dd>
+						</dl>
+					</div>
+
+					<!-- Comments panel (spec 05 §8). Standalone component, so the page can
+					     mount it without touching the module's declarations.
+
+					     🛑 `[hidden]`, not `*ngIf`, on the tab condition: this panel owns the
+					     only comment fetch, and its `openBlocksChanged` is what draws the
+					     editor's gutter markers. Behind an `*ngIf` the markers would not
+					     appear until the user happened to open this tab. -->
+					<div class="gz-rail-panel" *ngIf="isPage" [hidden]="railTab !== 'comments'">
+						<button
+							*ngIf="commentBlockId"
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							class="gz-comments-all"
+							(click)="openCommentsTab()"
+						>
+							<nb-icon icon="arrow-back-outline"></nb-icon>
+							{{ 'DOCS.COMMENTS.ALL_THREADS' | translate }}
+						</button>
+						<gz-docs-block-comments
+							[documentId]="document.id"
+							[documentName]="document.name"
+							[blockId]="commentBlockId"
+							[knownBlockIds]="knownBlockIds"
+							(openBlocksChanged)="onOpenCommentBlocks($event)"
+							(blockFocused)="onCommentBlockFocused($event)"
+						></gz-docs-block-comments>
+					</div>
+				</ng-template>
+			</aside>
+		</div>
+	</nb-card-body>
+</nb-card>

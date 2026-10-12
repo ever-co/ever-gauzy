@@ -7,6 +7,11 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+permissions:
+  contents: read
+
 jobs:
   prepare:
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
@@ -81,6 +86,33 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-yarn-
+
+      # Route the installs below through the internal Verdaccio cache. This job resolves to the
+      # self-hosted ARC pool (vars.RUNNER_LINUX_X64_8), which is the only place the VIP is
+      # reachable; the action PROBES it and falls back to the public npm registry otherwise, so the
+      # `|| 'ubuntu-latest'` fallback runner degrades to today's behaviour instead of hanging.
+      #
+      # Placed AFTER the yarn cache restore on purpose: the action rewrites yarn.lock's resolved
+      # URLs (that rewrite is the load-bearing half — yarn v1 fetches the URL recorded in the
+      # lockfile and ignores the registry setting), and hashFiles() in a cache key evaluates at step
+      # runtime. Configuring the registry before the restore would move the key and bifurcate the
+      # cache namespace by VIP reachability. Same ordering as build.yml.
+      #
+      # No save-key pinning is needed here, unlike build.yml: that file uses a split
+      # cache/restore + cache/save pair, whose save step re-derives hashFiles() at save time. This
+      # is the COMBINED actions/cache action — it captures its primary key during the restore, i.e.
+      # before the rewrite, and its post-job save reuses that captured key, so the entry is written
+      # under exactly the key the next run's restore computes.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # NOT contains(matrix.os, ...) as the app workflows use: this job's only matrix key is
+          # `containers`, so that expression collapses to false and would silently disable the
+          # in-network VIP retry and its warning. Derive it from the runner variable this job uses.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
 
       # - name: Increase file limit
       #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p

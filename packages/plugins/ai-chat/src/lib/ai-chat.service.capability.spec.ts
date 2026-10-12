@@ -4,7 +4,10 @@ import { ServiceUnavailableException } from '@nestjs/common';
 // the whole bootstrap (config, database, an ESM package jest cannot parse), and the tool builders pull
 // the ESM-only `ai` SDK. None of that is on the code paths under test, so it is stubbed AT THE MODULE
 // BOUNDARY — hoisted above the imports — leaving the real service, registry and capability logic live.
-jest.mock('@gauzy/core', () => ({ RequestContext: class {} }));
+// `currentTenantId` answers "no tenant": getConfig() now also resolves the tenant's VOICE default,
+// which is not what this file is about — with no tenant that lookup is skipped, so the capability
+// logic stays the only thing under test.
+jest.mock('@gauzy/core', () => ({ RequestContext: { currentTenantId: () => undefined } }));
 jest.mock('./esm-loader', () => ({ loadAiSdk: jest.fn() }));
 jest.mock('./tools/gauzy-api-client', () => ({ GauzyApiClient: class {} }));
 jest.mock('./tools/gauzy-tools', () => ({ buildGauzyTools: jest.fn(), GAUZY_TOOLS_REQUIRING_APPROVAL: [] }));

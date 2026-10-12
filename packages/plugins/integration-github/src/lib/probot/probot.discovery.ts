@@ -1,6 +1,7 @@
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import {
+	ForbiddenException,
 	Inject,
 	Injectable,
 	Logger,
@@ -8,14 +9,33 @@ import {
 	OnApplicationShutdown,
 	OnModuleInit
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import SmeeClient from 'smee-client';
 import { isEmpty } from 'underscore';
 import * as chalk from 'chalk';
 import type { Probot } from 'probot';
-import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { createProbot, createSmee } from './probot.helpers';
 import { HookMetadataAccessor } from './hook-metadata.accessor';
+import { GITHUB_SIGNATURE_HEADER, verifyGithubWebhookSignature } from './webhook-signature';
+
+/**
+ * The shape {@link ProbotDiscovery.receiveHook} needs off the incoming Express request.
+ *
+ * `rawBody` is stashed by the API bootstrap's `captureRawBody` body-parser hook — the HMAC has to be
+ * computed over the bytes GitHub signed, which the parsed `body` object no longer is.
+ */
+export interface IGithubWebhookRequest {
+	headers: Record<string, string | string[] | undefined>;
+	rawBody?: Buffer;
+}
+
+/** First value of a header, or `undefined` when it is absent or empty. */
+const headerValue = (request: IGithubWebhookRequest, name: string): string | undefined => {
+	const value = request?.headers?.[name];
+	const single = Array.isArray(value) ? value[0] : value;
+	return typeof single === 'string' && single.length > 0 ? single : undefined;
+};
 
 @Injectable()
 export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
@@ -45,6 +65,16 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 			if (this.config.appId && this.config.privateKey) {
 				this.probot = await createProbot(this.config);
 				console.log(chalk.green(`Probot App successfully initialized.`));
+				// Loud, because the receiver now refuses every delivery without it: a GitHub App that
+				// is otherwise fully configured would silently stop syncing installations and issues.
+				if (!this.config.webhookSecret?.trim()) {
+					console.warn(
+						chalk.yellow(
+							`GAUZY_GITHUB_WEBHOOK_SECRET is not set: GitHub webhook deliveries will be rejected (403). ` +
+								`Set it to the webhook secret configured in the GitHub App.`
+						)
+					);
+				}
 			} else {
 				console.warn(chalk.yellow(`Probot App initialization skipped: Missing appId or privateKey.`));
 			}
@@ -174,7 +204,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		}
 
 		// Generate a unique key and store the hook information
-		return this.hooks.set(v4(), {
+		return this.hooks.set(randomUUID(), {
 			target: hookFn,
 			eventOrEvents: hookMetadata
 		});
@@ -200,21 +230,71 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	}
 
 	/**
-	 * Receive and process a GitHub webhook request.
+	 * Receive, AUTHENTICATE and process a GitHub webhook request.
+	 *
+	 * This route is `@Public()` and the handlers behind it deliberately run outside any
+	 * `RequestContext` — `installation.deleted` hard-deletes the `IntegrationTenant` row (and its
+	 * cascaded settings and integration maps) of whichever tenant owns the installation id in the
+	 * body, and `issues.*` creates or overwrites Tasks and Tags in that tenant. The HMAC signature is
+	 * therefore the ONLY boundary between the open internet and every tenant's integration state, so
+	 * it is verified here before anything is parsed or dispatched, and there is no bypass for local
+	 * development.
+	 *
+	 * A note for whoever wires up the smee proxy: `webhookProxy` is never populated by
+	 * `GithubModule` today, so {@link ProbotDiscovery.onApplicationBootstrap} never starts a
+	 * `SmeeClient`. If it is ever wired, be aware that smee-client re-POSTs `JSON.parse`d payloads
+	 * (`superagent.send(data.body)`), so although it forwards the signature header unchanged, the
+	 * BYTES it delivers are a re-serialization and will not always hash to it. Forwarding a signed
+	 * delivery is therefore not a supported development path; redeliver from the GitHub App's Recent
+	 * Deliveries view, or point the App at a tunnel that forwards the body verbatim.
+	 *
+	 * Fails CLOSED: an unconfigured receiver, a missing header, a body the body-parser did not stash
+	 * and a bad signature all answer 403 rather than the old unconditional 201.
+	 *
 	 * @param request The incoming webhook request.
 	 * @returns A promise that resolves when the webhook is processed.
+	 * @throws ForbiddenException when the delivery cannot be proven to come from GitHub.
 	 */
-	public receiveHook(request: any) {
-		if (!this.probot) {
-			return;
+	public async receiveHook(request: IGithubWebhookRequest): Promise<void> {
+		// The HMAC key is the configured value VERBATIM — `createProbot` hands Probot the same untrimmed
+		// string, and GitHub keys its signature with exactly what was typed into the App settings.
+		// Trimming is used only to recognize a blank (unset) secret.
+		const secret = this.config.webhookSecret;
+
+		// No Probot instance (no appId/privateKey) or no secret means this deployment cannot verify
+		// anything. Answering 2xx there is indistinguishable from a working receiver — refuse, so the
+		// misconfiguration shows up in the GitHub App's delivery log instead of being silently dropped.
+		if (!this.probot || typeof secret !== 'string' || !secret.trim()) {
+			throw new ForbiddenException('GitHub webhooks are not enabled on this deployment.');
 		}
 
-		// Extract relevant information from the request
-		const id = request.headers['x-github-delivery'] as string;
-		const event = request.headers['x-github-event'];
-		const body = request.body;
+		const id = headerValue(request, 'x-github-delivery');
+		const event = headerValue(request, 'x-github-event');
+		const signature = headerValue(request, GITHUB_SIGNATURE_HEADER);
+		const payload = request.rawBody;
 
-		// Call the probot's receive method with extracted information
-		return this.probot.receive({ id, name: event, payload: body });
+		if (!id || !event || !signature || !payload?.length) {
+			throw new ForbiddenException('Missing GitHub webhook signature.');
+		}
+
+		if (!verifyGithubWebhookSignature(payload, signature, secret)) {
+			this.logger.warn(`Rejected GitHub webhook delivery ${id} (${event}): signature did not verify.`);
+			throw new ForbiddenException('Invalid GitHub webhook signature.');
+		}
+
+		// Parse only AFTER the bytes are proven authentic, and parse the same bytes that were hashed —
+		// `request.body` is a re-parse of them by the body parser and must not be trusted as the thing
+		// the signature covered.
+		let body: unknown;
+		try {
+			body = JSON.parse(payload.toString('utf8'));
+		} catch {
+			// Also the landing place for a GitHub App configured to send `application/x-www-form-urlencoded`
+			// (its JSON arrives under a `payload=` field), which this receiver has never supported.
+			throw new ForbiddenException('Malformed GitHub webhook payload.');
+		}
+
+		// Call the probot's receive method with the verified information
+		await this.probot.receive({ id, name: event as any, payload: body as any });
 	}
 }

@@ -140,6 +140,15 @@ export class EditOrganizationLocationComponent
 					this.leafletTemplate.addMarker(new LatLng(contact.latitude || null, contact.longitude || null));
 				}
 			}
+
+			// The map fills its panel now instead of standing at a fixed
+			// `calc(100vh - 30rem)`, so its box is decided by the layout around it
+			// rather than by the viewport. Leaflet caches the container size when it
+			// builds the map, on its own 200ms timer, which can land before this one
+			// — re-measure, which is what `invalidateSize` asks callers who resize its
+			// box to do. A no-op if the map has not been created yet, and that case
+			// needs nothing: it will measure the settled box when it is.
+			this.leafletTemplate?.invalidateSize();
 		}, 200);
 	}
 

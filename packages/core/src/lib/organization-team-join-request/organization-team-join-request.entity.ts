@@ -18,6 +18,7 @@ import {
 	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('organization_team_join_request', {
 	mikroOrmRepository: () => MikroOrmOrganizationTeamJoinRequestRepository
@@ -71,6 +72,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	/**
 	 * A confidential code associated with the entity.
 	 */
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ nullable: true })
 	code: string;
@@ -78,6 +80,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	/**
 	 * A confidential token for authentication or validation.
 	 */
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ nullable: true })
 	token: string;

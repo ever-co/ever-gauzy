@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { DataSource } from 'typeorm';
 import * as path from 'path';
 import { AccountingTemplate } from './accounting-template.entity';
-import * as mjml2html from 'mjml';
+import { compileMjml } from './../email-template/compile-mjml';
 /**
  * Note: This seed file assumes the following directory structure in seeds/data/accounting/default-accounting-templates/ folder
  *
@@ -86,7 +86,7 @@ const pathToAccountingTemplate = async (
 		const fileNameWithoutExtension = fileName[0];
 		template.name = `${templatePath[templatePath.length - 3]}`;
 		template.mjml = fileContent;
-		template.hbs = mjml2html(fileContent).html;
+		template.hbs = compileMjml(fileContent).html;
 		template.templateType = fileNameWithoutExtension;
 		return template;
 	} catch (error) {

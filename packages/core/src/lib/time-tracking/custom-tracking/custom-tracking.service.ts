@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TenantAwareCrudService } from '../../core/crud';
 import { getDateRangeFormat, MultiORMEnum } from '../../core/utils';
 import { moment } from '../../core/moment-extend';
@@ -31,7 +32,8 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		readonly typeOrmTimeSlotSessionRepository: TypeOrmTimeSlotSessionRepository,
 		readonly mikroOrmTimeSlotSessionRepository: MikroOrmTimeSlotSessionRepository,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmTimeSlotRepository, mikroOrmTimeSlotRepository);
 	}
@@ -115,16 +117,18 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = query;
 
-		let employeeIds = query.employeeIds || [];
+		// The requested ids used to be taken as given, so any TIME_TRACKER holder could read a colleague
+		// session and its decoded payload. Everything a caller may see is decided here: their own employee
+		// record, the employees they manage, or nothing.
+		let employeeIds = await this.managedEmployeeService.filterAccessibleEmployeeIds(
+			query.employeeIds || [],
+			query.teamIds || [],
+			query.projectIds || []
+		);
 		if (employeeIds.length === 0) {
-			const employeeId = RequestContext.currentEmployeeId();
-			if (employeeId) {
-				employeeIds = [employeeId];
-			} else {
-				const currentUser = RequestContext.currentUser();
-				if (currentUser?.employee?.id) {
-					employeeIds = [currentUser.employee.id];
-				}
+			const currentUser = RequestContext.currentUser();
+			if (currentUser?.employee?.id) {
+				employeeIds = [currentUser.employee.id];
 			}
 		}
 

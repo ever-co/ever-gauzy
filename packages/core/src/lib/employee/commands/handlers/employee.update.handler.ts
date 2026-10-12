@@ -1,13 +1,27 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { IEmployee, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	checkAgentExitLogoutRestrictionChange,
+	IEmployee,
+	IEmployeeUpdateInput,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
+import { ActivityLogService } from './../../../activity-log/activity-log.service';
+import {
+	employeeAgentRestrictionLocations,
+	recordAgentRestrictionAcknowledgement
+} from './../../agent-exit-logout-restriction';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
-	constructor(private readonly _employeeService: EmployeeService) {}
+	constructor(
+		private readonly _employeeService: EmployeeService,
+		private readonly _activityLogService: ActivityLogService
+	) {}
 
 	/**
 	 * Handles the execution of the `EmployeeUpdateCommand`.
@@ -34,16 +48,53 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			}
 		}
 
+		// Issue #9873: in EEA/UK a worker must always be able to exit and log out of the agent;
+		// elsewhere restricting either requires an explicit acknowledgement, recorded against the admin.
+		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
+			relations: { organization: { contact: true }, user: true, contact: true }
+		});
+		// The worker's own location and their organization's: EEA/UK if either is.
+		const previousLocation = employeeAgentRestrictionLocations(employee);
+		const location = employeeAgentRestrictionLocations(employee, input.contact);
+		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
+			input,
+			employee,
+			location,
+			previousLocation
+		);
+		if (restrictionError) {
+			throw new BadRequestException(restrictionError);
+		}
+
+		// The acknowledgement is a request flag, not an employee column.
+		const changes: IEmployeeUpdateInput = { ...input };
+		delete changes.acknowledgeAgentExitLogoutRestriction;
+
+		// Written and awaited before the save: no restriction without its recorded acknowledgement.
+		if (newRestrictions.length > 0) {
+			await recordAgentRestrictionAcknowledgement(this._activityLogService, {
+				entity: BaseEntityEnum.Employee,
+				entityId: id,
+				entityName: employee?.user?.name || employee?.fullName || id,
+				organizationId: employee?.organizationId,
+				tenantId: employee?.tenantId,
+				restricted: newRestrictions
+			});
+		}
+
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
 			return await this._employeeService.create({
-				...input,
-				upworkId: input.upworkId || null,
-				linkedInId: input.linkedInId || null,
+				...changes,
+				upworkId: changes.upworkId || null,
+				linkedInId: changes.linkedInId || null,
 				id
 			});
 		} catch (error) {
 			// Handle any errors during the update process
+			if (error instanceof BadRequestException || error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
 		}
 	}

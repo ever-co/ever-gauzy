@@ -11,7 +11,7 @@ import {
 	RoleGuard,
 	TenantService
 } from '@gauzy/ui-core/core';
-import { OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
+import { EmailVerificationNoticeComponent, OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
 import { ThemeModule, ThemeSelectorModule, ThemeSettingsModule } from '@gauzy/ui-core/theme';
 import { createOnboardingRoutes } from './onboarding.routes';
 import { OnboardingComponent } from './components/onboarding.component';
@@ -32,7 +32,8 @@ import { OnboardingCompleteComponent } from './components/onboarding-complete/on
 		ThemeModule,
 		ThemeSelectorModule,
 		ThemeSettingsModule,
-		OrganizationsStepFormModule
+		OrganizationsStepFormModule,
+		EmailVerificationNoticeComponent
 	],
 	exports: [RouterModule],
 	declarations: [OnboardingComponent, TenantOnboardingComponent, OnboardingCompleteComponent],

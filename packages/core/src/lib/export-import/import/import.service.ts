@@ -1,19 +1,21 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
+import * as os from 'node:os';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
-import * as rimraf from 'rimraf';
-import * as path from 'path';
+import * as path from 'node:path';
 import * as chalk from 'chalk';
-import { ConfigService } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core';
+import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
+import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
@@ -24,53 +26,97 @@ import {
 } from '../repositories/repositories.service';
 
 @Injectable()
-export class ImportService implements OnModuleInit {
-	private _dirname: string;
-	private _extractPath: string;
+export class ImportService {
+	private readonly logger = new Logger(ImportService.name);
 
-	private repositories: IRepositoryModel[] = [];
+	/**
+	 * The export/import repository graph, built once.
+	 *
+	 * Derived from `RepositoriesService`'s module-init state, never from the request, so a single
+	 * shared copy is correct. The per-request state that used to live beside it — `_dirname` and
+	 * `_extractPath` — is not, and is threaded explicitly instead (see {@link createExtractDirectory}).
+	 */
+	private repositories: Promise<IRepositoryModel[]> | null = null;
 
-	constructor(
-		private readonly configService: ConfigService,
-		private readonly commandBus: CommandBus,
-		private repositoriesService: RepositoriesService
-	) {}
+	constructor(private readonly commandBus: CommandBus, private repositoriesService: RepositoriesService) {}
 
-	async onModuleInit() {
-		//base import csv directory path
-		this._dirname = path.join(this.configService.assetOptions.assetPublicPath || __dirname);
+	/**
+	 * Builds (once) and returns the repository graph to import into.
+	 */
+	private async getRepositories(): Promise<IRepositoryModel[]> {
+		if (!this.repositories) {
+			// Do not cache a rejection: a transient failure must not poison every later request.
+			this.repositories = this.repositoriesService.buildRepositoriesRelationsGraph().catch((error) => {
+				this.repositories = null;
+				throw error;
+			});
+		}
+		return this.repositories;
 	}
 
-	public async registerAllRepositories() {
-		this.repositories = await this.repositoriesService.buildRepositoriesRelationsGraph();
+	/**
+	 * Creates a private, per-request directory to extract an uploaded archive into.
+	 *
+	 * 🛑 Two defects are closed here. Every import used to extract into ONE fixed directory,
+	 * `<assetPublicPath>/import/csv`, derived from a field on this singleton service — so two
+	 * tenants importing at the same time read each other's CSVs, and tenant A's import inserted
+	 * tenant B's rows under tenant A's id (GHSA-g235-c4fm-4fc7). That directory is also served
+	 * unauthenticated by `ServeStaticModule` at `/public/`, so `GET /public/import/csv/user.csv`
+	 * returned the business data of whoever was importing — permanently, after any import that threw
+	 * before the cleanup step. `os.tmpdir()` is outside the served tree and unique per call.
+	 *
+	 * @returns Absolute path of the new, empty extraction directory.
+	 */
+	public async createExtractDirectory(): Promise<string> {
+		// `mkdtemp` creates the directory owner-only (0700) on POSIX, so other local users of a shared
+		// `/tmp` cannot read the extracted CSVs; the controller removes it in a `finally`.
+		return await fsp.mkdtemp(path.join(os.tmpdir(), 'gauzy-import-'));
 	}
 
-	public removeExtractedFiles() {
+	/**
+	 * Removes one request's extraction directory. Best effort; never throws.
+	 *
+	 * @param extractPath - The directory returned by {@link createExtractDirectory}.
+	 */
+	public async removeExtractedFiles(extractPath: string): Promise<void> {
+		// Refuse an empty path outright rather than turning a recursive delete loose on a default.
+		if (!extractPath || typeof extractPath !== 'string') {
+			return;
+		}
 		try {
-			rimraf.sync(this._extractPath);
+			await fsp.rm(extractPath, { recursive: true, force: true });
 		} catch (error) {
-			console.log(error);
+			this.logger.error(`Failed to remove import extraction directory ${extractPath}`, error?.stack);
 		}
 	}
 
-	public async unzipAndParse(filePath: string, cleanup: boolean = false) {
-		//extracted import csv directory path
-		this._extractPath = path.join(path.join(this._dirname, filePath), '../csv');
-
+	/**
+	 * Extracts the uploaded archive into this request's own directory, then imports it.
+	 *
+	 * @param extractPath - This request's extraction directory.
+	 * @param filePath - Storage key of the uploaded archive.
+	 * @param cleanup - Whether to wipe the tenant's existing rows first (`ImportTypeEnum.CLEAN`).
+	 */
+	public async unzipAndParse(extractPath: string, filePath: string, cleanup: boolean = false) {
 		const file = await new FileStorage().getProvider().getFile(filePath);
-		await unzipper.Open.buffer(file).then((d) => d.extract({ path: this._extractPath }));
-		await this.parse(cleanup);
+		await unzipper.Open.buffer(file).then((d) => d.extract({ path: extractPath }));
+		await this.parse(extractPath, cleanup);
 	}
 
-	async parse(cleanup: boolean = false) {
+	async parse(extractPath: string, cleanup: boolean = false) {
 		/**
 		 * Can only run in a particular order
 		 */
 		const tenantId = RequestContext.currentTenantId();
-		for await (const item of this.repositories) {
+		const repositories = await this.getRepositories();
+		// Only an archive this server wrote carries the escape, so only such an archive is decoded: a
+		// legacy dump, a filled-in `/export/template` or an externally built CSV set would otherwise
+		// lose a legitimate leading apostrophe from a value such as `'=notes` (GHSA-7xp5-j564-4752).
+		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
+		for await (const item of repositories) {
 			const { repository, isStatic = false, relations = [] } = item;
 			const nameFile = repository.metadata.tableName;
-			const csvPath = path.join(this._extractPath, `${nameFile}.csv`);
+			const csvPath = path.join(extractPath, `${nameFile}.csv`);
 			const masterTable = repository.metadata.tableName;
 
 			if (!fs.existsSync(csvPath)) {
@@ -100,7 +146,8 @@ export class ImportService implements OnModuleInit {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					stream.on('data', (data) => {
-						results.push(data);
+						// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+						results.push(decodeCells ? fromSpreadsheetSafeCsvRow(data) : data);
 					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${masterTable}`), error);
@@ -129,16 +176,31 @@ export class ImportService implements OnModuleInit {
 
 			// export pivot relational tables
 			if (isNotEmpty(relations)) {
-				await this.parseRelationalTables(item, cleanup);
+				await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
 			}
 		}
 	}
 
-	async parseRelationalTables(entity: IRepositoryModel, cleanup: boolean = false) {
+	/**
+	 * Imports the junction tables of one entity.
+	 *
+	 * @param extractPath - This request's extraction directory.
+	 * @param entity - The entity whose junction tables to read.
+	 * @param cleanup - Whether the tenant's existing rows were wiped first.
+	 * @param decodeCells - Whether the archive is a marked Gauzy export whose cells carry the
+	 * spreadsheet-formula escape. Resolved from the archive manifest when the caller does not say.
+	 */
+	async parseRelationalTables(
+		extractPath: string,
+		entity: IRepositoryModel,
+		cleanup: boolean = false,
+		decodeCells?: boolean
+	) {
+		const decode = decodeCells ?? (await usesSpreadsheetSafeCells(extractPath));
 		const { relations } = entity;
 		for await (const item of relations) {
 			const { joinTableName } = item;
-			const csvPath = path.join(this._extractPath, `${joinTableName}.csv`);
+			const csvPath = path.join(extractPath, `${joinTableName}.csv`);
 
 			if (!fs.existsSync(csvPath)) {
 				console.log(chalk.yellow(`File Does Not Exist, Skipping: ${joinTableName}`));
@@ -152,7 +214,8 @@ export class ImportService implements OnModuleInit {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					stream.on('data', (data) => {
-						results.push(data);
+						// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+						results.push(decode ? fromSpreadsheetSafeCsvRow(data) : data);
 					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${joinTableName}`), error);
@@ -354,16 +417,18 @@ export class ImportService implements OnModuleInit {
 		});
 	}
 
-	public async addCurrentUserToImportedOrganizations() {
+	public async addCurrentUserToImportedOrganizations(extractPath: string) {
 		const userId = RequestContext.currentUserId();
 
-		const organizationsCsvPath = path.join(this._extractPath, 'organization.csv');
+		const organizationsCsvPath = path.join(extractPath, 'organization.csv');
+		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
 
 		return new Promise(async (resolve, reject) => {
 			const results: Organization[] = [];
 			const stream = fs.createReadStream(organizationsCsvPath, 'utf8').pipe(csv());
 			stream.on('data', (data) => {
-				if (isNotEmpty(data)) results.push(data);
+				// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+				if (isNotEmpty(data)) results.push(decodeCells ? fromSpreadsheetSafeCsvRow(data) : data);
 			});
 			stream.on('error', (error) => {
 				console.log(chalk.red(`Failed to parse CSV for table: organization`), error);

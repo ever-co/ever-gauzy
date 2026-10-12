@@ -7,3 +7,9 @@
     height: calc(100vh - 15.25rem) !important;
   }
 }
+
+// Record-side Documents panel: its own card under the project form.
+.project-documents {
+  display: block;
+  margin-top: 1rem;
+}

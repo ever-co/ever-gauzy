@@ -121,7 +121,6 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 			this.selectedLog.isSelected = this.disable;
 			this.selectedLog.data = log;
 		}
-		console.log(isChecked, log);
 	}
 
 	public clearData() {

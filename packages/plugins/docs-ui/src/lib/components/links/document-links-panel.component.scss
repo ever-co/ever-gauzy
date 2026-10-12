@@ -1,0 +1,93 @@
+:host {
+	display: block;
+}
+
+.docs-links-panel {
+	margin: 0;
+}
+
+.docs-links-panel-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.docs-links-panel-count {
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+}
+
+.docs-links-panel-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-left: auto;
+}
+
+/* The real input is driven by the button above it — visually hidden, not
+   `display: none`, so assistive tech can still reach it. */
+.docs-links-panel-file {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.muted {
+	color: var(--text-hint-color);
+	margin: 0;
+}
+
+.docs-links-panel-error {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.docs-links-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.25rem 0;
+
+	& + & {
+		border-top: 1px solid var(--divider-color);
+	}
+}
+
+.docs-links-row-open {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: left;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--text-primary-color);
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.docs-links-row-meta {
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+	white-space: nowrap;
+}
+
+.docs-links-row-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.125rem;
+	margin-left: auto;
+}

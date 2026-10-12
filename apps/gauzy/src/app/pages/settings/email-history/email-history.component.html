@@ -1,112 +1,261 @@
-<nb-card class="card-scroll">
-	<nb-card-header class="d-flex justify-content-between">
+<nb-card class="email-history-card">
+	<nb-card-header class="page-header">
 		<h4 class="email-history-header">
 			<ngx-header-title>
 				<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span>
 				{{ 'SETTINGS.EMAIL_HISTORY.HEADER' | translate }}
 			</ngx-header-title>
 		</h4>
-		<div class="filter">
-			<button (click)="openFiltersDialog()" nbButton status="primary" size="small">
-				{{ 'BUTTONS.FILTER' | translate }}
-				@if (filteredCount) {
-				<span>
-					<nb-badge [text]="filteredCount" status="danger" position="fixed" class="filter-count"></nb-badge>
-				</span>
-				}
-			</button>
-		</div>
 	</nb-card-header>
-	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
-		<div class="content-container">
-			<aside class="email-list">
-				<nb-list nbInfiniteList [threshold]="20" (bottomThreshold)="loadNext()">
-					@for (email of emails; track email.id) {
-					<nb-list-item (click)="selectEmail(email)">
-						<div class="email-list-item w-100" [class.selected]="selectedEmail?.id === email.id">
-							<div class="image-container">
-								<ngx-avatar
-									[name]="
-										email?.user?.name
-											? email?.user?.name
-											: ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
-									"
-									[src]="email.avatarUrl"
-								></ngx-avatar>
-							</div>
-							<div class="date" [title]="email?.email">
-								<b>{{ email.formattedDate | dateTimeFormat }}</b>
-							</div>
-							<div class="email-details-item">
-								{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}
-								<b>{{
-									email?.user ? email?.user?.email : ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
-								}}</b>
-							</div>
-							<div class="email-details-item">
-								<span [title]="email?.email">
-									{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}
-									<b>{{ email?.email }}</b>
-								</span>
-							</div>
-						</div>
-					</nb-list-item>
-					}
-				</nb-list>
-			</aside>
-			<div class="email-container">
-				@if (selectedEmail) {
-				<div class="email-details">
-					<span>
-						<span class="col-fixed">{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}</span>
-						<b>{{
-							selectedEmail?.user
-								? selectedEmail?.user?.email
-								: ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
-						}}</b>
-					</span>
-					<span>
-						<span class="col-fixed">{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}</span>
-						<b>{{ selectedEmail?.email }}</b>
-					</span>
-					<span>
-						<span class="col-fixed">{{ 'SETTINGS.EMAIL_HISTORY.SUBJECT' | translate }}</span>
-						<b>{{ selectedEmail?.name }}</b>
-					</span>
-					<span>
-						<span class="col-fixed">{{ 'SETTINGS.EMAIL_HISTORY.LANGUAGE' | translate }}</span>
-						<b>{{ getEmailLanguageFullName(selectedEmail?.emailTemplate?.languageCode) }}</b>
-					</span>
-					<span>
-						<span class="col-fixed">{{ 'SETTINGS.EMAIL_HISTORY.TEMPLATE' | translate }}</span>
-						<b>{{ selectedEmail?.emailTemplate?.title | titlecase }}</b>
-					</span>
-				</div>
-				}
-				<div class="email-history-archive">
-					@if (selectedEmail?.status === EmailStatusEnum.FAILED) {
-					<button status="basic" outline nbButton size="small" (click)="resend()">
-						{{ 'SETTINGS.EMAIL_HISTORY.RESEND' | translate }}
-					</button>
-					} @if (selectedEmail) {
-					<button status="primary" outline nbButton size="small" (click)="archive()">
-						{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
-					</button>
-					}
-				</div>
 
-				@if (selectedEmail) {
-				<div class="custom-parent-email-content">
-					@if (selectedEmail?.content) {
-					<div [innerHtml]="selectedEmail?.content | safeHtml" class="email-content"></div>
-					}
-				</div>
-				} @else {
-				<h2>
-					{{ 'SETTINGS.EMAIL_HISTORY.NO_EMAILS_SENT' | translate }}
-				</h2>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
+		<!-- ── Filters ─────────────────────────────────────────────────── -->
+		<div class="filter-bar">
+			<div class="filter-controls">
+				<ng-select
+					class="filter-select recipient"
+					[items]="recipients"
+					bindLabel="email"
+					bindValue="email"
+					[(ngModel)]="recipientFilter"
+					(ngModelChange)="onFiltersChange()"
+					[placeholder]="'SETTINGS.EMAIL_HISTORY.FILTERS.ALL_RECIPIENTS' | translate"
+					[attr.aria-label]="'SETTINGS.EMAIL_HISTORY.FILTERS.RECIPIENT' | translate"
+					[searchable]="true"
+					[addTag]="true"
+					appendTo="body"
+				></ng-select>
+
+				<ng-select
+					class="filter-select template"
+					[items]="templateOptions"
+					bindLabel="label"
+					bindValue="id"
+					groupBy="title"
+					[(ngModel)]="templateFilter"
+					(ngModelChange)="onFiltersChange()"
+					[placeholder]="'SETTINGS.EMAIL_HISTORY.FILTERS.ALL_TEMPLATES' | translate"
+					[attr.aria-label]="'SETTINGS.EMAIL_HISTORY.FILTERS.TEMPLATE' | translate"
+					[searchable]="true"
+					appendTo="body"
+				>
+					<ng-template ng-optgroup-tmp let-item="item">
+						<span class="option-group">{{ item.title }}</span>
+					</ng-template>
+					<ng-template ng-option-tmp let-item="item">
+						<span class="option-language">{{ item.language || item.title }}</span>
+					</ng-template>
+				</ng-select>
+
+				<ng-select
+					class="filter-select status"
+					[items]="statusOptions"
+					[(ngModel)]="statusFilter"
+					(ngModelChange)="onFiltersChange()"
+					[placeholder]="'SETTINGS.EMAIL_HISTORY.FILTERS.ALL_STATUSES' | translate"
+					[attr.aria-label]="'SETTINGS.EMAIL_HISTORY.FILTERS.STATUS' | translate"
+					[searchable]="false"
+					appendTo="body"
+				>
+					<ng-template ng-label-tmp let-item="item">
+						<span class="status-dot" [class.failed]="item === EmailStatusEnum.FAILED"></span>
+						{{ 'SETTINGS.EMAIL_HISTORY.FILTERS.' + item | translate }}
+					</ng-template>
+					<ng-template ng-option-tmp let-item="item">
+						<span class="status-dot" [class.failed]="item === EmailStatusEnum.FAILED"></span>
+						{{ 'SETTINGS.EMAIL_HISTORY.FILTERS.' + item | translate }}
+					</ng-template>
+				</ng-select>
+
+				<nb-toggle
+					class="archived-toggle"
+					labelPosition="end"
+					status="primary"
+					[(ngModel)]="showArchived"
+					(ngModelChange)="onFiltersChange()"
+				>
+					{{ 'SETTINGS.EMAIL_HISTORY.FILTERS.ARCHIVED' | translate }}
+				</nb-toggle>
+			</div>
+
+			<div class="filter-summary">
+				<span class="result-count">
+					{{ 'SETTINGS.EMAIL_HISTORY.FILTERS.SHOWING' | translate: { count: emails.length, total: total } }}
+				</span>
+				@if (hasActiveFilters) {
+					<button nbButton ghost status="basic" size="tiny" class="clear-filters" (click)="clearFilters()">
+						{{ 'BUTTONS.CLEAR' | translate }}
+					</button>
 				}
 			</div>
+		</div>
+
+		@if (hasActiveFilters) {
+			<div class="active-filters">
+				@for (active of activeFilters; track active.key) {
+					<span class="filter-chip">
+						<span class="chip-label">{{ active.label | translate }}</span>
+						@if (active.value) {
+							<span class="chip-value" [nbTooltip]="active.value">{{ active.value }}</span>
+						}
+						<button
+							type="button"
+							class="chip-remove"
+							[attr.aria-label]="('BUTTONS.CLEAR' | translate) + ' ' + (active.label | translate)"
+							(click)="removeFilter(active.key)"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</span>
+				}
+			</div>
+		}
+
+		<div class="inbox">
+			<!-- ── Sent emails ───────────────────────────────────────────── -->
+			<section class="panel email-list">
+				<nb-list nbInfiniteList [threshold]="20" (bottomThreshold)="loadNext()">
+					@for (email of emails; track email.id) {
+						<nb-list-item
+							class="email-row"
+							[class.selected]="selectedEmail?.id === email.id"
+							(click)="selectEmail(email)"
+						>
+							<img class="row-avatar" [src]="email.avatarUrl" width="28" height="28" alt="" />
+							<div class="row-copy">
+								<div class="row-line">
+									<span class="row-sender">
+										{{ email?.user?.name || ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate) }}
+									</span>
+									<span class="row-date" [nbTooltip]="email.formattedDate | dateTimeFormat">
+										{{ email.formattedDate | dateTimeFormat: 'MMM D, YYYY' }}
+									</span>
+								</div>
+								<div class="row-line">
+									<span class="row-subject" [nbTooltip]="email?.name">{{ email?.name }}</span>
+									@if (email?.status === EmailStatusEnum.FAILED) {
+										<nb-icon class="row-failed" icon="alert-circle-outline" status="danger"></nb-icon>
+									}
+								</div>
+								<span class="row-to" [nbTooltip]="email?.email">
+									{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }} {{ email?.email }}
+								</span>
+							</div>
+						</nb-list-item>
+					}
+				</nb-list>
+			</section>
+
+			<!-- ── Selected email ────────────────────────────────────────── -->
+			<section class="panel email-view">
+				@if (selectedEmail) {
+					<!-- Mail-client header: sender and subject with the actions, then every detail in two columns. -->
+					<header class="view-header">
+						<div class="view-title-row">
+							<img class="view-avatar" [src]="selectedEmail?.avatarUrl" width="32" height="32" alt="" />
+							<div class="view-title">
+								<h5 class="view-subject" [nbTooltip]="selectedEmail?.name">{{ selectedEmail?.name }}</h5>
+								<div class="view-sender">
+									<span
+										class="sender-name"
+										[nbTooltip]="selectedEmail?.user?.name || ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)"
+									>
+										{{ selectedEmail?.user?.name || ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate) }}
+									</span>
+									@if (selectedEmail?.status) {
+										<span class="view-status" [class.failed]="selectedEmail?.status === EmailStatusEnum.FAILED">
+											<span class="status-dot" [class.failed]="selectedEmail?.status === EmailStatusEnum.FAILED"></span>
+											{{ 'SETTINGS.EMAIL_HISTORY.FILTERS.' + selectedEmail?.status | translate }}
+										</span>
+									}
+								</div>
+							</div>
+							<div class="view-actions">
+								@if (selectedEmail?.status === EmailStatusEnum.FAILED) {
+									<button nbButton outline status="basic" size="tiny" (click)="resend()">
+										<nb-icon icon="refresh-outline"></nb-icon>
+										{{ 'SETTINGS.EMAIL_HISTORY.RESEND' | translate }}
+									</button>
+								}
+								<button nbButton outline status="basic" size="tiny" (click)="archive()">
+									<nb-icon icon="archive-outline"></nb-icon>
+									{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
+								</button>
+							</div>
+						</div>
+
+						<div class="view-details">
+							<dl class="detail-group">
+								<div class="detail">
+									<dt>{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}</dt>
+									<dd [nbTooltip]="selectedEmail?.user ? selectedEmail?.user?.email : ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)">
+										{{
+											selectedEmail?.user
+												? selectedEmail?.user?.email
+												: ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
+										}}
+									</dd>
+								</div>
+								<div class="detail">
+									<dt>{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}</dt>
+									<dd [nbTooltip]="selectedEmail?.email">{{ selectedEmail?.email }}</dd>
+								</div>
+								<div class="detail">
+									<dt>{{ 'SETTINGS.EMAIL_HISTORY.SUBJECT' | translate }}</dt>
+									<dd [nbTooltip]="selectedEmail?.name">{{ selectedEmail?.name }}</dd>
+								</div>
+							</dl>
+							<dl class="detail-group">
+								<div class="detail">
+									<dt>{{ 'SETTINGS.EMAIL_HISTORY.DATE' | translate }}</dt>
+									<dd [nbTooltip]="selectedEmail?.formattedDate | dateTimeFormat">
+										{{ selectedEmail?.formattedDate | dateTimeFormat }}
+									</dd>
+								</div>
+								<div class="detail">
+									<dt>{{ 'SETTINGS.EMAIL_HISTORY.LANGUAGE' | translate }}</dt>
+									<dd
+										[class.empty]="!getEmailLanguageFullName(selectedEmail?.emailTemplate?.languageCode)"
+										[nbTooltip]="getEmailLanguageFullName(selectedEmail?.emailTemplate?.languageCode)"
+										[nbTooltipDisabled]="!getEmailLanguageFullName(selectedEmail?.emailTemplate?.languageCode)"
+									>
+										{{ getEmailLanguageFullName(selectedEmail?.emailTemplate?.languageCode) || '—' }}
+									</dd>
+								</div>
+								<div class="detail">
+									<dt>{{ 'SETTINGS.EMAIL_HISTORY.TEMPLATE' | translate }}</dt>
+									<dd
+										[class.empty]="!selectedEmail?.emailTemplate?.title"
+										[nbTooltip]="selectedEmail?.emailTemplate?.title | titlecase"
+										[nbTooltipDisabled]="!selectedEmail?.emailTemplate?.title"
+									>
+										{{ (selectedEmail?.emailTemplate?.title | titlecase) || '—' }}
+									</dd>
+								</div>
+							</dl>
+						</div>
+					</header>
+
+					<div class="view-body">
+						@if (selectedEmail?.content) {
+							<div class="email-paper" [innerHtml]="selectedEmail?.content | safeHtml"></div>
+						}
+					</div>
+				} @else if (!loading) {
+					<div class="empty-state">
+						@if (hasActiveFilters) {
+							<nb-icon icon="funnel-outline"></nb-icon>
+							<span>{{ 'SETTINGS.EMAIL_HISTORY.FILTERS.NO_MATCH' | translate }}</span>
+							<button nbButton outline status="basic" size="small" (click)="clearFilters()">
+								{{ 'BUTTONS.CLEAR' | translate }}
+							</button>
+						} @else {
+							<nb-icon icon="email-outline"></nb-icon>
+							<span>{{ 'SETTINGS.EMAIL_HISTORY.NO_EMAILS_SENT' | translate }}</span>
+						}
+					</div>
+				}
+			</section>
 		</div>
 	</nb-card-body>
 </nb-card>

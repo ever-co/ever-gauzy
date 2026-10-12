@@ -37,17 +37,17 @@ import { Store } from '@gauzy/ui-core/core';
 			 * on.
 			 */
 			:host {
-				font-size: var(--gauzy-page-title-font-size, 1.25rem);
+				font-size: var(--gauzy-page-title-font-size, 1rem);
 				font-weight: var(--gauzy-page-title-font-weight, 600);
-				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				line-height: var(--gauzy-page-title-line-height, 1.5rem);
 				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 			}
 			.name,
 			.org-name {
-				font-size: var(--gauzy-page-title-font-size, 1.25rem);
+				font-size: var(--gauzy-page-title-font-size, 1rem);
 				font-weight: 400;
-				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				line-height: var(--gauzy-page-title-line-height, 1.5rem);
 				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 				color: var(--text-hint-color);
@@ -133,6 +133,19 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 	@Input() set allowEmployee(value: boolean) {
 		this._allowEmployee = value;
+	}
+
+	/**
+	 * Whether the "for <Organization>" suffix renders after the title. Defaults to true — most
+	 * pages show org-scoped data. Product-level pages (About, Help) opt out: their content has
+	 * nothing to do with the selected organization, and the suffix read as a mistake there.
+	 */
+	_allowOrganization: boolean = true;
+	get allowOrganization(): boolean {
+		return this._allowOrganization;
+	}
+	@Input() set allowOrganization(value: boolean) {
+		this._allowOrganization = value;
 	}
 
 	constructor(

@@ -214,7 +214,12 @@
 								class="label"
 								[innerHtml]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 							></label>
-							<ckeditor formControlName="description" [config]="ckConfig"></ckeditor>
+							<ga-rich-text-editor
+								formControlName="description"
+								preset="standard"
+								outputFormat="html"
+								[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+							></ga-rich-text-editor>
 						</div>
 					</div>
 					<div class="row mt-3">

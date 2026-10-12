@@ -2,7 +2,7 @@ import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/utils';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from './../../core/file-storage';
+import { FileStorage } from './../../core/file-storage/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { IssueType } from './issue-type.entity';
 

@@ -3,9 +3,6 @@
 
 :host nb-card {
   background-color: var(--gauzy-card-2);
-  ngx-gauzy-filters {
-    margin: 0 -2rem;
-  }
   nb-card-body {
     height: calc(100vh - 21.75rem);
   }
@@ -23,5 +20,101 @@
     background-color: var(--gauzy-card-2);
     padding: 6px 8px;
     border-radius: nb-theme(button-rectangle-border-radius);
+  }
+}
+
+// Calendar and Weekly tabs: no text above 12px. Scoped to `.calendar-card` and
+// `.weekly-card` (set in each component's template) because this sheet is
+// forwarded into Weekly and from there into Daily, which keeps its own sizes.
+:host .calendar-card,
+:host .weekly-card {
+  font-size: 12px;
+
+  // The filter controls take their size from the table-header and select tokens
+  // (0.75rem, 0.8125rem once a value is picked), set by rules up to (0,4,1)
+  // inside the filter component — pinned here at a higher specificity instead.
+  // Named one by one rather than `*`, which would also shrink their chevrons.
+  ngx-gauzy-filters ::ng-deep {
+    .select-button,
+    .select-button.placeholder,
+    .activity-level-filter,
+    .popover-button[nbButton],
+    .clear-filters [nbButton] {
+      font-size: 12px;
+    }
+  }
+}
+
+// Calendar tab only: every piece of text in the calendar itself at exactly 12px.
+:host .calendar-card {
+  // FullCalendar sizes its own text in `em` (a 1.75em title, events at .85em)
+  // and the shared overrides add a 1rem title, so nothing inherits one size.
+  // Every element is pinned instead, except the icon glyphs, which are sized
+  // off their font-size.
+  full-calendar ::ng-deep *:not(.fc-icon) {
+    font-size: 12px;
+  }
+
+  // The day-header row is sticky: the grid scrolls underneath it. The shared
+  // overrides unset its background, and every colour behind it is translucent,
+  // so the hour rows showed through it mid-scroll. It now paints, as one opaque
+  // background, the same stack it is seen against at rest — the three `card-2`
+  // layers (timesheet card, this card, its body) over the layout background — so
+  // it looks as before but covers what passes under it. The day cells keep their
+  // own translucent tint, now laid over an opaque row.
+  full-calendar ::ng-deep .fc-scrollgrid-section-sticky > * {
+    background:
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      var(--layout-background-color) !important;
+  }
+}
+
+// The filter row that is the whole card header on the Calendar, Weekly and Daily
+// tabs (Weekly forwards this sheet, Daily forwards Weekly). Its height is this
+// padding plus one line of 2rem controls — no margin anywhere inside it adds to
+// that. The inline 1rem ends the controls on the same inset as `+ Add Time`.
+:host .filters {
+  margin: 0;
+  padding: 0.5rem 1rem;
+
+  ngx-gauzy-filters {
+    display: block;
+    margin: 0;
+  }
+
+  // The filter bar is authored as nested Bootstrap rows and columns, whose
+  // gutters are negative margins cancelled by padding, plus a 5px bottom margin
+  // on every filter. All of it is reset here and the spacing is a flex gap
+  // instead.
+  ngx-gauzy-filters ::ng-deep {
+    .main-wrapper {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      justify-content: flex-end;
+    }
+
+    .main-wrapper > .col-auto {
+      margin: 0 !important;
+      padding: 0;
+    }
+
+    // `align-items-end` is a Bootstrap utility (`!important`). Centred instead, so
+    // every control in the row — including Daily's selection actions — shares
+    // one axis.
+    .filter-item-list {
+      margin: 0;
+      align-items: center !important;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .filter-item-list > .col-auto,
+    .single-filter-wrapper {
+      margin: 0;
+      padding: 0 !important;
+    }
   }
 }

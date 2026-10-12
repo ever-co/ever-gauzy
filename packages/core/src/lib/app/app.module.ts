@@ -1,5 +1,6 @@
 import { ConfigService, environment } from '@gauzy/config';
 import { LanguagesEnum } from '@gauzy/contracts';
+import { isSchedulerQueueRootEnabled, SchedulerModule } from '@gauzy/scheduler';
 import { createKeyvNonBlocking } from '@keyv/redis';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { Module, OnModuleInit } from '@nestjs/common';
@@ -7,9 +8,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { createClient as createRedisClient } from 'redis';
 import { Cacheable, CacheableMemory } from 'cacheable';
 import * as chalk from 'chalk';
-import { RedisModule } from '../redis/redis.module';
+import { EVER_REDIS_CLIENT, RedisModule } from '../redis/redis.module';
 import { Keyv } from 'keyv';
 import * as moment from 'moment';
 import { ClsModule, ClsService } from 'nestjs-cls';
@@ -124,6 +126,7 @@ import { OrganizationVendorModule } from '../organization-vendor/organization-ve
 import { OrganizationModule } from '../organization/organization.module';
 import { PasswordHashModule } from '../password-hash/password-hash.module';
 import { PaymentModule } from '../payment/payment.module';
+import { PayrollRunModule } from '../payroll-run/payroll-run.module';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
 import { ProductCategoryModule } from '../product-category/product-category.module';
@@ -152,6 +155,7 @@ import { TagModule } from '../tags/tag.module';
 import { DailyPlanModule } from '../tasks/daily-plan/daily-plan.module';
 import { TaskEstimationModule } from '../tasks/estimation/task-estimation.module';
 import { IssueTypeModule } from '../tasks/issue-type/issue-type.module';
+import { TaskMetadataBootstrapModule } from '../tasks/task-metadata-bootstrap';
 import { TaskLinkedIssueModule } from '../tasks/linked-issue/task-linked-issue.module';
 import { TaskPriorityModule } from '../tasks/priorities/priority.module';
 import { TaskRelatedIssueTypeModule } from '../tasks/related-issue-type/related-issue-type.module';
@@ -165,7 +169,11 @@ import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { BillingModule } from '../shared/billing';
+import { createThrottlerStorage } from '../throttler/redis-throttler.storage';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
+import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
+import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
 import { TimeOffRequestModule } from '../time-off-request/time-off-request.module';
 import { TimeTrackingModule } from '../time-tracking/time-tracking.module';
@@ -176,6 +184,7 @@ import { WarehouseModule } from '../warehouse/warehouse.module';
 import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { describeUnleashConfig } from './unleash-config-log';
 
 const { unleashConfig } = environment;
 
@@ -200,7 +209,8 @@ if (unleashConfig.url) {
 		};
 	}
 
-	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
+	// The Unleash API key travels in `customHeaders.Authorization` - never serialize the config as-is.
+	console.log(describeUnleashConfig(unleashInstanceConfig));
 
 	const instance = initializeUnleash(unleashInstanceConfig);
 
@@ -369,14 +379,24 @@ if (environment.THROTTLE_ENABLED) {
 		...(environment.THROTTLE_ENABLED
 			? [
 					ThrottlerModule.forRootAsync({
-						inject: [ConfigService],
-						useFactory: () => {
-							return [
-								{
-									ttl: environment.THROTTLE_TTL,
-									limit: environment.THROTTLE_LIMIT
-								}
-							];
+						imports: [RedisModule],
+						inject: [EVER_REDIS_CLIENT],
+						// Buckets live in Redis when one is configured, so the configured limit holds
+						// across every API replica instead of being multiplied by the replica count and
+						// reset by every rollout. Without Redis this resolves to `undefined` and the
+						// module keeps its own per-process store.
+						useFactory: (redisClient: ReturnType<typeof createRedisClient> | null) => {
+							const storage = createThrottlerStorage(redisClient);
+
+							return {
+								throttlers: [
+									{
+										ttl: environment.THROTTLE_TTL,
+										limit: environment.THROTTLE_LIMIT
+									}
+								],
+								...(storage ? { storage } : {})
+							};
 						}
 					})
 			  ]
@@ -436,6 +456,8 @@ if (environment.THROTTLE_ENABLED) {
 		CountryModule,
 		CurrencyModule,
 		InviteModule,
+		OfficialHolidayModule,
+		TimeOffBalanceModule,
 		TimeOffPolicyModule,
 		TimeOffRequestModule,
 		ApprovalPolicyModule,
@@ -444,6 +466,9 @@ if (environment.THROTTLE_ENABLED) {
 		RolePermissionModule,
 		TenantModule,
 		TenantSettingModule,
+		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
+		// self-hosted install carries the module but exposes no billing surface.
+		BillingModule,
 		TagModule,
 		TagTypeModule,
 		SkillModule,
@@ -451,6 +476,7 @@ if (environment.THROTTLE_ENABLED) {
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		PayrollRunModule,
 		EstimateEmailModule,
 		GoalModule,
 		GoalTimeFrameModule,
@@ -505,6 +531,7 @@ if (environment.THROTTLE_ENABLED) {
 		PublicShareModule,
 		EmailResetModule,
 		IssueTypeModule,
+		TaskMetadataBootstrapModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,
@@ -530,6 +557,41 @@ if (environment.THROTTLE_ENABLED) {
 		BroadcastModule,
 		OrganizationStrategicInitiativeModule,
 		PasswordHashModule,
+		/**
+		 * PRODUCER-ONLY BullMQ root for the API process.
+		 *
+		 * Why it exists: plugins that offload work (today the Documents pipeline) can only reach
+		 * BullMQ through `SchedulerQueueService`, and that provider only exists where a
+		 * `SchedulerModule.forRoot()` was imported. Until this line the API had none, so every
+		 * `extract → classify → chunk → embed → index` stage — plus OCR and thumbnails — ran
+		 * INLINE in the API process while `apps/worker` sat idle.
+		 *
+		 * The two halves are deliberately split:
+		 * - `enableQueueing: true`  → registers `BullModule.forRoot()`, i.e. the connection that
+		 *   makes `SchedulerQueueService` resolvable and lets this process ENQUEUE.
+		 * - 🛑 `enabled: false`     → the job-runner half stays OFF. `SchedulerDiscoveryService`
+		 *   still discovers `@ScheduledJob` methods but `registerSchedules()` skips every one of
+		 *   them (`if (!job.options.enabled || !this.moduleOptions.enabled) continue`), and
+		 *   `SchedulerJobRunnerService.execute()` returns immediately, which also neuters the
+		 *   `runOnStart` path. `apps/worker` owns scheduled jobs; if the API ran them too, every
+		 *   scheduled job would execute twice.
+		 * - `logRegisteredJobs: false` → discovery would otherwise log "Registered scheduled job"
+		 *   for jobs this process will never fire.
+		 *
+		 * 🛑 Conditional by design — with `REDIS_ENABLED` unset there is NO root at all and every
+		 * consumer keeps its in-process fallback (the Documents plugin dispatches stages inline).
+		 * That is the path single-container and dev setups run on and it must keep working.
+		 * `SCHEDULER_QUEUE_ENABLED=false` forces it off even where Redis is configured.
+		 */
+		...(isSchedulerQueueRootEnabled()
+			? [
+					SchedulerModule.forRoot({
+						enabled: false,
+						enableQueueing: true,
+						logRegisteredJobs: false
+					})
+			  ]
+			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,

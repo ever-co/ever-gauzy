@@ -1,7 +1,6 @@
 import { QueryRunner } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as mjml2html from 'mjml';
 import { v4 as uuidV4 } from 'uuid';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
@@ -10,6 +9,7 @@ import { isEmpty } from '@gauzy/utils';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { replacePlaceholders } from '../core/utils';
 import { prepareSQLQuery as p } from '../database/database.helper';
+import { compileMjml } from './compile-mjml';
 
 /**
  * Email templates utils functions.
@@ -138,7 +138,7 @@ export class EmailTemplateUtils {
 			switch (extension) {
 				case 'mjml':
 					template['mjml'] = fileContent;
-					template['hbs'] = mjml2html(fileContent).html;
+					template['hbs'] = compileMjml(fileContent).html;
 					break;
 				case 'hbs':
 					template['hbs'] = fileContent;

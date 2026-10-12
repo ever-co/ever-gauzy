@@ -44,6 +44,16 @@ export type DashboardWidgetHostState = 'missing' | 'forbidden' | 'loading' | 'er
 /** Widths offered in the resize menu when a widget declares no `supportedWidths`. */
 const FALLBACK_WIDTHS: number[] = [3, 4, 6, 8, 12];
 
+/**
+ * Row counts offered in the resize menu, between whatever bounds the widget
+ * declares. A ladder rather than every value in range: a chart that allows 3–10
+ * rows would otherwise put eight near-identical buttons in the menu.
+ */
+const FALLBACK_HEIGHTS: number[] = [2, 3, 4, 6, 8];
+
+/** Ceiling used when a widget declares no `maxSize.h`. */
+const MAX_WIDGET_ROWS = 12;
+
 /** Shared empty objects, so identity stays stable across change detection. */
 const EMPTY_CONFIG: Record<string, unknown> = Object.freeze({});
 const EMPTY_INPUTS: Record<string, unknown> = Object.freeze({});
@@ -232,8 +242,13 @@ export class DashboardWidgetHostComponent {
 	 */
 	readonly configureRequested = output<void>();
 
-	/** The user picked a new width (in grid columns) for this placement. */
-	readonly resized = output<{ w: number }>();
+	/**
+	 * The user picked a new footprint for this placement.
+	 *
+	 * Exactly one dimension is sent per emission — the menu offers width and
+	 * height as two separate ladders — and the canvas keeps whatever is absent.
+	 */
+	readonly resized = output<{ w?: number; h?: number }>();
 
 	/** Bumped whenever the registry changes, so a late-registered plugin appears. */
 	private readonly registryVersion = signal(0);
@@ -331,6 +346,21 @@ export class DashboardWidgetHostComponent {
 		return widths
 			.filter((width) => width >= min && width <= max && width <= DASHBOARD_GRID_COLUMNS)
 			.sort((a, b) => a - b);
+	});
+
+	/**
+	 * Row counts offered by the resize menu, clamped to the widget's min/max size.
+	 *
+	 * Both bounds are always included, so the menu can reach the shortest and
+	 * tallest size the widget declares even when neither is on the ladder. This
+	 * is what lets a user shrink a widget that arrived at a generous default.
+	 */
+	readonly heightOptions = computed<number[]>(() => {
+		const widget = this.widget();
+		const min = Math.max(widget?.minSize?.h ?? 1, 1);
+		const max = Math.max(widget?.maxSize?.h ?? MAX_WIDGET_ROWS, min);
+		const options = new Set<number>([min, max, ...FALLBACK_HEIGHTS.filter((rows) => rows > min && rows < max)]);
+		return [...options].sort((a, b) => a - b);
 	});
 
 	/**
@@ -438,9 +468,19 @@ export class DashboardWidgetHostComponent {
 	 *
 	 * @param width - New span in grid columns.
 	 */
-	onResize(width: number): void {
+	onResizeWidth(width: number): void {
 		this.closeMenu();
 		this.resized.emit({ w: width });
+	}
+
+	/**
+	 * Emits {@link resized} with the picked height and closes the menu.
+	 *
+	 * @param height - New span in grid rows.
+	 */
+	onResizeHeight(height: number): void {
+		this.closeMenu();
+		this.resized.emit({ h: height });
 	}
 
 	/** Retries a failed component resolution. */

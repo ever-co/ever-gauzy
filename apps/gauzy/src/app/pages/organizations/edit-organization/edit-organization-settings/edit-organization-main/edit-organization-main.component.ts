@@ -28,9 +28,26 @@ export class EditOrganizationMainComponent
 	implements OnInit, OnDestroy, AfterViewInit
 {
 	hoverState: boolean;
-	employeesCount: number;
+	avatarFailed = false;
 
 	@Input() organization: IOrganization;
+
+	/**
+	 * Headcount shown beside the logo.
+	 *
+	 * This used to be assigned from `route.parent.data`, but the parent route resolves
+	 * only `organization` and `organizationTaskSetting` — there has never been an
+	 * `employeesCount` key to destructure, so the panel rendered a bare "Employees"
+	 * with no number in front of it. The count lives on the organization itself, kept
+	 * up to date by the employee subscriber.
+	 */
+	get employeesCount(): number {
+		return this.organization?.totalEmployees ?? 0;
+	}
+
+	get hasBonusFacts(): boolean {
+		return !!this.organization?.bonusType || this.organization?.bonusPercentage != null;
+	}
 
 	/*
 	 * Organization Mutation Form
@@ -72,7 +89,6 @@ export class EditOrganizationMainComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
-				tap(({ employeesCount }) => (this.employeesCount = employeesCount)),
 				map(({ organization }) => organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._setFormValues()),
@@ -95,12 +111,16 @@ export class EditOrganizationMainComponent
 	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image && image.id) {
+				this.avatarFailed = false;
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
 			} else {
 				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
 			}
-			await this.updateOrganizationSettings();
+			// Persist, but stay put. This used to call `updateOrganizationSettings()`,
+			// which ends by navigating to the organizations list — so picking a logo
+			// saved the form and then threw you off the page you were editing.
+			await this.saveOrganization();
 			this.form.updateValueAndValidity();
 		} catch (error) {
 			console.log('Error while updating organization avatars');
@@ -114,13 +134,24 @@ export class EditOrganizationMainComponent
 	}
 
 	/**
-	 * Update organization main settings
+	 * Update organization main settings, then return to the organizations list.
 	 *
 	 * @returns
 	 */
 	async updateOrganizationSettings() {
+		if (await this.saveOrganization()) {
+			this.router.navigate([`/pages/organizations`]);
+		}
+	}
+
+	/**
+	 * Persist the form without leaving the page.
+	 *
+	 * @returns whether the organization was saved
+	 */
+	private async saveOrganization(): Promise<boolean> {
 		if (!this.organization || this.form.invalid) {
-			return;
+			return false;
 		}
 		try {
 			const organization = await this.organizationService.update(this.organization.id, {
@@ -139,10 +170,11 @@ export class EditOrganizationMainComponent
 					name: this.organization.name
 				});
 			}
-			this.router.navigate([`/pages/organizations`]);
+			return true;
 		} catch (error) {
 			console.log('Error while updating organization main details', error);
 			this.errorHandler.handleError(error);
+			return false;
 		}
 	}
 
@@ -155,9 +187,16 @@ export class EditOrganizationMainComponent
 		if (!this.organization) {
 			return;
 		}
+		// A new organization gets a fresh chance at loading its logo; without this the
+		// placeholder would stick for the rest of the session after one broken image.
+		this.avatarFailed = false;
 		this.form.setValue({
 			imageId: this.organization.imageId || null,
-			imageUrl: this.organization.imageUrl || null,
+			// Same expression the card header resolves the logo with. Reading only the
+			// `imageUrl` column showed the placeholder here while the header, a few
+			// pixels above, showed the uploaded asset. `imageUrl` is a disabled control,
+			// so this is display-only and never reaches the update payload.
+			imageUrl: this.organization.image?.fullUrl || this.organization.imageUrl || null,
 			tags: this.organization.tags || [],
 			currency: this.organization.currency || null,
 			name: this.organization.name || null,

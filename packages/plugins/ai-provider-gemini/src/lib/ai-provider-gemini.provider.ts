@@ -3,6 +3,7 @@ import {
 	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
@@ -121,8 +122,31 @@ export const geminiProviderDefinition: IAiChatProviderDefinition = {
 		const { createGoogleGenerativeAI } = await importEsm<typeof import('@ai-sdk/google')>('@ai-sdk/google');
 		const provider = createGoogleGenerativeAI({
 			apiKey: credentials.apiKey,
-			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {}),
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials)
 		});
 		return provider(modelId);
+	},
+
+	/**
+	 * Create a Gemini `EmbeddingModel` for the Documents knowledge pipeline
+	 * (`@gauzy/plugin-docs` chunk/query embeddings).
+	 *
+	 * Same lazy-ESM pattern as {@link createModel}; callers feature-detect this hook and
+	 * degrade to lexical-only retrieval when a provider does not implement it.
+	 *
+	 * @param modelId Embedding model id (e.g. 'gemini-embedding-001').
+	 * @param credentials Resolved credentials (tenant BYOK, environment, or platform).
+	 */
+	async createEmbeddingModel(modelId: string, credentials: IAiProviderCredentials) {
+		const { createGoogleGenerativeAI } = await importEsm<typeof import('@ai-sdk/google')>('@ai-sdk/google');
+		const provider = createGoogleGenerativeAI({
+			apiKey: credentials.apiKey,
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {}),
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials)
+		});
+		return provider.textEmbeddingModel(modelId);
 	}
 };

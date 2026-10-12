@@ -9,25 +9,28 @@
        title (ngx-header-title): the header band is already dense with
        selectors, and the trail was being squeezed to nothing on pages that
        show every selector. -->
-  <div class="header-container">
-    @if (createQuickActionsMenu?.length > 0) {
+  @if (createQuickActionsMenu?.length > 0) {
+    <div class="header-lead">
       <nb-action
         size="small"
         [class.left]="position === 'normal'"
         [class.right]="position === 'inverse'"
         class="show-large-up"
         >
-        <button nbButton class="button create" status="warning" size="small" (click)="openQuickActions()">
+        <button type="button" nbButton class="button create" status="primary" size="small" (click)="openQuickActions()">
           + {{ 'BUTTONS.CREATE' | translate }}
         </button>
       </nb-action>
-    }
+    </div>
+  }
+  <div class="header-container">
     <div class="actions" size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
       @if (showTeamsSelector && !showExtraActions && selectorsVisibility?.team) {
         <nb-action
           class="show-large-up"
           >
           <ga-team-selector
+            dropdownClass="header-entity-select"
             [employeeId]="(employee$ | async)?.id"
             [projectId]="(project$ | async)?.id"
             [shortened]="true"
@@ -41,6 +44,7 @@
           class="show-large-up"
           >
           <ga-project-selector
+            dropdownClass="header-entity-select"
             [employeeId]="(employee$ | async)?.id"
             [shortened]="true"
             class="header-selector project-selector"
@@ -52,12 +56,17 @@
         <nb-action
           class="show-large-up"
           >
-          <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector>
+          <ga-employee-selector
+            dropdownClass="header-entity-select"
+            class="header-selector employee-selector"
+          ></ga-employee-selector>
         </nb-action>
       }
 
       @if (showDateSelector && !showExtraActions && selectorsVisibility?.date) {
-        <nb-action>
+        <!-- .date-range-action: styled `position: static` so the picker's INLINE dropdown
+             escapes the .header-container scroll clip — see header.component.scss. -->
+        <nb-action class="date-range-action">
           @if (organization?.id) {
             <ngx-date-range-picker
               [firstDayOfWeek]="organization.startWeekOn"
@@ -71,7 +80,10 @@
         <nb-action
           class="show-large-up organization-selector-container"
           >
-          <ga-organization-selector class="header-selector organization-selector"></ga-organization-selector>
+          <ga-organization-selector
+            dropdownClass="header-entity-select"
+            class="header-selector organization-selector"
+          ></ga-organization-selector>
         </nb-action>
       }
 
@@ -114,6 +126,7 @@
           <h6>{{ 'HEADER.SELECT_TEAM' | translate }}</h6>
         </div>
         <ga-team-selector
+          dropdownClass="header-entity-select"
           [employeeId]="(employee$ | async)?.id"
           [projectId]="(project$ | async)?.id"
           [shortened]="true"
@@ -125,6 +138,7 @@
           <h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
         </div>
         <ga-project-selector
+          dropdownClass="header-entity-select"
           [employeeId]="(employee$ | async)?.id"
           [shortened]="true"
           class="header-selector project-selector"
@@ -136,6 +150,7 @@
         </div>
         @if (showEmployeesSelector) {
           <ga-employee-selector
+            dropdownClass="header-entity-select"
             class="header-selector employee-selector"
           ></ga-employee-selector>
         }
@@ -154,6 +169,7 @@
         </div>
         @if (showOrganizationsSelector) {
           <ga-organization-selector
+            dropdownClass="header-entity-select"
             class="header-selector organization-selector"
           ></ga-organization-selector>
         }

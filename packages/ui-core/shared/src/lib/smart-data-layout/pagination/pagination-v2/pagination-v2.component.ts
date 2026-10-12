@@ -12,6 +12,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     standalone: false
 })
 export class PaginationV2Component implements OnChanges, OnDestroy {
+	/** Disable when the parent handles reloading after a page-size change. */
+	@Input() public refreshOnPerPageChange = true;
+
 	private _source: LocalDataSource;
 	private _perPageSelect: any[];
 	private _currentPerPage: any;
@@ -129,7 +132,10 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 				this._source.getPaging().perPage = null;
 			} else {
 				this._source.getPaging().perPage = this._currentPerPage * 1;
-				this._source.refresh();
+				if (this.refreshOnPerPageChange) {
+					this._source.refresh();
+				}
+				this.perPageChange.emit(this._source.getPaging().perPage);
 			}
 			this._initPages();
 		}
@@ -201,6 +207,8 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	public get changePage(): EventEmitter<{ page: number }> {
 		return this._changePage;
 	}
+
+	@Output() public readonly perPageChange = new EventEmitter<number>();
 
 	ngOnDestroy(): void {}
 }

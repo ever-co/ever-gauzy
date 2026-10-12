@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.lib.json",
+	"compilerOptions": {
+		"declarationMap": false,
+		"baseUrl": "../../..",
+		"paths": {
+			"@gauzy/ui-core": ["./dist/packages/ui-core"],
+			"@gauzy/ui-core/*": ["./dist/packages/ui-core/*"],
+			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
+			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
+			"@gauzy/constants": ["./packages/constants/src/index.ts"]
+		}
+	},
+	"angularCompilerOptions": {
+		"compilationMode": "partial"
+	}
+}

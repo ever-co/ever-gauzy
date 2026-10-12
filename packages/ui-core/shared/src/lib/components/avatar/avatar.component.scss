@@ -55,18 +55,19 @@
     }
     .status-indicator {
       position: absolute;
-      width: 10px;
-      height: 10px;
-      border-radius: 8px;
-      border: 2px solid #ebebeb;
-      right: 0;
-      top: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 2px solid var(--gauzy-card-1);
+      right: -1px;
+      bottom: -1px;
+      top: auto;
 
       &.online {
-        background-color: #4caf50; /* Green for online */
+        background-color: var(--color-success-default);
       }
       &.offline {
-        background-color: #f44336; /* Red for offline */
+        background-color: var(--gauzy-text-color-2);
       }
     }
   }

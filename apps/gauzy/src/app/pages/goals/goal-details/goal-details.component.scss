@@ -1,78 +1,466 @@
-@forward '../keyresult-details/keyresult-details.component';
-@forward '../edit-keyresults/edit-keyresults.component';
+@use 'gauzy/_gauzy-dialogs' as *;
 
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+// The objective details dialog, on the scale of the app's other dialogs: the
+// objective's name, its actions and close on one header row with the owner and
+// time frame under it; a summary of description and progress; key results,
+// updates and alignments as rows on one grid; and the comment box as the footer.
+// Every custom property carries a fallback — `--gauzy-*` is undefined in
+// material-light / material-dark, where a `var()` without one is dropped.
+$control-font-size: 12px;
+$control-padding-x: 0.75rem;
+$inset: 1rem;
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+$radius: var(--gauzy-radius-sm, 0.375rem);
+$recessed: var(--gauzy-card-2, rgba(126, 126, 143, 0.06));
+// One grid for every row in the tabs, so bars and percentages line up down the
+// list: name, bar, percentage, and the row's action.
+$row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
+
+// 56rem: at 42rem the key-result names wrapped beside a short bar.
+.details-dialog {
+  width: min(calc(100vw - 2rem), 56rem);
 }
 
-.min-width-60vw {
-  min-width: 645px !important;
-}
 :host {
-  ::ng-deep {
-    nb-progress-bar {
-      width: 100%;
-      .progress-container {
-        height: 10px !important;
-      }
-      .progress-value {
-        span {
-          display: none;
-        }
+  nb-card {
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+  }
+
+  nb-card-header.header {
+    padding: 0.875rem $inset 0.75rem;
+    border-bottom: $divider;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  // The dialog's subject, so a step above the 12px chrome titles of the form
+  // dialogs; it wraps rather than pushing the actions out.
+  .title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1, inherit);
+    overflow-wrap: anywhere;
+  }
+
+  .header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  // Delete as a quiet icon button beside the close, where it used to float
+  // in a tinted box in the middle of the meta row.
+  .button-container {
+    display: flex;
+    order: -1;
+  }
+
+  .action {
+    margin: 0;
+    padding: 0.25rem;
+  }
+
+  // A real button, so the close is reachable from the keyboard and named for a
+  // screen reader; the browser's button chrome is stripped.
+  .cancel {
+    width: auto;
+    margin: 0;
+    padding: 0.25rem;
+    border: 0;
+    background: none;
+    line-height: 1;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  // Owner and time frame, one line under the name.
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 0.625rem;
+    font-size: $control-font-size;
+    line-height: 1rem;
+    color: $muted;
+
+    b {
+      font-weight: 600;
+      color: var(--gauzy-text-color-1, inherit);
+    }
+  }
+
+  .session {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  // The owner as a small chip with a 20px avatar. The image selectors name both
+  // wrappers so they out-rank the avatar's own `.image-container img` sizes
+  // (48px at its default `md`).
+  ngx-avatar ::ng-deep {
+    .inner-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.1875rem 0.5rem 0.1875rem 0.1875rem;
+      border-radius: 999px;
+      background-color: nb-theme(color-primary-transparent-100);
+    }
+
+    .image-outer-wrapper,
+    .image-outer-wrapper .image-container,
+    .image-outer-wrapper .image-container img {
+      width: 1.25rem;
+      height: 1.25rem;
+      min-width: 0;
+      margin: 0;
+    }
+
+    .image-outer-wrapper .image-container img {
+      display: block;
+      object-fit: cover;
+    }
+
+    .names-wrapper {
+      margin: 0;
+    }
+
+    .link-text {
+      font-size: $control-font-size;
+      font-weight: 500;
+      line-height: 1rem;
+      color: nb-theme(text-primary-color);
+    }
+  }
+
+  nb-card-body {
+    padding: 0;
+  }
+
+  .summary {
+    padding: $inset;
+  }
+
+  .description {
+    margin: 0 0 0.875rem;
+    font-size: $control-font-size;
+    line-height: 1.125rem;
+    color: var(--gauzy-text-color-1, inherit);
+    white-space: pre-line;
+
+    &.empty {
+      font-style: italic;
+      color: $muted;
+    }
+  }
+
+  // Overall progress on the same bar-then-number order as the rows below.
+  .progress-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .progress-label {
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: $muted;
+  }
+
+  .progress-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1rem;
+    text-align: end;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Nebular's tiny bar is 0.25rem; 6px reads as a bar without shouting, and its
+  // own percentage label is off because the number sits beside it. The track
+  // gets a tint of its own — the theme's all but vanishes on the recessed tab
+  // panel, so a 0% key result showed no bar at all. Through the bars' own
+  // classes, to out-rank the theme's per-status track rule.
+  .goal-progress,
+  .row-bar {
+    width: 100%;
+
+    ::ng-deep .progress-container {
+      height: 6px !important;
+      border-radius: 999px;
+      background-color: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+    }
+
+    ::ng-deep .progress-value {
+      border-radius: 999px;
+
+      span {
+        display: none;
       }
     }
   }
-  // `rgba(126, 126, 143, 0.1)` is the literal `--gauzy-sidebar-background-3`
-  // happens to hold in the LIGHT themes only; on `gauzy-dark` that token is a
-  // white-at-low-alpha lift precisely because a mid-grey overlay reads wrong on
-  // a near-black panel. Name the token so the footer follows the theme.
-  .custom-footer {
-    // Was a literal `rgba(126, 126, 143, 0.1)`. This is the same recessed
-    // surface the identical update cards in `keyresult-details` paint with
-    // `--gauzy-card-2`, so it follows the same token. The FALLBACKS differ on
-    // purpose — 0.1 here, 0.08 there — because each keeps the literal its own
-    // file already used, and the fallback is only reached by the two material
-    // themes. The token is what makes them agree everywhere else.
-    // The fallback is required:
-    // `--gauzy-card-2` is not defined in material-light / material-dark (see
-    // `themes.scss` — those two register against Nebular's own parents and
-    // never pick up the `gauzy-card-*` keys), and without one the whole
-    // declaration is dropped there.
-    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.1));
-    padding-bottom: 5px;
-  }
-  .custom-header {
-    padding: 5px 10px;
-  }
-  nb-action {
-    padding: 0;
-  }
-  .border {
-    border-radius: nb-theme(button-rectangle-border-radius);
-    border: 2px solid nb-theme(border-basic-color-3) !important;
-    padding: 6px;
-  }
-  .card-key-result {
-    /* Frame 499 */
 
-    /* Auto layout */
+  // Tabs at 12px on the summary's lower edge, with a fixed-height panel so
+  // switching tabs does not resize the dialog. The active tab keeps the app's
+  // tinted tab (`_overrides.scss`), which joins the tinted panel under it.
+  nb-tabset {
+    ::ng-deep .tabset {
+      padding: 0 $inset;
+      border-bottom: $divider;
+    }
 
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 5px 6px 5px 14px;
-    height: 55px;
-    background: nb-theme(background-basic-color-1);
-    border-radius: nb-theme(button-rectangle-border-radius);
-    margin-bottom: 4px;
+    ::ng-deep .tab-link,
+    ::ng-deep .tab-text {
+      font-size: $control-font-size;
+      font-weight: 600;
+      line-height: 1rem;
+      text-transform: none;
+    }
+
+    ::ng-deep .tab-link {
+      padding: 0.625rem 0.875rem;
+    }
   }
+
   nb-tab {
-    height: 20rem;
+    height: 16rem;
+    overflow-y: auto;
+    padding: 0.5rem $inset;
+    background-color: $recessed;
   }
-}
 
-.btn-comment {
-  align-self: flex-end;
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: $control-font-size;
+    line-height: 1rem;
+    color: $muted;
+  }
+
+  .rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row-item {
+    display: grid;
+    grid-template-columns: $row-columns;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0;
+    border-bottom: $divider;
+    font-size: $control-font-size;
+    line-height: 1rem;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    // On a phone the fixed bar left the name a column a few words wide: the
+    // name takes its own line, with bar, percentage and action under it.
+    @media (max-width: 575.98px) {
+      grid-template-columns: minmax(0, 1fr) 2.75rem 1.75rem;
+      row-gap: 0.375rem;
+
+      .row-name {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+
+  .row-name {
+    min-width: 0;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .row-percent {
+    font-weight: 600;
+    text-align: end;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // The row's action, as a bare icon that fills in on hover; `icon-slot` holds
+  // the column open on alignment rows that have no action.
+  .icon-button,
+  .icon-slot {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: $radius;
+    background: transparent;
+    color: $muted;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    nb-icon {
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
+    }
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--gauzy-text-color-1, inherit);
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 1px;
+    }
+  }
+
+  // Each level of the alignment chain indented under the one it hangs from,
+  // with a hairline elbow to show the link.
+  .alignment {
+    .level-1,
+    .level-2 {
+      position: relative;
+    }
+
+    .level-1 {
+      padding-inline-start: 1.25rem;
+    }
+
+    .level-2 {
+      padding-inline-start: 2.5rem;
+    }
+
+    .level-1::before,
+    .level-2::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 0.625rem;
+      height: 50%;
+      border-inline-start: $divider;
+      border-bottom: $divider;
+    }
+
+    .level-1::before {
+      inset-inline-start: 0.375rem;
+    }
+
+    .level-2::before {
+      inset-inline-start: 1.625rem;
+    }
+  }
+
+  .update {
+    padding: 0.625rem 0;
+    border-bottom: $divider;
+    font-size: $control-font-size;
+    line-height: 1rem;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    b {
+      font-weight: 600;
+      color: var(--gauzy-text-color-1, inherit);
+    }
+  }
+
+  .update-head,
+  .update-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+
+  .update-body {
+    margin-top: 0.5rem;
+    color: $muted;
+  }
+
+  .update-date {
+    color: $muted;
+  }
+
+  .update-status {
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    font-size: 11px;
+    text-transform: capitalize;
+  }
+
+  // The comment box: label, field and its button, with no card of its own
+  // nested inside the footer.
+  nb-card-footer.comments {
+    padding: 0.75rem $inset $inset;
+    border-top: $divider;
+  }
+
+  ::ng-deep label.label {
+    display: block;
+    margin: 0 0 0.375rem;
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: $muted;
+  }
+
+  .comment-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+
+    button {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+
+    @media (max-width: 575.98px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  textarea[nbInput] {
+    display: block;
+    height: 4rem;
+    min-height: 4rem !important;
+    padding: 0.5rem $control-padding-x;
+    font-size: $control-font-size;
+    line-height: 1rem;
+    resize: vertical;
+  }
 }

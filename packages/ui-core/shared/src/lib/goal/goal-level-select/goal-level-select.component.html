@@ -1,10 +1,18 @@
 @if (alignedGoal ? !!parentFormGroup.value.assignAsObjective : true) {
+<!-- Each field reports itself through `helperTextChange` on hover and on keyboard focus, so a dialog can show
+     its help in a column of its own. Hover and focus go to separate handlers because the component resolves
+     them together: with both bound to one setter, leaving a field with the pointer cleared the help the
+     keyboard was still on, and vice versa. With `enableHelperText` this component draws that help itself,
+     beside the field. `goal-level-field` marks the three fields for dialogs that lay them out on their own
+     grid. -->
 <div [formGroup]="parentFormGroup">
-	<div [class.row]="enableHelperText">
+	<div class="goal-level-field" [class.row]="enableHelperText">
 		<div
 			[class.col-md-7]="enableHelperText"
-			(mouseenter)="enableHelperText ? (helperText = 'objective-level') : null"
-			(mouseleave)="enableHelperText ? (helperText = '') : null"
+			(mouseenter)="hoverHelper('objective-level')"
+			(mouseleave)="hoverHelper('')"
+			(focusin)="focusHelper('objective-level')"
+			(focusout)="focusHelper('')"
 		>
 			<label for="objective-level" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
@@ -23,6 +31,7 @@
 				}
 			</nb-select>
 		</div>
+		@if (enableHelperText) {
 		<div class="col-md-5 position-relative helper-text">
 			@if (helperText == 'objective-level') {
 			<div class="mt-3 position-absolute">
@@ -32,13 +41,18 @@
 			</div>
 			}
 		</div>
+		}
 	</div>
-	<div [class.row]="enableHelperText">
-		@if (alignedGoal ? !!parentFormGroup.value.level : true) {
+	<!-- The Owner label and whichever control the level calls for, in one field: the team and organization
+	     selects used to sit in rows of their own under a label-only row. -->
+	@if (alignedGoal ? !!parentFormGroup.value.level : true) {
+	<div class="goal-level-field" [class.row]="enableHelperText">
 		<div
 			[class.col-md-7]="enableHelperText"
-			(mouseenter)="enableHelperText ? (helperText = 'objective-owner') : null"
-			(mouseleave)="enableHelperText ? (helperText = '') : null"
+			(mouseenter)="hoverHelper('objective-owner')"
+			(mouseleave)="hoverHelper('')"
+			(focusin)="focusHelper('objective-owner')"
+			(focusout)="focusHelper('')"
 		>
 			<label for="objective-owner" class="label mt-3">
 				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
@@ -54,27 +68,7 @@
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
-			}
-		</div>
-		}
-		<div class="col-md-5 position-relative helper-text">
-			@if (helperText == 'objective-owner') {
-			<div class="mt-3 position-absolute">
-				<p>
-					{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_OWNER' | translate }}
-				</p>
-			</div>
-			}
-		</div>
-	</div>
-	<div [class.row]="enableHelperText">
-		@if (parentFormGroup.value.level === goalLevelEnum.TEAM) {
-		<div
-			(selectedChange)="selectEmployee($event, 'owner')"
-			[class.col-md-7]="enableHelperText"
-			(mouseenter)="enableHelperText ? (helperText = 'objective-owner') : null"
-			(mouseleave)="enableHelperText ? (helperText = '') : null"
-		>
+			} @else if (parentFormGroup.value.level === goalLevelEnum.TEAM) {
 			<nb-select
 				formControlName="ownerId"
 				fullWidth
@@ -86,17 +80,7 @@
 				</nb-option>
 				}
 			</nb-select>
-		</div>
-		}
-		<div class="col-md-5"></div>
-	</div>
-	<div [class.row]="enableHelperText">
-		@if (parentFormGroup?.value.level === goalLevelEnum.ORGANIZATION) {
-		<div
-			[class.col-md-7]="enableHelperText"
-			(mouseenter)="enableHelperText ? (helperText = 'objective-owner') : null"
-			(mouseleave)="enableHelperText ? (helperText = '') : null"
-		>
+			} @else if (parentFormGroup.value.level === goalLevelEnum.ORGANIZATION) {
 			<nb-select
 				fullWidth
 				formControlName="ownerId"
@@ -108,16 +92,29 @@
 					{{ orgName }}
 				</nb-option>
 			</nb-select>
+			}
+		</div>
+		@if (enableHelperText) {
+		<div class="col-md-5 position-relative helper-text">
+			@if (helperText == 'objective-owner') {
+			<div class="mt-3 position-absolute">
+				<p>
+					{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_OWNER' | translate }}
+				</p>
+			</div>
+			}
 		</div>
 		}
-		<div class="col-md-5"></div>
 	</div>
+	}
 	@if (!alignedGoal) {
-	<div [class.row]="enableHelperText">
+	<div class="goal-level-field" [class.row]="enableHelperText">
 		<div
 			[class.col-md-7]="enableHelperText"
-			(mouseenter)="enableHelperText ? (helperText = 'objective-lead') : null"
-			(mouseleave)="enableHelperText ? (helperText = '') : null"
+			(mouseenter)="hoverHelper('objective-lead')"
+			(mouseleave)="hoverHelper('')"
+			(focusin)="focusHelper('objective-lead')"
+			(focusout)="focusHelper('')"
 		>
 			<label for="objective-lead" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}
@@ -133,6 +130,7 @@
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 		</div>
+		@if (enableHelperText) {
 		<div class="col-md-5 position-relative helper-text">
 			@if (helperText == 'objective-lead') {
 			<div class="mt-3 position-absolute">
@@ -142,6 +140,7 @@
 			</div>
 			}
 		</div>
+		}
 	</div>
 	}
 </div>

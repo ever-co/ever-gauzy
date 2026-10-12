@@ -1,10 +1,83 @@
 <nb-card>
 	<nb-card-header>
 		<h4>
-			<ngx-header-title [allowEmployee]="false">
+			<!-- Product-level page: the "for <Organization>" suffix is off — this content has
+			     nothing to do with the selected organization. -->
+			<ngx-header-title [allowEmployee]="false" [allowOrganization]="false">
 				{{ 'ABOUT_PAGE.ABOUT' | translate }}
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
-	<nb-card-body></nb-card-body>
+	<nb-card-body class="about-body">
+		<section class="intro">
+			<h5>Ever® Gauzy™</h5>
+			<p>{{ 'ABOUT_PAGE.DESCRIPTION' | translate }}</p>
+			<p class="license">
+				{{ 'ABOUT_PAGE.LICENSE' | translate }}
+				<a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL-3.0</a>
+			</p>
+		</section>
+
+		<section class="versions">
+			<h6>{{ 'ABOUT_PAGE.VERSION_DETAILS' | translate }}</h6>
+			@if (isVersionMismatch) {
+				<p class="mismatch">{{ 'ABOUT_PAGE.VERSION_MISMATCH' | translate }}</p>
+			}
+			<table>
+				<tr>
+					<th>{{ 'ABOUT_PAGE.WEB_APP' | translate }}</th>
+					<td>
+						@if (web.version) {
+							<a [href]="releaseUrl(web.version)" target="_blank" rel="noopener">{{ web.version }}</a>
+						} @else {
+							<span class="muted">{{ 'ABOUT_PAGE.UNTAGGED' | translate }}</span>
+						}
+					</td>
+					<td>
+						@if (web.commit) {
+							<a [href]="commitUrl(web.commit)" target="_blank" rel="noopener" [title]="web.commit">
+								{{ shortCommit(web.commit) }}
+							</a>
+						}
+					</td>
+				</tr>
+				<tr>
+					<th>{{ 'ABOUT_PAGE.API' | translate }}</th>
+					@if (api) {
+						<td>
+							@if (api.version) {
+								<a [href]="releaseUrl(api.version)" target="_blank" rel="noopener">{{ api.version }}</a>
+							} @else {
+								<span class="muted">{{ 'ABOUT_PAGE.UNTAGGED' | translate }}</span>
+							}
+						</td>
+						<td>
+							@if (api.commit) {
+								<a [href]="commitUrl(api.commit)" target="_blank" rel="noopener" [title]="api.commit">
+									{{ shortCommit(api.commit) }}
+								</a>
+							}
+						</td>
+					} @else if (apiFailed) {
+						<td colspan="2" class="muted">{{ 'ABOUT_PAGE.API_UNAVAILABLE' | translate }}</td>
+					} @else {
+						<!-- Request still in flight — placeholder, not "unavailable". -->
+						<td colspan="2" class="muted">…</td>
+					}
+				</tr>
+			</table>
+		</section>
+
+		<section class="links">
+			<h6>{{ 'ABOUT_PAGE.LEARN_MORE' | translate }}</h6>
+			<ul>
+				<li><a href="https://gauzy.co" target="_blank" rel="noopener">gauzy.co</a></li>
+				<li><a href="https://docs.gauzy.co" target="_blank" rel="noopener">docs.gauzy.co</a></li>
+				<li><a [href]="repoBaseUrl" target="_blank" rel="noopener">GitHub</a></li>
+				<li><a href="https://ever.co" target="_blank" rel="noopener">Ever Co. LTD</a></li>
+			</ul>
+		</section>
+
+		<p class="copyright">{{ 'ABOUT_PAGE.COPYRIGHT' | translate: { year: currentYear } }}</p>
+	</nb-card-body>
 </nb-card>

@@ -1,6 +1,7 @@
 import { IEmployeeUpdateInput } from '@gauzy/contracts';
 import { IntersectionType } from '@nestjs/mapped-types';
-import { PickType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
 import { UpdateProfileDTO } from './update-profile.dto';
 import { Employee } from '../employee.entity';
 
@@ -41,4 +42,10 @@ export class UpdateEmployeeDTO
 			'trackAllDisplays'
 		] as const)
 	)
-	implements IEmployeeUpdateInput {}
+	implements IEmployeeUpdateInput
+{
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	acknowledgeAgentExitLogoutRestriction?: boolean;
+}

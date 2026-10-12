@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TenantSettingController } from './tenant-setting.controller';
+import { TenantUiPreferencesController } from './tenant-ui-preferences.controller';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import { CommandHandlers } from './commands/handlers';
@@ -17,7 +18,7 @@ import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-s
 		RolePermissionModule,
 		CqrsModule
 	],
-	controllers: [TenantSettingController],
+	controllers: [TenantSettingController, TenantUiPreferencesController],
 	providers: [TenantSettingService, TypeOrmTenantSettingRepository, MikroOrmTenantSettingRepository, ...CommandHandlers],
 	exports: [TenantSettingService, TypeOrmTenantSettingRepository, MikroOrmTenantSettingRepository]
 })

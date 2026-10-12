@@ -30,6 +30,8 @@ export class RecordViewDrawerComponent {
 	@Input() heading: string;
 	/** Free text under the heading — typically the record's own name. */
 	@Input() subtitle: string;
+	/** Roomier panel for records with long-form content (e.g. a task description). */
+	@Input() wide = false;
 
 	@Output() closed = new EventEmitter<void>();
 

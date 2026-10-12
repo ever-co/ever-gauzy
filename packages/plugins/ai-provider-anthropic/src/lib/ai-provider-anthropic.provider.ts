@@ -3,6 +3,7 @@ import {
 	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
@@ -94,7 +95,9 @@ export const anthropicProviderDefinition: IAiChatProviderDefinition = {
 		const { createAnthropic } = await importEsm<typeof import('@ai-sdk/anthropic')>('@ai-sdk/anthropic');
 		const provider = createAnthropic({
 			apiKey: credentials.apiKey,
-			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {}),
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials)
 		});
 		return provider(modelId);
 	}

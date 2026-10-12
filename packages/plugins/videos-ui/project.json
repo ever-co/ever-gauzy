@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/videos-ui/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": ["contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {

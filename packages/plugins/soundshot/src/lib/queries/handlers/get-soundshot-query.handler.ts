@@ -1,12 +1,13 @@
 import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { assertCallerOwnsUpload } from '@gauzy/core';
 import { GetSoundshotQuery } from '../get-soundshot.query';
 import { ISoundshot } from '../../models/soundshot.model';
 import { SoundshotService } from '../../services/soundshot.service';
 
 @QueryHandler(GetSoundshotQuery)
 export class GetSoundshotQueryHandler implements IQueryHandler<GetSoundshotQuery> {
-	constructor(private readonly soundshotService: SoundshotService) { }
+	constructor(private readonly soundshotService: SoundshotService) {}
 
 	/**
 	 * Handles the `GetSoundshotQuery` to retrieve a soundshot entity by its ID.
@@ -29,7 +30,8 @@ export class GetSoundshotQueryHandler implements IQueryHandler<GetSoundshotQuery
 			throw new NotFoundException(`Soundshot with ID ${id} not found.`);
 		}
 
-		// Step 3: Return the soundshot entity
-		return soundshot;
+		// Step 3: These records carry `uploadedById`, not `employeeId`, so the per-employee restriction in
+		// TenantAwareCrudService never applies and this read was scoped to the tenant alone.
+		return assertCallerOwnsUpload(soundshot, `Soundshot with ID ${id} not found.`);
 	}
 }

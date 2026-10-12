@@ -12,6 +12,7 @@ import {
 	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('email_reset', { mikroOrmRepository: () => MikroOrmEmailResetRepository })
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
@@ -36,6 +37,7 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	/**
 	 * The code used to verify the email reset.
 	 */
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@ColumnIndex()
 	@MultiORMColumn()
@@ -44,6 +46,7 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	/**
 	 * The token used to verify the email reset.
 	 */
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })

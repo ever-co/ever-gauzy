@@ -5,6 +5,8 @@ export * from './candidate-confirmation/delete-feedback/delete-feedback.module';
 export * from './candidate-confirmation/delete-interview/delete-interview.component';
 export * from './candidate-confirmation/delete-interview/delete-interview.module';
 export * from './candidate-cv/candidate-cv.component';
+export * from './candidate-criterion-card/candidate-criterion-card.component';
+export * from './candidate-criterion-card/candidate-criterion-card.module';
 export * from './candidate-interview-feedback/candidate-interview-feedback.component';
 export * from './candidate-interview-feedback/candidate-interview-feedback.module';
 export * from './candidate-interview-info/candidate-interview-info.component';

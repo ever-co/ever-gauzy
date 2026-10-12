@@ -1,5 +1,14 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { SelectQueryBuilder, UpdateResult } from 'typeorm';
+import {
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { isUUID } from 'class-validator';
+import * as moment from 'moment';
 import {
 	ID,
 	IDailyPlan,
@@ -10,17 +19,41 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations, resolveRequestedPage } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
+
+const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
+
+/**
+ * Whether plan dates are stored in UTC. TypeORM writes a SQLite datetime as a UTC string, while on
+ * PostgreSQL and MySQL it hands the Date to the driver, which writes it in the API process's local time.
+ */
+const storesDatesInUtc = (): boolean => isSqlite() || isBetterSqlite3();
+
+/**
+ * The day a plan dated `date` is stored under, as `YYYY-MM-DD`: the date part of the stored value, which is
+ * what the unique index keys on. It is the UTC day on SQLite and on a process running in UTC, the usual
+ * deployment, and the process's local day otherwise.
+ */
+const storedPlanDay = (date: Date | string): string =>
+	(storesDatesInUtc() ? moment.utc(date) : moment(date)).format('YYYY-MM-DD');
+
+/**
+ * The instant a stored day starts, for a bound passed to the database as a Date, which the driver writes the
+ * same way as the plan dates.
+ */
+const storedDayStart = (day: string): Date =>
+	(storesDatesInUtc() ? moment.utc(day, 'YYYY-MM-DD') : moment(day, 'YYYY-MM-DD')).toDate();
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
@@ -42,11 +75,19 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns The created or updated DailyPlan
 	 */
 	async createDailyPlan(partialEntity: IDailyPlanCreateInput): Promise<IDailyPlan> {
+		const { employeeId, organizationId, taskId } = partialEntity;
+		const organizationTeamId = partialEntity.organizationTeamId ?? partialEntity.organizationTeam?.id;
+
+		// The owner comes from the request body, so the rule for updating or deleting a plan applies here too.
+		// It runs before the employee lookup, so a refusal does not reveal whether that employee exists.
+		if (!(await this._managedEmployeeService.canManageEmployee(employeeId, organizationTeamId, organizationId))) {
+			throw new ForbiddenException('You can only create daily plans for yourself or for employees you manage.');
+		}
+
 		try {
-			const { employeeId, organizationId, organizationTeamId, taskId } = partialEntity;
 			const tenantId = RequestContext.currentTenantId() ?? partialEntity.tenantId;
 
-			const dailyPlanDate = new Date(partialEntity.date).toISOString().split('T')[0];
+			const dailyPlanDate = storedPlanDay(partialEntity.date);
 
 			// Validate employee existence
 			const employee = await this._employeeService.findOneByIdString(employeeId);
@@ -55,65 +96,148 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Check for existing DailyPlan
-			let dailyPlan: DailyPlan;
+			let dailyPlan = await this.findEmployeeDayPlan(
+				tenantId,
+				organizationId,
+				employeeId,
+				organizationTeamId,
+				dailyPlanDate
+			);
 
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const item = await this.mikroOrmDailyPlanRepository.findOne(
-						{
-							tenantId,
-							organizationId,
-							organizationTeamId,
-							employeeId,
-							date: new Date(dailyPlanDate)
-						} as any,
-						{
-							populate: ['tasks'] as any[]
-						}
-					);
-					dailyPlan = item ? (this.serialize(item) as DailyPlan) : null;
-					break;
-				}
-				case MultiORMEnum.TypeORM:
-				default: {
-					const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
-					query.setFindOptions({ relations: { tasks: true } });
-					query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
-					query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
-					query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
-					query.andWhere(p(`DATE("dailyPlan"."date") = :dailyPlanDate`), {
-						dailyPlanDate: `${dailyPlanDate}`
-					});
-					query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
-					dailyPlan = await query.getOne();
-					break;
-				}
+			// If a taskId is provided, the task goes to the DailyPlan
+			const task = taskId ? await this._taskService.findOneByIdString(taskId) : null;
+			if (taskId && !task) {
+				throw new BadRequestException('Task not found');
 			}
 
-			// Create or update DailyPlan
+			// Create the DailyPlan with the task
 			if (!dailyPlan) {
-				dailyPlan = new DailyPlan({
+				const newPlan = new DailyPlan({
 					...partialEntity,
 					employeeId: employee.id,
 					employee: { id: employee.id },
-					tasks: []
+					tasks: task ? [task] : []
 				});
+				try {
+					await this.save(newPlan);
+					return newPlan;
+				} catch (error) {
+					// Only one plan per employee, team and day can exist. When a concurrent request created
+					// it after the lookup above, this insert is refused and the task goes to that plan.
+					dailyPlan = await this.findEmployeeDayPlan(
+						tenantId,
+						organizationId,
+						employeeId,
+						organizationTeamId,
+						dailyPlanDate
+					);
+					if (!dailyPlan) {
+						throw error;
+					}
+				}
 			}
 
-			// If a taskId is provided, add the task to the DailyPlan
-			if (taskId) {
-				const task = await this._taskService.findOneByIdString(taskId);
-				if (!task) {
-					throw new BadRequestException('Task not found');
-				}
+			// Add the task to the existing DailyPlan
+			if (task && !hasTask(dailyPlan, task.id)) {
+				await this.addTaskLink(dailyPlan.id, task.id);
 				dailyPlan.tasks.push(task);
 			}
 
-			await this.save(dailyPlan); // Save changes
-
-			return dailyPlan; // Return the created/updated DailyPlan
+			return dailyPlan;
 		} catch (error) {
 			throw new BadRequestException(error); // Clearer error messaging
+		}
+	}
+
+	/**
+	 * Finds the employee's plan for a stored day in a team, with its tasks. Tenant, organization, employee,
+	 * team and day are the key of the unique index `IDX_daily_plan_employee_team_day_unique`, so there is
+	 * at most one that is not soft-deleted, and only those are read. Without a team, it is the employee's
+	 * plan that has no team either.
+	 *
+	 * @param tenantId - The tenant of the plan
+	 * @param organizationId - The organization of the plan
+	 * @param employeeId - The employee who owns the plan
+	 * @param organizationTeamId - The team of the plan, if any
+	 * @param dailyPlanDate - The stored day, as `YYYY-MM-DD` (see storedPlanDay)
+	 * @returns The plan, or null when the employee has none that day in that team
+	 */
+	private async findEmployeeDayPlan(
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		organizationTeamId: ID | undefined,
+		dailyPlanDate: string
+	): Promise<DailyPlan | null> {
+		const nextDayDate = moment.utc(dailyPlanDate).add(1, 'day').format('YYYY-MM-DD');
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const item = await this.mikroOrmDailyPlanRepository.findOne(
+					{
+						tenantId,
+						organizationId,
+						organizationTeamId: organizationTeamId ?? null,
+						employeeId,
+						date: { $gte: storedDayStart(dailyPlanDate), $lt: storedDayStart(nextDayDate) }
+					} as any,
+					{
+						populate: ['tasks'] as any[]
+					}
+				);
+				return item ? (this.serialize(item) as DailyPlan) : null;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
+				query.setFindOptions({ relations: { tasks: true } });
+				query.where(p('"dailyPlan"."tenantId" = :tenantId'), { tenantId });
+				query.andWhere(p('"dailyPlan"."organizationId" = :organizationId'), { organizationId });
+				if (organizationTeamId) {
+					query.andWhere(p('"dailyPlan"."organizationTeamId" = :organizationTeamId'), { organizationTeamId });
+				} else {
+					query.andWhere(p('"dailyPlan"."organizationTeamId" IS NULL'));
+				}
+				// Any time on that day. Unlike DATE("date"), a range on the bare column lets the
+				// (employeeId, organizationTeamId, date) index narrow the lookup to that day.
+				query.andWhere(p(`"dailyPlan"."date" >= :dailyPlanDate AND "dailyPlan"."date" < :nextDayDate`), {
+					dailyPlanDate,
+					nextDayDate
+				});
+				query.andWhere(p('"dailyPlan"."employeeId" = :employeeId'), { employeeId });
+				return await query.getOne();
+			}
+		}
+	}
+
+	/**
+	 * Links a task to a plan with one insert into `daily_plan_task`, which does nothing when the link
+	 * already exists. Saving the plan would write its whole task list instead, and drop any link another
+	 * request added since the plan was read: TypeORM removes the links missing from the list, and
+	 * MikroORM rewrites them all.
+	 *
+	 * @param dailyPlanId - The plan to link the task to
+	 * @param taskId - The task to link
+	 */
+	private async addTaskLink(dailyPlanId: ID, taskId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmDailyPlanRepository
+					.getKnex()('daily_plan_task')
+					.insert({ dailyPlanId, taskId })
+					.onConflict(['dailyPlanId', 'taskId'])
+					.ignore();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmDailyPlanRepository
+					.createQueryBuilder()
+					.insert()
+					.into('daily_plan_task')
+					.values({ dailyPlanId, taskId })
+					.orIgnore()
+					.execute();
+				break;
 		}
 	}
 
@@ -125,6 +249,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getAllPlans(options: BaseQueryDTO<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+		const organizationTeamId = await this.resolveReadableTeam(options, employeeId);
+
 		try {
 			const { where } = options;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
@@ -136,9 +265,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						organizationId: where?.organizationId
 					};
 					if (employeeId) mikroWhere.employeeId = employeeId;
+					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						...(options?.relations ? { populate: options.relations as any[] } : {})
+						...(options?.relations ? { populate: options.relations as any[] } : {}),
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -171,6 +302,14 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (employeeId) {
 						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 					}
+
+					if (organizationTeamId) {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
+					}
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
@@ -205,6 +344,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getTeamDailyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+		// The query below already filters on the team from `where`, which is the one checked here.
+		await this.resolveReadableTeam(options);
+
 		try {
 			// Apply optional find options if provided
 			const { where, relations = [] } = options || {};
@@ -220,7 +365,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						populate: ['employee', 'tasks', ...(relations as any[])]
+						populate: ['employee', 'tasks', ...(relations as any[])],
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -248,6 +394,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						});
 					}
 
+					this.applyRequestedPage(query, options);
+
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
 
@@ -262,13 +410,101 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Refuses a plan read unless the caller belongs to the team it names, and returns the team the read
+	 * must then be limited to.
+	 *
+	 * A caller with CHANGE_SELECTED_EMPLOYEE skips the membership check and reads any team, or the whole
+	 * organization when no team is named, and so does an organization-wide viewer without an employee
+	 * record, the same exception `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. An employee
+	 * reading their own plans skips it too. A team these callers name still limits the read, so both ORM
+	 * branches return the same plans. Anyone else must name a team they are an active member or manager of.
+	 *
+	 * @param options - The request's query options, whose `where` names the team as the client sent it
+	 * @param ownerId - The employee whose plans are read, when the route is limited to one
+	 * @returns The team to filter on, or undefined when no usable team was named and the caller needs none
+	 * @throws ForbiddenException when the caller may not read those plans
+	 */
+	private async resolveReadableTeam(options: BaseQueryDTO | undefined, ownerId?: ID): Promise<ID | undefined> {
+		const organizationTeamId: unknown = options?.where?.organizationTeamId;
+
+		// A repeated or nested query value is not a string, and a malformed id would make the uuid
+		// comparison fail: neither names a team, so neither reaches the membership query.
+		const requestedTeamId =
+			typeof organizationTeamId === 'string' && isUUID(organizationTeamId) ? organizationTeamId : undefined;
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedTeamId;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+
+		if (!employeeId && RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return requestedTeamId;
+		}
+
+		if (employeeId && ownerId === employeeId) {
+			return requestedTeamId;
+		}
+
+		const isMember =
+			!!requestedTeamId && (await this._managedEmployeeService.isMemberOfTeam(employeeId, requestedTeamId));
+
+		if (!isMember) {
+			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
+		}
+
+		return requestedTeamId;
+	}
+
+	/**
+	 * Limits a plan list to the page the client asked for, only when it sent `take`: the clients that
+	 * sort plans into today, upcoming and past days read the whole list.
+	 *
+	 * Pages follow the plan date, and the id breaks ties so that no plan repeats or goes missing from one
+	 * page to the next.
+	 *
+	 * @param query The plan list query, filters already applied
+	 * @param options The client query
+	 */
+	private applyRequestedPage(query: SelectQueryBuilder<DailyPlan>, options: BaseQueryDTO): void {
+		const page = resolveRequestedPage(options);
+		if (!page) {
+			return;
+		}
+		query.orderBy(`${query.alias}.date`, 'ASC').addOrderBy(`${query.alias}.id`, 'ASC');
+		query.skip(page.offset).take(page.limit);
+	}
+
+	/**
+	 * The MikroORM find options for the page the client asked for, in the same order as
+	 * `applyRequestedPage`, or none when it sent no `take`.
+	 *
+	 * @param options The client query
+	 */
+	private mikroOrmRequestedPage(options: BaseQueryDTO) {
+		const page = resolveRequestedPage(options);
+		if (!page) {
+			return {};
+		}
+		return { orderBy: { date: 'ASC', id: 'ASC' } as const, limit: page.limit, offset: page.offset };
+	}
+
+	/**
 	 * Retrieves daily plans for the current employee based on given pagination options.
 	 *
 	 * @param options Pagination options for fetching daily plans.
 	 * @returns A promise resolving to daily plans for the current employee.
 	 */
 	async getMyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		const currentEmployeeId = RequestContext.currentEmployeeId();
+		// Read from the user: `currentEmployeeId()` is null for a CHANGE_SELECTED_EMPLOYEE holder even when
+		// they have an employee record, and this route only ever reads the caller's own plans.
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+
+		// A caller without an employee record owns no plans. Passing no owner on would read the whole
+		// organization for the callers that skip the team check.
+		if (!currentEmployeeId) {
+			return { items: [], total: 0 };
+		}
 
 		// Fetch daily plans for the current employee
 		return await this.getAllPlans(options, currentEmployeeId);
@@ -307,25 +543,38 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				relations: { tasks: true }
 			});
 		} else {
-			// User is potentially a manager → Check access first
-			// Step 1: Fetch minimal data to get organizationTeamId
-			const planTeamInfo = await this.findOneByOptions({
-				where: {
-					id: planId,
-					employeeId,
-					tenantId,
-					organizationId
-				}
-			});
+			// User is potentially a manager → Check access first.
+			// Step 1: Fetch minimal data to get the plan's owner, team and organization.
+			// This read must run without the automatic employee filter: for a caller without
+			// CHANGE_SELECTED_EMPLOYEE that filter overrides `employeeId` with the caller's own id, so a
+			// plan owned by anyone else would never be found and the manager check below could never run.
+			// The bypass covers this single read only; access is decided before anything is returned.
+			const { success, record: planTeamInfo } = await this.withoutEmployeeFilter(() =>
+				this.findOneOrFailByOptions({
+					where: {
+						id: planId,
+						employeeId,
+						tenantId,
+						organizationId
+					}
+				})
+			);
 
-			// Step 2: Check if current user can manage this employee in this team
+			// Step 2: Check if current user can manage the plan's owner in the plan's team.
+			// The owner and the organization come from the stored plan, not from the request body, so
+			// the check stays anchored to the record itself.
 			// Note: We throw the same generic error whether the plan doesn't exist or the user lacks permission
 			// to avoid leaking information about which plan IDs exist in the system
 			const canManage =
-				planTeamInfo &&
-				(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
+				success &&
+				!!planTeamInfo &&
+				(await this._managedEmployeeService.canManageEmployee(
+					planTeamInfo.employeeId ?? employeeId,
+					planTeamInfo.organizationTeamId,
+					planTeamInfo.organizationId ?? organizationId
+				));
 
-			if (!planTeamInfo || !canManage) {
+			if (!canManage) {
 				throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 			}
 
@@ -350,6 +599,67 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Deletes a daily plan the caller owns or manages.
+	 *
+	 * The inherited implementation narrows the criteria to the caller's own employeeId, so a manager
+	 * deleting a member's plan matched no row and the route answered 200 with `{ affected: 0 }`.
+	 *
+	 * @param criteria - The plan id, or find conditions when called internally
+	 * @param options - Additional find options forwarded to the base implementation
+	 * @returns The delete result
+	 * @throws NotFoundException if the plan does not exist or the caller may not act on its owner
+	 * @throws BadRequestException if an id is given together with additional where conditions
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<DailyPlan>,
+		options?: LegacyFindOneOptions<DailyPlan>
+	): Promise<DeleteResult> {
+		// Only the route passes a plain id. Anything else keeps the inherited behaviour, so the bypass
+		// below can never combine with a condition object and widen the deletion to the whole tenant.
+		if (typeof criteria !== 'string') {
+			return await super.delete(criteria, options);
+		}
+
+		// The inherited implementation merges options.where over the criteria, so a where carrying an id
+		// would replace the one authorized below and delete another plan inside the bypass. No caller
+		// needs that combination, so it is refused rather than silently narrowed.
+		if (options?.where) {
+			throw new BadRequestException('Deleting a daily plan by id does not accept where conditions');
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+
+		// This read must run without the automatic employee filter, otherwise a plan owned by anyone
+		// else is never found and the check below could never run. It covers this single read only.
+		const { success, record: plan } = await this.withoutEmployeeFilter(() =>
+			this.findOneOrFailByOptions({ where: { id: criteria, tenantId } })
+		);
+
+		// The owner, the team and the organization come from the stored plan, never from the request.
+		// The error does not say whether the plan exists, so plan ids stay unguessable.
+		const canManage =
+			success &&
+			!!plan &&
+			(await this._managedEmployeeService.canManageEmployee(
+				plan.employeeId,
+				plan.organizationTeamId,
+				plan.organizationId
+			));
+
+		if (!canManage) {
+			throw new NotFoundException('Daily plan not found or you do not have permission to access it');
+		}
+
+		const result = await this.withoutEmployeeFilter(() => super.delete(criteria, options));
+
+		if (!result.affected) {
+			throw new NotFoundException('Daily plan not found');
+		}
+
+		return result;
+	}
+
+	/**
 	 * Add a task to a specified daily plan.
 	 *
 	 * @param planId - The unique identifier of the daily plan to which the task will be added.
@@ -369,11 +679,33 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				where: { organizationId, tenantId }
 			});
 
+			// A retried request or a double click: the plan already holds the task, nothing to write.
+			if (hasTask(dailyPlan, taskId)) {
+				return dailyPlan;
+			}
+
 			// Add the new task to the daily plan's tasks array
 			dailyPlan.tasks.push(taskToAdd);
 
 			// Save the updated daily plan
-			return await this.save(dailyPlan);
+			try {
+				return await this.save(dailyPlan);
+			} catch (error) {
+				// A concurrent request for the same task can commit between the read above and this write,
+				// and the (dailyPlanId, taskId) primary key then rejects this insert. The plan holds the
+				// task either way, which is what the caller asked for. If the re-read fails too, the save
+				// error is the one that explains the failure, so it is the one rethrown.
+				const currentPlan = await this.getManagedDailyPlanOrThrow(
+					planId,
+					employeeId,
+					tenantId,
+					organizationId
+				).catch((): IDailyPlan => null);
+				if (currentPlan && hasTask(currentPlan, taskId)) {
+					return currentPlan;
+				}
+				throw error;
+			}
 		} catch (error) {
 			// Preserve HTTP exceptions (NotFoundException, etc.), only wrap non-HTTP errors
 			if (error instanceof HttpException) {
@@ -436,6 +768,18 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
 
+			// The employee comes from the request body, so the caller must be allowed to act on them.
+			// The message matches the not-found case below, so a probe cannot tell the two apart.
+			const canManage = await this._managedEmployeeService.canManageEmployee(
+				employeeId,
+				organizationTeamId,
+				organizationId
+			);
+
+			if (!canManage) {
+				throw new BadRequestException('Daily plans not found');
+			}
+
 			// Initial query for finding daily plans
 			let dailyPlansToUpdate: DailyPlan[];
 
@@ -480,7 +824,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 
 					// Find condition must include only today and future plans
-					query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
+					query.andWhere(p(`"${query.alias}"."date" >= :currentDate`), { currentDate });
 
 					if (plansIds.length > 0) {
 						query.andWhere(p(`${query.alias}.id IN (:...plansIds)`), { plansIds });
@@ -571,6 +915,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of plans and total count
 	 */
 	async getDailyPlansByTask(options: BaseQueryDTO, taskId: ID): Promise<IPagination<IDailyPlan>> {
+		const organizationTeamId = await this.resolveReadableTeam(options);
+
 		try {
 			const { where } = options;
 			const { organizationId } = where;
@@ -583,9 +929,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						organizationId,
 						tasks: { id: taskId }
 					};
+					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						populate: ['employee', 'tasks', 'employee.user'] as any[]
+						populate: ['employee', 'tasks', 'employee.user'] as any[],
+						...this.mikroOrmRequestedPage(options)
 					});
 					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
 				}
@@ -603,6 +951,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
+					if (organizationTeamId) {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
+					}
+
 					query.andWhere((qb: SelectQueryBuilder<any>) => {
 						const subQuery = qb.subQuery();
 						subQuery
@@ -612,6 +966,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 						return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
 					});
+
+					this.applyRequestedPage(query, options);
 
 					// Retrieves results and total count
 					const [items, total] = await query.getManyAndCount();

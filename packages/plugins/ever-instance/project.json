@@ -1,0 +1,44 @@
+{
+	"name": "plugin-ever-instance",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/ever-instance/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+		}
+	},
+	"tags": ["type:plugin", "type:plugin-extension-point"],
+	"implicitDependencies": ["contracts", "core"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/ever-instance",
+				"tsConfig": "packages/plugins/ever-instance/tsconfig.lib.json",
+				"packageJson": "packages/plugins/ever-instance/package.json",
+				"main": "packages/plugins/ever-instance/src/index.ts",
+				"assets": ["packages/plugins/ever-instance/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/ever-instance/jest.config.ts"
+			}
+		}
+	}
+}

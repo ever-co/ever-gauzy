@@ -50,7 +50,10 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 				context: { timeLog: this.timeLog }
 			})
 			.onClose.pipe(
-				tap((type) => this.dialogRef.close(type)),
+				// Cancelling the edit returns to this popup; only a saved log closes it,
+				// handing the result on so the page behind refreshes.
+				filter((timeLog: ITimeLog) => !!timeLog),
+				tap((timeLog: ITimeLog) => this.dialogRef.close(timeLog)),
 				untilDestroyed(this)
 			)
 			.subscribe();

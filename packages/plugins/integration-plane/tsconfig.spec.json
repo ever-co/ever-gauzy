@@ -1,0 +1,16 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../../dist/out-tsc",
+		"module": "commonjs",
+		// Mirrors packages/plugins/integration-zapier/tsconfig.spec.json: `jest.config.ts` here already
+		// points at this file, which did not exist because the package had no specs yet.
+		"allowJs": true,
+		// Transpile each file on its own instead of type-checking the whole program: importing
+		// `@gauzy/core` would re-check its SOURCE under this package's stricter
+		// `noPropertyAccessFromIndexSignature`, which fails on unrelated `process.env.X` accesses.
+		"isolatedModules": true,
+		"types": ["jest", "node"]
+	},
+	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
+}

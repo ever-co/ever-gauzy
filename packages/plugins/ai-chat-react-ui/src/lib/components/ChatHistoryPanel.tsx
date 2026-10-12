@@ -36,13 +36,18 @@ export function ChatHistoryPanel({
 	onClose
 }: ChatHistoryPanelProps) {
 	const containerStyle: CSSProperties = {
+		// Fills the chat BODY (the panel mounts this inside its position:relative body container),
+		// so the panel's own header row stays visible and operable above it.
 		position: 'absolute',
 		inset: 0,
 		display: 'flex',
 		flexDirection: 'column',
 		zIndex: 5,
-		backdropFilter: 'blur(2px)',
-		background: 'inherit'
+		// `inherit` resolved to transparent (the parent paints no background), so the conversation
+		// bled through. The layout publishes its sidebar surface as --gz-chat-surface; the blur is
+		// the fallback for hosts that do not (detached window).
+		backdropFilter: 'blur(12px)',
+		background: 'var(--gz-chat-surface, transparent)'
 	};
 
 	const headerStyle: CSSProperties = {

@@ -19,6 +19,15 @@ export enum SettingTitlesEnum {
     standalone: false
 })
 export class IntegrationSettingCardComponent extends TranslationBaseComponent {
+	/**
+	 * Stable permission array for the template's `*ngxPermissionsOnly` gate.
+	 * 🛑 Never inline `['INTEGRATION_EDIT']` in the binding: a literal is a NEW array on every
+	 * change-detection cycle, so NgxPermissionsDirective.ngOnChanges fires every cycle, resolves a
+	 * Promise.all, and — under default change detection — Zone schedules another tick, which
+	 * rebuilds the array. That loop pins the main thread and the panel never finishes rendering.
+	 */
+	public readonly integrationEditPermission = Object.freeze(['INTEGRATION_EDIT']) as string[];
+
 	public isIntegrationAISettingsEdit: boolean = false;
 
 	// Define a mapping object for setting names to titles and information

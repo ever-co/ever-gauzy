@@ -1,12 +1,12 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
-import { sign } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
+import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { MultiORMEnum } from './../core/utils';
+import { RequestContext } from './../core/context';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
@@ -40,8 +40,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+				// Raw knex bypasses the soft-delete filter that TypeORM's query builder applies
 				const result = await knex('invoice')
 					.where('isEstimate', false)
+					.whereNull('deletedAt')
 					.count('id as count')
 					.sum('totalValue as amount')
 					.first();
@@ -68,22 +70,36 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * GET highest invoice number
+	 * GET highest invoice number of the current tenant
+	 *
+	 * Invoices and estimates share one number sequence per tenant, and the unique constraint on
+	 * `invoiceNumber` is tenant-local (tenantId, invoiceNumber). The aggregate runs on raw builders,
+	 * which bypass TenantAwareCrudService scoping, so it must add the tenant predicate itself —
+	 * unscoped, it disclosed the installation-wide maximum across tenants (GHSA-57hw-jqpj-ww97).
 	 *
 	 * @returns
 	 */
 	async getHighestInvoiceNumber(): Promise<IInvoice> {
+		// Fail closed: without a tenant there is no sequence this caller may read.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException();
+		}
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const knex = this.mikroOrmRepository.getEntityManager().getKnex();
-					const result = await knex(this.tableName).max('invoiceNumber as max').first();
+					const result = await knex(this.tableName).where({ tenantId }).max('invoiceNumber as max').first();
 					return { max: result?.max ?? 0 } as any;
 				}
 				case MultiORMEnum.TypeORM:
 				default: {
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-					return await query.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max').getRawOne();
+					return await query
+						.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max')
+						.where(`${query.alias}.tenantId = :tenantId`, { tenantId })
+						.getRawOne();
 				}
 			}
 		} catch (error) {
@@ -145,7 +161,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			};
 			return await this.create({
 				id: invoiceId,
-				token: sign(payload, environment.JWT_SECRET, {})
+				token: signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, payload)
 			});
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -296,6 +312,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					id: In(where.toContact)
 				};
 			}
+			// The end bounds below cover their whole last second: the add/edit forms save dates with
+			// `endOf('day')` (23:59:59.999), which a `HH:mm:ss` bound of 23:59:59 would exclude.
 			if ('invoiceDate' in where) {
 				const { invoiceDate } = where;
 				const { startDate, endDate } = invoiceDate;
@@ -303,7 +321,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (startDate && endDate) {
 					filter.where.invoiceDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(endDate).endOf('second').format('YYYY-MM-DD HH:mm:ss.SSS')
 					);
 				} else {
 					filter.where.invoiceDate = Between(
@@ -319,7 +337,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (startDate && endDate) {
 					filter.where.dueDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(endDate).endOf('second').format('YYYY-MM-DD HH:mm:ss.SSS')
 					);
 				} else {
 					filter.where.dueDate = Between(

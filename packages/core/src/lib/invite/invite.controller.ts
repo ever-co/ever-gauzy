@@ -1,9 +1,7 @@
 import {
 	ICreateEmailInvitesOutput,
-	IInviteAcceptInput,
 	PermissionsEnum,
 	LanguagesEnum,
-	IOrganizationContactAcceptInviteInput,
 	IOrganizationContact,
 	IPagination,
 	IInvite,
@@ -26,6 +24,7 @@ import {
 	Req
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { Request } from 'express';
@@ -46,6 +45,8 @@ import {
 	InviteResendCommand
 } from './commands';
 import {
+	AcceptInviteDTO,
+	AcceptOrganizationContactInviteDTO,
 	CreateInviteDTO,
 	RejectInviteDTO,
 	ResendInviteDTO,
@@ -141,6 +142,9 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	@Get('/validate')
 	@UseValidationPipe({ whitelist: true })
 	async validateInviteByToken(@Query() options: ValidateInviteQueryDTO) {
@@ -169,6 +173,9 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	@Post('/validate-by-code')
 	@UseValidationPipe({ whitelist: true })
 	async validateInviteByCode(@Body() body: ValidateInviteByCodeQueryDTO) {
@@ -198,9 +205,17 @@ export class InviteController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Post('/accept')
+	// This route is unauthenticated and its body reaches `AuthService.register()` — the shared
+	// user-creation sink — so the whitelist is what decides which columns an invitee can write.
+	// Its `/validate` and `/validate-by-code` siblings have always done this; `/accept`, the one
+	// that actually creates rows, was the route left without a pipe.
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async acceptInvitation(
-		@Body() entity: IInviteAcceptInput,
+		@Body() entity: AcceptInviteDTO,
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	) {
@@ -223,6 +238,9 @@ export class InviteController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Post('/reject')
 	@UseValidationPipe()
 	async rejectInvitation(@Body() input: RejectInviteDTO) {
@@ -246,15 +264,23 @@ export class InviteController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Post('/contact')
 	@Public()
+	// Unauthenticated, and its body reaches `AuthService.register()` and `OrganizationService.create()`.
+	// The whitelist is what keeps `user.organizations` (a cascading relation) and every other
+	// undeclared column out of those sinks — the same reason `/accept` above carries one.
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async acceptOrganizationContactInvite(
-		@Body() input: IOrganizationContactAcceptInviteInput,
+		@Body() input: AcceptOrganizationContactInviteDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
-		input.originalUrl = request.get('Origin');
-		return await this.commandBus.execute(new InviteAcceptOrganizationContactCommand(input, languageCode));
+		return await this.commandBus.execute(
+			new InviteAcceptOrganizationContactCommand({ ...input, originalUrl: request.get('Origin') }, languageCode)
+		);
 	}
 
 	/**

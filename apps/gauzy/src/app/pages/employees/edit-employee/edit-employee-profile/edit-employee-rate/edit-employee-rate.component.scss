@@ -1,0 +1,12 @@
+@use '@shared/employee-tab-panel' as *;
+
+:host {
+  @include employee-tab-host;
+
+  > ga-employee-rates {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    flex: 1 1 auto;
+  }
+}

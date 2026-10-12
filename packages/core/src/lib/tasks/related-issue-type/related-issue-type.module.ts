@@ -21,9 +21,11 @@ import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-r
 	controllers: [TaskRelatedIssueTypeController],
 	providers: [
 		TaskRelatedIssueTypeService,
-		TypeOrmTaskRelatedIssueTypeRepository, MikroOrmTaskRelatedIssueTypeRepository,
+		TypeOrmTaskRelatedIssueTypeRepository,
+		MikroOrmTaskRelatedIssueTypeRepository,
 		...QueryHandlers,
 		...CommandHandlers
-	]
+	],
+	exports: [TaskRelatedIssueTypeService]
 })
 export class TaskRelatedIssueTypeModule {}

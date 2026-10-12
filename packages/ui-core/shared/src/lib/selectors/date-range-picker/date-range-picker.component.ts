@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, combineLatest, of, Subject, switchMap, take } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	DaterangepickerComponent as NgxDateRangePickerComponent,
@@ -9,11 +9,13 @@ import {
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
 import moment from 'moment';
+import { NbLayoutDirectionService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import {
 	DEFAULT_DATE_PICKER_CONFIG,
 	DateRangePickerBuilderService,
+	IDatePickerConfig,
 	NavigationService,
 	OrganizationsService,
 	SelectorBuilderService,
@@ -24,7 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
+import { dayOfWeekAsString, selectUnitOfTime, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
@@ -45,10 +47,32 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	private readonly dates$: BehaviorSubject<IDateRangePicker> = this._dateRangePickerBuilderService.dates$; // Default selected date picker ranges
 	private readonly range$: Subject<IDateRangePicker> = new Subject(); // Local store date picker ranges
 
+	/**
+	 * The date picker configuration this picker has already applied. The config object is rebuilt
+	 * once per route RESOLUTION, so a change of reference means "a new route settled", which is what
+	 * separates a route-driven unit from an in-page one the user chose from the ranges menu.
+	 */
+	private _appliedDatePickerConfig: IDatePickerConfig | null = null;
+
+	/** Re-positions the open panel whenever its size changes; see `ngAfterViewInit`. */
+	private _panelResizeObserver: ResizeObserver | null = null;
+
 	// Declaration of arrow variables
 	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
+
+	/**
+	 * Which way the dropdown hangs off the input. The panel (~600px double
+	 * calendar) is wider than the space between the input and the trailing
+	 * viewport edge, so it must open TOWARD the canvas: the library aligns the
+	 * panel's trailing edge to the input for 'left', mirrored under RTL. (The
+	 * old -130%/-146% margin hack did the same job against a containing-block
+	 * layout that no longer exists.)
+	 */
+	public get opens(): 'left' | 'right' {
+		return this._directionService.isRtl() ? 'right' : 'left';
+	}
 
 	/**
 	 * Locale configuration for the component.
@@ -217,7 +241,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _navigationService: NavigationService,
 		private readonly _selectorBuilderService: SelectorBuilderService,
-		private readonly _timeZoneService: TimeZoneService
+		private readonly _timeZoneService: TimeZoneService,
+		private readonly _directionService: NbLayoutDirectionService
 	) {
 		super(translateService);
 	}
@@ -225,7 +250,19 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	ngOnInit(): void {
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeDatePickerConfig$ = this._dateRangePickerBuilderService.datePickerConfig$;
-		const queryParams$ = this._route.queryParams;
+		// This pipeline consumes ONLY `unit_of_time` from the query string. The raw
+		// queryParams stream re-emits on every date/org/team write the picker itself
+		// issues through the router (replaceState never made it emit), and each
+		// emission costs an organization round-trip plus a re-derivation — narrow +
+		// distinct so only an actual unit change (or the first load) wakes it.
+		//
+		// This is the IN-PAGE signal only: it carries a unit the user chose from the
+		// ranges menu between two route resolutions. The authority on what unit a
+		// route runs at is the resolved date picker config — see the tap below.
+		const queryParamsUnitOfTime$ = this._route.queryParams.pipe(
+			map((params) => params['unit_of_time'] as moment.unitOfTime.Base | undefined),
+			distinctUntilChanged()
+		);
 
 		// Subscribe to the timeZone$ observable
 		const timeZone$ = this._timeZoneService.timeZone$.pipe(
@@ -242,10 +279,25 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			})
 		);
 
-		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParams$, timeZone$])
+		// Build the preset menu as soon as the route's config is known. The pipeline below rebuilds it
+		// too, but only after an organization round-trip: until that answered (seconds on a slow API)
+		// the panel opened EMPTY, the library positioned it from that 8px box, and it landed off the
+		// right edge of the screen — to the user it opened and closed again.
+		storeDatePickerConfig$
+			.pipe(
+				filter((datePickerConfig) => !!datePickerConfig),
+				tap(({ isLockDatePicker, unitOfTime }) => {
+					this.isLockDatePicker = isLockDatePicker;
+					this.createDateRangeMenus(unitOfTime);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParamsUnitOfTime$, timeZone$])
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
-				switchMap(([organization, datePickerConfig, queryParams, timeZone]) =>
+				switchMap(([organization, datePickerConfig, unitOfTimeFromQuery, timeZone]) =>
 					combineLatest([
 						this._organizationService.getById(organization.id, [], {
 							id: true,
@@ -254,11 +306,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 							startWeekOn: true
 						}),
 						of(datePickerConfig),
-						of(queryParams), // Emit queryParams as part of the inner observable
+						of(unitOfTimeFromQuery), // Emit the narrowed unit as part of the inner observable
 						of(timeZone)
 					])
 				),
-				tap(([organization, datePickerConfig, queryParams, timeZone]) => {
+				tap(([organization, datePickerConfig, unitOfTimeFromQuery, timeZone]) => {
 					this.organization = organization; // Update the organization
 					this.futureDateAllowed = organization.futureDateAllowed; // Update the future date allowed
 					this.timeZone = timeZone; // Update the time zone
@@ -271,8 +323,23 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
 
-					const { unit_of_time: unitOfTime = datePickerConfig.unitOfTime } = queryParams;
-					this.unitOfTime = unitOfTime;
+					// Reference equality: the config object is rebuilt once per route RESOLUTION,
+					// so this separates "a new route settled" from an organization or timezone
+					// re-emission of the same one. `selectUnitOfTime` holds the precedence rule
+					// and the reasoning behind it, and is unit-tested on its own.
+					const isNewRouteConfig = datePickerConfig !== this._appliedDatePickerConfig;
+					this._appliedDatePickerConfig = datePickerConfig;
+
+					const nextUnitOfTime = selectUnitOfTime({
+						isNewRouteConfig,
+						routeUnitOfTime: datePickerConfig.unitOfTime,
+						queryUnitOfTime: unitOfTimeFromQuery,
+						currentUnitOfTime: this.unitOfTime
+					});
+
+					if (nextUnitOfTime) {
+						this.unitOfTime = nextUnitOfTime;
+					}
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
@@ -294,12 +361,31 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// The library positions the panel ONCE, on a timer after opening, from the panel's width at
+		// that moment. Its calendars only take up space once the panel carries `shown`
+		// (`.md-drppicker.shown .calendar { display: block }`), and when the timer beats the render
+		// that applies it — seen in WebKit, and from the keyboard — it measures the 118px preset list
+		// alone and the panel lands past the right edge of the screen. Re-position on every size
+		// change while open instead; the observer runs before paint, so the panel never shows misplaced.
+		const picker = this.dateRangePickerDirective?.picker;
+		const panel = picker?.pickerContainer?.nativeElement;
+		if (panel && typeof ResizeObserver !== 'undefined') {
+			this._panelResizeObserver = new ResizeObserver(() => {
+				if (picker.isShown) {
+					this.dateRangePickerDirective.setPosition();
+				}
+			});
+			this._panelResizeObserver.observe(panel);
+		}
 	}
 
 	/**
 	 * Creates the date range translated menus based on the current configuration.
+	 *
+	 * @param unitOfTime The unit a locked picker offers; defaults to the picker's current unit.
 	 */
-	createDateRangeMenus(): void {
+	createDateRangeMenus(unitOfTime: moment.unitOfTime.Base = this.unitOfTime): void {
 		this.ranges = {};
 
 		// Helper function to add ranges to the ranges object
@@ -308,7 +394,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		};
 
 		// Determine which units of time are allowed
-		const allowedUnits = this.isLockDatePicker ? [this.unitOfTime] : ['day', 'week', 'month'];
+		const allowedUnits = this.isLockDatePicker ? [unitOfTime] : ['day', 'week', 'month'];
 
 		// Add date ranges based on the allowed units of time
 		allowedUnits.forEach((unit) => {
@@ -605,16 +691,61 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Opens the date picker when the calendar icon is clicked.
+	 * Opens the date picker when anywhere in the control is clicked, except the arrow buttons.
+	 * The calendar button also lands here from the keyboard: Enter/Space fire its click.
 	 *
-	 * @param event - The mouse event triggered by clicking the calendar icon.
+	 * @param event - The mouse event triggered by clicking the control.
 	 */
 	openDatepicker(event: MouseEvent): void {
-		if (this.dateRangePickerDirective) {
-			this.dateRangePickerDirective.toggle(event);
-		} else {
-			console.warn('DateRangePickerDirective is not initialized.');
+		const target = event.target as HTMLElement;
+
+		// The arrows step the range; they must not open the panel too.
+		if (target.closest('button:not(.calendar-trigger)')) {
+			return;
 		}
+
+		if (!this.dateRangePickerDirective) {
+			console.warn('DateRangePickerDirective is not initialized.');
+			return;
+		}
+
+		// The <input> opens the panel itself, and the directive counts it as inside.
+		if (target instanceof HTMLInputElement) {
+			return;
+		}
+
+		// The directive closes the panel on any document click outside its <input>, and the rest of
+		// this control sits outside it: left to bubble, the same click opened the panel and closed it
+		// again before it ever painted. Stop it here so opening is the only thing that click does.
+		event.stopPropagation();
+		this.dateRangePickerDirective.open(event);
+	}
+
+	/**
+	 * Keyboard counterpart of `openDatepicker`: Enter or ArrowDown in the date input opens the picker,
+	 * which the library itself only does on a pointer click. The buttons are left alone — Enter/Space
+	 * already fire their click (the calendar button's lands in `openDatepicker`).
+	 *
+	 * @param event - The keydown event bubbling up from inside the control.
+	 */
+	onControlKeydown(event: KeyboardEvent): void {
+		if (!(event.target instanceof HTMLInputElement)) {
+			return;
+		}
+
+		// An IME (Japanese, Chinese, Korean…) uses Enter to commit the composed text; that key belongs
+		// to the composition, not to us. Safari sends the committing keydown with `isComposing` already
+		// false, so its 229 keyCode ("IME is processing") is the only reliable signal there.
+		if (event.isComposing || event.keyCode === 229) {
+			return;
+		}
+
+		if (event.key !== 'Enter' && event.key !== 'ArrowDown') {
+			return;
+		}
+
+		event.preventDefault();
+		this.dateRangePickerDirective?.open(event);
 	}
 
 	/**
@@ -658,5 +789,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._panelResizeObserver?.disconnect();
+	}
 }

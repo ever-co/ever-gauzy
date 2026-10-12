@@ -1,0 +1,21 @@
+@use '@shared/employee-tab-panel' as *;
+
+:host {
+  @include employee-tab-host;
+}
+
+.container-contact {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  height: auto;
+  flex: 1 0 auto;
+  min-height: 0;
+
+  > ga-edit-employee-membership {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}

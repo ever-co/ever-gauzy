@@ -1,1 +1,11 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Invoices carries. This page has the standard list markup
+// (`nb-card-header.card-custom-header` > `.gauzy-button-container`, a
+// `.table-scroll-container` and a `.pagination-container`), so the default
+// `$actions` selector reaches its toolbar unchanged.
+@include ga-hub.list-page();

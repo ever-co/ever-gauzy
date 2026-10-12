@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Activé",
+		"DISABLED": "Désactivé",
 		"PAY": "Payer",
 		"ADD_EXISTING_USER": "Ajouter un utilisateur existant",
 		"ADD_NEW": "Ajouter Nouveau",
@@ -817,6 +819,7 @@
 		"SKILLS": "Compétences",
 		"PRIVACY": "Confidentialité",
 		"SELECT_TIMEZONE": "Sélectionner le fuseau horaire",
+		"SELECT_TIMEZONE_HINT": "Les horaires des rendez-vous sont affichés dans ce fuseau horaire.",
 		"SHOW_AVERAGE_BONUS": "Afficher la prime moyenne",
 		"SHOW_AVERAGE_INCOME": "Afficher le revenu moyen",
 		"SHOW_PAYPERIOD": "Afficher la période de paie",
@@ -1155,7 +1158,71 @@
 		"APPLICATIONS": "Applications.",
 		"OPEN_GA_BROWSER": "Ouvrez Gauzy dans votre navigateur.",
 		"START_SERVER": "Démarrer le serveur",
-		"STOP_SERVER": "Arrêter le serveur"
+		"STOP_SERVER": "Arrêter le serveur",
+		"DOCUMENTS": "Documents",
+		"BILLING": "Facturation",
+		"MONITORING": "Surveillance",
+		"ADD_ITEM": "Ajouter {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Vous uniquement",
+			"TENANT": "Tout le monde dans ce tenant"
+		},
+		"UNSAVED_CHANGES": "Modifications non enregistrées",
+		"ACCOUNT": {
+			"TITLE": "Compte",
+			"DESCRIPTION": "Le compte avec lequel vous êtes connecté.",
+			"MANAGE": "Gérer le profil",
+			"ROLE": "Rôle",
+			"MEMBER_SINCE": "Membre depuis"
+		},
+		"PREFERENCES": {
+			"TITLE": "Préférences",
+			"DESCRIPTION": "L'apparence et le comportement de l'application pour vous. Les changements s'appliquent immédiatement.",
+			"THEME": "Thème",
+			"THEME_HINT": "Jeu de couleurs de toute l'application.",
+			"LANGUAGE": "Langue",
+			"LANGUAGE_HINT": "Langue des menus, libellés et messages.",
+			"LAYOUT": "Disposition par défaut",
+			"RESET_LAYOUTS": "Réinitialiser les dispositions des pages",
+			"SAVE_ERROR": "Votre préférence n'a pas pu être enregistrée.",
+			"LAYOUTS_RESET": "Dispositions des pages réinitialisées à votre valeur par défaut."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Image carrée, au moins 128 × 128 px.",
+			"NAME_HINT": "Affiché à tous les utilisateurs de ce tenant.",
+			"TENANT_ID": "ID du tenant",
+			"TENANT_ID_HINT": "Indiquez-le en contactant le support ou en appelant l'API.",
+			"COPY_ERROR": "L'ID du tenant n'a pas pu être copié.",
+			"TITLE": "Profil du tenant",
+			"DESCRIPTION": "Le nom et le logo de ce tenant, affichés à tous les utilisateurs dans le sélecteur d'espaces de travail et la barre latérale.",
+			"NAME": "Nom du tenant",
+			"NAME_PLACEHOLDER": "Saisissez le nom du tenant",
+			"NAME_REQUIRED": "Le nom du tenant est obligatoire.",
+			"LOGO": "Logo du tenant",
+			"LOGO_CHANGE": "Cliquez pour téléverser un nouveau logo",
+			"LOGO_REMOVE": "Supprimer le logo",
+			"LOGO_UPLOAD_ERROR": "Le logo n'a pas pu être téléversé.",
+			"CREATED_AT": "Créé le",
+			"SAVED": "Profil du tenant enregistré",
+			"SAVE_ERROR": "Le profil du tenant n'a pas pu être enregistré.",
+			"LOAD_ERROR": "Le profil du tenant n'a pas pu être chargé."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "Interface",
+			"TITLE": "Interface utilisateur",
+			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (par défaut)",
+				"REACT": "React (nouveau)"
+			},
+			"HINT": "S'applique à tout le tenant, sur tous les appareils. Aujourd'hui, le tableau de bord de suivi du temps est disponible dans les deux interfaces ; d'autres pages suivront.",
+			"READ_ONLY": "Seuls les administrateurs du tenant peuvent modifier ce paramètre.",
+			"SAVING": "Enregistrement…",
+			"SAVED": "Préférence d'interface enregistrée",
+			"SAVE_ERROR": "La préférence d'interface n'a pas pu être enregistrée."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thèmes",
@@ -1189,7 +1256,9 @@
 		"CARDS_GRID": "Grille de cartes",
 		"SPRINT_VIEW": "Vue Sprint",
 		"QUICK_SETTINGS": "Paramètres rapides",
-		"NO_LAYOUT": "Aucun modèle de données disponible"
+		"NO_LAYOUT": "Aucun modèle de données disponible",
+		"PREFERENCES": "Préférences",
+		"SUPPORT": "Assistance"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Quoi de neuf?",
@@ -1736,6 +1805,19 @@
 		"TIME_TRACKING": "Suivi du temps",
 		"PROJECT_MANAGEMENT": "Gestion de projet",
 		"EMPLOYEE_STATISTICS": "Statistiques des employés",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Sur {{ count }} employés",
+			"OF_INCOME": "{{ value }} % des revenus",
+			"MARGIN": "Marge de {{ value }} %",
+			"BREAKDOWN": "Revenus par employé",
+			"NO_DATA": "Aucune activité financière sur cette période",
+			"NO_DATA_HINT": "Les revenus et dépenses enregistrés sur cette période apparaîtront ici.",
+			"NO_EMPLOYEES": "Aucun enregistrement d’employé pour cette période",
+			"SORT_BY": "Trier par {{ name }}",
+			"SORT_LABEL": "Trier par",
+			"SORT_ASCENDING": "Croissant",
+			"SORT_DESCENDING": "Décroissant"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Veuillez sélectionner un mois et un employé dans le menu ci-dessus.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insérer un texte pour les utilisateurs non authentifiés.",
 		"CHARTS": {
@@ -1924,7 +2006,90 @@
 			"PREVIOUS": "Précédent"
 		},
 		"NOT_STARTED": "Pas commencé",
-		"NOT_STARTED_HELP": "Le travail commencé n'est pas fixé pour cet employé. L'employé ne sera pas pris en compte dans les comptes, les dépenses partagées, etc."
+		"NOT_STARTED_HELP": "Le travail commencé n'est pas fixé pour cet employé. L'employé ne sera pas pris en compte dans les comptes, les dépenses partagées, etc.",
+		"VIEW": {
+			"PERIOD": "Période",
+			"PERIODS": {
+				"THIS_WEEK": "Cette semaine",
+				"THIS_MONTH": "Ce mois-ci",
+				"LAST_30_DAYS": "30 derniers jours"
+			},
+			"TABS": {
+				"OVERVIEW": "Aperçu",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Suivi du temps en cours",
+				"ONLINE": "En ligne",
+				"AWAY": "Absent",
+				"OFFLINE": "Hors ligne"
+			},
+			"LOCAL_TIME": "Heure locale",
+			"MEMBER_SINCE": "Membre depuis",
+			"WEEKLY_LIMIT": "Limite hebdomadaire",
+			"WORKED_TODAY": "Travaillé aujourd'hui",
+			"WORKED_PERIOD": "Travaillé sur la période",
+			"ACTIVITY_META": "{{ value }} d’activité",
+			"AVG_ACTIVITY": "Activité moyenne",
+			"OPEN_TASKS": "Tâches ouvertes",
+			"OPEN_TASKS_META": "{{ progress }} en cours · {{ overdue }} en retard",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs semaine dernière",
+				"THIS_MONTH": "vs mois dernier",
+				"LAST_30_DAYS": "vs 30 jours précédents"
+			},
+			"HOURS_WORKED": "Heures travaillées",
+			"HOURS_META": "{{ total }} au total · {{ average }} par jour travaillé",
+			"TRACKED": "Suivi",
+			"MANUAL": "Manuel",
+			"OPEN_TIMESHEET": "Ouvrir la feuille de temps",
+			"PROJECTS": "Projets",
+			"RECENT_SCREENSHOTS": "Captures d’écran récentes",
+			"VIEW_ALL": "Tout voir",
+			"ASSIGNED_TASKS": "Tâches assignées",
+			"COLUMNS": {
+				"TASK": "Tâche",
+				"PROJECT": "Projet",
+				"STATUS": "Statut",
+				"DUE": "Échéance",
+				"TIME": "Temps",
+				"NAME": "Nom",
+				"PRIORITY": "Priorité"
+			},
+			"TOP_TASKS": "Tâches les plus travaillées",
+			"APPS_URLS": "Applications et URL",
+			"NO_TIME": "Aucun temps suivi sur cette période",
+			"NO_TASKS": "Aucune tâche assignée",
+			"NO_APPS": "Aucune activité d’application ou d’URL sur cette période",
+			"NO_SCREENSHOTS": "Aucune capture d’écran sur cette période",
+			"UNAVAILABLE": "Vous n'avez pas accès à ces données",
+			"PROFILE": {
+				"ABOUT": "À propos",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Compétences et étiquettes",
+				"TIME_ZONE": "Fuseau horaire",
+				"NOT_PROVIDED": "Pas encore renseigné",
+				"NO_DESCRIPTION": "Aucune description n’a encore été ajoutée"
+			},
+			"TASKS_HELP": "Tâches dont cette personne est membre. Choisissez une case pour filtrer la liste.",
+			"TASK_FILTERS": {
+				"OPEN": "Ouvertes",
+				"PROGRESS": "En cours",
+				"OVERDUE": "En retard",
+				"DONE": "Terminées"
+			},
+			"DUE": {
+				"NONE": "Pas d’échéance",
+				"WAS_DUE": "Échéance",
+				"OVERDUE_DAY": "1 jour de retard",
+				"OVERDUE_DAYS": "{{ count }} jours de retard",
+				"TODAY": "Échéance aujourd’hui",
+				"TOMORROW": "Échéance demain",
+				"IN_DAYS": "Dans {{ count }} jours"
+			},
+			"SHOWING": "{{ shown }} tâches affichées sur {{ total }}",
+			"NO_TASKS_IN_VIEW": "Aucune tâche dans cette vue"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Tous les objectifs",
@@ -1940,6 +2105,7 @@
 		"EXPECTED": "Attendu",
 		"UPDATES": "Mises à jour",
 		"UPDATE": "Mettre à jour",
+		"ALIGNMENTS": "Alignements",
 		"COMMENTS": "Commentaires",
 		"KEY_RESULTS": "Résultats clés",
 		"GROUP_BY": "Grouper par",
@@ -1956,6 +2122,8 @@
 		"GOAL_TEMPLATES": "Modèles d'objectifs",
 		"CREATE_NEW_MENU": "Créer Nouveau",
 		"CREATE_FROM_PRESET": "Créer à partir d'un préréglage",
+		"SELECT_A_PRESET": "Sélectionner un préréglage",
+		"ADDITIONAL_DETAILS": "Détails supplémentaires",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Employés",
 			"TEAMS": "Équipes",
@@ -1985,7 +2153,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Aucun résultat clé à afficher.",
 			"NO_UPDATES": "Aucune mise à jour pour l'instant.",
-			"NO_ALIGNMENT": "Aucun alignement encore."
+			"NO_ALIGNMENT": "Aucun alignement encore.",
+			"NO_PROGRESS_DATA": "Aucune donnée de progression à afficher pour l'instant."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "L'organisation",
@@ -2418,6 +2587,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Permettre à l’employé de fermer l’application Agent. Lorsqu’il est désactivé, le bouton de fermeture est bloqué dans l’application.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Autoriser la déconnexion de l’application Agent",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permettre à l’employé de se déconnecter de l’application Agent. Lorsqu’il est désactivé, le bouton de déconnexion est bloqué dans l’application.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Protection des travailleurs de l'EEE / du Royaume-Uni active",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Pour les organisations et les travailleurs de l'EEE ou du Royaume-Uni, les travailleurs peuvent toujours quitter l'agent de bureau et s'en déconnecter. Une capture que le travailleur ne peut pas interrompre est difficile à justifier au regard du RGPD et de l'article 8 de la CEDH ; ces restrictions ne sont donc pas disponibles ici.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirmer la restriction de sortie ou de déconnexion de l'agent",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Avec cette restriction, le travailleur ne peut pas empêcher l'agent de bureau de le capturer. Confirmez que vous avez jugé cette mesure licite et proportionnée pour ces travailleurs et que vous en assumez la responsabilité. Votre confirmation est enregistrée sur votre compte.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Suivre l’activité du clavier et de la souris",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Activer le suivi complet de l’activité du clavier et de la souris, incluant les frappes clavier et les mouvements précis de la souris, dans toutes les applications de bureau ainsi que dans l’application Agent.",
 				"TRACK_ALL_DISPLAYS": "Suivre tous les écrans",
@@ -2441,6 +2614,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durée du compte à rebours de la preuve d'activité, cela représente un certain nombre de minutes données pour prouver l'activité.",
 				"ENABLE_DETECTION_INACTIVITY": "Permettre la détection de l'inactivité des employés",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Fréquence des captures d'écran",
 				"SCREENSHOT_FREQUENCY_INFO": "Spécifiez la fréquence de mise à jour ou les intervalles de synchronisation.",
 				"RANDOM_SCREENSHOT": "Capture d'écran aléatoire",
@@ -2681,7 +2856,10 @@
 		"ADDRESS": "Adresse",
 		"ADDRESS_2": "Adresse 2",
 		"MEMBERS": "Membres",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Cliquez ou déposez une image pour la téléverser",
+		"SEARCH_EMPLOYEES": "Rechercher des employés par nom ou e-mail",
+		"NO_MEMBERS": "Aucun membre ajouté pour le moment"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Langues",
@@ -2714,7 +2892,19 @@
 		"EMPLOYEE_UPDATED": "L'employé a été mis à jour.",
 		"IMAGE_UPDATED": "L'image a été mise à jour.",
 		"FAIL_TO_UPDATE_IMAGE": "Mise à jour échouée.",
-		"ANONYMOUS": "Anonyme"
+		"ANONYMOUS": "Anonyme",
+		"ABOUT": "À propos",
+		"INACTIVE": "Inactif",
+		"PER_HOUR": "/ heure",
+		"MEMBER_SINCE": "Membre depuis",
+		"NO_DESCRIPTION": "Aucune description n’a encore été ajoutée",
+		"NO_SKILLS": "Aucune compétence indiquée",
+		"VIEW_COMPANY_PROFILE": "Voir le profil de l’entreprise",
+		"EDIT": {
+			"NO_AWARDS": "Aucune distinction ajoutée",
+			"ADD_AWARD": "Ajouter une distinction",
+			"PRIVACY_HELP": "Choisissez les informations visibles sur le profil public."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Page de gestion des propositions",
@@ -3309,7 +3499,11 @@
 		"STOP_TIMER": "Arrêter le chronomètre",
 		"TIME_LOG": "Journal du temps",
 		"VIEW_APPOINTMENTS": "Voir les rendez-vous",
-		"VIEW_TIME_ACTIVITY": "Voir l'activité temporelle"
+		"VIEW_TIME_ACTIVITY": "Voir l'activité temporelle",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nouvelle page",
+			"UPLOAD": "Téléverser"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Comptabilité",
@@ -3317,7 +3511,8 @@
 		"PROJECT_MANAGEMENT": "Gestion de projet",
 		"JOBS": "Emplois",
 		"CONTACTS": "Contacts",
-		"TIME_TRACKING": "Suivi du temps"
+		"TIME_TRACKING": "Suivi du temps",
+		"DOCUMENTS": "Documents"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Prénom",
@@ -3363,6 +3558,9 @@
 		"BROWSE": "Parcourir",
 		"COMMENT": "Comme",
 		"COMMENTS": "Commentaires",
+		"COMMENT_PLACEHOLDER": "Écrire un commentaire…",
+		"NO_COMMENTS": "Aucun commentaire pour le moment",
+		"NO_COMMENTS_HINT": "Les commentaires apparaissent ici, les plus récents en premier.",
 		"HEADER": "Factures",
 		"INVOICE_NUMBER": "Numéro de facture",
 		"ESTIMATE_NUMBER": "Numéro d'estimation",
@@ -3626,7 +3824,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisation",
 		"SELECT_PROJECT": "Projet",
 		"SELECT_TEAM": "Équipe",
-		"AI_CHAT": "Chat IA"
+		"AI_CHAT": "Chat IA",
+		"COLLAPSE_SIDEBAR": "Réduire la barre latérale",
+		"EXPAND_SIDEBAR": "Développer la barre latérale"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistant IA",
@@ -3652,9 +3852,34 @@
 		"STOP": "Arrêter la génération",
 		"ERROR": "Une erreur s'est produite.",
 		"RETRY": "Réessayer",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"DICTATION_FAILED": "Impossible de transcrire l'enregistrement.",
+		"DICTATION_NOT_CONFIGURED": "La dictée nécessite un fournisseur vocal. Ajoutez-en un sur la page de paramètres « Fournisseurs IA ».",
+		"DICTATION_ASK_ADMIN": "La dictée nécessite un fournisseur vocal — demandez à un administrateur d'en ajouter un dans Paramètres → Fournisseurs IA.",
+		"DICTATION_KEY_REJECTED": "Le fournisseur vocal a rejeté sa clé API. Mettez-la à jour sur la page de paramètres « Fournisseurs IA ».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Le fournisseur vocal a rejeté sa clé API — demandez à un administrateur de la mettre à jour dans Paramètres → Fournisseurs IA.",
+		"DICTATION_OPEN_SETTINGS": "Ouvrir les fournisseurs IA",
+		"RATE_LIMITED_SHARED": "L'offre IA gratuite est limitée en ce moment. Connectez votre propre compte OpenRouter ou configurez un autre fournisseur IA pour un accès sans interruption.",
+		"RATE_LIMITED_OWN": "Votre fournisseur IA limite les requêtes en ce moment. Vérifiez votre offre et vos limites auprès du fournisseur, ou configurez un autre fournisseur IA.",
+		"RATE_LIMIT_RETRY_IN": "Vous pourrez réessayer dans environ {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Ouvrir les fournisseurs IA",
+		"ERROR_NOT_CONFIGURED": "Le chat IA nécessite un fournisseur configuré. Ajoutez-en un sur la page de paramètres « Fournisseurs IA ».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "Le chat IA nécessite un fournisseur configuré — demandez à un administrateur d'en ajouter un dans Paramètres → Fournisseurs IA.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Le fournisseur IA sélectionné ne peut pas répondre pour le moment. Vérifiez-le sur la page de paramètres « Fournisseurs IA ».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Le fournisseur IA sélectionné ne peut pas répondre pour le moment — demandez à un administrateur de vérifier Paramètres → Fournisseurs IA.",
+		"ERROR_MODEL_UNAVAILABLE": "Ce modèle n'est pas disponible avec la clé API actuelle. Choisissez-en un autre sur la page de paramètres « Fournisseurs IA ».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Ce modèle n'est pas disponible avec la clé API actuelle — demandez à un administrateur de vérifier Paramètres → Fournisseurs IA.",
+		"ERROR_KEY_REJECTED": "Le fournisseur IA a refusé sa clé API. Mettez-la à jour sur la page de paramètres « Fournisseurs IA ».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Le fournisseur IA a refusé sa clé API — demandez à un administrateur de la mettre à jour dans Paramètres → Fournisseurs IA.",
+		"ERROR_RATE_LIMITED": "Le fournisseur IA limite les requêtes.",
+		"RECORDING": "Enregistrement",
+		"PREVIEW": "Aperçu",
+		"PREVIEW_PAGE": "Page",
+		"PREVIEW_NEW_TAB": "Ouvrir dans un nouvel onglet",
+		"PREVIEW_CLOSE": "Fermer l'aperçu",
+		"PREVIEW_UNAVAILABLE": "Aucun aperçu n'est disponible pour ce fichier.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Ouvrir dans Documents",
+		"ATTACH_UPLOADING": "Envoi en cours…",
+		"ATTACH_DOCUMENT": "Document"
 	},
 	"HEADER_TITLE": {
 		"FOR": "pour",
@@ -3667,6 +3892,21 @@
 		"REDIRECT_TO_HOME": "Vous serez bientôt redirigé vers la page d'accueil"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Trouvez la documentation, obtenez des réponses et contactez l'équipe derrière Gauzy.",
+		"DOCUMENTATION": "Documentation",
+		"DOCUMENTATION_DESC": "Guides et référence pour chaque fonctionnalité de Gauzy.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Réponses aux questions les plus fréquentes.",
+		"SUPPORT_CHAT": "Chat d'assistance",
+		"SUPPORT_CHAT_DESC": "Discutez avec notre équipe d'assistance.",
+		"REPORT_ISSUE": "Signaler un problème",
+		"REPORT_ISSUE_DESC": "Un bug ? Ouvrez un ticket sur GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Code source, versions et discussions.",
+		"WEBSITE": "Site web de Gauzy",
+		"WEBSITE_DESC": "En savoir plus sur la plateforme Gauzy.",
+		"ABOUT_LINK": "À propos de Gauzy",
+		"ABOUT_LINK_DESC": "Détails de version, licence et liens.",
 		"HELP": "Aidez",
 		"KNOWLEDGE_BASE": "Base de connaissances",
 		"CHOSE_ICON": "Choisissez l'icône à définir",
@@ -3765,7 +4005,8 @@
 		"ROLES_PERMISSIONS": "Rôles et autorisations",
 		"TIME_TRACKING": "Suivi du temps",
 		"ESTIMATE": "Estimation",
-		"DASHBOARD": "Tableau de bord"
+		"DASHBOARD": "Tableau de bord",
+		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3863,6 +4104,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Allez sur le tableau de bord, Gérer les statistiques des employés, Tableau de suivi du temps."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Espace central des documents de l'entreprise : téléversements, pages wiki, relecture et connaissances IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3977,6 +4221,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Tous droits réservés.",
+		"DESCRIPTION": "Ever® Gauzy™ est une plateforme ouverte de gestion d'entreprise pour les économies collaboratives, à la demande et du partage — ERP, CRM, HRM, ATS et gestion de projet avec suivi du temps intégré.",
+		"LICENSE": "Open source, publié sous la licence",
+		"VERSION_DETAILS": "Détails de version",
+		"VERSION_MISMATCH": "L'application web et l'API ont été construites à partir de commits différents — un déploiement est peut-être en cours.",
+		"WEB_APP": "Application web",
+		"API": "API",
+		"UNTAGGED": "build sans tag",
+		"API_UNAVAILABLE": "Version de l'API indisponible",
+		"LEARN_MORE": "En savoir plus",
 		"ABOUT": "À propos"
 	},
 	"FOOTER": {
@@ -4369,6 +4623,20 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Surveillance active : le temps et l'activité sont enregistrés",
+		"MONITORING_IDLE": "Agent inactif",
+		"MONITORING_TRAY_ACTIVE": "Surveillance active, enregistrement : {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Surveillance en pause : rien n'est enregistré",
+		"MONITORING_CAPTURE_TIME": "temps et applications actives",
+		"MONITORING_CAPTURE_SCREENSHOTS": "captures d'écran",
+		"MONITORING_CAPTURE_INPUT": "activité du clavier et de la souris",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Sélectionner un client",
+			"SELECT_PROJECT": "Sélectionner un projet",
+			"SELECT_TEAM": "Sélectionner une équipe",
+			"SELECT_TASK": "Sélectionner une tâche",
+			"DESCRIPTION": "Ajouter une description"
+		},
 		"IS_BILLABLE": "Est facturable.",
 		"STOP_TIMER": "Arrêter le minuteur",
 		"START_TIMER": "Démarrer le chronomètre",
@@ -4474,7 +4742,7 @@
 			"SELECT_DEFAULT_CDN": "Sélectionnez le serveur CDN par défaut pour la mise à jour.",
 			"TOGGLE_UPDATE_LOCALLY": "Basculer pour mettre à jour localement",
 			"LOCAL_SERVER": "Serveur Local",
-			"LOCAL_SERVER_NOTE": "Le répertoire sélectionné doit certainement contenir les manifestes <strong>latest.yml</strong> et/ou <strong>latest-mac.yml</strong> afin de valider la mise à jour.",
+			"LOCAL_SERVER_NOTE": "Le répertoire sélectionné doit contenir le manifeste de mise à jour de votre système (Windows : <strong>latest-x64.yml</strong> ou <strong>latest-arm64.yml</strong> ; Linux : <strong>latest-x64-linux.yml</strong> ou <strong>latest-arm64-linux-arm64.yml</strong> ; macOS : <strong>latest-mac.yml</strong>) ainsi que les fichiers de mise à jour qu'il référence, afin de valider la mise à jour.",
 			"OTHER_SETTINGS": "Autres paramètres",
 			"ALLOW_PRERELEASE_VERSIONS": "Autoriser les versions de prépublication.",
 			"CHECK_UPDATE_APP_VERSION": "Vérifiez et mettez à jour la version de votre application.",
@@ -4838,7 +5106,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Captures d'écran",
 			"OF": "du",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Capture d’écran prise à {{ time }}",
+			"POSITION": "Capture d’écran {{ position }} sur {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Avertissement. Le compte à rebours est en marche, vous ne pouvez supprimer les captures d'écran que si vous arrêtez le minuteur ou depuis l'application Timer.",
 		"DELETE_CONFIRM": "Êtes-vous certain de vouloir supprimer ces captures d'écran et ce journal des temps ?",
@@ -4887,7 +5157,9 @@
 		"NO_SCREENSHOT": "Aucune capture d'écran",
 		"NO_SCREENSHOTS": "Pas de captures d'écran.",
 		"NO_RECORD_FOUND": "Aucun résultat trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet.",
-		"SCREEN_SELECTED": "{{count}} captures d’écran sélectionnées"
+		"SCREEN_SELECTED": "{{count}} captures d’écran sélectionnées",
+		"NO_TIME_TRACKED": "Aucun temps suivi",
+		"MINUTES_TRACKED": "{{ minutes }} min suivies"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Créons votre première organisation",
@@ -4913,6 +5185,16 @@
 		"BUFFER_AT_START": "Tampon au démarrage",
 		"BUFFER_AT_END": "Tampon à la fin",
 		"BREAK_TIME": "Pause",
+		"DETAILS": "Détails",
+		"PARTICIPANTS": "Participants",
+		"FORM_HINT": "Indiquez l'objet de la réunion, sa date et les participants.",
+		"DETAILS_HINT": "Ordre du jour, lieu et notes visibles par tous les invités.",
+		"SCHEDULE": "Horaire",
+		"SCHEDULE_HINT": "Choisissez la date et le créneau, avec une marge et une pause facultatives.",
+		"BUFFER_TIME_HINT": "Garder du temps libre avant ou après la réunion.",
+		"BREAK_TIME_HINT": "Interrompre la réunion pour une courte pause.",
+		"BREAK_START": "La pause commence à",
+		"PARTICIPANTS_HINT": "Personnes qui reçoivent l'invitation.",
 		"ARE_YOU_SURE": "Es-tu certain(e) ? Cette action est irréversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4957,7 +5239,9 @@
 		"CANCEL": "Annuler le rendez-vous",
 		"TIMEZONE": "Votre fuseau horaire:",
 		"CHANGE": "(Changer)",
+		"CHANGE_TIMEZONE": "Modifier",
 		"SELECT_EMPLOYEE_ERROR": "Veuillez sélectionner un employé.",
+		"SELECT_EMPLOYEE_HINT": "Choisissez la personne à rencontrer, puis un horaire qui vous convient.",
 		"EXPIRED_OR_CANCELLED": "Ce rendez-vous a expiré ou a été annulé.",
 		"EMAIL_SENT": "Un courriel a été envoyé à l'hôte ainsi qu'à tous les participants pour cette réunion.",
 		"NO_ACTIVE_EVENT_TYPES": "Il n'y a pas de types d'événements actifs.",
@@ -5004,7 +5288,10 @@
 			"payment-receipt": "Reçu de paiement",
 			"reject-candidate": "Rejeter le Candidat"
 		},
-		"HTML_EDITOR": "Éditeur HTML"
+		"HTML_EDITOR": "Éditeur HTML",
+		"FULL_PREVIEW": "Aperçu complet",
+		"VIEW_GRID": "Grille",
+		"VIEW_EDITOR": "Éditeur"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Les pipelines.",
@@ -5055,53 +5342,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fournisseur de fichiers",
+		"SHOW_SECRET": "Afficher le secret",
+		"HIDE_SECRET": "Masquer le secret",
+		"SUMMARY": {
+			"TITLE": "Configuration actuelle",
+			"DESCRIPTION": "Derniers paramètres enregistrés — utilisés par les nouveaux envois.",
+			"PROVIDER": "Fournisseur",
+			"BUCKET": "Bucket / nom du cloud",
+			"REGION": "Région",
+			"ENDPOINT": "Point de terminaison",
+			"CREDENTIALS": "Identifiants",
+			"CREDENTIALS_SAVED": "Enregistrés",
+			"CREDENTIALS_INCOMPLETE": "Incomplets",
+			"CREDENTIALS_NONE": "Non définis",
+			"CREDENTIALS_NOT_NEEDED": "Non requis",
+			"SERVER_DEFAULT": "Valeur par défaut du serveur"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Où obtenir les clés",
+			"LOCAL": {
+				"NAME": "Disque local",
+				"DESCRIPTION": "les fichiers sont enregistrés sur le système de fichiers du serveur API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "les fichiers sont enregistrés dans un bucket AWS S3. Utilisez une clé d'accès IAM pouvant lire et écrire dans le bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "stockage cloud compatible S3. Les identifiants sont vérifiés auprès de Wasabi lors de l'enregistrement."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hébergement d'images et de vidéos. Le nom du cloud et les clés API se trouvent dans la console Cloudinary, sous API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "stockage d'objets compatible S3 avec CDN optionnel. Créez une clé d'accès Spaces dans le panneau de contrôle DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Stockage local",
+			"WHERE": "Les fichiers envoyés sont écrits sur le système de fichiers du serveur API.",
+			"NO_CONFIG": "Rien à configurer — le stockage local fonctionne immédiatement.",
+			"WARNING": "Les fichiers sont perdus si le serveur est redéployé sans volume persistant, et ils ne sont pas partagés entre plusieurs instances de l'API. Utilisez un fournisseur cloud en production."
+		},
+		"CHECK": {
+			"BUTTON": "Vérifier la configuration",
+			"OK": "Tous les champs obligatoires sont remplis et les URL sont valides. Les clés elles-mêmes ne sont vérifiées que par le fournisseur.",
+			"OK_LOCAL": "Le stockage local ne nécessite aucune configuration.",
+			"OK_SERVER_DEFAULTS": "Rien ne manque. Laissés vides, ces champs utilisent la configuration du serveur :",
+			"MISSING": "Manquant :",
+			"INVALID_URL": "URL http(s) non valide :",
+			"HTTPS_REQUIRED": "Doit utiliser https:// — les clés sont envoyées à cette adresse :"
+		},
 		"S3": {
 			"HEADER": "Configuration S3",
+			"SUBTITLE": "Stockez les fichiers envoyés dans un bucket Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Identifiants",
+				"CREDENTIALS_HINT": "Une clé d'accès IAM pouvant lire et écrire dans le bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Où les fichiers envoyés sont écrits."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La partie publique de la paire de clés.",
+				"SECRET_ACCESS_KEY": "Affichée une seule fois, à la création de la clé. Les valeurs enregistrées sont renvoyées masquées.",
+				"REGION": "La région AWS du bucket, par ex. us-east-1 ou eu-west-1.",
+				"BUCKET": "Le nom du bucket tel qu'il apparaît dans la console S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Identifiant d'accès clé",
+				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Configuration Wasabi",
+			"SUBTITLE": "Stockez les fichiers envoyés dans un bucket Wasabi via son API compatible S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Identifiants",
+				"CREDENTIALS_HINT": "Une paire de clés d'accès issue de la console Wasabi.",
+				"BUCKET": "Bucket et point de terminaison",
+				"BUCKET_HINT": "Où les fichiers envoyés sont écrits.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La partie publique de la paire de clés.",
+				"SECRET_ACCESS_KEY": "Affichée une seule fois, à la création de la clé. Les valeurs enregistrées sont renvoyées masquées.",
+				"REGION": "La région du bucket, par ex. us-east-1 ou eu-central-1.",
+				"SERVICE_URL": "Le point de terminaison S3 de cette région.",
+				"BUCKET": "Lettres minuscules, chiffres, points et tirets. Les noms sont uniques sur tout Wasabi.",
+				"FORCE_PATH_STYLE": "Adresse les fichiers sous la forme endpoint/bucket/fichier au lieu de bucket.endpoint/fichier. Laissez activé sauf besoin d'URL de type virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Point de terminaison pour cette région :",
+			"USE_SUGGESTION": "L'utiliser",
+			"SAVE_NOTE": "À l'enregistrement, Gauzy utilise ces identifiants pour créer le bucket dans Wasabi. Si Wasabi refuse la requête, les paramètres ne sont pas enregistrés.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Identifiant de clé d'accès",
+				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau",
-				"SERVICE_URL": "URL de service"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL du service",
+				"FORCE_PATH_STYLE": "Forcer les URL de type chemin"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "ID de la clé d'accès",
+				"ACCESS_KEY_ID": "ID de clé d'accès",
 				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
 				"REGION": "Région",
-				"BUCKET": "Seau",
+				"BUCKET": "Bucket",
 				"SERVICE_URL": "URL du service"
 			}
 		},
 		"CLOUDINARY": {
 			"HEADER": "Configuration Cloudinary",
+			"SUBTITLE": "Stockez les fichiers envoyés dans Cloudinary et diffusez-les via son réseau de distribution.",
+			"SECTIONS": {
+				"ACCOUNT": "Compte",
+				"ACCOUNT_HINT": "Ces trois valeurs se trouvent dans la console Cloudinary, sous API Keys.",
+				"DELIVERY": "Diffusion",
+				"DELIVERY_HINT": "Comment les liens vers les fichiers sont construits."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Le nom affiché en haut de votre console Cloudinary.",
+				"ACCESS_API_KEY": "Identifie le compte ; utilisée avec le secret API.",
+				"ACCESS_API_SECRET": "Les valeurs enregistrées sont renvoyées masquées.",
+				"DELIVERY_URL": "Adresse de base des liens. Gardez https://res.cloudinary.com sauf si vous utilisez un domaine personnalisé.",
+				"SECURE": "Construit les liens en https://. Laissez sur True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Nom de Cloudinary",
-				"ACCESS_API_KEY": "Identifiant de clé d'accès",
-				"ACCESS_API_SECRET": "Clé d'accès secrète",
-				"DELIVERY_URL": "URL de livraison",
-				"SECURE": "Sécurisé"
+				"CLOUD_NAME": "Nom du cloud",
+				"ACCESS_API_KEY": "Clé API",
+				"ACCESS_API_SECRET": "Secret API",
+				"DELIVERY_URL": "URL de diffusion",
+				"SECURE": "Sécurisé (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Le nom de Cloudinary",
-				"ACCESS_API_KEY": "Clé d'accès identifiant",
-				"ACCESS_API_SECRET": "Clé d'accès secrète",
-				"DELIVERY_URL": "URL de livraison",
-				"SECURE": "Sécurisé"
+				"CLOUD_NAME": "Nom du cloud",
+				"ACCESS_API_KEY": "Clé API",
+				"ACCESS_API_SECRET": "Secret API",
+				"DELIVERY_URL": "URL de diffusion",
+				"SECURE": "Sécurisé (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Configuration DigitalOcean",
+			"SUBTITLE": "Stockez les fichiers envoyés dans un Space DigitalOcean via son API compatible S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Identifiants",
+				"CREDENTIALS_HINT": "Une clé d'accès Spaces issue du panneau de contrôle DigitalOcean.",
+				"BUCKET": "Space et point de terminaison",
+				"BUCKET_HINT": "Où les fichiers envoyés sont écrits.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "La partie publique de la paire de clés.",
+				"SECRET_ACCESS_KEY": "Affichée une seule fois, à la création de la clé. Les valeurs enregistrées sont renvoyées masquées.",
+				"SERVICE_URL": "Le point de terminaison du datacenter de votre Space, par ex. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fixé à us-east-1, comme l'attend Spaces ; le datacenter est déterminé par le point de terminaison.",
+				"BUCKET": "Le nom du Space.",
+				"CDN_URL": "Facultatif. Le point de terminaison CDN du Space, si le CDN est activé.",
+				"FORCE_PATH_STYLE": "Adresse les fichiers sous la forme endpoint/space/fichier au lieu de space.endpoint/fichier."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID de clé d'accès",
+				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
+				"REGION": "Région",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL du service",
+				"CDN_URL": "URL du CDN",
+				"FORCE_PATH_STYLE": "Forcer les URL de type chemin"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID de clé d'accès",
+				"SECRET_ACCESS_KEY": "Clé d'accès secrète",
+				"REGION": "Région",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "URL du service",
+				"CDN_URL": "URL du CDN"
 			}
 		}
 	},
@@ -5150,7 +5575,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Fournisseur de SMS",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Envoyez des notifications et des invitations par SMS via Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentation"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Gérer les fonctionnalités pour '{{ name }}'"
@@ -5171,7 +5598,18 @@
 			"SYSTEM": "Système",
 			"FILTERS": {
 				"TO": "A",
-				"TEMPLATE_LANGUAGE": "Modèle/Langue"
+				"TEMPLATE_LANGUAGE": "Modèle/Langue",
+				"RECIPIENT": "Destinataire",
+				"TEMPLATE": "Modèle",
+				"STATUS": "Statut",
+				"ALL_RECIPIENTS": "Tous les destinataires",
+				"ALL_TEMPLATES": "Tous les modèles",
+				"ALL_STATUSES": "Tous les statuts",
+				"SENT": "Envoyé",
+				"FAILED": "Échec",
+				"ARCHIVED": "Archivés",
+				"SHOWING": "{{ count }} sur {{ total }} affichés",
+				"NO_MATCH": "Aucun e-mail ne correspond à ces filtres."
 			}
 		}
 	},
@@ -5189,7 +5627,11 @@
 			"invoice": "Facture",
 			"estimate": "Estimation",
 			"receipt": "Reçu"
-		}
+		},
+		"VIEW_GRID": "Grille",
+		"VIEW_EDITOR": "Éditeur",
+		"FULL_PREVIEW": "Aperçu complet",
+		"SAVED": "Le modèle '{{ templateName }}' a été enregistré"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "S'inscrire",
@@ -5221,7 +5663,8 @@
 				"TERMS_AND_CONDITIONS": "Conditions générales",
 				"AND": " et ",
 				"PRIVACY_POLICY": "Politique de confidentialité"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Le mot de passe doit contenir au moins 4 caractères"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5231,6 +5674,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",
 		"OR_SIGN_IN_WITH": "Ou connectez-vous avec",
+		"SIGN_IN_WITH_EVER_ID": "Se connecter avec Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Se connecter avec Keycloak",
 		"FORGOT_EMAIL_TITLE": "Mot de passe oublié ?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Connexion avec un code magique",
@@ -5331,7 +5776,15 @@
 		"HOTKEYS": "Raccourcis clavier",
 		"HELP": "Aidez-moi",
 		"SIGN_OUT": "Déconnecter",
-		"PROFILE": "Profil"
+		"PROFILE": "Profil",
+		"ACCOUNT": "Compte",
+		"PREFERENCES": "Préférences",
+		"DOWNLOAD_APPS": "Télécharger les applications",
+		"DOWNLOAD_MACOS": "Télécharger pour macOS",
+		"DOWNLOAD_WINDOWS": "Télécharger pour Windows",
+		"DOWNLOAD_LINUX": "Télécharger pour Linux",
+		"DOWNLOAD_MOBILE": "Télécharger l'application mobile",
+		"DOWNLOAD_BROWSER_EXTENSION": "Télécharger l'extension de navigateur"
 	},
 	"WORKSPACES": {
 		"MENUS": {

@@ -13,6 +13,13 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# docker/build-push-action uploads a build record artifact and a job summary for every build.
+# The record holds every build-arg value in plain text, and on a public repo anyone signed in to
+# GitHub can download it, so neither is produced. (BuildKit `secrets:` are never recorded.)
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+
 jobs:
   gauzy-mcp:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
@@ -44,8 +51,13 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+          # VERDACCIO_TOKEN is a BuildKit build SECRET, never a build-arg: build-args are recorded
+          # in the image config blob and these ghcr packages are public, so a build-arg is readable
+          # via `docker history`. See the header on .deploy/mcp*/Dockerfile.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
 
       - name: Docker images list

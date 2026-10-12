@@ -6,19 +6,38 @@ export const HumanResourcesPage = {
 	// The employee name inside a row is rendered by ngx-avatar as `a.link-text`.
 	employeeRowNameCss: '.table-scrollable ngx-avatar a.link-text',
 	// The selected employee's name is read from the PAGE-HEADER employee selector label, not the HR
-	// card's `.employee-name` span. Reason: clicking an accounting row calls accounting.selectEmployee()
+	// card's `.identity-name` span. Reason: clicking an accounting row calls accounting.selectEmployee()
 	// which writes store.selectedEmployee WITHOUT `fullName`; the HR card binds `selectedEmployee.fullName`
 	// (`human-resources.component.html`) so that span renders EMPTY via this path. The header
 	// ga-employee-selector (`ng-select.employee` -> `ng-label-tmp`) instead renders the name from its own
 	// employee list via getShortenedName(firstName,lastName), so it correctly shows e.g. "Default Employee".
 	employeeNameCss: 'ng-select.employee .selector-template span',
-	// HR dashboard cards are ga-info-block components; the title lives in `.info-block .info-text`
-	// (the old `.statistic-component .title` was the accounting aggregate cards, not these per-employee ones).
-	infoTextCss: '.info-block .info-text',
-	// The clickable card element carrying the (click)="handleClick()" handler that opens the popup.
-	infoBlockCss: '.info-block',
-	// Placeholder lost its "Select " prefix along with every other combobox placeholder.
-	chartDropdownCss: '[placeholder="Chart"]',
+	// The HR dashboard no longer renders ga-info-block. Its figures now live in two kinds of element:
+	//   * `.kpi`      — the four headline tiles (Total Income, Total Expenses, Profit, Total Bonus)
+	//   * `.stat-row` — the component rows in the Breakdown panel (Income, Direct Income,
+	//                   Total Expense without salary, Salary, and the bonus components)
+	// Titles are in the label span of each, never mixed with the `.kpi-meta` / `.stat-row-meta`
+	// formula text — so a text filter here matches a heading and not the formula that quotes it.
+	infoTextCss: '.kpi-label, .stat-row-label',
+	// The clickable elements carrying the (click) handler that opens a history popup. Both are real
+	// <button>s now (the old .info-block was a click handler on a div).
+	//
+	// A card's rendered text is NOT just its own heading and figure: each one also prints its
+	// arithmetic as body text in `.kpi-meta` / `.stat-row-meta`, and that arithmetic quotes OTHER
+	// cards' headings — PROFIT_CALC is "Profit (Net Income) = Total Income {x} - Total Expenses {y}".
+	// Since Playwright's `hasText` is a CASE-INSENSITIVE SUBSTRING match over an element's whole
+	// subtree, filtering these cards by "Total Income" or by "Total Expenses" matches the Profit tile
+	// as well as the intended one. `clickCardByHeaderText` therefore scopes its text match to
+	// `infoTextCss` (the label span) via `filter({ has: ... })` rather than matching the card whole —
+	// otherwise which card got clicked would come down to which one `.first()` found in DOM order.
+	// The Bonus tile is deliberately excluded: it is `.kpi--static` (a div) because there is no BONUS
+	// history type to open.
+	infoBlockCss: '.kpi:not(.kpi--static), .stat-row:not(.is-static)',
+	// The redesigned switcher carries no `placeholder` — the panel header already names the control,
+	// and what it does expose is a TRANSLATED `aria-label`, which would tie this locator to the active
+	// language. `.chart-switcher` is the class the header gives it, and it sits on the same `nb-select`
+	// host the placeholder attribute used to, so the click target is unchanged.
+	chartDropdownCss: 'nb-select.chart-switcher',
 	// nb-select options render into `.option-list nb-option`.
 	dropdownOptionCss: '.option-list nb-option',
 	// Records-history popup is `nb-card.records` with `<h5 class="title">` inside its header.

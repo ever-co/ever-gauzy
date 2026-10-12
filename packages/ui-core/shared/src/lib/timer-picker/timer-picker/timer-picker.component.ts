@@ -24,6 +24,8 @@ export class TimerPickerComponent implements OnInit {
 	onTouched: any = () => {};
 	val: any;
 	@Input() disabled = false;
+	/** Accessible name for the inner combobox (a sibling `<label>` cannot name it). */
+	@Input() ariaLabel: string;
 	@Input()
 	public get min(): string {
 		return this._min;

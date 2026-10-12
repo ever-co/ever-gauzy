@@ -27,7 +27,7 @@ import {
 	RoleService
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
-import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
+import { ChangelogEntryComponent, NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
@@ -102,7 +102,9 @@ const COMPONENTS = [
 		NgxFaqModule,
 		ThemeModule,
 		SharedModule,
-		PasswordFormFieldModule
+		PasswordFormFieldModule,
+		// Standalone card shared with the changelog sidebar
+		ChangelogEntryComponent
 	],
 	declarations: [...COMPONENTS],
 	providers: [

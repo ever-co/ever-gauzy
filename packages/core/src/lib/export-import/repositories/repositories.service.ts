@@ -6,6 +6,7 @@ import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction } from '@gauzy/utils';
 import { ConnectionEntityManager } from '../../database/connection-entity-manager';
+import { isExportSkipped } from '../skip-export.decorator';
 import {
 	AccountingTemplate,
 	Activity,
@@ -1271,6 +1272,14 @@ export class RepositoriesService implements OnModuleInit {
 		return result;
 	}
 
+	/**
+	 * Registers a repository for every entity contributed by a plugin, and adds it to the
+	 * export/import graph unless the entity is marked with {@link SkipExport}.
+	 *
+	 * 🛑 The skip only removes the entity from `dynamicEntitiesClassMap` — the repository is still
+	 * registered on `this[className]`, because the rest of the platform resolves plugin repositories
+	 * through it. Excluding an entity from the archive must not make it unreachable.
+	 */
 	async createDynamicInstanceForPluginEntities() {
 		for await (const entity of getEntitiesFromPlugins(this.configService.plugins)) {
 			if (!isFunction(entity)) {
@@ -1280,9 +1289,16 @@ export class RepositoriesService implements OnModuleInit {
 			const className = camelCase(entity.name);
 			const repository = this._connectionEntityManager.getRepository(entity);
 
+			this[className] = repository;
+
+			// Derived data (extracted text, embeddings, caches): rebuilt after an import rather than
+			// carried in the archive. See `skip-export.decorator.ts` for the full rationale.
+			if (isExportSkipped(entity)) {
+				continue;
+			}
+
 			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(repository);
 
-			this[className] = repository;
 			this.dynamicEntitiesClassMap.push(repositoryRelationsGraph);
 		}
 	}

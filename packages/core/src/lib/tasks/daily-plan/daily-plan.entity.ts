@@ -2,8 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
+import { isPostgres } from '@gauzy/config';
 import { DailyPlanStatusEnum, ID, IDailyPlan, IEmployee, IOrganizationTeam, ITask } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -15,6 +16,18 @@ import {
 import { Employee, OrganizationTeam, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 
+/**
+ * Creating a plan looks up the employee's plan for that day in that team, and removing a task from
+ * upcoming plans reads the employee's plans from today on: `(employeeId, organizationTeamId, date)`
+ * serves both. Created by `AddDailyPlanEmployeeTeamDateIndex1790000023000`.
+ *
+ * An employee has at most one live plan per team and day of `date`, the plans without a team
+ * forming a team of their own: the unique index `IDX_daily_plan_employee_team_day_unique` on (tenantId,
+ * organizationId, employeeId, COALESCE(organizationTeamId, nil uuid), day of `date`, NULL once
+ * soft-deleted), created by `AddDailyPlanEmployeeTeamDayUniqueIndex1790000026000`. It indexes
+ * expressions, which the ORM decorators cannot declare, so only the migration creates it.
+ */
+@ColumnIndex('IDX_daily_plan_employee_team_date', ['employeeId', 'organizationTeamId', 'date'])
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })
 export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPlan {
 	[EntityRepositoryType]?: MikroOrmDailyPlanRepository;
@@ -37,6 +50,17 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@IsString()
 	@MultiORMColumn()
 	status: DailyPlanStatusEnum;
+
+	/**
+	 * Task ids in the order the owner arranged them. Stored as sent: `tasks` is not sorted by it, and
+	 * may hold tasks missing from it or have lost some of its ids, so clients reconcile the two.
+	 */
+	@ApiPropertyOptional({ type: () => [String] })
+	@IsOptional()
+	@IsArray()
+	@IsUUID('all', { each: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : 'json', nullable: true })
+	taskOrder?: ID[] | null;
 
 	/*
 	|--------------------------------------------------------------------------

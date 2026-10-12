@@ -12,6 +12,8 @@
 
 import type { IAiChatModel } from '@gauzy/contracts';
 import type { IAiChatModelList, IAiProviderCredentials } from './provider.types';
+import { ssrfSafeFetch } from './ssrf';
+import type { HostnameResolver } from './ssrf';
 
 /** How long a fetched catalogue stays fresh. Model lists change on the order of weeks. */
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
@@ -161,12 +163,31 @@ export function credentialCacheKey(credentials: IAiProviderCredentials | null): 
  *
  * Throws on any non-2xx. Callers are expected to catch and fall back to a curated list — a catalogue
  * is a convenience, never a gate.
+ *
+ * The request goes through the SSRF egress guard because for the self-hosted providers this URL is
+ * built from a TENANT-SUPPLIED base URL: loopback/private/link-local targets are refused, the host
+ * is re-checked after DNS resolution, and redirects are not followed (GHSA-w3mx-m5cr-3gxp).
+ *
+ * @param url - Absolute catalogue URL.
+ * @param init.headers - Extra request headers (auth).
+ * @param init.allowPrivateHost - Permit a private target. Pass
+ *        `isPrivateAiProviderEndpointAllowed(credentials)`, which allows operator-chosen addresses and
+ *        leaves everything a TENANT credential leads to — the URL it carries, or the provider default it
+ *        falls back to — to the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` flag.
+ * @param init.resolver - DNS resolver for the egress pre-flight; `dns.lookup` when unset (tests inject one).
  */
-export async function fetchCatalogueJson<T>(url: string, init?: { headers?: Record<string, string> }): Promise<T> {
-	const response = await fetch(url, {
-		headers: { accept: 'application/json', ...(init?.headers ?? {}) },
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
-	});
+export async function fetchCatalogueJson<T>(
+	url: string,
+	init?: { headers?: Record<string, string>; allowPrivateHost?: boolean; resolver?: HostnameResolver }
+): Promise<T> {
+	const response = await ssrfSafeFetch(
+		url,
+		{
+			headers: { accept: 'application/json', ...(init?.headers ?? {}) },
+			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+		},
+		{ allowPrivateHost: init?.allowPrivateHost, resolver: init?.resolver }
+	);
 	if (!response.ok) {
 		// Deliberately does NOT include the response body: these endpoints are called with a
 		// credential, and error bodies have been known to echo request context back.
@@ -250,6 +271,44 @@ export async function keyedCatalogue(options: {
 		const { value, stale } = await options.cache.get(credentialCacheKey(credentials), () =>
 			options.load(credentials)
 		);
+		return value.length ? { models: value, source: 'live', stale } : { models: curated, source: 'curated' };
+	} catch {
+		return { models: curated, source: 'curated' };
+	}
+}
+
+/**
+ * Resolve the catalogue of a SELF-HOSTED / local server (Speaches, LocalAI, whisper.cpp, an
+ * OpenAI-compatible gateway) — the exact case {@link keyedCatalogue} deliberately refuses.
+ *
+ * `keyedCatalogue` returns curated whenever a custom `baseUrl` is set, because for a VENDOR provider
+ * the key then belongs to that endpoint and must not be sent to the vendor's official catalogue host.
+ * For a local server there is no vendor host: the tenant's base URL IS the server, and its `/models`
+ * is the only list worth showing (which whisper models are actually installed, which chat models are
+ * loaded). So this calls `load(baseUrl, credentials)` against that base URL — and NOTHING is fetched
+ * when there is no base URL to fetch from.
+ *
+ * Fails open like the others: any error yields `curated`. The cache key includes the base URL as
+ * well as the (hashed) key, since two tenants can point at two different servers.
+ */
+export async function selfHostedCatalogue(options: {
+	credentials: IAiProviderCredentials | null;
+	/** Address used when the credential carries none (a provider's conventional local default). */
+	defaultBaseUrl?: string;
+	curated: IAiChatModel[];
+	cache: ICatalogueCache<IAiChatModel[]>;
+	load: (baseUrl: string, credentials: IAiProviderCredentials | null) => Promise<IAiChatModel[]>;
+}): Promise<IAiChatModelList> {
+	const { credentials, curated } = options;
+	// Fetch ONLY for a configured server: an explicit base URL, or the provider's conventional
+	// address once the tenant/operator has actually opted in (a credential row / env exists).
+	// With no credentials at all, nothing is fetched — otherwise every unconfigured local
+	// provider would make the settings page wait on a localhost timeout.
+	const baseUrl = credentials ? credentials.baseUrl || options.defaultBaseUrl : undefined;
+	if (!baseUrl) return { models: curated, source: 'curated' };
+	try {
+		const key = `${baseUrl}|${credentialCacheKey(credentials)}`;
+		const { value, stale } = await options.cache.get(key, () => options.load(baseUrl, credentials));
 		return value.length ? { models: value, source: 'live', stale } : { models: curated, source: 'curated' };
 	} catch {
 		return { models: curated, source: 'curated' };

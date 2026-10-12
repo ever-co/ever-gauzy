@@ -1,6 +1,21 @@
 import type { IAiProviderCredentials } from '@gauzy/plugin-ai-chat';
 import { openAiProviderDefinition } from './ai-provider-openai.provider';
 
+// The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
+// lookup with a fixed public address, so no case waits on — or depends on — real DNS.
+jest.mock('dns', () => ({
+	...jest.requireActual('dns'),
+	lookup: (_hostname: string, _options: unknown, callback: (error: null, addresses: unknown) => void) =>
+		callback(null, [{ address: '93.184.215.14', family: 4 }])
+}));
+
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * Dictation reached the user broken twice, and both defects were in the request this builds:
  *
@@ -72,6 +87,31 @@ describe('openAiProviderDefinition.transcribe', () => {
 		expect(options.method).toBe('POST');
 		expect((options.headers as Record<string, string>).authorization).toBe('Bearer sk-test-transcribe');
 		expect(form.get('model')).toBe('gpt-4o-mini-transcribe');
+		// No language hint unless the caller passes one: an empty `language` field is rejected.
+		expect(form.has('language')).toBe(false);
+	});
+
+	it('honours the tenant-chosen speech model and language hint', async () => {
+		// The speech model used to be a hardcoded constant; the settings page now lets a tenant pick
+		// one per provider and the engine passes it through `options.model`.
+		const fetchMock = capture({ text: 'bonjour' });
+		await openAiProviderDefinition.transcribe!(Buffer.from('fake-audio-bytes'), 'audio/webm', credentials(), {
+			model: 'whisper-1',
+			language: 'fr'
+		});
+
+		const { form } = requestOf(fetchMock);
+		expect(form.get('model')).toBe('whisper-1');
+		expect(form.get('language')).toBe('fr');
+	});
+
+	it('advertises its speech catalogue with the default model first', () => {
+		expect(openAiProviderDefinition.speech?.defaultModel).toBe('gpt-4o-mini-transcribe');
+		expect(openAiProviderDefinition.speech?.models.map((model) => model.id)).toEqual([
+			'gpt-4o-mini-transcribe',
+			'gpt-4o-transcribe',
+			'whisper-1'
+		]);
 	});
 
 	it.each([
@@ -107,7 +147,13 @@ describe('openAiProviderDefinition.transcribe', () => {
 	it('treats silence as an empty transcript rather than an error', async () => {
 		// A recording with nothing in it is a valid answer: the user pressed the mic and said nothing.
 		// Throwing here would surface as a failed dictation and send them looking at their API key.
-		capture({});
+		//
+		// Silence is what OpenAI actually sends for it: a `text` field holding an empty string. The
+		// fixture used to be `{}` — a body with NO `text` at all — which the shared helper
+		// deliberately rejects as a malformed response ("never as an empty transcript", pinned in
+		// ai-chat's openai-compatible-transcribe.spec.ts), so this case contradicted that contract
+		// and failed on every run.
+		capture({ text: '' });
 		await expect(transcribe()).resolves.toBe('');
 	});
 

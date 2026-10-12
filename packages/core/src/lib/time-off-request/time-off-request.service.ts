@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -15,11 +15,22 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
+
+/**
+ * Columns the time off table can be sorted by. Any other `order` key from the query string is ignored.
+ */
+const SORTABLE_COLUMNS = ['start', 'end', 'requestDate'] as const;
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
@@ -75,15 +86,22 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
 
-			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
-			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
+			// Both dates are optional, and the appointment calendar and the availability slots send none:
+			// `moment(undefined)` is "now", so the window collapsed to a single instant and no time off was
+			// ever listed. The format also used `hh`, the 12-hour clock without AM / PM, which moved an
+			// afternoon bound 12 hours back. Same bounds as `pagination()` now, and only when both are given.
+			// A plain presence check: `isNotEmpty` treats a Date (no enumerable property) as empty
+			const isGiven = (value: unknown) => value !== undefined && value !== null && value !== '';
+			const hasRange = isGiven(startDate) && isGiven(endDate);
+			const start = hasRange ? moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
+			const end = hasRange ? moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const where: any = {
 						tenantId,
 						organizationId,
-						start: { $gte: start, $lte: end }
+						...(hasRange ? { start: { $gte: start, $lte: end } } : {})
 					};
 					if (employeeId) {
 						where.employees = { id: employeeId };
@@ -115,10 +133,12 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						});
 					}
 
-					query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
-						begin: start,
-						end: end
-					});
+					if (hasRange) {
+						query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
+							begin: start,
+							end: end
+						});
+					}
 					const items = await query.getMany();
 					return { items, total: items.length };
 				}
@@ -130,13 +150,24 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			// Verify the record belongs to the current tenant before updating
+			// Verify the record belongs to the current tenant before updating, and make the verified id
+			// the one that is saved: the body is not DTO-validated, so a body id spread after the path id
+			// used to re-point the save (TypeORM save() with an existing PK is an UPDATE of that row).
+			//
+			// `findOneByIdString` THROWS NotFoundException when nothing matches the tenant-scoped
+			// conditions, so this call is the check — an id belonging to another tenant, or to no row
+			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
 			await this.findOneByIdString(id);
 			return await this.save({
-				id,
-				...timeOffRequest
+				...timeOffRequest,
+				id
 			});
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (the 404 above, and the ForbiddenException that
+			// `save()` raises for a cross-tenant row) instead of flattening them to 400.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}
@@ -164,6 +195,17 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	 * @returns
 	 */
 	public async pagination(options: any) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
+		const order = parseSortOrder(options?.order, SORTABLE_COLUMNS);
+		const hasOrder = Object.keys(order).length > 0;
+
+		// "Include Archived" unchecked hides archived requests; checked (or not sent) adds no filter.
+		// The query DTO JSON-parses `where` values, so the flag arrives as a boolean (or a string when called directly).
+		const hideArchived = [false, 'false'].includes(options?.where?.includeArchived);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -171,14 +213,23 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					const where: any = { tenantId };
 
 					if (isNotEmpty(options?.where)) {
-						const { organizationId, employeeIds, isHoliday, includeArchived, status, startDate, endDate } =
-							options.where;
+						const {
+							organizationId,
+							employeeIds,
+							isHoliday,
+							status,
+							startDate,
+							endDate,
+							user,
+							description,
+							policy
+						} = options.where;
 						if (isNotEmpty(organizationId)) where.organizationId = organizationId;
 						if (isNotEmpty(employeeIds)) where.employees = { id: { $in: employeeIds } };
 						if (isNotEmpty(status)) where.status = status;
 						if (isNotEmpty(isHoliday) && isNotEmpty(Boolean(JSON.parse(isHoliday))))
 							where.isHoliday = false;
-						if (isNotEmpty(includeArchived)) where.isArchived = Boolean(JSON.parse(includeArchived));
+						if (hideArchived) where.isArchived = false;
 
 						let sd = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
 						let ed = moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
@@ -188,31 +239,35 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						}
 						where.$or = [{ start: { $gte: sd, $lte: ed } }, { end: { $gte: sd, $lte: ed } }];
 
-						// Text search filters matching TypeORM branch
-						if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
-							const keywords: string[] = where.user.name.split(' ');
+						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
+						if (isNotEmpty(user) && isNotEmpty(user.name)) {
+							const keywords: string[] = splitKeywords(user.name);
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
-								userFilters.push({ employees: { user: { firstName: { $ilike: `%${keyword}%` } } } });
-								userFilters.push({ employees: { user: { lastName: { $ilike: `%${keyword}%` } } } });
+								userFilters.push(
+									{ employees: { user: { firstName: mikroOrmContains(keyword) } } },
+									{ employees: { user: { lastName: mikroOrmContains(keyword) } } }
+								);
 							});
-							if (where.$or) {
+							// Only whitespace typed: no keyword, nothing to filter on
+							if (userFilters.length > 0 && where.$or) {
 								where.$and = [{ $or: where.$or }, { $or: userFilters }];
 								delete where.$or;
-							} else {
+							} else if (userFilters.length > 0) {
 								where.$or = userFilters;
 							}
 						}
-						if (isNotEmpty(where.description)) {
-							where.description = { $ilike: `%${where.description}%` };
+						if (isNotEmpty(description)) {
+							where.description = mikroOrmContains(description);
 						}
-						if (isNotEmpty(where.policy) && isNotEmpty(where.policy.name)) {
-							where.policy = { name: { $ilike: `%${where.policy.name}%` } };
+						if (isNotEmpty(policy) && isNotEmpty(policy.name)) {
+							where.policy = { name: mikroOrmContains(policy.name) };
 						}
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 						populate: (options.relations || []) as any[],
+						...(hasOrder ? { orderBy: order } : {}),
 						limit: options.take ? options.take : 10,
 						offset: options.skip ? (options.take || 10) * (options.skip - 1) : 0
 					});
@@ -226,6 +281,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						query.setFindOptions({
 							skip: options.skip ? options.take * (options.skip - 1) : 0,
 							take: options.take ? options.take : 10,
+							...(hasOrder ? { order } : {}),
 							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 						});
 					}
@@ -286,10 +342,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {
 								qb.andWhere({ isHoliday: false });
 							}
-							if (isNotEmpty(where.includeArchived)) {
-								qb.andWhere({
-									isArchived: Boolean(JSON.parse(where.includeArchived))
-								});
+							if (hideArchived) {
+								qb.andWhere({ isArchived: false });
 							}
 							if (isNotEmpty(where.status)) {
 								qb.andWhere({
@@ -299,7 +353,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							qb.andWhere(
 								new Brackets((web: WhereExpressionBuilder) => {
 									if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
-										const keywords: string[] = where.user.name.split(' ');
+										const keywords: string[] = splitKeywords(where.user.name);
 										keywords.forEach((keyword: string, index: number) => {
 											web.orWhere(p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`), {
 												[`keyword_${index}`]: `%${keyword}%`

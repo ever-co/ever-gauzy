@@ -17,6 +17,7 @@ import { EmailTemplateService } from '@gauzy/ui-core/core';
 import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
+import { SandboxedSrcdocDirective } from './sandboxed-srcdoc.directive';
 
 @NgModule({
 	imports: [
@@ -39,6 +40,6 @@ import { EmailTemplatesComponent } from './email-templates.component';
 		LanguageSelectorModule
 	],
 	providers: [EmailTemplateService],
-	declarations: [EmailTemplatesComponent]
+	declarations: [EmailTemplatesComponent, SandboxedSrcdocDirective]
 })
 export class EmailTemplatesModule {}

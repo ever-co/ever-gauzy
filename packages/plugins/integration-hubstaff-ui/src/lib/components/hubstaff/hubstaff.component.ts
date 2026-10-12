@@ -19,6 +19,14 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
     standalone: false
 })
 export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateIntegrationEdit = Object.freeze(['INTEGRATION_EDIT']) as string[];
+
 	public settingsSmartTable: any;
 	public organizations$: Observable<IHubstaffOrganization[]>;
 	public organizations: IHubstaffOrganization[] = [];
