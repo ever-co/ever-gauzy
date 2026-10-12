@@ -2,7 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, In, Not } from 'typeorm';
 import { MultiORMEnum } from './../core/utils';
-import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord, SYSTEM_DEFAULT_ROLES } from '@gauzy/contracts';
+import {
+	IPagination,
+	IRole,
+	ITenant,
+	RolesEnum,
+	IRoleMigrateInput,
+	IImportRecord,
+	SYSTEM_DEFAULT_ROLES
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
@@ -98,6 +106,19 @@ export class RoleService extends TenantAwareCrudService<Role> {
 			}
 		}
 		return records;
+	}
+
+	/**
+	 * Finds the roles a team manager can give to a team member (EMPLOYEE and MANAGER) in the current tenant.
+	 *
+	 * @returns The matching roles, paginated like `findAll`.
+	 */
+	async findTeamAssignableRoles(): Promise<IPagination<IRole>> {
+		return await this.findAll({
+			where: {
+				name: In([RolesEnum.EMPLOYEE, RolesEnum.MANAGER])
+			}
+		});
 	}
 
 	/**
