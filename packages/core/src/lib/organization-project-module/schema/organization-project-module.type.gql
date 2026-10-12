@@ -1,0 +1,265 @@
+# The project module's GraphQL types.
+#
+# A project module is a unit of work the platform groups a project's tasks into: a named, dated part of
+# a project — a phase, a milestone, a workstream — that a set of employees is assigned to and a set of
+# teams shares. The row is as wide as a board card needs it: the plan's two dates, the lifecycle state
+# and the two flags live on it, so a board renders a card without joining anything.
+#
+# **The relations are identifiers here, and the collections are absent.** `parentId` and `projectId` are
+# the two relation columns this row itself carries: they travel with every read of the row, and they are
+# what a client needs to reach the parent module — read as `organizationProjectModule` with that value —
+# or the project the module belongs to, whose row the project domain owns. Every other relation is joined
+# by the reads whose caller names it in `relations` and not by the reads this surface performs, so a
+# field for one of them would be absent on exactly the answers this surface serves and a client would
+# read null and conclude the module has none:
+#
+# - `members` is the module-employee pivot, the `OrganizationProjectModuleEmployee` row. The employee
+#   reads join that pivot, but they answer modules rather than pivot rows, so it is neither a member of
+#   this type nor a type of its own here. Who works a module is read from the employee's side, as
+#   `employeeProjectModules` or `organizationProjectModulesByEmployee`.
+# - `teams` is what the module is shared with. The team read joins the pivot behind that pairing and
+#   answers modules, so the direction this surface carries is the other one: `teamProjectModules`.
+# - `tasks` are the tasks filed under the module. The work-tracking domain answers them as `moduleTasks`,
+#   narrowed by the module's own identifier, which is where that pivot is read from.
+# - `children`, `views` and `organizationSprints` are the collections the delivered reads join only when
+#   a REST caller names them, which this surface never does. A module's children are the modules whose
+#   `parentId` is this row, which the connection's own filter states.
+#
+# `status` is carried as its value rather than declared as a schema enum. The vocabulary is the
+# contracts package's own `ProjectModuleStatusEnum`, which the delivered routes validate against, so
+# declaring it here would claim a vocabulary this domain does not own — and a second domain that needed
+# the same value set would collide with this file rather than reuse it.
+#
+# `isFavorite` is a column of this row rather than a relation: the platform's favourite marker for a
+# module is written onto the module, so the flag travels with every read of it.
+
+"""
+One part of a project: a named, dated unit of work that employees are assigned to and teams share.
+"""
+type OrganizationProjectModule {
+	id: ID!
+	"The module's name, as its author wrote it. A module that names nothing is not a module."
+	name: String!
+	"""
+	The module's description, as the delivered write stores it: the brief's rich text, sanitised
+	through the shared server-side allowlist before it is persisted.
+	"""
+	description: String
+	"""
+	The lifecycle of the module, as the platform's own value: `backlog`, `planned`, `in-progress`,
+	`paused`, `completed` or `cancelled`. Carried as its value rather than declared here as an enum,
+	because the value set belongs to the contracts package and the delivered write validates against it.
+	"""
+	status: String
+	"The day the module starts. Null on a module that has not been scheduled."
+	startDate: DateTime
+	"The day the module is due to end. Null on a module with no end stated."
+	endDate: DateTime
+	"Whether the module is visible beyond the people it is assigned to."
+	public: Boolean
+	"The favourite marker of the row: whether the caller's own module list keeps it to hand."
+	isFavorite: Boolean
+	"""
+	The module this one is filed under — the self-reference that turns a flat list into a tree. The
+	parent row is not joined by the delivered reads, which join a relation only when a REST caller names
+	it; the identifier travels, and the parent itself is read as `organizationProjectModule`.
+	"""
+	parentId: ID
+	"""
+	The project the module belongs to. The row is joined only when a REST caller names it in `relations`,
+	which this surface never does, so the identifier is what is carried and the project itself is read
+	from the project domain, whose own type it is.
+	"""
+	projectId: ID
+	"The organization the module is filed under, by identifier."
+	organizationId: ID
+	"The tenant the module belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the module was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it the answer to the write that withdrew a row would not say so.
+	"""
+	deletedAt: DateTime
+	"When the module was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the module was filed."
+	createdAt: DateTime
+	"When the module was last changed."
+	updatedAt: DateTime
+	"Whether the module is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the module is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the module, by identifier. The user row is not joined by this surface's reads."
+	createdByUserId: ID
+	"The person who last changed the module, by identifier. The user row is not joined here."
+	updatedByUserId: ID
+	"The person who withdrew the module, by identifier. The user row is not joined here."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of modules.
+"""
+type OrganizationProjectModuleEdge {
+	node: OrganizationProjectModule!
+	cursor: String!
+}
+
+"""
+One page of modules, with the total the filters select and the boundary cursors.
+"""
+type OrganizationProjectModuleConnection {
+	nodes: [OrganizationProjectModule!]!
+	edges: [OrganizationProjectModuleEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a module list may be sorted by.
+
+The two timestamps, the name and the two dates of the module's own plan. `status` is filterable and not
+sortable: the vocabulary is the platform's, and its alphabetical order is not a lifecycle — a board
+orders modules by the dates it planned them for, and by the day they were written when it has no plan.
+"""
+enum OrganizationProjectModuleSortField {
+	createdAt
+	updatedAt
+	name
+	startDate
+	endDate
+}
+
+"""
+The order the modules are returned in. At most three keys are accepted.
+"""
+input OrganizationProjectModuleSort {
+	field: OrganizationProjectModuleSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a module list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered reads answer, because the connection narrows the rows
+the service returned: a member a read does not select would be a filter that silently selects nothing.
+
+`members`, `teams` and `tasks` are absent for that reason and one more: the list read hydrates none of
+them onto the rows it answers, so a filter on one would be evaluated against a row that carries none of
+them and would select nothing at all — the worst answer a filter can give. Who works a module, which
+teams share it and which tasks are filed under it are the questions the reads of their own domains
+answer.
+
+`tenantId` is absent too: the delivered read is scoped to the caller's own tenant by the service, from
+the credential rather than from the request, so every row the connection narrows already carries the
+caller's tenant and a member for it could only select all of them or none.
+"""
+input OrganizationProjectModuleFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	status: StringFilter
+	startDate: DateTimeFilter
+	endDate: DateTimeFilter
+	public: BooleanFilter
+	isFavorite: BooleanFilter
+	"The parent module, by identifier. `isNull: true` selects the roots of the tree."
+	parentId: IDFilter
+	projectId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [OrganizationProjectModuleFilter!]
+	or: [OrganizationProjectModuleFilter!]
+	not: OrganizationProjectModuleFilter
+}
+
+"""
+What a caller states when it files a module.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped from
+the credential and is never a member, but the organization is a member the caller names and the delivered
+route validates against the caller's own memberships. It is carried as its identifier rather than as the
+organization row, which is the shape this surface has for every relation.
+
+`name` is required because the column is not nullable: a module that names nothing names no unit of work.
+`description` is the brief's rich text and is sanitised through the shared server-side allowlist by the
+delivered write, so what a caller reads back is the sanitised text rather than the text it sent.
+
+`memberIds` and `managerIds` are the two lists the delivered write turns into the module-employee pivot:
+the service reads each identifier as an active employee of the module's own organization and tenant,
+writes one pivot row per employee and marks the managers among them. The pivot row itself is never
+stated — its own columns are the write's to derive rather than a caller's to assert — and `members`, the
+relation column the delivered body also validates, is not a member here at all: the write replaces it
+with the pivot rows it builds from these two lists, so a caller that stated it would have its list
+silently discarded.
+
+`tasks` are the tasks to file under the module, by identifier. The pairing is not stored on this row: the
+delivered write reads each identifier as an existing task and adds the module to that task's own module
+list, which is where the pairing lives. The identifiers are stated rather than the task rows because an
+identifier is what the write reads off each entry; a task's own list is written from the task's side.
+
+The two lifecycle markers are not members. `archivedAt` and `deletedAt` are what a lifecycle route writes
+about a row that exists rather than facts a caller states when it files one, and a create that carried
+them would file a module that is already withdrawn. `isActive` and `isArchived` are members, because they
+are flags an operator sets on the row rather than markers of a lifecycle the routes perform. There is no
+member for the tenant, for the same reason there is none on any other write on this platform.
+"""
+input CreateOrganizationProjectModuleInput {
+	organizationId: ID!
+	name: String!
+	description: String
+	status: String
+	startDate: DateTime
+	endDate: DateTime
+	public: Boolean
+	isFavorite: Boolean
+	isActive: Boolean
+	isArchived: Boolean
+	"The parent module to file this one under. Omit for a root of the tree."
+	parentId: ID
+	"The project the module belongs to, by identifier."
+	projectId: ID
+	"The employees the module is assigned to, by identifier."
+	memberIds: [ID!]
+	"The employees who manage the module, by identifier. They are written into the same pivot, marked."
+	managerIds: [ID!]
+	"The tasks to file under the module, by identifier."
+	tasks: [ID!]
+}
+
+"""
+What a caller states when it edits a module that exists.
+
+The members are the create input's with the criterion stated, and every one of them but `id` is optional,
+which is the shape the delivered body has: it is validated from a partial type, the write persists the
+members it carries and a member the caller leaves out is left as it is.
+
+Two of the lists are the exception that proves the reading of "left out" and "stated empty". `memberIds`,
+`managerIds` and `tasks` are read as a set whenever they are stated: an empty `tasks` list is the
+instruction to take every task out of the module, and leaving it out is the instruction to leave the task
+set as it is.
+"""
+input UpdateOrganizationProjectModuleInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	description: String
+	status: String
+	startDate: DateTime
+	endDate: DateTime
+	public: Boolean
+	isFavorite: Boolean
+	isActive: Boolean
+	isArchived: Boolean
+	parentId: ID
+	projectId: ID
+	memberIds: [ID!]
+	managerIds: [ID!]
+	tasks: [ID!]
+}

@@ -33,5 +33,6 @@ export enum ApprovalPolicyTypesEnum {
 export enum ApprovalPolicyTypesStringEnum {
 	TIME_OFF = 'TIME_OFF',
 	EQUIPMENT_SHARING = 'EQUIPMENT_SHARING',
-	BUSINESS_TRIP = 'BUSINESS_TRIP'
+	BUSINESS_TRIP = 'BUSINESS_TRIP',
+	PURCHASE_ORDER = 'PURCHASE_ORDER'
 }

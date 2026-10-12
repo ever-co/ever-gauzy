@@ -1,0 +1,140 @@
+# The time-off balance domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/time-off-balance` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+#
+# **A balance is a computed figure rather than a resource, and this file is written as such.** The row
+# is a ledger: `remaining` is not stored state a client may set, it is `accrued + carriedForward -
+# taken - carriedOut`, recomputed by the delivered write every time one of those four columns moves.
+# So the four writes below are operations on that arithmetic — an allocation sets what accrued, a
+# deduction and a reversal spend and unspend, a carry-forward moves the unused part of one year into
+# the next — and none of them is named `create` or `update`, because none of them writes a body over a
+# row. The class doc in `time-off-balance.resolver.ts` states the arithmetic and the two columns it is
+# computed from.
+#
+# **Why the caller's own balances are a second root field.** `GET /me` answers the same rows as `GET /`
+# read through the credential rather than through an argument: the delivered read resolves the employee
+# from the request context and refuses a caller that has no engagement of its own. The connection
+# protocol has no member that can state that — a filter narrows the rows a read returned, and this is a
+# different read — so it is a root field of its own, `myTimeOffBalances`, and it takes no `employeeId`
+# because offering one would be offering a choice the delivered read does not give.
+#
+# **A day count is stated in days, and it is not money.** Every quantity on this resource is a number
+# of days, fractional because half a day is a real entitlement: the entity stores each one as a
+# `numeric(10,2)` column with a numeric transformer, which is why they are carried as the exact
+# `Decimal` scalar rather than as a `Float` — `0.5` has no exact binary representation, and a ledger
+# that rounds is a ledger that disagrees with itself. No member of this domain is an amount of money.
+#
+# **`carry-forward`'s answer is a count, not a row.** The delivered write rolls every employee's unused
+# days for one policy from one year into the next and answers how many balances it moved — it writes
+# two rows per employee and there is no single row it would be honest to answer instead. So the field
+# answers `TimeOffCarryForwardResult`, whose one member says so.
+#
+# **The two lists are connections, and each takes the narrowing the delivered read applies before the
+# connection sees anything.** The delivered read is an `IPagination` over a DTO whose `organizationId`
+# is required by validation and whose `employeeId`/`policyId`/`year` are applied to the store, and it
+# answers one page of its own. The connection's `filter` narrows the rows that read returned; the three
+# arguments narrow the read. Stating both is what keeps the field honest about which of the two a
+# caller is doing.
+
+extend type Query {
+	"""
+	The leave balances the caller may see, newest year first.
+
+	The organization and the three narrowing members are the delivered query DTO's own, and they narrow
+	the read rather than the answer: the delivered method applies them to the store and returns one page
+	of its own. When the caller states no sort, the order is the delivered read's — `year` descending —
+	with the identifier appended so the order is total.
+	"""
+	timeOffBalances(
+		"The organization the balances belong to. The delivered query DTO requires it."
+		organizationId: ID!
+		"One employee's balances. A caller without the permission to change the selected employee is answered its own whatever it states here."
+		employeeId: ID
+		"One policy's balances."
+		policyId: ID
+		"The year the balances are tracked for."
+		year: Int
+		filter: TimeOffBalanceFilter
+		sort: [TimeOffBalanceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimeOffBalanceConnection!
+
+	"""
+	The caller's own leave balances, newest year first.
+
+	The delivered `GET /me` route answers these by resolving the employee from the credential, so this
+	field takes no employee and a caller that has no engagement of its own is refused by the delivered
+	read — its refusal, in its own words, rather than a second one restated here.
+	"""
+	myTimeOffBalances(
+		"The organization the balances belong to. The delivered query DTO requires it."
+		organizationId: ID!
+		"One policy's balances."
+		policyId: ID
+		"The year the balances are tracked for."
+		year: Int
+		filter: TimeOffBalanceFilter
+		sort: [TimeOffBalanceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimeOffBalanceConnection!
+}
+
+extend type Mutation {
+	"""
+	Sets the accrued days of one employee's balance under one policy for one year, creating the row when
+	this is the first allocation.
+
+	The delivered write **replaces** `accrued` rather than adding to it, so re-running an allocation for
+	a period is idempotent instead of compounding, and `remaining` is recomputed from it. An employee or
+	a policy that is not the caller's own is refused by the delivered write before anything is stored.
+	"""
+	allocateTimeOffBalance(input: AllocateTimeOffBalanceInput!): TimeOffBalance!
+
+	"""
+	Spends days from one balance, which is what approving a request does.
+
+	The delivered write performs the subtraction and the balance check in one conditional statement, so
+	two approvals landing at the same moment cannot each read the same `taken` and lose one of the two
+	deductions. A request for more days than are left is refused as a request rather than answered with a
+	clamped row.
+	"""
+	deductTimeOffBalance(input: AdjustTimeOffBalanceInput!): TimeOffBalance!
+
+	"""
+	Gives days back to one balance, which is what cancelling an approved request does.
+
+	`days` is positive on both this field and the deduction above: the operation decides the direction,
+	which is what stops a negative number from turning a spend into a grant. The delivered write clamps
+	at zero, so reversing twice can never push `taken` below it.
+	"""
+	reverseTimeOffBalance(input: AdjustTimeOffBalanceInput!): TimeOffBalance!
+
+	"""
+	Rolls the unused days of one policy from one year into the next.
+
+	The answer is **how many employee balances were rolled over** — a count rather than a row, because
+	the delivered write touches two rows per employee: it records what left the source year in
+	`carriedOut` and what arrived in the target year's `carriedForward`, so the same day is never
+	available in two years at once. It is safe to run again: both sides are set to the recomputed value
+	rather than added to. A policy that does not allow carry-forward, or a target year that is not later
+	than the source year, is refused as a request.
+	"""
+	carryForwardTimeOffBalances(input: CarryForwardTimeOffBalanceInput!): TimeOffCarryForwardResult!
+}

@@ -2,7 +2,14 @@ import { IUser } from '@gauzy/contracts';
 import { LockMode, raw } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { Between, EntityManager, In, LessThan, MoreThan } from 'typeorm';
-import { MultiORMEnum } from '../../core';
+// `MultiORMEnum` is taken from the module that declares it rather than from the `../../core` barrel.
+// That barrel re-exports `core.module`, and `CoreModule` now imports `GraphqlApiModule`, which reaches
+// every feature module including `AuthModule` -> `RefreshTokenModule` -> `TokenModule` -> this file.
+// Going through the barrel therefore closed a require cycle whose victim was `TokenModule`: the
+// refresh-token module ran `TokenModule.forFeatureAsync(...)` while `token.module` was still
+// mid-evaluation and got `undefined`. A repository needs one enum, not the application's root module,
+// so it asks the file that owns the enum and the ring is broken at the edge that never belonged.
+import { MultiORMEnum } from '../../core/utils';
 import { CrudService } from '../../core/crud/crud.service';
 import { Token } from '../entities/token.entity';
 import { IToken, ITokenFilters, ITokenQueryResult, ITokenRepository, TokenStatus } from '../interfaces';
@@ -88,10 +95,14 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 			const tokenMeta = em.getMetadata(Token);
 			const usageCountColumn = tokenMeta.properties.usageCount?.fieldNames?.[0] ?? 'usageCount';
 
-			await this.mikroOrmTokenRepository.nativeUpdate({ id: tokenId }, {
-				lastUsedAt: new Date(),
-				usageCount: raw('?? + 1', [usageCountColumn])
-			} as Partial<Token>);
+			// With the update date and version TypeORM's update query writes (see `CrudService.mikroOrmUpdateRow`).
+			await this.mikroOrmTokenRepository.nativeUpdate(
+				{ id: tokenId },
+				this.mikroOrmUpdateRow({
+					lastUsedAt: new Date(),
+					usageCount: raw('?? + 1', [usageCountColumn])
+				}) as Partial<Token>
+			);
 			return;
 		}
 

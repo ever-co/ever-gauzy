@@ -1,0 +1,291 @@
+# The join request's GraphQL types.
+#
+# A join request is the row between a person and a team: an address asks to join one organization team,
+# the platform mails a confirmation code to that address, and a manager of the tenant either accepts or
+# rejects the ask. The row carries the ask, the state it is in, and the credentials the confirmation
+# travels with — which is why so much of what follows is about what is *not* carried.
+#
+# **Three members are deliberately absent, and each is one the delivered answer withholds rather than
+# one this file forgot.** `code`, `token` and `expiredAt` carry `@Exclude({ toPlainOnly: true })` on the
+# entity, and the REST surface answers through `instanceToPlain`, so the other protocol removes all
+# three from every answer it gives. A GraphQL field for one of them would serve, through the second
+# door, exactly what the first withholds: the confirmation code is the whole of the proof that the
+# address belongs to the caller, the token stands in for that same proof, and the instant the row lapses
+# is not a fact a client needs in order to act on the request. The liveness a manager reads is
+# `isExpired`, which the entity's own load subscriber derives from that instant on every row a read
+# loads.
+#
+# **The soft-delete column is absent as well.** No route of this resource withdraws a request and none
+# restores one, so the column is the effect of no capability a client can reach; the state a request is
+# in is `status`, and `status` is a member of this type.
+#
+# **The relations are identifiers.** `organizationTeamId` and `userId` are columns of this row: they
+# travel with every read of it and they are what a client needs in order to reach the team or the person
+# the request names. The rows themselves are joined only by reads whose caller names them in
+# `relations`, and the reads this surface mirrors name none — a field for one of them would be absent on
+# exactly the answers this surface serves, and a client would read null and conclude the request names
+# nobody. The team is read on the organization-team domain and the person on the user domain.
+
+"""
+One request to join an organization team, as the delivered reads answer it.
+"""
+type OrganizationTeamJoinRequest {
+	"""
+	The row's identifier. It is present on every answer of the connection and withheld on the
+	validation's answer: the delivered reader removes it from the row before it answers, so that a
+	caller holding a confirmation code cannot then read the row by identifier. The field is therefore
+	nullable, which is the honest statement of the one answer on this surface that has no identifier.
+	"""
+	id: ID
+	"The tenant the request was filed in. Stamped by the delivered write, never stated by the caller."
+	tenantId: ID
+	"The organization the requested team belongs to. Stamped by the delivered write."
+	organizationId: ID
+	"The address that asked to join, and the address the confirmation is mailed to."
+	email: String!
+	"""
+	The name the applicant stated. The delivered write does not persist a stated name — see
+	`CreateOrganizationTeamJoinRequestInput` — so this member is read on a row some other write filled
+	in, and is null on a request filed over either protocol.
+	"""
+	fullName: String
+	"A link the applicant stated about itself. Read and written the same way `fullName` is."
+	linkAddress: String
+	"A position the applicant stated about itself. Read and written the same way `fullName` is."
+	position: String
+	"""
+	The state of the request. Null while the ask has not been validated, which is the state the
+	delivered write of the ask stores; `REQUESTED` once the mailed code has been presented; `ACCEPTED`
+	or `REJECTED` once a manager has moved it.
+	"""
+	status: OrganizationTeamJoinRequestStatus
+	"""
+	Whether the confirmation has lapsed. Derived on load by the entity's own subscriber from the
+	instant the row expires, which is withheld from the answer — this flag is the liveness fact a
+	manager reads, and a lapsed request is one no code can confirm.
+	"""
+	isExpired: Boolean!
+	"""
+	The team the ask is for. The row is read on the organization-team domain, because the delivered
+	reads this surface mirrors join no relation.
+	"""
+	organizationTeamId: ID!
+	"""
+	The person the invitation produced once it was accepted: the user of the tenant an acceptance
+	recorded or created. Null while the request is pending or rejected. Read on the user domain, which
+	is where that row's own type lives.
+	"""
+	userId: ID
+	"When the ask was filed."
+	createdAt: DateTime
+	"When the row last moved."
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The state one join request is in.
+
+The vocabulary is the domain's own — `OrganizationTeamJoinRequestStatusEnum` types this row's column
+and nothing else — so it is declared here as a closed set rather than carried as its value. All three
+members are ones the delivered reader can produce.
+"""
+enum OrganizationTeamJoinRequestStatus {
+	"The ask was confirmed with the mailed code and is waiting for a manager."
+	REQUESTED
+	"A manager accepted the ask, and the person is now a member of the team or of the tenant."
+	ACCEPTED
+	"A manager rejected the ask."
+	REJECTED
+}
+
+"""
+The two moves the delivered write acts on, as the route's `:action` segment carries them.
+
+`OrganizationTeamJoinRequestStatusEnum` holds a third member, `REQUESTED`, and this enum does not: it is
+the state a request is already in, and no route makes it a move. The delivered writer switches on
+exactly the two members below, in two branches, and writes nothing at all for any other value — so a
+free string here would accept every other value and answer the caller as though the move had been made,
+while the row kept the state it had. A silent no-op read as success is the worst answer a write can
+give, and the closed set is what makes such a value unrepresentable rather than ignored.
+"""
+enum OrganizationTeamJoinRequestAction {
+	"Accepts the ask: the person joins the team, and a user row is created when the tenant has none."
+	ACCEPTED
+	"Rejects the ask: the row is marked rejected and nothing else is written."
+	REJECTED
+}
+
+"""
+The boundary of one page of join requests.
+"""
+type OrganizationTeamJoinRequestEdge {
+	node: OrganizationTeamJoinRequest!
+	cursor: String!
+}
+
+"""
+One page of join requests, with the total the filters select and the boundary cursors.
+"""
+type OrganizationTeamJoinRequestConnection {
+	nodes: [OrganizationTeamJoinRequest!]!
+	edges: [OrganizationTeamJoinRequestEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a join-request list may be sorted by.
+"""
+enum OrganizationTeamJoinRequestSortField {
+	createdAt
+	updatedAt
+	email
+	status
+	isExpired
+}
+
+"""
+The order the requests are returned in. At most three keys are accepted.
+"""
+input OrganizationTeamJoinRequestSort {
+	field: OrganizationTeamJoinRequestSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the state of a request.
+"""
+input OrganizationTeamJoinRequestStatusFilter {
+	eq: OrganizationTeamJoinRequestStatus
+	ne: OrganizationTeamJoinRequestStatus
+	in: [OrganizationTeamJoinRequestStatus!]
+	nin: [OrganizationTeamJoinRequestStatus!]
+	isNull: Boolean
+}
+
+"""
+The fields a join-request list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows the
+rows the service returned: a member the read does not select would be a filter that silently selects
+nothing, which is the worst answer a filter can give. `isExpired` is here although it is not a column,
+because the entity derives it on every row a read loads and "which of these are still live" is the
+first question a manager's queue is read by. The relations the row carries as identifiers — the team
+and the person — are here for the same reason they are members of the type above.
+"""
+input OrganizationTeamJoinRequestFilter {
+	id: IDFilter
+	email: StringFilter
+	fullName: StringFilter
+	linkAddress: StringFilter
+	position: StringFilter
+	status: OrganizationTeamJoinRequestStatusFilter
+	organizationTeamId: IDFilter
+	userId: IDFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	isExpired: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [OrganizationTeamJoinRequestFilter!]
+	or: [OrganizationTeamJoinRequestFilter!]
+	not: OrganizationTeamJoinRequestFilter
+}
+
+"""
+What the ask and the resend both answer.
+
+The delivered handlers answer this pair and nothing else: the row they wrote is not in it, and neither
+is any fact about whether a confirmation was mailed. That is the design rather than an accident — the
+ask is filed by an address that holds no credential, so an answer that distinguished "a request was
+filed" from "a request for this address in this team already exists" would let a caller probe which
+addresses have asked to join a team. `status` is the member the handlers state in the body, not the
+transport's response code: the create route's transport answers `201` while the body it carries states
+`200`.
+"""
+type OrganizationTeamJoinRequestOutcome {
+	"The status the delivered handlers state in the body: `200` on both routes."
+	status: Int!
+	"The message the delivered handlers state in the body: `OK` on both routes."
+	message: String!
+}
+
+"""
+What a caller states when it asks to join one team.
+
+**Only the members the delivered write actually reads are offered.** `email` and `organizationTeamId`
+are the address and the team the row is filed under, and the six branding members are what the
+confirmation message is composed with — those are the whole of the payload the delivered create builds
+its row from, and it builds it explicitly: the team, the address, the tenant and organization of the
+team, the generated code and token, and a null status. A body member for the applicant's own name, link
+or position is validated by the delivered body and then dropped, so offering one here would be offering
+a write that is accepted and silently discarded; a member for the state would be dropped the same way,
+and the state a new ask is in is what the delivered write decides rather than what a caller states.
+
+Nothing names the tenant or the organization. Both are taken from the team the request names — the
+delivered write reads the team and stamps its tenant and organization — so a caller cannot file a
+request into a scope it does not own, and there is nothing for it to choose.
+"""
+input CreateOrganizationTeamJoinRequestInput {
+	"The address that asks to join. The confirmation code is mailed to it."
+	email: String!
+	"The team to ask to join. The delivered write reads it, and only a public team can be asked for."
+	organizationTeamId: ID!
+	"The application name the confirmation message greets the applicant with."
+	appName: String
+	"The logo the confirmation message shows."
+	appLogo: String
+	"The signature the confirmation message is signed with."
+	appSignature: String
+	"The link to the application the confirmation message points at."
+	appLink: String
+	"The link to the company the confirmation message carries."
+	companyLink: String
+	"The company name the confirmation message carries."
+	companyName: String
+}
+
+"""
+What a caller states when it presents the confirmation mailed to its address.
+
+The address, the team, and one of the two credentials the message carried: the code a human retypes, or
+the token the link carries. **Exactly one of `code` and `token` is required**, which is the rule the
+delivered DTO applies — each of the two is validated only when the other is absent — and it is stated
+here because the delivered read drops a credential that was not supplied rather than matching a row
+that has none: a body stating neither is refused rather than matched against every pending request of
+the team.
+"""
+input ValidateOrganizationTeamJoinRequestInput {
+	"The address the request was filed under."
+	email: String!
+	"The team the request was filed for."
+	organizationTeamId: ID!
+	"The confirmation code from the message. Required when no token is stated."
+	code: String
+	"The confirmation token from the message's link. Required when no code is stated."
+	token: String
+}
+
+"""
+What a caller states when it asks for a fresh confirmation to be mailed.
+
+The same members the ask carries, and for the same reason: the delivered method reads the address, the
+team and the branding off the body and nothing else. The row it rewrites is found by the first two —
+the pending request of that address in that team — so a caller cannot name a row directly, and the
+credentials it replaces are generated rather than stated.
+"""
+input ResendOrganizationTeamJoinRequestCodeInput {
+	"The address the pending request was filed under."
+	email: String!
+	"The team the pending request was filed for."
+	organizationTeamId: ID!
+	appName: String
+	appLogo: String
+	appSignature: String
+	appLink: String
+	companyLink: String
+	companyName: String
+}

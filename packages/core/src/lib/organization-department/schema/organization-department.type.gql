@@ -1,0 +1,186 @@
+# The organization department's GraphQL types.
+#
+# A department is the row an organization files its people and its recruiting under: the unit an
+# employee is a member of, and the unit a candidate is filed into. It carries a name of its own and
+# the columns every row of the platform carries, which is why the object type below is short — and
+# why the few members it does not carry are worth stating rather than leaving to be discovered.
+#
+# **The three collections are absent, and no identifier column stands in for them.** `tags`,
+# `members` and `candidates` are many-to-many pivots: this row holds no column naming any of them, so
+# there is nothing to carry here and a field for one would be absent on exactly the answers this
+# surface serves — a client would read null and conclude the department has no members. The delivered
+# list read joins a relation only when a REST caller names it in the query string, and this surface
+# names none; the people of a department are reached from the employee surface, the tag set from the
+# tag surface and the recruiting pipeline from the candidate surface, each of which owns those rows.
+#
+# **The delivered employee read is the one exception, and it is a root field rather than a member.**
+# That read joins the department-member pivot, which is what makes it a question the connection
+# cannot answer: it is stated as `organizationDepartmentsByEmployee` on the root type beside this
+# one, with the same row type as its node.
+#
+# **The base row's identifiers, timestamps and lifecycle columns are carried in full.** Withdrawing
+# and restoring are delivered routes whose whole effect is the `deletedAt` column, so a type without
+# it could not answer the write that withdrew a row; `archivedAt`, `isActive` and `isArchived` are
+# columns the platform maintains on every row, and they are stated as they are stored rather than
+# interpreted into a lifecycle of their own.
+
+"""
+One unit an organization files its people and its recruiting under.
+"""
+type OrganizationDepartment {
+	id: ID!
+	"The department's name, as the organization writes it. The column is not nullable."
+	name: String!
+	"The organization the department is filed under, by identifier."
+	organizationId: ID
+	"The tenant the department belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the department was withdrawn, or null while it is live. Withdrawing and restoring are
+	delivered routes whose whole effect is this column, so the answer to either write says which
+	state the row is in.
+	"""
+	deletedAt: DateTime
+	"When the department was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the department was filed."
+	createdAt: DateTime
+	"When the department was last changed."
+	updatedAt: DateTime
+	"Whether the department is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the department is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the department, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the department, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the department, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of departments.
+"""
+type OrganizationDepartmentEdge {
+	node: OrganizationDepartment!
+	cursor: String!
+}
+
+"""
+One page of departments, with the total the filters select and the boundary cursors.
+"""
+type OrganizationDepartmentConnection {
+	nodes: [OrganizationDepartment!]!
+	edges: [OrganizationDepartmentEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a department list may be sorted by.
+"""
+enum OrganizationDepartmentSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the departments are returned in. At most three keys are accepted.
+"""
+input OrganizationDepartmentSort {
+	field: OrganizationDepartmentSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a department list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned: a member the read does not select would be a filter that silently
+selects nothing. `name` is here for the obvious reason — a name is how a department is chosen from a
+list of them — and `organizationId` because a department is filed under an organization and a list
+of them is read one organization at a time.
+
+The three pivots are in neither, and that is a statement rather than an omission. `members`, `tags`
+and `candidates` are joined only when a REST caller names the relation in its query string, and this
+surface names none, so a filter on one of them would be evaluated against a row that carries none of
+it and would select nothing at all — the worst answer a filter can give. Who works a department is
+the employee read's question, and that read is a root field of its own precisely because the pivot it
+joins is not a relation the list read loads.
+"""
+input OrganizationDepartmentFilter {
+	id: IDFilter
+	name: StringFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationDepartmentFilter!]
+	or: [OrganizationDepartmentFilter!]
+	not: OrganizationDepartmentFilter
+}
+
+"""
+What a caller states when it files a department.
+
+`name` is required because the column is not nullable: a department that names nothing names no unit
+of the organization. `organizationId` is stated by the caller and is not stamped from the credential
+— the tenant is, and is therefore never a member here — and it is stated without a `!` because the
+relation column is nullable in the store and a caller that files a department without naming an
+organization is answered rather than refused, exactly as its REST counterpart is.
+
+The two identifier lists are the relations the delivered write persists: the employees the
+department is worked by and the tags attached to it. A related row is named by its identifier and
+never by the row beside it, because the write stores the pivot the identifier names — and a list the
+caller does not state is left out of the payload rather than sent empty, because an absent list is
+not an instruction and an empty one is the instruction to clear the pivot.
+"""
+input CreateOrganizationDepartmentInput {
+	name: String!
+	organizationId: ID
+	"The employees the department is worked by, by identifier."
+	memberIds: [ID!]
+	"The tags attached to the department, by identifier."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it edits a department that exists.
+
+The identifier is stated because the delivered route carries it in the path. **The delivered edit
+writes through the create path** — it hands the service the stated body with the path identifier
+merged in, so the row is written where the members are stated and left alone where they are not. A
+member the caller leaves out is therefore left as it is, and a relation list it states replaces the
+pivot.
+"""
+input UpdateOrganizationDepartmentInput {
+	id: ID!
+	name: String
+	organizationId: ID
+	memberIds: [ID!]
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it moves a set of departments into or out of one employee's book.
+
+One payload for both directions because the fact is one: the employee either gains the named
+departments or loses them, and the delivered write applies both lists together in the one call. The
+employee is named by its identifier — the delivered command takes the row the identifier names — and
+a list the caller does not state is left out rather than sent empty, because the handler reads
+"nothing stated" and "nothing to change" as the same instruction.
+"""
+input UpdateOrganizationDepartmentByEmployeeInput {
+	"The organization the departments belong to. The delivered write narrows the rows it touches by it."
+	organizationId: ID!
+	"The employee whose book of departments changes."
+	memberId: ID!
+	"The departments the employee gains, by identifier."
+	addedEntityIds: [ID!]
+	"The departments the employee loses, by identifier."
+	removedEntityIds: [ID!]
+}

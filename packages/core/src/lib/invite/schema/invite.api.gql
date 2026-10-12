@@ -1,0 +1,257 @@
+# The invite domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The domain is served by `/api/invite`, whose controller declares twelve routes and inherits none.
+# **The controller carries no class-level guard and no class-level permission: every route states its
+# own.** Five of them are `@Public()` — the address that is invited holds no credential yet, so the
+# validation of its mailed credential, the acceptance, the refusal and the contact acceptance are
+# served without a guard — and the other seven state `TenantPermissionGuard` and `PermissionGuard`
+# beside their own permission. The resolver class therefore carries the capability gate and nothing
+# else, and each field states exactly what its own route states:
+#
+# - `invites` and `myInvites` read under `ORG_INVITE_VIEW`;
+# - `sendInvites` writes under `ORG_INVITE_EDIT` and `ORG_TEAM_ADD` together, which is the pair its
+#   route states — a send may add people to teams, and the second permission is the one that says so;
+# - `resendInvite`, `inviteOrganizationContact`, `deleteInvite` and `handleInvitationResponse` write
+#   under `ORG_INVITE_EDIT` alone;
+# - `inviteByToken`, `inviteByCode`, `acceptInvite`, `rejectInvite` and
+#   `acceptOrganizationContactInvite` state none of the above — the same two guard classes and the same
+#   permissions their routes state, which is none at all.
+#
+# A field that demanded less than its route would be a way around the permission model, and one that
+# demanded more would refuse a caller the route serves. Neither is a decision this surface gets to make
+# on one protocol only.
+#
+# **`inviteByCode` is a query although its route is a `POST`.** The verb is the transport's: the code
+# travels in a body because a body is where a `POST` carries it, not because the call writes anything.
+# The delivered read matches an invitation by the address and the code and answers it, and it is the
+# same reader the `GET /validate` route reaches through the token — so both are query fields here, and
+# a client reads them as the two halves of one question rather than as a read and a write.
+#
+# **The five `@Public()` fields are behind the same tenant-scoped capability as every other field
+# here, and that is the one thing this surface cannot express fully.** `FEATURE_GRAPHQL` is the code
+# the commerce catalogue declares for the GraphQL endpoint and its resolvers, and `FeatureFlagGuard`
+# reads it from `FEATURE_METADATA` over the handler and then the class — which is why it is stated once
+# here, on the class, and appended to the guard chain the routes below already carry rather than
+# replacing any part of it. The capability it resolves is tenant-scoped: `FeatureService.isFeatureEnabled`
+# answers from the caller's own toggle rows when the request carries a tenant, and falls back to the
+# deployment's configured state when it does not — and `FEATURE_GRAPHQL` is not a code that
+# configuration names, so a request that carries no tenant scope resolves the capability as disabled and
+# is refused. The five `@Public()` routes below are the case that exposes it: their fields are served
+# only when the capability resolves for the caller's scope, which is a narrower door than the routes
+# they mirror, and the delivery has no way to state otherwise — a field cannot be more open than the gate
+# over it. Nothing narrower is stated on those five fields either, because a guard or a permission there
+# would refuse a caller the REST route serves. Dropping the gate to work around the limitation is not an
+# option this delivery has: it would leave the whole endpoint served to a deployment that switched the
+# capability off, which is the defect the gate exists to prevent. The limitation is therefore stated
+# here rather than worked around.
+#
+# The register is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other.
+
+extend type Query {
+	"""
+	The invitations of the caller's tenant, newest first.
+
+	The same service method the delivered list route calls, with the route's own defaults for an
+	unstated request: the route binds its query DTO to the query string — a `where`, the relations to
+	join, the page and the soft-delete flag — and this surface has no query string to bind, so the read
+	runs with none of them and the connection protocol's `filter` is applied to the rows the service
+	returns. The tenant is added to the criterion by the service, from the credential rather than from
+	the caller, so a filter naming another tenant narrows to nothing rather than reading across tenants.
+	"""
+	invites(
+		filter: InviteFilter
+		sort: [InviteSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): InviteConnection!
+
+	"""
+	The invitations waiting for the caller, newest first.
+
+	**A field of its own rather than a filter on the register**, because the delivered read is narrowed
+	by who is asking rather than by anything about the rows: it resolves the caller's own address out of
+	the credential and selects that address's pending, unexpired rows — the ones whose state is still
+	`INVITED`, whose instant has not passed or is absent, and which are neither inactive nor archived.
+	No filter over the register can state "addressed to me", and the register is scoped to the tenant
+	rather than to a person, so a caller that needs its own queue cannot reach it by narrowing.
+
+	Its rows carry fewer members than the connection's, and that is the delivered read's own projection:
+	it selects the identifier, the expiry and the teams, so every other member of `Invite` is absent on
+	these nodes. A client that needs a member this read does not select reads the row through
+	`invites`, which answers the register's columns.
+	"""
+	myInvites(
+		filter: InviteFilter
+		sort: [InviteSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): InviteConnection!
+
+	"""
+	Presents the token a message's link carried.
+
+	The same query the delivered `GET /validate` route dispatches, with the route's own two members: the
+	address and the token. The read verifies the token's own signature against the platform's secret and
+	then matches the invitation the verified payload names, so a token that was not issued for that
+	address is refused rather than matched against a row.
+
+	A miss is a refusal rather than an empty answer: the delivered reader answers an invitation that is
+	not there, has lapsed, or has already been answered with a bare `400`, and this field lets that
+	refusal through rather than turning it into a null. "No such invitation" and "the token was wrong"
+	are one answer on purpose: telling them apart would confirm which tokens are live. The field is
+	nullable only because a query may have no row, never because this read answers one.
+	"""
+	inviteByToken(email: String!, token: String!): Invite
+
+	"""
+	Presents the code that was mailed to an address.
+
+	**A query, although the delivered route is a `POST`.** The verb belongs to the transport: the code
+	travels in a body because a body is where a `POST` carries it, not because anything is written. The
+	delivered read matches the pending, unexpired invitation of that address by its code and answers it,
+	and this field says so in the vocabulary of a read.
+
+	A miss is a refusal for the same reason it is on the token above, and with the same deliberate
+	indistinguishability.
+	"""
+	inviteByCode(email: String!, code: String!): Invite
+}
+
+extend type Mutation {
+	"""
+	Sends invitations to a list of addresses.
+
+	The same command the delivered route dispatches, carrying the same language: the route reads the
+	`language` request header through its own decorator, and `RequestContext.getLanguageCode()` reads
+	that same header off the same request — the bootstrap mounts a request context on the GraphQL
+	endpoint as well as on the prefixed routes — so a caller asking the same question over either
+	protocol is mailed the same message in the same language. Without a header it answers English, which
+	is the decorator's own default.
+
+	The answer is the envelope the delivered handler produces: the invitations it wrote, how many there
+	were, and how many addresses it left alone because they were already invited. The last of the three
+	is the reason the answer is a type of its own rather than a list of invitations — an address that was
+	skipped is a fact about the call, and a client that received only the rows could not tell it from an
+	address that was never named.
+	"""
+	sendInvites(input: CreateInvitesInput!): InviteSendOutcome!
+
+	"""
+	Mails a fresh credential for an invitation that is still pending.
+
+	The same command the delivered route dispatches, in the caller's language, and the delivered route's
+	declared answer is the store's update result or the invitation. **This field answers the invitation**
+	— not the update result, which is a statement about the write rather than a row: it names how many
+	rows the store touched and carries none of what they now hold, so a client could not read the new
+	expiry or state of the invitation it just refreshed. The field therefore re-reads the row it named
+	after the command has run, and answers that.
+
+	The read is by identifier through the same service the register reads through, so an identifier that
+	names nothing is a miss rather than an empty invitation — which is the refusal the delivered re-read
+	would raise for the same call.
+	"""
+	resendInvite(input: ResendInviteInput!): Invite!
+
+	"""
+	Accepts an invitation: the invited person registers, and the credential is spent.
+
+	The same command the delivered route dispatches, with the same two arguments: the body, and the
+	origin the transport carried — the delivered route reads the request's `origin` header and states it
+	as `originalUrl`, which is what the message links are composed from, so the field reads it off the
+	same request rather than asking the caller to state it a second time.
+
+	**The answer is the kernel's `JSON` scalar, and that is a statement rather than a shortcut.** What
+	the command produces depends on the invitation's own kind: an account with its access and refresh
+	tokens, an employee, or a candidate — three different rows, decided by the role the invitation
+	carries rather than by anything the caller states. No single schema type can state that union, and
+	naming one of the three would be a lie about the other two; the document is carried through
+	unchanged instead, and a client reads the members it asked for.
+
+	The credential is spent exactly once: the delivered handlers claim the invitation before they
+	register anybody, so two acceptances racing on one invitation produce one account and one refusal
+	rather than two accounts.
+	"""
+	acceptInvite(input: AcceptInviteInput!): JSON!
+
+	"""
+	Refuses an invitation.
+
+	The same command the delivered route dispatches, with the same single argument — the body, and no
+	language, because the delivered handler reads none. The answer is what the handler answers: the
+	invitation it refused. A refusal that loses a race against an acceptance is a `409` rather than a
+	write, and this field lets that refusal through unchanged.
+	"""
+	rejectInvite(input: RejectInviteInput!): JSON!
+
+	"""
+	Takes up a contact invitation and provisions the contact's own workspace.
+
+	The same command the delivered route dispatches, with the origin the transport carried stated the
+	way the route states it: the route writes the request's `Origin` header onto the body before it
+	dispatches, so the field reads that same header off the same request.
+
+	The answer is the kernel's `JSON` scalar. This acceptance provisions a tenant, its roles and
+	features, an organization and the account that administers it, and returns the store's update result
+	for the invitation — a shape that states nothing about the workspace that was built. The document is
+	carried through unchanged, and a client that needs the invitation's own state reads it through
+	`invites`.
+	"""
+	acceptOrganizationContactInvite(input: AcceptOrganizationContactInviteInput!): JSON!
+
+	"""
+	Invites an existing organization contact to take up a workspace of its own.
+
+	The same command the delivered route dispatches, with the same body: the identifier from the path,
+	the origin from the transport's own header, and the inviter read from the credential rather than
+	stated by the caller — the delivered route passes `request.user` there, which is the account the
+	request was authenticated as, and `RequestContext.currentUser()` reads that same account off the same
+	request.
+
+	**The answer is the kernel's `JSON` scalar.** The route answers an `IOrganizationContact` — a type
+	this schema does not declare, because the contact is the organization-contact domain's resource and
+	is read on that domain's own fields — so carrying it as a document says plainly that the member to
+	read next is served there, rather than declaring a second, partial copy of that type here.
+	"""
+	inviteOrganizationContact(id: ID!): JSON!
+
+	"""
+	Removes an invitation outright.
+
+	The answer says whether the removal happened rather than returning the removed row, because the
+	delivered route answers the store's delete result — a statement about the write and not a row.
+	"""
+	deleteInvite(id: ID!): Boolean!
+
+	"""
+	Accepts or refuses an invitation on the caller's own behalf.
+
+	The same service method the delivered route calls, with the same four arguments: the invitation, the
+	move, the origin the transport carried, and the caller's language. The route reads the move from its
+	path and the service narrows the row to the caller's own address before it writes anything, so this
+	is not a way to answer somebody else's invitation.
+
+	The action is carried as text rather than declared as an enum of this domain's own, because the
+	vocabulary belongs to the contracts and the two members the delivered writer acts on are exactly the
+	two the platform names — see `handleInvitationResponse`'s own service for the transition each makes.
+
+	The answer is the invitation as it now stands: the delivered method re-reads the row after the move
+	and answers it, which is the state a caller needs and not a statement about the write.
+	"""
+	handleInvitationResponse(id: ID!, action: String!): Invite!
+}

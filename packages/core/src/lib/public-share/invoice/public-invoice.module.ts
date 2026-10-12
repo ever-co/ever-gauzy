@@ -7,6 +7,7 @@ import { CommandHandlers } from './commands/handlers';
 import { EstimateEmail, Invoice } from './../../core/entities/internal';
 import { PublicInvoiceController } from './public-invoice.controller';
 import { PublicInvoiceService } from './public-invoice.service';
+import { PublicInvoiceResolver } from './public-invoice.resolver';
 
 @Module({
 	imports: [
@@ -15,6 +16,6 @@ import { PublicInvoiceService } from './public-invoice.service';
 		MikroOrmModule.forFeature([Invoice, EstimateEmail])
 	],
 	controllers: [PublicInvoiceController],
-	providers: [PublicInvoiceService, ...QueryHandlers, ...CommandHandlers]
+	providers: [PublicInvoiceService, PublicInvoiceResolver, ...QueryHandlers, ...CommandHandlers]
 })
 export class PublicInvoiceModule {}

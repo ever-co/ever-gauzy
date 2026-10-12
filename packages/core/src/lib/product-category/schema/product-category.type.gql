@@ -1,0 +1,204 @@
+# The product category's object type.
+#
+# A category is the taxonomy as a tree rather than a flat tag list: `parentId` is the self-reference
+# that turns the flat list into a tree, and `sortOrder` is the ordering of one sibling among the
+# others. The concept stays in the domain that owns the entity, and the catalogue refers to it.
+#
+# `name` and `description` are the translated members. They live on `ProductCategoryTranslation` rows
+# — one per language — and the delivered reader merges the row for the requested language onto the
+# category before it answers, so a client reads them off the object exactly as the REST surface does.
+# They are nullable because a category with no translation for the requested language genuinely has
+# neither.
+#
+# The three members below are deliberately absent, and each for its own reason:
+#
+# - `translations` is not exposed. The merge that produces `name` and `description` deletes the
+#   collection in the same step it copies the members out of it, so a `translations` member would be
+#   absent from exactly the rows this surface answers and present only on the ones no merge reached.
+#   A field whose presence depends on whether a translation happened to match is worse than no field.
+# - `products` is not exposed. The relation is loaded only when a REST caller names it in `relations`,
+#   and the list root field asks the service for its rows without it, so the member would always be
+#   absent here. The products of a category are reachable as `Product.productCategoryId`.
+# - `status` is carried as its string value rather than declared as a schema enum. The vocabulary is
+#   the kernel extension's own `ProductStatus`, which also types the product's lifecycle column, so
+#   declaring it here would claim a vocabulary this domain does not own — and the next domain that
+#   needs the same value set would then collide with this file rather than reuse it.
+
+"""
+One node of the product taxonomy.
+"""
+type ProductCategory {
+	id: ID!
+	"The category's name in the requested language, merged from its translation."
+	name: String
+	"The category's description in the requested language, merged from its translation."
+	description: String
+	"A denormalised thumbnail URL, kept for lists that must not join the asset table."
+	imageUrl: String
+	"The asset the navigation shows for the category."
+	imageId: ID
+	image: ImageAsset
+	"The parent category. Null on a root, which is every category that has no parent."
+	parentId: ID
+	"The URL-safe identity of the category, unique within the organization among the live rows."
+	slug: String
+	"The ordering of this category among its siblings."
+	sortOrder: Int!
+	"Whether the category belongs to the featured navigation."
+	isFeatured: Boolean!
+	"""
+	The lifecycle of the category, as the kernel extension's own value: `DRAFT`, `ACTIVE` or
+	`ARCHIVED`. The value set is deliberately the same one the product's own lifecycle column uses, so
+	one navigation filter covers both.
+	"""
+	status: String!
+	"""
+	When the category was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	"Tenant extras, for example a navigation icon set or an external taxonomy id."
+	metadata: JSON
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of categories.
+"""
+type ProductCategoryEdge {
+	node: ProductCategory!
+	cursor: String!
+}
+
+"""
+One page of categories, with the total the filters select and the boundary cursors.
+"""
+type ProductCategoryConnection {
+	nodes: [ProductCategory!]!
+	edges: [ProductCategoryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a category list may be sorted by.
+"""
+enum ProductCategorySortField {
+	createdAt
+	updatedAt
+	name
+	slug
+	sortOrder
+	status
+	isFeatured
+}
+
+"""
+The order the categories are returned in. At most three keys are accepted.
+"""
+input ProductCategorySort {
+	field: ProductCategorySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a category list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`name` and `description` are filterable because the delivered reader merges them onto the row before
+the connection sees it: narrowing a storefront's taxonomy by the name in one language is the read the
+merged member exists for. A row for which no translation matched carries neither, which is what
+`isNull` states and what an `eq` never matches.
+"""
+input ProductCategoryFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	imageUrl: StringFilter
+	imageId: IDFilter
+	parentId: IDFilter
+	slug: StringFilter
+	sortOrder: NumberFilter
+	isFeatured: BooleanFilter
+	status: StringFilter
+	metadata: JSONFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductCategoryFilter!]
+	or: [ProductCategoryFilter!]
+	not: ProductCategoryFilter
+}
+
+"""
+One language's copy of a category's descriptive facts.
+
+The rows are the category's own: a translation carries the category it belongs to, so the write
+states the language and the text, never which category — the parent of the write is the category the
+call is made on.
+"""
+input ProductCategoryTranslationInput {
+	"The language this text is written in."
+	languageCode: String!
+	name: String!
+	description: String
+}
+
+"""
+What a caller states when it files a category.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant,
+for the same reason there is none on any other write here.
+
+The category's product list is not a member either. The relation is not a column of this row and the
+delivered write does not cascade it, so a body stating it would be accepted and then dropped; a
+product is filed under a category by writing the product's own `productCategoryId`.
+"""
+input CreateProductCategoryInput {
+	organizationId: ID!
+	"The text of the category, one member per language. A category with none has no name yet."
+	translations: [ProductCategoryTranslationInput!]
+	"The asset to show for the category, by identifier."
+	imageId: ID
+	imageUrl: String
+	"The parent to file the category under. Omit for a root."
+	parentId: ID
+	slug: String
+	sortOrder: Int
+	isFeatured: Boolean
+	status: String
+	metadata: JSON
+}
+
+"""
+What a caller states when it edits a category that exists.
+
+**A member that is absent is left as it is.** The service reads the category to prove it is the
+caller's and then updates that row where it stands — it is never removed and re-inserted, which is
+what keeps the categories below it attached to it. A member stated as `null` clears it: `parentId:
+null` makes the category a root. `translations`, when stated, replaces the category's languages as a
+set, so an empty list removes them all; when omitted, they are kept. `organizationId` identifies the
+caller's organization and does not move the category — a category stays in the organization whose
+tree it belongs to.
+"""
+input UpdateProductCategoryInput {
+	id: ID!
+	organizationId: ID!
+	translations: [ProductCategoryTranslationInput!]
+	imageId: ID
+	imageUrl: String
+	parentId: ID
+	slug: String
+	sortOrder: Int
+	isFeatured: Boolean
+	status: String
+	metadata: JSON
+}

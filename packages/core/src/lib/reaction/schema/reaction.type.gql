@@ -1,0 +1,192 @@
+# The reaction's object type.
+#
+# A reaction is one emoji one actor left on one row: `entity` names the domain the row belongs to,
+# `entityId` the row, `emoji` the mark, and `actorType` who left it. The row is small, which is what
+# makes this object type the mark, the identifiers and the base row.
+#
+# **`entity` is carried as its string value rather than declared as a schema enum.** The vocabulary is
+# the contract's `ReactionEntityEnum`, which the delivered column validates a body against — so
+# declaring it here would claim a value set this domain does not own, and widening it, as the contract
+# does when a new reactable domain arrives, would then be a schema change rather than a column one.
+# The value read here is exactly the string the REST surface accepts and returns.
+#
+# **`actorType` is carried as its string value for the same reason.** The vocabulary is the kernel's
+# `ActorTypeEnum`, shared with every other row that records who acted, and the delivered column stores
+# it as an integer behind a transformer — so a schema enum here would be a third statement of one
+# value set, in the one place that cannot see the other two. It is nullable because the column is: a
+# row written before the member existed has none.
+#
+# **`employee` is deliberately not a member.** The row owns the many-to-one, but the delivered reads
+# join a relation only when a REST caller names it in `relations`, and the reads behind this surface
+# name none — the individual read is handed an empty options DTO. A member here would therefore read
+# null on every row this surface answers, whichever row it was asked about, and a field that always
+# reads null is worse than no field. The author is carried as `employeeId`, and the person behind it is
+# reachable as `Employee.id`.
+#
+# `isActive` and `isArchived` are flags an operator sets, not the row's lifecycle. `archivedAt` and
+# `deletedAt` are the lifecycle: withdrawing and restoring are delivered routes — the two removals this
+# resource serves — and `deletedAt` is the whole of what withdrawal writes, so without it a caller
+# could not tell a live reaction from a withdrawn one on the answer to the write that withdrew it.
+
+"""
+One emoji one actor left on one row of another domain.
+"""
+type Reaction {
+	id: ID!
+	"The name of the domain the reacted-to row belongs to, as the contract's own vocabulary states it."
+	entity: String!
+	"The reacted-to row, by identifier. The row itself is not joined by this read."
+	entityId: ID!
+	"The mark itself, as the actor left it."
+	emoji: String!
+	"""
+	Who left the mark, as the kernel's own value: `User` for a person and `System` for the platform
+	itself. Null on a row written before the member existed.
+	"""
+	actorType: String
+	"""
+	The actor's employee record, by identifier. The employee row is not joined by this read.
+	"""
+	employeeId: ID
+	"The tenant the reaction belongs to, by identifier."
+	tenantId: ID
+	"The organization the reaction belongs to, by identifier."
+	organizationId: ID
+	"Whether the reaction is active. A flag an operator sets, not a statement about its lifecycle."
+	isActive: Boolean
+	"Whether the reaction is archived. A flag an operator sets, not a statement about its lifecycle."
+	isArchived: Boolean
+	"When the reaction was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the reaction was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the mark was left."
+	createdAt: DateTime
+	"When the row was last changed."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of reactions.
+"""
+type ReactionEdge {
+	node: Reaction!
+	cursor: String!
+}
+
+"""
+One page of reactions, with the total the filters select and the boundary cursors.
+"""
+type ReactionConnection {
+	nodes: [Reaction!]!
+	edges: [ReactionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a reaction list may be sorted by.
+"""
+enum ReactionSortField {
+	id
+	entity
+	entityId
+	emoji
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the reactions are returned in. At most three keys are accepted.
+"""
+input ReactionSort {
+	field: ReactionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a reaction list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the reaction row, because the delivered list read answers the row itself
+and joins only the relations a REST caller names in its query string — which this surface never names.
+A condition on the reacted-to row or on the employee behind `employeeId` is therefore not a member:
+neither is loaded by the read this connection is built over, and a condition on a relation that is
+never loaded could only ever match the empty set.
+
+`entity` is a text member rather than an enumerated one, so a caller narrows it by the value the
+contract's vocabulary states. The tenant comes from the credential on every read, so `tenantId`
+narrows the row's own column rather than restating a scope decision the caller does not have.
+`deletedAt` is a member for the same reason the object type carries it — it is the column the
+withdrawal routes write — and because the delivered list read answers live rows only, `isNull: true`
+selects every row this connection can return.
+"""
+input ReactionFilter {
+	id: IDFilter
+	entity: StringFilter
+	entityId: IDFilter
+	emoji: StringFilter
+	actorType: StringFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [ReactionFilter!]
+	or: [ReactionFilter!]
+	not: ReactionFilter
+}
+
+"""
+What a caller states when it leaves a reaction.
+
+`entity`, `entityId` and `emoji` are required because they are what the mark names and what the
+delivered write is keyed on: the column is non-null and the create is a toggle, so a reaction is
+recognised — and removed rather than filed a second time — by the domain, the row, the emoji, the
+organization and the actor together. A body omitting one of them names no mark at all.
+
+`actorType` is not a member. The delivered write stamps it: the create handler sets it to the kernel's
+`User` value on every reaction it files, so a member here would promise a choice the write overwrites.
+The author is not a member either, and for the same reason: the delivered write resolves the acting
+employee from the credential and refuses the call when the credential carries none.
+
+There is no member for the tenant: the delivered write reads it from the credential and stamps it,
+overwriting whatever a body states, so a member here would promise a scope the write refuses.
+"""
+input CreateReactionInput {
+	"The domain the reacted-to row belongs to."
+	entity: String!
+	"The row being reacted to, by identifier."
+	entityId: ID!
+	"The mark itself."
+	emoji: String!
+	"The organization the reaction belongs to."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a reaction that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit reads the row the identifier
+names — narrowed to the caller's own employee — before it writes, which is how a reaction of another
+tenant, or somebody else's, is answered with the refusal rather than with a write, and it then persists
+only the members a body states. Stating this here is what keeps a client from reading "absent" as
+"written as the column's default".
+
+The identifier is required and is stated because the delivered route carries it in the path, and the
+same member is what the write is keyed on.
+"""
+input UpdateReactionInput {
+	id: ID!
+	"The mark itself."
+	emoji: String
+	"The organization the reaction belongs to."
+	organizationId: ID
+}

@@ -1,0 +1,99 @@
+# The settlement-term domain's GraphQL types.
+#
+# `amount` on an instalment is `String`, never `Float`: every money value on this platform is an exact
+# decimal, and a float would round the instalment before a client ever saw it. `percentage` is a
+# `String` for the same reason — it is the input of an exact allocation.
+
+type PaymentTerm {
+	id: ID!
+	organizationId: ID
+	name: String!
+	code: String!
+	description: String
+	isDefault: Boolean!
+	lines: [PaymentTermLine!]
+}
+
+type PaymentTermLine {
+	id: ID!
+	paymentTermId: ID!
+	sequence: Int!
+	valueType: PaymentTermLineType!
+	valueAmount: String!
+	currency: String
+	dueBasis: PaymentDueBasis!
+	days: Int!
+	dayOfMonth: Int
+}
+
+enum PaymentTermLineType {
+	PERCENT
+	FIXED
+}
+
+enum PaymentDueBasis {
+	INVOICE_DATE
+	END_OF_MONTH
+	END_OF_NEXT_MONTH
+	DAY_OF_NEXT_MONTH
+}
+
+type PaymentTermInstalment {
+	sequence: Int!
+	sequences: [Int!]!
+	dueDate: String!
+	amount: String!
+	currency: String!
+	valueType: PaymentTermLineType!
+	percentage: String
+	dueBasis: PaymentDueBasis!
+	days: Int!
+	dayOfMonth: Int
+}
+
+type PaymentTermSchedule {
+	paymentTermId: ID!
+	code: String!
+	name: String!
+	total: String!
+	currency: String!
+	currencyDecimals: Int!
+	basisDate: String!
+	instalments: [PaymentTermInstalment!]!
+	allocatedTotal: String!
+	dueDate: String!
+}
+
+input PaymentTermLineInput {
+	sequence: Int
+	valueType: PaymentTermLineType
+	valueAmount: String!
+	currency: String
+	dueBasis: PaymentDueBasis
+	days: Int
+	dayOfMonth: Int
+}
+
+input CreatePaymentTermInput {
+	organizationId: ID!
+	name: String!
+	code: String!
+	description: String
+	isDefault: Boolean
+	lines: [PaymentTermLineInput!]!
+}
+
+input UpdatePaymentTermInput {
+	id: ID!
+	organizationId: ID!
+	name: String
+	code: String
+	description: String
+	isDefault: Boolean
+}
+
+input UpdatePaymentTermLinesInput {
+	id: ID!
+	organizationId: ID!
+	lines: [PaymentTermLineInput!]!
+}

@@ -1,5 +1,5 @@
 import { ID, PluginSubscriptionType } from '@gauzy/contracts';
-import { CrudService, MultiORMEnum, parseFindOptionsRelations } from '@gauzy/core';
+import { MultiORMEnum, parseFindOptionsRelations } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
 import {
@@ -10,9 +10,10 @@ import {
 } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionPlan } from '../entities/plugin-subscription-plan.entity';
 import { MikroOrmPluginSubscriptionPlanRepository, TypeOrmPluginSubscriptionPlanRepository } from '../repositories';
+import { RegistryCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptionPlan> {
+export class PluginSubscriptionPlanService extends RegistryCrudService<PluginSubscriptionPlan> {
 	constructor(
 		public readonly typeOrmPluginSubscriptionPlanRepository: TypeOrmPluginSubscriptionPlanRepository,
 		public readonly mikroOrmPluginSubscriptionPlanRepository: MikroOrmPluginSubscriptionPlanRepository

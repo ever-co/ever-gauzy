@@ -8,15 +8,11 @@
  */
 const permissions: string[] = [];
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		RequestContext: {
-			hasPermission: (permission: string) => permissions.includes(permission)
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/core', () => ({
+	RequestContext: {
+		hasPermission: (permission: string) => permissions.includes(permission)
+	}
+}));
 jest.mock('../../services/document.service', () => ({ DocumentService: class {} }));
 jest.mock('../../services/document-tree.service', () => ({ DocumentTreeService: class {} }));
 jest.mock('../../services/document-knowledge.service', () => ({ DocumentKnowledgeService: class {} }));

@@ -1,0 +1,43 @@
+# The activity log domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **There is one field, and the absences are the delivery.** `ActivityLogController` declares a single
+# route — `GET /api/activity-log` — and inherits nothing, because it does not extend the CRUD base: no
+# count route, no node route and no write route of any kind. A count field, a `activityLog(id)` field or
+# a mutation would therefore each be a capability with no delivered route behind it, which is the one
+# thing this surface must not contain. A log row is written by the subscribers that watch the other
+# tables and by nothing else, so there is nothing for a mutation here to dispatch even in principle.
+#
+# The controller carries `@Permissions()` on the class — an empty permission list — and states none on
+# its route, so every route it serves is tenant-guarded and otherwise unpermissioned. That is stated
+# here as it is stated there: the empty list is a decision ("no permission"), not an omission, and the
+# guards are the controller's own.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other.
+#
+# **`relations` is deliberately absent.** The delivered read accepts a list of relations and passes them
+# to the store, and this surface's read names none — so an argument here would promise joins the answer
+# does not carry. The two facts a caller reaches for a relation to get are both columns: the author is
+# `employeeId` on every row, and the record the action was against is the `entity` / `entityId` pair.
+
+extend type Query {
+	"""
+	The activity log of the caller's tenant, newest first.
+	"""
+	activityLogs(
+		filter: ActivityLogFilter
+		sort: [ActivityLogSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ActivityLogConnection!
+}

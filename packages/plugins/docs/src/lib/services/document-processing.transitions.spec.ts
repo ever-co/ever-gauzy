@@ -24,10 +24,9 @@ jest.mock(
 			currentRequestContext: () => ({})
 		},
 		EventBus: class {}
-	}),
-	{ virtual: true }
+	})
 );
-jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }), { virtual: true });
+jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }));
 jest.mock('../docs.config', () => ({ getDocsConfig: () => ({ maxExtractedChars: 500_000 }) }));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../events/document.event', () => ({ DocumentEvent: class {} }));

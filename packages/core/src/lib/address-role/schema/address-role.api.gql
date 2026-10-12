@@ -1,0 +1,15 @@
+# The address-role domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+
+extend type Query {
+	addressRoles(addressId: ID!): [AddressRole!]!
+	addressRoleDefault(role: AddressRoleEnum!, ownerAddressIds: [ID!]!): ID
+}
+
+extend type Mutation {
+	assignAddressRole(input: CreateAddressRoleInput!): AddressRole!
+	setAddressRoleDefault(addressId: ID!, role: AddressRoleEnum!, ownerAddressIds: [ID!]!): AddressRole!
+	revokeAddressRole(addressId: ID!, role: AddressRoleEnum!): Boolean!
+}

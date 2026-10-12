@@ -24,7 +24,6 @@ import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_INBOUND_DNS_TIMEOUT_MS,
 	DOCS_INBOUND_DOMAIN_TXT_PREFIX,
-	DOCS_INBOUND_LOCAL_PART_PATTERN,
 	DOCS_INBOUND_PLATFORM_LOCAL_PREFIX
 } from '../docs.constants';
 

@@ -80,6 +80,7 @@ import * as TaskMetadataBootstrapExports from './index';
 import { TaskMetadataBootstrapController } from './task-metadata-bootstrap.controller';
 import { TaskMetadataBootstrapModule } from './task-metadata-bootstrap.module';
 import { TaskMetadataBootstrapService } from './task-metadata-bootstrap.service';
+import { TaskMetadataResolver } from '../task-metadata.resolver';
 
 type ModuleMetadataCase = {
 	name: string;
@@ -198,8 +199,14 @@ describe('task metadata module exports', () => {
 		expectExactExports(TaskVersionModule, [TaskVersionService]);
 	});
 
-	it('preserves all three existing TagModule exports in order', () => {
-		expectExactExports(TagModule, [TagService, TypeOrmTagRepository, MikroOrmTagRepository]);
+	it('preserves every existing TagModule export, in order', () => {
+		// The tag module hands on its command bus beside its service and its two repositories: a
+		// resolver is a provider of the module that hosts the handler the Apollo configuration names,
+		// so a module that hosts one and imports the tag module receives the bus only if the tag
+		// module re-exports it. That was a deliberate change to the tag domain — the GraphQL view of
+		// its resource — and this assertion records the exports as they now are rather than as they
+		// were before it.
+		expectExactExports(TagModule, [TagService, CqrsModule, TypeOrmTagRepository, MikroOrmTagRepository]);
 	});
 
 	it('declares the standalone bootstrap module with only the exact dependencies and components', () => {
@@ -216,8 +223,12 @@ describe('task metadata module exports', () => {
 			RolePermissionModule
 		]);
 		expect(imports).not.toContain(TaskModule);
+		// The resolver is declared here rather than by any one of the six metadata modules because a
+		// resolver can only inject the services its own module can reach, and this module is the one
+		// that already reaches all seven readers the vocabulary answer needs.
 		expect(getMetadata(MODULE_METADATA.PROVIDERS, TaskMetadataBootstrapModule)).toEqual([
-			TaskMetadataBootstrapService
+			TaskMetadataBootstrapService,
+			TaskMetadataResolver
 		]);
 		expect(getMetadata(MODULE_METADATA.CONTROLLERS, TaskMetadataBootstrapModule)).toEqual([
 			TaskMetadataBootstrapController

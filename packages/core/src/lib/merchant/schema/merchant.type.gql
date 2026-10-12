@@ -1,0 +1,191 @@
+# The merchant's GraphQL types.
+#
+# A merchant is the store a sale is attributed to: the trading identity — a name, a code, an address
+# for correspondence, a currency its amounts are read in — behind the warehouses that hold its stock
+# and the tags that classify it.
+#
+# **Every relation is carried as an identifier or not at all, and the reason is the delivered read.**
+# `contact` and `logo` are owned by this row (`Merchant` holds `contactId` and `logoId`), so their
+# identifiers always travel; the rows they point at travel only when a REST caller names them in
+# `relations`, and neither the list read nor the one-row read this surface mirrors names any. A
+# `contact` or `logo` member here would be null on every row a caller reads, which is worse than an
+# absent member: a client would select it, read `null` and conclude the store has no logo.
+#
+# `tags` and `warehouses` are `@ManyToMany` pivots. This row holds no foreign key for either — the
+# pivot table does — so there is not even an identifier to carry them, and the delivered reads join
+# them only when asked. A store's warehouses are read from `warehouses` narrowed by the merchant, and
+# its tags from the tag domain.
+#
+# `currency` is carried as its value rather than declared as a schema enum. The vocabulary is the
+# money layer's own `CurrenciesEnum`, shared with every price and every payment on the platform, so
+# declaring it here would claim a value set this domain does not own — and the next domain that needs
+# the same set would then collide with this file rather than reuse it.
+
+"""
+The store a sale is attributed to: its trading identity, its currency and its logo.
+"""
+type Merchant {
+	id: ID!
+	"The trading name of the store, as entered."
+	name: String!
+	"The store's own code, unique within the organization among the live rows."
+	code: String!
+	"The address the store is written to."
+	email: String!
+	phone: String
+	description: String
+	"Whether the store is trading. A removal sets `deletedAt`; it does not clear this flag."
+	active: Boolean!
+	"""
+	The currency the store's amounts are read in, as the money layer's own value — for example `USD`.
+	It is a code rather than an amount, so it is text and not a `Decimal`.
+	"""
+	currency: String!
+	"The store's own contact row. Null on a store filed without one."
+	contactId: ID
+	"The asset the store is shown with. Null on a store filed without one."
+	logoId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the store was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of stores.
+"""
+type MerchantEdge {
+	node: Merchant!
+	cursor: String!
+}
+
+"""
+One page of stores, with the total the filters select and the boundary cursors.
+"""
+type MerchantConnection {
+	nodes: [Merchant!]!
+	edges: [MerchantEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a store list may be sorted by.
+"""
+enum MerchantSortField {
+	createdAt
+	updatedAt
+	name
+	code
+	email
+}
+
+"""
+The order the stores are returned in. At most three keys are accepted.
+"""
+input MerchantSort {
+	field: MerchantSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a store list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned rather than translating the filter into a query. `deletedAt` is
+filterable so a caller can ask which rows have been withdrawn, while the read itself answers live rows
+only.
+"""
+input MerchantFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	code: StringFilter
+	email: StringFilter
+	phone: StringFilter
+	description: StringFilter
+	active: BooleanFilter
+	currency: StringFilter
+	contactId: IDFilter
+	logoId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [MerchantFilter!]
+	or: [MerchantFilter!]
+	not: MerchantFilter
+}
+
+"""
+What a caller states when it files a store.
+
+The organization is required because the delivered create validates it: `POST /merchants` binds a DTO
+that intersects the organization base, and that base refuses a body naming neither an organization nor
+a sent-to destination. It requires the name, the code and the email for the same reason — the DTO
+marks all three non-empty — so a store cannot be filed half-identified. There is no member for the
+tenant, because the service stamps the caller's own tenant onto the row.
+
+**The two pivots are stated as identifier lists**, which is this protocol's spelling of the same
+write: the delivered body carries whole `tags` and `warehouses` arrays and the store persists the
+pivot rows for them, and a caller that has the rows in hand already has their identifiers. The
+delivered writer cascades the owning side, so a list that names rows of another organization is
+refused by the store's own constraints rather than by this surface.
+"""
+input CreateMerchantInput {
+	organizationId: ID!
+	name: String!
+	code: String!
+	email: String!
+	phone: String
+	description: String
+	active: Boolean
+	"The store's currency, as the money layer's own value."
+	currency: String
+	"The store's own contact row, by identifier."
+	contactId: ID
+	"The asset the store is shown with, by identifier."
+	logoId: ID
+	"The tags to classify the store with."
+	tagIds: [ID!]
+	"The warehouses to attach to the store."
+	warehouseIds: [ID!]
+}
+
+"""
+What a caller states when it changes a store that exists.
+
+**The organization, the name, the code and the email are required, and the write is nevertheless a
+merge rather than a replacement.** The delivered route validates those four on the body and then hands
+the parsed body to a service that saves it beside the path identifier: the columns the body carries
+are written and the ones it does not are left as they are. The two statements are not in conflict —
+the route is simply stricter about what a caller must restate than the write is about what it
+overwrites — and stating only one of them here would tell a client something the delivered pair does
+not.
+"""
+input UpdateMerchantInput {
+	id: ID!
+	organizationId: ID!
+	name: String!
+	code: String!
+	email: String!
+	phone: String
+	description: String
+	active: Boolean
+	currency: String
+	contactId: ID
+	logoId: ID
+	tagIds: [ID!]
+	warehouseIds: [ID!]
+}

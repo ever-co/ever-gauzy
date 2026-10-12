@@ -3,6 +3,7 @@
 // Original copyright: Copyright (c) 2018 Sumanth Chinthagunta
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { parseToBoolean } from '@gauzy/utils';
 import {
 	DeepPartial,
 	DeleteResult,
@@ -15,10 +16,26 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { Collection, CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
+import {
+	Collection,
+	CreateOptions,
+	EntityMetadata,
+	FilterQuery as MikroFilterQuery,
+	ReferenceKind,
+	RequiredEntityData,
+	Utils,
+	raw,
+	wrap
+} from '@mikro-orm/core';
 import { AssignOptions } from '@mikro-orm/knex';
 import { ID, IPagination } from '@gauzy/contracts';
-import { BaseEntity, SoftDeletableBaseEntity } from '../entities/internal';
+// The base classes' own module rather than the entity-registry barrel. That barrel re-exports every
+// entity *and* every subscriber, and a subscriber imports a module, which imports a controller, which
+// imports `core/crud` — so reaching the registry from here closes a cycle whose second lap arrives at
+// `tenant-aware-crud.service` while this file is still on its import lines. `CrudService` is then
+// `undefined` and `class TenantAwareCrudService extends CrudService` throws, which reads as a broken
+// suite rather than as a cycle. Only the two base classes are wanted here; the registry is not.
+import { BaseEntity, SoftDeletableBaseEntity } from '../entities/base.entity';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
@@ -33,7 +50,16 @@ import {
 	parseTypeORMFindToMikroOrm
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
+import { applyRowOffset, statesEmptyWindow } from './find-window.helper';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import {
+	createNewMikroOrmEntity,
+	isStated,
+	withCollectionsAsItems,
+	withPrimaryKeyForUpsert
+} from './mikro-orm-insert.helper';
+import { collapseRelationMirrors, stateRelationsFromMirrors } from './mikro-orm-scope-column.helper';
+import { withoutUnloadedReferences } from './mikro-orm-serialize.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
@@ -50,6 +76,30 @@ import { ITryRequest } from './try-request';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+/**
+ * The find options with `withDeleted` read as the boolean it states.
+ *
+ * A list route that hands its raw `@Query()` to the CRUD base — every inherited list does, and a route
+ * mounted with `UseValidationPipe()` does not transform — delivers `?withDeleted=false` as the *string*
+ * `'false'`. Both ORMs test the member by truthiness (TypeORM's find options and the MikroORM converter
+ * alike), so the string lifted the soft-delete filter and a caller that asked for live rows was handed the
+ * retired ones. The member is therefore read with `parseToBoolean` once, here, at every read entry point:
+ * a stated `true` or `'true'` stays, anything else is removed, and an options object without the member is
+ * returned untouched.
+ *
+ * @param options The options a caller passed, possibly undefined.
+ * @returns The same options, with `withDeleted` either `true` or absent.
+ */
+function withDeletedAsStated<O>(options: O): O {
+	if (!options || typeof options !== 'object' || !('withDeleted' in (options as object))) {
+		return options;
+	}
+
+	const { withDeleted, ...rest } = options as unknown as { withDeleted?: unknown } & Record<string, unknown>;
+
+	return (parseToBoolean(withDeleted) ? { ...rest, withDeleted: true } : rest) as unknown as O;
+}
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
 	constructor(
@@ -131,7 +181,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 		if (loadRelationIds) {
 			const named =
-				typeof loadRelationIds === 'object' ? (loadRelationIds as { relations?: unknown }).relations : undefined;
+				typeof loadRelationIds === 'object'
+					? (loadRelationIds as { relations?: unknown }).relations
+					: undefined;
 			// Only a real array names its relations exactly: TypeORM filters with `relations.indexOf(propertyPath)`,
 			// so a STRING (`?loadRelationIds[relations]=all-payments-list`) matches every relation whose name is a
 			// substring of it, and a missing or null list loads them all. Anything but an array is therefore
@@ -150,6 +202,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns A Promise that resolves to the count of entities.
 	 */
 	public async count(options?: ICountOptions<T>): Promise<number> {
+		options = withDeletedAsStated(options);
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
@@ -187,45 +240,71 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Also counts all entities that match given conditions,
 	 * but ignores pagination settings (from and take options).
 	 *
+	 * **`skip` is a row offset under both ORMs.** `findAll({ skip: 20, take: 20 })` answers rows 20-39,
+	 * which is what TypeORM's `skip` has always meant and what every caller of this method passes — the
+	 * store-paged GraphQL connections, and the services that multiply a page number out before calling.
+	 * The MikroORM branch used to inherit the shared parser's page-number reading (the one `paginate`
+	 * needs), so the same call answered rows 380-399 there; {@link applyRowOffset} puts the row offset
+	 * back. `paginate` keeps its page-number `skip` on both ORMs.
+	 *
+	 * **A stated `take` of zero is an empty page, not an unbounded one.** Neither ORM reads a zero limit
+	 * reliably (see {@link statesEmptyWindow}), so the read is issued for a single row, whose only purpose
+	 * is to have the store compute `total` through exactly the criteria, scope and `withDeleted` a real
+	 * page would have used, and the row is discarded.
+	 *
 	 * @param options
 	 * @returns
 	 */
 	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+
+		const emptyWindow = statesEmptyWindow(options);
+		const read = emptyWindow ? ({ ...options, take: 1 } as IFindManyOptions<T>) : options;
 
 		let total: number;
 		let items: T[];
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(read as FindManyOptions);
+				applyRowOffset(mikroOptions, read);
 				[items, total] = (await this.mikroOrmRepository.findAndCount(where, mikroOptions)) as any;
 				items = items.map((entity: T) => this.serialize(entity)) as T[];
 				break;
 			case MultiORMEnum.TypeORM:
 				[items, total] = await this.typeOrmRepository.findAndCount(
-					parseTypeORMFindOptions(options as FindManyOptions<T>)
+					parseTypeORMFindOptions(read as FindManyOptions<T>)
 				);
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 
-		return { items, total };
+		return { items: emptyWindow ? [] : items, total };
 	}
 
 	/**
 	 * Finds entities that match given find options.
 	 *
+	 * `skip` is a row offset under both ORMs and a stated `take` of zero answers no rows, for the reasons
+	 * given on {@link findAll}; nothing needs counting here, so an empty window is answered without a read.
+	 *
 	 * @param options
 	 * @returns
 	 */
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+
+		if (statesEmptyWindow(options)) {
+			return [];
+		}
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				applyRowOffset(mikroOptions, options);
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				return items.map((entity: T) => this.serialize(entity)) as T[];
 			case MultiORMEnum.TypeORM:
@@ -244,6 +323,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async paginate(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		try {
@@ -261,14 +341,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					const typeOrmOptions = parseTypeORMFindOptions(options as FindManyOptions<T>);
 					[items, total] = await this.typeOrmRepository.findAndCount({
 						skip:
-							typeOrmOptions && typeOrmOptions.skip
-								? typeOrmOptions.take * (typeOrmOptions.skip - 1)
-								: 0,
+							typeOrmOptions && typeOrmOptions.skip ? typeOrmOptions.take * (typeOrmOptions.skip - 1) : 0,
 						take: typeOrmOptions && typeOrmOptions.take ? typeOrmOptions.take : 10,
 						...(typeOrmOptions && typeOrmOptions.select ? { select: typeOrmOptions.select } : {}),
-						...(typeOrmOptions && typeOrmOptions.relations
-							? { relations: typeOrmOptions.relations }
-							: {}),
+						...(typeOrmOptions && typeOrmOptions.relations ? { relations: typeOrmOptions.relations } : {}),
 						...(typeOrmOptions && typeOrmOptions.where ? { where: typeOrmOptions.where } : {}),
 						...(typeOrmOptions && typeOrmOptions.order ? { order: typeOrmOptions.order } : {}),
 						...(typeOrmOptions && typeOrmOptions.withDeleted
@@ -302,6 +378,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		options = withDeletedAsStated(options);
 		// Asserted outside the try: the catch below turns any throw into `{ success: false }`, which
 		// would swallow the ForbiddenException instead of refusing the read.
 		this.assertRelationsPermitted(options);
@@ -359,6 +436,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByOptions(options: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		options = withDeletedAsStated(options);
 		// See findOneOrFailByIdString: the catch below would swallow the ForbiddenException.
 		this.assertRelationsPermitted(options);
 
@@ -391,17 +469,27 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 	/**
 	 * Finds first entity that matches given where condition.
-	 * If entity was not found in the database - rejects with error.
+	 * If entity was not found in the database - answers `success: false` rather than raising.
 	 *
-	 * @param options
-	 * @returns
+	 * The MikroORM branch states the criteria the way the parser expects to read them. That parser
+	 * reads a find *options* object and takes its `where` from it, so handing it the criteria
+	 * themselves leaves it with no `where` at all — and an absent filter is not an empty filter, it is
+	 * a filter that matches every row. The read then answered with the first row of the table
+	 * whatever was asked for, which is the worst possible answer for the callers this method exists
+	 * for: a caller asking whether a code is still free would be told about a different row entirely.
+	 * Every other call site in this class passes a full options object and is correct as it stands.
+	 *
+	 * @param options The where condition.
+	 * @returns Whether a record was found, and the record.
 	 */
 	public async findOneOrFailByWhereOptions(options: IFindWhereOptions<T>): Promise<ITryRequest<T>> {
 		try {
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({
+						where: options
+					} as FindManyOptions);
 					record = (await this.mikroOrmRepository.findOneOrFail(where, mikroOptions)) as any;
 					break;
 				case MultiORMEnum.TypeORM:
@@ -436,6 +524,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
@@ -476,13 +565,28 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 * Finds first entity by a given find options.
-	 * If entity was not found in the database - returns null.
+	 * Finds the first entity by the given find options.
 	 *
-	 * @param options
-	 * @returns
+	 * **A miss raises rather than answering `null`.** The declared return type says the row, and the
+	 * body has always raised `NotFoundException` on a miss — which is what the API contract wants,
+	 * since the exception filter turns it into the `404` a caller reading one resource by id should
+	 * get. The doc comment here used to promise `null`, and the `| null` in the signature said the
+	 * same thing; neither was enforced, because this workspace compiles without `strictNullChecks`,
+	 * where `T | null` collapses to `T` and a comment cannot be checked at all. A caller that reads
+	 * that promise and branches on `null` therefore gets a `404` from a path that meant to ask a
+	 * question, which is how a "is this code still free?" check came to refuse every free code.
+	 *
+	 * **A caller that must treat absence as an ordinary answer uses `findOneOrFailByOptions`**, whose
+	 * `ITryRequest` carries `success: false` instead of raising. That is the pair this platform
+	 * already uses in fifty-odd places, and it is the only shape here that says "not finding it is an
+	 * outcome" without changing what a read by id does.
+	 *
+	 * @param options The find options.
+	 * @returns The record.
+	 * @throws NotFoundException when no record matches.
 	 */
-	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T | null> {
+	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		let record: T;
@@ -506,13 +610,18 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 * Finds first entity that matches given where condition.
-	 * If entity was not found in the database - returns null.
+	 * Finds the first entity matching the given where condition.
 	 *
-	 * @param options
-	 * @returns
+	 * **A miss raises rather than answering `null`**, for the reason `findOneByOptions` states in
+	 * full: the body has always raised `NotFoundException`, the declared `| null` was never enforced
+	 * because this workspace compiles without `strictNullChecks`, and a caller that needs absence as
+	 * an ordinary answer uses `findOneOrFailByWhereOptions` and reads `success`.
+	 *
+	 * @param options The where condition.
+	 * @returns The record.
+	 * @throws NotFoundException when no record matches.
 	 */
-	public async findOneByWhereOptions(options: IFindWhereOptions<T>): Promise<T | null> {
+	public async findOneByWhereOptions(options: IFindWhereOptions<T>): Promise<T> {
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -535,6 +644,19 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	/**
 	 * Creates a new entity or updates an existing one based on the provided entity data.
 	 *
+	 * **Under MikroORM a new row is built by {@link createNewMikroOrmEntity}.** The managed create this method
+	 * has always used is what keeps a nested `{ id }` a reference to an existing row, but a managed entity
+	 * that carries its own primary key is registered as already stored, so MikroORM never inserted it: the
+	 * call answered with the entity it was handed and no row existed. And a new row left without a key relied
+	 * on a `gen_random_uuid()` default that only PostgreSQL has. The helper keeps the managed graph, states
+	 * the key after it is built, and generates a uuid where the dialect has no default.
+	 *
+	 * **A MikroORM failure is reported as one.** The MikroORM branch used to log its error and fall through
+	 * into the TypeORM branch, which under `DB_ORM=mikro-orm` knows only the skeleton of the entity — so a
+	 * refused insert was retried through a repository that knows nothing of the row but its identifier and
+	 * timestamps, and whatever that answered was returned as the created row. The error now reaches the
+	 * caller through the catch below, as every other failure does.
+	 *
 	 * @param entity The partial entity data for creation or update.
 	 * @param createOptions Options for the creation of the entity in MikroORM.
 	 * @param upsertOptions Options for the upsert operation in MikroORM.
@@ -555,32 +677,41 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	): Promise<T> {
 		try {
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					try {
-						if (partialEntity['id']) {
-							// Try to load the existing entity
-							const entity = await this.mikroOrmRepository.findOne(partialEntity['id']);
-							if (entity) {
-								// If the entity has an ID, perform an upsert operation
-								this.mikroOrmRepository.assign(entity, partialEntity as any, assignOptions);
-								await this.mikroOrmRepository.flush();
+				case MultiORMEnum.MikroORM: {
+					if (partialEntity['id']) {
+						// Try to load the existing entity
+						const entity = await this.mikroOrmRepository.findOne(partialEntity['id']);
+						if (entity) {
+							// If the entity has an ID, perform an upsert operation
+							// An embedded object's relation-id mirror (a plugin's `customFields: { repositoryId }`) is written only
+							// through its relation on an assign (see `stateRelationsFromMirrors`).
+							this.mikroOrmRepository.assign(
+								entity,
+								stateRelationsFromMirrors(
+									this.mikroOrmMetadata(),
+									this.withoutUncascadedNewRows(
+										withCollectionsAsItems(partialEntity as Record<string, unknown>)
+									),
+									{ embeddedOnly: true }
+								) as any,
+								assignOptions
+							);
+							await this.mikroOrmRepository.flush();
 
-								return this.serialize(entity);
-							}
+							return this.serialize(entity);
 						}
-						// If the entity doesn't have an ID, it's new and should be persisted
-						// Create a new entity using MikroORM
-						const newEntity = this.mikroOrmRepository.create(
-							partialEntity as RequiredEntityData<T>,
-							createOptions
-						);
-
-						// Persist new entity and flush
-						await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
-						return this.serialize(newEntity);
-					} catch (error) {
-						console.error('Error during mikro orm create crud transaction:', redactDatabaseError(error));
 					}
+					// No stored row has this id (or none was stated): build the new row so that MikroORM inserts it.
+					const newEntity = createNewMikroOrmEntity<T>(
+						this.mikroOrmRepository,
+						this.withoutUncascadedNewRows(withCollectionsAsItems(partialEntity as Record<string, unknown>)),
+						createOptions
+					);
+
+					// Persist new entity and flush
+					await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
+					return this.serialize(newEntity);
+				}
 				case MultiORMEnum.TypeORM:
 					const newEntity = this.typeOrmRepository.create(partialEntity as DeepPartial<T>);
 					return await this.typeOrmRepository.save(newEntity);
@@ -588,6 +719,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service create method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -597,6 +729,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Creates multiple new entities in a single bulk operation.
 	 * More efficient than calling create() in a loop as it batches the database operations.
 	 *
+	 * Under MikroORM each row is built by {@link createNewMikroOrmEntity}, for the reason {@link create}
+	 * gives: a managed entity created with its own id was never inserted.
+	 *
 	 * @param entities The array of partial entity data for creation.
 	 * @returns The array of created entities.
 	 */
@@ -605,10 +740,14 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const created = entities.map((entity) =>
-						this.mikroOrmRepository.create(entity as RequiredEntityData<T>, {
-							partial: true,
-							managed: true
-						})
+						createNewMikroOrmEntity<T>(
+							this.mikroOrmRepository,
+							this.withoutUncascadedNewRows(withCollectionsAsItems(entity as Record<string, unknown>)),
+							{
+								partial: true,
+								managed: true
+							}
+						)
 					);
 					await this.mikroOrmRepository.persistAndFlush(created);
 					return created.map((entity) => this.serialize(entity));
@@ -623,6 +762,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service createMany method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -639,13 +779,14 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.upsert(entity as T);
+					return (await this.saveWithMikroOrm([entity]))[0];
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entity as DeepPartial<T>);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service save method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -663,13 +804,14 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.upsertMany(entities as T[]);
+					return await this.saveWithMikroOrm(entities);
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entities as DeepPartial<T>[]);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service saveMany method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -697,7 +839,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					} else {
 						where = id as MikroFilterQuery<T>;
 					}
-					const row = partialEntity as RequiredEntityData<T>;
+					const row = this.mikroOrmUpdateRow(partialEntity as object) as RequiredEntityData<T>;
 					const updatedRow = await this.mikroOrmRepository.nativeUpdate(where, row as T);
 					return { affected: updatedRow } as UpdateResult;
 				case MultiORMEnum.TypeORM:
@@ -820,7 +962,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Soft delete not implemented for ORM type: ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new NotFoundException(`The record was not found or could not be soft-deleted`, safeErrorMessage(error));
+			throw new NotFoundException(
+				`The record was not found or could not be soft-deleted`,
+				safeErrorMessage(error)
+			);
 		}
 	}
 
@@ -1003,11 +1148,230 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	protected serialize(entity: T): T {
 		if (this.ormType === MultiORMEnum.MikroORM) {
-			// If using MikroORM, use wrap(entity).toJSON() for serialization
-			return wrap(entity).toJSON() as T;
+			// If using MikroORM, use wrap(entity).toJSON() for serialization, without the to-one relations the read did
+			// not load, which MikroORM writes as their key and TypeORM leaves out (see `withoutUnloadedReferences`).
+			return withoutUnloadedReferences(entity, wrap(entity).toJSON()) as T;
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
+	}
+
+	/**
+	 * A payload for MikroORM's `upsert` / `nativeUpdate` that names each foreign-key column once: see
+	 * `collapseRelationMirrors`. A stand-in that is not a MikroORM repository (a unit test's) has no mapping to
+	 * read, and its payload is passed on as it is.
+	 *
+	 * @param data The payload.
+	 * @returns The payload with a relation and its relation-id mirror collapsed into one key.
+	 */
+	protected withOneKeyPerColumn<D>(data: D): D {
+		return collapseRelationMirrors(this.mikroOrmMetadata(), data as object) as D;
+	}
+
+	/**
+	 * TypeORM's `save()`, on MikroORM.
+	 *
+	 * `save()` used to hand each payload to MikroORM's `upsert`, which is not what TypeORM's `save()` does, and
+	 * failed where TypeORM's succeeds:
+	 *
+	 * - a key the payload carries that is no column (`category`, `type` on a product, which the route's DTO
+	 *   carries) was written as a column (`table product has no column named category`); TypeORM ignores it;
+	 * - a new row went without a primary key, which SQLite and MySQL have no default for
+	 *   (`NOT NULL constraint failed: feature_organization.id`: every organization feature toggle);
+	 * - a relation beside its relation-id mirror, which is what `serialize()` answers, was refused;
+	 * - collections (a product's tags, a many-to-many's ids) are not written by an upsert at all.
+	 *
+	 * Each payload is therefore saved as TypeORM saves it. The row its primary key names is loaded — a
+	 * soft-deleted one included, as TypeORM's loader includes it — and the payload assigned onto it, keys that
+	 * are no property ignored; a payload without a key, or naming no row, is built as `create()` builds one. One
+	 * flush writes them all, in a transaction, as TypeORM's `save()` of an array does. An entity instance is
+	 * upserted as before, since MikroORM writes its change set correctly, and so is every payload handed to a
+	 * stand-in that is not a MikroORM repository, or to an entity whose key is composite.
+	 *
+	 * @param payloads The payloads to save.
+	 * @returns The saved entities, in order.
+	 */
+	protected async saveWithMikroOrm(payloads: IPartialEntity<T>[]): Promise<T[]> {
+		const repository = this.mikroOrmRepository;
+		const meta = this.mikroOrmMetadata();
+		const primaryKeys = meta?.getPrimaryProps() ?? [];
+
+		if (!meta || primaryKeys.length !== 1) {
+			const saved: T[] = [];
+			for (const payload of payloads) {
+				saved.push(
+					await repository.upsert(withPrimaryKeyForUpsert(repository, this.withOneKeyPerColumn(payload)) as T)
+				);
+			}
+			return saved;
+		}
+
+		const [primaryKey] = primaryKeys;
+		const em = repository.getEntityManager();
+		const saved: T[] = [];
+
+		for (const payload of payloads) {
+			if (Utils.isEntity(payload)) {
+				saved.push(await repository.upsert(payload as T));
+				continue;
+			}
+
+			const data = this.withoutUncascadedNewRows(
+				withCollectionsAsItems(this.withOneKeyPerColumn(payload as object) as Record<string, unknown>)
+			);
+			const key = data[primaryKey.name];
+			const existing = isStated(key)
+				? await repository.findOne({ [primaryKey.name]: key } as MikroFilterQuery<T>, { filters: false })
+				: null;
+
+			if (existing) {
+				// An embedded object's relation-id mirror is written only through its relation on an assign.
+				repository.assign(existing, stateRelationsFromMirrors(meta, data, { embeddedOnly: true }) as any, {
+					updateNestedEntities: false,
+					onlyOwnProperties: true,
+					onlyProperties: true
+				});
+				saved.push(existing);
+			} else {
+				const created = createNewMikroOrmEntity<T>(repository, data, { partial: true, managed: true });
+				em.persist(created);
+				saved.push(created);
+			}
+		}
+
+		await em.flush();
+		return saved;
+	}
+
+	/**
+	 * The row `update()` hands MikroORM's `nativeUpdate`: one key per column ({@link withOneKeyPerColumn}), and
+	 * what TypeORM's `update()` writes without being asked. TypeORM's update query sets every
+	 * `@UpdateDateColumn` to the current time and increments the `@VersionColumn` unless the payload states
+	 * them; `nativeUpdate` runs no `onUpdate` hook and never touches a version, so under MikroORM `updatedAt`
+	 * stayed at its creation time through every `update()`, and a compare-and-set on `{ id, version }` (the
+	 * token status transitions) left the version where it was, so a second writer holding the same version
+	 * still matched. Each property with an `onUpdate` is given its value, and the version property is
+	 * incremented in the statement, unless the payload states it.
+	 *
+	 * @param data The payload.
+	 * @returns The row to write.
+	 */
+	protected mikroOrmUpdateRow<D extends object>(data: D): D {
+		const meta = this.mikroOrmMetadata();
+		if (!meta) {
+			return data;
+		}
+
+		const row: Record<string, unknown> = { ...(collapseRelationMirrors(meta, data) as Record<string, unknown>) };
+
+		for (const property of meta.props) {
+			if (
+				typeof property.onUpdate === 'function' &&
+				property.persist !== false &&
+				row[property.name] === undefined
+			) {
+				row[property.name] = property.onUpdate(row as never, this.mikroOrmRepository.getEntityManager());
+			}
+		}
+
+		// The version column is the one TypeORM's `@VersionColumn` names (its metadata is complete under either ORM),
+		// or MikroORM's own version property. MikroORM's `version: true` cannot map it: it leaves the column out of
+		// the INSERT and expects a database default the migrations do not give it.
+		const versionName = this.typeOrmRepository?.metadata?.versionColumn?.propertyName ?? meta.versionProperty;
+		const version = versionName ? meta.properties[versionName] : undefined;
+		if (version?.fieldNames?.length && row[version.name] === undefined) {
+			row[version.name] = raw('?? + 1', [version.fieldNames[0]]);
+		}
+
+		return row as D;
+	}
+
+	/**
+	 * The payload without the new rows of a to-many relation TypeORM would not insert.
+	 *
+	 * TypeORM writes a new (keyless) row of a one-to-many or many-to-many relation only when the relation cascades
+	 * inserts; otherwise it ignores it, and callers rely on that: `FulfillmentService.create` hands the CRUD base the
+	 * fulfilment with its `lines` and then creates each line itself. MikroORM persists new rows by default, so under
+	 * `DB_ORM=mikro-orm` every such line was inserted twice and the second insert broke `UQ_fulfillment_line` — no
+	 * line shipped, and no return could be taken against it. A row that states its key is kept (both ORMs link it),
+	 * and so is every row of a relation whose TypeORM mapping cascades inserts. TypeORM's mapping is read from its
+	 * metadata, which is complete under either ORM; without it (a stand-in) the payload is passed on as it is.
+	 *
+	 * @param data The payload.
+	 * @returns The payload without those rows, or the payload itself when there are none.
+	 */
+	protected withoutUncascadedNewRows<D>(data: D): D {
+		const meta = this.mikroOrmMetadata();
+		const typeOrm = this.typeOrmRepository?.metadata;
+		if (!meta || typeof typeOrm?.findRelationWithPropertyPath !== 'function' || !data || typeof data !== 'object') {
+			return data;
+		}
+		if (Utils.isEntity(data)) {
+			return data;
+		}
+
+		const payload = data as Record<string, unknown>;
+		let kept: Record<string, unknown> | undefined;
+
+		for (const relation of meta.relations) {
+			if (relation.kind !== ReferenceKind.ONE_TO_MANY && relation.kind !== ReferenceKind.MANY_TO_MANY) {
+				continue;
+			}
+			const items = payload[relation.name];
+			if (!Array.isArray(items)) {
+				continue;
+			}
+			const typeOrmRelation = typeOrm.findRelationWithPropertyPath(relation.name);
+			if (!typeOrmRelation || typeOrmRelation.isCascadeInsert) {
+				continue;
+			}
+
+			const key = relation.targetMeta?.primaryKeys?.length === 1 ? relation.targetMeta.primaryKeys[0] : 'id';
+			const stored = items.filter(
+				(item) =>
+					!item ||
+					typeof item !== 'object' ||
+					(Utils.isEntity(item) ? wrap(item, true).hasPrimaryKey() : isStated((item as any)[key]))
+			);
+			if (stored.length !== items.length) {
+				kept ??= { ...payload };
+				kept[relation.name] = stored;
+			}
+		}
+
+		return (kept ?? data) as D;
+	}
+
+	/**
+	 * Forgets what a failed MikroORM write left pending in the request's unit of work.
+	 *
+	 * A flush that fails leaves its change sets behind, and MikroORM's own guidance is to clear the entity manager
+	 * then: otherwise the next flush in the same request — the idempotency interceptor settling the key, say —
+	 * retries the failed statement and fails with it ("An idempotency key could not be settled: A record with these
+	 * values already exists"). TypeORM has no unit of work to leave behind. A stand-in repository has nothing to clear.
+	 */
+	protected clearMikroOrmUnitOfWork(): void {
+		if (this.ormType !== MultiORMEnum.MikroORM) {
+			return;
+		}
+		try {
+			const repository = this.mikroOrmRepository as Partial<MikroOrmBaseEntityRepository<T>> | undefined;
+			repository?.getEntityManager?.()?.clear();
+		} catch {
+			// Clearing is best effort: the error being reported is the one that matters.
+		}
+	}
+	/**
+	 * This entity's MikroORM metadata, or `undefined` for a stand-in that is not a MikroORM repository (a unit
+	 * test's), which has no mapping to read.
+	 */
+	private mikroOrmMetadata(): EntityMetadata<T> | undefined {
+		const repository = this.mikroOrmRepository as Partial<MikroOrmBaseEntityRepository<T>> | undefined;
+		if (typeof repository?.getEntityManager !== 'function' || typeof repository.getEntityName !== 'function') {
+			return undefined;
+		}
+
+		return repository.getEntityManager()?.getMetadata().find<T>(repository.getEntityName());
 	}
 }
 

@@ -12,19 +12,15 @@
  * `@gauzy/core` boots the whole application graph on import, so its DTO base is stubbed with a
  * plain class here; the assertions are about what the *plugin's* DTOs declare on top of it.
  */
-jest.mock(
-	'@gauzy/core',
-	() => {
-		const { IsOptional, IsUUID } = jest.requireActual('class-validator');
-		class TenantOrganizationBaseDTO {
-			organizationId?: string;
-		}
-		IsOptional()(TenantOrganizationBaseDTO.prototype, 'organizationId');
-		IsUUID()(TenantOrganizationBaseDTO.prototype, 'organizationId');
-		return { TenantOrganizationBaseDTO, BaseQueryDTO: class {} };
-	},
-	{ virtual: true }
-);
+jest.mock('@gauzy/core', () => {
+	const { IsOptional, IsUUID } = jest.requireActual('class-validator');
+	class TenantOrganizationBaseDTO {
+		organizationId?: string;
+	}
+	IsOptional()(TenantOrganizationBaseDTO.prototype, 'organizationId');
+	IsUUID()(TenantOrganizationBaseDTO.prototype, 'organizationId');
+	return { TenantOrganizationBaseDTO, BaseQueryDTO: class {} };
+});
 
 import { getMetadataStorage } from 'class-validator';
 import { DocumentScopeQueryDTO } from './document-scope-query.dto';

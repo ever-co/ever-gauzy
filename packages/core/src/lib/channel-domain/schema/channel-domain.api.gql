@@ -1,0 +1,54 @@
+# The channel-domain domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here. The four root fields are the
+# ones the GraphQL API specification fixes for this resource, and the permission on every one of them
+# is the channel's own: a hostname is a dimension of the channel rather than a resource with access
+# rules of its own, which is what the REST surface says too.
+
+extend type Query {
+	"""
+	The hostnames of the caller's organization, optionally of one channel, the canonical host first.
+	"""
+	channelDomains(
+		filter: ChannelDomainFilter
+		sort: [ChannelDomainSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ChannelDomainConnection!
+
+	"""
+	One hostname of the caller's organization, or null when there is none.
+	"""
+	channelDomain(id: ID!): ChannelDomain
+}
+
+extend type Mutation {
+	"""
+	Attaches a hostname to a channel. The hostname is normalised before anything is read, and the
+	channel's first host is made primary whatever the input says.
+	"""
+	createChannelDomain(input: CreateChannelDomainInput!): ChannelDomain!
+
+	"""
+	Changes the flags of a hostname that exists. Setting `isPrimary` moves the flag from the current
+	primary — an update is the deliberate operation, so it does not have to be told twice.
+	"""
+	updateChannelDomain(input: UpdateChannelDomainInput!): ChannelDomain!
+
+	"""
+	Detaches a hostname. Refused for the channel's only host unless `force` is stated, because a
+	channel no request can resolve to cannot serve (invariant I-25).
+	"""
+	deleteChannelDomain(id: ID!, force: Boolean): ChannelDomain!
+
+	"""
+	Answers whether a hostname reaches the channel it is bound to: the same resolution the request
+	guard makes, which is the half of DNS/TLS readiness this platform can decide.
+	"""
+	verifyChannelDomain(id: ID!): ChannelDomainVerification!
+}

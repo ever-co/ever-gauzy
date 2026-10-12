@@ -1,0 +1,70 @@
+# The official holiday domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/official-holiday` routes already serve, under the same
+# guard and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other.
+#
+# **This resource serves five routes and no more, and the surface states five fields.** Its controller
+# is a plain class rather than a CRUD controller: it declares the list, the one-row read, the filing,
+# the edit and the removal, and it inherits nothing. There is therefore **no count field** — this
+# resource serves no count route — and **no withdrawal or restoration**, because there is no lifecycle
+# pair to mirror. A field for either would be a capability with no REST route behind it, which is the
+# one thing this delivery exists not to add.
+#
+# **The permissions are the Time Off policy's, on every route, and the pairs differ per route.** The
+# controller states `ALL_ORG_EDIT` with `TIME_OFF_POLICY_EDIT` on the class, and then each handler
+# states its own pair: the two reads the view pair, the filing the add pair, the edit the edit pair
+# and the removal the delete pair. The three writes therefore keep the class's `ALL_ORG_EDIT` half and
+# the two reads replace it with `ALL_ORG_VIEW` — which is what the delivered metadata says and what
+# the fields below repeat rather than tidying into one pair.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The delivered list read fixes an order of its own — the
+# holiday date ascending, so a year reads as a calendar — and the connection declares no default order
+# of its own for it, which is how that order is kept rather than replaced.
+
+extend type Query {
+	"""
+	The official holidays of the caller's tenant, earliest first.
+	"""
+	officialHolidays(
+		filter: OfficialHolidayFilter
+		sort: [OfficialHolidaySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OfficialHolidayConnection!
+
+	"""
+	One official holiday of the caller's tenant, or null when there is none.
+	"""
+	officialHoliday(id: ID!): OfficialHoliday
+}
+
+extend type Mutation {
+	"""
+	Files a holiday.
+	"""
+	createOfficialHoliday(input: CreateOfficialHolidayInput!): OfficialHoliday!
+
+	"""
+	Changes a holiday. A member the caller leaves out is left as it is, because the delivered edit is a
+	partial column update rather than a replacement of the row.
+	"""
+	updateOfficialHoliday(input: UpdateOfficialHolidayInput!): OfficialHoliday!
+
+	"""
+	Removes a holiday outright. This is the only removal this resource serves: there is no withdrawal
+	and no restoration behind it, so a caller that means "this day no longer applies" reaches for the
+	removal rather than for a soft one.
+	"""
+	deleteOfficialHoliday(id: ID!): Boolean!
+}

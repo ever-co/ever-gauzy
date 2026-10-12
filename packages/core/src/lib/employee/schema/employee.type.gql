@@ -1,0 +1,641 @@
+# The employee's object type.
+#
+# An employee is not an account. An account is one person's way in to the platform, and it exists once
+# per tenant; an employee is that person's engagement *by one organization* — which is why the same
+# account can stand behind several employee rows, one per organization it works for, and why the
+# relation from the row to the account is many-to-one rather than one-to-one. Everything a sale is
+# attributed to, every task a person is assigned and every commission a person accrues points at an
+# employee identifier for that reason, and not at an account identifier.
+#
+# **Every member below is a column of this row.** The delivered reads do not join anything: the list
+# route binds the relations its caller names in the query string, and the fields below run the read
+# with none. So a member for `user`, `contact`, `candidate`, `organizationPosition`, `teams`,
+# `projects`, `settings`, `awards`, `tags`, `skills` or any of the other collections this row carries
+# would be absent on every row this surface answers — a field that always reads null is worse than no
+# field. Each of those relations is carried as the identifier that always travels (`userId`,
+# `contactId`, `organizationPositionId`), and the row behind the identifier is read from its own
+# domain's surface: the account from `user(id)`, the tags of an employee from the tag surface's own
+# pivot reads, the awards from `employeeAwards(filter: { employeeId: ... })`.
+#
+# The user columns are the case that matters most and is easiest to get wrong. The paginated spelling
+# of the list selects the account's name, address and image beside the row, and the members read
+# selects them too — but `GET /`, which this surface's `employees` connection mirrors, does not: it
+# joins the account only to constrain it to live accounts, and selects nothing from it. A `name`,
+# `email` or `imageUrl` member here would therefore be filled on one of this domain's three list
+# fields and empty on the other two, which is exactly the kind of member this schema refuses.
+#
+# `billRateValue`, `minimumBillingRate`, `averageIncome`, `averageBonus`, `averageExpenses`,
+# `totalWorkHours`, `totalJobs` and `jobSuccess` are `Decimal` and never `Float`. They are stored in
+# `numeric` columns whose wire format is an exact decimal string, a rate is money per unit of time and
+# so is money, and a binary fraction cannot hold a rate or a cent exactly.
+#
+# `employeeLevel` is the row's own column and is deliberately a `String`, not a reference: the
+# platform keeps a separate `employeeLevel` table for the vocabulary an administration screen offers,
+# and the row stores the label it was given. Carrying the label is what the delivered reads answer;
+# the vocabulary itself is read from `employeeLevels`.
+#
+# `fullName` and `isDeleted` are absent although the entity declares them: both are virtual members
+# the store does not have and neither delivered read fills, so a field for either would answer null on
+# every row. The name of the person behind the row is read from the account surface, which is where
+# the two name columns live.
+
+"""
+One person's engagement by one organization: what they are paid, on what terms, what they are allowed
+to do in the tracking agent, and which account they sign in as.
+"""
+type Employee {
+	id: ID!
+	"The instant the row is dated to, where an administration screen dates it. Not the hire date — that is `startedWorkOn`."
+	valueDate: DateTime
+	"A one-line summary written for the lists, kept beside the long description rather than derived from it."
+	short_description: String
+	"The long description, sanitised through the server-side allowlist before it is stored, because a public organization page renders it."
+	description: String
+	"When the engagement began. The delivered working-employees read is defined against it and against `endWork`."
+	startedWorkOn: DateTime
+	"When the engagement ended, or null while it is current. Null is what the working-employees read treats as still working."
+	endWork: DateTime
+	"How often this employee is paid, as the contracts package's own `PayPeriodEnum` value."
+	payPeriod: String
+	"The billing rate per hour, in `billRateCurrency`. Money, and therefore an exact decimal."
+	billRateValue: Decimal
+	"The floor below which tracked time on this employee is not billed. A rate, and therefore an exact decimal."
+	minimumBillingRate: Decimal
+	"The currency `billRateValue` and `minimumBillingRate` are stated in, as the contracts package's own `CurrenciesEnum` value."
+	billRateCurrency: String
+	"Recurring weekly limit, in hours. A whole number of hours rather than an amount."
+	reWeeklyLimit: Int
+	"When the offer was made, for an engagement that is being hired."
+	offerDate: DateTime
+	"When the offer was accepted."
+	acceptDate: DateTime
+	"When the offer was declined."
+	rejectDate: DateTime
+	"The engagement level's label, as the row stores it. The vocabulary it is drawn from is read from `employeeLevels`."
+	employeeLevel: String
+	"Whether the bonus computed for this employee is hidden from the employee's own view."
+	anonymousBonus: Boolean
+	"The average income the platform computed for this employee. Money."
+	averageIncome: Decimal
+	"The average bonus the platform computed for this employee. Money."
+	averageBonus: Decimal
+	"Total hours the platform recorded against this employee."
+	totalWorkHours: Decimal
+	"The average expenses the platform computed for this employee. Money."
+	averageExpenses: Decimal
+	"Whether the employee's own view shows the anonymous-bonus column."
+	show_anonymous_bonus: Boolean
+	"Whether the employee's own view shows the average-bonus column."
+	show_average_bonus: Boolean
+	"Whether the employee's own view shows the average-expenses column."
+	show_average_expenses: Boolean
+	"Whether the employee's own view shows the average-income column."
+	show_average_income: Boolean
+	"Whether the employee's own view shows the billing-rate column."
+	show_billrate: Boolean
+	"Whether the employee's own view shows the pay-period column."
+	show_payperiod: Boolean
+	"Whether the employee's own view shows the start date column."
+	show_start_work_on: Boolean
+	"Whether the employee is open to being put forward for other engagements."
+	isJobSearchActive: Boolean
+	"The employee's LinkedIn profile."
+	linkedInUrl: String
+	"The employee's Facebook profile."
+	facebookUrl: String
+	"The employee's Instagram profile."
+	instagramUrl: String
+	"The employee's Twitter profile."
+	twitterUrl: String
+	"The employee's GitHub profile."
+	githubUrl: String
+	"The employee's GitLab profile."
+	gitlabUrl: String
+	"The employee's Upwork profile."
+	upworkUrl: String
+	"The employee's Stack Overflow profile."
+	stackoverflowUrl: String
+	"Whether the platform has verified this engagement."
+	isVerified: Boolean
+	"Whether the platform has vetted this engagement."
+	isVetted: Boolean
+	"How many jobs the external marketplace reports for this employee. A number, and an exact decimal because the column is one."
+	totalJobs: Decimal
+	"The external marketplace's success score for this employee. An exact decimal for the same reason."
+	jobSuccess: Decimal
+	"The external marketplace's public profile link."
+	profile_link: String
+	"Whether the tracking agent records time for this employee."
+	isTrackingEnabled: Boolean
+	"Whether the employee is currently online. Written by the tracking agent, not by an administration screen."
+	isOnline: Boolean
+	"Whether the employee has stepped away."
+	isAway: Boolean
+	"Whether the tracking agent currently has a running timer for this employee."
+	isTrackingTime: Boolean
+	"Whether the agent may capture screenshots. A per-employee policy the agent reads."
+	allowScreenshotCapture: Boolean
+	"Whether the employee may enter time by hand."
+	allowManualTime: Boolean
+	"Whether the employee may change a time entry that exists."
+	allowModifyTime: Boolean
+	"Whether the employee may remove a time entry."
+	allowDeleteTime: Boolean
+	"Whether the employee may quit the agent application."
+	allowAgentAppExit: Boolean
+	"Whether the employee may sign out of the agent application."
+	allowLogoutFromAgentApp: Boolean
+	"Whether the agent tracks keyboard and mouse activity, or only elapsed time."
+	trackKeyboardMouseActivity: Boolean
+	"Whether the agent captures every display, or only the primary one."
+	trackAllDisplays: Boolean
+	"The employee's identifier at the external marketplace."
+	upworkId: String
+	"The employee's identifier at LinkedIn."
+	linkedInId: String
+	"The account this engagement belongs to. The account row is read from this surface's own `user(id)` by this identifier."
+	userId: ID
+	"The contact row the engagement keeps its postal and fiscal facts in, where it has one. The contact is read from the contact surface."
+	contactId: ID
+	"The organization position this employee holds, where one is recorded. The position is read from the position surface."
+	organizationPositionId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"""
+	When the engagement was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — `DELETE /:id/soft` and `PUT /:id/recover` — and this column is what they write, so without
+	it a caller could not tell a live row from a withdrawn one on the answer to the write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of employees.
+"""
+type EmployeeEdge {
+	node: Employee!
+	cursor: String!
+}
+
+"""
+One page of employees, with the total the filters select and the boundary cursors.
+"""
+type EmployeeConnection {
+	nodes: [Employee!]!
+	edges: [EmployeeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields the employee list may be sorted by.
+
+The set is narrower than the columns the type carries, and that is a decision rather than an oversight
+in one direction only: every member here is a column the row always has, and the columns a list is
+read in an order for are the dates, the level and the flags. Sorting a roster by a description or by a
+profile URL is not a question an administration screen asks.
+"""
+enum EmployeeSortField {
+	createdAt
+	updatedAt
+	startedWorkOn
+	endWork
+	short_description
+	employeeLevel
+	isActive
+	isArchived
+	isOnline
+	isTrackingEnabled
+}
+
+"""
+The order the employees are returned in. At most three keys are accepted.
+"""
+input EmployeeSort {
+	field: EmployeeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields the employee list may be narrowed by.
+
+Every member is a column of the row, which is what makes it answerable: the delivered read joins
+nothing, so a member for a relation would narrow by a value the rows this surface holds never carry.
+The identifiers a relation is carried as are filterable for the reason they exist — selecting the
+employees of one organization, or the engagements of one account, is the read these columns are for.
+"""
+input EmployeeFilter {
+	id: IDFilter
+	valueDate: DateTimeFilter
+	short_description: StringFilter
+	description: StringFilter
+	startedWorkOn: DateTimeFilter
+	endWork: DateTimeFilter
+	payPeriod: StringFilter
+	billRateValue: DecimalFilter
+	minimumBillingRate: DecimalFilter
+	billRateCurrency: StringFilter
+	reWeeklyLimit: NumberFilter
+	offerDate: DateTimeFilter
+	acceptDate: DateTimeFilter
+	rejectDate: DateTimeFilter
+	employeeLevel: StringFilter
+	anonymousBonus: BooleanFilter
+	averageIncome: DecimalFilter
+	averageBonus: DecimalFilter
+	totalWorkHours: DecimalFilter
+	averageExpenses: DecimalFilter
+	totalJobs: DecimalFilter
+	jobSuccess: DecimalFilter
+	profile_link: StringFilter
+	isVerified: BooleanFilter
+	isVetted: BooleanFilter
+	isJobSearchActive: BooleanFilter
+	isTrackingEnabled: BooleanFilter
+	isOnline: BooleanFilter
+	isAway: BooleanFilter
+	isTrackingTime: BooleanFilter
+	allowScreenshotCapture: BooleanFilter
+	allowManualTime: BooleanFilter
+	allowModifyTime: BooleanFilter
+	allowDeleteTime: BooleanFilter
+	allowAgentAppExit: BooleanFilter
+	allowLogoutFromAgentApp: BooleanFilter
+	trackKeyboardMouseActivity: BooleanFilter
+	trackAllDisplays: BooleanFilter
+	upworkId: StringFilter
+	linkedInId: StringFilter
+	userId: IDFilter
+	contactId: IDFilter
+	organizationPositionId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeFilter!]
+	or: [EmployeeFilter!]
+	not: EmployeeFilter
+}
+
+# The working-employees read and the members read project a subset of the row rather than the whole of
+# it, so each declares its own filter and sort vocabulary instead of borrowing the list's.
+#
+# This is not bookkeeping. The connection protocol evaluates a filter against the rows the delivered
+# read returned, so a field that read did not select is `undefined` on every row — and a filter on it
+# would either match nothing or, worse, match by absence. Declaring `startedWorkOn` as filterable on
+# `workingEmployees` is honest, because that read selects it; declaring it on `employeeMembers`, whose
+# read selects six columns, would be a field the evaluator refuses while the schema advertises it.
+
+"""
+The fields the working-employees list may be sorted by.
+"""
+enum WorkingEmployeeSortField {
+	createdAt
+	updatedAt
+	startedWorkOn
+	billRateValue
+	isOnline
+	isTrackingEnabled
+}
+
+"""
+The order the working employees are returned in. At most three keys are accepted.
+"""
+input WorkingEmployeeSort {
+	field: WorkingEmployeeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields the working-employees list may be narrowed by: exactly the columns that read selects.
+"""
+input WorkingEmployeeFilter {
+	id: IDFilter
+	short_description: StringFilter
+	description: StringFilter
+	startedWorkOn: DateTimeFilter
+	averageIncome: DecimalFilter
+	averageExpenses: DecimalFilter
+	averageBonus: DecimalFilter
+	isTrackingEnabled: BooleanFilter
+	billRateCurrency: StringFilter
+	billRateValue: DecimalFilter
+	minimumBillingRate: DecimalFilter
+	userId: IDFilter
+	isAway: BooleanFilter
+	isOnline: BooleanFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [WorkingEmployeeFilter!]
+	or: [WorkingEmployeeFilter!]
+	not: WorkingEmployeeFilter
+}
+
+"""
+The fields the organization-members list may be sorted by.
+"""
+enum EmployeeMemberSortField {
+	createdAt
+	updatedAt
+	isOnline
+	isAway
+}
+
+"""
+The order the organization members are returned in. At most three keys are accepted.
+"""
+input EmployeeMemberSort {
+	field: EmployeeMemberSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields the organization-members list may be narrowed by: exactly the columns that read selects.
+"""
+input EmployeeMemberFilter {
+	id: IDFilter
+	userId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	isOnline: BooleanFilter
+	isAway: BooleanFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeMemberFilter!]
+	or: [EmployeeMemberFilter!]
+	not: EmployeeMemberFilter
+}
+
+"""
+The account a new employee signs in as, when the caller is filing an account together with the
+engagement.
+
+The members are the ones the delivered body validates for a nested account. The role is stated as an
+identifier here rather than as the row the delivered body accepts, because that body resolves the role
+from the database and refuses one the caller may not grant — the row's other columns are not read from
+this member at all, so stating them would promise an effect the write does not have.
+
+`password` is a plaintext member on the way in and is hashed before the row is written; it is never a
+member of the answer, because the answer is the account's projection and the projection has no digest
+in it.
+"""
+input EmployeeUserInput {
+	"The address the account is created with, and the address it signs in with."
+	email: String!
+	"The given name to file on the account."
+	firstName: String
+	"The family name to file on the account."
+	lastName: String
+	"The image to show for the account."
+	imageUrl: String
+	"The language the account's own interface is read in."
+	preferredLanguage: String
+	"The role the account acts under, resolved from the database and refused when the caller may not grant it."
+	roleId: ID
+}
+
+"""
+What a caller states when it files an engagement.
+
+The organization is stated and required because the delivered create does not derive one: the tenant is
+stamped from the credential, never from an argument, but the organization is a member the caller names
+and the delivered handler reads it to file the row and to add the account to the organization. There is
+no member for the tenant, for the same reason there is none on any other write here.
+
+Either `userId` names an account that already exists or `user` states one to file with the engagement,
+and the delivered create refuses a body that states neither: an engagement is a fact about a person, so
+there has to be a person. `password` is read only on the branch that files a new account.
+
+The nested row collections the delivered body also accepts — the employment types, the departments and
+the skills — are not members here. Each is a collection of rows rather than of identifiers, the
+delivered write cascades the rows themselves, and a GraphQL input that stated a half-row would be a
+second and weaker way to write the same relation than the domain that owns it already offers. The
+position is the exception, because it is one relation and it has an identifier: `organizationPositionId`.
+"""
+input CreateEmployeeInput {
+	"The organization the engagement is filed under."
+	organizationId: ID!
+	"The account that already exists and is to be engaged."
+	userId: ID
+	"The account to file together with the engagement, when none exists yet."
+	user: EmployeeUserInput
+	"The new account's password, read only on the branch that files one."
+	password: String
+	"When the engagement begins."
+	startedWorkOn: DateTime
+	"When the engagement ended, if it already has."
+	endWork: DateTime
+	"A one-line summary for the lists."
+	short_description: String
+	"The long description. It is sanitised through the server-side allowlist before it is stored."
+	description: String
+	"Whether the computed bonus is hidden from the employee's own view."
+	anonymousBonus: Boolean
+	"The engagement level's label, as this row stores it."
+	employeeLevel: String
+	"The organization position this employee holds."
+	organizationPositionId: ID
+	"The facets to attach to the employee, as the identifiers the pivot is written from."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it edits an engagement.
+
+Every member is optional and a member that is absent is left as it is *for the columns of this row*,
+because the delivered edit reads the row and persists the stated members over it. The account is the
+exception and is not a member at all: the edit route reads the engagement's own columns, and an
+account is edited through the account's own surface.
+
+The identifier is carried in the body as well as in the field's own argument, because the delivered
+handler reads the body's and treats the path's as authoritative — see `updateEmployee`.
+"""
+input UpdateEmployeeInput {
+	id: ID!
+	"When the engagement begins."
+	startedWorkOn: DateTime
+	"When the engagement ended, if it already has."
+	endWork: DateTime
+	"A one-line summary for the lists."
+	short_description: String
+	"The long description. It is sanitised through the server-side allowlist before it is stored."
+	description: String
+	"Whether the computed bonus is hidden from the employee's own view."
+	anonymousBonus: Boolean
+	"The engagement level's label, as this row stores it."
+	employeeLevel: String
+	"The organization position this employee holds."
+	organizationPositionId: ID
+	"The facets to attach to the employee, as the identifiers the pivot is written from."
+	tagIds: [ID!]
+	"The employee's LinkedIn profile."
+	linkedInUrl: String
+	"The employee's Facebook profile."
+	facebookUrl: String
+	"The employee's Instagram profile."
+	instagramUrl: String
+	"The employee's Twitter profile."
+	twitterUrl: String
+	"The employee's GitHub profile."
+	githubUrl: String
+	"The employee's GitLab profile."
+	gitlabUrl: String
+	"The employee's Upwork profile."
+	upworkUrl: String
+	"The employee's Stack Overflow profile."
+	stackoverflowUrl: String
+	"The billing rate per hour, in `billRateCurrency`. A rate, and therefore an exact decimal."
+	billRateValue: Decimal
+	"The currency the rates are stated in."
+	billRateCurrency: String
+	"The floor below which tracked time is not billed."
+	minimumBillingRate: Decimal
+	"How often the employee is paid."
+	payPeriod: String
+	"Recurring weekly limit, in hours."
+	reWeeklyLimit: Int
+	"When the offer was made."
+	offerDate: DateTime
+	"When the offer was accepted."
+	acceptDate: DateTime
+	"When the offer was declined."
+	rejectDate: DateTime
+	"The employee's identifier at the external marketplace."
+	upworkId: String
+	"The employee's identifier at LinkedIn."
+	linkedInId: String
+	"The external marketplace's public profile link."
+	profile_link: String
+	"Whether the employee has stepped away."
+	isAway: Boolean
+	"Whether the employee's own view shows the anonymous-bonus column."
+	show_anonymous_bonus: Boolean
+	"Whether the employee's own view shows the average-bonus column."
+	show_average_bonus: Boolean
+	"Whether the employee's own view shows the average-expenses column."
+	show_average_expenses: Boolean
+	"Whether the employee's own view shows the average-income column."
+	show_average_income: Boolean
+	"Whether the employee's own view shows the billing-rate column."
+	show_billrate: Boolean
+	"Whether the employee's own view shows the pay-period column."
+	show_payperiod: Boolean
+	"Whether the employee's own view shows the start date column."
+	show_start_work_on: Boolean
+	"Whether the engagement is active."
+	isActive: Boolean
+	"Whether the engagement is archived."
+	isArchived: Boolean
+	"Whether the platform has verified this engagement."
+	isVerified: Boolean
+	"Whether the platform has vetted this engagement."
+	isVetted: Boolean
+	"Whether the employee is currently online."
+	isOnline: Boolean
+	"Whether the tracking agent records time for this employee."
+	isTrackingEnabled: Boolean
+	"Whether the tracking agent currently has a running timer for this employee."
+	isTrackingTime: Boolean
+	"Whether the employee is open to being put forward for other engagements."
+	isJobSearchActive: Boolean
+	"Whether the agent may capture screenshots."
+	allowScreenshotCapture: Boolean
+	"Whether the employee may enter time by hand."
+	allowManualTime: Boolean
+	"Whether the employee may change a time entry that exists."
+	allowModifyTime: Boolean
+	"Whether the employee may remove a time entry."
+	allowDeleteTime: Boolean
+	"Whether the employee may quit the agent application."
+	allowAgentAppExit: Boolean
+	"Whether the employee may sign out of the agent application."
+	allowLogoutFromAgentApp: Boolean
+	"Whether the agent tracks keyboard and mouse activity."
+	trackKeyboardMouseActivity: Boolean
+	"Whether the agent captures every display, or only the primary one."
+	trackAllDisplays: Boolean
+}
+
+"""
+What a caller states when an employee edits their own profile.
+
+This is the same class of write as `UpdateEmployeeInput` and a narrower statement of it: the delivered
+profile body carries the facts an employee owns — the networks, the rates, the hiring dates and the
+employment terms — and none of the administrative columns, which is why the two inputs are two
+declarations rather than one. Both are carried because both routes are served, and a resolver that
+merged them would let a profile edit reach columns its own route cannot.
+"""
+input UpdateEmployeeProfileInput {
+	id: ID!
+	"When the engagement begins."
+	startedWorkOn: DateTime
+	"When the engagement ended, if it already has."
+	endWork: DateTime
+	"A one-line summary for the lists."
+	short_description: String
+	"The long description. It is sanitised through the server-side allowlist before it is stored."
+	description: String
+	"Whether the computed bonus is hidden from the employee's own view."
+	anonymousBonus: Boolean
+	"The engagement level's label, as this row stores it."
+	employeeLevel: String
+	"The organization position this employee holds."
+	organizationPositionId: ID
+	"The facets to attach to the employee, as the identifiers the pivot is written from."
+	tagIds: [ID!]
+	"The employee's LinkedIn profile."
+	linkedInUrl: String
+	"The employee's Facebook profile."
+	facebookUrl: String
+	"The employee's Instagram profile."
+	instagramUrl: String
+	"The employee's Twitter profile."
+	twitterUrl: String
+	"The employee's GitHub profile."
+	githubUrl: String
+	"The employee's GitLab profile."
+	gitlabUrl: String
+	"The employee's Upwork profile."
+	upworkUrl: String
+	"The employee's Stack Overflow profile."
+	stackoverflowUrl: String
+	"The billing rate per hour, in `billRateCurrency`. A rate, and therefore an exact decimal."
+	billRateValue: Decimal
+	"The currency the rates are stated in."
+	billRateCurrency: String
+	"The floor below which tracked time is not billed."
+	minimumBillingRate: Decimal
+	"How often the employee is paid."
+	payPeriod: String
+	"Recurring weekly limit, in hours."
+	reWeeklyLimit: Int
+	"When the offer was made."
+	offerDate: DateTime
+	"When the offer was accepted."
+	acceptDate: DateTime
+	"When the offer was declined."
+	rejectDate: DateTime
+	"The employee's identifier at the external marketplace."
+	upworkId: String
+	"The employee's identifier at LinkedIn."
+	linkedInId: String
+	"The external marketplace's public profile link."
+	profile_link: String
+	"Whether the employee has stepped away."
+	isAway: Boolean
+}

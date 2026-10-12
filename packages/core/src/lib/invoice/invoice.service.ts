@@ -3,7 +3,8 @@ import { Invoice } from './invoice.entity';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
-import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
+import { DecimalString, ID, IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
+import { addDecimalStrings, normalizeDecimalString } from '../money/decimal';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
@@ -16,6 +17,25 @@ import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } fro
 import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+
+/** One total of invoice values in one currency: how many documents, and their exact sum. */
+export interface IInvoiceCurrencyTotal {
+	currency: string;
+	count: number;
+	totalValue: DecimalString;
+}
+
+/** One status's total in one currency. */
+export interface IInvoiceStatusTotal extends IInvoiceCurrencyTotal {
+	status: string | null;
+}
+
+/** One organization's invoices (or estimates), counted and totalled per currency and per status. */
+export interface IInvoiceStatistics {
+	count: number;
+	totals: IInvoiceCurrencyTotal[];
+	byStatus: IInvoiceStatusTotal[];
+}
 
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
@@ -67,6 +87,73 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				};
 			}
 		}
+	}
+
+	/**
+	 * One organization's invoices — or, when asked, its estimates — counted and totalled per currency and per
+	 * status.
+	 *
+	 * Scoped where `getInvoiceStats` is not: that read feeds the platform-wide statistics and counts every
+	 * tenant's invoices together, and is left as it is. This one reads only the credential's tenant (the CRUD
+	 * read applies it) and the one organization named, and refuses to run without an organization rather
+	 * than widening to the whole tenant. A soft-deleted document is not counted, because the CRUD read does
+	 * not return it.
+	 *
+	 * Money is summed as exact decimal strings and never across currencies: an invoice in euros and one in
+	 * dollars have no total. A document with no stored total counts and adds nothing.
+	 *
+	 * @param input The organization, and whether to read estimates instead of invoices (default: invoices).
+	 * @returns The count, the totals per currency, and the totals per status and currency.
+	 */
+	async getStatistics(input: {
+		tenantId?: ID;
+		organizationId?: ID;
+		isEstimate?: boolean;
+	}): Promise<IInvoiceStatistics> {
+		const { organizationId } = input ?? {};
+
+		if (!organizationId) {
+			throw new BadRequestException('INVOICE_ORGANIZATION_REQUIRED: invoice statistics are per organization.');
+		}
+
+		const rows = await this.find({
+			where: { organizationId, isEstimate: input.isEstimate === true },
+			select: { id: true, status: true, currency: true, totalValue: true }
+		});
+
+		const totals = new Map<string, IInvoiceCurrencyTotal>();
+		const byStatus = new Map<string, IInvoiceStatusTotal>();
+
+		for (const row of rows ?? []) {
+			const currency = row.currency;
+			const status = row.status ?? null;
+			// The column is numeric; a driver may hand it over as a number or as text, and a document may hold
+			// none. Each is read as the exact decimal it spells.
+			const value = normalizeDecimalString(row.totalValue ?? 0);
+
+			const total = totals.get(currency) ?? { currency, count: 0, totalValue: '0' };
+			total.count += 1;
+			total.totalValue = addDecimalStrings(total.totalValue, value);
+			totals.set(currency, total);
+
+			const key = `${status}|${currency}`;
+			const bucket = byStatus.get(key) ?? { status, currency, count: 0, totalValue: '0' };
+			bucket.count += 1;
+			bucket.totalValue = addDecimalStrings(bucket.totalValue, value);
+			byStatus.set(key, bucket);
+		}
+
+		return {
+			count: rows?.length ?? 0,
+			totals: Array.from(totals.values()).map((total) => ({
+				...total,
+				totalValue: normalizeDecimalString(total.totalValue)
+			})),
+			byStatus: Array.from(byStatus.values()).map((bucket) => ({
+				...bucket,
+				totalValue: normalizeDecimalString(bucket.totalValue)
+			}))
+		};
 	}
 
 	/**
