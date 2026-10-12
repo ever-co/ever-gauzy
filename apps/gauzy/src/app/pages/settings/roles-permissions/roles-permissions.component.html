@@ -29,7 +29,7 @@
             nbButton
             ghost
             size="tiny"
-            (click)="formControl.reset(rolesEnum.EMPLOYEE)"
+            (click)="formControl.reset(rolesEnum.EMPLOYEE); onSelectedRole()"
             [attr.aria-label]="'BUTTONS.CLEAR' | translate"
           >
             <nb-icon icon="close" pack="eva"></nb-icon>

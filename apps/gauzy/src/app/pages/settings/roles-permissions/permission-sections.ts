@@ -299,8 +299,8 @@ export const ADMINISTRATION_PERMISSION_SECTIONS: IPermissionSection[] = [
  */
 export function toPermissionSections(permissions: P[], sections: IPermissionSection[]): IPermissionSection[] {
 	const visible = new Set(permissions);
-	const placed = new Set<P>();
-	const result: IPermissionSection[] = [];
+	let placed = new Set<P>();
+	let result: IPermissionSection[] = [];
 	for (const section of sections) {
 		const items = section.permissions.filter((permission) => visible.has(permission));
 		items.forEach((permission) => placed.add(permission));
