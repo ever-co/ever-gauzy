@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
@@ -7,6 +7,7 @@ import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './..
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { RequestContext } from './../../../../core/context';
+import { debugInDevelopment } from './../../../../logger';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
@@ -36,6 +37,7 @@ export function omitScopeFields<T extends object>(input: T): Partial<T> {
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	protected ormType: MultiORM = getORMType();
+	private readonly logger = new Logger(TimeLogUpdateHandler.name);
 
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -58,16 +60,14 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
 		const { id, input, manualTimeSlot, forceDelete = false } = command;
-		console.log('Executing TimeLogUpdateCommand:', { id, input, manualTimeSlot, forceDelete });
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
-		console.log('Retrieved TimeLog:', timeLog);
 
 		// Tenant and organization always come from the stored row, never from the input: the input is
 		// (partly) a request body, and spreading its tenantId/organizationId into the update re-pointed
 		// the log at another tenant (GHSA-6qvm-3wg4-26w4).
 		const { employeeId, organizationId, tenantId } = timeLog;
-		console.log('Tenant ID:', tenantId);
+		debugInDevelopment(this.logger, () => `Tenant ID: ${tenantId}`);
 		const changes = omitScopeFields(input);
 
 		let timesheet: ITimesheet;
@@ -75,18 +75,16 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Check if time slots need to be updated
 		let needToUpdateTimeSlots = Boolean(input.startedAt || input.stoppedAt);
-		console.log('Need to update time slots:', needToUpdateTimeSlots);
+		debugInDevelopment(this.logger, () => `Need to update time slots: ${needToUpdateTimeSlots}`);
 
 		if (needToUpdateTimeSlots) {
 			timesheet = await this.commandBus.execute(
 				new TimesheetFirstOrCreateCommand(input.startedAt, employeeId, organizationId)
 			);
-			console.log('Generated or retrieved Timesheet:', timesheet);
 
 			// Generate time slots based on the updated time log details
 			const { startedAt, stoppedAt } = { ...timeLog, ...changes };
 			updateTimeSlots = this.timeSlotService.generateTimeSlots(startedAt, stoppedAt);
-			console.log('Generated updated TimeSlots:', updateTimeSlots);
 		}
 
 		// Update the time log in the repository
@@ -97,45 +95,40 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				...(timesheet ? { timesheetId: timesheet.id } : {})
 			}
 		);
-		console.log('Updated TimeLog in the repository:', { id: timeLog.id, input: changes });
 
 		// Regenerate the existing time slots for the time log
 		const timeSlots = this.timeSlotService.generateTimeSlots(timeLog.startedAt, timeLog.stoppedAt);
-		console.log('Generated existing TimeSlots for TimeLog:', timeSlots);
 
 		// Retrieve the updated time log
 		timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
-		console.log('Retrieved updated TimeLog from repository:', timeLog);
 
 		// Check if time slots need to be updated
 		if (needToUpdateTimeSlots) {
 			// Identify conflicting start times
 			const startTimes = this.getConflictingStartTimes(timeSlots, updateTimeSlots);
-			console.log('Identified conflicting start times:', startTimes);
 
 			// Remove conflicting time slots
 			if (startTimes.length > 0) {
 				await this.removeConflictingTimeSlots(tenantId, organizationId, employeeId, startTimes, forceDelete);
-				console.log('Removed conflicting TimeSlots:', startTimes);
 			}
 			// Create new time slots if needed for Web Timer
 			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 				await this.bulkCreateTimeSlots(updateTimeSlots, timeLog, employeeId, organizationId, tenantId);
-				console.log('Created new TimeSlots for Web Timer:', updateTimeSlots);
 			}
 
 			// Update the time log in the repository
 			await this.saveUpdatedTimeLog(timeLog);
-			console.log('Saved updated TimeLog in the repository:', timeLog);
 
 			// Recalculate timesheets and employee hours
 			await this.recalculateTimesheetAndEmployeeHours(timeLog.timesheetId, employeeId);
-			console.log('Recalculated timesheets and employee hours:', timeLog.timesheetId, employeeId);
+			debugInDevelopment(
+				this.logger,
+				() => `Recalculated timesheets and employee hours: ${timeLog.timesheetId}, ${employeeId}`
+			);
 		}
 
 		// Return the updated time log
 		const updatedTimeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
-		console.log('Final updated TimeLog:', updatedTimeLog);
 
 		return updatedTimeLog;
 	}
@@ -236,7 +229,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 		}
 
-		console.log(`conflicting time slots for ${forceDelete ? 'hard' : 'soft'} deleting: %s`, slots.length);
+		debugInDevelopment(
+			this.logger,
+			() => `conflicting time slots for ${forceDelete ? 'hard' : 'soft'} deleting: ${slots.length}`
+		);
 
 		if (isEmpty(slots)) {
 			return [];
