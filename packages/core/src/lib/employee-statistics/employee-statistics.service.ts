@@ -15,6 +15,18 @@ import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 
+/**
+ * The month containing `date`, as the range `findWorkingEmployees` filters on.
+ *
+ * Passing the bare Date counted every current employee: the working-period filter only applies when the
+ * range has both `startDate` and `endDate`, so a split expense was divided among today's employees
+ * instead of those working in its month.
+ */
+export const monthOf = (date: Date): IDateRangePicker => ({
+	startDate: moment(date).startOf('month').toDate(),
+	endDate: moment(date).endOf('month').toDate()
+});
+
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -334,7 +346,7 @@ export class EmployeeStatisticsService {
 				// Add a new map entry if the key(month-year) does not already exist
 				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 					employee.organization.id,
-					expense.valueDate
+					monthOf(expense.valueDate)
 				);
 
 				const newStat = {
@@ -427,11 +439,12 @@ export class EmployeeStatisticsService {
 					const splitExpense = amount / stat.splitAmong;
 					stat.splitExpense = Number((splitExpense + stat.splitExpense).toFixed(2));
 					stat.recurringExpense.push(expense);
-					stat.valueDate = date;
+					// A copy: `date` is the loop variable, moved on by `setMonth` after this iteration
+					stat.valueDate = new Date(date);
 				} else {
 					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 						employee.organization.id,
-						date
+						monthOf(date)
 					);
 
 					// Add a new map entry if the key(month-year) does not already exist
@@ -441,7 +454,7 @@ export class EmployeeStatisticsService {
 						splitExpense: Number((amount / splitAmong).toFixed(2)),
 						splitAmong,
 						recurringExpense: [expense],
-						valueDate: date
+						valueDate: new Date(date)
 					};
 
 					monthlySplitExpenseMap.set(key, newStat);
