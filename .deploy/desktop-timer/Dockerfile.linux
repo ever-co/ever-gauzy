@@ -10,6 +10,8 @@ WORKDIR /opt/src
 COPY --chown=node:node apps/desktop-timer/package.json ./apps/desktop-timer/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 
 USER node:node
 

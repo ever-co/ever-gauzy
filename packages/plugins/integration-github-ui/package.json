@@ -24,28 +24,28 @@
 		"lib:watch": "yarn nx build plugin-integration-github-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "21.0.7",
-		"@angular/core": "21.0.7"
+		"@angular/common": "22.2.2",
+		"@angular/core": "22.2.2"
 	},
 	"dependencies": {
-		"@angular/forms": "21.0.7",
-		"@angular/router": "21.0.7",
+		"@angular/forms": "22.2.2",
+		"@angular/router": "22.2.2",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-config": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",
-		"@nebular/theme": "^17.0.0",
+		"@nebular/theme": "^18.0.0",
 		"@ngneat/until-destroy": "^10.0.0",
-		"@ngx-translate/core": "^17.0.0",
-		"angular2-smart-table": "^4.1.1",
+		"@ngx-translate/core": "^18.0.0",
+		"angular2-smart-table": "^4.2.0",
 		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.2",
-		"tslib": "^2.6.2"
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"jest-preset-angular": "16.0.0"
+		"@types/node": "^26.6.5",
+		"jest-preset-angular": "17.0.2"
 	},
 	"keywords": [
 		"gauzy",

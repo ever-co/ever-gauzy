@@ -31,10 +31,10 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
-		"typescript": "^5.9.3"
+		"typescript": "~6.0.3"
 	},
 	"engines": {
 		"node": ">=22",

@@ -27,23 +27,23 @@
 		"lib:watch": "yarn nx build plugin-jitsu-analytics --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.26",
-		"@nestjs/core": "^11.1.26"
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@jitsu/js": "^1.10.4",
+		"@jitsu/js": "^1.11.0",
 		"chalk": "^4.1.0",
-		"node-fetch": "^2.6.7",
-		"tslib": "^2.6.2",
-		"typeorm": "^1.0.0"
+		"node-fetch": "^3.3.2",
+		"tslib": "^2.8.1",
+		"typeorm": "^1.1.2"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
 	},
 	"keywords": [
 		"gauzy",

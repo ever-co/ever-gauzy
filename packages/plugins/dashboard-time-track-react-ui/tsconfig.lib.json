@@ -9,5 +9,13 @@
 		"jsx": "react-jsx"
 	},
 	"exclude": ["src/**/*.spec.ts"],
-	"include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"]
+	"include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"],
+	"angularCompilerOptions": {
+		"extendedDiagnostics": {
+			"checks": {
+				"nullishCoalescingNotNullable": "suppress",
+				"optionalChainNotNullable": "suppress"
+			}
+		}
+	}
 }

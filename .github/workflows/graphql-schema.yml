@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
 
       - name: Restore node_modules archive
         # The same key the build workflow writes, so a push that already built this exact lockfile

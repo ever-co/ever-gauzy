@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "ignoreDeprecations": "6.0",
         "outDir": "lib",
         "rootDir": "src",
         "target": "es2019",

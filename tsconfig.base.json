@@ -1,6 +1,15 @@
 {
 	"compileOnSave": false,
 	"compilerOptions": {
+		"ignoreDeprecations": "6.0",
+		// TypeScript 6 changed these defaults; the workspace keeps the TypeScript 5 behaviour it was written for
+		// (a project that wants more sets it itself): not strict, side-effect imports unchecked, and CommonJS modules
+		// imported without the interop helpers (the code calls namespace imports such as `import * as moment from
+		// 'moment'`). `types` keeps TypeScript 6's default (none): every build configuration lists its own, and the
+		// old automatic sweep of node_modules/@types now trips on a dependency's stub package (@types/parse-path).
+		"strict": false,
+		"esModuleInterop": false,
+		"noUncheckedSideEffectImports": false,
 		"rootDir": ".",
 		"sourceMap": true,
 		"declaration": false,

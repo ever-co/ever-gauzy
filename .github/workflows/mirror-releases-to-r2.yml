@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '26'
 
       - name: Verify R2 credentials and signing
         # Runs before any mirroring. R2 answers "signature rejected" in a way the mirror reads as

@@ -22,6 +22,8 @@ const nxPreset = require('@nx/jest/preset').default;
 //                                       desktop apps' shells load through the library's entry point)
 //   jose                             -> the shared OpenID Connect library in `@gauzy/auth` (the auth,
 //                                       auth-keycloak and auth-zitadel suites)
+//   marked                           -> docs-ui's markdown rendering (ESM-only from marked 16, `.esm.js`)
+//   hash-it                          -> desktop-ui-lib's cache services (ESM-only from hash-it 7)
 // plus every `.mjs` file: Angular and its ecosystem ship ESM-only `fesm2022/*.mjs` bundles, which the
 // Angular projects compile with jest-preset-angular. A Node project only pays for that alternative
 // when one of its specs actually reaches an `.mjs` file, which would otherwise fail to load anyway.
@@ -43,13 +45,21 @@ const nxPreset = require('@nx/jest/preset').default;
 //   - `@gauzy/*` is deliberately absent, and adding it would do nothing. Jest resolves workspace
 //     packages to their real source path (`packages/<pkg>/src/index.ts`), which has no
 //     `node_modules/` segment, so this pattern is never consulted for them.
-const transformIgnorePatterns = [
-	String.raw`node_modules/(?!.*\.mjs$|(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios|@datorama|@ngneat|lodash-es|d3-[a-z-]+|internmap|jose)/)`
-];
+//
+// The list itself lives in `jest.patterns.js`, beside the variant the Node projects use: they load ES modules natively
+// under `--experimental-vm-modules`, which NestJS 12 (ES modules) needs — see there.
+const vm = require('node:vm');
+const { transformIgnorePatterns, nodeTransformIgnorePatterns } = require('./jest.patterns');
+
+// Which variant applies follows from how THIS process loads ES modules, not from the kind of project: with the flag
+// (`vm.SourceTextModule` exists) Jest evaluates every `.mjs` and every `"type": "module"` package as an ES module,
+// so compiling one to CommonJS breaks it, and the Node variant leaves them alone. A Node project that does not
+// restate the key (about half of them) gets the right one by inheriting it; without the flag, the list above.
+const loadsEsModulesNatively = typeof vm.SourceTextModule === 'function';
 
 module.exports = {
 	...nxPreset,
-	transformIgnorePatterns,
+	transformIgnorePatterns: loadsEsModulesNatively ? nodeTransformIgnorePatterns : transformIgnorePatterns,
 	// A ts-jest worker keeps every module graph it compiled, so on the projects with hundreds of suites
 	// (core: 551) each worker grows to several GB, and `nx run-many --parallel=2` x (cores - 1) workers
 	// exhausted the 68 GiB unit-test runner (run 37932712666, OOM-killed at 67.4 GiB). Jest restarts a

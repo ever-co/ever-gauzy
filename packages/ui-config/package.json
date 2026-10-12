@@ -34,18 +34,18 @@
 		"setup-env:dev": "yarn generate-env:dev && yarn replace-env:dev"
 	},
 	"peerDependencies": {
-		"@angular/common": "21.0.7",
-		"@angular/core": "21.0.7"
+		"@angular/common": "22.2.2",
+		"@angular/core": "22.2.2"
 	},
 	"dependencies": {
-		"tslib": "^2.6.2"
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
+		"@types/node": "^26.6.5",
 		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
-		"jest-preset-angular": "16.0.0"
+		"jest-preset-angular": "17.0.2"
 	},
 	"keywords": [
 		"gauzy",

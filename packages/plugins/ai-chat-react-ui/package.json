@@ -24,27 +24,27 @@
 		"lib:watch": "yarn nx build plugin-ai-chat-react-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "21.0.7",
-		"@angular/core": "21.0.7",
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0"
+		"@angular/common": "22.2.2",
+		"@angular/core": "22.2.2",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0"
 	},
 	"dependencies": {
-		"@ai-sdk/react": "^4.0.16",
-		"ai": "^7.0.15",
-		"streamdown": "^2.5.0",
+		"@ai-sdk/react": "^4.0.140",
+		"ai": "^7.0.137",
+		"streamdown": "^2.7.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin-ui": "^0.1.0",
 		"@gauzy/ui-config": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",
 		"@gauzy/ui-react": "^0.1.0",
 		"@gauzy/ui-react-components": "^0.1.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"jest-preset-angular": "16.0.0"
+		"@types/node": "^26.6.5",
+		"jest-preset-angular": "17.0.2"
 	},
 	"keywords": [
 		"Angular",
