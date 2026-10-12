@@ -255,14 +255,14 @@ describe('The order’s document and approval verbs — one capability, two surf
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, route)).toEqual([pair.permission]);
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, field)).toEqual([pair.permission]);
 
-			expect(reflector.get(IDEMPOTENT_METADATA_KEY, route)?.scope).toBe(pair.scope);
-			expect(reflector.get(IDEMPOTENT_METADATA_KEY, field)?.scope).toBe(pair.scope);
-			expect(reflector.get(IDEMPOTENT_METADATA_KEY, field)?.required ?? false).toBe(false);
+			expect((reflector.get(IDEMPOTENT_METADATA_KEY, route) as any)?.scope).toBe(pair.scope);
+			expect((reflector.get(IDEMPOTENT_METADATA_KEY, field) as any)?.scope).toBe(pair.scope);
+			expect((reflector.get(IDEMPOTENT_METADATA_KEY, field) as any)?.required ?? false).toBe(false);
 
 			// Both are writes predicated on the order's version, read by the guard from the order service.
 			expect(reflector.get(VERSIONED_METADATA_KEY, route)).toMatchObject({ resource: OrderService });
 			expect(reflector.get(VERSIONED_METADATA_KEY, field)).toMatchObject({ resource: OrderService });
-			expect(reflector.get(VERSIONED_METADATA_KEY, route)?.write ?? true).toBe(true);
+			expect((reflector.get(VERSIONED_METADATA_KEY, route) as any)?.write ?? true).toBe(true);
 		}
 	);
 

@@ -516,6 +516,15 @@ describe('OrderService.requestApproval — a buyer places a draft for a staff me
 		expect(built.order()).toMatchObject({ status: OrderStatus.DRAFT, version: 3 });
 	});
 
+	it('without a stated version, holds the draft’s placement to the version it read', async () => {
+		const built = fixture();
+		const place = jest.spyOn(built.service, 'place');
+
+		await built.service.requestApproval('order-1');
+
+		expect(place).toHaveBeenCalledWith('order-1', { approvalRequested: true }, at(3));
+	});
+
 	it('refuses a stale version with the conflict, and files nothing', async () => {
 		const built = fixture();
 

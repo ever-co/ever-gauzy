@@ -292,6 +292,10 @@ export interface IOrderInvoiceDocumentState {
 	readonly isAccepted?: boolean | null;
 	/** The document's own status. */
 	readonly status?: string;
+	/** The document's total — for an estimate, the grand total it offers — as the document stores it. */
+	readonly totalValue?: string | number | null;
+	/** The document's currency. */
+	readonly currency?: string | null;
 }
 
 /**
@@ -350,8 +354,10 @@ export interface IOrderInvoicingPort {
 	 *
 	 * @param invoiceId The estimate.
 	 * @param accepted True when the buyer accepted it, false when they declined it.
+	 * @returns Whether this call answered it: false when the estimate had already been answered (by a
+	 * concurrent answer), which it leaves as it is.
 	 */
-	answerEstimate(invoiceId: ID, accepted: boolean): Promise<void>;
+	answerEstimate(invoiceId: ID, accepted: boolean): Promise<boolean>;
 }
 
 /** What sending an estimate to the buyer did. */

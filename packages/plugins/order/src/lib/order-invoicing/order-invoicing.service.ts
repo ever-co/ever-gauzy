@@ -150,8 +150,8 @@ export class OrderInvoicingService {
 	 * @returns The order, stamped with its invoice.
 	 * @throws ForbiddenException when the caller lacks `INVOICES_EDIT`.
 	 * @throws NotFoundException when the order is not the caller's.
-	 * @throws ConflictException with `ORDER_ALREADY_INVOICED`, `ORDER_NOT_INVOICEABLE` or
-	 * `ORDER_TEST_NOT_INVOICEABLE`.
+	 * @throws ConflictException with `ORDER_ALREADY_INVOICED`, `ORDER_NOT_INVOICEABLE`,
+	 * `ORDER_TEST_NOT_INVOICEABLE` or `ORDER_PARTIALLY_INVOICED`.
 	 * @throws BadRequestException with `ORDER_EMPTY` when no line can be billed.
 	 * @throws ServiceUnavailableException with `ORDER_INVOICING_UNAVAILABLE` when no invoicing capability is
 	 * registered.
@@ -194,6 +194,9 @@ export class OrderInvoicingService {
 		// Taken before anything is issued: the stamp is decided from this read, so it is held to this read.
 		const heldTo = this.heldTo(order, expectation);
 		const { document, billedLines } = await this.documentOf(order, false);
+
+		this.assertNoLineBilledYet(order, billedLines);
+
 		const issued = await invoicing.issue(document);
 		const links: OrderLineInvoice[] = [];
 		let invoiced: Order;
@@ -385,8 +388,13 @@ export class OrderInvoicingService {
 	 * @returns The confirmed order.
 	 * @throws ForbiddenException when the caller lacks `ESTIMATES_EDIT`.
 	 * @throws NotFoundException when the order is not the caller's.
+	 * **Only a quote that still offers the order as it stands is accepted.** An order changed after its quote
+	 * was sent — a line, a price, a discount, a delivery choice — no longer comes to the total the estimate
+	 * offers, and confirming it would bind the buyer to figures they were never offered: the acceptance is
+	 * refused (`ORDER_QUOTE_STALE`), nothing is written, and a new quote is the way forward.
+	 *
 	 * @throws ConflictException with `ORDER_QUOTE_NOT_ANSWERABLE`, `ORDER_QUOTE_NOT_SENT`,
-	 * `ORDER_QUOTE_DECLINED` or `ORDER_QUOTE_VOID`.
+	 * `ORDER_QUOTE_DECLINED`, `ORDER_QUOTE_VOID` or `ORDER_QUOTE_STALE`.
 	 * @throws BadRequestException with `ORDER_STATUS_TRANSITION_INVALID` or `ORDER_EMPTY` when the order's
 	 * lifecycle refuses the move.
 	 * @throws ServiceUnavailableException with `ORDER_INVOICING_UNAVAILABLE` when no invoicing capability is
@@ -409,7 +417,12 @@ export class OrderInvoicingService {
 		const heldTo = this.heldTo(order, expectation);
 
 		if (quote.isAccepted !== true) {
-			await invoicing.answerEstimate(quote.invoiceId, true);
+			await this.assertQuoteCurrent(order, quote);
+
+			if (!(await invoicing.answerEstimate(quote.invoiceId, true))) {
+				await this.refuseAnsweredMeanwhile(invoicing, order, quote.invoiceId, true);
+			}
+
 			await this.historyService.record(
 				order.id,
 				'ORDER_QUOTE_ACCEPTED',
@@ -487,7 +500,10 @@ export class OrderInvoicingService {
 			expectation: this.heldTo(order, expectation)
 		});
 
-		await invoicing.answerEstimate(quote.invoiceId, false);
+		if (!(await invoicing.answerEstimate(quote.invoiceId, false))) {
+			await this.refuseAnsweredMeanwhile(invoicing, order, quote.invoiceId, false);
+		}
+
 		await this.historyService.record(
 			order.id,
 			'ORDER_QUOTE_DECLINED',
@@ -497,6 +513,108 @@ export class OrderInvoicingService {
 		);
 
 		return declined;
+	}
+
+	/**
+	 * Refuses to accept a quote that no longer offers the order as it stands.
+	 *
+	 * @param order The order.
+	 * @param quote The quote, as the invoicing capability reads it.
+	 * @throws ConflictException with `ORDER_QUOTE_STALE` when the estimate's total or currency is not the order's
+	 * current grand total and currency (or the capability does not report them, so they cannot be checked).
+	 */
+	private async assertQuoteCurrent(order: Order, quote: IOrderInvoiceDocumentState): Promise<void> {
+		const { grandTotal } = (await this.totalsService.computeBreakdown(order)).exactTotals;
+		const quoted = quote.totalValue ?? null;
+		const current =
+			quoted !== null &&
+			(quote.currency ?? null) === (order.currency ?? null) &&
+			compareDecimalStrings(quoted, grandTotal) === 0;
+
+		if (current) {
+			return;
+		}
+
+		throw new ConflictException({
+			message:
+				`The quote for order ${order.number} offers ${quoted ?? 'an unknown total'} ${quote.currency ?? ''}, but the ` +
+				`order now comes to ${grandTotal} ${order.currency}; send a new quote for the order as it stands.`,
+			code: 'ORDER_QUOTE_STALE',
+			details: {
+				orderId: order.id,
+				quoteInvoiceId: quote.invoiceId,
+				quoted: { totalValue: quoted === null ? null : String(quoted), currency: quote.currency ?? null },
+				current: { grandTotal, currency: order.currency ?? null }
+			}
+		});
+	}
+
+	/**
+	 * Refuses an answer that lost the race to another one: the estimate was answered between this call's read
+	 * and its write. The answer that won is reported; an acceptance that met an acceptance carries on.
+	 *
+	 * @throws ConflictException with `ORDER_QUOTE_DECLINED` or `ORDER_QUOTE_ALREADY_ACCEPTED`.
+	 */
+	private async refuseAnsweredMeanwhile(
+		invoicing: IOrderInvoicingPort,
+		order: Order,
+		quoteInvoiceId: ID,
+		accepting: boolean
+	): Promise<void> {
+		const answered = await invoicing.read(quoteInvoiceId);
+
+		if (accepting && answered?.isAccepted === true) {
+			return;
+		}
+
+		if (answered?.isAccepted === true) {
+			throw new ConflictException({
+				message: `The quote for order ${order.number} was accepted, and an accepted quote is not declined afterwards.`,
+				code: 'ORDER_QUOTE_ALREADY_ACCEPTED',
+				details: { orderId: order.id, quoteInvoiceId }
+			});
+		}
+
+		throw new ConflictException({
+			message: accepting
+				? `The quote for order ${order.number} was declined; send a new quote to make another offer.`
+				: `The quote for order ${order.number} was already declined.`,
+			code: accepting ? 'ORDER_QUOTE_DECLINED' : 'ORDER_QUOTE_ALREADY_DECLINED',
+			details: { orderId: order.id, quoteInvoiceId }
+		});
+	}
+
+	/**
+	 * Refuses to invoice the whole order when part of it was billed already through the line-invoice register,
+	 * which links lines to documents without stamping the order: this invoice bills every line at the quantity
+	 * ordered, so it would bill those quantities a second time.
+	 *
+	 * @param order The order.
+	 * @param billedLines The lines the invoice would bill.
+	 * @throws ConflictException with `ORDER_PARTIALLY_INVOICED`.
+	 */
+	private assertNoLineBilledYet(order: Order, billedLines: Map<ID, IOrderTotalsBreakdown['lines'][number]>): void {
+		const billed = [...billedLines.values()]
+			.map(({ line }) => ({
+				orderLineId: line.id,
+				invoicedQuantity: line.invoicedQuantity ?? 0,
+				creditedQuantity: line.creditedQuantity ?? 0
+			}))
+			.filter(
+				(line) => compareDecimalStrings(subtractDecimalStrings(line.invoicedQuantity, line.creditedQuantity), '0') > 0
+			);
+
+		if (!billed.length) {
+			return;
+		}
+
+		throw new ConflictException({
+			message:
+				`Order ${order.number} has ${billed.length} line(s) billed already through the line invoice register; ` +
+				'invoicing the whole order would bill them again. Bill the rest through the register, or credit what was billed first.',
+			code: 'ORDER_PARTIALLY_INVOICED',
+			details: { orderId: order.id, lines: billed }
+		});
 	}
 
 	/*

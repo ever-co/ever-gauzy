@@ -296,7 +296,9 @@ function invoicingPort() {
 						invoiceNumber: document.invoiceNumber,
 						isEstimate: document.isEstimate,
 						isAccepted: document.isAccepted,
-						status: document.status
+						status: document.status,
+						totalValue: document.grandTotal ?? null,
+						currency: document.currency ?? null
 					}
 				: null;
 		}),
@@ -306,13 +308,19 @@ function invoicingPort() {
 		sendEstimate: jest.fn(async (invoiceId: string, recipient: string) => {
 			Object.assign(documents.get(invoiceId) ?? {}, { status: 'SENT', sentTo: recipient });
 
-			return { sent: true, recipient };
+			return { sent: true, recipient } as { sent: boolean; recipient: string; reason?: string };
 		}),
+		// As the adapter does: only an estimate not answered yet is answered, and the caller is told which.
 		answerEstimate: jest.fn(async (invoiceId: string, accepted: boolean) => {
-			Object.assign(documents.get(invoiceId) ?? {}, {
-				isAccepted: accepted,
-				status: accepted ? 'ACCEPTED' : 'REJECTED'
-			});
+			const document = documents.get(invoiceId);
+
+			if (!document || (document.isAccepted !== null && document.isAccepted !== undefined)) {
+				return false;
+			}
+
+			Object.assign(document, { isAccepted: accepted, status: accepted ? 'ACCEPTED' : 'REJECTED' });
+
+			return true;
 		})
 	};
 }
@@ -682,6 +690,33 @@ describe('OrderInvoicingService.generateInvoice — the invoice that bills an or
 	});
 });
 
+describe('OrderInvoicingService.generateInvoice — lines billed already through the line invoice register', () => {
+	it('refuses to bill them a second time (ORDER_PARTIALLY_INVOICED), issuing nothing and writing nothing', async () => {
+		const built = fixture();
+		Object.assign(built.tables.order_line[0], { invoicedQuantity: 1, creditedQuantity: 0 });
+
+		const refusal = await built.service.generateInvoice('order-1', at(3)).catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 409, response: { code: 'ORDER_PARTIALLY_INVOICED' } });
+		expect(refusal.response.details.lines).toEqual([
+			{ orderLineId: 'line-1', invoicedQuantity: 1, creditedQuantity: 0 }
+		]);
+		expect(built.port.issue).not.toHaveBeenCalled();
+		expect(built.register.record).not.toHaveBeenCalled();
+		expect(built.order()).toMatchObject({ version: 3 });
+		expect(built.order().invoiceId).toBeUndefined();
+	});
+
+	it('bills a line whose register billing was credited back in full', async () => {
+		const built = fixture();
+		Object.assign(built.tables.order_line[0], { invoicedQuantity: 3, creditedQuantity: 3 });
+
+		await expect(built.service.generateInvoice('order-1', at(3))).resolves.toMatchObject({
+			invoiceId: 'invoice-101'
+		});
+	});
+});
+
 describe('OrderInvoicingService.sendQuote — the estimate an order is offered with', () => {
 	it('issues an estimate from the order’s figures, links it, and e-mails it — without moving the order', async () => {
 		const built = fixture({ order: { status: OrderStatus.DRAFT, isDraft: true } });
@@ -867,11 +902,14 @@ describe('OrderInvoicingService.acceptQuote — the buyer accepts, and the order
 	const quoted = (status: OrderStatus, quote: Record<string, unknown> = {}) => {
 		const built = fixture({ order: { status, isDraft: status === OrderStatus.DRAFT, quoteInvoiceId: 'quote-1' } });
 
+		// The estimate offers the order as it stands: the fixture order comes to 6.18 USD.
 		built.port.documents.set('quote-1', {
 			isEstimate: true,
 			isAccepted: null,
 			status: 'SENT',
 			invoiceNumber: 77,
+			grandTotal: '6.18',
+			currency: 'USD',
 			...quote
 		});
 
@@ -879,6 +917,41 @@ describe('OrderInvoicingService.acceptQuote — the buyer accepts, and the order
 	};
 
 	afterEach(() => jest.restoreAllMocks());
+
+	it.each([
+		['the order now comes to another total', { grandTotal: '5.00' }],
+		['the order is now in another currency', { currency: 'EUR' }],
+		['the estimate does not say what it offers', { grandTotal: undefined }]
+	])('refuses a quote that no longer offers the order as it stands (%s): 409, nothing answered, nothing moved', async (_label, quote) => {
+		const built = quoted(OrderStatus.PENDING, quote);
+
+		const refusal = await built.service.acceptQuote('order-1', at(3)).catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 409, response: { code: 'ORDER_QUOTE_STALE' } });
+		expect(refusal.response.details.current).toEqual({ grandTotal: '6.18', currency: 'USD' });
+		expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: null });
+		expect(built.order()).toMatchObject({ status: OrderStatus.PENDING, version: 3 });
+		expect(timelineOf(built)).toEqual([]);
+	});
+
+	it('refuses an acceptance that loses the race to a decline, leaving the decline and the order as they are', async () => {
+		const built = quoted(OrderStatus.PENDING);
+		// The buyer declines between this call's read of the quote and its answer.
+		built.port.answerEstimate.mockImplementationOnce(async () => {
+			Object.assign(built.port.documents.get('quote-1'), { isAccepted: false, status: 'REJECTED' });
+
+			return false;
+		});
+
+		await expect(built.service.acceptQuote('order-1', at(3))).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'ORDER_QUOTE_DECLINED' }
+		});
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: false, status: 'REJECTED' });
+		expect(built.order()).toMatchObject({ status: OrderStatus.PENDING, version: 3 });
+		expect(timelineOf(built)).toEqual([]);
+	});
 
 	it('marks the estimate accepted, then places and confirms a draft — DRAFT -> PENDING -> CONFIRMED', async () => {
 		const built = quoted(OrderStatus.DRAFT);
@@ -1089,6 +1162,23 @@ describe('OrderInvoicingService.declineQuote — the buyer declines, and the ord
 
 		await expect(built.service.declineQuote('order-1', undefined, at(4))).resolves.toMatchObject({ version: 5 });
 		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: false, status: 'REJECTED' });
+	});
+
+	it('refuses a decline that loses the race to an acceptance; the acceptance stands', async () => {
+		const built = quoted(OrderStatus.PENDING);
+		// The buyer accepts between this call's read of the quote and its answer.
+		built.port.answerEstimate.mockImplementationOnce(async () => {
+			Object.assign(built.port.documents.get('quote-1'), { isAccepted: true, status: 'ACCEPTED' });
+
+			return false;
+		});
+
+		await expect(built.service.declineQuote('order-1', undefined, at(3))).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'ORDER_QUOTE_ALREADY_ACCEPTED' }
+		});
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: true, status: 'ACCEPTED' });
+		expect(timelineOf(built)).toEqual([]);
 	});
 
 	it('refuses an accepted quote, an already declined one, a voided one and an order with none — each with 409', async () => {

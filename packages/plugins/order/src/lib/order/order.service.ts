@@ -493,9 +493,13 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		}
 
 		let placed: Order;
+		// Without a stated version, the write is held to the version read above, as every other write here is.
+		const heldTo: OrderVersionExpectation = expectation?.wildcard
+			? { wildcard: false, versions: [Number(order.version)] }
+			: expectation;
 
 		if (order.status === OrderStatus.DRAFT) {
-			placed = await this.place(order.id, { approvalRequested: true }, expectation);
+			placed = await this.place(order.id, { approvalRequested: true }, heldTo);
 		} else {
 			const open = await this.approvals.findOpen(order.id);
 
@@ -507,11 +511,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 				});
 			}
 
-			placed = await this.totalsService.recompute(order.id, 'APPROVAL_REQUESTED', {
-				expectation: expectation?.wildcard
-					? { wildcard: false, versions: [Number(order.version)] }
-					: expectation
-			});
+			placed = await this.totalsService.recompute(order.id, 'APPROVAL_REQUESTED', { expectation: heldTo });
 		}
 
 		const { approvalId } = await this.approvals.requestApproval({

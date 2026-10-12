@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { IsNull } from 'typeorm';
 import {
 	DiscountTaxTypeEnum,
 	EstimateStatusTypesEnum,
@@ -169,7 +170,9 @@ export class OrderInvoicingAdapter implements IOrderInvoicingPort {
 			invoiceNumber: invoice.invoiceNumber,
 			isEstimate: Boolean(invoice.isEstimate),
 			isAccepted: invoice.isAccepted ?? null,
-			status: invoice.status
+			status: invoice.status,
+			totalValue: invoice.totalValue ?? null,
+			currency: invoice.currency ?? null
 		};
 	}
 
@@ -193,14 +196,29 @@ export class OrderInvoicingAdapter implements IOrderInvoicingPort {
 	 * module's estimate route and its public accept link write — with the estimate status that goes with it,
 	 * so the estimate list shows the answer the order acted on.
 	 *
+	 * **Only an estimate not answered yet is answered**: the write is predicated on `isAccepted` being null,
+	 * so of an acceptance and a decline made at the same time exactly one is recorded, and the other is told.
+	 *
 	 * @param invoiceId The estimate.
 	 * @param accepted True when the buyer accepted it, false when they declined it.
+	 * @returns Whether this call answered it.
 	 */
-	public async answerEstimate(invoiceId: ID, accepted: boolean): Promise<void> {
-		await this.invoiceService.update(invoiceId, {
-			isAccepted: accepted,
-			status: accepted ? EstimateStatusTypesEnum.ACCEPTED : EstimateStatusTypesEnum.REJECTED
-		} as never);
+	public async answerEstimate(invoiceId: ID, accepted: boolean): Promise<boolean> {
+		try {
+			const result = await this.invoiceService.update({ id: invoiceId, isAccepted: IsNull() } as never, {
+				isAccepted: accepted,
+				status: accepted ? EstimateStatusTypesEnum.ACCEPTED : EstimateStatusTypesEnum.REJECTED
+			} as never);
+
+			return (result as { affected?: number })?.affected !== 0;
+		} catch (error) {
+			// The tenant-aware update reads the row it is predicated on first: an answered estimate is not found.
+			if (error instanceof NotFoundException) {
+				return false;
+			}
+
+			throw error;
+		}
 	}
 
 	/**

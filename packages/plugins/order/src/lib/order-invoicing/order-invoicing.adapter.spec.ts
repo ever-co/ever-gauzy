@@ -28,6 +28,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { IsNull } from 'typeorm';
 import { DiscountTaxTypeEnum, InvoiceStatusTypesEnum, InvoiceTypeEnum } from '@gauzy/contracts';
 import { IOrderInvoiceDocument } from '../order.types';
 import { OrderInvoicingAdapter } from './order-invoicing.adapter';
@@ -186,7 +187,9 @@ describe('OrderInvoicingAdapter — the order’s document, written by the platf
 					invoiceNumber: 42,
 					isEstimate: true,
 					isAccepted: null,
-					status: 'SENT'
+					status: 'SENT',
+					totalValue: 6.18,
+					currency: 'USD'
 				})
 				.mockRejectedValueOnce(new NotFoundException())
 		});
@@ -197,7 +200,10 @@ describe('OrderInvoicingAdapter — the order’s document, written by the platf
 			invoiceNumber: 42,
 			isEstimate: true,
 			isAccepted: null,
-			status: 'SENT'
+			status: 'SENT',
+			// What the estimate offers, which an acceptance is checked against.
+			totalValue: 6.18,
+			currency: 'USD'
 		});
 		await expect(adapter.read('invoice-of-another-tenant')).resolves.toBeNull();
 	});
@@ -265,16 +271,29 @@ describe('OrderInvoicingAdapter.sendEstimate — the platform’s estimate e-mai
 });
 
 describe('OrderInvoicingAdapter.answerEstimate — the buyer’s answer, on the estimate itself', () => {
-	it('writes the finance document’s own accept flag and the status that goes with it', async () => {
+	it('writes the finance document’s own accept flag and the status that goes with it, on an unanswered estimate only', async () => {
 		const finance = financeService();
+		finance.update.mockResolvedValue({ affected: 1 });
 		const adapter = new OrderInvoicingAdapter(finance as never);
 
-		await adapter.answerEstimate('invoice-42', true);
-		await adapter.answerEstimate('invoice-43', false);
+		await expect(adapter.answerEstimate('invoice-42', true)).resolves.toBe(true);
+		await expect(adapter.answerEstimate('invoice-43', false)).resolves.toBe(true);
 
 		expect(finance.update.mock.calls).toEqual([
-			['invoice-42', { isAccepted: true, status: 'ACCEPTED' }],
-			['invoice-43', { isAccepted: false, status: 'REJECTED' }]
+			[{ id: 'invoice-42', isAccepted: IsNull() }, { isAccepted: true, status: 'ACCEPTED' }],
+			[{ id: 'invoice-43', isAccepted: IsNull() }, { isAccepted: false, status: 'REJECTED' }]
 		]);
+	});
+
+	it('answers false, writing nothing, when the estimate was answered already', async () => {
+		// The tenant-aware update reads the row its criteria name first: an answered estimate is not found.
+		const answered = financeService();
+		answered.update.mockRejectedValue(new NotFoundException());
+		await expect(new OrderInvoicingAdapter(answered as never).answerEstimate('invoice-42', true)).resolves.toBe(false);
+
+		// Answered between that read and the write: the statement matches no row.
+		const raced = financeService();
+		raced.update.mockResolvedValue({ affected: 0 });
+		await expect(new OrderInvoicingAdapter(raced as never).answerEstimate('invoice-42', false)).resolves.toBe(false);
 	});
 });
