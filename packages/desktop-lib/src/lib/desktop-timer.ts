@@ -874,40 +874,58 @@ export default class TimerHandler {
 	 * up early would let this work overtake the jobs stored ahead. Answers whether the stored jobs ahead were all applied.
 	 */
 	private async waitForStoredJobs(queue: AsyncTimerSyncQueue, caller: string, deadline: number): Promise<boolean> {
-		let errorAudited = false;
+		const failedRounds = { audited: false };
 		while (!queue.isClosed) {
 			const remaining = deadline - Date.now();
 			if (remaining <= 0) {
-				if (!this._fallbackDeadlineAudited) {
-					this._fallbackDeadlineAudited = true;
-					await this._auditLogHandler.timerAuditError(
-						`[${caller}] Stored timer jobs still pending after ${FALLBACK_MAX_WAIT_MS} ms; going ahead without them`
-					);
-				}
+				await this.auditFallbackDeadline(caller);
 				return false;
 			}
-			let settled: boolean;
-			try {
-				settled = await queue.settle(Math.min(FALLBACK_SETTLE_MS, remaining));
-			} catch (error) {
-				if (!errorAudited) {
-					errorAudited = true;
-					await this._auditLogHandler.timerAuditError(
-						`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
-					);
-				}
-				// The round failed at once rather than waiting: pause for what it would have waited, then try again.
-				const pause = Math.min(FALLBACK_SETTLE_MS, Math.max(0, deadline - Date.now()));
-				if (pause > 0) {
-					await new Promise((resolve) => setTimeout(resolve, pause));
-				}
-				continue;
-			}
-			if (settled) {
+			if (await this.settleRound(queue, caller, remaining, deadline, failedRounds)) {
 				return true;
 			}
 		}
 		return true;
+	}
+
+	/*
+	 * One round of `waitForStoredJobs`: whether the stored jobs ahead were all applied within `remaining` (at most
+	 * `FALLBACK_SETTLE_MS`). A round that cannot read the store fails at once rather than waiting: it is audited (once
+	 * per wait), pauses for what it would have waited, and answers false so that the wait goes on.
+	 */
+	private async settleRound(
+		queue: AsyncTimerSyncQueue,
+		caller: string,
+		remaining: number,
+		deadline: number,
+		failedRounds: { audited: boolean }
+	): Promise<boolean> {
+		try {
+			return await queue.settle(Math.min(FALLBACK_SETTLE_MS, remaining));
+		} catch (error) {
+			if (!failedRounds.audited) {
+				failedRounds.audited = true;
+				await this._auditLogHandler.timerAuditError(
+					`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
+				);
+			}
+			const pause = Math.min(FALLBACK_SETTLE_MS, Math.max(0, deadline - Date.now()));
+			if (pause > 0) {
+				await new Promise((resolve) => setTimeout(resolve, pause));
+			}
+			return false;
+		}
+	}
+
+	/** Audits, once per fallback episode, that the cut-off passed with stored jobs still pending. */
+	private async auditFallbackDeadline(caller: string): Promise<void> {
+		if (this._fallbackDeadlineAudited) {
+			return;
+		}
+		this._fallbackDeadlineAudited = true;
+		await this._auditLogHandler.timerAuditError(
+			`[${caller}] Stored timer jobs still pending after ${FALLBACK_MAX_WAIT_MS} ms; going ahead without them`
+		);
 	}
 
 	/*

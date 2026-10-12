@@ -276,6 +276,23 @@ describe('TimerHandler', () => {
 	});
 
 	describe('processWithQueue', () => {
+		/** An asynchronous session whose first job (1000 ms) is stored and held, so that it stays pending. */
+		const sessionWithHeldJob = async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			timerService.hold((write) => write.duration === 1000);
+			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+			return { handler, queue: await asyncQueueOf(handler) };
+		};
+		const refuseEveryStore = (queue: AsyncTimerSyncQueue) =>
+			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+		/** Stops `Date.now` at a time the test moves forward itself. */
+		const stoppedClock = () => {
+			const clock = { now: Date.now() };
+			jest.spyOn(Date, 'now').mockImplementation(() => clock.now);
+			return clock;
+		};
+
 		it.each([
 			['absent', {}],
 			['false', { asyncTimerDataSync: false }]
@@ -358,12 +375,8 @@ describe('TimerHandler', () => {
 		});
 
 		it('runs a job it cannot store in memory, after the stored jobs ahead of it', async () => {
-			appSetting = { asyncTimerDataSync: true };
-			const handler = newHandler();
-			timerService.hold((write) => write.duration === 1000);
-			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+			const { handler, queue } = await sessionWithHeldJob();
+			refuseEveryStore(queue);
 
 			const fallback = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
 			await sleep(50);
@@ -380,11 +393,7 @@ describe('TimerHandler', () => {
 		});
 
 		it('stores a job that failed to store once when the store accepts it at its turn, behind the jobs ahead', async () => {
-			appSetting = { asyncTimerDataSync: true };
-			const handler = newHandler();
-			timerService.hold((write) => write.duration === 1000);
-			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-			const queue = await asyncQueueOf(handler);
+			const { handler, queue } = await sessionWithHeldJob();
 			jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
 
 			await handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
@@ -401,16 +410,11 @@ describe('TimerHandler', () => {
 		])(
 			'never lets a newer job overtake an older one that could not be stored (%s)',
 			async (_label, refusal) => {
-				appSetting = { asyncTimerDataSync: true };
-				const handler = newHandler();
-				timerService.hold((write) => write.duration === 1000);
-				await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-				const queue = await asyncQueueOf(handler);
-				const refused = jest.spyOn(queue, 'processWithQueue');
+				const { handler, queue } = await sessionWithHeldJob();
 				if (refusal === 'once') {
-					refused.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+					jest.spyOn(queue, 'processWithQueue').mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
 				} else {
-					refused.mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+					refuseEveryStore(queue);
 				}
 
 				// The 2000 ms update is refused and waits behind the held 1000 ms one…
@@ -452,17 +456,12 @@ describe('TimerHandler', () => {
 		});
 
 		it('waits once for a stuck backlog, however many refused jobs queue behind it', async () => {
-			appSetting = { asyncTimerDataSync: true };
-			const handler = newHandler();
-			timerService.hold((write) => write.duration === 1000);
-			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+			const { handler, queue } = await sessionWithHeldJob();
+			refuseEveryStore(queue);
 			// The stored 1000 ms job never settles; each wait round advances the clock by what it waited.
-			let clock = Date.now();
-			jest.spyOn(Date, 'now').mockImplementation(() => clock);
+			const clock = stoppedClock();
 			const settle = jest.spyOn(queue, 'settle').mockImplementation(async (ms?: number) => {
-				clock += ms ?? 0;
+				clock.now += ms ?? 0;
 				return false;
 			});
 
@@ -486,20 +485,15 @@ describe('TimerHandler', () => {
 		});
 
 		it('keeps waiting for the stored jobs ahead when a wait round cannot read the store', async () => {
-			appSetting = { asyncTimerDataSync: true };
-			const handler = newHandler();
-			timerService.hold((write) => write.duration === 1000);
-			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
-			let clock = Date.now();
-			jest.spyOn(Date, 'now').mockImplementation(() => clock);
+			const { handler, queue } = await sessionWithHeldJob();
+			refuseEveryStore(queue);
+			const clock = stoppedClock();
 			const realSettle = queue.settle.bind(queue);
 			const settle = jest
 				.spyOn(queue, 'settle')
 				// The first round fails at once, close to the cut-off (so that the pause after it is short)...
 				.mockImplementationOnce(async () => {
-					clock += 60_000 - 20;
+					clock.now += 60_000 - 20;
 					throw new Error('SQLITE_IOERR: disk I/O error');
 				})
 				// ...and the stored job is applied during the next one.
@@ -523,11 +517,7 @@ describe('TimerHandler', () => {
 		});
 
 		it('stores a refused job behind stored jobs still pending at the cut-off, rather than run ahead of them', async () => {
-			appSetting = { asyncTimerDataSync: true };
-			const handler = newHandler();
-			timerService.hold((write) => write.duration === 1000);
-			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-			const queue = await asyncQueueOf(handler);
+			const { handler, queue } = await sessionWithHeldJob();
 			// Refused when submitted and again at its turn; accepted at the cut-off.
 			jest.spyOn(queue, 'processWithQueue')
 				.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'))
@@ -549,12 +539,8 @@ describe('TimerHandler', () => {
 		});
 
 		it('keeps a job it could not store behind the stored jobs ahead of it, even past one 5 s wait', async () => {
-			appSetting = { asyncTimerDataSync: true };
-			const handler = newHandler();
-			timerService.hold((write) => write.duration === 1000);
-			await handler.processWithQueue('gauzy-queue', duration(1, 1000), knex);
-			const queue = await asyncQueueOf(handler);
-			jest.spyOn(queue, 'processWithQueue').mockRejectedValue(new Error('SQLITE_FULL: database or disk is full'));
+			const { handler, queue } = await sessionWithHeldJob();
+			refuseEveryStore(queue);
 
 			const fallback = handler.processWithQueue('gauzy-queue', duration(1, 2000), knex);
 			await sleep(6_000);
