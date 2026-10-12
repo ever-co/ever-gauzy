@@ -346,7 +346,7 @@ describe('TimeLogService', () => {
 			// Stand-in for the per-request store withoutEmployeeFilter() keeps its state in.
 			const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
 			const originalClsService = RequestContext['clsService'];
-			const memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID };
+			let memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID };
 			let readsWithFilter: number;
 
 			const inRequest = <R>(callback: () => Promise<R>) => requestStorage.run(new Map(), callback);

@@ -88,17 +88,21 @@ describe('RequestApprovalService approver lookups (GHSA-gwpq-mmw7-vx85 sibling)'
 	});
 
 	it('links only approvers of the caller tenant on create', async () => {
-		const { service } = createService();
+		const { service, employees, teams } = createService();
 
 		const created: any = await service.createRequestApproval(input);
 
 		expect(created.employeeApprovals.map((row: any) => row.employeeId)).toEqual(['employee-own']);
 		expect(created.teamApprovals.map((row: any) => row.teamId)).toEqual(['team-own']);
 		expect(JSON.stringify(created)).not.toContain(TENANT_B);
+		// Scoped at the lookup itself, not filtered after loading foreign rows.
+		for (const lookup of [employees.find, teams.find]) {
+			expect(lookup).toHaveBeenCalledWith({ where: expect.objectContaining({ tenantId: TENANT_A }) });
+		}
 	});
 
 	it('links only approvers of the caller tenant on update', async () => {
-		const { service } = createService();
+		const { service, employees, teams } = createService();
 		jest.spyOn(service, 'findOneByIdString').mockResolvedValue({ id: 'approval-1', tenantId: TENANT_A } as any);
 
 		const updated: any = await service.updateRequestApproval('approval-1', input);
@@ -106,6 +110,10 @@ describe('RequestApprovalService approver lookups (GHSA-gwpq-mmw7-vx85 sibling)'
 		expect(updated.employeeApprovals.map((row: any) => row.employeeId)).toEqual(['employee-own']);
 		expect(updated.teamApprovals.map((row: any) => row.teamId)).toEqual(['team-own']);
 		expect(JSON.stringify(updated)).not.toContain(TENANT_B);
+		// Scoped at the lookup itself, not filtered after loading foreign rows.
+		for (const lookup of [employees.find, teams.find]) {
+			expect(lookup).toHaveBeenCalledWith({ where: expect.objectContaining({ tenantId: TENANT_A }) });
+		}
 	});
 
 	it('matches nothing without a tenant', async () => {
