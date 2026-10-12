@@ -466,19 +466,23 @@ describe('TimerHandler', () => {
 				return false;
 			});
 
-			await Promise.all([
-				handler.processWithQueue('gauzy-queue', duration(1, 2000), knex),
-				handler.processWithQueue('gauzy-queue', duration(1, 3000), knex)
-			]);
+			try {
+				await Promise.all([
+					handler.processWithQueue('gauzy-queue', duration(1, 2000), knex),
+					handler.processWithQueue('gauzy-queue', duration(1, 3000), knex)
+				]);
 
-			// One 60 s wait in 5 s rounds for the pair, not one per job.
-			expect(settle).toHaveBeenCalledTimes(12);
-			expect(
-				audit.timerAuditError.mock.calls.filter(([message]) => message.includes('still pending after'))
-			).toHaveLength(1);
-			// Both ran in memory, in order, once the wait was over.
-			expect(timerService.writes.map((write) => write.duration)).toEqual([2000, 3000]);
-			timerService.release();
+				// One 60 s wait in 5 s rounds for the pair, not one per job.
+				expect(settle).toHaveBeenCalledTimes(12);
+				expect(
+					audit.timerAuditError.mock.calls.filter(([message]) => message.includes('still pending after'))
+				).toHaveLength(1);
+				// Both ran in memory, in order, once the wait was over.
+				expect(timerService.writes.map((write) => write.duration)).toEqual([2000, 3000]);
+			} finally {
+				// Never leave the stored job held: teardown would wait for it.
+				timerService.release();
+			}
 		});
 
 		it('stores a refused job behind stored jobs still pending at the cut-off, rather than run ahead of them', async () => {
