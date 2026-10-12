@@ -32,6 +32,8 @@ import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 
+const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
+
 /**
  * Whether plan dates are stored in UTC. TypeORM writes a SQLite datetime as a UTC string, while on
  * PostgreSQL and MySQL it hands the Date to the driver, which writes it in the API process's local time.
@@ -129,7 +131,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Add the task to the existing DailyPlan
-			if (task && !dailyPlan.tasks.some(({ id }) => id === task.id)) {
+			if (task && !hasTask(dailyPlan, task.id)) {
 				await this.addTaskLink(dailyPlan.id, task.id);
 				dailyPlan.tasks.push(task);
 			}
@@ -640,11 +642,33 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				where: { organizationId, tenantId }
 			});
 
+			// A retried request or a double click: the plan already holds the task, nothing to write.
+			if (hasTask(dailyPlan, taskId)) {
+				return dailyPlan;
+			}
+
 			// Add the new task to the daily plan's tasks array
 			dailyPlan.tasks.push(taskToAdd);
 
 			// Save the updated daily plan
-			return await this.save(dailyPlan);
+			try {
+				return await this.save(dailyPlan);
+			} catch (error) {
+				// A concurrent request for the same task can commit between the read above and this write,
+				// and the (dailyPlanId, taskId) primary key then rejects this insert. The plan holds the
+				// task either way, which is what the caller asked for. If the re-read fails too, the save
+				// error is the one that explains the failure, so it is the one rethrown.
+				const currentPlan = await this.getManagedDailyPlanOrThrow(
+					planId,
+					employeeId,
+					tenantId,
+					organizationId
+				).catch((): IDailyPlan => null);
+				if (currentPlan && hasTask(currentPlan, taskId)) {
+					return currentPlan;
+				}
+				throw error;
+			}
 		} catch (error) {
 			// Preserve HTTP exceptions (NotFoundException, etc.), only wrap non-HTTP errors
 			if (error instanceof HttpException) {
