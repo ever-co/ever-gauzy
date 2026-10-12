@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbIconModule, NbButtonModule, NbDialogModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	InvoiceEstimateHistoryService,
 	InvoicesService,
@@ -14,7 +14,7 @@ import { PaymentsRoutingModule } from './payments-routing.module';
 
 @NgModule({
 	imports: [
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbCardModule,
 		PaymentsRoutingModule,
 		CardGridModule,

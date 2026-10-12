@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EMPTY, filter } from 'rxjs';
@@ -13,6 +13,7 @@ import { PasswordFormFieldComponent } from '@gauzy/ui-core/shared';
 	selector: 'ngx-login-workspace',
 	templateUrl: './login-workspace.component.html',
 	styleUrls: ['./login-workspace.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxLoginWorkspaceComponent {

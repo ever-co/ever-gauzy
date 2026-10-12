@@ -1,10 +1,11 @@
-import { Component, Output, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Output, EventEmitter, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NbCardComponent } from '@nebular/theme';
 
 @Component({
 	selector: 'gauzy-under-construction-popup',
 	templateUrl: './popup.component.html',
 	styleUrls: ['./popup.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class UnderConstructionPopupComponent {

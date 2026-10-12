@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Injector, Input, Output, Signal, runInInjectionContext } from '@angular/core';
+import { Component, EventEmitter, Injector, Input, Output, type Signal, runInInjectionContext, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ResolveFn } from '@angular/router';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
@@ -71,6 +71,7 @@ const CATEGORY_LABELS: Record<WidgetCategory, string> = {
 	selector: 'ga-widget-palette',
 	templateUrl: './widget-palette.component.html',
 	styleUrls: ['./widget-palette.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WidgetPaletteComponent extends TranslationBaseComponent {

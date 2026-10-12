@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ import { CandidateInterviewMutationComponent } from '../candidate-interview-muta
     selector: 'ga-candidate-interview-info',
     templateUrl: './candidate-interview-info.component.html',
     styleUrls: ['./candidate-interview-info.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

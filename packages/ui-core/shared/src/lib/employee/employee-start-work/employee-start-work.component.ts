@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { EmployeeEndWorkComponent } from '../employee-end-work-popup/employee-end-work.component';
 
@@ -6,6 +6,7 @@ import { EmployeeEndWorkComponent } from '../employee-end-work-popup/employee-en
     selector: 'ga-employee-start-work',
     templateUrl: './employee-start-work.component.html',
     styleUrls: ['./employee-start-work.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeStartWorkComponent {

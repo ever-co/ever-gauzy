@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { ID } from '@gauzy/contracts';
@@ -34,6 +34,7 @@ import {
 	templateUrl: './docs-detail-activity.component.html',
 	styleUrls: ['./docs-detail-activity.component.scss'],
 	providers: [DocumentActivityService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsDetailActivityComponent extends TranslationBaseComponent implements OnChanges {

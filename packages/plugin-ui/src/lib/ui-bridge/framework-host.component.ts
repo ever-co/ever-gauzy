@@ -6,7 +6,7 @@ import {
 	OnInit,
 	OnDestroy,
 	OnChanges,
-	SimpleChanges,
+	type SimpleChanges,
 	inject,
 	Injector,
 	ChangeDetectionStrategy,

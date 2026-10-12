@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
@@ -18,6 +18,7 @@ import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetCom
     selector: 'ga-warehouse-form',
     templateUrl: './warehouse-form.component.html',
     styleUrls: ['./warehouse-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class WarehouseFormComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
@@ -32,6 +32,7 @@ interface WeeklyDayData {
 	selector: 'ngx-weekly-timesheet',
 	templateUrl: './weekly.component.html',
 	styleUrls: ['./weekly.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WeeklyComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {

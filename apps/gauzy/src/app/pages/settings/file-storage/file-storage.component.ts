@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -167,6 +167,7 @@ export interface IFileStorageCheck {
 	templateUrl: './file-storage.component.html',
 	styleUrls: ['./file-storage.component.scss'],
 	providers: [FileStorageService, TenantService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class FileStorageComponent extends TranslationBaseComponent implements OnInit {

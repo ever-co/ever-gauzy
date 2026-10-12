@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { BasicInfoFormComponent } from '@gauzy/ui-core/shared';
     selector: 'ga-edit-user-mutation',
     templateUrl: './edit-user-mutation.component.html',
     styleUrls: ['./edit-user-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditUserMutationComponent extends TranslationBaseComponent implements OnInit {

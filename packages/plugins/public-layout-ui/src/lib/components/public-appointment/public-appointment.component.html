@@ -8,7 +8,7 @@
     @if (organization$ | async; as organization) {
       @if (employee$ | async; as employee) {
         <div class="employee-info">
-          <img class="employee-image" [src]="employee.user?.imageUrl" alt="Employee Avatar" />
+          <img class="employee-image" [src]="$safeNavigationMigration(employee.user?.imageUrl)" alt="Employee Avatar" />
           <div class="employee-details">
             <span class="employee-name">{{ employee?.fullName }}</span>
             <div class="employee-position">

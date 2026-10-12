@@ -1,5 +1,5 @@
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IProductCategoryTranslatable, IProductOptionGroupTranslatable } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     selector: 'ngx-product-option-group-translation',
     templateUrl: './product-option-group-translation.component.html',
     styleUrls: ['./product-option-group-translation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductOptionGroupTranslationsComponent extends TranslationBaseComponent {

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
 import {
@@ -62,7 +62,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		NbIconModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		DirectivesModule,
 		PipesModule,
 		ComponentsModule,

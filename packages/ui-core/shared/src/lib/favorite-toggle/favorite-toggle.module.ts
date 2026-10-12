@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FavoriteToggleComponent } from './favorite-toggle.component';
 
 @NgModule({
@@ -11,7 +11,7 @@ import { FavoriteToggleComponent } from './favorite-toggle.component';
 		NbButtonModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule
+		TranslatePipe
 	],
 	exports: [FavoriteToggleComponent]
 })

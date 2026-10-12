@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
 	BaseEntityEnum,
 	IEmployee,
@@ -46,6 +46,7 @@ const initialTaskValue = {
 	selector: 'ngx-team-task-dialog',
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TeamTaskDialogComponent extends TranslationBaseComponent implements OnInit {

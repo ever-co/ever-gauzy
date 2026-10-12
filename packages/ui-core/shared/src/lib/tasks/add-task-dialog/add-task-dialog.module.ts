@@ -15,7 +15,7 @@ import {
 import { AddTaskDialogComponent } from './add-task-dialog.component';
 import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.module';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { TaskPrioritySelectModule } from '../task-priority-select/task-priority-select.module';
@@ -41,7 +41,7 @@ import { TaskSelectModule } from '../task-select/task-select.module';
 		NbSelectModule,
 		NbToastrModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
 		ProjectSelectModule,

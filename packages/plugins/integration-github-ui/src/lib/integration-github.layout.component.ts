@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -7,6 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @Component({
     selector: `ngx-integration-github-layout`,
     template: `<router-outlet></router-outlet>`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IntegrationGithubLayoutComponent implements OnInit {

@@ -1,7 +1,7 @@
 <gauzy-select
 	class="w-100"
 	label="CONTEXT_MENU.CLIENT"
-	[selectedItem]="(selected$ | async)?.id"
+	[selectedItem]="$safeNavigationMigration((selected$ | async)?.id)"
 	[items]="data$ | async"
 	bindLabel="name"
 	bindValue="id"

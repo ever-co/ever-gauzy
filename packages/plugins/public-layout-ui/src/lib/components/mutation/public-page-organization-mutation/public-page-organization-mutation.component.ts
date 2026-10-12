@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-public-page-organization-mutation',
 	templateUrl: './public-page-organization-mutation.component.html',
 	styleUrls: ['./public-page-organization-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit {

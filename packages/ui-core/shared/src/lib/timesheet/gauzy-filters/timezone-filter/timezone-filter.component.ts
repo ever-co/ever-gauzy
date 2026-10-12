@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, filter } from 'rxjs';
@@ -18,6 +18,7 @@ import { TimeZoneService } from './time-zone.service';
 	selector: 'ga-timezone-filter',
 	templateUrl: './timezone-filter.component.html',
 	styleUrls: ['./timezone-filter.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimezoneFilterComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

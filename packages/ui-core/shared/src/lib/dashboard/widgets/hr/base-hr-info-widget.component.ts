@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { computed, Directive, inject, LOCALE_ID, OnInit, Signal, signal, Type } from '@angular/core';
+import { computed, Directive, inject, LOCALE_ID, OnInit, type Signal, signal, Type } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest, from, of, Subject } from 'rxjs';

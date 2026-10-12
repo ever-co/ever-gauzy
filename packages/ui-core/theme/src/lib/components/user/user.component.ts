@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
 import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
     selector: 'gauzy-user',
     templateUrl: './user.component.html',
     styleUrls: ['./user.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class UserComponent implements OnInit {

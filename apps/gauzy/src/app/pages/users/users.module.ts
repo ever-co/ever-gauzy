@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -77,7 +77,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,

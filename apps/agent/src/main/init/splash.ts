@@ -5,7 +5,7 @@ import { delaySync, getAuthConfig } from '../util';
 import { AppError } from '@gauzy/desktop-lib';
 const appRootPath: string = path.join(__dirname, '../..');
 import { ApiService } from '../api';
-import * as isOnline from 'is-online';
+import isOnline from 'is-online';
 
 async function checkAndGetPermissionAccess() {
 	if (process.platform === 'darwin') {

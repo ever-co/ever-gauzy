@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
     selector: 'ngx-project-create-mutation',
     templateUrl: './create.component.html',
     styleUrls: ['./create.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProjectCreateMutationComponent extends TranslationBaseComponent implements OnInit {

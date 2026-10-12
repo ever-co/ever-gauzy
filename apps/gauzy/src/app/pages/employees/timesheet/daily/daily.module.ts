@@ -13,7 +13,7 @@ import {
 	NbPopoverModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
@@ -46,7 +46,7 @@ import { DailyComponent } from './daily/daily.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,

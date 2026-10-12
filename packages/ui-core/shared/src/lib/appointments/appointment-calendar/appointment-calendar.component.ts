@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnDestroy, OnInit, forwardRef, Input } from '@angular/core';
+import { Component, ViewChild, OnDestroy, OnInit, forwardRef, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -50,6 +50,7 @@ import { TimezoneSelectorComponent } from '../timezone-selector/timezone-selecto
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AppointmentCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

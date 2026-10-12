@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IInvoice } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -63,6 +63,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InvoicePdfComponent extends TranslationBaseComponent implements OnInit {

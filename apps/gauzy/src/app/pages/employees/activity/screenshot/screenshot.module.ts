@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbButtonModule, NbCheckboxModule, NbDialogModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
 import {
 	DailyStatisticsModule,
@@ -22,7 +22,7 @@ const NB_MODULES = [NbButtonModule, NbCheckboxModule, NbDialogModule.forChild(),
 	imports: [
 		...NB_MODULES,
 		MomentModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ScreenshotRoutingModule,
 		DailyStatisticsModule,
 		GalleryModule,

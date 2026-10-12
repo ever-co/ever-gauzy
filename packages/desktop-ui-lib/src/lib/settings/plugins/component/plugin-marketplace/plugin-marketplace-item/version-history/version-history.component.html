@@ -1,7 +1,7 @@
 @let versions = query.versions$ | async; @let isAvailable = (query.count$ | async) > 0; @let isRemoving =
 query.deleting$ | async; @let isRecovering = query.restoring$ | async; @let isLoading = (query.isLoading$ | async) &&
 versions.length === 0; @let isEditing = query.updating$ | async; @let isDisabled = isRemoving || isRecovering ||
-isEditing; @let selectedVersionId = (query.version$ | async)?.id;
+isEditing; @let selectedVersionId = $safeNavigationMigration((query.version$ | async)?.id);
 
 <nb-card class="content-active first">
 	<nb-card-header class="header">

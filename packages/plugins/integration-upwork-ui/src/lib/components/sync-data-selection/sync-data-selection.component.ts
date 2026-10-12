@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, WritableSignal, Input } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, type WritableSignal, Input } from '@angular/core';
 import { of, Observable } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { tap, catchError } from 'rxjs/operators';

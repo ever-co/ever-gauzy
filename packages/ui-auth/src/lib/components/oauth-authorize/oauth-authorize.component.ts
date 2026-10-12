@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -15,6 +15,7 @@ interface OAuthRequestInfo {
 	selector: 'ngx-oauth-authorize',
 	templateUrl: './oauth-authorize.component.html',
 	styleUrls: ['./oauth-authorize.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OAuthAuthorizeComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,6 +16,7 @@ import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 	selector: 'ngx-screenshots-item',
 	templateUrl: './screenshots-item.component.html',
 	styleUrls: ['./screenshots-item.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { Subject } from 'rxjs';
@@ -11,6 +11,7 @@ import { Store } from '@gauzy/ui-core/core';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: '',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ImageUploaderBaseComponent {

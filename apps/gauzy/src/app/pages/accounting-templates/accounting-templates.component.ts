@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -54,6 +54,7 @@ export interface AccountingTemplateCard {
     standalone: false,
     // Asks the settings shell for a definite height (see settings.component.scss), so
     // the card fills the content area and the panes scroll instead of the page.
+    changeDetection: ChangeDetectionStrategy.Eager,
     host: { class: 'settings-page-fill' }
 })
 export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDestroy {

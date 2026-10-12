@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, filter } from 'rxjs';
@@ -24,6 +24,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 	selector: 'ngx-app-url-activity',
 	styleUrls: ['./app-url-activity.component.scss'],
 	templateUrl: './app-url-activity.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -54,6 +54,7 @@ import { DocumentsService } from '../services/documents.service';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CreateDialogComponent extends TranslationBaseComponent {

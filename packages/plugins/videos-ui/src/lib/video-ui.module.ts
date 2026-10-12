@@ -17,7 +17,7 @@ import {
 	NbTabsetModule
 } from '@nebular/theme';
 import { provideEffects } from '@ngneat/effects-ng';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
 import { VideoEffects } from './+state/video.effect';
 import { VideoQuery } from './+state/video.query';
@@ -92,7 +92,7 @@ import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundsho
 		NbProgressBarModule,
 		NbListModule,
 		MomentModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		NbTabsetModule,
 		NgOptimizedImage

@@ -9,7 +9,7 @@ import {
 	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -36,7 +36,7 @@ import { EmploymentTypesComponent } from './employment-types.component';
 		NbDialogModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule,
 		NbTabsetModule,
 		NbTooltipModule,

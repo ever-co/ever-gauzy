@@ -25,7 +25,7 @@ import {
 	OrganizationsService,
 	SkillsService
 } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -128,7 +128,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		EmployeesRoutingModule,
 		SharedModule,
 		RecordViewModule,

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Signal, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, type Signal, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { DynamicTabsComponent } from '@gauzy/ui-core/shared';
 	selector: 'ga-dashboard-layout',
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DashboardComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

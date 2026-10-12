@@ -19,7 +19,7 @@
         @if (!employee?.id) {
           <nb-card class="custom author d-flex flex-row p-3">
             <div class="image-container">
-              <img [src]="proposal?.author?.user?.imageUrl" alt="" />
+              <img [src]="$safeNavigationMigration(proposal?.author?.user?.imageUrl)" alt="" />
             </div>
             <div class="identity">
               <h6 class="role">
@@ -57,7 +57,7 @@
               <h6 class="role">
                 {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON' | translate }}
               </h6>
-              {{ proposal?.valueDate | date : 'shortDate' | dateFormat }}
+              {{ $safeNavigationMigration(proposal?.valueDate) | date : 'shortDate' | dateFormat }}
             </nb-card>
           </div>
         </div>

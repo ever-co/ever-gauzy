@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, forwardRef, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, forwardRef, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -19,6 +19,7 @@ import { Store } from '@gauzy/ui-core/core';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeSelectComponent implements OnInit, OnDestroy {

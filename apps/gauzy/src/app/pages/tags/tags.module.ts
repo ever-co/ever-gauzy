@@ -17,7 +17,7 @@ import {
 import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -45,7 +45,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		ColorPickerComponent,
 		ColorPickerDirective,

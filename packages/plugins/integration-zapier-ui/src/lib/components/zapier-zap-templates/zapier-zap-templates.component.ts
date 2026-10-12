@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { tap, catchError, finalize } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
@@ -12,6 +12,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	selector: 'ngx-zapier-zap-templates',
 	templateUrl: './zapier-zap-templates.component.html',
 	styleUrls: ['./zapier-zap-templates.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierZapTemplatesComponent extends TranslationBaseComponent implements OnInit {

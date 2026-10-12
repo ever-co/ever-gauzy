@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
@@ -50,6 +50,7 @@ import {
 @Component({
     templateUrl: './expenses.component.html',
     styleUrls: ['./expenses.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpensesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

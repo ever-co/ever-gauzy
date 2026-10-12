@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { IEquipment, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
@@ -26,6 +26,7 @@ import { ImageRowComponent } from '../inventory/components/inventory-table-compo
 @Component({
     templateUrl: './equipment.component.html',
     styleUrls: ['./equipment.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

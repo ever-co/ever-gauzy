@@ -237,11 +237,11 @@
 										<ngx-avatar
 											class="avatar-dashboard activity"
 											[size]="'sm'"
-											[name]="employee?.user?.name"
-											[src]="employee?.user?.imageUrl"
+											[name]="$safeNavigationMigration(employee?.user?.name)"
+											[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
 											[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
-											[caption]="(employee?.timeSlots)[0]?.startedAt | utcToLocal | dateFormat"
-											[id]="employee?.id"
+											[caption]="$safeNavigationMigration((employee?.timeSlots)[0]?.startedAt) | utcToLocal | dateFormat"
+											[id]="$safeNavigationMigration(employee?.id)"
 											[employee]="employee"
 										></ngx-avatar>
 									</ng-template>
@@ -295,12 +295,12 @@
 										@for (timeSlot of employee.timeSlots; track timeSlot.id) {
 											<swiper-slide>
 												<ngx-screenshots-item
-													[timeFormat]="filters?.timeFormat"
-													[timezone]="filters?.timeZone"
+													[timeFormat]="$safeNavigationMigration(filters?.timeFormat)"
+													[timezone]="$safeNavigationMigration(filters?.timeZone)"
 													[timeSlot]="timeSlot"
 													(delete)="onDelete()"
 													[multiple]="false"
-													[employeeId]="timeSlot?.employee?.id"
+													[employeeId]="$safeNavigationMigration(timeSlot?.employee?.id)"
 												></ngx-screenshots-item>
 											</swiper-slide>
 										}
@@ -381,17 +381,17 @@
 								<div class="row align-items-center">
 									<div class="col-3 cell">
 										<ngx-avatar
-											[name]="manualTime?.user?.name"
-											[src]="manualTime?.user?.imageUrl"
-											[id]="manualTime?.employeeId"
-											[employee]="manualTime?.employee"
+											[name]="$safeNavigationMigration(manualTime?.user?.name)"
+											[src]="$safeNavigationMigration(manualTime?.user?.imageUrl)"
+											[id]="$safeNavigationMigration(manualTime?.employeeId)"
+											[employee]="$safeNavigationMigration(manualTime?.employee)"
 											size="sm"
 											class="avatar-dashboard"
 										></ngx-avatar>
 									</div>
 									<div
 										class="col cell project-name"
-										[nbTooltip]="manualTime?.project?.name"
+										[nbTooltip]="$safeNavigationMigration(manualTime?.project?.name)"
 										[nbTooltipDisabled]="!manualTime?.project?.name"
 									>
 										{{ manualTime?.project?.name }}
@@ -670,9 +670,9 @@
 									<div class="row align-items-center">
 										<div class="col-3 cell">
 											<ngx-avatar
-												[name]="member?.user?.name"
-												[src]="member?.user?.imageUrl"
-												[id]="member?.id"
+												[name]="$safeNavigationMigration(member?.user?.name)"
+												[src]="$safeNavigationMigration(member?.user?.imageUrl)"
+												[id]="$safeNavigationMigration(member?.id)"
 												[employee]="member"
 												size="sm"
 												class="avatar-dashboard"
@@ -685,7 +685,7 @@
 												</div>
 												<div class="activity-percentage">
 													<nb-badge
-														[status]="progressStatus(member?.todayTime?.overall)"
+														[status]="progressStatus($safeNavigationMigration(member?.todayTime?.overall))"
 														[text]="(member?.todayTime?.overall || 0) + '%'"
 													></nb-badge>
 												</div>
@@ -699,7 +699,7 @@
 													</div>
 													<div class="activity-percentage">
 														<nb-badge
-															[status]="progressStatus(member?.weekTime?.overall)"
+															[status]="progressStatus($safeNavigationMigration(member?.weekTime?.overall))"
 															[text]="(member?.weekTime?.overall || 0) + '%'"
 														></nb-badge>
 													</div>

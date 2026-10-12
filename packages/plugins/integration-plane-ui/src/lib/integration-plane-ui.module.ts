@@ -10,7 +10,7 @@ import {
 	NbInputModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
@@ -36,7 +36,7 @@ import { getPlaneRoutes } from './integration-plane.routes';
 		CommonModule,
 		ReactiveFormsModule,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule.forChild(),

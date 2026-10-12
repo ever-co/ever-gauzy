@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ngx-created-at',
     templateUrl: './created-at.component.html',
     styleUrls: ['./created-at.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CreatedAtComponent {

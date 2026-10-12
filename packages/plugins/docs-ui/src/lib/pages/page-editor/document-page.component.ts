@@ -7,7 +7,8 @@ import {
 	OnDestroy,
 	OnInit,
 	ViewChild,
-	inject
+	inject,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Actions } from '@ngneat/effects-ng';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { distinctUntilChanged, filter, firstValueFrom, map } from 'rxjs';
@@ -70,7 +71,7 @@ const BLOCK_ANCHOR_RETRY_MS = 150;
 		CommonModule,
 		FormsModule,
 		RouterModule,
-		TranslateModule,
+		TranslatePipe,
 		NgxPermissionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -85,6 +86,7 @@ const BLOCK_ANCHOR_RETRY_MS = 150;
 		VersionHistoryPanelComponent
 	],
 	templateUrl: './document-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./document-page.component.scss']
 })
 export class DocumentPageComponent implements OnInit, OnDestroy {

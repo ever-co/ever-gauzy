@@ -11,7 +11,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { WorkspaceSigninComponent } from './workspace-signin.component';
@@ -38,7 +38,7 @@ const routes: Routes = [
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		ThemeModule,
 		WorkspaceSharedModule

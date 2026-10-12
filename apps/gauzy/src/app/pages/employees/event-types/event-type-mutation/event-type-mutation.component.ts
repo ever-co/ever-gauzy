@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
     templateUrl: './event-type-mutation.component.html',
     styleUrls: ['./event-type-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EventTypeMutationComponent extends TranslationBaseComponent implements OnInit {

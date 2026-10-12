@@ -7,7 +7,8 @@ import {
 	OnDestroy,
 	OnInit,
 	Output,
-	ViewChild
+	ViewChild,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { formatDate, Location } from '@angular/common';
@@ -42,6 +43,7 @@ import { FormHelpers, LeafletMapComponent, LocationFormComponent } from '../../f
 		'./organizations-step-form.component.scss',
 		'./../../user/edit-profile-form/edit-profile-form.component.scss'
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterViewInit {

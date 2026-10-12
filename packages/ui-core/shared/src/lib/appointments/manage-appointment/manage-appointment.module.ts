@@ -8,7 +8,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { ManageAppointmentComponent } from './manage-appointment.component';
 import { EmployeeScheduleModule } from '../employee-schedules/employee-schedule.module';
@@ -24,7 +24,7 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 		NbInputModule,
 		NbSpinnerModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		EmployeeScheduleModule,
 		TimerPickerModule,

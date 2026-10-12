@@ -1,4 +1,4 @@
-import { Component, OnInit, forwardRef, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, forwardRef, OnDestroy, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
@@ -19,6 +19,7 @@ import { ErrorHandlingService, GithubService, Store } from '@gauzy/ui-core/core'
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RepositorySelectorComponent implements OnInit, OnDestroy {

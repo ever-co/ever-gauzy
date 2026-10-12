@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import {
 	enableProdMode,
 	importProvidersFrom,
@@ -187,7 +187,7 @@ bootstrapApplication(AppComponent, {
 
 			iconLibraries.setDefaultPack('eva');
 		}),
-		provideHttpClient(withInterceptorsFromDi()),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 		provideAnimations()
 	]
 }).catch((error) => console.error(error));

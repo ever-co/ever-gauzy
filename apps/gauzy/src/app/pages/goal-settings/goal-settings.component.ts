@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -34,6 +34,7 @@ import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.compon
     selector: 'ga-goal-settings',
     templateUrl: './goal-settings.component.html',
     styleUrls: ['./goal-settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

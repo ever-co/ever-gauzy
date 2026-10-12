@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	IEmployee,
@@ -47,6 +47,7 @@ import { AsyncPipe } from '@angular/common';
 	selector: 'ngx-tasks',
 	templateUrl: './tasks.component.html',
 	styleUrls: ['./tasks.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbCardModule,
 		FormsModule,

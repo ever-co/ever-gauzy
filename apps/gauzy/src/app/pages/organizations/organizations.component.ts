@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { IOrganization, ComponentLayoutStyleEnum, IUser, CrudActionEnum } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
@@ -34,6 +34,7 @@ import {
 @Component({
     templateUrl: './organizations.component.html',
     styleUrls: ['./organizations.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

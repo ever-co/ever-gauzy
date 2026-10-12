@@ -26,13 +26,13 @@
 					<ngx-avatar
 						class="avatar-dashboard"
 						size="sm"
-						[name]="manualTime?.user?.name"
-						[src]="manualTime?.user?.imageUrl"
-						[id]="manualTime?.employeeId"
-						[employee]="manualTime?.employee"
+						[name]="$safeNavigationMigration(manualTime?.user?.name)"
+						[src]="$safeNavigationMigration(manualTime?.user?.imageUrl)"
+						[id]="$safeNavigationMigration(manualTime?.employeeId)"
+						[employee]="$safeNavigationMigration(manualTime?.employee)"
 					></ngx-avatar>
 
-					<span class="cell-text" [title]="manualTime?.project?.name">
+					<span class="cell-text" [title]="$safeNavigationMigration(manualTime?.project?.name)">
 						{{ manualTime?.project?.name }}
 					</span>
 
@@ -41,7 +41,7 @@
 					</span>
 
 					<span class="cell-numeric cell-muted manual-time-date">
-						{{ manualTime?.startedAt | dateFormat }}
+						{{ $safeNavigationMigration(manualTime?.startedAt) | dateFormat }}
 					</span>
 				</div>
 			}

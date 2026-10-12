@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbProgressBarModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { DocumentsService } from '../../services/documents.service';
 import { AngularNodeViewComponent } from '../node-view/angular-node-view-renderer';
@@ -17,7 +17,7 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 @Component({
 	selector: 'gz-file-attachment-node-view',
 	standalone: true,
-	imports: [CommonModule, TranslateModule, NbButtonModule, NbIconModule, NbProgressBarModule],
+	imports: [CommonModule, TranslatePipe, NbButtonModule, NbIconModule, NbProgressBarModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div

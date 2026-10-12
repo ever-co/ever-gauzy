@@ -1,4 +1,4 @@
-import { OnInit, OnDestroy, Component } from '@angular/core';
+import { OnInit, OnDestroy, Component, ChangeDetectionStrategy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -13,6 +13,7 @@ import { CandidateSkillsService, CandidateStore, Store, ToastrService } from '@g
     selector: 'ga-edit-candidate-skills',
     templateUrl: './edit-candidate-skills.component.html',
     styleUrls: ['edit-candidate-skills.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateSkillsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

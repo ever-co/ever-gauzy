@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, type SimpleChanges, ViewChild } from '@angular/core';
 import { ID, IPluginVersion } from '@gauzy/contracts';
 import { NbSelectComponent } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';

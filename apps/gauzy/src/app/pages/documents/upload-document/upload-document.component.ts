@@ -1,10 +1,11 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup, AbstractControl } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
     selector: 'ga-upload-doc',
     templateUrl: './upload-document.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class UploadDocumentComponent implements OnInit {

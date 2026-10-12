@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, BehaviorSubject } from 'rxjs';
@@ -15,6 +15,7 @@ export interface IPaginationBase {
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: '',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {

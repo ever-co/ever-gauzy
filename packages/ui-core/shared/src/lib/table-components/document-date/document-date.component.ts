@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-document-date',
@@ -9,6 +9,7 @@ import { Component, Input, OnInit } from '@angular/core';
 		  </div>
 		}
 		`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DocumentDateTableComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -12,6 +12,7 @@ import { ImageAssetService, ToastrService } from '@gauzy/ui-core/core';
     selector: 'ga-image-asset',
     templateUrl: './image-asset.component.html',
     styleUrls: ['./image-asset.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ImageAssetComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	IBaseEntityWithMembers,
@@ -10,6 +10,7 @@ import { IPersonListItem } from '../table-components/people-list/people-list.com
     selector: 'ga-entity-with-members-card',
     templateUrl: './entity-with-members-card.component.html',
     styleUrls: ['./entity-with-members-card.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EntityWithMembersCardComponent {

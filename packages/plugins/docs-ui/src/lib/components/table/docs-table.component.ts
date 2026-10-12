@@ -7,7 +7,8 @@ import {
 	OnDestroy,
 	OnInit,
 	Output,
-	SimpleChanges
+	type SimpleChanges,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { NbMenuService } from '@nebular/theme';
 import { Cell, IColumns, LocalDataSource, Settings } from 'angular2-smart-table';
@@ -60,6 +61,7 @@ const ROW_MENU_TAG_PREFIX = 'gz-docs-row-actions-';
 	selector: 'gz-docs-table',
 	templateUrl: './docs-table.component.html',
 	styleUrls: ['./docs-table.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsTableComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {

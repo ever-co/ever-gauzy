@@ -24,7 +24,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { provideEffects } from '@ngneat/effects-ng';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	applyDeclarativeRegistrations,
@@ -149,7 +149,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		FormsModule,
 		ReactiveFormsModule,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		TreeModule,
 		NbBadgeModule,

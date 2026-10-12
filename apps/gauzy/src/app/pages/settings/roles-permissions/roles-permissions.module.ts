@@ -12,7 +12,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { RolePermissionsService } from '@gauzy/ui-core/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -35,7 +35,7 @@ import { RolesPermissionsComponent } from './roles-permissions.component';
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule
 	],
 	declarations: [RolesPermissionsComponent],

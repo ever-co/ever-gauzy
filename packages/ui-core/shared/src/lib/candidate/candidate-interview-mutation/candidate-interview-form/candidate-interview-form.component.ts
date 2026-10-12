@@ -6,7 +6,8 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	AfterViewInit
+	AfterViewInit,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
@@ -24,6 +25,7 @@ import { Store } from '@gauzy/ui-core/core';
 	selector: 'ga-candidate-interview-form',
 	templateUrl: 'candidate-interview-form.component.html',
 	styleUrls: ['candidate-interview-form.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CandidateInterviewFormComponent implements AfterViewInit, OnInit, OnDestroy {

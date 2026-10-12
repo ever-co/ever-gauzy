@@ -16,10 +16,10 @@
             @if (mode == 'update') {
               <div class="description">
                 <ngx-avatar
-                  [id]="timeLog?.employee?.id"
-                  [employee]="timeLog?.employee"
-                  [name]="timeLog?.employee?.user?.name"
-                  [src]="timeLog?.employee?.user?.imageUrl"
+                  [id]="$safeNavigationMigration(timeLog?.employee?.id)"
+                  [employee]="$safeNavigationMigration(timeLog?.employee)"
+                  [name]="$safeNavigationMigration(timeLog?.employee?.user?.name)"
+                  [src]="$safeNavigationMigration(timeLog?.employee?.user?.imageUrl)"
                   class="report-table"
                 ></ngx-avatar>
               </div>
@@ -124,10 +124,10 @@
           <div class="field span-2">
             <label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
             <ga-contact-selector
-              [employeeId]="form.get('employeeId')?.value"
+              [employeeId]="$safeNavigationMigration(form.get('employeeId')?.value)"
               name="organizationContactId"
               formControlName="organizationContactId"
-              [required]="organization?.requireClient"
+              [required]="$safeNavigationMigration(organization?.requireClient)"
             ></ga-contact-selector>
             @if (form.get('organizationContactId')?.invalid && f.submitted) {
               <div class="invalid-feedback d-block">
@@ -148,9 +148,9 @@
               [showAllOption]="false"
               [placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
               [defaultSelected]="false"
-              [employeeId]="form.get('employeeId')?.value"
-              [organizationContactId]="form.get('organizationContactId')?.value"
-              [required]="organization?.requireProject"
+              [employeeId]="$safeNavigationMigration(form.get('employeeId')?.value)"
+              [organizationContactId]="$safeNavigationMigration(form.get('organizationContactId')?.value)"
+              [required]="$safeNavigationMigration(organization?.requireProject)"
             ></ga-project-selector>
             @if (form.get('projectId')?.invalid && f.submitted) {
               <div class="invalid-feedback d-block">
@@ -181,7 +181,7 @@
               [employeeId]="getControlValue('employeeId')"
               [projectId]="getControlValue('projectId')"
               formControlName="taskId"
-              [required]="organization?.requireTask"
+              [required]="$safeNavigationMigration(organization?.requireTask)"
             ></ga-task-selector>
             @if (form.get('taskId')?.invalid && f.submitted) {
               <div class="invalid-feedback d-block">
@@ -203,7 +203,7 @@
               [placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
               name="description"
               formControlName="description"
-              [required]="organization?.requireDescription"
+              [required]="$safeNavigationMigration(organization?.requireDescription)"
             ></textarea>
             @if (form.get('description')?.invalid && f.submitted) {
               <div class="invalid-feedback d-block">
@@ -225,7 +225,7 @@
                 name="reason"
                 formControlName="reason"
                 [nbAutocomplete]="auto"
-                [required]="organization?.requireReason"
+                [required]="$safeNavigationMigration(organization?.requireReason)"
                 />
               <nb-autocomplete #auto fullWidth>
                 @for (reason of reasons; track reason) {

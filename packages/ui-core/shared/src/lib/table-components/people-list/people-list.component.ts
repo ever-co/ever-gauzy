@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { ID } from '@gauzy/contracts';
 
 /**
@@ -38,6 +38,7 @@ export interface IPersonListItem {
 	selector: 'ngx-people-list',
 	templateUrl: './people-list.component.html',
 	styleUrls: ['./people-list.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PeopleListComponent {

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { filter, firstValueFrom, tap } from 'rxjs';
@@ -19,6 +19,7 @@ import { BasicInfoFormComponent } from '../../user/forms';
     selector: 'ga-employee-mutation',
     templateUrl: 'employee-mutation.component.html',
     styleUrls: ['employee-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {

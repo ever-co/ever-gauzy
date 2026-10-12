@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-core/core';
@@ -8,6 +8,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-danger-zone-mutation',
     templateUrl: './danger-zone-mutation.component.html',
     styleUrls: ['./danger-zone-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DangerZoneMutationComponent extends TranslationBaseComponent {

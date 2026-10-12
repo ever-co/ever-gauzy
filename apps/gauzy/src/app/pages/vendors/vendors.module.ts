@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -43,7 +43,7 @@ const STANDALONE_MODULES = [
 ];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [TranslateModule.forChild(), NgxPermissionsModule.forChild()];
+const THIRD_PARTY_MODULES = [TranslatePipe, NgxPermissionsModule.forChild()];
 
 @NgModule({
 	imports: [

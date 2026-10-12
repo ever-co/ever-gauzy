@@ -1,8 +1,9 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder } from '@angular/forms';
 @Component({
     selector: 'ga-candidate-cv',
     templateUrl: 'candidate-cv.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateCvComponent implements OnInit {

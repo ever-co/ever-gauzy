@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
 
 @Component({
     selector: 'ga-user-multi-select',
     templateUrl: './user-multi-select.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class UserSelectComponent {

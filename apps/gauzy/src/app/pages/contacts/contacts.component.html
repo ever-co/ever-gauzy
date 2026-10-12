@@ -46,7 +46,7 @@
 		} @else {
 			<ga-card-grid
 				[loading]="loading"
-				[totalItems]="pagination?.totalItems"
+				[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 				(onSelectedItem)="selectContact($event)"
 				[settings]="settingsSmartTable"
 				[source]="organizationContacts"
@@ -105,7 +105,7 @@
 				status="basic"
 				size="small"
 				[disabled]="!selectedOrganizationContact && disableButton"
-				(click)="removeOrganizationContact(selectedOrganizationContact?.id, selectedOrganizationContact?.name)"
+				(click)="removeOrganizationContact($safeNavigationMigration(selectedOrganizationContact?.id), $safeNavigationMigration(selectedOrganizationContact?.name))"
 				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>

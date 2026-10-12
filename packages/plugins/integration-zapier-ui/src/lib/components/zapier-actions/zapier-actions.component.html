@@ -40,7 +40,7 @@
 <ngx-record-view-drawer
   [open]="!!viewedAction"
   heading="INTEGRATIONS.ZAPIER_PAGE.ACTIONS.TITLE"
-  [subtitle]="viewedAction?.name"
+  [subtitle]="$safeNavigationMigration(viewedAction?.name)"
   (closed)="closeView()"
 >
   @if (viewedAction) {

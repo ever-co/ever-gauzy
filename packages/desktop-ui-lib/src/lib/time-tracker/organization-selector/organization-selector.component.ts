@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, IUser } from '@gauzy/contracts';
 import { uniq } from 'underscore';
 import { ElectronService } from '../../electron/services';
@@ -13,6 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'ngx-desktop-timer-organization-selector',
     templateUrl: './organization-selector.component.html',
     styleUrls: ['./organization-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgSelectComponent, NbTooltipModule, FormsModule, NgOptionTemplateDirective, NgLabelTemplateDirective, TranslatePipe]
 })
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {

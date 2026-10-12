@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
 import { Observable, EMPTY } from 'rxjs';
 import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
@@ -31,6 +31,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-public-page-employee-mutation',
 	templateUrl: './public-page-employee-mutation.component.html',
 	styleUrls: ['./public-page-employee-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

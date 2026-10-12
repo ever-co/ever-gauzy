@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, Input, OnDestroy, OnInit, OnChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, Input, OnDestroy, OnInit, OnChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -79,6 +79,7 @@ import {
 		`
     ],
     providers: [CurrencyPipe, CurrencyPositionPipe],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeHorizontalBarChartComponent

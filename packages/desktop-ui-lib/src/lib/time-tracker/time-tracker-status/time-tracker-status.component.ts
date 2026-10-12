@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ITimerIcon } from './interfaces';
 import { TimeTrackerStatusService } from './time-tracker-status.service';
@@ -11,6 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'gauzy-time-tracker-status',
     templateUrl: './time-tracker-status.component.html',
     styleUrls: ['./time-tracker-status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FaIconComponent, NbTooltipModule, AsyncPipe, TranslatePipe]
 })
 export class TimeTrackerStatusComponent {

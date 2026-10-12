@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IDocument } from '@gauzy/contracts';
 
 /**
@@ -28,6 +28,7 @@ import { IDocument } from '@gauzy/contracts';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class UpdatedCellComponent {

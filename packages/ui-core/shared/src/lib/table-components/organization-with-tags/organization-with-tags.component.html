@@ -35,8 +35,8 @@
         <nb-badge
           class="color"
           position="centered"
-          [style.background]="background(rowData?.brandColor)"
-          [style.color]="backgroundContrast(rowData?.brandColor)"
+          [style.background]="background($safeNavigationMigration(rowData?.brandColor))"
+          [style.color]="backgroundContrast($safeNavigationMigration(rowData?.brandColor))"
           [text]="'FORM.LABELS.DEFAULT' | translate"
         >
         </nb-badge>

@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ISelectedEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -26,6 +26,7 @@ const PLACEHOLDER_AVATAR = /avatar-default\.svg|dummyimage\.com/i;
 	selector: 'ngx-record-view',
 	templateUrl: './record-view.component.html',
 	styleUrls: ['./record-view.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RecordViewComponent implements OnChanges {

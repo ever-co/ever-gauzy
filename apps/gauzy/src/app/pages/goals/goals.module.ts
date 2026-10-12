@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbDialogModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { GoalsRoutingModule } from './goals-routing.module';
 
@@ -8,7 +8,7 @@ import { GoalsRoutingModule } from './goals-routing.module';
 	imports: [
 		GoalsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild()
 	]
 })

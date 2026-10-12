@@ -21,7 +21,7 @@ import {
 	NbDatepickerModule,
 	NbPopoverModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	AddTaskDialogModule,
@@ -87,7 +87,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		DragDropModule,
 		NgxPermissionsModule.forChild(),
 		RichTextEditorModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		TasksRoutingModule,
 		TableComponentsModule,
 		TagsColorInputModule,

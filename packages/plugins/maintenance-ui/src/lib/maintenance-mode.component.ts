@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Location } from '@angular/common';
 import { environment } from '@gauzy/ui-config';
 import { ServerConnectionService, Store } from '@gauzy/ui-core/core';
@@ -7,6 +7,7 @@ import { ServerConnectionService, Store } from '@gauzy/ui-core/core';
     selector: 'ga-maintenance-mode',
     styleUrls: ['./maintenance-mode.component.scss'],
     templateUrl: './maintenance-mode.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MaintenanceModeComponent implements OnInit, OnDestroy {

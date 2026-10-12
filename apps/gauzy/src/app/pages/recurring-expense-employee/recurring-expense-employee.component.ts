@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,6 +35,7 @@ import {
     selector: 'ga-recurring-expenses-employee',
     templateUrl: './recurring-expense-employee.component.html',
     styleUrls: ['./recurring-expense-employee.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

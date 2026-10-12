@@ -17,7 +17,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	RecordViewModule,
 	SmartDataViewLayoutModule,
@@ -57,7 +57,7 @@ const NB_MODULES = [
 @NgModule({
 	imports: [
 		...NB_MODULES,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		IntegrationZapierRoutes,
 		RecordViewModule,
 		SmartDataViewLayoutModule,

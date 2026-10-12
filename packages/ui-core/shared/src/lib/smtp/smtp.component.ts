@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnInit, type SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { ActivatedRoute, Data } from '@angular/router';
 import { ICustomSmtp, IOrganization, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
@@ -15,6 +15,7 @@ import { FormHelpers } from '../forms/helpers';
 @Component({
 	templateUrl: './smtp.component.html',
 	styleUrls: ['./smtp.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SMTPComponent extends TranslationBaseComponent implements OnInit, OnChanges, AfterViewInit {

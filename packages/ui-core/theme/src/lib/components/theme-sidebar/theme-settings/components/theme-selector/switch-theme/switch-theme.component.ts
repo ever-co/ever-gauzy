@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ThemeSelectorComponent } from '../theme-selector.component';
 import { NbThemeService } from '@nebular/theme';
 import { Store } from '@gauzy/ui-core/core';
@@ -11,6 +11,7 @@ import { untilDestroyed } from '@ngneat/until-destroy';
     selector: 'gauzy-switch-theme',
     templateUrl: './switch-theme.component.html',
     styleUrls: ['./switch-theme.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SwitchThemeComponent extends ThemeSelectorComponent {

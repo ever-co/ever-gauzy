@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router, UrlSerializer } from '@angular/router';
 import { catchError, concatMap, delay, filter, finalize, switchMap, tap } from 'rxjs/operators';
@@ -35,6 +35,7 @@ import {
     selector: 'ngx-import-export',
     templateUrl: './import-export.component.html',
     styleUrls: ['./import-export.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {

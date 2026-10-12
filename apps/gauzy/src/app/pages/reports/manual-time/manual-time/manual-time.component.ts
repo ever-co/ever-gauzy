@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { IGetTimeLogReportInput, ITimeLog, ITimeLogFilters, TimeLogType, ManualTimeLogAction } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,6 +22,7 @@ import {
 	selector: 'ga-manual-time-report',
 	templateUrl: './manual-time.component.html',
 	styleUrls: ['./manual-time.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ManualTimeComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

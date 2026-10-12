@@ -101,7 +101,7 @@
 			<!-- The trigger is a fixed-width pill in the header band, so the name
 			     clips to an ellipsis; the title carries the untruncated one. The
 			     employee, project and team selectors each do the same. -->
-			<div class="selector-template" [title]="item?.name">
+			<div class="selector-template" [title]="$safeNavigationMigration(item?.name)">
 				@if (item.imageUrl) {
 				<img height="25" width="25" [src]="item.imageUrl" alt="" />
 				}

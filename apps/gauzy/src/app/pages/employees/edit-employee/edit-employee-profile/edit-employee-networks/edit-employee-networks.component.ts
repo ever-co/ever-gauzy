@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { EmployeeStore, Store, UrlPatternValidator } from '@gauzy/ui-core/core';
     selector: 'ga-edit-employee-networks',
     templateUrl: './edit-employee-networks.component.html',
     styleUrls: ['./edit-employee-networks.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {

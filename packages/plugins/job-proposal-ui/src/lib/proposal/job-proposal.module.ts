@@ -1,7 +1,7 @@
 import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import {
 	applyDeclarativeRegistrations,
@@ -34,7 +34,7 @@ import { COMPONENTS } from './components';
 		RouterModule.forChild([]),
 		RichTextEditorModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NebularModule,
 		BaseChartDirective,
 		SharedModule,

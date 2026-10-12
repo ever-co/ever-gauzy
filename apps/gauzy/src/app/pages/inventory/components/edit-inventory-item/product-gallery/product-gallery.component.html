@@ -89,7 +89,7 @@
 		<div class="col-sm-3 col-md-4 gallery-sm-preview" (click)="onSmallImgPreviewClick(galleryItem)">
 			<img
 				class="gallery-sm-preview-item"
-				[src]="galleryItem?.fullUrl"
+				[src]="$safeNavigationMigration(galleryItem?.fullUrl)"
 				[class.selected]="isSelected(galleryItem)"
 			/>
 			@if (isFeaturedImage(galleryItem)) {

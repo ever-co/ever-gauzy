@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
@@ -6,6 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @Component({
 	selector: 'ngx-toggle-switcher',
 	templateUrl: './toggle-switcher.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ToggleSwitcherComponent implements OnInit {

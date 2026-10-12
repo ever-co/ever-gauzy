@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IBaseEntityWithMembers, IEditEntityByMemberInput, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -7,6 +7,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-edit-employee-membership',
     templateUrl: './edit-employee-membership-form.component.html',
     styleUrls: ['./edit-employee-membership-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditEmployeeMembershipFormComponent implements OnInit {

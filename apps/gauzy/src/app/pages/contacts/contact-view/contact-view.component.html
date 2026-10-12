@@ -10,14 +10,14 @@
 
 		<div class="identity">
 			@if (selectedContact?.imageUrl) {
-				<img class="identity-avatar" [src]="selectedContact?.imageUrl" [alt]="selectedContact?.name" />
+				<img class="identity-avatar" [src]="$safeNavigationMigration(selectedContact?.imageUrl)" [alt]="$safeNavigationMigration(selectedContact?.name)" />
 			} @else {
 				<!-- An <img> bound to a missing URL renders the browser's broken-image glyph. -->
 				<span class="identity-avatar identity-avatar-fallback" aria-hidden="true">{{ initials }}</span>
 			}
-			<h4 class="identity-name" [title]="selectedContact?.name">{{ selectedContact?.name }}</h4>
+			<h4 class="identity-name" [title]="$safeNavigationMigration(selectedContact?.name)">{{ selectedContact?.name }}</h4>
 			@if (selectedContact?.contactType) {
-				<span class="identity-type">{{ selectedContact?.contactType | titlecase }}</span>
+				<span class="identity-type">{{ $safeNavigationMigration(selectedContact?.contactType) | titlecase }}</span>
 			}
 		</div>
 
@@ -55,8 +55,8 @@
 									<dd class="field-value">
 										@if (selectedContact?.primaryEmail) {
 											<gauzy-email
-												[rowData]="{ email: selectedContact?.primaryEmail }"
-												[nbTooltip]="selectedContact?.primaryEmail"
+												[rowData]="{ email: $safeNavigationMigration(selectedContact?.primaryEmail) }"
+												[nbTooltip]="$safeNavigationMigration(selectedContact?.primaryEmail)"
 											></gauzy-email>
 										} @else {
 											<span class="field-empty">&mdash;</span>
@@ -99,7 +99,7 @@
 									</dt>
 									<dd class="field-value">
 										@if (selectedContact?.contact?.fiscalInformation) {
-											<span [nbTooltip]="selectedContact?.contact?.fiscalInformation">
+											<span [nbTooltip]="$safeNavigationMigration(selectedContact?.contact?.fiscalInformation)">
 												{{ selectedContact?.contact?.fiscalInformation }}
 											</span>
 										} @else {
@@ -116,8 +116,8 @@
 									<dd class="field-value">
 										@if (selectedContact?.contact?.website) {
 											<gauzy-external-link
-												[rowData]="selectedContact?.contact"
-												[nbTooltip]="selectedContact?.contact?.website"
+												[rowData]="$safeNavigationMigration(selectedContact?.contact)"
+												[nbTooltip]="$safeNavigationMigration(selectedContact?.contact?.website)"
 											></gauzy-external-link>
 										} @else {
 											<span class="field-empty">&mdash;</span>
@@ -206,7 +206,7 @@
 									</dt>
 									<dd class="field-value">
 										@if (selectedContact?.budgetType) {
-											{{ selectedContact?.budgetType | titlecase }}
+											{{ $safeNavigationMigration(selectedContact?.budgetType) | titlecase }}
 										} @else {
 											<span class="field-empty">&mdash;</span>
 										}
@@ -319,10 +319,10 @@
 										@for (member of selectedMembers; track member.id) {
 											<li class="member-card">
 												<ngx-avatar
-													[name]="member?.user?.name"
-													[caption]="member?.user?.email"
-													[src]="member?.user?.imageUrl"
-													[id]="member?.id"
+													[name]="$safeNavigationMigration(member?.user?.name)"
+													[caption]="$safeNavigationMigration(member?.user?.email)"
+													[src]="$safeNavigationMigration(member?.user?.imageUrl)"
+													[id]="$safeNavigationMigration(member?.id)"
 													[employee]="member"
 												></ngx-avatar>
 												<button

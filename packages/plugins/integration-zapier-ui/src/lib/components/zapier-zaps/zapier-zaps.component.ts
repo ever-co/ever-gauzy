@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { tap, catchError, finalize, switchMap, map, distinctUntilChanged } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	selector: 'ngx-zapier-zaps',
 	templateUrl: './zapier-zaps.component.html',
 	styleUrls: ['./zapier-zaps.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierZapsComponent extends TranslationBaseComponent implements OnInit {

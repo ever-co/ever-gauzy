@@ -18,7 +18,7 @@ import {
 } from '@angular/core';
 import { ResolveFn } from '@angular/router';
 import { NbButtonModule, NbCardModule, NbIconModule, NbPopoverDirective, NbPopoverModule } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, from, isObservable, of } from 'rxjs';
 import { map, shareReplay, take } from 'rxjs/operators';
@@ -194,7 +194,7 @@ export function renderableConfigFields(schema: WidgetConfigField[] | undefined):
 @Component({
 	selector: 'ga-dashboard-widget-host',
 	standalone: true,
-	imports: [CommonModule, NbButtonModule, NbCardModule, NbIconModule, NbPopoverModule, TranslateModule],
+	imports: [CommonModule, NbButtonModule, NbCardModule, NbIconModule, NbPopoverModule, TranslatePipe],
 	templateUrl: './dashboard-widget-host.component.html',
 	styleUrls: ['./dashboard-widget-host.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush

@@ -121,7 +121,7 @@
 <ngx-record-view-drawer
 	[open]="!!viewedEmployee"
 	heading="JOB_EMPLOYEE.EMPLOYEE"
-	[subtitle]="viewedEmployee?.user?.name"
+	[subtitle]="$safeNavigationMigration(viewedEmployee?.user?.name)"
 	(closed)="closeView()"
 >
 	@if (viewedEmployee) {

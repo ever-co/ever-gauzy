@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, SecurityContext, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, SecurityContext, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmailTemplateEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
@@ -48,6 +48,7 @@ export interface EmailTemplateCard {
 @Component({
     templateUrl: './email-templates.component.html',
     styleUrls: ['./email-templates.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmailTemplatesComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {

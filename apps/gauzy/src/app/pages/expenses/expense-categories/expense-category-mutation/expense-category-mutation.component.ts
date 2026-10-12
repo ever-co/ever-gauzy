@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { FormHelpers } from '@gauzy/ui-core/shared';
     selector: 'ngx-expense-category-mutation',
     templateUrl: './expense-category-mutation.component.html',
     styleUrls: ['./expense-category-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpenseCategoryMutationComponent extends TranslationBaseComponent implements OnInit {

@@ -11,7 +11,7 @@ import {
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { distinctUntilChanged, forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -58,7 +58,7 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 		NbInputModule,
 		NbTabsetModule,
 		NbToggleModule,
-		TranslateModule,
+		TranslatePipe,
 		PendingApprovalsComponent
 	],
 	template: `

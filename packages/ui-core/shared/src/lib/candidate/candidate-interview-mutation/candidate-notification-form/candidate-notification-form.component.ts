@@ -1,4 +1,4 @@
-import { Component, OnDestroy, Input, ViewChild } from '@angular/core';
+import { Component, OnDestroy, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { ICandidateInterview, ICandidate, IEmployee } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
@@ -6,6 +6,7 @@ import { CandidateEmailComponent } from './candidate-email/candidate-email.compo
     selector: 'ga-candidate-notification-form',
     templateUrl: './candidate-notification-form.component.html',
     styleUrls: ['./candidate-notification-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateNotificationFormComponent implements OnDestroy {

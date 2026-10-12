@@ -37,7 +37,7 @@
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.BUCKET' | translate }}</dt>
 							<!-- null: left empty, so the server's own configuration applies -->
-							@if (summary?.bucket === null) {
+							@if ($safeNavigationMigration(summary?.bucket) === null) {
 								<dd><span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span></dd>
 							} @else {
 								<dd class="mono" [attr.title]="summary?.bucket || null">{{ summary?.bucket || '—' }}</dd>
@@ -46,7 +46,7 @@
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.REGION' | translate }}</dt>
 							<!-- null: left empty, so the server's own configuration applies -->
-							@if (summary?.region === null) {
+							@if ($safeNavigationMigration(summary?.region) === null) {
 								<dd><span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span></dd>
 							} @else {
 								<dd class="mono">{{ summary?.region || '—' }}</dd>
@@ -55,7 +55,7 @@
 						<div class="summary-item">
 							<dt>{{ 'SETTINGS_FILE_STORAGE.SUMMARY.ENDPOINT' | translate }}</dt>
 							<!-- null: left empty, so the server's own configuration applies -->
-							@if (summary?.endpoint === null) {
+							@if ($safeNavigationMigration(summary?.endpoint) === null) {
 								<dd><span class="server-default">{{ 'SETTINGS_FILE_STORAGE.SUMMARY.SERVER_DEFAULT' | translate }}</span></dd>
 							} @else {
 								<dd class="mono" [attr.title]="summary?.endpoint || null">{{ summary?.endpoint || '—' }}</dd>

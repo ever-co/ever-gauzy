@@ -1,9 +1,10 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
+import { Component, Output, EventEmitter, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-info-block',
     templateUrl: './info-block.component.html',
     styleUrls: ['./info-block.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InfoBlockComponent {

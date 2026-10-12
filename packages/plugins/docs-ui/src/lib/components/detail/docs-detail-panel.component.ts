@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -77,6 +77,7 @@ const SUGGESTED_TAG_COLORS = ['#3366FF', '#00D68F', '#FFAA00', '#FF3D71', '#8B5C
 	selector: 'gz-docs-detail-panel',
 	templateUrl: './docs-detail-panel.component.html',
 	styleUrls: ['./docs-detail-panel.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsDetailPanelComponent extends TranslationBaseComponent implements OnChanges {

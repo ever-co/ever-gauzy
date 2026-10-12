@@ -10,7 +10,7 @@
         <div class="day col">{{ day | dateTime : 'D dddd' }}</div>
         <ngx-progress-status class="report-progress col-6"
         [percentage]="(((weeklyActivities$ | async)?.dates[day]?.sum ?? 0) * 100) / ((weeklyActivities$ | async)?.sum ?? 1)"></ngx-progress-status>
-        <div class="col hours text-end">{{ (weeklyActivities$ | async)?.dates[day]?.sum | durationFormat : 'h[h] m[m] s[s]':{trim:'both'} }}
+        <div class="col hours text-end">{{ $safeNavigationMigration((weeklyActivities$ | async)?.dates[day]?.sum) | durationFormat : 'h[h] m[m] s[s]':{trim:'both'} }}
         </div>
       </div>
     }

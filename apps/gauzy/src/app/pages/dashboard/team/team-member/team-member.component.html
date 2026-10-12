@@ -15,10 +15,10 @@
 					<div [class]="isClassic ? 'col-9' : 'col-12'">
 						<ngx-avatar
 							[class]="isClassic ? 'avatar-dashboard' : 'report-table'"
-							[id]="member?.employee?.id"
-							[name]="member?.employee?.user?.name"
-							[src]="member?.employee?.user?.imageUrl"
-							[employee]="member?.employee"
+							[id]="$safeNavigationMigration(member?.employee?.id)"
+							[name]="$safeNavigationMigration(member?.employee?.user?.name)"
+							[src]="$safeNavigationMigration(member?.employee?.user?.imageUrl)"
+							[employee]="$safeNavigationMigration(member?.employee)"
 						></ngx-avatar>
 					</div>
 				</div>
@@ -38,15 +38,15 @@
 							<div class="col">
 								<nb-progress-bar
 									[displayValue]="false"
-									[status]="progressStatus(calculatePercentage(task.duration, task?.estimate))"
-									[value]="calculatePercentage(task.duration, task?.estimate)"
+									[status]="progressStatus(calculatePercentage(task.duration, $safeNavigationMigration(task?.estimate)))"
+									[value]="calculatePercentage(task.duration, $safeNavigationMigration(task?.estimate))"
 									class="mb-1"
 									size="tiny"
 								></nb-progress-bar>
 							</div>
 							<div class="col-3">
 								@if (task?.estimate) {
-								{{ task?.estimate | durationFormat }}
+								{{ $safeNavigationMigration(task?.estimate) | durationFormat }}
 								}
 							</div>
 						</div>
@@ -70,9 +70,9 @@
 						<nb-progress-bar
 							[displayValue]="false"
 							[status]="
-								progressStatus(calculatePercentage(member?.todayWorkDuration, member?.workPeriod))
+								progressStatus(calculatePercentage($safeNavigationMigration(member?.todayWorkDuration), $safeNavigationMigration(member?.workPeriod)))
 							"
-							[value]="calculatePercentage(member?.todayWorkDuration, member?.workPeriod)"
+							[value]="calculatePercentage($safeNavigationMigration(member?.todayWorkDuration), $safeNavigationMigration(member?.workPeriod))"
 							class="mb-1"
 							size="tiny"
 						>
@@ -81,7 +81,7 @@
 					<div [class]="member?.isWorkingToday ? 'col-3 text-right' : 'col-4'">
 						{{
 							member?.todayWorkDuration > 0
-								? humanize(member?.todayWorkDuration)
+								? humanize($safeNavigationMigration(member?.todayWorkDuration))
 								: ('ORGANIZATIONS_PAGE.NOT_WORKED' | translate)
 						}}
 					</div>

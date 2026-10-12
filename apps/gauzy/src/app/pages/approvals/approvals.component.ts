@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
@@ -36,6 +36,7 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 	selector: 'ngx-approvals',
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import {
 	HttpRequest,
 	HttpHandler,
-	HttpEvent,
+	type HttpEvent,
 	HttpInterceptor,
 	HttpErrorResponse,
 	HttpStatusCode

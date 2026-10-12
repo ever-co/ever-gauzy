@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,6 +30,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ga-employment-types',
 	templateUrl: './employment-types.component.html',
 	styleUrls: ['./employment-types.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmploymentTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

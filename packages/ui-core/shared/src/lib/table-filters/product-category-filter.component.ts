@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { IProductCategoryTranslated } from '@gauzy/contracts';
 
@@ -12,6 +12,7 @@ import { IProductCategoryTranslated } from '@gauzy/contracts';
 			(onChanged)="selectedProductCategoryEvent($event)"
 		></ngx-product-category-selector>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProductCategoryFilterComponent extends DefaultFilter implements OnChanges {

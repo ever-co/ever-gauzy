@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TranslateService } from '@ngx-translate/core';
 import { IDashboardTab, IDashboardWidgetPlacement } from '@gauzy/contracts';
@@ -35,6 +35,7 @@ export const DASHBOARD_CANVAS_DROP_LIST_ID = 'ga-dashboard-canvas-list';
 	selector: 'ga-dashboard-canvas',
 	templateUrl: './dashboard-canvas.component.html',
 	styleUrls: ['./dashboard-canvas.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DashboardCanvasComponent extends TranslationBaseComponent {

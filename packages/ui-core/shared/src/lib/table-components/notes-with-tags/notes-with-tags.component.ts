@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Color } from '@kurkle/color';
 import { NbThemeService } from '@nebular/theme';
@@ -11,6 +11,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-notes-with-tags',
     templateUrl: './notes-with-tags.component.html',
     styleUrls: ['./notes-with-tags.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NotesWithTagsComponent extends TranslationBaseComponent implements OnInit {

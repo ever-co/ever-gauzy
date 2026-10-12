@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	ProductTypesIconsEnum,
@@ -22,6 +22,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     selector: 'ngx-product-type-mutation',
     templateUrl: './product-type-mutation.component.html',
     styleUrls: ['./product-type-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductTypeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

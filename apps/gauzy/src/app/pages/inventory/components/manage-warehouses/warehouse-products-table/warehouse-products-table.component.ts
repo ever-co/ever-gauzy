@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IWarehouse, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
     selector: 'ga-warehouse-products-table',
     templateUrl: './warehouse-products-table.component.html',
     styleUrls: ['./warehouse-products-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class WarehouseProductsTableComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {

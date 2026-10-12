@@ -10,7 +10,7 @@ import {
 	NbSelectModule,
 	NbIconModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { GoalLevelSelectModule } from '@gauzy/ui-core/shared';
 import { GoalTemplateSelectComponent } from './goal-template-select.component';
 
@@ -29,7 +29,7 @@ import { GoalTemplateSelectComponent } from './goal-template-select.component';
 		NbIconModule,
 		NbStepperModule,
 		GoalLevelSelectModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	exports: [GoalTemplateSelectComponent]
 })

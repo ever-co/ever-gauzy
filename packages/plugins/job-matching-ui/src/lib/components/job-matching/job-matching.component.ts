@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, combineLatest, map, BehaviorSubject, merge } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,6 +35,7 @@ import { I18nService, TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ga-job-matching',
 	templateUrl: './job-matching.component.html',
 	styleUrls: ['./job-matching.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class JobMatchingComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 
@@ -7,6 +7,7 @@ import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
     selector: 'gauzy-all-team',
     templateUrl: './all-team.component.html',
     styleUrls: ['./all-team.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AllTeamComponent implements OnInit {

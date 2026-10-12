@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +11,7 @@ import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmatio
     selector: 'ngx-img-asset',
     templateUrl: './img-asset.component.html',
     styleUrls: ['./img-asset.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NgxImageAssetComponent extends TranslationBaseComponent implements OnInit {

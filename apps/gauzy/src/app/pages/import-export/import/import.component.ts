@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { ImportService, Store } from '@gauzy/ui-core/core';
 	selector: 'ngx-import',
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ImportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

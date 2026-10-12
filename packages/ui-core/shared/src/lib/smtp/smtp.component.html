@@ -10,14 +10,14 @@
         <header>
           {{
           'CUSTOM_SMTP_PAGE.HEADER'
-          | translate: { name: organization?.name }
+          | translate: { name: $safeNavigationMigration(organization?.name) }
           }}
         </header>
       } @else {
         <header>
           {{
           'CUSTOM_SMTP_PAGE.HEADER'
-          | translate: { name: user?.tenant?.name }
+          | translate: { name: $safeNavigationMigration(user?.tenant?.name) }
           }}
         </header>
       }

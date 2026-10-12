@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { ICandidate, IEmployee } from '@gauzy/contracts';
@@ -8,6 +8,7 @@ import { ICandidate, IEmployee } from '@gauzy/contracts';
     selector: 'ga-candidate-interviewer-select',
     templateUrl: './candidate-interviewer-select.component.html',
     styleUrls: ['../base-candidate-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateInterviewerSelectComponent {

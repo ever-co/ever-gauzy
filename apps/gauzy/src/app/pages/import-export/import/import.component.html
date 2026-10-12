@@ -118,7 +118,7 @@
 						</div>
 						@if (uploader.options.isHTML5) {
 						<div class="col-1" style="white-space: nowrap">
-							{{ item?.file?.size | fileSize }}
+							{{ $safeNavigationMigration(item?.file?.size) | fileSize }}
 						</div>
 						<div class="col-5">
 							<div class="d-flex align-items-center">

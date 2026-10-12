@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultEditor } from 'angular2-smart-table';
 
 @Component({
@@ -11,6 +11,7 @@ import { DefaultEditor } from 'angular2-smart-table';
 		></nb-toggle>
 	`,
 	styles: ['.apply-tax {text-align: center}'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InvoiceApplyTaxDiscountComponent extends DefaultEditor implements OnInit {

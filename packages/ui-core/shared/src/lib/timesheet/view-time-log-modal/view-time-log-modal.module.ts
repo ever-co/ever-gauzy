@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbButtonModule, NbDialogModule, NbIconModule, NbAlertModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { TableComponentsModule } from '../../table-components';
@@ -13,7 +13,7 @@ import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-mod
 	exports: [ViewTimeLogModalComponent],
 	imports: [
 		CommonModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		NbCardModule,
 		NbButtonModule,

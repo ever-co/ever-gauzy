@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -21,6 +21,7 @@ import { TasksService } from '@gauzy/ui-core/core';
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TaskNumberFieldComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

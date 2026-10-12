@@ -14,7 +14,7 @@ import {
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LanguagesService, TenantService } from '@gauzy/ui-core/core';
 import { FeatureToggleModule, ImageUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
 import { GeneralSettingRoutingModule } from './general-setting-routing.module';
@@ -36,7 +36,7 @@ import { PersonalSettingsComponent } from './personal-settings/personal-settings
 		NbSelectModule,
 		NbSpinnerModule,
 		NbToggleModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		GeneralSettingRoutingModule,
 		FeatureToggleModule,
 		ImageUploaderModule,

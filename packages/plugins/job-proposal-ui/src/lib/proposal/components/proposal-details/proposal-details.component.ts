@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,6 +11,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ngx-proposal-details',
     templateUrl: './proposal-details.component.html',
     styleUrls: ['./proposal-details.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {

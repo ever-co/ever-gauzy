@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InvoicesService } from '@gauzy/ui-core/core';
 import { SharedModule } from './../../../shared.module';
 import { InvoiceViewInnerComponent } from './invoice-view-inner.component';
 
 @NgModule({
-	imports: [NbCardModule, Angular2SmartTableModule, TranslateModule.forChild(), SharedModule],
+	imports: [NbCardModule, Angular2SmartTableModule, TranslatePipe, SharedModule],
 	declarations: [InvoiceViewInnerComponent],
 	exports: [InvoiceViewInnerComponent],
 	providers: [InvoicesService]

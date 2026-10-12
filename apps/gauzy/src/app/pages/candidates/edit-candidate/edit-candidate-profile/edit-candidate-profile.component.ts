@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,6 +30,7 @@ import { firstValueFrom } from 'rxjs';
     templateUrl: './edit-candidate-profile.component.html',
     styleUrls: ['./edit-candidate-profile.component.scss'],
     providers: [CandidateStore],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

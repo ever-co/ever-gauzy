@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Tiny URL prompt used by the slash commands Video / Embed (spec 05 §6.4).
@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
 @Component({
 	selector: 'gz-docs-url-prompt-dialog',
 	standalone: true,
-	imports: [FormsModule, TranslateModule, NbButtonModule, NbCardModule, NbInputModule],
+	imports: [FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<nb-card class="gz-url-dialog">

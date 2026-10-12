@@ -9,7 +9,7 @@
 
 	<div class="video-info">
 		@if(video.uploadedBy) {
-		<ngx-avatar [src]="video.uploadedBy?.user.imageUrl" [employee]="video.uploadedBy"></ngx-avatar>
+		<ngx-avatar [src]="$safeNavigationMigration(video.uploadedBy?.user.imageUrl)" [employee]="video.uploadedBy"></ngx-avatar>
 		}
 		<div class="info">
 			<div class="title">

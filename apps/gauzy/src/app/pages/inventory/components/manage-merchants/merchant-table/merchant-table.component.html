@@ -39,7 +39,7 @@
       } @else {
         <ga-card-grid
           [loading]="loading"
-          [totalItems]="pagination?.totalItems"
+          [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
           [settings]="settingsSmartTable"
           [source]="merchants"
           (onSelectedItem)="selectStore($event)"
@@ -49,7 +49,7 @@
       <ng-template #gridLayout>
         <ga-card-grid
           [loading]="loading"
-          [totalItems]="pagination?.totalItems"
+          [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
           [settings]="settingsSmartTable"
           [source]="merchants"
           (onSelectedItem)="selectStore($event)"
@@ -126,7 +126,7 @@
 <ngx-record-view-drawer
   [open]="!!viewedMerchant"
   heading="INVENTORY_PAGE.MERCHANTS"
-  [subtitle]="viewedMerchant?.name"
+  [subtitle]="$safeNavigationMigration(viewedMerchant?.name)"
   (closed)="closeView()"
   >
   @if (viewedMerchant) {

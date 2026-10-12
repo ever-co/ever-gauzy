@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, type SimpleChanges, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { ITask, IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { GauzyEditableGridComponent } from '@gauzy/ui-core/shared';
 	selector: 'ga-tasks-sprint-view',
 	templateUrl: './tasks-sprint-view.component.html',
 	styleUrls: ['./tasks-sprint-view.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> implements OnInit, OnChanges {

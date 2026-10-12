@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective, FormControl } from '@angular/forms';
 import { EMPTY } from 'rxjs';
@@ -14,6 +14,7 @@ import { ReplacePipe } from '@gauzy/ui-core/shared';
     templateUrl: './authorization.component.html',
     styleUrls: ['./authorization.component.scss'],
     providers: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IntegrationAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {

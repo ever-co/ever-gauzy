@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
@@ -42,6 +42,7 @@ import { InterviewCriterionsTableComponent } from '../../../manage-candidate-int
     selector: 'ga-edit-candidate-interview',
     templateUrl: './edit-candidate-interview.component.html',
     styleUrls: ['./edit-candidate-interview.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateInterviewComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

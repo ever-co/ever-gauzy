@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
 import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -27,6 +27,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/sha
     selector: 'gauzy-teams',
     templateUrl: './team.component.html',
     styleUrls: ['./team.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TeamComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
