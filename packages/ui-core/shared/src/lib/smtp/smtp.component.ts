@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnInit, type SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, type SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { ActivatedRoute, Data } from '@angular/router';
 import { ICustomSmtp, IOrganization, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
@@ -20,6 +20,21 @@ import { FormHelpers } from '../forms/helpers';
 })
 export class SMTPComponent extends TranslationBaseComponent implements OnInit, OnChanges, AfterViewInit {
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
+
+	/**
+	 * `aria-describedby` on `nb-select` stays on its host, but the focusable element is
+	 * the trigger button Nebular renders inside it — copy the hint id onto that button so
+	 * screen readers announce it. Deferred: the button belongs to the select's own view.
+	 */
+	@ViewChild('secureSelect', { read: ElementRef }) set secureSelect(ref: ElementRef<HTMLElement>) {
+		if (!ref) {
+			return;
+		}
+		setTimeout(() => {
+			const describedBy = ref.nativeElement.getAttribute('aria-describedby');
+			ref.nativeElement.querySelector('button')?.setAttribute('aria-describedby', describedBy);
+		});
+	}
 
 	@Input() organization?: IOrganization;
 	@Input() isOrganization?: boolean;
