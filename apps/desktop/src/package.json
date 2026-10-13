@@ -220,6 +220,7 @@
 		"@as-integrations/express5": "^1.1.2"
 	},
 	"resolutions": {
+		"**/@mikro-orm/better-sqlite/better-sqlite3": "13.0.3",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
 		"@gauzy/config": "file:../../../dist/packages/config",
 		"@gauzy/constants": "file:../../../dist/packages/constants",

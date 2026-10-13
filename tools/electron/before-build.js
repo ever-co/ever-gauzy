@@ -20,7 +20,7 @@ const path = require('node:path');
 /** The environment electron-builder 26.0 installed with (its `getGypEnv`), so install scripts target Electron. */
 function electronInstallEnv({ electronVersion, platform, arch }) {
 	const npmArch = arch === 'armv7l' ? 'arm' : arch;
-	const env = {
+	let env = {
 		...process.env,
 		npm_config_arch: npmArch,
 		npm_config_target_arch: npmArch,

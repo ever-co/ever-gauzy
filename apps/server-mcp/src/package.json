@@ -139,6 +139,7 @@
 		"custom-electron-titlebar": "^4.4.1"
 	},
 	"resolutions": {
+		"**/@mikro-orm/better-sqlite/better-sqlite3": "13.0.3",
 		"@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
 		"@gauzy/config": "file:../../../dist/packages/config",
