@@ -1,3 +1,4 @@
+<!-- cspell:ignore badeball Subresource -->
 # Cypress 15 -> 16 Migration Instructions for LLM
 
 ## Overview
