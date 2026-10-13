@@ -35,6 +35,12 @@ describe('splitDuration (WakaTime summary)', () => {
 		expect(splitDuration(null)).toEqual({ totalSeconds: 0, hours: 0, minutes: 0 });
 		expect(splitDuration('7260')).toEqual({ totalSeconds: 7260, hours: 2, minutes: 1 });
 	});
+
+	it('counts a non-numeric, infinite or negative value as 0', () => {
+		for (const seconds of ['abc', Infinity, -120] as const) {
+			expect(splitDuration(seconds)).toEqual({ totalSeconds: 0, hours: 0, minutes: 0 });
+		}
+	});
 });
 
 describe('WakatimeService.getSummaries', () => {
