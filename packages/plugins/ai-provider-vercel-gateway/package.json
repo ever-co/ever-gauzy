@@ -26,7 +26,7 @@
 		"lib:watch": "yarn nx build plugin-ai-provider-vercel-gateway --watch"
 	},
 	"dependencies": {
-		"@ai-sdk/gateway": "^4.0.110",
+		"@ai-sdk/gateway": "^4.0.111",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-ai-chat": "^0.1.0",

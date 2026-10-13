@@ -29,7 +29,7 @@
 	"dependencies": {
 		"@angular/forms": "22.2.2",
 		"@angular/router": "22.2.2",
-		"@fullcalendar/angular": "^6.1.20",
+		"@fullcalendar/angular": "^6.1.21",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",

@@ -26,7 +26,7 @@
 		"lib:watch": "yarn nx build plugin-ai-provider-openai --watch"
 	},
 	"dependencies": {
-		"@ai-sdk/openai": "^4.0.91",
+		"@ai-sdk/openai": "^4.0.92",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-ai-chat": "^0.1.0",

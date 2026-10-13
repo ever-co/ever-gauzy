@@ -168,7 +168,7 @@
 		"auto-launch": "5.0.6",
 		"consolidate": "^1.0.4",
 		"electron-log": "^5.4.4",
-		"electron-store": "^11.0.2",
+		"electron-store": "^12.0.0",
 		"electron-updater": "^6.8.9",
 		"electron-util": "^1.0.0",
 		"embedded-queue": "^0.0.11",

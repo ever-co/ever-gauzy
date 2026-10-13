@@ -38,7 +38,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"chalk": "^4.1.0",
 		"express": "^5.3.0",
-		"posthog-node": "^5.55.2",
+		"posthog-node": "^5.55.3",
 		"tslib": "^2.8.1"
 	},
 	"devDependencies": {

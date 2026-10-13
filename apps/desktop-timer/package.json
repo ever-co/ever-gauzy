@@ -63,7 +63,7 @@
 		"consolidate": "^1.0.4",
 		"custom-electron-titlebar": "^4.4.1",
 		"electron-log": "^5.4.4",
-		"electron-store": "^11.0.2",
+		"electron-store": "^12.0.0",
 		"electron-updater": "^6.8.9",
 		"electron-util": "^1.0.0",
 		"express": "^5.3.0",

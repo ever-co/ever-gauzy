@@ -30,8 +30,8 @@
 		"react-dom": "^19.3.0"
 	},
 	"dependencies": {
-		"@ai-sdk/react": "^4.0.140",
-		"ai": "^7.0.137",
+		"@ai-sdk/react": "^4.0.141",
+		"ai": "^7.0.138",
 		"streamdown": "^2.7.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin-ui": "^0.1.0",
