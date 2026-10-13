@@ -137,9 +137,23 @@ $divider: 1px solid $border;
         text-transform: uppercase;
         color: var(--text-hint-color);
 
+        // One column on phones: the headings stop lining up with anything, so they are hidden
+        // visually — but kept for screen readers, which name each cell from them.
         @media (max-width: 575.98px) {
-            display: none;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
+    }
+
+    .history-table {
+        position: relative;
     }
 
     .history-file {

@@ -101,41 +101,44 @@
               <p class="info muted">{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate }}</p>
             </div>
           </header>
-          <div class="history-row history-head" aria-hidden="true">
-            <span>{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</span>
-            <span>{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</span>
-            <span>{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}</span>
-            <span>{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}</span>
-            <span class="history-actions">{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}</span>
-          </div>
-          @for (item of recentImports; track item.id) {
-            <div class="history-row">
-              <span class="history-file" [attr.title]="item.file">{{ item.file }}</span>
-              <span class="history-size">{{ item.size | fileSize }}</span>
-              <!-- Angular's `date`, not the shared `dateTimeFormat`: that pipe feeds its Angular-style
-                   default ('d MMMM, y H:mm') to moment, where `d` is the weekday number. -->
-              <span class="history-date">{{ item.importDate ? (item.importDate | date: 'medium') : '—' }}</span>
-              <span class="history-status">
-                <span
-                  class="status-dot"
-                  [class.is-success]="item.status === importStatus.SUCCESS"
-                  [class.is-danger]="item.status === importStatus.FAILED"
-                  [class.is-warning]="item.status === importStatus.IN_PROGRESS"
-                  aria-hidden="true"
-                ></span>
-                {{ item.status }}
-              </span>
-              <!-- Same archive download as the Import page's history. -->
-              <span class="history-actions">
-                <button nbButton ghost status="primary" size="small" (click)="downloadImport(item)">
-                  <nb-icon icon="download-outline"></nb-icon>
-                  {{ 'BUTTONS.DOWNLOAD' | translate }}
-                </button>
-              </span>
+          <!-- ARIA table roles on the CSS grid, so each value is announced with its column name. -->
+          <div class="history-table" role="table" aria-labelledby="import-history-title">
+            <div class="history-row history-head" role="row">
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</span>
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</span>
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}</span>
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}</span>
+              <span class="history-actions" role="columnheader">{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}</span>
             </div>
-          } @empty {
-            <div class="history-row history-empty">—</div>
-          }
+            @for (item of recentImports; track item.id) {
+              <div class="history-row" role="row">
+                <span class="history-file" role="cell" [attr.title]="item.file">{{ item.file }}</span>
+                <span class="history-size" role="cell">{{ item.size | fileSize }}</span>
+                <!-- Angular's `date`, not the shared `dateTimeFormat`: that pipe feeds its Angular-style
+                     default ('d MMMM, y H:mm') to moment, where `d` is the weekday number. -->
+                <span class="history-date" role="cell">{{ item.importDate ? (item.importDate | date: 'medium') : '—' }}</span>
+                <span class="history-status" role="cell">
+                  <span
+                    class="status-dot"
+                    [class.is-success]="item.status === importStatus.SUCCESS"
+                    [class.is-danger]="item.status === importStatus.FAILED"
+                    [class.is-warning]="item.status === importStatus.IN_PROGRESS"
+                    aria-hidden="true"
+                  ></span>
+                  {{ item.status }}
+                </span>
+                <!-- Same archive download as the Import page's history. -->
+                <span class="history-actions" role="cell">
+                  <button nbButton ghost status="primary" size="small" (click)="downloadImport(item)">
+                    <nb-icon icon="download-outline"></nb-icon>
+                    {{ 'BUTTONS.DOWNLOAD' | translate }}
+                  </button>
+                </span>
+              </div>
+            } @empty {
+              <div class="history-row history-empty" role="row"><span role="cell">—</span></div>
+            }
+          </div>
         </section>
       }
     </ng-container>

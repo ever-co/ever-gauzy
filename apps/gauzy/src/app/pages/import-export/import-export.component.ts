@@ -105,17 +105,16 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
-	 * Reads the import history for the "Import history" panel, newest first. A refusal (the
-	 * endpoint needs ALL_ORG_VIEW and IMPORT_ADD) or any error just leaves the panel hidden.
+	 * Reads the import history for the "Import history" panel. The server already orders it
+	 * newest first (`importDate DESC`), so the first rows are the latest. A refusal (the endpoint
+	 * needs ALL_ORG_VIEW and IMPORT_ADD) or any error just leaves the panel hidden.
 	 */
 	private loadRecentImports(): void {
 		this.importService
 			.getHistory()
 			.pipe(
 				tap(({ items }) => {
-					this.recentImports = [...(items ?? [])]
-						.sort((a, b) => new Date(b.importDate ?? 0).getTime() - new Date(a.importDate ?? 0).getTime())
-						.slice(0, this.recentImportsLimit);
+					this.recentImports = (items ?? []).slice(0, this.recentImportsLimit);
 					this.historyAvailable = true;
 				}),
 				catchError(() => {
