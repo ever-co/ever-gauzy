@@ -17,6 +17,8 @@ import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	ImportTypeEnum,
+	IImportHistory,
+	ImportStatusEnum,
 	IUserOrganization
 } from '@gauzy/contracts';
 import { Environment, environment } from '@gauzy/ui-config';
@@ -25,6 +27,7 @@ import {
 	ErrorHandlingService,
 	ExportAllService,
 	GauzyCloudService,
+	ImportService,
 	Store,
 	ToastrService,
 	UsersOrganizationsService
@@ -46,7 +49,16 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	gauzyUser: IUser;
 	userOrganizations: IUserOrganization[] = [];
 
+	/** How many imports the landing page lists; the Import page has the full history. */
+	readonly recentImportsLimit = 3;
+	readonly importStatus = ImportStatusEnum;
+	/** The newest imports, from the same `GET /import/history` the Import page uses. */
+	recentImports: IImportHistory[] = [];
+	/** `false` until the history answers; stays `false` (panel hidden) if it is refused. */
+	historyAvailable = false;
+
 	constructor(
+		private readonly importService: ImportService,
 		private readonly exportAll: ExportAllService,
 		private readonly gauzyCloudService: GauzyCloudService,
 		private readonly userOrganizationService: UsersOrganizationsService,
@@ -66,6 +78,49 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
 				tap(() => this.getOrganizations()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.loadRecentImports();
+	}
+
+	/**
+	 * Downloads the archive an import was made from, through the authenticated API — the same
+	 * call as the Import page's history (`ImportComponent.download`).
+	 *
+	 * @param item - The import-history row whose archive to save.
+	 */
+	downloadImport(item: IImportHistory): void {
+		if (!item?.id) {
+			return;
+		}
+		this.importService
+			.downloadArchive(item.id)
+			.pipe(untilDestroyed(this))
+			.subscribe({
+				next: (blob: Blob) => saveAs(blob, item.file),
+				// This page's ToastrService translates the key and defaults the error title.
+				error: () => this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED')
+			});
+	}
+
+	/**
+	 * Reads the import history for the "Import history" panel. The server already orders it
+	 * newest first (`importDate DESC`), so the first rows are the latest. A refusal (the endpoint
+	 * needs ALL_ORG_VIEW and IMPORT_ADD) or any error just leaves the panel hidden.
+	 */
+	private loadRecentImports(): void {
+		this.importService
+			.getHistory()
+			.pipe(
+				tap(({ items }) => {
+					this.recentImports = (items ?? []).slice(0, this.recentImportsLimit);
+					this.historyAvailable = true;
+				}),
+				catchError(() => {
+					this.historyAvailable = false;
+					return EMPTY;
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
