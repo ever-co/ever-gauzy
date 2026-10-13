@@ -56,7 +56,8 @@ describe('live editor schema inventory', () => {
 		const actual = describeSchema(deps);
 		const sortKeys = (record: Record<string, string[]>) =>
 			Object.fromEntries(Object.keys(record).sort().map((key) => [key, record[key]]));
-		// Regenerate after a deliberate schema change: DOCS_WRITE_SCHEMA_INVENTORY=1 yarn nx test docs-ui
+		// Regenerate after a deliberate schema change (the env var is not a cache input, hence the flag):
+		// DOCS_WRITE_SCHEMA_INVENTORY=1 yarn nx test plugin-docs-ui --skip-nx-cache
 		if (process.env['DOCS_WRITE_SCHEMA_INVENTORY'] === '1') {
 			const json = { nodes: sortKeys(actual.nodes), marks: sortKeys(actual.marks) };
 			writeFileSync(join(__dirname, 'editor-schema.inventory.json'), JSON.stringify(json, null, '\t') + '\n');

@@ -10,7 +10,8 @@ import { validateTiptapDocument } from './tiptap-schema.validator';
  * This suite feeds each of them to `validateTiptapDocument` with every attribute present (as `null`,
  * which no value check rejects), so an attribute the editor writes and this package does not list
  * fails HERE, in CI, instead of as a 400 on a user's autosave. It is read as a file, not imported:
- * the backend must never depend on the Angular editor package.
+ * the backend must never depend on the Angular editor package — which is also why this project's
+ * `test` target lists the JSON among its Nx `inputs` (a changed inventory must re-run this suite).
  *
  * Both entries this suite was written for were real outages of the content route after the
  * TipTap 3.31 upgrade: headings (`id`/`data-toc-id`, the table-of-contents anchor) and table cells
