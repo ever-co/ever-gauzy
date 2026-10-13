@@ -28,10 +28,12 @@ export function overlapCondition(
 			return `("${alias}"."startedAt", "${alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
+			return `"${alias}"."startedAt" < '${stoppedAt}' AND "${alias}"."stoppedAt" > '${startedAt}'`;
 		case DatabaseTypeEnum.mysql:
-			return p(`"${alias}"."startedAt" < '${stoppedAt}' AND "${alias}"."stoppedAt" > '${startedAt}'`);
+			// Quoted for the `dbType` given, not for the process-wide database `p()` reads
+			return `\`${alias}\`.\`startedAt\` < '${stoppedAt}' AND \`${alias}\`.\`stoppedAt\` > '${startedAt}'`;
 		default:
-			throw Error(`cannot get conflict time log due to unsupported database type: ${dbType}`);
+			throw new Error(`cannot get conflict time log due to unsupported database type: ${dbType}`);
 	}
 }
 
