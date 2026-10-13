@@ -37,7 +37,9 @@ describe('OrganizationProjectService.updateOrganizationProjectMembers', () => {
 			['employee-a']
 		);
 
+		expect(self.deleteMemberByIds).toHaveBeenCalledTimes(1);
 		expect(self.deleteMemberByIds).toHaveBeenCalledWith(['row-b']);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledTimes(1);
 		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledWith({
 			entity: BaseEntityEnum.OrganizationProject,
 			entityId: 'project-1',

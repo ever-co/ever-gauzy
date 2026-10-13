@@ -1,5 +1,6 @@
 import '../core/entities/internal';
 
+import { BaseEntityEnum, EntitySubscriptionTypeEnum } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationSprintService } from './organization-sprint.service';
@@ -117,10 +118,17 @@ describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
 			['employee-a']
 		);
 
+		expect(self.deleteMemberByIds).toHaveBeenCalledTimes(1);
 		expect(self.deleteMemberByIds).toHaveBeenCalledWith(['row-b']);
-		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledWith(
-			expect.objectContaining({ entityId: 'sprint-1', employeeId: 'employee-b' })
-		);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledTimes(1);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledWith({
+			entity: BaseEntityEnum.OrganizationSprint,
+			entityId: 'sprint-1',
+			employeeId: 'employee-b',
+			type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+			organizationId: fixture.organizationId,
+			tenantId: fixture.tenantId
+		});
 		expect(entitySubscriptionService.delete).not.toHaveBeenCalled();
 	});
 });
