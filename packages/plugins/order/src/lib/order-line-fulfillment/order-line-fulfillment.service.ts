@@ -534,20 +534,25 @@ export class OrderLineFulfillmentService {
 	 * @param scope The order the line must belong to, and its tenant and organization.
 	 * @param orderLineId The line to move.
 	 * @param delta The exact delta, never zero.
+	 * @param guarded Whether the move is checked against doc 10 I-12. Every move a caller states is; the one
+	 * that is not is {@link reverse}'s, which puts back the exact value this call found on the line — a
+	 * state the line was already in — and refusing it would leave the call half-applied after telling the
+	 * caller it failed, on precisely the lines a repair move is allowed to touch.
 	 * @returns How many rows the statement changed: one when the move landed, none when it was refused.
 	 */
 	private async moveCounter(
 		counter: ReturnCounter,
 		scope: IOrderScope,
 		orderLineId: ID,
-		delta: DecimalString
+		delta: DecimalString,
+		guarded = true
 	): Promise<number> {
 		const q = quoteIdentifier;
 		const column = q(counter.column);
 		const moved = `ROUND(${column} + CAST(:delta AS DECIMAL(20,6)), 6)`;
 		// The half of doc 10 I-12 this move can break rides the same `WHERE` as the floor (see
 		// `returnInvariantHalf`), so a move that would leave the line outside it changes no row.
-		const invariant = returnInvariantHalf(counter, !delta.startsWith('-'), moved, q);
+		const invariant = guarded ? returnInvariantHalf(counter, !delta.startsWith('-'), moved, q) : null;
 		const sql =
 			`UPDATE ${q('order_line')} SET ${column} = ${moved} ` +
 			`WHERE ${q('id')} = :orderLineId AND ${q('orderId')} = :orderId ` +
@@ -644,7 +649,8 @@ export class OrderLineFulfillmentService {
 		for (const move of [...applied].reverse()) {
 			try {
 				const opposite = move.delta.startsWith('-') ? move.delta.slice(1) : `-${move.delta}`;
-				const affected = await this.moveCounter(counter, scope, move.orderLineId, opposite);
+				// Unguarded for I-12: this restores the value the line held before this call (see `moveCounter`).
+				const affected = await this.moveCounter(counter, scope, move.orderLineId, opposite, false);
 
 				if (affected === 0) {
 					throw new Error(`the reversal of ${move.delta} was refused`);

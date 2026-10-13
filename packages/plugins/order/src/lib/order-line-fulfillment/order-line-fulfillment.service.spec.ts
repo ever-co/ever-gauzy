@@ -1185,6 +1185,28 @@ describe('OrderLineFulfillmentService — doc 10 invariant I-12', () => {
 		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1, returnRequestedQuantity: 1 });
 	});
 
+	it('puts a repair back exactly when a later move of the same call is refused', async () => {
+		// Greptile on #10546: a call that lowers line A's received counter (a repair of a line already outside
+		// I-12: two received against none requested) and then fails on line B must put A back to two — but the
+		// reversal is a receipt *raised*, and a reversal carrying the I-12 guard would be refused, logged, and
+		// leave A at one while the caller is told the whole call failed. The reversal restores the exact state
+		// this call found, so it is floored and scoped like any move, and not refused for I-12.
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 4, returnRequestedQuantity: 0, returnReceivedQuantity: 2, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 4, returnRequestedQuantity: 1, returnReceivedQuantity: 1, position: 2 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '-1' },
+				{ orderLineId: 'line-2', quantityDelta: '-5' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 2 });
+		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 1 });
+	});
+
 	it('leaves the written-off counter to its floor alone, because it is not part of I-12', async () => {
 		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 0 })]);
 
