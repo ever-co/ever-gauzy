@@ -408,9 +408,14 @@ export class OAuth2AuthorizationServer {
 					// Log connection events for better monitoring
 					name: 'mcp-oauth-session-store',
 					socket: {
-						// Bounded retries, as the ioredis client had (maxRetriesPerRequest: 3)
+						// Keeps reconnecting, backing off to one attempt every 5 s.
 						reconnectStrategy: (retries: number) => Math.min(100 * Math.pow(2, retries), 5000)
-					}
+					},
+					// What bounds a request during an outage (ioredis: maxRetriesPerRequest: 3): a session read or write
+					// queued while Redis is unreachable fails after 5 s instead of waiting for the reconnect. Stated
+					// rather than left to node-redis's default (5 s in 6.3), so a change of default cannot make sign-in
+					// requests hang.
+					commandOptions: { timeout: 5000 }
 				});
 
 				// Handle Redis connection events
