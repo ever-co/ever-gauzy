@@ -40,9 +40,12 @@ name: Egress audit
 # nothing of it is copied into this repository.
 #
 # Runs every day on the newest published develop images (the demo images), on demand with any
-# images, and on pull requests: the route list and baseline checks on every change to the UI's
-# routes, the audit itself when its inputs change. The audit runs the published images: no code of
-# a pull request runs in it.
+# images, on pull requests into any branch but develop, and on every push to develop: the route list
+# and baseline checks on every change, the audit itself when its inputs change. A pull request into
+# develop starts no run (owner decision 2026-09-21, enforced by tools/scripts/pr-trigger-check.mjs):
+# the run belongs to the merge, and the push it lands as compares the baselines with the develop it
+# landed on, exactly as a pull request compares them with its base. The audit runs the published
+# images: no code of a pull request runs in it.
 on:
   schedule:
     - cron: '30 6 * * *'
@@ -57,6 +60,33 @@ on:
         required: true
         default: 'ghcr.io/ever-co/gauzy-webapp-demo:latest'
   pull_request:
+    # Not for a pull request into develop (owner decision 2026-09-21): the push trigger below runs the
+    # same checks when the change lands there. Pull requests aimed at other branches still run it.
+    branches-ignore:
+      - develop
+    paths:
+      - '.github/workflows/egress-audit.yml'
+      - 'tools/egress-audit/**'
+      - 'apps/gauzy/src/**'
+      - 'packages/ui-*/**'
+      - 'packages/plugin-ui/**'
+      - 'packages/plugins/*-ui/**'
+      - 'tools/ever-platform/**'
+      - 'docs/ever-platform/**'
+      - 'packages/**'
+      - 'apps/**'
+      - 'eslint.config.js'
+      - '.env.sample'
+      # The static checks read every text file of the tree (deploy files, environment files,
+      # scripts): any change runs the inputs job; the audit itself still runs only when its own
+      # inputs change (see "Run the audit?").
+      - '**'
+      - '**/package.json'
+      - '**/yarn.lock'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - develop
     paths:
       - '.github/workflows/egress-audit.yml'
       - 'tools/egress-audit/**'
@@ -124,37 +154,61 @@ jobs:
       - name: Install the harness (tools/egress-audit/package-lock.json)
         run: npm ci --prefix "$AUDIT_DIR" --ignore-scripts --no-audit --no-fund
 
+      # What the baselines are compared with: the base branch of a pull request, or the commit a push to
+      # develop moved the branch from (a pull request into develop starts no run, so the push is where a
+      # change into develop is checked). Empty for the schedule and manual runs, which compare nothing.
+      - name: The base this run compares with
+        id: base
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          ref=""
+          if [ "$EVENT" = "pull_request" ]; then
+            ref="origin/$BASE_REF"
+          elif [ "$EVENT" = "push" ]; then
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              echo "::error::the push names no previous commit to compare the baselines with"; exit 1
+            fi
+            ref="$BEFORE"
+          fi
+          if [ -n "$ref" ]; then
+            git rev-parse --verify --quiet "$ref^{commit}" > /dev/null || { echo "::error::the base $ref is not available"; exit 1; }
+          fi
+          echo "ref=$ref" | tee -a "$GITHUB_OUTPUT"
+
       - name: The route list is in step with the Angular router
         run: |
           node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" ui-routes \
             --framework angular --entry apps/gauzy/src/app/app.routes.ts --out "$AUDIT_DIR/ui-routes.json" --check
 
       - name: The baseline of Ever links only shrinks
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ steps.base.outputs.ref != '' }}
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE: ${{ steps.base.outputs.ref }}
         run: |
           flag=""
           if [ "$BASELINE_FIRST_VERSION" = "true" ]; then flag="--first-version"; fi
           if [ "$BASELINE_REWALK" = "true" ]; then
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
-              --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag || echo "(the walk opens new routes: the entries they added are checked next)"
-            git show "origin/$BASE_REF:$AUDIT_DIR/ui-baseline.json" > "$RUNNER_TEMP/ui-baseline.base.json"
+              --base "$BASE" --config "$AUDIT_CONFIG" $flag || echo "(the walk opens new routes: the entries they added are checked next)"
+            git show "$BASE:$AUDIT_DIR/ui-baseline.json" > "$RUNNER_TEMP/ui-baseline.base.json"
             node tools/egress-audit/check-baseline-rewalk.mjs --base-file "$RUNNER_TEMP/ui-baseline.base.json"
           else
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
-              --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag
+              --base "$BASE" --config "$AUDIT_CONFIG" $flag
           fi
 
       - name: No Ever host named outside the Ever Platform modules beyond the baseline (sources)
         run: node --test tools/egress-audit/static-hostnames.test.mjs
 
       - name: The baseline of Ever hosts in the sources only shrinks
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ steps.base.outputs.ref != '' }}
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE: ${{ steps.base.outputs.ref }}
         run: |
-          base_ref="origin/$BASE_REF"
+          base_ref="$BASE"
           base_path="$AUDIT_DIR/static-hostnames.baseline.json"
           base_file="$RUNNER_TEMP/static-hostnames.base.json"
           git rev-parse --verify --quiet "$base_ref^{commit}" > /dev/null || { echo "::error::the base $base_ref is not available"; exit 1; }
@@ -178,7 +232,9 @@ jobs:
         run: node --test tools/ever-platform/outbound-calls.test.mjs
 
       - name: No dependency on a private ever-co repository (the default branch must build for anyone)
-        if: ${{ github.event_name != 'pull_request' || github.base_ref == 'develop' }}
+        # On the push to develop, the schedule and manual runs: a pull request into develop starts no run
+        # (owner decision 2026-09-21), and the branches other pull requests aim at may name private repositories.
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           node --test tools/ever-platform/check-private-deps.test.mjs
           node tools/ever-platform/check-private-deps.mjs
@@ -186,14 +242,14 @@ jobs:
       - name: Run the audit?
         id: scope
         env:
-          EVENT: ${{ github.event_name }}
-          BASE_REF: ${{ github.base_ref }}
+          BASE: ${{ steps.base.outputs.ref }}
         run: |
-          # On a pull request the audit runs only when its own inputs change: it audits the published
-          # images, so a change elsewhere is audited once it is merged and built.
+          # On a pull request and on a push to develop the audit runs only when its own inputs change: it
+          # audits the published images, so a change elsewhere is audited once it is merged and built (the
+          # daily run). The schedule and manual runs always audit.
           audit=true
-          if [ "$EVENT" = "pull_request" ]; then
-            if git diff --quiet "origin/$BASE_REF...HEAD" -- "$AUDIT_DIR" .github/workflows/egress-audit.yml; then audit=false; fi
+          if [ -n "$BASE" ]; then
+            if git diff --quiet "$BASE...HEAD" -- "$AUDIT_DIR" .github/workflows/egress-audit.yml; then audit=false; fi
           fi
           echo "audit=$audit" | tee -a "$GITHUB_OUTPUT"
 
