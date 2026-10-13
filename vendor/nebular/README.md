@@ -21,7 +21,8 @@ These tarballs are built from the open upstream pull request that ports Nebular 
   (`.angular/cache`) takes a package in `node_modules` as unchanged while its version is, so a rebuild that kept
   `18.0.0` went on linking the previous build's Nebular until the cache was cleared. Give every rebuild its own
   version AND its own file name: yarn 1 caches a local tarball by its path, so new contents under an old name
-  are never extracted where that name was installed before.
+  are never extracted where that name was installed before, and Nx hashes the dependency by path and version
+  (the lockfile drops the build metadata), so it would serve the previous build of the apps from its cache.
 
 | File | Package | sha256 |
 |---|---|---|
