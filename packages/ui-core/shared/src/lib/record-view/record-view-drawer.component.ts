@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Right-side drawer used as the "View" surface for the simpler records — the
@@ -17,6 +17,7 @@ import { Component, EventEmitter, HostListener, Input, Output } from '@angular/c
 	selector: 'ngx-record-view-drawer',
 	templateUrl: './record-view-drawer.component.html',
 	styleUrls: ['./record-view-drawer.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RecordViewDrawerComponent {

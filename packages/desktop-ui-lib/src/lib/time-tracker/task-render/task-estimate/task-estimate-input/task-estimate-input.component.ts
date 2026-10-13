@@ -5,6 +5,7 @@ import {
 	Input,
 	OnInit,
 	Output,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import * as moment from 'moment';
@@ -24,6 +25,7 @@ export interface IEstimateInput {
     selector: 'gauzy-task-estimate-input',
     templateUrl: './task-estimate-input.component.html',
     styleUrls: ['./task-estimate-input.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormsModule, ReactiveFormsModule, NbIconModule]
 })
 export class TaskEstimateInputComponent implements OnInit, AfterViewInit {

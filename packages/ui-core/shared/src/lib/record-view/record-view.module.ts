@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PipesModule } from '../pipes/pipes.module';
 import { StatusBadgeModule } from '../status-badge/status-badge.module';
 import { TableComponentsModule } from '../table-components/table-components.module';
@@ -25,7 +25,7 @@ import { RecordViewDrawerComponent } from './record-view-drawer.component';
 		PipesModule,
 		StatusBadgeModule,
 		TableComponentsModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [RecordViewComponent, RecordViewDrawerComponent],

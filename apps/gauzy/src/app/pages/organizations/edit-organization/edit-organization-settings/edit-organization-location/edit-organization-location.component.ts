@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, Input, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Input, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-core/share
     selector: 'ga-edit-org-location',
     templateUrl: './edit-organization-location.component.html',
     styleUrls: ['./edit-organization-location.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditOrganizationLocationComponent

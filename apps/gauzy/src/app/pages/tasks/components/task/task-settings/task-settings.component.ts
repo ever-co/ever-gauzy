@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IOrganizationProject, TaskListTypeEnum, PermissionsEnum, IPagination, ITask } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
@@ -11,6 +11,7 @@ import { Store, TasksService, TasksStoreService } from '@gauzy/ui-core/core';
     selector: 'ngx-task-settings',
     templateUrl: './task-settings.component.html',
     styleUrls: ['./task-settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TaskSettingsComponent {

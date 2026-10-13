@@ -17,7 +17,7 @@
 	<div [class.contacts-img]="layout === 'CARDS_GRID'">
 		@if (rowData?.imageUrl) {
 		<div>
-			<img height="30" width="50" [src]="rowData?.imageUrl" alt="Avatar" class="avatar" />
+			<img height="30" width="50" [src]="$safeNavigationMigration(rowData?.imageUrl)" alt="Avatar" class="avatar" />
 		</div>
 		} @if (rowData?.name) {
 		<div>{{ rowData?.name }}</div>

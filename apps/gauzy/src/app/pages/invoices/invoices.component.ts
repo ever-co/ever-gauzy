@@ -7,7 +7,8 @@ import {
 	QueryList,
 	ViewChildren,
 	TemplateRef,
-	AfterViewInit
+	AfterViewInit,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -82,6 +83,7 @@ import { PublicLinkComponent } from './public-link/public-link.component';
     selector: 'ngx-invoices',
     templateUrl: './invoices.component.html',
     styleUrls: ['invoices.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoicesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -7,7 +7,8 @@ import {
 	OnDestroy,
 	ElementRef,
 	HostListener,
-	Renderer2
+	Renderer2,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -26,6 +27,7 @@ import { PictureNameTagsComponent } from '../../table-components';
 	selector: 'ga-tags-color-input',
 	templateUrl: './tags-color-input.component.html',
 	styleUrls: ['./tags-color-input.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit, OnDestroy {

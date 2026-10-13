@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -49,6 +49,7 @@ import { EmployeeWorkStatusComponent } from '../employees/table-components';
 @Component({
     templateUrl: './users.component.html',
     styleUrls: ['./users.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class UsersComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

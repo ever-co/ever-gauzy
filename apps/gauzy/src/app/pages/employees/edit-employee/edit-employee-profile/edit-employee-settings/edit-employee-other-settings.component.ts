@@ -6,7 +6,8 @@ import {
 	ElementRef,
 	QueryList,
 	ViewChild,
-	ViewChildren
+	ViewChildren,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
 import { filter, tap } from 'rxjs';
@@ -23,6 +24,7 @@ import { EmployeeStore, applyEEAUKFormRestrictions, bindAgentRestrictionListener
 	selector: 'ga-edit-employee-settings',
 	templateUrl: './edit-employee-other-settings.component.html',
 	styleUrls: ['./edit-employee-other-settings.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {

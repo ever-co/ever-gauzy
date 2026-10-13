@@ -1,5 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGetTimeLogInput, ITimeLog, ITimesheet, TimesheetStatus, PermissionsEnum } from '@gauzy/contracts';
@@ -18,6 +18,7 @@ import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
     selector: 'ngx-timesheet-view',
     templateUrl: './view.component.html',
     styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TimesheetViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

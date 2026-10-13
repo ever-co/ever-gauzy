@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
@@ -9,6 +9,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			<router-outlet></router-outlet>
 		</ngx-public-layout>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PublicLayoutComponent extends TranslationBaseComponent {

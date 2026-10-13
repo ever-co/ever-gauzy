@@ -1,4 +1,4 @@
-import { Component, OnDestroy, Input } from '@angular/core';
+import { Component, OnDestroy, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -11,6 +11,7 @@ import { CandidateCriterionsRatingService, CandidateFeedbacksService } from '@ga
     selector: 'ga-delete-feedback',
     templateUrl: 'delete-feedback.component.html',
     styleUrls: ['delete-feedback.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DeleteFeedbackComponent extends TranslationBaseComponent implements OnDestroy {

@@ -8,7 +8,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService, TranslatePipe } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { VideoQuery } from '../../+state/video.query';
 import { VideoComponent } from './video.component';
@@ -17,11 +17,12 @@ describe('VideoComponent', () => {
 	let fixture: ComponentFixture<VideoComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [TranslateModule.forRoot()],
+			imports: [TranslatePipe],
 			declarations: [VideoComponent],
 			// The component injects an Akita query, the Nebular dialog service and the effects `Actions`
 			// stream; provide minimal doubles so it can be constructed and `ngAfterViewInit` can subscribe.
 			providers: [
+				provideTranslateService(),
 				{ provide: VideoQuery, useValue: { video$: of(null), isAvailable$: of(false), isLoading$: of(true) } },
 				{ provide: NbDialogService, useValue: { open: jest.fn() } },
 				{ provide: Actions, useValue: { dispatch: jest.fn() } }

@@ -14,7 +14,7 @@
       }
       @if (rowData?.projectUrl) {
         <div>
-          <a [href]="rowData?.projectUrl" rel="noopener" target="_blank">{{
+          <a [href]="$safeNavigationMigration(rowData?.projectUrl)" rel="noopener" target="_blank">{{
             this.rowData.projectUrl | truncate: 20
           }}</a>
         </div>
@@ -23,7 +23,7 @@
         <div>
           <nb-badge
             [status]="rowData?.owner === 'INTERNAL' ? 'primary' : 'danger'"
-            [text]="rowData?.owner | titlecase"
+            [text]="$safeNavigationMigration(rowData?.owner) | titlecase"
           ></nb-badge>
         </div>
       }

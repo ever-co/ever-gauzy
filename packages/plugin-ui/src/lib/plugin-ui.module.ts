@@ -4,7 +4,7 @@ import {
 	inject,
 	InjectionToken,
 	Injector,
-	ModuleWithProviders,
+	type ModuleWithProviders,
 	NgModule,
 	OnDestroy,
 	provideAppInitializer,

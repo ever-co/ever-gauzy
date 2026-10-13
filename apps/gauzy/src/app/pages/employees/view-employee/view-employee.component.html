@@ -145,21 +145,21 @@
 		<section class="summary" [nbSpinner]="counts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 			<div class="summary-cell">
 				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.WORKED_TODAY' | translate }}</span>
-				<span class="summary-value">{{ counts.failed ? '—' : formatDuration(counts.value?.todayDuration) }}</span>
+				<span class="summary-value">{{ counts.failed ? '—' : formatDuration($safeNavigationMigration(counts.value?.todayDuration)) }}</span>
 				<span class="summary-meta">
-					{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent(counts.value?.todayActivities) } }}
+					{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent($safeNavigationMigration(counts.value?.todayActivities)) } }}
 				</span>
 			</div>
 
 			<div class="summary-cell">
 				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.WORKED_PERIOD' | translate }}</span>
-				<span class="summary-value">{{ counts.failed ? '—' : formatDuration(counts.value?.weekDuration) }}</span>
+				<span class="summary-value">{{ counts.failed ? '—' : formatDuration($safeNavigationMigration(counts.value?.weekDuration)) }}</span>
 				<ng-container *ngTemplateOutlet="deltaTpl; context: { $implicit: durationDelta }"></ng-container>
 			</div>
 
 			<div class="summary-cell">
 				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.AVG_ACTIVITY' | translate }}</span>
-				<span class="summary-value">{{ counts.failed ? '—' : formatPercent(counts.value?.weekActivities) }}</span>
+				<span class="summary-value">{{ counts.failed ? '—' : formatPercent($safeNavigationMigration(counts.value?.weekActivities)) }}</span>
 				<ng-container *ngTemplateOutlet="deltaTpl; context: { $implicit: activityDelta }"></ng-container>
 			</div>
 

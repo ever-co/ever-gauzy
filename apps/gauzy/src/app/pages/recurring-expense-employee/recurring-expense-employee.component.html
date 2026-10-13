@@ -147,7 +147,7 @@
 <ngx-record-view-drawer
   [open]="!!viewedRecurringExpense"
   heading="EMPLOYEES_PAGE.RECURRING_EXPENSE"
-  [subtitle]="viewedRecurringExpense?.employee?.user?.name"
+  [subtitle]="$safeNavigationMigration(viewedRecurringExpense?.employee?.user?.name)"
   (closed)="closeView()"
   >
   @if (viewedRecurringExpense) {

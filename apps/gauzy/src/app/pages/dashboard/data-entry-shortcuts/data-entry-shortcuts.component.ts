@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-core/core';
@@ -9,6 +9,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 	selector: 'ga-data-entry-shortcuts',
 	templateUrl: './data-entry-shortcuts.component.html',
 	styleUrls: ['./data-entry-shortcuts.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DataEntryShortcutsComponent implements OnInit, OnDestroy {

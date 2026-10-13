@@ -1,9 +1,10 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-single-statistic',
     templateUrl: './single-statistic.component.html',
     styleUrls: ['./single-statistic.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SingleStatisticComponent implements OnInit {

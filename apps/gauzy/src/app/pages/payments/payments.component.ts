@@ -1,4 +1,4 @@
-import { OnInit, Component, OnDestroy } from '@angular/core';
+import { OnInit, Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
@@ -49,6 +49,7 @@ import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-m
     selector: 'ngx-payments',
     templateUrl: './payments.component.html',
     styleUrls: ['./payments.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PaymentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

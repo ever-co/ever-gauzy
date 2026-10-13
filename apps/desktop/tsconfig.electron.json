@@ -1,5 +1,13 @@
 {
     "compilerOptions": {
+        "ignoreDeprecations": "6.0",
+        // TypeScript 6 defaults: rootDir to this folder (the output used to start at src/, which holds every
+        // emitted file, so the app entry is index.js); strict, checked side-effect imports and esModuleInterop to
+        // on (the code calls namespace imports, and interop helpers would change the emitted requires).
+        "rootDir": "./src",
+        "strict": false,
+        "esModuleInterop": false,
+        "noUncheckedSideEffectImports": false,
         "outDir": "../../dist/apps/desktop",
         "sourceMap": true,
         "declaration": false,
@@ -10,16 +18,9 @@
         "module": "commonjs",
         "target": "ES2022",
         "types": [],
-		"skipLibCheck": true
+        "skipLibCheck": true
     },
-    "files": [
-        "global.d.ts"
-    ],
-    "include": [
-        "src/index.ts",
-        "src/preload/*.ts"
-    ],
-    "exclude": [
-        "jest.config.ts"
-    ]
+    "files": ["global.d.ts"],
+    "include": ["src/index.ts", "src/preload/*.ts"],
+    "exclude": ["jest.config.ts"]
 }

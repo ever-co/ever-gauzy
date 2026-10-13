@@ -1,15 +1,16 @@
 import {
-  Component,
-  Input,
-  EventEmitter,
-  Output,
-  ViewChild,
-  ElementRef,
-  AfterViewInit,
-  Inject,
-  Renderer2,
-  ChangeDetectorRef,
-  DOCUMENT
+	Component,
+	Input,
+	EventEmitter,
+	Output,
+	ViewChild,
+	ElementRef,
+	AfterViewInit,
+	Inject,
+	Renderer2,
+	ChangeDetectorRef,
+	DOCUMENT,
+	ChangeDetectionStrategy
 } from '@angular/core';
 
 import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -36,6 +37,7 @@ function isGoogleMapsLoaded(): boolean {
     selector: 'ga-location-form',
     styleUrls: ['./location-form.component.scss'],
     templateUrl: 'location-form.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class LocationFormComponent extends TranslationBaseComponent implements AfterViewInit {

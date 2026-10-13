@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TaskRenderComponent } from '../task-render.component';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -13,6 +13,7 @@ import { TaskBadgeViewComponent } from '../task-badge-view/task-badge-view.compo
     selector: 'gauzy-task-render-cell',
     templateUrl: './task-render-cell.component.html',
     styleUrls: ['./task-render-cell.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [TaskBadgeViewComponent]
 })
 export class TaskRenderCellComponent extends TaskRenderComponent {

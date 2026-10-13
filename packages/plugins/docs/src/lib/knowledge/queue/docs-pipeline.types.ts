@@ -69,7 +69,9 @@ export function fromBullJob<T>(job: Job<T>): IDocsStageJob<T> {
 		data: job.data,
 		attempts: job.opts?.attempts ?? 1,
 		attemptsMade: job.attemptsMade ?? 0,
-		discard: () => job.discard()
+		// BullMQ 6 removed `Job#discard()`. Nothing is lost: the pipeline calls `discard()` only on a permanent
+		// failure and then returns without rethrowing, so BullMQ completes the job and never schedules a retry.
+		discard: () => undefined
 	};
 }
 

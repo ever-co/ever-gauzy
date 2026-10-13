@@ -32,7 +32,7 @@
             @if(form.get('operatingSystem')?.valid && form.get('operatingSystem')?.value) {
               <nb-hint class="hint-success">
                 <nb-icon icon="checkmark-circle-outline"></nb-icon>
-                OS selected: {{ form.get('operatingSystem')?.value | translate | titlecase }}
+                OS selected: {{ $safeNavigationMigration(form.get('operatingSystem')?.value) | translate | titlecase }}
               </nb-hint>
             }
           </div>
@@ -62,7 +62,7 @@
             @if(form.get('architecture')?.valid && form.get('architecture')?.value) {
               <nb-hint class="hint-success">
                 <nb-icon icon="checkmark-circle-outline"></nb-icon>
-                Architecture: {{ form.get('architecture')?.value | translate }}
+                Architecture: {{ $safeNavigationMigration(form.get('architecture')?.value) | translate }}
               </nb-hint>
             }
           </div>
@@ -73,7 +73,7 @@
     <div class="source-container">
       <div class="source-content">
         <!-- choose source -->
-        @switch (form.get('type')?.value){
+        @switch ($safeNavigationMigration(form.get('type')?.value)){
           <!-- NPM -->
           @case (pluginSourceType.NPM) {
             <lib-npm-form [form]="form"></lib-npm-form>

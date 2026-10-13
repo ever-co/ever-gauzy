@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import {
@@ -46,6 +46,7 @@ import {
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TeamsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

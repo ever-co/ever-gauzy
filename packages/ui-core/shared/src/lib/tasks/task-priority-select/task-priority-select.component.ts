@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -30,6 +30,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TaskPrioritySelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

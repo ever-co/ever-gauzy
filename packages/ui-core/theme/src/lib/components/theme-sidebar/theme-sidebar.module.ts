@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ChangelogEntryComponent, DirectivesModule } from '@gauzy/ui-core/shared';
 import { ThemeSidebarComponent } from './theme-sidebar.component';
 import { ThemeSettingsModule } from './theme-settings/theme-settings.module';
@@ -15,7 +15,7 @@ import { ThemeSettingsComponent } from './theme-settings/theme-settings.componen
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ThemeSettingsModule,
 		DirectivesModule,
 		// Standalone card shared with the login page's What's New panel

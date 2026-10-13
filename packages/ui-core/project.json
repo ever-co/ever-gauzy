@@ -14,7 +14,6 @@
 				"^build",
 				{
 					"target": "config",
-					"projects": "self",
 					"params": "forward"
 				}
 			],

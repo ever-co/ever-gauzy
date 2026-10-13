@@ -4,12 +4,12 @@
 		<div class="slot-heading">
 			@if (timeSlot) {
 			<span class="slot-title">
-				{{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+				{{ $safeNavigationMigration(timeSlot?.startedAt) | utcToTimezone : (timeZone$ | async) | dateFormat }}
 			</span>
 			<span class="slot-subtitle">
-				{{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false }}
+				{{ $safeNavigationMigration(timeSlot?.startedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false }}
 				–
-				{{ timeSlot?.stoppedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false }}
+				{{ $safeNavigationMigration(timeSlot?.stoppedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false }}
 			</span>
 			}
 		</div>
@@ -21,10 +21,10 @@
 				<span class="summary-label">{{ 'TIMESHEET.MEMBER' | translate }}</span>
 				<ngx-avatar
 					class="report-table"
-					[id]="timeSlot?.employee?.id"
-					[employee]="timeSlot?.employee"
-					[name]="timeSlot?.employee?.user?.name"
-					[src]="timeSlot?.employee?.user?.imageUrl"
+					[id]="$safeNavigationMigration(timeSlot?.employee?.id)"
+					[employee]="$safeNavigationMigration(timeSlot?.employee)"
+					[name]="$safeNavigationMigration(timeSlot?.employee?.user?.name)"
+					[src]="$safeNavigationMigration(timeSlot?.employee?.user?.imageUrl)"
 				></ngx-avatar>
 			</div>
 			<div class="summary-item">
@@ -32,8 +32,8 @@
 				<div class="activity-meter">
 					<span class="summary-value">{{ timeSlot?.percentage || 0 }}%</span>
 					<nb-progress-bar
-						[value]="timeSlot?.percentage"
-						[status]="progressStatus(timeSlot?.percentage)"
+						[value]="$safeNavigationMigration(timeSlot?.percentage)"
+						[status]="progressStatus($safeNavigationMigration(timeSlot?.percentage))"
 						[displayValue]="false"
 						size="tiny"
 					></nb-progress-bar>
@@ -42,7 +42,7 @@
 			<div class="summary-item">
 				<span class="summary-label">{{ 'TIMESHEET.DURATION' | translate }}</span>
 				<span class="summary-value">
-					{{ timeSlot?.duration | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
+					{{ $safeNavigationMigration(timeSlot?.duration) | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
 					{{ 'ACTIVITY.MINUTES' | translate }}
 				</span>
 			</div>
@@ -72,7 +72,7 @@
 			</div>
 			<div class="screenshot-grid">
 				@for (image of screenshots; track image.id) {
-				@let recordedTime = image?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
+				@let recordedTime = $safeNavigationMigration(image?.recordedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
 				<figure class="screenshot" [class.not-work-related]="image?.isWorkRelated === false">
 					<!-- The frame opens the full-size gallery; its buttons stop the click. -->
 					<div
@@ -80,11 +80,11 @@
 						ngxGallery
 						[items]="screenshots"
 						[item]="image"
-						[employeeId]="timeSlot?.employee?.id"
+						[employeeId]="$safeNavigationMigration(timeSlot?.employee?.id)"
 					>
 						<img
 							draggable="false"
-							[src]="image?.thumbUrl"
+							[src]="$safeNavigationMigration(image?.thumbUrl)"
 							[alt]="image?.description || ('TIMESHEET.SCREENSHOTS.TAKEN_AT' | translate : { time: recordedTime })"
 						/>
 						<div class="screenshot-actions">
@@ -96,7 +96,7 @@
 								size="tiny"
 								type="button"
 								class="icon-button"
-								[nbTooltip]="image?.description"
+								[nbTooltip]="$safeNavigationMigration(image?.description)"
 								[attr.aria-label]="'REPORT_PAGE.DESCRIPTION' | translate"
 								(click)="$event.stopPropagation()"
 							>
@@ -112,7 +112,7 @@
 								class="icon-button"
 								[nbTooltip]="'TIMESHEET.DELETE' | translate"
 								[attr.aria-label]="'TIMESHEET.DELETE' | translate"
-								(click)="$event.stopPropagation(); deleteImage(image, image?.employee)"
+								(click)="$event.stopPropagation(); deleteImage(image, $safeNavigationMigration(image?.employee))"
 							>
 								<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 							</button>
@@ -152,15 +152,15 @@
 				<div class="time-log-header">
 					<div class="time-log-heading">
 						<span class="time-log-range">
-							{{ timeLog?.startedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
+							{{ $safeNavigationMigration(timeLog?.startedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
 							–
 							@if (!timeLog?.isRunning) {
-							{{ timeLog?.stoppedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
+							{{ $safeNavigationMigration(timeLog?.stoppedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
 							} @else {
 							{{ 'TIMESHEET.TILL_NOW' | translate }}
 							}
 						</span>
-						<span class="time-log-duration">{{ timeLog?.duration | durationFormat }}</span>
+						<span class="time-log-duration">{{ $safeNavigationMigration(timeLog?.duration) | durationFormat }}</span>
 						@if (TimeLogsLabel[timeLog?.logType]; as label) {
 						<nb-badge class="time-log-type" [status]="label.status" [text]="label.text"></nb-badge>
 						}
@@ -191,7 +191,7 @@
 							(click)="$event.stopPropagation()"
 							ngxConfirmDialog
 							[message]="'TIMESHEET.DELETE_CONFIRM' | translate"
-							(confirm)="deleteTimeLog(timeLog, timeSlot?.employee)"
+							(confirm)="deleteTimeLog(timeLog, $safeNavigationMigration(timeSlot?.employee))"
 							[disabled]="timeLog.isRunning"
 						>
 							<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
@@ -204,7 +204,7 @@
 				<dl class="time-log-fields">
 					<dt>{{ 'TIMESHEET.SOURCE' | translate }}</dt>
 					<dd class="source">
-						<span>{{ timeLog?.source | replace : '_' : ' ' | titlecase }}</span>
+						<span>{{ $safeNavigationMigration(timeLog?.source) | replace : '_' : ' ' | titlecase }}</span>
 						@if (timeLog?.version) {
 						<span class="version">{{ timeLog?.version }}</span>
 						}
@@ -213,7 +213,7 @@
 					<dt>{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }}</dt>
 					<dd>
 						@if (timeLog?.organizationContact) {
-						<ngx-contact-links [value]="timeLog?.organizationContact"></ngx-contact-links>
+						<ngx-contact-links [value]="$safeNavigationMigration(timeLog?.organizationContact)"></ngx-contact-links>
 						} @else {
 						<span class="empty">{{ 'TIMESHEET.NO_ORGANIZATION_CONTACT' | translate }}</span>
 						}

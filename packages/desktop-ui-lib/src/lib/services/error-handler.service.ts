@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, ErrorHandler, Provider } from '@angular/core';
+import { Injectable, ErrorHandler, type Provider } from '@angular/core';
 import { ToastrNotificationService } from './toastr-notification.service';
 import { ErrorClientService } from './error-client.service';
 import { ErrorServerService } from './error-server.service';

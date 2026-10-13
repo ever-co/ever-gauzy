@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IDocumentCategory } from '@gauzy/contracts';
 
 /** What the dialog resolves with on confirm (`null` on cancel). */
@@ -18,7 +18,7 @@ export type IDocsCategoryDialogResult = Pick<IDocumentCategory, 'name' | 'color'
  */
 @Component({
 	selector: 'gz-docs-category-dialog',
-	imports: [CommonModule, FormsModule, TranslateModule, NbButtonModule, NbCardModule, NbInputModule],
+	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule],
 	template: `
 		<nb-card class="docs-dialog docs-category-dialog">
 			<nb-card-header>
@@ -59,6 +59,7 @@ export type IDocsCategoryDialogResult = Pick<IDocumentCategory, 'name' | 'color'
 			</nb-card-footer>
 		</nb-card>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styles: [
 		`
 			.docs-category-dialog {

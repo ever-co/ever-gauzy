@@ -115,7 +115,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 				}
 			});
 		});
-		this.languageElectronService.initialize(this._cdr.checkNoChanges());
+		this.languageElectronService.initialize<void>();
 	}
 
 	ngOnInit(): void {

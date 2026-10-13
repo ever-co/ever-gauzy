@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CounterPointComponent } from '@gauzy/ui-core/shared';
 
 /**
@@ -25,7 +25,7 @@ import { CounterPointComponent } from '@gauzy/ui-core/shared';
 	templateUrl: './time-track-counter-card.component.html',
 	styleUrls: ['./time-track-counter-card.component.scss'],
 	standalone: true,
-	imports: [NbButtonModule, NbIconModule, TranslateModule, CounterPointComponent],
+	imports: [NbButtonModule, NbIconModule, TranslatePipe, CounterPointComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimeTrackCounterCardComponent {

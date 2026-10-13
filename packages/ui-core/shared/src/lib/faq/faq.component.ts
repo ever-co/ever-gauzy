@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { faqs } from './faq-setting';
@@ -8,6 +8,7 @@ import { faqs } from './faq-setting';
 	selector: 'ngx-faq',
 	templateUrl: './faq.component.html',
 	styleUrls: ['./faq.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxFaqComponent implements OnInit, OnDestroy {

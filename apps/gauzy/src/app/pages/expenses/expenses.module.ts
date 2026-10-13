@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -48,7 +48,7 @@ const STANDALONE_MODULES = [
 ];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [NgxPermissionsModule.forChild(), TranslateModule.forChild()];
+const THIRD_PARTY_MODULES = [NgxPermissionsModule.forChild(), TranslatePipe];
 
 @NgModule({
 	imports: [

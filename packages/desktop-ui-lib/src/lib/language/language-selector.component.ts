@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { AfterViewInit, Component, Input, NgZone, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, NgZone, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbOptionModule, NbSelectModule } from '@nebular/theme';
@@ -17,6 +17,7 @@ import { LanguageService } from './language.service';
     selector: 'gauzy-language-selector',
     templateUrl: './language-selector.component.html',
     styleUrls: ['./language-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbSelectModule, NbOptionModule, AsyncPipe, TranslatePipe]
 })
 export class LanguageSelectorComponent implements OnInit, AfterViewInit {

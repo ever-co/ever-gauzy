@@ -45,7 +45,7 @@
             </div>
             <div class="p-2">
               <strong>{{ 'FORM.LABELS.DURATION' | translate }}: </strong>
-              <span>{{ formatDuration(appointment?.startDateTime, appointment?.endDateTime) }}</span>
+              <span>{{ formatDuration($safeNavigationMigration(appointment?.startDateTime), $safeNavigationMigration(appointment?.endDateTime)) }}</span>
             </div>
           </nb-card>
           @if (!appointment.status) {

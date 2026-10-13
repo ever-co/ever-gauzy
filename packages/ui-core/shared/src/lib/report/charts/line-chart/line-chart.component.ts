@@ -5,7 +5,7 @@ import {
 	OnChanges,
 	OnDestroy,
 	OnInit,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild
 } from '@angular/core';
 import { tap } from 'rxjs/operators';

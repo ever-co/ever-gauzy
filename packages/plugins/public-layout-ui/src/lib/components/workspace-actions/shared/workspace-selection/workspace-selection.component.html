@@ -30,7 +30,7 @@
               [src]="workspace.user?.tenant?.logo || '/assets/images/logos/logo_Gauzy.png'"
 						[attr.alt]="
 							workspace.user?.tenant?.name
-								? ('workspaces.workspaceLogoAlt' | translate : { name: workspace.user?.tenant?.name })
+								? ('workspaces.workspaceLogoAlt' | translate : { name: $safeNavigationMigration(workspace.user?.tenant?.name) })
 								: ''
 						"
               loading="lazy"

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
@@ -12,6 +12,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
     templateUrl: './pipeline-form.component.html',
     styleUrls: ['./pipeline-form.component.scss'],
     selector: 'ga-pipeline-mutation-form',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PipelineFormComponent implements OnInit {

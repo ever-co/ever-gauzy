@@ -1,4 +1,4 @@
-import * as ElectronStore from 'electron-store';
+import type ElectronStore from 'electron-store';
 
 /**
  * Represents the structure of a file path object used in the application.
@@ -153,4 +153,33 @@ export interface IApplicationConfig {
 	additionalSetting: IAdditionalSetting | undefined;
 }
 
-export type IStore = ElectronStore<StoreSchema>;
+/**
+ * The part of electron-store's API used here, which electron-store 11 inherits from `conf`. `conf` is ESM-only and
+ * publishes its types under `exports` only, which this repository's `moduleResolution: node` ignores: there an
+ * ElectronStore appears to have none of these members (only the type is affected; the instance has them all). The
+ * signatures are `conf`'s, less its dot-notation overloads (as electron-store 8 declared them).
+ * Drop once the repository resolves modules by `exports` (`moduleResolution: node16` or `bundler`).
+ */
+export interface IElectronStoreApi<T extends Record<string, any> = Record<string, unknown>> {
+	readonly path: string;
+	readonly size: number;
+	store: T;
+	get<Key extends keyof T>(key: Key): T[Key];
+	get<Key extends keyof T>(key: Key, defaultValue: Required<T>[Key]): Required<T>[Key];
+	get<Key extends string, Value = unknown>(key: Exclude<Key, keyof T>, defaultValue?: Value): Value;
+	set<Key extends keyof T>(key: Key, value?: T[Key]): void;
+	set(key: string, value: unknown): void;
+	set(object: Partial<T>): void;
+	has(key: keyof T | string): boolean;
+	reset<Key extends keyof T>(...keys: Key[]): void;
+	delete(key: keyof T | string): void;
+	clear(): void;
+	onDidChange<Key extends keyof T>(key: Key, callback: (newValue?: T[Key], oldValue?: T[Key]) => void): () => void;
+	onDidAnyChange(callback: (newValue?: Readonly<T>, oldValue?: Readonly<T>) => void): () => void;
+}
+
+/** An electron-store instance (see `IElectronStoreApi`). */
+export type ElectronStoreOf<T extends Record<string, any> = Record<string, unknown>> = ElectronStore<T> &
+	IElectronStoreApi<T>;
+
+export type IStore = ElectronStoreOf<StoreSchema>;

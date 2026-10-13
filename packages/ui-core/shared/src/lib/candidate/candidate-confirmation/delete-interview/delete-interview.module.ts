@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DeleteInterviewComponent } from './delete-interview.component';
 
 @NgModule({
-	imports: [CommonModule, NbButtonModule, NbCardModule, NbIconModule, TranslateModule.forChild()],
+	imports: [CommonModule, NbButtonModule, NbCardModule, NbIconModule, TranslatePipe],
 	declarations: [DeleteInterviewComponent],
 	exports: [DeleteInterviewComponent]
 })

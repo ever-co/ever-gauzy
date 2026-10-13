@@ -39,8 +39,8 @@
                 <nb-form-field>
                   <input
                     class="form-control"
-                    [placeholder]="data?.placeholder"
-                    [type]="data?.inputType"
+                    [placeholder]="$safeNavigationMigration(data?.placeholder)"
+                    [type]="$safeNavigationMigration(data?.inputType)"
                     formControlName="input"
                     nbInput
                     fullWidth
@@ -55,7 +55,7 @@
                   <nb-form-field>
                     <input
                       class="form-control"
-                      [placeholder]="data?.placeholder"
+                      [placeholder]="$safeNavigationMigration(data?.placeholder)"
                       [type]="getInputType()"
                       formControlName="input"
                       nbInput
@@ -79,7 +79,7 @@
                     <nb-form-field>
                       <textarea
                         class="form-control"
-                        [placeholder]="data?.placeholder"
+                        [placeholder]="$safeNavigationMigration(data?.placeholder)"
                         formControlName="input"
                         nbInput
                         required
@@ -92,7 +92,7 @@
                   @if (data?.inputType == 'select') {
                     <nb-select
                       class="form-control"
-                      [placeholder]="data?.placeholder"
+                      [placeholder]="$safeNavigationMigration(data?.placeholder)"
                       formControlName="input"
                       required
 									[status]="

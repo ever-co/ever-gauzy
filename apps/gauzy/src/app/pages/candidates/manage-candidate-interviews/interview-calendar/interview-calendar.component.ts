@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
+import { Component, OnDestroy, ViewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, DateSelectArg, EventClickArg, EventHoveringArg, EventInput } from '@fullcalendar/core';
 import { disableCursor } from '@fullcalendar/core/internal';
@@ -30,6 +30,7 @@ import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } 
     selector: 'ga-interview-calendar',
     templateUrl: './interview-calendar.component.html',
     styleUrls: ['./interview-calendar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InterviewCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

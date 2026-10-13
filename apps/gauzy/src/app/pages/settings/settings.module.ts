@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DangerZoneMutationModule, SharedModule } from '@gauzy/ui-core/shared';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
@@ -41,7 +41,7 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SettingsRoutingModule,
 		SharedModule,
 		EmailTemplatesModule,

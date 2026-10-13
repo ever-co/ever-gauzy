@@ -1,8 +1,8 @@
-<ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
+<ng-container *ngxPermissionsOnly="$safeNavigationMigration(item?.data?.permissionKeys)">
 	@if (!collapse) { @if (!item?.hidden) {
 	<div
-		[gaTooltip]="item?.title"
-		[icon]="item?.icon"
+		[gaTooltip]="$safeNavigationMigration(item?.title)"
+		[icon]="$safeNavigationMigration(item?.icon)"
 		[class]="(selected ? 'selected ' : '') + (!collapse ? 'custom ' : '') + 'sub-item'"
 		(click)="select()"
 	>
@@ -10,7 +10,7 @@
 			<i [class]="item?.icon"></i>
 			@if (collapse || mouseHover) {
 			<span>
-				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
+				<a [href]="getExternalUrl($safeNavigationMigration(item?.link))" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
@@ -19,7 +19,7 @@
 	</div>
 	} } @else { @if (!item?.hidden) {
 	<div
-		[nbTooltip]="item?.title"
+		[nbTooltip]="$safeNavigationMigration(item?.title)"
 		nbTooltipPlacement="right"
 		[nbTooltipDisabled]="tooltipDisabled"
 		[class]="(selected ? 'sub-item selected' : 'sub-item') + (!collapse ? ' custom' : '')"
@@ -28,7 +28,7 @@
 			<i [class]="item?.icon"></i>
 			@if (collapse || mouseHover) {
 			<span>
-				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
+				<a [href]="getExternalUrl($safeNavigationMigration(item?.link))" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
@@ -41,7 +41,7 @@
 			status="basic"
 			outline
 			size="tiny"
-			[attr.aria-label]="'MENU.ADD_ITEM' | translate: { name: item?.title }"
+			[attr.aria-label]="'MENU.ADD_ITEM' | translate: { name: $safeNavigationMigration(item?.title) }"
 			(click)="add()"
 			nbButton
 		>

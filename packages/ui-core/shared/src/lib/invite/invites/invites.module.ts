@@ -15,7 +15,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
@@ -56,7 +56,7 @@ const COMPONENTS = [
 		...NB_MODULES,
 		NgSelectModule,
 		ClipboardModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,

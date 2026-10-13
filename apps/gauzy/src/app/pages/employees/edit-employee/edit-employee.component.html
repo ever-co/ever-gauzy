@@ -49,7 +49,7 @@
             <ngx-favorite-toggle
               [entityType]="'Employee'"
               [entityId]="selectedEmployee.id"
-              [entityName]="selectedEmployee.user?.name"
+              [entityName]="$safeNavigationMigration(selectedEmployee.user?.name)"
               size="small"
               status="basic"
               spacing="detail"

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import {
 	InvitationTypeEnum,
 	IInvite,
@@ -28,6 +28,7 @@ import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invit
     selector: 'ga-invite-mutation',
     templateUrl: './invite-mutation.component.html',
     styleUrls: ['./invite-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InviteMutationComponent extends TranslationBaseComponent implements OnInit {

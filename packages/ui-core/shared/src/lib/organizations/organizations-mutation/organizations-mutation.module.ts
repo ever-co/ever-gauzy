@@ -14,7 +14,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
@@ -40,7 +40,7 @@ import { OrganizationsStepFormModule } from '../organizations-step-form/organiza
 		NbToggleModule,
 		RemoveLodashModule,
 		OrganizationsStepFormModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	declarations: [OrganizationsMutationComponent],
 	providers: [OrganizationDepartmentsService],

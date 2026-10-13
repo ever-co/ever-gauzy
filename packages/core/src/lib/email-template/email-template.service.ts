@@ -196,7 +196,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					entity = {
 						...emailTemplate,
 						mjml: content.mjml,
-						hbs: compileMjml(content.mjml).html
+						hbs: (await compileMjml(content.mjml)).html
 					};
 					break;
 			}
@@ -214,7 +214,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					break;
 				case 'html':
 					entity.mjml = content.mjml;
-					entity.hbs = compileMjml(content.mjml).html;
+					entity.hbs = (await compileMjml(content.mjml)).html;
 					break;
 			}
 			await super.create(entity);

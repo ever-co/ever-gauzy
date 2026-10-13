@@ -7,7 +7,7 @@ import {
 	OnDestroy,
 	OnInit,
 	OnChanges,
-	SimpleChanges
+	type SimpleChanges
 } from '@angular/core';
 import { createRoot, type Root } from 'react-dom/client';
 import React from 'react';

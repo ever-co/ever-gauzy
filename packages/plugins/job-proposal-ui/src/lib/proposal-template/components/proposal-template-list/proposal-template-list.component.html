@@ -136,7 +136,7 @@
 <ngx-record-view-drawer
 	[open]="!!viewedTemplate"
 	heading="PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE"
-	[subtitle]="viewedTemplate?.name"
+	[subtitle]="$safeNavigationMigration(viewedTemplate?.name)"
 	(closed)="closeView()"
 >
 	@if (viewedTemplate) {

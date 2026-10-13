@@ -1,10 +1,11 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { EntityName, MetadataStorage } from '@mikro-orm/core';
 import { EntityManager, EntityRepository, AnyEntity } from '@mikro-orm/knex';
 
 /**
  * The token of a constructor argument no provider supplies: an entity name is never injected, it is passed by
- * MikroORM (`em.getRepository(Entity)`) or resolved from the repository class (see below).
+ * MikroORM (`em.getRepository(Entity)`) or resolved from the repository class (see below). No longer put on the
+ * constructor (see there); kept exported for code that refers to it.
  */
 export const MIKRO_ORM_REPOSITORY_ENTITY_NAME = Symbol('MIKRO_ORM_REPOSITORY_ENTITY_NAME');
 
@@ -59,7 +60,11 @@ export function resolveMikroOrmRepositoryEntity<T extends object>(repository: Fu
 export class MikroOrmBaseEntityRepository<T extends object> extends EntityRepository<T> {
 	constructor(
 		@Optional() em?: EntityManager,
-		@Optional() @Inject(MIKRO_ORM_REPOSITORY_ENTITY_NAME) entityName?: EntityName<T>
+		// Not injected by token: Nest 12 keeps a base class's `@Inject` for a subclass that declares a constructor of its
+		// own, but reads `@Optional()` from that subclass only, so the token became a required dependency of every
+		// repository with its own constructor (and nothing provides it). A subclass passes its entity, or it is
+		// resolved below.
+		@Optional() entityName?: EntityName<T>
 	) {
 		super(em, entityName);
 

@@ -7,7 +7,8 @@ import {
 	DestroyRef,
 	Injector,
 	signal,
-	Type
+	Type,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbLayoutDirectionService, NbSidebarService } from '@nebular/theme';
@@ -20,6 +21,7 @@ import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/the
 	selector: 'ngx-one-column-layout',
 	styleUrl: './one-column.layout.scss',
 	templateUrl: './one-column.layout.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OneColumnLayoutComponent {

@@ -1,5 +1,5 @@
 import { NbAuthComponent, NbAuthService } from '@nebular/auth';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
@@ -11,6 +11,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ngx-auth',
     templateUrl: './auth.component.html',
     styleUrls: ['./auth.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NgxAuthComponent extends NbAuthComponent implements OnInit {

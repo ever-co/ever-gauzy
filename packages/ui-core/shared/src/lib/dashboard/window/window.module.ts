@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbPopoverModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { WindowComponent } from '../window/window.component';
 import { WindowTemplateDirective } from './window-template.directive';
@@ -12,7 +12,7 @@ import { WindowTemplateDirective } from './window-template.directive';
 		NbButtonModule,
 		NbIconModule,
 		NbPopoverModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		WindowTemplateDirective
 	],

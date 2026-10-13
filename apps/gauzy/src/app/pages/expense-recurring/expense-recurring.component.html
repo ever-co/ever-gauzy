@@ -144,7 +144,7 @@
 <ngx-record-view-drawer
   [open]="!!viewedRecurringExpense"
   heading="ORGANIZATIONS_PAGE.RECURRING_EXPENSE"
-  [subtitle]="getCategoryName(viewedRecurringExpense?.categoryName)"
+  [subtitle]="getCategoryName($safeNavigationMigration(viewedRecurringExpense?.categoryName))"
   (closed)="closeView()"
   >
   @if (viewedRecurringExpense) {

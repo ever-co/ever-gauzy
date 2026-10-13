@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -28,6 +28,7 @@ import { SpinnerButtonDirective } from '../../../../directives/spinner-button.di
 	selector: 'lib-plugin-marketplace',
 	templateUrl: './plugin-marketplace.component.html',
 	styleUrls: ['./plugin-marketplace.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		PluginMarketplaceFilterComponent,
 		NbIconModule,

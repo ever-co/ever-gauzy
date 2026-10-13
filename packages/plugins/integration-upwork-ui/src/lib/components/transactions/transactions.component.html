@@ -11,7 +11,7 @@
 	<input
 		type="text"
 		class="form-control"
-		[value]="file?.name"
+		[value]="$safeNavigationMigration(file?.name)"
 		readonly="true"
 		fullWidth
 	/>

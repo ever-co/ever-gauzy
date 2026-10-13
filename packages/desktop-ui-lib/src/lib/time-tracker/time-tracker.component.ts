@@ -8,7 +8,8 @@ import {
 	NgZone,
 	OnInit,
 	TemplateRef,
-	ViewChild
+	ViewChild,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -141,6 +142,7 @@ interface IScreenshotResult {
 	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbLayoutModule,
 		NbSpinnerModule,

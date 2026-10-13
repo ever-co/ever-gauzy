@@ -13,7 +13,7 @@
 			<div class="col-auto ml-auto">
 				<ngx-gauzy-filters
 					[filters]="filters"
-					[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
+					[saveFilters]="$safeNavigationMigration((datePickerConfig$ | async)?.isSaveDatePicker)"
 					(filtersChange)="filtersChange($event)"
 				></ngx-gauzy-filters>
 			</div>
@@ -29,7 +29,7 @@
 						<nb-card-body class="chart">
 							<ngx-line-chart
 								[data]="charts"
-								[standardWorkHours]="organization?.standardWorkHoursPerDay"
+								[standardWorkHours]="$safeNavigationMigration(organization?.standardWorkHoursPerDay)"
 								[enableAnnotations]="true"
 							></ngx-line-chart>
 						</nb-card-body>
@@ -82,10 +82,10 @@
 											<div class="avatar-wrapper">
 												<ngx-avatar
 													class="report-table"
-													[src]="log?.employee?.user?.imageUrl"
-													[name]="log?.employee?.user?.name"
-													[id]="log?.employee?.id"
-													[employee]="log?.employee"
+													[src]="$safeNavigationMigration(log?.employee?.user?.imageUrl)"
+													[name]="$safeNavigationMigration(log?.employee?.user?.name)"
+													[id]="$safeNavigationMigration(log?.employee?.id)"
+													[employee]="$safeNavigationMigration(log?.employee)"
 												></ngx-avatar>
 											</div>
 										</div>
@@ -98,7 +98,7 @@
 										<div class="responsive-table-content mobile-padding">
 											@if (log.dates[date]) {
 											<span>
-												{{ log.dates[date]?.sum | durationFormat }}
+												{{ $safeNavigationMigration(log.dates[date]?.sum) | durationFormat }}
 											</span>
 											} @else { &#8212; }
 										</div>
@@ -110,7 +110,7 @@
 										</div>
 										<div class="responsive-table-content mobile-padding">
 											<span>
-												{{ log?.sum | durationFormat }}
+												{{ $safeNavigationMigration(log?.sum) | durationFormat }}
 											</span>
 										</div>
 									</div>

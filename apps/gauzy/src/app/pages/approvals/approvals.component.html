@@ -54,7 +54,7 @@
     } @else {
       <ga-card-grid
         [loading]="loading"
-        [totalItems]="pagination?.totalItems"
+        [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
         (scroll)="onScroll()"
         (onSelectedItem)="selectRequestApproval($event)"
         [settings]="settingsSmartTable"
@@ -125,7 +125,7 @@
 <ngx-record-view-drawer
   [open]="!!viewedRequestApproval"
   heading="APPROVAL_REQUEST_PAGE.HEADER"
-  [subtitle]="viewedRequestApproval?.name"
+  [subtitle]="$safeNavigationMigration(viewedRequestApproval?.name)"
   (closed)="closeView()"
   >
   @if (viewedRequestApproval) {

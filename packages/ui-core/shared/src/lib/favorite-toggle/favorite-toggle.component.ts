@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { BaseEntityEnum, IFavorite, IOrganization } from '@gauzy/contracts';
@@ -12,6 +12,7 @@ import { filter, tap } from 'rxjs/operators';
 	selector: 'ngx-favorite-toggle',
 	templateUrl: './favorite-toggle.component.html',
 	styleUrls: ['./favorite-toggle.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class FavoriteToggleComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

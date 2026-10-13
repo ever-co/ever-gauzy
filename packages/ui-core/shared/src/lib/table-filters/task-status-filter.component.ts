@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { ITaskStatus } from '@gauzy/contracts';
 
@@ -12,6 +12,7 @@ import { ITaskStatus } from '@gauzy/contracts';
 			(onChanged)="onChange($event)"
 		></ga-task-status-select>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TaskStatusFilterComponent extends DefaultFilter implements OnChanges {

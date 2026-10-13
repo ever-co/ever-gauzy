@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -11,7 +11,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { catchError, filter, firstValueFrom, of, tap } from 'rxjs';
@@ -112,7 +112,7 @@ export interface IDocsInboundAddressRow {
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule,
+		TranslatePipe,
 		NgxPermissionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -124,6 +124,7 @@ export interface IDocsInboundAddressRow {
 	],
 	providers: [DocumentInboundAddressService, DocumentsService],
 	templateUrl: './docs-inbound-settings-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./docs-inbound-settings-page.component.scss']
 })
 export class DocsInboundSettingsPageComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization } from '@gauzy/contracts';
 import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,6 +11,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ngx-feature',
     templateUrl: './feature.component.html',
     styleUrls: ['./feature.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class FeatureComponent extends TranslationBaseComponent implements OnInit {

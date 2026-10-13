@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganizationPosition, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import {
     selector: 'ga-positions',
     templateUrl: './positions.component.html',
     styleUrls: ['positions.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PositionsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

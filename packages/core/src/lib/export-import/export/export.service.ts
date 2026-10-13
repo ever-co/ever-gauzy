@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { FindManyOptions, IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { v4 as uuidv4 } from 'uuid';
-import * as archiver from 'archiver';
+// archiver 8 is ES modules with one class per format (the `archiver('zip')` factory is gone).
+import { ZipArchive } from 'archiver';
 import * as csv from 'csv-writer';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
@@ -132,7 +133,7 @@ export class ExportService {
 	async archiveAndDownload(job: IExportJob): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const output = fs.createWriteStream(job.archivePath);
-			const archive = archiver('zip', { zlib: { level: 9 } });
+			const archive = new ZipArchive({ zlib: { level: 9 } });
 
 			output.on('close', () => resolve());
 			output.on('error', (error) => reject(error));

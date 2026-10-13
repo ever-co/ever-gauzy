@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ICandidate, ICandidateInterview, IEmployee, ICandidateFeedback } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
     selector: 'ga-criterions-rating-chart',
     templateUrl: './criterions-rating-chart.component.html',
     styleUrls: ['./criterions-rating-chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CriterionsRatingChartComponent implements OnDestroy {

@@ -12,7 +12,7 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EmailTemplateService } from '@gauzy/ui-core/core';
 import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
@@ -34,7 +34,7 @@ import { SandboxedSrcdocDirective } from './sandboxed-srcdoc.directive';
 		NbIconModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		AceEditorModule,
 		LanguageSelectorModule

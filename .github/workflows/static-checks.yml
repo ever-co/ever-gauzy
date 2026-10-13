@@ -60,7 +60,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
 
       # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone - `types: []`,
       # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` - precisely so
@@ -73,7 +73,7 @@ jobs:
       # and S8543). Exact version, no scripts, no lockfile writes, and into RUNNER_TEMP so it
       # cannot disturb the checkout. It is also faster: ~4s to install against ~37s for npx.
       - name: Install TypeScript
-        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/tsc" typescript@5.9.3
+        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/tsc" typescript@6.0.3
 
       - name: Type-check every jest.config.ts
         run: |
@@ -103,7 +103,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
 
       - name: Restore node_modules archive
         # Best effort: the same key the build workflow writes, so a push that already built this
@@ -193,7 +193,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
 
       # No `yarn install`, for the same reason `typecheck-configs` above does without one: every
       # script below imports Node's built-in modules and nothing else - except the GraphQL

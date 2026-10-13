@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inje
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
 import { EverIdWorkspacesComponent } from '../components/ever-id-workspaces.component';
 import { AuthZitadelUiService, EverIdWorkspaceResponse } from '../services/auth-zitadel-ui.service';
@@ -18,7 +18,7 @@ const KNOWN_ERRORS = new Set(['email_unverified', 'sign_in_failed', 'cancelled',
 @Component({
 	selector: 'ngx-ever-id-handoff',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbAlertModule, NbButtonModule, NbCardModule, RouterLink, TranslateModule, EverIdWorkspacesComponent],
+	imports: [NbAlertModule, NbButtonModule, NbCardModule, RouterLink, TranslatePipe, EverIdWorkspacesComponent],
 	template: `
 		<section class="ever-id-page">
 			<h2 class="title">{{ 'AUTH_ZITADEL.HANDOFF.TITLE' | translate }}</h2>

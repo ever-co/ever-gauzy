@@ -1,10 +1,11 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { RequestApprovalStatusTypesEnum, ComponentLayoutStyleEnum, RolesEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
     selector: 'ngx-request-approval-action',
     templateUrl: './request-approval-action.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RequestApprovalActionComponent implements OnInit {

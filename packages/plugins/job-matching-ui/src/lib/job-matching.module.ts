@@ -1,7 +1,7 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import { catchError, map, takeUntil, tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -28,7 +28,7 @@ import { JobMatchingComponent } from './components/job-matching/job-matching.com
 	imports: [
 		RouterModule.forChild([]),
 		NebularModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgSelectModule,
 		SharedModule,
 		DialogsModule

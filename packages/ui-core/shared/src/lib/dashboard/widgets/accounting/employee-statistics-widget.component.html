@@ -39,17 +39,17 @@
 						<td class="is-employee">
 							<ngx-avatar
 								class="report-table"
-								[name]="row?.employee?.user?.name"
-								[src]="row?.employee?.user?.imageUrl"
-								[id]="row?.employee?.id"
-								[employee]="row?.employee"
+								[name]="$safeNavigationMigration(row?.employee?.user?.name)"
+								[src]="$safeNavigationMigration(row?.employee?.user?.imageUrl)"
+								[id]="$safeNavigationMigration(row?.employee?.id)"
+								[employee]="$safeNavigationMigration(row?.employee)"
 							></ngx-avatar>
 						</td>
-						<td class="is-numeric">{{ format(row?.income) }}</td>
-						<td class="is-numeric">{{ format(row?.expense) }}</td>
-						<td class="is-numeric">{{ format(row?.profit) }}</td>
+						<td class="is-numeric">{{ format($safeNavigationMigration(row?.income)) }}</td>
+						<td class="is-numeric">{{ format($safeNavigationMigration(row?.expense)) }}</td>
+						<td class="is-numeric">{{ format($safeNavigationMigration(row?.profit)) }}</td>
 						@if (hasBonusType()) {
-							<td class="is-numeric">{{ format(row?.bonus) }}</td>
+							<td class="is-numeric">{{ format($safeNavigationMigration(row?.bonus)) }}</td>
 						}
 					</tr>
 				}

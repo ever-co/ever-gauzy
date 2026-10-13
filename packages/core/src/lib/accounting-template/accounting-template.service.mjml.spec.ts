@@ -26,7 +26,7 @@ describe('AccountingTemplateService MJML compilation (GHSA-48h9-vwf5-h8m7)', () 
 	let service: AccountingTemplateService;
 
 	const includePayload = () =>
-		`<mjml><mj-body><mj-section><mj-column><mj-text>Invoice from {{from}}</mj-text><mj-include path="${secretFile}" type="html" /></mj-column></mj-section></mj-body></mjml>`;
+		`<mjml><mj-body><mj-section><mj-column><mj-text>Invoice from {{from}}</mj-text><mj-include path="${path.relative(process.cwd(), secretFile)}" type="html" /></mj-column></mj-section></mj-body></mjml>`;
 	const plain = (text: string) =>
 		`<mjml><mj-body><mj-section><mj-column><mj-text>${text}</mj-text></mj-column></mj-section></mj-body></mjml>`;
 
@@ -52,27 +52,30 @@ describe('AccountingTemplateService MJML compilation (GHSA-48h9-vwf5-h8m7)', () 
 	});
 
 	describe('generatePreview', () => {
-		it('does not return the bytes of an <mj-include>d file', () => {
-			const { html } = service.generatePreview({ request: { data: includePayload(), organization: 'Acme' } });
+		it('does not return the bytes of an <mj-include>d file', async () => {
+			const { html } = await service.generatePreview({ request: { data: includePayload(), organization: 'Acme' } });
 
 			expect(html).not.toContain(MARKER);
 			expect(html).toContain('Invoice from Acme');
 		});
 
-		it('CONTROL: with the pre-fix compiler call the same request leaks the file', () => {
-			jest.spyOn(compileMjmlModule, 'compileMjml').mockImplementation((source: unknown) => rawMjml2html(source));
+		it('CONTROL: with the pre-fix compiler call the same request leaks the file', async () => {
+			jest.spyOn(compileMjmlModule, 'compileMjml').mockImplementation((source: unknown) =>
+				// mjml 5 ignores includes unless asked: the CONTROL asks, as the pre-fix call shape effectively did.
+				rawMjml2html(source, { ignoreIncludes: false, includePath: dir })
+			);
 
-			const { html } = service.generatePreview({ request: { data: includePayload(), organization: 'Acme' } });
+			const { html } = await service.generatePreview({ request: { data: includePayload(), organization: 'Acme' } });
 
 			expect(html).toContain(MARKER);
 		});
 
-		it('treats a JSON object `data` as text, never as a Handlebars AST', () => {
+		it('treats a JSON object `data` as text, never as a Handlebars AST', async () => {
 			const ast = Handlebars.parse('AST-MARKER {{from}}');
 			// CONTROL: Handlebars would have compiled the object as a program.
 			expect(Handlebars.compile(ast as any)({ from: 'Acme' })).toBe('AST-MARKER Acme');
 
-			const { html } = service.generatePreview({ request: { data: ast, organization: 'Acme' } });
+			const { html } = await service.generatePreview({ request: { data: ast, organization: 'Acme' } });
 			expect(html).not.toContain('AST-MARKER');
 		});
 	});
@@ -114,7 +117,7 @@ describe('AccountingTemplateService MJML compilation (GHSA-48h9-vwf5-h8m7)', () 
 			expect(entity.mjml).toBe(plain('NEW-VERSION'));
 			expect(entity.hbs).toContain('NEW-VERSION');
 			// CONTROL: the pre-fix code compiled `record.mjml`, whose html is the OLD version.
-			expect(rawMjml2html(record.mjml).html).toContain('OLD-VERSION');
+			expect((await rawMjml2html(record.mjml)).html).toContain('OLD-VERSION');
 			expect(entity.hbs).not.toContain('OLD-VERSION');
 
 			// And an include submitted on update is not followed either.

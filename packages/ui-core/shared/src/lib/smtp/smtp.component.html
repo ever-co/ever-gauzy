@@ -11,9 +11,9 @@
 					<div class="smtp-heading">
 						<h6 class="smtp-title">
 							@if (isOrganization) {
-								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: organization?.name } }}
+								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: $safeNavigationMigration(organization?.name) } }}
 							} @else {
-								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: user?.tenant?.name } }}
+								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: $safeNavigationMigration(user?.tenant?.name) } }}
 							}
 						</h6>
 						<!-- Sending looks up the organization's SMTP, then the tenant's, then the server default. -->

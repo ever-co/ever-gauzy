@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { faCheck, faBan, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -6,6 +6,7 @@ import { faCheck, faBan, faTimes } from '@fortawesome/free-solid-svg-icons';
     selector: 'ga-toggle-filter',
     templateUrl: './toggle-filter.component.html',
     styleUrls: ['./toggle-filter.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ToggleFilterComponent extends DefaultFilter implements OnChanges {

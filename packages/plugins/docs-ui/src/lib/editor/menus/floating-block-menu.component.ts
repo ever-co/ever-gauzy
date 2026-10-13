@@ -6,11 +6,11 @@ import {
 	Input,
 	OnChanges,
 	OnDestroy,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild
 } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Editor } from '@tiptap/core';
 import { FloatingMenuPlugin } from '@tiptap/extension-floating-menu';
 import { PluginKey } from '@tiptap/pm/state';
@@ -24,7 +24,7 @@ const pluginKey = new PluginKey('gzFloatingBlockMenu');
 @Component({
 	selector: 'gz-floating-block-menu',
 	standalone: true,
-	imports: [TranslateModule, NbButtonModule, NbIconModule, NbTooltipModule],
+	imports: [TranslatePipe, NbButtonModule, NbIconModule, NbTooltipModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-floating-menu" #menu>

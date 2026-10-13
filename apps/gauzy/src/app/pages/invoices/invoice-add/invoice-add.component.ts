@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
@@ -56,6 +56,7 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
     selector: 'ga-invoice-add',
     templateUrl: './invoice-add.component.html',
     styleUrls: ['./invoice-add.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -138,7 +139,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
-		this.selectedLanguage = this.translateService.currentLang;
+		this.selectedLanguage = this.translateService.getCurrentLang();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),

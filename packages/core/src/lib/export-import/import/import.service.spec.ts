@@ -27,7 +27,7 @@ jest.mock('../../core/file-storage', () => ({
 	}
 }));
 
-import * as archiver from 'archiver';
+import { ZipArchive } from 'archiver';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
@@ -40,7 +40,7 @@ import { generateImportArchiveFileName } from './import-archive-file-name';
  */
 async function buildArchive(csv: string, extraFiles: Record<string, string> = {}): Promise<Buffer> {
 	const chunks: Buffer[] = [];
-	const archive = archiver('zip', { zlib: { level: 0 } });
+	const archive = new ZipArchive({ zlib: { level: 0 } });
 	archive.on('data', (chunk: Buffer) => chunks.push(chunk));
 	const finished = new Promise<void>((resolve, reject) => {
 		archive.on('end', () => resolve());

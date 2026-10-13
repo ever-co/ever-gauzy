@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +21,7 @@ import {
     selector: 'ga-org-roles-permissions',
     templateUrl: './roles-permissions.component.html',
     styleUrls: ['./roles-permissions.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RolesPermissionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

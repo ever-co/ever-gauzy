@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
@@ -60,6 +60,7 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 	selector: 'ngx-tasks',
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

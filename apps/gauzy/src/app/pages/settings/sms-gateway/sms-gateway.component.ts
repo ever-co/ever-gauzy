@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { SMSProviderEnum } from '@gauzy/contracts';
 
 @Component({
     selector: 'ga-sms-gateway',
     templateUrl: './sms-gateway.component.html',
     styleUrls: ['./sms-gateway.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SmsGatewayComponent implements OnInit {

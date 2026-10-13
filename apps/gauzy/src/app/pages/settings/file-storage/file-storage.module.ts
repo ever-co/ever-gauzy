@@ -10,7 +10,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FileProviderSelectorModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { FileStorageRoutingModule } from './file-storage-routing.module';
@@ -32,7 +32,7 @@ const NB_MODULES = [
 	imports: [
 		...NB_MODULES,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		FileStorageRoutingModule,
 		SharedModule,
 		FileProviderSelectorModule

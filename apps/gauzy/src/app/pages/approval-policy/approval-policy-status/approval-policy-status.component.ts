@@ -1,9 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ApprovalPolicyTypesEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
 	selector: 'ngx-request-approval-status',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	templateUrl: './approval-policy-status.component.html'
 })
 export class ApprovalPolicyStatusComponent extends TranslationBaseComponent implements OnInit {

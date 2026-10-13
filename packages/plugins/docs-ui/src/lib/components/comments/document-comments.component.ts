@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, type SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { BaseEntityEnum, IComment, ICommentCreateInput, ICommentUpdateInput, ID, PermissionsEnum } from '@gauzy/contracts';
@@ -53,6 +53,7 @@ import { MentionDirectoryService } from './mention-directory.service';
 	// directory here — not on the composer — means the root box, every reply box and
 	// every inline editor under this thread share ONE employee fetch.
 	providers: [DocumentCommentsService, MentionDirectoryService, EmployeesService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocumentCommentsComponent extends TranslationBaseComponent implements OnChanges {

@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { PdfmakerService } from './pdfmaker.service';
 
 /**
@@ -32,5 +35,46 @@ describe('PdfmakerService', () => {
 
 	it('rejects instead of resolving nothing when generation fails', async () => {
 		await expect(service.generatePdf({ content: [{ image: 'not-an-image' }] })).rejects.toBeDefined();
+	});
+
+	describe('resource access (pdfmake 0.3 reads files and URLs a document names)', () => {
+		// A valid 1x1 PNG
+		const PNG = Buffer.from(
+			'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+			'base64'
+		);
+		let dir: string;
+		let file: string;
+
+		beforeAll(() => {
+			dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfmaker-'));
+			file = path.join(dir, 'logo.png');
+			fs.writeFileSync(file, PNG);
+		});
+		afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+		it('embeds an image given as a data URL', async () => {
+			const pdf = await service.generatePdf({ content: [{ image: `data:image/png;base64,${PNG.toString('base64')}` }] });
+
+			expect(isPdf(pdf)).toBe(true);
+		});
+
+		it('refuses to read a local file named in the document, even a valid image', async () => {
+			await expect(service.generatePdf({ content: [{ image: file }] })).rejects.toThrow(
+				/Access to local file denied/
+			);
+		});
+
+		it('refuses to fetch a URL named in the document', async () => {
+			const fetchSpy = jest.spyOn(globalThis, 'fetch');
+			try {
+				await expect(
+					service.generatePdf({ content: [{ image: 'http://169.254.169.254/latest/meta-data/' }] })
+				).rejects.toThrow(/denied/);
+				expect(fetchSpy).not.toHaveBeenCalled();
+			} finally {
+				fetchSpy.mockRestore();
+			}
+		});
 	});
 });

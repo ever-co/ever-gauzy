@@ -15,7 +15,7 @@
 		<div class="account">
 			<span class="account-avatar">
 				@if (user()?.imageUrl && !avatarFailed()) {
-					<img [src]="user()?.imageUrl" alt="" (error)="avatarFailed.set(true)" />
+					<img [src]="$safeNavigationMigration(user()?.imageUrl)" alt="" (error)="avatarFailed.set(true)" />
 				} @else {
 					{{ initials() }}
 				}
@@ -41,7 +41,7 @@
 				<span class="row-label">{{ 'SETTINGS_GENERAL.ACCOUNT.ROLE' | translate }}</span>
 			</div>
 			<div class="row-control auto">
-				<span class="row-value">{{ 'USERS_PAGE.ROLE.' + user()?.role?.name | translate }}</span>
+				<span class="row-value">{{ 'USERS_PAGE.ROLE.' + $safeNavigationMigration(user()?.role?.name) | translate }}</span>
 			</div>
 		</div>
 	}
@@ -52,7 +52,7 @@
 				<span class="row-label">{{ 'SETTINGS_GENERAL.ACCOUNT.MEMBER_SINCE' | translate }}</span>
 			</div>
 			<div class="row-control auto">
-				<span class="row-value">{{ user()?.createdAt | date: 'mediumDate' }}</span>
+				<span class="row-value">{{ $safeNavigationMigration(user()?.createdAt) | date: 'mediumDate' }}</span>
 			</div>
 		</div>
 	}

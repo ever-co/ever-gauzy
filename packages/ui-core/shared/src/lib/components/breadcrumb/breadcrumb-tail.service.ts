@@ -1,4 +1,4 @@
-import { Injectable, Signal, signal, inject } from '@angular/core';
+import { Injectable, type Signal, signal, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';

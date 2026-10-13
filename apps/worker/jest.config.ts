@@ -13,11 +13,6 @@ export default {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json', isolatedModules: true }]
 	},
 	moduleFileExtensions: ['ts', 'js', 'html'],
-	// The core barrel reaches dependencies that ship ESM-only builds Jest cannot `require` (`uuid` through
-	// the request context, `camelcase`, …). Same list, and the same reasoning, as
-	// `packages/core/jest.config.ts` and the plugin packages that load the barrel.
-	transformIgnorePatterns: [
-		'node_modules/(?!(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios)/)'
-	],
+	// transformIgnorePatterns: inherited from jest.preset.js, which takes the Node rule under --experimental-vm-modules (an ESM config cannot `require`).
 	coverageDirectory: '../../coverage/apps/worker'
 };

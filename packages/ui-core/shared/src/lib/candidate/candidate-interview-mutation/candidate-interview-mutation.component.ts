@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, Input, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
@@ -36,6 +36,7 @@ import { CommunicationService } from './communication.service';
     selector: 'ga-candidate-interview-mutation',
     templateUrl: 'candidate-interview-mutation.component.html',
     styleUrls: ['candidate-interview-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateInterviewMutationComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
@@ -24,6 +24,7 @@ import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
     selector: 'ga-candidate-mutation',
     templateUrl: 'candidate-mutation.component.html',
     styleUrls: ['candidate-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateMutationComponent implements OnInit, AfterViewInit {

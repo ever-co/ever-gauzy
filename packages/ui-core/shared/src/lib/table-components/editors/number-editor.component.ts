@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 
 @Component({
@@ -10,6 +10,7 @@ import { Cell, DefaultEditor } from 'angular2-smart-table';
 		(input)="onInputChange($event)"
 		[name]="cell.getId()"
 	/>`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NumberEditorComponent extends DefaultEditor implements OnInit {

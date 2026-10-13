@@ -36,14 +36,14 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		super(typeOrmAccountingTemplateRepository, mikroOrmAccountingTemplateRepository);
 	}
 
-	generatePreview(input) {
+	async generatePreview(input) {
 		const { organization } = input.request;
 		// Coerce first: both the MJML compiler and the Handlebars fallback below must only ever see a
 		// string — Handlebars.compile() also accepts a pre-parsed AST object (GHSA-48h9-vwf5-h8m7).
 		const data = toTemplateSource(input.request.data);
 		let textToHtml = data;
 		try {
-			const mjmlToHtml = compileMjml(data);
+			const mjmlToHtml = await compileMjml(data);
 			textToHtml = mjmlToHtml.errors.length ? data : mjmlToHtml.html;
 		} catch (error) {}
 
@@ -169,7 +169,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		// try/catch below on purpose — that catch means "no template for this organization yet", and
 		// mjml throws on markup it cannot parse, so a compile failure must not be read as a missing
 		// record and turned into an insert.
-		const hbs = compileMjml(input.mjml).html;
+		const hbs = (await compileMjml(input.mjml)).html;
 		try {
 			const record = await this.findOneByWhereOptions({
 				languageCode: input.languageCode,

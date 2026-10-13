@@ -6,7 +6,8 @@ import {
 	forwardRef,
 	Input,
 	OnInit,
-	Output
+	Output,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -31,6 +32,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CountryComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {

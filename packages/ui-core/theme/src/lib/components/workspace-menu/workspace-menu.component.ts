@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, inject, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, inject, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -7,6 +7,7 @@ import { filter } from 'rxjs/operators';
 	selector: 'gauzy-workspace-menu',
 	templateUrl: './workspace-menu.component.html',
 	styleUrls: ['./workspace-menu.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WorkspaceMenuComponent implements OnInit, OnDestroy {

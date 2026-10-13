@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 
 @Component({
@@ -16,6 +16,7 @@ import { NbIconModule } from '@nebular/theme';
 		</div>
 		`,
     styleUrls: ['./time-tracker.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbIconModule]
 })
 export class CustomRenderComponent implements OnInit {
@@ -39,6 +40,7 @@ export class CustomRenderComponent implements OnInit {
 		</span>
 	`,
     styleUrls: ['./time-tracker.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CustomDescriptionComponent {

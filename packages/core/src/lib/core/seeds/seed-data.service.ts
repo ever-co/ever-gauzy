@@ -2,7 +2,6 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import * as rimraf from 'rimraf';
 import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
@@ -14,6 +13,7 @@ import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { IEmployee, IOrganization, IOrganizationProject, IRole, ITenant, IUser } from '@gauzy/contracts';
 import { validateSeedCredentials } from '../../bootstrap/validate-secrets';
+import { removeGeneratedFiles } from './utils';
 import { MigrationLockingDataSource } from '../../database/migration-run-lock';
 import { getPluginModules, hasLifecycleMethod, PluginLifecycleMethods } from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
@@ -1678,10 +1678,14 @@ export class SeedDataService {
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
-			rimraf(`${dir}/!(rimraf|.gitkeep)`, () => {
-				this.log(chalk.green(`✅ CLEANED UP`));
-				resolve(true);
-			});
+			// A failed cleanup never stops the seed, as with rimraf 3's callback. The rejection is handled
+			// here: `finally()` would hand it on to a promise nobody awaits, and Node ends the process on that.
+			removeGeneratedFiles(dir)
+				.then(
+					() => this.log(chalk.green(`✅ CLEANED UP`)),
+					(error) => this.log(chalk.yellow(`⚠ COULD NOT CLEAN UP ${dir}: ${error?.message ?? error}`))
+				)
+				.then(() => resolve(true));
 		});
 	}
 

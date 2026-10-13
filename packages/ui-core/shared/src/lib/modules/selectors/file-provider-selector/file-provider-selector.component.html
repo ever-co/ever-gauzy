@@ -13,7 +13,7 @@
         <nb-option
           [value]="providerName.value | uppercase"
           >
-          {{ providerName?.label | titlecase }}
+          {{ $safeNavigationMigration(providerName?.label) | titlecase }}
         </nb-option>
       }
     </nb-select>

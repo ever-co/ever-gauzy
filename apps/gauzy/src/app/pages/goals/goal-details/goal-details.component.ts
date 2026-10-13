@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
@@ -14,6 +14,7 @@ import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-detail
     selector: 'ga-goal-details',
     templateUrl: './goal-details.component.html',
     styleUrls: ['./goal-details.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit {

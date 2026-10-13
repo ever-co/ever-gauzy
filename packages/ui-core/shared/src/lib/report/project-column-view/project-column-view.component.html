@@ -2,7 +2,7 @@
   <div class="single-project-template">
     <div class="logo-wrapper">
       @if (project?.imageUrl) {
-        <img draggable="false" [src]="project?.imageUrl" />
+        <img draggable="false" [src]="$safeNavigationMigration(project?.imageUrl)" />
       } @else {
         <img
           draggable="false"
@@ -12,7 +12,7 @@
         }
       </div>
       <div class="headers-wrapper">
-        <div class="main-header" [title]="project?.name">{{ project?.name }} </div>
+        <div class="main-header" [title]="$safeNavigationMigration(project?.name)">{{ project?.name }} </div>
         <div class="employees-count">Members count {{ project?.membersCount }}</div>
       </div>
     </div>

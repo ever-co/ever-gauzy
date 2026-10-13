@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { OnInit } from '@angular/core';
 import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/contracts';
@@ -11,6 +11,7 @@ import { InvoiceEstimateHistoryService, InvoicesService, Store, ToastrService } 
     selector: 'ga-invoice-email',
     templateUrl: './invoice-email-mutation.component.html',
     styleUrls: ['./invoice-email-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceEmailMutationComponent extends TranslationBaseComponent implements OnInit {

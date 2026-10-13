@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
 
 export enum EmployeeChartEnum {
@@ -11,6 +11,7 @@ export enum EmployeeChartEnum {
     selector: 'ga-employee-charts',
     templateUrl: './employee-charts.component.html',
     styleUrls: ['./employee-charts.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeChartsComponent implements OnInit {

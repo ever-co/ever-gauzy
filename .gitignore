@@ -168,6 +168,8 @@ apps/server-api/src/assets/icons/menu
 
 /Tempnx-console-tmp**/**
 
+.claude/worktrees
+
 # ------------------------------------------------------------------------------------------------
 # Local agent scratch and the npm lockfile.
 #

@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule, SMTPModule } from '@gauzy/ui-core/shared';
 import { CustomSmtpComponent } from './custom-smtp.component';
 import { CustomSmtpRoutingModule } from './custom-smtp-routing.module';
@@ -11,7 +11,7 @@ import { CustomSmtpRoutingModule } from './custom-smtp-routing.module';
 		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		CustomSmtpRoutingModule,
 		SharedModule,
 		SMTPModule

@@ -38,7 +38,7 @@ describe('assertCriteriaHasPredicate', () => {
 	});
 });
 
-describe('why the guard exists — TypeORM 1.0 with an all-undefined criteria object', () => {
+describe('why the guard exists — an all-undefined criteria object (TypeORM 1.0 ran it unfiltered)', () => {
 	const RowSchema = new EntitySchema({
 		name: 'Row',
 		tableName: 'row',
@@ -71,15 +71,18 @@ describe('why the guard exists — TypeORM 1.0 with an all-undefined criteria ob
 		await rows.save([{ employeeId: 'a' }, { employeeId: 'b' }, { employeeId: null }]);
 	});
 
-	it('CONTROL: repository.delete({ employeeId: undefined }) wipes the whole table', async () => {
-		const { affected } = await rows.delete({ employeeId: undefined });
-		expect(affected).toBe(3);
-		expect(await rows.count()).toBe(0);
+	// TypeORM 1.0 ran these with no WHERE at all: the delete wiped the table and the update touched every row,
+	// which is what the guard was written against. TypeORM 1.1 refuses empty criteria for both itself, so the
+	// controls now pin that refusal (and that nothing was written); the guard stays, so a caller learns which
+	// criterion was missing, and so a dependency that relaxes this again cannot reopen the hole.
+	it('CONTROL: repository.delete({ employeeId: undefined }) has no criterion left (TypeORM >= 1.1 refuses it)', async () => {
+		await expect(rows.delete({ employeeId: undefined })).rejects.toThrow(/Empty criteria/);
+		expect(await rows.count()).toBe(3);
 	});
 
-	it('CONTROL: repository.update({ employeeId: undefined }, ...) touches every row', async () => {
-		const { affected } = await rows.update({ employeeId: undefined }, { flag: true });
-		expect(affected).toBe(3);
+	it('CONTROL: repository.update({ employeeId: undefined }, ...) has no criterion left (TypeORM >= 1.1 refuses it)', async () => {
+		await expect(rows.update({ employeeId: undefined }, { flag: true })).rejects.toThrow(/Empty criteria/);
+		expect(await rows.countBy({ flag: true })).toBe(0);
 	});
 
 	it('a null value is a real predicate (IS NULL) under the shipped setting', async () => {

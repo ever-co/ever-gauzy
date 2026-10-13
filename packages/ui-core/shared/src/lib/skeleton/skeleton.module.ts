@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SkeletonComponent } from './skeleton.component';
 
 @NgModule({
-	imports: [CommonModule, TranslateModule.forChild()],
+	imports: [CommonModule, TranslatePipe],
 	declarations: [SkeletonComponent],
 	exports: [SkeletonComponent]
 })

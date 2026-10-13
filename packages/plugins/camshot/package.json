@@ -30,13 +30,13 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
-		"@types/express": "^5.0.1",
+		"@types/express": "^5.0.6",
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
 	},
 	"keywords": [
 		"camshot",
@@ -51,7 +51,7 @@
 		"camshot-plugins"
 	],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

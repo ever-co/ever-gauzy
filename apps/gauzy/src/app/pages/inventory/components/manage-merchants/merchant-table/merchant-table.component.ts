@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +24,7 @@ import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } fro
     selector: 'ga-merchant-table',
     templateUrl: './merchant-table.component.html',
     styleUrls: ['./merchant-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MerchantTableComponent extends PaginationFilterBaseComponent implements OnInit {

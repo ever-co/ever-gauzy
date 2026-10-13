@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCheckboxModule, NbBadgeModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EnabledStatusComponent } from './enabled-row.component';
 import { IconRowComponent } from './icon-row.component';
 import { ImageRowComponent } from './image-row.component';
@@ -25,7 +25,7 @@ import { DescriptionComponent } from './description/description.component';
 		NoImageComponent,
 		DescriptionComponent
 	],
-	imports: [NbCheckboxModule, NbBadgeModule, NbIconModule, CommonModule, TranslateModule.forChild(), SharedModule],
+	imports: [NbCheckboxModule, NbBadgeModule, NbIconModule, CommonModule, TranslatePipe, SharedModule],
 	exports: [NoImageComponent]
 })
 export class InventoryTableComponentsModule {}

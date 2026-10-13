@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -14,6 +14,7 @@ import { Store } from '@gauzy/ui-core/core';
 	selector: 'ngx-zapier-authorize',
 	templateUrl: './zapier-authorize.component.html',
 	styleUrls: ['./zapier-authorize.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierAuthorizeComponent extends TranslationBaseComponent implements OnInit {

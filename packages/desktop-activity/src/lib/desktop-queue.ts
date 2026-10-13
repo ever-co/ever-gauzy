@@ -1,7 +1,7 @@
 import * as Queue from 'better-queue';
 import * as path from 'path';
 import { QueueStore } from './queue-store';
-import * as isOnline from 'is-online';
+import isOnline from 'is-online';
 import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpdatePayload, TQueueName } from './i-queue';
 import { EventEmitter } from 'events';
 

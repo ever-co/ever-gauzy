@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -9,7 +9,7 @@ import {
 	NbInputModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, catchError, debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument, IDocumentLink } from '@gauzy/contracts';
@@ -38,7 +38,7 @@ const DOCUMENT_PICKER_PAGE_SIZE = 20;
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule,
+		TranslatePipe,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
@@ -47,6 +47,7 @@ const DOCUMENT_PICKER_PAGE_SIZE = 20;
 	],
 	providers: [DocumentsService],
 	templateUrl: './document-attach-dialog.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./document-attach-dialog.component.scss']
 })
 export class DocumentAttachDialogComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { combineLatest, debounceTime } from 'rxjs';
@@ -24,6 +24,7 @@ import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 	selector: 'ngx-edit-employee',
 	templateUrl: './edit-employee.component.html',
 	styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {

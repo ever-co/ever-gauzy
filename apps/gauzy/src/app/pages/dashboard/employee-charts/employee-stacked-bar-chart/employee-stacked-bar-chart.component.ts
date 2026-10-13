@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, inject, Input, OnChanges, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -97,6 +97,7 @@ import { IEmployeeChartLegendItem } from '../employee-chart-legend/employee-char
 		`
     ],
     providers: [CurrencyPipe, CurrencyPositionPipe],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeStackedBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {

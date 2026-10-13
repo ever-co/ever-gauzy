@@ -134,7 +134,7 @@
           dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
           ) {
           <ga-card-grid
-            [totalItems]="pagination?.totalItems"
+            [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
             [settings]="settingsSmartTable"
             [source]="documentList"
             [buttonTemplate]="actionButtons"

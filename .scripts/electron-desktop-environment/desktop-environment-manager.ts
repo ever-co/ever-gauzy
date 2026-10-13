@@ -1,9 +1,13 @@
 import { DesktopEnvironmentContentFactory } from './desktop-environment-content-factory';
-import { argv } from 'yargs';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import * as path from 'path';
 import * as fs from 'fs';
 import { env } from '../env';
 import { IDesktopEnvironment } from './interfaces/i-desktop-environment';
+
+// yargs 18 has no `argv` singleton: the process arguments are parsed explicitly.
+const argv = yargs(hideBin(process.argv)).parseSync();
 
 export class DesktopEnvironmentManager {
 	private static _instance: DesktopEnvironmentManager;

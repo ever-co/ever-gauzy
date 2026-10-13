@@ -15,7 +15,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
@@ -63,7 +63,7 @@ const NB_MODULES = [
 	imports: [
 		...NB_MODULES,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule,
 		SelectorsModule,
 		SharedModule,

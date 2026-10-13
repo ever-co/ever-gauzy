@@ -47,16 +47,16 @@
 									<nb-card-body class="card-body-table">
 										<div class="col-1 text-truncate">
 											<img
-												[alt]="integration?.integration?.title"
-												[src]="integration?.integration?.fullImgUrl"
-												[title]="integration?.integration?.name | replace: '_' : ' '"
+												[alt]="$safeNavigationMigration(integration?.integration?.title)"
+												[src]="$safeNavigationMigration(integration?.integration?.fullImgUrl)"
+												[title]="$safeNavigationMigration(integration?.integration?.name) | replace: '_' : ' '"
 												height="100%"
 												width="100%"
 											/>
 										</div>
 										<div class="col-4 pl-3 text-truncate">
-											@let name = integration?.name | replace: '_' : ' ';
-											@let description = getProviderDescription(integration?.integration);
+											@let name = $safeNavigationMigration(integration?.name) | replace: '_' : ' ';
+											@let description = getProviderDescription($safeNavigationMigration(integration?.integration));
 											<div class="title" [title]="name">
 												{{ name }}
 											</div>
@@ -69,7 +69,7 @@
 										</div>
 										<div class="col-2 toggle-cell">
 											<ngx-toggle-switcher
-												[value]="integration?.isActive"
+												[value]="$safeNavigationMigration(integration?.isActive)"
 												[label]="false"
 												(onSwitched)="updateIntegrationTenant(integration, $event)"
 											></ngx-toggle-switcher>

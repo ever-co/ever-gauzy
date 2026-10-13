@@ -10,7 +10,8 @@ import {
 	OnInit,
 	QueryList,
 	TemplateRef,
-	ViewChildren
+	ViewChildren,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
@@ -23,6 +24,7 @@ import { WidgetService } from '../widget/widget.service';
 	selector: 'ga-widget-layout',
 	templateUrl: './widget-layout.component.html',
 	styleUrls: ['./widget-layout.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WidgetLayoutComponent

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 	selector: 'ngx-project-edit-mutation',
 	templateUrl: './edit.component.html',
 	styleUrls: ['./edit.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProjectEditMutationComponent extends TranslationBaseComponent implements OnInit {

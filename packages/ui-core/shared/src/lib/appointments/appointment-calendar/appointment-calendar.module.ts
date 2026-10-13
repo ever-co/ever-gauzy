@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
@@ -15,7 +15,7 @@ import { TimezoneSelectorModule } from '../timezone-selector/timezone-selector.m
 const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule];
 
 @NgModule({
-	imports: [...NB_MODULES, FullCalendarModule, TranslateModule.forChild(), SharedModule, TimezoneSelectorModule],
+	imports: [...NB_MODULES, FullCalendarModule, TranslatePipe, SharedModule, TimezoneSelectorModule],
 	exports: [AppointmentCalendarComponent],
 	declarations: [AppointmentCalendarComponent],
 	providers: [EmployeeAppointmentService, AppointmentEmployeesService, AvailabilitySlotsService, TimeOffService]

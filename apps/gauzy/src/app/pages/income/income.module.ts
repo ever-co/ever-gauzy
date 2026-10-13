@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -41,7 +41,7 @@ import { IncomeRoutingModule } from './income-routing.module';
 		RecordViewModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,

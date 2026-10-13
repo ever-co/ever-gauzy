@@ -3,7 +3,7 @@
 <ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
 	@if (allowEmployee && employee?.id) {
 		<span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
-		<span> {{ employee?.fullName | truncate: 22 }} </span>
+		<span> {{ $safeNavigationMigration(employee?.fullName) | truncate: 22 }} </span>
 	}
 </ng-template>
 

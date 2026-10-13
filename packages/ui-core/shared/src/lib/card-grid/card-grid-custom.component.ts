@@ -1,17 +1,18 @@
 import {
 	Component,
-	ComponentFactoryResolver,
 	Input,
 	OnDestroy,
 	OnInit,
 	ViewChild,
-	ViewContainerRef
+	ViewContainerRef,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-custom-component',
 	template: ` <ng-template #dynamicTarget></ng-template> `,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CustomViewComponent implements OnInit, OnDestroy {
@@ -21,8 +22,6 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 	customComponent: any;
 	@ViewChild('dynamicTarget', { read: ViewContainerRef, static: true })
 	dynamicTarget: any;
-
-	constructor(private resolver: ComponentFactoryResolver) {}
 
 	ngOnInit() {
 		this.createCustomComponent();
@@ -36,8 +35,7 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 	}
 
 	protected createCustomComponent() {
-		const componentFactory = this.resolver.resolveComponentFactory(this.renderComponent);
-		this.customComponent = this.dynamicTarget.createComponent(componentFactory);
+		this.customComponent = this.dynamicTarget.createComponent(this.renderComponent);
 	}
 
 	protected patchInstance() {

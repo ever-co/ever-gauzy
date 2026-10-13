@@ -17,7 +17,7 @@
 						[hasSourceFilter]="false"
 						[hasLogTypeFilter]="false"
 						[filters]="filters"
-						[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
+						[saveFilters]="$safeNavigationMigration((datePickerConfig$ | async)?.isSaveDatePicker)"
 						(filtersChange)="filtersChange($event)"
 					></ngx-gauzy-filters>
 				</div>
@@ -79,7 +79,7 @@
 													<ng-container
 														[ngTemplateOutlet]="clientEl"
 														[ngTemplateOutletContext]="{
-															$implicit: client?.organizationContact
+															$implicit: $safeNavigationMigration(client?.organizationContact)
 														}"
 													>
 													</ng-container>
@@ -105,15 +105,15 @@
 													@switch (client.budgetType) {
 														@case (OrganizationContactBudgetTypeEnum.HOURS) {
 															<span>
-																{{ client?.spent * 3600 | durationFormat }}
+																{{ $safeNavigationMigration(client?.spent) * 3600 | durationFormat }}
 															</span>
 														}
 														@case (OrganizationContactBudgetTypeEnum.COST) {
 															<span>
 																{{
-																	client?.spent
-																		| currency: organization?.currency
-																		| position: organization?.currencyPosition
+																	$safeNavigationMigration(client?.spent)
+																		| currency: $safeNavigationMigration(organization?.currency)
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}
 															</span>
 														}
@@ -135,8 +135,8 @@
 															<span>
 																{{
 																	client.remainingBudget
-																		| currency: organization?.currency
-																		| position: organization?.currencyPosition
+																		| currency: $safeNavigationMigration(organization?.currency)
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}
 															</span>
 														}
@@ -151,15 +151,15 @@
 													@switch (client.budgetType) {
 														@case (OrganizationContactBudgetTypeEnum.HOURS) {
 															<span class="currency-span">
-																{{ client?.budget * 3600 | durationFormat }}
+																{{ $safeNavigationMigration(client?.budget) * 3600 | durationFormat }}
 															</span>
 														}
 														@case (OrganizationContactBudgetTypeEnum.COST) {
 															<span class="currency-span">
 																{{
 																	client.budget
-																		| currency: organization?.currency
-																		| position: organization?.currencyPosition
+																		| currency: $safeNavigationMigration(organization?.currency)
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}
 															</span>
 														}
@@ -167,7 +167,7 @@
 													<div class="progress-wrapper">
 														<ngx-progress-status
 															class="report-progress"
-															[percentage]="client?.spentPercentage"
+															[percentage]="$safeNavigationMigration(client?.spentPercentage)"
 															defaultStatus="success"
 														>
 														</ngx-progress-status>

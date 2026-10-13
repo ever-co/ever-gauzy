@@ -249,7 +249,9 @@ export class FeatureToggleResolver {
 
 		// Load the toggle definitions from the provider if it is enabled.
 		if (unleashConfig.url) {
-			featureToggles = getFeatureToggleDefinitions();
+			// unleash-client 6 types the definitions as its own EnhancedFeatureInterface, whose `type` is optional; the
+			// objects are the same ones the REST route returns.
+			featureToggles = (getFeatureToggleDefinitions() ?? []) as IFeatureToggleDefinition[];
 
 			// Only the platform's own features are supported; anything else the provider holds is not
 			// a capability of this installation.

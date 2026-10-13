@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, Validators } from '@angular/forms';
 import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
@@ -10,6 +10,7 @@ import { GoalSettingsService } from '@gauzy/ui-core/core';
 	selector: 'ga-keyresult-type-select',
 	templateUrl: './keyresult-type-select.component.html',
 	styleUrls: ['./keyresult-type-select.component.sass'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class KeyresultTypeSelectComponent {

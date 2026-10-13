@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
 import { IOrganizationTeamEmployee } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
@@ -7,6 +7,7 @@ import { progressStatus } from '@gauzy/ui-core/common';
     selector: 'gauzy-team-member',
     templateUrl: './team-member.component.html',
     styleUrls: ['./team-member.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TeamMemberComponent implements OnInit {

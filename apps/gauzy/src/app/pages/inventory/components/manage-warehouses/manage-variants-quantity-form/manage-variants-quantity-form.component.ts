@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.comp
 @Component({
     templateUrl: './manage-variants-quantity-form.component.html',
     styleUrls: ['./manage-variants-quantity-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ManageVariantsQuantityFormComponent extends TranslationBaseComponent implements OnInit {

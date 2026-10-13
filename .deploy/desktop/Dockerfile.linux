@@ -1,8 +1,8 @@
-FROM node:buster-slim as linux
+FROM node:26-trixie-slim AS linux
 
 RUN mkdir -p /opt/src && chown -R node:node /opt/src && \
 	apt update && apt install -y --no-install-recommends \
-	curl gnupg git libappindicator3-1 ca-certificates binutils \
+	curl gnupg git libayatana-appindicator3-1 ca-certificates binutils \
 	icnsutils graphicsmagick
 
 WORKDIR /opt/src
@@ -10,6 +10,8 @@ WORKDIR /opt/src
 COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 
 USER node:node
 

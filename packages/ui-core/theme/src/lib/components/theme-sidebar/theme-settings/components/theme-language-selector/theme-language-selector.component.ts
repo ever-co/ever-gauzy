@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap, from, concatMap } from 'rxjs';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
@@ -13,6 +13,7 @@ import { ThemeLanguageSelectorService } from './theme-language-selector.service'
 	selector: 'ngx-theme-language-selector',
 	styleUrls: ['./theme-language-selector.component.scss'],
 	templateUrl: './theme-language-selector.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterViewInit {

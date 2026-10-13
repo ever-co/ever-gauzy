@@ -8,7 +8,7 @@
   @if (!!(task$ | async)?.dueDate) {
     <div class="col-12 mb-1">
       <gauzy-task-due-date
-        [dueDate]="(task$ | async)?.dueDate"
+        [dueDate]="$safeNavigationMigration((task$ | async)?.dueDate)"
       ></gauzy-task-due-date>
     </div>
   }

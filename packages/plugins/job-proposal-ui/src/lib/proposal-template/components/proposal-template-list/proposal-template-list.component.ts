@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
@@ -47,6 +47,7 @@ export enum ProposalTemplateTabsEnum {
 	selector: 'ga-proposal-template-list',
 	templateUrl: './proposal-template-list.component.html',
 	styleUrls: ['./proposal-template-list.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProposalTemplateListComponent

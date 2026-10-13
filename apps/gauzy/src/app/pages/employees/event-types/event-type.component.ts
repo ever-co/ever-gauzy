@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -29,6 +29,7 @@ import { DEFAULT_EVENT_TYPE } from './default-event-type';
 @Component({
     templateUrl: './event-type.component.html',
     styleUrls: ['event-type.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EventTypeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

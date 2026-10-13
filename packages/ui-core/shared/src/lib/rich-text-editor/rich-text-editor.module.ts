@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RichTextEditorComponent } from './rich-text-editor.component';
 import { RichTextToolbarComponent } from './rich-text-toolbar.component';
 import { RICH_TEXT_ICON_PACK, RICH_TEXT_ICONS } from './rich-text-icons';
@@ -24,7 +24,7 @@ import { RICH_TEXT_ICON_PACK, RICH_TEXT_ICONS } from './rich-text-icons';
 		NbInputModule,
 		NbSelectModule,
 		NbTooltipModule,
-		TranslateModule
+		TranslatePipe
 	],
 	exports: [RichTextEditorComponent, RichTextToolbarComponent]
 })

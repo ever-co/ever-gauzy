@@ -1,6 +1,6 @@
 import * as expressSession from 'express-session';
 import { createClient } from 'redis';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import { environment } from '@gauzy/config';
 import { redactUrlCredentials, redactUrlErrorInput } from '../core/util/redact-credentials';
 
@@ -95,7 +95,9 @@ export async function configureRedisSession(app: any): Promise<void> {
 					host,
 					port,
 					passphrase: password,
-					keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
+					// TCP keepalive: node-redis 5+ takes the switch and the initial delay (ms) as two options
+					keepAlive: true,
+					keepAliveInitialDelay: 10_000,
 					reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
 					connectTimeout: 10_000,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'

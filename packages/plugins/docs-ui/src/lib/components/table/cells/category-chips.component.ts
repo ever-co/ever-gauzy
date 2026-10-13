@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IDocument, IDocumentCategory } from '@gauzy/contracts';
 
 /** Category chips: up to 3 colored chips + "+N" overflow. */
@@ -50,6 +50,7 @@ import { IDocument, IDocumentCategory } from '@gauzy/contracts';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CategoryChipsComponent {

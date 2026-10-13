@@ -7,7 +7,8 @@ import {
 	EventEmitter,
 	ViewChild,
 	AfterViewInit,
-	ChangeDetectorRef
+	ChangeDetectorRef,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -38,6 +39,7 @@ import { AlertModalComponent } from '../../components/alert-modal/alert-modal.co
 	templateUrl: './manage-appointment.component.html',
 	styleUrls: ['./manage-appointment.component.scss'],
 	providers: [AppointmentEmployeesService, AvailabilitySlotsService, EmployeeAppointmentService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {

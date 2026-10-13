@@ -10,7 +10,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ProductCategoryService } from '@gauzy/ui-core/core';
 import { SmartDataViewLayoutModule, CardGridModule, ProductMutationModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -30,7 +30,7 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 		NbInputModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		ProductCategoriesRoutingModule,
 		ProductMutationModule,

@@ -15,18 +15,22 @@
  * a `javascript:` URL by rewriting it to `unsafe:javascript:…` instead of deleting it, so a naive
  * `not.toContain('javascript:')` would fail on markup that is in fact inert.
  */
-import { Injector, runInInjectionContext } from '@angular/core';
+import { DOCUMENT, Injector, runInInjectionContext } from '@angular/core';
 import { DomSanitizer, ɵDomSanitizerImpl as DomSanitizerImpl } from '@angular/platform-browser';
 import { SanitizeHtmlPipe } from './sanitize-html.pipe';
 
 describe('SanitizeHtmlPipe', () => {
 	/**
-	 * The REAL Angular sanitizer, constructed directly rather than stubbed — `ɵDomSanitizerImpl`
-	 * is the exact class Angular's own root provider instantiates and takes only the document.
-	 * Testing against a stub would prove nothing about the allowlist that actually runs.
+	 * The REAL Angular sanitizer rather than a stub — `ɵDomSanitizerImpl` is the exact class
+	 * Angular's own root provider instantiates, and the document is all it needs (since Angular 22
+	 * it `inject()`s it, so the injector provides it). Testing against a stub would prove nothing
+	 * about the allowlist that actually runs.
 	 */
 	const injector = Injector.create({
-		providers: [{ provide: DomSanitizer, useValue: new DomSanitizerImpl(document) }]
+		providers: [
+			{ provide: DOCUMENT, useValue: document },
+			{ provide: DomSanitizer, useClass: DomSanitizerImpl, deps: [] }
+		]
 	});
 
 	/** Builds the pipe inside an injection context, the way Angular instantiates it. */

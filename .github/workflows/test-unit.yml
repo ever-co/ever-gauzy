@@ -62,7 +62,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
 
       - name: Restore node_modules archive
         # Best effort: the same key the build workflow writes, so a stage push that already built
@@ -111,6 +111,7 @@ jobs:
           # turns the loading off; a spec that needs a particular mode pins it itself. `.env.local`
           # stays as it is — it is the local-dev default, and nothing here needs it removed.
           NX_LOAD_DOT_ENV_FILES: 'false'
+          PARALLEL: ${{ inputs.parallel || '2' }}
         # `--nxBail=false` so one failing project still lets every other project report; without that
         # the first failure hides the rest and each fix costs another full run to find the next
         # problem. It is the real flag name — nx has no `--continue`, and an unknown option is
@@ -118,4 +119,15 @@ jobs:
         #
         # `--parallel=2` rather than the nx default of 3: jest already forks per project, and this
         # fleet has a documented history of Node heap exhaustion when several suites run at once.
-        run: yarn nx run-many -t test --nxBail=false --parallel=${{ inputs.parallel || '2' }}
+        #
+        # Two runs, because the two kinds of project need opposite Node flags (see jest.patterns.js): the Node
+        # projects load NestJS 12 and the other ESM-only dependencies as native modules, which Node offers to Jest
+        # only behind --experimental-vm-modules; the Angular projects (jest-preset-angular) break under it. Locally the
+        # `.env.test` files do the same split; they are not loaded here. Both runs always run, and the step fails if
+        # either did.
+        run: |
+          angular="$(node .github/scripts/jest-angular-projects.js)"
+          status=0
+          NODE_OPTIONS=--experimental-vm-modules yarn nx run-many -t test --exclude="$angular" --nxBail=false --parallel="$PARALLEL" || status=$?
+          yarn nx run-many -t test --projects="$angular" --nxBail=false --parallel="$PARALLEL" || status=$?
+          exit "$status"

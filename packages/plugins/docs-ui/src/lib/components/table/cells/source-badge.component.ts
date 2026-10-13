@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DocumentSourceEnum, IDocument } from '@gauzy/contracts';
 
 const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
@@ -48,6 +48,7 @@ const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SourceBadgeComponent {

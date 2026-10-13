@@ -2,7 +2,7 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { NgModule, ErrorHandler, VERSION, inject, provideAppInitializer } from '@angular/core';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
@@ -230,7 +230,7 @@ const FEATURE_MODULES = [
 
 		// ─── Framework Providers ──────────────────────────────────────────────────────
 		// Configures HttpClient to pick up class-based HTTP_INTERCEPTORS from DI.
-		provideHttpClient(withInterceptorsFromDi()),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 
 		// Registers all Chart.js defaults so ng2-charts charts render without manual imports.
 		provideCharts(withDefaultRegisterables())

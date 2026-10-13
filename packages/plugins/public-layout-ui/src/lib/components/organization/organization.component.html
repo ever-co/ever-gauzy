@@ -116,8 +116,8 @@
 													class="org-value"
 													[textContent]="
 														profits || 0
-															| currency: organization?.currency
-															| position: organization?.currencyPosition
+															| currency: $safeNavigationMigration(organization?.currency)
+															| position: $safeNavigationMigration(organization?.currencyPosition)
 													"
 												></span>
 											</h5>
@@ -188,8 +188,8 @@
 							class="org-value text-left col"
 							[textContent]="
 								totalIncome || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
+									| currency: $safeNavigationMigration(organization?.currency)
+									| position: $safeNavigationMigration(organization?.currencyPosition)
 							"
 						></span>
 					</div>
@@ -207,8 +207,8 @@
 							class="org-value col text-left"
 							[textContent]="
 								bonusesPaid || 0
-									| currency: organization?.currency
-									| position: organization?.currencyPosition
+									| currency: $safeNavigationMigration(organization?.currency)
+									| position: $safeNavigationMigration(organization?.currencyPosition)
 							"
 						></span>
 					</div>
@@ -368,7 +368,7 @@
 												<div>
 													<div class="avatar has-aura">
 														<a>
-															<img [src]="employee?.user?.imageUrl" />
+															<img [src]="$safeNavigationMigration(employee?.user?.imageUrl)" />
 														</a>
 													</div>
 												</div>
@@ -466,7 +466,7 @@
 																{{
 																	employee.billRateValue
 																		| currency: employee.billRateCurrency : 'symbol'
-																		| position: organization?.currencyPosition
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}/hr
 															</div>
 														}
@@ -577,14 +577,14 @@
 			@for (client of clients; track client; let last = $last) {
 				<nb-list-item class="search-result" [class.border-bottom]="!last">
 					<div class="avatar has-aura">
-						<img [src]="client?.imageUrl" />
+						<img [src]="$safeNavigationMigration(client?.imageUrl)" />
 					</div>
 					<div class="main-details">
 						{{ client?.name }}
 					</div>
 					@if (hasEditPublicPage$ | async) {
 						<div class="specialty">
-							<gauzy-email [rowData]="{ email: client?.primaryEmail }"></gauzy-email>
+							<gauzy-email [rowData]="{ email: $safeNavigationMigration(client?.primaryEmail) }"></gauzy-email>
 						</div>
 					}
 				</nb-list-item>

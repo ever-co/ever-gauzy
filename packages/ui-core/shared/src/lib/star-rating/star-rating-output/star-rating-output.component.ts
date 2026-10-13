@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 export enum StarsIcon {
 	FILLED = 'star',
@@ -10,6 +10,7 @@ export enum StarsIcon {
     selector: 'ga-star-rating-output',
     templateUrl: './star-rating-output.component.html',
     styleUrls: ['./star-rating-output.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class StarRatingOutputComponent {

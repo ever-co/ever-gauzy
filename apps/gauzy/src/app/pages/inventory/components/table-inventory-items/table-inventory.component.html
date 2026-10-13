@@ -46,7 +46,7 @@
 		} @else {
 			<ga-card-grid
 				[loading]="loading"
-				[totalItems]="pagination?.totalItems"
+				[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 				[settings]="settingsSmartTable"
 				[source]="products"
 				(scroll)="onScroll()"
@@ -56,7 +56,7 @@
 		<ng-template #gridLayout>
 			<ga-card-grid
 				[loading]="loading"
-				[totalItems]="pagination?.totalItems"
+				[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 				[settings]="settingsSmartTable"
 				[source]="products"
 				(scroll)="onScroll()"

@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { CurrencyModule } from '../../modules/currency/currency.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
@@ -50,7 +50,7 @@ import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.mo
 		ColorPickerComponent,
 		ColorPickerDirective,
 		SharedModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		CurrencyModule,
 		EmployeeMultiSelectModule,
 		ImageUploaderModule,
