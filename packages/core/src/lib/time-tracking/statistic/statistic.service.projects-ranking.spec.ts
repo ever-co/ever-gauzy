@@ -126,8 +126,8 @@ describe('StatisticService.getOverallTrackedTime', () => {
 	});
 
 	it('MikroORM: sums the non-deleted time logs without joining their slots', async () => {
-		const calls: string[] = [];
-		const knexBuilder: Record<string, jest.Mock> = {};
+		let calls: string[] = [];
+		let knexBuilder: Record<string, jest.Mock> = {};
 		for (const method of ['select', 'whereNull', 'innerJoin']) {
 			knexBuilder[method] = jest.fn((...args: unknown[]) => {
 				calls.push(`${method}:${String(args[0])}`);
