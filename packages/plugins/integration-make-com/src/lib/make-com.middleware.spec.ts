@@ -1,3 +1,8 @@
+// Only the injected service's type is needed: keep the rest of @gauzy/core (database, seeds) out of this test
+jest.mock('@gauzy/core', () => ({
+	IntegrationTenantService: class IntegrationTenantService {}
+}));
+
 import { MakeComMiddleware } from './make-com.middleware';
 
 /**
