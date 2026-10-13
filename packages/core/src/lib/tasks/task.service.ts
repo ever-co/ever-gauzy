@@ -183,7 +183,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
-				await this.syncTaskMentions(id, mentionEmployeeIds, task.organizationId);
+				// The saved organization: the edit may have moved the task to another one
+				await this.syncTaskMentions(id, mentionEmployeeIds, updatedTask.organizationId ?? task.organizationId);
 			}
 
 			const { organizationId } = updatedTask;
