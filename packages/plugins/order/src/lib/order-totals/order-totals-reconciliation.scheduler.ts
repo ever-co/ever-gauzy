@@ -96,27 +96,38 @@ export class OrderTotalsReconciliationScheduler {
 	 */
 	private reportDrift(report: IOrderTotalsAuditReport): void {
 		const examined = `${report.examined} order(s) touched in the last ${report.windowDays} day(s)`;
+		const failed = report.failed ?? [];
+
+		// **The orders a pass could not examine are reported whatever else it found.** They used to be
+		// written only inside the drift branch, so a run in which nothing drifted — including a run in which
+		// every examination failed — printed "no drift" and nothing else, and the one line an operator reads
+		// said the opposite of what the report held. A failed order is not an order found in agreement.
+		const unexamined = failed.length > 0 ? `; ${failed.length} could not be examined` : '';
 
 		if (report.drifted.length === 0) {
-			this.logger.log(`Order totals reconciliation examined ${examined}; no drift.`);
+			if (failed.length === 0) {
+				this.logger.log(`Order totals reconciliation examined ${examined}; no drift.`);
+			} else {
+				this.logger.error(
+					`Order totals reconciliation examined ${examined}; none of the orders it could read drifted${unexamined}.`
+				);
+			}
+		} else {
+			this.logger.warn(
+				`Order totals reconciliation examined ${examined} and found ${report.drifted.length} order(s) whose ` +
+					`derived columns disagree with their ledgers; repaired ${report.repaired.length}${unexamined}.`
+			);
 
-			return;
+			for (const drift of report.drifted) {
+				const columns = drift.columns
+					.map((column) => `${column}: stored ${drift.stored[column]}, derived ${drift.derived[column]}`)
+					.join('; ');
+
+				this.logger.warn(`Order ${drift.orderId} drifted — ${columns}.`);
+			}
 		}
 
-		this.logger.warn(
-			`Order totals reconciliation examined ${examined} and found ${report.drifted.length} order(s) whose ` +
-				`derived columns disagree with their ledgers; repaired ${report.repaired.length}.`
-		);
-
-		for (const drift of report.drifted) {
-			const columns = drift.columns
-				.map((column) => `${column}: stored ${drift.stored[column]}, derived ${drift.derived[column]}`)
-				.join('; ');
-
-			this.logger.warn(`Order ${drift.orderId} drifted — ${columns}.`);
-		}
-
-		for (const failure of report.failed) {
+		for (const failure of failed) {
 			this.logger.error(`Order ${failure.orderId} could not be examined: ${failure.message}`);
 		}
 	}
