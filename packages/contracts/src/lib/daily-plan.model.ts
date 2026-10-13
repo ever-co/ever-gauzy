@@ -17,6 +17,7 @@ export interface IDailyPlanBase extends IBasePerTenantAndOrganizationEntityModel
 
 export interface IDailyPlan extends IDailyPlanBase, IEmployeeEntityInput, IRelationalOrganizationTeam {
 	tasks?: ITask[];
+	taskOrder?: ID[] | null;
 }
 
 export interface IDailyPlanCreateInput extends IDailyPlanBase, IEmployeeEntityInput, IRelationalOrganizationTeam {
@@ -26,7 +27,9 @@ export interface IDailyPlanCreateInput extends IDailyPlanBase, IEmployeeEntityIn
 export interface IDailyPlanUpdateInput
 	extends Partial<IDailyPlanBase>,
 		Pick<IDailyPlanCreateInput, 'employeeId'>,
-		Partial<Pick<IRelationalOrganizationTeam, 'organizationTeamId'>> {}
+		Partial<Pick<IRelationalOrganizationTeam, 'organizationTeamId'>> {
+	taskOrder?: IDailyPlan['taskOrder'];
+}
 
 export interface IGetDailyPlansByTeamInput extends IBaseRelationsEntityModel, IBasePerTenantAndOrganizationEntityModel {
 	teamIds?: ID[];

@@ -98,6 +98,7 @@ function surfaces() {
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		getMaxTaskNumberByProject: jest.fn().mockResolvedValue(12),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
+		deleteTask: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-03-02T10:00:00.000Z') }),
 		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
 		findByNumber: jest.fn().mockResolvedValue(ROWS[0]),
@@ -456,7 +457,9 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 		const { resolver, taskService } = surfaces();
 
 		expect(await resolver.deleteTask(PICKING)).toBe(true);
-		expect(taskService.delete).toHaveBeenCalledWith(PICKING);
+		// The method the route calls, which lets a team manager without the delete grant delete only their teams' tasks.
+		expect(taskService.deleteTask).toHaveBeenCalledWith(PICKING);
+		expect(taskService.delete).not.toHaveBeenCalled();
 
 		expect(await resolver.unassignEmployeeFromTeamTasks(EMPLOYEE, TEAM)).toBe(true);
 		expect(taskService.unassignEmployeeFromTeamTasks).toHaveBeenCalledWith(EMPLOYEE, TEAM);
@@ -538,7 +541,7 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 	it('surfaces a refusal as a 4xx that is not a 404', async () => {
 		const { resolver, taskService } = surfaces();
 		const refusal = new Error('TASK_NOT_EDITABLE: the task could not be written.');
-		taskService.delete.mockRejectedValueOnce(refusal);
+		taskService.deleteTask.mockRejectedValueOnce(refusal);
 
 		await expect(resolver.deleteTask(PICKING)).rejects.toBe(refusal);
 	});
@@ -592,7 +595,8 @@ describe('TaskResolver — the guard stack and the permission are the controller
 		]);
 		expect(permissionOfField('deleteTask')).toEqual([
 			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.ORG_TASK_DELETE
+			PermissionsEnum.ORG_TASK_DELETE,
+			PermissionsEnum.ORG_TASK_EDIT
 		]);
 		expect(permissionOfField('unassignEmployeeFromTeamTasks')).toEqual([
 			PermissionsEnum.ALL_ORG_EDIT,

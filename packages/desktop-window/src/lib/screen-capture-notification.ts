@@ -1,4 +1,4 @@
-import { screen } from 'electron';
+import { Display, screen } from 'electron';
 import {
 	IBaseWindow,
 	BaseWindow,
@@ -6,6 +6,7 @@ import {
 	DefaultWindow,
 	WindowConfig,
 	RegisteredWindow,
+	localStore,
 	store
 } from '@gauzy/desktop-core';
 
@@ -38,7 +39,7 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 					center: false, // Prevents the window from being centered
 					focusable: false, // Makes the window non-focusable
 					skipTaskbar: true, // Excludes the window from the taskbar
-					...ScreenCaptureNotification.primaryDisplayPosition(), // Top-right corner of the primary display
+					...ScreenCaptureNotification.notificationPosition(), // Top-right corner of the chosen display
 					...(preloadPath
 						? {
 								webPreferences: {
@@ -87,8 +88,8 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 		// The position was computed when the window was created. Displays get re-arranged while the
 		// app runs (sleep/wake, a monitor plugged in or out, a new primary), after which the window
 		// stayed on whatever monitor that old position now falls into (#7538): put it back on the
-		// primary display every time it is shown.
-		const { x, y } = ScreenCaptureNotification.primaryDisplayPosition();
+		// chosen display every time it is shown.
+		const { x, y } = ScreenCaptureNotification.notificationPosition();
 		this.browserWindow.setPosition(x, y);
 
 		// Display the browser window in an inactive state
@@ -102,17 +103,28 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 	}
 
 	/**
-	 * Top-right corner of the primary display's work area, 16 px from its edges.
+	 * Top-right corner of the work area of the notification's display, 16 px from its edges.
 	 *
-	 * Uses the work area's own origin: the primary display is not always at (0, 0) in the virtual
-	 * screen, and `size.width` alone landed the window on a neighbouring monitor in that case.
+	 * Uses the work area's own origin: a display is not always at (0, 0) in the virtual screen, and
+	 * `size.width` alone landed the window on a neighbouring monitor in that case.
 	 */
-	private static primaryDisplayPosition(): { x: number; y: number } {
-		const { workArea } = screen.getPrimaryDisplay();
+	private static notificationPosition(): { x: number; y: number } {
+		const { workArea } = ScreenCaptureNotification.notificationDisplay();
 		return {
 			x: workArea.x + workArea.width - (ScreenCaptureNotification.WIDTH + 16),
 			y: workArea.y + 16
 		};
+	}
+
+	/**
+	 * The display the notification is shown on: the one chosen in the settings
+	 * (`screenshotNotificationDisplayId`) while it is connected, otherwise the primary display.
+	 */
+	private static notificationDisplay(): Display {
+		const chosenId = localStore.applicationSettingService.find()?.screenshotNotificationDisplayId;
+		const chosen =
+			chosenId == null ? undefined : screen.getAllDisplays().find((display) => display.id === chosenId);
+		return chosen ?? screen.getPrimaryDisplay();
 	}
 
 	/**

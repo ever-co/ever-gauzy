@@ -66,6 +66,23 @@ extend type Query {
 	): RoleConnection!
 
 	"""
+	The roles a team manager may give a team member: the employee and manager roles of the caller's
+	tenant, which is what `GET /roles/team-assignable` answers, in the order and under the page protocol
+	of `tenantRoles`. The route reads live rows only, so `withDeleted` is not offered.
+	"""
+	teamAssignableRoles(
+		filter: RoleFilter
+		sort: [RoleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): RoleConnection!
+
+	"""
 	The role the delivered options look-up answers, or null when this tenant has none.
 
 	`name` is the only member the route's own query DTO narrows by, and it defaults to the employee
