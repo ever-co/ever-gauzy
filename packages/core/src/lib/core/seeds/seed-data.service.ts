@@ -1678,11 +1678,14 @@ export class SeedDataService {
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
-			// Settles either way, as rimraf 3's callback did: a failed cleanup never stopped the seed.
-			removeGeneratedFiles(dir).finally(() => {
-				this.log(chalk.green(`✅ CLEANED UP`));
-				resolve(true);
-			});
+			// A failed cleanup never stops the seed, as with rimraf 3's callback. The rejection is handled
+			// here: `finally()` would hand it on to a promise nobody awaits, and Node ends the process on that.
+			removeGeneratedFiles(dir)
+				.then(
+					() => this.log(chalk.green(`✅ CLEANED UP`)),
+					(error) => this.log(chalk.yellow(`⚠ COULD NOT CLEAN UP ${dir}: ${error?.message ?? error}`))
+				)
+				.then(() => resolve(true));
 		});
 	}
 

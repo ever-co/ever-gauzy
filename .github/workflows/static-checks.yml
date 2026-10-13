@@ -73,7 +73,7 @@ jobs:
       # and S8543). Exact version, no scripts, no lockfile writes, and into RUNNER_TEMP so it
       # cannot disturb the checkout. It is also faster: ~4s to install against ~37s for npx.
       - name: Install TypeScript
-        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/tsc" typescript@5.9.3
+        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/tsc" typescript@6.0.3
 
       - name: Type-check every jest.config.ts
         run: |

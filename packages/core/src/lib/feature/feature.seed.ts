@@ -165,7 +165,7 @@ async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationP
 
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
 
-	await new Promise((resolve, reject) => {
+	await new Promise((resolve) => {
 		// Determine directories based on environment
 		const isElectron = env.isElectron;
 
@@ -180,14 +180,13 @@ async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationP
 		console.log('Feature Cleaner -> dir: ' + dir);
 
 		// delete old generated report image
-		removeGeneratedFiles(dir).then(
-			() => {
-				console.log(chalk.green(`CLEANED UP FEATURE IMAGES`));
-				resolve(null);
-			},
-			() => {
-				reject(null);
-			}
-		);
+		// A failed cleanup never stopped the seed (rimraf 3 called the success handler either way); it still does not.
+		removeGeneratedFiles(dir)
+			.then(
+				() => console.log(chalk.green(`CLEANED UP FEATURE IMAGES`)),
+				(error) =>
+					console.error(chalk.red(`FAILED TO CLEAN FEATURE IMAGES: ${dir}: ${error?.message ?? error}`))
+			)
+			.then(() => resolve(null));
 	});
 }

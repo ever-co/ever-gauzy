@@ -131,7 +131,8 @@ export class DesktopIconGenerator
 						}
 					]);
 					imgJimp.greyscale();
-					imgJimp.brightness(-0.1);
+					// jimp 1 multiplies each channel by the value; 0.22's -0.1 meant the same 90% (a -0.1 now gives black).
+					imgJimp.brightness(0.9);
 				}
 				await imgJimp.write(path.join(pngFilePath, icon) as `${string}.png`);
 				console.log(`✔ tray icon ${icon} generated successfully.`);

@@ -187,7 +187,7 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
 
-	await new Promise((resolve, reject) => {
+	await new Promise((resolve) => {
 		// Determine directories based on environment
 		const isElectron = env.isElectron;
 
@@ -202,15 +202,13 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
 		console.log('Report Cleaner -> assetPublicPath: ' + dir);
 
 		// delete old generated report image
-		removeGeneratedFiles(dir).then(
-			() => {
-				console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
-				resolve(null);
-			},
-			() => {
-				reject(null);
-			}
-		);
+		// A failed cleanup never stopped the seed (rimraf 3 called the success handler either way); it still does not.
+		removeGeneratedFiles(dir)
+			.then(
+				() => console.log(chalk.green(`CLEANED UP REPORT IMAGES`)),
+				(error) => console.error(chalk.red(`FAILED TO CLEAN REPORT IMAGES: ${dir}: ${error?.message ?? error}`))
+			)
+			.then(() => resolve(null));
 	});
 }
 

@@ -53,8 +53,8 @@ const { transformIgnorePatterns, nodeTransformIgnorePatterns } = require('./jest
 
 // Which variant applies follows from how THIS process loads ES modules, not from the kind of project: with the flag
 // (`vm.SourceTextModule` exists) Jest evaluates every `.mjs` and every `"type": "module"` package as an ES module,
-// so compiling one to CommonJS breaks it, and the Node variant leaves them alone. A Node project that does not
-// restate the key (about half of them) gets the right one by inheriting it; without the flag, the list above.
+// so compiling one to CommonJS breaks it, and the Node variant leaves them alone. Every project inherits the key
+// (none restates it); without the flag, the list above.
 const loadsEsModulesNatively = typeof vm.SourceTextModule === 'function';
 
 module.exports = {

@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 
 const root = process.cwd();
-const projects = [];
+let projects = [];
 const walk = (dir) => {
 	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
 		if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name.startsWith('.')) continue;
@@ -25,8 +25,8 @@ const walk = (dir) => {
 };
 for (const top of ['apps', 'packages']) walk(path.join(root, top));
 
-const angular = [];
-const missingEnv = [];
+let angular = [];
+let missingEnv = [];
 for (const file of projects) {
 	const project = JSON.parse(fs.readFileSync(file, 'utf8'));
 	const jestConfig = project.targets?.test?.options?.jestConfig;

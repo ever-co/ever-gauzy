@@ -20,8 +20,12 @@
  * under it, Jest would evaluate every `.mjs` bundle as an ES module after jest-preset-angular compiled it to CommonJS
  * ("module is not defined" in `setup-env/zone`, and every Angular suite failed to load).
  *
- * A project's own `transformIgnorePatterns` REPLACES the preset's, so a Node project that sets the key takes it from
- * here rather than restating the list.
+ * No project sets the key: `jest.preset.js` picks the variant, and a project's own `transformIgnorePatterns` would
+ * REPLACE the preset's.
+ *
+ * Nx loads a `.env.test` value only when the variable is not set yet, so a `NODE_OPTIONS` that is already set wins
+ * over both files: `yarn ng test <node project>` (the `ng` script sets a heap size) runs WITHOUT the flag and the
+ * suites fail to load NestJS. Run them with `yarn nx test <project>`, or add the flag to your own NODE_OPTIONS.
  */
 const ESM_PACKAGES = String.raw`(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios|@datorama|@ngneat|lodash-es|d3-[a-z-]+|internmap|jose|marked|hash-it)/`;
 

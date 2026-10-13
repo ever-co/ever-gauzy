@@ -153,19 +153,13 @@ export async function cleanAssets(config: Partial<ApplicationPluginConfig>, dest
 		? path.resolve(env.gauzyUserPath, 'public', destDir) // Electron-specific path
 		: path.join(config.assetOptions.assetPublicPath, destDir); // Standard path for other environments
 
-	// Delete old files in the directory except for `rimraf` and `.gitkeep`
-	await new Promise((resolve, reject) => {
-		removeGeneratedFiles(dir).then(
-			() => {
-				console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`));
-				resolve(null); // Resolve on successful cleanup
-			},
-			() => {
-				console.error(chalk.red(`FAILED TO CLEAN EVER ICONS: ${dir}`));
-				reject(null); // Reject on failure
-			}
-		);
-	});
+	// Delete old files in the directory except for `rimraf` and `.gitkeep`.
+	// A failed cleanup never stopped the seed: rimraf 3 took the failure handler for its options argument and called
+	// the success one either way. It still does not, now with the failure logged.
+	await removeGeneratedFiles(dir).then(
+		() => console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`)),
+		(error) => console.error(chalk.red(`FAILED TO CLEAN EVER ICONS: ${dir}: ${error?.message ?? error}`))
+	);
 }
 
 /**

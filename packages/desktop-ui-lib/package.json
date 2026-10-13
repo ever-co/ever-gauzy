@@ -91,7 +91,7 @@
 		"electron-angular"
 	],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false
