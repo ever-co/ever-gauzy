@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import {
 	Money,
 	MultiORMEnum,
+	addDecimalStrings,
 	RequestContext,
 	STORAGE_SCALE,
 	compareDecimalStrings,
@@ -67,6 +68,127 @@ const RETURN_COUNTERS = {
 
 /** One of the counters above. */
 type ReturnCounter = (typeof RETURN_COUNTERS)[keyof typeof RETURN_COUNTERS];
+
+/**
+ * The half of doc 10 invariant I-12 one move of one counter can break, and what a refusal of it is called.
+ *
+ * I-12 is `returnReceivedQuantity + returnDismissedQuantity <= returnRequestedQuantity <= fulfilledQuantity`:
+ * what came back or was let off is bounded by what was asked back, and what was asked back is bounded by
+ * what left the building. It was stated by the design and enforced by nothing — no `CHECK`, no service
+ * guard, no test — so it held only as long as every writer happened to keep it, and a writer that did not
+ * (a receipt against a return the counter never counted, an `ITEM_RETURN` asking back more than shipped)
+ * left the order describing goods that do not exist.
+ *
+ * **Only the half a move can break is checked, and only in the direction that can break it.** A receipt
+ * raises the received counter, so it may not take received + dismissed past requested; taking it back
+ * lowers the left-hand side and can only help. A request raised may not pass what was fulfilled; a request
+ * withdrawn may not fall below what already came back. Checking the whole invariant on every move would
+ * refuse the moves that repair a line already outside it — a compensation, or the withdrawal of a return
+ * recorded before the requested counter had a writer — and a guard that blocks its own repair turns a
+ * stale row into a stuck one.
+ *
+ * The condition is part of the statement's `WHERE`, beside the floor, so the check and the write are one
+ * statement the database serialises rather than a read that a concurrent move can overtake.
+ */
+interface IReturnInvariantHalf {
+	/** The comparison, written over the moved value, as the statement's extra condition. */
+	condition: string;
+	/** The code the refusal is raised with. */
+	code: string;
+	/** Whether the line as it now stands, moved by the delta, is outside this half. */
+	breaks: (line: Record<string, DecimalString>, moved: DecimalString) => boolean;
+	/** What the refusal says. */
+	explain: (line: Record<string, DecimalString>, moved: DecimalString) => string;
+}
+
+/**
+ * @param counter The counter a move changes.
+ * @param rising Whether the move raises it.
+ * @param moved The moved value, as the statement spells it.
+ * @param q The dialect's identifier quoting.
+ * @returns The half of I-12 the move can break, or `null` when it can break none.
+ */
+function returnInvariantHalf(
+	counter: ReturnCounter,
+	rising: boolean,
+	moved: string,
+	q: (identifier: string) => string
+): IReturnInvariantHalf | null {
+	const received = q(RETURN_COUNTERS.received.column);
+	const dismissed = q(RETURN_COUNTERS.dismissed.column);
+	const requested = q(RETURN_COUNTERS.requested.column);
+	const fulfilled = q('fulfilledQuantity');
+	// Every side is rounded at the column's scale: SQLite holds a `numeric(20,6)` with a fraction as a binary
+	// float, and `0.1 + 0.2` compared with `0.3` there is false. On the two dialects that hold the columns as
+	// exact decimals the rounding is a no-op.
+	const sum = (a: string, b: string) => `ROUND(${a} + ${b}, 6)`;
+	const exact = (column: string) => `ROUND(${column}, 6)`;
+	const value = (line: Record<string, DecimalString>, column: string) => normalizeDecimalString(line[column] ?? 0);
+	const returned = (line: Record<string, DecimalString>, moved: DecimalString, which: 'received' | 'dismissed') =>
+		addDecimalStrings(
+			which === 'received' ? moved : value(line, RETURN_COUNTERS.received.column),
+			which === 'dismissed' ? moved : value(line, RETURN_COUNTERS.dismissed.column)
+		);
+
+	if (counter === RETURN_COUNTERS.received || counter === RETURN_COUNTERS.dismissed) {
+		if (!rising) {
+			return null;
+		}
+
+		const which = counter === RETURN_COUNTERS.received ? 'received' : 'dismissed';
+
+		return {
+			condition:
+				which === 'received'
+					? `${sum(moved, dismissed)} <= ${exact(requested)}`
+					: `${sum(received, moved)} <= ${exact(requested)}`,
+			code: 'ORDER_LINE_RETURNED_EXCEEDS_REQUESTED',
+			breaks: (line, after) =>
+				compareDecimalStrings(returned(line, after, which), value(line, RETURN_COUNTERS.requested.column)) > 0,
+			explain: (line, after) =>
+				`the line would have ${normalizeDecimalString(returned(line, after, which))} units received or dismissed ` +
+				`from return against ${value(line, RETURN_COUNTERS.requested.column)} requested for return, and doc 10 ` +
+				`I-12 bounds what came back by what was asked back`
+		};
+	}
+
+	if (counter === RETURN_COUNTERS.requested) {
+		if (rising) {
+			return {
+				condition: `${moved} <= ${exact(fulfilled)}`,
+				code: 'ORDER_LINE_RETURN_REQUEST_EXCEEDS_FULFILLED',
+				breaks: (line, after) => compareDecimalStrings(after, value(line, 'fulfilledQuantity')) > 0,
+				explain: (line, after) =>
+					`the line would have ${normalizeDecimalString(after)} units requested for return against ` +
+					`${value(line, 'fulfilledQuantity')} fulfilled, and doc 10 I-12 bounds what is asked back by what ` +
+					`left the building`
+			};
+		}
+
+		return {
+			condition: `${sum(received, dismissed)} <= ${moved}`,
+			code: 'ORDER_LINE_RETURN_REQUEST_BELOW_RETURNED',
+			breaks: (line, after) =>
+				compareDecimalStrings(
+					addDecimalStrings(
+						value(line, RETURN_COUNTERS.received.column),
+						value(line, RETURN_COUNTERS.dismissed.column)
+					),
+					after
+				) > 0,
+			explain: (line, after) =>
+				`the line would have ${normalizeDecimalString(after)} units requested for return against ` +
+				`${normalizeDecimalString(
+					addDecimalStrings(
+						value(line, RETURN_COUNTERS.received.column),
+						value(line, RETURN_COUNTERS.dismissed.column)
+					)
+				)} already received or dismissed, and doc 10 I-12 bounds what came back by what was asked back`
+		};
+	}
+
+	return null;
+}
 
 /** The order a move is confined to, as the scoped read of it answered. */
 interface IOrderScope {
@@ -232,7 +354,8 @@ export class OrderLineFulfillmentService {
 	 * @param orderId The order whose lines are moved, and the scope the write is checked in.
 	 * @param moves One entry per order line this delivery touched. An empty list moves nothing.
 	 * @throws BadRequestException when no order was named, a delta is not exact, or a move would take a
-	 * counter below zero.
+	 * counter below zero — or, with `ORDER_LINE_RETURNED_EXCEEDS_REQUESTED`, would leave the line having
+	 * received and dismissed more than was requested for return (doc 10 I-12, see `returnInvariantHalf`).
 	 * @throws NotFoundException when the order, or a named line of it, is not the caller's.
 	 */
 	public async recordReturnReceipt(orderId: ID, moves: readonly IOrderLineReceiptMove[]): Promise<void> {
@@ -255,7 +378,9 @@ export class OrderLineFulfillmentService {
 	 * @param orderId The order whose lines are moved, and the scope the write is checked in.
 	 * @param moves One entry per order line whose requested quantity changed. An empty list moves nothing.
 	 * @throws BadRequestException when no order was named, a delta is not exact, or a move would take a
-	 * counter below zero.
+	 * counter below zero — or would leave the line outside doc 10 I-12: a request raised past what was
+	 * fulfilled (`ORDER_LINE_RETURN_REQUEST_EXCEEDS_FULFILLED`), or withdrawn below what already came back
+	 * (`ORDER_LINE_RETURN_REQUEST_BELOW_RETURNED`).
 	 * @throws NotFoundException when the order, or a named line of it, is not the caller's.
 	 */
 	public async recordReturnRequest(orderId: ID, moves: readonly IOrderLineReturnRequestMove[]): Promise<void> {
@@ -275,7 +400,8 @@ export class OrderLineFulfillmentService {
 	 * @param orderId The order whose lines are moved, and the scope the write is checked in.
 	 * @param moves One entry per order line whose dismissed quantity changed. An empty list moves nothing.
 	 * @throws BadRequestException when no order was named, a delta is not exact, or a move would take a
-	 * counter below zero.
+	 * counter below zero — or, with `ORDER_LINE_RETURNED_EXCEEDS_REQUESTED`, would leave the line having
+	 * received and dismissed more than was requested for return (doc 10 I-12).
 	 * @throws NotFoundException when the order, or a named line of it, is not the caller's.
 	 */
 	public async recordReturnDismissal(orderId: ID, moves: readonly IOrderLineReceiptMove[]): Promise<void> {
@@ -398,7 +524,11 @@ export class OrderLineFulfillmentService {
 	 *   counter that is exactly empty — and the rounding is a no-op on the two dialects that hold the
 	 *   column as an exact decimal;
 	 * - the floor is part of the `WHERE`, so a move that would take the counter below zero changes no
-	 *   row rather than being checked against a value read earlier.
+	 *   row rather than being checked against a value read earlier;
+	 * - so is the half of doc 10 I-12 the move can break (`returnInvariantHalf`): a receipt or a dismissal
+	 *   raised past what was requested, or a request raised past what was fulfilled or withdrawn below what
+	 *   came back, changes no row either. The written-off counter is not part of I-12 and carries the floor
+	 *   alone.
 	 *
 	 * @param counter The counter to move.
 	 * @param scope The order the line must belong to, and its tenant and organization.
@@ -415,11 +545,15 @@ export class OrderLineFulfillmentService {
 		const q = quoteIdentifier;
 		const column = q(counter.column);
 		const moved = `ROUND(${column} + CAST(:delta AS DECIMAL(20,6)), 6)`;
+		// The half of doc 10 I-12 this move can break rides the same `WHERE` as the floor (see
+		// `returnInvariantHalf`), so a move that would leave the line outside it changes no row.
+		const invariant = returnInvariantHalf(counter, !delta.startsWith('-'), moved, q);
 		const sql =
 			`UPDATE ${q('order_line')} SET ${column} = ${moved} ` +
 			`WHERE ${q('id')} = :orderLineId AND ${q('orderId')} = :orderId ` +
 			`AND ${q('tenantId')} = :tenantId AND ${q('organizationId')} = :organizationId ` +
-			`AND ${q('deletedAt')} IS NULL AND ${moved} >= 0`;
+			`AND ${q('deletedAt')} IS NULL AND ${moved} >= 0` +
+			(invariant ? ` AND ${invariant.condition}` : '');
 
 		return await this.execute(sql, {
 			delta,
@@ -459,11 +593,39 @@ export class OrderLineFulfillmentService {
 			);
 		}
 
-		const held = this.quantityOf((line as unknown as Record<string, number | DecimalString>)[counter.column]);
+		const counters = line as unknown as Record<string, number | DecimalString>;
+		const held = this.quantityOf(counters[counter.column]);
+		const after = normalizeDecimalString(addDecimalStrings(held, move.delta));
 
-		throw new BadRequestException(
-			`${counter.belowZero}: moving line ${move.orderLineId} by ${normalizeDecimalString(move.delta)} would ` +
-				`take the ${held} units ${counter.noun} below zero, and a line cannot hold less than nothing.`
+		if (compareDecimalStrings(after, '0') < 0) {
+			throw new BadRequestException(
+				`${counter.belowZero}: moving line ${move.orderLineId} by ${normalizeDecimalString(move.delta)} would ` +
+					`take the ${held} units ${counter.noun} below zero, and a line cannot hold less than nothing.`
+			);
+		}
+
+		// The quantities I-12 is stated over, read as the exact decimals the statement compared.
+		const read = Object.fromEntries(
+			[...Object.values(RETURN_COUNTERS).map(({ column }) => column), 'fulfilledQuantity'].map((column) => [
+				column,
+				this.quantityOf(counters[column])
+			])
+		) as Record<string, DecimalString>;
+		const invariant = returnInvariantHalf(counter, !move.delta.startsWith('-'), '', quoteIdentifier);
+
+		if (invariant?.breaks(read, after)) {
+			throw new BadRequestException(
+				`${invariant.code}: moving line ${move.orderLineId} by ${normalizeDecimalString(move.delta)} is refused: ` +
+					`${invariant.explain(read, after)}.`
+			);
+		}
+
+		// The statement refused a move the line, read a moment later, would accept: another move of the same
+		// line landed in between. Nothing was written, and the caller is told to read again rather than handed
+		// a reason that is no longer true.
+		throw new ConflictException(
+			`ORDER_LINE_COUNTER_CONFLICT: moving line ${move.orderLineId} by ${normalizeDecimalString(move.delta)} was ` +
+				`refused while the line was being moved by another write; read the order again and retry.`
 		);
 	}
 

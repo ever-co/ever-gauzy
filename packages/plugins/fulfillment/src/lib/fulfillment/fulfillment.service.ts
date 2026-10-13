@@ -11,6 +11,7 @@ import {
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
+	DecimalString,
 	FulfillmentDirection,
 	FulfillmentStatusDetail,
 	ID,
@@ -517,6 +518,10 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			});
 		}
 
+		if (current.direction !== FulfillmentDirection.RETURN) {
+			await this.assertNotRequestedForReturn(current);
+		}
+
 		const { fulfillment } = await this.move(fulfillmentId, FulfillmentStatusDetail.CANCELED, expectation, {
 			canceledAt: new Date(),
 			metadata: { ...(current.metadata ?? {}), ...(reason ? { cancelReason: reason } : {}) }
@@ -975,6 +980,53 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				// refused it against, which is the least helpful thing a refusal about a boundary can do.
 				details: { orderLineId, requested, outstanding }
 			});
+		}
+	}
+
+	/**
+	 * Refuses a cancelation that would leave an order line with more asked back than it fulfilled.
+	 *
+	 * Doc 10 invariant I-12 bounds `returnRequestedQuantity` by `fulfilledQuantity`. The order package refuses a
+	 * request raised past what was fulfilled (`OrderLineFulfillmentService`); this is the same half from the
+	 * other side. A return is measured against what was fulfilled, and a pending shipment counts as fulfilled
+	 * from the moment it is created — so the units a return asks back can rest on a shipment that is still
+	 * cancelable, and giving them back would leave the line asking back goods it never sent.
+	 *
+	 * It is checked before the shipment moves, so a refusal leaves the shipment, its counters and the order
+	 * exactly as they were. The check reads the line and compares; it is not one statement with the counter
+	 * move, which on this path is a read and a write of its own (`bumpOrderLineCounters`), so a return raised
+	 * between the two is not seen — the order package's own guard refuses the reverse race, a request raised
+	 * after the cancelation, and the nightly reconciliation reads both counters.
+	 *
+	 * @param fulfillment The outbound shipment about to be cancelled.
+	 * @throws ConflictException with `FULFILLMENT_UNITS_REQUESTED_FOR_RETURN` when a line's requested-return
+	 * quantity would exceed what it still fulfils once this shipment's units are given back.
+	 */
+	private async assertNotRequestedForReturn(fulfillment: Fulfillment): Promise<void> {
+		const lines = ((await this.lineService.findAll({
+			where: { fulfillmentId: fulfillment.id }
+		})) as IPagination<FulfillmentLine>).items;
+		const givenBack = new Map<ID, DecimalString>();
+
+		for (const line of lines) {
+			givenBack.set(line.orderLineId, addQuantities(givenBack.get(line.orderLineId), line.quantity as Quantity));
+		}
+
+		for (const [orderLineId, quantity] of givenBack) {
+			const orderLine: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
+			const stillFulfilled = remainingQuantity(orderLine?.fulfilledQuantity as Quantity, quantity);
+			const requested = toQuantityText(orderLine?.returnRequestedQuantity as Quantity);
+
+			if (compareDecimalStrings(requested, stillFulfilled) > 0) {
+				throw new ConflictException({
+					message:
+						`FULFILLMENT_UNITS_REQUESTED_FOR_RETURN: fulfillment '${fulfillment.id}' cannot be canceled: order line ` +
+						`'${orderLineId}' has ${requested} units requested for return, and giving back this shipment's ` +
+						`${quantity} would leave it ${stillFulfilled} fulfilled (doc 10 I-12). Withdraw or reduce the return first.`,
+					code: 'FULFILLMENT_UNITS_REQUESTED_FOR_RETURN',
+					details: { fulfillmentId: fulfillment.id, orderLineId, requested, stillFulfilled }
+				});
+			}
 		}
 	}
 
