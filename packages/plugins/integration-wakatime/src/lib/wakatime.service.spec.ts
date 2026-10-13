@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { MikroOrmWakatimeRepository } from './repository/mikro-orm-wakatime.repository';
 import { TypeOrmWakatimeRepository } from './repository/type-orm-wakatime.repository';
 import { WakatimeService, splitDuration } from './wakatime.service';
+
 describe('WakatimeService', () => {
 	let service: WakatimeService;
 	beforeEach(async () => {
@@ -33,5 +34,32 @@ describe('splitDuration (WakaTime summary)', () => {
 	it('treats a day without heartbeats (null sum) and numeric strings from the driver', () => {
 		expect(splitDuration(null)).toEqual({ totalSeconds: 0, hours: 0, minutes: 0 });
 		expect(splitDuration('7260')).toEqual({ totalSeconds: 7260, hours: 2, minutes: 1 });
+	});
+});
+
+describe('WakatimeService.getSummaries', () => {
+	// The tests run with the default ORM (TypeORM), so the sum comes from `typeOrmWakatimeRepository.query`
+	const summaryFor = async (rows: any[]) => {
+		const query = jest.fn().mockResolvedValue(rows);
+		const service = new WakatimeService({ query } as any, {} as any);
+		const { data } = await service.getSummaries({});
+		return data[0].grand_total;
+	};
+
+	it('shows the minutes left over after the hours, zero-padded', async () => {
+		expect(await summaryFor([{ seconds: 3700 }])).toMatchObject({
+			digital: '1:01',
+			hours: 1,
+			minute: 1,
+			total_seconds: 3700
+		});
+	});
+
+	it('shows 0:00 for a day without heartbeats (null sum)', async () => {
+		expect(await summaryFor([{ seconds: null }])).toMatchObject({ digital: '0:00', minute: 0, total_seconds: 0 });
+	});
+
+	it('shows 0:00 when the query returns no row', async () => {
+		expect(await summaryFor([])).toMatchObject({ digital: '0:00', minute: 0, total_seconds: 0 });
 	});
 });
