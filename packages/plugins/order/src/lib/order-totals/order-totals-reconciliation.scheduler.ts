@@ -102,7 +102,17 @@ export class OrderTotalsReconciliationScheduler {
 		// written only inside the drift branch, so a run in which nothing drifted — including a run in which
 		// every examination failed — printed "no drift" and nothing else, and the one line an operator reads
 		// said the opposite of what the report held. A failed order is not an order found in agreement.
-		const unexamined = failed.length > 0 ? `; ${failed.length} could not be examined` : '';
+		//
+		// `failed` holds two different failures, and the log names each for what it is: an order whose
+		// derivation could not be read was never examined, while an order that is also in `drifted` was
+		// examined, found to drift, and its repair failed — the operator retries the second and reads the row
+		// of the first.
+		const driftedIds = new Set(report.drifted.map((drift) => drift.orderId));
+		const unrepaired = failed.filter((failure) => driftedIds.has(failure.orderId)).length;
+		const unexamined = [
+			unrepaired > 0 ? `; ${unrepaired} drifted order(s) could not be repaired` : '',
+			failed.length - unrepaired > 0 ? `; ${failed.length - unrepaired} could not be examined` : ''
+		].join('');
 
 		if (report.drifted.length === 0) {
 			if (failed.length === 0) {
@@ -128,7 +138,11 @@ export class OrderTotalsReconciliationScheduler {
 		}
 
 		for (const failure of failed) {
-			this.logger.error(`Order ${failure.orderId} could not be examined: ${failure.message}`);
+			this.logger.error(
+				driftedIds.has(failure.orderId)
+					? `Order ${failure.orderId} drifted and could not be repaired: ${failure.message}`
+					: `Order ${failure.orderId} could not be examined: ${failure.message}`
+			);
 		}
 	}
 }

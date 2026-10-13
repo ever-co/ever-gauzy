@@ -1665,4 +1665,55 @@ describe('OrderTotalsReconciliationScheduler — the schedule and the run', () =
 			error.mockRestore();
 		}
 	});
+
+	/**
+	 * `auditRecent` puts two different failures in `failed`: an order whose derivation could not be read, and
+	 * an order that was examined, found to drift, and whose repair then failed — that one is in `drifted` too.
+	 * They ask different things of the operator (look at the row, or retry the repair), so the log names each
+	 * for what it is rather than calling a failed repair an order nobody examined.
+	 */
+	it('tells a failed repair apart from an order that could not be examined', async () => {
+		const report = {
+			windowDays: 7,
+			since: '2026-01-01T00:00:00.000Z',
+			examined: 3,
+			drifted: [
+				{
+					orderId: 'order-drifted',
+					columns: ['fulfillmentStatus'],
+					stored: { fulfillmentStatus: 'NOT_FULFILLED' },
+					derived: { fulfillmentStatus: 'FULFILLED' }
+				}
+			],
+			repaired: [],
+			failed: [
+				{ orderId: 'order-drifted', message: 'ENTITY_VERSION_CONFLICT' },
+				{ orderId: 'order-unreadable', message: 'MONEY_NOT_DECIMAL_STRING: abc' }
+			]
+		};
+		const totals = { auditRecent: jest.fn().mockResolvedValue(report) };
+		const scheduler = new OrderTotalsReconciliationScheduler(totals as never);
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		const error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+		try {
+			await scheduler.reconcileOrderTotals();
+
+			const errors = error.mock.calls.map(([line]) => String(line));
+			const summary = warn.mock.calls.map(([line]) => String(line)).find((line) => /reconciliation examined/.test(line));
+
+			expect(errors).toEqual(
+				expect.arrayContaining([
+					expect.stringMatching(/order-drifted.*could not be repaired/),
+					expect.stringMatching(/order-unreadable.*could not be examined/)
+				])
+			);
+			expect(errors.some((line) => /order-drifted.*could not be examined/.test(line))).toBe(false);
+			expect(summary).toMatch(/1 drifted order\(s\) could not be repaired/);
+			expect(summary).toMatch(/1 could not be examined/);
+		} finally {
+			warn.mockRestore();
+			error.mockRestore();
+		}
+	});
 });
