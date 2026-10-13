@@ -50,46 +50,33 @@ describe('EmployeeStatisticsService split expenses', () => {
 		expect(map.get('0-2024')).toMatchObject({ splitAmong: 4, splitExpense: 250 });
 	});
 
+	const firstQuarter = { startDate: new Date(2024, 0, 1), endDate: new Date(2024, 2, 31) };
+	const firstQuarterMonths = [new Date(2024, 0, 1), new Date(2024, 1, 1), new Date(2024, 2, 1)];
+
+	// The recurring split expenses of the first quarter of 2024, for the given recurring expenses
+	const recurringSplit = async (items: object[]) => {
+		const context = setup();
+		context.organizationRecurringExpenseService.findAll.mockResolvedValue({ items });
+		const map = await context.service.organizationRecurringSplitExpenses('employee-1', firstQuarter, 'org-1');
+		return { ...context, map, valueDates: [...map.values()].map(({ valueDate }) => valueDate) };
+	};
+
 	it('dates every month of a recurring split expense in its own month', async () => {
-		const { service, employeeService, organizationRecurringExpenseService } = setup();
-		organizationRecurringExpenseService.findAll.mockResolvedValue({
-			items: [{ startDate: new Date(2023, 5, 1), endDate: null, value: 300 }]
-		});
-
-		const map = await service.organizationRecurringSplitExpenses(
-			'employee-1',
-			{ startDate: new Date(2024, 0, 1), endDate: new Date(2024, 2, 31) },
-			'org-1'
-		);
-
-		expect([...map.values()].map(({ valueDate }) => valueDate)).toEqual([
-			new Date(2024, 0, 1),
-			new Date(2024, 1, 1),
-			new Date(2024, 2, 1)
+		const { employeeService, valueDates } = await recurringSplit([
+			{ startDate: new Date(2023, 5, 1), endDate: null, value: 300 }
 		]);
+
+		expect(valueDates).toEqual(firstQuarterMonths);
 		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(new Date(2024, 1, 1)));
 	});
 
 	it('keeps each month dated in its own month when several recurring expenses cover it', async () => {
-		const { service, organizationRecurringExpenseService } = setup();
-		organizationRecurringExpenseService.findAll.mockResolvedValue({
-			items: [
-				{ startDate: new Date(2023, 5, 1), endDate: null, value: 300 },
-				{ startDate: new Date(2023, 8, 1), endDate: null, value: 100 }
-			]
-		});
-
-		const map = await service.organizationRecurringSplitExpenses(
-			'employee-1',
-			{ startDate: new Date(2024, 0, 1), endDate: new Date(2024, 2, 31) },
-			'org-1'
-		);
-
-		expect([...map.values()].map(({ valueDate }) => valueDate)).toEqual([
-			new Date(2024, 0, 1),
-			new Date(2024, 1, 1),
-			new Date(2024, 2, 1)
+		const { map, valueDates } = await recurringSplit([
+			{ startDate: new Date(2023, 5, 1), endDate: null, value: 300 },
+			{ startDate: new Date(2023, 8, 1), endDate: null, value: 100 }
 		]);
+
+		expect(valueDates).toEqual(firstQuarterMonths);
 		expect(map.get('1-2024')).toMatchObject({ splitAmong: 4, splitExpense: 100 });
 	});
 
