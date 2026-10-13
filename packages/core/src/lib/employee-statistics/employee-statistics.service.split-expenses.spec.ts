@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { EmployeeStatisticsService, monthOf } from './employee-statistics.service';
+import { EmployeeStatisticsService, monthOf, shareOf } from './employee-statistics.service';
 
 /**
  * Organization split expenses are divided among the employees working in the expense's month. The service
@@ -68,5 +68,54 @@ describe('EmployeeStatisticsService split expenses', () => {
 			new Date(2024, 2, 1)
 		]);
 		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(new Date(2024, 1, 1)));
+	});
+
+	it('keeps each month dated in its own month when several recurring expenses cover it', async () => {
+		const { service, organizationRecurringExpenseService } = setup();
+		organizationRecurringExpenseService.findAll.mockResolvedValue({
+			items: [
+				{ startDate: new Date(2023, 5, 1), endDate: null, value: 300 },
+				{ startDate: new Date(2023, 8, 1), endDate: null, value: 100 }
+			]
+		});
+
+		const map = await service.organizationRecurringSplitExpenses(
+			'employee-1',
+			{ startDate: new Date(2024, 0, 1), endDate: new Date(2024, 2, 31) },
+			'org-1'
+		);
+
+		expect([...map.values()].map(({ valueDate }) => valueDate)).toEqual([
+			new Date(2024, 0, 1),
+			new Date(2024, 1, 1),
+			new Date(2024, 2, 1)
+		]);
+		expect(map.get('1-2024')).toMatchObject({ splitAmong: 4, splitExpense: 100 });
+	});
+
+	it('gives a zero share, not Infinity, for a month in which nobody was working', async () => {
+		const { service, employeeService, expenseService, organizationRecurringExpenseService } = setup();
+		employeeService.findWorkingEmployees.mockResolvedValue({ total: 0 });
+		expenseService.findAll.mockResolvedValue({
+			items: [
+				{ valueDate: new Date(2024, 0, 10), amount: 1000 },
+				{ valueDate: new Date(2024, 0, 20), amount: 500 }
+			]
+		});
+		organizationRecurringExpenseService.findAll.mockResolvedValue({
+			items: [
+				{ startDate: new Date(2024, 0, 1), endDate: null, value: 300 },
+				{ startDate: new Date(2024, 0, 1), endDate: null, value: 100 }
+			]
+		});
+		const range = { startDate: new Date(2024, 0, 1), endDate: new Date(2024, 0, 31) };
+
+		const oneOff = await service.employeeSplitExpenseInNMonths('employee-1', range, 'org-1');
+		const recurring = await service.organizationRecurringSplitExpenses('employee-1', range, 'org-1');
+
+		expect(oneOff.get('0-2024')).toMatchObject({ splitAmong: 0, splitExpense: 0 });
+		expect(recurring.get('0-2024')).toMatchObject({ splitAmong: 0, splitExpense: 0 });
+		expect(shareOf(300, 0)).toBe(0);
+		expect(shareOf(300, 4)).toBe(75);
 	});
 });
