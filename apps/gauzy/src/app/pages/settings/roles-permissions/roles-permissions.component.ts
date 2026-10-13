@@ -9,6 +9,12 @@ import { environment } from '@gauzy/ui-config';
 import { PermissionGroups, IRolePermission, RolesEnum, IUser, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import {
+	ADMINISTRATION_PERMISSION_SECTIONS,
+	GENERAL_PERMISSION_SECTIONS,
+	IPermissionSection,
+	toPermissionSections
+} from './permission-sections';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,6 +35,9 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	permissions: IRolePermission[] = [];
 	filteredGeneralPermissions: PermissionsEnum[] = [];
 	filteredAdminPermissions: PermissionsEnum[] = [];
+	/** The filtered lists split into titled sections; rebuilt with them on each search. */
+	generalSections: IPermissionSection[] = [];
+	adminSections: IPermissionSection[] = [];
 	roles$: Observable<IRole[]> = observableOf([]);
 	permissions$: Subject<any> = new Subject();
 	roleSubject$: Subject<any> = new Subject();
@@ -243,6 +252,20 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
+	 * How many of a group's permissions the selected role has on, over the whole
+	 * group — not the search-filtered list — for the panel header.
+	 */
+	getEnabledCount(group: 'GENERAL' | 'ADMINISTRATION'): { enabled: number; total: number } {
+		// Distinct: `PermissionGroups.GENERAL` lists ORG_TAGS_EDIT twice, and the
+		// sections show it once.
+		const permissions = [
+			...new Set(group === 'GENERAL' ? this.permissionGroups.GENERAL : this.getAdministrationPermissions())
+		];
+		const enabled = permissions.filter((permission) => !!this.enabledPermissions[permission]).length;
+		return { enabled, total: permissions.length };
+	}
+
+	/**
 	 * GET all tenant roles
 	 */
 	async getRoles() {
@@ -371,6 +394,14 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 				map((searchTerm) => {
 					this.filteredGeneralPermissions = this._filterPermissions('GENERAL', searchTerm);
 					this.filteredAdminPermissions = this._filterPermissions('ADMINISTRATION', searchTerm);
+					this.generalSections = toPermissionSections(
+						this.filteredGeneralPermissions,
+						GENERAL_PERMISSION_SECTIONS
+					);
+					this.adminSections = toPermissionSections(
+						this.filteredAdminPermissions,
+						ADMINISTRATION_PERMISSION_SECTIONS
+					);
 				})
 			)
 			.subscribe();

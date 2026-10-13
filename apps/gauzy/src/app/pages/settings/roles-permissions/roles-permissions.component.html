@@ -8,136 +8,164 @@
     </h4>
   </nb-card-header>
   <nb-card-body>
-    <div class="row">
-      <div class="col-6">
-        <div class="form-group">
-          <nb-form-field>
-            <input
-              #input
-              [formControl]="formControl"
-              (input)="onInputChange()"
-              nbInput
-              fullWidth
-              [placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
-              [nbAutocomplete]="autocomplete"
-              />
-              <button nbSuffix nbButton ghost>
-                <nb-icon
-                  [icon]="'close'"
-                  pack="eva"
-                  (click)="formControl.reset(rolesEnum.EMPLOYEE)"
-                ></nb-icon>
-              </button>
-            </nb-form-field>
-            <nb-autocomplete #autocomplete (selectedChange)="onSelectionChange($event)">
-              @for (role of roles$ | async; track role) {
-                <nb-option
-                  [value]="role.name"
-                  [class]="role.name === input.value ? 'active' : ''"
-                  >
-                  {{ role.name }}
-                </nb-option>
-              }
-            </nb-autocomplete>
-          </div>
-        </div>
-        <div class="col-6">
+    <!-- One compact toolbar: role picker, permission search, and the role action
+         on the end side. Same controls and behaviour as before. -->
+    <div class="toolbar">
+      <div class="toolbar-field role-field">
+        <nb-form-field>
+          <input
+            #input
+            [formControl]="formControl"
+            (input)="onInputChange()"
+            nbInput
+            fullWidth
+            fieldSize="small"
+            [placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+            [nbAutocomplete]="autocomplete"
+          />
+          <button
+            type="button"
+            nbSuffix
+            nbButton
+            ghost
+            size="tiny"
+            (click)="formControl.reset(rolesEnum.EMPLOYEE); onSelectedRole()"
+            [attr.aria-label]="'BUTTONS.CLEAR' | translate"
+          >
+            <nb-icon icon="close" pack="eva"></nb-icon>
+          </button>
+        </nb-form-field>
+        <nb-autocomplete #autocomplete (selectedChange)="onSelectionChange($event)">
+          @for (role of roles$ | async; track role) {
+            <nb-option [value]="role.name" [class]="role.name === input.value ? 'active' : ''">
+              {{ role.name }}
+            </nb-option>
+          }
+        </nb-autocomplete>
+      </div>
+      <div class="toolbar-field search-field">
+        <nb-form-field>
+          <nb-icon nbPrefix icon="search-outline" aria-hidden="true"></nb-icon>
           <input
             type="text"
             [formControl]="searchControl"
             nbInput
             fullWidth
+            fieldSize="small"
             placeholder="Search permissions..."
-            />
+          />
+        </nb-form-field>
+      </div>
+      <div class="toolbar-actions" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
+        @if (isWantToCreate) {
+          <div class="actions create">
+            <button
+              nbButton
+              status="success"
+              (click)="createRole()"
+              size="small"
+              [nbTooltip]="'BUTTONS.CREATE' | translate"
+            >
+              <nb-icon icon="plus-outline"></nb-icon>
+            </button>
+            {{ 'BUTTONS.CREATE_NEW_ROLE' | translate : { name: input.value } }}
           </div>
-          <div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
-            @if (isWantToCreate) {
-              <div class="actions create">
-                <button
-                  nbButton
-                  status="success"
-                  (click)="createRole()"
-                  size="small"
-                  [nbTooltip]="'BUTTONS.CREATE' | translate"
-                  >
-                  <nb-icon icon="plus-outline"></nb-icon>
-                </button>
-                {{ 'BUTTONS.CREATE_NEW_ROLE' | translate : { name: input.value } }}
-              </div>
-            }
-            @if (role && role.isSystem === false && !isWantToCreate) {
-              <div class="actions delete">
-                <button
-                  nbButton
-                  status="basic"
-                  class="action"
-                  (click)="deleteRole()"
-                  size="small"
-                  [nbTooltip]="'BUTTONS.DELETE' | translate"
-                  >
-                  <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-                </button>
-                {{ 'BUTTONS.DELETE_EXISTING_ROLE' | translate : { name: role.name } }}
-              </div>
-            }
+        }
+        @if (role && role.isSystem === false && !isWantToCreate) {
+          <div class="actions delete">
+            <button
+              nbButton
+              status="basic"
+              class="action"
+              (click)="deleteRole()"
+              size="small"
+              [nbTooltip]="'BUTTONS.DELETE' | translate"
+            >
+              <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+            </button>
+            {{ 'BUTTONS.DELETE_EXISTING_ROLE' | translate : { name: role.name } }}
           </div>
-        </div>
+        }
+      </div>
+    </div>
         <div class="row content" [nbSpinner]="loading" nbSpinnerSize="large">
           <div class="col-12 col-xl-6">
             <nb-card>
               <nb-card-header>
-                {{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL' | translate }}
+                <span class="group-title">{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL' | translate }}</span>
+                @if (getEnabledCount('GENERAL'); as count) {
+                  <span class="group-count">{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.ENABLED_COUNT' | translate: count }}</span>
+                }
               </nb-card-header>
               <nb-card-body class="permission-items-col">
-                @for (permission of filteredGeneralPermissions; track permission) {
-                  <nb-toggle
-                    [(checked)]="enabledPermissions[permission]"
-                    (checkedChange)="permissionChanged(permission, $event, !isDisabledGeneralPermissions())"
-                    labelPosition="start"
-                    status="basic"
-                    [disabled]="isDisabledGeneralPermissions()"
-                    >
-                    <div class="custom-permission-view">
-                      <!--
-                        The <small> line under this one used to render the SAME
-                        translation key, so every row printed its label twice —
-                        once bold, once as a 11px grey "description". There are no
-                        *_DESCRIPTION keys in the catalogue for it to have meant.
-                      -->
-                      <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
-                    </div>
-                  </nb-toggle>
+                @for (section of generalSections; track section.key) {
+                  <section class="permission-section" [attr.aria-labelledby]="'perm-section-' + section.key">
+                    <h6 class="section-title" [id]="'perm-section-' + section.key">
+                      {{ 'ORGANIZATIONS_PAGE.PERMISSIONS.SECTIONS.' + section.key | translate }}
+                    </h6>
+                    @for (permission of section.permissions; track permission) {
+                      <nb-toggle
+                        [(checked)]="enabledPermissions[permission]"
+                        (checkedChange)="permissionChanged(permission, $event, !isDisabledGeneralPermissions())"
+                        labelPosition="start"
+                        status="basic"
+                        [disabled]="isDisabledGeneralPermissions()"
+                        >
+                        <div class="custom-permission-view">
+                          <!--
+                            The <small> line under this one used to render the SAME
+                            translation key, so every row printed its label twice —
+                            once bold, once as a 11px grey "description". There are no
+                            *_DESCRIPTION keys in the catalogue for it to have meant.
+                          -->
+                          <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+                        </div>
+                      </nb-toggle>
+                    }
+                  </section>
                 }
               </nb-card-body>
             </nb-card>
           </div>
           <div class="col-12 col-xl-6">
             <nb-card>
-              <nb-card-header
-                >{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION' | translate }}
-                <nb-icon
-                  [nbTooltip]="'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN' | translate"
-                  icon="question-mark-circle-outline"
-                  size="tiny"
-                  >
-                </nb-icon>
+              <nb-card-header>
+                <span class="group-title">
+                  {{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION' | translate }}
+                  <nb-icon
+                    [nbTooltip]="'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN' | translate"
+                    icon="question-mark-circle-outline"
+                    size="tiny"
+                    >
+                  </nb-icon>
+                </span>
+                @if (getEnabledCount('ADMINISTRATION'); as count) {
+                  <span class="group-count">{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.ENABLED_COUNT' | translate: count }}</span>
+                }
               </nb-card-header>
               <nb-card-body class="permission-items-col">
-                @for (permission of filteredAdminPermissions; track permission) {
-                  <nb-toggle
-                    [(checked)]="enabledPermissions[permission]"
-							(checkedChange)="
-								permissionChanged(permission, $event, !isDisabledAdministrationPermissions())
-							"
-                    labelPosition="start"
-                    status="basic"
-                    [disabled]="isDisabledAdministrationPermissions()"
-                    >
-                    <div class="custom-permission-view">
-                      <!-- Same duplicated-label removal as the General group above. -->
-                      <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
-                    </div>
-                  </nb-toggle>
+                @for (section of adminSections; track section.key) {
+                  <section class="permission-section" [attr.aria-labelledby]="'perm-admin-section-' + section.key">
+                    <h6 class="section-title" [id]="'perm-admin-section-' + section.key">
+                      {{ 'ORGANIZATIONS_PAGE.PERMISSIONS.SECTIONS.' + section.key | translate }}
+                    </h6>
+                    @for (permission of section.permissions; track permission) {
+                      <nb-toggle
+                        [(checked)]="enabledPermissions[permission]"
+    							(checkedChange)="
+    								permissionChanged(permission, $event, !isDisabledAdministrationPermissions())
+    							"
+                        labelPosition="start"
+                        status="basic"
+                        [disabled]="isDisabledAdministrationPermissions()"
+                        >
+                        <div class="custom-permission-view">
+                          <!-- Same duplicated-label removal as the General group above. -->
+                          <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+                        </div>
+                      </nb-toggle>
+                    }
+                  </section>
                 }
               </nb-card-body>
             </nb-card>
