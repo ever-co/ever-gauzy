@@ -4287,7 +4287,40 @@
 		"UNTAGGED": "גרסה ללא תג",
 		"API_UNAVAILABLE": "גרסת ה-API אינה זמינה",
 		"LEARN_MORE": "מידע נוסף",
-		"ABOUT": "עלינו"
+		"ABOUT": "עלינו",
+		"GITHUB": {
+			"TITLE": "ב-GitHub",
+			"DESCRIPTION": "Ever Gauzy מפותח בקוד פתוח: עקבו אחר הגרסאות, דווחו על בעיה או תרמו.",
+			"RELEASES": "גרסאות",
+			"ISSUES": "בעיות",
+			"PULL_REQUESTS": "בקשות משיכה",
+			"CONTRIBUTORS": "תורמים",
+			"CONTRIBUTING": "מדריך תרומה",
+			"CODE_OF_CONDUCT": "קוד התנהגות",
+			"LICENSE_FILE": "רישיון"
+		},
+		"CARD": {
+			"IN_SYNC": "מסונכרן",
+			"DIFFERENT": "גרסאות בנייה שונות",
+			"RELEASE_NOTES": "הערות גרסה",
+			"COMMIT": "קומיט",
+			"REPOSITORY": "מאגר"
+		},
+		"ENV": {
+			"TITLE": "סביבה",
+			"BUILD": "בנייה",
+			"PRODUCTION": "ייצור",
+			"DEVELOPMENT": "פיתוח",
+			"MODE": "מצב",
+			"DEMO": "הדגמה",
+			"STANDARD": "רגיל",
+			"RUNNING_IN": "פועל ב",
+			"DESKTOP": "אפליקציית שולחן עבודה",
+			"BROWSER": "דפדפן",
+			"API_ADDRESS": "כתובת API",
+			"WEB_ADDRESS": "כתובת אינטרנט",
+			"COPY": "העתק {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "על ידי",

@@ -4270,7 +4270,40 @@
 		"UNTAGGED": "无标签构建",
 		"API_UNAVAILABLE": "API 版本不可用",
 		"LEARN_MORE": "了解更多",
-		"ABOUT": "关于"
+		"ABOUT": "关于",
+		"GITHUB": {
+			"TITLE": "GitHub 上的项目",
+			"DESCRIPTION": "Ever Gauzy 以开源方式开发：关注版本发布、报告问题或参与贡献。",
+			"RELEASES": "版本发布",
+			"ISSUES": "问题",
+			"PULL_REQUESTS": "拉取请求",
+			"CONTRIBUTORS": "贡献者",
+			"CONTRIBUTING": "贡献指南",
+			"CODE_OF_CONDUCT": "行为准则",
+			"LICENSE_FILE": "许可证"
+		},
+		"CARD": {
+			"IN_SYNC": "已同步",
+			"DIFFERENT": "构建不同",
+			"RELEASE_NOTES": "版本说明",
+			"COMMIT": "提交",
+			"REPOSITORY": "仓库"
+		},
+		"ENV": {
+			"TITLE": "环境",
+			"BUILD": "构建",
+			"PRODUCTION": "生产",
+			"DEVELOPMENT": "开发",
+			"MODE": "模式",
+			"DEMO": "演示",
+			"STANDARD": "标准",
+			"RUNNING_IN": "运行于",
+			"DESKTOP": "桌面应用",
+			"BROWSER": "浏览器",
+			"API_ADDRESS": "API 地址",
+			"WEB_ADDRESS": "Web 地址",
+			"COPY": "复制{{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "通过",
