@@ -24,6 +24,7 @@
 		"artifactName": "${name}-${arch}-${version}.${ext}",
 		"productName": "Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"beforeBuild": "tools/electron/before-build.js",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false,
