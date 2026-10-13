@@ -37,7 +37,7 @@ import {
 	NbToastrModule,
 	NbWindowModule
 } from '@nebular/theme';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
@@ -70,6 +70,9 @@ const dialogRefStub: Partial<NbDialogRef<unknown>> = {
 beforeEach(() => {
 	TestBed.configureTestingModule({
 		imports: [
+			// The `translate` pipe for components a spec DECLARES (a standalone component imports its own):
+			// TranslateModule.forRoot() exported it until ngx-translate 18 removed the module.
+			TranslatePipe,
 			NbThemeModule.forRoot({ name: 'default' }),
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),

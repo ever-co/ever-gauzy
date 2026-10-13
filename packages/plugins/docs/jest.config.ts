@@ -5,10 +5,8 @@ module.exports = {
 	transform: {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},
-	// sanitize-html pulls in ESM-only nested deps (htmlparser2@12 chain) — transform them to CJS.
-	transformIgnorePatterns: [
-		'node_modules[\\\\/](?!(sanitize-html[\\\\/]node_modules[\\\\/])?(htmlparser2|entities|domhandler|domutils|dom-serializer|domelementtype)[\\\\/])'
-	],
+	// Loads ES modules natively (NestJS 12 is ES modules; run with NODE_OPTIONS=--experimental-vm-modules): see jest.patterns.js.
+	transformIgnorePatterns: require('../../../jest.patterns').nodeTransformIgnorePatterns,
 	moduleFileExtensions: ['ts', 'js', 'html'],
 	coverageDirectory: '../../../coverage/packages/plugins/docs'
 };

@@ -9,12 +9,7 @@ module.exports = {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},
 	moduleFileExtensions: ['ts', 'js', 'html'],
-	// Mirrors the list in the root `jest.preset.js` (it used to live in packages/core/jest.config.ts),
-	// for the same reason: importing `@gauzy/core` reaches ESM-only builds Jest cannot `require`
-	// (e.g. `uuid`, via `core/context/request-context`). This key REPLACES the preset's rather than
-	// adding to it, so keep it in sync with that list if it grows.
-	transformIgnorePatterns: [
-		'node_modules/(?!(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios)/)'
-	],
+	// Loads ES modules natively (NestJS 12 is ES modules; run with NODE_OPTIONS=--experimental-vm-modules): see jest.patterns.js.
+	transformIgnorePatterns: require('../../../jest.patterns').nodeTransformIgnorePatterns,
 	coverageDirectory: '../../../coverage/packages/plugins/integration-zapier'
 };

@@ -218,7 +218,7 @@ export class EmployeeJobPostService {
 				category: faker.person.jobTitle(),
 				title: faker.lorem.sentence(),
 				description: faker.lorem.sentences(3),
-				jobDateCreated: faker.date.past({ years: 0.1 }),
+				jobDateCreated: faker.date.recent({ days: 37 }),
 				jobStatus: faker.helpers.arrayElement(Object.values(JobPostStatusEnum)),
 				jobSource: faker.helpers.arrayElement(Object.values(JobPostSourceEnum)),
 				jobType: faker.helpers.arrayElement(Object.values(JobPostTypeEnum))
