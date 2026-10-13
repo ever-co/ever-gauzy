@@ -5608,6 +5608,16 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Administrar SMTP para '{{ name }}'",
+		"DESCRIPTION_TENANT": "Se usa para los correos de cada organización sin SMTP propio, como invitaciones, facturas y avisos de hojas de horas. Sin él, se aplica la configuración de correo predeterminada del servidor. Los correos de verificación de cuenta y de restablecimiento de contraseña siempre usan la configuración del servidor.",
+		"DESCRIPTION_ORGANIZATION": "Se usa para los correos de esta organización en lugar del SMTP del inquilino. Valide la conexión y luego guarde.",
+		"HINTS": {
+			"FROM_ADDRESS": "La dirección del remitente que ven los destinatarios en su bandeja de entrada.",
+			"HOST": "La dirección de su servidor SMTP, p. ej. smtp.gmail.com.",
+			"PORT": "Normalmente 587 (STARTTLS) o 465 (SSL).",
+			"SECURE": "Solo se aplica a otros puertos: 465 siempre usa SSL y 587 siempre usa STARTTLS.",
+			"USERNAME": "La cuenta usada para iniciar sesión en el servidor SMTP. Los valores guardados se muestran enmascarados; vuelva a introducir el usuario y la contraseña para cambiar esta configuración.",
+			"PASSWORD": "La contraseña o contraseña de aplicación de esa cuenta."
+		},
 		"FROM_ADDRESS": "Desde la dirección de correo electrónico",
 		"HOST": "Anfitrión",
 		"PORT": "Puerto",

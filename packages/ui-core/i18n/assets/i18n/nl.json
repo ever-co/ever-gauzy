@@ -5606,6 +5606,16 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "SMTP beheren voor '{{ name }}'",
+		"DESCRIPTION_TENANT": "Gebruikt voor de e-mails van elke organisatie zonder eigen SMTP, zoals uitnodigingen, facturen en urenstaatmeldingen. Zonder deze gelden de standaard mailinstellingen van de server. E-mails voor accountverificatie en wachtwoordherstel gebruiken altijd de serverinstellingen.",
+		"DESCRIPTION_ORGANIZATION": "Gebruikt voor de e-mails van deze organisatie in plaats van de tenant-SMTP. Valideer de verbinding en sla daarna op.",
+		"HINTS": {
+			"FROM_ADDRESS": "Het afzenderadres dat ontvangers in hun inbox zien.",
+			"HOST": "Het adres van uw SMTP-server, bijv. smtp.gmail.com.",
+			"PORT": "Meestal 587 (STARTTLS) of 465 (SSL).",
+			"SECURE": "Geldt alleen voor andere poorten: 465 gebruikt altijd SSL en 587 altijd STARTTLS.",
+			"USERNAME": "Het account waarmee wordt aangemeld bij de SMTP-server. Opgeslagen waarden worden gemaskeerd teruggegeven; voer gebruikersnaam en wachtwoord opnieuw in om deze instellingen te wijzigen.",
+			"PASSWORD": "Het wachtwoord of app-wachtwoord van dat account."
+		},
 		"FROM_ADDRESS": "Van e-mailadres",
 		"HOST": "Gastheer",
 		"PORT": "Haven",

@@ -5606,6 +5606,16 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "管理SMTP邮件服务器的 '{{ name }}'",
+		"DESCRIPTION_TENANT": "用于所有未单独配置 SMTP 的组织所发送的邮件，例如邀请、发票和工时表通知。未配置时，使用服务器的默认邮件设置。账户验证和密码重置邮件始终使用服务器的设置。",
+		"DESCRIPTION_ORGANIZATION": "此组织的邮件将使用此处设置，而不是租户的 SMTP。请先验证连接，然后保存。",
+		"HINTS": {
+			"FROM_ADDRESS": "收件人在收件箱中看到的发件人地址。",
+			"HOST": "您的 SMTP 服务器地址，例如 smtp.gmail.com。",
+			"PORT": "通常为 587（STARTTLS）或 465（SSL）。",
+			"SECURE": "仅对其他端口生效：465 始终使用 SSL，587 始终使用 STARTTLS。",
+			"USERNAME": "用于登录 SMTP 服务器的账户。已保存的值会以掩码显示；如需修改这些设置，请重新输入用户名和密码。",
+			"PASSWORD": "该账户的密码或应用专用密码。"
+		},
 		"FROM_ADDRESS": "发件人电子邮件地址",
 		"HOST": "主人",
 		"PORT": "港口",
