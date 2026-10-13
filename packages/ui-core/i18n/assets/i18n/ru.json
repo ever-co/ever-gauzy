@@ -4293,7 +4293,40 @@
 		"UNTAGGED": "сборка без тега",
 		"API_UNAVAILABLE": "Версия API недоступна",
 		"LEARN_MORE": "Подробнее",
-		"ABOUT": "О нас"
+		"ABOUT": "О нас",
+		"GITHUB": {
+			"TITLE": "На GitHub",
+			"DESCRIPTION": "Ever Gauzy разрабатывается открыто: следите за релизами, сообщайте о проблемах или участвуйте.",
+			"RELEASES": "Релизы",
+			"ISSUES": "Задачи",
+			"PULL_REQUESTS": "Пул-реквесты",
+			"CONTRIBUTORS": "Участники",
+			"CONTRIBUTING": "Руководство для участников",
+			"CODE_OF_CONDUCT": "Кодекс поведения",
+			"LICENSE_FILE": "Лицензия"
+		},
+		"CARD": {
+			"IN_SYNC": "Синхронизировано",
+			"DIFFERENT": "Разные сборки",
+			"RELEASE_NOTES": "Примечания к выпуску",
+			"COMMIT": "Коммит",
+			"REPOSITORY": "Репозиторий"
+		},
+		"ENV": {
+			"TITLE": "Окружение",
+			"BUILD": "Сборка",
+			"PRODUCTION": "Продакшн",
+			"DEVELOPMENT": "Разработка",
+			"MODE": "Режим",
+			"DEMO": "Демо",
+			"STANDARD": "Стандартный",
+			"RUNNING_IN": "Работает в",
+			"DESKTOP": "Настольное приложение",
+			"BROWSER": "Браузер",
+			"API_ADDRESS": "Адрес API",
+			"WEB_ADDRESS": "Веб-адрес",
+			"COPY": "Скопировать {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "по",

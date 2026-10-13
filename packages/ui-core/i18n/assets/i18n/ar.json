@@ -4255,7 +4255,40 @@
 		"UNTAGGED": "إصدار بدون وسم",
 		"API_UNAVAILABLE": "إصدار API غير متاح",
 		"LEARN_MORE": "اعرف المزيد",
-		"ABOUT": "حول"
+		"ABOUT": "حول",
+		"GITHUB": {
+			"TITLE": "على GitHub",
+			"DESCRIPTION": "يُطوَّر Ever Gauzy بشكل مفتوح: تابع الإصدارات أو أبلغ عن مشكلة أو ساهم.",
+			"RELEASES": "الإصدارات",
+			"ISSUES": "المشكلات",
+			"PULL_REQUESTS": "طلبات الدمج",
+			"CONTRIBUTORS": "المساهمون",
+			"CONTRIBUTING": "دليل المساهمة",
+			"CODE_OF_CONDUCT": "مدونة السلوك",
+			"LICENSE_FILE": "الترخيص"
+		},
+		"CARD": {
+			"IN_SYNC": "متزامن",
+			"DIFFERENT": "إصداران مختلفان",
+			"RELEASE_NOTES": "ملاحظات الإصدار",
+			"COMMIT": "الالتزام",
+			"REPOSITORY": "المستودع"
+		},
+		"ENV": {
+			"TITLE": "البيئة",
+			"BUILD": "البناء",
+			"PRODUCTION": "إنتاج",
+			"DEVELOPMENT": "تطوير",
+			"MODE": "الوضع",
+			"DEMO": "تجريبي",
+			"STANDARD": "قياسي",
+			"RUNNING_IN": "يعمل في",
+			"DESKTOP": "تطبيق سطح المكتب",
+			"BROWSER": "المتصفح",
+			"API_ADDRESS": "عنوان API",
+			"WEB_ADDRESS": "عنوان الويب",
+			"COPY": "نسخ {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "قبل",

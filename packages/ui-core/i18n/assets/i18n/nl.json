@@ -4270,7 +4270,40 @@
 		"UNTAGGED": "build zonder tag",
 		"API_UNAVAILABLE": "API-versie niet beschikbaar",
 		"LEARN_MORE": "Meer informatie",
-		"ABOUT": "Over"
+		"ABOUT": "Over",
+		"GITHUB": {
+			"TITLE": "Op GitHub",
+			"DESCRIPTION": "Ever Gauzy wordt open ontwikkeld: volg de releases, meld een probleem of draag bij.",
+			"RELEASES": "Releases",
+			"ISSUES": "Issues",
+			"PULL_REQUESTS": "Pull requests",
+			"CONTRIBUTORS": "Bijdragers",
+			"CONTRIBUTING": "Richtlijnen voor bijdragen",
+			"CODE_OF_CONDUCT": "Gedragscode",
+			"LICENSE_FILE": "Licentie"
+		},
+		"CARD": {
+			"IN_SYNC": "Synchroon",
+			"DIFFERENT": "Verschillende builds",
+			"RELEASE_NOTES": "Release-opmerkingen",
+			"COMMIT": "Commit",
+			"REPOSITORY": "Repository"
+		},
+		"ENV": {
+			"TITLE": "Omgeving",
+			"BUILD": "Build",
+			"PRODUCTION": "Productie",
+			"DEVELOPMENT": "Ontwikkeling",
+			"MODE": "Modus",
+			"DEMO": "Demo",
+			"STANDARD": "Standaard",
+			"RUNNING_IN": "Draait in",
+			"DESKTOP": "Desktop-app",
+			"BROWSER": "Browser",
+			"API_ADDRESS": "API-adres",
+			"WEB_ADDRESS": "Webadres",
+			"COPY": "{{ name }} kopiëren"
+		}
 	},
 	"FOOTER": {
 		"BY": "door",
