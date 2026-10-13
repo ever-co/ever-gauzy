@@ -66,7 +66,11 @@ export class AboutComponent implements OnInit, OnDestroy {
 		this.isDemo = !!environment.DEMO;
 		this.isDesktop = !!(environment.IS_ELECTRON || environment.IS_INTEGRATED_DESKTOP);
 		this.apiAddress = environment.API_BASE_URL || window.location.origin;
-		this.webAddress = environment.CLIENT_BASE_URL || window.location.origin;
+		// The address actually serving this page. CLIENT_BASE_URL is a build default
+		// (http://localhost:4200) that ordinary browser visits never update, so it is only the
+		// fallback where the page origin is not a web address (the desktop app's file:// shell).
+		const origin = window.location.origin;
+		this.webAddress = /^https?:/.test(origin) ? origin : environment.CLIENT_BASE_URL || origin;
 		this.githubLinks = [
 			{ labelKey: 'ABOUT_PAGE.CARD.REPOSITORY', icon: 'github-outline', url: this.repoBaseUrl },
 			{ labelKey: 'ABOUT_PAGE.GITHUB.RELEASES', icon: 'pricetags-outline', url: `${this.repoBaseUrl}/releases` },
@@ -126,22 +130,53 @@ export class AboutComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	/** Copies an address; the button shows "Copied!" for 1.5s. A refused clipboard does nothing. */
+	/**
+	 * Copies an address; the button shows "Copied!" for 1.5s.
+	 *
+	 * `navigator.clipboard` exists only in secure contexts (https, or localhost), so a self-hosted
+	 * install opened over plain HTTP falls back to a selected textarea + `execCommand('copy')`,
+	 * which browsers still honour inside a click handler.
+	 */
 	copyAddress(which: 'api' | 'web'): void {
 		const value = which === 'api' ? this.apiAddress : this.webAddress;
-		if (!navigator?.clipboard?.writeText) {
+		const done = () => this.showCopied(which);
+		if (navigator?.clipboard?.writeText) {
+			navigator.clipboard
+				.writeText(value)
+				.then(done)
+				.catch(() => this.copyWithSelection(value) && done());
 			return;
 		}
-		navigator.clipboard
-			.writeText(value)
-			.then(() => {
-				this.copied = which;
-				if (this.copiedTimer) {
-					clearTimeout(this.copiedTimer);
-				}
-				this.copiedTimer = setTimeout(() => (this.copied = null), 1500);
-			})
-			.catch(() => undefined);
+		if (this.copyWithSelection(value)) {
+			done();
+		}
+	}
+
+	/** Legacy copy path for non-secure contexts. Returns whether the browser reported success. */
+	private copyWithSelection(value: string): boolean {
+		const field = document.createElement('textarea');
+		field.value = value;
+		field.setAttribute('readonly', '');
+		field.style.position = 'fixed';
+		field.style.opacity = '0';
+		document.body.appendChild(field);
+		field.select();
+		let copied = false;
+		try {
+			copied = document.execCommand('copy');
+		} catch {
+			copied = false;
+		}
+		document.body.removeChild(field);
+		return copied;
+	}
+
+	private showCopied(which: 'api' | 'web'): void {
+		this.copied = which;
+		if (this.copiedTimer) {
+			clearTimeout(this.copiedTimer);
+		}
+		this.copiedTimer = setTimeout(() => (this.copied = null), 1500);
 	}
 
 	releaseUrl(version: string): string {
