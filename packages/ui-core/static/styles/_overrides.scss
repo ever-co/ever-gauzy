@@ -1612,51 +1612,52 @@ angular2-smart-table {
 // ng-select copies a select's classes onto the panel when it is appended
 // (`[class]="appendToValue ? … : classes"` in its template), which is the only
 // reason a body-level selector can tell these panels apart at all.
-@supports (max-width: max-content) {
+//
+// 🛑 ng-select 24 no longer appends the panel to <body>: it renders it through a
+// CDK overlay, `body > .cdk-overlay-container > .cdk-overlay-connected-position-
+// bounding-box > .cdk-overlay-pane > ng-dropdown-panel`, and sizes the PANE to
+// the trigger (`overlayRef.updateSize({ width })`, inline). The selector this
+// rule used to have (`body > ng-dropdown-panel`) matched nothing after the
+// upgrade, so every panel in the app shrank to its trigger's width. The rule
+// now styles the pane that holds the panel (`:has()`); the bounding box spans
+// the viewport, so `right: 1rem` still means "1rem from the screen edge".
+// Entity selects are excluded here: they have their own rule below.
+@supports (max-width: max-content) and selector(:has(*)) {
   html:not([dir='rtl'])
-    > body
-    > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select):not(.currency-selector) {
+    .cdk-overlay-pane:has(
+      > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select):not(.currency-selector):not(
+          .gauzy-entity-select
+        )
+    ) {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
+    // The floor ng-select's own inline `min-width` used to give: never narrower than the select.
+    // `NgSelectPanelSizingService` writes the trigger's width onto the pane.
+    min-width: var(--gauzy-ng-select-trigger-width, 0px) !important;
   }
 }
 
-// ── ...except the header's organization panel, which opens LEFTWARDS ─────────
+// ── Entity selects: wider than their trigger, flipped to stay on screen ──────
 //
-// The rule above anchors an appended panel on ng-select's inline `left` (its
-// trigger) and lets it run to 1rem from the right edge of the screen. That
-// works for a panel with room to its right. The organization control is the
-// last one in the header cluster and is now only as wide as its logo, so it
-// has almost no room there: the panel had a few dozen pixels to open into and
-// squeezed every option into it.
+// The organization / project / team / employee selectors (`gauzy-entity-select`)
+// sit in the header band and in forms. Owner, 2026-10-13: only the EXPANDED panel
+// gets wider — as wide as its options need, within a cap — while the collapsed
+// control keeps its width, and long names still end in an ellipsis.
 //
-// So this one drops the trigger anchor and takes the opposite one — `left:
-// auto` + `right`, which is the same "open towards the middle of the screen"
-// treatment a right-hand app menu gets. The panel is sized by its options
-// (`max-content`), floored so a one-word organization name still reads as a
-// menu, and capped so a long one cannot run off the left edge.
-//
-// `right` is measured from the viewport, not from the trigger, because CSS
-// cannot know where the trigger's right edge is — what follows the selector in
-// the header (the timer, the sidebar actions) is conditional. 1.5rem is the
-// `.actions` row's own right margin, so the panel lines up with the edge of the
-// header cluster.
-//
-// Scoped to `min-width: xl` — the complement of the `media-breakpoint-down(lg)`
-// rule that hides `.show-large-up` — because that is exactly the range in which
-// the header's copy of the selector is the one on screen. Below it the header
-// copy is hidden and the `.extra-actions` overflow panel owns a full-width copy
-// instead, which has all the room it needs and keeps the default anchoring.
-@include media-breakpoint-up(xl) {
-  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel.organization-entity-select {
-    left: auto !important;
-    right: 1.5rem !important;
+// The width lives here because ng-select re-applies the trigger's width to the
+// pane on every open and every trigger resize, and an `!important` rule is the
+// one thing that survives that. `EntitySelectPanelDirective` (ui-core shared
+// selectors) supplies what CSS cannot do: end-aligned positions and push, so the header's
+// right-most pill (the organization logo) opens leftwards instead of off-screen —
+// the job the old right-anchored, `min-width: xl`-only organization rule did.
+// The floor (never narrower than the trigger) is `NgSelectPanelSizingService`'s
+// `--gauzy-ng-select-trigger-width`, as for every other panel.
+@supports (max-width: max-content) and selector(:has(*)) {
+  .cdk-overlay-pane:has(> ng-dropdown-panel.ng-dropdown-panel.gauzy-entity-select) {
     width: max-content !important;
-    // Overrides the inline `min-width`, which ng-select sets to the trigger's
-    // width — that is the logo-sized pill now, not a menu.
-    min-width: 14rem !important;
-    max-width: min(24rem, calc(100vw - 3rem));
+    max-width: min(32rem, calc(100vw - 2rem)) !important;
+    min-width: var(--gauzy-ng-select-trigger-width, 0px) !important;
   }
 }
 
