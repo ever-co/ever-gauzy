@@ -5,7 +5,8 @@ import { IconGenerator } from '../interfaces/icon-generator';
 import { IDesktopIconGenerator, JimpImage } from '../interfaces/i-desktop-icon-generator';
 import { IconFactory } from '../icon-factory';
 import { env } from '../../env';
-import * as PngIco from 'png-to-ico';
+// png-to-ico 3 is an ES module whose default export is the converter.
+import pngToIco from 'png-to-ico';
 import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
 
 export class DesktopIconGenerator
@@ -52,7 +53,7 @@ export class DesktopIconGenerator
 		const linuxIconSizes = [512, 256, 128, 64, 32, 16];
 		const linuxDestination = path.join(this.destination, 'linux');
 		if (!fs.existsSync(linuxDestination)) {
-			fs.mkdirSync(linuxDestination);
+			fs.mkdirSync(linuxDestination, { recursive: true });
 			console.log('✔ linux icons directory created.');
 		}
 		for (const iconSize of linuxIconSizes) {
@@ -92,7 +93,7 @@ export class DesktopIconGenerator
 			.clone()
 			.resize({ w: ICON_SIZE, mode: ResizeStrategy.NEAREST_NEIGHBOR })
 			.write(windowsTempIconFilePath as `${string}.png`);
-		const buffer = await PngIco([windowsTempIconFilePath]);
+		const buffer = await pngToIco([windowsTempIconFilePath]);
 		fs.writeFileSync(windowsIconFilePath, buffer);
 		await this.remove(windowsTempIconFilePath, true);
 		console.log(`✔ window ${ico} generated.`);
@@ -101,7 +102,8 @@ export class DesktopIconGenerator
 	public async generateTrayIcon(originalImage: JimpImage): Promise<void> {
 		const REF_SIZE = 16;
 		const colors = ['gray', 'normal'];
-		const grayColor = '#999999';
+		// jimp 1 takes the mix colour as RGB components (#999999).
+		const grayColor = { r: 0x99, g: 0x99, b: 0x99 };
 		const scales = [1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5];
 		const pngFilePath = path.join(
 			'apps',
@@ -111,6 +113,8 @@ export class DesktopIconGenerator
 			'icons',
 			'tray'
 		);
+		// jimp 1 does not create the folder (see resizeAndConvert), and most apps do not track it.
+		fs.mkdirSync(pngFilePath, { recursive: true });
 		for (const color of colors) {
 			for (const scale of scales) {
 				const size = REF_SIZE * scale;
@@ -150,6 +154,8 @@ export class DesktopIconGenerator
 			'icons',
 			'menu'
 		);
+		// jimp 1 does not create the folder (see resizeAndConvert), and most apps do not track it.
+		fs.mkdirSync(destination, { recursive: true });
 		for (const iconSize of iconSizes) {
 			const png = iconSize === iconSizes[0] ? 'icon.png' : `icon_${iconSize}x${iconSize}.png`;
 			const menuIconFilePath = path.join(destination, png);
@@ -164,6 +170,10 @@ export class DesktopIconGenerator
 	public async resizeAndConvert(filePath: string, trayIconFilePath?: string): Promise<void> {
 		const image = await Jimp.read(filePath);
 
+		// jimp 0.x's write created the missing folders; jimp 1's does not, and `apps/<app>/src/icons` does not exist
+		// in a fresh checkout, so every icon write failed with ENOENT (caught and logged) and the build went on
+		// without icons.
+		fs.mkdirSync(this.destination, { recursive: true });
 		const pngFilePath = path.join(this.destination, 'icon.png');
 		await image
 			.clone()
