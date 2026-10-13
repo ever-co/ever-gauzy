@@ -3,8 +3,7 @@ export default {
 	displayName: 'mcp',
 	preset: '../../jest.preset.js',
 	testEnvironment: 'node',
-	// Loads `.mjs` natively (NestJS 12 is ES modules; run with NODE_OPTIONS=--experimental-vm-modules): see jest.patterns.js.
-	transformIgnorePatterns: require('../../jest.patterns').nodeTransformIgnorePatterns,
+	// transformIgnorePatterns: inherited from jest.preset.js, which takes the Node rule under --experimental-vm-modules (an ESM config cannot `require`).
 	transform: {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},

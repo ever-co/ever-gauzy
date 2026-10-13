@@ -50,7 +50,7 @@ function assemblePdf(objects: (string | undefined)[], trailerExtras = ''): Buffe
 
 /**
  * Builds a PDF whose pages carry a real text layer (Helvetica `Tj` runs), which is what
- * `PdfExtractor` reads through `pdf-parse`'s `pagerender` hook.
+ * `PdfExtractor` reads page by page through `pdf-parse`'s `getText()`.
  *
  * @param pages One entry per page; each entry is the list of text lines on that page.
  * @returns The PDF bytes.
