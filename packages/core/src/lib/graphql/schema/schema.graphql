@@ -56012,11 +56012,15 @@ type SellerOffering {
 One band of a graduated commission schedule: `from <= x < to`, with `to` null meaning open ended. The bounds are in major units for an amount basis and in units for a quantity basis.
 """
 input CommissionTierInput {
-  """Inclusive lower bound."""
-  from: Float!
+  """
+  Inclusive lower bound. An exact decimal, never a float: on an amount basis a band boundary is money, and the band a sale falls into is decided by an exact comparison. A JSON number is still accepted.
+  """
+  from: Decimal!
 
-  """Exclusive upper bound; null is open ended."""
-  to: Float
+  """
+  Exclusive upper bound; null is open ended. An exact decimal, as `from` is.
+  """
+  to: Decimal
 
   """
   Rate applied to the whole amount or quantity when the value falls in this band. An exact decimal, never a float.
