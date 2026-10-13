@@ -1540,7 +1540,8 @@
 		"updateable",
 		"upsell",
 		"weightable",
-		"workstream"
+		"workstream",
+		"describedby"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
