@@ -15,7 +15,7 @@ describe('overlapCondition', () => {
 
 	it.each([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3])('uses a full overlap test on %s', (db) => {
 		expect(overlapCondition(db, 'time_log', start, stop)).toBe(
-			`"time_log"."startedAt" < '${stop}' AND "time_log"."stoppedAt" > '${start}'`
+			`julianday("time_log"."startedAt") < julianday('${stop}') AND julianday("time_log"."stoppedAt") > julianday('${start}')`
 		);
 	});
 
@@ -36,10 +36,12 @@ describe('overlapCondition', () => {
 
 /**
  * The condition run against stored time logs (SQLite in memory; MySQL uses the same comparison).
- * New range: 10:00 - 11:00.
+ * New range: 10:00 - 11:00, given as ISO strings as the handler does.
  */
 describe('overlapCondition on stored time logs', () => {
-	const at = (time: string) => `2026-10-12T${time}:00.000Z`;
+	// Stored as TypeORM writes a datetime to SQLite (not ISO: a plain text comparison with the ISO bounds fails)
+	const at = (time: string) => `2026-10-12 ${time}:00.000`;
+	const iso = (time: string) => `2026-10-12T${time}:00.000Z`;
 	const logs = {
 		inside: [at('10:15'), at('10:45')],
 		enclosing: [at('09:00'), at('12:00')],
@@ -68,7 +70,7 @@ describe('overlapCondition on stored time logs', () => {
 	});
 
 	it('returns every log overlapping the range, and none that only touches it', async () => {
-		const condition = overlapCondition(DatabaseTypeEnum.betterSqlite3, 'time_log', at('10:00'), at('11:00'));
+		const condition = overlapCondition(DatabaseTypeEnum.betterSqlite3, 'time_log', iso('10:00'), iso('11:00'));
 		const rows: { id: string }[] = await dataSource.query(
 			`SELECT "id" FROM "time_log" WHERE ${condition} ORDER BY "id"`
 		);

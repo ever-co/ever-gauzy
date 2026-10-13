@@ -28,7 +28,9 @@ export function overlapCondition(
 			return `("${alias}"."startedAt", "${alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
-			return `"${alias}"."startedAt" < '${stoppedAt}' AND "${alias}"."stoppedAt" > '${startedAt}'`;
+			// Compared as dates: SQLite stores 'YYYY-MM-DD HH:MM:SS.SSS', and as text that sorts before the ISO
+			// bounds ('T' > ' ') of the same day, so a plain string comparison missed most overlapping logs
+			return `julianday("${alias}"."startedAt") < julianday('${stoppedAt}') AND julianday("${alias}"."stoppedAt") > julianday('${startedAt}')`;
 		case DatabaseTypeEnum.mysql:
 			// Quoted for the `dbType` given, not for the process-wide database `p()` reads
 			return `\`${alias}\`.\`startedAt\` < '${stoppedAt}' AND \`${alias}\`.\`stoppedAt\` > '${startedAt}'`;
