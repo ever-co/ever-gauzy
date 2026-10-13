@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card class="about-card">
 	<nb-card-header>
 		<h4>
 			<!-- Product-level page: the "for <Organization>" suffix is off — this content has
@@ -8,76 +8,239 @@
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
-	<nb-card-body class="about-body">
-		<section class="intro">
-			<h5>Ever® Gauzy™</h5>
-			<p>{{ 'ABOUT_PAGE.DESCRIPTION' | translate }}</p>
-			<p class="license">
-				{{ 'ABOUT_PAGE.LICENSE' | translate }}
-				<a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL-3.0</a>
-			</p>
-		</section>
+	<nb-card-body>
+		<!--
+			Two columns, one card style: the product and its builds on the start side, every
+			link in one Resources list on the end side (one column on narrow screens).
+		-->
+		<div class="about-layout">
+			<div class="about-main">
+				<!-- Product: mark, name, description, license. -->
+				<section class="ab-card intro">
+					<!-- The product's square logo: a dark tile with the white wordmark, so it reads on
+					     light and dark themes alike. Decorative — the name follows as text. -->
+					<img
+						class="brand-logo"
+						src="assets/images/logos/logo_Gauzy_512x512.png"
+						alt=""
+						width="64"
+						height="64"
+					/>
+					<div class="intro-copy">
+						<h5 class="product-name">Ever® Gauzy™</h5>
+						<p class="product-description">{{ 'ABOUT_PAGE.DESCRIPTION' | translate }}</p>
+						<p class="license">
+							<nb-icon icon="shield-outline" aria-hidden="true"></nb-icon>
+							<span>
+								{{ 'ABOUT_PAGE.LICENSE' | translate }}
+								<a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL-3.0</a>
+							</span>
+						</p>
+					</div>
+				</section>
 
-		<section class="versions">
-			<h6>{{ 'ABOUT_PAGE.VERSION_DETAILS' | translate }}</h6>
-			@if (isVersionMismatch) {
-				<p class="mismatch">{{ 'ABOUT_PAGE.VERSION_MISMATCH' | translate }}</p>
-			}
-			<table>
-				<tr>
-					<th>{{ 'ABOUT_PAGE.WEB_APP' | translate }}</th>
-					<td>
-						@if (web.version) {
-							<a [href]="releaseUrl(web.version)" target="_blank" rel="noopener">{{ web.version }}</a>
-						} @else {
-							<span class="muted">{{ 'ABOUT_PAGE.UNTAGGED' | translate }}</span>
+				<!--
+					Builds: one row per deployed surface, from the only facts there are — the
+					version tag and the commit (baked into the web bundle; `/api/version` for the
+					API). The status says whether the two match, and only when both are known.
+				-->
+				<section class="ab-card" aria-labelledby="about-versions-title">
+					<header class="ab-head">
+						<h6 class="ab-title" id="about-versions-title">{{ 'ABOUT_PAGE.VERSION_DETAILS' | translate }}</h6>
+						@if (syncState !== 'unknown') {
+							<span class="sync" [class.is-different]="syncState === 'different'">
+								<span class="dot" aria-hidden="true"></span>
+								{{ (syncState === 'in-sync' ? 'ABOUT_PAGE.CARD.IN_SYNC' : 'ABOUT_PAGE.CARD.DIFFERENT') | translate }}
+							</span>
 						}
-					</td>
-					<td>
-						@if (web.commit) {
-							<a [href]="commitUrl(web.commit)" target="_blank" rel="noopener" [title]="web.commit">
-								{{ shortCommit(web.commit) }}
-							</a>
-						}
-					</td>
-				</tr>
-				<tr>
-					<th>{{ 'ABOUT_PAGE.API' | translate }}</th>
-					@if (api) {
-						<td>
-							@if (api.version) {
-								<a [href]="releaseUrl(api.version)" target="_blank" rel="noopener">{{ api.version }}</a>
-							} @else {
-								<span class="muted">{{ 'ABOUT_PAGE.UNTAGGED' | translate }}</span>
-							}
-						</td>
-						<td>
-							@if (api.commit) {
-								<a [href]="commitUrl(api.commit)" target="_blank" rel="noopener" [title]="api.commit">
-									{{ shortCommit(api.commit) }}
-								</a>
-							}
-						</td>
-					} @else if (apiFailed) {
-						<td colspan="2" class="muted">{{ 'ABOUT_PAGE.API_UNAVAILABLE' | translate }}</td>
-					} @else {
-						<!-- Request still in flight — placeholder, not "unavailable". -->
-						<td colspan="2" class="muted">…</td>
+					</header>
+					@if (isVersionMismatch) {
+						<p class="mismatch" role="note">
+							<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+							<span>{{ 'ABOUT_PAGE.VERSION_MISMATCH' | translate }}</span>
+						</p>
 					}
-				</tr>
-			</table>
-		</section>
+					<ul class="rows">
+						<ng-container
+							*ngTemplateOutlet="buildRow; context: { $implicit: web, label: 'ABOUT_PAGE.WEB_APP', icon: 'monitor-outline', state: 'ready' }"
+						></ng-container>
+						<ng-container
+							*ngTemplateOutlet="
+								buildRow;
+								context: {
+									$implicit: api,
+									label: 'ABOUT_PAGE.API',
+									icon: 'hard-drive-outline',
+									state: api ? 'ready' : apiFailed ? 'failed' : 'loading'
+								}
+							"
+						></ng-container>
+					</ul>
+					<!-- This installation: build facts from the environment, then its two addresses. -->
+					<h6 class="ab-group-title">{{ 'ABOUT_PAGE.ENV.TITLE' | translate }}</h6>
+					<dl class="facts">
+						<div class="fact">
+							<dt>{{ 'ABOUT_PAGE.ENV.BUILD' | translate }}</dt>
+							<dd>
+								<span class="dot" [class.is-live]="isProductionBuild" aria-hidden="true"></span>
+								{{ (isProductionBuild ? 'ABOUT_PAGE.ENV.PRODUCTION' : 'ABOUT_PAGE.ENV.DEVELOPMENT') | translate }}
+							</dd>
+						</div>
+						<div class="fact">
+							<dt>{{ 'ABOUT_PAGE.ENV.MODE' | translate }}</dt>
+							<dd>{{ (isDemo ? 'ABOUT_PAGE.ENV.DEMO' : 'ABOUT_PAGE.ENV.STANDARD') | translate }}</dd>
+						</div>
+						<div class="fact">
+							<dt>{{ 'ABOUT_PAGE.ENV.RUNNING_IN' | translate }}</dt>
+							<dd>{{ (isDesktop ? 'ABOUT_PAGE.ENV.DESKTOP' : 'ABOUT_PAGE.ENV.BROWSER') | translate }}</dd>
+						</div>
+						<div class="fact">
+							<dt>{{ 'ABOUT_PAGE.ENV.API_ADDRESS' | translate }}</dt>
+							<dd>
+								<code class="address" [title]="apiAddress">{{ apiAddress }}</code>
+								<button
+									type="button"
+									class="icon-link"
+									(click)="copyAddress('api')"
+									[attr.aria-label]="
+										copied === 'api'
+											? ('BUTTONS.COPIED' | translate)
+											: ('ABOUT_PAGE.ENV.COPY' | translate: { name: ('ABOUT_PAGE.ENV.API_ADDRESS' | translate) })
+									"
+									[title]="copied === 'api' ? ('BUTTONS.COPIED' | translate) : ''"
+								>
+									<nb-icon [icon]="copied === 'api' ? 'checkmark-outline' : 'copy-outline'" aria-hidden="true"></nb-icon>
+								</button>
+							</dd>
+						</div>
+						<div class="fact">
+							<dt>{{ 'ABOUT_PAGE.ENV.WEB_ADDRESS' | translate }}</dt>
+							<dd>
+								<code class="address" [title]="webAddress">{{ webAddress }}</code>
+								<button
+									type="button"
+									class="icon-link"
+									(click)="copyAddress('web')"
+									[attr.aria-label]="
+										copied === 'web'
+											? ('BUTTONS.COPIED' | translate)
+											: ('ABOUT_PAGE.ENV.COPY' | translate: { name: ('ABOUT_PAGE.ENV.WEB_ADDRESS' | translate) })
+									"
+									[title]="copied === 'web' ? ('BUTTONS.COPIED' | translate) : ''"
+								>
+									<nb-icon [icon]="copied === 'web' ? 'checkmark-outline' : 'copy-outline'" aria-hidden="true"></nb-icon>
+								</button>
+							</dd>
+						</div>
+					</dl>
+					<footer class="ab-foot">
+						<span class="muted">{{ 'ABOUT_PAGE.CARD.REPOSITORY' | translate }}</span>
+						<a class="mono-chip" [href]="repoBaseUrl" target="_blank" rel="noopener">{{ repoName }}</a>
+					</footer>
+				</section>
+			</div>
 
-		<section class="links">
-			<h6>{{ 'ABOUT_PAGE.LEARN_MORE' | translate }}</h6>
-			<ul>
-				<li><a href="https://gauzy.co" target="_blank" rel="noopener">gauzy.co</a></li>
-				<li><a href="https://docs.gauzy.co" target="_blank" rel="noopener">docs.gauzy.co</a></li>
-				<li><a [href]="repoBaseUrl" target="_blank" rel="noopener">GitHub</a></li>
-				<li><a href="https://ever.co" target="_blank" rel="noopener">Ever Co. LTD</a></li>
-			</ul>
-		</section>
+			<!-- Resources: the Learn More links and the project on GitHub, as one list. -->
+			<aside class="ab-card about-aside" aria-labelledby="about-resources-title">
+				<header class="ab-head">
+					<h6 class="ab-title" id="about-resources-title">{{ 'ABOUT_PAGE.LEARN_MORE' | translate }}</h6>
+				</header>
+				<ul class="rows">
+					@for (link of learnMoreLinks; track link.url) {
+						<li>
+							<a class="link-row" [href]="link.url" target="_blank" rel="noopener">
+								<span class="row-icon" aria-hidden="true"><nb-icon [icon]="link.icon"></nb-icon></span>
+								<span class="row-label">{{ link.label }}</span>
+								<nb-icon class="row-trailing" icon="external-link-outline" aria-hidden="true"></nb-icon>
+							</a>
+						</li>
+					}
+				</ul>
+
+				<header class="ab-head group-header" id="about-github-title">
+					<h6 class="ab-title">{{ 'ABOUT_PAGE.GITHUB.TITLE' | translate }}</h6>
+					<p class="ab-subtitle">{{ 'ABOUT_PAGE.GITHUB.DESCRIPTION' | translate }}</p>
+				</header>
+				<ul class="rows" aria-labelledby="about-github-title">
+					@for (link of githubLinks; track link.url) {
+						<li>
+							<a class="link-row" [href]="link.url" target="_blank" rel="noopener">
+								<span class="row-icon" aria-hidden="true"><nb-icon [icon]="link.icon"></nb-icon></span>
+								<span class="row-label">{{ link.labelKey | translate }}</span>
+								<nb-icon class="row-trailing" icon="external-link-outline" aria-hidden="true"></nb-icon>
+							</a>
+						</li>
+					}
+				</ul>
+			</aside>
+		</div>
 
 		<p class="copyright">{{ 'ABOUT_PAGE.COPYRIGHT' | translate: { year: currentYear } }}</p>
 	</nb-card-body>
 </nb-card>
+
+<!-- One build row: status, surface, commit and version, then icon links to both. -->
+<ng-template #buildRow let-row let-label="label" let-icon="icon" let-state="state">
+	<li class="build-row">
+		<span class="row-icon" aria-hidden="true"><nb-icon [icon]="icon"></nb-icon></span>
+		<div class="build-main">
+			<div class="build-name">
+				<span
+					class="dot"
+					[class.is-live]="state === 'ready' && row?.commit && syncState !== 'different'"
+					[class.is-different]="state === 'ready' && row?.commit && syncState === 'different'"
+					aria-hidden="true"
+				></span>
+				<span class="row-label">{{ label | translate }}</span>
+			</div>
+			<div class="build-facts">
+				@if (state === 'ready') {
+					<!-- The commit opens the commit, the version its release, as in the footer popover. -->
+					@if (row.commit) {
+						<a class="commit-chip" [href]="commitUrl(row.commit)" target="_blank" rel="noopener" [title]="row.commit">
+							{{ shortCommit(row.commit) }}
+						</a>
+					}
+					@if (row.version) {
+						<a class="version" [href]="releaseUrl(row.version)" target="_blank" rel="noopener">{{ row.version }}</a>
+					} @else {
+						<span class="muted">{{ 'ABOUT_PAGE.UNTAGGED' | translate }}</span>
+					}
+				} @else if (state === 'failed') {
+					<span class="muted">{{ 'ABOUT_PAGE.API_UNAVAILABLE' | translate }}</span>
+				} @else {
+					<!-- Request still in flight — placeholder, not "unavailable". -->
+					<span class="muted">…</span>
+				}
+			</div>
+		</div>
+		@if (state === 'ready') {
+			<div class="build-actions">
+				@if (row.version) {
+					<a
+						class="icon-link"
+						[href]="releaseUrl(row.version)"
+						target="_blank"
+						rel="noopener"
+						[attr.aria-label]="('ABOUT_PAGE.CARD.RELEASE_NOTES' | translate) + ' ' + row.version"
+						[title]="'ABOUT_PAGE.CARD.RELEASE_NOTES' | translate"
+					>
+						<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
+					</a>
+				}
+				@if (row.commit) {
+					<a
+						class="icon-link"
+						[href]="commitUrl(row.commit)"
+						target="_blank"
+						rel="noopener"
+						[attr.aria-label]="('ABOUT_PAGE.CARD.COMMIT' | translate) + ' ' + shortCommit(row.commit)"
+						[title]="'ABOUT_PAGE.CARD.COMMIT' | translate"
+					>
+						<nb-icon icon="code-outline" aria-hidden="true"></nb-icon>
+					</a>
+				}
+			</div>
+		}
+	</li>
+</ng-template>
