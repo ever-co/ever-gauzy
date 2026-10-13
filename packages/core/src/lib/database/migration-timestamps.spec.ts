@@ -42,6 +42,22 @@ const SHIPPED_NAME_DEVIATIONS: Readonly<Record<string, string>> = Object.freeze(
 		'UpgradeEstimateEmailTableTokenColumnValue1706968055472'
 });
 
+/**
+ * Timestamps that shipped migrations share, keyed by timestamp, with their files in path order. Same rule as
+ * above: a migration that has run somewhere keeps its name, because a renamed one is a NEW migration to TypeORM
+ * and runs again. The uniqueness tests expect exactly these collisions, so an entry fails the suite once its pair
+ * no longer collides, and nothing new is added.
+ */
+const SHIPPED_SHARED_TIMESTAMPS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+	// Both reached develop on 2026-10-12 (#10507 and the employee-presence change) and ran on demo under these
+	// names. They touch unrelated tables (`employee.lastSeenAt`/`isIdle`; `timesheet.reason`), so the order
+	// between them does not matter.
+	'1790000025000': [
+		'packages/core/src/lib/database/migrations/1790000025000-AddEmployeePresence.ts',
+		'packages/core/src/lib/database/migrations/1790000025000-AddTimesheetReason.ts'
+	]
+});
+
 interface IMigrationFile {
 	/** Repository-relative path, with forward slashes. */
 	file: string;
@@ -138,10 +154,13 @@ describe('migration timestamps and names', () => {
 	});
 
 	it('gives every migration file a timestamp no other migration file in the repository uses', () => {
-		expect(sharedKeys(migrations.map((migration) => [migration.timestamp, migration.file]))).toEqual([]);
+		expect(sharedKeys(migrations.map((migration) => [migration.timestamp, migration.file]))).toEqual(
+			Object.entries(SHIPPED_SHARED_TIMESTAMPS).map(([timestamp, files]) => `${timestamp}: ${files.join(', ')}`)
+		);
 	});
 
 	it('gives every migration class a timestamp no other class uses, which is what TypeORM orders by', () => {
+		const classOf = (file: string) => migrations.find((migration) => migration.file === file)?.declared ?? file;
 		expect(
 			sharedKeys(
 				migrations.map((migration) => [
@@ -149,7 +168,11 @@ describe('migration timestamps and names', () => {
 					migration.declared ?? migration.file
 				])
 			)
-		).toEqual([]);
+		).toEqual(
+			Object.entries(SHIPPED_SHARED_TIMESTAMPS).map(
+				([timestamp, files]) => `${timestamp}: ${files.map(classOf).join(', ')}`
+			)
+		);
 	});
 
 	it('names each class and its `name` after the file, timestamp included', () => {

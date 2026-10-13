@@ -15,11 +15,14 @@ export class CollectionChangedEvent extends BaseEvent {
 	 * @param collectionId The collection that changed.
 	 * @param slug The collection's slug, which is what a cached listing is invalidated by.
 	 * @param organizationId The organization the collection belongs to.
+	 * @param tenantId The tenant the collection belongs to. A subscription delivers the event only to a
+	 * subscriber of this tenant, and drops an event that states none.
 	 */
 	constructor(
 		public readonly collectionId: ID,
 		public readonly slug: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -29,7 +32,12 @@ export class CollectionChangedEvent extends BaseEvent {
 	 * @returns The event describing it.
 	 */
 	static from(collection: Collection): CollectionChangedEvent {
-		return new CollectionChangedEvent(collection.id, collection.slug, collection.organizationId);
+		return new CollectionChangedEvent(
+			collection.id,
+			collection.slug,
+			collection.organizationId,
+			collection.tenantId
+		);
 	}
 }
 
@@ -44,11 +52,13 @@ export class ProductPublishedEvent extends BaseEvent {
 	 * @param productId The published product.
 	 * @param channelId The channel it went live on.
 	 * @param organizationId The organization the product belongs to.
+	 * @param tenantId The tenant the publication belongs to, which is who a subscription may tell.
 	 */
 	constructor(
 		public readonly productId: ID,
 		public readonly channelId: ID,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -61,7 +71,8 @@ export class ProductPublishedEvent extends BaseEvent {
 		return new ProductPublishedEvent(
 			publication.productId,
 			publication.channelId,
-			publication.organizationId
+			publication.organizationId,
+			publication.tenantId
 		);
 	}
 }
@@ -74,11 +85,13 @@ export class ProductUnpublishedEvent extends BaseEvent {
 	 * @param productId The withdrawn product.
 	 * @param channelId The channel it was withdrawn from.
 	 * @param organizationId The organization the product belongs to.
+	 * @param tenantId The tenant the publication belongs to, which is who a subscription may tell.
 	 */
 	constructor(
 		public readonly productId: ID,
 		public readonly channelId: ID,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId?: ID
 	) {
 		super();
 	}
@@ -91,7 +104,8 @@ export class ProductUnpublishedEvent extends BaseEvent {
 		return new ProductUnpublishedEvent(
 			publication.productId,
 			publication.channelId,
-			publication.organizationId
+			publication.organizationId,
+			publication.tenantId
 		);
 	}
 }

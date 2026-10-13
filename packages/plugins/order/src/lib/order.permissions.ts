@@ -18,9 +18,12 @@ const permission = (value: string): PermissionsEnum => value as PermissionsEnum;
  * The permissions this plugin declares.
  *
  * The resource is the word the route uses — `/orders` → `ORDERS` — so a route and its permission can be
- * read against each other without a translation table. Invoice and quote generation are deliberately
- * absent: they are guarded by the existing invoice and estimate permissions, because the invoice is the
- * accounting document and it keeps its own.
+ * read against each other without a translation table. Invoice and quote generation add no permission of
+ * their own: their routes state the order grant (`ORDERS_EDIT`; accepting a quote states `ORDERS_APPROVE`,
+ * because it confirms the order), and issuing or answering the document additionally requires the existing
+ * invoice and estimate permissions (`INVOICES_EDIT`, `ESTIMATES_EDIT`), checked by the service — because the
+ * invoice is the accounting document and it keeps its own, and the platform's guard reads a route's grants
+ * as alternatives rather than as a conjunction.
  */
 export const ORDER_PERMISSIONS = {
 	/** Read orders, their totals history, timeline, transactions, credit lines and changes. */

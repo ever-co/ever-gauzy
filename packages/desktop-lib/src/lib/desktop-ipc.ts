@@ -130,10 +130,9 @@ let displayListenersRegistered = false;
 function watchDisplays(): void {
 	if (displayListenersRegistered) return;
 	displayListenersRegistered = true;
-	const notify = () => {
+	const notify = () =>
 		getAppWindowManager().settingWindow?.webContents?.send?.('setting_page_ipc', { type: 'displays_changed' });
-	};
-	// One call per event: Electron types `screen.on` with an overload per event name, which a union does not match.
+	// One call per event: `screen.on` is overloaded per event name, so a union of the three names matches no overload.
 	screen.on('display-added', notify);
 	screen.on('display-removed', notify);
 	screen.on('display-metrics-changed', notify);

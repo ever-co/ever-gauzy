@@ -23,6 +23,10 @@ jest.mock('@gauzy/core', () => {
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
 		FeatureFlagGuard: class FeatureFlagGuard {},
+		// The payment lifecycle events the subscription fields stream extend the kernel's event class, and the
+		// two resolvers that serve them inject the bus.
+		BaseEvent: class BaseEvent {},
+		EventBus: class EventBus {},
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
 		// The retry declaration the mutations carry is the kernel's own decorator, as it is in the
 		// production graph: a double would make the resolver import a different function than the one

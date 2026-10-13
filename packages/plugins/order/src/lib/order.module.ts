@@ -5,6 +5,7 @@ import {
 	AdjustmentModule,
 	ChannelModule,
 	EventOutboxModule,
+	GraphqlSubscriptionModule,
 	IdempotencyModule,
 	Product,
 	ProductTranslation,
@@ -18,6 +19,7 @@ import { PricingModule } from '@gauzy/plugin-pricing';
 import { TaxModule } from '@gauzy/plugin-tax';
 import { ALL_ORDER_ENTITIES } from './entities';
 import { ORDER_AGGREGATE_WRITER } from './order.types';
+import { OrderStreamedEvents } from './order-streamed-events';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
 import { TypeOrmOrderRepository } from './order/repository/type-orm-order.repository';
@@ -70,6 +72,7 @@ import { OrderTotalsReconciliationScheduler } from './order-totals/order-totals-
 import { OrderUnitOfWork } from './order-totals/order-unit-of-work';
 import { OrderChangeStalenessScheduler } from './order-change/order-change-staleness.scheduler';
 import { SubscriptionOrderService } from './subscription-order/subscription-order.service';
+import { OrderInvoicingService } from './order-invoicing/order-invoicing.service';
 
 /**
  * The order module.
@@ -129,12 +132,15 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		// after the fact through a bus — an event published after a commit is an event a crash loses, and
 		// the outbox exists precisely so that it is not.
 		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `OrderStreamedEvents`.
+		GraphqlSubscriptionModule,
 		PricingModule,
 		TaxModule,
 		CartModule
 	],
 	providers: [
 		OrderService,
+		OrderStreamedEvents,
 		{
 			provide: ORDER_AGGREGATE_WRITER,
 			useExisting: OrderService
@@ -148,6 +154,10 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		OrderUnitOfWork,
 		OrderCheckoutHandler,
 		SubscriptionOrderService,
+		// The bridge to the accounting documents that bill an order. The documents themselves are the
+		// platform's finance rows, reached through the `ORDER_INVOICING` port, which this module does not
+		// bind: the binding is the installation's (see `OrderPlatformAdaptersModule`).
+		OrderInvoicingService,
 		OrderLineService,
 		TypeOrmOrderLineRepository,
 		MikroOrmOrderLineRepository,
@@ -211,7 +221,8 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		OrderCreditLineService,
 		OrderHistoryService,
 		OrderCheckoutHandler,
-		SubscriptionOrderService
+		SubscriptionOrderService,
+		OrderInvoicingService
 	]
 })
 export class OrderModule {}

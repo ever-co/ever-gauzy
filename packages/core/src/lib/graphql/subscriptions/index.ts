@@ -1,5 +1,6 @@
 export * from './graphql-pubsub.service';
 export * from './graphql-subscription.module';
+export * from './plugin-subscription';
 export * from './subscription-bus-bridge';
 export * from './subscription-catalogue';
 export * from './subscription-consumer';

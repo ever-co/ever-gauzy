@@ -1,4 +1,4 @@
-import { EventOutboxModule, RolePermissionModule } from '@gauzy/core';
+import { EventOutboxModule, GraphqlSubscriptionModule, RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -27,6 +27,7 @@ import { MikroOrmShippingProfileVariantRepository } from './shipping-profile-var
 import { WarehouseFulfillmentService } from './warehouse-fulfillment/warehouse-fulfillment.service';
 import { ReturnShipmentService } from './return-shipment/return-shipment.service';
 import { fulfillmentResolvers } from './graphql';
+import { FulfillmentStreamedEvents } from './fulfillment-streamed-events';
 
 /**
  * The fulfilment module.
@@ -58,10 +59,13 @@ import { fulfillmentResolvers } from './graphql';
 		// the module that owns the outbox row is imported here. An event published after a commit is an
 		// event a crash loses, and the outbox is a table precisely so that it is not.
 		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `FulfillmentStreamedEvents`.
+		GraphqlSubscriptionModule,
 		OrderModule
 	],
 	providers: [
 		FulfillmentService,
+		FulfillmentStreamedEvents,
 		TypeOrmFulfillmentRepository,
 		MikroOrmFulfillmentRepository,
 		FulfillmentLineService,

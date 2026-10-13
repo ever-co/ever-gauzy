@@ -16,11 +16,12 @@ import {
 	versionExpectationOf
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
-import { OrderService } from '../order/order.service';
+import { IOrderApprovalRequested, OrderService } from '../order/order.service';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChangeService } from '../order-change/order-change.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderHistoryService } from '../order-history/order-history.service';
+import { IOrderQuoteSent, OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
 import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
@@ -84,7 +85,8 @@ export class OrderResolver {
 		private readonly shippingMethodService: OrderShippingMethodService,
 		private readonly creditLineService: OrderCreditLineService,
 		private readonly historyService: OrderHistoryService,
-		private readonly changeService: OrderChangeService
+		private readonly changeService: OrderChangeService,
+		private readonly invoicingService: OrderInvoicingService
 	) {}
 
 	/**
@@ -254,6 +256,31 @@ export class OrderResolver {
 	}
 
 	/**
+	 * Places a buyer's draft order for a staff member's approval.
+	 *
+	 * The mirror of `POST /orders/:id/request-approval`: the same service method, the same grant, the same
+	 * retry scope and the same versioned resource, and the note the route's body carries as an argument.
+	 *
+	 * @param id The order.
+	 * @param note The buyer's note to the approver.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The placed order, and the approval request filed for it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.approval.request', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'requestOrderApproval' })
+	async requestOrderApproval(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('note', { type: () => String, nullable: true }) note?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<IOrderApprovalRequested> {
+		return this.orderService.requestApproval(id, note, versionExpectationOf(context?.req));
+	}
+
+	/**
 	 * Confirms a placed order.
 	 *
 	 * @param id The order.
@@ -309,6 +336,99 @@ export class OrderResolver {
 		@Context() context?: any
 	): Promise<Order> {
 		return this.orderService.archive(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Issues the invoice that bills an order.
+	 *
+	 * The mirror of `POST /orders/:id/invoice`: the same service method, the same grant, the same retry scope
+	 * and the same versioned resource. The order answered carries the invoice in `invoiceId`.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, stamped with its invoice.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.invoice', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'generateOrderInvoice' })
+	async generateOrderInvoice(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.generateInvoice(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Sends the buyer a quote for an order.
+	 *
+	 * The mirror of `POST /orders/:id/quote/send`: the same service method, the same grant, the same retry
+	 * scope and the same versioned resource. The payload says whether the estimate e-mail went, because the
+	 * quote is recorded whether or not it did.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, the estimate the quote is, and whether the e-mail went.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.quote.send', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'sendOrderQuote' })
+	async sendOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<IOrderQuoteSent> {
+		return this.invoicingService.sendQuote(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Records the buyer's acceptance of an order's quote and confirms the order.
+	 *
+	 * The mirror of `POST /orders/:id/quote/accept`: the same service method, the same grant — the approve
+	 * route's, because it confirms the order — and the same versioned resource; like `confirmOrder`, no retry
+	 * scope.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The confirmed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'acceptOrderQuote' })
+	async acceptOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.acceptQuote(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Records the buyer's refusal of an order's quote, leaving the order where it is.
+	 *
+	 * The mirror of `POST /orders/:id/quote/decline`: the same service method, the same grant and the same
+	 * versioned resource, and the reason the route's body carries as an argument — the shape
+	 * `declineOrderChange` already has.
+	 *
+	 * @param id The order.
+	 * @param reason Why the buyer declined.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, in the status it was in.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'declineOrderQuote' })
+	async declineOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.declineQuote(id, reason, versionExpectationOf(context?.req));
 	}
 
 	/**

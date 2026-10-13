@@ -122,6 +122,14 @@ export { RolePermissionModule, RolePermissionService } from './lib/role-permissi
 // through the module that provides the service and the service itself.
 export { RequestApprovalModule } from './lib/request-approval/request-approval.module';
 export { RequestApprovalService } from './lib/request-approval/request-approval.service';
+// The finance document is public API for the same reason: a package whose record is billed — an order
+// invoiced, an order quoted — issues the platform's own `invoice` row (and, for a quote, the estimate and the
+// estimate e-mail that rides it) rather than a parallel accounting table, and it can only do that through the
+// module that provides the service and the service itself. The package reaches them from an adapter it binds
+// behind a port of its own, so its domain module never imports this one (`apps/api/src/plugin-composition.ts`
+// joins the two).
+export { InvoiceModule } from './lib/invoice/invoice.module';
+export { InvoiceService } from './lib/invoice/invoice.service';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
 
@@ -323,6 +331,34 @@ export * from './lib/tax-line';
 export * from './lib/sequence';
 export * from './lib/search';
 export * from './lib/event-outbox';
+/**
+ * The subscription surface a package streams its events through.
+ *
+ * A package's subscription field returns {@link tenantScopedEventStream} (its in-process events) or
+ * {@link tenantScopedTopicStream} (the tenant topics the outbox consumer and the bus bridge publish to),
+ * so the subscriber's tenant is enforced by the kernel rather than restated — or forgotten — by each
+ * package; `declareStreamedEvents` is how a package that appends to the outbox makes those facts
+ * selectable by `Subscription.events`. Only the plugin-facing members are named: the transport, the hub
+ * and the delivery stay the kernel's own.
+ */
+export {
+	currentSubscriberScope,
+	declareStreamedEvents,
+	deliverPayloadAsIs,
+	observableToAsyncIterable,
+	tenantScopedEventStream,
+	tenantScopedTopicStream
+} from './lib/graphql/subscriptions/plugin-subscription';
+export type { SubscriberScope, TenantEventStreamOptions } from './lib/graphql/subscriptions/plugin-subscription';
+export { GraphqlSubscriptionModule } from './lib/graphql/subscriptions/graphql-subscription.module';
+export { GraphqlPubSub } from './lib/graphql/subscriptions/graphql-pubsub.service';
+export {
+	NON_SUBSCRIBABLE_EVENT_NAMES,
+	SubscriptionCatalogue
+} from './lib/graphql/subscriptions/subscription-catalogue';
+export { GraphqlSubscriptionConsumer } from './lib/graphql/subscriptions/subscription-consumer';
+export { GraphqlSubscriptionBusBridge } from './lib/graphql/subscriptions/subscription-bus-bridge';
+export type { SubscriptionEnvelope } from './lib/graphql/subscriptions/subscription-hub.service';
 export * from './lib/operation';
 export * from './lib/webhook';
 export * from './lib/job-execution';

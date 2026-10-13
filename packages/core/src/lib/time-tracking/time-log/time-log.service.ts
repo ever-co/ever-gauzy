@@ -1641,8 +1641,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
 
-			// Check for conflicts with existing time logs
-			const timeLog = await this.findOneByIdString(id);
+			// The stored log, read past this service's own-employee filter: a team manager edits a member's log, and
+			// that filter would answer "not found" for any log but the manager's own. `assertCanWriteTimeFor` above
+			// has already checked that the caller may write `employeeId`'s time, and the owner check below refuses any
+			// other log, so the read reaches nothing the caller could not have edited.
+			const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 
 			// The update keeps the log's timesheet and time slots, while the conflict cleanup below deletes
 			// slots of `employeeId`: naming anyone but the log's owner would move the log without its time
@@ -1686,8 +1689,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Execute the command to update the time log
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
-			// Retrieve the updated time log entry
-			return await this.findOneByIdString(id);
+			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
+			return await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 		} catch (error) {
 			// Never swallow the reason (same blanket catch as `addManualTime`).
 			if (error instanceof HttpException) {

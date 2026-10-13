@@ -31,7 +31,7 @@ import {
 	versionExpectationOf
 } from '@gauzy/core';
 import { Order } from './order.entity';
-import { OrderService } from './order.service';
+import { IOrderApprovalRequested, OrderService } from './order.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { CreateOrderDTO, UpdateOrderDTO } from './dto';
 import { OrderChangeService } from '../order-change/order-change.service';
@@ -40,6 +40,7 @@ import { OrderHistoryService } from '../order-history/order-history.service';
 import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
+import { IOrderQuoteSent, OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
 import { CreateOrderChangeDTO } from '../order-change/dto';
 import { CreateOrderCreditLineDTO } from '../order-credit-line/dto';
 
@@ -76,7 +77,8 @@ export class OrderController extends CrudController<Order> {
 		private readonly creditLineService: OrderCreditLineService,
 		private readonly transactionService: OrderTransactionService,
 		private readonly summaryService: OrderSummaryService,
-		private readonly historyService: OrderHistoryService
+		private readonly historyService: OrderHistoryService,
+		private readonly invoicingService: OrderInvoicingService
 	) {
 		super(orderService);
 	}
@@ -174,6 +176,40 @@ export class OrderController extends CrudController<Order> {
 	}
 
 	/**
+	 * Places a buyer's draft order for a staff member's approval.
+	 *
+	 * The order lifecycle has no status of its own for "awaiting approval", so the request is the move the
+	 * place route makes — `DRAFT -> PENDING` — plus an approval request filed against the order through the
+	 * platform's approval machinery. A staff member approves it with `POST /orders/:id/approve`, whose
+	 * confirmation decides the request. The grant is the place route's, `ORDERS_EDIT`, and so is the retry
+	 * scope's shape: a request is a placement.
+	 *
+	 * @param id The order.
+	 * @param body The buyer's note to the approver.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The placed order, and the approval request filed for it.
+	 */
+	@ApiOperation({ summary: "Place a buyer's draft order for a staff member's approval" })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Order placed and approval requested' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order is past placing, or a request already awaits a decision'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.approval.request', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/request-approval')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async requestApproval(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: { note?: string },
+		@Req() request: Request
+	): Promise<IOrderApprovalRequested> {
+		return this.orderService.requestApproval(id, body?.note, versionExpectationOf(request));
+	}
+
+	/**
 	 * Confirms a placed order.
 	 *
 	 * @param id The order.
@@ -229,6 +265,128 @@ export class OrderController extends CrudController<Order> {
 	@HttpCode(HttpStatus.OK)
 	async archive(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
 		return this.orderService.archive(id, versionExpectationOf(request));
+	}
+
+	/**
+	 * Issues the invoice that bills an order.
+	 *
+	 * The invoice is the platform's own finance document, built from the order — one item per billable line
+	 * and per delivery choice, the order's discount and tax as the order computed them — and the order is
+	 * stamped with it in a write predicated on the version the caller states. Each line's link to the item
+	 * that billed it is recorded in the order's invoice register.
+	 *
+	 * The route states the order grant; issuing the document also requires the finance module's own
+	 * `INVOICES_EDIT`, which the service checks, because the platform's guard reads a route's grants as
+	 * alternatives.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The order, stamped with its invoice.
+	 */
+	@ApiOperation({ summary: 'Invoice an order' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Order invoiced' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order is already invoiced, is a test order, or is in a status that cannot be invoiced'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.invoice', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/invoice')
+	@HttpCode(HttpStatus.OK)
+	async invoice(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.invoicingService.generateInvoice(id, versionExpectationOf(request));
+	}
+
+	/**
+	 * Sends the buyer a quote for an order.
+	 *
+	 * The quote is the platform's own estimate, built from the order as it stands and linked through the
+	 * order's `quoteInvoiceId`; an earlier quote the buyer has not answered is voided as superseded. It is
+	 * e-mailed through the platform's estimate e-mail, and the send's outcome is reported in `delivery`
+	 * rather than failing the write: an installation with no mail server can still quote, and the quote
+	 * can be sent again.
+	 *
+	 * The route states the order grant; the estimate also requires the finance module's own
+	 * `ESTIMATES_EDIT`, which the service checks.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The order, the estimate the quote is, and whether the e-mail went.
+	 */
+	@ApiOperation({ summary: 'Send the buyer a quote for an order' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Quote recorded; `delivery` says whether the e-mail went' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order is past quoting, is invoiced, or its quote was already accepted'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.quote.send', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/quote/send')
+	@HttpCode(HttpStatus.OK)
+	async sendQuote(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrderQuoteSent> {
+		return this.invoicingService.sendQuote(id, versionExpectationOf(request));
+	}
+
+	/**
+	 * Records the buyer's acceptance of an order's quote and confirms the order.
+	 *
+	 * The estimate is marked accepted, and the order moves to `CONFIRMED` through its own lifecycle — a draft
+	 * is placed first, then confirmed — never by writing the status. The grant is the approve route's,
+	 * `ORDERS_APPROVE`, because accepting a quote confirms the order exactly as that route does; recording
+	 * the answer on the estimate also requires the finance module's own `ESTIMATES_EDIT`, which the service
+	 * checks. Like the approve route it states no retry scope: a repeat finds the order confirmed and is
+	 * refused rather than applied twice.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The confirmed order.
+	 */
+	@ApiOperation({ summary: 'Accept the quote of an order, confirming the order' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Quote accepted and order confirmed' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order has no open quote to accept, or its quote was declined or voided'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
+	@Post(':id/quote/accept')
+	@HttpCode(HttpStatus.OK)
+	async acceptQuote(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.invoicingService.acceptQuote(id, versionExpectationOf(request));
+	}
+
+	/**
+	 * Records the buyer's refusal of an order's quote.
+	 *
+	 * The estimate is marked declined and the order is left where it is — a draft stays a draft — so the
+	 * seller can revise it and send a new quote. The order's version still advances, in a write predicated on
+	 * the version the caller states, because its quote is no longer open. The estimate also requires the
+	 * finance module's own `ESTIMATES_EDIT`, which the service checks.
+	 *
+	 * @param id The order.
+	 * @param body Why the buyer declined, recorded on the timeline.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The order, in the status it was in.
+	 */
+	@ApiOperation({ summary: 'Decline the quote of an order, leaving the order where it is' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Quote declined; the order keeps its status' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order has no open quote to decline, or its quote was already answered or voided'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Post(':id/quote/decline')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async declineQuote(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: { reason?: string },
+		@Req() request: Request
+	): Promise<IOrder> {
+		return this.invoicingService.declineQuote(id, body?.reason, versionExpectationOf(request));
 	}
 
 	/**

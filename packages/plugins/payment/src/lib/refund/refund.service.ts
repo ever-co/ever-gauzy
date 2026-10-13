@@ -163,7 +163,8 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 				refund.orderId,
 				refund.amount,
 				refund.currency,
-				refund.organizationId ?? this.scope.organizationId
+				refund.organizationId ?? this.scope.organizationId,
+				refund.tenantId ?? this.scope.tenantId
 			),
 			`refund ${refund.id}`
 		);
@@ -322,7 +323,8 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 				refund.paymentId,
 				refund.amount,
 				refund.currency,
-				refund.organizationId ?? this.scope.organizationId
+				refund.organizationId ?? this.scope.organizationId,
+				refund.tenantId ?? this.scope.tenantId
 			),
 			`refund ${refund.id}`
 		);

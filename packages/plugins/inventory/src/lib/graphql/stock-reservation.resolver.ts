@@ -8,9 +8,9 @@
  */
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { BadRequestException, UseGuards } from '@nestjs/common';
-import { map } from 'rxjs/operators';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	deliverPayloadAsIs,
 	EventBus,
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
@@ -22,7 +22,8 @@ import {
 	TenantPermissionGuard,
 	Versioned,
 	connectionFromOffsetPage,
-	resolveConnectionWindow
+	resolveConnectionWindow,
+	tenantScopedEventStream
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
@@ -197,9 +198,28 @@ export class StockReservationResolver {
 	 *
 	 * Declared so a client subscribes instead of polling. The stream is the platform’s event bus, so a
 	 * subscriber sees exactly the events the domain already publishes for its outbox.
+	 *
+	 * 🛑 **The stream had no narrowing at all.** Every hold of every tenant was delivered to every
+	 * subscriber holding the view grant, the `referenceId` argument was read by nothing, and the stream
+	 * was an rxjs observable, which graphql-js refuses as a subscription source. It is now the kernel's
+	 * tenant-scoped stream: a hold is delivered only when the tenant its row carries is the subscriber's
+	 * (captured when the subscription opened), only inside the subscriber's organization, and only for the
+	 * document the subscriber named.
+	 *
+	 * @param referenceId The document whose holds the subscriber asked about, when it named one.
+	 * @returns The holds that changed.
 	 */
-	@Subscription('stockReservationChanged')
-	stockReservationChanged(@Args('referenceId') referenceId: string): any {
-		return this.eventBus.ofType(StockReservationChangedEvent).pipe(map((event) => event.reservation));
+	@Subscription('stockReservationChanged', { resolve: deliverPayloadAsIs })
+	stockReservationChanged(@Args('referenceId') referenceId: string): AsyncIterableIterator<StockReservation> {
+		return tenantScopedEventStream<StockReservationChangedEvent, StockReservation>(
+			this.eventBus.ofType(StockReservationChangedEvent),
+			{
+				narrow: ({ reservation }) =>
+					!referenceId || String(reservation?.referenceId ?? '') === String(referenceId),
+				tenantOf: ({ reservation }) => reservation?.tenantId,
+				organizationOf: ({ reservation }) => reservation?.organizationId,
+				read: ({ reservation }) => reservation
+			}
+		);
 	}
 }

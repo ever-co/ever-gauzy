@@ -514,12 +514,14 @@ export class TaskResolver {
 	}
 
 	/**
-	 * Removes a task outright, with the rows that hang off it.
+	 * Removes a task outright, with the rows that hang off it — through the service method `DELETE /api/tasks/:id`
+	 * calls, under the same grants: with `ORG_TASK_EDIT` alone, only a manager of one of the task's teams may delete
+	 * it (`deleteTask` checks that); the delete grants delete any task of the organization.
 	 */
 	@Mutation('deleteTask')
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
 	async deleteTask(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskService.delete(id);
+		await this.taskService.deleteTask(id);
 
 		return true;
 	}

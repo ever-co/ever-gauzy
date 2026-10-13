@@ -14,6 +14,13 @@ export * from './lib/order-state-machine/order-state-machine';
 export * from './lib/order-totals/order-totals.service';
 export * from './lib/checkout/order-checkout.handler';
 export * from './lib/subscription-order/subscription-order.service';
+// The bridge from an order to the accounting documents that bill it, and the adapters an installation binds
+// the `ORDER_INVOICING` and `ORDER_APPROVAL` ports to — with the module that provides them, which the order
+// module itself deliberately does not import.
+export * from './lib/order-invoicing/order-invoicing.service';
+export * from './lib/order-invoicing/order-invoicing.adapter';
+export * from './lib/order-approval/order-approval.adapter';
+export * from './lib/order-platform-adapters.module';
 
 export * from './lib/order/order.entity';
 export * from './lib/order/order.service';

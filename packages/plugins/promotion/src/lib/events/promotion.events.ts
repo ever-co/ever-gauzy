@@ -19,11 +19,13 @@ export class PromotionChangedEvent extends BaseEvent {
 	 * @param promotionId The promotion that changed.
 	 * @param status The state it moved to.
 	 * @param organizationId The organization the promotion belongs to.
+	 * @param tenantId The tenant the promotion belongs to: the subscription delivers the event to that tenant's subscribers only.
 	 */
 	constructor(
 		public readonly promotionId: ID,
 		public readonly status: string,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -33,7 +35,7 @@ export class PromotionChangedEvent extends BaseEvent {
 	 * @returns The event describing it.
 	 */
 	static from(promotion: Promotion): PromotionChangedEvent {
-		return new PromotionChangedEvent(promotion.id, promotion.status, promotion.organizationId);
+		return new PromotionChangedEvent(promotion.id, promotion.status, promotion.organizationId, promotion.tenantId);
 	}
 }
 
@@ -50,13 +52,15 @@ export class PromotionBudgetExhaustedEvent extends BaseEvent {
 	 * @param limit The ceiling.
 	 * @param used What has been consumed, including reservations.
 	 * @param organizationId The organization the budget belongs to.
+	 * @param tenantId The tenant the budget belongs to: the subscription delivers the event to that tenant's subscribers only.
 	 */
 	constructor(
 		public readonly promotionId: ID,
 		public readonly budgetId: ID,
 		public readonly limit: DecimalString,
 		public readonly used: DecimalString,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -76,6 +80,7 @@ export class CouponRedeemedEvent extends BaseEvent {
 	 * @param currency The currency of the discount.
 	 * @param orderId The order the redemption was registered against, when it has one yet.
 	 * @param organizationId The organization the coupon belongs to.
+	 * @param tenantId The tenant the coupon belongs to: the subscription delivers the event to that tenant's subscribers only.
 	 */
 	constructor(
 		public readonly couponId: ID,
@@ -83,7 +88,8 @@ export class CouponRedeemedEvent extends BaseEvent {
 		public readonly amount: DecimalString,
 		public readonly currency: string,
 		public readonly orderId: ID | undefined,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -101,7 +107,8 @@ export class CouponRedeemedEvent extends BaseEvent {
 			amount,
 			(coupon as { currency?: string }).currency ?? '',
 			orderId,
-			coupon.organizationId
+			coupon.organizationId,
+			coupon.tenantId
 		);
 	}
 }
@@ -120,13 +127,15 @@ export class GiftCardRedeemedEvent extends BaseEvent {
 	 * @param balanceAfter The balance the card holds afterwards.
 	 * @param orderId The order the value settled.
 	 * @param organizationId The organization the card belongs to.
+	 * @param tenantId The tenant the card belongs to: the subscription delivers the event to that tenant's subscribers only.
 	 */
 	constructor(
 		public readonly giftCardId: ID,
 		public readonly amount: DecimalString,
 		public readonly balanceAfter: DecimalString,
 		public readonly orderId: ID | undefined,
-		public readonly organizationId: ID
+		public readonly organizationId: ID,
+		public readonly tenantId: ID
 	) {
 		super();
 	}
@@ -138,7 +147,12 @@ export class GiftCardRedeemedEvent extends BaseEvent {
 	 * @param orderId The order the value settled.
 	 * @returns The event describing it.
 	 */
-	static from(card: GiftCard, amount: DecimalString, balanceAfter: DecimalString, orderId?: ID): GiftCardRedeemedEvent {
-		return new GiftCardRedeemedEvent(card.id, amount, balanceAfter, orderId, card.organizationId);
+	static from(
+		card: GiftCard,
+		amount: DecimalString,
+		balanceAfter: DecimalString,
+		orderId?: ID
+	): GiftCardRedeemedEvent {
+		return new GiftCardRedeemedEvent(card.id, amount, balanceAfter, orderId, card.organizationId, card.tenantId);
 	}
 }

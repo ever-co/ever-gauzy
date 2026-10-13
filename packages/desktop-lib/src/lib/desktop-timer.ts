@@ -80,6 +80,13 @@ export default class TimerHandler {
 	// The setting is off but an earlier asynchronous session left jobs behind: new jobs queue behind them until none is
 	// left, then the session moves to the in-memory queue.
 	private _drainingLeftovers = false;
+	// Every job for the persistent queue, in submission order (see `submitInOrder`): a job refused by the store must
+	// still run before the newer ones, which would otherwise be stored ahead of it and then overwritten by it.
+	private _submissions: Promise<void> = Promise.resolve();
+	private _submissionsPending = 0;
+	// While refused work waits for the stored jobs ahead: the one deadline all of it shares (see `submitInOrder`).
+	private _fallbackDeadline: number | null = null;
+	private _fallbackDeadlineAudited = false;
 	private _deferredSyncs = 0;
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
@@ -795,21 +802,27 @@ export default class TimerHandler {
 	public async clearActivityEvents(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
 		const queue = await this.asyncTimerSync(knex);
 		if (queue) {
-			try {
-				await queue.processWithQueue(
+			const store = () =>
+				queue.processWithQueue(
 					DEFAULT_TIMER_QUEUE,
 					{ type: TimerQueueJobType.CLEAR_ACTIVITY_EVENTS, data: tables?.length ? { tables } : {} },
 					knex
 				);
-				return;
-			} catch (error) {
-				await this._auditLogHandler.timerAuditError(
-					`[clearActivityEvents] Could not queue the activity reset, emptying the tables once the saves ahead are written: ${error?.message ?? error}`
-				);
-				// Not before the event saves stored ahead of it: one written after the reset would land in the next time slot.
-				await this.waitForStoredJobs(queue, 'clearActivityEvents');
-			}
+			// Not before the event saves queued ahead of it: one written after the reset would land in the next time slot.
+			return this.submitInOrder(queue, 'clearActivityEvents', {
+				store,
+				runInMemory: () => this.resetActivityTables(knex, tables),
+				refused: (error) =>
+					this._auditLogHandler.timerAuditError(
+						`[clearActivityEvents] Could not queue the activity reset, emptying the tables once the saves ahead are written: ${(error as Error)?.message ?? error}`
+					)
+			});
 		}
+		await this.resetActivityTables(knex, tables);
+	}
+
+	/* Empties the ActivityWatch event tables (`tables`, all five when absent) right away. */
+	private async resetActivityTables(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
 		if (!tables?.length) {
 			await this._activityWatchService.clearAllEvents();
 			return;
@@ -856,32 +869,126 @@ export default class TimerHandler {
 	/*
 	 * Waits for the jobs stored ahead before work that bypasses the persistent queue (a job, or a reset, it could not
 	 * store), so that this work cannot overtake them: in rounds of `FALLBACK_SETTLE_MS`, until they have run or the queue
-	 * is closed — or until `FALLBACK_MAX_WAIT_MS` has passed, so that a store that never settles cannot stall the timer for
-	 * good (audited). Answers whether the stored jobs ahead were all applied.
+	 * is closed — or until `deadline`, so that a store that never settles cannot stall the timer for good (audited once
+	 * per fallback episode). A round that cannot read the store (audited once per wait) pauses and keeps waiting: giving
+	 * up early would let this work overtake the jobs stored ahead. Answers whether the stored jobs ahead were all applied.
 	 */
-	private async waitForStoredJobs(queue: AsyncTimerSyncQueue, caller: string): Promise<boolean> {
-		const deadline = Date.now() + FALLBACK_MAX_WAIT_MS;
+	private async waitForStoredJobs(queue: AsyncTimerSyncQueue, caller: string, deadline: number): Promise<boolean> {
+		const failedRounds = { audited: false };
 		while (!queue.isClosed) {
-			let settled: boolean;
-			try {
-				settled = await queue.settle(FALLBACK_SETTLE_MS);
-			} catch (error) {
-				await this._auditLogHandler.timerAuditError(
-					`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
-				);
+			const remaining = deadline - Date.now();
+			if (remaining <= 0) {
+				await this.auditFallbackDeadline(caller);
 				return false;
 			}
-			if (settled) {
+			if (await this.settleRound(queue, caller, remaining, deadline, failedRounds)) {
 				return true;
-			}
-			if (Date.now() >= deadline) {
-				await this._auditLogHandler.timerAuditError(
-					`[${caller}] Stored timer jobs still pending after ${FALLBACK_MAX_WAIT_MS} ms; going ahead without them`
-				);
-				return false;
 			}
 		}
 		return true;
+	}
+
+	/*
+	 * One round of `waitForStoredJobs`: whether the stored jobs ahead were all applied within `remaining` (at most
+	 * `FALLBACK_SETTLE_MS`). A round that cannot read the store fails at once rather than waiting: it is audited (once
+	 * per wait), pauses for what it would have waited, and answers false so that the wait goes on.
+	 */
+	private async settleRound(
+		queue: AsyncTimerSyncQueue,
+		caller: string,
+		remaining: number,
+		deadline: number,
+		failedRounds: { audited: boolean }
+	): Promise<boolean> {
+		try {
+			return await queue.settle(Math.min(FALLBACK_SETTLE_MS, remaining));
+		} catch (error) {
+			if (!failedRounds.audited) {
+				failedRounds.audited = true;
+				await this._auditLogHandler.timerAuditError(
+					`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
+				);
+			}
+			const pause = Math.min(FALLBACK_SETTLE_MS, Math.max(0, deadline - Date.now()));
+			if (pause > 0) {
+				await new Promise((resolve) => setTimeout(resolve, pause));
+			}
+			return false;
+		}
+	}
+
+	/** Audits, once per fallback episode, that the cut-off passed with stored jobs still pending. */
+	private async auditFallbackDeadline(caller: string): Promise<void> {
+		if (this._fallbackDeadlineAudited) {
+			return;
+		}
+		this._fallbackDeadlineAudited = true;
+		await this._auditLogHandler.timerAuditError(
+			`[${caller}] Stored timer jobs still pending after ${FALLBACK_MAX_WAIT_MS} ms; going ahead without them`
+		);
+	}
+
+	/*
+	 * Hands every job for the persistent queue on in submission order. Each job takes its place synchronously, when it
+	 * is submitted — before anything is awaited — so a newer job can never reach the store while an older one is still
+	 * being stored, refused or run. At its turn a job:
+	 *  1. is stored (the normal case): it then runs after everything stored before it;
+	 *  2. if the store refuses it (audited), is offered once more — a busy database usually accepts the retry;
+	 *  3. if still refused, waits for the jobs stored ahead of it to be applied and runs right here, in memory, so it has
+	 *     finished before the next job's turn;
+	 *  4. if those stored jobs are still pending at the deadline, is offered to the store once more rather than run ahead
+	 *     of them (they would overwrite it when they run), and runs in memory only if that fails too.
+	 * The deadline (`FALLBACK_MAX_WAIT_MS`) is shared by all the refused work of one episode — from the first refusal
+	 * until no submission is pending any more — so a stuck backlog delays the timer once, not once per job.
+	 * A closed queue (quitting) runs the work in memory straight away.
+	 */
+	private submitInOrder(
+		queue: AsyncTimerSyncQueue,
+		caller: string,
+		work: {
+			store: () => Promise<void>;
+			runInMemory: () => Promise<void>;
+			refused: (error: unknown) => Promise<void>;
+		}
+	): Promise<void> {
+		const tryStore = async (): Promise<boolean> => {
+			try {
+				await work.store();
+				return true;
+			} catch {
+				return false;
+			}
+		};
+		this._submissionsPending++;
+		const run = this._submissions.then(async () => {
+			if (queue.isClosed) {
+				return work.runInMemory();
+			}
+			try {
+				return await work.store();
+			} catch (error) {
+				await work.refused(error);
+			}
+			if (await tryStore()) {
+				return;
+			}
+			this._fallbackDeadline ??= Date.now() + FALLBACK_MAX_WAIT_MS;
+			const applied = await this.waitForStoredJobs(queue, caller, this._fallbackDeadline);
+			if (!applied && !queue.isClosed && (await tryStore())) {
+				return;
+			}
+			await work.runInMemory();
+		});
+		this._submissions = run
+			.catch(() => undefined)
+			.finally(() => {
+				if (--this._submissionsPending === 0) {
+					// The episode is over: the next refusal waits for the jobs stored by then, from scratch.
+					this._fallbackDeadline = null;
+					this._fallbackDeadlineAudited = false;
+				}
+			});
+		return run;
 	}
 
 	/*
@@ -895,7 +1002,9 @@ export default class TimerHandler {
 
 	/*
 	 * When the app quits: applies what the persistent queue holds (bounded) and releases it; the rest runs on the next
-	 * start, and the jobs that still come (e.g. the last time-slot link) use the in-memory queue.
+	 * start, and the jobs that still come (e.g. the last time-slot link) use the in-memory queue. Work the store refused
+	 * and that was still waiting its turn runs in memory once the queue is closed: that is waited for too (bounded), so
+	 * that quitting does not drop it with the process.
 	 */
 	private async closeAsyncTimerSync(): Promise<void> {
 		const queue = await this._asyncTimerSync;
@@ -908,6 +1017,23 @@ export default class TimerHandler {
 			this._drainingLeftovers = false;
 			this._asyncTimerSync = Promise.resolve(null);
 			await queue.close(QUIT_CLOSE_MS).catch((error) => console.error('Error closing the timer queue', error));
+			await this.settlePendingSubmissions(QUIT_CLOSE_MS);
+		}
+	}
+
+	/* Resolves once the submissions made so far have been stored or run (false after `timeoutMs`). */
+	private async settlePendingSubmissions(timeoutMs: number): Promise<boolean> {
+		if (this._submissionsPending === 0) {
+			return true;
+		}
+		let timer: ReturnType<typeof setTimeout>;
+		const timeout = new Promise<boolean>((resolve) => {
+			timer = setTimeout(() => resolve(false), timeoutMs);
+		});
+		try {
+			return await Promise.race([this._submissions.then(() => true), timeout]);
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 
@@ -936,20 +1062,23 @@ export default class TimerHandler {
 		const asyncTimerSync = await this.asyncTimerSync(knex);
 
 		if (asyncTimerSync) {
-			try {
-				return await asyncTimerSync.processWithQueue(type, data, knex);
-			} catch (error) {
-				// The job was not stored: run it on the in-memory queue below rather than lose it — once the stored jobs
-				// ahead of it have run, so it does not overtake them. A closed queue (quitting) needs neither.
-				if (!asyncTimerSync.isClosed) {
-					await this._auditLogHandler.timerAuditError(
-						`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${error?.message ?? error}`
-					);
-					await this.waitForStoredJobs(asyncTimerSync, 'processWithQueue');
-				}
-			}
+			// A job the store refuses still runs, in memory, rather than being lost: behind the stored jobs ahead of it,
+			// so it does not overtake them, and ahead of the jobs submitted after it (see `submitInOrder`).
+			return this.submitInOrder(asyncTimerSync, 'processWithQueue', {
+				store: () => asyncTimerSync.processWithQueue(type, data, knex),
+				runInMemory: () => this.ProcessQueueMessage({ data }, knex),
+				refused: (error) =>
+					this._auditLogHandler.timerAuditError(
+						`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${(error as Error)?.message ?? error}`
+					)
+			});
 		}
 
+		return this.processInMemory(type, data, knex);
+	}
+
+	/* The in-memory queue: used when the persistent queue is off or closed. */
+	private async processInMemory(type, data, knex): Promise<void> {
 		const queName = `${type}-${this.appName}`;
 		console.log(`processWithQueue Called for ${queName}`);
 

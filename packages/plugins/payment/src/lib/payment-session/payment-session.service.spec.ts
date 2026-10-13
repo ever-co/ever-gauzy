@@ -702,7 +702,9 @@ describe('PaymentSessionService — the provider answers (doc 10 §8.5, §8.7, �
 			amount: '40',
 			currency: 'USD',
 			collectionId: COLLECTION,
-			organizationId: ORG
+			organizationId: ORG,
+			// The tenant the attempt was written under: a subscription delivers the event to that tenant only.
+			tenantId: TENANT
 		});
 	});
 
@@ -795,7 +797,8 @@ describe('PaymentSessionService — the provider answers (doc 10 §8.5, §8.7, �
 			sessionId: opened.id,
 			collectionId: COLLECTION,
 			amount: '40',
-			reason: 'CARD_DECLINED'
+			reason: 'CARD_DECLINED',
+			tenantId: TENANT
 		});
 	});
 
@@ -840,7 +843,12 @@ describe('PaymentSessionService — voiding an attempt (doc 10 §8.5, §13.3)', 
 		});
 		expect(fixture.published).toHaveLength(1);
 		expect(fixture.published[0]).toBeInstanceOf(PaymentCanceledEvent);
-		expect(fixture.published[0]).toMatchObject({ sessionId: opened.id, amount: '100', currency: 'USD' });
+		expect(fixture.published[0]).toMatchObject({
+			sessionId: opened.id,
+			amount: '100',
+			currency: 'USD',
+			tenantId: TENANT
+		});
 	});
 
 	it('leaves a partial release as a partial release, and refuses a release past what is outstanding', async () => {
@@ -986,6 +994,8 @@ describe('PaymentSessionService — the expiry sweep (doc 10 §8.5)', () => {
 			'PAYMENT_SESSION_EXPIRED',
 			'PAYMENT_SESSION_EXPIRED'
 		]);
+		// The sweep runs with no request behind it, so the tenant comes from the rows it expired.
+		expect(fixture.published.map((event) => event.tenantId)).toEqual([TENANT, TENANT]);
 		expect(fixture.collection(COLLECTION)).toMatchObject({ status: PaymentCollectionStatus.FAILED });
 		expect(fixture.collection(OTHER_COLLECTION)).toMatchObject({ status: PaymentCollectionStatus.FAILED });
 	});

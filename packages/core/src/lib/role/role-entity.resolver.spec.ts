@@ -86,6 +86,8 @@ const ROWS = [
 function surfaces() {
 	const roleService = {
 		findAll: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
+		// What `GET /roles/team-assignable` reads: the service narrows to the employee and manager roles itself.
+		findTeamAssignableRoles: jest.fn().mockResolvedValue({ items: [ROWS[2]], total: 1 }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		findOneByWhereOptions: jest.fn().mockResolvedValue(ROWS[2]),
 		// Nothing holds the name a filing states until a test says otherwise: `countBy` is the read the
@@ -255,6 +257,7 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 			'roleByOptions',
 			'roleCount',
 			'roles',
+			'teamAssignableRoles',
 			'tenantRoles'
 		]);
 	});
@@ -272,7 +275,7 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 
 	it('reaches every one of those fields from a root operation type of the built schema', () => {
 		expect(rootFields('Query')).toEqual(
-			expect.arrayContaining(['roles', 'tenantRoles', 'role', 'roleByOptions', 'roleCount'])
+			expect.arrayContaining(['roles', 'tenantRoles', 'teamAssignableRoles', 'role', 'roleByOptions', 'roleCount'])
 		);
 		expect(rootFields('Mutation')).toEqual(
 			expect.arrayContaining(['createRole', 'updateRole', 'deleteRole', 'softDeleteRole', 'recoverRole'])
@@ -292,6 +295,7 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 			'findAll',
 			'findById',
 			'findOneRoleByOptions',
+			'findTeamAssignable',
 			'getCount',
 			'importRole',
 			'pagination',
@@ -350,6 +354,18 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 			'offset',
 			'withDeleted',
 		]);
+		// The team-assignable list reads live rows only, so it offers the page protocol without `withDeleted`.
+		expect(fieldArgs('Query', 'teamAssignableRoles')).toEqual([
+			'filter',
+			'sort',
+			'page',
+			'first',
+			'after',
+			'last',
+			'before',
+			'limit',
+			'offset'
+		]);
 		// The count route passes its query string through as the store's own `where`, which this
 		// surface cannot hand to that call, so the count states no narrowing it could not honour.
 		expect(fieldArgs('Query', 'roleCount')).toEqual([]);
@@ -374,6 +390,17 @@ describe('RoleEntityResolver — the connection contract', () => {
 		expect(connection.pageInfo.hasNextPage).toBe(false);
 		// The cursor is the platform's own codec, so the same cursor is valid on the REST surface.
 		expect(CursorCodec.decode(connection.edges[0].cursor).id).toBe(ADMIN);
+	});
+
+	it('answers the team-assignable roles from the read the REST route performs', async () => {
+		const { resolver, roleService } = surfaces();
+
+		const connection = await resolver.teamAssignableRoles();
+
+		expect(roleService.findTeamAssignableRoles).toHaveBeenCalledWith();
+		expect(roleService.findAll).not.toHaveBeenCalled();
+		expect(connection.nodes.map((node) => node.name)).toEqual([ROWS[2].name]);
+		expect(connection.totalCount).toBe(1);
 	});
 
 	it('orders by the resource’s own order when the caller states none', async () => {
@@ -639,6 +666,7 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'tenantRoles', route: 'pagination' },
 	{ field: 'role', route: 'findById' },
 	{ field: 'roleByOptions', route: 'findOneRoleByOptions' },
+	{ field: 'teamAssignableRoles', route: 'findTeamAssignable' },
 	{ field: 'roleCount', route: 'getCount' },
 	{ field: 'createRole', route: 'create' },
 	{ field: 'updateRole', route: 'update' },
@@ -806,7 +834,7 @@ describe('RoleEntityResolver — a capability that is switched off is not served
 	it('refuses the fields this delivery added under the same gate', async () => {
 		const { guard } = gate(false);
 
-		for (const field of ['tenantRoles', 'roleByOptions', 'roleCount', 'deleteRole', 'softDeleteRole', 'recoverRole']) {
+		for (const field of ['tenantRoles', 'teamAssignableRoles', 'roleByOptions', 'roleCount', 'deleteRole', 'softDeleteRole', 'recoverRole']) {
 			const refusal = await guard.canActivate(graphqlContext(field)).catch((thrown) => thrown);
 
 			expect(refusal).toBeInstanceOf(NotFoundException);

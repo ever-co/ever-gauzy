@@ -174,6 +174,37 @@ export class RoleEntityResolver {
 	}
 
 	/**
+	 * The roles a team manager may give a team member: the employee and manager roles of the caller's tenant.
+	 *
+	 * The read is the one `GET /roles/team-assignable` performs (`RoleService.findTeamAssignableRoles()`),
+	 * under the same permissions, and the answer is a connection over its rows exactly as `tenantRoles` is
+	 * over the list route's.
+	 */
+	@Query('teamAssignableRoles')
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD)
+	async teamAssignableRoles(
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<IRole>> {
+		const { items }: IPagination<IRole> = await this.roleService.findTeamAssignableRoles();
+
+		return buildConnection<IRole>({
+			rows: items ?? [],
+			filterable: ROLE_FILTERABLE,
+			sortable: ROLE_SORTABLE,
+			defaultSort: ROLE_DEFAULT_SORT,
+			request: { filter, sort, page, first, after, last, before, limit, offset }
+		});
+	}
+
+	/**
 	 * One role of the caller's tenant.
 	 *
 	 * The field is nullable in the schema, so a role that does not exist — or that belongs to

@@ -1,8 +1,16 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { filter } from 'rxjs';
 import { DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	deliverPayloadAsIs,
+	EventBus,
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	tenantScopedEventStream
+} from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
 import { IGiftCard, IGiftCardTransaction } from '../../promotion.types';
@@ -31,7 +39,6 @@ import {
 	UpdateGiftCardPayload,
 	VoidGiftCardPayload,
 	cursorOffset,
-	toAsyncIterable,
 	toConnection,
 	toOrder,
 	toWindow
@@ -141,10 +148,7 @@ export class GiftCardResolver {
 	 */
 	@Permissions(PromotionPermission.GIFT_CARDS_VIEW as PermissionsEnum)
 	@Query('giftCardBalance')
-	async giftCardBalance(
-		@Args('code') code: string,
-		@Args('pin') pin?: string
-	): Promise<IGiftCardBalancePayload> {
+	async giftCardBalance(@Args('code') code: string, @Args('pin') pin?: string): Promise<IGiftCardBalancePayload> {
 		const balance = await this.giftCardService.balanceByCode(code, pin);
 
 		return {
@@ -390,15 +394,26 @@ export class GiftCardResolver {
 	 * redemption needs the figure the customer will see next, and reading it separately would race with
 	 * the next movement on the same card.
 	 *
+	 * 🛑 **Held to the subscriber's tenant.** The stream used to read the bus and narrow on the id argument
+	 * alone, so a subscriber holding the view grant was handed every tenant's events. The kernel's
+	 * tenant-scoped stream admits only an event of the subscriber's tenant (captured when the subscription
+	 * opened, never read from the publisher's request the bus calls back in) and organization, and
+	 * `deliverPayloadAsIs` hands graphql-js the event itself as the field's value.
+	 *
 	 * @param giftCardId The card to narrow the stream to, when the caller wants one.
 	 * @returns The stream.
 	 */
 	@Permissions(PromotionPermission.GIFT_CARDS_VIEW as PermissionsEnum)
-	@Subscription('giftCardRedeemed')
+	@Subscription('giftCardRedeemed', { resolve: deliverPayloadAsIs })
 	giftCardRedeemed(@Args('giftCardId') giftCardId?: ID): AsyncIterable<IGiftCardRedeemedPayload> {
-		const source = this.eventBus.ofType(GiftCardRedeemedEvent);
-
-		return toAsyncIterable(giftCardId ? source.pipe(filter((event) => event.giftCardId === giftCardId)) : source);
+		return tenantScopedEventStream<GiftCardRedeemedEvent, IGiftCardRedeemedPayload>(
+			this.eventBus.ofType(GiftCardRedeemedEvent),
+			{
+				narrow: (event) => !giftCardId || event.giftCardId === giftCardId,
+				tenantOf: (event) => event.tenantId,
+				organizationOf: (event) => event.organizationId
+			}
+		);
 	}
 
 	/**

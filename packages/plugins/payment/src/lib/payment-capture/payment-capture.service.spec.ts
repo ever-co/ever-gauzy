@@ -551,7 +551,9 @@ describe('PaymentCaptureService — the ledger and the payment row move together
 			paymentId: PAYMENT,
 			amount: '40',
 			currency: 'USD',
-			organizationId: ORG
+			organizationId: ORG,
+			// The tenant the capture was written under: a subscription delivers the event to that tenant only.
+			tenantId: TENANT
 		});
 	});
 

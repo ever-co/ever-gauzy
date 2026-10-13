@@ -92,7 +92,14 @@ jest.mock('@gauzy/core', () => {
 			.connectionFromOffsetPage,
 		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
 			.resolveConnectionWindow,
-		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows,
+		// The kernel's tenant-scoped stream and its payload option, the real ones for the same reason: the
+		// level streams are built on them, and a stand-in would let the suite agree with itself about whose
+		// events a subscriber hears.
+		deliverPayloadAsIs: jest.requireActual('@gauzy/core/src/lib/graphql/subscriptions/plugin-subscription')
+			.deliverPayloadAsIs,
+		tenantScopedEventStream: jest.requireActual('@gauzy/core/src/lib/graphql/subscriptions/plugin-subscription')
+			.tenantScopedEventStream
 	};
 });
 
@@ -109,10 +116,12 @@ jest.mock(
 	})
 );
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { print } from 'graphql';
-import { Observable, from } from 'rxjs';
+import { ClsService } from 'nestjs-cls';
+import { from } from 'rxjs';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { StockLevelController } from './../stock-level/stock-level.controller';
@@ -294,14 +303,14 @@ describe('StockLevelResolver — one concept, two protocols, the same names (doc
 		expect(resolverSource).toMatch(/@Query\('stockLevels'\)/);
 		expect(resolverSource).toMatch(/@Query\('stockLevel'\)/);
 		expect(resolverSource).toMatch(/@Mutation\('reconcileStockLevels'\)/);
-		expect(resolverSource).toMatch(/@Subscription\('stockLevelChanged'\)/);
+		expect(resolverSource).toMatch(/@Subscription\('stockLevelChanged'[,)]/);
 		// The two derived level streams were declared in the schema and bound to nothing, so a client
 		// that subscribed to either was accepted and then never heard anything — which is the one
 		// failure a subscription cannot be told apart from a quiet warehouse.
 		expect(schemaText).toMatch(/stockLevelLow\(warehouseId: ID\): StockLevel!/);
 		expect(schemaText).toMatch(/stockLevelOutOfStock\(warehouseId: ID\): StockLevel!/);
-		expect(resolverSource).toMatch(/@Subscription\('stockLevelLow'\)/);
-		expect(resolverSource).toMatch(/@Subscription\('stockLevelOutOfStock'\)/);
+		expect(resolverSource).toMatch(/@Subscription\('stockLevelLow'[,)]/);
+		expect(resolverSource).toMatch(/@Subscription\('stockLevelOutOfStock'[,)]/);
 		// The availability a level derives stays a computation over the level rather than a level of its
 		// own: it is named for what it answers.
 		expect(resolverSource).toMatch(/@Query\('availableQuantity'\)/);
@@ -313,36 +322,60 @@ describe('StockLevelResolver — one concept, two protocols, the same names (doc
 		// the opposite of what a subscription argument is for, on the one transport where the server pays
 		// for every frame it sends.
 		const published = [
-			{ level: { warehouseId: WAREHOUSE, variantId: VARIANT, availableQuantity: 1 } },
-			{ level: { warehouseId: 'another-location', variantId: VARIANT, availableQuantity: 2 } },
-			{ level: { warehouseId: WAREHOUSE, variantId: 'another-variant', availableQuantity: 3 } }
+			{ level: { warehouseId: WAREHOUSE, variantId: VARIANT, availableQuantity: 1 }, tenantId: TENANT },
+			{ level: { warehouseId: 'another-location', variantId: VARIANT, availableQuantity: 2 }, tenantId: TENANT },
+			{ level: { warehouseId: WAREHOUSE, variantId: 'another-variant', availableQuantity: 3 }, tenantId: TENANT }
 		];
 		const resolver = new StockLevelResolver({} as never, { ofType: () => from(published) } as never);
 
-		await expect(collect(resolver.stockLevelChanged(WAREHOUSE, VARIANT))).resolves.toEqual([
+		await expect(collect(asSubscriber(() => resolver.stockLevelChanged(WAREHOUSE, VARIANT)))).resolves.toEqual([
 			{ warehouseId: WAREHOUSE, variantId: VARIANT, availableQuantity: 1 }
 		]);
 		// A stream the caller narrowed to a location alone keeps every variant of it, and a caller that
 		// narrowed nothing is handed everything, which is what a nullable argument means.
-		await expect(collect(resolver.stockLevelLow(WAREHOUSE))).resolves.toHaveLength(2);
-		await expect(collect(resolver.stockLevelOutOfStock(undefined as never))).resolves.toHaveLength(3);
+		await expect(collect(asSubscriber(() => resolver.stockLevelLow(WAREHOUSE)))).resolves.toHaveLength(2);
+		await expect(
+			collect(asSubscriber(() => resolver.stockLevelOutOfStock(undefined as never)))
+		).resolves.toHaveLength(3);
 	});
 });
+
+/** The tenant the level streams above are opened as. */
+const TENANT = 'tenant-of-the-subscriber';
+
+/**
+ * Opens a stream as a signed-in user of {@link TENANT}.
+ *
+ * The level streams are the kernel's tenant-scoped stream, which captures the subscriber from the request
+ * context when it opens and refuses an operation that has none. The request context is the kernel's own,
+ * over a real CLS store — the `RequestContext` the `@gauzy/core` double exports above is a different
+ * object, read by nothing here.
+ *
+ * @param open Opens the stream.
+ * @returns The stream.
+ */
+function asSubscriber<T>(open: () => T): T {
+	const { RequestContext } = jest.requireActual('@gauzy/core/src/lib/core/context/request-context');
+
+	if (!RequestContext['clsService']) {
+		RequestContext.setClsService(new ClsService(new AsyncLocalStorage()));
+	}
+
+	return RequestContext.runWithRequest({ user: { id: 'subscriber', tenantId: TENANT } }, open);
+}
 
 /**
  * Reads a subscription stream to its end.
  *
- * @param stream The observable a subscription field answered with.
- * @returns Everything it published, in order.
+ * @param stream The async iterable a subscription field answered with — what graphql-js reads.
+ * @returns Everything it delivered, in order.
  */
-function collect(stream: unknown): Promise<unknown[]> {
+async function collect(stream: AsyncIterable<unknown>): Promise<unknown[]> {
 	const seen: unknown[] = [];
 
-	return new Promise((resolve, reject) => {
-		(stream as Observable<unknown>).subscribe({
-			next: (value) => seen.push(value),
-			error: reject,
-			complete: () => resolve(seen)
-		});
-	});
+	for await (const value of stream) {
+		seen.push(value);
+	}
+
+	return seen;
 }

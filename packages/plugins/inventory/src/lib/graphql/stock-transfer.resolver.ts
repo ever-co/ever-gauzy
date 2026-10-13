@@ -8,9 +8,9 @@
  */
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { map } from 'rxjs/operators';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	deliverPayloadAsIs,
 	EventBus,
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
@@ -22,7 +22,8 @@ import {
 	TenantPermissionGuard,
 	Versioned,
 	connectionFromOffsetPage,
-	resolveConnectionWindow
+	resolveConnectionWindow,
+	tenantScopedEventStream
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
@@ -211,9 +212,24 @@ export class StockTransferResolver {
 	 *
 	 * Declared so a client subscribes instead of polling. The stream is the platform’s event bus, so a
 	 * subscriber sees exactly the events the domain already publishes for its outbox.
+	 *
+	 * 🛑 **The stream had no narrowing at all**, exactly as the reservation stream: every tenant's
+	 * transfers reached every subscriber and the `id` argument was read by nothing. It is now the
+	 * kernel's tenant-scoped stream, narrowed to the transfer the subscriber named.
+	 *
+	 * @param id The transfer the subscriber asked about, when it named one.
+	 * @returns The transfers that moved.
 	 */
-	@Subscription('stockTransferChanged')
-	stockTransferChanged(@Args('id') id: string): any {
-		return this.eventBus.ofType(StockTransferChangedEvent).pipe(map((event) => event.transfer));
+	@Subscription('stockTransferChanged', { resolve: deliverPayloadAsIs })
+	stockTransferChanged(@Args('id') id: string): AsyncIterableIterator<StockTransfer> {
+		return tenantScopedEventStream<StockTransferChangedEvent, StockTransfer>(
+			this.eventBus.ofType(StockTransferChangedEvent),
+			{
+				narrow: ({ transfer }) => !id || String(transfer?.id ?? '') === String(id),
+				tenantOf: ({ transfer }) => transfer?.tenantId,
+				organizationOf: ({ transfer }) => transfer?.organizationId,
+				read: ({ transfer }) => transfer
+			}
+		);
 	}
 }

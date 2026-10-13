@@ -1,8 +1,16 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { filter } from 'rxjs';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	deliverPayloadAsIs,
+	EventBus,
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	tenantScopedEventStream
+} from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
 import { ICoupon, IPromotion, IPromotionUsage } from '../../promotion.types';
@@ -26,7 +34,6 @@ import {
 	SoftDeleteCouponPayload,
 	UpdateCouponPayload,
 	cursorOffset,
-	toAsyncIterable,
 	toConnection,
 	toOrder,
 	toWindow
@@ -285,15 +292,26 @@ export class CouponResolver {
 	 * The event is published only after the conditional statement accepted the use, so a subscriber
 	 * never reports a redemption the counter refused.
 	 *
+	 * 🛑 **Held to the subscriber's tenant.** The stream used to read the bus and narrow on the id argument
+	 * alone, so a subscriber holding the view grant was handed every tenant's events. The kernel's
+	 * tenant-scoped stream admits only an event of the subscriber's tenant (captured when the subscription
+	 * opened, never read from the publisher's request the bus calls back in) and organization, and
+	 * `deliverPayloadAsIs` hands graphql-js the event itself as the field's value.
+	 *
 	 * @param couponId The coupon to narrow the stream to, when the caller wants one.
 	 * @returns The stream.
 	 */
 	@Permissions(PromotionPermission.COUPONS_VIEW as PermissionsEnum)
-	@Subscription('couponRedeemed')
+	@Subscription('couponRedeemed', { resolve: deliverPayloadAsIs })
 	couponRedeemed(@Args('couponId') couponId?: ID): AsyncIterable<ICouponRedeemedPayload> {
-		const source = this.eventBus.ofType(CouponRedeemedEvent);
-
-		return toAsyncIterable(couponId ? source.pipe(filter((event) => event.couponId === couponId)) : source);
+		return tenantScopedEventStream<CouponRedeemedEvent, ICouponRedeemedPayload>(
+			this.eventBus.ofType(CouponRedeemedEvent),
+			{
+				narrow: (event) => !couponId || event.couponId === couponId,
+				tenantOf: (event) => event.tenantId,
+				organizationOf: (event) => event.organizationId
+			}
+		);
 	}
 
 	/**

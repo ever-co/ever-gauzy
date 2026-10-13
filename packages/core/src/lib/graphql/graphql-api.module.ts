@@ -13,6 +13,7 @@ import { PaymentTermModule } from './../payment-term/payment-term.module';
 import { AddressRoleResolver } from './../address-role/address-role.resolver';
 import { AddressRoleModule } from './../address-role/address-role.module';
 import { GraphqlSubscriptionModule } from './subscriptions/graphql-subscription.module';
+import { PlatformEventsResolver } from './subscriptions/platform-events.resolver';
 import { ChannelResolver } from './../channel/channel.resolver';
 import { ChannelDomainResolver } from './../channel-domain/channel-domain.resolver';
 import { RegionResolver } from './../region/region.resolver';
@@ -88,6 +89,10 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	ChannelResolver,
 	ChannelDomainResolver,
 	RegionResolver,
+	// The kernel's own subscription field, `Subscription.events`: the platform event stream over the
+	// subscription hub. Its dependencies — the hub and the role-permission service the live permission
+	// check asks — come from `GraphqlSubscriptionModule` and `RolePermissionModule`, both imported below.
+	PlatformEventsResolver,
 	// The party-data kernel. Each resolver is declared by the domain module that owns the service it
 	// calls: the address book, the group, the membership pivot (whose resolver is attached to the
 	// group type because the membership has no root of its own), the login and the company account.
