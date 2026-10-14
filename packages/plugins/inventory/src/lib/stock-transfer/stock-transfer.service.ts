@@ -4,6 +4,7 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockTransferStatus } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockTransferLine } from './../stock-transfer-line/stock-transfer-line.entity';
@@ -65,6 +66,10 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	 *
 	 * A transfer between one location and itself is refused by the database as well as here: the
 	 * constraint states the rule once, so no code path can create a document that has no meaning.
+	 *
+	 * Both locations and every line's variant have to be the caller's. A transfer out of another
+	 * tenant's location would ship that tenant's stock on this caller's paperwork, and one into it would
+	 * create stock there (review R2-01); each is refused as naming something that does not exist.
 	 */
 	public async createTransfer(input: {
 		fromWarehouseId: ID;
@@ -81,6 +86,12 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		}
 
 		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			await assertLocationInScope(manager, input.fromWarehouseId);
+			await assertLocationInScope(manager, input.toWarehouseId);
+			for (const line of input.lines ?? []) {
+				await assertVariantInScope(manager, line.variantId);
+			}
+
 			const { formatted } = await this.sequenceService.allocate('TRANSFER');
 			const transfer = manager.create(StockTransfer, {
 				number: formatted,
@@ -395,12 +406,17 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	/**
 	 * Loads a transfer, or refuses with the document that is not there.
 	 *
+	 * The load is inside the request's tenant and organization, and it is the load every transition —
+	 * request, approve, ship, receive, cancel and the edit — makes inside its own transaction, so a
+	 * transfer of another tenant is one that does not exist for this caller (review R2-01). Only the edit
+	 * used to run a scoped read first; the transitions read by identifier alone.
+	 *
 	 * @param manager The transaction the caller runs in.
 	 * @param id Id of the transfer.
-	 * @throws NotFoundException When no transfer holds that id.
+	 * @throws NotFoundException When no transfer of the caller's holds that id.
 	 */
 	private async requireTransfer(manager: any, id: ID): Promise<StockTransfer> {
-		const transfer = await manager.findOne(StockTransfer, { where: { id } });
+		const transfer = await manager.findOne(StockTransfer, { where: { id, ...requestScope() } });
 		if (!transfer) {
 			throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer does not exist.', {
 				notFound: true,

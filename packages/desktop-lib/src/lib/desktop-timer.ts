@@ -26,6 +26,7 @@ import {
 	isAsyncTimerDataSyncEnabled
 } from './queues/async-timer-sync-queue';
 import { ITimerQueueJob, TimerQueueJobType, TimerQueueProcessor } from './queues/timer-queue-processor';
+import { restoreUtilTypeChecks } from './queues/embedded-queue-node';
 
 // embedded-queue is required lazily inside processWithQueue() to avoid
 // loading it at module import time (before app.ready).
@@ -1086,7 +1087,8 @@ export default class TimerHandler {
 			console.log(`Initializing Queue ${queName}`);
 
 			// Lazy require — deferred from module scope to avoid loading embedded-queue
-			// (and its native dependencies) before app.ready.
+			// (and its native dependencies) before app.ready. Its nedb store needs util checks Node 23 removed.
+			restoreUtilTypeChecks();
 			const EmbeddedQueue = require('embedded-queue');
 
 			this.queue = await EmbeddedQueue.Queue.createQueue({

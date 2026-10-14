@@ -18,6 +18,7 @@ import {
 	StockReasonCode
 } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { assertLocationInScope, narrowLevelReadToTenant, requestScope } from './../inventory.scope';
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockCountLine } from './../stock-count-line/stock-count-line.entity';
@@ -84,9 +85,14 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 	 * The organization travels with the tenant, because every other read in this package is scoped by
 	 * both; and the conflicting session's status is reported beside its id, so an operator is told which
 	 * session to close rather than being told only that one exists.
+	 *
+	 * The location has to be the caller's: a session over another tenant's location would snapshot that
+	 * tenant's levels into the caller's sheet and write its corrections onto them (review R2-01).
 	 */
 	public async createCount(input: Partial<StockCount>): Promise<StockCount> {
 		return await this.typeOrmStockCountRepository.manager.transaction(async (manager) => {
+			await assertLocationInScope(manager, input.warehouseId);
+
 			const tenantId = RequestContext.currentTenantId();
 			const organizationId = RequestContext.currentOrganizationId();
 			const open = await manager.findOne(StockCount, {
@@ -122,16 +128,22 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 	 *
 	 * The snapshot is taken now and never re-read, because the whole point of a count is to compare
 	 * what the record believed at the start against what the floor reports at the end.
+	 *
+	 * The levels are read inside the session's own tenant. A session is created over the caller's own
+	 * location, but its location is a column a generic update can still move, and a snapshot of another
+	 * tenant's levels would hand the caller that tenant's quantities as the sheet's expectation.
 	 */
 	public async open(id: ID): Promise<StockCount> {
 		return await this.typeOrmStockCountRepository.manager.transaction(async (manager) => {
 			const count = await this.requireState(manager, id, [StockCountStatus.DRAFT]);
-
-			const levels = await manager
+			const query = manager
 				.createQueryBuilder(WarehouseProductVariant, 'level')
 				.innerJoin('level.warehouseProduct', 'aggregate')
-				.where('aggregate.warehouseId = :warehouseId', { warehouseId: count.warehouseId })
-				.getMany();
+				.where('aggregate.warehouseId = :warehouseId', { warehouseId: count.warehouseId });
+
+			narrowLevelReadToTenant(query, count.tenantId ?? RequestContext.currentTenantId());
+
+			const levels = await query.getMany();
 
 			for (const level of levels as WarehouseProductVariant[]) {
 				const line = manager.create(StockCountLine, {
@@ -303,10 +315,10 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 		});
 	}
 
-	/** Lists the lines of a session, optionally hiding the expectation for a blind count. */
+	/** Lists the lines of a session of the caller's, optionally hiding the expectation for a blind count. */
 	public async listLines(id: ID, includeExpected: boolean): Promise<StockCountLine[]> {
 		const lines = await this.typeOrmStockCountRepository.manager.find(StockCountLine, {
-			where: { stockCountId: id }
+			where: { stockCountId: id, ...requestScope() }
 		});
 		if (includeExpected) {
 			return lines;
@@ -322,7 +334,7 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 	/** Counts the lines still awaiting a reading, which is what a progress readout shows. */
 	public async pendingLineCount(id: ID): Promise<number> {
 		return await this.typeOrmStockCountRepository.manager.count(StockCountLine, {
-			where: { stockCountId: id, countedQuantity: IsNull() } as any
+			where: { stockCountId: id, countedQuantity: IsNull(), ...requestScope() } as any
 		});
 	}
 
@@ -368,9 +380,15 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 		return formatDecimalUnits(units < 0n ? -units : units, scale);
 	}
 
-	/** Loads a session and refuses an operation the state does not allow. */
+	/**
+	 * Loads a session and refuses an operation the state does not allow.
+	 *
+	 * The load is inside the request's tenant and organization, and every verb — open, record, close and
+	 * cancel — makes it inside its own transaction, so another tenant's session is one that does not exist
+	 * for this caller (review R2-01).
+	 */
 	private async requireState(manager: any, id: ID, expected: StockCountStatus[]): Promise<StockCount> {
-		const count = await manager.findOne(StockCount, { where: { id } });
+		const count = await manager.findOne(StockCount, { where: { id, ...requestScope() } });
 		if (!count) {
 			throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The count session does not exist.', {
 				notFound: true,
