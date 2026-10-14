@@ -9,6 +9,7 @@ import * as moment from 'moment';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../employee-statistics.service';
 import { MonthAggregatedEmployeeStatisticsQuery } from '../month-aggregated-employee-statistics.query';
+import { recurringExpenseStart } from '../../recurring-expense-start';
 
 /**
  * Finds income, expense, profit and bonus
@@ -222,10 +223,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate =
-				expense.startDate > inputStartDate
-					? expense.startDate
-					: inputStartDate;
+			const requiredStartDate = recurringExpenseStart(expense.startDate, inputStartDate);
 
 			for (
 				const date = new Date(requiredStartDate);

@@ -14,6 +14,7 @@ import { IncomeService } from '../income/income.service';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import { recurringExpenseStart } from './recurring-expense-start';
 
 /**
  * The month containing `date`, as the range `findWorkingEmployees` filters on.
@@ -427,7 +428,7 @@ export class EmployeeStatisticsService {
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate = expense.startDate > inputStartDate ? expense.startDate : inputStartDate;
+			const requiredStartDate = recurringExpenseStart(expense.startDate, inputStartDate);
 
 			for (
 				const date = new Date(requiredStartDate);
