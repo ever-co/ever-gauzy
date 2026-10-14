@@ -935,6 +935,25 @@ describe('SellerPayoutService — approving and executing (doc 20 §7.4, MK-13)'
 		await expect(canceled.service.recordExecution('p1', { paid: true })).rejects.toBeInstanceOf(ConflictException);
 	});
 
+	it.each([SellerPayoutStatus.DRAFT, SellerPayoutStatus.PENDING, SellerPayoutStatus.FAILED])(
+		'refuses to record an execution for a %s payout, which was never approved (R4-18)',
+		async (status) => {
+			// The README's prepare -> approve -> execute: a payout recorded paid straight from the run kept
+			// `approvedAt`/`approvedByUserId` empty, and a failed one is re-driven through `retry`, which re-approves it.
+			const fixture = payoutFixture({
+				payouts: [payoutRow('p1', { status })],
+				lines: [{ id: 'l1', sellerPayoutId: 'p1', sellerTransactionId: 't1', amount: '100.000000' }],
+				transactions: [transactionRow('t1', { status: SellerTransactionStatus.SETTLED })]
+			});
+
+			await expect(fixture.service.recordExecution('p1', { paid: true })).rejects.toMatchObject({
+				response: { code: 'SELLER_PAYOUT_NOT_APPROVED', details: { status } }
+			});
+			expect(fixture.rows()[0]).toMatchObject({ status: SellerTransactionStatus.SETTLED });
+			expect(fixture.events()).toEqual([]);
+		}
+	);
+
 	it('re-drives a failed payout and refuses to re-drive anything else', async () => {
 		const failed = payoutFixture({
 			payouts: [payoutRow('p1', { status: SellerPayoutStatus.FAILED, failureCode: 'x', failureReason: 'y' })]
