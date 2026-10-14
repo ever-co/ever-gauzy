@@ -431,6 +431,41 @@ describe('SellerOfferingService — the state moves (doc 20 §3.4)', () => {
 		await expect(active.service.submit('offering-1')).rejects.toBeInstanceOf(ConflictException);
 	});
 
+	it('refuses to move the status or the approval stamp through an edit, and accepts a restatement (R4-19)', async () => {
+		// `PUT /seller-offerings/:id {status:"ACTIVE"}` skipped `publish` - and with it the publication clauses and the
+		// seller's own status, so a SUSPENDED seller's offerings could be re-listed.
+		const fixture = offeringFixture();
+
+		for (const body of [
+			{ status: OfferingStatus.ACTIVE },
+			{ approvedAt: new Date('2026-01-01T00:00:00.000Z') },
+			{ approvedByUserId: 'someone' }
+		]) {
+			await expect(fixture.service.updateOffering('offering-1', body as never)).rejects.toMatchObject({
+				response: { code: 'SELLER_OFFERING_FIELD_NOT_WRITABLE', details: { fields: Object.keys(body) } }
+			});
+		}
+
+		const edited = await fixture.service.updateOffering('offering-1', {
+			status: OfferingStatus.DRAFT,
+			metadata: { note: 'restated' }
+		} as never);
+
+		expect(edited).toMatchObject({ status: OfferingStatus.DRAFT, metadata: { note: 'restated' } });
+	});
+
+	it('neither publishes nor withdraws again an offering that was withdrawn (R4-19)', async () => {
+		const fixture = offeringFixture({
+			offerings: [offeringRow('offering-1', { status: OfferingStatus.WITHDRAWN })]
+		});
+
+		await expect(fixture.service.publish('offering-1', [CHANNEL])).rejects.toBeInstanceOf(ConflictException);
+		await expect(fixture.service.withdraw('offering-1')).rejects.toBeInstanceOf(ConflictException);
+		// Nor through the two-action path: pausing it first, then publishing the paused row (Greptile).
+		await expect(fixture.service.unpause('offering-1')).rejects.toBeInstanceOf(ConflictException);
+		await expect(fixture.service.publish('offering-1', [CHANNEL])).rejects.toBeInstanceOf(ConflictException);
+	});
+
 	it('publishes an offering of an active seller and records who approved it', async () => {
 		const fixture = offeringFixture();
 

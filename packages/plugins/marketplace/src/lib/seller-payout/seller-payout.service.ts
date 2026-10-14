@@ -407,6 +407,19 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			throw new ConflictException(`A payout in ${payout.status} is final and is never edited.`);
 		}
 
+		// prepare -> approve -> execute (review R4-18): an execution is recorded against an approved payout (or one whose
+		// provider call is in flight). A DRAFT or PENDING payout has no approval record, and a FAILED one is re-driven
+		// through `retry`, which re-approves it - recording it paid directly left `approvedAt` empty on a paid payout.
+		if (payout.status !== SellerPayoutStatus.APPROVED && payout.status !== SellerPayoutStatus.PROCESSING) {
+			throw new ConflictException({
+				message:
+					`SELLER_PAYOUT_NOT_APPROVED: payout '${payout.id}' is ${payout.status}; an execution is recorded ` +
+					`only for an approved payout (approve it, or retry a failed one, first).`,
+				code: 'SELLER_PAYOUT_NOT_APPROVED',
+				details: { sellerPayoutId: payout.id, status: payout.status }
+			});
+		}
+
 		const lines = await this.lineRepository.find({ where: { sellerPayoutId: payout.id } as FindOptionsWhere<SellerPayoutLine> });
 		const transactions = await this.transactionRepository.find({
 			where: { id: In(lines.map((line) => line.sellerTransactionId)) } as FindOptionsWhere<SellerTransaction>

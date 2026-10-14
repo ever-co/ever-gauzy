@@ -25,6 +25,21 @@ import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
 
+/** The members of an offering only its state moves write (review R4-19). */
+const OFFERING_LIFECYCLE_MEMBERS = ['status', 'approvedAt', 'approvedByUserId'] as const;
+
+/** Whether a stated value is the one stored: a date by its instant, anything else as text. */
+function sameValue(stored: unknown, stated: unknown): boolean {
+	if (stated === null || stored === null || stored === undefined) {
+		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
+	}
+	if (stored instanceof Date || stated instanceof Date) {
+		return new Date(stored as string | Date).getTime() === new Date(stated as string | Date).getTime();
+	}
+
+	return String(stated) === String(stored);
+}
+
 /**
  * Manages what a seller offers, and when it may be sold.
  *
@@ -175,6 +190,26 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	): Promise<SellerOffering> {
 		const offering = await this.getOffering(id, scope, manager);
 
+		// The status moves through submit, publish, pause, unpause and withdraw (review R4-19): `publish` checks the
+		// publication clauses and the seller's own status, and an edit that set `status: ACTIVE` skipped both -
+		// `PUT /seller-offerings/:id {status:"ACTIVE"}` re-listed the offerings of a SUSPENDED or OFFBOARDED seller. The
+		// approval stamp is `publish`'s too. A body that restates the stored value is accepted.
+		const lifecycle = OFFERING_LIFECYCLE_MEMBERS.filter(
+			(member) =>
+				(input as Record<string, unknown>)[member] !== undefined &&
+				!sameValue((offering as unknown as Record<string, unknown>)[member], (input as Record<string, unknown>)[member])
+		);
+
+		if (lifecycle.length > 0) {
+			throw new BadRequestException({
+				message:
+					`SELLER_OFFERING_FIELD_NOT_WRITABLE: ${lifecycle.join(', ')} of offering '${id}' ` +
+					`${lifecycle.length === 1 ? 'moves' : 'move'} through submit, publish, pause, unpause and withdraw, not an edit.`,
+				code: 'SELLER_OFFERING_FIELD_NOT_WRITABLE',
+				details: { sellerOfferingId: id, fields: lifecycle }
+			});
+		}
+
 		const window = this.assertWindow(
 			input.availableFrom ?? offering.availableFrom,
 			input.availableTo ?? offering.availableTo
@@ -184,7 +219,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		// Named as strings rather than as `keyof SellerOffering`, because the immutable set includes the
 		// columns every platform base entity contributes — the organization and the tenant above all,
 		// which are the two a caller must never be able to move.
-		const immutable = ['id', 'sellerId', 'variantId', 'organizationId', 'tenantId'];
+		const immutable = ['id', 'sellerId', 'variantId', 'organizationId', 'tenantId', ...OFFERING_LIFECYCLE_MEMBERS];
 		const values: Record<string, any> = { ...input, ...window };
 
 		for (const field of immutable) {
@@ -230,6 +265,12 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		manager?: EntityManager
 	): Promise<SellerOffering> {
 		const offering = await this.getOffering(id, scope, manager);
+
+		// A withdrawn offering is terminal (review R4-19): it explains past lines' prices and is never listed again.
+		if (offering.status === OfferingStatus.WITHDRAWN) {
+			throw new ConflictException(`An offering in ${offering.status} is terminal and cannot be published.`);
+		}
+
 		const seller = await this.requireSeller(offering.sellerId, manager);
 
 		if (channelIds?.length) {
@@ -261,6 +302,12 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	async unpause(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
 		const offering = await this.getOffering(id, scope, manager);
 
+		// A withdrawn offering is terminal (review R4-19): pausing it would hand `publish` a PAUSED row to re-list
+		// (`POST /seller-offerings/:id/unpublish` then `publish`, or bulk PAUSE then PUBLISH) - Greptile.
+		if (offering.status === OfferingStatus.WITHDRAWN) {
+			throw new ConflictException(`An offering in ${offering.status} is terminal and cannot be paused.`);
+		}
+
 		offering.status = OfferingStatus.PAUSED;
 
 		const paused = await this.repository(manager).save(offering);
@@ -273,6 +320,10 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	/** Withdraws an offering; the row is kept, because it explains a past line's price and commission. */
 	async withdraw(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
 		const offering = await this.getOffering(id, scope, manager);
+
+		if (offering.status === OfferingStatus.WITHDRAWN) {
+			throw new ConflictException(`An offering in ${offering.status} has already been withdrawn.`);
+		}
 
 		offering.status = OfferingStatus.WITHDRAWN;
 
