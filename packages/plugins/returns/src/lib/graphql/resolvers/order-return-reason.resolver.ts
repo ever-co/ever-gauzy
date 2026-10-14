@@ -4,7 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { ReturnsFeatures } from '../../returns.features';
-import { toUserError } from '../wire';
+import { deleteOutcome, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { IOrderReturnReason } from '../../returns.types';
 import { ReturnsPermissions } from '../../returns.permissions';
@@ -184,9 +184,11 @@ export class OrderReturnReasonResolver {
 	@Permissions(ReturnsPermissions.RETURNS_CREATE)
 	async hardDeleteOrderReturnReason(@Args('id') id: ID) {
 		try {
-			await this.orderReturnReasonService.delete(id);
+			// The identity is answered only for a removal that reached a row: an identifier that names none of
+			// the caller's deletes nothing and raises nothing, and is answered `NOT_FOUND` (`deleteOutcome`).
+			const userErrors = deleteOutcome(await this.orderReturnReasonService.delete(id), id);
 
-			return { id, userErrors: [] };
+			return { id: userErrors.length ? null : id, userErrors };
 		} catch (error) {
 			return { id: null, userErrors: [toUserError(error)] };
 		}

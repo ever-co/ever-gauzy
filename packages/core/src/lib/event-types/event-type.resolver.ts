@@ -16,6 +16,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
 import { EventTypeCreateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEventTypeInput` declares in the schema. */
 export interface ICreateEventTypeInput {
@@ -262,13 +263,12 @@ export class EventTypeResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deleteEventType` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deleteEventType` may return; the field answers whether the removal reached a row —
+	 * `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
 	 */
 	@Mutation('deleteEventType')
 	async deleteEventType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.eventTypeService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.eventTypeService.delete(id));
 	}
 
 	/**

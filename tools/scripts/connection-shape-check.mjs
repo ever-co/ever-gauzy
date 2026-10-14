@@ -109,7 +109,11 @@ const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	// terms acceptances are append-only evidence with no `deletedAt` column; a menu item is a join over
 	// live menu rows (`GET /report/menu-items` binds no `BaseQueryDTO`); payroll lines are removed outright
 	// by `removeItem`; and no route withdraws an email-change request.
-	'termsAcceptances', 'reportMenuItems', 'payrollItems', 'emailResets'
+	'termsAcceptances', 'reportMenuItems', 'payrollItems', 'emailResets',
+	// `GET /roles/team-assignable` (develop #10525) binds no query at all — no `BaseQueryDTO`, so no `withDeleted` —
+	// and reads the tenant's live EMPLOYEE and MANAGER roles only (`RoleService.findTeamAssignableRoles`); the field
+	// mirrors that route, and a flag the route does not take would make GraphQL wider than REST (doc 17 §3.1).
+	'teamAssignableRoles'
 ]);
 
 /**

@@ -177,27 +177,32 @@ export class PaymentWebhookEventController extends CrudController<PaymentWebhook
 	}
 
 	/**
-	 * Deletes a row from the inbound provider callback log.
+	 * Retires a row of the inbound provider callback log. The log is evidence, and this route no longer
+	 * erases it.
 	 *
-	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
-	 * permission it demands. The base declares the route with no permission metadata at all, so
-	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
-	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
-	 * class's read grant alone. It now states `PAYMENT_CALLBACKS_REPROCESS`, the grant the record and
-	 * update routes here already carry, because the log is evidence and removing a row from it is an
-	 * administrative act.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row. The entity
+	 * records every callback "before anything is done with it" because "a callback that cannot be verified is
+	 * still evidence — it is what a dispute is argued with — and a handler defect is only replayable if the
+	 * bytes that caused it were kept"; a hard delete threw exactly that away. So the route now retires the
+	 * event exactly as `DELETE ':id/soft'` does — through the service's scoped `softRemove`, which keeps the
+	 * row and its raw body with `deletedAt` set and lets `PUT ':id/recover'` bring it back. Like the hard
+	 * delete it replaces (and like the soft route), a retired event no longer holds the live
+	 * `(providerId, eventId)` replay key, whose unique index covers live rows only. There is no hard-delete
+	 * path through the API. The route's path, status and permission are unchanged:
+	 * `PAYMENT_CALLBACKS_REPROCESS`, the grant the record and update routes here carry.
 	 *
-	 * @param id The event to delete.
-	 * @param options The inherited options, forwarded to the service.
-	 * @returns The result of the delete.
+	 * @param id The event to retire.
+	 * @param options The inherited rest parameter; the retirement reads the event in the caller's scope.
+	 * @returns The retired event.
 	 */
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
+	@ApiOperation({ summary: 'Retire a provider callback (soft delete; the callback log is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The callback was retired.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Callback not found' })
 	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.paymentWebhookEventService.softRemove(id);
 	}
 
 	/**

@@ -1060,6 +1060,16 @@ const SELLER_WRITES: ReadonlyArray<{
 		call: () => ['seller-1']
 	},
 	{
+		field: 'recoverSeller',
+		method: 'recoverSeller',
+		route: 'softRecover',
+		permission: PermissionsEnum.SELLERS_DELETE,
+		service: 'softRecover',
+		call: () => ['seller-1']
+	},
+	// Kept working under its deprecation (owner decision 6, 2026-10-13: `recover*` wins): the same
+	// route, the same grant and the same call as `recoverSeller`, until the removal release it names.
+	{
 		field: 'restoreSeller',
 		method: 'restoreSeller',
 		route: 'softRecover',
@@ -1461,6 +1471,7 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 	offboardSeller: { args: ['seller-1'], row: SELLER },
 	deleteSeller: { args: ['seller-1'], row: DELETE_RESULT },
 	softDeleteSeller: { args: ['seller-1'], row: SELLER },
+	recoverSeller: { args: ['seller-1'], row: SELLER },
 	restoreSeller: { args: ['seller-1'], row: SELLER },
 	publishSellerOffering: { args: ['offering-1', ['channel-1']], row: OFFERING },
 	pauseSellerOffering: { args: ['offering-1'], row: OFFERING },
@@ -2125,6 +2136,44 @@ describe('the marketplace GraphQL contribution', () => {
 
 			expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(0, 2));
 			expect(reads).toEqual([{ field: 'listSettlements', skip: 1, take: 3 }]);
+		});
+	});
+
+	/* --------------------------------------------------------------------------------------------
+	 * The restore/recover naming (owner decision 6, 2026-10-13)
+	 * ------------------------------------------------------------------------------------------ */
+
+	describe('the seller restore act, under the name the rest of the schema uses', () => {
+		// The composed schema spells `PUT /<resource>/:id/recover` as `recover<Type>` in every other field;
+		// `restoreSeller` was the one field that followed the design table's `restore<Type>`. The owner's
+		// answer to "which spelling wins" was "what is NOT deprecated should win", and `recover*` is the live
+		// spelling, so the seller gains `recoverSeller` and `restoreSeller` is deprecated — kept working, and
+		// pointing its callers at the field that replaces it.
+		const mutations = () => COMPOSED.getMutationType()?.getFields() ?? {};
+
+		it('declares recoverSeller, live and not deprecated, answering the seller', () => {
+			const field = mutations()['recoverSeller'];
+
+			expect(field).toBeDefined();
+			expect(field?.deprecationReason).toBeUndefined();
+			expect(String(field?.type)).toBe('Seller!');
+			expect(field?.args.map((argument) => `${argument.name}: ${String(argument.type)}`)).toEqual(['id: ID!']);
+		});
+
+		it('keeps restoreSeller, deprecated in favour of recoverSeller with a removal release named', () => {
+			const field = mutations()['restoreSeller'];
+
+			expect(field).toBeDefined();
+			// The repository's deprecation contract (`schema-diff.ts`): the replacement first, then the release
+			// the removal is planned for, so the schema gate can tell when the field may go.
+			expect(field?.deprecationReason).toMatch(/^Use `?recoverSeller`?; removal planned for \d+\.\d+\.\d+$/);
+			expect(String(field?.type)).toBe(String(mutations()['recoverSeller']?.type));
+		});
+
+		it('states the deprecation on the resolver too, so the two halves of the contribution say one thing', () => {
+			// The SDL is what the server serves; the decorator is what a reader of the resolver sees first.
+			expect(RESOLVER_SOURCE).toMatch(/name: 'restoreSeller',\s*deprecationReason: '[^']*recoverSeller[^']*'/);
+			expect(RESOLVER_SOURCE).toMatch(/\{ name: 'recoverSeller' \}/);
 		});
 	});
 
