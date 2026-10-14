@@ -1,10 +1,12 @@
 import { CreateFulfillmentTables1791000000240 } from './migrations/1791000000240-CreateFulfillmentTables';
 import { AddCartShippingOptionForeignKey1791000000250 } from './migrations/1791000000250-AddCartShippingOptionForeignKey';
 import { AddFulfillmentVersionColumn1791000000610 } from './migrations/1791000000610-AddFulfillmentVersionColumn';
+import { AddFulfillmentSellerColumn1791000000654 } from './migrations/1791000000654-AddFulfillmentSellerColumn';
 
 export { CreateFulfillmentTables1791000000240 } from './migrations/1791000000240-CreateFulfillmentTables';
 export { AddCartShippingOptionForeignKey1791000000250 } from './migrations/1791000000250-AddCartShippingOptionForeignKey';
 export { AddFulfillmentVersionColumn1791000000610 } from './migrations/1791000000610-AddFulfillmentVersionColumn';
+export { AddFulfillmentSellerColumn1791000000654 } from './migrations/1791000000654-AddFulfillmentSellerColumn';
 
 /**
  * The plugin's migration set, in run order.
@@ -21,5 +23,6 @@ export { AddFulfillmentVersionColumn1791000000610 } from './migrations/179100000
 export const ALL_FULFILLMENT_MIGRATIONS = [
 	CreateFulfillmentTables1791000000240,
 	AddCartShippingOptionForeignKey1791000000250,
-	AddFulfillmentVersionColumn1791000000610
+	AddFulfillmentVersionColumn1791000000610,
+	AddFulfillmentSellerColumn1791000000654
 ];
