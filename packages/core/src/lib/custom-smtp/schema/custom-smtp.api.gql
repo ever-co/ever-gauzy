@@ -10,11 +10,12 @@
 # configuration an organization's mail actually uses, and the validator that proves one works by sending
 # through it. Every one of those is a field below.
 #
-# **The permission is the controller's and there is one of it.** The class carries `CUSTOM_SMTP_VIEW`
-# and no handler states a permission of its own — the creation, the edit and the validator included — so
-# every field below runs under that one permission and the class states it once. Reading a transport
-# configuration and replacing it are the same grant on this resource; that is the delivered scope, and
-# widening it here would be a decision this delivery has no business making.
+# **The permissions are the controller's: a read grant and a write grant.** The class carries
+# `CUSTOM_SMTP_VIEW`, which the reads and the validator run under; every write — the creation, the edit, the
+# removal and the two lifecycle moves — states `CUSTOM_SMTP_EDIT`, on the route and on the field alike. The
+# family had only the read grant until 2026-10-13, when the owner's decision 5 ("require edit permission" on
+# the soft-delete/recover pair) needed a write grant to exist; it is granted wherever the read grant is, so no
+# role that could replace a transport configuration before lost the ability to.
 #
 # **The list is the route that reads the whole filtered set.** The delivered resource serves its rows
 # twice — `GET /` and `GET /pagination` — and both reach the CRUD base's list method, so the connection

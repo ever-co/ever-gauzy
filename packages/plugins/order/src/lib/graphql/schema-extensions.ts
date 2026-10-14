@@ -676,16 +676,25 @@ export const orderSchemaExtensions = gql`
 		softDeleteOrderTransaction(id: ID!): OrderTransaction!
 		"Restores a soft-deleted ledger transaction."
 		recoverOrderTransaction(id: ID!): OrderTransaction!
-		# The write routes of this domain whose capability no field answered: the destructive delete five
-		# of its resources serve — a different act from the recoverable withdrawal above, which keeps the
-		# row — and the update of the three whose own DTO is the resource's writable surface. Each mirrors
-		# one route: the same service method, the same identifier, and the same ORDERS_EDIT grant the route
-		# states. The ledger, the timeline and the totals history declare no update and no delete, because
+		# The write routes of this domain whose capability no field answered: the DELETE /:id route five of
+		# its resources serve, and the update of the three whose own DTO is the resource's writable surface.
+		# Each mirrors one route: the same service method, the same identifier, and the same ORDERS_EDIT grant
+		# the route states. 13 §11.4 keeps every order table in one retention row — "order*, … | Indefinite |
+		# Soft delete only (deletedAt); no hard delete through the API" — so each DELETE /:id route, and the
+		# delete field that mirrors it, retires the row through the service's softRemove (the act of the
+		# softDelete field above) and never erases it; the answer is still { id, deleted }. The ledger, the
+		# timeline and the totals history declare no update and no delete field, because
 		# 10-orders-payments-and-returns-spec.md §4.2 states those rows are written by the writer that owns
 		# them and — for the ledger and the timeline — never edited or deleted at all.
-		"Deletes an order outright, dropping the row and every satellite of it."
+		"""
+		Retires an order (soft delete: it is kept with deletedAt set, as \`softDeleteOrder\` does, and
+		\`recoverOrder\` brings it back). An order is never hard-deleted.
+		"""
 		deleteOrder(id: ID!): OrderDeleteResult!
-		"Deletes a frozen address outright. \`softDeleteOrderAddress\` retires it recoverably instead."
+		"""
+		Retires a frozen address (soft delete, as \`softDeleteOrderAddress\` does; \`recoverOrderAddress\` brings it
+		back). An address of an order is never hard-deleted.
+		"""
 		deleteOrderAddress(id: ID!): OrderDeleteResult!
 		"""
 		Amends a pending change's own columns. The version argument is the version of the ORDER the change
@@ -693,15 +702,24 @@ export const orderSchemaExtensions = gql`
 		version the change produces — and an order that has moved past it answers a conflict.
 		"""
 		updateOrderChange(id: ID!, input: UpdateOrderChangeInput!, version: Int): OrderChange!
-		"Deletes a change outright, with the actions it carries."
+		"""
+		Retires a change (soft delete, as \`softDeleteOrderChange\` does; \`recoverOrderChange\` brings it back).
+		A change is the audit of a modification and is never hard-deleted, nor are the actions it carries.
+		"""
 		deleteOrderChange(id: ID!): OrderDeleteResult!
 		"Amends one action of a pending change, before the change is applied."
 		updateOrderChangeAction(id: ID!, input: UpdateOrderChangeActionInput!): OrderChangeAction!
-		"Deletes one action of a pending change outright."
+		"""
+		Retires one action of a change (soft delete, as \`softDeleteOrderChangeAction\` does;
+		\`recoverOrderChangeAction\` brings it back). An action is never hard-deleted.
+		"""
 		deleteOrderChangeAction(id: ID!): OrderDeleteResult!
 		"Amends a credit line that was applied to an order."
 		updateOrderCreditLine(id: ID!, input: UpdateOrderCreditLineInput!): OrderCreditLine!
-		"Deletes a credit line outright. \`softDeleteOrderCreditLine\` retires it recoverably instead."
+		"""
+		Retires a credit line (soft delete, as \`softDeleteOrderCreditLine\` does; \`recoverOrderCreditLine\`
+		brings it back). A credit line is money owed back and is never hard-deleted.
+		"""
 		deleteOrderCreditLine(id: ID!): OrderDeleteResult!
 	}
 
@@ -758,16 +776,17 @@ export const orderSchemaExtensions = gql`
 	}
 
 	"""
-	What a destructive delete of one of this domain's rows did.
-	One type for the domain rather than one per resource: the answer is the same three facts whatever was
-	removed — which row the delete named, and whether a row was there to remove. The recoverable
-	withdrawal beside each of these fields answers that resource's own type instead, because it answers
+	What a delete field of one of this domain's rows did. Every one of them retires the row (soft delete:
+	the row is kept with deletedAt set and its recover field brings it back); none erases it.
+	One type for the domain rather than one per resource: the answer is the same two facts whatever was
+	retired — which row the field named, and whether a row of the caller's was there to retire. The
+	softDelete field beside each of these answers that resource's own type instead, because it answers
 	the row it retired.
 	"""
 	type OrderDeleteResult {
 		"The identifier the delete named."
 		id: ID!
-		"Whether a row was there to remove; a delete of one that was not answers false."
+		"Whether a row of the caller's was there to retire; a delete of one that was not answers false."
 		deleted: Boolean!
 	}
 

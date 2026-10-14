@@ -390,6 +390,108 @@ describe('an idempotency key on the real stores, under DB_ORM=mikro-orm as under
 			},
 			ENTITY_GRAPH_TIMEOUT
 		);
+
+		it(
+			'takes over a claim whose holder disappeared, on this driver, and leaves a live one to its holder',
+			async () => {
+				// Handover 2026-09-20 §5 item 1, the third storage call: the takeover read takes a row lock (`FOR
+				// UPDATE` on PostgreSQL and MySQL; on SQLite the surrounding transaction is the lock) and renews the
+				// lease inside the same transaction. The unit suite proves the branch over a double; this runs it on
+				// the real driver, where MikroORM's `transactional` fork has to find the row by the scope its claim
+				// wrote and flush the renewed lease through the relations MikroORM persists.
+				const key = `abandoned-key-${store}`;
+				const input = { scope: SCOPE, key, requestHash: 'b'.repeat(64), resourceType: 'order' };
+
+				const first = await serviceOn(store).startOrReplay(input);
+				expect(first.outcome).toBe('CLAIMED');
+
+				// Control: under the default window the holder is still working, so the key is not free.
+				const live = await serviceOn(store).startOrReplay(input);
+				expect(live.outcome).toBe('IN_FLIGHT');
+
+				// The holder disappeared: with a stale-lock window of nothing, its lease is abandoned the moment it
+				// is read.
+				await new Promise((resolve) => setTimeout(resolve, 5));
+				const retaken = await serviceOn(store).startOrReplay(input, { staleLockMs: 0 });
+
+				expect(retaken.outcome).toBe('CLAIMED');
+				expect(retaken.record.id).toBe(first.record.id);
+				expect(new Date(retaken.record.lockedAt as Date).getTime()).toBeGreaterThan(
+					new Date(first.record.lockedAt as Date).getTime()
+				);
+
+				// Still one row, still in progress, still under the caller's scope.
+				const rows = await dataSource.query(
+					'SELECT "id", "status", "tenantId", "organizationId" FROM "idempotency_key" WHERE "key" = ?',
+					[key]
+				);
+				expect(rows).toEqual([
+					{ id: first.record.id, status: IdempotencyStatus.IN_PROGRESS, tenantId: TENANT, organizationId: ORGANIZATION }
+				]);
+			},
+			ENTITY_GRAPH_TIMEOUT
+		);
+
+		it(
+			'sweeps a settled key past its window and an abandoned lease, and keeps every live row, on this driver',
+			async () => {
+				// The cleanup sweep's two rules, on the real store: a row whose response is still inside its window is
+				// never deleted, and an in-progress row only once its lease is abandoned. On MikroORM the range is
+				// stated as `$lt`/`$in`; a translation that dropped it would delete the live rows below too.
+				const service = serviceOn(store);
+				const claim = (key: string, retentionMs: number) =>
+					service.startOrReplay(
+						{ scope: SCOPE, key: `${key}-${store}`, requestHash: 'c'.repeat(64), resourceType: 'order' },
+						{ retentionMs }
+					);
+
+				// Moves a row's lease back in time, written in the format this store keeps the column in
+				const backdateLease = async (key: string, byMs: number) => {
+					const [{ lockedAt }] = await dataSource.query(
+						'SELECT "lockedAt" FROM "idempotency_key" WHERE "key" = ?',
+						[`${key}-${store}`]
+					);
+					const iso = typeof lockedAt === 'string' && !lockedAt.includes('T');
+					const at = new Date(iso ? `${lockedAt.replace(' ', 'T')}Z` : lockedAt).getTime() - byMs;
+					const value =
+						typeof lockedAt === 'number'
+							? at
+							: iso
+								? new Date(at).toISOString().replace('T', ' ').replace('Z', '')
+								: new Date(at).toISOString();
+					await dataSource.query('UPDATE "idempotency_key" SET "lockedAt" = ? WHERE "key" = ?', [
+						value,
+						`${key}-${store}`
+					]);
+				};
+
+				const settledExpired = await claim('settled-expired', -60_000);
+				await service.complete(settledExpired.record, { responseStatus: HttpStatus.CREATED, responseBody: { id: 'order-1' } });
+				// Past its window, and its holder went away ten minutes ago: abandoned
+				await claim('abandoned-expired', -60_000);
+				await backdateLease('abandoned-expired', 10 * 60_000);
+				// Past its window too, but its holder renewed the lease just now: still being worked on
+				await claim('leased-expired', -60_000);
+				const settledLive = await claim('settled-live', 60_000);
+				await service.complete(settledLive.record, { responseStatus: HttpStatus.CREATED, responseBody: { id: 'order-2' } });
+				await claim('in-progress-live', 60_000);
+
+				// A real stale-lock window: only a lease older than a minute counts as abandoned
+				const deleted = await serviceOn(store).purgeExpired(500, { staleLockMs: 60_000 });
+
+				expect(deleted).toBe(2);
+				const kept = (await dataSource.query('SELECT "key", "status" FROM "idempotency_key" ORDER BY "key"')) as Array<{
+					key: string;
+					status: string;
+				}>;
+				expect(kept).toEqual([
+					{ key: `in-progress-live-${store}`, status: IdempotencyStatus.IN_PROGRESS },
+					{ key: `leased-expired-${store}`, status: IdempotencyStatus.IN_PROGRESS },
+					{ key: `settled-live-${store}`, status: IdempotencyStatus.COMPLETED }
+				]);
+			},
+			ENTITY_GRAPH_TIMEOUT
+		);
 	});
 
 	it(

@@ -16,6 +16,7 @@ import { Permissions, Roles } from './../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RoleService } from './role.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateRoleInput` declares in the schema. */
 export interface ICreateRoleInput {
@@ -293,10 +294,9 @@ export class RoleEntityResolver {
 	/**
 	 * Creates a role for the caller's tenant.
 	 *
-	 * The name is validated here rather than in the service because it is argument validation: the
-	 * REST route reaches the same service through a DTO whose `@IsRoleAlreadyExist()` constraint
-	 * states the same rule, and a client that switched surfaces must not be able to create a second
-	 * role with a name the first surface refuses.
+	 * The name is checked here as argument validation, and `RoleService.create` — which `POST /roles` calls
+	 * too — enforces the rules both surfaces share: no platform role name (case-insensitively) and no name the
+	 * tenant already uses, so a client that switched surfaces cannot get a name the other refuses.
 	 *
 	 * @param input The declared input members.
 	 * @returns The created role.
@@ -347,6 +347,11 @@ export class RoleEntityResolver {
 	/**
 	 * Renames a role of the caller's tenant.
 	 *
+	 * The rules that make a rename safe live in `RoleService.update`, which `PUT /roles/:id` calls too, so the
+	 * two surfaces cannot differ (R7-01): a platform role keeps its name, no role takes a platform role's name
+	 * (`updateRole(input:{ id:<ADMIN role>, name:"SUPER_ADMIN" })` made every ADMIN a SUPER_ADMIN), and a new
+	 * name must be free in the tenant.
+	 *
 	 * The field is declared non-nullable, so the record is read back after the write rather than the
 	 * update result being returned: `PUT /api/roles/:id` answers with what the ORM reported, and
 	 * that is a transport detail this schema does not expose.
@@ -388,9 +393,7 @@ export class RoleEntityResolver {
 	@Mutation('deleteRole')
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	async deleteRole(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.roleService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.roleService.delete(id));
 	}
 
 	/**

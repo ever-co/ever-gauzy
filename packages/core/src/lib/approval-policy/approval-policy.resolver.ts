@@ -17,6 +17,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
 import { ApprovalPolicyCreateCommand, ApprovalPolicyGetCommand, ApprovalPolicyUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateApprovalPolicyInput` declares in the schema. */
 export interface ICreateApprovalPolicyInput {
@@ -237,9 +238,7 @@ export class ApprovalPolicyResolver {
 	@Mutation('deleteApprovalPolicy')
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	async deleteApprovalPolicy(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.approvalPolicyService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.approvalPolicyService.delete(id));
 	}
 
 	/**

@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
 import { ID, IReaction, IReactionCreateInput, IReactionUpdateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeService } from '../employee/employee.service';
 import { Reaction } from './reaction.entity';
@@ -150,5 +151,62 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 			console.error(`[ReactionDelete] Failed to delete reaction with id: ${id}. Error:`, error);
 			throw new BadRequestException('Reaction deletion failed', error);
 		}
+	}
+
+	/**
+	 * Withdraws a reaction (`DELETE /reaction/:id/soft`, `softDeleteReaction`) on the terms `update` and `delete`
+	 * act on: only a reaction of the caller's own employee record. See {@link assertOwnReaction}.
+	 *
+	 * @param id - The reaction to withdraw.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The withdrawn reaction.
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Reaction>, saveOptions?: SaveOptions): Promise<Reaction> {
+		await this.assertOwnReaction(id, false);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn reaction (`PUT /reaction/:id/recover`, `recoverReaction`) on the same terms.
+	 *
+	 * @param id - The reaction to restore.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored reaction.
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Reaction>, saveOptions?: SaveOptions): Promise<Reaction> {
+		await this.assertOwnReaction(id, true);
+
+		return super.softRecover(id, options, saveOptions);
+	}
+
+	/**
+	 * The rule `update` and `delete` apply, applied to withdrawing and restoring (owner decision 5, 2026-10-13:
+	 * these routes stay equal to `update` — which states no permission, and enforces this instead).
+	 *
+	 * The CRUD base's scope drops the employee for a CHANGE_SELECTED_EMPLOYEE holder and falls back to the whole
+	 * tenant for a caller with no employee record, so either could withdraw or restore anybody's reaction. Like
+	 * `update` and `delete`, this requires the caller's own employee in the request context (refused with the
+	 * same 400 when there is none) and reads the reaction with that employee stated, so another employee's answers
+	 * 404 — among withdrawn rows when the act is a restoration. The refusal is raised before the base method runs,
+	 * because the base rethrows whatever fails inside it as a 404.
+	 *
+	 * @param id - The reaction acted on.
+	 * @param withDeleted - Whether the reaction is read among withdrawn rows (a restoration).
+	 * @throws {BadRequestException} When the request carries no employee of the caller's own.
+	 * @throws {NotFoundException} When the reaction is not the caller's own.
+	 */
+	private async assertOwnReaction(id: ID, withDeleted: boolean): Promise<void> {
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			throw new BadRequestException('Employee ID not found in context');
+		}
+
+		await this.findOneByIdString(id, {
+			where: { employeeId } as FindOptionsWhere<Reaction>,
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 }

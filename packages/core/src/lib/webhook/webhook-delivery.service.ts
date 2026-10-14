@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { FindOptionsWhere, IsNull } from 'typeorm';
 import { ID, IWebhookAttemptResult, IWebhookDelivery, JsonData, WebhookDeliveryStatus, WebhookHeader } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
@@ -7,8 +8,9 @@ import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { WebhookEventPublisher } from './webhook-event.publisher';
-import { refusalForResolvedEndpoint } from './webhook-endpoint-policy';
+import { refusalForResolvedEndpoint, WebhookEndpointRefusedError } from './webhook-endpoint-policy';
 import { signWebhookPayload } from './webhook-signature';
+import { WebhookTransport } from './webhook-transport';
 import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-delivery.repository';
 import { MikroOrmWebhookDeliveryRepository } from './repository/mikro-orm-webhook-delivery.repository';
 
@@ -138,6 +140,12 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	/** The payload version sent when a subscription pins none. */
 	static readonly DEFAULT_API_VERSION = '1';
 
+	/**
+	 * The HTTP client every attempt goes through: it connects to the address the policy checked and reads
+	 * at most `RESPONSE_BODY_LIMIT` bytes of the answer (see `WebhookTransport`).
+	 */
+	private readonly transport = new WebhookTransport();
+
 	constructor(
 		readonly typeOrmWebhookDeliveryRepository: TypeOrmWebhookDeliveryRepository,
 		readonly mikroOrmWebhookDeliveryRepository: MikroOrmWebhookDeliveryRepository,
@@ -199,8 +207,9 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	 * @throws NotFoundException when the delivery or its subscription no longer exists.
 	 */
 	async deliver(deliveryId: ID): Promise<IWebhookDeliveryAttempt> {
-		const delivery = await this.getDelivery(deliveryId);
-		const subscription = await this.subscriptions.getSubscription(delivery.subscriptionId);
+		// The runtime's own readers: an attempt is made from a queue job, which has no caller to scope by.
+		const delivery = await this.getDeliveryForAttempt(deliveryId);
+		const subscription = await this.subscriptions.getSubscriptionForDelivery(delivery.subscriptionId);
 		const attempt = (delivery.attemptCount ?? 0) + 1;
 
 		// A disabled subscription is not called: the operator switched it off, and the delivery is
@@ -230,20 +239,7 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 		const endpointRefusal = await this.refuseUnroutableEndpoint(subscription.url);
 
 		if (endpointRefusal) {
-			const refused = await this.saveDelivery(delivery, {
-				status: WebhookDeliveryStatus.DEAD,
-				lastError: endpointRefusal,
-				nextAttemptAt: null,
-				attemptCount: attempt
-			});
-
-			await this.webhookEventPublisher.deliveryFailed(this.redact(refused), attempt);
-
-			return {
-				delivery: refused,
-				result: { delivered: false, lastError: endpointRefusal, durationMs: 0 },
-				skipped: true
-			};
+			return this.refuseByPolicy(delivery, attempt, endpointRefusal, 0);
 		}
 
 		const body = JSON.stringify(delivery.payload);
@@ -256,6 +252,14 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 			body,
 			this.buildHeaders(delivery, subscription, attempt, signature.header)
 		);
+
+		// The connection's own lookup refused the address it was about to connect to: the name answered the
+		// check above with a public address and the socket with a refused one, which is DNS rebinding. That is
+		// the same refusal as the one above and is recorded the same way — dead, announced, and not counted
+		// against the endpoint, which never answered.
+		if (result.refusedByPolicy) {
+			return this.refuseByPolicy(delivery, attempt, result.lastError as string, result.durationMs ?? 0);
+		}
 
 		// The subscription's own counters are updated first: they are what eventually disables a dead
 		// endpoint, and they must survive whatever happens to the delivery row afterwards.
@@ -334,20 +338,77 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	}
 
 	/**
-	 * Reads a delivery.
+	 * Reads a delivery of the caller's own scope.
+	 *
+	 * 🛑 **The reader every request-facing operation uses** — the node read and the redelivery, over
+	 * REST and GraphQL alike. It used to read by id alone, so a tenant-A user holding `WEBHOOKS_VIEW`
+	 * read tenant B's event names, B's partner's response status and body, and B's subscription id; and
+	 * with `WEBHOOK_DELIVERIES_RETRY` re-fired B's stored payloads at B's partner. The scope is the
+	 * list's own ({@link scopeOfTheCaller}), and a row outside it answers what a missing row answers.
+	 *
+	 * The delivery runtime reads through {@link getDeliveryForAttempt} instead.
 	 *
 	 * @param id The delivery id.
 	 * @returns The delivery.
-	 * @throws NotFoundException when it does not exist.
+	 * @throws NotFoundException when no delivery of that id is in the caller's scope.
 	 */
 	async getDelivery(id: ID): Promise<WebhookDelivery> {
-		const delivery = await this.typeOrmWebhookDeliveryRepository.findOne({ where: { id } as any });
+		const scope = this.scopeOfTheCaller();
+		const delivery = scope
+			? await this.typeOrmWebhookDeliveryRepository.findOne({
+					where: { ...scope, id } as FindOptionsWhere<WebhookDelivery>
+			  })
+			: null;
 
 		if (!delivery) {
 			throw new NotFoundException('The webhook delivery does not exist.');
 		}
 
 		return delivery;
+	}
+
+	/**
+	 * Reads a delivery for the delivery runtime, whatever tenant it belongs to.
+	 *
+	 * 🛑 **Runtime only — never reachable from a request.** `deliver()` is called by the outbox dispatch
+	 * consumer and the retry worker, both queue jobs with no caller; the id they hold came from the
+	 * store, not from a request. A route or a resolver must use {@link getDelivery}.
+	 *
+	 * @param id The delivery id.
+	 * @returns The delivery.
+	 * @throws NotFoundException when it does not exist.
+	 */
+	private async getDeliveryForAttempt(id: ID): Promise<WebhookDelivery> {
+		const delivery = await this.typeOrmWebhookDeliveryRepository.findOne({
+			where: { id } as FindOptionsWhere<WebhookDelivery>
+		});
+
+		if (!delivery) {
+			throw new NotFoundException('The webhook delivery does not exist.');
+		}
+
+		return delivery;
+	}
+
+	/**
+	 * The criteria that put a delivery inside the caller's scope, or undefined when no credential
+	 * resolved a tenant.
+	 *
+	 * The same two columns the list narrows on: the request's tenant, and its organization as stated
+	 * or, when none is selected, the tenant-wide rows. A caller with no tenant is given nothing.
+	 *
+	 * @returns The criteria, or undefined.
+	 */
+	private scopeOfTheCaller(): FindOptionsWhere<WebhookDelivery> | undefined {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			return undefined;
+		}
+
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return { tenantId, organizationId: organizationId ?? IsNull() } as FindOptionsWhere<WebhookDelivery>;
 	}
 
 	/**
@@ -407,10 +468,13 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	 * @returns The deliveries, with the stored body withheld.
 	 */
 	async listDeliveries(narrowing: IWebhookDeliveryNarrowing = {}): Promise<IRedactedWebhookDelivery[]> {
-		const where: Record<string, unknown> = {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope) {
+			return [];
+		}
+
+		let where: Record<string, unknown> = { ...scope };
 
 		for (const [column, value] of Object.entries(narrowing)) {
 			// A member that was not stated is left out rather than written as `undefined`: a repository
@@ -511,42 +575,86 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	}
 
 	/**
+	 * Records an attempt the policy refused, without calling — or without finishing calling — the endpoint.
+	 *
+	 * Dead rather than failed: the ladder exists for an endpoint that is unreachable, and this one is
+	 * unreachable by policy, so re-attempting it would only repeat the refusal. The subscription's counters
+	 * are not moved — the endpoint never answered — and the refusal is announced like any refused attempt.
+	 *
+	 * @param delivery The delivery.
+	 * @param attempt The 1-based attempt number.
+	 * @param reason Why the endpoint was refused.
+	 * @param durationMs How long the attempt ran before it was refused.
+	 * @returns The attempt, marked skipped.
+	 */
+	private async refuseByPolicy(
+		delivery: WebhookDelivery,
+		attempt: number,
+		reason: string,
+		durationMs: number
+	): Promise<IWebhookDeliveryAttempt> {
+		const refused = await this.saveDelivery(delivery, {
+			status: WebhookDeliveryStatus.DEAD,
+			lastError: reason,
+			nextAttemptAt: null,
+			attemptCount: attempt
+		});
+
+		await this.webhookEventPublisher.deliveryFailed(this.redact(refused), attempt);
+
+		return {
+			delivery: refused,
+			result: { delivered: false, lastError: reason, durationMs },
+			skipped: true
+		};
+	}
+
+	/**
 	 * Posts one attempt.
 	 *
 	 * A redirect is reported rather than followed: the endpoint a subscription names is the endpoint
 	 * the payload may be sent to, and following a `Location` would hand the payload to whoever
-	 * answers it. The body is read up to a fixed limit and then dropped, so a huge or slow response
-	 * cannot hold the worker.
+	 * answers it. The body is read up to a fixed limit and the connection is then closed, so a huge or
+	 * slow response cannot hold the worker or its memory, and the socket connects to the address the
+	 * endpoint policy checked (`WebhookTransport`).
 	 *
 	 * @param url The endpoint.
 	 * @param body The exact bytes to send.
 	 * @param headers The headers.
-	 * @returns What the attempt did.
+	 * @returns What the attempt did; `refusedByPolicy` when the connection's own lookup refused the host.
 	 */
-	private async post(url: string, body: string, headers: Record<string, string>): Promise<IWebhookAttemptResult> {
+	private async post(
+		url: string,
+		body: string,
+		headers: Record<string, string>
+	): Promise<IWebhookAttemptResult & { refusedByPolicy?: boolean }> {
 		const startedAt = Date.now();
-		const controller = new AbortController();
-		const timer = setTimeout(() => controller.abort(), WebhookDeliveryService.REQUEST_TIMEOUT_MS);
 
 		try {
-			const response = await fetch(url, {
-				method: 'POST',
+			const answer = await this.transport.post(url, {
 				headers,
 				body,
-				redirect: 'manual',
-				signal: controller.signal
+				timeoutMs: WebhookDeliveryService.REQUEST_TIMEOUT_MS,
+				bodyLimit: WebhookDeliveryService.RESPONSE_BODY_LIMIT
 			});
 
-			const raw = await response.text();
-
 			return {
-				delivered: response.ok,
-				responseStatus: response.status,
-				responseBody: raw ? raw.slice(0, WebhookDeliveryService.RESPONSE_BODY_LIMIT) : undefined,
+				delivered: answer.ok,
+				responseStatus: answer.status,
+				responseBody: answer.body ? answer.body : undefined,
 				durationMs: Date.now() - startedAt
 			};
 		} catch (error) {
-			// An aborted fetch is this timeout firing, not a mistake by the endpoint, and the two are
+			if (error instanceof WebhookEndpointRefusedError) {
+				return {
+					delivered: false,
+					lastError: error.message,
+					durationMs: Date.now() - startedAt,
+					refusedByPolicy: true
+				};
+			}
+
+			// An aborted attempt is this timeout firing, not a mistake by the endpoint, and the two are
 			// recorded differently so triage can tell a slow receiver from a broken one.
 			const aborted = error instanceof Error && error.name === 'AbortError';
 
@@ -559,8 +667,6 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 					: 'The delivery failed.',
 				durationMs: Date.now() - startedAt
 			};
-		} finally {
-			clearTimeout(timer);
 		}
 	}
 

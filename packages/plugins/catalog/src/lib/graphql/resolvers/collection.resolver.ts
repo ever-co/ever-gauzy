@@ -106,14 +106,19 @@ export class CollectionResolver {
 	/**
 	 * Deletes a collection.
 	 *
-	 * @returns True once the collection is gone.
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with. The service's `delete` is the kernel's, which checks no existence: an identifier that names no
+	 * collection of the caller matches nothing and raises nothing, and this field used to answer `true` for it
+	 * while `DELETE`'s own result said `affected: 0`.
+	 *
+	 * @returns True when the collection was removed, false when the identifier matched none.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
 	@Mutation('deleteCollection')
 	async deleteCollection(@Args('id') id: ID): Promise<boolean> {
-		await this.collectionService.delete(id);
+		const result = await this.collectionService.delete(id);
 
-		return true;
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**

@@ -291,12 +291,15 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 			return this.purgeExpiredOnMikroOrm(limit, now, abandonedBefore, terminalStatuses);
 		}
 
+		// The projection is TypeORM's object form: TypeORM 1.x removed the string-array `select` and throws
+		// ('String-array "select" syntax has been removed') on it, which took the whole sweep — and with it the
+		// hourly cleanup job — down on every TypeORM installation once the platform moved to TypeORM 1.
 		const terminal = await this.typeOrmIdempotencyKeyRepository.find({
 			where: {
 				expiresAt: LessThan(now),
 				status: In(terminalStatuses)
 			} as any,
-			select: ['id'] as any,
+			select: { id: true } as any,
 			take: limit
 		});
 
@@ -309,7 +312,7 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 							status: IdempotencyStatus.IN_PROGRESS,
 							lockedAt: LessThan(abandonedBefore)
 						} as any,
-						select: ['id'] as any,
+						select: { id: true } as any,
 						take: remaining
 				  })
 				: [];

@@ -153,25 +153,30 @@ export class SubscriptionController extends CrudController<Subscription> {
 	}
 
 	/**
-	 * Deletes a subscription.
+	 * Retires a subscription. This route no longer erases one — or, through it, the money it billed.
 	 *
-	 * The route belongs to `CrudController`, which declares `DELETE :id` with no permission metadata at
-	 * all, so `PermissionGuard` (`shared/guards/permission.guard.ts`) resolves the handler first, falls
-	 * back to the class and answers `true` from its `isEmpty` branch to the empty pair — leaving the route
-	 * on the class-level `SUBSCRIPTIONS_VIEW` that every member of the tenant holds. This override exists
-	 * only to state the permission: ending a customer's subscription is the same class of act as
-	 * cancelling it, and the plugin declares no `SUBSCRIPTIONS_DELETE`, so it states `SUBSCRIPTIONS_EDIT`.
+	 * The route belongs to `CrudController`, whose handler hard-deletes the row, and the database cascades that
+	 * delete: `FK_subscription_billing_subscription` and `FK_subscription_item_subscription` are
+	 * `ON DELETE CASCADE`, so erasing a subscription erased every billing cycle it ever ran — the table `13` §11.4
+	 * names in its "**Soft delete only (`deletedAt`); no hard delete through the API**" row. The route now retires
+	 * the subscription exactly as `DELETE ':id/soft'` does — through the service's `softRemove`, which keeps the
+	 * row (and so its cycles and items) with `deletedAt` set and lets `PUT ':id/recover'` bring it back. There is
+	 * no hard-delete path through the API. The route's path, status and permission are unchanged: ending a
+	 * customer's subscription is the same class of act as cancelling it, and the plugin declares no
+	 * `SUBSCRIPTIONS_DELETE`, so it states `SUBSCRIPTIONS_EDIT`.
 	 *
-	 * @param id The subscription to delete.
-	 * @returns The result of the delete.
+	 * @param id The subscription to retire.
+	 * @param options The inherited rest parameter.
+	 * @returns The retired subscription.
 	 */
-	@ApiOperation({ summary: 'Delete a subscription' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The subscription was deleted.' })
+	@ApiOperation({ summary: 'Retire a subscription (soft delete; a subscription is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The subscription was retired.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Subscription not found' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.subscriptionService.softRemove(id);
 	}
 
 	/**

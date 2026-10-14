@@ -512,30 +512,26 @@ export class SubscriptionResolver {
 	}
 
 	/**
-	 * Deletes a subscription outright.
+	 * Retires a subscription. The field no longer erases one — or, through it, the money it billed.
 	 *
-	 * The route it mirrors is `DELETE /subscriptions/:id`, declared by `CrudController` and overridden by
-	 * the controller only to state the permission the base leaves unstated — the base declares the route
-	 * with no permission metadata, so `PermissionGuard` (`shared/guards/permission.guard.ts`) answers
-	 * `true` from its `isEmpty` branch and nothing but the class-level `SUBSCRIPTIONS_VIEW` stands in
-	 * front of it. The field states the route's own `SUBSCRIPTIONS_EDIT`, which is the grant ending a
-	 * customer's subscription carries, and reaches the same service method the route reaches:
-	 * `super.delete(id)`, the CRUD base's own `delete`, which removes the row.
+	 * The route it mirrors is `DELETE /subscriptions/:id`, which used to reach the CRUD base's hard `delete`;
+	 * the database cascades that delete into `subscription_billing` and `subscription_item`
+	 * (`ON DELETE CASCADE`), so it erased every billing cycle the subscription ever ran — the table `13` §11.4
+	 * names in its "Soft delete only (`deletedAt`); no hard delete through the API" row. The route now retires
+	 * the subscription through `SubscriptionService.softRemove`, and this field reaches the same method with the
+	 * route's own grant, `SUBSCRIPTIONS_EDIT`: one act behind one name on both surfaces, recoverable with
+	 * `recoverSubscription`. The answer keeps its shape — the identifier of the retired subscription, or the
+	 * reason it was refused (`NOT_FOUND` for an identifier that names no subscription of the caller) — so a
+	 * client reading `id` and `userErrors` reads what it read before.
 	 *
-	 * The distinction from `softDeleteSubscription` is the whole reason both fields exist. A soft delete
-	 * sets `deletedAt` and leaves the lines and the billing history answerable; this removes the row. The
-	 * answer says which one happened by carrying the identifier rather than a row, because a hard delete
-	 * has no row left to answer with — the same shape `deleteSubscriptionItem` and `deleteSubscriptionPlan`
-	 * already answer.
-	 *
-	 * @param id The subscription to delete.
-	 * @returns The payload, carrying the identity that was removed.
+	 * @param id The subscription to retire.
+	 * @returns The payload, carrying the identity that was retired.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
 	@Mutation('deleteSubscription')
 	async deleteSubscription(@Args('id') id: ID) {
 		try {
-			await this.subscriptionService.delete(id);
+			await this.subscriptionService.softRemove(id);
 
 			return { id, userErrors: [] };
 		} catch (error) {

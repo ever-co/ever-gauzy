@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateContactInput` declares in the schema. */
 export interface ICreateContactInput {
@@ -232,9 +233,7 @@ export class ContactResolver {
 	 */
 	@Mutation('deleteContact')
 	async deleteContact(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.contactService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.contactService.delete(id));
 	}
 
 	/**
