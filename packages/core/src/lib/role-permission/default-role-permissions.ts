@@ -172,6 +172,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
+			PermissionsEnum.CUSTOM_SMTP_EDIT,
 			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
@@ -629,6 +630,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
+			PermissionsEnum.CUSTOM_SMTP_EDIT,
 			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,

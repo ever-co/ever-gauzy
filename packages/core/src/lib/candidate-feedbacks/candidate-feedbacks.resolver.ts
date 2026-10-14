@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateCandidateFeedbackInput` declares in the schema. */
 export interface ICreateCandidateFeedbackInput {
@@ -215,9 +216,7 @@ export class CandidateFeedbacksResolver {
 	 */
 	@Mutation('deleteCandidateFeedback')
 	async deleteCandidateFeedback(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateFeedbacksService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateFeedbacksService.delete(id));
 	}
 
 	/**

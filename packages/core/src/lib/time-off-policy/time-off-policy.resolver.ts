@@ -20,6 +20,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TimeOffPolicyService } from './time-off-policy.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateTimeOffPolicyInput` declares in the schema. */
 export interface ICreateTimeOffPolicyInput {
@@ -285,9 +286,7 @@ export class TimeOffPolicyResolver {
 	@Mutation('deleteTimeOffPolicy')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_EDIT)
 	async deleteTimeOffPolicy(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.timeOffPolicyService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.timeOffPolicyService.delete(id));
 	}
 
 	/**

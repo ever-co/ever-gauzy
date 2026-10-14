@@ -13,6 +13,7 @@ import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductVariantSettingService } from './product-setting.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateProductVariantSettingInput` declares in the schema. */
 export interface ICreateProductVariantSettingInput {
@@ -228,9 +229,7 @@ export class ProductVariantSettingResolver {
 	 */
 	@Mutation('deleteProductVariantSetting')
 	async deleteProductVariantSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productVariantSettingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.productVariantSettingService.delete(id));
 	}
 
 	/**

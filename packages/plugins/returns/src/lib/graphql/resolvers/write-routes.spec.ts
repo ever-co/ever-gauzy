@@ -1605,3 +1605,35 @@ describe('DELETE /:id retires and never erases', () => {
 		expect(service.delete).not.toHaveBeenCalled();
 	});
 });
+
+/**
+ * `hardDeleteOrderReturnReason` answers what the delete did (handover 2026-09-20 §7.65 item 21): a removal that
+ * reached no row is answered `NOT_FOUND` on the id rather than with the identity, the outcome every other
+ * delete payload of the commerce plugins now gives.
+ */
+describe('hardDeleteOrderReturnReason answers NOT_FOUND for a delete that removed nothing', () => {
+	it('answers NOT_FOUND on the id, and no identity, when the delete matched no row', async () => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 0 }) };
+
+		await expect(new OrderReturnReasonResolver(service as never).hardDeleteOrderReturnReason(REASON)).resolves.toEqual({
+			id: null,
+			userErrors: [
+				{
+					code: 'NOT_FOUND',
+					message: `NOT_FOUND: no record with id ${REASON} was found to delete.`,
+					path: ['id'],
+					details: { id: REASON }
+				}
+			]
+		});
+	});
+
+	it('answers the identity when the delete removed the row', async () => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 1 }) };
+
+		await expect(new OrderReturnReasonResolver(service as never).hardDeleteOrderReturnReason(REASON)).resolves.toEqual({
+			id: REASON,
+			userErrors: []
+		});
+	});
+});

@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { GoalTimeFrameService } from './goal-time-frame.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateGoalTimeFrameInput` declares in the schema. */
 export interface ICreateGoalTimeFrameInput {
@@ -206,9 +207,7 @@ export class GoalTimeFrameResolver {
 	 */
 	@Mutation('deleteGoalTimeFrame')
 	async deleteGoalTimeFrame(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalTimeFrameService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.goalTimeFrameService.delete(id));
 	}
 
 	/**

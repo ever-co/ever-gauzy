@@ -27,6 +27,24 @@ import { DOCS_CONTENT_SCHEMA_INVALID } from '../docs.constants';
 const COMMON_NODE_ATTRIBUTES: readonly string[] = ['blockId'];
 
 /**
+ * The table-of-contents anchor pair. The live editor (not the static renderer) registers
+ * `@tiptap/extension-table-of-contents`, which writes the same generated id into both keys of
+ * every heading — and `editor.getJSON()` serialises them, so a heading without them on this list
+ * made every page that has one unsavable (400 on each autosave).
+ */
+const TOC_ANCHOR_ATTRIBUTES: readonly string[] = ['id', 'data-toc-id'];
+
+/**
+ * A ToC anchor becomes an HTML `id` and a `#fragment`; the extension generates a UUID v4, but the
+ * shape is checked rather than the generator, so a slug-style `getId` stays savable while markup,
+ * whitespace and unbounded values do not.
+ */
+const TOC_ANCHOR_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+
+/** The horizontal alignments a table cell may state (TableKit's `align`). */
+const TABLE_CELL_ALIGNMENTS: readonly string[] = ['left', 'center', 'right', 'justify'];
+
+/**
  * The node types of the `gz-document-editor` schema and the attribute keys each one may carry.
  *
  * `uploadId` (image, fileAttachment) is the **transient** upload marker of `05` §6.6. The client
@@ -39,7 +57,9 @@ export const DOCS_SCHEMA_NODES: Readonly<Record<string, readonly string[]>> = {
 	doc: [],
 	paragraph: ['textAlign'],
 	text: [],
-	heading: ['level', 'textAlign'],
+	// `id` + `data-toc-id`: the ToC anchor `@tiptap/extension-table-of-contents` stamps on every
+	// heading of the live editor (its `addGlobalAttributes`, `anchorTypes: ['heading']`).
+	heading: ['level', 'textAlign', ...TOC_ANCHOR_ATTRIBUTES],
 	blockquote: [],
 	bulletList: [],
 	orderedList: ['start', 'type'],
@@ -51,11 +71,11 @@ export const DOCS_SCHEMA_NODES: Readonly<Record<string, readonly string[]>> = {
 	// TaskList / TaskItem
 	taskList: [],
 	taskItem: ['checked'],
-	// TableKit
+	// TableKit (`align`: the cell alignment TableKit serialises since @tiptap/extension-table 3.31)
 	table: [],
 	tableRow: [],
-	tableHeader: ['colspan', 'rowspan', 'colwidth'],
-	tableCell: ['colspan', 'rowspan', 'colwidth'],
+	tableHeader: ['colspan', 'rowspan', 'colwidth', 'align'],
+	tableCell: ['colspan', 'rowspan', 'colwidth', 'align'],
 	// Media
 	image: ['src', 'alt', 'title', 'width', 'height', 'documentId', 'align', 'uploadId'],
 	youtube: ['src', 'start', 'width', 'height'],
@@ -186,6 +206,20 @@ function validateAttributes(attrs: unknown, allowed: readonly string[], path: st
 	const blockId = (attrs as Record<string, unknown>)['blockId'];
 	if (blockId !== undefined && blockId !== null && !BLOCK_ID_PATTERN.test(String(blockId))) {
 		reject(`${path}.attrs.blockId`, 'block id is not a valid UniqueID value');
+	}
+	if (allowed.includes('colwidth')) {
+		const align = (attrs as Record<string, unknown>)['align'];
+		if (align !== undefined && align !== null && !TABLE_CELL_ALIGNMENTS.includes(String(align))) {
+			reject(`${path}.attrs.align`, 'table cell alignment must be left, center, right or justify');
+		}
+	}
+	if (allowed.includes('data-toc-id')) {
+		for (const key of TOC_ANCHOR_ATTRIBUTES) {
+			const value = (attrs as Record<string, unknown>)[key];
+			if (value !== undefined && value !== null && !(typeof value === 'string' && TOC_ANCHOR_PATTERN.test(value))) {
+				reject(`${path}.attrs.${key}`, 'table-of-contents anchor is not a valid id');
+			}
+		}
 	}
 }
 

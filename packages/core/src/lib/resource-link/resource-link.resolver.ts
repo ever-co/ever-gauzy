@@ -22,6 +22,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ResourceLink } from './resource-link.entity';
 import { ResourceLinkService } from './resource-link.service';
 import { ResourceLinkCreateCommand, ResourceLinkUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateResourceLinkInput` declares in the schema. */
 export interface ICreateResourceLinkInput {
@@ -208,9 +209,7 @@ export class ResourceLinkResolver {
 	 */
 	@Mutation('deleteResourceLink')
 	async deleteResourceLink(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.resourceLinkService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.resourceLinkService.delete(id));
 	}
 
 	/**
