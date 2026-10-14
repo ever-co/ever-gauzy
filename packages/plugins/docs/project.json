@@ -36,6 +36,15 @@
 		"test": {
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"inputs": [
+				"default",
+				"^production",
+				"{workspaceRoot}/jest.preset.js",
+				"{workspaceRoot}/jest.resolver.js",
+				"{workspaceRoot}/jest.interop.js",
+				"{workspaceRoot}/jest.angular-defaults.ts",
+				"{workspaceRoot}/packages/plugins/docs-ui/src/lib/editor/extensions/editor-schema.inventory.json"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/docs/jest.config.ts"
 			}
