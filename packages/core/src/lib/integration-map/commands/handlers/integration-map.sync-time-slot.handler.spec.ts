@@ -34,10 +34,7 @@ describe('IntegrationMapSyncTimeSlotHandler', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	it("creates the missing time slot with the slot's activity, then maps it", async () => {
-		const execute = jest
-			.fn()
-			.mockResolvedValueOnce({ id: 'gauzy-slot-1' })
-			.mockResolvedValueOnce({ id: 'map-1' });
+		const execute = jest.fn().mockResolvedValueOnce({ id: 'gauzy-slot-1' }).mockResolvedValueOnce({ id: 'map-1' });
 		const integrationMapService = { findOneByWhereOptions: jest.fn().mockRejectedValue(new Error('not found')) };
 		const handler = new IntegrationMapSyncTimeSlotHandler({ execute } as never, integrationMapService as never);
 
