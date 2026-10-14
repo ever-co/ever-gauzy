@@ -153,9 +153,9 @@ export class FoldPriceTierNullKeys1791000000437 implements MigrationInterface {
 			`SELECT COUNT(*) AS \`n\` FROM (SELECT 1 FROM \`product_price\` WHERE \`deletedAt\` IS NULL AND \`variantId\` IS NOT NULL GROUP BY \`variantId\`, \`currency\`, \`sellerKey\`, \`priceListKey\`, \`minQuantityKey\`, \`maxQuantityKey\` HAVING COUNT(*) > 1) \`colliding\``
 		);
 
-		await this.dropTierIndex(queryRunner, 'DROP INDEX `UQ_price_tier` ON `product_price`');
-		await queryRunner.query(
-			'CREATE UNIQUE INDEX `UQ_price_tier` ON `product_price` (`variantId`, `currency`, `sellerKey`, `priceListKey`, `minQuantityKey`, `maxQuantityKey`, `deletedKey`)'
+		await this.replaceMysqlTierIndex(
+			queryRunner,
+			'`variantId`, `currency`, `sellerKey`, `priceListKey`, `minQuantityKey`, `maxQuantityKey`, `deletedKey`'
 		);
 	}
 
@@ -169,9 +169,9 @@ export class FoldPriceTierNullKeys1791000000437 implements MigrationInterface {
 			return;
 		}
 
-		await this.dropTierIndex(queryRunner, 'DROP INDEX `UQ_price_tier` ON `product_price`');
-		await queryRunner.query(
-			'CREATE UNIQUE INDEX `UQ_price_tier` ON `product_price` (`variantId`, `currency`, `sellerId`, `priceListKey`, `minQuantityKey`, `maxQuantityKey`, `deletedKey`)'
+		await this.replaceMysqlTierIndex(
+			queryRunner,
+			'`variantId`, `currency`, `sellerId`, `priceListKey`, `minQuantityKey`, `maxQuantityKey`, `deletedKey`'
 		);
 
 		if (await queryRunner.hasColumn('product_price', 'sellerKey')) {
@@ -247,6 +247,27 @@ export class FoldPriceTierNullKeys1791000000437 implements MigrationInterface {
 					`soft-delete or correct the extra rows, then run the migrations again.`
 			);
 		}
+	}
+
+	/**
+	 * Replaces the tier index on MySQL in one statement.
+	 *
+	 * MySQL commits every DDL statement on its own, so a `DROP INDEX` followed by a `CREATE UNIQUE INDEX` leaves the
+	 * table with no tier index at all when the second fails — a duplicate another process wrote after the collision
+	 * check is enough. One `ALTER TABLE … DROP INDEX …, ADD UNIQUE INDEX …` is applied as a unit: when the new index
+	 * cannot be built the old one stays (checked on MySQL 8.0.22; Greptile, #10596). A table that carries no tier index
+	 * gets the new one without a drop.
+	 *
+	 * @param queryRunner The runner the migration is executing on.
+	 * @param columns The index's members, quoted for MySQL.
+	 */
+	private async replaceMysqlTierIndex(queryRunner: QueryRunner, columns: string): Promise<void> {
+		const existing = await queryRunner.query(
+			"SELECT COUNT(*) AS `n` FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_price' AND INDEX_NAME = 'UQ_price_tier'"
+		);
+		const drop = Number(existing?.[0]?.n ?? 0) > 0 ? 'DROP INDEX `UQ_price_tier`, ' : '';
+
+		await queryRunner.query(`ALTER TABLE \`product_price\` ${drop}ADD UNIQUE INDEX \`UQ_price_tier\` (${columns})`);
 	}
 
 	/**
