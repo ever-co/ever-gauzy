@@ -1,7 +1,8 @@
 ﻿import { Injectable } from '@nestjs/common';
+import { DeepPartial, EntityManager } from 'typeorm';
 import { ID, IOrderTotals } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { IOrderRowScope, createUnderOrderScope } from '../order-history/order-row-scope';
+import { IOrderRowScope, createUnderOrderScope, orderScopeColumns } from '../order-history/order-row-scope';
 import { OrderSummary } from './order-summary.entity';
 import { TypeOrmOrderSummaryRepository } from './repository/type-orm-order-summary.repository';
 import { MikroOrmOrderSummaryRepository } from './repository/mikro-orm-order-summary.repository';
@@ -43,9 +44,24 @@ export class OrderSummaryService extends TenantAwareCrudService<OrderSummary> {
 	 *
 	 * @param entry The version's summary.
 	 * @param scope The order's tenancy, read from the order row.
+	 * @param manager The caller's TypeORM transaction, when the version was committed inside one: the row is
+	 * then written on that transaction's manager, with the order's tenancy stated, so it commits or rolls back
+	 * with the version it describes.
 	 * @returns The appended row.
 	 */
-	public async append(entry: IOrderSummaryEntry, scope?: IOrderRowScope): Promise<OrderSummary> {
+	public async append(entry: IOrderSummaryEntry, scope?: IOrderRowScope, manager?: EntityManager): Promise<OrderSummary> {
+		if (manager) {
+			const summaries = manager.getRepository(OrderSummary);
+
+			const row: OrderSummary = summaries.create({
+				...entry,
+				order: { id: entry.orderId },
+				...orderScopeColumns(scope)
+			} as unknown as DeepPartial<OrderSummary>);
+
+			return summaries.save(row);
+		}
+
 		return createUnderOrderScope<OrderSummary>(
 			this,
 			{ typeOrm: this.typeOrmOrderSummaryRepository, mikroOrm: this.mikroOrmOrderSummaryRepository },
