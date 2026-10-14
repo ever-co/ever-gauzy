@@ -4966,6 +4966,17 @@ type Mutation {
   revokeAddressRole(addressId: ID!, role: AddressRoleEnum!): Boolean!
 
   """
+  Withdraws an address role without removing it — `DELETE /address-roles/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteAddressRole(id: ID!): AddressRole!
+
+  """
+  Restores a withdrawn address role — `PUT /address-roles/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverAddressRole(id: ID!): AddressRole!
+
+  """
   Records an address. A stated default is moved through the set-default operation rather than
   written, so the party's authoritative column, the address's mirror and the role row agree.
   """
@@ -5557,6 +5568,17 @@ type Mutation {
   """
   verifyChannelDomain(id: ID!): ChannelDomainVerification!
 
+  """
+  Withdraws a channel domain without removing it — `DELETE /channel-domains/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteChannelDomain(id: ID!): ChannelDomain!
+
+  """
+  Restores a withdrawn channel domain — `PUT /channel-domains/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverChannelDomain(id: ID!): ChannelDomain!
+
   """Opens a sales context. The channel is stored `DRAFT`."""
   createChannel(input: CreateChannelInput!): Channel!
 
@@ -5588,6 +5610,17 @@ type Mutation {
   as its default region cannot be left out.
   """
   replaceChannelRegions(input: ReplaceChannelRegionsInput!): [ChannelRegion!]!
+
+  """
+  Withdraws a channel without removing it — `DELETE /channels/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteChannel(id: ID!): Channel!
+
+  """
+  Restores a withdrawn channel — `PUT /channels/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverChannel(id: ID!): Channel!
 
   """
   Posts a comment against a row of another resource.
@@ -5789,11 +5822,14 @@ type Mutation {
 
   """
   Withdraws a placement without removing it: the row keeps its identifier and stops being answered by
-  the list, and the restoration below brings it back.
+  the list, and the restoration below brings it back. It requires the edit grant the change above requires,
+  as the `DELETE /:id/soft` route it mirrors does.
   """
   softDeleteDashboardWidget(id: ID!): DashboardWidget!
 
-  """Puts a withdrawn placement back."""
+  """
+  Puts a withdrawn placement back, under the same edit grant: restoring undoes a removal.
+  """
   recoverDashboardWidget(id: ID!): DashboardWidget!
 
   """
@@ -5824,11 +5860,16 @@ type Mutation {
 
   """
   Withdraws a dashboard without removing it: the row keeps its identifier and stops being answered by
-  the list, and the restoration below brings it back.
+  the list, and the restoration below brings it back. It requires the edit grant the change above requires,
+  as the `DELETE /:id/soft` route it mirrors does, and only the user who created the dashboard may withdraw
+  it — the same terms as the edit and the removal.
   """
   softDeleteDashboard(id: ID!): Dashboard!
 
-  """Puts a withdrawn dashboard back."""
+  """
+  Puts a withdrawn dashboard back, under the same edit grant and for its creator only: restoring undoes a
+  removal.
+  """
   recoverDashboard(id: ID!): Dashboard!
 
   """
@@ -7316,6 +7357,28 @@ type Mutation {
   convertQuantity(value: String!, fromUnitId: ID!, toUnitId: ID!): UnitConversion!
 
   """
+  Withdraws a unit without removing it — `DELETE /units/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteUnit(id: ID!): Unit!
+
+  """
+  Restores a withdrawn unit — `PUT /units/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverUnit(id: ID!): Unit!
+
+  """
+  Withdraws a unit category without removing it — `DELETE /unit-categories/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteUnitCategory(id: ID!): UnitCategory!
+
+  """
+  Restores a withdrawn unit category — `PUT /unit-categories/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverUnitCategory(id: ID!): UnitCategory!
+
+  """
   Files a mention, and raises the subscription and the notification the delivered filing raises
   beside it.
   
@@ -8092,6 +8155,17 @@ type Mutation {
   archivePaymentTerm(id: ID!): Boolean!
 
   """
+  Withdraws a payment term without removing it — `DELETE /payment-terms/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeletePaymentTerm(id: ID!): PaymentTerm!
+
+  """
+  Restores a withdrawn payment term — `PUT /payment-terms/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverPaymentTerm(id: ID!): PaymentTerm!
+
+  """
   Records a money movement.
   
   The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
@@ -8550,6 +8624,17 @@ type Mutation {
   ones left out are withdrawn in one transaction.
   """
   replaceRegionCountries(input: ReplaceRegionCountriesInput!): [RegionCountry!]!
+
+  """
+  Withdraws a region without removing it — `DELETE /regions/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteRegion(id: ID!): Region!
+
+  """
+  Restores a withdrawn region — `PUT /regions/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverRegion(id: ID!): Region!
 
   """
   Switches a report on or off in an organization's menu.

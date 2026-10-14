@@ -640,21 +640,36 @@ describe('DashboardResolver — the guard stack and the permission are the contr
 		}
 	});
 
-	it('carries the read permission on the four fields whose routes inherit it', () => {
-		// The count, the withdrawal and the restoration are delivered by the CRUD base without a
-		// permission of their own, so they run under the controller's class-level read permission.
-		// Stating "no metadata" as "no permission", or stating the edit permission a lifecycle move seems
-		// to deserve, would widen those routes on this surface only.
-		for (const handler of ['getCount', 'pagination', 'softRemove', 'softRecover']) {
+	it('carries the read permission on the two reads whose routes inherit it', () => {
+		// The count and the paginated list are delivered by the CRUD base without a permission of their own,
+		// so they run under the controller's class-level read permission. Stating "no metadata" as "no
+		// permission" would widen those routes on this surface only.
+		for (const handler of ['getCount', 'pagination']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(DashboardController)[handler])).toBeUndefined();
 		}
 
-		for (const field of ['dashboardCount', 'softDeleteDashboard', 'recoverDashboard']) {
-			expect(permissionOfField(field)).toEqual([PermissionsEnum.DASHBOARD_READ]);
-		}
+		expect(permissionOfField('dashboardCount')).toEqual([PermissionsEnum.DASHBOARD_READ]);
 		// The paginated spelling of the list is the same capability as the connection and inherits the
 		// same read permission, which is why the connection does not mirror it as a second field.
 		expect(permissionOfRoute(DashboardController, 'pagination')).toEqual([PermissionsEnum.DASHBOARD_READ]);
+	});
+
+	it('carries the edit grant on the withdrawal and the restoration, on both surfaces (owner decision 5)', () => {
+		// The pair used to be inherited from the CRUD base with no permission of its own, so it stood on the
+		// class-level DASHBOARD_READ and a read-only role could withdraw and restore dashboards; the fields
+		// mirrored that read grant. Owner decision 5 (2026-10-13): the soft-delete/recover pair requires the
+		// controller's own edit grant — the one `update` states — and the field states what its route states.
+		const edit = Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(DashboardController)['update']);
+
+		expect(edit).toEqual([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DASHBOARD_UPDATE]);
+		for (const [field, route] of [
+			['softDeleteDashboard', 'softRemove'],
+			['recoverDashboard', 'softRecover']
+		]) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(DashboardController)[route])).toEqual(edit);
+			expect(permissionOfRoute(DashboardController, route)).toEqual(edit);
+			expect(permissionOfField(field)).toEqual(edit);
+		}
 	});
 
 	it('carries the organization-wide edit pair on every write whose route states it', () => {

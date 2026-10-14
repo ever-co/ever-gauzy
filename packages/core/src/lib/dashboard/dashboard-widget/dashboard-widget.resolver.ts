@@ -253,23 +253,25 @@ export class DashboardWidgetResolver {
 	/**
 	 * Withdraws a placement without removing the row.
 	 *
-	 * The permission is the controller's class-level read permission and not the edit one, because that
-	 * is what the delivered route runs under: the withdrawal is inherited from the CRUD base, where it
-	 * states no permission of its own. The delivered route passes the service the empty option list it
-	 * collected, so the field states none either.
+	 * The permission is the edit grant `updateDashboardWidget` states, as the route this field mirrors —
+	 * `DELETE /dashboard-widget/:id/soft` — now states it: owner decision 5 (2026-10-13) makes the
+	 * soft-delete/recover pair require the controller's own edit grant. The route used to be inherited from the
+	 * CRUD base with no permission of its own and so stood on the class's `DASHBOARD_READ`, and this field
+	 * mirrored that read grant. The delivered route passes the service the empty option list it collected, so
+	 * the field states none either.
 	 */
 	@Mutation('softDeleteDashboardWidget')
-	@Permissions(PermissionsEnum.DASHBOARD_READ)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async softDeleteDashboardWidget(@Args('id', { type: () => ID }) id: Id): Promise<DashboardWidget> {
 		return await this.dashboardWidgetService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn placement back. Its permission is the withdrawal's, for the same reason: the
-	 * delivered route carries none of its own to mirror.
+	 * Puts a withdrawn placement back. Its permission is the withdrawal's — the edit grant — as the
+	 * `PUT /dashboard-widget/:id/recover` route it mirrors states it: restoring undoes a removal.
 	 */
 	@Mutation('recoverDashboardWidget')
-	@Permissions(PermissionsEnum.DASHBOARD_READ)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async recoverDashboardWidget(@Args('id', { type: () => ID }) id: Id): Promise<DashboardWidget> {
 		return await this.dashboardWidgetService.softRecover(id);
 	}
