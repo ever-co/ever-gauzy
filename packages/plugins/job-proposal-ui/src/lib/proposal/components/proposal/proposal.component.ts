@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IProposal,
+	BaseEntityEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProposalViewModel,
@@ -56,6 +57,8 @@ import {
 	standalone: false
 })
 export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	/** The favorite toggle binds the enum member: the library compiles its templates strictly. */
+	protected readonly BaseEntityEnum = BaseEntityEnum;
 	public smartTableSettings: any;
 	public selectedEmployeeId: ID | null;
 	public selectedDateRange: IDateRangePicker;
