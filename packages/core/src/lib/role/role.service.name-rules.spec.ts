@@ -24,8 +24,8 @@ import { RoleService } from './role.service';
  * The rules now live in `RoleService`, which both surfaces call, so they are identical on REST and GraphQL:
  *   - the platform's role names (`RolesEnum`, case-insensitively) are reserved — no caller creates a role under one or
  *     renames a role to one (the default roles come only from the SUPER_ADMIN-only bulk path);
- *   - a role whose name is one of them, or that is a system role, cannot be renamed, withdrawn or restored
- *     through a caller's request (its removal was already refused);
+ *   - a role whose name is one of them, or that is a system role, cannot be renamed or withdrawn through a caller's
+ *     request (its removal was already refused); restoring one withdrawn before this change stays possible;
  *   - a name is unique in its tenant.
  */
 const TENANT = 'tenant-1';
@@ -34,7 +34,9 @@ const ROLES = [
 	{ id: 'role-admin', name: RolesEnum.ADMIN, isSystem: true, tenantId: TENANT },
 	{ id: 'role-manager', name: RolesEnum.MANAGER, isSystem: false, tenantId: TENANT },
 	{ id: 'role-auditor', name: 'AUDITOR', isSystem: false, tenantId: TENANT },
-	{ id: 'role-reviewer', name: 'REVIEWER', isSystem: false, tenantId: TENANT }
+	{ id: 'role-reviewer', name: 'REVIEWER', isSystem: false, tenantId: TENANT },
+	// Withdrawn, not removed: its name stays taken, or restoring it would create the duplicate.
+	{ id: 'role-retired', name: 'RETIRED', isSystem: false, tenantId: TENANT, deletedAt: new Date('2026-01-01') }
 ];
 
 function service(): { service: RoleService; baseCreate: jest.SpyInstance; baseUpdate: jest.SpyInstance; baseSoftRemove: jest.SpyInstance } {
@@ -44,8 +46,10 @@ function service(): { service: RoleService; baseCreate: jest.SpyInstance; baseUp
 		if (!role) throw new Error('not found');
 		return { ...role };
 	});
-	(instance as any).find = jest.fn(async (options: { where: { name: string } }) =>
-		ROLES.filter((role) => role.name === options.where.name).map((role) => ({ ...role }))
+	(instance as any).find = jest.fn(async (options: { where: { name: string }; withDeleted?: boolean }) =>
+		ROLES.filter((role) => role.name === options.where.name && (options.withDeleted || !('deletedAt' in role))).map(
+			(role) => ({ ...role })
+		)
 	);
 	const baseCreate = jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity: any) => ({ id: 'role-new', ...entity }));
 	const baseUpdate = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({ affected: 1 } as any);
@@ -109,6 +113,14 @@ describe('Role names are authorization identities — R7-01', () => {
 			expect(baseCreate).not.toHaveBeenCalled();
 		});
 
+		it('refuses the name of a withdrawn role, reading withdrawn roles to know it is taken', async () => {
+			const { service: roles, baseCreate } = service();
+
+			await expect(roles.create({ name: 'RETIRED' } as any)).rejects.toBeInstanceOf(BadRequestException);
+			expect((roles as any).find).toHaveBeenCalledWith(expect.objectContaining({ where: { name: 'RETIRED' }, withDeleted: true }));
+			expect(baseCreate).not.toHaveBeenCalled();
+		});
+
 		it('creates a custom role under a free name, trimmed', async () => {
 			const { service: roles, baseCreate } = service();
 
@@ -139,6 +151,13 @@ describe('Role names are authorization identities — R7-01', () => {
 			const { service: roles, baseUpdate } = service();
 
 			await expect(roles.update('role-auditor', { name: 'REVIEWER' } as any)).rejects.toBeInstanceOf(BadRequestException);
+			expect(baseUpdate).not.toHaveBeenCalled();
+		});
+
+		it('refuses to rename a custom role to the name of a withdrawn role', async () => {
+			const { service: roles, baseUpdate } = service();
+
+			await expect(roles.update('role-auditor', { name: 'RETIRED' } as any)).rejects.toBeInstanceOf(BadRequestException);
 			expect(baseUpdate).not.toHaveBeenCalled();
 		});
 
