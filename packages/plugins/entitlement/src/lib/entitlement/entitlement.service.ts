@@ -48,7 +48,7 @@ import { EntitlementKeyService } from '../entitlement-key/entitlement-key.servic
 import { EntitlementConditionDTO } from './dto/entitlement.dto';
 import { MikroOrmEntitlementRepository } from './repository/mikro-orm-entitlement.repository';
 import { TypeOrmEntitlementRepository } from './repository/type-orm-entitlement.repository';
-import { movedReadOnlyMembers, notWritable } from '../entitlement.writable';
+import { movedReadOnlyMembers, notWritable, writableOnly } from '../entitlement.writable';
 
 /** Statuses from which a right may be extended by a renewal. */
 const EXTENDABLE_STATUSES: EntitlementStatus[] = [
@@ -163,7 +163,9 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			expectation,
 			// The version is written by the conditional update and never by the caller's payload, so a
 			// body that carried one cannot move the row past the version the write was predicated on.
-			patch: { ...changes }
+			// Only the writable members are written: a restated state member was checked above and is not echoed back
+			// over a revocation that lands between the check and this statement.
+			patch: writableOnly(changes, ENTITLEMENT_WRITABLE_MEMBERS)
 		});
 
 		return await this.findOneDetailed(id);

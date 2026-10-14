@@ -164,6 +164,8 @@ function repository(rows: Row[], options: { onSave?: (entity: Row) => void } = {
 					return (expected.value ?? []).some((candidate: unknown) => matchesValue(value, candidate));
 				case 'lessThanOrEqual':
 					return instant(value ?? 0) <= instant(expected.value ?? 0);
+				case 'isNull':
+					return value === null || value === undefined;
 				default:
 					throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 			}
@@ -245,9 +247,11 @@ function repository(rows: Row[], options: { onSave?: (entity: Row) => void } = {
 
 			return created;
 		},
+		// TypeORM's `update` applies the whole criteria it is handed - the conditional writes predicate the status
+		// and the billing history in it - so the double matches every member, not the id alone.
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows.findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows.findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(rows[index], partial);
@@ -759,6 +763,37 @@ describe('SubscriptionBillingService â€” a correction moves an uncharged cycleâ€
 			expect(fixture.billing('billing-1')?.status).toBe(status);
 		}
 	);
+
+	it('decides the write on the cycle as the statement finds it, not as an earlier read saw it (Greptile)', async () => {
+		// A charge lands between the correction's read and its write, and a waiver races a payment: the read says
+		// PENDING while the row is already PAID. The conditional statement matches nothing and the caller is refused.
+		const fixture = billingFixture([
+			billingRow('billing-1', { status: SubscriptionBillingStatus.PAID, paidAt: new Date(), orderId: 'order-1' })
+		]);
+		const stale = { ...fixture.billing('billing-1'), status: SubscriptionBillingStatus.PENDING, paidAt: null, orderId: null };
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockResolvedValueOnce(stale as never);
+		await expect(fixture.service.update('billing-1', { amount: '0' })).rejects.toMatchObject({
+			response: { code: 'SUBSCRIPTION_BILLING_SETTLED', details: { status: SubscriptionBillingStatus.PAID } }
+		});
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockResolvedValueOnce(stale as never);
+		await expect(fixture.service.markWaived('billing-1', { reason: 'goodwill' })).rejects.toMatchObject({
+			response: { code: 'SUBSCRIPTION_BILLING_TRANSITION_INVALID', details: { status: SubscriptionBillingStatus.PAID } }
+		});
+
+		expect(fixture.billing('billing-1')).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '120.000000' });
+		expect(fixture.billing('billing-1')?.paidAt).toBeInstanceOf(Date);
+	});
+
+	it('writes back none of the restated members it checked', async () => {
+		const fixture = billingFixture([billingRow('billing-1')]);
+		const update = jest.spyOn((fixture.service as any).typeOrmSubscriptionBillingRepository, 'update');
+
+		await fixture.service.update('billing-1', { amount: '99', status: SubscriptionBillingStatus.PENDING, attemptCount: 0 });
+
+		expect(update).toHaveBeenLastCalledWith(expect.anything(), { amount: '99.000000' });
+	});
 
 	it('pays a cycle that is due, invoiced or retrying, and waives one that is due or retrying', async () => {
 		const fixture = billingFixture([

@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, LessThanOrEqual } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, IsNull, LessThanOrEqual } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
 import { currentScope } from '../subscription.scope';
 import { normalizeDecimal } from '../subscription.cycle';
-import { movedReadOnlyMembers, notWritable } from '../subscription.writable';
+import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
 import { SubscriptionBilling } from './subscription-billing.entity';
 import { MikroOrmSubscriptionBillingRepository } from './repository/mikro-orm-subscription-billing.repository';
 import { TypeOrmSubscriptionBillingRepository } from './repository/type-orm-subscription-billing.repository';
@@ -189,7 +189,7 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			throw invalidTransition(billing, 'paid', PAYABLE_FROM);
 		}
 
-		await super.update(id, {
+		await this.writeIf(id, { status: In([...PAYABLE_FROM]) }, async () => invalidTransition(await this.findOneScoped(id), 'paid', PAYABLE_FROM), {
 			status: SubscriptionBillingStatus.PAID,
 			paidAt: options.paidAt ?? new Date(),
 			orderId: options.orderId ?? billing.orderId,
@@ -238,7 +238,7 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			throw invalidTransition(billing, 'waived', WAIVABLE_FROM);
 		}
 
-		await super.update(id, {
+		await this.writeIf(id, { status: In([...WAIVABLE_FROM]) }, async () => invalidTransition(await this.findOneScoped(id), 'waived', WAIVABLE_FROM), {
 			status: SubscriptionBillingStatus.WAIVED,
 			paidAt: null,
 			nextRetryAt: null,
@@ -391,21 +391,66 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			);
 		}
 
-		if (recordsBilledMoney(billing)) {
-			throw new ConflictException({
+		const settled = (current: SubscriptionBilling) =>
+			new ConflictException({
 				message:
-					`SUBSCRIPTION_BILLING_SETTLED: billing cycle '${id}' is ${billing.status} and records money billed, so ` +
+					`SUBSCRIPTION_BILLING_SETTLED: billing cycle '${id}' is ${current.status} and records money billed, so ` +
 					`it is history rather than a schedule entry and is no longer corrected.`,
 				code: 'SUBSCRIPTION_BILLING_SETTLED',
-				details: { subscriptionBillingId: id, status: billing.status }
+				details: { subscriptionBillingId: id, status: current.status }
 			});
+
+		if (recordsBilledMoney(billing)) {
+			throw settled(billing);
 		}
 
-		if (patch['amount'] !== undefined) {
-			patch['amount'] = this.normalizeAmount(patch['amount'] as DecimalString, billing.currency);
+		let correction = writableOnly(patch, SUBSCRIPTION_BILLING_WRITABLE_MEMBERS);
+
+		if (correction['amount'] !== undefined) {
+			correction = { ...correction, amount: this.normalizeAmount(correction['amount'] as DecimalString, billing.currency) };
 		}
 
-		return super.update(id, patch as any);
+		// The statement is conditional on the cycle still recording no money billed, so a charge that lands between the
+		// read above and this write is not corrected over.
+		return this.writeIf(
+			id,
+			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), paidAt: IsNull(), attemptCount: 0 },
+			async () => settled(await this.findOneScoped(id)),
+			correction
+		);
+	}
+
+	/**
+	 * Writes a cycle only if it still matches the condition its write was decided on (Greptile).
+	 *
+	 * The check and the write of a settling action or a correction used to be two statements: a correction could read an
+	 * untouched cycle and write its amount after the billing run had charged it, and a `pay` and a `waive` racing on
+	 * one cycle could both pass their checks, the second overwriting the first. The condition rides in the statement's
+	 * own WHERE, inside the caller's tenant and organization, and a statement that matched no row is answered with the
+	 * refusal the caller states, decided on the row as it now stands.
+	 *
+	 * @param id The cycle.
+	 * @param condition The state the write was decided on.
+	 * @param refusal Builds the exception for a cycle that no longer matches.
+	 * @param patch The columns to write.
+	 * @returns The update result.
+	 */
+	private async writeIf(
+		id: ID,
+		condition: FindOptionsWhere<SubscriptionBilling>,
+		refusal: () => Promise<Error>,
+		patch: Record<string, unknown>
+	): Promise<{ affected?: number }> {
+		const result = await this.typeOrmSubscriptionBillingRepository.update(
+			{ id, ...currentScope(), ...condition } as FindOptionsWhere<SubscriptionBilling>,
+			patch as any
+		);
+
+		if (!result?.affected) {
+			throw await refusal();
+		}
+
+		return result;
 	}
 
 	/**

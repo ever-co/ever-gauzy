@@ -2426,6 +2426,24 @@ describe('SubscriptionService — the versioned write', () => {
 		expect(changed).toMatchObject({ status: stored.status, quantity: '2', metadata: { seat: 'B' } });
 	});
 
+	it('does not write a restated lifecycle member back over a cancellation that landed after the check (Greptile)', async () => {
+		const fixture = subscriptionFixture();
+		const stored = fixture.subscription(SUBSCRIPTION)!;
+
+		// The edit was read and checked while ACTIVE; a cancellation lands before the statement runs.
+		const original = fixture.service.findOneDetailed.bind(fixture.service);
+		jest.spyOn(fixture.service, 'findOneDetailed').mockImplementationOnce(async (id: string) => {
+			// What the check saw, as a snapshot: the row itself moves on after the read.
+			const read = { ...(await original(id)) };
+			stored.status = SubscriptionStatus.CANCELED;
+			return read as never;
+		});
+
+		await fixture.service.applyChanges(SUBSCRIPTION, { status: SubscriptionStatus.ACTIVE, quantity: '2' } as never);
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.CANCELED, quantity: '2' });
+	});
+
 	it('refuses a change predicated on a version the subscription no longer holds', async () => {
 		// The conflict, not a not-found: the row exists and has merely moved on, and the caller has to be
 		// told to read it again rather than sent down the deleted-record path.

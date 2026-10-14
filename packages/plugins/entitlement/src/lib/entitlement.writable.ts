@@ -60,3 +60,15 @@ function restates(stored: unknown, stated: unknown): boolean {
 
 	return String(stated) === String(stored);
 }
+
+/**
+ * The members of a patch a caller may move, and nothing else: a member checked as a restatement is not written back,
+ * so an edit cannot put back a value a lifecycle move changed between the check and the write (Greptile).
+ *
+ * @param patch The members the write states.
+ * @param writable The members a caller may move.
+ * @returns A new patch holding only the writable members.
+ */
+export function writableOnly(patch: Record<string, unknown>, writable: readonly string[]): Record<string, unknown> {
+	return Object.fromEntries(Object.entries(patch ?? {}).filter(([member]) => writable.includes(member)));
+}

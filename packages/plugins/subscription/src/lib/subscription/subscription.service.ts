@@ -48,7 +48,7 @@ import {
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 import { currentScope } from '../subscription.scope';
-import { movedReadOnlyMembers, notWritable } from '../subscription.writable';
+import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionItemService } from '../subscription-item/subscription-item.service';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
@@ -241,7 +241,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			expectation,
 			// The version is written by the conditional update and never by the caller's payload, so a body
 			// that named one cannot move the row past the version the write was predicated on.
-			patch: { ...(changes as Record<string, unknown>) } as Record<string, unknown> & Partial<Subscription>
+			// Only the writable members are written: a restated lifecycle member was checked above and is not echoed
+			// back over a cancellation that lands between the check and this statement.
+			patch: writableOnly(changes as Record<string, unknown>, SUBSCRIPTION_WRITABLE_MEMBERS) as Record<string, unknown> &
+				Partial<Subscription>
 		});
 
 		return await this.findOneDetailed(id);
