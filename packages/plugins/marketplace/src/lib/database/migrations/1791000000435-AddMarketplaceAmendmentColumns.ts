@@ -374,6 +374,11 @@ export class AddMarketplaceAmendmentColumns1791000000435 implements MigrationInt
 	 * `currency` — the filtered tuple on PostgreSQL and SQLite, and the generated-key form on MySQL, which
 	 * has no filtered index.
 	 *
+	 * 🛑 **The tuple this builds is not the one to keep.** On PostgreSQL and SQLite it names the nullable members
+	 * raw, so a base price (no seller, no list, no bounds) escapes it, and on MySQL the raw `sellerId` lets every
+	 * platform price escape (review R5-13). This migration has run on installations and is left as it ran;
+	 * `FoldPriceTierNullKeys1791000000437` replaces the index with the folded tuple right after it.
+	 *
 	 * @param queryRunner The runner the migration is executing on.
 	 * @param dialect The dialect, for its quoting and its tuple.
 	 */
@@ -390,6 +395,11 @@ export class AddMarketplaceAmendmentColumns1791000000435 implements MigrationInt
 	/**
 	 * Puts the price table's unique tuple back the way the pricing set declared it.
 	 *
+	 * That is `CreatePricingTables1791000000120`'s tuple exactly, folds included — `COALESCE(priceListId, nil-uuid)`,
+	 * `COALESCE(minQuantity, -1)`, `COALESCE(maxQuantity, -1)` on PostgreSQL and SQLite, the generated keys on MySQL.
+	 * It used to restore the three members raw, which left a reverted installation with an index no base price is
+	 * held to (review R5-13).
+	 *
 	 * @param queryRunner The runner the migration is executing on.
 	 * @param dialect The dialect, for its quoting and its tuple.
 	 */
@@ -399,7 +409,11 @@ export class AddMarketplaceAmendmentColumns1791000000435 implements MigrationInt
 	): Promise<void> {
 		if (!(await queryRunner.hasTable('product_price'))) return;
 
-		await this.replacePriceTuple(queryRunner, dialect, '"variantId", "currency", "priceListId", "minQuantity", "maxQuantity"');
+		await this.replacePriceTuple(
+			queryRunner,
+			dialect,
+			`"variantId", "currency", COALESCE("priceListId", '00000000-0000-0000-0000-000000000000'), COALESCE("minQuantity", -1), COALESCE("maxQuantity", -1)`
+		);
 	}
 
 	/**

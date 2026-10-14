@@ -8,6 +8,7 @@ import { CreateMarketplaceTables1791000000380 } from './database/migrations/1791
 import { AddSellerPayoutAccountForeignKeys1791000000420 } from './database/migrations/1791000000420-AddSellerPayoutAccountForeignKeys';
 import { AddMarketplaceCheckConstraints1791000000434 } from './database/migrations/1791000000434-AddMarketplaceCheckConstraints';
 import { AddMarketplaceAmendmentColumns1791000000435 } from './database/migrations/1791000000435-AddMarketplaceAmendmentColumns';
+import { FoldPriceTierNullKeys1791000000437 } from './database/migrations/1791000000437-FoldPriceTierNullKeys';
 import { Seller } from './seller/seller.entity';
 import { SellerOffering } from './seller-offering/seller-offering.entity';
 import { SellerTransaction } from './seller-transaction/seller-transaction.entity';
@@ -48,6 +49,7 @@ import { resolvers } from './graphql/resolvers';
 		CreateMarketplaceTables1791000000380,
 		AddSellerPayoutAccountForeignKeys1791000000420,
 		AddMarketplaceAmendmentColumns1791000000435,
+		FoldPriceTierNullKeys1791000000437,
 		AddMarketplaceCheckConstraints1791000000434
 	],
 	/**
