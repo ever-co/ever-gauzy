@@ -1,4 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { UpdateResult } from 'typeorm';
 
 /**
  * What a generic edit of a warehouse document may write (review R2-13).
@@ -94,6 +95,33 @@ export function warehouseEditOf(
 }
 
 /**
+ * Answers an edit's write, or refuses it when the document moved between the check and the write.
+ *
+ * The write is predicated on the status the check read (`{ id, status }`), so an operation that moved the document
+ * in between — `pack` sealing a slip, `close` freezing a manifest, `release` putting a wave on the floor — leaves
+ * the statement matching nothing, and the edit is refused rather than landing on a document whose writable members
+ * are no longer what were checked. A driver that does not report affected rows is taken at its word.
+ *
+ * @param result What the conditional write answered.
+ * @param code The conflict code.
+ * @param document The document's name for the message.
+ * @param id The document.
+ * @returns The write's result.
+ * @throws ConflictException with `code` when the write matched no row.
+ */
+export function editLanded(result: unknown, code: string, document: string, id: unknown): UpdateResult {
+	if ((result as UpdateResult | undefined)?.affected === 0) {
+		throw new ConflictException({
+			message: `${code}: ${document} '${id}' changed while it was being edited; read it again and repeat the edit.`,
+			code,
+			details: { id }
+		});
+	}
+
+	return result as UpdateResult;
+}
+
+/**
  * The refusal of an edit that selects documents by anything but an id: each edit is checked against the one row it
  * changes, so a criteria-wide edit is not a correction this surface makes.
  *
@@ -103,6 +131,54 @@ export function warehouseEditOf(
  */
 export function editByIdOnly(code: string, document: string): BadRequestException {
 	return notWritable(code, `${document} is edited one at a time, by its id.`, {});
+}
+
+/** A JSON column may read back as text on some drivers; content is compared, not representation. */
+function asJson(value: unknown): unknown {
+	if (typeof value !== 'string') {
+		return value;
+	}
+
+	try {
+		return JSON.parse(value);
+	} catch {
+		return value;
+	}
+}
+
+/**
+ * Whether two JSON values hold the same content: an object's members in any order, an array's items in order. An
+ * echoed metadata object whose keys came back in another order is a restatement, not a change.
+ */
+function sameContent(left: unknown, right: unknown): boolean {
+	if (Array.isArray(left) || Array.isArray(right)) {
+		return (
+			Array.isArray(left) &&
+			Array.isArray(right) &&
+			left.length === right.length &&
+			left.every((item, index) => sameContent(item, right[index]))
+		);
+	}
+
+	if (left !== null && right !== null && typeof left === 'object' && typeof right === 'object') {
+		const members = (value: object) =>
+			Object.keys(value)
+				.filter((key) => (value as Record<string, unknown>)[key] !== undefined)
+				.sort();
+		const leftMembers = members(left);
+		const rightMembers = members(right);
+
+		return (
+			leftMembers.length === rightMembers.length &&
+			leftMembers.every(
+				(key, index) =>
+					key === rightMembers[index] &&
+					sameContent((left as Record<string, unknown>)[key], (right as Record<string, unknown>)[key])
+			)
+		);
+	}
+
+	return left === right;
 }
 
 /** Whether a stated value is the value already stored. */
@@ -140,7 +216,7 @@ function restates(stored: unknown, stated: unknown): boolean {
 	}
 
 	if (typeof stored === 'object' || typeof stated === 'object') {
-		return JSON.stringify(stored) === JSON.stringify(stated);
+		return sameContent(asJson(stored), asJson(stated));
 	}
 
 	return String(stated) === String(stored);

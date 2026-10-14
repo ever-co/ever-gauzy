@@ -10,7 +10,7 @@ import {
 	MANIFEST_NUMBER_KEY,
 	WAREHOUSE_FULFILLMENT
 } from '../warehouse.types';
-import { editByIdOnly, warehouseEditOf } from '../warehouse.writable';
+import { editByIdOnly, editLanded, warehouseEditOf } from '../warehouse.writable';
 import { sumQuantities } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { CarrierManifest } from './carrier-manifest.entity';
@@ -95,7 +95,17 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 			operations: 'a manifest moves through submit (close), hand-over and cancel, and its membership is never edited.'
 		});
 
-		return Object.keys(edit).length ? await super.update(id, edit as QueryDeepPartialEntity<CarrierManifest>) : stored;
+		if (!Object.keys(edit).length) {
+			return stored;
+		}
+
+		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
+		return editLanded(
+			await super.update({ id, status: stored.status } as FindOptionsWhere<CarrierManifest>, edit as QueryDeepPartialEntity<CarrierManifest>),
+			'CARRIER_MANIFEST_EDIT_CONFLICT',
+			'carrier manifest',
+			id
+		);
 	}
 
 	/**

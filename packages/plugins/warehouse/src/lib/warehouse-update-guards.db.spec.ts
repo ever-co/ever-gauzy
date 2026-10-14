@@ -579,6 +579,18 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 	});
 
 	describe('pick waves', () => {
+		it('accepts an echoed metadata object whose keys come back in another order, and writes the rest of the edit', async () => {
+			await h.set('pick_wave', WAVE, { metadata: JSON.stringify({ cancelReason: 'none', closedShort: false }) });
+
+			await h.waves.update(WAVE, { metadata: { closedShort: false, cancelReason: 'none' }, priority: 5 } as any);
+
+			const wave = await h.row('pick_wave', WAVE);
+			expect([wave?.priority, JSON.parse(wave?.metadata)]).toEqual([
+				5,
+				{ cancelReason: 'none', closedShort: false }
+			]);
+		});
+
 		it('refuses to release a wave by edit, or to move its counters and its server-written metadata', async () => {
 			for (const [member, value] of [
 				['status', PickWaveStatus.RELEASED],
@@ -618,6 +630,20 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 	});
 
 	describe('pack slips', () => {
+		it('refuses an edit checked against an OPEN slip that was packed before the edit wrote', async () => {
+			// The check read the slip OPEN; `pack` sealed it before the write. The write is predicated on the status the
+			// check read, so it lands on nothing and the edit is refused instead of rewriting the sealed slip.
+			const open = await h.slips.findOneScoped(SLIP);
+			await h.set('pack_slip', SLIP, { status: PackSlipStatus.PACKED, packageCount: 1 });
+			jest.spyOn(h.slips, 'findOneScoped').mockResolvedValueOnce(open);
+
+			await expect(h.slips.update(SLIP, { packageCount: 4 } as any)).rejects.toMatchObject({
+				status: 409,
+				response: { code: 'PACK_SLIP_EDIT_CONFLICT' }
+			});
+			expect((await h.row('pack_slip', SLIP))?.packageCount).toBe(1);
+		});
+
 		it('refuses to mark a slip PACKED by edit, or to state its tracking number past the uniqueness check', async () => {
 			for (const [member, value] of [
 				['status', PackSlipStatus.PACKED],

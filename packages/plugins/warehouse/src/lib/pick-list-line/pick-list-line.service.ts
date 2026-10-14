@@ -14,7 +14,7 @@ import {
 	WAREHOUSE_STOCK_LEDGER,
 	WarehouseStockMovementKind
 } from '../warehouse.types';
-import { editByIdOnly, warehouseEditOf } from '../warehouse.writable';
+import { editByIdOnly, editLanded, warehouseEditOf } from '../warehouse.writable';
 import {
 	fromQuantityUnits,
 	isPositiveQuantity,
@@ -93,7 +93,17 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			operations: 'an outcome is recorded through pick, substitute and skip, and the route is fixed when the list is released.'
 		});
 
-		return Object.keys(edit).length ? await super.update(id, edit as QueryDeepPartialEntity<PickListLine>) : stored;
+		if (!Object.keys(edit).length) {
+			return stored;
+		}
+
+		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
+		return editLanded(
+			await super.update({ id, status: stored.status } as FindOptionsWhere<PickListLine>, edit as QueryDeepPartialEntity<PickListLine>),
+			'PICK_LIST_LINE_EDIT_CONFLICT',
+			'pick line',
+			id
+		);
 	}
 
 	/**

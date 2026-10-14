@@ -12,7 +12,7 @@ import {
 	PickListLineStatus,
 	PickListStatus
 } from '../warehouse.types';
-import { editByIdOnly, warehouseEditOf } from '../warehouse.writable';
+import { editByIdOnly, editLanded, warehouseEditOf } from '../warehouse.writable';
 import { normalizeQuantity } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PackSlip } from './pack-slip.entity';
@@ -83,7 +83,17 @@ export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 			operations: 'a slip is packed or voided through its own routes, and a packed slip is immutable; a re-pack voids it and opens a new one.'
 		});
 
-		return Object.keys(edit).length ? await super.update(id, edit as QueryDeepPartialEntity<PackSlip>) : stored;
+		if (!Object.keys(edit).length) {
+			return stored;
+		}
+
+		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
+		return editLanded(
+			await super.update({ id, status: stored.status } as FindOptionsWhere<PackSlip>, edit as QueryDeepPartialEntity<PackSlip>),
+			'PACK_SLIP_EDIT_CONFLICT',
+			'pack slip',
+			id
+		);
 	}
 
 	/**
