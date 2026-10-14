@@ -111,8 +111,12 @@ on:
 permissions:
   contents: read
 
+# A push to develop gets a group of its own (its commit): GitHub keeps one pending run per group and
+# replaces it with the next, so with one group per branch a push queued behind a long audit could be
+# replaced by the push after it — which compares only with the commit before it, leaving the replaced
+# push's baseline additions unchecked. Pull requests keep one group each and cancel superseded runs.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.event_name == 'push' && github.sha) || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
