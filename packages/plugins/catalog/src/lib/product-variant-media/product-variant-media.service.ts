@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { ProductVariantMedia } from './product-variant-media.entity';
@@ -11,6 +12,13 @@ import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-prod
  * At most one image per variant is the primary one, and "at most one" is enforced here rather than by
  * the caller: setting a new primary clears the previous one in the same transaction, so a gallery can
  * never be left with two thumbnails or with none after an image is detached.
+ *
+ * **The previous primary is cleared first, in one statement, and only then is the new one set.**
+ * `UQ_variant_media_primary` admits one live primary row per variant, and Postgres and SQLite check a
+ * unique index per statement. Writing the rows one by one — in the order `find()` returned them, which has
+ * no `ORDER BY`, or in the order a caller listed the images — set the new primary while the old one was
+ * still set whenever the new row came first, so the write failed on the index and rolled back, depending
+ * on row order (R5-07).
  */
 @Injectable()
 export class ProductVariantMediaService extends TenantAwareCrudService<ProductVariantMedia> {
@@ -67,6 +75,9 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 				await manager.delete(ProductVariantMedia, removed.map((row) => row.id));
 			}
 
+			// Cleared first, so the loop below can set the new primary in any order (R5-07).
+			await this.clearPrimary(manager, variantId, tenantId);
+
 			for (const [position, imageAssetId] of imageAssetIds.entries()) {
 				const isPrimary = primaryImageAssetId ? imageAssetId === primaryImageAssetId : false;
 				const row = existing.find((candidate) => candidate.imageAssetId === imageAssetId);
@@ -107,16 +118,40 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 		}
 
 		await this.typeOrmProductVariantMediaRepository.manager.transaction(async (manager) => {
-			for (const row of rows) {
-				const isPrimary = row.id === target.id;
+			// Every other primary of the variant is cleared in one statement before the target is set (R5-07).
+			await this.clearPrimary(manager, variantId, target.tenantId, target.id);
 
-				if (row.isPrimary !== isPrimary) {
-					await manager.update(ProductVariantMedia, row.id, { isPrimary });
-				}
+			if (!target.isPrimary) {
+				await manager.update(ProductVariantMedia, target.id, { isPrimary: true });
 			}
 		});
 
 		return this.findByVariant(variantId);
+	}
+
+	/**
+	 * Clears the variant's primary image in one statement, so the next write can set a new one without the
+	 * unique index ever seeing two.
+	 *
+	 * The rows are selected by predicate rather than by the ids read earlier, so a primary set by another
+	 * request since that read is cleared too. Scoped to the variant's tenant when it is known.
+	 *
+	 * @param manager The transaction's entity manager.
+	 * @param variantId The variant.
+	 * @param tenantId The variant's tenant.
+	 * @param exceptId A row to leave as it is: the one about to be, or already, the primary.
+	 */
+	private async clearPrimary(manager: EntityManager, variantId: ID, tenantId?: ID | null, exceptId?: ID): Promise<void> {
+		await manager.update(
+			ProductVariantMedia,
+			{
+				variantId,
+				isPrimary: true,
+				...(tenantId ? { tenantId } : {}),
+				...(exceptId ? { id: Not(exceptId) } : {})
+			},
+			{ isPrimary: false }
+		);
 	}
 
 	/**
