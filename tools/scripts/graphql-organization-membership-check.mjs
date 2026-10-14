@@ -38,7 +38,7 @@ const RESOLVER_ROOTS = [join(ROOT, 'packages', 'core', 'src'), join(ROOT, 'packa
 const PUBLIC_EXEMPT = {
 };
 
-const failures = [];
+let failures = [];
 
 /* -------- 1. the interceptor is global, early, and makes the REST validator's lookup -------- */
 
@@ -82,22 +82,22 @@ function fieldsTakingOrganization(text) {
 		.replace(/#[^\n]*/g, ' ')
 		.replace(/@\w+(?:\([^)]*\))?/g, ' ');
 
-	const blocks = new Map(); // `type:Name` / `input:Name` → body
+	let blocks = new Map(); // `type:Name` / `input:Name` → body
 	for (const match of sdl.matchAll(/(?:extend\s+)?(type|input)\s+(\w+)[^{]*\{([^}]*)\}/g)) {
 		const key = `${match[1]}:${match[2]}`;
 		blocks.set(key, (blocks.get(key) ?? '') + '\n' + match[3]);
 	}
 
 	// `name: Type` pairs of each input type, named type only.
-	const inputFields = new Map();
+	let inputFields = new Map();
 	for (const [key, body] of blocks) {
 		if (!key.startsWith('input:')) continue;
-		const fields = new Map();
+		let fields = new Map();
 		for (const field of body.matchAll(/(\w+)\s*:\s*\[*\s*(\w+)/g)) fields.set(field[1], field[2]);
 		inputFields.set(key.slice(6), fields);
 	}
 
-	const reaching = new Set([...inputFields].filter(([, fields]) => fields.has('organizationId')).map(([name]) => name));
+	let reaching = new Set([...inputFields].filter(([, fields]) => fields.has('organizationId')).map(([name]) => name));
 	for (let changed = true; changed; ) {
 		changed = false;
 		for (const [name, fields] of inputFields) {
@@ -108,7 +108,7 @@ function fieldsTakingOrganization(text) {
 		}
 	}
 
-	const found = new Set();
+	let found = new Set();
 	for (const operation of ['Query', 'Mutation', 'Subscription']) {
 		const body = blocks.get(`type:${operation}`) ?? '';
 		for (const field of body.matchAll(/(\w+)\s*(?:\(([^)]*)\))?\s*:\s*[\[\]\w!]+/g)) {
@@ -152,7 +152,7 @@ function filesUnder(dir, found = []) {
 	return found;
 }
 
-const publicFields = new Map(); // `Operation.field` → file
+let publicFields = new Map(); // `Operation.field` → file
 for (const file of RESOLVER_ROOTS.flatMap((root) => filesUnder(root))) {
 	const source = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|\s)\/\/[^\n]*/g, '$1');
 	const classAt = source.search(/export class \w+/);

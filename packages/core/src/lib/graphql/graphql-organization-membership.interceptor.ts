@@ -35,7 +35,7 @@ export interface IStatedOrganizations {
  * @returns The organization ids named, and whether a member was malformed.
  */
 export function statedOrganizations(args: Record<string, unknown>, definitions: readonly GraphQLArgument[]): IStatedOrganizations {
-	const found: IStatedOrganizations = { ids: new Set<string>(), malformed: false };
+	let found: IStatedOrganizations = { ids: new Set<string>(), malformed: false };
 
 	const stateId = (value: unknown): void => {
 		if (value === null || value === undefined || value === '') return;
