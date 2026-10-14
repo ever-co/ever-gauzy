@@ -173,6 +173,16 @@ const LEVEL_B = '00000000-0000-4000-8000-0000000004b1';
 const AGGREGATE_A = '00000000-0000-4000-8000-0000000007a1';
 const AGGREGATE_B = '00000000-0000-4000-8000-0000000007b1';
 
+/** A second organization of tenant A, with stock of its own (seeded by the cases that need it). */
+const ORG_A2 = '00000000-0000-4000-8000-0000000000a2';
+const ORG_A2_STOCK = {
+	warehouses: ['00000000-0000-4000-8000-0000000001a3'],
+	product: '00000000-0000-4000-8000-0000000002a2',
+	variant: '00000000-0000-4000-8000-0000000003a2',
+	level: '00000000-0000-4000-8000-0000000004a2',
+	aggregate: '00000000-0000-4000-8000-0000000007a2'
+};
+
 /*
 |--------------------------------------------------------------------------
 | Fixture schemas: the columns the services read and write
@@ -424,6 +434,17 @@ interface IHarness {
 	row: (table: string, id: string) => Promise<Row | undefined>;
 	/** Counts the rows of a table, optionally of one tenant. */
 	countOf: (table: string, tenantId?: string) => Promise<number>;
+	/** Stocks one variant of one scope at one location with ten on hand; further locations are left empty. */
+	stock: (scope: { tenantId: string; organizationId: string }, ids: IStockIds) => Promise<void>;
+}
+
+/** The rows one scope's stock is made of. */
+interface IStockIds {
+	warehouses: string[];
+	product: string;
+	variant: string;
+	level: string;
+	aggregate: string;
 }
 
 /** Acts as a caller of one tenant, or as a caller with no request at all. */
@@ -453,11 +474,7 @@ async function harness(): Promise<IHarness> {
 		);
 	};
 
-	for (const [tenantId, organizationId, warehouses, product, variant, level, aggregate] of [
-		[TENANT_A, ORG_A, [WAREHOUSE_A, WAREHOUSE_A2], PRODUCT_A, VARIANT_A, LEVEL_A, AGGREGATE_A],
-		[TENANT_B, ORG_B, [WAREHOUSE_B, WAREHOUSE_B2], PRODUCT_B, VARIANT_B, LEVEL_B, AGGREGATE_B]
-	] as Array<[string, string, string[], string, string, string, string]>) {
-		const scope = { tenantId, organizationId };
+	const stock: IHarness['stock'] = async (scope, { warehouses, product, variant, level, aggregate }) => {
 		for (const warehouse of warehouses) {
 			await insert('warehouse', { id: warehouse, ...scope });
 		}
@@ -480,7 +497,28 @@ async function harness(): Promise<IHarness> {
 			quantity: 10,
 			...scope
 		});
-	}
+	};
+
+	await stock(
+		{ tenantId: TENANT_A, organizationId: ORG_A },
+		{
+			warehouses: [WAREHOUSE_A, WAREHOUSE_A2],
+			product: PRODUCT_A,
+			variant: VARIANT_A,
+			level: LEVEL_A,
+			aggregate: AGGREGATE_A
+		}
+	);
+	await stock(
+		{ tenantId: TENANT_B, organizationId: ORG_B },
+		{
+			warehouses: [WAREHOUSE_B, WAREHOUSE_B2],
+			product: PRODUCT_B,
+			variant: VARIANT_B,
+			level: LEVEL_B,
+			aggregate: AGGREGATE_B
+		}
+	);
 
 	let sequence = 0;
 	const sequenceService = {
@@ -498,6 +536,7 @@ async function harness(): Promise<IHarness> {
 		transfers: new StockTransferService(repository(StockTransfer), undefined as any, sequenceService, engine),
 		transferLines: new StockTransferLineService(repository(StockTransferLine), undefined as any),
 		counts: new StockCountService(repository(StockCount), undefined as any, sequenceService, engine),
+		stock,
 		row: async (table, id) => (await dataSource.query(`SELECT * FROM "${table}" WHERE "id" = ?`, [id]))[0],
 		countOf: async (table, tenantId) =>
 			Number(
@@ -613,6 +652,73 @@ describe('inventory domain verbs keep to the caller’s tenant (DB-backed, two t
 			expect((await h.reservations.consume(consumed.id)).status).toBe(StockReservationStatus.CONSUMED);
 			expect((await h.reservations.release(released.id)).status).toBe(StockReservationStatus.RELEASED);
 			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 8, reservedQuantity: 0 });
+		});
+
+		/** Tenant A's own hold of two units, taken by a caller of A's first organization. */
+		async function holdOfA(): Promise<StockReservation> {
+			actAs(TENANT_A, ORG_A);
+
+			return await h.reservations.reserve({
+				warehouseId: WAREHOUSE_A,
+				variantId: VARIANT_A,
+				productId: PRODUCT_A,
+				quantity: 2,
+				referenceType: StockReservationReferenceType.ORDER,
+				referenceId: '00000000-0000-4000-8000-0000000005a4'
+			});
+		}
+
+		it('each scope member is enforced on its own: another organization of the tenant, or another tenant sharing the organization id, cannot consume the hold', async () => {
+			const hold = await holdOfA();
+
+			actAs(TENANT_A, ORG_A2);
+			await expect(h.reservations.consume(hold.id)).rejects.toBeInstanceOf(NotFoundException);
+			actAs(TENANT_B, ORG_A);
+			await expect(h.reservations.consume(hold.id)).rejects.toBeInstanceOf(NotFoundException);
+
+			expect((await h.row('stock_reservation', hold.id))?.status).toBe(StockReservationStatus.ACTIVE);
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 2 });
+		});
+
+		it('a caller of the tenant with no organization is narrowed to the tenant alone', async () => {
+			const hold = await holdOfA();
+
+			actAs(TENANT_B);
+			await expect(h.reservations.release(hold.id)).rejects.toBeInstanceOf(NotFoundException);
+			actAs(TENANT_A);
+			expect((await h.reservations.release(hold.id)).status).toBe(StockReservationStatus.RELEASED);
+		});
+
+		it("the operator's expiry sweep reaches its own organization's holds when an older batch belongs to another organization of the tenant", async () => {
+			await h.stock({ tenantId: TENANT_A, organizationId: ORG_A2 }, ORG_A2_STOCK);
+
+			actAs(TENANT_A, ORG_A2);
+			const foreign = await h.reservations.reserve({
+				warehouseId: ORG_A2_STOCK.warehouses[0],
+				variantId: ORG_A2_STOCK.variant,
+				productId: ORG_A2_STOCK.product,
+				quantity: 1,
+				referenceType: StockReservationReferenceType.CART,
+				referenceId: '00000000-0000-4000-8000-0000000005a5',
+				expiresAt: new Date(Date.now() - 120_000)
+			});
+			actAs(TENANT_A, ORG_A);
+			const own = await h.reservations.reserve({
+				warehouseId: WAREHOUSE_A,
+				variantId: VARIANT_A,
+				productId: PRODUCT_A,
+				quantity: 1,
+				referenceType: StockReservationReferenceType.CART,
+				referenceId: '00000000-0000-4000-8000-0000000005a6',
+				expiresAt: new Date(Date.now() - 60_000)
+			});
+
+			// A batch of one: the oldest expired hold of the tenant is the other organization's.
+			expect(await h.reservations.releaseExpired(1)).toEqual({ released: 1, batches: 1 });
+
+			expect((await h.row('stock_reservation', own.id))?.status).toBe(StockReservationStatus.EXPIRED);
+			expect((await h.row('stock_reservation', foreign.id))?.status).toBe(StockReservationStatus.ACTIVE);
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 0 });
 		});
 
 		it('a caller with no request (the expiry sweep) still expires the holds of every tenant', async () => {
