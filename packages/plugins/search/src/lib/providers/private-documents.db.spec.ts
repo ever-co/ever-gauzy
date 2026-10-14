@@ -240,6 +240,20 @@ describe('search does not show PRIVATE documents (R7-05), on a real database', (
 		expect(result.facets).toEqual([{ attribute: 'kind', values: [{ value: 'file', count: 2 }] }]);
 	});
 
+	it('compares the rule without regard to case, as the declaration promises and the indexer does', async () => {
+		// A rule spelled in lower case admits the rows the column stores in upper case, on every dialect:
+		// PostgreSQL and SQLite compare text case-sensitively, so a bare IN refused rows the indexer wrote.
+		const rule = { ...DOCUMENT_INDEX, visibleWhen: { field: 'visibility', values: ['organization'] } };
+		const registry = new SearchIndexRegistry(dataSource);
+		registry.register(rule);
+		const lowerCased = new DatabaseSearchProvider(dataSource.getRepository(SearchDocumentRow) as any, registry);
+
+		const result = await lowerCased.query({ q: 'salary', organizationId: ORG }, ['document']);
+
+		expect(isRowVisible(rule, A)).toBe(true);
+		expect(result.items.map((hit) => hit.entityId).sort()).toEqual([A.id, D.id].sort());
+	});
+
 	it('hides a document whose row was deleted, and one whose row belongs to another tenant', async () => {
 		await dataSource.getRepository(DocumentRow).softDelete({ id: D.id });
 		await dataSource.query(`UPDATE "document" SET "tenantId" = ? WHERE "id" = ?`, [OTHER_TENANT, A.id]);

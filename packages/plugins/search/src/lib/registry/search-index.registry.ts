@@ -266,7 +266,7 @@ export class SearchIndexRegistry {
 			// The query reads the rule from the source row's own column, so the field must be declared and
 			// read from a column of the source table rather than through a relation path — and a rule that
 			// admits no value would hide the whole entity.
-			const field = (definition.fields ?? []).find((candidate) => candidate.name === rule.field);
+			const field = definition.fields.find((candidate) => candidate.name === rule.field);
 			const source = String(field?.source ?? field?.name ?? '');
 
 			if (!field || source.includes('.')) {

@@ -636,13 +636,14 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			const values = this.addParam(
 				params,
 				'ruledValues',
-				(rule.values ?? []).map((value) => String(value))
+				// Compared without regard to case, as `ISearchRowRule` states and `isRowVisible` compares at index time.
+				(rule.values ?? []).map((value) => String(value).toLowerCase())
 			);
 			const source = this.typeOrmSearchDocumentRepository.manager
 				.createQueryBuilder(admitting.target, 'src')
 				.select('1')
 				.where(`src.${admitting.id} = doc.entityId`)
-				.andWhere(`src.${admitting.column} IN (:...${values})`);
+				.andWhere(`LOWER(src.${admitting.column}) IN (:...${values})`);
 
 			if (admitting.tenant) {
 				source.andWhere(`src.${admitting.tenant} = doc.tenantId`);
