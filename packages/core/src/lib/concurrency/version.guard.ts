@@ -133,8 +133,12 @@ export class VersionGuard implements CanActivate {
 
 		try {
 			const record = await this.idempotency()?.findByKey(idempotent.scope, key);
+			const settled = record?.status === IdempotencyStatus.COMPLETED || record?.status === IdempotencyStatus.FAILED;
 
-			return record?.status === IdempotencyStatus.COMPLETED || record?.status === IdempotencyStatus.FAILED;
+			// A settled record whose replay window has passed is not replayed: the interceptor's `claim()`
+			// clears it and the handler runs as a first attempt, so the write the precondition guards does
+			// happen. Yielding to it skipped the version check for a real write (R1-08 of the #10254 review).
+			return settled && !isPastReplayWindow(record?.expiresAt);
 		} catch (error) {
 			// A store that cannot be read is not a reason to refuse a write. The precondition still
 			// applies, and the conditional update is the half that cannot be skipped.
@@ -333,4 +337,24 @@ export class VersionGuard implements CanActivate {
 			return { exists: true, version: null };
 		}
 	}
+}
+
+/**
+ * Whether an idempotency record is past the window its response may be replayed in.
+ *
+ * The same reading as `IdempotencyService.isExpired`, stated here because the guard only holds the
+ * record: a record with no expiry is inside its window, and so is one whose expiry cannot be read.
+ *
+ * @param expiresAt The record's expiry.
+ * @param now The moment to compare against.
+ * @returns True when the record will not be replayed.
+ */
+function isPastReplayWindow(expiresAt: Date | string | null | undefined, now: number = Date.now()): boolean {
+	if (!expiresAt) {
+		return false;
+	}
+
+	const expiry = new Date(expiresAt).getTime();
+
+	return Number.isFinite(expiry) && expiry <= now;
 }

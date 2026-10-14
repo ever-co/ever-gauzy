@@ -586,6 +586,35 @@ describe('a route that carries retry safety as well as a version', () => {
 		expect(await guard.canActivate(httpContext(staleRetry()))).toBe(true);
 	});
 
+	it('does not yield to a settled record whose replay window has passed (R1-08)', async () => {
+		// The interceptor's `claim()` clears an expired row and runs the handler as a first attempt, so a
+		// guard that yielded here skipped the precondition for a write that does happen: on a route whose
+		// version is optional the write went through unconditionally (a lost update), on a required one the
+		// caller who did send `If-Match` was told `428 VERSION_REQUIRED`.
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.COMPLETED, expiresAt: new Date(Date.now() - 60_000) },
+			reader
+		);
+		const refusal = await refusalFrom(() => guard.canActivate(httpContext(staleRetry())));
+
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+	});
+
+	it('still yields to a settled record inside its replay window — control', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.FAILED, expiresAt: new Date(Date.now() + 60_000) },
+			reader
+		);
+
+		expect(await guard.canActivate(httpContext(staleRetry()))).toBe(true);
+	});
+
 	it('still refuses a stale write while the first attempt is in progress', async () => {
 		const reader = readerAnswering({ version: 4 });
 		const { guard } = guardForBoth(
