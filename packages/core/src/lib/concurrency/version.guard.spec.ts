@@ -609,7 +609,9 @@ describe('a route that carries retry safety as well as a version', () => {
 		// window closes before the interceptor's `claim()`, the row is cleared and the handler runs as a
 		// first attempt. The version the caller stated must reach that write.
 		const reader = readerAnswering({ version: 4 });
-		const record = { status: IdempotencyStatus.COMPLETED, expiresAt: new Date(Date.now() + 5) };
+		// A comfortably future expiry, moved into the past only once the guard has answered — the race is
+		// staged, not timed, so a slow runner cannot turn it into a different case.
+		const record = { status: IdempotencyStatus.COMPLETED, expiresAt: new Date(Date.now() + 60_000) };
 		const { guard } = guardForBoth({ resource: InvoiceService, required: true }, { scope: 'invoice.update' }, record, reader);
 		const request: any = staleRetry();
 
@@ -622,6 +624,28 @@ describe('a route that carries retry safety as well as a version', () => {
 		// `428 VERSION_REQUIRED` a required route answered when the yield left nothing behind — and it
 		// is the stale `3`, so the conditional update refuses the write rather than applying it.
 		expect(versionExpectationOf(request)).toEqual(expect.objectContaining({ versions: [3] }));
+	});
+
+	it('never hands one GraphQL field’s version to the next field of the same document', async () => {
+		// Greptile on #10583: mutations of one document share the request. The first field is a settled
+		// retry stating version 3; the second states none and its own key is settled too. If the second
+		// key expired before its claim, its handler must find no version — not the first field's `3`.
+		const reader = readerAnswering({ version: 3 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService, required: true },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.COMPLETED, expiresAt: new Date(Date.now() + 60_000) },
+			reader
+		);
+		const shared: any = { method: 'POST', headers: {} };
+		const field = (input: Record<string, unknown>) =>
+			graphqlContext({ id: 'invoice-1', input: { idempotencyKey: 'retry-key-12345678', ...input } }, { req: shared });
+
+		expect(await guard.canActivate(field({ version: 3 }))).toBe(true);
+		expect(shared[VERSION_EXPECTATION_PROPERTY]).toEqual({ wildcard: false, versions: [3] });
+
+		expect(await guard.canActivate(field({}))).toBe(true);
+		expect(shared).not.toHaveProperty(VERSION_EXPECTATION_PROPERTY);
 	});
 
 	it('leaves nothing on a yielded request that stated no version — control', async () => {

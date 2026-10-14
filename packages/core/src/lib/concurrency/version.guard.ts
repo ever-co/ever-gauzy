@@ -160,6 +160,17 @@ export class VersionGuard implements CanActivate {
 	 * @throws ApiException when the version is missing, unusable or stale.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		const request = executionRequest(context);
+
+		// 🛑 **One expectation per field.** A GraphQL document's mutations share one request object and run
+		// one after the other, each behind this guard; an expectation left by an earlier field would
+		// otherwise be read by a later field's write that stated none — a conditional write on a version
+		// the caller never stated for it, instead of `428 VERSION_REQUIRED`. Whatever this pass decides is
+		// decided from this field's own arguments alone.
+		if (request && VERSION_EXPECTATION_PROPERTY in request) {
+			delete request[VERSION_EXPECTATION_PROPERTY];
+		}
+
 		const options = this.reflector.getAllAndOverride<IVersionedOptions | undefined>(VERSIONED_METADATA_KEY, [
 			context.getHandler(),
 			context.getClass()
@@ -171,7 +182,6 @@ export class VersionGuard implements CanActivate {
 			return true;
 		}
 
-		const request = executionRequest(context);
 		const isGraphql = context.getType<'http' | 'graphql' | string>() === 'graphql';
 
 		const method = String(request?.method ?? '').toUpperCase();
