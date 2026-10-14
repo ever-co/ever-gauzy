@@ -347,6 +347,14 @@ jobs:
         if: always()
         run: node tools/scripts/graphql-write-parity-check.mjs
 
+      # GraphQL runs no class-validator, so the organization-membership rule REST's DTOs state with
+      # `@IsOrganizationBelongsToUser()` (GHSA-44pv-34gx-q9p4) is applied to every GraphQL operation by one global
+      # interceptor (R7-03). This gate keeps it global and early, and fails when a @Public() field that takes an
+      # organizationId — the one kind the interceptor skips — appears without a reviewed exemption.
+      - name: Every GraphQL field that names an organization runs the membership rule
+        if: always()
+        run: node tools/scripts/graphql-organization-membership-check.mjs
+
       # Every range a workspace declares must be a key of yarn.lock. Thirteen commerce plugins asked for
       # `@nestjs/graphql@^13.0.0` while the lockfile resolved only core's `^13.4.2`: a `--frozen-lockfile`
       # install refused the branch, and a plain one hoisted a second copy of the package, so the API failed
@@ -400,6 +408,18 @@ jobs:
       - name: The subscription gate reads every shape it must
         if: always()
         run: node --test tools/scripts/subscription-parity-check.test.mjs
+
+      # The deploy images install only production dependencies, so a package that runtime code imports but only a
+      # devDependency declares is present everywhere CI and local boots run, and missing in the container: the feat
+      # API image stopped at start with "Cannot find module 'rimraf'" (rimraf 6 was a devDependency of core and root).
+      # cspell:words rimraf
+      - name: Every package the API and worker images load at runtime is installed in them
+        if: always()
+        run: node tools/scripts/runtime-dependency-check.mjs
+
+      - name: The runtime dependency check's own cases
+        if: always()
+        run: node --test tools/scripts/runtime-dependency-check.test.mjs
 
       # The mapped types (`PartialType`, `PickType`, `OmitType`, `IntersectionType`) copy the parent DTO's field
       # initializers into every instance, and a `ValidationPipe` builds the request body with that constructor - so a

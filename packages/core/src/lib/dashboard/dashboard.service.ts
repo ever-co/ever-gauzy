@@ -8,8 +8,9 @@ import {
 	IDashboardUpdateInput,
 	ID
 } from '@gauzy/contracts';
-import { DeleteResult } from 'typeorm';
+import { DeleteResult, SaveOptions } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { Dashboard } from './dashboard.entity';
@@ -156,6 +157,42 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 		this.checkOwnership(dashboard);
 
 		return await super.delete(id);
+	}
+
+	/**
+	 * Withdraws a dashboard without removing the row (`DELETE /dashboard/:id/soft`, `softDeleteDashboard`), on the
+	 * terms the edit and the removal above state: dashboards are personal, so only their creator may withdraw one.
+	 *
+	 * The CRUD base's soft removal checks the tenant and nothing else, so without this a member who may not edit or
+	 * delete a colleague's dashboard could still withdraw it through the inherited route. The refusal is raised
+	 * before the base method runs, because the base rethrows whatever fails inside it as a 404.
+	 *
+	 * @param id - The dashboard to withdraw.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The withdrawn dashboard.
+	 * @throws {ForbiddenException} If the dashboard belongs to another user.
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Dashboard>, saveOptions?: SaveOptions): Promise<Dashboard> {
+		this.checkOwnership(await this.findOneByIdString(id));
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn dashboard (`PUT /dashboard/:id/recover`, `recoverDashboard`) — again only for its
+	 * creator. The ownership read includes withdrawn rows, since the row to restore is one.
+	 *
+	 * @param id - The dashboard to restore.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored dashboard.
+	 * @throws {ForbiddenException} If the dashboard belongs to another user.
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Dashboard>, saveOptions?: SaveOptions): Promise<Dashboard> {
+		this.checkOwnership(await this.findOneByIdString(id, { withDeleted: true }));
+
+		return super.softRecover(id, options, saveOptions);
 	}
 
 	/**

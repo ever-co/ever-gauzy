@@ -651,26 +651,40 @@ describe('DashboardWidgetResolver — the guard stack and the permission are the
 		}
 	});
 
+	it('carries the edit grant on the withdrawal and the restoration, on both surfaces (owner decision 5)', () => {
+		// The pair used to be inherited from the CRUD base with no permission of its own, so it stood on the
+		// class-level DASHBOARD_READ and the fields mirrored that read grant. Owner decision 5 (2026-10-13): the
+		// soft-delete/recover pair requires the controller's own edit grant — the one `update` states.
+		const edit = Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(DashboardWidgetController)['update']);
+
+		expect(edit).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+		for (const [field, route] of [
+			['softDeleteDashboardWidget', 'softRemove'],
+			['recoverDashboardWidget', 'softRecover']
+		]) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(DashboardWidgetController)[route])).toEqual(edit);
+			expect(permissionOfRoute(DashboardWidgetController, route)).toEqual(edit);
+			expect(permissionOfField(field)).toEqual(edit);
+		}
+	});
+
 	it('carries the organization-wide edit permission on every write whose route states it', () => {
 		for (const field of ['createDashboardWidget', 'updateDashboardWidget', 'deleteDashboardWidget']) {
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
 		}
 	});
 
-	it('carries the read permission on the fields whose routes inherit it', () => {
-		// The count, the withdrawal and the restoration are delivered by the CRUD base without a
-		// permission of their own, so they run under the controller's class-level read permission.
-		// Stating "no metadata" as "no permission", or stating the edit permission a lifecycle move seems
-		// to deserve, would widen those routes on this surface only.
-		for (const handler of ['getCount', 'pagination', 'softRemove', 'softRecover']) {
+	it('carries the read permission on the reads whose routes inherit it', () => {
+		// The count and the paginated list are delivered by the CRUD base without a permission of their own,
+		// so they run under the controller's class-level read permission. Stating "no metadata" as "no
+		// permission" would widen those routes on this surface only.
+		for (const handler of ['getCount', 'pagination']) {
 			expect(
 				Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(DashboardWidgetController)[handler])
 			).toBeUndefined();
 		}
 
-		for (const field of ['dashboardWidgetCount', 'softDeleteDashboardWidget', 'recoverDashboardWidget']) {
-			expect(permissionOfField(field)).toEqual([PermissionsEnum.DASHBOARD_READ]);
-		}
+		expect(permissionOfField('dashboardWidgetCount')).toEqual([PermissionsEnum.DASHBOARD_READ]);
 		expect(permissionOfRoute(DashboardWidgetController, 'pagination')).toEqual([PermissionsEnum.DASHBOARD_READ]);
 	});
 });

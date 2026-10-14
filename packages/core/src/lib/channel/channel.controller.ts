@@ -9,13 +9,14 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ChannelStatus, IChannel, IChannelRegion, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { paginateRows, resolveRestPage } from '../api/graphql-connection';
 import { CrudController } from '../core/crud';
-import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe, AbstractValidationPipe } from '../shared/pipes';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Channel } from './channel.entity';
@@ -31,6 +32,7 @@ import {
 	SetChannelStatusDTO,
 	UpdateChannelDTO
 } from './dto';
+import { TenantOrganizationBaseDTO } from '../core/dto';
 
 /**
  * The sales context over REST.
@@ -354,5 +356,51 @@ export class ChannelController extends CrudController<Channel> {
 		}
 
 		return stated;
+	}
+
+	/**
+	 * Withdraws a channel without removing the row — the `DELETE /:id/soft` route the CRUD base maps.
+	 *
+	 * Restated only to state its permission. Left inherited, the route carried none, and `PermissionGuard` —
+	 * handler first, then class — authorised it on this class's read grant (`CHANNELS_VIEW`), so a role that
+	 * may only look could withdraw a row. The soft-delete/recover pair requires the controller's own edit grant,
+	 * the one `update` states (owner decision 5, 2026-10-13); the status code, the path, the validation and the
+	 * service call are the inherited route's own, so the change is who may call it and nothing else. The GraphQL
+	 * field that mirrors it states the same grant.
+	 *
+	 * @param id The row to withdraw.
+	 * @param options The inherited route's rest parameter, forwarded to the service unchanged.
+	 * @returns The withdrawn row.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@Permissions(PermissionsEnum.CHANNELS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Channel> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a withdrawn row — the `PUT /:id/recover` route the CRUD base maps.
+	 *
+	 * Restated for the reason the withdrawal above is: restoring undoes a removal, so it requires the same edit
+	 * grant (owner decision 5) rather than the class's read grant (`CHANNELS_VIEW`) the inherited route stood on.
+	 *
+	 * @param id The row to restore.
+	 * @param options The inherited route's rest parameter, forwarded to the service unchanged.
+	 * @returns The restored row.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@Permissions(PermissionsEnum.CHANNELS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Channel> {
+		return await super.softRecover(id, ...options);
 	}
 }
