@@ -169,11 +169,8 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			// Extract the task from the screening task
 			const task = screeningTask.task;
 
-			// Create a new screening task with the updated input
-			const updatedScreeningTask = await super.create({ ...input, id });
-
 			// Update the task accordingly to the screening status. Compared with the stored status: the saved
-			// entity always carries the new one, so comparing with it never synced the task.
+			// screening task always carries the new one, so comparing with it never synced the task.
 			if (input.status && input.status !== screeningTask.status) {
 				// The task stays a screening task (hidden from the task lists) only while pending or snoozed
 				const isScreeningTask = [ScreeningTaskStatusEnum.PENDING, ScreeningTaskStatusEnum.SNOOZED].includes(
@@ -188,6 +185,10 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 
 				await this.taskService.update(task.id, { isScreeningTask, status: taskStatus });
 			}
+
+			// Saved after the task: if the task update fails, the screening status is not saved either, so a
+			// retry of the same request still sees the status change and syncs the task
+			const updatedScreeningTask = await super.create({ ...input, id });
 
 			// Generate the activity log
 			this.activityLogService.logActivity<ScreeningTask>(

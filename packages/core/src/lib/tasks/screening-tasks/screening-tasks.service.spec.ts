@@ -82,6 +82,18 @@ describe('ScreeningTasksService.update', () => {
 		expect(taskService.update).not.toHaveBeenCalled();
 	});
 
+	it('does not save the screening status when the task update fails, so a retry still syncs the task', async () => {
+		const create = jest.mocked(TenantAwareCrudService.prototype.create);
+		taskService.update.mockRejectedValueOnce(new Error('database timeout'));
+
+		await expect(update(ScreeningTaskStatusEnum.ACCEPTED)).rejects.toThrow();
+		expect(create).not.toHaveBeenCalled();
+
+		await update(ScreeningTaskStatusEnum.ACCEPTED);
+		expect(taskService.update).toHaveBeenCalledTimes(2);
+		expect(create).toHaveBeenCalledTimes(1);
+	});
+
 	it('logs the stored screening task as the previous values', async () => {
 		await update(ScreeningTaskStatusEnum.ACCEPTED);
 
