@@ -153,6 +153,12 @@ export class CreateTermsAcceptanceTable1785000000000 implements MigrationInterfa
 	 * seconds, which would truncate the milliseconds the fingerprint covers and
 	 * make every record read back as tampered.
 	 *
+	 * `tenant_id(191)` in the unique index: the four columns are 829 characters, 3,316 bytes in utf8mb4, and InnoDB
+	 * keys stop at 3,072 (`1071 Specified key was too long`), so a utf8mb4 installation could not create the index,
+	 * and MySQL commits DDL statement by statement, which left the table behind and failed every retry with
+	 * "already exists". A tenant id is a UUID, so 191 characters keep the whole value; the other three keep their
+	 * full length. An installation whose default charset let the full-width index through keeps it.
+	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
@@ -160,7 +166,7 @@ export class CreateTermsAcceptanceTable1785000000000 implements MigrationInterfa
 			`CREATE TABLE \`terms_acceptance\` (\`id\` varchar(128) NOT NULL, \`subject_id\` varchar(255) NOT NULL, \`tenant_id\` varchar(255) NULL, \`document_id\` varchar(255) NOT NULL, \`version\` varchar(64) NOT NULL, \`sha256\` varchar(64) NOT NULL, \`accepted_at\` datetime(3) NOT NULL, \`locale\` varchar(35) NOT NULL, \`ip_hash\` varchar(64) NULL, \`user_agent\` varchar(512) NULL, \`method\` varchar(64) NOT NULL, \`metadata\` json NULL, \`fingerprint\` varchar(64) NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`terms_acceptance_unique_idx\` ON \`terms_acceptance\` (\`subject_id\`, \`tenant_id\`, \`document_id\`, \`version\`)`
+			`CREATE UNIQUE INDEX \`terms_acceptance_unique_idx\` ON \`terms_acceptance\` (\`subject_id\`, \`tenant_id\`(191), \`document_id\`, \`version\`)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`terms_acceptance_subject_idx\` ON \`terms_acceptance\` (\`subject_id\`, \`document_id\`, \`accepted_at\`)`

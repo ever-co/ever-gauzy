@@ -139,6 +139,20 @@ export async function addCheckConstraint(
 
 	const type = queryRunner.connection.options.type as DatabaseTypeEnum;
 
+	if (type === DatabaseTypeEnum.mysql) {
+		const foreignKey = await modifyingForeignKeyOn(queryRunner, definition.table, definition.columns);
+
+		if (foreignKey) {
+			console.log(
+				chalk.yellow(
+					`${migrationName}: MySQL refuses a CHECK over a column a foreign-key action rewrites (${foreignKey} on ${definition.table}), so ${definition.name} is not created; the rule rests on the write path and the nightly audit.`
+				)
+			);
+
+			return 'unsupported';
+		}
+	}
+
 	await queryRunner.query(type === DatabaseTypeEnum.mysql ? definition.mysql : definition.postgres);
 	console.log(chalk.yellow(`${migrationName}: added ${definition.name} on ${definition.table}.`));
 
@@ -173,4 +187,40 @@ export async function dropCheckConstraint(
 	await queryRunner.query(statement);
 
 	return true;
+}
+
+/**
+ * The foreign key whose referential action rewrites one of the columns a rule reads, on MySQL.
+ *
+ * MySQL ≥ 8.0.16 refuses a `CHECK` over a column that a foreign key's action modifies — `ON DELETE SET NULL` /
+ * `SET DEFAULT`, or any `ON UPDATE` action other than `RESTRICT` / `NO ACTION` — with `3823 … needed in a foreign
+ * key constraint … referential action`. `ON DELETE CASCADE` removes the row rather than rewriting the column, so it
+ * does not count. Adding such a rule anyway stopped every MySQL installation at the migration that tried (review
+ * R5-11: `CHK_adjustment_funding`, `CHK_promotion_seller_funding` over a seller reference that is `SET NULL`).
+ *
+ * @param queryRunner The migration's runner, on MySQL.
+ * @param table The table the rule is about.
+ * @param columns The columns the rule reads.
+ * @returns The name of the first such foreign key, or undefined when there is none.
+ */
+export async function modifyingForeignKeyOn(
+	queryRunner: QueryRunner,
+	table: string,
+	columns: readonly string[]
+): Promise<string | undefined> {
+	if (!columns.length) {
+		return undefined;
+	}
+
+	const rows: Array<{ name: string }> = await queryRunner.query(
+		`SELECT k.CONSTRAINT_NAME AS name FROM information_schema.KEY_COLUMN_USAGE k ` +
+			`JOIN information_schema.REFERENTIAL_CONSTRAINTS r ` +
+			`ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME AND r.TABLE_NAME = k.TABLE_NAME ` +
+			`WHERE k.TABLE_SCHEMA = DATABASE() AND k.TABLE_NAME = ? AND k.COLUMN_NAME IN (${columns.map(() => '?').join(', ')}) ` +
+			`AND (r.DELETE_RULE IN ('SET NULL', 'SET DEFAULT') OR r.UPDATE_RULE IN ('SET NULL', 'SET DEFAULT', 'CASCADE')) ` +
+			`LIMIT 1`,
+		[table, ...columns]
+	);
+
+	return rows?.[0]?.name;
 }

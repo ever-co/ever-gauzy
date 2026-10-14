@@ -903,14 +903,11 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 			return;
 		}
 
-		await this.dropIndex(
-			queryRunner,
-			dialect,
-			CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY,
-			CreateVendorProductTermTable1791000000345.LINE_TABLE
-		);
-
 		if (dialect === 'mysql') {
+			// One statement, not a drop and a create: the order's foreign key on `purchaseOrderId` uses this index, and MySQL
+			// refuses to drop it alone (`1553 needed in a foreign key constraint`), which stopped every MySQL installation
+			// here. Dropped and re-added in one ALTER, the new tuple — same leading column — takes over the key's role.
+			const replace = current !== undefined;
 			// `deletedKey` rather than `deletedAt`, and `expectedAtKey` rather than `expectedAt`: every
 			// live row carries a null `deletedAt`, and a unique index in MySQL exempts any tuple that
 			// contains a null, so this tuple constrained nothing at all. The date is folded for the same
@@ -919,11 +916,18 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 			// Both generated columns are declared by `CreatePurchasingTables1791000000340`, which creates
 			// this table.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`expectedAtKey\`, \`deletedKey\`)`
+				`ALTER TABLE \`purchase_order_line\` ${replace ? `DROP INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\`, ` : ''}ADD UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` (\`purchaseOrderId\`, \`variantId\`, \`expectedAtKey\`, \`deletedKey\`)`
 			);
 
 			return;
 		}
+
+		await this.dropIndex(
+			queryRunner,
+			dialect,
+			CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY,
+			CreateVendorProductTermTable1791000000345.LINE_TABLE
+		);
 
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX IF NOT EXISTS "${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}" ON "${CreateVendorProductTermTable1791000000345.LINE_TABLE}" ("purchaseOrderId", "variantId", COALESCE("expectedAt", '1970-01-01 00:00:00')) WHERE "deletedAt" IS NULL`
@@ -962,7 +966,7 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 			return;
 		}
 
-		if (current !== undefined) {
+		if (current !== undefined && dialect !== 'mysql') {
 			await this.dropIndex(
 				queryRunner,
 				dialect,
@@ -972,8 +976,10 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 		}
 
 		if (dialect === 'mysql') {
+			// One ALTER for the same reason as in `widenLineBusinessKey`: the order's foreign key needs an index here.
+			const replace = current !== undefined;
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`deletedKey\`)`
+				`ALTER TABLE \`purchase_order_line\` ${replace ? `DROP INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\`, ` : ''}ADD UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` (\`purchaseOrderId\`, \`variantId\`, \`deletedKey\`)`
 			);
 
 			return;
