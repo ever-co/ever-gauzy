@@ -1,5 +1,5 @@
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
+import { createWriteStream, mkdirSync, readFileSync, type WriteStream } from 'node:fs';
 import { createServer } from 'node:net';
 import { dirname, join, sep } from 'node:path';
 import { chromium, type Browser, type Page } from '@playwright/test';
@@ -255,6 +255,62 @@ function processes(): ProcessInfo[] {
 		.map((m) => ({ pid: Number(m[1]), ppid: Number(m[2]), cmd: m[3] }));
 }
 
+/** Splits a Windows command line into its arguments the way `CommandLineToArgvW` does (quotes, backslashes). */
+export function windowsArgs(commandLine: string): string[] {
+	let args: string[] = [];
+	let current = '';
+	let started = false;
+	let quoted = false;
+	for (let i = 0; i < commandLine.length; i++) {
+		const ch = commandLine[i];
+		if (ch === '\\') {
+			let n = 0;
+			while (commandLine[i] === '\\') {
+				n++;
+				i++;
+			}
+			if (commandLine[i] === '"') {
+				current += '\\'.repeat(Math.floor(n / 2));
+				if (n % 2) current += '"';
+				else quoted = !quoted;
+			} else {
+				current += '\\'.repeat(n);
+				i--;
+			}
+			started = true;
+		} else if (ch === '"') {
+			if (quoted && commandLine[i + 1] === '"') {
+				current += '"'; // "" inside quotes is a literal quote
+				i++;
+			} else quoted = !quoted;
+			started = true;
+		} else if (!quoted && (ch === ' ' || ch === '\t')) {
+			if (started) args.push(current);
+			current = '';
+			started = false;
+		} else {
+			current += ch;
+			started = true;
+		}
+	}
+	if (started) args.push(current);
+	return args;
+}
+
+/**
+ * The arguments of a process, as separate values: parsed from the Windows command line, read from
+ * `/proc/<pid>/cmdline` on Linux. Where neither exists (macOS), `ps` only shows the arguments joined with
+ * spaces; they are split before each ` --`, so a path with spaces stays in one piece.
+ */
+function argsOf(p: ProcessInfo): string[] {
+	if (process.platform === 'win32') return windowsArgs(p.cmd);
+	try {
+		return readFileSync(`/proc/${p.pid}/cmdline`, 'utf8').split('\0').filter(Boolean);
+	} catch {
+		return p.cmd.split(/ (?=--)/);
+	}
+}
+
 /**
  * Stops what is left of this run: every process started with this run's `--user-data-dir` (Chromium passes
  * it on to the app's child processes, and a relaunched app gets the same command line), and — for a packaged
@@ -265,24 +321,22 @@ function processes(): ProcessInfo[] {
  */
 function killLeftovers(desktop: DesktopApp): void {
 	const win = process.platform === 'win32';
-	const norm = (s: string) => (win ? s.toLowerCase() : s).replace(/"/g, '');
+	const norm = (s: string) => (win ? s.toLowerCase() : s); // Windows paths are case-insensitive
 	let list: ProcessInfo[];
 	try {
 		list = processes();
 	} catch {
 		return;
 	}
+	// The whole argument must match: a profile at "<this run's profile> backup" is someone else's.
 	const userData = norm(`--user-data-dir=${desktop.userDataDir}`);
-	const startedWithUserData = (cmd: string) => {
-		const c = norm(cmd);
-		return c.endsWith(userData) || c.includes(`${userData} `);
-	};
+	const startedWithUserData = (p: ProcessInfo) => argsOf(p).some((arg) => norm(arg) === userData);
 	const packaged = desktop.target.args.length === 0;
 	const exe = norm(desktop.target.executablePath);
 	const root = /^(.*?\.app)\//.exec(desktop.target.executablePath)?.[1] ?? dirname(desktop.target.executablePath);
 	const prefix = root.endsWith(sep) ? root : root + sep;
 	const fromBuild = (p: ProcessInfo) => packaged && (win ? norm(p.exe ?? '') === exe : p.cmd.startsWith(prefix));
-	let ours = new Map(list.filter((p) => startedWithUserData(p.cmd) || fromBuild(p)).map((p) => [p.pid, p]));
+	let ours = new Map(list.filter((p) => startedWithUserData(p) || fromBuild(p)).map((p) => [p.pid, p]));
 	for (let grown = true; grown; ) {
 		grown = false;
 		for (const p of list) {
