@@ -104,11 +104,7 @@ describe('favorites of the newly favoritable record types', () => {
 		[BaseEntityEnum.Invoice, { invoiceNumber: 12 }, '#12'],
 		[BaseEntityEnum.Expense, { vendor: { name: 'Amazon' }, amount: 120, currency: 'USD' }, 'Amazon · 120 USD'],
 		[BaseEntityEnum.Expense, { category: { name: 'Travel' }, amount: 5, currency: 'EUR' }, 'Travel · 5 EUR'],
-		[
-			BaseEntityEnum.Income,
-			{ organizationContact: { name: 'Acme' }, amount: 900, currency: 'USD' },
-			'Acme · 900 USD'
-		],
+		[BaseEntityEnum.Income, { client: { name: 'Acme' }, amount: 900, currency: 'USD' }, 'Acme · 900 USD'],
 		[BaseEntityEnum.Payment, { amount: 300, currency: 'USD', invoice: { invoiceNumber: 7 } }, '300 USD · #7'],
 		[
 			BaseEntityEnum.Payment,

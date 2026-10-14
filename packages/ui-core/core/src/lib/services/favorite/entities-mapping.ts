@@ -187,7 +187,7 @@ export const ENTITY_TITLES: Partial<Record<BaseEntityEnum, (record: IFavoriteRec
 			amountOf(record)
 		),
 	[BaseEntityEnum.Income]: (record) =>
-		joined(nameOf(record['organizationContact']) || (record['clientName'] as string), amountOf(record)),
+		joined(nameOf(record['client']) || (record['clientName'] as string), amountOf(record)),
 	[BaseEntityEnum.Payment]: (record) => {
 		const invoiceNumber = (record['invoice'] as { invoiceNumber?: unknown } | undefined)?.invoiceNumber;
 		return joined(amountOf(record), invoiceNumber ? `#${invoiceNumber}` : nameOf(record['organizationContact']));

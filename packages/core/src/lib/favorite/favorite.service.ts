@@ -29,13 +29,13 @@ import { GlobalFavoriteDiscoveryService } from './global-favorite-service.servic
  *   open it. Each mirrors the view permission of the type's own read route; a function when it depends on
  *   the row (an estimate is an invoice row read with `ESTIMATES_VIEW`).
  */
-interface IFavoriteDetailOptions {
+export interface IFavoriteDetailOptions {
 	relations?: string[];
 	relationsPermission?: PermissionsEnum;
 	access?: (record: Record<string, unknown>) => PermissionsEnum[];
 }
 
-const FAVORITE_DETAILS: Partial<Record<BaseEntityEnum, IFavoriteDetailOptions>> = {
+export const FAVORITE_DETAILS: Partial<Record<BaseEntityEnum, IFavoriteDetailOptions>> = {
 	[BaseEntityEnum.Employee]: { relations: ['user'], relationsPermission: PermissionsEnum.ORG_EMPLOYEES_VIEW },
 	[BaseEntityEnum.Candidate]: { relations: ['user'], relationsPermission: PermissionsEnum.ORG_CANDIDATES_VIEW },
 	[BaseEntityEnum.Invoice]: {
@@ -47,7 +47,8 @@ const FAVORITE_DETAILS: Partial<Record<BaseEntityEnum, IFavoriteDetailOptions>> 
 		access: () => [PermissionsEnum.ORG_EXPENSES_VIEW]
 	},
 	[BaseEntityEnum.Income]: {
-		relations: ['organizationContact'],
+		// An income's contact is its `client` relation (`Income.client`), not `organizationContact`.
+		relations: ['client'],
 		access: () => [PermissionsEnum.ORG_INCOMES_VIEW]
 	},
 	[BaseEntityEnum.Payment]: {
