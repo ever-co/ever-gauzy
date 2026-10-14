@@ -150,13 +150,13 @@
 			"gauzy.co": 11
 		},
 		".env.sample": {
+			"EVER_PLATFORM_API_URL": 2,
+			"EVER_STATS_API_URL": 2,
 			"api.ever.co": 4,
 			"api.gauzy.co": 1,
 			"app.ever.co": 3,
 			"app.ever.team": 1,
 			"app.gauzy.co": 4,
-			"EVER_PLATFORM_API_URL": 2,
-			"EVER_STATS_API_URL": 2,
 			"ever.co": 7,
 			"gauzy.co": 12
 		},
@@ -579,6 +579,12 @@
 		"packages/plugins/camshot/package.json": {
 			"ever.co": 3
 		},
+		"packages/plugins/cart/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/catalog/package.json": {
+			"ever.co": 3
+		},
 		"packages/plugins/changelog/package.json": {
 			"ever.co": 3
 		},
@@ -609,6 +615,12 @@
 		},
 		"packages/plugins/docs/src/lib/knowledge/extraction/__fixtures__/xlsx.fixture.ts": {
 			"ever.co": 1
+		},
+		"packages/plugins/entitlement/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/fulfillment/package.json": {
+			"ever.co": 3
 		},
 		"packages/plugins/integration-activepieces-ui/package.json": {
 			"ever.co": 3
@@ -702,6 +714,9 @@
 		"packages/plugins/integration-zapier/package.json": {
 			"ever.co": 3
 		},
+		"packages/plugins/inventory/package.json": {
+			"ever.co": 3
+		},
 		"packages/plugins/jitsu-analytics/package.json": {
 			"ever.co": 3
 		},
@@ -760,7 +775,16 @@
 		"packages/plugins/maintenance-ui/package.json": {
 			"ever.co": 3
 		},
+		"packages/plugins/marketplace/package.json": {
+			"ever.co": 3
+		},
 		"packages/plugins/onboarding-ui/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/order/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/payment/package.json": {
 			"ever.co": 3
 		},
 		"packages/plugins/posthog-ui/package.json": {
@@ -769,7 +793,13 @@
 		"packages/plugins/posthog/package.json": {
 			"ever.co": 3
 		},
+		"packages/plugins/pricing/package.json": {
+			"ever.co": 3
+		},
 		"packages/plugins/product-reviews/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/promotion/package.json": {
 			"ever.co": 3
 		},
 		"packages/plugins/public-layout-ui/package.json": {
@@ -778,7 +808,16 @@
 		"packages/plugins/public-layout-ui/src/lib/components/workspace-actions/shared/email-code-form/email-code-form.component.ts": {
 			"gauzy.co": 1
 		},
+		"packages/plugins/purchasing/package.json": {
+			"ever.co": 3
+		},
 		"packages/plugins/registry/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/returns/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/search/package.json": {
 			"ever.co": 3
 		},
 		"packages/plugins/sentry-tracing/package.json": {
@@ -787,10 +826,19 @@
 		"packages/plugins/soundshot/package.json": {
 			"ever.co": 3
 		},
+		"packages/plugins/subscription/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/tax/package.json": {
+			"ever.co": 3
+		},
 		"packages/plugins/videos-ui/package.json": {
 			"ever.co": 3
 		},
 		"packages/plugins/videos/package.json": {
+			"ever.co": 3
+		},
+		"packages/plugins/warehouse/package.json": {
 			"ever.co": 3
 		},
 		"packages/ui-auth/package.json": {
@@ -845,7 +893,22 @@
 			"downloads.ever.co": 3,
 			"gauzy.co": 1
 		},
+		"tools/scripts/authorization-probe.mjs": {
+			"ever.co": 3
+		},
+		"tools/scripts/commerce-e2e.mjs": {
+			"ever.co": 2
+		},
+		"tools/scripts/commerce-flow-e2e.mjs": {
+			"ever.co": 2
+		},
+		"tools/scripts/graphql-surface-smoke.mjs": {
+			"ever.co": 1
+		},
 		"tools/scripts/legacy-rich-text-audit.ts": {
+			"ever.co": 1
+		},
+		"tools/scripts/return-receipt-e2e.mjs": {
 			"ever.co": 1
 		}
 	},
