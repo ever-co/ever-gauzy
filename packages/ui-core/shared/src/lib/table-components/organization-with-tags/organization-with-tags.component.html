@@ -15,46 +15,47 @@
           <nb-icon icon="briefcase-outline"></nb-icon>
         </span>
       }
-      <span>
-        <div>{{ rowData?.name }}</div>
+      <span class="identity">
+        <div class="name">{{ rowData?.name }}</div>
         @if (rowData?.totalEmployees) {
           <div class="member">
             {{ rowData.totalEmployees }} {{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
           </div>
         }
+        <!-- Badges sit in the text column so they line up with the name, not the logo -->
+        @if (rowData?.isDefault) {
+          <div class="tags">
+            <!--
+              Both halves read `brandColor` now. The fill was computed from
+              `rowData.color`, which `IOrganization` does not define, while the text
+              colour was contrast-matched against `brandColor` — so the badge was
+              painted one colour and lettered for another.
+            -->
+            <nb-badge
+              class="color"
+              position="centered"
+              [style.background]="background(rowData?.brandColor)"
+              [style.color]="backgroundContrast(rowData?.brandColor)"
+              [text]="'FORM.LABELS.DEFAULT' | translate"
+            >
+            </nb-badge>
+          </div>
+        }
+        @if (rowData?.tags?.length) {
+          <div class="tags">
+            @for (tag of rowData.tags; track tag) {
+              <nb-badge
+                class="color"
+                position="centered"
+                [style.background]="background(tag.color)"
+                [text]="tag.name"
+                [style.color]="backgroundContrast(tag.color)"
+              >
+              </nb-badge>
+            }
+          </div>
+        }
       </span>
     </div>
-    @if (rowData?.isDefault) {
-      <div class="tags">
-        <!--
-          Both halves read `brandColor` now. The fill was computed from
-          `rowData.color`, which `IOrganization` does not define, while the text
-          colour was contrast-matched against `brandColor` — so the badge was
-          painted one colour and lettered for another.
-        -->
-        <nb-badge
-          class="color"
-          position="centered"
-          [style.background]="background(rowData?.brandColor)"
-          [style.color]="backgroundContrast(rowData?.brandColor)"
-          [text]="'FORM.LABELS.DEFAULT' | translate"
-        >
-        </nb-badge>
-      </div>
-    }
-    @if (rowData?.tags?.length) {
-      <div class="tags">
-        @for (tag of rowData.tags; track tag) {
-          <nb-badge
-            class="color"
-            position="centered"
-            [style.background]="background(tag.color)"
-            [text]="tag.name"
-            [style.color]="backgroundContrast(tag.color)"
-          >
-          </nb-badge>
-        }
-      </div>
-    }
   </div>
 }
