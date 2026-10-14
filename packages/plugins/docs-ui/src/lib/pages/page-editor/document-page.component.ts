@@ -49,6 +49,7 @@ import { DocsExportService } from '../../services/docs-export.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
+import { documentPageLayoutOf, IDocumentPageLayout } from './document-page-view';
 
 type RailTab = 'toc' | 'info' | 'comments';
 
@@ -204,6 +205,20 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((id) => void this.load(id));
+
+		// `?view=full`: a sidebar favorite opens the page as wide as the shell allows, right rail closed
+		// (handover §4.P). Only that entry point carries it; the viewer can still toggle both afterwards.
+		this.route.queryParamMap
+			.pipe(
+				map((params) => documentPageLayoutOf(params.get('view'))),
+				filter((layout): layout is IDocumentPageLayout => !!layout),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((layout) => {
+				this.fullWidth = layout.fullWidth;
+				this.railOpen = layout.railOpen;
+				this.cdr.markForCheck();
+			});
 
 		// `?block=` deep link (spec 05 §8): scroll to the block, flash it, and open its
 		// thread. Tracked separately from `:id` so a link to another block of the SAME
