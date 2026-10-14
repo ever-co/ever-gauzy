@@ -926,6 +926,23 @@ describe('PaymentCollectionService — what may still change (doc 10 §8.2, §8.
 	});
 
 	/**
+	 * The restatement check compared values as text, so a body member that only STRINGIFIES to the stored value - an
+	 * array holding it, `['0']` for `'0.000000'` - was taken for a restatement and dropped instead of refused.
+	 */
+	it.each([
+		['status', [PaymentCollectionStatus.NOT_PAID]],
+		['authorizedAmount', ['0']]
+	])('refuses %s stated as a value that only stringifies to the stored one', async (member, value) => {
+		const fixture = collectionFixture([collectionRow('c1')]);
+		const before = { ...fixture.store('c1') };
+
+		await expect(
+			fixture.service.updateCollection('c1', { [member]: value, metadata: { note: 'x' } } as never)
+		).rejects.toThrow(new RegExp(`PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: ${member}`));
+		expect(fixture.store('c1')).toEqual(before);
+	});
+
+	/**
 	 * R3-04: `PUT /payment-collections/:id {metadata}` reached this method as `{ metadata, authorizedAmount: '0', ... }`
 	 * (the create DTO's defaults) and wrote the zeros - after which `assertCanAuthorize` accepted a second
 	 * authorisation of the whole amount. The totals are the only record of what the sessions moved; no update writes

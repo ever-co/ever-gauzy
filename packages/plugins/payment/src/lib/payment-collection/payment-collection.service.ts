@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, IsNull } from 'typeorm';
+import { restatesStoredValue } from '@gauzy/common';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { Money, readAffectedRows } from '@gauzy/core';
@@ -663,33 +664,3 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	}
 }
 
-/**
- * Whether a value an update states is the value already stored, so restating it is not a change.
- *
- * A decimal is compared by value (`'0'` restates `'0.000000'`, the column's scale), a date by its instant, and a
- * missing value restates only a missing one.
- */
-function restatesStoredValue(stored: unknown, stated: unknown): boolean {
-	if (stated === null || stated === undefined || stored === null || stored === undefined) {
-		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
-	}
-	if (stored instanceof Date || stated instanceof Date) {
-		const held = new Date(stored as string | Date).getTime();
-		const wanted = new Date(stated as string | Date).getTime();
-
-		return Number.isFinite(held) && held === wanted;
-	}
-
-	const decimal = /^[+-]?\d+(\.\d+)?$/;
-	const canonical = (value: string) =>
-		value
-			.replace(/^\+/, '')
-			.replace(/(\.\d*?)0+$/, '$1')
-			.replace(/\.$/, '');
-
-	if (decimal.test(String(stored)) && decimal.test(String(stated))) {
-		return canonical(String(stored)) === canonical(String(stated));
-	}
-
-	return String(stated) === String(stored);
-}

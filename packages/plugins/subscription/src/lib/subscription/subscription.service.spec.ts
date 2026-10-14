@@ -2468,6 +2468,41 @@ describe('SubscriptionService — the versioned write', () => {
 		expect(changed).toMatchObject({ status: stored.status, quantity: '2', metadata: { seat: 'B' } });
 	});
 
+	/**
+	 * The restatement check compared any value as text, so every object read `'[object Object]'`: a body that CHANGED
+	 * the items (read-only here; they move through the plan change) was taken for a restatement and silently dropped.
+	 */
+	it('refuses a body that changes a read-only object member, and accepts one that echoes it as read', async () => {
+		const fixture = subscriptionFixture();
+		const read = await fixture.service.findOneDetailed(SUBSCRIPTION);
+		const items = JSON.parse(JSON.stringify(read.items)) as Array<Record<string, unknown>>;
+
+		expect(items.length).toBeGreaterThan(0);
+
+		const refusal = await fixture.service
+			.applyChanges(
+				SUBSCRIPTION,
+				{ items: [{ ...items[0], quantity: '99' }, ...items.slice(1)], quantity: '2' } as never,
+				asReadByTheCaller
+			)
+			.catch((error) => error);
+
+		expect(refusal.response).toMatchObject({
+			code: 'SUBSCRIPTION_FIELD_NOT_WRITABLE',
+			details: { subscriptionId: SUBSCRIPTION, fields: ['items'] }
+		});
+
+		// The same items as they were read - members in another order, dates as ISO text - are a restatement.
+		const echoed = items.map((item) => Object.fromEntries(Object.entries(item).reverse()));
+		const changed = await fixture.service.applyChanges(
+			SUBSCRIPTION,
+			{ items: echoed, quantity: '2' } as never,
+			asReadByTheCaller
+		);
+
+		expect(changed).toMatchObject({ quantity: '2' });
+	});
+
 	it('does not write a restated lifecycle member back over a cancellation that landed after the check (Greptile)', async () => {
 		const fixture = subscriptionFixture();
 		const stored = fixture.subscription(SUBSCRIPTION)!;
