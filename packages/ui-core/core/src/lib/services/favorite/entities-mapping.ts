@@ -72,7 +72,9 @@ export type FavoriteLinkBuilder = (id: string, record?: IFavoriteRecord) => stri
 function documentLink(id: string, record?: IFavoriteRecord): string {
 	switch (record?.['kind']) {
 		case DocumentKindEnum.PAGE:
-			return `/pages/documents/page/${id}`;
+			// `view=full`: the editor as wide as the shell allows, right rail closed — for this entry point only
+			// (docs-ui `DOCS_PAGE_FULL_VIEW`); normal Documents navigation keeps the editor's defaults.
+			return `/pages/documents/page/${id}?view=full`;
 		case DocumentKindEnum.FOLDER:
 			return `/pages/documents?folder=${id}`;
 		default:

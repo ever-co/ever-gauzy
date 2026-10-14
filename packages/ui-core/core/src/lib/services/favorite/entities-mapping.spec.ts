@@ -20,9 +20,9 @@ describe('favorite entity links', () => {
 	});
 
 	describe('Document', () => {
-		it('opens a page in the document page (the docs shell keeps only the tree beside it)', () => {
+		it('opens a page in the document page at full width (the docs shell keeps only the tree beside it)', () => {
 			expect(ENTITY_LINKS[BaseEntityEnum.Document](ID, { id: ID, kind: DocumentKindEnum.PAGE })).toBe(
-				`/pages/documents/page/${ID}`
+				`/pages/documents/page/${ID}?view=full`
 			);
 		});
 
