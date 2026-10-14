@@ -11,7 +11,7 @@
  */
 import '../../core/entities/internal';
 import { Readable } from 'node:stream';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RequestContext } from '../../core/context';
 import { FileStorage } from '../../core/file-storage';
@@ -88,6 +88,15 @@ describe('Screenshot Controller — upload of an empty file', () => {
 			controller.create({ organizationId: 'org-1' } as never, { key: 'screenshots/e.png', filename: 'e.png' } as never)
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(provider.deleteFile).toHaveBeenCalledWith('screenshots/e.png');
+	});
+
+	it('answers an error, not a success, when the provider cannot read the object back', async () => {
+		provider.getFile.mockResolvedValue(undefined);
+
+		await expect(
+			controller.create({ organizationId: 'org-1' } as never, { key: 'screenshots/u.png', filename: 'u.png' } as never)
+		).rejects.toBeInstanceOf(InternalServerErrorException);
+		expect(provider.deleteFile).not.toHaveBeenCalled();
 	});
 
 	it('still records a real image that a provider returns as a stream', async () => {

@@ -1,6 +1,7 @@
 import {
 	BadRequestException,
 	Controller,
+	InternalServerErrorException,
 	Logger,
 	UseGuards,
 	HttpStatus,
@@ -49,7 +50,7 @@ async function toBuffer(content: unknown): Promise<Buffer | undefined> {
 	const body = content as { transformToByteArray?: () => Promise<Uint8Array> };
 	if (typeof body.transformToByteArray === 'function') return Buffer.from(await body.transformToByteArray());
 	if (typeof (content as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
-		const chunks: Buffer[] = [];
+		let chunks: Buffer[] = [];
 		for await (const chunk of content as AsyncIterable<Buffer | Uint8Array | string>) {
 			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
 		}
@@ -126,7 +127,13 @@ export class ScreenshotController {
 		// An empty upload (a display the desktop timer could not capture) has no image to record. Refuse it here,
 		// OUTSIDE the try/catch below: in there the thumbnail step failed on it, the error was swallowed and the
 		// client got a 201 with no screenshot while the 0-byte file stayed on disk.
-		if (fileContent?.length === 0) {
+		// A provider that could not read the object back returns nothing: that is a server-side failure, not a
+		// success without a record (the file is kept — it may be readable on the client's retry).
+		if (!fileContent) {
+			this.logger.error(`Could not read the uploaded screenshot '${file.key}' back from the file storage provider`);
+			throw new InternalServerErrorException('The uploaded screenshot could not be read back from storage');
+		}
+		if (fileContent.length === 0) {
 			try {
 				await provider.deleteFile(file.key);
 			} catch {
