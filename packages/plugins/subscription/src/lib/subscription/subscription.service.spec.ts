@@ -2376,6 +2376,55 @@ describe('SubscriptionService — the versioned write', () => {
 		expect(changed).toMatchObject({ quantity: '3', version: 2 });
 	});
 
+	/**
+	 * R4-07: `PUT /subscriptions/:id` and `updateSubscription` both reach `applyChanges`, and it wrote whatever it was
+	 * handed - `{status:"ACTIVE", nextBillingAt:"2020-01-01"}` reactivated a cancelled subscription for the next run to
+	 * charge, `billingCycleCount: 0` re-charged the setup fee, a new `currency` desynchronised the items' prices. The
+	 * edit moves the payer, the quantity and the metadata; the rest moves through the subscription's own actions.
+	 */
+	it.each([
+		['status', SubscriptionStatus.ACTIVE],
+		['nextBillingAt', new Date('2020-01-01T00:00:00.000Z')],
+		['billingCycleCount', 0],
+		['currency', 'EUR'],
+		['customerId', 'another-customer'],
+		['canceledAt', null]
+	])('refuses to move %s through the edit, and leaves the row as it was', async (member, value) => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					status: SubscriptionStatus.CANCELED,
+					canceledAt: new Date('2026-09-01T00:00:00.000Z'),
+					billingCycleCount: 4
+				})
+			]
+		});
+		const before = { ...fixture.subscription(SUBSCRIPTION) };
+
+		const refusal = await fixture.service
+			.applyChanges(SUBSCRIPTION, { [member]: value } as never, asReadByTheCaller)
+			.catch((error) => error);
+
+		expect(refusal.response).toMatchObject({
+			code: 'SUBSCRIPTION_FIELD_NOT_WRITABLE',
+			details: { subscriptionId: SUBSCRIPTION, fields: [member] }
+		});
+		expect(fixture.subscription(SUBSCRIPTION)).toEqual(before);
+	});
+
+	it('accepts a body that restates the lifecycle as stored, and writes the members it may', async () => {
+		const fixture = subscriptionFixture();
+		const stored = fixture.subscription(SUBSCRIPTION)!;
+
+		const changed = await fixture.service.applyChanges(
+			SUBSCRIPTION,
+			{ status: stored.status, currency: stored.currency, quantity: '2', metadata: { seat: 'B' } } as never,
+			asReadByTheCaller
+		);
+
+		expect(changed).toMatchObject({ status: stored.status, quantity: '2', metadata: { seat: 'B' } });
+	});
+
 	it('refuses a change predicated on a version the subscription no longer holds', async () => {
 		// The conflict, not a not-found: the row exists and has merely moved on, and the caller has to be
 		// told to read it again rather than sent down the deleted-record path.
