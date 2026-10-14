@@ -181,3 +181,92 @@ describe('a key whose request was refused', () => {
 		expect(row.responseBody).toBeUndefined();
 	});
 });
+
+/**
+ * A GraphQL retry of a refused mutation (R1-07 of the #10254 review).
+ *
+ * The REST replay sets the stored status and answers the stored body — the same response the first caller
+ * received. Over GraphQL there is no status to set for one field (the response is shared by the whole
+ * document), and the stored body is an error envelope, not the field's type: returned as the field's value
+ * it made GraphQL answer "Cannot return null for non-nullable field" (INTERNAL_ERROR), or a partly-null
+ * object as a success — and the refusal code, the one thing the stored body is kept for, was lost. A
+ * replayed refusal is raised again as the refusal it was.
+ */
+describe('a GraphQL retry of a mutation that was refused', () => {
+	function graphqlSurface(handler: () => Promise<unknown>) {
+		const store = keyStore();
+		const interceptor = new IdempotencyInterceptor(store as never, new Reflector());
+		const resolver = { billSubscription: handler };
+		const response = { statusCode: 200, status: jest.fn(), setHeader: () => undefined };
+		const req = { method: 'POST', headers: {}, res: response };
+
+		Reflect.defineMetadata(IDEMPOTENT_METADATA_KEY, { scope: SCOPE, required: false }, resolver.billSubscription);
+
+		const send = async () => {
+			const args = [
+				undefined,
+				{ input: { id: 'sub-1', idempotencyKey: KEY } },
+				{ req, res: response },
+				{ fieldName: 'billSubscription', operation: { operation: 'mutation' } }
+			];
+			const context = {
+				getType: () => 'graphql',
+				getClass: () => class Resolver {},
+				getHandler: () => resolver.billSubscription,
+				getArgs: () => args,
+				getArgByIndex: (index: number) => args[index]
+			} as never;
+
+			try {
+				return {
+					thrown: false,
+					value: await lastValueFrom(interceptor.intercept(context, { handle: () => from(handler()) } as never) as never)
+				};
+			} catch (error) {
+				return { thrown: true, value: error };
+			}
+		};
+
+		return { send, store, response };
+	}
+
+	it('raises the stored refusal again, with its code and status, rather than answering it as the field’s data', async () => {
+		let attempts = 0;
+		const { send, response } = graphqlSurface(async () => {
+			attempts += 1;
+
+			throw new ApiException(HttpStatus.CONFLICT, ApiErrorCode.VERSION_REQUIRED, 'State the version.', {
+				field: 'version'
+			});
+		});
+
+		const first = await send();
+		const retry = await send();
+
+		expect(attempts).toBe(1);
+		expect(first.thrown).toBe(true);
+		expect(retry.thrown).toBe(true);
+		expect(retry.value).toBeInstanceOf(ApiException);
+		expect((retry.value as ApiException).getStatus()).toBe(HttpStatus.CONFLICT);
+		expect((retry.value as ApiException).code).toBe(ApiErrorCode.VERSION_REQUIRED);
+		expect((retry.value as ApiException).details).toEqual({ field: 'version' });
+		expect(String((retry.value as ApiException).message)).toContain('State the version');
+		// The response is the whole document's: one field's replay does not set its status.
+		expect(response.status).not.toHaveBeenCalled();
+	});
+
+	it('still answers a settled success as the field’s data — control', async () => {
+		let attempts = 0;
+		const { send } = graphqlSurface(async () => {
+			attempts += 1;
+
+			return { id: 'invoice-1', total: '10.00' };
+		});
+
+		await send();
+		const retry = await send();
+
+		expect(attempts).toBe(1);
+		expect(retry).toEqual({ thrown: false, value: { id: 'invoice-1', total: '10.00' } });
+	});
+});

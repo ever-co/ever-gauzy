@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateProductOptionInput` declares in the schema. */
 export interface ICreateProductOptionInput {
@@ -206,9 +207,7 @@ export class ProductOptionResolver {
 	 */
 	@Mutation('deleteProductOption')
 	async deleteProductOption(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productOptionService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.productOptionService.delete(id));
 	}
 
 	/**

@@ -19,6 +19,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { TagListCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateTagInput` declares in the schema. */
 export interface ICreateTagInput {
@@ -279,9 +280,7 @@ export class TagResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async deleteTag(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.tagService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.tagService.delete(id));
 	}
 
 	/**

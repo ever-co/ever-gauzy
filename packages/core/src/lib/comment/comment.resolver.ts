@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Comment } from './comment.entity';
 import { CommentService } from './comment.service';
 import { CommentCreateCommand, CommentUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateCommentInput` declares in the schema. */
 export interface ICreateCommentInput {
@@ -272,9 +273,7 @@ export class CommentResolver {
 	 */
 	@Mutation('deleteComment')
 	async deleteComment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commentService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.commentService.delete(id));
 	}
 
 	/**
