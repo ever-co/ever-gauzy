@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
@@ -34,6 +35,8 @@ export class GoodsReceiptDTO extends TenantOrganizationBaseDTO {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
+	// A JSON body (REST) and a GraphQL `DateTime` input both carry a string: convert it, or `@IsDate()` refuses every value
+	@Type(() => Date)
 	@IsDate()
 	readonly receivedAt?: Date;
 

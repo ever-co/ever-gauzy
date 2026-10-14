@@ -503,6 +503,45 @@ export const schemaExtensions = gql`
 	}
 
 	"""
+	A correction to a goods receipt's own fields: the members \`PUT /goods-receipts/:id\` accepts.
+
+	A posted receipt's status, its cancellation, the order it is anchored to and the location it arrived
+	at are what its stock movements and the order's received counters were written from, so a value for
+	any of them is accepted only when it restates what the receipt already holds; a change is refused with
+	\`GOODS_RECEIPT_IMMUTABLE\` — reversing the receipt (\`closeGoodsReceipt\`) is the correction. The other
+	members are written as given.
+	"""
+	input UpdateGoodsReceiptInput {
+		purchaseOrderId: ID
+		warehouseId: ID
+		number: String
+		status: GoodsReceiptStatus
+		receivedAt: DateTime
+		receivedByUserId: ID
+		canceledAt: DateTime
+		version: Int
+		note: String
+		metadata: JSON
+	}
+
+	"""
+	An annotation of one goods-receipt line: the members \`PUT /goods-receipt-lines/:id\` writes.
+
+	The route drops a line's quantities, its cost and its links to the receipt, the order line and the
+	stock movement before it writes, so they are not members here; the variant is accepted only when it
+	restates the one the line already names (a change is refused with \`GOODS_RECEIPT_LINE_IMMUTABLE\`,
+	because the movement the line posted stands for that variant).
+	"""
+	input UpdateGoodsReceiptLineInput {
+		variantId: ID
+		batchNumber: String
+		expiresAt: DateTime
+		warehouseBinId: ID
+		note: String
+		metadata: JSON
+	}
+
+	"""
 	The delivery a caller records against the order the field already names.
 
 	It is the body of \`POST /purchase-orders/:id/receipts\` plus the two things that route reads from its
@@ -629,6 +668,18 @@ export const schemaExtensions = gql`
 		recordGoodsReceiptLine(receiptId: ID!, input: RecordGoodsReceiptLineInput!): GoodsReceiptPayload!
 		"Ends a receipt: its quantities are taken back out of stock and off the order's lines."
 		closeGoodsReceipt(id: ID!, reason: String): GoodsReceiptPayload!
+		"""
+		Corrects a goods receipt's own fields, as \`PUT /goods-receipts/:id\` does and under its grant. What the
+		receipt posted cannot be moved this way: a change of status, cancellation, order or location is refused
+		with \`GOODS_RECEIPT_IMMUTABLE\` in \`userErrors\` — \`closeGoodsReceipt\` is the correction.
+		"""
+		updateGoodsReceipt(id: ID!, input: UpdateGoodsReceiptInput!): GoodsReceiptPayload!
+		"""
+		Annotates one goods-receipt line, as \`PUT /goods-receipt-lines/:id\` does and under its grant, and answers
+		the line as that route does. Re-pointing the line at another variant is refused
+		(\`GOODS_RECEIPT_LINE_IMMUTABLE\`): the movement the line posted stands for the variant it names.
+		"""
+		updateGoodsReceiptLine(id: ID!, input: UpdateGoodsReceiptLineInput!): GoodsReceiptLine!
 		"""
 		Deletes a goods receipt outright.
 

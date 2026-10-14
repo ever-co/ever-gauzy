@@ -1853,18 +1853,43 @@ describe('GoodsReceiptService — a correction cannot move what a posted receipt
 			expect(fixture.linesOf(line.receiptId)[0]).toEqual(before);
 		});
 
-		it('still annotates the line, and accepts the variant restated as it is', async () => {
+		it.each([
+			['warehouseBinId', '00000000-0000-4000-8000-00000000b1b1'],
+			['batchNumber', 'LOT-9'],
+			['expiresAt', new Date('2031-01-01T00:00:00.000Z')]
+		])(
+			'refuses a change to %s, which the reversal reads back (R2-12), and writes nothing',
+			async (member, value) => {
+				const { fixture, line } = await postedReceipt();
+				const before = { ...line };
+
+				await expect(
+					fixture.receiptLineService.update(line.id, { [member]: value } as never)
+				).rejects.toMatchObject({
+					status: 400,
+					response: {
+						code: 'GOODS_RECEIPT_LINE_IMMUTABLE',
+						details: { goodsReceiptLineId: line.id, fields: [member] }
+					}
+				});
+
+				expect(fixture.linesOf(line.receiptId)[0]).toEqual(before);
+			}
+		);
+
+		it('still annotates the line, and accepts the posted members restated as they are', async () => {
 			const { fixture, line } = await postedReceipt();
 
 			await fixture.receiptLineService.update(line.id, {
 				variantId: VARIANT,
-				batchNumber: 'LOT-9',
+				warehouseBinId: line.warehouseBinId ?? null,
+				batchNumber: line.batchNumber ?? null,
+				expiresAt: line.expiresAt ?? null,
 				note: 'two cartons dented'
 			} as never);
 
 			expect(fixture.linesOf(line.receiptId)[0]).toMatchObject({
 				variantId: VARIANT,
-				batchNumber: 'LOT-9',
 				note: 'two cartons dented'
 			});
 		});

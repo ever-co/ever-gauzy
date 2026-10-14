@@ -6,11 +6,22 @@ import { FeatureFlag } from '@gauzy/common';
 import { PurchasingFeatures } from '../../purchasing.features';
 import { IGoodsReceipt, IGoodsReceiptLine } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
-import { deleteOutcome, toUserError } from '../wire';
+import { asRouteBody, deleteOutcome, toUserError } from '../wire';
 import { GoodsReceipt } from '../../goods-receipt/goods-receipt.entity';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
+import { UpdateGoodsReceiptLineDTO } from '../../goods-receipt-line/dto';
 import { GoodsReceiptLine } from '../../goods-receipt-line/goods-receipt-line.entity';
 import { GoodsReceiptLineService } from '../../goods-receipt-line/goods-receipt-line.service';
+
+/** An annotation of one receipt line, as `UpdateGoodsReceiptLineInput` declares it. */
+interface IUpdateGoodsReceiptLineArgs {
+	variantId?: ID;
+	batchNumber?: string;
+	expiresAt?: Date;
+	warehouseBinId?: ID;
+	note?: string;
+	metadata?: Record<string, unknown>;
+}
 
 /**
  * The goods-receipt line's own fields.
@@ -26,7 +37,8 @@ import { GoodsReceiptLineService } from '../../goods-receipt-line/goods-receipt-
  * makes a delivered write route a delivered capability on both protocols. A withdrawal a REST caller can
  * perform and a GraphQL caller cannot is the asymmetry the two-protocol rule forbids, and a read the line
  * does not need is not a reason to withhold a write it does. Nothing here reads a line by id: the pair
- * takes one because the routes take one.
+ * takes one because the routes take one. The same reasoning delivers `updateGoodsReceiptLine`, the mirror of
+ * `PUT /goods-receipt-lines/:id`, and the hard delete beside them.
  *
  * **Authorisation is the controller's.** A line with no root read is still served through the one
  * GraphQL endpoint, so the class carries the guard chain, the platform's feature gate and the read
@@ -108,6 +120,34 @@ export class GoodsReceiptLineResolver {
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	async softDeleteGoodsReceiptLine(@Args('id') id: ID): Promise<GoodsReceiptLine> {
 		return await this.goodsReceiptLineService.softRemove(id);
+	}
+
+	/**
+	 * Annotates a receipt line — the mirror of `PUT /goods-receipt-lines/:id`.
+	 *
+	 * The route was withheld from GraphQL while its body let a caller re-point a posted line's `variantId`
+	 * while the movement already written for the old variant stood (handover 2026-09-20 §7.65 item 23 (c)).
+	 * `GoodsReceiptLineService.update` now refuses that change below the route (`GOODS_RECEIPT_LINE_IMMUTABLE`,
+	 * ae6ffe0419d), so the field is the route: the members the route writes — it drops the quantities, the cost
+	 * and the receipt, order-line and movement links before it writes, so `UpdateGoodsReceiptLineInput` does not
+	 * declare them — the same method with the same arguments, the same grant, and the same answer, the line
+	 * read back. A refusal is raised as the route raises it: this document carries no payload type of which a
+	 * receipt line is the member, which is why `softDeleteGoodsReceiptLine` answers the line too.
+	 *
+	 * @param id The line to annotate.
+	 * @param input The members to change.
+	 * @returns The updated line.
+	 */
+	@Mutation('updateGoodsReceiptLine')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async updateGoodsReceiptLine(
+		@Args('id') id: ID,
+		@Args('input') input: IUpdateGoodsReceiptLineArgs
+	): Promise<GoodsReceiptLine> {
+		// The route's own validation of its body, so a value the route refuses is refused here too.
+		await this.goodsReceiptLineService.update(id, (await asRouteBody(UpdateGoodsReceiptLineDTO, input)) as any);
+
+		return await this.goodsReceiptLineService.findOneByIdString(id);
 	}
 
 	/**

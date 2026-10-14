@@ -6,8 +6,13 @@ import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { immutableMembers, movedMembers } from '../purchasing.immutable';
 import { GoodsReceiptLine } from './goods-receipt-line.entity';
 
-/** The member of a line its posted movement was written for. */
-const POSTED_LINE_MEMBERS = ['variantId'] as const;
+/**
+ * The members of a line its posted movement was written for, and that its reversal reads back: the variant, the bin
+ * the units were put away in, and their lot and expiry. A reversal takes the units out of `warehouseBinId` with the
+ * line's `batchNumber` / `expiresAt`, so a line re-pointed at another bin or lot after posting would be reversed out
+ * of a position its units never entered (review R2-12; #10562's GraphQL `updateGoodsReceiptLine` exposes them too).
+ */
+const POSTED_LINE_MEMBERS = ['variantId', 'warehouseBinId', 'batchNumber', 'expiresAt'] as const;
 import { MikroOrmGoodsReceiptLineRepository } from './repository/mikro-orm-goods-receipt-line.repository';
 import { TypeOrmGoodsReceiptLineRepository } from './repository/type-orm-goods-receipt-line.repository';
 
@@ -51,21 +56,23 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 	}
 
 	/**
-	 * Annotates a receipt line, refusing a change to the variant its movement was written for.
+	 * Annotates a receipt line, refusing a change to what its movement was written for: the variant, the bin, the lot
+	 * and the expiry.
 	 *
 	 * `PUT /goods-receipt-lines/:id` strips the quantities, the cost, the movement link, the receipt and the order
 	 * line from its body before it writes, and it did not strip `variantId` (handover 2026-09-20 §7.65 item 23
 	 * (c)). Every line is written by a posting — a receipt is born `POSTED`, and a line written on its own goes
 	 * through the same posting — so its movement already stands for the variant it named; re-pointing the line
 	 * left that movement, and the stock it put on hand, describing a variant the line no longer names. The
-	 * refusal is made here, below the route, so every caller of the generic update is held to it; the route, its
-	 * DTO and every other member — the batch, the expiry, the bin, the note — are unchanged.
+	 * refusal is made here, below the route, so every caller of the generic update is held to it. The bin, the lot
+	 * and the expiry are held the same way, because the reversal takes the units back out of that bin with that lot
+	 * (R2-12). The route and its DTO are unchanged; a member restated as stored is accepted, and the note stays free.
 	 *
 	 * @param id The line, or the conditions that select the lines to annotate.
 	 * @param partialEntity The members to change.
 	 * @returns The update result, as the base class answers it.
 	 * @throws BadRequestException with `GOODS_RECEIPT_LINE_IMMUTABLE` when the annotation would re-point a line at
-	 * another variant.
+	 * another variant, bin, lot or expiry.
 	 */
 	public async update(
 		id: ID | FindOptionsWhere<GoodsReceiptLine>,
@@ -83,7 +90,7 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 					throw immutableMembers(
 						'GOODS_RECEIPT_LINE_IMMUTABLE',
 						`an annotation cannot change ${moved.join(', ')} of goods receipt line '${line.id}', because the ` +
-							`stock movement it posted stands for that variant; reverse the receipt and record the right ` +
+							`stock movement it posted stands for that variant, bin and lot; reverse the receipt and record the right ` +
 							`line instead.`,
 						{ goodsReceiptLineId: line.id, fields: moved }
 					);
