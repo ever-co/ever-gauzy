@@ -808,6 +808,29 @@ describe('OrderChangeService — the money a change moves (doc 10 §6.3, §6.6)'
 		expect(fixture.order.grandTotal).toBe(100);
 	});
 
+	it('checks an ITEM_UPDATE against the state the earlier actions of its change leave (Greptile)', async () => {
+		// 5 ordered, 2 shipped, 5 asked back: withdrawing 3 of the return request first makes 2 a valid quantity.
+		const fixture = orderFixture({
+			lines: [line('L1', { quantity: 5, unitPrice: 20, fulfilledQuantity: 2, returnRequestedQuantity: 5 })]
+		});
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [
+				{ action: OrderChangeActionType.ITEM_RETURN, referenceId: 'L1', details: { orderLineId: 'L1', quantity: -3 } },
+				{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity: 2 } }
+			]
+		} as never);
+
+		await fixture.service.confirm(change.id);
+
+		expect(Number(fixture.tables.order_line[0].quantity)).toBe(2);
+		expect(Number(fixture.tables.order_line[0].returnRequestedQuantity)).toBe(2);
+	});
+
 	it('compares fractional quantities exactly: 0.4 invoiced less 0.1 credited lets the line go to 0.3, not 0.29', async () => {
 		// In floating point 0.4 - 0.1 is 0.30000000000000004, which refused a valid update to exactly 0.3.
 		const fixture = orderFixture({
