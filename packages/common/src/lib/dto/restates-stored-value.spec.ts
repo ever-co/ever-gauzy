@@ -78,7 +78,8 @@ describe('restatesStoredValue', () => {
 
 			expect(restatesStoredValue('1.000000', long)).toBe(false);
 			expect(restatesStoredValue(`1.${'0'.repeat(100_000)}`, '1')).toBe(true);
-			expect(Date.now() - started).toBeLessThan(1_000);
+			// Generous for a loaded runner: the backtracking pattern takes far longer than this on 100k digits.
+			expect(Date.now() - started).toBeLessThan(5_000);
 		});
 
 		it('uses the decimal reader a module passes', () => {

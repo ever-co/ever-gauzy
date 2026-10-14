@@ -321,7 +321,7 @@ export const schemaExtensions = gql`
 		items: [SubscriptionItemInput!]
 		paymentAccountHolderId: ID
 		paymentMethodTokenId: ID
-		"Start the subscription at creation: its first period is due at once, and the next billing run bills it."
+		"Start the subscription at creation: without a trial its first period is due at once, and the next billing run bills it; with a trial (startTrial) the subscription stays pending and its first paid period is due when the trial ends."
 		activate: Boolean
 		"Leave the subscription inside the plan's trial."
 		startTrial: Boolean
