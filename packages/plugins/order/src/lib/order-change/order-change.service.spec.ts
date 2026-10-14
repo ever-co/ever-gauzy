@@ -785,6 +785,29 @@ describe('OrderChangeService — the money a change moves (doc 10 §6.3, §6.6)'
 		expect(fixture.order.grandTotal).toBe(100);
 	});
 
+	it('refuses a change whose later ITEM_UPDATE is below the floor before applying any of its actions (Greptile)', async () => {
+		// The actions are applied one by one; the refusal used to come after an earlier ITEM_ADD had already written its
+		// line to the placed order, with no re-derivation.
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 5, unitPrice: 20, fulfilledQuantity: 4 })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [
+				{ action: OrderChangeActionType.ITEM_ADD, details: { title: 'Extra', quantity: 1, unitPrice: 10 } },
+				{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity: 2 } }
+			]
+		} as never);
+
+		await expect(fixture.service.confirm(change.id)).rejects.toMatchObject({
+			response: { code: 'ORDER_CHANGE_NOT_APPLICABLE', details: { orderLineId: 'L1', minimumQuantity: '4' } }
+		});
+		expect(fixture.tables.order_line).toHaveLength(1);
+		expect(fixture.order.grandTotal).toBe(100);
+	});
+
 	it('compares fractional quantities exactly: 0.4 invoiced less 0.1 credited lets the line go to 0.3, not 0.29', async () => {
 		// In floating point 0.4 - 0.1 is 0.30000000000000004, which refused a valid update to exactly 0.3.
 		const fixture = orderFixture({
