@@ -124,6 +124,7 @@
      so the record renderer is built fresh for each request that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedRequestApproval"
+  [fullViewLink]="viewedRequestApproval ? '/pages/employees/approvals/view/' + viewedRequestApproval.id : null"
   heading="APPROVAL_REQUEST_PAGE.HEADER"
   [subtitle]="$safeNavigationMigration(viewedRequestApproval?.name)"
   (closed)="closeView()"

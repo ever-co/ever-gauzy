@@ -306,6 +306,7 @@
            so the record renderer is built fresh for each entry that is opened. -->
       <ngx-record-view-drawer
         [open]="!!viewedRecord"
+        [fullViewLink]="viewedRecord ? viewFullLink : null"
         [heading]="viewHeading"
         [subtitle]="$safeNavigationMigration(viewedRecord?.name)"
         (closed)="closeView()"

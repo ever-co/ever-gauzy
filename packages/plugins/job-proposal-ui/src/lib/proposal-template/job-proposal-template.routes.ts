@@ -2,6 +2,8 @@ import { Route } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PageRouteRegistryConfig, PermissionsGuard } from '@gauzy/ui-core/core';
 import { ProposalTemplateListComponent } from './components/proposal-template-list/proposal-template-list.component';
+import { RecordViewRoutePageComponent } from '@gauzy/ui-core/shared';
+import { PROPOSAL_TEMPLATE_RECORD_VIEW } from './proposal-template-record-view';
 
 /** Path for the job proposal template tab under /pages/jobs. */
 export const JOB_PROPOSAL_TEMPLATE_PATH = 'proposal-template';
@@ -42,6 +44,19 @@ export function getJobProposalTemplateRoutes(): Route[] {
 					only: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
 					redirectTo: '/pages/jobs/search'
 				}
+			}
+		},
+		{
+			// One template, full width: where the templates drawer's "expand to full width" icon leads.
+			path: 'view/:id',
+			component: RecordViewRoutePageComponent,
+			canActivate: [PermissionsGuard],
+			data: {
+				permissions: {
+					only: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
+					redirectTo: '/pages/jobs/search'
+				},
+				recordView: PROPOSAL_TEMPLATE_RECORD_VIEW
 			}
 		}
 	];
