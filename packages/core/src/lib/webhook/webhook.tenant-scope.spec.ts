@@ -383,15 +383,17 @@ describe('webhook id-addressed operations are scoped to the caller (R1-01, R1-02
 	describe('the delivery runtime', () => {
 		it('still reaches any tenant’s delivery and subscription from the queue worker, where there is no caller', async () => {
 			actAsWorker();
-			const fetchSpy = jest
-				.spyOn(globalThis, 'fetch')
-				.mockResolvedValue(new Response('ok', { status: 200 }) as never);
+			// The HTTP call itself is stubbed at the service's own seam: this case is about which rows the
+			// runtime can read, not about the client (that is `webhook-delivery.service.spec.ts`).
+			const post = jest
+				.spyOn(fixture.deliveryService as never as { post: () => Promise<unknown> }, 'post')
+				.mockResolvedValue({ delivered: true, responseStatus: 200, responseBody: 'ok', durationMs: 1 });
 			// A public literal address, so the policy has nothing to resolve.
 			await fixture.subscriptionRows.update({ id: fixture.foreignSubscriptionId }, { url: 'https://93.184.215.14/h' });
 
 			const attempt = await fixture.deliveryService.deliver(fixture.foreignDeliveryId);
 
-			expect(fetchSpy).toHaveBeenCalledTimes(1);
+			expect(post).toHaveBeenCalledTimes(1);
 			expect(attempt.result.delivered).toBe(true);
 			expect(attempt.delivery.status).toBe(WebhookDeliveryStatus.DELIVERED);
 			const subscription = await fixture.subscriptionRows.findOneByOrFail({ id: fixture.foreignSubscriptionId });
