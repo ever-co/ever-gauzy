@@ -7,8 +7,7 @@ import {
 	CurrencyCode,
 	DecimalString,
 	ID,
-	IdempotencyOutcome,
-	IdempotencyStatus
+	IdempotencyOutcome
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
@@ -2299,11 +2298,12 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	}
 
 	/**
-	 * Whether a billing pass holds the claim on the subscription's current period and has not completed it — a charge
-	 * of that period is running (or was left by a pass that stopped; the next pass takes it over).
+	 * Whether a billing pass holds a live claim on the subscription's current period — a charge of that period is
+	 * running. A claim held past the platform's stale-lock window belongs to a pass that stopped, and the next pass
+	 * takes it over, so it does not count (`IdempotencyService.isLeaseLive`, which takes nothing over).
 	 *
 	 * @param subscription The subscription, as read.
-	 * @returns True when the period's billing claim is in progress.
+	 * @returns True when the period's billing claim is a live lease.
 	 */
 	private async chargeInFlight(subscription: Subscription): Promise<boolean> {
 		if (!subscription.currentPeriodStart) {
@@ -2315,7 +2315,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			`${subscription.id}:${new Date(subscription.currentPeriodStart).toISOString()}`
 		);
 
-		return claim?.status === IdempotencyStatus.IN_PROGRESS;
+		return !!claim && this.idempotencyService.isLeaseLive(claim);
 	}
 
 	/**

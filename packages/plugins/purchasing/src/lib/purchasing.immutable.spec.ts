@@ -7,6 +7,9 @@ describe('movedMembers — what a correction to a posted purchasing document wou
 		// batch number while its stock movement kept the old one.
 		expect(movedMembers({ batchNumber: '10' }, { batchNumber: '10.0' }, ['batchNumber'])).toEqual(['batchNumber']);
 		expect(movedMembers({ batchNumber: '1' }, { batchNumber: '+1' }, ['batchNumber'])).toEqual(['batchNumber']);
+		// CodeRabbit on #10635: JSON-looking text is not read as JSON either.
+		expect(movedMembers({ batchNumber: '[1,2]' }, { batchNumber: '[1, 2]' }, ['batchNumber'])).toEqual(['batchNumber']);
+		expect(movedMembers({ batchNumber: 'B1' }, { batchNumber: ['B1'] }, ['batchNumber'])).toEqual(['batchNumber']);
 		expect(movedMembers({ batchNumber: '10' }, { batchNumber: '10' }, ['batchNumber'])).toEqual([]);
 	});
 

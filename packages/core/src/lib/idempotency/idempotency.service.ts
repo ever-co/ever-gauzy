@@ -735,11 +735,14 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * counts as abandoned, which is the same reading {@link isLockStale} takes for the operator's
 	 * release: it was written by a build that did not stamp one.
 	 *
+	 * Public and side-effect free, so a domain can ask whether work under a key it read with
+	 * {@link findByKey} is still running without calling {@link claim}, which would take a stale row over.
+	 *
 	 * @param record The stored row.
 	 * @param policy Overrides for the stale-lock window.
 	 * @returns True while the row is a claim another request may still be executing.
 	 */
-	private isLeaseLive(
+	public isLeaseLive(
 		record: Pick<IdempotencyKey, 'status' | 'lockedAt'>,
 		policy: IIdempotencyPolicy = {}
 	): boolean {

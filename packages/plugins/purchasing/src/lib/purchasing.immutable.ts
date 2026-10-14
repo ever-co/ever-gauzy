@@ -10,7 +10,8 @@ import { restatesStoredValue } from '@gauzy/common';
  * (`@gauzy/common`): a date is compared as an instant, because a column reads back as a `Date` while a body states an
  * ISO string; everything else this is used for — identifiers and enumerations — is compared as exact text, and a
  * body value that only stringifies to the stored one (an array holding it) is a change. None of these members is an
- * amount, so no value is read as a decimal: a batch number `"10"` and `"10.0"` are two batches.
+ * amount or a document, so no text is read as a decimal or as JSON: a batch number `"10"` and `"10.0"` are two
+ * batches, and so are `"[1,2]"` and `"[1, 2]"`.
  *
  * @param stored The row as it is stored.
  * @param patch The members a caller asked to write.
@@ -23,12 +24,26 @@ export function movedMembers(
 	members: readonly string[]
 ): string[] {
 	return members.filter(
-		(member) => patch[member] !== undefined && !restatesStoredValue(stored[member], patch[member], AS_TEXT)
+		(member) => patch[member] !== undefined && !restatesExactly(stored[member], patch[member])
 	);
 }
 
 /** Reads no value as a decimal, so two decimal-looking identifiers are compared as the text they are. */
 const AS_TEXT = { decimal: () => null };
+
+/**
+ * `restatesStoredValue` with text kept as text: two strings restate each other only when they are the same text —
+ * neither a decimal (`"10"`, `"10.0"`) nor JSON (`"[1,2]"`, `"[1, 2]"`) is read out of an identifier. A date is
+ * still compared by its instant, a missing value only restates a missing one, and an object or an array stated for a
+ * text member is still a change.
+ */
+function restatesExactly(stored: unknown, stated: unknown): boolean {
+	if (typeof stored === 'string' && typeof stated === 'string') {
+		return stored === stated;
+	}
+
+	return restatesStoredValue(stored, stated, AS_TEXT);
+}
 
 
 /**
