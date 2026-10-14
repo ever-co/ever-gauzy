@@ -132,13 +132,13 @@ for (const root of ROOTS) {
 			// singular spelling answers the pair as well.
 			const names = /s$/.test(resource) ? [resource, resource.slice(0, -1)] : [resource];
 			const softDelete = names.map((name) => `softDelete${name}`).find((name) => fields.has(name)) ?? `softDelete${resource}`;
-			// The act has two names in this repository and both are correct. §10's table gives
-			// `PUT /<resource>/:id/recover` the field name `restore<Type>`, while a hundred and eleven of the
-			// delivered fields spell it `recover<Type>`; `restoreSeller` is the one that follows the table.
-			// A gate that accepted only one spelling would fail the other, so it accepts either — the
-			// divergence between the table and the surface is recorded in the specification, not settled here.
-			const recovered =
-				names.flatMap((name) => [`recover${name}`, `restore${name}`]).find((name) => fields.has(name)) ?? null;
+			// The act has one name: `recover<Type>`. §10's table used to give `PUT /<resource>/:id/recover` the
+			// field name `restore<Type>` while a hundred and eleven delivered fields spelt it `recover<Type>`, and
+			// this gate accepted either. The owner settled it on 2026-10-13 — "what is NOT deprecated should
+			// win", i.e. the live `recover*` spelling — so the table is amended, `restoreSeller` (the one field
+			// that followed it) is deprecated in favour of `recoverSeller`, and a deprecated spelling no longer
+			// answers the pair: a new resource that named its field `restore<Type>` would fail here.
+			const recovered = names.map((name) => `recover${name}`).find((name) => fields.has(name)) ?? null;
 
 			if (fields.has(softDelete) && recovered) {
 				checked.answered += 1;
@@ -187,7 +187,7 @@ for (const [unit, resources] of Object.entries(OUTSTANDING)) {
 	}
 
 	for (const resource of resources) {
-		const recovered = [`recover${resource}`, `restore${resource}`].some((name) => fields.has(name));
+		const recovered = fields.has(`recover${resource}`);
 
 		if (fields.has(`softDelete${resource}`) && recovered) {
 			stale.push(`${unit}: ${resource} now answers the pair, so its baseline row is delivered`);
