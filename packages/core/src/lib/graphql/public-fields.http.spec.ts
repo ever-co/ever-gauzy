@@ -14,6 +14,7 @@ jest.mock('uuid', () => {
 import '../core/entities/internal';
 
 import { readFileSync } from 'node:fs';
+import { AddressInfo } from 'node:net';
 import * as path from 'node:path';
 import { INestApplication, Injectable } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
@@ -27,6 +28,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { THROTTLER_LIMIT, THROTTLER_TTL } from '@nestjs/throttler/dist/throttler.constants';
 import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
+import { Client, createClient } from 'graphql-ws';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as request from 'supertest';
@@ -102,6 +104,8 @@ describe('public GraphQL fields, over HTTP', () => {
 	const joinRequests = { validateJoinRequest: jest.fn(async () => JOIN_REQUEST) };
 
 	let app: INestApplication;
+	let socketUrl: string;
+	const sockets: Client[] = [];
 
 	beforeAll(async () => {
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -178,10 +182,14 @@ describe('public GraphQL fields, over HTTP', () => {
 			.getInstance()
 			.use('/graphql', (req: any, res: any, next: any) => middleware.use(req, res, next));
 
-		await app.init();
+		// Listening, so the socket transport the platform mounts beside the HTTP endpoint is reachable too.
+		await app.listen(0, '127.0.0.1');
+		const { port } = app.getHttpServer().address() as AddressInfo;
+		socketUrl = `ws://127.0.0.1:${port}/graphql`;
 	}, 120_000);
 
 	afterAll(async () => {
+		await Promise.all(sockets.splice(0).map((socket) => socket.dispose()));
 		await app?.close();
 		RequestContext.setClsService(undefined as any);
 		jest.restoreAllMocks();
@@ -267,6 +275,43 @@ describe('public GraphQL fields, over HTTP', () => {
 				`{ inviteByToken(email: "${INVITE.email}", token: "t") { id } }`
 			);
 			expect(other.body.errors).toBeUndefined();
+		});
+	});
+
+	describe('a public field is rate-limited over the socket transport too (R7-09)', () => {
+		/** One operation over an open graphql-ws connection, answered with its single result. */
+		const operate = (socket: Client, query: string) =>
+			new Promise<any>((resolve, reject) => {
+				let result: unknown;
+				socket.subscribe(
+					{ query },
+					{ next: (value) => (result = value), error: reject, complete: () => resolve(result) }
+				);
+			});
+
+		it('refuses the eleventh guess of an invite code sent over one open socket', async () => {
+			// A socket accepts any credential-shaped string at connect time and `@Public()` skips its
+			// verification, so these operations are as anonymous as the HTTP ones. They carry no HTTP
+			// exchange of their own, and the throttler used to skip every such operation — an unlimited
+			// guessing channel once the public fields answered.
+			const socket = createClient({
+				url: socketUrl,
+				connectionParams: { Authorization: 'Bearer not-a-real-token' },
+				retryAttempts: 0,
+				lazy: true
+			});
+			sockets.push(socket);
+
+			const results: any[] = [];
+			for (let guess = 0; guess < 11; guess++) {
+				results.push(
+					await operate(socket, `{ inviteByCode(email: "${INVITE.email}", code: "C${guess}") { id } }`)
+				);
+			}
+
+			expect(results.slice(0, 10).every((result) => result?.data?.inviteByCode?.id === INVITE.id)).toBe(true);
+			expect(results[10]?.data?.inviteByCode ?? null).toBeNull();
+			expect(JSON.stringify(results[10]?.errors)).toMatch(/Too Many Requests/i);
 		});
 	});
 
