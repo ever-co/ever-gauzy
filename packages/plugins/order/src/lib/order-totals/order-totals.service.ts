@@ -132,6 +132,12 @@ export interface IOrderRecalculation {
 	 * TypeORM entity metadata carries the base columns only, and silently ignoring the manager would run the
 	 * write outside the transaction the caller believes it is in. Omitted, nothing changes: every caller that
 	 * opens no transaction runs exactly as it always did.
+	 *
+	 * **On MySQL the caller's transaction must be `READ COMMITTED`.** The order is read `FOR UPDATE`, but the
+	 * ledgers are plain reads, and under MySQL's default `REPEATABLE READ` those come from the snapshot of the
+	 * transaction's first plain read: a caller that waited for the order's lock would derive the status from
+	 * ledgers that miss what the transaction it waited for committed (Greptile on #10555; reproduced on MySQL
+	 * 8.0). `FulfillmentService.cancel` opens its transaction that way; PostgreSQL defaults to it.
 	 */
 	manager?: EntityManager | MikroOrmEntityManager;
 }

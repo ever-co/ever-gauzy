@@ -126,6 +126,30 @@ function rowLockOf(manager: EntityManager): { lock?: { mode: 'pessimistic_write'
 }
 
 /**
+ * The isolation level the cancelation's transaction asks for: `READ COMMITTED` on MySQL, the server's default
+ * elsewhere.
+ *
+ * MySQL's default `REPEATABLE READ` reads every plain `SELECT` of a transaction from one snapshot, taken at its
+ * first plain read. Two cancelations of different shipments of one order queue on the order's row (the
+ * re-derivation reads it `FOR UPDATE`), but the one that waited would still read the order's other ledgers —
+ * the lines the first one gave units back to, its transactions, adjustments — as they were before the first
+ * committed, derive `fulfillmentStatus` from them and, holding the latest version, write it: an order whose
+ * shipments are all cancelled could be left `PARTIALLY_FULFILLED` (Greptile on #10555). Under `READ COMMITTED`
+ * each statement reads what was committed when it started, so once the order's lock is granted every ledger
+ * read sees the first cancelation. Locking those reads instead (`FOR SHARE`) would take the order lines in the
+ * opposite order to `bumpOrderLineCounters`' `FOR UPDATE` and deadlock two such cancelations. PostgreSQL
+ * already defaults to `READ COMMITTED`; SQLite accepts no other level and serialises writers anyway.
+ *
+ * @param manager The manager the transaction is opened on.
+ * @returns `READ COMMITTED` on the MySQL family, otherwise nothing (the server's default).
+ */
+function cancelationIsolationOf(manager: EntityManager): 'READ COMMITTED' | undefined {
+	const type = String((manager?.connection?.options as { type?: string } | undefined)?.type ?? '');
+
+	return ['mysql', 'mariadb', 'aurora-mysql'].includes(type) ? 'READ COMMITTED' : undefined;
+}
+
+/**
  * Whether an error is the concurrency kernel's refusal of a write predicated on a version that moved on.
  *
  * @param error What a conditional write threw.
@@ -569,9 +593,13 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		// MikroORM, and for a return leg (which moves no counter and is re-derived by nothing), the path below
 		// is the one this method always had.
 		if (this.ormType === MultiORMEnum.TypeORM && current.direction !== FulfillmentDirection.RETURN) {
-			const fulfillment = await this.typeOrmFulfillmentRepository.manager.transaction((manager) =>
-				this.cancelInTransaction(fulfillmentId, expectation, patch, manager)
-			);
+			const entityManager = this.typeOrmFulfillmentRepository.manager;
+			const work = (manager: EntityManager) =>
+				this.cancelInTransaction(fulfillmentId, expectation, patch, manager);
+			const isolation = cancelationIsolationOf(entityManager);
+			const fulfillment = isolation
+				? await entityManager.transaction(isolation, work)
+				: await entityManager.transaction(work);
 
 			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 		}

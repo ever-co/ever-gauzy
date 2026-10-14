@@ -560,11 +560,16 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 	};
 	/** Every transaction the service opened, and whether it committed or rolled back. */
 	const transactions: Array<'committed' | 'rolled back'> = [];
+	/** The isolation level each transaction was opened with (`undefined` = the server's default). */
+	const isolationLevels: Array<string | undefined> = [];
 	// The entity manager the conditional update and the event both go through. Its `transaction` behaves as the
 	// database's: the work runs on the transaction's manager, and a failure puts every table back as it was.
 	(fulfillmentRepository as Row).manager = {
 		name: 'fulfillment-manager',
-		transaction: async (work: (manager: unknown) => Promise<unknown>) => {
+		// TypeORM's two forms: `transaction(work)` and `transaction(isolationLevel, work)`
+		transaction: async (...args: unknown[]) => {
+			const work = args[args.length - 1] as (manager: unknown) => Promise<unknown>;
+			isolationLevels.push(args.length > 1 ? (args[0] as string) : undefined);
 			const before = structuredClone(tables);
 
 			try {
@@ -618,6 +623,7 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		recomputed,
 		orderTotals,
 		transactions,
+		isolationLevels,
 		transactionManager,
 		manager: (fulfillmentRepository as Row).manager,
 		line: (id: string = LINE_A) => tables.order_line.find((row) => row.id === id),
@@ -1859,6 +1865,34 @@ describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)
 		}
 		expect(fixture.row('pending').status).toBe(FulfillmentStatusDetail.CANCELED);
 	});
+
+	it.each([
+		['mysql', 'READ COMMITTED'],
+		['mariadb', 'READ COMMITTED'],
+		['postgres', undefined],
+		['better-sqlite3', undefined]
+	])(
+		"opens the cancelation's transaction READ COMMITTED on MySQL, at the default elsewhere (%s)",
+		async (type, level) => {
+			// Greptile on #10555: under MySQL's REPEATABLE READ the cancelation that waited for the order's row lock
+			// would still read the order's other ledgers from its first snapshot — before the other cancelation had
+			// committed — and derive the order's status from them. READ COMMITTED reads every statement afresh.
+			const fixture = fulfillmentFixture({
+				seed: {
+					order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+					fulfillment: [shipment('pending')],
+					fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+				}
+			});
+			(fixture.manager as Row).connection = { options: { type } };
+
+			await fixture.service.cancel('pending');
+
+			expect(fixture.isolationLevels).toEqual([level]);
+			expect(fixture.transactions).toEqual(['committed']);
+			expect(fixture.row('pending').status).toBe(FulfillmentStatusDetail.CANCELED);
+		}
+	);
 
 	it('rolls the cancelation back when the order cannot be re-derived, and says so', async () => {
 		// The opposite of the second-write shape, and the point of the change: nothing has committed when the
