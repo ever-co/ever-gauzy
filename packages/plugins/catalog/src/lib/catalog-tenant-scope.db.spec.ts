@@ -122,6 +122,10 @@ const IMAGE_B2 = '00000000-0000-4000-8000-0000000005b2';
 const TAG_A = '00000000-0000-4000-8000-0000000006a1';
 const TAG_B = '00000000-0000-4000-8000-0000000006b1';
 
+/** A second organization of tenant A, and a third tenant that happens to carry A's organization id. */
+const ORG_A2 = '00000000-0000-4000-8000-0000000000a2';
+const TENANT_C = '00000000-0000-4000-8000-00000000000c';
+
 /*
 |--------------------------------------------------------------------------
 | Fixture schemas: the columns the services read and write
@@ -481,6 +485,68 @@ describe('catalogue set writes keep to the caller’s tenant (DB-backed, two ten
 
 			const after = await h.productChannels.setPublication(PRODUCT_A, [CHANNEL_A], PublicationStatus.ARCHIVED);
 			expect(after.map((row) => row.status)).toEqual([PublicationStatus.ARCHIVED]);
+		});
+	});
+
+	/*
+	 * The cases above change the tenant and the organization together, so they would stay green with either filter
+	 * removed from `callerScope()`. These change one member at a time, and state the caller with no organization.
+	 */
+	describe('each scope member is enforced on its own', () => {
+		/** Every set write of this fix, each naming one of tenant A's own subjects. */
+		const writes: Array<[string, string, () => Promise<unknown>]> = [
+			[
+				'variant publications',
+				'product_variant_channel',
+				() =>
+					h.variantChannels.replacePublications(VARIANT_A, [
+						{ channelId: CHANNEL_A, status: PublicationStatus.ACTIVE }
+					])
+			],
+			[
+				'collection channels',
+				'collection_channel',
+				() =>
+					h.collectionChannels.replaceChannels(COLLECTION_A, [
+						{ channelId: CHANNEL_A, status: PublicationStatus.ACTIVE }
+					])
+			],
+			['variant gallery', 'product_variant_media', () => h.media.replaceMedia(VARIANT_A, [IMAGE_A1], IMAGE_A1)],
+			['variant facets', 'tag_product_variant', () => h.tags.replaceTags(VARIANT_A, [TAG_A])],
+			[
+				'product publication',
+				'product_channel',
+				() => h.productChannels.setPublication(PRODUCT_A, [CHANNEL_A], PublicationStatus.ACTIVE)
+			]
+		];
+
+		it.each([
+			['another organization of the same tenant', TENANT_A, ORG_A2],
+			['another tenant that shares the organization id', TENANT_C, ORG_A],
+			['another tenant, with no organization stated', TENANT_B, null]
+		])('refuses %s, and writes nothing', async (_label, tenantId, organizationId) => {
+			actAs(tenantId, organizationId);
+
+			for (const [what, table, write] of writes) {
+				await expect(write()).rejects.toBeInstanceOf(NotFoundException);
+				expect({
+					what,
+					rows: (await h.dataSource.query(`SELECT COUNT(*) AS "n" FROM "${table}"`))[0].n
+				}).toEqual({
+					what,
+					rows: 0
+				});
+			}
+		});
+
+		it('control: a caller of the tenant with no organization stated is narrowed to the tenant alone', async () => {
+			actAs(TENANT_A, null);
+
+			for (const [what, table, write] of writes) {
+				await write();
+				const rows = await h.rowsOf(table, TENANT_A);
+				expect({ what, rows: rows.length }).toEqual({ what, rows: 1 });
+			}
 		});
 	});
 });
