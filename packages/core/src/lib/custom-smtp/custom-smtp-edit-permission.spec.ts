@@ -60,7 +60,7 @@ describe('CUSTOM_SMTP_EDIT — the custom SMTP family has a write grant', () => 
 	});
 
 	it('is granted by default to every role the read grant is granted to', () => {
-		const holders = DEFAULT_ROLE_PERMISSIONS.filter(({ defaultEnabledPermissions }) =>
+		let holders = DEFAULT_ROLE_PERMISSIONS.filter(({ defaultEnabledPermissions }) =>
 			defaultEnabledPermissions.includes(PermissionsEnum.CUSTOM_SMTP_VIEW)
 		).map(({ role }) => role);
 

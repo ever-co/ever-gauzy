@@ -18,9 +18,10 @@ import { replacePlaceholders } from '../../core/utils';
  *
  * **Who gets it: exactly the live holders of the read grant.** "Holds" is the predicate
  * `RolePermissionService.checkRolePermission` applies — enabled, active, not archived, not soft-deleted — so a
- * role whose read grant is switched off, archived or deleted gains nothing, and a role that already has a
- * `CUSTOM_SMTP_EDIT` row (whatever its state) is left exactly as its tenant left it. It only INSERTS: no existing
- * row is changed or removed, and running it again inserts nothing.
+ * role whose read grant is switched off, archived or deleted gains nothing. A holder with no `CUSTOM_SMTP_EDIT` row
+ * gets one, switched on; a holder whose row a permission reload wrote switched off earlier in the same upgrade has it
+ * switched on (see the note in `up()`); a row a person created, changed or deleted is left exactly as its tenant
+ * left it. Nothing is removed, and running it again changes nothing.
  *
  * New tenants get the grant from `DEFAULT_ROLE_PERMISSIONS` (SUPER_ADMIN and ADMIN, the read grant's holders).
  */
@@ -54,49 +55,82 @@ export class GrantCustomSmtpEditPermission1791000000573 implements MigrationInte
 				throw Error(`Unsupported database: ${dbType}`);
 		}
 
-		const holders: Array<{ tenantId: string; roleId: string }> = await queryRunner.query(
-			replacePlaceholders(
-				p(
-					`SELECT DISTINCT "held"."tenantId", "held"."roleId"
-					FROM "role_permission" "held"
-					WHERE "held"."permission" = $1
-						AND "held"."enabled" = ${truthy}
-						AND "held"."isActive" = ${truthy}
-						AND "held"."isArchived" = ${falsy}
-						AND "held"."deletedAt" IS NULL
-						AND "held"."tenantId" IS NOT NULL
-						AND NOT EXISTS (
-							SELECT 1 FROM "role_permission" "granted"
-							WHERE "granted"."tenantId" = "held"."tenantId"
-								AND "granted"."roleId" = "held"."roleId"
-								AND "granted"."permission" = $2
-						)`
-				),
-				dbType
-			),
-			[PermissionsEnum.CUSTOM_SMTP_VIEW, PermissionsEnum.CUSTOM_SMTP_EDIT]
+		const run = (sql: string, parameters: unknown[] = []) =>
+			queryRunner.query(replacePlaceholders(p(sql), dbType), parameters);
+
+		// The live holders of the read grant, by tenant and role.
+		const holders: Array<{ tenantId: string; roleId: string }> = await run(
+			`SELECT DISTINCT "held"."tenantId", "held"."roleId"
+			FROM "role_permission" "held"
+			WHERE "held"."permission" = $1
+				AND "held"."enabled" = ${truthy}
+				AND "held"."isActive" = ${truthy}
+				AND "held"."isArchived" = ${falsy}
+				AND "held"."deletedAt" IS NULL
+				AND "held"."tenantId" IS NOT NULL`,
+			[PermissionsEnum.CUSTOM_SMTP_VIEW]
 		);
 
+		// Every write-grant row that already exists. Read once, decided in code: MySQL refuses an UPDATE whose
+		// subquery reads the table being updated, so the rows to switch on are named by id instead.
+		const existing: Array<{
+			id: string;
+			tenantId: string;
+			roleId: string;
+			enabled: boolean | number;
+			createdByUserId: string | null;
+			updatedByUserId: string | null;
+			deletedAt: string | Date | null;
+		}> = await run(
+			`SELECT "id", "tenantId", "roleId", "enabled", "createdByUserId", "updatedByUserId", "deletedAt"
+			FROM "role_permission" WHERE "permission" = $1`,
+			[PermissionsEnum.CUSTOM_SMTP_EDIT]
+		);
+		const byHolder = new Map(existing.map((row) => [`${row.tenantId}|${row.roleId}`, row]));
+
+		let inserted = 0;
+		let enabled = 0;
+
 		for (const { tenantId, roleId } of holders) {
-			if (dbType === DatabaseTypeEnum.postgres) {
-				await queryRunner.query(
-					p(`INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled") VALUES ($1, $2, $3, true)`),
-					[tenantId, roleId, PermissionsEnum.CUSTOM_SMTP_EDIT]
-				);
-			} else {
-				await queryRunner.query(
-					replacePlaceholders(
-						p(
-							`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled") VALUES ($1, $2, $3, $4, 1)`
-						),
-						dbType
-					),
-					[uuidV4(), tenantId, roleId, PermissionsEnum.CUSTOM_SMTP_EDIT]
-				);
+			const row = byHolder.get(`${tenantId}|${roleId}`);
+
+			if (!row) {
+				if (dbType === DatabaseTypeEnum.postgres) {
+					await run(
+						`INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled") VALUES ($1, $2, $3, true)`,
+						[tenantId, roleId, PermissionsEnum.CUSTOM_SMTP_EDIT]
+					);
+				} else {
+					await run(
+						`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled") VALUES ($1, $2, $3, $4, 1)`,
+						[uuidV4(), tenantId, roleId, PermissionsEnum.CUSTOM_SMTP_EDIT]
+					);
+				}
+				inserted++;
+				continue;
+			}
+
+			// A row that exists already is left as it is — unless nobody decided it. The permission-reload
+			// migrations (`RolePermissionUtils.migrateRolePermissions`) insert every permission value a role lacks,
+			// switched on only for the role's defaults, and they run with the code being deployed: on an upgrade where
+			// one of them runs before this migration, every tenant-granted reader of SMTP settings gets a SWITCHED-OFF
+			// write-grant row first, and skipping it would lock that role out of saving. Such a row was written by a
+			// migration, so it carries no user — no `createdByUserId`, no `updatedByUserId` (the entity subscriber
+			// stamps both from the request) — and is live. A row a person created or changed carries their id, and a
+			// deleted row was deleted by someone; both are a tenant's decision and stay exactly as they are.
+			const isOff = row.enabled === false || Number(row.enabled) === 0;
+			const unattributed = !row.createdByUserId && !row.updatedByUserId && !row.deletedAt;
+			if (isOff && unattributed) {
+				await run(`UPDATE "role_permission" SET "enabled" = ${truthy} WHERE "id" = $1`, [row.id]);
+				enabled++;
 			}
 		}
 
-		console.log(chalk.green(`${this.name}: granted ${PermissionsEnum.CUSTOM_SMTP_EDIT} to ${holders.length} role(s).`));
+		console.log(
+			chalk.green(
+				`${this.name}: ${PermissionsEnum.CUSTOM_SMTP_EDIT} inserted for ${inserted} role(s) and switched on for ${enabled} role(s) a reload had written it switched off for.`
+			)
+		);
 	}
 
 	/**
