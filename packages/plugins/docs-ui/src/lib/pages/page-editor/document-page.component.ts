@@ -49,7 +49,7 @@ import { DocsExportService } from '../../services/docs-export.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
-import { documentPageLayoutOf, IDocumentPageLayout } from './document-page-view';
+import { documentPageLayoutOf, documentPageLayoutOnViewChange } from './document-page-view';
 
 type RailTab = 'toc' | 'info' | 'comments';
 
@@ -126,6 +126,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	public menuOpen = false;
 	public iconPickerOpen = false;
 	public fullWidth = false;
+	/** Whether the current width / rail came from the `?view=full` parameter (a favorite), not the viewer. */
+	private layoutFromView = false;
 
 	public titleDraft = '';
 	public iconDraft = '';
@@ -208,13 +210,17 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 		// `?view=full`: a sidebar favorite opens the page as wide as the shell allows, right rail closed
 		// (handover §4.P). Only that entry point carries it; the viewer can still toggle both afterwards.
+		// Normal navigation away from it (breadcrumb, tree) restores the defaults, as the component is reused.
 		this.route.queryParamMap
 			.pipe(
-				map((params) => documentPageLayoutOf(params.get('view'))),
-				filter((layout): layout is IDocumentPageLayout => !!layout),
+				map((params) => params.get('view')),
+				distinctUntilChanged(),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe((layout) => {
+			.subscribe((view) => {
+				const layout = documentPageLayoutOnViewChange(view, this.layoutFromView);
+				this.layoutFromView = !!documentPageLayoutOf(view);
+				if (!layout) return;
 				this.fullWidth = layout.fullWidth;
 				this.railOpen = layout.railOpen;
 				this.cdr.markForCheck();
