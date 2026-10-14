@@ -245,23 +245,25 @@ export class DashboardResolver {
 	/**
 	 * Withdraws a dashboard without removing the row.
 	 *
-	 * The permission is the controller's class-level read permission and not the edit one, because that
-	 * is what the delivered route runs under: the withdrawal is inherited from the CRUD base, where it
-	 * states no permission of its own. The delivered route passes the service the empty option list it
-	 * collected, so the field states none either.
+	 * The permission is the edit grant `updateDashboard` states, as the route this field mirrors —
+	 * `DELETE /dashboard/:id/soft` — now states it: owner decision 5 (2026-10-13) makes the soft-delete/recover
+	 * pair require the controller's own edit grant. The route used to be inherited from the CRUD base with no
+	 * permission of its own and so stood on the class's `DASHBOARD_READ`, and this field mirrored that read
+	 * grant. Like the edit and the removal, the service refuses anyone but the dashboard's creator. The delivered
+	 * route passes the service the empty option list it collected, so the field states none either.
 	 */
 	@Mutation('softDeleteDashboard')
-	@Permissions(PermissionsEnum.DASHBOARD_READ)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DASHBOARD_UPDATE)
 	async softDeleteDashboard(@Args('id', { type: () => ID }) id: Id): Promise<Dashboard> {
 		return await this.dashboardService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn dashboard back. Its permission is the withdrawal's, for the same reason: the
-	 * delivered route carries none of its own to mirror.
+	 * Puts a withdrawn dashboard back. Its permission is the withdrawal's — the edit grant — as the
+	 * `PUT /dashboard/:id/recover` route it mirrors states it, and only the dashboard's creator may restore it.
 	 */
 	@Mutation('recoverDashboard')
-	@Permissions(PermissionsEnum.DASHBOARD_READ)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DASHBOARD_UPDATE)
 	async recoverDashboard(@Args('id', { type: () => ID }) id: Id): Promise<Dashboard> {
 		return await this.dashboardService.softRecover(id);
 	}
