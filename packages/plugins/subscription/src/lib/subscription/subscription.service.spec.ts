@@ -2952,6 +2952,45 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		expect(fixture.billings(created.id)).toEqual([expect.objectContaining({ id: opening.id, periodStart: start })]);
 	});
 
+	it('reads the running charge’s claim before the resume opens its transaction', async () => {
+		// Greptile on #10635: the claim is read through the idempotency service's own connection, which a
+		// pool of one cannot give while the resume holds its transaction's.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			activate: true,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const manager = (fixture.service.typeOrmSubscriptionRepository as unknown as Row).manager;
+		const transaction = manager.transaction;
+		let open = false;
+		const readInside: boolean[] = [];
+		const findByKey = fixture.idempotencyService.findByKey;
+
+		manager.transaction = async (run: (transactional: unknown) => Promise<unknown>) => {
+			open = true;
+
+			try {
+				return await transaction(run);
+			} finally {
+				open = false;
+			}
+		};
+		fixture.idempotencyService.findByKey = async (scope: string, key: string) => {
+			readInside.push(open);
+
+			return await findByKey(scope, key);
+		};
+
+		await fixture.service.pause(created.id, { reason: 'customer asked' });
+		await fixture.service.resume(created.id);
+
+		expect(readInside).toEqual([false]);
+	});
+
 	it('refuses the activation when the opening cycle was charged between its read and its move', async () => {
 		// CodeRabbit on #10635: the move is predicated on the cycle still billing nothing, and a cycle that
 		// lost that race stays put — committing the activation then would leave the subscription on a period

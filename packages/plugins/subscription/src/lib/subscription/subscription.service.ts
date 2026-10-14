@@ -567,6 +567,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			const opened = new Date(subscription.currentPeriodStart as Date);
 			const period = periodFrom(now.getTime() > opened.getTime() ? now : opened, this.planService.cadenceOf(plan));
 			let nextBillingAt = period.start;
+			// A charge still running has not recorded its order or attempt yet, so its cycle reads untouched;
+			// the billing claim it holds on the period is what shows it. Read before the transaction (whose
+			// connection a second read would otherwise wait on): no pass starts on a paused subscription, so
+			// a pass that holds the claim now began before the pause.
+			const charging = await this.chargeInFlight(subscription);
 
 			// One transaction, as in `activate`: no run sees the subscription `ACTIVE` before its opening
 			// cycle is on the period it now starts, and a refused claim moves nothing. While it is paused no
@@ -578,10 +583,9 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				// Any other was charged and awaits a retry: it keeps its period and its retry schedule — it
 				// cannot move (it records an attempt), and starting another period would leave it behind
 				// and open a new cycle that skips its retries — so resuming only lifts the pause.
-				// A charge still running has not recorded its order or attempt yet, so its cycle reads untouched;
-				// the billing claim it holds on the period is what shows it. Moving the cycle then would let the
-				// returning charge settle a cycle on another period, so the period stays, as for a retry.
-				const restart = (!opening || this.isUntouched(opening)) && !(await this.chargeInFlight(subscription));
+				// Moving the cycle of a running charge would let the returning charge settle a cycle on another
+				// period, so the period stays, as for a retry.
+				const restart = (!opening || this.isUntouched(opening)) && !charging;
 				const settled = !!opening && SETTLED_CYCLE_STATUSES.includes(opening.status);
 				const periodEnd = new Date(subscription.currentPeriodEnd as Date);
 
