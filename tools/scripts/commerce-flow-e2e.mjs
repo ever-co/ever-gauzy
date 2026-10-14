@@ -232,6 +232,35 @@ function decimalValue(value) {
 	return `${sign}${whole}${fraction ? `.${fraction}` : ''}`;
 }
 
+/**
+ * The normaliser's own cases, checked before any check relies on it: equal and unequal fractions, signs, zero,
+ * leading zeros and values that are not decimals. A normaliser that dropped a significant digit would let two
+ * different amounts compare equal and turn a real mismatch green, so the suite refuses to run with one.
+ *
+ * @returns {string[]} The cases that failed.
+ */
+function decimalValueSelfCheck() {
+	const cases = [
+		[62, '62.000000', true],
+		['62.000000', '62', true],
+		[62.5, '62.500000', true],
+		[62, '62.5', false],
+		['62.05', '62.5', false],
+		['0.000001', '0', false],
+		['-0.50', '-0.5', true],
+		['-1', '1', false],
+		['0', '-0.000', true],
+		['007.10', '7.1', true],
+		[null, '0', false],
+		['abc', 'abc', false],
+		['', '', false]
+	];
+
+	return cases
+		.filter(([a, b, equal]) => (decimalValue(a) !== null && decimalValue(a) === decimalValue(b)) !== equal)
+		.map(([a, b, equal]) => `${JSON.stringify(a)} ${equal ? '=' : '≠'} ${JSON.stringify(b)}`);
+}
+
 /** @param {{json: any, text: string}} result A response. @returns {string} A short description. */
 function brief(result) {
 	return (result.json ? JSON.stringify(result.json) : result.text).slice(0, 300);
@@ -1534,6 +1563,12 @@ function finish() {
 	}
 
 	process.exit(failed.length === 0 ? 0 : 1);
+}
+
+const brokenDecimalCases = decimalValueSelfCheck();
+if (brokenDecimalCases.length) {
+	console.error(`\ncommerce flow end-to-end suite: could not run — decimalValue fails its own cases: ${brokenDecimalCases.join('; ')}`);
+	process.exit(1);
 }
 
 main().catch((error) => {
