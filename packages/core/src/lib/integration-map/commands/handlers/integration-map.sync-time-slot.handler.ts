@@ -39,15 +39,18 @@ export class IntegrationMapSyncTimeSlotHandler
 				tenantId
 			});
 		} catch (error) {
-			const { time_slot, starts_at } = entity;
+			// The slot is created with its activity. It used to be created blank: the time log saved right
+			// after it skips every slot whose start already exists (TimeSlotBulkCreateHandler), so the activity
+			// submitted with the time log never replaced the zeros.
+			const { time_slot, starts_at, overall = 0, keyboard = 0, mouse = 0, tracked = 0 } = entity;
 			const gauzyTimeSlot = await this._commandBus.execute(
 				new TimeSlotCreateCommand({
 					employeeId,
 					startedAt: starts_at,
-					overall: 0,
-					keyboard: 0,
-					mouse: 0,
-					duration: 0,
+					overall,
+					keyboard,
+					mouse,
+					duration: tracked,
 					time_slot,
 					organizationId
 				})
