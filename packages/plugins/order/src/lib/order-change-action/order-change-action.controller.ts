@@ -79,25 +79,34 @@ export class OrderChangeActionController extends CrudController<OrderChangeActio
 	}
 
 	/**
-	 * Deletes an order change action by id.
+	 * Retires an order change action. This route no longer erases one.
 	 *
-	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
-	 * `PermissionGuard` answers `true` to empty metadata — its `isEmpty(permissions)` return in
-	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler demanded nothing
-	 * beyond this controller's class-level view grant. This override exists only to state that permission:
-	 * the path and the body are the base class's, and the grant is `ORDERS_EDIT`, the same one this
-	 * resource's update route already requires.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row. `13` §11.4 keeps every
+	 * order table in one retention row — "`order*`, `payment` (the columns this programme adds), `payment_capture`,
+	 * `refund`, `tax_line`, `adjustment`, `subscription_billing`, `order_return*` | Indefinite | Soft delete only
+	 * (`deletedAt`); no hard delete through the API" — and the owner decided it again on 2026-10-13 ("Soft delete
+	 * only").
 	 *
-	 * @param id The order change action.
-	 * @returns The result of the delete.
+	 * An action is one step of the set a change was applied as (`order-change-action.entity.ts`), so the row is part of
+	 * the audit of a modification.
+	 *
+	 * The route therefore retires the row exactly as `DELETE ':id/soft'` does: through the service's `softRemove`,
+	 * which keeps the row with `deletedAt` set and lets `PUT ':id/recover'` bring it back. There is no hard-delete path
+	 * through the API. The route's path, its status and its permission — `ORDERS_EDIT`, which the base class leaves
+	 * unstated — are unchanged.
+	 *
+	 * @param id The order change action to retire.
+	 * @param options The inherited rest parameter; the retirement reads the row in the caller's scope.
+	 * @returns The retired order change action.
 	 */
-	@ApiOperation({ summary: 'Delete an order change action' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order change action was deleted' })
+	@ApiOperation({ summary: 'Retire an order change action (soft delete; it is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order change action was retired' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order change action not found' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.service.softRemove(id);
 	}
 
 	/**
