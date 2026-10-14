@@ -283,14 +283,36 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 
 			return partial;
 		},
-		update: async (entity: unknown, id: unknown, patch: any) => {
-			const row = rows(entity).find((candidate: any) => same(candidate.id, id));
+		/**
+		 * TypeORM's `update` takes an id or a where object; the service clears a variant's primary by
+		 * predicate (`{ variantId, isPrimary: true, deletedAt: IsNull(), id: Not(target) }`), so both are modelled.
+		 */
+		update: async (entity: unknown, criteria: unknown, patch: any) => {
+			const hit = (candidate: any) =>
+				criteria !== null && typeof criteria === 'object'
+					? Object.entries(criteria).every(([field, expected]) => {
+							if (expected instanceof FindOperator) {
+								if (expected.type === 'not') {
+									return !same(candidate[field], expected.value);
+								}
 
-			if (row) {
+								if (expected.type === 'isNull') {
+									return candidate[field] === null || candidate[field] === undefined;
+								}
+
+								throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
+							}
+
+							return same(candidate[field], expected);
+					  })
+					: same(candidate.id, criteria);
+			const hits = rows(entity).filter(hit);
+
+			for (const row of hits) {
 				Object.assign(row, patch);
 			}
 
-			return { affected: row ? 1 : 0 };
+			return { affected: hits.length };
 		},
 		delete: async (entity: unknown, criteria: unknown) => {
 			const ids = Array.isArray(criteria) ? criteria : [criteria];
