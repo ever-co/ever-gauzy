@@ -4,11 +4,12 @@ import { ID } from '@gauzy/contracts';
 import { FEATURE_GRAPHQL, FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PurchasingFeatures } from '../../purchasing.features';
-import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
+import { asRouteBody, toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { GoodsReceiptStatus, IGoodsReceipt, IGoodsReceiptLine, IGoodsReceiptLineInput } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
 import { GoodsReceiptLineService } from '../../goods-receipt-line/goods-receipt-line.service';
+import { UpdateGoodsReceiptDTO } from '../../goods-receipt/dto';
 import { GoodsReceipt } from '../../goods-receipt/goods-receipt.entity';
 import { GoodsReceiptPosting, GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
 
@@ -203,7 +204,8 @@ export class GoodsReceiptResolver {
 	 * now refuses those changes below the route (`GOODS_RECEIPT_IMMUTABLE`, ae6ffe0419d), so the field can be
 	 * the route exactly: the same members, the same method with the same arguments, the same grant. The answer
 	 * is the receipt as the `goodsReceipt` query reads it, in the payload every mutation of this resource
-	 * answers, and a refusal travels in `userErrors`.
+	 * answers, and a refusal — of the route's own body validation (`asRouteBody`) or of the service — travels in
+	 * `userErrors`.
 	 *
 	 * @param id The receipt to correct.
 	 * @param input The members to change, as the route's body states them.
@@ -213,7 +215,8 @@ export class GoodsReceiptResolver {
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	async updateGoodsReceipt(@Args('id') id: ID, @Args('input') input: IUpdateGoodsReceiptArgs) {
 		try {
-			await this.goodsReceiptService.update(id, input as any);
+			// The route's own validation of its body, so a value the route refuses is refused here too.
+			await this.goodsReceiptService.update(id, (await asRouteBody(UpdateGoodsReceiptDTO, input)) as any);
 
 			return toGoodsReceiptPayload(await this.goodsReceiptService.findOneDetailed(id));
 		} catch (error) {

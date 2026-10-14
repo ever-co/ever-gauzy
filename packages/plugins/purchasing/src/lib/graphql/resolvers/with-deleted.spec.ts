@@ -38,6 +38,8 @@ jest.mock('@gauzy/core', () => {
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
+		// The update fields validate their input against the routes' DTOs, which extend it.
+		TenantOrganizationBaseDTO: class TenantOrganizationBaseDTO {},
 		MikroOrmBaseEntityRepository: class {},
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,

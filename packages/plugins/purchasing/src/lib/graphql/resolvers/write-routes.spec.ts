@@ -52,6 +52,7 @@
  * controllers are the real ones.
  */
 
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import {
 	IDEMPOTENT_METADATA_KEY,
@@ -70,6 +71,8 @@ import { PurchasingPermissions } from '../../purchasing.permissions';
 import { GoodsReceiptController } from '../../goods-receipt/goods-receipt.controller';
 import { GoodsReceiptLineController } from '../../goods-receipt-line/goods-receipt-line.controller';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
+import { UpdateGoodsReceiptDTO } from '../../goods-receipt/dto';
+import { UpdateGoodsReceiptLineDTO } from '../../goods-receipt-line/dto';
 import { PurchaseOrderLineController } from '../../purchase-order-line/purchase-order-line.controller';
 import { immutableMembers } from '../../purchasing.immutable';
 import { schemaExtensions } from '../schema-extensions';
@@ -821,6 +824,39 @@ describe('the two update routes — mirrored, now that their services refuse wha
 
 		await expect(lines.update(LINE, { variantId: VARIANT })).rejects.toBe(lineRefusal);
 		await expect(lineFields.updateGoodsReceiptLine(LINE, { variantId: VARIANT })).rejects.toBe(lineRefusal);
+	});
+
+	it('refuses on both surfaces what the route’s body validation refuses, before the service is reached', async () => {
+		// Greptile (#10562): the GraphQL scalars check a value's kind only — JSON admits an array, String any length —
+		// so the fields run the route's own pipe over the route's own DTO (`asRouteBody`).
+		const stubs = stubsFor();
+		const { resolver: receiptFields } = receiptSurface(stubs);
+		const { resolver: lineFields } = lineSurface(stubs);
+		// What `@UseValidationPipe({ transform: true, whitelist: true })` runs on the two routes' bodies.
+		const routePipe = new ValidationPipe({ transform: true, whitelist: true });
+		const tooLong = 'x'.repeat(65);
+		const receiptBodies = [{ metadata: [] }, { number: tooLong }, { receivedByUserId: 'not-an-id' }];
+		const lineBodies = [{ metadata: [] }, { batchNumber: tooLong }, { variantId: 'not-an-id' }];
+
+		for (const body of receiptBodies) {
+			await expect(
+				routePipe.transform(body, { type: 'body', metatype: UpdateGoodsReceiptDTO })
+			).rejects.toBeInstanceOf(BadRequestException);
+			await expect(receiptFields.updateGoodsReceipt(RECEIPT, body)).resolves.toMatchObject({
+				goodsReceipt: null,
+				userErrors: [{ code: 'BAD_REQUEST' }]
+			});
+		}
+
+		for (const body of lineBodies) {
+			await expect(
+				routePipe.transform(body, { type: 'body', metatype: UpdateGoodsReceiptLineDTO })
+			).rejects.toBeInstanceOf(BadRequestException);
+			await expect(lineFields.updateGoodsReceiptLine(LINE, body)).rejects.toBeInstanceOf(BadRequestException);
+		}
+
+		expect(stubs.receipt.update).not.toHaveBeenCalled();
+		expect(stubs.line.update).not.toHaveBeenCalled();
 	});
 
 	it.each(UPDATES)('$field states exactly the grant its route states, under the same guards', (entry) => {

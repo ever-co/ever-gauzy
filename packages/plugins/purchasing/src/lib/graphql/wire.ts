@@ -1,4 +1,4 @@
-import { HttpException } from '@nestjs/common';
+import { BadRequestException, HttpException, ValidationPipe } from '@nestjs/common';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { IGoodsReceipt } from '../purchasing.types';
 import { normalizeQuantity } from '../purchasing.quantity';
@@ -102,6 +102,39 @@ export function toUserError(error: unknown): IUserError {
 		named ?? prefixed ?? (error instanceof HttpException ? codeForStatus(error.getStatus()) : 'INTERNAL_ERROR');
 
 	return { code, message, path: [], details: null };
+}
+
+/**
+ * The validation a REST route of this package runs on its body: `@UseValidationPipe({ transform: true, whitelist: true })`.
+ * Built on first use rather than at import, because the pipe loads `class-validator` when it is constructed.
+ */
+let routeBodyValidation: ValidationPipe | undefined;
+
+/**
+ * A mutation's input, validated exactly as the route it mirrors validates its body.
+ *
+ * The GraphQL scalars check only a value's kind — `JSON` admits an array where the route's DTO says
+ * `@IsObject()`, `String` admits any length where it says `@MaxLength(64)`, `ID` any string where it says
+ * `@IsUUID()` — so a field that handed its input straight to the service would accept what the route refuses.
+ * Running the route's own pipe over the route's own DTO keeps the two surfaces one contract. A refusal is the
+ * pipe's `400`, with its reasons joined into one message so the payload can carry them.
+ *
+ * @param metatype The DTO the route binds its body to.
+ * @param input The mutation's input.
+ * @returns The input as the route's handler would receive it.
+ * @throws BadRequestException naming every constraint the input breaks.
+ */
+export async function asRouteBody<T>(metatype: new (...args: any[]) => T, input: unknown): Promise<T> {
+	try {
+		routeBodyValidation ??= new ValidationPipe({ transform: true, whitelist: true });
+
+		return await routeBodyValidation.transform(input ?? {}, { type: 'body', metatype });
+	} catch (error) {
+		const response = error instanceof BadRequestException ? (error.getResponse() as { message?: unknown }) : null;
+		const reasons = Array.isArray(response?.message) ? response.message.join('; ') : null;
+
+		throw reasons ? new BadRequestException(reasons) : error;
+	}
 }
 
 /**

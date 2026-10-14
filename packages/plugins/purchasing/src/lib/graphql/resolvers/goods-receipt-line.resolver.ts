@@ -6,9 +6,10 @@ import { FeatureFlag } from '@gauzy/common';
 import { PurchasingFeatures } from '../../purchasing.features';
 import { IGoodsReceipt, IGoodsReceiptLine } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
-import { toUserError } from '../wire';
+import { asRouteBody, toUserError } from '../wire';
 import { GoodsReceipt } from '../../goods-receipt/goods-receipt.entity';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
+import { UpdateGoodsReceiptLineDTO } from '../../goods-receipt-line/dto';
 import { GoodsReceiptLine } from '../../goods-receipt-line/goods-receipt-line.entity';
 import { GoodsReceiptLineService } from '../../goods-receipt-line/goods-receipt-line.service';
 
@@ -143,7 +144,8 @@ export class GoodsReceiptLineResolver {
 		@Args('id') id: ID,
 		@Args('input') input: IUpdateGoodsReceiptLineArgs
 	): Promise<GoodsReceiptLine> {
-		await this.goodsReceiptLineService.update(id, input as any);
+		// The route's own validation of its body, so a value the route refuses is refused here too.
+		await this.goodsReceiptLineService.update(id, (await asRouteBody(UpdateGoodsReceiptLineDTO, input)) as any);
 
 		return await this.goodsReceiptLineService.findOneByIdString(id);
 	}
