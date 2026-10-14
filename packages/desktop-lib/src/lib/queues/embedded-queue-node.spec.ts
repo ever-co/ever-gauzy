@@ -13,12 +13,16 @@ describe('embedded-queue on Node >= 23', () => {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const EmbeddedQueue = require('embedded-queue');
 		const queue = await EmbeddedQueue.Queue.createQueue({ inMemoryOnly: true });
-		const processed = new Promise((resolve) => queue.process('e2e', async (job: { data: unknown }) => resolve(job.data), 1));
+		try {
+			const processed = new Promise((resolve) => queue.process('e2e', async (job: { data: unknown }) => resolve(job.data), 1));
 
-		await queue.createJob({ type: 'e2e', data: { recordedAt: new Date('2026-10-14T00:00:00Z'), id: 1 } });
+			await queue.createJob({ type: 'e2e', data: { recordedAt: new Date('2026-10-14T00:00:00Z'), id: 1 } });
 
-		await expect(processed).resolves.toEqual({ recordedAt: new Date('2026-10-14T00:00:00Z'), id: 1 });
-		await queue.shutdown(1000);
+			await expect(processed).resolves.toEqual({ recordedAt: new Date('2026-10-14T00:00:00Z'), id: 1 });
+		} finally {
+			// Also when the job cannot be stored: an open queue keeps working in the background.
+			await queue.shutdown(1000);
+		}
 	});
 
 	it('keeps an existing implementation and matches only real Dates and RegExps', () => {
