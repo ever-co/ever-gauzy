@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, EntityManager } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
@@ -13,6 +13,7 @@ import {
 	AdjustmentService,
 	EventOutboxService,
 	IVersionExpectation,
+	IVersionedWriter,
 	IdempotencyService,
 	Money,
 	RequestContext,
@@ -460,20 +461,27 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const start = trialEndsAt && trialEndsAt.getTime() > now.getTime() ? trialEndsAt : now;
 		const period = periodFrom(start, cadence);
 
-		// Moved before the subscription becomes `ACTIVE`, while no billing run selects it: a run that
-		// reached it first would open its own row for the new period, and this one could not follow.
-		await this.moveOpeningCycle(subscription, period);
+		// One transaction, the claim first. The claim is the subscription's versioned write, predicated on
+		// the row still being `PENDING`: its UPDATE takes the row lock, so a second activation that read
+		// `PENDING` too waits on it and, once this one commits, matches nothing and is refused — before it
+		// has moved anything. The opening cycle moves inside the same transaction, so no billing run sees
+		// the subscription `ACTIVE` before its cycle is on the period the activation starts (a run that
+		// reached it first would open its own row for that period, and the cycle could not follow), and a
+		// refused claim leaves the cycle where the winner put it.
+		await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+				where: { ...currentScope(), status: SubscriptionStatus.PENDING },
+				id,
+				expectation,
+				patch: {
+					status: SubscriptionStatus.ACTIVE,
+					currentPeriodStart: period.start,
+					currentPeriodEnd: period.end,
+					nextBillingAt: period.start
+				}
+			});
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id,
-			expectation,
-			patch: {
-				status: SubscriptionStatus.ACTIVE,
-				currentPeriodStart: period.start,
-				currentPeriodEnd: period.end,
-				nextBillingAt: period.start
-			}
+			await this.moveOpeningCycle(subscription, period, manager);
 		});
 
 		await this.emit('subscription.activated', id, {
@@ -2163,8 +2171,13 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param subscription The pending subscription, as read before it is activated.
 	 * @param period The period the activation starts.
+	 * @param manager The activation's transaction.
 	 */
-	private async moveOpeningCycle(subscription: Subscription, period: ISubscriptionPeriod): Promise<void> {
+	private async moveOpeningCycle(
+		subscription: Subscription,
+		period: ISubscriptionPeriod,
+		manager: EntityManager
+	): Promise<void> {
 		if ((subscription.billingCycleCount ?? 0) > 0) {
 			return;
 		}
@@ -2177,7 +2190,34 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return;
 		}
 
-		await this.billingService.reschedulePending(opening.id, period);
+		await this.billingService.reschedulePending(opening.id, period, manager);
+	}
+
+	/**
+	 * The subscription's versioned writer inside a caller's TypeORM transaction.
+	 *
+	 * The two members `commitVersionedUpdate` uses, run on the transaction's manager: an update by the
+	 * criteria the kernel builds, and a read by id inside the caller's scope that answers
+	 * `NotFoundException` for a subscription that is not there.
+	 *
+	 * @param manager The transaction.
+	 * @returns The writer.
+	 */
+	private transactionWriter(manager: EntityManager): IVersionedWriter<Subscription> {
+		const subscriptions = manager.getRepository(Subscription);
+
+		return {
+			update: (criteria, partial) => subscriptions.update(criteria as never, partial as never),
+			findOneByIdString: async (id) => {
+				const subscription = await subscriptions.findOne({ where: { id, ...currentScope() } } as never);
+
+				if (!subscription) {
+					throw new NotFoundException('The subscription was not found.');
+				}
+
+				return subscription;
+			}
+		} as IVersionedWriter<Subscription>;
 	}
 
 	/**

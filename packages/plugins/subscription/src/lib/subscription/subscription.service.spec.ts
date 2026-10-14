@@ -500,6 +500,16 @@ function subscriptionFixture(
 	]);
 	const manager = {
 		connection: { options: { type: 'postgres' } },
+		// A transaction's repository writes the same store: the double's transaction restores it on a rollback.
+		getRepository: (entity: unknown) => {
+			const table = entityToTable.get(entity);
+
+			if (!table) {
+				throw new Error('the in-memory double was handed an entity it does not know');
+			}
+
+			return repository(tables, table, table === 'subscription' ? () => commits.push('subscription') : undefined);
+		},
 		create: (_entity: unknown, partial: Row) => ({ ...partial }),
 		save: async (entity: unknown, rowOrRows: any) => {
 			const table = entityToTable.get(entity);
@@ -2683,6 +2693,85 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		expect(fixture.orderCalls).toHaveLength(1);
 		expect(fixture.billings(created.id)).toEqual([
 			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID, periodStart: start })
+		]);
+	});
+
+	/**
+	 * Two activations of one pending subscription, overlapping: the losing one read it `PENDING` too, and
+	 * the winning one runs to completion between that read and the loser's own writes. The loser computes
+	 * a later period than the one the winner activated.
+	 *
+	 * @param expectation The version the losing caller states.
+	 * @returns The fixture, the subscription, the cycle written at creation and what the loser was answered.
+	 */
+	async function overlappingActivations(expectation?: IVersionExpectation) {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const [opening] = fixture.billings(created.id);
+		const read = fixture.service.findOneScoped.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockImplementationOnce(async (id) => {
+			// What the losing activation read: still `PENDING`.
+			const seen = { ...(await read(id)) };
+
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			await fixture.service.activate(id);
+			await new Promise((resolve) => setTimeout(resolve, 5));
+
+			return seen as never;
+		});
+
+		const answered = await fixture.service.activate(created.id, expectation).catch((error) => error);
+
+		return { fixture, created, opening, answered };
+	}
+
+	it('refuses an overlapping activation before it moves the opening cycle off the period the winner activated', async () => {
+		// Greptile on #10625: the opening cycle was moved before the subscription's versioned write, so the
+		// loser moved the still-unbilled cycle to its own period and only then was refused — the subscription
+		// stayed on the winner's period, the next run opened a second cycle for it, and the moved one was
+		// never billed.
+		const { fixture, created, opening, answered } = await overlappingActivations({ wildcard: false, versions: [1] });
+		const stored = fixture.subscription(created.id) as Row;
+
+		expect(answered).toBeInstanceOf(ApiException);
+		expect(answered.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(stored).toMatchObject({ status: SubscriptionStatus.ACTIVE, version: 2 });
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({
+				id: opening.id,
+				status: SubscriptionBillingStatus.PENDING,
+				periodStart: stored.currentPeriodStart,
+				periodEnd: stored.currentPeriodEnd
+			})
+		]);
+
+		// The first run bills that cycle, for the period the subscription is on, and opens no other.
+		const run = await fixture.service.runBilling({ asOf: stored.currentPeriodStart as Date });
+
+		expect(run).toMatchObject({ examined: 1, billed: 1, failed: 0 });
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID })
+		]);
+	});
+
+	it('activates once when an overlapping activation states no version', async () => {
+		// A scheduled pass states no version, and is predicated on the row's own: the subscription is
+		// activated once, on one period, and its opening cycle sits on that period.
+		const { fixture, created, opening, answered } = await overlappingActivations();
+		const stored = fixture.subscription(created.id) as Row;
+
+		expect(answered).toBeInstanceOf(ApiException);
+		expect(answered.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(fixture.events.filter((event) => event.name === 'subscription.activated')).toHaveLength(1);
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, periodStart: stored.currentPeriodStart })
 		]);
 	});
 
