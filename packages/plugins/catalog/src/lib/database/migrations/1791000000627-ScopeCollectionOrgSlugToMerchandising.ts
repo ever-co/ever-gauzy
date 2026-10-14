@@ -170,24 +170,50 @@ export class ScopeCollectionOrgSlugToMerchandising1791000000627 implements Migra
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await this.mysqlSwapIndex(queryRunner, `(\`organizationKey\`, \`slug\`, \`deletedKey\`)`);
-		await queryRunner.query(`ALTER TABLE \`collection\` DROP COLUMN \`noCustomerKey\``);
+		if (await queryRunner.hasColumn('collection', 'noCustomerKey')) {
+			await queryRunner.query(`ALTER TABLE \`collection\` DROP COLUMN \`noCustomerKey\``);
+		}
 	}
 
 	/**
 	 * Replaces `UQ_collection_org_slug` by an index over `columns`: built as `UQ_collection_org_slug_next`,
 	 * then the current index is dropped and the new one renamed into its place.
 	 *
+	 * A run interrupted part-way (MySQL commits each statement) is picked up where it stopped, and at no
+	 * point is the collection left without a slug rule:
+	 * - stopped after building `_next` and before dropping the current index: the current index still holds
+	 *   the rule, and `_next`, which may be of either shape, is dropped and rebuilt;
+	 * - stopped after dropping the current index and before the rename: `_next` is the only rule left, so it
+	 *   takes the current name back first, and the swap then runs as usual.
+	 *
 	 * @param queryRunner
 	 * @param columns The new index's column list, parenthesised.
 	 */
 	private async mysqlSwapIndex(queryRunner: QueryRunner, columns: string): Promise<void> {
-		// Left behind by a run that failed after building it: rebuilt, since it may be of the other shape.
-		const leftover = await queryRunner.query(
-			`SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'collection' AND INDEX_NAME = 'UQ_collection_org_slug_next' LIMIT 1`
-		);
-		if (leftover.length > 0) {
-			await queryRunner.query(`DROP INDEX \`UQ_collection_org_slug_next\` ON \`collection\``);
+		const exists = async (name: string): Promise<boolean> =>
+			(
+				await queryRunner.query(
+					`SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'collection' AND INDEX_NAME = ? LIMIT 1`,
+					[name]
+				)
+			).length > 0;
+
+		if (await exists('UQ_collection_org_slug_next')) {
+			if (await exists('UQ_collection_org_slug')) {
+				await queryRunner.query(`DROP INDEX \`UQ_collection_org_slug_next\` ON \`collection\``);
+			} else {
+				await queryRunner.query(
+					`ALTER TABLE \`collection\` RENAME INDEX \`UQ_collection_org_slug_next\` TO \`UQ_collection_org_slug\``
+				);
+			}
 		}
+
+		if (!(await exists('UQ_collection_org_slug'))) {
+			// Nothing to keep in place while the new index is built.
+			await queryRunner.query(`CREATE UNIQUE INDEX \`UQ_collection_org_slug\` ON \`collection\` ${columns}`);
+			return;
+		}
+
 		await queryRunner.query(`CREATE UNIQUE INDEX \`UQ_collection_org_slug_next\` ON \`collection\` ${columns}`);
 		await queryRunner.query(`DROP INDEX \`UQ_collection_org_slug\` ON \`collection\``);
 		await queryRunner.query(
