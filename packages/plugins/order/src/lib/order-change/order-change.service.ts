@@ -17,9 +17,11 @@ import {
 	RequestContext,
 	TenantAwareCrudService,
 	addDecimalStrings,
+	compareDecimalStrings,
 	getORMType,
 	matchesExpectation,
-	parseEntityVersion
+	parseEntityVersion,
+	subtractDecimalStrings
 } from '@gauzy/core';
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
@@ -410,6 +412,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		// authority, but it runs once everything has been applied, so a caller whose expectation no
 		// longer holds would otherwise be refused with its change already applied.
 		await this.assertOrderExpectationHolds(change.orderId, expectation);
+		await this.assertActionsApplicable(change, actions);
 
 		for (const action of actions) {
 			await this.applyAction(change, action);
@@ -727,6 +730,11 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 					}
 				}
 
+				// A line is not cut below what has already moved against it (review R3-14); see `flooredQuantity`.
+				if (changes['quantity'] !== undefined) {
+					changes['quantity'] = this.flooredQuantity(line, changes['quantity']);
+				}
+
 				await this.lineService.update(line.id, changes as any);
 				break;
 			}
@@ -1028,6 +1036,90 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 * @param lineId The line.
 	 * @returns The line.
 	 */
+	/**
+	 * The quantity an `ITEM_UPDATE` may set on a line, or the refusal (review R3-14).
+	 *
+	 * A line is not cut below what has already moved against it: the units shipped, the units still invoiced
+	 * (invoiced less credited) and the units a return has asked for. `ITEM_REMOVE` refuses a fulfilled line for the
+	 * same reason; an update that lowered the quantity under the shipped units billed the order for fewer than left
+	 * the building and reported it `FULFILLED`. Exact decimals throughout (`0.4 - 0.1` is not `0.30000000000000004`),
+	 * and every figure form `decimalOf` reads - a number, decimal text, an exponent such as `5e-1` - is accepted;
+	 * anything that is not a figure is refused rather than read as the zero an absent quantity means.
+	 *
+	 * @param line The line, as stored.
+	 * @param raw The quantity the action states.
+	 * @returns The value to write: a number as it was stated, text as the exact decimal it was compared as.
+	 * @throws BadRequestException with `ORDER_CHANGE_NOT_APPLICABLE` when the quantity is not a figure or is below the
+	 * floor.
+	 */
+	private flooredQuantity(line: OrderLine, raw: unknown): unknown {
+		const counted = (value: unknown) => String(value ?? 0);
+		const floor = [
+			counted(line.fulfilledQuantity),
+			subtractDecimalStrings(counted(line.invoicedQuantity), counted(line.creditedQuantity)),
+			counted(line.returnRequestedQuantity)
+		].reduce((highest, candidate) => (compareDecimalStrings(candidate, highest) > 0 ? candidate : highest));
+		const text = typeof raw === 'number' ? String(raw) : `${raw ?? ''}`.trim();
+		const quantity = /^[+-]?(\d+(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/.test(text)
+			? this.decimalOf(text).replace(/^([+-]?)\./, '$10.')
+			: null;
+
+		if (quantity !== null && compareDecimalStrings(quantity, floor) >= 0) {
+			return typeof raw === 'number' ? raw : quantity;
+		}
+
+		throw new BadRequestException({
+			message:
+				`ORDER_CHANGE_NOT_APPLICABLE: line '${line.id}' cannot be set to ${String(raw)}; ` +
+				`${floor} of it has already been shipped, invoiced or asked back.`,
+			code: 'ORDER_CHANGE_NOT_APPLICABLE',
+			details: {
+				orderLineId: line.id,
+				quantity: raw,
+				minimumQuantity: floor,
+				fulfilledQuantity: line.fulfilledQuantity,
+				invoicedQuantity: line.invoicedQuantity,
+				creditedQuantity: line.creditedQuantity,
+				returnRequestedQuantity: line.returnRequestedQuantity
+			}
+		});
+	}
+
+	/**
+	 * Refuses, before any action is applied, an `ITEM_UPDATE` whose quantity falls below what has moved against an
+	 * existing line (Greptile): the actions are applied one by one, so a refusal raised by a later action used to
+	 * leave the earlier ones written to a placed order with no re-derivation. A line the same change adds is checked
+	 * when it is applied; it has nothing moved against it.
+	 *
+	 * @param change The change.
+	 * @param actions Its actions, in application order.
+	 */
+	private async assertActionsApplicable(change: OrderChange, actions: OrderChangeAction[]): Promise<void> {
+		// A line an earlier action of the same change touches is left to the check made when the update is applied,
+		// on the state those actions leave: an `ITEM_RETURN` of -3 that withdraws a return request can be what makes a
+		// following `ITEM_UPDATE` valid (Greptile), and the stored counters would refuse it.
+		let touchedEarlier = new Set<ID>();
+
+		for (const action of actions) {
+			const details = (action.details ?? {}) as Record<string, unknown>;
+			const lineId = (action.referenceId ?? details['orderLineId']) as ID | undefined;
+
+			if (action.action === OrderChangeActionType.ITEM_UPDATE && details['quantity'] !== undefined && lineId) {
+				if (!touchedEarlier.has(lineId)) {
+					const [line] = await this.lineService.find({ where: { id: lineId } } as any);
+
+					if (line && line.orderId === change.orderId) {
+						this.flooredQuantity(line, details['quantity']);
+					}
+				}
+			}
+
+			if (lineId) {
+				touchedEarlier.add(lineId);
+			}
+		}
+	}
+
 	private async loadLine(orderId: ID, lineId: ID): Promise<OrderLine> {
 		if (!lineId) {
 			throw new BadRequestException('ORDER_CHANGE_ACTION_INVALID: the action needs a line reference.');

@@ -2,6 +2,7 @@
 import { DeepPartial, EntityManager } from 'typeorm';
 import { ID, IOrderTotals } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
+import { orderLedgerAppendOnly } from '../order-ledger.append-only';
 import { IOrderRowScope, createUnderOrderScope, orderScopeColumns } from '../order-history/order-row-scope';
 import { OrderSummary } from './order-summary.entity';
 import { TypeOrmOrderSummaryRepository } from './repository/type-orm-order-summary.repository';
@@ -69,5 +70,53 @@ export class OrderSummaryService extends TenantAwareCrudService<OrderSummary> {
 			{ ...entry, order: { id: entry.orderId } },
 			scope
 		);
+	}
+
+	/**
+	 * Refuses an edit of a ledger row (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async update(id: unknown, partialEntity?: unknown): Promise<never> {
+		void id;
+		void partialEntity;
+
+		throw orderLedgerAppendOnly('order_summary', 'update');
+	}
+
+	/**
+	 * Refuses to erase a ledger row (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async delete(criteria: unknown): Promise<never> {
+		void criteria;
+
+		throw orderLedgerAppendOnly('order_summary', 'delete');
+	}
+
+	/**
+	 * Refuses to retire a ledger row: the next derivation would stop counting it with no re-derivation of its own
+	 * (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async softRemove(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw orderLedgerAppendOnly('order_summary', 'retire');
+	}
+
+	/**
+	 * Refuses to restore a ledger row, for the reason `softRemove` gives (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async softRecover(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw orderLedgerAppendOnly('order_summary', 'restore');
 	}
 }

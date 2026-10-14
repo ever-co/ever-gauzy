@@ -4,6 +4,7 @@ import { FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, Tenant
 import { FeatureFlag } from '@gauzy/common';
 import { OrderLineInvoiceService } from '../order-line-invoice/order-line-invoice.service';
 import { OrderLineService } from '../order-line/order-line.service';
+import { OrderEditGuard } from '../order/order-edit.guard';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { OrderLine } from './types';
 
@@ -30,7 +31,8 @@ import { OrderLine } from './types';
 export class OrderLineResolver {
 	constructor(
 		private readonly service: OrderLineInvoiceService,
-		private readonly lineService: OrderLineService
+		private readonly lineService: OrderLineService,
+		private readonly editGuard: OrderEditGuard
 	) {}
 
 	/**
@@ -68,6 +70,8 @@ export class OrderLineResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'softDeleteOrderLine' })
 	async softDeleteOrderLine(@Args('id', { type: () => ID }) id: string): Promise<OrderLine> {
+		await this.editGuard.assertDraft((await this.lineService.findOneByIdString(id)).orderId, 'order line');
+
 		return this.lineService.softRemove(id);
 	}
 
@@ -85,6 +89,11 @@ export class OrderLineResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'recoverOrderLine' })
 	async recoverOrderLine(@Args('id', { type: () => ID }) id: string): Promise<OrderLine> {
+		await this.editGuard.assertDraft(
+			(await this.lineService.findOneByIdString(id, { withDeleted: true } as never)).orderId,
+			'order line'
+		);
+
 		return this.lineService.softRecover(id);
 	}
 }

@@ -4,6 +4,7 @@ import { ID } from '@gauzy/contracts';
 import {
 	AbstractValidationPipe,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantOrganizationBaseDTO,
@@ -13,6 +14,7 @@ import {
 } from '@gauzy/core';
 import { OrderTransaction } from './order-transaction.entity';
 import { OrderTransactionService } from './order-transaction.service';
+import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { CreateOrderTransactionDTO, UpdateOrderTransactionDTO } from './dto';
 
@@ -27,12 +29,18 @@ import { CreateOrderTransactionDTO, UpdateOrderTransactionDTO } from './dto';
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 @Controller('/order-transactions')
 export class OrderTransactionController extends CrudController<OrderTransaction> {
-	constructor(private readonly service: OrderTransactionService) {
+	constructor(
+		private readonly service: OrderTransactionService,
+		private readonly totalsService: OrderTotalsService
+	) {
 		super(service);
 	}
 
 	/**
-	 * Creates an order transaction.
+	 * Records an operator's `MANUAL` correction on an order's payment ledger, in the order's currency, and re-derives
+	 * the order (review R3-11). Every other kind of row is written by the operation that causes it and is refused here
+	 * (`ORDER_TRANSACTION_NOT_MANUAL`); the ledger is append-only, so the update, delete and retire routes below answer
+	 * `ORDER_LEDGER_APPEND_ONLY`.
 	 *
 	 * The write routes are declared here rather than inherited, because a request body is validated
 	 * from the *type* the handler names: the base class takes the entity's shape as a generic, whose
@@ -41,18 +49,27 @@ export class OrderTransactionController extends CrudController<OrderTransaction>
 	 * missing required field, a property the resource does not have. Declaring the DTO is what makes
 	 * the request validated, and it is also what gives the route a documented body.
 	 */
-	@ApiOperation({ summary: 'Create an order transaction' })
+	@ApiOperation({ summary: 'Record a MANUAL correction on an order payment ledger' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The order transaction was created', type: OrderTransaction })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	// A correction is money recorded: a client that retries after a lost answer - or after the re-derivation below
+	// failed - presents its key and is answered from the first attempt instead of recording the correction twice.
+	@Idempotent({ scope: 'order.transaction.manual', required: false, resourceType: 'order_transaction' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateOrderTransactionDTO): Promise<OrderTransaction> {
-		return this.service.create(entity as any);
+		const row = await this.service.recordManual(entity as any);
+
+		// ADR-26: every ledger move re-derives the order, so the correction is counted now, not at the nightly pass.
+		await this.totalsService.recompute(row.orderId, 'PAYMENT_RECONCILED');
+
+		return row;
 	}
 
 	/**
-	 * Updates an order transaction.
+	 * Refused: a ledger row is never edited (`ORDER_LEDGER_APPEND_ONLY`, review R3-11); the correction is a new
+	 * `MANUAL` row through the route above.
 	 *
 	 * The return type is the base class's own: the inherited service answers `update` with the ORM's
 	 * update result as readily as with the row, so narrowing it to the entity would be untrue.
