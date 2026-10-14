@@ -999,27 +999,8 @@
 				border-color: var(--color-primary-default);
 			}
 
-			.ng-dropdown-panel {
-				background-color: var(--gauzy-card-1) !important;
-				border: 1px solid var(--border-basic-color-4);
-				border-radius: var(--border-radius);
-				box-shadow: var(--gauzy-shadow, none);
-
-				.ng-option {
-					background-color: transparent !important;
-					color: var(--text-basic-color) !important;
-					font-size: 13px;
-
-					&.ng-option-marked {
-						background-color: var(--gauzy-hover-tint) !important;
-					}
-
-					&.ng-option-selected {
-						background-color: var(--color-primary-transparent-default) !important;
-						color: var(--color-primary-default) !important;
-					}
-				}
-			}
+			// The dropdown panel is styled at the top level of this sheet (`.ai-chat-model-panel`):
+			// ng-select 24 renders it in a CDK overlay under <body>, outside this form.
 		}
 	}
 
@@ -1079,17 +1060,6 @@
 		// disambiguates.
 		.model-select {
 			display: block;
-
-			.model-label {
-				display: block;
-			}
-
-			.model-id {
-				display: block;
-				font-size: 11px;
-				font-family: var(--font-family-mono, monospace);
-				color: var(--text-hint-color);
-			}
 		}
 
 		&.toggles {
@@ -1203,5 +1173,45 @@
 			margin-top: 1px;
 			color: var(--color-success-default);
 		}
+	}
+}
+
+// ── Model picker panel ──────────────────────────────────────────────────────
+// ng-select 24 renders EVERY dropdown panel through a CDK overlay pane under <body> — with or
+// without `appendTo` — so the option rows no longer sit inside `.ai-chat-settings` and rules nested
+// there never match (they did on ng-select 21, where a panel without `appendTo` was a child of the
+// select). Both model selects name this panel class, so it is styled here, globally but only for them.
+// The two-line rows are what the template's virtual scroll measures (see the template's note on the
+// routing providers' ~250 models): the label and the id must each be a block.
+::ng-deep .ng-dropdown-panel.ai-chat-model-panel {
+	background-color: var(--gauzy-card-1) !important;
+	border: 1px solid var(--border-basic-color-4);
+	border-radius: var(--border-radius);
+	box-shadow: var(--gauzy-shadow, none);
+
+	.ng-option {
+		background-color: transparent !important;
+		color: var(--text-basic-color) !important;
+		font-size: 13px;
+
+		&.ng-option-marked {
+			background-color: var(--gauzy-hover-tint) !important;
+		}
+
+		&.ng-option-selected {
+			background-color: var(--color-primary-transparent-default) !important;
+			color: var(--color-primary-default) !important;
+		}
+	}
+
+	.model-label {
+		display: block;
+	}
+
+	.model-id {
+		display: block;
+		font-size: 11px;
+		font-family: var(--font-family-mono, monospace);
+		color: var(--text-hint-color);
 	}
 }
