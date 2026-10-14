@@ -559,9 +559,9 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		}
 	};
 	/** Every transaction the service opened, and whether it committed or rolled back. */
-	const transactions: Array<'committed' | 'rolled back'> = [];
+	let transactions: Array<'committed' | 'rolled back'> = [];
 	/** The isolation level each transaction was opened with (`undefined` = the server's default). */
-	const isolationLevels: Array<string | undefined> = [];
+	let isolationLevels: Array<string | undefined> = [];
 	// The entity manager the conditional update and the event both go through. Its `transaction` behaves as the
 	// database's: the work runs on the transaction's manager, and a failure puts every table back as it was.
 	(fulfillmentRepository as Row).manager = {
@@ -1835,7 +1835,7 @@ describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)
 		});
 		// Only the reads made on the transaction's manager are recorded: the cancelation's first read of the
 		// shipment is made before the transaction opens, through the service's own repository, and takes no lock.
-		const reads: Array<[string, Row]> = [];
+		let reads: Array<[string, Row]> = [];
 		const getRepository = fixture.transactionManager.getRepository;
 
 		(fixture.transactionManager as Row).getRepository = (entity: unknown) => {
@@ -1893,6 +1893,49 @@ describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)
 			expect(fixture.row('pending').status).toBe(FulfillmentStatusDetail.CANCELED);
 		}
 	);
+
+	it('locks the order lines in id order whatever order the shipment lists them in', async () => {
+		// Greptile on #10555: each order line stays locked until the transaction ends, so two cancelations of
+		// shipments that share lines and list them in opposite orders would deadlock. They are taken by id.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [
+					orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 }),
+					orderLine(LINE_B, { quantity: 5, fulfilledQuantity: 2 })
+				],
+				fulfillment: [shipment('pending')],
+				// Listed B first
+				fulfillment_line: [
+					shipmentLine('line-b', 'pending', LINE_B, 2),
+					shipmentLine('line-a', 'pending', LINE_A, 3)
+				]
+			}
+		});
+		let locked: unknown[] = [];
+		const getRepository = fixture.transactionManager.getRepository;
+		(fixture.transactionManager as Row).getRepository = (entity: unknown) => {
+			const repository = getRepository(entity) as Row;
+
+			if (entity !== jest.requireMock('@gauzy/plugin-order').OrderLine) {
+				return repository;
+			}
+
+			return {
+				...repository,
+				findOne: async (options: Row = {}) => {
+					locked.push((options.where as Row).id);
+
+					return repository.findOne(options);
+				}
+			};
+		};
+
+		await fixture.service.cancel('pending');
+
+		expect(locked).toEqual([LINE_A, LINE_B]);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(0);
+	});
 
 	it('rolls the cancelation back when the order cannot be re-derived, and says so', async () => {
 		// The opposite of the second-write shape, and the point of the change: nothing has committed when the

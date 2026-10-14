@@ -126,6 +126,17 @@ function rowLockOf(manager: EntityManager): { lock?: { mode: 'pessimistic_write'
 }
 
 /**
+ * A shipment's lines ordered by the order line they count against, so the order lines are always locked in
+ * the same order (see `FulfillmentService.cancelInTransaction`).
+ *
+ * @param lines The shipment's lines.
+ * @returns A sorted copy.
+ */
+function inOrderLineOrder<T extends { orderLineId?: string | null }>(lines: T[]): T[] {
+	return [...lines].sort((a, b) => String(a.orderLineId ?? '').localeCompare(String(b.orderLineId ?? '')));
+}
+
+/**
  * The isolation level the cancelation's transaction asks for: `READ COMMITTED` on MySQL, the server's default
  * elsewhere.
  *
@@ -684,7 +695,11 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			return fulfillment;
 		}
 
-		const lines = await manager.getRepository(FulfillmentLine).find({ where: { fulfillmentId } });
+		// Each order line is locked (FOR UPDATE) as its counter moves and stays locked until the transaction ends,
+		// so the lines are taken in one order - by id - whatever order the shipment lists them in: two
+		// cancelations of shipments that share lines would otherwise lock A then B and B then A, and the database
+		// would abort one of them as a deadlock (Greptile on #10555).
+		const lines = inOrderLineOrder(await manager.getRepository(FulfillmentLine).find({ where: { fulfillmentId } }));
 
 		for (const line of lines) {
 			await this.bumpOrderLineCounters(

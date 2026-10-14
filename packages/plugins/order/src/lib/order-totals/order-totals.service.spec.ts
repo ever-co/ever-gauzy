@@ -2015,7 +2015,7 @@ describe('OrderTotalsService — the re-derivation inside the caller’s transac
 		['better-sqlite3', false]
 	])('reads the order it re-derives under a row lock where the dialect has one (%s)', async (type, locks) => {
 		const { service } = transactionalService();
-		const reads: unknown[] = [];
+		let reads: unknown[] = [];
 
 		await dataSource.transaction(async (manager: any) => {
 			const reporting = new Proxy(manager, {
@@ -2087,7 +2087,7 @@ describe('OrderTotalsService — the re-derivation inside the caller’s transac
 		const fixture = orderFixture({}, { orm: 'mikro-orm', unitOfWork: { usesMikroOrm: true, run: (work: any) => work() } });
 		const { TransactionContext } = jest.requireActual('@mikro-orm/core');
 		const fork = { getUnitOfWork: () => undefined, nativeUpdate: async () => 0, name: 'tx-fork' };
-		const contexts: unknown[] = [];
+		let contexts: unknown[] = [];
 		const create = jest.spyOn(TransactionContext, 'create').mockImplementation(async (em: unknown, next: any) => {
 			contexts.push(em);
 
