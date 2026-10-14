@@ -1,9 +1,10 @@
-import { INestApplication, Module } from '@nestjs/common';
+import { ExecutionContext, INestApplication, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { Test } from '@nestjs/testing';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
 import * as request from 'supertest';
 import { ThrottlerBehindProxyGuard } from './throttler-behind-proxy.guard';
 
@@ -17,6 +18,9 @@ import { ThrottlerBehindProxyGuard } from './throttler-behind-proxy.guard';
  * write is guarded, so it was not the crash the review read from an older release). This boots the
  * guard exactly as `AppModule` registers it and sends real HTTP from two client addresses.
  */
+/** The guard instance the app registered, for the direct `canActivate` cases. */
+const APP_GUARD_INSTANCE = 'THROTTLER_GUARD_UNDER_TEST';
+
 @Resolver()
 class PingResolver {
 	@Query(() => String)
@@ -35,7 +39,12 @@ class PingResolver {
 			context: ({ req }: { req: unknown }) => ({ req })
 		})
 	],
-	providers: [PingResolver, { provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard }]
+	providers: [
+		PingResolver,
+		ThrottlerBehindProxyGuard,
+		{ provide: APP_GUARD_INSTANCE, useExisting: ThrottlerBehindProxyGuard },
+		{ provide: APP_GUARD, useExisting: ThrottlerBehindProxyGuard }
+	]
 })
 class ThrottledGraphqlModule {}
 
@@ -54,11 +63,31 @@ describe('ThrottlerBehindProxyGuard on GraphQL operations', () => {
 		await app?.close();
 	});
 
-	const ping = (client = '203.0.113.10') =>
+	/** A GraphQL execution context whose operation context carries `req` (or nothing). */
+	const graphqlContext = (operationContext: Record<string, unknown>): ExecutionContext => {
+		const host = new ExecutionContextHost([undefined, {}, operationContext, {}], PingResolver, PingResolver.prototype.ping);
+		host.setType('graphql');
+		return host;
+	};
+
+	it.each([
+		['no request at all', {}],
+		['an upgrade request without a response (graphql-ws)', { req: { headers: {}, socket: {} } }]
+	])('lets a socket-delivered operation through without spending an allowance: %s', async (_label, operationContext) => {
+		const guard = app.get(APP_GUARD_INSTANCE);
+		const storage = app.get(ThrottlerStorage);
+		const increment = jest.spyOn(storage, 'increment');
+
+		await expect(guard.canActivate(graphqlContext(operationContext))).resolves.toBe(true);
+		expect(increment).not.toHaveBeenCalled();
+		increment.mockRestore();
+	});
+
+	const ping = (client: string) =>
 		request(app.getHttpServer()).post('/graphql').set('X-Forwarded-For', client).send({ query: '{ ping }' });
 
 	it('answers a query, and states the rate limit on the HTTP response', async () => {
-		const response = await ping();
+		const response = await ping('203.0.113.10');
 
 		expect(response.body.errors).toBeUndefined();
 		expect(response.body.data).toEqual({ ping: 'pong' });
@@ -66,16 +95,23 @@ describe('ThrottlerBehindProxyGuard on GraphQL operations', () => {
 	});
 
 	it('rate-limits GraphQL operations like REST routes', async () => {
-		await ping(); // the second of the two allowed
+		const client = '203.0.113.11';
+		await ping(client);
+		await ping(client); // the two allowed
 
-		const third = await ping();
+		const third = await ping(client);
 
 		expect(third.body.data ?? null).toBeNull();
 		expect(JSON.stringify(third.body.errors)).toMatch(/Too Many Requests/i);
 	});
 
 	it('keeps one bucket per client, not one for every GraphQL caller', async () => {
-		// The client above has spent its two; a different address has not.
+		const spender = '203.0.113.12';
+		await ping(spender);
+		await ping(spender);
+		expect(JSON.stringify((await ping(spender)).body.errors)).toMatch(/Too Many Requests/i);
+
+		// Another address has spent nothing.
 		const other = await ping('198.51.100.20');
 
 		expect(other.body.errors).toBeUndefined();
