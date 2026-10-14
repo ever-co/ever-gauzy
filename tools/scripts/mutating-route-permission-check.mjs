@@ -520,9 +520,8 @@ function readCrudController(source) {
 	const classPublic = /@Public\(/.test(classBlock);
 	const classRoles = /@Roles\(/.test(classBlock);
 
-	const body = code.slice(declaration.index);
 	const found = new Map();
-	for (const member of rawMembers(body)) if (!found.has(member.name)) found.set(member.name, member.raw);
+	for (const member of classMembers(code, declaration.index)) if (!found.has(member.name)) found.set(member.name, member.raw);
 
 	const routes = {};
 	for (const handler of INHERITED) {
@@ -546,28 +545,183 @@ function readCrudController(source) {
 }
 
 /**
- * The class members of a controller body with their decorator blocks, unflattened (part one's `members`
- * collapses whitespace, which is fine for matching a decorator and not for reading its arguments).
- *
- * A member's block starts where the previous member's body closes: a `}` alone at class-body indentation.
- * A multi-line decorator closes at the same indentation too — `\t})` after `@ApiResponse({ … })` — so the
- * brace only counts when nothing follows it on its line; otherwise the block would start inside its own
- * decorators and lose the ones above that line (`TaskController.delete` is the case that showed it).
+ * Blanks the contents of string literals, keeping their length and line breaks, so a brace or a parenthesis
+ * inside a path or a description can never be counted as structure.
  */
-function rawMembers(body) {
-	const declaration = /^\t(?!\t)(?:public |protected |private )?(?:async )?([A-Za-z_$][\w$]*)\s*\(/gm;
-	const found = [];
-	let match;
-	while ((match = declaration.exec(body)) !== null) {
-		let bodyEnd = body.lastIndexOf('\n\t}', match.index);
-		while (bodyEnd !== -1 && !/^\n\t\}[ \t]*\r?\n/.test(body.slice(bodyEnd, bodyEnd + 8))) {
-			bodyEnd = bodyEnd === 0 ? -1 : body.lastIndexOf('\n\t}', bodyEnd - 1);
+function blankStrings(code) {
+	return code.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, (literal) =>
+		literal[0] + literal.slice(1, -1).replace(/[^\n]/g, ' ') + literal[literal.length - 1]
+	);
+}
+
+/**
+ * The members of the class whose declaration starts at `from`, each with the decorators written above it.
+ *
+ * Read structurally rather than by indentation, so tabs, spaces and multi-line decorators read the same: the
+ * class body is the first `{` outside parentheses after the declaration, a member's body is a `{` opened at
+ * class-body depth outside parentheses (decorator arguments such as `@ApiResponse({ … })` are inside
+ * parentheses, so their braces never count), and a member's decorator block is everything between the end of
+ * the previous member — its body's `}` or a `;` — and its name. The name is the first `identifier(` at
+ * parenthesis depth zero that is not a decorator (`@Name(`) or a call on something (`.name(`).
+ *
+ * @param code The controller source, with comments stripped.
+ * @param from The index of the class declaration.
+ * @returns `{ name, raw }` per member that has a body, in source order.
+ */
+function classMembers(code, from) {
+	const text = blankStrings(code);
+	let paren = 0;
+	let open = -1;
+	for (let index = from; index < text.length; index++) {
+		const character = text[index];
+		if (character === '(') paren++;
+		else if (character === ')') paren--;
+		else if (character === '{' && paren === 0) {
+			open = index;
+			break;
 		}
-		const blockStart = bodyEnd === -1 ? Math.max(body.indexOf('{'), 0) : bodyEnd;
-		found.push({ name: match[1], raw: body.slice(blockStart, match.index) });
+	}
+	if (open === -1) return [];
+
+	const found = [];
+	let depth = 0;
+	let segmentStart = open + 1;
+	paren = 0;
+	for (let index = open; index < text.length; index++) {
+		const character = text[index];
+		if (character === '(') paren++;
+		else if (character === ')') paren--;
+		if (paren > 0) continue;
+
+		if (character === ';' && depth === 1) {
+			segmentStart = index + 1;
+		} else if (character === '{') {
+			depth++;
+			if (depth === 2) {
+				const segment = text.slice(segmentStart, index);
+				const name = memberName(segment);
+				if (name) found.push({ name: name.name, raw: code.slice(segmentStart, segmentStart + name.index) });
+			}
+		} else if (character === '}') {
+			depth--;
+			if (depth === 1) segmentStart = index + 1;
+			if (depth === 0) break;
+		}
 	}
 	return found;
 }
+
+/** The first `identifier(` at parenthesis depth zero in a member segment that is neither `@x(` nor `.x(`. */
+function memberName(segment) {
+	let paren = 0;
+	const identifier = /[A-Za-z_$][\w$]*/y;
+	for (let index = 0; index < segment.length; index++) {
+		const character = segment[index];
+		if (character === '(') {
+			paren++;
+			continue;
+		}
+		if (character === ')') {
+			paren--;
+			continue;
+		}
+		if (paren > 0 || !/[A-Za-z_$]/.test(character) || /[\w$]/.test(segment[index - 1] ?? ' ')) continue;
+		identifier.lastIndex = index;
+		const match = identifier.exec(segment);
+		const after = segment.slice(index + match[0].length).match(/^\s*(?:<[^>]*>)?\s*\(/);
+		const before = segment.slice(0, index).replace(/\s+$/, '').slice(-1);
+		if (after && before !== '@' && before !== '.' && !['async', 'public', 'protected', 'private', 'static', 'get', 'set'].includes(match[0])) {
+			return { name: match[0], index };
+		}
+		index += match[0].length - 1;
+	}
+	return null;
+}
+
+/**
+ * The reader checks itself before it is trusted with the tree: each fixture is a controller shape the tree has or
+ * could have, with what `PermissionGuard` would resolve for it, so a reader that misreads one of them fails here
+ * by name instead of passing a misread tree. The shapes are the ones that have broken a textual reading before
+ * or would: tab and space indentation, a multi-line decorator closing at member indentation, a property between
+ * two members, braces and parentheses inside strings, a `CrudFactory` base with generic and call arguments, a
+ * method re-declared without an HTTP decorator, and a doc comment that mentions a decorator.
+ */
+function selfTest() {
+	const problems = [];
+	const expect = (label, source, expected) => {
+		const read = readCrudController(source);
+		const actual = Object.fromEntries(
+			Object.entries(read?.routes ?? {}).map(([handler, route]) => [handler, route.removed ? 'removed' : route.grants.join('|') || '-'])
+		);
+		if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+			problems.push(`${label}: read ${JSON.stringify(actual)}, expected ${JSON.stringify(expected)}`);
+		}
+	};
+	const override = (indent, grant, path = ':id/soft', handler = 'softRemove') =>
+		[
+			`${indent}@ApiResponse({`,
+			`${indent}${indent}status: HttpStatus.ACCEPTED,`,
+			`${indent}${indent}description: 'Withdrawn (soft) — {id} stays readable with ?withDeleted'`,
+			`${indent}})`,
+			`${indent}@Permissions(${grant})`,
+			`${indent}@HttpCode(HttpStatus.ACCEPTED)`,
+			`${indent}@Delete('${path}')`,
+			`${indent}async ${handler}(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Row> {`,
+			`${indent}${indent}return await super.${handler}(id, ...options);`,
+			`${indent}}`
+		].join('\n');
+	const controller = (indent, members, base = 'CrudController<Row>', classGrant = 'ROWS_VIEW') =>
+		[
+			`/** The @Permissions(PermissionsEnum.NOT_A_DECORATOR) in this comment is prose. */`,
+			`@UseGuards(TenantPermissionGuard, PermissionGuard)`,
+			`@Permissions(PermissionsEnum.${classGrant})`,
+			`@Controller('/rows')`,
+			`export class RowController extends ${base} {`,
+			`${indent}private readonly logger = new Logger(RowController.name);`,
+			``,
+			`${indent}constructor(private readonly rowService: RowService) {`,
+			`${indent}${indent}super(rowService);`,
+			`${indent}}`,
+			``,
+			`${indent}@Permissions(PermissionsEnum.ROWS_EDIT)`,
+			`${indent}@Put(':id')`,
+			`${indent}async update(@Param('id') id: ID, @Body() body: UpdateRowDTO): Promise<Row> {`,
+			`${indent}${indent}if (body.name === ')') { return this.rowService.update(id, { name: '{' }); }`,
+			`${indent}${indent}return this.rowService.update(id, body);`,
+			`${indent}}`,
+			``,
+			members,
+			`}`
+		].join('\n');
+	const inherited = { create: 'ROWS_VIEW', update: 'ROWS_EDIT', delete: 'ROWS_VIEW', softRemove: 'ROWS_VIEW', softRecover: 'ROWS_VIEW' };
+
+	for (const [label, indent] of [['tab-indented', '\t'], ['space-indented', '    '], ['two-space-indented', '  ']]) {
+		expect(`${label}, pair inherited`, controller(indent, ''), inherited);
+		expect(`${label}, softRemove restated on the edit grant`, controller(indent, override(indent, 'PermissionsEnum.ROWS_EDIT')), {
+			...inherited,
+			softRemove: 'ROWS_EDIT'
+		});
+		// The case a reader that missed the override would get wrong: the class states a write grant and the
+		// restated route a read one, so reading the route as inherited would report the class's write grant.
+		expect(
+			`${label}, softRemove restated on a read grant under a write-granted class`,
+			controller(indent, override(indent, 'PermissionsEnum.ROWS_VIEW'), 'CrudController<Row>', 'ROWS_ADMIN'),
+			{ create: 'ROWS_ADMIN', update: 'ROWS_EDIT', delete: 'ROWS_ADMIN', softRemove: 'ROWS_VIEW', softRecover: 'ROWS_ADMIN' }
+		);
+	}
+	expect(
+		'CrudFactory base with generic and call arguments',
+		controller('\t', override('\t', 'PermissionsEnum.ROWS_EDIT'), 'CrudFactory<\n\tRow,\n\tIRowFind\n>(BaseQueryDTO, CreateRowDTO)'),
+		{ ...inherited, softRemove: 'ROWS_EDIT' }
+	);
+	expect('a route re-declared without an HTTP decorator', controller('\t', '\tasync delete(id: ID) {\n\t\treturn null;\n\t}'), {
+		...inherited,
+		delete: 'removed'
+	});
+	return problems;
+}
+
+const selfTestProblems = selfTest();
 
 const coreFailures = [];
 const coreStale = [];
@@ -670,6 +824,11 @@ if (coreStale.length > 0) {
 	for (const entry of coreStale) console.error(`  ${entry}`);
 }
 
-if (failures.length > 0 || coreFailures.length > 0 || coreStale.length > 0) process.exit(1);
+if (selfTestProblems.length > 0) {
+	console.error('FAILED — the route reader misreads a controller shape, so its reading of the tree cannot be trusted:');
+	for (const problem of selfTestProblems) console.error(`  ${problem}`);
+}
+
+if (failures.length > 0 || coreFailures.length > 0 || coreStale.length > 0 || selfTestProblems.length > 0) process.exit(1);
 
 console.log(`PASSED — ${pluginSummary}; ${coreSummary}.`);
