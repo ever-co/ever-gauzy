@@ -28,7 +28,7 @@ type ExecutedQuery = { sql: string; parameters: any[] };
  */
 function runner(
 	type: DatabaseTypeEnum,
-	description: { table?: boolean; columns?: string[]; checks?: string[] } = {}
+	description: { table?: boolean; columns?: string[]; checks?: string[]; modifyingForeignKeys?: string[] } = {}
 ): { queryRunner: QueryRunner; executed: ExecutedQuery[]; described: string[] } {
 	const executed: ExecutedQuery[] = [];
 	const described: string[] = [];
@@ -40,6 +40,11 @@ function runner(
 	const queryRunner = {
 		connection: { options: { type } },
 		query: async (sql: string, parameters: any[] = []) => {
+			// The MySQL foreign-key probe is a read, answered from the description rather than recorded as a write.
+			if (sql.includes('information_schema')) {
+				return (description.modifyingForeignKeys ?? []).map((name) => ({ name }));
+			}
+
 			executed.push({ sql, parameters });
 
 			return [];
@@ -173,5 +178,26 @@ describe('check constraint helper — the probes', () => {
 
 		expect(await dropCheckConstraint(embedded.queryRunner, DEFINITION)).toBe(false);
 		expect(embedded.executed).toEqual([]);
+	});
+});
+
+describe('check constraint helper — a rule MySQL cannot hold beside a foreign-key action', () => {
+	it('does not add a CHECK on MySQL over a column a foreign-key action modifies, and says why (3823)', async () => {
+		// MySQL >= 8.0.16 refuses a CHECK over a column an `ON DELETE SET NULL` / `SET DEFAULT` or `ON UPDATE`
+		// action rewrites (3823); adding it anyway stopped every MySQL installation at the migration.
+		const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		const mysql = runner(DatabaseTypeEnum.mysql, { columns: ['amount'], modifyingForeignKeys: ['FK_example_owner'] });
+
+		expect(await addCheckConstraint(mysql.queryRunner, DEFINITION, 'TestMigration')).toBe('unsupported');
+		expect(mysql.executed).toEqual([]);
+		expect(log.mock.calls.map((call) => String(call[0])).join(' ')).toContain('FK_example_owner');
+		log.mockRestore();
+	});
+
+	it('still adds it on PostgreSQL, which has no such restriction — control', async () => {
+		const postgres = runner(DatabaseTypeEnum.postgres, { columns: ['amount'], modifyingForeignKeys: ['FK_example_owner'] });
+
+		expect(await addCheckConstraint(postgres.queryRunner, DEFINITION, 'TestMigration')).toBe('added');
+		expect(postgres.executed.map((one) => one.sql)).toEqual([DEFINITION.postgres]);
 	});
 });
