@@ -137,11 +137,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			const taskMembers = task.members;
 
-			// Separate members into removed and new members
+			// Separate members into removed and new members. Only an update that carries `members` changes
+			// them: without it (the estimate recalculated after an estimation changes, a module or screening
+			// update, a partial PUT) every assignee used to count as removed and lost their ASSIGNMENT subscription.
+			const membersChanged = Array.isArray(data.members);
 			const memberIdSet = new Set((data.members || []).map(({ id }) => id));
 			const existingMemberIdSet = new Set((taskMembers || []).map(({ id }) => id));
 
-			const removedMembers = (taskMembers || []).filter((member) => !memberIdSet.has(member.id));
+			const removedMembers = membersChanged
+				? (taskMembers || []).filter((member) => !memberIdSet.has(member.id))
+				: [];
 			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
 			if (data.projectId && data.projectId !== task.projectId) {
