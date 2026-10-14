@@ -20,7 +20,7 @@ import { CreatePricingTables1791000000120 } from './1791000000120-CreatePricingT
 
 /** The statements one direction of the migration issues on one dialect. */
 async function statementsOf(type: DatabaseTypeEnum, direction: 'up' | 'down' = 'up'): Promise<string[]> {
-	const statements: string[] = [];
+	let statements: string[] = [];
 	const queryRunner = {
 		connection: { options: { type } },
 		query: async (sql: string) => {
@@ -44,7 +44,7 @@ const unquote = (identifier: string) => identifier.replace(/^[`"]|[`"]$/g, '');
 
 /** Splits the body of a CREATE TABLE at its top-level commas. */
 function topLevelParts(body: string): string[] {
-	const parts: string[] = [];
+	let parts: string[] = [];
 	let depth = 0;
 	let quote: string | null = null;
 	let current = '';
@@ -79,7 +79,7 @@ const CONSTRAINT_KEYWORDS = /^(CONSTRAINT|PRIMARY|INDEX|KEY|UNIQUE|FOREIGN|CHECK
  * @returns The column names declared per table.
  */
 function declaredColumns(statements: string[]): Map<string, string[]> {
-	const tables = new Map<string, string[]>();
+	let tables = new Map<string, string[]>();
 
 	for (const sql of statements) {
 		const create = /^CREATE TABLE (?:IF NOT EXISTS )?([`"]?\w+[`"]?)\s*\(([\s\S]*)\)[^)]*$/i.exec(sql.trim());
@@ -150,14 +150,14 @@ describe('CreatePricingTables1791000000120 — the statements each dialect runs 
 		// (`1215 Cannot add foreign key constraint`) — the error the run on MySQL 8.0.22 met next, once the duplicate
 		// `deletedKey` was gone: `product_price.priceListId` cascades with its list and fed the STORED `priceListKey`.
 		const statements = await statementsOf(DatabaseTypeEnum.mysql);
-		const storedBases = new Map<string, Set<string>>();
+		let storedBases = new Map<string, Set<string>>();
 
 		for (const sql of statements) {
 			const create = /^CREATE TABLE `(\w+)`\s*\(([\s\S]*)\)[^)]*$/.exec(sql.trim());
 			if (!create) {
 				continue;
 			}
-			const bases = new Set<string>();
+			let bases = new Set<string>();
 			for (const part of topLevelParts(create[2]).filter((one) =>
 				/GENERATED ALWAYS AS[\s\S]*\bSTORED$/i.test(one)
 			)) {

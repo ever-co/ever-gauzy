@@ -12,18 +12,138 @@
  * Running every plugin's migrations on all three databases is the real cure, and a much larger job. This gate is the
  * cheap one for the class that shipped: for every dialect branch of every migration (each `async` method), a
  * column named by `ALTER TABLE <t> ADD [COLUMN] <c>` after that branch's `CREATE TABLE <t> (…)` declared `<c>` is a
- * duplicate — on every database. It reads the source only, so it runs without an install.
+ * duplicate — on every database. A `CREATE TABLE` is read to its balanced closing parenthesis, however many lines it
+ * spans, and quoted text inside it is skipped. It reads the source only, so it runs without an install.
+ *
+ * Its readers are held to every statement shape by `migration-duplicate-column-check.test.mjs`.
  *
  * Run from the repository root: `node tools/scripts/migration-duplicate-column-check.mjs`
  */
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const SKIP = new Set(['node_modules', 'dist', '.angular', 'coverage', '.nx']);
 
-/** Every `*.ts` file under a `migrations` directory of `packages/` and `apps/`, specs and barrels excluded. */
+/** An identifier as a migration's source writes it: bare, double-quoted, or backtick-quoted (escaped in a template). */
+const IDENT = String.raw`\\?[\x60"]?(\w+)\\?[\x60"]?`;
+const CREATE_TABLE = new RegExp(String.raw`CREATE TABLE (?:IF NOT EXISTS )?${IDENT}\s*\(`, 'g');
+const ADD_COLUMN = new RegExp(String.raw`ALTER TABLE ${IDENT}\s+ADD (?:COLUMN )?\\?[\x60"]?(\w+)\\?[\x60"]?\s`, 'g');
+/** What a member of a CREATE TABLE starts with when it declares a constraint or an index rather than a column. */
+const NOT_A_COLUMN = /^(CONSTRAINT|PRIMARY|INDEX|KEY|UNIQUE|FOREIGN|CHECK|FULLTEXT|SPATIAL)\b/i;
+/** `ADD CONSTRAINT …`, `ADD INDEX …` and the like add no column. */
+const NOT_A_COLUMN_ADD = /^(CONSTRAINT|PRIMARY|INDEX|KEY|UNIQUE|FOREIGN|CHECK|FULLTEXT|SPATIAL)$/i;
+
+/**
+ * The text between the parenthesis at `open` and the one that balances it, skipping quoted text.
+ *
+ * @param {string} text The source.
+ * @param {number} open The index of the opening parenthesis.
+ * @returns {string | null} The body, or null when the statement never closes.
+ */
+export function balancedBody(text, open) {
+	let depth = 0;
+	let quote = null;
+
+	for (let index = open; index < text.length; index++) {
+		const char = text[index];
+
+		if (quote) {
+			if (char === quote) {
+				quote = null;
+			}
+			continue;
+		}
+		if (char === "'") {
+			quote = char;
+		} else if (char === '(') {
+			depth += 1;
+		} else if (char === ')') {
+			depth -= 1;
+			if (depth === 0) {
+				return text.slice(open + 1, index);
+			}
+		}
+	}
+
+	return null;
+}
+
+/**
+ * The columns a CREATE TABLE body declares, in order.
+ *
+ * @param {string} body The text between the statement's outer parentheses.
+ * @returns {string[]} The column names.
+ */
+export function declaredColumns(body) {
+	let parts = [];
+	let depth = 0;
+	let quote = null;
+	let current = '';
+
+	for (const char of body) {
+		if (quote) {
+			quote = char === quote ? null : quote;
+		} else if (char === "'") {
+			quote = char;
+		} else if (char === '(') {
+			depth += 1;
+		} else if (char === ')') {
+			depth -= 1;
+		} else if (char === ',' && depth === 0) {
+			parts.push(current);
+			current = '';
+			continue;
+		}
+		current += char;
+	}
+	parts.push(current);
+
+	return parts
+		.map((part) => part.trim())
+		.filter((part) => part && !NOT_A_COLUMN.test(part))
+		.map((part) => new RegExp(`^${IDENT}`).exec(part)?.[1])
+		.filter(Boolean);
+}
+
+/**
+ * Every column one migration's dialect branches add after their own CREATE TABLE already declared it.
+ *
+ * @param {string} source A migration's source.
+ * @returns {{ method: string, table: string, column: string }[]} The duplicates.
+ */
+export function findDuplicateColumnAdds(source) {
+	let duplicates = [];
+
+	// One dialect branch per method: `sqliteUpQueryRunner`, `postgresUpQueryRunner`, `mysqlUpQueryRunner`, …
+	for (const branch of source.split(/(?=(?:public|private|protected)?\s*async\s+\w+\s*\()/)) {
+		const method = /async\s+(\w+)/.exec(branch)?.[1] ?? '(module)';
+		let created = new Map();
+
+		for (const match of branch.matchAll(CREATE_TABLE)) {
+			const body = balancedBody(branch, match.index + match[0].length - 1);
+			created.set(match[1], { at: match.index, columns: new Set(body === null ? [] : declaredColumns(body)) });
+		}
+		for (const match of branch.matchAll(ADD_COLUMN)) {
+			const [, table, column] = match;
+			const declared = created.get(table);
+
+			if (
+				!NOT_A_COLUMN_ADD.test(column) &&
+				declared &&
+				match.index > declared.at &&
+				declared.columns.has(column)
+			) {
+				duplicates.push({ method, table, column });
+			}
+		}
+	}
+
+	return duplicates;
+}
+
+/** Every `*.ts` file under a `migrations` directory, specs, declarations and barrels excluded. */
 function migrationFiles(dir, inMigrations = false, found = []) {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		if (SKIP.has(entry.name)) {
@@ -45,53 +165,33 @@ function migrationFiles(dir, inMigrations = false, found = []) {
 	return found;
 }
 
-/** An identifier as a migration writes it: bare, double-quoted or backtick-quoted (escaped in a template). */
-const IDENT = String.raw`\\?[\x60"]?(\w+)\\?[\x60"]?`;
-const CREATE_TABLE = new RegExp(String.raw`CREATE TABLE (?:IF NOT EXISTS )?${IDENT}\s*\(`, 'g');
-const ADD_COLUMN = new RegExp(String.raw`ALTER TABLE ${IDENT}\s+ADD (?:COLUMN )?\\?[\x60"](\w+)\\?[\x60"]`, 'g');
-/** A column definition inside a CREATE TABLE: a quoted name right after `(` or `,`, followed by its type. */
-const COLUMN = new RegExp(String.raw`[(,]\s*\\?[\x60"](\w+)\\?[\x60"]\s+(?!\()`, 'g');
+function main() {
+	const files = ['packages', 'apps'].flatMap((top) => migrationFiles(join(ROOT, top)));
+	let findings = [];
 
-const findings = [];
-const files = ['packages', 'apps'].flatMap((top) => migrationFiles(join(ROOT, top)));
-
-for (const file of files) {
-	const source = readFileSync(file, 'utf8');
-	// One dialect branch per method: `sqliteUpQueryRunner`, `postgresUpQueryRunner`, `mysqlUpQueryRunner`, …
-	for (const branch of source.split(/(?=(?:public|private|protected)?\s*async\s+\w+\s*\()/)) {
-		const method = /async\s+(\w+)/.exec(branch)?.[1] ?? '(module)';
-		const created = new Map();
-
-		for (const match of branch.matchAll(CREATE_TABLE)) {
-			const end = branch.indexOf('\n', match.index);
-			const statement = branch.slice(match.index, end > 0 ? end : undefined);
-			created.set(match[1], {
-				at: match.index,
-				columns: new Set([...statement.matchAll(COLUMN)].map((c) => c[1]))
-			});
-		}
-		for (const match of branch.matchAll(ADD_COLUMN)) {
-			const [, table, column] = match;
-			const table_ = created.get(table);
-			if (table_ && match.index > table_.at && table_.columns.has(column)) {
-				findings.push(`${relative(ROOT, file).split(sep).join('/')} ${method}: ${table}.${column}`);
-			}
+	for (const file of files) {
+		for (const { method, table, column } of findDuplicateColumnAdds(readFileSync(file, 'utf8'))) {
+			findings.push(`${relative(ROOT, file).split(sep).join('/')} ${method}: ${table}.${column}`);
 		}
 	}
-}
 
-if (findings.length) {
-	console.error(
-		`migration duplicate column check: FAILED — ${findings.length} column(s) added by ALTER TABLE after the same ` +
-			`branch's CREATE TABLE already declared them (the database refuses the second one, e.g. MySQL 1060):`
+	if (findings.length) {
+		console.error(
+			`migration duplicate column check: FAILED — ${findings.length} column(s) added by ALTER TABLE after the same ` +
+				`branch's CREATE TABLE already declared them (the database refuses the second one, e.g. MySQL 1060):`
+		);
+		for (const finding of findings) {
+			console.error(`  - ${finding}`);
+		}
+		process.exit(1);
+	}
+
+	console.log(
+		`migration duplicate column check: PASSED — ${files.length} migration file(s), and no dialect branch adds a ` +
+			`column its own CREATE TABLE already declared.`
 	);
-	for (const finding of findings) {
-		console.error(`  - ${finding}`);
-	}
-	process.exit(1);
 }
 
-console.log(
-	`migration duplicate column check: PASSED — ${files.length} migration file(s), and no dialect branch adds a column ` +
-		`its own CREATE TABLE already declared.`
-);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+	main();
+}
