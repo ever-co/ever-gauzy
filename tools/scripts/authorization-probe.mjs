@@ -331,7 +331,11 @@ async function main() {
 	// no class-validator, so the same read of another organization's payroll was served. A random organization id
 	// is one the super administrator cannot belong to; their own (from their memberships) is the control.
 	const memberships = await call('GET', '/api/user-organization', { token, tenantId });
-	const ownOrganizationId = (memberships.json?.items ?? []).find((row) => row?.organizationId)?.organizationId;
+	// The signed-in user's own rows only: the listing is not guaranteed to be the caller's alone.
+	const adminUserId = login.json?.user?.id;
+	const ownOrganizationId = (memberships.json?.items ?? []).find(
+		(row) => row?.organizationId && row?.userId === adminUserId && row?.isActive !== false
+	)?.organizationId;
 	record(
 		'the super administrator belongs to an organization the membership check can be probed with',
 		Boolean(ownOrganizationId),
@@ -346,9 +350,11 @@ async function main() {
 			`HTTP ${foreign.status} ${errorCode(foreign)}`
 		);
 		const own = await graphql(payroll, { token, tenantId, variables: { organizationId: ownOrganizationId } });
+		// Served, not merely "not refused for membership": an unrelated error (a permission, a crash) must fail the
+		// control rather than pass it.
 		record(
-			'the same read naming the caller’s own organization is not refused for membership',
-			own.status === 200 && !/not associated with the specified organization/i.test(String(errorCode(own))),
+			'the same read naming the caller’s own organization is served',
+			own.status === 200 && !own.json?.errors?.length && own.json?.data?.payrollItems != null,
 			`HTTP ${own.status} ${errorCode(own) || 'served'}`
 		);
 	}
