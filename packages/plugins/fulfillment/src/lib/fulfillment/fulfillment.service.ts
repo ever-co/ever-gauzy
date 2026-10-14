@@ -683,7 +683,13 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	public async softRemove(id: ID, ...rest: any[]): Promise<Fulfillment> {
 		const [shipment] = await this.find({ where: removalCriteria(id) as FindOptionsWhere<Fulfillment> });
 
-		if (shipment && isCountedShipment(shipment)) {
+		// The retirement selects what the check read and nothing wider: a shipment outside the organization the
+		// request states is not retired on the strength of a check that could not see it.
+		if (!shipment) {
+			throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${id}.`);
+		}
+
+		if (isCountedShipment(shipment)) {
 			throw shipmentNotDeletable(shipment);
 		}
 

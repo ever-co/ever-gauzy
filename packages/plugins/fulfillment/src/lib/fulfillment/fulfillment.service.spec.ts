@@ -2122,6 +2122,23 @@ describe('FulfillmentService — a shipment the order line still counts is not r
 		await expect(fixture.service.delete('theirs')).resolves.toMatchObject({ affected: 1 });
 		expect(fixture.row('theirs')).toBeUndefined();
 	});
+
+	it('does not retire a counted shipment of another organization that the check could not see (Greptile)', async () => {
+		// The check reads in the organization the request states; the base retirement scopes by tenant alone. A
+		// counted shipment of another organization of the same tenant used to slip between the two and be retired.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('theirs')],
+				fulfillment_line: [shipmentLine('theirs-a', 'theirs', LINE_A, 5)]
+			}
+		});
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(UNKNOWN as never);
+
+		await expect(fixture.service.softRemove('theirs')).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.row('theirs')!.deletedAt).toBeUndefined();
+	});
 });
 
 /**

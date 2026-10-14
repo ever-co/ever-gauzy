@@ -692,6 +692,18 @@ describe('FulfillmentLineService — a correction or a removal never strands the
 		expect(fixture.row('two-a').deletedAt).toBeInstanceOf(Date);
 	});
 
+	it('does not retire a line the organization-scoped check could not see (Greptile)', async () => {
+		const fixture = lineFixture({
+			fulfillment: [shipmentOf(SHIPMENT_ONE, 'PENDING')],
+			fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)]
+		});
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(UNKNOWN as never);
+
+		await expect(fixture.service.softRemove('one-a')).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.row('one-a').deletedAt).toBeUndefined();
+	});
+
 	it('refuses a line whose shipment cannot be read, rather than guessing it counts nothing', async () => {
 		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)] });
 

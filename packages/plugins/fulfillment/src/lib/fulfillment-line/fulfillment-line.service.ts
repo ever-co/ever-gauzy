@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
@@ -180,7 +180,12 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 			withDeleted: true
 		});
 
-		if (line && isCountedShipment(line.fulfillment)) {
+		// The retirement selects what the check read and nothing wider (see `FulfillmentService.softRemove`).
+		if (!line) {
+			throw new NotFoundException(`FULFILLMENT_LINE_NOT_FOUND: no fulfilment line exists with id ${id}.`);
+		}
+
+		if (isCountedShipment(line.fulfillment)) {
 			throw lineNotDeletable(line);
 		}
 

@@ -637,7 +637,9 @@ describe('GiftCardService — the balance and the status move through the ledger
 		await service.update('gc-1', {
 			expiresAt,
 			metadata: { note: 'renewed' },
-			balance: '100',
+			// Any spelling `IsDecimalAmount` accepts restates the stored value: leading zeros, the scale, blanks.
+			balance: ' 0100.00 ',
+			initialAmount: '+100',
 			currency: 'USD',
 			status: GiftCardStatus.ACTIVE
 		} as never);

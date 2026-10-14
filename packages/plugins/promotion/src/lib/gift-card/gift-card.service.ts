@@ -4,7 +4,7 @@ import { EntityManager, FindOptionsWhere, IsNull, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { EventBus, Money, readAffectedRows, RequestContext } from '@gauzy/core';
+import { EventBus, Money, normalizeDecimalString, readAffectedRows, RequestContext } from '@gauzy/core';
 import { GiftCardRedeemedEvent } from '../events';
 import { GiftCard } from './gift-card.entity';
 import { TypeOrmGiftCardRepository } from './repository/type-orm-gift-card.repository';
@@ -391,7 +391,7 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 		id: string | number | FindOptionsWhere<GiftCard>,
 		partialEntity: QueryDeepPartialEntity<GiftCard>
 	): Promise<UpdateResult | GiftCard> {
-		const patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+		let patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
 		const named = GIFT_CARD_LEDGER_MEMBERS.filter((member) => patch[member] !== undefined);
 
 		if (named.length > 0) {
@@ -686,15 +686,19 @@ function restatesStoredValue(stored: unknown, stated: unknown): boolean {
 		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
 	}
 
-	const decimal = /^[+-]?\d+(\.\d+)?$/;
-	const canonical = (value: string) =>
-		value
-			.replace(/^\+/, '')
-			.replace(/(\.\d*?)0+$/, '$1')
-			.replace(/\.$/, '');
+	// A decimal is compared by value with the platform's own normaliser, which reads what `IsDecimalAmount` accepts
+	// (leading zeros, a sign, the column's trailing zeros, surrounding blanks); anything else is compared as text.
+	const asDecimal = (value: unknown): string | null => {
+		try {
+			return normalizeDecimalString(String(value).trim());
+		} catch {
+			return null;
+		}
+	};
+	const [held, wanted] = [asDecimal(stored), asDecimal(stated)];
 
-	if (decimal.test(String(stored)) && decimal.test(String(stated))) {
-		return canonical(String(stored)) === canonical(String(stated));
+	if (held !== null && wanted !== null) {
+		return held === wanted;
 	}
 
 	return String(stated) === String(stored);
