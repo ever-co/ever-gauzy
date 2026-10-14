@@ -108,6 +108,9 @@
 						}
 					]
 				},
+				"development": {
+					"outputHashing": "all"
+				},
 				"local": {
 					"optimization": false,
 					"buildOptimizer": false,
