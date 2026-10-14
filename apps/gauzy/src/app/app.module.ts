@@ -54,7 +54,7 @@ import {
 	WorkspaceSyncService
 } from '@gauzy/ui-core/core';
 import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
-import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
+import { SharedModule, TimeTrackerModule, provideNgSelectPanelSizing } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
@@ -211,6 +211,10 @@ const FEATURE_MODULES = [
 		// Runs core app initialization (user session, tenant, permissions, etc.).
 		AppInitService,
 		provideAppInitializer(() => inject(AppInitService).init()),
+
+		// Floors every ng-select dropdown panel at its select's width (ng-select 24 renders panels in a
+		// CDK overlay and no longer states that floor itself; see `NgSelectPanelSizingService`).
+		provideNgSelectPanelSizing(),
 
 		// Checks whether cross-tab workspace sync (BroadcastChannel) is supported.
 		WorkspaceSyncService,

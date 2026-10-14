@@ -38,8 +38,11 @@ refusal is answered rather than hidden.
 
 **A licence key leaves the service exactly once.** The plaintext is returned in
 the response to the issuance call and never again: only its SHA-256 digest — the
-lookup column — and, when the operator asked to be able to re-display it, a
-ciphertext, are stored. Nothing logs, exports or publishes it.
+lookup column — and, when the issuance asked for `storeKey`, a ciphertext, are
+stored. Nothing logs, exports or publishes it, and nothing re-displays it: a key
+is shown once, at issue (owner decision 2026-10-13), so `POST
+/api/entitlement-keys/:id/reveal` answers `410 ENTITLEMENT_KEY_SHOWN_ONCE` and a
+lost key is replaced with `/:id/reissue`.
 
 **Seat arithmetic is a count, not a counter.** The number of seats in use is the
 number of live activation rows; the counters on the tables are caches the usage
@@ -68,7 +71,8 @@ capability uses.
 - `POST /api/entitlement-activations/:id/release`, `/:id/revoke`:
   `ENTITLEMENTS_EDIT`
 - `GET /api/entitlement-keys`, `/:id`: `ENTITLEMENTS_VIEW`
-- `POST /api/entitlement-keys`, `/:id/reveal`: `ENTITLEMENTS_GRANT`
+- `POST /api/entitlement-keys`: `ENTITLEMENTS_GRANT`; `/:id/reveal` keeps that
+  grant but is refused for every key (`410 ENTITLEMENT_KEY_SHOWN_ONCE`)
 - `PUT /api/entitlement-keys/:id`, `POST /api/entitlement-keys/:id/revoke`,
   `/:id/reissue`: `ENTITLEMENTS_EDIT`
 

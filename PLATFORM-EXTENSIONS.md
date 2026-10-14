@@ -107,6 +107,12 @@ naming doctrine, the rollout plan and the task breakdown) and
 `docs/handoffs/HANDOVER-2026-09-20-gauzy-platform-extensions.md`. A reviewer
 reading only this repository sees the code without its reasoning.
 
+Two records of the design's promises do live here, because a gate keeps each
+one true against the composed schema:
+[`docs/platform-extensions/design-name-triage.md`](docs/platform-extensions/design-name-triage.md)
+— every root field the design named and nothing served, with its decision
+(`tools/scripts/design-name-triage-check.mjs`).
+
 ## Verifying it
 
 The branch is developed and verified against a local installation — SQLite,
