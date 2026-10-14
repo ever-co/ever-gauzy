@@ -1,5 +1,5 @@
 import { QueryRunner } from 'typeorm';
-import { AddWarehouseSellerColumn1791000000436 } from './1791000000436-AddWarehouseSellerColumn';
+import { AddWarehouseSellerColumn1791000000436 } from './migrations/1791000000436-AddWarehouseSellerColumn';
 
 /**
  * On PostgreSQL a statement that fails aborts the migration's transaction: every later statement, TypeORM's own

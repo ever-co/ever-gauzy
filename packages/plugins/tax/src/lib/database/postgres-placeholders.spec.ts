@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { CreateTaxRatePartTable1791000000145 } from './1791000000145-CreateTaxRatePartTable';
-import { CreateTaxRegimeTables1791000000146 } from './1791000000146-CreateTaxRegimeTables';
+import { CreateTaxRatePartTable1791000000145 } from './migrations/1791000000145-CreateTaxRatePartTable';
+import { CreateTaxRegimeTables1791000000146 } from './migrations/1791000000146-CreateTaxRegimeTables';
 
 /**
  * node-postgres binds parameters as `$1`, `$2`, …; a `?` reaches the server as SQL and is a syntax error there. The
