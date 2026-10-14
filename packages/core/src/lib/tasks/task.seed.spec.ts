@@ -1,9 +1,9 @@
 import '../core/entities/internal';
 
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Employee, Organization, OrganizationProject, OrganizationTeam, User } from '../core/entities/internal';
 import { SEED_SAMPLE_ISSUES } from './task-seed-issues';
-import { createRandomTask, GITHUB_API_URL } from './task.seed';
+import { createRandomTask, GITHUB_API_URL, loadSeedIssues } from './task.seed';
 
 // The GitHub issues request, answered per test
 const get = jest.fn();
@@ -80,5 +80,33 @@ describe('createRandomTask when GitHub refuses the issues request', () => {
 		);
 		expect(saved.map((task) => task.title)).toEqual(SEED_SAMPLE_ISSUES.map((issue) => issue.title));
 		expect(saved.every((task) => task.project === project && task.tags.length > 0)).toBe(true);
+	});
+});
+
+describe('loadSeedIssues', () => {
+	const answering = (data: unknown) => ({ get: jest.fn(() => of({ data })) });
+
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('hands back the issues GitHub answers, unchanged', async () => {
+		const issues = [
+			{
+				title: 'From GitHub',
+				body: '',
+				state: 'open',
+				labels: [{ name: 'bug', description: '', color: 'd73a4a' }]
+			}
+		];
+
+		expect(await loadSeedIssues(answering(issues) as never)).toBe(issues);
+	});
+
+	it('falls back to the sample issues when GitHub answers none', async () => {
+		expect(await loadSeedIssues(answering([]) as never)).toBe(SEED_SAMPLE_ISSUES);
 	});
 });
