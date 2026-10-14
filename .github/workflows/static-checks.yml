@@ -347,6 +347,14 @@ jobs:
         if: always()
         run: node tools/scripts/graphql-write-parity-check.mjs
 
+      # GraphQL runs no class-validator, so the organization-membership rule REST's DTOs state with
+      # `@IsOrganizationBelongsToUser()` (GHSA-44pv-34gx-q9p4) is applied to every GraphQL operation by one global
+      # interceptor (R7-03). This gate keeps it global and early, and fails when a @Public() field that takes an
+      # organizationId — the one kind the interceptor skips — appears without a reviewed exemption.
+      - name: Every GraphQL field that names an organization runs the membership rule
+        if: always()
+        run: node tools/scripts/graphql-organization-membership-check.mjs
+
       # Every range a workspace declares must be a key of yarn.lock. Thirteen commerce plugins asked for
       # `@nestjs/graphql@^13.0.0` while the lockfile resolved only core's `^13.4.2`: a `--frozen-lockfile`
       # install refused the branch, and a plain one hoisted a second copy of the package, so the API failed
