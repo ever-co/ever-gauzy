@@ -1912,6 +1912,73 @@ describe('OrderTotalsService — the re-derivation inside the caller’s transac
 		expect(await rowOf('order_line', 'line-1')).toMatchObject({ fulfilledQuantity: 0 });
 	});
 
+	/**
+	 * Greptile on #10555: inside a transaction a plain read is a snapshot, and on MySQL's default `REPEATABLE READ`
+	 * it is the snapshot of the transaction's first read — so a retry after a lost version race would read the
+	 * version that lost again. On the dialects that have row locks the order is read `FOR UPDATE`, which reads
+	 * the latest committed row and holds it; on SQLite, which has none (and where TypeORM refuses the option),
+	 * nothing is asked for. The store here is SQLite, so the lock is recorded and then stripped before the read.
+	 */
+	it.each([
+		['mysql', true],
+		['postgres', true],
+		['better-sqlite3', false]
+	])('reads the order it re-derives under a row lock where the dialect has one (%s)', async (type, locks) => {
+		const { service } = transactionalService();
+		const reads: unknown[] = [];
+
+		await dataSource.transaction(async (manager: any) => {
+			const reporting = new Proxy(manager, {
+				get(target, property) {
+					if (property === 'connection') {
+						return { options: { type } };
+					}
+
+					if (property === 'getRepository') {
+						return (entity: unknown) => {
+							const repository = target.getRepository(entity);
+
+							return new Proxy(repository, {
+								get(inner, member) {
+									if (member === 'findOne' && entity === Order) {
+										return (options: any) => {
+											reads.push(options);
+
+											const { lock, ...rest } = options ?? {};
+
+											return inner.findOne(rest);
+										};
+									}
+
+									const value = inner[member];
+
+									return typeof value === 'function' ? value.bind(inner) : value;
+								}
+							});
+						};
+					}
+
+					const value = target[property];
+
+					return typeof value === 'function' ? value.bind(target) : value;
+				}
+			});
+
+			await service.recompute('order-1', 'FULFILLMENT_COMMITTED', { manager: reporting });
+		});
+
+		expect(reads.length).toBeGreaterThan(0);
+		for (const read of reads as any[]) {
+			if (locks) {
+				expect(read.lock).toEqual({ mode: 'pessimistic_write' });
+			} else {
+				expect(read.lock).toBeUndefined();
+			}
+		}
+		expect(await rowOf('order', 'order-1')).toMatchObject({ version: 2 });
+		expect(outside).toEqual({});
+	});
+
 	it('refuses a transaction of the other ORM rather than writing outside it', async () => {
 		const { service } = transactionalService();
 		const mikroOrmFork = { getUnitOfWork: () => undefined, nativeUpdate: async () => 0 };
@@ -1947,4 +2014,267 @@ describe('OrderTotalsService — the re-derivation inside the caller’s transac
 		expect(fixture.order.version).toBe(2);
 		expect(fixture.summaries).toHaveLength(1);
 	});
+});
+
+/**
+ * The same half of ADR-26 on a MikroORM installation, against a real MikroORM transaction (Greptile on #10555).
+ *
+ * MikroORM joins a transaction through its context: the platform's repositories are bound to the global entity
+ * manager, and `EntityManager.getContext()` resolves to the transaction context when one is set. `recompute`
+ * therefore runs a MikroORM caller's re-derivation inside `TransactionContext.create(fork, …)` rather than
+ * threading the manager by hand. The collaborators here are what the platform's are on that ORM — reads and
+ * writes on the **global** manager — over a real in-memory SQLite store, and the caller opens its transaction
+ * with `begin()` on a fork, which sets no context of its own: so the only thing that can route the
+ * re-derivation's statements into the caller's transaction is the context `recompute` sets. SQLite gives
+ * MikroORM a pool of one connection, so a statement that escaped the transaction would not be silently
+ * committed beside it — it would wait for the connection the transaction holds, and the case would time out.
+ */
+describe('OrderTotalsService — a MikroORM caller’s transaction, for real (ADR-26, §7.65 item 22)', () => {
+	class MOrder {
+		id!: string;
+		tenantId?: string;
+		organizationId?: string;
+		channelId?: string;
+		currency!: string;
+		currencyDecimals!: number;
+		status!: string;
+		paymentStatus!: string;
+		fulfillmentStatus!: string;
+		version!: number;
+		sellerCount?: number;
+		promisedAt?: Date | null;
+	}
+	class MLine {
+		id!: string;
+		orderId!: string;
+		quantity!: number;
+		unitPrice!: number;
+		isTaxInclusive!: boolean;
+		requiresShipping!: boolean;
+		fulfilledQuantity!: number;
+		writtenOffQuantity!: number;
+		returnDismissedQuantity!: number;
+		returnReceivedQuantity!: number;
+	}
+	class MSummary {
+		id!: string;
+		orderId!: string;
+		version!: number;
+		reason!: string;
+	}
+	class MEvent {
+		id!: string;
+		eventName!: string;
+		aggregateId!: string;
+	}
+
+	const money = Object.fromEntries(TOTAL_COLUMNS.map((column) => [column, { type: 'double', nullable: true }]));
+	const schemas = [
+		new MikroEntitySchema<MOrder>({
+			class: MOrder,
+			tableName: 'tx_order',
+			properties: {
+				id: { type: 'string', primary: true },
+				tenantId: { type: 'string', nullable: true },
+				organizationId: { type: 'string', nullable: true },
+				channelId: { type: 'string', nullable: true },
+				currency: { type: 'string' },
+				currencyDecimals: { type: 'number' },
+				status: { type: 'string' },
+				paymentStatus: { type: 'string' },
+				fulfillmentStatus: { type: 'string' },
+				version: { type: 'number' },
+				sellerCount: { type: 'number', nullable: true },
+				promisedAt: { type: 'Date', nullable: true },
+				...(money as any)
+			}
+		}),
+		new MikroEntitySchema<MLine>({
+			class: MLine,
+			tableName: 'tx_order_line',
+			properties: {
+				id: { type: 'string', primary: true },
+				orderId: { type: 'string' },
+				quantity: { type: 'double' },
+				unitPrice: { type: 'double' },
+				isTaxInclusive: { type: 'boolean' },
+				requiresShipping: { type: 'boolean' },
+				fulfilledQuantity: { type: 'double' },
+				writtenOffQuantity: { type: 'double' },
+				returnDismissedQuantity: { type: 'double' },
+				returnReceivedQuantity: { type: 'double' }
+			}
+		}),
+		new MikroEntitySchema<MSummary>({
+			class: MSummary,
+			tableName: 'tx_order_summary',
+			properties: {
+				id: { type: 'string', primary: true },
+				orderId: { type: 'string' },
+				version: { type: 'number' },
+				reason: { type: 'string' }
+			}
+		}),
+		new MikroEntitySchema<MEvent>({
+			class: MEvent,
+			tableName: 'tx_event_outbox',
+			properties: {
+				id: { type: 'string', primary: true },
+				eventName: { type: 'string' },
+				aggregateId: { type: 'string' }
+			}
+		})
+	];
+
+	let txOrm: MikroORM;
+	let sequence = 0;
+
+	beforeAll(async () => {
+		txOrm = await MikroORM.init({
+			driver: BetterSqliteDriver,
+			dbName: ':memory:',
+			entities: schemas,
+			allowGlobalContext: true,
+			discovery: { warnWhenNoEntities: false }
+		});
+		await txOrm.getSchemaGenerator().createSchema();
+	});
+
+	afterAll(async () => {
+		await txOrm?.close(true);
+	});
+
+	beforeEach(async () => {
+		const em = txOrm.em.fork();
+
+		for (const schema of [MEvent, MSummary, MLine, MOrder]) {
+			await em.nativeDelete(schema as never, {});
+		}
+
+		await em.insert(MOrder, {
+			id: 'order-1',
+			tenantId: 'tenant-1',
+			organizationId: 'org-1',
+			channelId: 'channel-1',
+			currency: 'USD',
+			currencyDecimals: 2,
+			status: OrderStatus.PROCESSING,
+			paymentStatus: OrderPaymentStatus.NOT_PAID,
+			fulfillmentStatus: FulfillmentStatus.NOT_FULFILLED,
+			version: 1
+		} as never);
+		await em.insert(MLine, {
+			id: 'line-1',
+			orderId: 'order-1',
+			quantity: 2,
+			unitPrice: 10,
+			isTaxInclusive: false,
+			requiresShipping: true,
+			fulfilledQuantity: 0,
+			writtenOffQuantity: 0,
+			returnDismissedQuantity: 0,
+			returnReceivedQuantity: 0
+		} as never);
+	});
+
+	/**
+	 * @returns The service, its collaborators bound to the global entity manager as the platform's repositories
+	 * are on MikroORM — every read and write resolves the manager's context when it runs.
+	 */
+	function mikroOrmService() {
+		const em = txOrm.em;
+		const fresh = { disableIdentityMap: true } as const;
+		const nothing = { findAll: async () => ({ items: [], total: 0 }), find: async () => [] };
+		const orderWriter = {
+			update: async (criteria: any, patch: any) => ({ affected: await em.nativeUpdate(MOrder, criteria, patch) }),
+			findOneByIdString: async (id: string) => {
+				const order = await em.findOne(MOrder, { id }, fresh);
+
+				if (!order) {
+					throw new Error(`ORDER_NOT_FOUND: ${id}`);
+				}
+
+				return order;
+			},
+			find: async (options: any = {}) => em.find(MOrder, options.where ?? {}, { ...fresh, limit: options.take })
+		};
+
+		return new OrderTotalsService(
+			{ manager: { name: 'typeorm-manager' } } as never,
+			{
+				findAll: async ({ where }: any) => {
+					const items = await em.find(MLine, where, fresh);
+
+					return { items, total: items.length };
+				}
+			} as never,
+			nothing as never,
+			nothing as never,
+			nothing as never,
+			{
+				append: async (entry: any) =>
+					em.insert(MSummary, { id: `summary-${++sequence}`, orderId: entry.orderId, version: entry.version, reason: entry.reason })
+			} as never,
+			{ findByOwner: async () => [] } as never,
+			{ findByOwner: async () => [] } as never,
+			{
+				mikroOrmEventOutboxRepository: { getEntityManager: () => em },
+				append: async (manager: any, input: any) =>
+					manager.insert(MEvent, { id: `event-${++sequence}`, eventName: input.name, aggregateId: input.aggregateId })
+			} as never,
+			{ get: () => orderWriter } as never,
+			{ usesMikroOrm: true, run: (work: () => Promise<unknown>) => work() } as never
+		);
+	}
+
+	/** What the store holds once nothing is open: the order, and how many summary and event rows exist. */
+	const committed = async () => {
+		const em = txOrm.em.fork();
+
+		return {
+			order: await em.findOne(MOrder, { id: 'order-1' }, { disableIdentityMap: true }),
+			summaries: await em.count(MSummary, {}),
+			events: await em.count(MEvent, {})
+		};
+	};
+
+	it(
+		'derives the order from the caller’s uncommitted move, and commits with it',
+		async () => {
+			const service = mikroOrmService();
+			const tx = txOrm.em.fork();
+
+			await tx.begin();
+			await tx.nativeUpdate(MLine, { id: 'line-1' }, { fulfilledQuantity: 2 });
+			await service.recompute('order-1', 'FULFILLMENT_COMMITTED', { manager: tx as never, event: { name: 'order.fulfilled' } });
+			await tx.commit();
+
+			expect(await committed()).toMatchObject({
+				order: { version: 2, fulfillmentStatus: FulfillmentStatus.FULFILLED },
+				summaries: 1,
+				events: 1
+			});
+		},
+		30_000
+	);
+
+	it(
+		'rolls back with the caller: the version, the summary row and the event leave with the move',
+		async () => {
+			const service = mikroOrmService();
+			const tx = txOrm.em.fork();
+
+			await tx.begin();
+			await tx.nativeUpdate(MLine, { id: 'line-1' }, { fulfilledQuantity: 2 });
+			await service.recompute('order-1', 'FULFILLMENT_COMMITTED', { manager: tx as never, event: { name: 'order.fulfilled' } });
+			await tx.rollback();
+
+			expect(await committed()).toMatchObject({
+				order: { version: 1, fulfillmentStatus: FulfillmentStatus.NOT_FULFILLED },
+				summaries: 0,
+				events: 0
+			});
+		},
+		30_000
+	);
 });

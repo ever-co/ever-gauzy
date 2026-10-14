@@ -103,6 +103,28 @@ const FULFILLMENT_COMMITTED = 'FULFILLMENT_COMMITTED';
 const RECOMPUTE_ATTEMPTS = 3;
 
 /**
+ * The row lock a transaction's read of the row it is about to write takes, where the dialect has one.
+ *
+ * Inside a transaction a plain read is a snapshot: on MySQL's default `REPEATABLE READ` it is the snapshot of
+ * the transaction's first read, so a row another transaction changed and committed since is still read as it
+ * was — the version a conditional write is then predicated on is stale, the write matches nothing, and the
+ * conflict's own read-back sees the same stale row. A locking read (`SELECT … FOR UPDATE`) reads the latest
+ * committed row and holds it until the transaction ends, so two cancelations of one shipment queue on it and the second sees the first. PostgreSQL and MySQL have it; SQLite has
+ * no row locks (TypeORM refuses the option there) and serialises writers on its one connection instead, which
+ * is the lock.
+ *
+ * @param manager The transaction's manager.
+ * @returns The find option that takes the lock, or nothing where the dialect has none.
+ */
+function rowLockOf(manager: EntityManager): { lock?: { mode: 'pessimistic_write' } } {
+	const type = String((manager?.connection?.options as { type?: string } | undefined)?.type ?? '');
+
+	return ['postgres', 'cockroachdb', 'mysql', 'mariadb', 'aurora-mysql'].includes(type)
+		? { lock: { mode: 'pessimistic_write' } }
+		: {};
+}
+
+/**
  * Whether an error is the concurrency kernel's refusal of a write predicated on a version that moved on.
  *
  * @param error What a conditional write threw.
@@ -986,11 +1008,18 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	private transactionWriter(manager: EntityManager): IVersionedWriter<Fulfillment> {
 		const shipments = manager.getRepository(Fulfillment);
 		const tenantId = RequestContext.currentTenantId();
+		// Read under a row lock where the dialect has one (see `rowLockOf`): two cancelations of one shipment
+		// then queue on the row, and the second reads it `CANCELED` and is the documented no-op, instead of
+		// reading a snapshot that still says `PENDING` and answering a conflict.
+		const locked = rowLockOf(manager);
 
 		return {
 			update: (criteria, partial) => shipments.update(criteria as never, partial as never),
 			findOneByIdString: async (id) => {
-				const shipment = await shipments.findOne({ where: { id, ...(tenantId ? { tenantId } : {}) } as never });
+				const shipment = await shipments.findOne({
+					where: { id, ...(tenantId ? { tenantId } : {}) },
+					...locked
+				} as never);
 
 				if (!shipment) {
 					throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${id}.`);
@@ -1136,7 +1165,9 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		const tenantId = RequestContext.currentTenantId();
 		const scoped = { id: orderLineId, ...(tenantId ? { tenantId } : {}) };
 		const line: IOrderLine = manager
-			? await manager.getRepository(OrderLine).findOne({ where: scoped as never })
+			? // Under a row lock where the dialect has one: the counter is read, moved in JavaScript and written back,
+			  // and on MySQL a plain read inside the transaction is a snapshot another cancelation may have outdated.
+			  await manager.getRepository(OrderLine).findOne({ where: scoped, ...rowLockOf(manager) } as never)
 			: await this.orderLineService.findOneByIdString(orderLineId);
 
 		if (!line) {

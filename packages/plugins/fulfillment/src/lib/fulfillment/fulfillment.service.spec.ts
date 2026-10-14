@@ -1766,6 +1766,55 @@ describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)
 		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
 	});
 
+	it.each([
+		['mysql', true],
+		['postgres', true],
+		['better-sqlite3', false]
+	])('reads the shipment and its order line under a row lock where the dialect has one (%s)', async (type, locks) => {
+		// Greptile on #10555: on MySQL's `REPEATABLE READ` a plain read inside the transaction is a snapshot, so
+		// the loser of two concurrent cancelations would read the shipment `PENDING` after the winner committed and
+		// answer a conflict instead of the no-op. Read `FOR UPDATE`, the second cancelation queues on the row and
+		// reads it `CANCELED`. SQLite has no row locks and is asked for none.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+		// Only the reads made on the transaction's manager are recorded: the cancelation's first read of the
+		// shipment is made before the transaction opens, through the service's own repository, and takes no lock.
+		const reads: Array<[string, Row]> = [];
+		const getRepository = fixture.transactionManager.getRepository;
+
+		(fixture.transactionManager as Row).getRepository = (entity: unknown) => {
+			const repository = getRepository(entity) as Row;
+
+			if (entity !== Fulfillment) {
+				return repository;
+			}
+
+			return {
+				...repository,
+				findOne: async (options: Row = {}) => {
+					reads.push(['fulfillment', options]);
+
+					return repository.findOne(options);
+				}
+			};
+		};
+		(fixture.transactionManager as Row).connection = { options: { type } };
+
+		await fixture.service.cancel('pending');
+
+		const shipmentReads = reads.filter(([name]) => name === 'fulfillment');
+		expect(shipmentReads.length).toBeGreaterThan(0);
+		for (const [, options] of shipmentReads) {
+			expect(options.lock).toEqual(locks ? { mode: 'pessimistic_write' } : undefined);
+		}
+		expect(fixture.row('pending').status).toBe(FulfillmentStatusDetail.CANCELED);
+	});
+
 	it('rolls the cancelation back when the order cannot be re-derived, and says so', async () => {
 		// The opposite of the second-write shape, and the point of the change: nothing has committed when the
 		// re-derivation fails, so the caller is told the truth — the shipment is still pending — rather than a

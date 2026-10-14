@@ -563,8 +563,12 @@ export class OrderTotalsService {
 		const scope = (order: Order): Record<string, unknown> => (order.tenantId ? { tenantId: order.tenantId } : {});
 		const ownerOrder = { createdAt: 'ASC', id: 'ASC' } as const;
 
+		// The order is read under a row lock where the dialect has one (see `rowLockOf`): it is the row this
+		// re-derivation writes, and a retry after a lost race has to see the version that won.
+		const locked = rowLockOf(manager);
+
 		return {
-			order: (orderId) => manager.getRepository(Order).findOne({ where: { id: orderId } }),
+			order: (orderId) => manager.getRepository(Order).findOne({ where: { id: orderId }, ...locked } as never),
 			lines: (order) =>
 				manager.getRepository(OrderLine).find({ where: { orderId: order.id, ...scope(order) } as never }),
 			shippingMethods: (order) =>
@@ -601,10 +605,12 @@ export class OrderTotalsService {
 	private transactionOrderWriter(manager: EntityManager): IVersionedWriter<Order> {
 		const orders = manager.getRepository(Order);
 
+		const locked = rowLockOf(manager);
+
 		return {
 			update: (criteria, patch) => orders.update(criteria as never, patch as never),
 			findOneByIdString: async (id) => {
-				const order = await orders.findOne({ where: { id } });
+				const order = await orders.findOne({ where: { id }, ...locked } as never);
 
 				if (!order) {
 					throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${id}.`);
@@ -1571,6 +1577,28 @@ function orderIdOf(row: { orderId?: ID; order?: unknown }): ID | undefined {
 	}
 
 	return (row.order as { id?: ID } | null | undefined)?.id ?? undefined;
+}
+
+/**
+ * The row lock a transaction's read of the row it is about to write takes, where the dialect has one.
+ *
+ * Inside a transaction a plain read is a snapshot: on MySQL's default `REPEATABLE READ` it is the snapshot of
+ * the transaction's first read, so a row another transaction changed and committed since is still read as it
+ * was — the version a conditional write is then predicated on is stale, the write matches nothing, and the
+ * conflict's own read-back sees the same stale row. A locking read (`SELECT … FOR UPDATE`) reads the latest
+ * committed row and holds it until the transaction ends, so the version the re-derivation reads is the one its update is predicated on. PostgreSQL and MySQL have it; SQLite has
+ * no row locks (TypeORM refuses the option there) and serialises writers on its one connection instead, which
+ * is the lock.
+ *
+ * @param manager The transaction's manager.
+ * @returns The find option that takes the lock, or nothing where the dialect has none.
+ */
+function rowLockOf(manager: EntityManager): { lock?: { mode: 'pessimistic_write' } } {
+	const type = String((manager?.connection?.options as { type?: string } | undefined)?.type ?? '');
+
+	return ['postgres', 'cockroachdb', 'mysql', 'mariadb', 'aurora-mysql'].includes(type)
+		? { lock: { mode: 'pessimistic_write' } }
+		: {};
 }
 
 /**
