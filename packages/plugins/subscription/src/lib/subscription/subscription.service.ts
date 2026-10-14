@@ -7,7 +7,8 @@ import {
 	CurrencyCode,
 	DecimalString,
 	ID,
-	IdempotencyOutcome
+	IdempotencyOutcome,
+	IdempotencyStatus
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
@@ -577,7 +578,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				// Any other was charged and awaits a retry: it keeps its period and its retry schedule — it
 				// cannot move (it records an attempt), and starting another period would leave it behind
 				// and open a new cycle that skips its retries — so resuming only lifts the pause.
-				const restart = !opening || this.isUntouched(opening);
+				// A charge still running has not recorded its order or attempt yet, so its cycle reads untouched;
+				// the billing claim it holds on the period is what shows it. Moving the cycle then would let the
+				// returning charge settle a cycle on another period, so the period stays, as for a retry.
+				const restart = (!opening || this.isUntouched(opening)) && !(await this.chargeInFlight(subscription));
 				const settled = !!opening && SETTLED_CYCLE_STATUSES.includes(opening.status);
 				const periodEnd = new Date(subscription.currentPeriodEnd as Date);
 
@@ -2288,6 +2292,26 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		return subscription.currentPeriodStart
 			? await this.billingService.findByPeriod(subscription.id, new Date(subscription.currentPeriodStart), manager)
 			: null;
+	}
+
+	/**
+	 * Whether a billing pass holds the claim on the subscription's current period and has not completed it — a charge
+	 * of that period is running (or was left by a pass that stopped; the next pass takes it over).
+	 *
+	 * @param subscription The subscription, as read.
+	 * @returns True when the period's billing claim is in progress.
+	 */
+	private async chargeInFlight(subscription: Subscription): Promise<boolean> {
+		if (!subscription.currentPeriodStart) {
+			return false;
+		}
+
+		const claim = await this.idempotencyService.findByKey(
+			BILLING_SCOPE,
+			`${subscription.id}:${new Date(subscription.currentPeriodStart).toISOString()}`
+		);
+
+		return claim?.status === IdempotencyStatus.IN_PROGRESS;
 	}
 
 	/**

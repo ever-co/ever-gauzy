@@ -651,6 +651,12 @@ function subscriptionFixture(
 		complete: async (record: Row, response: Row) => {
 			record.response = { status: response.responseStatus, body: response.responseBody, ...response };
 		},
+		/** The stored claim, with the status the platform's row carries: completed once it has a response. */
+		findByKey: async (scope: string, key: string) => {
+			const record = records.get(`${scope}:${key}`);
+
+			return record ? { ...record, status: record.response ? 'COMPLETED' : 'IN_PROGRESS' } : null;
+		},
 		/** Models a restarted store: the claims are gone, the rows the store protected are not. */
 		forget: () => records.clear(),
 		/** Models the passage of time, which is what ages a lock out between two attempts. */
@@ -2915,6 +2921,35 @@ describe('SubscriptionService — the opening period is billed, from creation to
 
 		// The paid period runs out first: the next run bills the period after it.
 		expect(resumed).toMatchObject({ status: SubscriptionStatus.ACTIVE, currentPeriodStart: start, nextBillingAt: end });
+	});
+
+	it('keeps the opening period when its charge is still running as the subscription is resumed', async () => {
+		// Greptile on #10635: a charge still running has not recorded its order or attempt yet, so its cycle
+		// reads untouched; moving it would let the returning charge settle a cycle on another period while
+		// the subscription is written back onto the old one. The billing claim it holds is what shows it.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			activate: true,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const start = new Date(created.currentPeriodStart as Date);
+		const [opening] = fixture.billings(created.id);
+
+		// The billing pass's claim on the opening period, taken and not yet completed.
+		await fixture.idempotencyService.claim({
+			scope: 'subscription.bill',
+			key: `${created.id}:${start.toISOString()}`,
+			requestHash: 'running-charge'
+		});
+		await fixture.service.pause(created.id, { reason: 'customer asked' });
+		const resumed = await fixture.service.resume(created.id, new Date(start.getTime() + 10 * 24 * 60 * 60 * 1000));
+
+		expect(resumed).toMatchObject({ status: SubscriptionStatus.ACTIVE, currentPeriodStart: start, nextBillingAt: start });
+		expect(fixture.billings(created.id)).toEqual([expect.objectContaining({ id: opening.id, periodStart: start })]);
 	});
 
 	it('refuses the activation when the opening cycle was charged between its read and its move', async () => {

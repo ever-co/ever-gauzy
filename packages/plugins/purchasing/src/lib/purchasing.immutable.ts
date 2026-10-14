@@ -8,8 +8,9 @@ import { restatesStoredValue } from '@gauzy/common';
  * not a change either, so a client that sends a whole row back with one descriptive member edited is not refused
  * for the members it did not touch. What counts as the value already held is `restatesStoredValue`'s rule
  * (`@gauzy/common`): a date is compared as an instant, because a column reads back as a `Date` while a body states an
- * ISO string; everything else this is used for — identifiers and enumerations — is compared as text, and a body
- * value that only stringifies to the stored one (an array holding it) is a change.
+ * ISO string; everything else this is used for — identifiers and enumerations — is compared as exact text, and a
+ * body value that only stringifies to the stored one (an array holding it) is a change. None of these members is an
+ * amount, so no value is read as a decimal: a batch number `"10"` and `"10.0"` are two batches.
  *
  * @param stored The row as it is stored.
  * @param patch The members a caller asked to write.
@@ -22,9 +23,12 @@ export function movedMembers(
 	members: readonly string[]
 ): string[] {
 	return members.filter(
-		(member) => patch[member] !== undefined && !restatesStoredValue(stored[member], patch[member])
+		(member) => patch[member] !== undefined && !restatesStoredValue(stored[member], patch[member], AS_TEXT)
 	);
 }
+
+/** Reads no value as a decimal, so two decimal-looking identifiers are compared as the text they are. */
+const AS_TEXT = { decimal: () => null };
 
 
 /**
