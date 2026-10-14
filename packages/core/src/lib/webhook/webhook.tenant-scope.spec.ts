@@ -112,6 +112,9 @@ interface IFixture {
 	foreignSubscriptionId: string;
 	ownDeliveryId: string;
 	foreignDeliveryId: string;
+	/** Tenant A's tenant-wide subscription and delivery (no organization). */
+	tenantWideSubscriptionId: string;
+	tenantWideDeliveryId: string;
 }
 
 /** Acts as a signed-in user of one tenant and, optionally, one organization. */
@@ -163,6 +166,13 @@ async function openFixture(): Promise<IFixture> {
 		url: 'https://a.example.com/hooks',
 		events: ['order.placed']
 	});
+	// A caller of tenant A with no organization selected writes a tenant-wide subscription.
+	actAs(TENANT_A, null);
+	const tenantWide = await subscriptionService.createSubscription({
+		name: 'A tenant-wide',
+		url: 'https://a.example.com/tenant-wide',
+		events: ['*']
+	});
 	actAs(TENANT_B, ORG_B1);
 	const foreign = await subscriptionService.createSubscription({
 		name: 'B orders',
@@ -199,6 +209,19 @@ async function openFixture(): Promise<IFixture> {
 		organizationId: ORG_B1
 	});
 
+	const tenantWideDelivery = await deliveryRows.save({
+		subscriptionId: tenantWide.subscription.id,
+		eventId: 'e0000000-0000-4000-8000-00000000000c',
+		eventName: 'tenant.updated',
+		payload: { data: {} },
+		status: WebhookDeliveryStatus.DELIVERED,
+		attemptCount: 1,
+		responseStatus: 200,
+		responseBody: 'A tenant-wide answer',
+		tenantId: TENANT_A,
+		organizationId: null
+	});
+
 	return {
 		dataSource,
 		subscriptionRows,
@@ -213,7 +236,9 @@ async function openFixture(): Promise<IFixture> {
 		ownSubscriptionId: String(own.subscription.id),
 		foreignSubscriptionId: String(foreign.subscription.id),
 		ownDeliveryId: String(ownDelivery.id),
-		foreignDeliveryId: String(foreignDelivery.id)
+		foreignDeliveryId: String(foreignDelivery.id),
+		tenantWideSubscriptionId: String(tenantWide.subscription.id),
+		tenantWideDeliveryId: String(tenantWideDelivery.id)
 	};
 }
 
@@ -316,6 +341,57 @@ describe('webhook id-addressed operations are scoped to the caller (R1-01, R1-02
 			await expect(fixture.rest.subscriptions.findById(fixture.foreignSubscriptionId)).rejects.toBeInstanceOf(
 				NotFoundException
 			);
+		});
+	});
+
+	describe('a caller with a tenant but no organization selected', () => {
+		it('lists and addresses only the tenant-wide subscriptions, not an organization’s', async () => {
+			actAs(TENANT_A, null);
+
+			const listed = (await fixture.rest.subscriptions.findAll({} as never)).items.map((row) => row.id);
+			expect(listed).toEqual([fixture.tenantWideSubscriptionId]);
+			expect((await fixture.rest.subscriptions.findById(fixture.tenantWideSubscriptionId)).name).toBe(
+				'A tenant-wide'
+			);
+			await expect(fixture.rest.subscriptions.findById(fixture.ownSubscriptionId)).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			expect(await fixture.graphql.webhookSubscription(fixture.foreignSubscriptionId)).toBeNull();
+
+			// Control: the organization's caller does not see the tenant-wide row either — one set per scope.
+			actAs(TENANT_A, ORG_A1);
+			await expect(fixture.rest.subscriptions.findById(fixture.tenantWideSubscriptionId)).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+		});
+
+		it('lists and addresses only the tenant-wide deliveries', async () => {
+			actAs(TENANT_A, null);
+
+			const listed = (await fixture.rest.deliveries.findAll({} as never)).items.map((row) => row.id);
+			expect(listed).toEqual([fixture.tenantWideDeliveryId]);
+			expect((await fixture.rest.deliveries.findById(fixture.tenantWideDeliveryId)).responseBody).toBe(
+				'A tenant-wide answer'
+			);
+			await expect(fixture.rest.deliveries.findById(fixture.ownDeliveryId)).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(fixture.rest.deliveries.redeliver(fixture.foreignDeliveryId)).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+		});
+	});
+
+	describe('a caller with no tenant', () => {
+		it('lists nothing on either resource, over either protocol', async () => {
+			actAs(null, null);
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-without-tenant' } as never);
+
+			expect((await fixture.rest.subscriptions.findAll({} as never)).items).toEqual([]);
+			expect((await fixture.rest.deliveries.findAll({} as never)).items).toEqual([]);
+			expect((await fixture.graphql.webhookSubscriptions()).totalCount).toBe(0);
+			expect((await fixture.graphql.webhookDeliveries()).totalCount).toBe(0);
+			expect(await fixture.graphql.webhookDelivery(fixture.foreignDeliveryId)).toBeNull();
 		});
 	});
 
