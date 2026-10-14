@@ -355,7 +355,7 @@ export class WebhookResolver {
 	@Mutation('deleteWebhookSubscription')
 	@Permissions(PermissionsEnum.WEBHOOKS_DELETE)
 	async deleteWebhookSubscription(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		return deleteRemovedRows(await this.webhookSubscriptionService.delete(id));
+		return deleteRemovedRows(await this.webhookSubscriptionService.deleteSubscription(id));
 	}
 
 	/**
