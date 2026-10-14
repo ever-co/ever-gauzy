@@ -14,6 +14,17 @@ import {
 	resolveExpectedVersion
 } from './version.util';
 
+/**
+ * What a conditional write needs from the record's owner: an update by criteria that reports how many rows
+ * it changed, and a read of one record by id that answers `NotFoundException` for a record that is not there.
+ *
+ * `CrudService` is one, and every caller in the platform hands its own service. The type is structural so a
+ * caller that runs the write inside a transaction it opened can hand a writer bound to that transaction's
+ * entity manager instead — the statement, the predicate and the conflict decision are this helper's either
+ * way, and only the connection the statement runs on changes.
+ */
+export type IVersionedWriter<T extends BaseEntity> = Pick<CrudService<T>, 'update' | 'findOneByIdString'>;
+
 /** What a conditional write is told to do. */
 export interface IVersionedWriteOptions<T> {
 	/** The record's id. */
@@ -112,14 +123,14 @@ export function versionExpectationOf(request: any): IVersionExpectation {
  * which ORM it ran on. An entity with no `version` column never reaches this helper — nothing calls
  * it on a route that did not opt in — and therefore behaves exactly as it does today.
  *
- * @param service The service that owns the record.
+ * @param service The service that owns the record, or a writer bound to the caller's transaction.
  * @param options The record, what the caller accepted and what to write.
  * @returns The version the record now holds.
  * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the version moved on, or with
  * `RESOURCE_NOT_FOUND` when the record is gone.
  */
 export async function commitVersionedUpdate<T extends BaseEntity>(
-	service: CrudService<T>,
+	service: IVersionedWriter<T>,
 	options: IVersionedWriteOptions<T>
 ): Promise<{ version: number }> {
 	// An expectation that is neither a wildcard nor a list of versions accepted nothing. The guard never
@@ -234,7 +245,7 @@ function readAffected(result: unknown): number {
  * @returns The version, or null when the record is gone or carries none.
  * @throws Whatever the reader raised, when it raised something other than a miss.
  */
-async function readStoredVersion<T extends BaseEntity>(service: CrudService<T>, id: ID): Promise<number | null> {
+async function readStoredVersion<T extends BaseEntity>(service: IVersionedWriter<T>, id: ID): Promise<number | null> {
 	try {
 		const row = await service.findOneByIdString(id);
 
@@ -256,7 +267,7 @@ async function readStoredVersion<T extends BaseEntity>(service: CrudService<T>, 
  * @returns Its version and whether it exists, as far as that could be determined.
  */
 async function readRowState<T extends BaseEntity>(
-	service: CrudService<T>,
+	service: IVersionedWriter<T>,
 	id: ID
 ): Promise<{ actualVersion?: number | null; exists?: boolean }> {
 	try {
