@@ -35,13 +35,22 @@ export function approvalStatusBadge(
  * An approval request, described for `ngx-record-view` — the grid columns read vertically. Shared by the
  * approvals drawer and the request's full-width page (`/pages/employees/approvals/view/:id`).
  */
-export function buildApprovalViewSections(): IRecordViewSection[] {
+export function buildApprovalViewSections(status?: {
+	text: string;
+	value: unknown;
+	class: string;
+}): IRecordViewSection[] {
 	return [
 		{
 			fields: [
 				{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME', key: 'name' },
-				// `status` is the `{ text, value, class }` badge the grid derives when the rows are loaded.
-				{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS', key: 'status', type: 'badge' },
+				// The drawer's rows already carry the grid's `{ text, value, class }` badge as `status`; the page
+				// passes the badge it builds from the raw status, in the current language.
+				{
+					label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS',
+					type: 'badge',
+					...(status ? { value: status } : { key: 'status' })
+				},
 				{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT', key: 'min_count' },
 				{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY', key: 'approvalPolicy.name' }
 			]
@@ -68,25 +77,25 @@ export const APPROVAL_RECORD_VIEW: IRecordViewRouteData<IRequestApproval> = {
 	heading: 'APPROVAL_REQUEST_PAGE.HEADER',
 	backLink: '/pages/employees/approvals',
 	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector
-			.get(RequestApprovalService)
-			.getAll(APPROVAL_VIEW_RELATIONS, {
-				id,
-				organizationId: scope.organizationId,
-				tenantId: scope.tenantId
-			} as any);
+		const { items } = await injector.get(RequestApprovalService).getAll(APPROVAL_VIEW_RELATIONS, {
+			id,
+			organizationId: scope.organizationId,
+			tenantId: scope.tenantId
+		} as any);
 		const request: any = items?.find((item) => item.id === id);
 		if (!request) {
 			return null;
 		}
-		const translateService = injector.get(TranslateService);
 		return {
 			...request,
 			employees: (request.employeeApprovals ?? []).map((approval) => approval.employee),
-			teams: (request.teamApprovals ?? []).map((approval) => approval.team),
-			status: approvalStatusBadge(request.status, (key) => translateService.instant(key))
+			teams: (request.teamApprovals ?? []).map((approval) => approval.team)
 		};
 	},
-	sections: () => buildApprovalViewSections(),
+	// The badge is built with the sections, so a language change re-translates it (the raw status stays).
+	sections: (request, injector) => {
+		const translateService = injector.get(TranslateService);
+		return buildApprovalViewSections(approvalStatusBadge(request.status, (key) => translateService.instant(key)));
+	},
 	subtitle: (request) => request.name
 };

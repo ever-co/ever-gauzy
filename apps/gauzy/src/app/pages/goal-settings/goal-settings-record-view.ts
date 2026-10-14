@@ -67,15 +67,16 @@ export function buildKpiViewSections(kpi: IKPI, translate: (key: string) => stri
 }
 
 /** A time frame, described for `ngx-record-view` — the grid columns read vertically. */
-export function buildTimeFrameViewSections(): IRecordViewSection[] {
+export function buildTimeFrameViewSections(status?: { text: string; class: string }): IRecordViewSection[] {
 	return [
 		{
 			fields: [
 				{ label: 'SM_TABLE.NAME', key: 'name' },
 				{ label: 'SM_TABLE.START_DATE', key: 'startDate', type: 'date' },
 				{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' },
-				// `status` is the `{ text, class }` badge the grid derives when the rows are loaded.
-				{ label: 'SM_TABLE.STATUS', key: 'status', type: 'badge' }
+				// The drawer's rows already carry the grid's `{ text, class }` badge as `status`; the page passes
+				// the badge it builds from the raw status, in the current language.
+				{ label: 'SM_TABLE.STATUS', type: 'badge', ...(status ? { value: status } : { key: 'status' }) }
 			]
 		}
 	];
@@ -107,11 +108,10 @@ export const TIME_FRAME_RECORD_VIEW: IRecordViewRouteData<IGoalTimeFrame> = {
 	backLink: '/pages/goals/settings',
 	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
 		const { items } = await injector.get(GoalSettingsService).getAllTimeFrames(settingsScope(id, scope));
-		const timeFrame: any = items?.find((item) => item.id === id);
-		return timeFrame
-			? { ...timeFrame, status: timeFrameStatusBadge(timeFrame.status, translatorOf(injector)) }
-			: null;
+		return items?.find((item) => item.id === id) ?? null;
 	},
-	sections: () => buildTimeFrameViewSections(),
+	// The badge is built with the sections, so a language change re-translates it (the raw status stays).
+	sections: (timeFrame, injector) =>
+		buildTimeFrameViewSections(timeFrameStatusBadge(timeFrame.status, translatorOf(injector))),
 	subtitle: (timeFrame) => timeFrame.name
 };
