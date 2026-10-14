@@ -4,6 +4,7 @@ import { ConnectedPosition, FlexibleConnectedPositionStrategy } from '@angular/c
 import { NgSelectComponent } from '@ng-select/ng-select';
 import {
 	ENTITY_SELECT_PANEL_POSITIONS,
+	ENTITY_SELECT_PANEL_VIEWPORT_MARGIN,
 	EntitySelectPanelDirective,
 	withEndAlignedFallbacks
 } from './entity-select-panel.directive';
@@ -45,6 +46,7 @@ describe('EntitySelectPanelDirective', () => {
 		});
 		strategy.withPositions = setPositions as any;
 		strategy.withPush = jest.fn().mockReturnValue(strategy);
+		strategy.withViewportMargin = jest.fn().mockReturnValue(strategy);
 		strategy.withPositions(options.positions ?? [BELOW, ABOVE]); // what ng-select did before attaching
 		setPositions.mockClear();
 		const overlayRef = {
@@ -74,6 +76,8 @@ describe('EntitySelectPanelDirective', () => {
 
 		expect(setPositions).toHaveBeenLastCalledWith(ENTITY_SELECT_PANEL_POSITIONS);
 		expect(strategy.withPush).toHaveBeenCalledWith(true);
+		// Greptile TREX: pushed at a narrow width, the organization panel sat flush on the left edge.
+		expect(strategy.withViewportMargin).toHaveBeenCalledWith(ENTITY_SELECT_PANEL_VIEWPORT_MARGIN);
 		expect(overlayRef.updatePosition).toHaveBeenCalled();
 	});
 

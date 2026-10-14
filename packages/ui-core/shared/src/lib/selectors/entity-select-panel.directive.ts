@@ -15,6 +15,12 @@ export const ENTITY_SELECT_PANEL_POSITIONS: ConnectedPosition[] = [
 	{ originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' }
 ];
 
+/**
+ * How close a pushed panel may come to the viewport edge — the same 1rem the generic panels keep
+ * from the right edge (`_overrides.scss`). Without it push slides a panel flush against the edge.
+ */
+export const ENTITY_SELECT_PANEL_VIEWPORT_MARGIN = 16;
+
 /** Marks a position strategy this directive has already taught the end-aligned fallbacks. */
 const AUGMENTED = Symbol('gauzyEntitySelectPositions');
 
@@ -87,7 +93,7 @@ export class EntitySelectPanelDirective {
 				augmentable[AUGMENTED] = true;
 			}
 			// Re-state the list ng-select set for this open, through the wrapper.
-			strategy.withPositions(strategy.positions.filter((p) => !(p.originX === 'end' && p.overlayX === 'end'))).withPush(true);
+			strategy.withPositions(strategy.positions.filter((p) => !(p.originX === 'end' && p.overlayX === 'end'))).withPush(true).withViewportMargin(ENTITY_SELECT_PANEL_VIEWPORT_MARGIN);
 		}
 		overlayRef.updatePosition();
 	}

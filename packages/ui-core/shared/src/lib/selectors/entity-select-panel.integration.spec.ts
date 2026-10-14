@@ -27,7 +27,7 @@ import { NG_SELECT_TRIGGER_WIDTH_VAR, NgSelectPanelSizingService } from './ng-se
 	`
 })
 class HostComponent {
-	@ViewChild('select', { static: true }) select!: NgSelectComponent;
+	@ViewChild('select', { static: true }) readonly select!: NgSelectComponent;
 	items = [{ name: 'Ever Technologies LTD' }, { name: 'A project with a rather long name indeed' }];
 	selected = null;
 }
