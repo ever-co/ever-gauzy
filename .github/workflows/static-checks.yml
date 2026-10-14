@@ -367,3 +367,11 @@ jobs:
       - name: Every literal entity column type is accepted on Postgres, MySQL and SQLite
         if: always()
         run: node tools/scripts/entity-column-dialect-check.mjs
+
+      # The deploy images install only production dependencies, so a package that runtime code imports but only a
+      # devDependency declares is present everywhere CI and local boots run, and missing in the container: the feat
+      # API image stopped at start with "Cannot find module 'rimraf'" (rimraf 6 was a devDependency of core and root).
+      # cspell:words rimraf
+      - name: Every package the API and worker images load at runtime is installed in them
+        if: always()
+        run: node tools/scripts/runtime-dependency-check.mjs
