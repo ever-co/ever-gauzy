@@ -109,7 +109,7 @@ import { PaymentWebhookEventController } from './payment-webhook-event/payment-w
 import { PaymentWebhookEventService } from './payment-webhook-event/payment-webhook-event.service';
 
 /** The caller the request context answers with; each case states it. */
-const mockCaller: { tenantId: string | null; organizationId: string | null } = { tenantId: null, organizationId: null };
+let mockCaller: { tenantId: string | null; organizationId: string | null } = { tenantId: null, organizationId: null };
 
 const TENANT_A = '00000000-0000-4000-8000-00000000000a';
 const ORGANIZATION_A = '00000000-0000-4000-8000-0000000000a1';
