@@ -240,6 +240,29 @@ describe('a licence key is shown once, at issue (owner decision 9, 2026-10-13)',
 			expect(deletes).toEqual(['delete :id', 'softRemove :id/soft']);
 		});
 
+		it.each(CONTROLLERS)(
+			'%p overrides every DELETE route the real CrudController declares, so none is inherited unread',
+			(controller) => {
+				// `@gauzy/core` is doubled in this suite, so the base the controllers extend here carries no route
+				// metadata. The real base is read as source instead: every `@Delete(...)` handler it declares
+				// must be one each controller overrides — an override replaces the inherited route, and a
+				// DELETE route the kernel adds later would otherwise reach the hard delete from these
+				// controllers without anything here noticing.
+				const source = readFileSync(
+					join(__dirname, '../../../../../core/src/lib/core/crud/crud.controller.ts'),
+					'utf8'
+				);
+				const inherited = [...source.matchAll(/@Delete\(([^)]*)\)[\s\S]*?\n\s*async (\w+)\(/g)].map(
+					(match) => `${match[2]} ${match[1].replace(/['"]/g, '')}`
+				);
+
+				expect(inherited.sort()).toEqual(['delete :id', 'softRemove :id/soft']);
+				for (const handler of inherited.map((route) => route.split(' ')[0])) {
+					expect(Object.prototype.hasOwnProperty.call(controller.prototype, handler)).toBe(true);
+				}
+			}
+		);
+
 		it.each(CONTROLLERS)('%p retires the row on DELETE /:id through softRemove, never the hard delete', async (controller) => {
 			const service = {
 				delete: jest.fn().mockResolvedValue({ affected: 1 }),
