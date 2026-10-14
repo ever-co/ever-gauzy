@@ -285,7 +285,7 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 		},
 		/**
 		 * TypeORM's `update` takes an id or a where object; the service clears a variant's primary by
-		 * predicate (`{ variantId, isPrimary: true, id: Not(target) }`), so both are modelled.
+		 * predicate (`{ variantId, isPrimary: true, deletedAt: IsNull(), id: Not(target) }`), so both are modelled.
 		 */
 		update: async (entity: unknown, criteria: unknown, patch: any) => {
 			const hit = (candidate: any) =>
@@ -294,6 +294,10 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 							if (expected instanceof FindOperator) {
 								if (expected.type === 'not') {
 									return !same(candidate[field], expected.value);
+								}
+
+								if (expected.type === 'isNull') {
+									return candidate[field] === null || candidate[field] === undefined;
 								}
 
 								throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);

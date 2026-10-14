@@ -54,6 +54,7 @@ const ORG = '3c7e0000-0000-4000-8000-0000000000a1';
 
 import 'reflect-metadata';
 import { DataSource, EntitySchema } from 'typeorm';
+import { ProductVariant } from '@gauzy/core';
 import { CreateCatalogTables1791000000100 } from '../database/migrations/1791000000100-CreateCatalogTables';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { ProductVariantMediaService } from './product-variant-media.service';
@@ -82,6 +83,19 @@ const TypeOrmProductVariantMedia = new EntitySchema<any>({
 	}
 });
 
+/** The variant the gallery belongs to: `replaceMedia` checks that it is the caller's before writing. */
+const TypeOrmProductVariant = new EntitySchema<any>({
+	name: 'ProductVariant',
+	target: ProductVariant,
+	tableName: 'product_variant',
+	columns: {
+		id: { type: 'varchar', primary: true },
+		deletedAt: { type: 'datetime', nullable: true, deleteDate: true },
+		tenantId: { type: 'varchar', nullable: true },
+		organizationId: { type: 'varchar', nullable: true }
+	}
+});
+
 describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_media_primary (SQLite)', () => {
 	let dataSource: DataSource;
 	let service: ProductVariantMediaService;
@@ -91,7 +105,7 @@ describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_m
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [TypeOrmProductVariantMedia],
+			entities: [TypeOrmProductVariantMedia, TypeOrmProductVariant],
 			synchronize: false,
 			logging: false
 		});
@@ -104,6 +118,15 @@ describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_m
 		} finally {
 			await queryRunner.release();
 		}
+
+		await dataSource.query(
+			`CREATE TABLE "product_variant" ("id" varchar PRIMARY KEY NOT NULL, "deletedAt" datetime, "tenantId" varchar, "organizationId" varchar)`
+		);
+		await dataSource.query(`INSERT INTO "product_variant" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [
+			VARIANT,
+			TENANT,
+			ORG
+		]);
 
 		const repository = dataSource.getRepository(ProductVariantMedia);
 		service = new ProductVariantMediaService(repository as any, {} as any);
@@ -122,12 +145,15 @@ describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_m
 		await dataSource?.destroy();
 	});
 
+	/** The id of an image's gallery row in this fixture. */
+	const galleryId = (imageAssetId: string): string => `${imageAssetId.slice(0, -3)}9${imageAssetId.slice(-2)}`;
+
 	/** Inserts the gallery rows directly, in the given order, with the given image as the thumbnail. */
 	async function gallery(images: string[], primary: string): Promise<void> {
 		for (const [position, imageAssetId] of images.entries()) {
 			await dataSource.query(
 				`INSERT INTO "product_variant_media" ("id", "tenantId", "organizationId", "variantId", "imageAssetId", "position", "isPrimary") VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				[`${imageAssetId.slice(0, -3)}9${imageAssetId.slice(-2)}`, TENANT, ORG, VARIANT, imageAssetId, position, imageAssetId === primary ? 1 : 0]
+				[galleryId(imageAssetId), TENANT, ORG, VARIANT, imageAssetId, position, imageAssetId === primary ? 1 : 0]
 			);
 		}
 	}
@@ -188,6 +214,37 @@ describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_m
 		await service.setPrimary(VARIANT, IMAGE_B);
 
 		expect((await rows()).map((row) => row.isPrimary)).toEqual([0, 1]);
+	});
+
+	it('setPrimary sets the target even when the gallery it read is stale (the target read as already primary)', async () => {
+		// Another request moved the thumbnail to B after this one read the gallery with A still primary.
+		await gallery([IMAGE_A, IMAGE_B], IMAGE_B);
+		const repository = dataSource.getRepository(ProductVariantMedia);
+		const stale = (imageAssetId: string, isPrimary: boolean) => ({
+			id: galleryId(imageAssetId),
+			variantId: VARIANT,
+			imageAssetId,
+			isPrimary,
+			tenantId: TENANT,
+			organizationId: ORG
+		});
+		(repository.find as jest.Mock).mockImplementationOnce(async () => [stale(IMAGE_A, true), stale(IMAGE_B, false)]);
+
+		await service.setPrimary(VARIANT, IMAGE_A);
+
+		expect((await rows()).map((row) => row.isPrimary)).toEqual([1, 0]);
+	});
+
+	it('leaves a soft-deleted row’s flag as it was deleted with', async () => {
+		await gallery([IMAGE_A, IMAGE_B], IMAGE_B);
+		await dataSource.query(`UPDATE "product_variant_media" SET "deletedAt" = datetime('now') WHERE "imageAssetId" = ?`, [IMAGE_B]);
+
+		await service.setPrimary(VARIANT, IMAGE_A);
+		await service.replaceMedia(VARIANT, [IMAGE_A], IMAGE_A);
+
+		await expect(
+			dataSource.query(`SELECT "isPrimary" FROM "product_variant_media" WHERE "imageAssetId" = ?`, [IMAGE_B])
+		).resolves.toEqual([{ isPrimary: 1 }]);
 	});
 
 	it('control: the index itself still refuses a second live thumbnail', async () => {

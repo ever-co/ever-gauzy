@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager, Not } from 'typeorm';
+import { EntityManager, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
@@ -83,7 +83,7 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 			}
 
 			// Cleared first, so the loop below can set the new primary in any order (R5-07).
-			await this.clearPrimary(manager, variantId, tenantId);
+			await this.clearPrimary(manager, variantId);
 
 			for (const [position, imageAssetId] of imageAssetIds.entries()) {
 				const isPrimary = primaryImageAssetId ? imageAssetId === primaryImageAssetId : false;
@@ -126,11 +126,10 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 
 		await this.typeOrmProductVariantMediaRepository.manager.transaction(async (manager) => {
 			// Every other primary of the variant is cleared in one statement before the target is set (R5-07).
-			await this.clearPrimary(manager, variantId, target.tenantId, target.id);
-
-			if (!target.isPrimary) {
-				await manager.update(ProductVariantMedia, target.id, { isPrimary: true });
-			}
+			// The target is set unconditionally: its `isPrimary` was read before this transaction, and another
+			// request may have moved the thumbnail since.
+			await this.clearPrimary(manager, variantId, target.id);
+			await manager.update(ProductVariantMedia, target.id, { isPrimary: true });
 		});
 
 		return this.findByVariant(variantId);
@@ -141,20 +140,22 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 	 * unique index ever seeing two.
 	 *
 	 * The rows are selected by predicate rather than by the ids read earlier, so a primary set by another
-	 * request since that read is cleared too. Scoped to the variant's tenant when it is known.
+	 * request since that read is cleared too. Only the live gallery is touched — a soft-deleted row keeps the
+	 * flag it was deleted with, which is what a recovery brings back — and only within the caller's scope,
+	 * like every other read and write of the gallery.
 	 *
 	 * @param manager The transaction's entity manager.
 	 * @param variantId The variant.
-	 * @param tenantId The variant's tenant.
-	 * @param exceptId A row to leave as it is: the one about to be, or already, the primary.
+	 * @param exceptId A row to leave as it is: the one about to be set as the primary.
 	 */
-	private async clearPrimary(manager: EntityManager, variantId: ID, tenantId?: ID | null, exceptId?: ID): Promise<void> {
+	private async clearPrimary(manager: EntityManager, variantId: ID, exceptId?: ID): Promise<void> {
 		await manager.update(
 			ProductVariantMedia,
 			{
 				variantId,
 				isPrimary: true,
-				...(tenantId ? { tenantId } : {}),
+				deletedAt: IsNull(),
+				...callerScope(),
 				...(exceptId ? { id: Not(exceptId) } : {})
 			},
 			{ isPrimary: false }
