@@ -403,7 +403,7 @@ function datastore(tables: Record<string, Row[]>) {
 			return { affected: row ? 1 : 0 };
 		},
 		query: async (sql: string, params: any[] = []) => {
-			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
+			if (/SET LOCAL lock_timeout|set_config\('lock_timeout'|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
 				return [];
 			}
 			if (/FROM "product_variant"/.test(sql)) {

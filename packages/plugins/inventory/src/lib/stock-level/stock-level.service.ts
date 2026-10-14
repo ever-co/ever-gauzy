@@ -1074,7 +1074,9 @@ export class StockLevelService {
 		const timeout = Number.isFinite(timeoutMs) ? Number(timeoutMs) : DEFAULT_LOCK_TIMEOUT_MS;
 
 		if (dialect === DatabaseTypeEnum.postgres) {
-			await manager.query('SET LOCAL lock_timeout = $1', [`${timeout}ms`]);
+			// `set_config(…, true)` is SET LOCAL in a form that takes a parameter: PostgreSQL's SET takes none, and
+			// `SET LOCAL lock_timeout = $1` was answered `syntax error at or near "$1"` on every movement.
+			await manager.query(`SELECT set_config('lock_timeout', $1, true)`, [`${timeout}ms`]);
 			await manager.query('SELECT "id" FROM "warehouse_product_variant" WHERE "id" = $1 FOR UPDATE', [levelId]);
 			return;
 		}
