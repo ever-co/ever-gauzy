@@ -2470,7 +2470,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "删除组织",
 			"WARNING": "{{ name }} 将被永久删除。此操作无法撤销。",
-			"TYPE_TO_CONFIRM": "输入 {{ name }} 以确认。",
+			"TYPE_TO_CONFIRM": "请输入以下内容以确认：",
 			"CONFIRM": "删除组织"
 		},
 		"ORGANIZATIONS": "组织",

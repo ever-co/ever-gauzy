@@ -2470,7 +2470,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "Organisatie verwijderen",
 			"WARNING": "{{ name }} wordt permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
-			"TYPE_TO_CONFIRM": "Typ {{ name }} om te bevestigen.",
+			"TYPE_TO_CONFIRM": "Typ het volgende om te bevestigen:",
 			"CONFIRM": "Organisatie verwijderen"
 		},
 		"ORGANIZATIONS": "Organisaties",

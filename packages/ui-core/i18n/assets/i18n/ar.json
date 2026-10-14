@@ -2469,7 +2469,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "حذف المؤسسة",
 			"WARNING": "سيتم حذف {{ name }} نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
-			"TYPE_TO_CONFIRM": "اكتب {{ name }} للتأكيد.",
+			"TYPE_TO_CONFIRM": "اكتب ما يلي للتأكيد:",
 			"CONFIRM": "حذف المؤسسة"
 		},
 		"ORGANIZATIONS": "المنظمات",

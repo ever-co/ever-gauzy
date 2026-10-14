@@ -2469,7 +2469,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "Usuń organizację",
 			"WARNING": "{{ name }} zostanie trwale usunięta. Tej operacji nie można cofnąć.",
-			"TYPE_TO_CONFIRM": "Wpisz {{ name }}, aby potwierdzić.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
 			"CONFIRM": "Usuń organizację"
 		},
 		"ORGANIZATIONS": "Organizacje",

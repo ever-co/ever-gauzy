@@ -2512,7 +2512,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "מחיקת ארגון",
 			"WARNING": "{{ name }} יימחק לצמיתות. לא ניתן לבטל פעולה זו.",
-			"TYPE_TO_CONFIRM": "הקלד {{ name }} לאישור.",
+			"TYPE_TO_CONFIRM": "הקלד את הטקסט הבא לאישור:",
 			"CONFIRM": "מחיקת ארגון"
 		},
 		"ORGANIZATIONS": "ארגונים",

@@ -2470,7 +2470,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "Organisation löschen",
 			"WARNING": "{{ name }} wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
-			"TYPE_TO_CONFIRM": "Geben Sie {{ name }} zur Bestätigung ein.",
+			"TYPE_TO_CONFIRM": "Geben Sie zur Bestätigung Folgendes ein:",
 			"CONFIRM": "Organisation löschen"
 		},
 		"ORGANIZATIONS": "Organisationen",

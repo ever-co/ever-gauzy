@@ -2470,7 +2470,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "Excluir organização",
 			"WARNING": "{{ name }} será excluída permanentemente. Esta ação não pode ser desfeita.",
-			"TYPE_TO_CONFIRM": "Digite {{ name }} para confirmar.",
+			"TYPE_TO_CONFIRM": "Digite o seguinte para confirmar:",
 			"CONFIRM": "Excluir organização"
 		},
 		"ORGANIZATIONS": "Organizações",

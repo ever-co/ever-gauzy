@@ -2471,7 +2471,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "Supprimer l'organisation",
 			"WARNING": "{{ name }} sera supprimée définitivement. Cette action est irréversible.",
-			"TYPE_TO_CONFIRM": "Saisissez {{ name }} pour confirmer.",
+			"TYPE_TO_CONFIRM": "Saisissez le texte suivant pour confirmer :",
 			"CONFIRM": "Supprimer l'organisation"
 		},
 		"ORGANIZATIONS": "Organisations",

@@ -2470,7 +2470,7 @@
 		"DELETE_DIALOG": {
 			"TITLE": "Elimina organizzazione",
 			"WARNING": "{{ name }} verrà eliminata definitivamente. Questa azione non può essere annullata.",
-			"TYPE_TO_CONFIRM": "Digita {{ name }} per confermare.",
+			"TYPE_TO_CONFIRM": "Digita quanto segue per confermare:",
 			"CONFIRM": "Elimina organizzazione"
 		},
 		"ORGANIZATIONS": "Organizzazioni",
