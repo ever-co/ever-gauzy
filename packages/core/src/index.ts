@@ -274,12 +274,16 @@ export {
 // are written before the parent's conditional write has to ask the question *before* it writes them —
 // otherwise a caller whose version no longer holds is refused after its change has landed. Asking it
 // with a second, hand-written comparison is how the two answers drift apart.
+//
+// `IVersionedWriter` is on it because a caller that runs a versioned write inside a transaction it opened
+// hands the kernel a writer bound to that transaction rather than its service (ADR-26, handover §7.65 item 22).
 export {
 	Versioned,
 	VersionGuard,
 	VersionInterceptor,
 	VersionedColumn,
 	commitVersionedUpdate,
+	IVersionedWriter,
 	parseIfMatch,
 	formatEntityTag,
 	versionExpectationOf,
