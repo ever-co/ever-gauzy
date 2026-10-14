@@ -745,7 +745,6 @@ for (const file of [...filesUnder(CORE), ...filesUnder(PLUGINS)].sort()) {
 
 	for (const [handler, route] of Object.entries(read.routes)) {
 		if (route.removed || route.open) continue;
-		const key = `${read.controller}.${handler}`;
 		if (isCore) coreCounts.routes++;
 
 		// Rule 3, everywhere: a grant no guard reads is no grant.
