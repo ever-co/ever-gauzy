@@ -49,6 +49,15 @@ const OUTSTANDING = {
 
 };
 
+/**
+ * Controllers whose GraphQL type has a different name from the resource the controller is named after, mapped
+ * to that type's name. Only a name the SDL actually declares belongs here — the entry is checked by the pair
+ * being found under it, so a wrong one fails like a missing pair.
+ */
+const TYPE_NAMES = {
+	CustomSmtp: 'SmtpSetting'
+};
+
 /** Every file under a directory whose name ends with a suffix, skipping build output. */
 function walk(directory, suffix, found = []) {
 	for (const entry of readdirSync(directory)) {
@@ -130,7 +139,13 @@ for (const root of ROOTS) {
 			// `ScreeningTasksController`) while their GraphQL type, and so its fields, are singular
 			// (`softDeleteCandidateFeedback`). The type's name is the one the convention follows, so the
 			// singular spelling answers the pair as well.
-			const names = /s$/.test(resource) ? [resource, resource.slice(0, -1)] : [resource];
+			// And one controller is named after its table while its GraphQL type is named after the concept:
+			// `CustomSmtpController` serves the type `SmtpSetting`, whose fields are `softDeleteSmtpSetting` and
+			// `recoverSmtpSetting`. The type's name is the one the convention follows, so it answers the pair too.
+			const names = [
+				...(/s$/.test(resource) ? [resource, resource.slice(0, -1)] : [resource]),
+				...(TYPE_NAMES[resource] ? [TYPE_NAMES[resource]] : [])
+			];
 			const softDelete = names.map((name) => `softDelete${name}`).find((name) => fields.has(name)) ?? `softDelete${resource}`;
 			// The act has one name: `recover<Type>`. §10's table used to give `PUT /<resource>/:id/recover` the
 			// field name `restore<Type>` while a hundred and eleven delivered fields spelt it `recover<Type>`, and
