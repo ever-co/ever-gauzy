@@ -215,6 +215,52 @@ async function call(method, url, options = {}) {
 	return { status: response.status, json, text, headers: response.headers };
 }
 
+/**
+ * An amount as a canonical decimal string, so two surfaces that state the same value in different shapes compare
+ * equal: `62`, `62.0` and `"62.000000"` all become `"62"`, `"-0.50"` becomes `"-0.5"`. Exact — no float conversion.
+ *
+ * @param {unknown} value A number or a decimal string.
+ * @returns {string | null} The canonical form, or null when the value is not a decimal.
+ */
+function decimalValue(value) {
+	if (value === null || value === undefined) return null;
+	const match = /^\s*([+-]?)(\d*)(?:\.(\d*))?\s*$/.exec(String(value));
+	if (!match || (match[2] === '' && (match[3] ?? '') === '')) return null;
+	const whole = match[2].replace(/^0+(?=\d)/, '') || '0';
+	const fraction = (match[3] ?? '').replace(/0+$/, '');
+	const sign = match[1] === '-' && (whole !== '0' || fraction !== '') ? '-' : '';
+	return `${sign}${whole}${fraction ? `.${fraction}` : ''}`;
+}
+
+/**
+ * The normaliser's own cases, checked before any check relies on it: equal and unequal fractions, signs, zero,
+ * leading zeros and values that are not decimals. A normaliser that dropped a significant digit would let two
+ * different amounts compare equal and turn a real mismatch green, so the suite refuses to run with one.
+ *
+ * @returns {string[]} The cases that failed.
+ */
+function decimalValueSelfCheck() {
+	const cases = [
+		[62, '62.000000', true],
+		['62.000000', '62', true],
+		[62.5, '62.500000', true],
+		[62, '62.5', false],
+		['62.05', '62.5', false],
+		['0.000001', '0', false],
+		['-0.50', '-0.5', true],
+		['-1', '1', false],
+		['0', '-0.000', true],
+		['007.10', '7.1', true],
+		[null, '0', false],
+		['abc', 'abc', false],
+		['', '', false]
+	];
+
+	return cases
+		.filter(([a, b, equal]) => (decimalValue(a) !== null && decimalValue(a) === decimalValue(b)) !== equal)
+		.map(([a, b, equal]) => `${JSON.stringify(a)} ${equal ? '=' : '≠'} ${JSON.stringify(b)}`);
+}
+
 /** @param {{json: any, text: string}} result A response. @returns {string} A short description. */
 function brief(result) {
 	return (result.json ? JSON.stringify(result.json) : result.text).slice(0, 300);
@@ -835,7 +881,13 @@ async function main() {
 				);
 				record(
 					"the request carries the order's amount and currency",
-					String(filed.amount) === String(stored.grandTotal) && filed.currency === stored.currency,
+					// Compared by value: the two surfaces deliberately keep their own shapes. The approval register is
+					// develop's kernel and has always served `amount` as a number; commerce money is a decimal string
+					// (#10545). On PostgreSQL that reads `62` against `"62.000000"` — the same amount — which a string
+					// comparison called a mismatch (upgrade-test run 38543160016). The owner may still want one shape.
+					decimalValue(filed.amount) !== null &&
+						decimalValue(filed.amount) === decimalValue(stored.grandTotal) &&
+						filed.currency === stored.currency,
 					`amount=${filed.amount} ${filed.currency} vs order grandTotal=${stored.grandTotal} ${stored.currency}`
 				);
 			} else {
@@ -1511,6 +1563,12 @@ function finish() {
 	}
 
 	process.exit(failed.length === 0 ? 0 : 1);
+}
+
+const brokenDecimalCases = decimalValueSelfCheck();
+if (brokenDecimalCases.length) {
+	console.error(`\ncommerce flow end-to-end suite: could not run — decimalValue fails its own cases: ${brokenDecimalCases.join('; ')}`);
+	process.exit(1);
 }
 
 main().catch((error) => {
