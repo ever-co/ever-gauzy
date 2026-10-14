@@ -6,7 +6,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { PurchasingFeatures } from '../../purchasing.features';
 import { IGoodsReceipt, IGoodsReceiptLine } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
-import { asRouteBody, toUserError } from '../wire';
+import { asRouteBody, deleteOutcome, toUserError } from '../wire';
 import { GoodsReceipt } from '../../goods-receipt/goods-receipt.entity';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
 import { UpdateGoodsReceiptLineDTO } from '../../goods-receipt-line/dto';
@@ -173,9 +173,11 @@ export class GoodsReceiptLineResolver {
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	async deleteGoodsReceiptLine(@Args('id') id: ID) {
 		try {
-			await this.goodsReceiptLineService.delete(id);
+			// The identity is answered only for a removal that reached a row: an identifier that names none of
+			// the caller's deletes nothing and raises nothing, and is answered `NOT_FOUND` (`deleteOutcome`).
+			const userErrors = deleteOutcome(await this.goodsReceiptLineService.delete(id), id);
 
-			return { id, userErrors: [] };
+			return { id: userErrors.length ? null : id, userErrors };
 		} catch (error) {
 			return { id: null, userErrors: [toUserError(error)] };
 		}

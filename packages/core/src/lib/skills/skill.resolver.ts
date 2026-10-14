@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Skill } from './skill.entity';
 import { SkillService } from './skill.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateSkillInput` declares in the schema. */
 export interface ICreateSkillInput {
@@ -199,9 +200,7 @@ export class SkillResolver {
 	 */
 	@Mutation('deleteSkill')
 	async deleteSkill(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.skillService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.skillService.delete(id));
 	}
 
 	/**

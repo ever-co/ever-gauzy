@@ -16,6 +16,7 @@ import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEquipmentSharingPolicyInput` declares in the schema. */
 export interface ICreateEquipmentSharingPolicyInput {
@@ -245,16 +246,15 @@ export class EquipmentSharingPolicyResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own
 	 * delete result — a statement about the write, `{ affected }` — which is not a row and not what a
-	 * field named `deleteEquipmentSharingPolicy` may return; the field answers the one fact the removal
-	 * establishes, that it ran. A policy a sharing period still points at is the store's own constraint to
+	 * field named `deleteEquipmentSharingPolicy` may return; the field answers whether the removal reached a row
+	 * — `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
+	 * A policy a sharing period still points at is the store's own constraint to
 	 * refuse, and this field does not pre-empt it.
 	 */
 	@Mutation('deleteEquipmentSharingPolicy')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.EQUIPMENT_SHARING_POLICY_EDIT)
 	async deleteEquipmentSharingPolicy(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.equipmentSharingPolicyService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.equipmentSharingPolicyService.delete(id));
 	}
 
 	/**

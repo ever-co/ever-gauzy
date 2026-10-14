@@ -15,6 +15,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Favorite } from './favorite.entity';
 import { FavoriteService } from './favorite.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateFavoriteInput` declares in the schema. */
 export interface ICreateFavoriteInput {
@@ -275,9 +276,7 @@ export class FavoriteResolver {
 	 */
 	@Mutation('deleteFavorite')
 	async deleteFavorite(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.favoriteService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.favoriteService.delete(id));
 	}
 
 	/**

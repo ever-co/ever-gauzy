@@ -15,6 +15,7 @@ import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../sha
 import { Equipment } from './equipment.entity';
 import { EquipmentService } from './equipment.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEquipmentInput` declares in the schema. */
 export interface ICreateEquipmentInput {
@@ -254,14 +255,12 @@ export class EquipmentResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own
 	 * delete result — a statement about the write, `{ affected }` — which is not a row and not what a
-	 * field named `deleteEquipment` may return; the field answers the one fact the removal establishes,
-	 * that it ran.
+	 * field named `deleteEquipment` may return; the field answers whether the removal reached a row
+	 * — `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
 	 */
 	@Mutation('deleteEquipment')
 	async deleteEquipment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.equipmentService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.equipmentService.delete(id));
 	}
 
 	/**

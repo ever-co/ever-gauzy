@@ -138,6 +138,39 @@ export async function asRouteBody<T>(metatype: new (...args: any[]) => T, input:
 }
 
 /**
+ * The outcome of a hard delete, as a mutation payload carries it.
+ *
+ * The kernel's `TenantAwareCrudService.delete` checks no existence: a scoped `DELETE` that matched nothing —
+ * an identifier of another tenant, a stale one, one already removed — answers `affected: 0` and raises
+ * nothing, so a payload built only from "no exception" told the caller a row was removed when none was
+ * (handover 2026-09-20 §7.65 item 21), while the REST route's own result said `affected: 0`. A result that
+ * states a count is read as both ORMs report it (`affected`); a result that states none — a service whose own
+ * `delete` answers the row it acted on instead, or nothing — either acted or raised, and reads as done. A
+ * removal that reached nothing is reported as the warehouse plugin reports it: `NOT_FOUND` on the `id`
+ * argument, the code a 404 maps to.
+ *
+ * @param result What the service's removal returned.
+ * @param id The identifier the caller named.
+ * @returns No outcome when a row was removed, and the `NOT_FOUND` outcome when none was.
+ */
+export function deleteOutcome(result: unknown, id: string): IUserError[] {
+	const affected = (result as { affected?: unknown } | null | undefined)?.affected;
+
+	if (typeof affected !== 'number' || affected > 0) {
+		return [];
+	}
+
+	return [
+		{
+			code: 'NOT_FOUND',
+			message: `NOT_FOUND: no record with id ${id} was found to delete.`,
+			path: ['id'],
+			details: { id }
+		}
+	];
+}
+
+/**
  * @param value A quantity.
  * @returns It as an exact decimal string at the storage scale, which is what the `Decimal` scalar
  * carries.

@@ -7,6 +7,7 @@ import { UserOrganizationService } from '../../../user-organization/user-organiz
 import { OrganizationService } from '../../organization.service';
 import { ContactService } from '../../../contact/contact.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
+import { OrganizationCommerceDefaultsCreateCommand } from '../organization-commerce-defaults.create.command';
 import { assertNoAgentRestrictionOnCreate } from '../../../employee/agent-exit-logout-restriction';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 import { RequestContext } from '../../../core/context';
@@ -139,12 +140,19 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				console.log('Error occurred during creation of contact details or updating the organization:', error);
 			}
 
-			// 6. Execute organization update tasks in the background (fire-and-forget).
+			// 6. Seed the commerce defaults the organization needs before it can issue a document: its default
+			// channel and region, the seven numbering series (ORDER, PO, …), the default tax category, the
+			// currency price preference, the measurement families and the search definitions. Awaited, so the
+			// organization the response returns can place its first order; a failure is logged and does not
+			// undo the organization (the step is idempotent and can be re-run).
+			await this.createCommerceDefaults(organization);
+
+			// 7. Execute organization update tasks in the background (fire-and-forget).
 			this.executeOrganizationUpdateTasks(organization).catch((error) =>
 				this.logger.error('Unhandled error in execute organization update tasks:', error?.message)
 			);
 
-			// 7. Create Import Records while migrating for relative organization.
+			// 8. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
 				await this.commandBus.execute(
@@ -160,6 +168,23 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		} catch (error) {
 			console.log('An error occurred during the organization creation process.', error);
 			throw new BadRequestException(error, 'An error occurred during the organization creation process.');
+		}
+	}
+
+	/**
+	 * Seeds the per-organization commerce defaults (R5-05). Without them an organization created at runtime
+	 * cannot number an order (404 "No numbering series is configured for ORDER") or a purchase order (409
+	 * `PURCHASE_ORDER_SEQUENCE_MISSING`). See `createDefaultCommerceDefaults`.
+	 *
+	 * @param organization The organization just created.
+	 */
+	private async createCommerceDefaults(organization: IOrganization): Promise<void> {
+		try {
+			await this.commandBus.execute(new OrganizationCommerceDefaultsCreateCommand(organization));
+		} catch (error) {
+			this.logger.error(
+				`Could not seed the commerce defaults of organization ${organization.id}: ${error?.message}`
+			);
 		}
 	}
 

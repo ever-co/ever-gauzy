@@ -31,6 +31,7 @@ import {
 	OrganizationContactUpdateCommand
 } from './commands';
 import { OrganizationContactService } from './organization-contact.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `ContactDetailInput` declares in the schema. */
 export interface IContactDetailInput {
@@ -369,9 +370,7 @@ export class OrganizationContactResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	async deleteOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationContactService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationContactService.delete(id));
 	}
 
 	/**

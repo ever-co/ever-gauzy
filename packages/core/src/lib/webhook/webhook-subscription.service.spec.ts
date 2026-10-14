@@ -75,7 +75,13 @@ class SubscriptionTable {
 }
 
 function matches(row: Row, criteria: Row = {}): boolean {
-	return Object.entries(criteria).every(([column, condition]) => (row[column] ?? null) === (condition ?? null));
+	return Object.entries(criteria).every(([column, condition]) =>
+		// `IsNull()` is the one operator the service's criteria carry: the scope of a caller with no
+		// organization selected is the tenant-wide rows.
+		condition && typeof condition === 'object' && (condition as { type?: string }).type === 'isNull'
+			? (row[column] ?? null) === null
+			: (row[column] ?? null) === (condition ?? null)
+	);
 }
 
 /** The service under test, with the table it writes to and the platform's encryption helper. */
@@ -100,6 +106,15 @@ const input = (overrides: Partial<IWebhookSubscriptionInput> = {}): IWebhookSubs
 	url: 'https://receiver.example.test/hooks/orders',
 	events: ['order.placed'],
 	...overrides
+});
+
+beforeEach(() => {
+	// Every case acts as a signed-in caller of one tenant and organization: the request-facing reads
+	// are scoped to the caller (R1-01), so a case with no caller would address nothing. A case about a
+	// different caller states its own. The cross-tenant cases are in `webhook.tenant-scope.spec.ts`,
+	// against a real store.
+	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+	jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
 });
 
 afterEach(() => {

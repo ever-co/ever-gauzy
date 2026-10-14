@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NbSelectModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { EntitySelectPanelDirective } from '../entity-select-panel.directive';
 import { TeamSelectorComponent } from './team/team.component';
 
 @NgModule({
 	declarations: [TeamSelectorComponent],
 	exports: [TeamSelectorComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslatePipe, NgSelectModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslatePipe, NgSelectModule, EntitySelectPanelDirective]
 })
 export class TeamSelectModule {}
