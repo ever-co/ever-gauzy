@@ -1,21 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNumber, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsUUID, Min, ValidateNested } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 
-/** One line as it is received. */
+/**
+ * One line as it is received. Both quantities count units that arrived, so neither may be negative
+ * (review R2-03); the service refuses the same values for the GraphQL mutation, which has no DTO.
+ */
 export class StockTransferReceiveLineDTO {
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	lineId: ID;
 
-	@ApiProperty({ type: () => Number })
+	@ApiProperty({ type: () => Number, minimum: 0 })
 	@IsNumber()
+	@Min(0)
 	receivedQuantity: number;
 
-	@ApiPropertyOptional({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
 	@IsNumber()
+	@Min(0)
 	damagedQuantity?: number;
 }
 

@@ -169,8 +169,16 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		await assertLocationInScope(manager, input.warehouseId);
 		await assertVariantInScope(manager, input.variantId);
 
+		// The caller may tighten the level’s backorder policy for this call, never widen it (review R2-02):
+		// the GraphQL input carried `allowBackorder` straight here, and `true` let a hold past what a
+		// no-backorder level holds — a million units against ten — where the same request over REST (whose
+		// DTO has no such member) was refused. Whether a location may sell what it does not hold is the
+		// level’s own setting; a caller stating `true` is answered by that setting, and a caller stating
+		// `false` is held to on-hand even where the level would allow more.
+		const allowBackorder = input.allowBackorder === false ? false : undefined;
+
 		const level = await this.findLevel(input.warehouseId, input.variantId);
-		this.assertAvailable(level, quantity, input.allowBackorder);
+		this.assertAvailable(level, quantity, allowBackorder);
 
 		return await this.typeOrmStockReservationRepository.manager.transaction(async (manager) => {
 			const reservation = manager.create(StockReservation, {
@@ -206,12 +214,10 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 					// consume — and that rule has to be evaluated where the level row is locked rather than
 					// against the pre-flight read above, which a competing writer can overtake.
 					respectSafetyStock: true,
-					// The caller's policy for this call travels with the movement. The level's own column is
-					// what the hold rule reads when the caller states nothing; when the caller states the
-					// policy the demand is allowed under, that is what the rule measures it against — which is
-					// the whole point of the per-call override, and the case it exists for is a demand past
-					// what the level currently holds.
-					...(input.allowBackorder === undefined ? {} : { allowBackorder: input.allowBackorder })
+					// A caller that tightened the policy for this call carries that to the rule evaluated under
+					// the lock; otherwise the rule reads the level's own column. A caller can no longer widen
+					// it here (R2-02), so the override is only ever `false`.
+					...(allowBackorder === undefined ? {} : { allowBackorder })
 				} as IStockMovementInput,
 				manager
 			);
@@ -612,11 +618,8 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 */
 	private assertAvailable(level: WarehouseProductVariant | null, quantity: number, allowBackorder?: boolean): void {
 		if (!level) {
-			// The variant has never been stocked at this location. That is a backorder by definition, and
-			// it is allowed only when the caller says the policy permits it.
-			if (allowBackorder) {
-				return;
-			}
+			// The variant has never been stocked at this location, so there is no level whose policy could
+			// permit a backorder, and a caller cannot grant one itself (R2-02).
 			throw inventoryError(
 				InventoryErrorCode.INSUFFICIENT_AVAILABLE,
 				'The variant is not stocked at this location, so nothing can be held there.',
