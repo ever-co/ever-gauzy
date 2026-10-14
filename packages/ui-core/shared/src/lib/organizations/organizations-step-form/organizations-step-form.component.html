@@ -352,13 +352,13 @@
 						<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.INVITES' | translate }}</h6>
 						<div class="grid">
 							<div class="form-group">
-								<label class="label" for="invitesAllowedToggle">
+								<!-- A caption, not a <label>: nb-toggle labels its own inner checkbox with the projected text -->
+								<span class="label">
 									{{ 'FORM.LABELS.ENABLE_DISABLE_INVITES' | translate }}
-								</label>
+								</span>
 								<nb-toggle
 									class="toggle"
 									formControlName="invitesAllowed"
-									id="invitesAllowedToggle"
 									status="primary"
 									labelPosition="end"
 									(checkedChange)="toggleExpiry($event)"
@@ -404,9 +404,10 @@
 				<form class="step-form" [formGroup]="employeeFeatureForm" (ngSubmit)="submitEmployeeFeature()">
 					<div class="grid">
 						<div class="form-group">
-							<label class="label" for="registerAsEmployee">
+							<!-- A caption, not a <label>: nb-toggle labels its own inner checkbox with the projected text -->
+							<span class="label">
 								{{ 'ORGANIZATIONS_PAGE.REGISTER_AS_EMPLOYEE' | translate }}
-							</label>
+							</span>
 							<nb-toggle
 								class="toggle"
 								formControlName="registerAsEmployee"
