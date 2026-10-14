@@ -430,3 +430,12 @@ jobs:
       - name: An update request body carries no default the client did not send
         if: always()
         run: node tools/scripts/update-dto-initializer-check.mjs
+
+      # No CI job runs the migration chain on MySQL, so a MySQL-only statement is never executed before a MySQL
+      # install boots: the pricing migration added `deletedKey` with ALTER TABLE after its own CREATE TABLE had
+      # declared it, and every fresh MySQL install stopped at boot with 1060 Duplicate column name (review R2-25).
+      - name: No migration adds a column its own CREATE TABLE already declared
+        if: always()
+        run: |
+          node --test tools/scripts/migration-duplicate-column-check.test.mjs
+          node tools/scripts/migration-duplicate-column-check.mjs
