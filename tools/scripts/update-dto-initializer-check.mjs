@@ -113,10 +113,10 @@ const REGEX_PREFIX = /[(,=:[!&|?{};+\-*%<>~^]|^$|\breturn$|\btypeof$|\bcase$/;
 
 /** @returns The masked copy of `source`. */
 function mask(source) {
-	const out = source.split('');
+	let out = source.split('');
 	const n = source.length;
 	let i = 0;
-	const templateDepth = [];
+	let templateDepth = [];
 
 	const blank = (from, to) => {
 		for (let k = from; k < to; k++) if (out[k] !== '\n') out[k] = ' ';
