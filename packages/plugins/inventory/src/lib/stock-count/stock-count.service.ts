@@ -18,7 +18,7 @@ import {
 	StockReasonCode
 } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
-import { assertLocationInScope, requestScope } from './../inventory.scope';
+import { assertLocationInScope, narrowLevelReadToTenant, requestScope } from './../inventory.scope';
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockCountLine } from './../stock-count-line/stock-count-line.entity';
@@ -136,16 +136,12 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 	public async open(id: ID): Promise<StockCount> {
 		return await this.typeOrmStockCountRepository.manager.transaction(async (manager) => {
 			const count = await this.requireState(manager, id, [StockCountStatus.DRAFT]);
-			const tenantId = count.tenantId ?? RequestContext.currentTenantId();
-
 			const query = manager
 				.createQueryBuilder(WarehouseProductVariant, 'level')
 				.innerJoin('level.warehouseProduct', 'aggregate')
 				.where('aggregate.warehouseId = :warehouseId', { warehouseId: count.warehouseId });
 
-			if (tenantId) {
-				query.andWhere('level.tenantId = :tenantId', { tenantId });
-			}
+			narrowLevelReadToTenant(query, count.tenantId ?? RequestContext.currentTenantId());
 
 			const levels = await query.getMany();
 

@@ -31,7 +31,7 @@ import {
 import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockMovementReferenceType, StockMovementType, StockReasonCode } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
-import { assertLocationInScope, IInventoryScope, requestTenantScope } from './../inventory.scope';
+import { assertLocationInScope, IInventoryScope, narrowLevelReadToTenant, requestTenantScope } from './../inventory.scope';
 import {
 	IAppliedMovement,
 	IStockAvailability,
@@ -628,12 +628,12 @@ export class StockLevelService {
 	 *
 	 * A caller with no tenant — a worker, a migration, a system context — is not narrowed: those reads
 	 * are the platform’s own and span every tenant by design.
+	 *
+	 * A level with no tenant of its own is its aggregate's, exactly as the write path counts it
+	 * (`scopeOfLevel`), so the reads and the writes of this engine agree about whose a level is.
 	 */
 	private scopeToTenant(query: any): void {
-		const tenantId = RequestContext.currentTenantId();
-		if (tenantId) {
-			query.andWhere('level.tenantId = :tenantId', { tenantId });
-		}
+		narrowLevelReadToTenant(query, RequestContext.currentTenantId());
 	}
 
 	/**

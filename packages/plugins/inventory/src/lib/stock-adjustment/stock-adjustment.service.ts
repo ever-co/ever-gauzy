@@ -4,7 +4,7 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import { StockAdjustmentStatus, StockAdjustmentType, StockMovementType, StockMovementReferenceType } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
-import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
+import { assertLocationInScope, assertVariantInScope, narrowLevelReadToTenant, requestScope } from './../inventory.scope';
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockAdjustment } from './stock-adjustment.entity';
@@ -195,11 +195,7 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 			.innerJoin('level.warehouseProduct', 'aggregate')
 			.where('aggregate.warehouseId = :warehouseId', { warehouseId })
 			.andWhere('level.variantId = :variantId', { variantId });
-		const tenantId = RequestContext.currentTenantId();
-
-		if (tenantId) {
-			query.andWhere('level.tenantId = :tenantId', { tenantId });
-		}
+		narrowLevelReadToTenant(query, RequestContext.currentTenantId());
 
 		return await query.getOne();
 	}

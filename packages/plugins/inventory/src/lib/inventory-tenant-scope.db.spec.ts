@@ -1079,6 +1079,81 @@ describe('inventory domain verbs keep to the caller’s tenant (DB-backed, two t
 
 	/*
 	|--------------------------------------------------------------------------
+	| A level that predates the scope stamping
+	|--------------------------------------------------------------------------
+	*/
+
+	describe('a level row with no tenant of its own (its aggregate carries it)', () => {
+		// Rows written before the write path stamped levels, or imported without a scope, carry the tenant on the
+		// aggregate only. The engine counts such a level as its aggregate's tenant's; every read that decides a
+		// write has to agree with it, or the read and the write disagree about the same row.
+		beforeEach(async () => {
+			await h.dataSource.query(
+				`UPDATE "warehouse_product_variant" SET "tenantId" = NULL, "organizationId" = NULL WHERE "id" = ?`,
+				[LEVEL_A]
+			);
+			actAs(TENANT_A, ORG_A);
+		});
+
+		it('a SET adjustment is computed from the quantity the level holds', async () => {
+			const draft = await h.adjustments.createAdjustment({
+				warehouseId: WAREHOUSE_A,
+				variantId: VARIANT_A,
+				type: StockAdjustmentType.SET,
+				quantity: 7,
+				reasonCode: 'COUNT'
+			} as Partial<StockAdjustment>);
+
+			expect((await h.adjustments.apply(draft.id)).quantityDelta).toBe(-3);
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 7, reservedQuantity: 0 });
+		});
+
+		it('a hold is measured against the level, not refused as unstocked', async () => {
+			await h.reservations.reserve({
+				warehouseId: WAREHOUSE_A,
+				variantId: VARIANT_A,
+				productId: PRODUCT_A,
+				quantity: 3,
+				referenceType: StockReservationReferenceType.ORDER,
+				referenceId: '00000000-0000-4000-8000-0000000005a7'
+			});
+
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 3 });
+		});
+
+		it('a count session snapshots the level', async () => {
+			const count = await h.counts.createCount({ warehouseId: WAREHOUSE_A } as Partial<StockCount>);
+			await h.counts.open(count.id);
+
+			const lines = await h.dataSource.query(`SELECT * FROM "stock_count_line" WHERE "stockCountId" = ?`, [
+				count.id
+			]);
+			expect(lines.map((line: Row) => [line.warehouseProductVariantId, Number(line.expectedQuantity)])).toEqual([
+				[LEVEL_A, 10]
+			]);
+		});
+
+		it('another tenant still cannot reach it', async () => {
+			actAs(TENANT_B, ORG_B);
+
+			await expect(
+				h.engine.applyMovement({
+					type: StockMovementType.ADJUSTMENT,
+					quantityDelta: -1,
+					reservedDelta: 0,
+					referenceType: 'ADJUSTMENT',
+					referenceId: '00000000-0000-4000-8000-0000000006b2',
+					warehouseId: WAREHOUSE_A,
+					variantId: VARIANT_A,
+					levelId: LEVEL_A
+				} as any)
+			).rejects.toBeInstanceOf(NotFoundException);
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 0 });
+		});
+	});
+
+	/*
+	|--------------------------------------------------------------------------
 	| The ledger engine itself
 	|--------------------------------------------------------------------------
 	*/

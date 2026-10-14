@@ -61,6 +61,32 @@ export function requestTenantScope(): IInventoryScope {
 }
 
 /**
+ * Narrows a level read to one tenant the way the ledger engine counts a level's tenant.
+ *
+ * A level written before the write path stamped its rows — or imported without a scope — carries no tenant of its
+ * own; its aggregate does, and the engine counts it as the aggregate's (`StockLevelService.scopeOfLevel`). A read
+ * that decides a write has to count it the same way: filtering on `level.tenantId` alone hid such a level from the
+ * caller's own reads while the engine still wrote to it, so a `SET` adjustment to 7 of a level holding 10 read the
+ * current quantity as 0 and wrote +7, leaving 17 (Greptile on #10579).
+ *
+ * The query must join the level's aggregate as `aggregate`, which every level read of this package does. A caller
+ * with no tenant is not narrowed.
+ *
+ * @param query The level read, `level` joined to `aggregate`.
+ * @param tenantId The tenant to narrow to.
+ */
+export function narrowLevelReadToTenant(
+	query: { andWhere: (where: string, parameters: Record<string, unknown>) => unknown },
+	tenantId: ID | null | undefined
+): void {
+	if (tenantId) {
+		query.andWhere('(level.tenantId = :tenantId OR (level.tenantId IS NULL AND aggregate.tenantId = :tenantId))', {
+			tenantId
+		});
+	}
+}
+
+/**
  * Whether a row exists inside a scope.
  *
  * A scope with no tenant is a system caller's, for which every row is in scope, so nothing is read.
