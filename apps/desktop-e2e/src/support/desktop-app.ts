@@ -1,17 +1,19 @@
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
 import { createServer } from 'node:net';
-import { join } from 'node:path';
+import { dirname, join, sep } from 'node:path';
 import { chromium, type Browser, type Page } from '@playwright/test';
-import { AppTarget, PROTOCOLS, runDir, userDataDirOf } from './config';
+import { AppTarget, loginItemNames, PROTOCOLS, runDir, userDataDirOf } from './config';
 import { RegistryGuard } from './registry';
 
 /**
  * The app's proxy: it refuses every request at once (403) and records the host. Chromium sends every
  * non-loopback request of the app through it, so the run never reaches the internet (no GitHub update
  * check, no update download, no telemetry, no web fonts) while the renderer still reaches the API on
- * 127.0.0.1 (loopback bypasses the proxy). The main process uses Node's own HTTP stack, which ignores
- * this switch; it only talks to the API.
+ * 127.0.0.1 (loopback bypasses the proxy). Node's HTTP stack in the main process (e.g. the updater's
+ * GitHub release lookup with node-fetch) and in processes the app forks ignores that switch; the same
+ * proxy reaches it through `NODE_USE_ENV_PROXY` + `HTTP(S)_PROXY`, with loopback in `NO_PROXY`
+ * (Electron 44's main process honours them: an https request then fails at the proxy's 403 within ms).
  *
  * A port nobody listens on is not good enough on Windows: a refused connection to it takes seconds
  * (SYN retries), and the app's startup window then took minutes to load.
@@ -20,7 +22,7 @@ let blockingProxy: Promise<{ url: string; blocked: Set<string> }> | undefined;
 
 function refusingProxy(): Promise<{ url: string; blocked: Set<string> }> {
 	blockingProxy ??= new Promise((resolve, reject) => {
-		const blocked = new Set<string>();
+		let blocked = new Set<string>();
 		const server = createServer((socket) => {
 			socket.once('data', (chunk) => {
 				// "CONNECT host:443 HTTP/1.1" for HTTPS, "GET http://host/path HTTP/1.1" for plain HTTP.
@@ -88,6 +90,11 @@ export async function launchDesktopApp(target: AppTarget): Promise<DesktopApp> {
 	const env = { ...process.env } as Record<string, string>;
 	delete env['NODE_OPTIONS']; // packaged Electron refuses most NODE_OPTIONS; a dev's --experimental-vm-modules would only add noise
 	delete env['ELECTRON_RUN_AS_NODE'];
+	for (const name of ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'ALL_PROXY']) {
+		delete env[name];
+		delete env[name.toLowerCase()];
+	}
+	Object.assign(env, { NODE_USE_ENV_PROXY: '1', HTTP_PROXY: proxy.url, HTTPS_PROXY: proxy.url, NO_PROXY: 'localhost,127.0.0.1,::1' });
 	const args = [
 		...target.args,
 		`--user-data-dir=${userDataDir}`,
@@ -96,7 +103,9 @@ export async function launchDesktopApp(target: AppTarget): Promise<DesktopApp> {
 		'--lang=en-US',
 		'--mute-audio' // the app plays a camera-shutter sound for every screenshot
 	];
-	const child = spawn(target.executablePath, args, { cwd: runDir, env, stdio: ['ignore', 'pipe', 'pipe'] });
+	// Off Windows the app leads a process group of its own, so the clean-up can stop the whole group.
+	const detached = process.platform !== 'win32';
+	const child = spawn(target.executablePath, args, { cwd: runDir, env, detached, stdio: ['ignore', 'pipe', 'pipe'] });
 	const out = createWriteStream(log, { flags: 'a' });
 	child.stdout?.on('data', (d) => out.writable && out.write(d));
 	child.stderr?.on('data', (d) => out.writable && out.write(d));
@@ -184,8 +193,9 @@ export async function exited(desktop: DesktopApp, timeout = 60_000): Promise<voi
 
 /**
  * Quits the app (CDP `Browser.close`, which Electron handles like a user's quit), then makes sure nothing
- * of it survives: the started process tree and, on Windows, every process still running from the build
- * under test (a relaunched app, the forked desktop API). Processes of other installations are never touched.
+ * of it survives: the started process tree (off Windows: its process group) and every process still running
+ * from the build under test — a relaunched app (`app.relaunch()` starts it outside the first process's
+ * tree and group), the forked desktop API. Processes of other installations are never touched.
  */
 export async function closeDesktopApp(desktop: DesktopApp | undefined): Promise<void> {
 	if (!desktop) return;
@@ -206,45 +216,69 @@ export async function closeDesktopApp(desktop: DesktopApp | undefined): Promise<
 	const deadline = Date.now() + 15_000;
 	while (Date.now() < deadline && (await targets(desktop)).length) await new Promise((r) => setTimeout(r, 500));
 	killTree(desktop.pid);
-	if (process.platform === 'win32') killWindowsProcessesOf(desktop.target.executablePath);
+	killProcessesOf(desktop.target.executablePath);
 	logStreams.get(desktop.log)?.end();
 }
 
 function killTree(pid: number): void {
 	try {
 		if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
-		else process.kill(pid, 'SIGKILL');
+		else process.kill(-pid, 'SIGKILL'); // the group the app leads (spawned detached)
 	} catch {
 		// already gone
 	}
 }
 
-function killWindowsProcessesOf(executablePath: string): void {
-	const script =
-		`$p = $env:GAUZY_E2E_EXE; Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $p } | ` +
-		`ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }`;
+/** Stops every process running from the build under test, matched by its executable (Windows) or install directory. */
+function killProcessesOf(executablePath: string): void {
+	let killed: number[] = [];
 	try {
-		const killed = execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], {
-			env: { ...process.env, GAUZY_E2E_EXE: executablePath },
-			encoding: 'utf8'
-		}).trim();
-		if (killed) console.log(`[desktop-e2e] stopped leftover processes of the build under test: ${killed.split(/\s+/).join(', ')}`);
+		if (process.platform === 'win32') {
+			const script =
+				`$p = $env:GAUZY_E2E_EXE; Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $p } | ` +
+				`ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }`;
+			killed = execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], {
+				env: { ...process.env, GAUZY_E2E_EXE: executablePath },
+				encoding: 'utf8'
+			})
+				.split(/\s+/)
+				.filter(Boolean)
+				.map(Number);
+		} else {
+			// Every process of an unpacked Linux app runs an executable in its directory; on macOS, in its .app bundle
+			// (the helpers live in Contents/Frameworks).
+			const root = /^(.*?\.app)\//.exec(executablePath)?.[1] ?? dirname(executablePath);
+			const prefix = root.endsWith(sep) ? root : root + sep;
+			for (const line of execFileSync('ps', ['-axo', 'pid=,args='], { encoding: 'utf8' }).split('\n')) {
+				const match = /^\s*(\d+)\s+(.*)$/.exec(line);
+				if (!match || !match[2].startsWith(prefix) || Number(match[1]) === process.pid) continue;
+				try {
+					process.kill(Number(match[1]), 'SIGKILL');
+					killed.push(Number(match[1]));
+				} catch {
+					// gone in the meantime
+				}
+			}
+		}
 	} catch {
 		// nothing left
 	}
+	if (killed.length) console.log(`[desktop-e2e] stopped leftover processes of the build under test: ${killed.join(', ')}`);
 }
 
 /**
  * Snapshots the Windows keys the desktop apps write on their first start — the login items (`Run`,
- * `StartupApproved\Run`: values named after the app id, the same values an installed release uses) and the
- * deep-link protocols — so `restore()` can put back exactly what a run changed. Undefined off Windows.
+ * `StartupApproved\Run`: only the values named after the apps' ids — the same values an installed release
+ * uses; other programs' login items are neither compared nor touched) and the deep-link protocols — so
+ * `restore()` can put back exactly what a run changed. Undefined off Windows.
  */
 export function desktopRegistryGuard(): RegistryGuard | undefined {
 	if (!RegistryGuard.supported) return undefined;
 	const software = 'HKEY_CURRENT_USER\\Software';
+	const names = loginItemNames();
 	const guard = new RegistryGuard()
-		.watchValues(`${software}\\Microsoft\\Windows\\CurrentVersion\\Run`)
-		.watchValues(`${software}\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run`);
+		.watchValues(`${software}\\Microsoft\\Windows\\CurrentVersion\\Run`, names)
+		.watchValues(`${software}\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run`, names);
 	for (const protocol of PROTOCOLS) guard.watchTree(`${software}\\Classes\\${protocol}`);
 	return guard;
 }

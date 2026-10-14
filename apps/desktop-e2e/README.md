@@ -79,17 +79,23 @@ window never came up. Attaching later leaves those renderers alone, and lets the
 - **Own user data per app** (`--user-data-dir=<run dir>/<app>-user-data`): an installed Gauzy app's settings, database
   and single-instance lock are not touched, and it may keep running.
 - **No internet**: `--proxy-server` points at a local proxy that refuses every request (403) and records the host;
-  requests to loopback addresses — the API on `127.0.0.1` — bypass it. No update check against GitHub, no update
-  download, no telemetry; the hosts the app tried to reach are printed at the end. (A closed port is not enough on
-  Windows: a refused connection takes seconds there, and the startup window then took minutes.)
+  requests to loopback addresses — the API on `127.0.0.1` — bypass it. Node's HTTP stack in the main process and in
+  the processes the app forks (e.g. the updater's GitHub release lookup with `node-fetch`) ignores `--proxy-server`;
+  it is sent to the same proxy with `NODE_USE_ENV_PROXY=1` + `HTTP_PROXY`/`HTTPS_PROXY`, loopback in `NO_PROXY`.
+  No update check against GitHub, no update download, no telemetry; the hosts the app tried to reach are printed at
+  the end. (A closed port is not enough on Windows: a refused connection takes seconds there, and the startup window
+  then took minutes.)
 - **`--mute-audio`**: the timer plays a camera-shutter sound for every screenshot.
 - **Windows registry**: on its first start an app registers itself as a login item (`HKCU\…\CurrentVersion\Run`,
   `…\Explorer\StartupApproved\Run`, a value named after its app id — the same value an installed release uses) and
   as its protocol handler (`HKCU\Software\Classes\gauzy-timer` and the other apps' protocols). The suite exports
-  those keys before the first start and afterwards puts back exactly what changed (only the changed values of the
-  Run keys, the whole protocol key), then checks that nothing differs. If a run is killed before its clean-up, the
+  those keys before the first start and afterwards puts back exactly what changed (in the Run keys only the Gauzy
+  apps' own values — other programs' login items are neither compared nor touched — and the whole protocol key),
+  then checks that nothing differs. If a run is killed before its clean-up, the
   installed app's login item and protocol point at the test build until that app starts again (or fix them in
   `regedit`).
-- **Processes**: the app is quit at the end, and anything still running from the build under test (matched by its
-  executable path) is stopped; the API is stopped by the global setup's teardown.
+- **Processes**: the app is quit at the end; then the process tree it was started as (off Windows: its process
+  group) and anything still running from the build under test — a relaunched app, a forked API — is stopped
+  (matched by its executable path on Windows, by the app's directory / `.app` bundle on Linux / macOS). The API is
+  stopped by the global setup's teardown.
 - **The test database**: the organization's timer settings above.

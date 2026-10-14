@@ -13,8 +13,8 @@ import { join } from 'node:path';
  * (same app id, same protocol) with the path of the build under test.
  *
  * `RegistryGuard` exports the watched keys before the app starts and, afterwards, puts back exactly
- * what the run changed: for value-watched keys only the values that differ (another program may have
- * changed other values in the meantime), for tree-watched keys the whole subtree. Everything goes
+ * what the run changed: for value-watched keys only the named values (the apps' own; other programs'
+ * values in the same key are neither compared nor touched), for tree-watched keys the whole subtree. Everything goes
  * through `reg export` / `reg import` files, so every value type round-trips unchanged.
  */
 const HEADER = 'Windows Registry Editor Version 5.00';
@@ -24,6 +24,8 @@ type Sections = Map<string, Map<string, string>>;
 interface Snapshot {
 	key: string;
 	mode: 'values' | 'tree';
+	/** values mode: the watched value names, in their exported (quoted) form, lower case. */
+	names?: Set<string>;
 	exists: boolean;
 	body: string;
 	sections: Sections;
@@ -86,9 +88,13 @@ export class RegistryGuard {
 		return process.platform === 'win32';
 	}
 
-	/** Remembers the values of `key` (not its subkeys); afterwards only values the run touched are put back. */
-	watchValues(key: string): this {
-		this.snapshots.push(this.take(key, 'values'));
+	/**
+	 * Remembers the values called `names` of `key` (not its subkeys); afterwards only those of them the run
+	 * touched are put back. Value names are case-insensitive, like in the registry.
+	 */
+	watchValues(key: string, names: string[]): this {
+		const quoted = new Set(names.map((n) => `"${n.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`.toLowerCase()));
+		this.snapshots.push({ ...this.take(key, 'values'), names: quoted });
 		return this;
 	}
 
@@ -100,15 +106,17 @@ export class RegistryGuard {
 
 	/** What differs from the snapshots right now (nothing is changed). */
 	diff(): RegistryChange[] {
-		const changes: RegistryChange[] = [];
+		let changes: RegistryChange[] = [];
 		for (const before of this.snapshots) {
 			const after = this.take(before.key, before.mode);
 			if (before.mode === 'tree') {
 				if (before.body !== after.body) changes.push({ key: before.key, change: 'tree-changed' });
 				continue;
 			}
-			const b = before.sections.get(before.key) ?? new Map<string, string>();
-			const a = after.sections.get(before.key) ?? new Map<string, string>();
+			const watched = (values: Map<string, string> | undefined) =>
+				new Map([...(values ?? [])].filter(([name]) => before.names?.has(name.toLowerCase())));
+			const b = watched(before.sections.get(before.key));
+			const a = watched(after.sections.get(before.key));
 			for (const [name, line] of a) {
 				if (!b.has(name)) changes.push({ key: before.key, change: 'added', name, after: line });
 				else if (b.get(name) !== line) changes.push({ key: before.key, change: 'changed', name, before: b.get(name), after: line });
@@ -121,7 +129,7 @@ export class RegistryGuard {
 	/** Puts back everything the run changed, then checks that nothing differs any more. Returns what it restored. */
 	restore(): RegistryChange[] {
 		const changes = this.diff();
-		const blocks: string[] = [];
+		let blocks: string[] = [];
 		for (const before of this.snapshots) {
 			const mine = changes.filter((c) => c.key === before.key);
 			if (!mine.length) continue;

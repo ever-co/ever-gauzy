@@ -75,18 +75,49 @@ export const DIST_DIR: Record<DesktopAppName, string> = {
 /** The deep-link protocol each app registers on its first start (Windows: `HKCU\Software\Classes\<protocol>`). */
 export const PROTOCOLS = ['gauzy-timer', 'gauzy-desktop', 'gauzy-server', 'gauzy-api-server', 'gauzy-agent', 'gauzy-mcp-server'];
 
-/** The electron-builder `--dir` output of an app, from its built manifest (product name, output directory). */
-export function packagedExecutable(app: DesktopAppName): string {
+/** The app id each app is released with (`build.appId`), when its built manifest does not say. */
+const APP_IDS: Record<DesktopAppName, string> = {
+	'desktop-timer': 'com.ever.gauzydesktoptimer',
+	desktop: 'com.ever.gauzydesktop',
+	server: 'com.ever.gauzyserver',
+	'server-api': 'com.ever.gauzyapiserver',
+	agent: 'com.ever.gauzyagent',
+	'server-mcp': 'com.ever.gauzymcpserver'
+};
+
+interface BuiltManifest {
+	dist: string;
+	name: string;
+	build: { appId?: string; productName?: string; directories?: { output?: string }; linux?: { executableName?: string } };
+}
+
+/** The app's built `package.json` (name, electron-builder config). Empty when the app is not built. */
+function builtManifest(app: DesktopAppName): BuiltManifest {
 	const dist = join(process.env['DESKTOP_E2E_DIST'] || join(repoRoot, 'dist'), 'apps', DIST_DIR[app]);
-	let build: { productName?: string; directories?: { output?: string }; linux?: { executableName?: string } } = {};
-	let name = app as string;
 	try {
 		const manifest = JSON.parse(readFileSync(join(dist, 'package.json'), 'utf8'));
-		build = manifest.build ?? {};
-		name = manifest.name ?? name;
+		return { dist, name: manifest.name ?? app, build: manifest.build ?? {} };
 	} catch {
-		// not built: the path below will not exist and the caller says so
+		// not built: the paths derived from it will not exist and the caller says so
+		return { dist, name: app, build: {} };
 	}
+}
+
+/**
+ * The value names the apps write into the Windows login-item keys (`HKCU\…\CurrentVersion\Run`,
+ * `…\Explorer\StartupApproved\Run`): Electron's `setLoginItemSettings` names the value after the app user model
+ * id — the app id the app sets at start, or Electron's default `electron.app.<product name>`.
+ */
+export function loginItemNames(): string[] {
+	return (Object.keys(DIST_DIR) as DesktopAppName[]).flatMap((app) => {
+		const { name, build } = builtManifest(app);
+		return [...new Set([build.appId ?? APP_IDS[app], APP_IDS[app], `electron.app.${build.productName ?? name}`])];
+	});
+}
+
+/** The electron-builder `--dir` output of an app, from its built manifest (product name, output directory). */
+export function packagedExecutable(app: DesktopAppName): string {
+	const { dist, name, build } = builtManifest(app);
 	const productName = build.productName ?? name;
 	const out = resolve(dist, build.directories?.output ?? 'dist');
 	switch (process.platform) {

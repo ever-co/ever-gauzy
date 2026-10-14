@@ -176,7 +176,7 @@ test('desktop timer: setup, login, timer with screenshots recorded by the API', 
 	const start = () => tracker.locator('button[status="success"]').filter({ has: tracker.locator('nb-icon[icon="play"]') });
 	const stop = () => tracker.locator('button[status="danger"]').filter({ has: tracker.locator('nb-icon[icon="pause"]') });
 	/** Every screenshot upload the app makes: when, and what the API answered. */
-	const uploads: { at: number; status: number; recorded: boolean }[] = [];
+	let uploads: { at: number; status: number; recorded: boolean }[] = [];
 	const uploaded = (since: number, timeout: number) =>
 		tracker.waitForResponse(
 			(res) => res.request().method() === 'POST' && new URL(res.url()).pathname === '/api/timesheet/screenshot' && Date.now() >= since,
