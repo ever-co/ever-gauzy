@@ -2953,6 +2953,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Delete organization",
+			"WARNING": "{{ name }} will be permanently deleted. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete organization"
+		},
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
 		"POSITIONS": "Positions",
