@@ -321,7 +321,7 @@ export const schemaExtensions = gql`
 		items: [SubscriptionItemInput!]
 		paymentAccountHolderId: ID
 		paymentMethodTokenId: ID
-		"Bill the first period as part of creation."
+		"Start the subscription at creation: its first period is due at once, and the next billing run bills it."
 		activate: Boolean
 		"Leave the subscription inside the plan's trial."
 		startTrial: Boolean

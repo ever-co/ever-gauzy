@@ -266,6 +266,46 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	}
 
 	/**
+	 * Moves a cycle nothing has billed yet onto another period.
+	 *
+	 * A subscription created pending carries the cycle of the period it would have started with, and
+	 * its first period starts when it is activated (`SubscriptionService.activate`). The cycle moves with
+	 * that period, rather than staying behind as a `PENDING` row nothing bills — which a revenue or a
+	 * dunning report reads as an unpaid cycle for good. Only a cycle that records no money billed moves:
+	 * `PENDING`, with no order and no attempt. Any other is answered unchanged.
+	 *
+	 * @param id The cycle.
+	 * @param period The period it now covers.
+	 * @returns The cycle, moved or as it was.
+	 * @throws BadRequestException when the period is empty.
+	 */
+	public async reschedulePending(id: ID, period: { start: Date; end: Date }): Promise<SubscriptionBilling> {
+		if (period.end.getTime() <= period.start.getTime()) {
+			throw new BadRequestException(
+				'SUBSCRIPTION_BILLING_PERIOD_INVALID: a billing period must end after it starts.'
+			);
+		}
+
+		const billing = await this.findOneScoped(id);
+
+		if (billing.status !== SubscriptionBillingStatus.PENDING || billing.orderId || billing.attemptCount) {
+			return billing;
+		}
+
+		// Predicated on the cycle still billing nothing, so a charge that reached it after the read above
+		// is never moved off the period it was charged for. Losing that race leaves the cycle where the
+		// charge put it, which is the answer for a cycle that records money billed.
+		await this.writeIf(
+			id,
+			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), attemptCount: 0 },
+			async () => null,
+			{ periodStart: period.start, periodEnd: period.end, dueAt: period.start }
+		);
+
+		return await this.findOneScoped(id);
+	}
+
+	/**
 	 * Records that a paid cycle was refunded.
 	 *
 	 * @param id The cycle.

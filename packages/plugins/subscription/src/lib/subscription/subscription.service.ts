@@ -330,7 +330,13 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 					quantity: normalizeDecimal(input.quantity, '1'),
 					currentPeriodStart: period.start,
 					currentPeriodEnd: period.end,
-					nextBillingAt: period.end,
+					// The next period a billing run bills is the one starting at `nextBillingAt`
+					// (`billCycle`). Without a trial that is the opening period itself, whose cycle row is
+					// written below: it was `period.end`, so the first run billed the second period and the
+					// opening cycle stayed `PENDING` for good — the first period of every subscription was
+					// free, and its setup fee landed on the second. A trial is different: its own period is
+					// waived, and the first paid period is the one starting when the trial ends.
+					nextBillingAt: trialDays > 0 ? period.end : period.start,
 					billingCycleCount: 0,
 					currency,
 					// The row starts its optimistic lock at one, which is the value the column's own
@@ -425,6 +431,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * trial has not run out yet — rather than from creation, so a subscription that sat pending for a
 	 * week does not inherit a week of period it was never billed for.
 	 *
+	 * That period is the first one billed: `nextBillingAt` is its **start**, so the next billing run
+	 * bills it (or, when it starts at a trial's end, bills it once the trial is over). It was the
+	 * period's end, which made the first run bill the second period and left the first one free. The
+	 * cycle row written at creation for the period the subscription would have started with moves to
+	 * the activation's period, so it is the row that run settles rather than a `PENDING` cycle nothing
+	 * ever bills. Activating does not charge anybody itself: billing stays with the billing run and the
+	 * permission that drives it.
+	 *
 	 * @param id The subscription to activate.
 	 * @param expectation The version the caller read the subscription at.
 	 * @returns The activated subscription.
@@ -446,6 +460,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const start = trialEndsAt && trialEndsAt.getTime() > now.getTime() ? trialEndsAt : now;
 		const period = periodFrom(start, cadence);
 
+		// Moved before the subscription becomes `ACTIVE`, while no billing run selects it: a run that
+		// reached it first would open its own row for the new period, and this one could not follow.
+		await this.moveOpeningCycle(subscription, period);
+
 		await commitVersionedUpdate<Subscription>(this, {
 			where: currentScope(),
 			id,
@@ -454,7 +472,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				status: SubscriptionStatus.ACTIVE,
 				currentPeriodStart: period.start,
 				currentPeriodEnd: period.end,
-				nextBillingAt: period.end
+				nextBillingAt: period.start
 			}
 		});
 
@@ -2134,6 +2152,32 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const trialEndsAt = subscription.metadata?.['trialEndsAt'];
 
 		return typeof trialEndsAt === 'string' ? new Date(trialEndsAt) : null;
+	}
+
+	/**
+	 * Moves the cycle written at creation onto the period an activation starts.
+	 *
+	 * Only a subscription that was never billed has one, and only a cycle that records no money billed
+	 * moves (`SubscriptionBillingService.reschedulePending`): a trial's waived cycle stays where it is,
+	 * as the record of the trial.
+	 *
+	 * @param subscription The pending subscription, as read before it is activated.
+	 * @param period The period the activation starts.
+	 */
+	private async moveOpeningCycle(subscription: Subscription, period: ISubscriptionPeriod): Promise<void> {
+		if ((subscription.billingCycleCount ?? 0) > 0) {
+			return;
+		}
+
+		const opening = (await this.billingService.findForSubscription(subscription.id)).find(
+			(cycle) => cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount
+		);
+
+		if (!opening || new Date(opening.periodStart).getTime() === period.start.getTime()) {
+			return;
+		}
+
+		await this.billingService.reschedulePending(opening.id, period);
 	}
 
 	/**
