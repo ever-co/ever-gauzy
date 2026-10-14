@@ -1,0 +1,53 @@
+<nb-card class="dialog" role="alertdialog" aria-labelledby="org-delete-title" aria-describedby="org-delete-warning">
+  <nb-card-header>
+    <h6 id="org-delete-title" class="title">{{ 'ORGANIZATIONS_PAGE.DELETE_DIALOG.TITLE' | translate }}</h6>
+    <button
+      type="button"
+      class="cancel"
+      [attr.aria-label]="'BUTTONS.CLOSE' | translate"
+      (click)="close()"
+    >
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+  </nb-card-header>
+  <nb-card-body>
+    <div id="org-delete-warning" class="warning">
+      <nb-icon icon="alert-triangle-outline" status="danger" aria-hidden="true"></nb-icon>
+      <span>{{ 'ORGANIZATIONS_PAGE.DELETE_DIALOG.WARNING' | translate: { name: name } }}</span>
+    </div>
+    <label
+      class="confirm-label"
+      for="org-delete-name"
+      [innerHTML]="'ORGANIZATIONS_PAGE.DELETE_DIALOG.TYPE_TO_CONFIRM' | translate: { name: nameMarkup }"
+    ></label>
+    <input
+      #nameInput
+      id="org-delete-name"
+      nbInput
+      fullWidth
+      fieldSize="small"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      [placeholder]="name"
+      [(ngModel)]="typedName"
+      (keydown.enter)="delete()"
+    />
+  </nb-card-body>
+  <nb-card-footer>
+    <button type="button" (click)="close()" status="basic" ghost nbButton size="small">
+      {{ 'BUTTONS.CANCEL' | translate }}
+    </button>
+    <button
+      type="button"
+      (click)="delete()"
+      [disabled]="!isConfirmed"
+      status="danger"
+      nbButton
+      size="small"
+    >
+      <nb-icon icon="trash-2-outline"></nb-icon>
+      {{ 'ORGANIZATIONS_PAGE.DELETE_DIALOG.CONFIRM' | translate }}
+    </button>
+  </nb-card-footer>
+</nb-card>
