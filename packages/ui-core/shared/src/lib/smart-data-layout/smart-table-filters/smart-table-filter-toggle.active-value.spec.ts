@@ -27,6 +27,12 @@ describe('filterRowHasActiveValue', () => {
 		const typed = row('<input />');
 		(typed.querySelector('input') as HTMLInputElement).value = 'abc';
 		expect(filterRowHasActiveValue(typed)).toBe(true);
+		// A native select is active once anything past its first ("all") option is chosen.
+		const options = '<option value="">All</option><option value="a">A</option>';
+		expect(filterRowHasActiveValue(row(`<select>${options}</select>`))).toBe(false);
+		const chosen = row(`<select>${options}</select>`);
+		(chosen.querySelector('select') as HTMLSelectElement).selectedIndex = 1;
+		expect(filterRowHasActiveValue(chosen)).toBe(true);
 		expect(filterRowHasActiveValue(row('<nb-select><button class="select-button placeholder"></button></nb-select>'))).toBe(false);
 		expect(filterRowHasActiveValue(row('<nb-select><button class="select-button"></button></nb-select>'))).toBe(true);
 		expect(filterRowHasActiveValue(row('<button class="na on"></button>'))).toBe(false);
