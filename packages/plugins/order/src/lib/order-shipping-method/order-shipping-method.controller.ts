@@ -13,6 +13,7 @@ import {
 } from '@gauzy/core';
 import { OrderShippingMethod } from './order-shipping-method.entity';
 import { OrderShippingMethodService } from './order-shipping-method.service';
+import { OrderEditGuard } from '../order/order-edit.guard';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { CreateOrderShippingMethodDTO, UpdateOrderShippingMethodDTO } from './dto';
 
@@ -27,8 +28,24 @@ import { CreateOrderShippingMethodDTO, UpdateOrderShippingMethodDTO } from './dt
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 @Controller('/order-shipping-methods')
 export class OrderShippingMethodController extends CrudController<OrderShippingMethod> {
-	constructor(private readonly service: OrderShippingMethodService) {
+	constructor(
+		private readonly service: OrderShippingMethodService,
+		private readonly editGuard: OrderEditGuard
+	) {
 		super(service);
+	}
+
+	/**
+	 * Refuses a write to this row once its order is placed (review R3-11): a placed order changes through an order
+	 * change, which versions, prices and re-derives it. `OrderEditGuard` states the rule.
+	 *
+	 * @param id The row.
+	 * @param withDeleted Whether a retired row is read too (a restore reads one).
+	 */
+	private async assertEditable(id: ID, withDeleted = false): Promise<void> {
+		const stored = await this.service.findOneByIdString(id, withDeleted ? ({ withDeleted: true } as never) : undefined);
+
+		await this.editGuard.assertDraft(stored.orderId, 'order shipping method');
 	}
 
 	/**
@@ -52,6 +69,8 @@ export class OrderShippingMethodController extends CrudController<OrderShippingM
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateOrderShippingMethodDTO): Promise<OrderShippingMethod> {
+		await this.editGuard.assertDraft(entity.orderId, 'order shipping method');
+
 		return this.service.create(entity as any);
 	}
 
@@ -75,6 +94,11 @@ export class OrderShippingMethodController extends CrudController<OrderShippingM
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrderShippingMethodDTO
 	): Promise<any> {
+		const stored = await this.service.findOneByIdString(id);
+
+		this.editGuard.assertSameOrder(stored.orderId, (entity as { orderId?: ID }).orderId, 'order shipping method');
+		await this.editGuard.assertDraft(stored.orderId, 'order shipping method');
+
 		return this.service.update(id, entity as any);
 	}
 
@@ -105,6 +129,8 @@ export class OrderShippingMethodController extends CrudController<OrderShippingM
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		await this.assertEditable(id);
+
 		return await this.service.softRemove(id);
 	}
 
@@ -127,6 +153,8 @@ export class OrderShippingMethodController extends CrudController<OrderShippingM
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		await this.assertEditable(id);
+
 		return await super.softRemove(id, ...options);
 	}
 
@@ -149,6 +177,8 @@ export class OrderShippingMethodController extends CrudController<OrderShippingM
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		await this.assertEditable(id, true);
+
 		return await super.softRecover(id, ...options);
 	}
 }

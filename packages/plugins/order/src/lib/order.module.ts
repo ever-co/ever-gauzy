@@ -23,6 +23,7 @@ import { OrderStreamedEvents } from './order-streamed-events';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
 import { TypeOrmOrderRepository } from './order/repository/type-orm-order.repository';
+import { OrderEditGuard } from './order/order-edit.guard';
 import { MikroOrmOrderRepository } from './order/repository/mikro-orm-order.repository';
 import { OrderLineController } from './order-line/order-line.controller';
 import { OrderLineService } from './order-line/order-line.service';
@@ -147,6 +148,8 @@ import { OrderInvoicingService } from './order-invoicing/order-invoicing.service
 		},
 		TypeOrmOrderRepository,
 		MikroOrmOrderRepository,
+		// Holds the children's generic routes and GraphQL fields to drafts (review R3-11).
+		OrderEditGuard,
 		OrderTotalsService,
 		// The persistence context each unit of a request-less pass runs in — a MikroORM fork per order
 		// under that ORM, the work itself under TypeORM — and the one answer to which ORM an order row is

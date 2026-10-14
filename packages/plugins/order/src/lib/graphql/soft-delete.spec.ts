@@ -246,10 +246,21 @@ const CONTEXT: Row = { req: REQUEST };
  * pair is supposed to reach.
  */
 const RESOLVER_DEPS: Readonly<Record<string, readonly string[]>> = {
-	OrderResolver: ['order', 'totals', 'line', 'address', 'shippingMethod', 'creditLine', 'history', 'change'],
+	OrderResolver: [
+		'order',
+		'totals',
+		'line',
+		'address',
+		'shippingMethod',
+		'creditLine',
+		'history',
+		'change',
+		'invoicing',
+		'editGuard'
+	],
 	OrderChangeResolver: ['change', 'action', 'summary', 'transaction', 'history'],
 	OrderLineInvoiceResolver: ['invoice', 'line'],
-	OrderLineResolver: ['invoice', 'line']
+	OrderLineResolver: ['invoice', 'line', 'editGuard']
 };
 
 /** One of the eleven resources, its two surfaces and the service that owns it. */
@@ -534,7 +545,11 @@ function surfaces(entry: IResource): { service: Row; controller: Row; resolver: 
 				delete: jest.fn().mockResolvedValue(DELETED),
 				update: jest.fn().mockResolvedValue(UPDATED),
 				findOneByIdString: jest.fn().mockResolvedValue(UPDATED),
-				commitChange: jest.fn().mockResolvedValue(UPDATED)
+				commitChange: jest.fn().mockResolvedValue(UPDATED),
+				// The draft guard (review R3-11) lets every row through here: this suite is about which service
+				// a field reaches; `order-placed-children.spec.ts` holds the guard's own rule.
+				assertDraft: jest.fn().mockResolvedValue(undefined),
+				assertSameOrder: jest.fn()
 			});
 		}
 	}
@@ -546,7 +561,8 @@ function surfaces(entry: IResource): { service: Row; controller: Row; resolver: 
 		// Every controller of this domain takes the resource's own service first and hands it to the base
 		// class, which is what the two inherited routes call; the order controller's six other
 		// collaborators belong to routes this pair does not touch.
-		controller: new entry.controller(service) as Row,
+		// A child controller takes the draft guard second (review R3-11); the others ignore the extra argument.
+		controller: new entry.controller(service, stubs.get('editGuard') ?? { assertDraft: async () => undefined }) as Row,
 		resolver: new entry.resolver(...entry.deps.map((name) => stubs.get(name))) as Row
 	};
 }

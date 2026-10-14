@@ -727,6 +727,37 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 					}
 				}
 
+				// A line is not cut below what has already moved against it (review R3-14): the units shipped, the
+				// units still invoiced (invoiced less credited) and the units a return has asked for. `ITEM_REMOVE`
+				// refuses a fulfilled line for the same reason; an update that lowered the quantity under the shipped
+				// units billed the order for fewer than left the building and reported it `FULFILLED`.
+				if (changes['quantity'] !== undefined) {
+					const quantity = Number(changes['quantity']);
+					const floor = Math.max(
+						Number(line.fulfilledQuantity ?? 0),
+						Number(line.invoicedQuantity ?? 0) - Number(line.creditedQuantity ?? 0),
+						Number(line.returnRequestedQuantity ?? 0)
+					);
+
+					if (!Number.isFinite(quantity) || quantity < floor) {
+						throw new BadRequestException({
+							message:
+								`ORDER_CHANGE_NOT_APPLICABLE: line '${line.id}' cannot be set to ${changes['quantity']}; ` +
+								`${floor} of it has already been shipped, invoiced or asked back.`,
+							code: 'ORDER_CHANGE_NOT_APPLICABLE',
+							details: {
+								orderLineId: line.id,
+								quantity: changes['quantity'],
+								minimumQuantity: floor,
+								fulfilledQuantity: line.fulfilledQuantity,
+								invoicedQuantity: line.invoicedQuantity,
+								creditedQuantity: line.creditedQuantity,
+								returnRequestedQuantity: line.returnRequestedQuantity
+							}
+						});
+					}
+				}
+
 				await this.lineService.update(line.id, changes as any);
 				break;
 			}

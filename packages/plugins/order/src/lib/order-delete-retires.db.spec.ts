@@ -219,6 +219,12 @@ type Row = Record<string, any>;
 const none = {} as never;
 
 /**
+ * The draft guard of the order children (review R3-11), letting every row through: the rows here are standalone
+ * fixtures with no order behind them, and the guard's own rule is held by `order-placed-children.spec.ts`.
+ */
+const DRAFTS_ONLY_ALLOWED = { assertDraft: async () => undefined, assertSameOrder: () => undefined } as never;
+
+/**
  * The ten routes, each a real controller over its real service, built over the two fixture repositories.
  */
 const ROUTES: ReadonlyArray<{ route: string; build: (typeOrm: unknown, mikroOrm: unknown) => Row }> = [
@@ -238,23 +244,12 @@ const ROUTES: ReadonlyArray<{ route: string; build: (typeOrm: unknown, mikroOrm:
 	},
 	{
 		route: 'order-lines',
-		build: (t, m) => new OrderLineController(new OrderLineService(t as never, m as never, none))
-	},
-	{
-		route: 'order-transactions',
-		build: (t, m) => new OrderTransactionController(new OrderTransactionService(t as never, m as never))
-	},
-	{
-		route: 'order-history',
-		build: (t, m) => new OrderHistoryController(new OrderHistoryService(t as never, m as never))
-	},
-	{
-		route: 'order-summaries',
-		build: (t, m) => new OrderSummaryController(new OrderSummaryService(t as never, m as never))
+		build: (t, m) => new OrderLineController(new OrderLineService(t as never, m as never, none), DRAFTS_ONLY_ALLOWED)
 	},
 	{
 		route: 'order-credit-lines',
-		build: (t, m) => new OrderCreditLineController(new OrderCreditLineService(t as never, m as never))
+		build: (t, m) =>
+			new OrderCreditLineController(new OrderCreditLineService(t as never, m as never), DRAFTS_ONLY_ALLOWED)
 	},
 	{
 		route: 'order-changes',
@@ -283,11 +278,31 @@ const ROUTES: ReadonlyArray<{ route: string; build: (typeOrm: unknown, mikroOrm:
 	},
 	{
 		route: 'order-addresses',
-		build: (t, m) => new OrderAddressController(new OrderAddressService(t as never, m as never))
+		build: (t, m) => new OrderAddressController(new OrderAddressService(t as never, m as never), DRAFTS_ONLY_ALLOWED)
 	},
 	{
 		route: 'order-shipping-methods',
-		build: (t, m) => new OrderShippingMethodController(new OrderShippingMethodService(t as never, m as never))
+		build: (t, m) =>
+			new OrderShippingMethodController(new OrderShippingMethodService(t as never, m as never), DRAFTS_ONLY_ALLOWED)
+	}
+];
+
+/**
+ * The three order ledgers. They are append-only (review R3-11): `DELETE /:id` and the retire/restore pair refuse with
+ * `ORDER_LEDGER_APPEND_ONLY` and the row stays live - still never erased, which is what this suite is about.
+ */
+const LEDGER_ROUTES: ReadonlyArray<{ route: string; build: (typeOrm: unknown, mikroOrm: unknown) => Row }> = [
+	{
+		route: 'order-transactions',
+		build: (t, m) => new OrderTransactionController(new OrderTransactionService(t as never, m as never), none)
+	},
+	{
+		route: 'order-history',
+		build: (t, m) => new OrderHistoryController(new OrderHistoryService(t as never, m as never))
+	},
+	{
+		route: 'order-summaries',
+		build: (t, m) => new OrderSummaryController(new OrderSummaryService(t as never, m as never))
 	}
 ];
 
@@ -313,7 +328,18 @@ const FIELDS: ReadonlyArray<{ field: string; build: (typeOrm: unknown, mikroOrm:
 	{
 		field: 'deleteOrderAddress',
 		build: (t, m) =>
-			new OrderResolver(none, none, none, new OrderAddressService(t as never, m as never), none, none, none, none)
+			new OrderResolver(
+				none,
+				none,
+				none,
+				new OrderAddressService(t as never, m as never),
+				none,
+				none,
+				none,
+				none,
+				none,
+				DRAFTS_ONLY_ALLOWED
+			)
 	},
 	{
 		field: 'deleteOrderCreditLine',
@@ -326,7 +352,9 @@ const FIELDS: ReadonlyArray<{ field: string; build: (typeOrm: unknown, mikroOrm:
 				none,
 				new OrderCreditLineService(t as never, m as never),
 				none,
-				none
+				none,
+				none,
+				DRAFTS_ONLY_ALLOWED
 			)
 	},
 	{
@@ -481,6 +509,23 @@ describe('DELETE /:id of an order record retires it and never erases it (13 §11
 				await expect(controller.delete(FOREIGN_TENANT)).rejects.toThrow(NotFoundException);
 
 				expect(await stored(FOREIGN_TENANT)).toMatchObject({ id: FOREIGN_TENANT, deletedAt: null });
+			});
+		});
+
+		describe.each(LEDGER_ROUTES)('DELETE /$route/:id of an append-only ledger', ({ build }) => {
+			it('refuses, and keeps the row live: the ledger is never erased, retired or restored', async () => {
+				const { typeOrm, mikroOrm, stored } = await arrange(ormType);
+				const controller = build(typeOrm, mikroOrm);
+
+				for (const call of [
+					() => controller.delete(OWN),
+					() => controller.softRemove(OWN),
+					() => controller.softRecover(OWN)
+				]) {
+					await expect(call()).rejects.toMatchObject({ response: { code: 'ORDER_LEDGER_APPEND_ONLY' } });
+				}
+
+				expect(await stored(OWN)).toMatchObject({ id: OWN, deletedAt: null });
 			});
 		});
 

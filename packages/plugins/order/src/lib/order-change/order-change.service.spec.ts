@@ -751,6 +751,57 @@ describe('OrderChangeService — the money a change moves (doc 10 §6.3, §6.6)'
 		expect(fixture.order.grandTotal).toBe(60);
 	});
 
+	/**
+	 * R3-14: `ITEM_REMOVE` refused a fulfilled line, but `ITEM_UPDATE` wrote any quantity - a line of 5, fully shipped
+	 * and invoiced, could be confirmed down to 2: the order was billed for 2 of the 5 units that left and still
+	 * reported `FULFILLED`. The floor is what has moved against the line: shipped, invoiced less credited, and asked
+	 * back by a return.
+	 */
+	it.each([
+		['shipped', { fulfilledQuantity: 4 }, 4],
+		['invoiced and not credited', { invoicedQuantity: 5, creditedQuantity: 2 }, 3],
+		['asked back by a return', { returnRequestedQuantity: 3 }, 3]
+	])('refuses to lower a quantity below what was %s', async (_what, counters, minimum) => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 5, unitPrice: 20, ...counters })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [
+				{
+					action: OrderChangeActionType.ITEM_UPDATE,
+					referenceId: 'L1',
+					details: { orderLineId: 'L1', quantity: (minimum as number) - 1 }
+				}
+			]
+		} as never);
+
+		await expect(fixture.service.confirm(change.id)).rejects.toMatchObject({
+			response: { code: 'ORDER_CHANGE_NOT_APPLICABLE', details: { orderLineId: 'L1', minimumQuantity: minimum } }
+		});
+		expect(Number(fixture.tables.order_line[0].quantity)).toBe(5);
+		expect(fixture.order.grandTotal).toBe(100);
+	});
+
+	it('still lowers a quantity to what has moved against the line, and no further', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 5, unitPrice: 20, fulfilledQuantity: 3 })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity: 3 } }]
+		} as never);
+
+		await fixture.service.confirm(change.id);
+
+		expect(Number(fixture.tables.order_line[0].quantity)).toBe(3);
+		expect(fixture.order.grandTotal).toBe(60);
+	});
+
 	it('refuses an action that targets a line of another order', async () => {
 		const fixture = orderFixture({
 			lines: [line('L1', { quantity: 1, unitPrice: 20 }), line('L2', { orderId: 'order-2', quantity: 1, unitPrice: 20 })]

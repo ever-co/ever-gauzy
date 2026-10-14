@@ -18,6 +18,7 @@ import {
 import { FeatureFlag } from '@gauzy/common';
 import { IOrderApprovalRequested, OrderService } from '../order/order.service';
 import { OrderAddressService } from '../order-address/order-address.service';
+import { OrderEditGuard } from '../order/order-edit.guard';
 import { OrderChangeService } from '../order-change/order-change.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderHistoryService } from '../order-history/order-history.service';
@@ -87,8 +88,29 @@ export class OrderResolver {
 		private readonly creditLineService: OrderCreditLineService,
 		private readonly historyService: OrderHistoryService,
 		private readonly changeService: OrderChangeService,
-		private readonly invoicingService: OrderInvoicingService
+		private readonly invoicingService: OrderInvoicingService,
+		private readonly editGuard: OrderEditGuard
 	) {}
+
+	/**
+	 * Refuses to retire or restore a child of a placed order (review R3-11); the order change is the way to change
+	 * one. `OrderEditGuard` states the rule, and the REST routes these fields mirror apply it too.
+	 *
+	 * @param service The child's service.
+	 * @param id The child row.
+	 * @param subject What it is, for the message.
+	 * @param withDeleted Whether a retired row is read too (a restore reads one).
+	 */
+	private async assertChildEditable(
+		service: { findOneByIdString(id: string, options?: never): Promise<{ orderId: string }> },
+		id: string,
+		subject: string,
+		withDeleted = false
+	): Promise<void> {
+		const stored = await service.findOneByIdString(id, (withDeleted ? { withDeleted: true } : undefined) as never);
+
+		await this.editGuard.assertDraft(stored.orderId, subject);
+	}
 
 	/**
 	 * Lists orders.
@@ -529,6 +551,8 @@ export class OrderResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'softDeleteOrderAddress' })
 	async softDeleteOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<OrderAddress> {
+		await this.assertChildEditable(this.addressService as never, id, 'order address');
+
 		return this.addressService.softRemove(id);
 	}
 
@@ -545,6 +569,8 @@ export class OrderResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'recoverOrderAddress' })
 	async recoverOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<OrderAddress> {
+		await this.assertChildEditable(this.addressService as never, id, 'order address', true);
+
 		return this.addressService.softRecover(id);
 	}
 
@@ -568,7 +594,11 @@ export class OrderResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'deleteOrderAddress' })
 	async deleteOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
-		return await retireForDeleteField(id, () => this.addressService.softRemove(id));
+		return await retireForDeleteField(id, async () => {
+			await this.assertChildEditable(this.addressService as never, id, 'order address');
+
+			return this.addressService.softRemove(id);
+		});
 	}
 
 	/**
@@ -587,6 +617,8 @@ export class OrderResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'softDeleteOrderCreditLine' })
 	async softDeleteOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
+		await this.assertChildEditable(this.creditLineService as never, id, 'order credit line');
+
 		return this.creditLineService.softRemove(id);
 	}
 
@@ -603,6 +635,8 @@ export class OrderResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'recoverOrderCreditLine' })
 	async recoverOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
+		await this.assertChildEditable(this.creditLineService as never, id, 'order credit line', true);
+
 		return this.creditLineService.softRecover(id);
 	}
 
@@ -654,7 +688,11 @@ export class OrderResolver {
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'deleteOrderCreditLine' })
 	async deleteOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
-		return await retireForDeleteField(id, () => this.creditLineService.softRemove(id));
+		return await retireForDeleteField(id, async () => {
+			await this.assertChildEditable(this.creditLineService as never, id, 'order credit line');
+
+			return this.creditLineService.softRemove(id);
+		});
 	}
 
 	/**
@@ -675,6 +713,8 @@ export class OrderResolver {
 	async softDeleteOrderShippingMethod(
 		@Args('id', { type: () => ID }) id: string
 	): Promise<OrderShippingMethod> {
+		await this.assertChildEditable(this.shippingMethodService as never, id, 'order shipping method');
+
 		return this.shippingMethodService.softRemove(id);
 	}
 
@@ -693,6 +733,8 @@ export class OrderResolver {
 	async recoverOrderShippingMethod(
 		@Args('id', { type: () => ID }) id: string
 	): Promise<OrderShippingMethod> {
+		await this.assertChildEditable(this.shippingMethodService as never, id, 'order shipping method', true);
+
 		return this.shippingMethodService.softRecover(id);
 	}
 

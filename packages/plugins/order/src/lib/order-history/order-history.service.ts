@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { orderLedgerAppendOnly } from '../order-ledger.append-only';
 import { IOrderRowScope, createUnderOrderScope } from './order-row-scope';
 import { OrderHistory } from './order-history.entity';
 import { TypeOrmOrderHistoryRepository } from './repository/type-orm-order-history.repository';
@@ -98,6 +99,54 @@ export class OrderHistoryService extends TenantAwareCrudService<OrderHistory> {
 				new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime() ||
 				compareIds(left.id, right.id)
 		);
+	}
+
+	/**
+	 * Refuses an edit of a ledger row (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async update(id: unknown, partialEntity?: unknown): Promise<never> {
+		void id;
+		void partialEntity;
+
+		throw orderLedgerAppendOnly('order_history', 'update');
+	}
+
+	/**
+	 * Refuses to erase a ledger row (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async delete(criteria: unknown): Promise<never> {
+		void criteria;
+
+		throw orderLedgerAppendOnly('order_history', 'delete');
+	}
+
+	/**
+	 * Refuses to retire a ledger row: the next derivation would stop counting it with no re-derivation of its own
+	 * (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async softRemove(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw orderLedgerAppendOnly('order_history', 'retire');
+	}
+
+	/**
+	 * Refuses to restore a ledger row, for the reason `softRemove` gives (`ORDER_LEDGER_APPEND_ONLY`).
+	 *
+	 * @throws BadRequestException always.
+	 */
+	async softRecover(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw orderLedgerAppendOnly('order_history', 'restore');
 	}
 }
 
