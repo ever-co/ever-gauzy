@@ -1541,7 +1541,12 @@
 		"upsell",
 		"weightable",
 		"workstream",
-		"describedby"
+		"describedby",
+		"HKCU",
+		"regedit",
+		"taskkill",
+		"requestfailed",
+		"subkeys"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
