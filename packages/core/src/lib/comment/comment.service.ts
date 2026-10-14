@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
@@ -11,6 +11,8 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
+import { LegacyFindOneOptions } from '../core/utils';
 import { RequestContext } from '../core/context';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
@@ -167,5 +169,85 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			console.log(`Error while updating comment: ${error.message}`, error);
 			throw new BadRequestException('Comment update failed', error);
 		}
+	}
+
+	/**
+	 * Withdraws a comment (`DELETE /comment/:id/soft`, `softDeleteComment`) on the terms an edit is allowed on.
+	 *
+	 * See {@link assertMayManage}: the CRUD base's own scope let a caller with no employee identity who may not act
+	 * for others withdraw any comment of the tenant, while `update` refuses that caller outright.
+	 *
+	 * @param id - The comment to withdraw.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The withdrawn comment.
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
+		await this.assertMayManage(id, false);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn comment (`PUT /comment/:id/recover`, `recoverComment`) on the terms an edit is allowed on.
+	 *
+	 * @param id - The comment to restore.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored comment.
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
+		await this.assertMayManage(id, true);
+
+		return super.softRecover(id, options, saveOptions);
+	}
+
+	/**
+	 * Removes a comment (`DELETE /comment/:id`, `deleteComment`) on the terms an edit is allowed on, when it is
+	 * addressed by its id — which is how both routes address it. A call with object criteria is a service-level
+	 * call rather than a caller's request, and keeps the base behaviour.
+	 *
+	 * @param criteria - The comment's id, or criteria.
+	 * @param options - Additional where conditions, passed to the base method unchanged.
+	 * @returns The delete result.
+	 */
+	public async delete(criteria: string | FindOptionsWhere<Comment>, options?: LegacyFindOneOptions<Comment>): Promise<DeleteResult> {
+		if (typeof criteria === 'string') {
+			await this.assertMayManage(criteria, false);
+		}
+
+		return super.delete(criteria, options);
+	}
+
+	/**
+	 * The rule `update` applies to whose comment a caller may change, applied to withdrawing, restoring and removing
+	 * one (owner decision 5, 2026-10-13: these routes stay equal to `update` — which states no permission, and
+	 * enforces this instead).
+	 *
+	 * A CHANGE_SELECTED_EMPLOYEE holder may act on any comment of the tenant (the base scope already keeps it to the
+	 * tenant). Anyone else must have an employee identity, and the comment must be that employee's own: the read
+	 * goes through the tenant-scoped finder with the author stated, so another employee's comment answers 404 — and
+	 * it reads withdrawn rows when the act is a restoration. The refusal is raised before the base method runs,
+	 * because the base rethrows whatever fails inside it as a 404.
+	 *
+	 * @param id - The comment acted on.
+	 * @param withDeleted - Whether the comment is read among withdrawn rows (a restoration).
+	 * @throws {ForbiddenException} When the caller has no employee identity and may not act for others.
+	 * @throws {NotFoundException} When the comment is not the caller's own.
+	 */
+	private async assertMayManage(id: ID, withDeleted: boolean): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			throw new ForbiddenException(`You don't have permission to manage this comment`);
+		}
+
+		await this.findOneByIdString(id, {
+			where: { employeeId } as FindOptionsWhere<Comment>,
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 }
