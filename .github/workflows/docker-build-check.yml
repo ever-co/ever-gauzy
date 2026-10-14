@@ -1,0 +1,226 @@
+name: Docker Build Check
+
+# Builds the deploy images (API, web app, worker) from the PR's code WITHOUT pushing anything, then runs
+# each one the way an environment does and checks that it serves:
+#   - API: fresh SQLite database + demo seed -> GET /api/health 200 and a super admin login,
+#   - web app: nginx answers / with the Angular shell,
+#   - worker: starts against Redis and the API's database and keeps running.
+#
+# Nothing leaves the runner: no registry login, no `push`, no `cache-to` (the images are tagged
+# `gauzy-*-check:<sha>`, a name no deployment or image updater follows). The publish workflows
+# (docker-build-publish-*.yml) stay the only ones that push.
+
+on:
+  pull_request:
+    # A pull request INTO develop starts no workflow (owner decision 2026-09-21, tools/scripts/pr-trigger-check.mjs).
+    branches-ignore:
+      - develop
+    paths:
+      - '.deploy/api/**'
+      - '.deploy/webapp/**'
+      - '.deploy/worker/**'
+      - '.dockerignore'
+      - '.github/workflows/docker-build-check.yml'
+  # Manual run on any branch, e.g. after a dependency update that changes what the images install.
+  workflow_dispatch:
+
+concurrency:
+  group: docker-build-check-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+
+jobs:
+  api:
+    name: API image (build + boot + login)
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./.deploy/api/Dockerfile
+          push: false
+          load: true
+          platforms: linux/amd64
+          tags: gauzy-api-check:${{ github.sha }}
+          build-args: |
+            NODE_ENV=development
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
+            DEMO=true
+            NX_BRANCH=${{ github.head_ref || github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+          secrets: |
+            VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+
+      - name: Boot on SQLite with the demo seed, health + login
+        shell: bash
+        env:
+          IMAGE: gauzy-api-check:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          PASSWORD="$(openssl rand -hex 16)"
+          docker volume create gauzy-check-data
+          # A fresh named volume is root-owned; the image runs as `node`.
+          docker run --rm --user root --entrypoint sh -v gauzy-check-data:/data "$IMAGE" -c "chown node:node /data"
+          docker run -d --name gauzy-check-api -p 3000:3000 \
+            -v gauzy-check-data:/data \
+            -e API_HOST=0.0.0.0 -e API_PORT=3000 -e PORT=3000 \
+            -e DB_TYPE=better-sqlite3 -e DB_PATH=/data/gauzy.sqlite3 \
+            -e DEMO=true -e REDIS_ENABLED=false \
+            -e DEMO_SUPER_ADMIN_EMAIL=ci-admin@example.com -e DEMO_SUPER_ADMIN_PASSWORD="$PASSWORD" \
+            -e JWT_SECRET="$(openssl rand -hex 32)" -e JWT_REFRESH_TOKEN_SECRET="$(openssl rand -hex 32)" \
+            -e JWT_VERIFICATION_TOKEN_SECRET="$(openssl rand -hex 32)" -e EXPRESS_SESSION_SECRET="$(openssl rand -hex 32)" \
+            "$IMAGE"
+          # Migrations + the demo seed run before the API answers; allow up to 30 minutes.
+          for i in $(seq 1 360); do
+            if [ "$(docker inspect -f '{{.State.Running}}' gauzy-check-api)" != "true" ]; then
+              echo "::error::API container exited"; docker logs --tail 300 gauzy-check-api; exit 1
+            fi
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/health || true)
+            if [ "$code" = "200" ]; then echo "health 200 after $((i * 5)) s"; break; fi
+            if [ "$i" = 360 ]; then echo "::error::no health 200 within 30 min"; docker logs --tail 300 gauzy-check-api; exit 1; fi
+            sleep 5
+          done
+          curl -sf http://127.0.0.1:3000/api/health
+          echo
+          login=$(curl -s -o /tmp/login.json -w '%{http_code}' -H 'Content-Type: application/json' \
+            -d "{\"email\":\"ci-admin@example.com\",\"password\":\"$PASSWORD\"}" http://127.0.0.1:3000/api/auth/login)
+          token=$(jq -r '.token // empty' /tmp/login.json)
+          if [ "$login" -ge 300 ] || [ -z "$token" ]; then
+            echo "::error::login answered $login without a token"; head -c 500 /tmp/login.json; docker logs --tail 200 gauzy-check-api; exit 1
+          fi
+          me=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $token" http://127.0.0.1:3000/api/user/me)
+          [ "$me" = "200" ] || { echo "::error::GET /api/user/me answered $me"; exit 1; }
+          echo "login OK, /api/user/me 200"
+
+      - name: API logs
+        if: always()
+        run: docker logs --tail 400 gauzy-check-api 2>&1 || true
+
+      - name: Worker image (build, no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./.deploy/worker/Dockerfile
+          push: false
+          load: true
+          platforms: linux/amd64
+          tags: gauzy-worker-check:${{ github.sha }}
+          build-args: |
+            NODE_ENV=development
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
+            NX_BRANCH=${{ github.head_ref || github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+          secrets: |
+            VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+
+      - name: Worker starts against Redis and the API's database
+        shell: bash
+        env:
+          IMAGE: gauzy-worker-check:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          docker network create gauzy-check
+          docker run -d --name gauzy-check-redis --network gauzy-check redis:7-alpine
+          docker run -d --name gauzy-check-worker --network gauzy-check \
+            -v gauzy-check-data:/data \
+            -e DB_TYPE=better-sqlite3 -e DB_PATH=/data/gauzy.sqlite3 \
+            -e REDIS_ENABLED=true -e REDIS_URL=redis://gauzy-check-redis:6379 \
+            -e JWT_SECRET="$(openssl rand -hex 32)" -e JWT_REFRESH_TOKEN_SECRET="$(openssl rand -hex 32)" \
+            "$IMAGE"
+          for i in $(seq 1 120); do
+            if [ "$(docker inspect -f '{{.State.Running}}' gauzy-check-worker)" != "true" ]; then
+              echo "::error::worker container exited"; docker logs --tail 300 gauzy-check-worker; exit 1
+            fi
+            if docker logs gauzy-check-worker 2>&1 | grep -q 'Worker application started'; then echo "started after $((i * 5)) s"; break; fi
+            if [ "$i" = 120 ]; then echo "::error::worker did not start within 10 min"; docker logs --tail 300 gauzy-check-worker; exit 1; fi
+            sleep 5
+          done
+          sleep 60
+          [ "$(docker inspect -f '{{.State.Running}}' gauzy-check-worker)" = "true" ] || { echo "::error::worker stopped after starting"; docker logs --tail 300 gauzy-check-worker; exit 1; }
+          echo "worker still running 60 s after start"
+
+      - name: Worker logs
+        if: always()
+        run: docker logs --tail 300 gauzy-check-worker 2>&1 || true
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker rm -f gauzy-check-api gauzy-check-worker gauzy-check-redis 2>/dev/null || true
+          docker network rm gauzy-check 2>/dev/null || true
+          docker volume rm gauzy-check-data 2>/dev/null || true
+          docker image rm "gauzy-api-check:${{ github.sha }}" "gauzy-worker-check:${{ github.sha }}" 2>/dev/null || true
+
+  webapp:
+    name: Web app image (build + serve)
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./.deploy/webapp/Dockerfile
+          push: false
+          load: true
+          platforms: linux/amd64
+          tags: gauzy-webapp-check:${{ github.sha }}
+          build-args: |
+            NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
+            DEMO=true
+            NX_BRANCH=${{ github.head_ref || github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+          secrets: |
+            VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+
+      - name: Serves the app
+        shell: bash
+        env:
+          IMAGE: gauzy-webapp-check:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          docker run -d --name gauzy-check-webapp -p 4200:4200 -e API_BASE_URL=http://127.0.0.1:3000 -e DEMO=true "$IMAGE"
+          for i in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Running}}' gauzy-check-webapp)" != "true" ]; then
+              echo "::error::web app container exited"; docker logs --tail 200 gauzy-check-webapp; exit 1
+            fi
+            code=$(curl -s -o /tmp/index.html -w '%{http_code}' http://127.0.0.1:4200/ || true)
+            if [ "$code" = "200" ]; then break; fi
+            if [ "$i" = 60 ]; then echo "::error::no 200 on / within 5 min"; docker logs --tail 200 gauzy-check-webapp; exit 1; fi
+            sleep 5
+          done
+          grep -q '<ga-app' /tmp/index.html || { echo "::error::/ is not the Angular shell"; head -c 1000 /tmp/index.html; exit 1; }
+          script=$(grep -o 'src="main[^"]*\.js"' /tmp/index.html | head -1 | sed 's/src="//; s/"$//')
+          [ -n "$script" ] || { echo "::error::no main bundle referenced"; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:4200/$script")
+          [ "$code" = "200" ] || { echo "::error::GET /$script answered $code"; exit 1; }
+          echo "/ and /$script answer 200"
+
+      - name: Web app logs
+        if: always()
+        run: docker logs --tail 200 gauzy-check-webapp 2>&1 || true
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker rm -f gauzy-check-webapp 2>/dev/null || true
+          docker image rm "gauzy-webapp-check:${{ github.sha }}" 2>/dev/null || true
