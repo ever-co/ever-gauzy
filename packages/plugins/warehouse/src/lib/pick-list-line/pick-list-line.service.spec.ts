@@ -116,11 +116,10 @@ import { PickListLineService } from './pick-list-line.service';
  * Three outcomes are recorded here and they are deliberately different things (doc 09 §14.5,
  * INV-21):
  *
- * - a **pick** took what the list asked for, and the ledger is already right, because the level was
- *   decremented when the shipment consumed its reservations — so nothing is written;
- * - a **short pick** took less, which means the ledger is wrong — it believes goods are gone that
- *   were never on the shelf — so the missing quantity is written back as an `ADJUSTMENT` in the same
- *   call as the line;
+ * - a **pick** took what the list asked for, and picking writes nothing;
+ * - a **short pick** took less, which means the ledger is wrong — it holds units the bin never had — so
+ *   the missing quantity is written off as a negative `ADJUSTMENT` in the same call as the line (review
+ *   R2-14: it used to be written as a positive one, which raised on-hand by the units that were missing);
  * - a **skip** is a decision on the floor rather than a stock count: the stock stays where it is, so
  *   nothing is corrected and only the shortfall is recorded.
  *
@@ -480,10 +479,10 @@ describe('PickListLineService — recording a pick (doc 09 §14.5, INV-21)', () 
 		expect(fixture.capability.movements).toEqual([]);
 	});
 
-	it('records a short pick, closes the remainder short and writes the shortfall back to stock', async () => {
-		// A bin that held less than the list asked for is a stock error: the ledger believes goods are
-		// gone that were never on the shelf, and the correction is an adjustment for exactly the
-		// difference.
+	it('records a short pick, closes the remainder short and writes the shortfall off stock', async () => {
+		// A bin that held less than the list asked for is a stock error: the book holds units the shelf
+		// never had, and the correction takes exactly the difference off (review R2-14). The bin was
+		// believed to hold 5 and held 3: on-hand has to go down by 2, not up by 2.
 		const fixture = lineFixture({ lines: [lineRow('line-1', { quantityRequested: '5.000000' })] });
 
 		const picked = await fixture.service.recordPick('line-1', { pickedQuantity: '3' });
@@ -498,7 +497,7 @@ describe('PickListLineService — recording a pick (doc 09 §14.5, INV-21)', () 
 			warehouseId: WAREHOUSE,
 			variantId: VARIANT,
 			binId: 'bin-1',
-			quantity: '2.000000',
+			quantity: '-2.000000',
 			kind: WarehouseStockMovementKind.ADJUSTMENT,
 			referenceType: 'PICK_LIST_LINE',
 			referenceId: 'line-1'
@@ -517,7 +516,7 @@ describe('PickListLineService — recording a pick (doc 09 §14.5, INV-21)', () 
 			quantityShort: '5.000000',
 			status: PickListLineStatus.SHORT
 		});
-		expect(fixture.capability.movements[0]).toMatchObject({ quantity: '5.000000' });
+		expect(fixture.capability.movements[0]).toMatchObject({ quantity: '-5.000000' });
 	});
 
 	it('refuses a pick one unit over what the line asks for, and records nothing', async () => {

@@ -32,11 +32,10 @@ import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-l
  *
  * Three outcomes are recorded here and they are deliberately different things:
  *
- * - a **pick** took what the list asked for, and the ledger is already right, because the level was
- *   decremented when the shipment consumed its reservations;
- * - a **short pick** took less, which means the ledger is wrong — it believes goods are gone that were
- *   never on the shelf — so the missing quantity is written back through the inventory capability in
- *   the same transaction as the line;
+ * - a **pick** took what the list asked for, and picking writes nothing;
+ * - a **short pick** took less, which means the ledger is wrong — it holds units the bin never had — so
+ *   the missing quantity is written off through the inventory capability with the line (review R2-14:
+ *   see `correctShortfall` for the sign, and for what it assumes about the sale side);
  * - a **skip** is a decision on the floor rather than a stock count: the picker left the stock where it
  *   is, so nothing is corrected here and the shortfall is reported for a backorder or an adjustment
  *   request to be raised downstream.
@@ -468,11 +467,18 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			warehouseId: list.warehouseId,
 			variantId: line.variantId,
 			binId: line.binId,
-			quantity: shortfall,
+			// A write-off, not a write-back (review R2-14). The bin was believed to hold what the list asked for and
+			// held less, so the book carries `shortfall` units nobody can pick: they come off, and on-hand meets the
+			// shelf. The correction used to be `+shortfall`, on the premise that the shipment had already consumed
+			// the requested units — but nothing consumes stock before or at picking (review R2-05: the reservation
+			// is never consumed), so every short pick raised on-hand by the units that were missing. When R2-05 wires
+			// the sale side, this and the substitution below are revisited together: a shipment that consumed the
+			// requested quantity has already taken these units off, and this write-off would then be a second one.
+			quantity: subtractQuantities(0, shortfall),
 			kind: WarehouseStockMovementKind.ADJUSTMENT,
 			referenceType: 'PICK_LIST_LINE',
 			referenceId: line.id,
-			reason: 'SHORT_PICK: the bin held less than the pick list asked for.'
+			reason: 'SHORT_PICK: the bin held less than the pick list asked for; the units it never had are written off.'
 		});
 	}
 
