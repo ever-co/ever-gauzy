@@ -569,9 +569,10 @@ describe('a route that carries retry safety as well as a version', () => {
 		// the change twice.
 		expect(await guard.canActivate(httpContext(request))).toBe(true);
 		expect(findByKey).toHaveBeenCalledWith('invoice.update', 'retry-key-12345678');
-		// Nothing is loosened: the handler does not run for a settled key, so no expectation is left
-		// behind for a write that will not happen. The interceptor replays the stored response.
-		expect(request).not.toHaveProperty(VERSION_EXPECTATION_PROPERTY);
+		// Nothing is refused and nothing is read: the handler does not run for a settled key. But should the
+		// key's window close before the interceptor claims it, the write still carries the version the
+		// caller stated (R1-08), so the conditional update decides rather than nothing.
+		expect(request[VERSION_EXPECTATION_PROPERTY]).toEqual({ wildcard: false, versions: [3] });
 	});
 
 	it('yields for a key whose first attempt failed, because that answer is stored too', async () => {
@@ -601,6 +602,40 @@ describe('a route that carries retry safety as well as a version', () => {
 		const refusal = await refusalFrom(() => guard.canActivate(httpContext(staleRetry())));
 
 		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+	});
+
+	it('leaves the stated version on a yielded write, so a key that expires before the claim still writes conditionally', async () => {
+		// Greptile on #10583: the guard yields while the record is settled and inside its window; if the
+		// window closes before the interceptor's `claim()`, the row is cleared and the handler runs as a
+		// first attempt. The version the caller stated must reach that write.
+		const reader = readerAnswering({ version: 4 });
+		const record = { status: IdempotencyStatus.COMPLETED, expiresAt: new Date(Date.now() + 5) };
+		const { guard } = guardForBoth({ resource: InvoiceService, required: true }, { scope: 'invoice.update' }, record, reader);
+		const request: any = staleRetry();
+
+		expect(await guard.canActivate(httpContext(request))).toBe(true);
+
+		// …the window closes here, between the guard and the claim…
+		record.expiresAt = new Date(Date.now() - 1);
+
+		// The handler's own reading of the expectation finds the version the caller stated — not the
+		// `428 VERSION_REQUIRED` a required route answered when the yield left nothing behind — and it
+		// is the stale `3`, so the conditional update refuses the write rather than applying it.
+		expect(versionExpectationOf(request)).toEqual(expect.objectContaining({ versions: [3] }));
+	});
+
+	it('leaves nothing on a yielded request that stated no version — control', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService, required: false },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.COMPLETED },
+			reader
+		);
+		const request: any = { ...staleRetry(), headers: { [IDEMPOTENCY_KEY_HEADER]: 'retry-key-12345678' } };
+
+		expect(await guard.canActivate(httpContext(request))).toBe(true);
+		expect(request).not.toHaveProperty(VERSION_EXPECTATION_PROPERTY);
 	});
 
 	it('still yields to a settled record inside its replay window — control', async () => {

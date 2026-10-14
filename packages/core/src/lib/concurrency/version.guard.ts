@@ -174,28 +174,41 @@ export class VersionGuard implements CanActivate {
 		const request = executionRequest(context);
 		const isGraphql = context.getType<'http' | 'graphql' | string>() === 'graphql';
 
-		// Retry safety is answered first — see the class comment. The handler does not run for a
-		// settled key, so there is no write left for the precondition to guard.
-		if (await this.isSettledRetry(context, request, isGraphql)) {
-			return true;
-		}
-
 		const method = String(request?.method ?? '').toUpperCase();
 		// A GraphQL operation travels over POST whichever root type it selects, so the method says
 		// nothing about whether it writes: the resolver's own declaration is the only honest source.
 		const write = options.write ?? (isGraphql ? true : !isReadOnlyMethod(method));
+		// One HTTP request carries one `If-Match`, so REST states the version in a header. A GraphQL
+		// request carries as many mutations as its document selects, and a header could not say which of
+		// them the version belongs to, so the version rides beside the input it qualifies.
+		const ifMatch = isGraphql
+			? versionFromResolverArgs(context.getArgByIndex?.(1))
+			: readRequestHeader(request, IF_MATCH_HEADER);
+
+		// Retry safety is answered first — see the class comment. The handler does not run for a
+		// settled key, so there is no write left for the precondition to guard.
+		if (await this.isSettledRetry(context, request, isGraphql)) {
+			// …unless the key's window closes between this check and the interceptor's claim, which then
+			// clears the row and runs the handler as a first attempt. For that case the write still
+			// carries the version the caller stated — the conditional update enforces it, and a handler
+			// that requires one finds it — so the yield can never become an unconditional write. Nothing
+			// is read and nothing is refused here: the comparison is the write's, and a replay is answered
+			// whatever the caller stated (R1-08 of the #10254 review, second half).
+			const stated = evaluateVersionPrecondition({ ifMatch, write, required: false });
+
+			if (stated.action === 'PROCEED') {
+				this.attachExpectation(request, stated, options);
+			}
+
+			return true;
+		}
 
 		const id = this.resolveResourceId(options, context, request);
 		const row = options.resource && id ? await this.readRow(options.resource, id) : undefined;
 
 		const decision = evaluateVersionPrecondition({
-			// One HTTP request carries one `If-Match`, so REST states the version in a header. A
-			// GraphQL request carries as many mutations as its document selects, and a header could
-			// not say which of them the version belongs to, so the version rides beside the input it
-			// qualifies. Both forms reach the same comparison, and both answer the same codes.
-			ifMatch: isGraphql
-				? versionFromResolverArgs(context.getArgByIndex?.(1))
-				: readRequestHeader(request, IF_MATCH_HEADER),
+			// Both forms of the stated version reach the same comparison, and both answer the same codes.
+			ifMatch,
 			write,
 			required: options.required,
 			...(row ? { exists: row.exists, currentVersion: row.version } : {})
@@ -251,15 +264,30 @@ export class VersionGuard implements CanActivate {
 				// accepted, because `If-Match: "3", "4"` says either will do and keeping only `3` refused a
 				// row sitting at `4` with `409`. `resolveExpectedVersion` picks from that list against the
 				// row at write time. A wildcard leaves an empty list whether or not the row was read.
-				if (request) {
-					request[VERSION_EXPECTATION_PROPERTY] = {
-						wildcard: decision.wildcard,
-						versions: decision.wildcard ? [] : [...decision.versions],
-						...(options.target ? { target: options.target } : {})
-					};
-				}
+				this.attachExpectation(request, decision, options);
 
 				return true;
+		}
+	}
+
+	/**
+	 * Leaves the accepted version on the request for the write.
+	 *
+	 * @param request The request.
+	 * @param decision The precondition's `PROCEED` decision.
+	 * @param options What the route declared.
+	 */
+	private attachExpectation(
+		request: any,
+		decision: { wildcard: boolean; versions: readonly number[] },
+		options: IVersionedOptions
+	): void {
+		if (request) {
+			request[VERSION_EXPECTATION_PROPERTY] = {
+				wildcard: decision.wildcard,
+				versions: decision.wildcard ? [] : [...decision.versions],
+				...(options.target ? { target: options.target } : {})
+			};
 		}
 	}
 
