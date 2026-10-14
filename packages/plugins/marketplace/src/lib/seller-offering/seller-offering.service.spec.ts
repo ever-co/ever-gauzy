@@ -461,6 +461,9 @@ describe('SellerOfferingService — the state moves (doc 20 §3.4)', () => {
 
 		await expect(fixture.service.publish('offering-1', [CHANNEL])).rejects.toBeInstanceOf(ConflictException);
 		await expect(fixture.service.withdraw('offering-1')).rejects.toBeInstanceOf(ConflictException);
+		// Nor through the two-action path: pausing it first, then publishing the paused row (Greptile).
+		await expect(fixture.service.unpause('offering-1')).rejects.toBeInstanceOf(ConflictException);
+		await expect(fixture.service.publish('offering-1', [CHANNEL])).rejects.toBeInstanceOf(ConflictException);
 	});
 
 	it('publishes an offering of an active seller and records who approved it', async () => {

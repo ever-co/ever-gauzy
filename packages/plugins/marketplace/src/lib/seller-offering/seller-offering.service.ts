@@ -302,6 +302,12 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	async unpause(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
 		const offering = await this.getOffering(id, scope, manager);
 
+		// A withdrawn offering is terminal (review R4-19): pausing it would hand `publish` a PAUSED row to re-list
+		// (`POST /seller-offerings/:id/unpublish` then `publish`, or bulk PAUSE then PUBLISH) - Greptile.
+		if (offering.status === OfferingStatus.WITHDRAWN) {
+			throw new ConflictException(`An offering in ${offering.status} is terminal and cannot be paused.`);
+		}
+
 		offering.status = OfferingStatus.PAUSED;
 
 		const paused = await this.repository(manager).save(offering);
