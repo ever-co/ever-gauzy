@@ -2836,6 +2836,101 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		]);
 	});
 
+	it('keeps a failed opening charge on its period and its retry when the subscription is paused and resumed', async () => {
+		// Greptile and CodeRabbit on #10635: a failed first charge leaves the subscription never billed and
+		// owed its opening period, and resuming restarted that period — the failed cycle could not move, so
+		// the next run opened a new one, skipping the cycle's retry schedule and leaving it behind.
+		let attempt = 0;
+		const fixture = subscriptionFixture({
+			subscriptions: [],
+			items: [],
+			billings: [],
+			orders: () => {
+				attempt += 1;
+
+				if (attempt === 1) {
+					throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the card was declined');
+				}
+
+				return { orderId: `order-${attempt}`, paid: true };
+			}
+		});
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			activate: true,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const start = new Date(created.currentPeriodStart as Date);
+		const [opening] = fixture.billings(created.id);
+
+		expect(await fixture.service.runBilling({ asOf: start })).toMatchObject({ billed: 0, failed: 1 });
+
+		const failed = { ...fixture.billings(created.id)[0] };
+		const retryAt = new Date(failed.nextRetryAt as Date);
+
+		await fixture.service.pause(created.id, { reason: 'customer asked' });
+		const resumed = await fixture.service.resume(created.id, new Date(start.getTime() + 60 * 60 * 1000));
+
+		// Resuming lifts the pause and nothing else: the period, and the retry the failed cycle carries.
+		expect(resumed).toMatchObject({ status: SubscriptionStatus.ACTIVE, currentPeriodStart: start, nextBillingAt: start });
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, periodStart: start, attemptCount: failed.attemptCount, nextRetryAt: failed.nextRetryAt })
+		]);
+
+		fixture.idempotencyService.advanceBy(retryAt.getTime() - start.getTime());
+		const run = await fixture.service.runBilling({ asOf: retryAt });
+
+		expect(run).toMatchObject({ billed: 1, failed: 0 });
+		expect(run.results[0]).toMatchObject({ billingId: opening.id, periodStart: start });
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID })
+		]);
+	});
+
+	it('moves the cycle written for the opening period, not a later pending one', async () => {
+		// CodeRabbit on #10635: the newest untouched pending cycle was taken for the opening one, so a later
+		// cycle written through the billing-cycle route was moved instead, and the opening one stayed behind.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const createdAt = new Date(created.currentPeriodStart as Date);
+		const [opening] = fixture.billings(created.id);
+		const later = new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000);
+
+		// Written the way the billing-cycle route writes one: a row of its own, through the cycles' repository.
+		await (fixture.billingService.typeOrmSubscriptionBillingRepository as unknown as Row).save({
+			id: 'billing-later',
+			tenantId: TENANT,
+			organizationId: ORG,
+			subscriptionId: created.id,
+			periodStart: later,
+			periodEnd: monthAfter(later),
+			amount: '120.000000',
+			currency: 'USD',
+			status: SubscriptionBillingStatus.PENDING,
+			dueAt: later,
+			attemptCount: 0
+		});
+
+		await new Promise((resolve) => setTimeout(resolve, 5));
+		const activated = await fixture.service.activate(created.id);
+
+		expect(fixture.billings(created.id)).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ id: opening.id, periodStart: activated.currentPeriodStart }),
+				expect.objectContaining({ id: 'billing-later', periodStart: later, dueAt: later })
+			])
+		);
+	});
+
 	it('does not move a cycle that records an attempt', async () => {
 		const fixture = subscriptionFixture({
 			billings: [

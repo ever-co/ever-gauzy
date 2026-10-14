@@ -469,6 +469,9 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		// reached it first would open its own row for that period, and the cycle could not follow), and a
 		// refused claim leaves the cycle where the winner put it.
 		await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			// Read before the claim, which rewrites the period the opening cycle is found by.
+			const opening = await this.openingCycleOn(subscription, manager);
+
 			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
 				where: { ...currentScope(), status: SubscriptionStatus.PENDING },
 				id,
@@ -481,7 +484,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				}
 			});
 
-			await this.moveOpeningCycle(subscription, period, manager);
+			await this.moveOpeningCycle(subscription, opening, period, manager);
 		});
 
 		await this.emit('subscription.activated', id, {
@@ -562,27 +565,41 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			const plan = await this.planService.findOneScoped(subscription.planId);
 			const opened = new Date(subscription.currentPeriodStart as Date);
 			const period = periodFrom(now.getTime() > opened.getTime() ? now : opened, this.planService.cadenceOf(plan));
+			let nextBillingAt = period.start;
 
-			// One transaction, the claim first, as in `activate`: no run sees the subscription `ACTIVE`
-			// before its opening cycle is on the period it now starts, and a refused claim moves nothing.
+			// One transaction, as in `activate`: no run sees the subscription `ACTIVE` before its opening
+			// cycle is on the period it now starts, and a refused claim moves nothing. While it is paused no
+			// run touches the cycle, so it is read first and decides what the resume writes.
 			await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+				const opening = await this.openingCycleOn(subscription, manager);
+				// An opening charge already attempted keeps its period and its retry schedule: the cycle
+				// cannot move (it records an attempt), and starting another period would leave it behind
+				// and open a new cycle that skips its retries. Resuming then only lifts the pause.
+				const restart = !opening || this.isUntouched(opening);
+
+				nextBillingAt = restart ? period.start : new Date(subscription.nextBillingAt as Date);
+
 				await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
 					where: { ...currentScope(), status: SubscriptionStatus.PAUSED },
 					id,
 					expectation,
-					patch: {
-						status: SubscriptionStatus.ACTIVE,
-						pausedUntil: null,
-						currentPeriodStart: period.start,
-						currentPeriodEnd: period.end,
-						nextBillingAt: period.start
-					}
+					patch: restart
+						? {
+								status: SubscriptionStatus.ACTIVE,
+								pausedUntil: null,
+								currentPeriodStart: period.start,
+								currentPeriodEnd: period.end,
+								nextBillingAt: period.start
+						  }
+						: { status: SubscriptionStatus.ACTIVE, pausedUntil: null }
 				});
 
-				await this.moveOpeningCycle(subscription, period, manager);
+				if (restart) {
+					await this.moveOpeningCycle(subscription, opening, period, manager);
+				}
 			});
 
-			await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt: period.start });
+			await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt });
 
 			return await this.findOneScoped(id);
 		}
@@ -2216,12 +2233,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * moves (`SubscriptionBillingService.reschedulePending`): a trial's waived cycle stays where it is,
 	 * as the record of the trial.
 	 *
-	 * @param subscription The pending subscription, as read before it is activated.
+	 * @param subscription The subscription, as read before it is activated (or resumed).
+	 * @param opening Its opening cycle, as read on the transaction before the claim (`openingCycleOn`).
 	 * @param period The period the activation starts.
 	 * @param manager The activation's transaction.
 	 */
 	private async moveOpeningCycle(
 		subscription: Subscription,
+		opening: SubscriptionBilling | null,
 		period: ISubscriptionPeriod,
 		manager: EntityManager
 	): Promise<void> {
@@ -2229,16 +2248,35 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return;
 		}
 
-		// Read on the activation's transaction: a second connection may be one the transaction is holding.
-		const opening = (await this.billingService.findForSubscription(subscription.id, manager)).find(
-			(cycle) => cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount
-		);
-
-		if (!opening || new Date(opening.periodStart).getTime() === period.start.getTime()) {
+		if (!opening || !this.isUntouched(opening) || new Date(opening.periodStart).getTime() === period.start.getTime()) {
 			return;
 		}
 
 		await this.billingService.reschedulePending(opening.id, period, manager);
+	}
+
+	/**
+	 * The cycle written for the subscription's current period — at creation, the opening one — read on the
+	 * caller's transaction (a second connection may be one the transaction is holding). It is found by its
+	 * period, not as "the newest pending cycle": a later cycle written through the billing-cycle route is
+	 * not the opening one.
+	 *
+	 * @param subscription The subscription, as read before the write.
+	 * @param manager The caller's transaction.
+	 * @returns The cycle, or null when the period has none.
+	 */
+	private async openingCycleOn(subscription: Subscription, manager: EntityManager): Promise<SubscriptionBilling | null> {
+		return subscription.currentPeriodStart
+			? await this.billingService.findByPeriod(subscription.id, new Date(subscription.currentPeriodStart), manager)
+			: null;
+	}
+
+	/**
+	 * @param cycle A cycle.
+	 * @returns Whether it records no money billed and no attempt: `PENDING`, with no order and no attempt.
+	 */
+	private isUntouched(cycle: SubscriptionBilling): boolean {
+		return cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount;
 	}
 
 	/**

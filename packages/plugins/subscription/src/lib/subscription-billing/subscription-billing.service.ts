@@ -355,10 +355,15 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	/**
 	 * @param subscriptionId The subscription.
 	 * @param periodStart The period start that identifies the cycle.
+	 * @param manager The caller's transaction, when the read is one of its statements.
 	 * @returns The cycle, or null when the period has never been billed.
 	 */
-	public async findByPeriod(subscriptionId: ID, periodStart: Date): Promise<SubscriptionBilling | null> {
-		return await this.typeOrmSubscriptionBillingRepository.findOne({
+	public async findByPeriod(
+		subscriptionId: ID,
+		periodStart: Date,
+		manager?: EntityManager
+	): Promise<SubscriptionBilling | null> {
+		return await this.cyclesOn(manager).findOne({
 			where: {
 				subscriptionId,
 				periodStart,
