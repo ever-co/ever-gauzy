@@ -177,11 +177,15 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 					input.status
 				);
 
-				const taskStatus = [ScreeningTaskStatusEnum.DECLINED, ScreeningTaskStatusEnum.DUPLICATED].includes(
-					input.status
-				)
-					? TaskStatusEnum.CANCELLED
-					: task.status;
+				// Declined / duplicated cancel the task; leaving those statuses reopens it, since the cancellation
+				// came from the screening. Otherwise the task keeps its own status.
+				const cancelling = [ScreeningTaskStatusEnum.DECLINED, ScreeningTaskStatusEnum.DUPLICATED];
+				let taskStatus = task.status;
+				if (cancelling.includes(input.status)) {
+					taskStatus = TaskStatusEnum.CANCELLED;
+				} else if (cancelling.includes(screeningTask.status)) {
+					taskStatus = TaskStatusEnum.OPEN;
+				}
 
 				await this.taskService.update(task.id, { isScreeningTask, status: taskStatus });
 			}

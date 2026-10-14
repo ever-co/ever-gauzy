@@ -82,6 +82,24 @@ describe('ScreeningTasksService.update', () => {
 		expect(taskService.update).not.toHaveBeenCalled();
 	});
 
+	it.each([ScreeningTaskStatusEnum.ACCEPTED, ScreeningTaskStatusEnum.PENDING, ScreeningTaskStatusEnum.SNOOZED])(
+		'reopens the task cancelled by a declined screening when it becomes %s',
+		async (status) => {
+			jest.mocked(self.findOneByIdString as jest.Mock).mockResolvedValue({
+				id: 'screening-1',
+				status: ScreeningTaskStatusEnum.DECLINED,
+				task: { ...task, status: TaskStatusEnum.CANCELLED }
+			});
+
+			await update(status);
+
+			expect(taskService.update).toHaveBeenCalledWith(
+				'task-1',
+				expect.objectContaining({ status: TaskStatusEnum.OPEN })
+			);
+		}
+	);
+
 	it('does not save the screening status when the task update fails, so a retry still syncs the task', async () => {
 		const create = jest.mocked(TenantAwareCrudService.prototype.create);
 		taskService.update.mockRejectedValueOnce(new Error('database timeout'));
