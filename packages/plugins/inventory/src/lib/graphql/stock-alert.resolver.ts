@@ -121,10 +121,20 @@ export class StockAlertResolver {
 		return await this.service.update(id, input);
 	}
 
-	/** Deletes a rule. */
+	/**
+	 * Deletes a rule.
+	 *
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with. The service's `delete` is the kernel's, which checks no existence: an identifier that names no
+	 * rule of the caller matches nothing and raises nothing, and this field used to answer `true` for it.
+	 *
+	 * @returns True when the rule was removed, false when the identifier matched none.
+	 */
 	@Mutation('deleteStockAlert')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
 	async deleteStockAlert(@Args('id') id: string): Promise<any> {
-		return await this.service.delete(id).then(() => true);
+		const result = await this.service.delete(id);
+
+		return Number(result?.affected ?? 0) > 0;
 	}
 }

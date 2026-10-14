@@ -171,17 +171,20 @@
 					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 					{{ 'BUTTONS.VALIDATED' | translate }}
 				</button>
-				<button
-					type="button"
-					nbButton
-					size="small"
-					status="primary"
-					(click)="formDirective.ngSubmit.emit()"
-					[disabled]="form.invalid || isWrapped"
-				>
-					<nb-icon icon="save-outline"></nb-icon>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+				<!-- Saving writes the configuration, which requires the write grant; reading and validating do not. -->
+				<ng-template [ngxPermissionsOnly]="PermissionsEnum.CUSTOM_SMTP_EDIT">
+					<button
+						type="button"
+						nbButton
+						size="small"
+						status="primary"
+						(click)="formDirective.ngSubmit.emit()"
+						[disabled]="form.invalid || isWrapped"
+					>
+						<nb-icon icon="save-outline"></nb-icon>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</ng-template>
 			} @else {
 				<button
 					type="button"

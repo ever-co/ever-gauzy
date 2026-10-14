@@ -82,6 +82,59 @@ describe('validateTiptapDocument — structure', () => {
 	});
 });
 
+/**
+ * The live editor registers `@tiptap/extension-table-of-contents`, whose global attributes stamp
+ * every heading with `id` and `data-toc-id` (the ToC anchor). The allow-list only had `level` and
+ * `textAlign`, so **every page with a heading answered 400 on autosave** ("Save failed · Retry").
+ */
+describe('validateTiptapDocument — table-of-contents heading anchors', () => {
+	const anchor = '1a89a503-3b1c-4e36-9e3d-ecb6deb74e35';
+
+	it('accepts the ToC anchor attributes the live editor writes on a heading', () => {
+		expect(() =>
+			validateTiptapDocument(
+				doc({
+					type: 'heading',
+					attrs: { blockId: '90103a02-0b31-4116-a454-00c3e0ec8965', textAlign: null, id: anchor, 'data-toc-id': anchor, level: 2 },
+					content: [text('H2 title')]
+				})
+			)
+		).not.toThrow();
+	});
+
+	it('accepts a heading whose anchor is not assigned yet', () => {
+		expect(() =>
+			validateTiptapDocument(doc({ type: 'heading', attrs: { level: 1, id: null, 'data-toc-id': null }, content: [] }))
+		).not.toThrow();
+	});
+
+	it.each(['"><script>alert(1)</script>', 'a b', '', 'x'.repeat(129)])('rejects the anchor value %p', (value: string) => {
+		expectSchemaRejection(doc({ type: 'heading', attrs: { level: 2, id: value }, content: [] }));
+	});
+
+	it('rejects a ToC anchor on a node the extension does not anchor', () => {
+		expectSchemaRejection(doc({ type: 'paragraph', attrs: { 'data-toc-id': anchor }, content: [] }));
+	});
+});
+
+/** TableKit (3.31) serialises a cell's `align`; a table on a page answered 400 like a heading did. */
+describe('validateTiptapDocument — table cell alignment', () => {
+	const table = (cellType: string, align: unknown) =>
+		doc({
+			type: 'table',
+			content: [{ type: 'tableRow', content: [{ type: cellType, attrs: { colspan: 1, rowspan: 1, colwidth: null, align }, content: [paragraph(text('c'))] }] }]
+		});
+
+	it.each(['tableCell', 'tableHeader'])('accepts an aligned %s', (cellType: string) => {
+		expect(() => validateTiptapDocument(table(cellType, 'center'))).not.toThrow();
+		expect(() => validateTiptapDocument(table(cellType, null))).not.toThrow();
+	});
+
+	it('rejects an alignment that is not one', () => {
+		expectSchemaRejection(table('tableCell', 'expression(alert(1))'));
+	});
+});
+
 describe('validateTiptapDocument — attribute values (§6.1 step 3)', () => {
 	it.each(['javascript:alert(1)', 'data:text/html;base64,PHNjcmlwdD4=', 'vbscript:msgbox'])(
 		'rejects the link scheme %s',

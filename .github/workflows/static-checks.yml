@@ -269,6 +269,14 @@ jobs:
         if: always()
         run: node tools/scripts/money-type-check.mjs
 
+      # The design promised root fields by name, and 81 of them appeared nowhere in the code (handover
+      # 2026-09-20 §7.68). Owner decision 12 (2026-10-13): triage each, build what is needed. Every name has a
+      # decision here (delivered / naming / retired / build / drop), each decision is checked against the
+      # composed schema, and the build backlog may only shrink.
+      - name: Every phantom design name is triaged, and the build backlog only shrinks
+        if: always()
+        run: node tools/scripts/design-name-triage-check.mjs
+
       # Owner decision (2026-09-21): a pull request into develop does not start a workflow - the Actions
       # minutes belonged to every commit of the branch being merged, and the run belongs to the merge. The
       # decision is a trigger, so a job-level guard cannot express it and only this check can keep it.
@@ -339,6 +347,14 @@ jobs:
         if: always()
         run: node tools/scripts/graphql-write-parity-check.mjs
 
+      # GraphQL runs no class-validator, so the organization-membership rule REST's DTOs state with
+      # `@IsOrganizationBelongsToUser()` (GHSA-44pv-34gx-q9p4) is applied to every GraphQL operation by one global
+      # interceptor (R7-03). This gate keeps it global and early, and fails when a @Public() field that takes an
+      # organizationId — the one kind the interceptor skips — appears without a reviewed exemption.
+      - name: Every GraphQL field that names an organization runs the membership rule
+        if: always()
+        run: node tools/scripts/graphql-organization-membership-check.mjs
+
       # Every range a workspace declares must be a key of yarn.lock. Thirteen commerce plugins asked for
       # `@nestjs/graphql@^13.0.0` while the lockfile resolved only core's `^13.4.2`: a `--frozen-lockfile`
       # install refused the branch, and a plain one hoisted a second copy of the package, so the API failed
@@ -367,3 +383,40 @@ jobs:
       - name: Every literal entity column type is accepted on Postgres, MySQL and SQLite
         if: always()
         run: node tools/scripts/entity-column-dialect-check.mjs
+
+      # The kernel's hard delete checks no existence: an identifier that names no row of the caller deletes
+      # nothing and raises nothing (`affected: 0`). Ninety-odd GraphQL delete fields dropped that result and
+      # answered `true` — "removed" for a row that was never there — while the REST route reported the
+      # `affected: 0` it got (handover 2026-09-20 §7.65 item 21). Every delete field consults the result now.
+      - name: Every GraphQL delete field answers what its delete did
+        if: always()
+        run: |
+          node --test tools/scripts/graphql-delete-answer-check.test.mjs
+          node tools/scripts/graphql-delete-answer-check.mjs
+
+      # Subscriptions were the one design dimension nothing measured: the design promised 86, the schema served
+      # about 31, and no gate noticed (handover 2026-09-20 §7.65 item 19). Owner decision 8 (2026-10-13): "Add a
+      # gate + build backlog". The gate records every promised stream, derives a typed field for every durable
+      # aggregate the plugins stream, refuses a served stream nothing publishes, and lets both backlogs only shrink.
+      - name: Every promised subscription is served or in a backlog that only shrinks
+        if: always()
+        run: node tools/scripts/subscription-parity-check.mjs
+
+      # The gate's readers, held to every shape they must read (a commented-out publish is not a producer; a
+      # catalogue in any quote style or `as const` is read; an unreadable declaration fails): a reader that skips a
+      # shape is a gate that stops measuring without going red.
+      - name: The subscription gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/subscription-parity-check.test.mjs
+
+      # The deploy images install only production dependencies, so a package that runtime code imports but only a
+      # devDependency declares is present everywhere CI and local boots run, and missing in the container: the feat
+      # API image stopped at start with "Cannot find module 'rimraf'" (rimraf 6 was a devDependency of core and root).
+      # cspell:words rimraf
+      - name: Every package the API and worker images load at runtime is installed in them
+        if: always()
+        run: node tools/scripts/runtime-dependency-check.mjs
+
+      - name: The runtime dependency check's own cases
+        if: always()
+        run: node --test tools/scripts/runtime-dependency-check.test.mjs

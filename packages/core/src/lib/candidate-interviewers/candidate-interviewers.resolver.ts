@@ -20,6 +20,7 @@ import {
 	CandidateInterviewersEmployeeBulkDeleteCommand,
 	CandidateInterviewersInterviewBulkDeleteCommand
 } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateCandidateInterviewerInput` declares in the schema. */
 export interface ICreateCandidateInterviewerInput {
@@ -198,9 +199,7 @@ export class CandidateInterviewersResolver {
 	@Mutation('deleteCandidateInterviewer')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	async deleteCandidateInterviewer(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateInterviewersService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateInterviewersService.delete(id));
 	}
 
 	/** Withdraws one panel seat without removing it. */

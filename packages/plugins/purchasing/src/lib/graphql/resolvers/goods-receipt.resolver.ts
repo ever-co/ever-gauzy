@@ -4,7 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { FEATURE_GRAPHQL, FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PurchasingFeatures } from '../../purchasing.features';
-import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
+import { deleteOutcome, toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { GoodsReceiptStatus, IGoodsReceipt, IGoodsReceiptLine, IGoodsReceiptLineInput } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
@@ -203,9 +203,11 @@ export class GoodsReceiptResolver {
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	async deleteGoodsReceipt(@Args('id') id: ID) {
 		try {
-			await this.goodsReceiptService.delete(id);
+			// The identity is answered only for a removal that reached a row: an identifier that names none of
+			// the caller's deletes nothing and raises nothing, and is answered `NOT_FOUND` (`deleteOutcome`).
+			const userErrors = deleteOutcome(await this.goodsReceiptService.delete(id), id);
 
-			return { id, userErrors: [] };
+			return { id: userErrors.length ? null : id, userErrors };
 		} catch (error) {
 			return { id: null, userErrors: [toUserError(error)] };
 		}

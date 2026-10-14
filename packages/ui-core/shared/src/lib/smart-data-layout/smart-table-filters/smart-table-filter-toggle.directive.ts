@@ -242,23 +242,7 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 		if (!filters) {
 			return false;
 		}
-		const inputs = Array.from(filters.querySelectorAll('input, textarea')) as HTMLInputElement[];
-		if (inputs.some((input) => input.value?.trim().length > 0)) {
-			return true;
-		}
-		const selects = Array.from(filters.querySelectorAll('select')) as HTMLSelectElement[];
-		if (selects.some((select) => select.selectedIndex > 0)) {
-			return true;
-		}
-		// ng-select marks its host; nb-select marks the ABSENCE of a value with
-		// `.placeholder` on its trigger button (never on the host); the
-		// accept/deny toggle filter marks its active CHOICE button with `.on`
-		// (`.na.on` means "no filter", so only check/deny count).
-		return (
-			!!filters.querySelector('.ng-select.ng-has-value') ||
-			!!filters.querySelector('nb-select .select-button:not(.placeholder)') ||
-			!!filters.querySelector('button.check.on, button.deny.on')
-		);
+		return filterRowHasActiveValue(filters);
 	}
 
 	private reflectActiveState(): void {
@@ -287,4 +271,32 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 		}
 		this.button = null;
 	}
+}
+
+/**
+ * Whether a smart-table filter row holds any value — what lights the toggle's active-filter dot.
+ *
+ * ng-select marks a selected value with `ng-has-value` on its inner `.ng-select-container`, NOT on
+ * the host (its template, and its own theme's `.ng-select .ng-has-value .ng-placeholder`): the old
+ * `.ng-select.ng-has-value` never matched, so no ng-select based filter (invite status, team, payment
+ * method, tags…) ever lit the dot. nb-select marks the ABSENCE of a value with `.placeholder` on its
+ * trigger button (never on the host); the accept/deny toggle filter marks its active CHOICE button with
+ * `.on` (`.na.on` means "no filter", so only check/deny count).
+ *
+ * @param filters The filter row element.
+ */
+export function filterRowHasActiveValue(filters: ParentNode): boolean {
+	const inputs = Array.from(filters.querySelectorAll('input, textarea')) as HTMLInputElement[];
+	if (inputs.some((input) => input.value?.trim().length > 0)) {
+		return true;
+	}
+	const selects = Array.from(filters.querySelectorAll('select')) as HTMLSelectElement[];
+	if (selects.some((select) => select.selectedIndex > 0)) {
+		return true;
+	}
+	return (
+		!!filters.querySelector('.ng-select .ng-select-container.ng-has-value') ||
+		!!filters.querySelector('nb-select .select-button:not(.placeholder)') ||
+		!!filters.querySelector('button.check.on, button.deny.on')
+	);
 }

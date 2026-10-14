@@ -457,9 +457,9 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
-	"The outcome of deleting a subscription outright."
+	"The outcome of retiring a subscription through deleteSubscription (a soft delete; a subscription is never hard-deleted)."
 	type DeleteSubscriptionPayload {
-		"The subscription that was removed; null when the removal was refused."
+		"The subscription that was retired; null when the retirement was refused."
 		id: ID
 		userErrors: [UserError!]!
 	}
@@ -591,13 +591,12 @@ export const schemaExtensions = gql`
 		"Removes a recurring line mid-cycle, settling the remainder of the period."
 		removeSubscriptionItem(id: ID!, variantId: ID!): SubscriptionPlanChangePayload!
 		"""
-		Deletes a subscription outright.
+		Retires a subscription: a soft delete, recoverable with recoverSubscription.
 
-		The row leaves the database rather than being retired, which is why every read that has to keep
-		answering for what was sold reaches the recoverable pair below instead. It is mirrored because
-		\`DELETE /subscriptions/:id\` serves it and §3.1 requires one mutation per REST write route including
-		the routes the CRUD base contributes; a caller that reaches it over REST must be able to reach it
-		over GraphQL, and the answer says which of the two removals happened.
+		A subscription is never hard-deleted through the API: erasing it would cascade into its billing
+		cycles, the record of money billed. This field and \`DELETE /subscriptions/:id\` retire the
+		subscription exactly as softDeleteSubscription does, and answer with its identifier, or with the
+		reason the retirement was refused.
 		"""
 		deleteSubscription(id: ID!): DeleteSubscriptionPayload!
 		"""

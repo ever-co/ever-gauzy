@@ -30,6 +30,7 @@ import {
 	isOrderChangeStatus,
 	isOrderTransactionType
 } from './filters';
+import { retireForDeleteField } from './order-delete-result';
 import {
 	IOrderChangeConnection,
 	IOrderDeleteResult,
@@ -315,24 +316,26 @@ export class OrderChangeResolver {
 	}
 
 	/**
-	 * Deletes a change outright, with the actions it carries.
+	 * Retires a change. This field no longer erases one, nor the actions it carries.
 	 *
-	 * The route it mirrors is `DELETE /order-changes/:id`, declared by the controller and overridden only
-	 * to state the permission the base class leaves unstated. It is the destructive half of what the pair
-	 * above does recoverably: a change retained explains a modification after the fact, and this is how a
-	 * change recorded in error is removed rather than retired.
+	 * The route it mirrors is `DELETE /order-changes/:id`, which reached `CrudController`'s hard delete — and
+	 * that cascaded into the change's actions. A change is the only path that modifies a placed order, so a
+	 * change retained is what explains a modification after the fact, and `13` §11.4 keeps every order table
+	 * in one retention row — "`order*`, … | Indefinite | Soft delete only (`deletedAt`); no hard delete
+	 * through the API". A change recorded in error is therefore retired, not removed: the route and this
+	 * field reach `OrderChangeService.softRemove`, the act `softDeleteOrderChange` performs, and
+	 * `recoverOrderChange` brings it back.
 	 *
-	 * The permission is the route's own — `ORDERS_EDIT`.
+	 * The answer keeps its shape: the identifier, and whether a change of the caller's was there to retire —
+	 * `deleted: false` when the identifier names none. The permission is the route's own — `ORDERS_EDIT`.
 	 *
-	 * @param id The change to delete.
-	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 * @param id The change to retire.
+	 * @returns The identifier the field named, and whether a change was there to retire.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'deleteOrderChange' })
 	async deleteOrderChange(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
-		const result = await this.changeService.delete(id);
-
-		return { id, deleted: Number(result?.affected ?? 0) > 0 };
+		return await retireForDeleteField(id, () => this.changeService.softRemove(id));
 	}
 
 	/**
@@ -402,23 +405,25 @@ export class OrderChangeResolver {
 	}
 
 	/**
-	 * Deletes one action of a pending change outright.
+	 * Retires one action of a change. This field no longer erases one.
 	 *
-	 * The route it mirrors is `DELETE /order-change-actions/:id`, declared by the controller and
-	 * overridden only to state the permission the base class leaves unstated. The withdrawal beside it
-	 * keeps the row that explains a modification; this removes it.
+	 * The route it mirrors is `DELETE /order-change-actions/:id`. An action is one step of the set a change
+	 * is applied as, so the row is part of what explains a modification, and `13` §11.4 keeps every order
+	 * table in one retention row — "`order*`, … | Indefinite | Soft delete only (`deletedAt`); no hard delete
+	 * through the API" — so the route and this field now retire the action through
+	 * `OrderChangeActionService.softRemove`, the act `softDeleteOrderChangeAction` performs, and
+	 * `recoverOrderChangeAction` brings it back.
 	 *
-	 * The permission is the route's own — `ORDERS_EDIT`.
+	 * The answer keeps its shape: the identifier, and whether an action of the caller's was there to retire —
+	 * `deleted: false` when the identifier names none. The permission is the route's own — `ORDERS_EDIT`.
 	 *
-	 * @param id The action to delete.
-	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 * @param id The action to retire.
+	 * @returns The identifier the field named, and whether an action was there to retire.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation(() => Object, { name: 'deleteOrderChangeAction' })
 	async deleteOrderChangeAction(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
-		const result = await this.actionService.delete(id);
-
-		return { id, deleted: Number(result?.affected ?? 0) > 0 };
+		return await retireForDeleteField(id, () => this.actionService.softRemove(id));
 	}
 
 	/**

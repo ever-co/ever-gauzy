@@ -14,6 +14,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeLevel } from './employee-level.entity';
 import { EmployeeLevelService } from './employee-level.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEmployeeLevelInput` declares in the schema. */
 export interface ICreateEmployeeLevelInput {
@@ -223,9 +224,7 @@ export class EmployeeLevelResolver {
 	 */
 	@Mutation('deleteEmployeeLevel')
 	async deleteEmployeeLevel(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeLevelService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeLevelService.delete(id));
 	}
 
 	/**

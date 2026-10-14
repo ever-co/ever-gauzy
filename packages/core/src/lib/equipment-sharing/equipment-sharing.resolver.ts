@@ -29,6 +29,7 @@ import {
 	EquipmentSharingStatusCommand,
 	EquipmentSharingUpdateCommand
 } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEquipmentSharingInput` declares in the schema. */
 export interface ICreateEquipmentSharingInput {
@@ -435,9 +436,7 @@ export class EquipmentSharingResolver {
 	 */
 	@Mutation('deleteEquipmentSharing')
 	async deleteEquipmentSharing(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.equipmentSharingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.equipmentSharingService.delete(id));
 	}
 
 	/**

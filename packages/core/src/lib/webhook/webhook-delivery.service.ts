@@ -7,8 +7,9 @@ import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { WebhookEventPublisher } from './webhook-event.publisher';
-import { refusalForResolvedEndpoint } from './webhook-endpoint-policy';
+import { refusalForResolvedEndpoint, WebhookEndpointRefusedError } from './webhook-endpoint-policy';
 import { signWebhookPayload } from './webhook-signature';
+import { WebhookTransport } from './webhook-transport';
 import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-delivery.repository';
 import { MikroOrmWebhookDeliveryRepository } from './repository/mikro-orm-webhook-delivery.repository';
 
@@ -138,6 +139,12 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	/** The payload version sent when a subscription pins none. */
 	static readonly DEFAULT_API_VERSION = '1';
 
+	/**
+	 * The HTTP client every attempt goes through: it connects to the address the policy checked and reads
+	 * at most `RESPONSE_BODY_LIMIT` bytes of the answer (see `WebhookTransport`).
+	 */
+	private readonly transport = new WebhookTransport();
+
 	constructor(
 		readonly typeOrmWebhookDeliveryRepository: TypeOrmWebhookDeliveryRepository,
 		readonly mikroOrmWebhookDeliveryRepository: MikroOrmWebhookDeliveryRepository,
@@ -230,20 +237,7 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 		const endpointRefusal = await this.refuseUnroutableEndpoint(subscription.url);
 
 		if (endpointRefusal) {
-			const refused = await this.saveDelivery(delivery, {
-				status: WebhookDeliveryStatus.DEAD,
-				lastError: endpointRefusal,
-				nextAttemptAt: null,
-				attemptCount: attempt
-			});
-
-			await this.webhookEventPublisher.deliveryFailed(this.redact(refused), attempt);
-
-			return {
-				delivery: refused,
-				result: { delivered: false, lastError: endpointRefusal, durationMs: 0 },
-				skipped: true
-			};
+			return this.refuseByPolicy(delivery, attempt, endpointRefusal, 0);
 		}
 
 		const body = JSON.stringify(delivery.payload);
@@ -256,6 +250,14 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 			body,
 			this.buildHeaders(delivery, subscription, attempt, signature.header)
 		);
+
+		// The connection's own lookup refused the address it was about to connect to: the name answered the
+		// check above with a public address and the socket with a refused one, which is DNS rebinding. That is
+		// the same refusal as the one above and is recorded the same way — dead, announced, and not counted
+		// against the endpoint, which never answered.
+		if (result.refusedByPolicy) {
+			return this.refuseByPolicy(delivery, attempt, result.lastError as string, result.durationMs ?? 0);
+		}
 
 		// The subscription's own counters are updated first: they are what eventually disables a dead
 		// endpoint, and they must survive whatever happens to the delivery row afterwards.
@@ -511,42 +513,86 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	}
 
 	/**
+	 * Records an attempt the policy refused, without calling — or without finishing calling — the endpoint.
+	 *
+	 * Dead rather than failed: the ladder exists for an endpoint that is unreachable, and this one is
+	 * unreachable by policy, so re-attempting it would only repeat the refusal. The subscription's counters
+	 * are not moved — the endpoint never answered — and the refusal is announced like any refused attempt.
+	 *
+	 * @param delivery The delivery.
+	 * @param attempt The 1-based attempt number.
+	 * @param reason Why the endpoint was refused.
+	 * @param durationMs How long the attempt ran before it was refused.
+	 * @returns The attempt, marked skipped.
+	 */
+	private async refuseByPolicy(
+		delivery: WebhookDelivery,
+		attempt: number,
+		reason: string,
+		durationMs: number
+	): Promise<IWebhookDeliveryAttempt> {
+		const refused = await this.saveDelivery(delivery, {
+			status: WebhookDeliveryStatus.DEAD,
+			lastError: reason,
+			nextAttemptAt: null,
+			attemptCount: attempt
+		});
+
+		await this.webhookEventPublisher.deliveryFailed(this.redact(refused), attempt);
+
+		return {
+			delivery: refused,
+			result: { delivered: false, lastError: reason, durationMs },
+			skipped: true
+		};
+	}
+
+	/**
 	 * Posts one attempt.
 	 *
 	 * A redirect is reported rather than followed: the endpoint a subscription names is the endpoint
 	 * the payload may be sent to, and following a `Location` would hand the payload to whoever
-	 * answers it. The body is read up to a fixed limit and then dropped, so a huge or slow response
-	 * cannot hold the worker.
+	 * answers it. The body is read up to a fixed limit and the connection is then closed, so a huge or
+	 * slow response cannot hold the worker or its memory, and the socket connects to the address the
+	 * endpoint policy checked (`WebhookTransport`).
 	 *
 	 * @param url The endpoint.
 	 * @param body The exact bytes to send.
 	 * @param headers The headers.
-	 * @returns What the attempt did.
+	 * @returns What the attempt did; `refusedByPolicy` when the connection's own lookup refused the host.
 	 */
-	private async post(url: string, body: string, headers: Record<string, string>): Promise<IWebhookAttemptResult> {
+	private async post(
+		url: string,
+		body: string,
+		headers: Record<string, string>
+	): Promise<IWebhookAttemptResult & { refusedByPolicy?: boolean }> {
 		const startedAt = Date.now();
-		const controller = new AbortController();
-		const timer = setTimeout(() => controller.abort(), WebhookDeliveryService.REQUEST_TIMEOUT_MS);
 
 		try {
-			const response = await fetch(url, {
-				method: 'POST',
+			const answer = await this.transport.post(url, {
 				headers,
 				body,
-				redirect: 'manual',
-				signal: controller.signal
+				timeoutMs: WebhookDeliveryService.REQUEST_TIMEOUT_MS,
+				bodyLimit: WebhookDeliveryService.RESPONSE_BODY_LIMIT
 			});
 
-			const raw = await response.text();
-
 			return {
-				delivered: response.ok,
-				responseStatus: response.status,
-				responseBody: raw ? raw.slice(0, WebhookDeliveryService.RESPONSE_BODY_LIMIT) : undefined,
+				delivered: answer.ok,
+				responseStatus: answer.status,
+				responseBody: answer.body ? answer.body : undefined,
 				durationMs: Date.now() - startedAt
 			};
 		} catch (error) {
-			// An aborted fetch is this timeout firing, not a mistake by the endpoint, and the two are
+			if (error instanceof WebhookEndpointRefusedError) {
+				return {
+					delivered: false,
+					lastError: error.message,
+					durationMs: Date.now() - startedAt,
+					refusedByPolicy: true
+				};
+			}
+
+			// An aborted attempt is this timeout firing, not a mistake by the endpoint, and the two are
 			// recorded differently so triage can tell a slow receiver from a broken one.
 			const aborted = error instanceof Error && error.name === 'AbortError';
 
@@ -559,8 +605,6 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 					: 'The delivery failed.',
 				durationMs: Date.now() - startedAt
 			};
-		} finally {
-			clearTimeout(timer);
 		}
 	}
 

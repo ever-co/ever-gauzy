@@ -140,15 +140,20 @@ export class OrderLineInvoiceResolver {
 	/**
 	 * Removes a link and re-derives the line's counters from what remains.
 	 *
+	 * The answer is read from what the removal reported — `deleted: affected > 0`, the rule the order plugin's
+	 * other deletes answer with — rather than stated: the service raises `ORDER_LINE_INVOICE_NOT_FOUND` for a
+	 * link that is not the caller's, so today the two agree, but a field that drops the result would go on
+	 * saying "deleted" if that ever stopped being true (handover 2026-09-20 §7.65 item 21).
+	 *
 	 * @param id The link.
 	 * @returns What the removal did.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Mutation('deleteOrderLineInvoice')
 	async deleteOrderLineInvoice(@Args('id', { type: () => ID }) id: string) {
-		await this.service.delete(id);
+		const result = await this.service.delete(id);
 
-		return { id, deleted: true };
+		return { id, deleted: Number(result?.affected ?? 0) > 0 };
 	}
 
 	/**
