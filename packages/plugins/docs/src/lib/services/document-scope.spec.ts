@@ -74,7 +74,7 @@ jest.mock('./document-settings.service', () => ({ DocumentSettingsService: class
 jest.mock('../dto', () => ({}));
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { DocumentVisibilityEnum, PermissionsEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentVisibilityEnum, PermissionsEnum } from '@gauzy/contracts';
 import { DOCS_ORGANIZATION_REQUIRED, DOCS_WRITE_FORBIDDEN } from '../docs.constants';
 import { DocumentService } from './document.service';
 
@@ -429,5 +429,47 @@ describe('DocumentService — HTML sanitization', () => {
 
 		expect(sanitizeRichHtmlMock).toHaveBeenCalledWith('<b>x</b>');
 		expect((service as any).save.mock.calls[0][0].contentHtml).toBe('sanitized(<b>x</b>)');
+	});
+});
+
+/**
+ * A mention added in a page is created in the page's organization, as the task and comment edits do since
+ * develop #10531: `updateEntityMentions` published the new mentions without one, so the mention, its
+ * notification and its subscription were not in the organization the page belongs to.
+ */
+describe('DocumentService — mentions carry the document organization', () => {
+	it('on create', async () => {
+		const { service, mentionService } = buildService();
+		(service as any).create = jest.fn(async (input: any) => ({ ...input, id: 'doc-new' }));
+
+		await service.createDocument({ kind: 'PAGE', name: 'p', mentionEmployeeIds: ['employee-2'] } as any);
+
+		expect(mentionService.updateEntityMentions).toHaveBeenCalledWith(
+			BaseEntityEnum.Document,
+			'doc-new',
+			['employee-2'],
+			undefined,
+			undefined,
+			'org-1'
+		);
+	});
+
+	it('on a content save', async () => {
+		const { service, mentionService } = buildService([documentRow({ kind: 'PAGE', updatedAt: new Date(0) })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn(async (input: any) => input);
+		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
+
+		await service.updateContent('doc-1', { contentJson: emptyDoc(), mentionEmployeeIds: ['employee-2'] } as any);
+
+		expect(mentionService.updateEntityMentions).toHaveBeenCalledWith(
+			BaseEntityEnum.Document,
+			'doc-1',
+			['employee-2'],
+			undefined,
+			undefined,
+			'org-1'
+		);
 	});
 });
