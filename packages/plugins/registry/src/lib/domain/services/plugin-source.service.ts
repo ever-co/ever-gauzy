@@ -1,13 +1,14 @@
-import { TenantAwareCrudService, MultiORMEnum } from '@gauzy/core';
+import { MultiORMEnum } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { PluginSource } from '../entities/plugin-source.entity';
 import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
 import { TypeOrmPluginSourceRepository } from '../repositories/type-orm-plugin-source.repository';
 import { ID, PluginSourceType } from '@gauzy/contracts';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginSourceService extends TenantAwareCrudService<PluginSource> {
+export class PluginSourceService extends RegistryTenantAwareCrudService<PluginSource> {
 	constructor(
 		public readonly typeOrmPluginSourceRepository: TypeOrmPluginSourceRepository,
 		public readonly mikroOrmPluginSourceRepository: MikroOrmPluginSourceRepository

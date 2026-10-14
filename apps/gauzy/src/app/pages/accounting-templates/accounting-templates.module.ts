@@ -8,7 +8,7 @@ import {
 	NbDialogModule
 } from '@nebular/theme';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageSelectorModule, SharedModule } from '@gauzy/ui-core/shared';
 import { AccountingTemplatesRoutingModule } from './accounting-templates-routing.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
@@ -23,7 +23,7 @@ import { SandboxedSrcdocDirective } from './sandboxed-srcdoc.directive';
 		NbIconModule,
 		NbDialogModule.forChild(),
 		AceEditorModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		LanguageSelectorModule,
 		AccountingTemplatesRoutingModule

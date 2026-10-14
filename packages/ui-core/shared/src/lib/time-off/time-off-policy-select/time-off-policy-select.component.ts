@@ -1,4 +1,4 @@
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { filter, first, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -20,6 +20,7 @@ import { TimeOffService } from '@gauzy/ui-core/core';
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeOffPolicySelectComponent implements OnInit {

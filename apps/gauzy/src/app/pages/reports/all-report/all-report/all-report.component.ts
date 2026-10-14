@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IGetReportCategory, IOrganization, IReport, IReportCategory, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { ReportService } from '../report.service';
     selector: 'ga-all-report',
     templateUrl: './all-report.component.html',
     styleUrls: ['./all-report.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AllReportComponent implements OnInit {

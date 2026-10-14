@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { getContrastColor } from '@gauzy/ui-core/common';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
@@ -26,7 +26,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 						class="color"
 						position="centered"
 						[style.background]="tag?.color"
-						[style.color]="backgroundContrast(tag?.color)"
+						[style.color]="backgroundContrast($safeNavigationMigration(tag?.color))"
 						text="{{ tag?.name }}"
 					>
 					</nb-badge>
@@ -103,6 +103,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ItemImgTagsComponent {

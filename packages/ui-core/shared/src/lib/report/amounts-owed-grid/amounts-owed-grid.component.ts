@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IAmountOwedReport,
 	IGetTimeLogReportInput,
@@ -19,6 +19,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 	selector: 'ga-amounts-owed-grid',
 	templateUrl: './amounts-owed-grid.component.html',
 	styleUrls: ['./amounts-owed-grid.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

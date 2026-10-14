@@ -19,6 +19,7 @@
  * assertions below therefore go through `isAllowedUrl` — the app's scheme ALLOWLIST — and the
  * matrix at the bottom pins exactly where Angular stops and the allowlist takes over.
  */
+import { DOCUMENT, Injector, runInInjectionContext } from '@angular/core';
 import { DomSanitizer, ɵDomSanitizerImpl as DomSanitizerImpl } from '@angular/platform-browser';
 import { renderMarkdownToSanitizedHtml, sanitizeHtml } from './markdown-render.util';
 import { isAllowedUrl } from './safe-url.util';
@@ -33,11 +34,16 @@ describe('read-only render sanitization', () => {
 	 * identity and `TestBed.inject` dies on a null NgModule. Every other spec here sidesteps
 	 * TestBed for the same reason (see the note atop `documents.service.spec.ts`).
 	 *
-	 * `ɵDomSanitizerImpl` is the exact class Angular's own root provider instantiates, and its
-	 * only constructor argument is the document — so this exercises the genuine allowlist
-	 * sanitizer rather than a stub, which is the whole point of these tests.
+	 * `ɵDomSanitizerImpl` is the exact class Angular's own root provider instantiates, and the
+	 * document is all it needs — so this exercises the genuine allowlist sanitizer rather than a
+	 * stub, which is the whole point of these tests. Since Angular 22 it `inject()`s the document
+	 * instead of taking it as a constructor argument, so it is built inside an injector that
+	 * provides only that (still no TestBed).
 	 */
-	const sanitizer: DomSanitizer = new DomSanitizerImpl(document);
+	const sanitizer: DomSanitizer = runInInjectionContext(
+		Injector.create({ providers: [{ provide: DOCUMENT, useValue: document }] }),
+		() => new DomSanitizerImpl()
+	);
 
 	/** Parses rendered output so assertions describe DOM semantics, not string shape. */
 	const parse = (html: string | null): HTMLElement => {

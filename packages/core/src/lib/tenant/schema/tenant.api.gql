@@ -1,0 +1,69 @@
+# The tenant domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The tenant is the one core resource whose routes carry no permission, and mirroring that is the
+# delivery rather than an omission.** `TenantController` states no class-level permission and no
+# handler states one either: the row every other row is scoped by is the caller's own, it is reached
+# with the identifier the credential already carries, and no delivered route asks for a grant to serve
+# it. There is therefore no permission for GraphQL to mirror, and stating one — the settings
+# permission, or whichever grant reads as administrative — would give this surface a scope its routes
+# do not have and would refuse a caller the same request over REST serves.
+#
+# **Two of the four routes carry a role, and the fields that mirror them carry the same one.**
+# `PUT /api/tenant` and `DELETE /api/tenant` are guarded by `RoleGuard` and state
+# `RolesEnum.SUPER_ADMIN`: editing the tenant and removing it are the installation owner's acts, and
+# the platform states them as the role they require rather than as a permission. `updateTenant` and
+# `deleteTenant` therefore declare `RoleGuard` with that same role, and the two reads declare nothing
+# of their own — which is exactly the chain their routes run under, no wider and no narrower.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the
+# handler and then the class, which is why the gate is stated once rather than restated per field —
+# and why it is appended to the chain the routes below already carry rather than replacing any part of
+# it. A tenant that switched the capability off is answered `Cannot query field <name>` here, while
+# the REST routes of this resource answer as they always did: those routes are not gated by that code,
+# so the door that switches the capability back on is never the door the capability locked.
+#
+# **The read states no identifier, and that is the route it mirrors.** `GET /api/tenant` takes no path
+# parameter: it answers the tenant of the credential that asks, so an argument here would be a way to
+# name somebody else's tenant that REST does not offer. `tenant` is therefore the one root field of
+# this schema whose subject comes entirely from the caller.
+#
+# **The creation refusal is the route's own gate and the field performs it.** `POST /api/tenant`
+# refuses a caller that already belongs to a tenant or already holds a role — the delivered body of
+# that check — because the resource onboards one tenant per installation, and that check is not a
+# guard: it is stated in the handler, so it is stated in the field that mirrors the handler.
+
+extend type Query {
+	"""
+	The tenant of the credential that asks. The subject comes from the caller and never from an
+	argument, which is the delivered read route's own shape.
+	"""
+	tenant: Tenant
+}
+
+extend type Mutation {
+	"""
+	Files a tenant and onboards the caller into it: the delivered creation, which stamps the caller as
+	the new tenant's owner. A caller that already belongs to a tenant is refused, as the delivered
+	route refuses it.
+	"""
+	createTenant(input: CreateTenantInput!): Tenant!
+
+	"""
+	Replaces the caller's own tenant. The delivered edit is dispatched under the installation owner's
+	role, so this field carries the same role guard its route does; the answer is the row read back,
+	because the delivered route answers the store's own update result, which is a statement about the
+	write rather than the tenant.
+	"""
+	updateTenant(input: UpdateTenantInput!): Tenant!
+
+	"""
+	Removes the caller's own tenant outright. The delivered removal is dispatched under the same
+	installation owner's role, so this field carries the same role guard its route does.
+	"""
+	deleteTenant: Boolean!
+}

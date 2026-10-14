@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { BaseDashboardWidgetComponent } from '../../widget-host/base-dashboard-widget.component';
@@ -55,7 +55,7 @@ interface IDataEntryShortcut {
 	templateUrl: './data-entry-shortcuts-widget.component.html',
 	styleUrls: ['./data-entry-shortcuts-widget.component.scss'],
 	standalone: true,
-	imports: [NbIconModule, TranslateModule],
+	imports: [NbIconModule, TranslatePipe],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataEntryShortcutsWidgetComponent extends BaseDashboardWidgetComponent {

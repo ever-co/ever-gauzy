@@ -15,9 +15,9 @@
 							<ngx-avatar
 								class="avatar-dashboard activity"
 								size="sm"
-								[id]="employee?.id"
-								[name]="employee?.user?.name"
-								[src]="employee?.user?.imageUrl"
+								[id]="$safeNavigationMigration(employee?.id)"
+								[name]="$safeNavigationMigration(employee?.user?.name)"
+								[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
 								[employee]="employee"
 								[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
 								[caption]="lastWorkedAt(employee) | utcToLocal | dateFormat"
@@ -71,7 +71,7 @@
 									[timeSlot]="timeSlot"
 									[timeFormat]="timeFormat()"
 									[timezone]="timeZone()"
-									[employeeId]="timeSlot?.employee?.id"
+									[employeeId]="$safeNavigationMigration(timeSlot?.employee?.id)"
 									[multiple]="false"
 									(delete)="onDelete()"
 								></ngx-screenshots-item>

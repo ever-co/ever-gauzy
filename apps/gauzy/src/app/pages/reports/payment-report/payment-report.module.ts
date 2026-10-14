@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	ContactSelectModule,
 	CurrencyModule,
@@ -17,7 +17,7 @@ import { PaymentReportComponent } from './payment-report/payment-report.componen
 	imports: [
 		PaymentReportRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

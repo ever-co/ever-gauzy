@@ -62,4 +62,23 @@ export interface ICrudController<T> {
 	 * @param options
 	 */
 	delete(id: any, ...options: any[]): Promise<DeleteResult>;
+
+	/**
+	 * Soft deletes the entity with the given id: marks it deleted without removing the row.
+	 *
+	 * Declared here because `CrudFactory` returns its class as this interface, and a subclass that overrides
+	 * the inherited route — to attach a permission, say — has to be able to call it through `super`.
+	 *
+	 * @param id
+	 * @param options
+	 */
+	softRemove(id: any, ...options: any[]): Promise<T>;
+
+	/**
+	 * Restores a soft-deleted entity with the given id.
+	 *
+	 * @param id
+	 * @param options
+	 */
+	softRecover(id: any, ...options: any[]): Promise<T>;
 }

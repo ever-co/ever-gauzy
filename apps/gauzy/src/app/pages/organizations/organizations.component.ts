@@ -1,6 +1,6 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import { IOrganization, ComponentLayoutStyleEnum, IUser, CrudActionEnum } from '@gauzy/contracts';
+import { IOrganization, ComponentLayoutStyleEnum, IUser, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
@@ -34,6 +34,7 @@ import { OrganizationDeleteConfirmationComponent } from './organization-delete-c
 @Component({
     templateUrl: './organizations.component.html',
     styleUrls: ['./organizations.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -72,6 +73,14 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 	) {
 		super(translateService);
 		this.setView();
+	}
+
+	/**
+	 * The drawer's "expand to full width" icon leads to the organization's edit page, which requires
+	 * ALL_ORG_EDIT; a view-only viewer (the drawer needs ALL_ORG_VIEW) gets no icon rather than a redirect.
+	 */
+	get canOpenOrganizationPage(): boolean {
+		return this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT);
 	}
 
 	ngOnInit() {

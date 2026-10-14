@@ -1,0 +1,168 @@
+# The pipeline's GraphQL types.
+#
+# A pipeline is an ordered set of stages a deal moves through: the row itself carries only a name and
+# a description, and the meaning of the pipeline is the order of its stages — which is why
+# `PipelineStage` is the row that carries the pipeline, the stage's own index and the deals that sit
+# at it.
+#
+# **`stages` is not a member of the type, and that is the delivered reader's decision rather than
+# this file's.** `Pipeline.stages` is a `@OneToMany`, so the pipeline table holds no foreign key for
+# it; the delivered reads answer it only when a REST caller names it in `relations`, and the list read
+# this surface mirrors names none. A `stages` member would therefore be null on every row a caller
+# reads here — worse than an absent member, because a client would select it, read `null` and
+# conclude the pipeline has no stages. The stages of a pipeline are reached from the rows that own
+# `pipelineId`, and the deals of one are read through `pipelineDeals` below.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes and this column is the
+# whole of what they write; without it the answer to the write that withdrew a pipeline could not say
+# so.
+
+"""
+An ordered set of stages a deal moves through.
+"""
+type Pipeline {
+	id: ID!
+	"The name of the pipeline, as entered."
+	name: String!
+	"What the pipeline is for. Null on a pipeline that states none."
+	description: String
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the pipeline was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of pipelines.
+"""
+type PipelineEdge {
+	node: Pipeline!
+	cursor: String!
+}
+
+"""
+One page of pipelines, with the total the filters select and the boundary cursors.
+"""
+type PipelineConnection {
+	nodes: [Pipeline!]!
+	edges: [PipelineEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a pipeline list may be sorted by.
+"""
+enum PipelineSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the pipelines are returned in. At most three keys are accepted.
+"""
+input PipelineSort {
+	field: PipelineSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a pipeline list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers. `deletedAt` is filterable so a
+caller can ask the one question the list read cannot — which rows have been withdrawn — while the
+read itself answers live rows only.
+"""
+input PipelineFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	description: StringFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [PipelineFilter!]
+	or: [PipelineFilter!]
+	not: PipelineFilter
+}
+
+"""
+One stage of a pipeline, as a write states it.
+
+The stages of a pipeline are not a column of the pipeline row; they are rows of their own that carry
+`pipelineId`, and a write replaces the set rather than editing a member of it. The parent of each
+stage is the pipeline the write is made on, so a stage states the pipeline neither.
+
+`id` is what tells an update which of the pipeline's existing stages is being kept: a stage that
+states one is saved, a stage that states none is created, and an existing stage the body does not
+name is removed. That is the delivered writer's own diff and the sharpest edge of this resource's
+edit — see `UpdatePipelineInput`.
+
+`index` is deliberately not a member. The delivered writer assigns it from the position of the stage
+in the array it is handed, before it saves anything, so an `index` a caller states is accepted and
+replaced. A member whose value a write always overwrites is worse stated than not.
+"""
+input PipelineStageInput {
+	"The stage to keep, on an edit. Omit to create a new stage."
+	id: ID
+	"The name of the stage, as it appears on the board."
+	name: String!
+	"What the stage means, when the board needs to say."
+	description: String
+}
+
+"""
+What a caller states when it files a pipeline, with the stages it starts with.
+
+The organization is required because the delivered create validates it: `POST /pipelines` binds a DTO
+that intersects the organization base. There is no member for the tenant, because the service stamps
+the caller's own tenant onto the row and overwrites whatever a body states.
+
+A pipeline with no `stages` is filed with none: the delivered writer cascades the array it is given
+and there is no default stage set behind it.
+"""
+input CreatePipelineInput {
+	organizationId: ID!
+	name: String!
+	description: String
+	"The stages to file the pipeline with, in board order."
+	stages: [PipelineStageInput!]
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+What a caller states when it changes a pipeline that exists.
+
+**A member the caller leaves out is left as it is on the pipeline row, and `stages` is the exception
+that makes this input worth reading twice.** The delivered writer keeps the stages the body names,
+saves them, creates the ones that state no identifier, and **removes every existing stage the body
+does not name**. A body that omits `stages` altogether therefore empties the pipeline: the stage rows
+are diffed against an absent array and every one of them is removed. Stating this here is what keeps
+a client from reading "absent" as "unchanged".
+
+The edit runs in one transaction and hands the stages their `pipelineId` and their `index` itself, in
+the order the array states.
+"""
+input UpdatePipelineInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	description: String
+	stages: [PipelineStageInput!]
+	isActive: Boolean
+	isArchived: Boolean
+}

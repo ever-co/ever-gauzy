@@ -1,0 +1,404 @@
+# The organization's object type.
+#
+# The organization is the scope every other record on this platform is filed under: a channel, a
+# warehouse, a price list and an invoice each name one, and each of them reads this row's settings for
+# the defaults it applies. That is why the settings columns are carried here in full rather than
+# summarised — a client that speaks this protocol has to be able to read the currency, the rounding
+# position, the working day and the tracking policy of the scope it is about to write into.
+#
+# **The members are the columns, named as the columns are named.** The row predates several naming
+# conventions this platform later settled on, so `profile_link`, `short_description`, `show_income`
+# and their neighbours are spelled with underscores while the rest of the schema is camel-cased. They
+# are carried exactly as the delivered row carries them, because a client reading the same row over
+# the two protocols has to read the same member names, and a response shape that renamed them here
+# would be a second vocabulary for one record.
+#
+# **A relation is carried as a field only where the delivered read always joins it.** `image` is
+# declared `eager` on the entity, so it travels on every row either read returns and the member is
+# always answered. Nothing else is: the delivered list route joins only the relations a REST caller
+# names in its query string, and this surface names none — so `contact` is carried as `contactId`,
+# its column, and the collections are not carried at all. `tags` and `skills` have no identifier
+# column to carry: they are pivot tables, reachable from `Tag.organizations` and the skill surface.
+#
+# **The sensitive-relation guard is not restated here, and does not need to be.** The delivered
+# controller refuses a REST caller that *names* a sensitive relation (`payments`, `invoices`,
+# `employees`, `contact` and their neighbours) without the permission that relation requires; it is a
+# refusal on the request, not a filter on the answer. This surface has no `relations` argument to
+# abuse, so a caller here can only receive members the read already decided to join — which, in this
+# file, is the eager image and nothing else.
+#
+# `currency` is carried as its code rather than declared as a schema enum. The vocabulary is the
+# platform's own `CurrenciesEnum`, which types the column and which the currency domain's reference
+# table serves; declaring it again here would be a second declaration of a value set this domain does
+# not own, and a third would follow the day a currency is added.
+
+"""
+One organization: the scope a channel, a warehouse, a price list and an invoice are filed under, and
+the settings a write into any of them reads its defaults from.
+"""
+type Organization {
+	id: ID!
+	"The organization's name, as it is shown to everyone who works in it."
+	name: String!
+	"Whether this is the tenant's default organization: the one a client is put into when it names none."
+	isDefault: Boolean!
+	"The public profile's path segment, when the organization publishes one."
+	profile_link: String
+	"The banner the public profile shows, as a URL."
+	banner: String
+	"How many people work in the organization, as the row records it. A figure the row carries rather than one this surface counts."
+	totalEmployees: Int
+	"The one-line description the public profile shows."
+	short_description: String
+	"Who the organization works for, as the public profile puts it."
+	client_focus: String
+	"""
+	The long-form description. The delivered writes sanitise this member through the platform's
+	server-side allowlist before it is stored, because the public profile renders it as markup — the
+	answer here is the sanitised text, not what the caller sent.
+	"""
+	overview: String
+	"A denormalised logo URL, kept for lists that must not join the asset table."
+	imageUrl: String
+	"The logo asset, by identifier. The relation is eager, so this and `image` always travel together."
+	imageId: ID
+	"The logo asset itself."
+	image: ImageAsset
+	"The ISO 4217 code of the currency the organization's amounts are in."
+	currency: String!
+	"The date the organization's books were valued at, when an operator set one."
+	valueDate: DateTime
+	"""
+	Which date a new document defaults to — `TODAY`, `START_OF_MONTH`, `END_OF_MONTH` and their
+	neighbours. Carried as its own value rather than declared as an enum: the vocabulary is the
+	platform's `DefaultValueDateTypeEnum`, which types the column.
+	"""
+	defaultValueDateType: String
+	"The alignment a rendered document defaults to, as the row records it."
+	defaultAlignmentType: String
+	"The organization's timezone, as an IANA name."
+	timeZone: String
+	"The region code every address in the organization is resolved against when it names none."
+	regionCode: String
+	"The brand colour a document is rendered with."
+	brandColor: String
+	"The date format the organization's documents are rendered in."
+	dateFormat: String
+	"The organization's registered legal name, when it differs from the one it is known by."
+	officialName: String
+	"Which day the organization's week starts on. Carried as its own value: the vocabulary is the platform's `WeekDaysEnum`."
+	startWeekOn: String
+	"The organization's tax registration number."
+	taxId: String
+	"The number format the organization's documents are rendered in."
+	numberFormat: String
+	"The smallest project size the organization reports on, as the row records it."
+	minimumProjectSize: String
+	"Which bonus scheme applies — `PROFIT_BASED_BONUS`, `REVENUE_BASED_BONUS` and their neighbours. The vocabulary is the platform's `BonusTypeEnum`."
+	bonusType: String
+	"""
+	The bonus rate as a percentage between 0 and 100. A rate rather than an amount, so it is a `Float`:
+	nothing here is money, and no amount is ever read from this member.
+	"""
+	bonusPercentage: Float
+	"Whether the organization lets its administrators invite people."
+	invitesAllowed: Boolean
+	"The number of days an invitation stays valid for, when the organization set its own."
+	inviteExpiryPeriod: Int
+	"When the organization's fiscal year starts."
+	fiscalStartDate: DateTime
+	"When the organization's fiscal year ends."
+	fiscalEndDate: DateTime
+	"When the organization was registered."
+	registrationDate: DateTime
+	"Whether the organization's documents may be dated in the future."
+	futureDateAllowed: Boolean
+	"Whether an employee may record time by hand rather than by timer."
+	allowManualTime: Boolean!
+	"Whether a recorded time entry may be changed after it was recorded."
+	allowModifyTime: Boolean!
+	"Whether a recorded time entry may be removed."
+	allowDeleteTime: Boolean!
+	"Whether the organization records inactivity as well as activity."
+	allowTrackInactivity: Boolean!
+	"How many minutes of inactivity the organization tolerates before it records a gap."
+	inactivityTimeLimit: Int!
+	"How many seconds of activity the organization requires as proof that work happened."
+	activityProofDuration: Int!
+	"Whether a manually recorded time entry must state why it was recorded."
+	requireReason: Boolean!
+	"Whether a manually recorded time entry must carry a description."
+	requireDescription: Boolean!
+	"Whether a time entry must name a project."
+	requireProject: Boolean!
+	"Whether a time entry must name a task."
+	requireTask: Boolean!
+	"Whether a time entry must name a client."
+	requireClient: Boolean!
+	"Whether the organization renders times on a 12- or a 24-hour clock."
+	timeFormat: Int!
+	"Whether a document's tax and its discount are stated as separate lines."
+	separateInvoiceItemTaxAndDiscount: Boolean
+	"The organization's public website."
+	website: String
+	"The legal information a document issued by the organization carries."
+	fiscalInformation: String
+	"""
+	Where the currency symbol sits in a rendered amount. Carried as its own value rather than declared
+	as an enum: the vocabulary is the money layer's `MoneySymbolPosition`, which types the column.
+	"""
+	currencyPosition: String!
+	"Whether a document's discount is applied after its tax rather than before it."
+	discountAfterTax: Boolean
+	"The time a working day defaults to starting at."
+	defaultStartTime: String
+	"The time a working day defaults to ending at."
+	defaultEndTime: String
+	"The terms the organization's estimates carry by default."
+	defaultInvoiceEstimateTerms: String
+	"Whether an accepted estimate is converted into an invoice automatically."
+	convertAcceptedEstimates: Boolean
+	"How many days an issued document has before it falls due."
+	daysUntilDue: Int
+	"Whether idle time is removed from a recorded period before it is stored."
+	isRemoveIdleTime: Boolean!
+	"Whether the tracker captures screenshots."
+	allowScreenshotCapture: Boolean!
+	"The identifier the organization is known by in an external system of record, when it is linked to one."
+	upworkOrganizationId: String
+	"The name the organization is known by in that external system."
+	upworkOrganizationName: String
+	"Whether screenshots are taken at random intervals rather than on a fixed schedule."
+	randomScreenshot: Boolean
+	"Whether the tracker keeps recording while the machine is asleep."
+	trackOnSleep: Boolean
+	"""
+	How many seconds apart screenshots are taken. The column is `numeric`, so it is carried as a
+	`Float` rather than an `Int`: a fractional interval the write accepts is one this surface has to be
+	able to answer.
+	"""
+	screenshotFrequency: Float!
+	"Whether a tracking rule the organization set is enforced rather than merely recorded."
+	enforced: Boolean
+	"The standard number of hours in a working day, which a schedule that states none defaults to."
+	standardWorkHoursPerDay: Int
+	"Whether an employee may quit the desktop tracker."
+	allowAgentAppExit: Boolean!
+	"Whether an employee may sign out of the desktop tracker."
+	allowLogoutFromAgentApp: Boolean!
+	"Whether the tracker records keyboard and mouse activity."
+	trackKeyboardMouseActivity: Boolean!
+	"Whether the tracker follows every display rather than only the primary one."
+	trackAllDisplays: Boolean!
+	"""
+	The organization's contact row, by identifier. The contact record itself is a row of the contact
+	domain and the delivered reads do not join it, so the identifier is carried rather than a member
+	that would answer null; the row is read from the contact surface.
+	"""
+	contactId: ID
+	"The tenant the organization belongs to, by identifier. The row is read from the tenant surface."
+	tenantId: ID
+	"""
+	When the organization was withdrawn, or null while it is live. Withdrawing and restoring are
+	delivered routes — the two removals this resource serves — and this column is the whole of what they
+	write, so without it a caller could not tell a live row from a withdrawn one on the answer to the
+	write that withdrew it.
+	"""
+	deletedAt: DateTime
+	"When the organization was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the organization was filed."
+	createdAt: DateTime
+	"When the organization was last changed."
+	updatedAt: DateTime
+	"Whether the organization is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the organization is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the organization, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the organization, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the organization, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of organizations.
+"""
+type OrganizationEdge {
+	node: Organization!
+	cursor: String!
+}
+
+"""
+One page of organizations, with the total the filters select and the boundary cursors.
+"""
+type OrganizationConnection {
+	nodes: [Organization!]!
+	edges: [OrganizationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an organization list may be sorted by.
+"""
+enum OrganizationSortField {
+	createdAt
+	updatedAt
+	name
+	currency
+	isDefault
+}
+
+"""
+The order the organizations are returned in. At most three keys are accepted.
+"""
+input OrganizationSort {
+	field: OrganizationSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an organization list may be narrowed by.
+
+`name`, `currency`, `regionCode` and the settings beside them are the columns a client narrows a
+picker by; the identifier is here so a caller can ask for a known set in one request. The relations
+are not: the delivered read joins none of them here, so a filter on one would be evaluated against a
+row that carries none and would select nothing at all.
+"""
+input OrganizationFilter {
+	id: IDFilter
+	name: StringFilter
+	currency: StringFilter
+	isDefault: BooleanFilter
+	regionCode: StringFilter
+	timeZone: StringFilter
+	officialName: StringFilter
+	taxId: StringFilter
+	website: StringFilter
+	contactId: IDFilter
+	bonusType: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationFilter!]
+	or: [OrganizationFilter!]
+	not: OrganizationFilter
+}
+
+"""
+The contact row the delivered create files beside the organization, as `IContact` declares it.
+
+The delivered create reads this member, stores it as a contact of the caller's organization and links
+it back onto the row; a caller that states none gets no contact row. The members are the contact
+domain's own columns, and the row it produces is read from `Contact`.
+"""
+input OrganizationContactDetailInput {
+	"The contact's display name, when the person or place is addressed as one."
+	name: String
+	firstName: String
+	lastName: String
+	country: String
+	city: String
+	address: String
+	address2: String
+	postcode: String
+	regionCode: String
+	fax: String
+	fiscalInformation: String
+	website: String
+}
+
+"""
+What a caller states when it files an organization.
+
+The members are the ones the delivered create body validates and the delivered handler reads. Three
+groups the body accepts are deliberately absent:
+
+- the tenant is never stated, because a write's tenant comes from the credential;
+- `tagIds` is not declared. The delivered body validates it and the handler then drops it: the row's
+  `tags` is a pivot the create does not cascade, so a caller that sent it would be told nothing and
+  the tags would not be written. A member that is accepted and silently discarded is worse than one
+  that is not offered — tags are attached from the tag surface, which owns the pivot;
+- the `show_*` visibility flags belong to the edit below, not here: the delivered create body does not
+  validate them.
+"""
+input CreateOrganizationInput {
+	name: String!
+	"The currency the organization's amounts are in, as an ISO 4217 code. The delivered create requires it."
+	currency: String!
+	"The logo asset to file the organization with, by identifier."
+	imageId: ID
+	"The standard number of hours in a working day, between 1 and 24."
+	standardWorkHoursPerDay: Int
+	"The organization's identifier in an external system of record, when it is linked to one."
+	upworkOrganizationId: String
+	"The organization's name in that external system."
+	upworkOrganizationName: String
+	"Which date a new document defaults to. The vocabulary is the platform's `DefaultValueDateTypeEnum`."
+	defaultValueDateType: String
+	"Which day the organization's week starts on. The vocabulary is the platform's `WeekDaysEnum`."
+	startWeekOn: String
+	"How many days an invitation stays valid for."
+	inviteExpiryPeriod: Int
+	"The region code every address in the organization resolves against when it names none."
+	regionCode: String
+	"The bonus rate as a percentage between 0 and 100."
+	bonusPercentage: Float
+	"Which bonus scheme applies. The vocabulary is the platform's `BonusTypeEnum`."
+	bonusType: String
+	"The contact row to file beside the organization."
+	contact: OrganizationContactDetailInput
+}
+
+"""
+What a caller states when it edits an organization that exists.
+
+**A member of the `show_*` family that is absent is written as `false`, not left as it is.** The
+delivered handler reads each of them through a truth test rather than an absence test —
+`show_profits: !!input.show_profits` — so an edit that states none of them turns every one of them
+off. The rest of the members are written from the body as stated, and the handler reads the row before
+it writes, so an organization that is not the caller's is a miss rather than an upsert under an
+identifier the caller does not own.
+
+The identifier is the only member stated outside the body, and it is stated because the delivered
+route carries it in the path: the body itself is the same body the create validates, plus the
+visibility flags.
+"""
+input UpdateOrganizationInput {
+	id: ID!
+	name: String!
+	currency: String!
+	imageId: ID
+	standardWorkHoursPerDay: Int
+	upworkOrganizationId: String
+	upworkOrganizationName: String
+	defaultValueDateType: String
+	startWeekOn: String
+	inviteExpiryPeriod: Int
+	regionCode: String
+	bonusPercentage: Float
+	bonusType: String
+	contact: OrganizationContactDetailInput
+	"Whether the public profile shows income."
+	show_income: Boolean
+	"Whether the public profile shows profits."
+	show_profits: Boolean
+	"Whether the public profile shows bonuses paid."
+	show_bonuses_paid: Boolean
+	"Whether the public profile shows total hours."
+	show_total_hours: Boolean
+	"Whether the public profile shows the minimum project size."
+	show_minimum_project_size: Boolean
+	"Whether the public profile shows how many projects the organization has."
+	show_projects_count: Boolean
+	"Whether the public profile shows how many clients the organization has."
+	show_clients_count: Boolean
+	"Whether the public profile shows its clients."
+	show_clients: Boolean
+	"Whether the public profile shows how many people work in the organization."
+	show_employees_count: Boolean
+}

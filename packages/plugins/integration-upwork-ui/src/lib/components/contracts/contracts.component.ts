@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, EMPTY, firstValueFrom, filter, catchError, tap } from 'rxjs';
@@ -19,6 +19,7 @@ import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-sel
 	templateUrl: './contracts.component.html',
 	styleUrls: ['./contracts.component.scss'],
 	providers: [TitleCasePipe],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ContractsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

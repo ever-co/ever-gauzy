@@ -1,0 +1,45 @@
+{
+	"name": "plugin-order",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/order/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+		}
+	},
+	"tags": [],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-cart", "plugin-pricing",
+		"plugin-subscription", "plugin-tax", "utils"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/order",
+				"tsConfig": "packages/plugins/order/tsconfig.lib.json",
+				"packageJson": "packages/plugins/order/package.json",
+				"main": "packages/plugins/order/src/index.ts",
+				"assets": ["packages/plugins/order/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/order/jest.config.ts"
+			}
+		}
+	}
+}

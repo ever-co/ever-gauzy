@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, ITimeLog, PermissionsEnum, TimeLogSourceEnum } from '@gauzy/contracts';
 import moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -13,6 +13,7 @@ import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 	selector: 'ngx-view-time-log',
 	templateUrl: './view-time-log.component.html',
 	styleUrls: ['./view-time-log.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {

@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbIconModule, NbToggleModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LastPayloadViewerComponent } from '../last-payload-viewer/last-payload-viewer.component';
 import {
 	EVER_STATS_SCHEMA_URL,
@@ -37,7 +37,7 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 		NbCardModule,
 		NbIconModule,
 		NbToggleModule,
-		TranslateModule,
+		TranslatePipe,
 		LastPayloadViewerComponent
 	],
 	template: `
@@ -89,7 +89,7 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 								<header class="panel-header">
 									<span class="panel-mark" aria-hidden="true"><nb-icon icon="bar-chart-outline"></nb-icon></span>
 									<div class="panel-heading">
-										<nb-toggle data-test="toggle" [checked]="status?.enabled" [disabled]="busy" (checkedChange)="toggle($event)">
+										<nb-toggle data-test="toggle" [checked]="$safeNavigationMigration(status?.enabled)" [disabled]="busy" (checkedChange)="toggle($event)">
 											{{ 'EVER_STATS.ENABLED' | translate }}
 										</nb-toggle>
 									</div>

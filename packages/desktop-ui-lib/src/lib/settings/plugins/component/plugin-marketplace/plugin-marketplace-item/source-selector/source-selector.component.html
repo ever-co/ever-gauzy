@@ -3,7 +3,7 @@ async; @let selected = query.source$| async;
 
 <gauzy-select
 	class="w-100"
-	[selectedItem]="selected?.id"
+	[selectedItem]="$safeNavigationMigration(selected?.id)"
 	[items]="sources"
 	bindLabel="fullName"
 	bindValue="id"

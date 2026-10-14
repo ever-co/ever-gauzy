@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
@@ -45,11 +45,13 @@ import {
 	VendorFilterComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
+import { buildExpenseViewSections } from './expense-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     templateUrl: './expenses.component.html',
     styleUrls: ['./expenses.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpensesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -625,49 +627,12 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 			return;
 		}
 
-		this.viewSections = this.buildViewSections();
+		this.viewSections = buildExpenseViewSections();
 		this.viewedExpense = expense;
 	}
 
 	closeView(): void {
 		this.viewedExpense = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the grid columns, read vertically.
-	 */
-	private buildViewSections(): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'SM_TABLE.DATE', key: 'valueDate', type: 'date' },
-					{ label: 'SM_TABLE.VALUE', key: 'amount', type: 'money' },
-					// `statuses` was derived by `statusMapper` when the rows were
-					// loaded, so it is already the `{ text, class }` a badge expects.
-					{ label: 'SM_TABLE.STATUS', key: 'statuses', type: 'badge' },
-					{ label: 'SM_TABLE.VENDOR', key: 'vendor.name' },
-					{ label: 'SM_TABLE.CATEGORY', key: 'category.name' },
-					{ label: 'SM_TABLE.PROJECT', key: 'project.name' },
-					{ label: 'SM_TABLE.CONTACT', key: 'organizationContact.name' },
-					{
-						label: 'SM_TABLE.EMPLOYEE',
-						key: 'employee',
-						type: 'person',
-						// Same rule the grid applies: without this permission the
-						// employee column is removed, so the View must not show it either.
-						permission: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					},
-					{ label: 'EXPENSES_PAGE.SPLIT_EXPENSE', key: 'splitExpense', type: 'boolean' }
-				]
-			},
-			{
-				fields: [
-					{ label: 'POP_UPS.PURPOSE', key: 'purpose', type: 'multiline', wide: true },
-					{ label: 'SM_TABLE.NOTES', key: 'notes', type: 'multiline', wide: true },
-					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
-				]
-			}
-		];
 	}
 
 	/**

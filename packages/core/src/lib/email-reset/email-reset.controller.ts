@@ -1,11 +1,11 @@
-import { Controller, HttpCode, HttpStatus, UseGuards, Post, Body } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, HttpCode, HttpStatus, UseGuards, Post, Body, Get, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { UseValidationPipe } from '../shared/pipes';
-import { EmailResetService } from './email-reset.service';
-import { ResetEmailRequestDTO, VerifyEmailResetRequestDTO } from './dto';
+import { EmailResetService, IEmailResetView } from './email-reset.service';
+import { EmailResetQueryDTO, ResetEmailRequestDTO, VerifyEmailResetRequestDTO } from './dto';
 
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -13,6 +13,23 @@ import { ResetEmailRequestDTO, VerifyEmailResetRequestDTO } from './dto';
 @Controller('email-reset')
 export class EmailResetController {
 	constructor(private readonly emailResetService: EmailResetService) { }
+
+	/**
+	 * The address-change requests of one user of the caller's tenant, newest first, never with their code or
+	 * token. The caller's own by default; another user's needs `ORG_USERS_EDIT`, which the service checks.
+	 * Runs under the controller's pair, like the two writes.
+	 *
+	 * @param query The user whose requests are read; omit it for the caller.
+	 * @returns The requests.
+	 */
+	@ApiOperation({ summary: "List a user's email-change requests, without their secrets." })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The requests, newest first.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Another user's requests need ORG_USERS_EDIT." })
+	@Get('/')
+	@UseValidationPipe({ whitelist: true })
+	async findAll(@Query() query: EmailResetQueryDTO): Promise<IEmailResetView[]> {
+		return await this.emailResetService.findForUser(query?.userId);
+	}
 
 	/**
 	 * Create email reset request.

@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SmartDataViewLayoutModule, CardGridModule, SharedModule } from '@gauzy/ui-core/shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
@@ -56,7 +56,7 @@ import { PipelinesComponent } from './pipelines.component';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		PipelinesRouting,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		DragDropModule,
 		NbButtonModule,
 		NbSelectModule,

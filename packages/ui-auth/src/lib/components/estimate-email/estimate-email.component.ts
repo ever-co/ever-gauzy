@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
     selector: 'ga-estimate-email',
     templateUrl: './estimate-email.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EstimateEmailComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, Input, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CrudActionEnum, IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
 import { OrganizationProjectsService, OrganizationProjectStore, Store } from '@gauzy/ui-core/core';
 
@@ -12,6 +12,7 @@ export interface TaskViewMode {
     selector: 'ngx-project-view',
     templateUrl: './project-view.component.html',
     styleUrls: ['./project-view.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProjectViewComponent implements OnInit {

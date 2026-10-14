@@ -1,9 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 
 @Component({
     selector: 'ngx-equipment-sharing-status',
     templateUrl: './equipment-sharing-status.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentSharingStatusComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,6 +12,7 @@ import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 @Component({
     selector: 'ngx-integration-github-wizard',
     templateUrl: './wizard.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {

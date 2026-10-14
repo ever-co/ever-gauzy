@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, timer } from 'rxjs';
@@ -144,6 +144,7 @@ const TASK_LIMIT = 8;
 	selector: 'ngx-view-employee',
 	templateUrl: './view-employee.component.html',
 	styleUrls: ['./view-employee.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ViewEmployeeComponent extends TranslationBaseComponent implements OnInit {

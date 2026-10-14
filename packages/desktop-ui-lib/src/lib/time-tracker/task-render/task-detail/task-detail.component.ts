@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { ITaskRender } from '../task-render.component';
 import { ITag, ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
@@ -9,6 +9,7 @@ import { TaskBadgeViewComponent } from '../task-badge-view/task-badge-view.compo
     selector: 'gauzy-task-detail',
     templateUrl: './task-detail.component.html',
     styleUrls: ['./task-detail.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, TaskBadgeViewComponent, TranslatePipe]
 })
 export class TaskDetailComponent {

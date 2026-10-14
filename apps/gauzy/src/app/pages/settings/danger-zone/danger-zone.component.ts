@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { DangerZoneMutationComponent } from '@gauzy/ui-core/shared';
     selector: 'ga-danger-zone',
     templateUrl: './danger-zone.component.html',
     styleUrls: ['./danger-zone.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DangerZoneComponent extends TranslationBaseComponent implements OnInit {

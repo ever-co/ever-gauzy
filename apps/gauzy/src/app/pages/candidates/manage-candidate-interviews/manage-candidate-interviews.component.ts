@@ -1,5 +1,5 @@
 import { ICandidateInterview, IOrganization } from '@gauzy/contracts';
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -16,6 +16,7 @@ import { CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
     selector: 'ga-manage-candidate-interviews',
     templateUrl: './manage-candidate-interviews.component.html',
     styleUrls: ['./manage-candidate-interviews.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ManageCandidateInterviewsComponent

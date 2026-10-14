@@ -1,0 +1,199 @@
+# The employee setting's object type.
+#
+# A setting row is one employee's stored facts about one thing: `settingType` says what kind of setting
+# it is, `entity` and `entityId` say which record of the platform it is about — both optional, because
+# a setting that is about no particular record is one the delivered write stores with both columns
+# empty — and `data` is the document itself. `defaultData` is the row the platform falls back to when
+# the employee has stated nothing, which is why it is a column beside `data` rather than a rule the
+# reader applies: the fallback is data too, and it is data the tenant owns.
+#
+# **The two vocabularies are carried as their values, not declared as enums here.** `settingType` is
+# the contracts package's `EmployeeSettingTypeEnum` and `entity` is its `BaseEntityEnum`; both columns
+# are stored as values whose vocabulary the entity's own column declares, so a second declaration here
+# could diverge from the column it claims to describe — and the next domain that needs the same value
+# set would then collide with this file rather than reuse it. A client reads the value it was given.
+#
+# **The `employee` relation is not a field, and `employeeId` is.** The read behind these fields joins
+# no relation, so a member for the object would be absent on every row answered here; the foreign key
+# always travels, and it is what a client joins on. The employee behind it is read from the employee
+# surface, which is where that concept is declared.
+
+"""
+One employee's stored settings.
+"""
+type EmployeeSetting {
+	id: ID!
+	"""
+	What kind of setting this is, as the contracts package's own value: `Normal`, `Task-View` or
+	`Custom`. Carried as its value rather than declared as a schema enum, because the value set belongs
+	to the column that stores it.
+	"""
+	settingType: String
+	"The record this setting is about. Absent on a setting that is about no particular record."
+	entityId: ID
+	"""
+	The kind of record `entityId` names, as the contracts package's own value. The column is a varchar
+	holding that value, so it travels as text rather than as an enum declared here.
+	"""
+	entity: String
+	"The setting's document, as the caller stored it."
+	data: JSON
+	"The document the platform falls back to when the employee has stated nothing."
+	defaultData: JSON
+	"The employee this setting belongs to. The row behind it is read from the employee surface."
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the setting was withdrawn, or null while it is live."
+	archivedAt: DateTime
+	"""
+	When the setting was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes whose whole effect is this column, so it is carried: without it the answer to the write that
+	withdrew a row would not say so.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of settings.
+"""
+type EmployeeSettingEdge {
+	node: EmployeeSetting!
+	cursor: String!
+}
+
+"""
+One page of settings, with the total the filters select and the boundary cursors.
+"""
+type EmployeeSettingConnection {
+	nodes: [EmployeeSetting!]!
+	edges: [EmployeeSettingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a setting list may be sorted by.
+
+The two timestamps, the two vocabulary values and the relation key, and `deletedAt` beside them: the
+withdrawal is a delivered operation, so a reviewer asking which of an employee's settings are
+withdrawn has an order to ask it in. `data` and `defaultData` are deliberately absent — a document has
+no order a caller could predict, which is what the filter beside them is for.
+"""
+enum EmployeeSettingSortField {
+	createdAt
+	updatedAt
+	settingType
+	entity
+	employeeId
+	deletedAt
+}
+
+"""
+The order the settings are returned in. At most three keys are accepted.
+"""
+input EmployeeSettingSort {
+	field: EmployeeSettingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a setting list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`data` and `defaultData` are narrowed as documents, which is what the connection protocol's JSON kind
+is: a caller asks whether a stored value is present inside the document rather than for the document
+as a whole, because two callers never write byte-identical documents.
+"""
+input EmployeeSettingFilter {
+	id: IDFilter
+	settingType: StringFilter
+	entityId: IDFilter
+	entity: StringFilter
+	data: JSONFilter
+	defaultData: JSONFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeSettingFilter!]
+	or: [EmployeeSettingFilter!]
+	not: EmployeeSettingFilter
+}
+
+"""
+What a caller states when it files a setting.
+
+The members are the scalar ones the delivered `CreateEmployeeSettingDTO` validates — the intersection
+of the tenant-and-organization base body with the entity's own columns. The tenant is not among them:
+the delivered write stamps the tenant of the credential onto the row and never reads one from a body,
+so a caller cannot file into a scope it is not acting in. The organization is among them, because the
+delivered base body carries it and the write takes it from there; an organization the caller states is
+checked against the caller's own memberships by that body's validation rather than trusted.
+
+The employee is optional, because the delivered write prefers the employee the credential names and
+falls back to the one the caller states — so a caller acting as an employee files its own setting by
+stating nothing.
+
+**A row already filed for the same employee, entity and organization is overwritten rather than added
+to.** The delivered create looks the setting up by those three columns first and, when it finds one,
+writes the stated body over that row under the identifier it already has — so a caller that files
+twice for the same employee and record has one setting, not two, and the columns that tell two
+settings apart are the ones it must state.
+
+There is no member for the employee relation. The relation is not a column of this row, and this
+schema declares no type for it; the employee behind the identifier is read from the employee surface.
+"""
+input CreateEmployeeSettingInput {
+	"What kind of setting this is, as the contracts package's own value."
+	settingType: String
+	"The record this setting is about."
+	entityId: ID
+	"The kind of record `entityId` names, as the contracts package's own value."
+	entity: String
+	"The setting's document."
+	data: JSON
+	"The document the platform falls back to when the employee has stated nothing."
+	defaultData: JSON
+	"""
+	The employee to file the setting for. Omit it and the delivered write uses the employee the
+	credential names.
+	"""
+	employeeId: ID
+	"The organization to file the setting under. The delivered base body carries it."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a setting that exists.
+
+The delivered `PUT /:id` body is the create body with the employee removed, so this input carries the
+same members minus the employee and gains the identifier the route carries in its path: this surface's
+mutation takes one argument, and the identifier travels in it — the resolver passes it on both ways,
+exactly as the delivered route does with its path and its body.
+
+**A member that is absent is left as it is.** The delivered update reads the row by the identifier to
+prove it is the caller's, then writes the members the body states over that row; a member the body
+does not state is not part of that write, so the column keeps what the row has. This is what keeps a
+client from reading "absent" as "cleared" — and from reading it as "defaulted", which is what the
+resources that replace the whole row would do with the same request.
+"""
+input UpdateEmployeeSettingInput {
+	"The setting to change."
+	id: ID!
+	settingType: String
+	entityId: ID
+	entity: String
+	data: JSON
+	defaultData: JSON
+	organizationId: ID
+}

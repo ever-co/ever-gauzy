@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { IDocumentInboundAddressSecret } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -24,7 +24,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
  */
 @Component({
 	selector: 'gz-docs-inbound-secret-dialog',
-	imports: [CommonModule, TranslateModule, NbButtonModule, NbCardModule, NbIconModule],
+	imports: [CommonModule, TranslatePipe, NbButtonModule, NbCardModule, NbIconModule],
 	template: `
 		<nb-card class="docs-dialog docs-inbound-secret-dialog">
 			<nb-card-header>{{ 'DOCS.INBOUND.SECRET_TITLE' | translate }}</nb-card-header>
@@ -42,7 +42,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 						ghost
 						size="small"
 						[attr.aria-label]="'DOCS.INBOUND.COPY_ADDRESS' | translate"
-						(click)="copy(secret?.address, 'DOCS.INBOUND.TOAST_ADDRESS_COPIED')"
+						(click)="copy($safeNavigationMigration(secret?.address), 'DOCS.INBOUND.TOAST_ADDRESS_COPIED')"
 					>
 						<nb-icon icon="clipboard-outline"></nb-icon>
 					</button>
@@ -56,7 +56,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 						status="primary"
 						size="small"
 						[attr.aria-label]="'DOCS.INBOUND.COPY_SECRET' | translate"
-						(click)="copy(secret?.webhookSecret, 'DOCS.INBOUND.TOAST_SECRET_COPIED')"
+						(click)="copy($safeNavigationMigration(secret?.webhookSecret), 'DOCS.INBOUND.TOAST_SECRET_COPIED')"
 					>
 						<nb-icon icon="clipboard-outline"></nb-icon>
 						{{ 'DOCS.INBOUND.COPY_SECRET' | translate }}
@@ -71,6 +71,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			</nb-card-footer>
 		</nb-card>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styles: [
 		`
 			.docs-inbound-secret-dialog {

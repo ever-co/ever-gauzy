@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbComponentStatus, NbComponentSize } from '@nebular/theme';
 
 @Component({
@@ -13,6 +13,7 @@ import { NbComponentStatus, NbComponentSize } from '@nebular/theme';
 			}
 		`
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class BadgeLabelComponent {

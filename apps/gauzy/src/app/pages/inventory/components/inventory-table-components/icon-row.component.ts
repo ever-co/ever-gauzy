@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IProductTypeTranslated } from '@gauzy/contracts';
 
 @Component({
@@ -28,6 +28,7 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 			}
 		`
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IconRowComponent {

@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
 import { OverviewTabComponent } from './overview-tab.component';
@@ -18,7 +18,7 @@ import { OverviewTabComponent } from './overview-tab.component';
     imports: [
     CommonModule,
     FormsModule,
-    TranslateModule,
+    TranslatePipe,
     NbCardModule,
     NbIconModule,
     NbBadgeModule,

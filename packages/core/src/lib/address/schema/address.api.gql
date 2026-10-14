@@ -1,0 +1,75 @@
+# The address book's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own. The names are
+# the ones the GraphQL API specification fixes for this resource, so the REST surface and this one
+# expose the same capabilities under the same words.
+#
+# The list root field is a connection: the same filters, the same sort keys and the same page the REST
+# list route takes, answered with the kernel's `PageInfo` and the platform's own cursor codec, so a
+# cursor obtained over one surface resumes on the other.
+
+extend type Query {
+	"""
+	The addresses of the caller's organization, newest first.
+	"""
+	addresses(
+		filter: AddressFilter
+		sort: [AddressSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): AddressConnection!
+
+	"""
+	One address of the caller's organization, or null when there is none.
+	"""
+	address(id: ID!): Address
+}
+
+extend type Mutation {
+	"""
+	Records an address. A stated default is moved through the set-default operation rather than
+	written, so the party's authoritative column, the address's mirror and the role row agree.
+	"""
+	createAddress(input: CreateAddressInput!): Address!
+
+	"""
+	Changes the descriptive facts of an address. A body that states a validation verdict is refused.
+	"""
+	updateAddress(input: UpdateAddressInput!): Address!
+
+	"""
+	Removes an address, softly, which is the only removal the book offers. An address the party names
+	as its current default is refused: the default is moved first, which is one call.
+	"""
+	deleteAddress(id: ID!): Address!
+
+	"""
+	Removes an address under the spelling the soft-delete route uses. Removal here is soft under either
+	spelling — both routes reach one operation, and both refuse an address the party names as its
+	current default — so this field and `deleteAddress` are the same call. It is stated as its own field
+	because a client that reads the route reaches the capability the route promises, rather than having
+	to know that the other spelling of the removal is the same one.
+	"""
+	softDeleteAddress(id: ID!): Address!
+
+	"""
+	Puts a withdrawn address back, clearing the marker the withdrawal set. Restoring undoes a removal, so
+	it requires the edit grant the two removals require, as the `PUT /:id/recover` route it mirrors does:
+	a role that may only read the address book cannot bring back an address an editor withdrew.
+	"""
+	recoverAddress(id: ID!): Address!
+
+	"""
+	Makes an address the party's default for one role, or clears that default when `isDefault` is
+	false. Setting it releases the flag from the sibling the party named before; clearing it is the
+	one way to reach "this party has no default for this role" without contradicting the party's own
+	column.
+	"""
+	setDefaultAddress(input: SetDefaultAddressInput!): Address!
+}

@@ -7,7 +7,7 @@ import {
 	OnDestroy,
 	OnInit,
 	Output,
-	SimpleChanges,
+	type SimpleChanges,
 	inject
 } from '@angular/core';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';

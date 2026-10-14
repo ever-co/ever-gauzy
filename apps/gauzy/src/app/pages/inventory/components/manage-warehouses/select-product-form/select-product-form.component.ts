@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IOrganization, IProductTranslated, LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -25,6 +25,7 @@ export interface SelectedRowEvent {
     selector: 'ngx-select-product',
     templateUrl: './select-product-form.component.html',
     styleUrls: ['./select-product-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SelectProductComponent extends PaginationFilterBaseComponent implements OnInit {

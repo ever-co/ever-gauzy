@@ -1,10 +1,10 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, inject, Input, OnInit, output } from '@angular/core';
+import { Component, inject, Input, OnInit, output, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
@@ -15,7 +15,8 @@ import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 	templateUrl: './children-menu-item.component.html',
 	styleUrls: ['./children-menu-item.component.scss'],
 	standalone: true,
-	imports: [CommonModule, NgxPermissionsModule, NbTooltipModule, NbButtonModule, TooltipDirective, TranslateModule]
+	changeDetection: ChangeDetectionStrategy.Eager,
+	imports: [CommonModule, NgxPermissionsModule, NbTooltipModule, NbButtonModule, TooltipDirective, TranslatePipe]
 })
 export class ChildrenMenuItemComponent implements OnInit {
 	private readonly router = inject(Router);

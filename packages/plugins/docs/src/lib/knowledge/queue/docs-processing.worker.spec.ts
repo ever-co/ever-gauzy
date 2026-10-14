@@ -15,15 +15,11 @@
  * `@gauzy/scheduler` and the collaborating services are mocked at the module boundary; the
  * pipeline and worker under test are real.
  */
-jest.mock(
-	'@gauzy/scheduler',
-	() => ({
-		QueueWorker: () => () => undefined,
-		QueueJobHandler: () => () => undefined,
-		QueueWorkerHost: class {}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/scheduler', () => ({
+	QueueWorker: () => () => undefined,
+	QueueJobHandler: () => () => undefined,
+	QueueWorkerHost: class {}
+}));
 jest.mock('../../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../../services/document-processing.service', () => ({ DocumentProcessingService: class {} }));
 jest.mock('../classification/document-classifier.service', () => ({ DocumentClassifierService: class {} }));

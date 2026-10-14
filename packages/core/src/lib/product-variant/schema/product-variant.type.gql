@@ -1,0 +1,148 @@
+# The product variant's object type.
+#
+# A variant is the thing a cart line, a stock level, a price and an order line all point at: the
+# product is what a person browses, the variant is what they buy. It stays in the domain that owns
+# the entity, and the commerce packages refer to it.
+#
+# `price` and `setting` are one-to-one rows of their own. They are deliberately not fields here:
+# what a variant costs is the pricing domain's answer, and the variant's own price row is the
+# platform's legacy list price, which the pricing package supersedes once it is installed. Exposing
+# both under one name would make the schema say two different things depending on configuration.
+
+"""
+One buyable configuration of a product.
+"""
+type ProductVariant {
+	id: ID!
+	"Free-text notes for the operator."
+	notes: String
+	"How many units this variant represents, when it is sold as a bundle."
+	quantity: Int!
+	"The tax rate applied to this variant, as a percentage."
+	taxes: Float!
+	"""
+	Whether an invoice is raised when the variant is ordered or when it is fulfilled. Stored as the
+	platform's own enumeration value so a client can round-trip it.
+	"""
+	billingInvoicingPolicy: String!
+	"The operator's own reference, used on purchase orders and in the warehouse."
+	internalReference: String
+	"Whether the variant may be sold. A disabled variant is readable and cannot be ordered."
+	enabled: Boolean!
+	"The product this variant belongs to."
+	productId: ID
+	product: Product
+	"The image shown for this variant, which overrides the product's cover."
+	imageId: ID
+	image: ImageAsset
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of variants.
+"""
+type ProductVariantEdge {
+	node: ProductVariant!
+	cursor: String!
+}
+
+"""
+One page of variants, with the total the filters select and the boundary cursors.
+"""
+type ProductVariantConnection {
+	nodes: [ProductVariant!]!
+	edges: [ProductVariantEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a variant list may be sorted by.
+"""
+enum ProductVariantSortField {
+	createdAt
+	updatedAt
+	internalReference
+	quantity
+	enabled
+}
+
+"""
+The order the variants are returned in. At most three keys are accepted.
+"""
+input ProductVariantSort {
+	field: ProductVariantSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a variant list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`productId` is stated as a filter rather than served as a root field of its own: the variants of one
+product are the same rows narrowed to one product, which is what the delivered sub-route answers, and
+a second root field for them would be a second surface that could disagree with this one.
+"""
+input ProductVariantFilter {
+	id: IDFilter
+	notes: StringFilter
+	quantity: NumberFilter
+	taxes: DecimalFilter
+	billingInvoicingPolicy: StringFilter
+	internalReference: StringFilter
+	enabled: BooleanFilter
+	productId: IDFilter
+	imageId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductVariantFilter!]
+	or: [ProductVariantFilter!]
+	not: ProductVariantFilter
+}
+
+"""
+One combination of option values a variant is generated for.
+
+The values are the names the option translations carry, which is what the delivered generator
+matches against: it resolves each stated value to the option row of the product that names it, so a
+value the product does not offer is a combination that produces a variant without that option.
+"""
+input ProductVariantOptionCombinationInput {
+	options: [String!]!
+}
+
+"""
+What a caller states when it generates the variants of a product.
+
+The product is named rather than carried. Everything else the generator needs — the option groups it
+matches the combinations against, and the tenant and the organization the new rows belong to — is
+read from the product row, so a caller cannot state a scope the product does not have.
+"""
+input CreateProductVariantsInput {
+	productId: ID!
+	optionCombinations: [ProductVariantOptionCombinationInput!]!
+}
+
+"""
+What a caller may change on a variant that exists. A member that is absent is left as it is.
+
+The product is not among the members: moving a variant to another product would move the stock, the
+prices, the publications and the order lines that point at it, which is a different operation than
+an edit. `enabled` is here because withdrawing a variant from sale is an edit; the rows it has
+already been sold on keep pointing at it.
+"""
+input UpdateProductVariantInput {
+	id: ID!
+	notes: String
+	quantity: Int
+	taxes: Float
+	billingInvoicingPolicy: String
+	internalReference: String
+	enabled: Boolean
+	imageId: ID
+}

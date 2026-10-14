@@ -1,5 +1,6 @@
 const fs = require('fs');
-const simpleGit = require('simple-git');
+// simple-git 4 removed the default export.
+const { simpleGit } = require('simple-git');
 const git = simpleGit();
 
 // Windows Authenticode: engage electron-updater publisher verification ONLY when a publisher name

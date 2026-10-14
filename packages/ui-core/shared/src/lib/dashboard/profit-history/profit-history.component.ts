@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, Optional, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +18,7 @@ import { DateViewComponent } from '../../table-components';
 	selector: 'ga-profit-history-selector',
 	templateUrl: './profit-history.component.html',
 	styleUrls: ['./profit-history.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProfitHistoryComponent extends PaginationFilterBaseComponent implements OnInit, OnChanges {

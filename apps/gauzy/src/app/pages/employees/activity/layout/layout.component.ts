@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, QueryParamsHandling } from '@angular/router';
 import { distinctUntilChanged, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,6 +16,7 @@ import {
 	templateUrl: './layout.component.html',
 	styleUrls: ['./layout.component.scss'],
 	providers: [RouteUtil],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ActivityLayoutComponent implements OnInit, OnDestroy {

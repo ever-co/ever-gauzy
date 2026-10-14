@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ID, IDocumentCategory } from '@gauzy/contracts';
 
 /**
@@ -13,12 +13,12 @@ import { ID, IDocumentCategory } from '@gauzy/contracts';
  */
 @Component({
 	selector: 'gz-docs-category-merge-dialog',
-	imports: [CommonModule, FormsModule, TranslateModule, NbButtonModule, NbCardModule, NbSelectModule],
+	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbSelectModule],
 	template: `
 		<nb-card class="docs-dialog docs-category-merge-dialog">
 			<nb-card-header>{{ 'DOCS.SETTINGS.MERGE_TITLE' | translate }}</nb-card-header>
 			<nb-card-body>
-				<p class="hint">{{ 'DOCS.SETTINGS.MERGE_HINT' | translate : { name: source?.name } }}</p>
+				<p class="hint">{{ 'DOCS.SETTINGS.MERGE_HINT' | translate : { name: $safeNavigationMigration(source?.name) } }}</p>
 				<label class="label">{{ 'DOCS.SETTINGS.MERGE_TARGET' | translate }}</label>
 				<nb-select fullWidth [(selected)]="targetId">
 					<nb-option *ngFor="let category of targets" [value]="category.id">
@@ -34,6 +34,7 @@ import { ID, IDocumentCategory } from '@gauzy/contracts';
 			</nb-card-footer>
 		</nb-card>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styles: [
 		`
 			.docs-category-merge-dialog {

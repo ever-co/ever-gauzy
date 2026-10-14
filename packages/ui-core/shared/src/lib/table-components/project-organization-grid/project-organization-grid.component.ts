@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
     selector: 'gauzy-project-organization-grid',
     templateUrl: './project-organization-grid.component.html',
     styleUrls: ['./project-organization-grid.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProjectOrganizationGridComponent {

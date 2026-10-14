@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
@@ -25,6 +25,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ga-objective-mutation',
     templateUrl: './edit-objective.component.html',
     styleUrls: ['./edit-objective.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditObjectiveComponent implements OnInit, OnDestroy {

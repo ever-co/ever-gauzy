@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	GauzyFiltersModule,
 	LineChartModule,
@@ -17,7 +17,7 @@ import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.
 	imports: [
 		TimeLimitReportRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

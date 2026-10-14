@@ -17,7 +17,7 @@
 # envsubst + replacements.sed. The ENV literals in the production stage below are the
 # load-bearing defaults for that substitution — keep them in sync with replacements.sed.
 
-FROM node:24.16.0-alpine3.23 AS dependencies
+FROM node:26.11.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -119,6 +119,8 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
@@ -166,7 +168,11 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	yarn cache clean && \
 	rm -f .npmrc .yarnrc
 
-FROM node:24.16.0-alpine3.23 AS development
+FROM node:26.11.1-alpine3.24 AS development
+
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
 
 USER node:node
 
@@ -176,7 +182,11 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.16.0-alpine3.23 AS build
+FROM node:26.11.1-alpine3.24 AS build
+
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
 
 WORKDIR /srv/gauzy
 

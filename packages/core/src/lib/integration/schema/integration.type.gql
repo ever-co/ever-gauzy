@@ -1,0 +1,242 @@
+# The integration domain's object types.
+#
+# An `Integration` row is the catalogue of what this installation can be connected to: a provider
+# (`Github`, `Jira`, `Hubstaff`, …), a display name, an image, whether it is paid, whether it is still
+# coming, and where its documentation lives. An `IntegrationType` row is the facet an integration is
+# filed under — "For Sales Teams", "Project Management", "AI Agents" — and the two are joined many to
+# many, which is what makes one catalogue entry reachable from several facets.
+#
+# **The catalogue rows are reference data and the connection rows are configuration.** These two types
+# describe the catalogue. What a tenant has *configured* — the credentials, the entity syncs and the
+# provider link — is `IntegrationTenant` and its settings, declared beside this domain and reached
+# through their own root fields.
+#
+# `fullImgUrl` is carried beside `imgSrc` because the delivered read computes it: a subscriber resolves
+# the stored path through the file storage provider on every load, so the fully-qualified URL is present
+# on every row this surface answers rather than being something a client assembles.
+#
+# `freeTrialPeriod` is carried as a whole number of days. The column is `numeric`, but the value is a
+# count — the length of a provider's trial — so it is stated as the count it is rather than as the
+# money-shaped decimal the store happens to use for it.
+#
+# The members both types deliberately leave out are the reverse sides of their relations:
+# `IntegrationType.integrations` and `Integration.integrationTypes` are loaded by neither delivered
+# read, and each is reachable through the other's root field — which is what the two facets below are
+# for. `Integration.tags` is absent for the same reason: the delivered catalogue read loads neither
+# relation, so a member for one would always be empty here.
+#
+# `IntegrationEntity` is declared once, by this file, because the vocabulary is this domain's own: it
+# names the kinds of row an integration can synchronise, and the two settings resources beside this one
+# — the per-entity sync flags and the tied-entity flags — read and write exactly these values. A closed
+# enum is what that is: the set is the platform's, not a caller's, and a value outside it names nothing
+# the platform can sync.
+
+"""
+One entry of the integration catalogue: a provider this installation can be connected to.
+"""
+type Integration {
+	id: ID!
+	"The provider's display name, for example `Github`."
+	name: String!
+	"""
+	The provider's own identifier — `github`, `jira`, `hubstaff` — which is what a configured
+	integration is looked up by. Null on a catalogue entry that is not wired to a provider yet.
+	"""
+	provider: String
+	"Where the provider sends a caller back to once it has authorised the connection."
+	redirectUrl: String
+	"The stored path of the catalogue image."
+	imgSrc: String
+	"The same image, resolved through the file storage provider, as a client can load it."
+	fullImgUrl: String
+	"Whether the catalogue entry is advertised before it can be connected."
+	isComingSoon: Boolean
+	"Whether connecting requires a paid provider plan."
+	isPaid: Boolean
+	"A free trial is offered, and for how long."
+	isFreeTrial: Boolean
+	"The length of the free trial, in whole days."
+	freeTrialPeriod: Int
+	"The provider's version this catalogue entry was written against."
+	version: String
+	"Where the provider's own documentation is."
+	docUrl: String
+	"The position of the entry in the catalogue listing."
+	order: Int
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+One facet of the integration catalogue: a group an integration is filed under.
+"""
+type IntegrationType {
+	id: ID!
+	"The facet's name, for example `Project Management`."
+	name: String!
+	"The facet's explanation, shown under its name."
+	description: String
+	"The facet's icon."
+	icon: String
+	"The group the facet is presented in, for example `Categories`."
+	groupName: String!
+	"The position of the facet among the others."
+	order: Int!
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The kinds of row an integration synchronises.
+
+The vocabulary is this domain's own and is closed: a value outside it names a row type the platform
+has no sync for. It is declared once here and referenced by the two settings resources that write it,
+so the sync flags and the catalogue cannot drift apart.
+"""
+enum IntegrationEntity {
+	Project
+	Organization
+	Note
+	Client
+	Task
+	Issue
+	Label
+	Activity
+	User
+	Employee
+	TimeLog
+	TimeSlot
+	Screenshot
+	Income
+	Expense
+	Proposal
+	JOB_MATCHING
+	EMPLOYEE_PERFORMANCE
+}
+
+"""
+The boundary of one page of catalogue entries.
+"""
+type IntegrationEdge {
+	node: Integration!
+	cursor: String!
+}
+
+"""
+One page of catalogue entries, with the total the filters select and the boundary cursors.
+"""
+type IntegrationConnection {
+	nodes: [Integration!]!
+	edges: [IntegrationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The boundary of one page of catalogue facets.
+"""
+type IntegrationTypeEdge {
+	node: IntegrationType!
+	cursor: String!
+}
+
+"""
+One page of catalogue facets, with the total the filters select and the boundary cursors.
+"""
+type IntegrationTypeConnection {
+	nodes: [IntegrationType!]!
+	edges: [IntegrationTypeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a catalogue list may be sorted by.
+"""
+enum IntegrationSortField {
+	createdAt
+	updatedAt
+	name
+	provider
+	order
+	isComingSoon
+	isFreeTrial
+	version
+}
+
+"""
+The order the catalogue is returned in. At most three keys are accepted.
+"""
+input IntegrationSort {
+	field: IntegrationSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a catalogue list may be sorted by, for the facets.
+"""
+enum IntegrationTypeSortField {
+	createdAt
+	updatedAt
+	name
+	groupName
+	order
+}
+
+"""
+The order the facets are returned in. At most three keys are accepted.
+"""
+input IntegrationTypeSort {
+	field: IntegrationTypeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a catalogue list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Two of the row's columns are deliberately absent. `name` and `provider` are here, but the delivered
+read's own *search term* is a root-field argument rather than a member of this input: it is the string
+the delivered command hands the store as a prefix match, and it is stated where the delivered filter
+object is stated. `isPaid` is absent for the same reason — the delivered read takes it as a member of
+its own filter object, and this surface states it as the argument it is. One narrowing stated twice in
+one field would be two spellings that could disagree.
+"""
+input IntegrationFilter {
+	id: IDFilter
+	name: StringFilter
+	provider: StringFilter
+	redirectUrl: StringFilter
+	version: StringFilter
+	docUrl: StringFilter
+	order: NumberFilter
+	isComingSoon: BooleanFilter
+	isFreeTrial: BooleanFilter
+	freeTrialPeriod: NumberFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IntegrationFilter!]
+	or: [IntegrationFilter!]
+	not: IntegrationFilter
+}
+
+"""
+The fields a facet list may be narrowed by.
+"""
+input IntegrationTypeFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	groupName: StringFilter
+	order: NumberFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IntegrationTypeFilter!]
+	or: [IntegrationTypeFilter!]
+	not: IntegrationTypeFilter
+}

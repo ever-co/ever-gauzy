@@ -10,7 +10,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { HelpCenterArticleService } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EmployeeMultiSelectModule, RichTextEditorModule } from '@gauzy/ui-core/shared';
 import { AddArticleComponent } from './add-article.component';
 
@@ -26,7 +26,7 @@ import { AddArticleComponent } from './add-article.component';
 		NbSelectModule,
 		NbToggleModule,
 		RichTextEditorModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		EmployeeMultiSelectModule
 	],
 	providers: [HelpCenterArticleService],

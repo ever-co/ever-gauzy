@@ -227,12 +227,19 @@ describe('GitHub update feed', () => {
 		});
 
 		it('bounds the GitHub lookup with a timeout, since it now runs before every check', async () => {
-			await new CdnUpdate(CONFIG).tagName();
+			// node-fetch 3 has no `timeout` option: the bound is an AbortSignal that fires after 10 s.
+			const timeout = jest.spyOn(AbortSignal, 'timeout');
+			try {
+				await new CdnUpdate(CONFIG).tagName();
 
-			expect(fetchMock).toHaveBeenCalledWith(
-				expect.stringContaining('https://api.github.com/repos/'),
-				expect.objectContaining({ timeout: 10 * 1000 })
-			);
+				expect(timeout).toHaveBeenCalledWith(10 * 1000);
+				expect(fetchMock).toHaveBeenCalledWith(
+					expect.stringContaining('https://api.github.com/repos/'),
+					expect.objectContaining({ signal: timeout.mock.results[0].value })
+				);
+			} finally {
+				timeout.mockRestore();
+			}
 		});
 
 		it('keeps the last resolved tag when a later lookup fails', async () => {

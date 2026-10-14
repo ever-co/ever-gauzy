@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -34,6 +34,7 @@ export type DocsPreviewViewer = 'pdf' | 'image' | 'video' | 'audio' | 'text' | '
 	selector: 'gz-docs-preview-modal',
 	templateUrl: './docs-preview-modal.component.html',
 	styleUrls: ['./docs-preview-modal.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsPreviewModalComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

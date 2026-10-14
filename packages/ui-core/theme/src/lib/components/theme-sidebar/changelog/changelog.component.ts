@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IChangelog } from '@gauzy/contracts';
 import { NbSidebarService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,6 +14,7 @@ export const CHANGELOG_SIDEBAR_TAG = 'changelog_sidebar';
 	selector: 'ngx-changelog',
 	templateUrl: './changelog.component.html',
 	styleUrls: ['./changelog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ChangelogComponent implements OnInit, OnDestroy {

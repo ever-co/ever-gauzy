@@ -13,7 +13,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -51,7 +51,7 @@ const NB_MODULES = [
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule,
 		CardGridModule,
 		CurrencyModule,

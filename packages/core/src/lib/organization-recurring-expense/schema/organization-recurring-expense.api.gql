@@ -1,0 +1,172 @@
+# The organization recurring expense domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-recurring-expense` routes already serve, under
+# the same guard chain and with the same permission — which, on this resource, is no permission at all:
+# the controller carries the tenant guard and states no `@Permissions` anywhere, so a field that demanded
+# one here would refuse a caller the REST route serves. Nothing here decides anything either: each field
+# calls the same `OrganizationRecurringExpenseService` method, dispatches the same command or executes the
+# same query the route behind it does, with the same payload and the same request facts.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list route
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
+# surface resumes on the other. `withDeleted` is offered because the delivered list route offers it: the
+# paginated spelling of that list takes `BaseQueryDTO`, which carries the member, and hands its query
+# string straight to the same read — so a REST caller can ask for withdrawn rows and a connection that
+# could not would hide them.
+#
+# **Three delivered reads are one capability here.** The controller serves the list twice — `GET /` and
+# the inherited `GET /pagination` — and the two answer the same rows under the same criterion, one of them
+# sliced by `take`/`skip` and the other not; the third is `GET /month`, which reads the same rows with the
+# criterion its `data` parameter carries. The list field mirrors `GET /`, and the month route's criterion
+# is stated in the connection's own vocabulary rather than lost: see
+# `OrganizationRecurringExpenseFilter`, which writes the disjunction out. So no caller loses the month
+# question by asking it here, and a second root field for either spelling would be a second surface that
+# could disagree with this one.
+#
+# **The organization the read runs in comes from the credential, not from the caller.** Every client of
+# those routes sends the organization its screen is showing and the delivered month handler cannot answer
+# without one; the credential's own organization is that same value and is the one value a caller cannot
+# misstate. The caller's own narrowing inside that organization still arrives in `filter`.
+#
+# `organizationRecurringExpenseStartDateUpdateType` mirrors `GET /date-update-type`, and
+# `organizationRecurringExpenseShares` mirrors `GET /employee/:organizationId`. Both are root fields of
+# their own rather than filters on the connection, and for the same reason: each answers something a
+# filter cannot narrow to. The first answers a computed verdict about a change the caller has not made
+# yet, together with the rows that verdict was drawn from; the second answers a quotient — each shared
+# arrangement's amount divided by the organization's head count — which is a figure no stored row holds.
+# See the two types in the domain's `organization-recurring-expense.type.gql`.
+#
+# The count takes no filter, and that is a statement rather than an omission: the delivered count route
+# binds its query string to the store's own `where`, which the connection protocol does not speak, so a
+# `filter` argument here would either be handed to a service call that cannot accept it or be evaluated
+# over a second code path that could disagree with the connection's `totalCount`. It is nullable because
+# a count is an aggregate a resource may legitimately have no answer for, and a non-null field would turn
+# "not answered" into a fabricated zero.
+#
+# `deleteOrganizationRecurringExpense` answers a boolean rather than a row, and the reason is the
+# delivered handler's own answer: it returns a delete result when the whole arrangement goes, an update
+# result when only its tail does, and the row it opened when one month is taken out of the middle. Those
+# are three shapes, none of which is the shape of a field, so the field answers the one fact the route
+# establishes — that the removal ran — and a caller that needs the arrangement as it now stands reads it
+# back from the connection.
+
+extend type Query {
+	"""
+	The standing costs of the caller's organization, newest arrangement first.
+	"""
+	organizationRecurringExpenses(
+		filter: OrganizationRecurringExpenseFilter
+		sort: [OrganizationRecurringExpenseSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationRecurringExpenseConnection!
+
+	"""
+	One standing cost of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such row"
+	on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	organizationRecurringExpense(id: ID!): OrganizationRecurringExpense
+
+	"""
+	How many standing costs the caller's tenant holds.
+	"""
+	organizationRecurringExpenseCount: Int
+
+	"""
+	What moving one arrangement's beginning to the stated instant would mean, and the arrangements in the
+	way.
+
+	The delivered read compares the instant with the arrangement's own beginning and, when the change
+	would move it forward or backward, reads the sibling arrangements of the same parent that fall inside
+	the gap. A change the delivered edit refuses is answered here as the verdict that names it rather than
+	raised, because this field is the question the edit asks itself before it decides what to write.
+	"""
+	organizationRecurringExpenseStartDateUpdateType(
+		"The arrangement whose beginning would move."
+		recurringExpenseId: ID!
+		"The instant the beginning would move to."
+		newStartDate: DateTime!
+	): OrganizationRecurringExpenseStartDateUpdateType!
+
+	"""
+	The organization's shared arrangements as one employee's share of each, for one month.
+
+	The delivered read selects the shared arrangements in force in the month, counts the people the
+	organization employs, and divides each arrangement's amount by that count — so the quotient is a
+	computation over a range rather than a stored amount, and the row it is answered on carries the whole
+	it came from beside it. The month is the year and the calendar month's zero-based position, which is
+	what the delivered read passes to its date constructor; both are required because the read builds one
+	instant from the two and measures every arrangement against it.
+	"""
+	organizationRecurringExpenseShares(
+		"The organization whose shared arrangements are read. It must be the caller's own."
+		organizationId: ID!
+		"The four-digit year the month belongs to."
+		year: Int!
+		"The month, zero-based: January is `0`."
+		month: Int!
+	): [OrganizationRecurringExpenseShare!]!
+}
+
+extend type Mutation {
+	"""
+	Records a standing cost.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller, so
+	an arrangement cannot be written into a tenant the caller is not acting in. The delivered handler sets
+	the row's parent to the row's own identifier, which is what makes the arrangement a family.
+	"""
+	createOrganizationRecurringExpense(
+		input: CreateOrganizationRecurringExpenseInput!
+	): OrganizationRecurringExpense!
+
+	"""
+	Changes a standing cost from the month the caller states onward.
+
+	The delivered edit decides what the change means — it may write the beginning and the value, close the
+	arrangement and open its successor, or resolve a conflict — and answers whichever row that produced,
+	which is what this field answers. A member the caller omits is left as it is.
+	"""
+	updateOrganizationRecurringExpense(
+		input: UpdateOrganizationRecurringExpenseInput!
+	): OrganizationRecurringExpense!
+
+	"""
+	Removes a standing cost, in one of the three ways the delivered input names.
+
+	The answer is the one fact the removal establishes, because the delivered handler's own answer is a
+	delete result, an update result or a newly opened row depending on the deletion type — three shapes,
+	none of them a row this field could state. A caller that needs the arrangement as it now stands reads
+	it back from the connection.
+	"""
+	deleteOrganizationRecurringExpense(
+		id: ID!
+		input: OrganizationRecurringExpenseDeleteInput!
+	): Boolean!
+
+	"""
+	Withdraws a standing cost without removing the row.
+
+	The delivered list stops answering it and the rows that reference it keep resolving the identifier
+	they hold. The answer is the withdrawn row; it is recoverable until it is removed outright.
+	"""
+	softDeleteOrganizationRecurringExpense(id: ID!): OrganizationRecurringExpense!
+
+	"""
+	Puts a withdrawn standing cost back.
+	"""
+	recoverOrganizationRecurringExpense(id: ID!): OrganizationRecurringExpense!
+}

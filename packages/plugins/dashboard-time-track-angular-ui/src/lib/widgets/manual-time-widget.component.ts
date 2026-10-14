@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbButtonModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { IManualTimesStatistics } from '@gauzy/contracts';
 import { IDashboardWidgetContext } from '@gauzy/ui-core/core';
@@ -23,7 +23,7 @@ import { TimeTrackWidgetStateComponent } from './time-track-widget-state.compone
 	standalone: true,
 	imports: [
 		NbButtonModule,
-		TranslateModule,
+		TranslatePipe,
 		ComponentsModule,
 		DateFormatPipe,
 		DurationFormatPipe,

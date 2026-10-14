@@ -313,6 +313,24 @@ describe('EverConnectEntitlementService.features and the summary', () => {
 		expect(await service.features('tenant-1', 'org-1')).toEqual({ ladder: 'paused', features: {} });
 	});
 
+	it('shows every feature off in the summary while paused, as features() answers', async () => {
+		const { service, link } = setup({ link: true });
+		const seal = (claims: Record<string, unknown>) =>
+			(service as unknown as { secrets: { seal: (v: string) => string } }).secrets.seal(jwsOf(claims));
+
+		link!.entitlementJwsEncrypted = seal(claimsFor(`link:${LINK}`, 1));
+		expect((await service.summary('tenant-1', 'org-1', false)).link).toMatchObject({
+			ladder: 'valid',
+			features: { discoverability: true, ever_id_login: true }
+		});
+
+		link!.entitlementJwsEncrypted = seal({ ...claimsFor(`link:${LINK}`, 2), exp: NOW_S - 31 * DAY });
+		expect((await service.summary('tenant-1', 'org-1', false)).link).toMatchObject({
+			ladder: 'paused',
+			features: { discoverability: false, ever_id_login: false }
+		});
+	});
+
 	it('shows the licence ids and the ladder in the summary', async () => {
 		const { service, link } = setup({ link: true });
 		link!.entitlementJwsEncrypted = (

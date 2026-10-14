@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     template: `
@@ -8,6 +8,7 @@ import { Component, Input } from '@angular/core';
 			</strong>
 		</div>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateSourceComponent {

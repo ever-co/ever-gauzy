@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DoCheck, OnDestroy, inject } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbProgressBarModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { ID } from '@gauzy/contracts';
 import { DocumentsService } from '../../services/documents.service';
@@ -27,7 +27,7 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 @Component({
 	selector: 'gz-image-node-view',
 	standalone: true,
-	imports: [CommonModule, TranslateModule, NbButtonModule, NbIconModule, NbProgressBarModule],
+	imports: [CommonModule, TranslatePipe, NbButtonModule, NbIconModule, NbProgressBarModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<figure class="gz-image-node" [class.selected]="selected()" [attr.data-align]="align">

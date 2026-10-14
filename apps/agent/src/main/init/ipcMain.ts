@@ -27,7 +27,7 @@ import { checkUserAuthentication } from '../auth';
 import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..');
 import { QueueAudit, AuditStatus } from '../queue/audit-queue';
-import * as isOnline from 'is-online';
+import isOnline from 'is-online';
 import { AgentLogger } from '../agent-logger';
 
 const userService = new UserService();

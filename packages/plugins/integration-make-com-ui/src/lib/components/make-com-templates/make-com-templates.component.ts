@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, finalize } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -12,6 +12,7 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-templates',
 	templateUrl: './make-com-templates.component.html',
 	styleUrls: ['./make-com-templates.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class MakeComTemplatesComponent extends TranslationBaseComponent implements OnInit {

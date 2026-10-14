@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	NbButtonModule,
@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { filter, firstValueFrom, map } from 'rxjs';
 import {
@@ -56,7 +56,7 @@ import { DocumentAttachDialogComponent } from './document-attach-dialog.componen
 	standalone: true,
 	imports: [
 		CommonModule,
-		TranslateModule,
+		TranslatePipe,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
@@ -65,6 +65,7 @@ import { DocumentAttachDialogComponent } from './document-attach-dialog.componen
 	],
 	providers: [DocumentsService],
 	templateUrl: './document-links-panel.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./document-links-panel.component.scss']
 })
 export class DocumentLinksPanelComponent extends TranslationBaseComponent implements OnChanges {

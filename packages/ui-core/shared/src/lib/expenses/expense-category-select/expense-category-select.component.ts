@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IExpenseCategory, IOrganization, IOrganizationExpenseCategory, IOrganizationVendor } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -20,6 +20,7 @@ import { removeDuplicatesByProperty } from '@gauzy/ui-core/common';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {

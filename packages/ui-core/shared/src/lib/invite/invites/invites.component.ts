@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -41,6 +41,7 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 	selector: 'ga-invites',
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InvitesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

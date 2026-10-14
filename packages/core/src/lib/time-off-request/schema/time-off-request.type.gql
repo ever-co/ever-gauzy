@@ -1,0 +1,203 @@
+# The time-off request's object type, its filter, its sort, and the two bodies its writes take.
+#
+# A request is one stretch of leave asked for, by one or more employees, under a policy: `start` and
+# `end` are the two ends of the leave itself, `requestDate` is the day it was asked for — which is a
+# different fact from the day it was filed, and the two are read in different orders — and `status` is
+# where the decision stands. The type is named for the resource the entity is, which is
+# `TimeOffRequest`; the contracts package calls the same interface `ITimeOff`, and the schema states the
+# resource rather than the interface.
+#
+# **The policy and the employees are members because the delivered list read fills them.** That read
+# left-joins the policy, the employees and each employee's account beside every row, so a client reading
+# this list reads the policy's name and the employees it covers without a second round trip. The writes
+# answer rows the delivered writes read without either, so both members are nullable — exactly as the
+# corresponding REST answers carry no such objects.
+#
+# **The status is carried as its value, not redeclared as an enum.** The vocabulary is the contracts
+# package's `StatusTypesEnum` — `REQUESTED`, `APPROVED`, `DENIED`, and the `ALL` the list filters use —
+# and the entity validates against it directly. Declaring it again here would claim a value set this
+# domain does not own, and the review fields below are the transitions between two of its values:
+# approving moves a request from `REQUESTED` to `APPROVED` and denying moves it to `DENIED`, and the
+# delivered handler refuses to move one that has already left `REQUESTED`.
+#
+# **The document is carried as its identifier.** The entity keeps both an eager asset relation and the
+# identifier column; the reads this surface mirrors name neither, so what always travels is `documentId`
+# and `documentUrl`, and the asset itself is read from its own surface.
+#
+# The lifecycle columns are carried because the delivered reads return them and one delivered route
+# writes one of them: `deletedAt` is the whole of what withdrawing writes.
+
+"""
+One stretch of leave asked for under a policy.
+"""
+type TimeOffRequest {
+	id: ID!
+	"The first day of the leave."
+	start: DateTime!
+	"The last day of the leave."
+	end: DateTime!
+	"The day the leave was asked for, which is not the day the row was filed."
+	requestDate: DateTime!
+	"""
+	Where the decision stands, as the contracts package's vocabulary states it: `REQUESTED`,
+	`APPROVED` or `DENIED`. It is deliberately not redeclared as a schema enum here.
+	"""
+	status: String!
+	"Why the leave is being asked for."
+	description: String
+	"A link to whatever document the request carries, kept beside the asset identifier."
+	documentUrl: String
+	"The document the request carries, by identifier. Read the asset itself from its own surface."
+	documentId: ID
+	"Whether the row is a public holiday rather than a request somebody filed."
+	isHoliday: Boolean
+	"The policy the leave is taken under."
+	policyId: ID
+	"""
+	The policy itself, filled by the list read, which joins it beside every row. The write fields answer
+	rows read without it.
+	"""
+	policy: TimeOffPolicy
+	"""
+	The employees the leave is for, filled by the list read, which joins them and each of their accounts
+	beside every row. The accounts themselves are not members of this surface: an engagement carries its
+	account as an identifier, on the employee's own surface.
+	"""
+	employees: [Employee!]
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"When the request was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of requests.
+"""
+type TimeOffRequestEdge {
+	node: TimeOffRequest!
+	cursor: String!
+}
+
+"""
+One page of requests, with the total the filters select and the boundary cursors.
+"""
+type TimeOffRequestConnection {
+	nodes: [TimeOffRequest!]!
+	edges: [TimeOffRequestEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a request list may be sorted by.
+"""
+enum TimeOffRequestSortField {
+	createdAt
+	updatedAt
+	start
+	end
+	requestDate
+	status
+	isHoliday
+}
+
+"""
+The order the requests are returned in. At most three keys are accepted.
+"""
+input TimeOffRequestSort {
+	field: TimeOffRequestSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a request list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row. The employee is deliberately not here: the row carries its
+employees as a collection, so there is no value for the protocol to compare, and the field's own
+`employeeId` argument is what narrows the read by one — through the join the delivered read performs.
+
+Two narrowings the delivered paginated route can state are deliberately absent here, and for one
+reason: that route's `where` can search the joined account's name and the joined policy's name as text,
+and this input narrows by comparing a value at a declared field — while the row carries an object at
+each of those two. `policyId` is how a caller narrows to one policy, and the employees of a request are
+read from the employee's own surface. Stating a member over a relation here would be a filter the
+schema offers and the evaluator refuses on every row.
+"""
+input TimeOffRequestFilter {
+	id: IDFilter
+	documentUrl: StringFilter
+	description: StringFilter
+	start: DateTimeFilter
+	end: DateTimeFilter
+	requestDate: DateTimeFilter
+	status: StringFilter
+	isHoliday: BooleanFilter
+	policyId: IDFilter
+	documentId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimeOffRequestFilter!]
+	or: [TimeOffRequestFilter!]
+	not: TimeOffRequestFilter
+}
+
+"""
+What a caller states when it files a request.
+
+The organization, the two ends of the leave and the day it was asked for are required because they are
+the four columns the row cannot be without: the entity declares all four non-nullable and the delivered
+write assigns them straight onto the row it stores. The tenant is stamped from the credential, as it is
+on every write of this platform, and is therefore not a member.
+
+`status` seeds the approval record the delivered write files beside the request; an absent status is
+that write's own default, which is "requested".
+"""
+input CreateTimeOffRequestInput {
+	"The organization the request is filed in."
+	organizationId: ID!
+	"The first day of the leave."
+	start: DateTime!
+	"The last day of the leave."
+	end: DateTime!
+	"The day the leave was asked for."
+	requestDate: DateTime!
+	"The employees the leave is for, by identifier."
+	employeeIds: [ID!]
+	"Why the leave is being asked for."
+	description: String
+	"The policy the leave is taken under, by identifier."
+	policyId: ID
+	"Where the decision starts, if the caller states it rather than leaving the delivered default."
+	status: String
+	"Whether the row is a public holiday rather than a request somebody filed."
+	isHoliday: Boolean
+	"A link to whatever document the request carries."
+	documentUrl: String
+}
+
+"""
+What a caller states when it edits a filed request.
+
+The delivered edit takes the identifier from its own argument and passes the body through to the write,
+and the body's own interface declares one member — where the decision stands. So this body declares one
+member beside the identifier, and stating it is the whole of what an edit can change: a request's dates
+and its employees are what the request *is*, and rewriting them would leave the approval record filed
+beside it describing a leave nobody asked for.
+"""
+input UpdateTimeOffRequestInput {
+	id: ID!
+	"Where the decision stands. The delivered write stores the value it is given."
+	status: String
+}

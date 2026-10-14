@@ -17,7 +17,7 @@ export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailT
 		let textToHtml = input;
 
 		try {
-			const mjmlToHtml = compileMjml(input);
+			const mjmlToHtml = await compileMjml(input);
 			textToHtml = mjmlToHtml.errors.length ? input : mjmlToHtml.html;
 		} catch (error) {
 			// ignore mjml conversion errors for non-mjml text such as subject

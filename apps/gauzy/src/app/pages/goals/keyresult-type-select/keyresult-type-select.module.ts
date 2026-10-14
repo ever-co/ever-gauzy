@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NbSelectModule, NbInputModule, NbDialogModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { GoalCustomUnitModule, ProjectSelectModule, TaskSelectModule } from '@gauzy/ui-core/shared';
 import { KeyresultTypeSelectComponent } from './keyresult-type-select.component';
 
@@ -17,7 +17,7 @@ import { KeyresultTypeSelectComponent } from './keyresult-type-select.component'
 		GoalCustomUnitModule,
 		ReactiveFormsModule,
 		NbDialogModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	exports: [KeyresultTypeSelectComponent]
 })

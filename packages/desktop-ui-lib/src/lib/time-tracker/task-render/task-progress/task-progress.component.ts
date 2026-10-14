@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TaskRenderComponent } from '../task-render.component';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { TaskEstimateComponent } from '../task-estimate/task-estimate.component';
@@ -14,6 +14,7 @@ import { AsyncPipe } from '@angular/common';
     selector: 'gauzy-task-progress',
     templateUrl: './task-progress.component.html',
     styleUrls: ['./task-progress.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [TaskEstimateComponent, TaskDueDateComponent, NbProgressBarModule, AsyncPipe]
 })
 export class TaskProgressComponent extends TaskRenderComponent implements AfterViewInit {

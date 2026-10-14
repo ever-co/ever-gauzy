@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NbTooltipModule } from '@nebular/theme';
 import { TimeTrackerStatusService } from './time-tracker-status.service';
@@ -10,9 +10,9 @@ import { TimeTrackerStatusComponent } from './time-tracker-status.component';
     imports: [
         CommonModule,
         FontAwesomeModule,
-        TranslateModule,
+        TranslatePipe,
         NbTooltipModule,
-        TranslateModule,
+        TranslatePipe,
         TimeTrackerStatusComponent,
     ],
     exports: [TimeTrackerStatusComponent],

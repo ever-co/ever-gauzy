@@ -74,13 +74,15 @@ export const createRandomOrganizationTags = async (
 		}
 
 		for (const organization of organizations) {
-			// If DEFAULT_ORGANIZATION_TAGS is an object, use Object.values; otherwise, use it directly if it's already an array
-			const tags = Array.isArray(DEFAULT_ORGANIZATION_TAGS)
+			// If DEFAULT_ORGANIZATION_TAGS is an object, use Object.values; otherwise, use it directly if it's already an array.
+			// Named apart from the `tags` being collected: it used to be a second `tags`, which shadowed that list, so
+			// the push below grew DEFAULT_ORGANIZATION_TAGS itself and the function saved an empty list.
+			const names: string[] = Array.isArray(DEFAULT_ORGANIZATION_TAGS)
 				? DEFAULT_ORGANIZATION_TAGS
 				: Object.values(DEFAULT_ORGANIZATION_TAGS);
 
 			// Create Tag instances for the current organization
-			const organizationTags: Tag[] = tags.map((name: string) => {
+			const organizationTags: Tag[] = names.map((name: string) => {
 				const tag = new Tag();
 				tag.name = name;
 				tag.description = ''; // Consider adding meaningful descriptions if applicable

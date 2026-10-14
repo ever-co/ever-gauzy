@@ -27,8 +27,8 @@
 		"lib:watch": "yarn nx build plugin-ever-stats --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.26",
-		"@nestjs/core": "^11.1.26"
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
 	},
 	"dependencies": {
 		"@ever-co/connect-contracts": "1.0.0-rc.6",
@@ -40,17 +40,17 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-ever-instance": "^0.1.0",
-		"@mikro-orm/core": "^6.6.14",
-		"@nestjs/swagger": "^11.4.4",
-		"nestjs-cls": "^6.2.0",
-		"tslib": "^2.6.2",
-		"typeorm": "^1.0.0"
+		"@mikro-orm/core": "^6.6.17",
+		"@nestjs/swagger": "^12.0.2",
+		"nestjs-cls": "^7.0.1",
+		"tslib": "^2.8.1",
+		"typeorm": "^1.1.2"
 	},
 	"devDependencies": {
 		"@ever-co/connect-tools": "1.0.0-rc.6",
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
 	},
 	"keywords": [
 		"gauzy",
@@ -60,7 +60,7 @@
 		"plugin"
 	],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

@@ -81,7 +81,9 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 	@ApiPropertyOptional({ type: Object, description: 'Plan limitations and quotas' })
 	@IsOptional()
 	@IsObject({ message: 'Limitations must be an object' })
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	limitations?: Record<string, any>;
 
 	@ApiProperty({ type: Boolean, description: 'Whether the plan is active and available for purchase' })
@@ -125,7 +127,9 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 	@ApiPropertyOptional({ type: String, description: 'Plan metadata (JSON string)' })
 	@IsOptional()
 	@IsObject({ message: 'Metadata must be an object' })
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	metadata?: Record<string, any>;
 
 	@ApiPropertyOptional({ type: Number, description: 'Sort order for displaying plans' })

@@ -21,8 +21,8 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { TypeormInstrumentation } from 'opentelemetry-instrumentation-typeorm';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { REDACTED_CREDENTIAL, redactKeyValueList, redactUrlCredentials } from '../core/util/redact-credentials';
 // import { PeriodicExportingMetricReader, ConsoleMetricExporter } from '@opentelemetry/sdk-metrics';
@@ -70,14 +70,6 @@ if (process.env.OTEL_ENABLED === 'true') {
 	}
 
 	console.log('Tracing service name: ' + serviceName);
-
-	provider = new NodeTracerProvider({
-		resource: new Resource({
-			[SemanticResourceAttributes.SERVICE_NAME]: serviceName
-		})
-	});
-
-	provider.register();
 
 	url = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT;
 
@@ -246,7 +238,25 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 	console.log('Tracing Enabled Instrumentations:', instrumentationNames.join(', '));
 
-	if (process.env.OTEL_PROVIDER === 'honeycomb') {
+	// OpenTelemetry 2.x: a provider takes its span processors and resource at construction (`addSpanProcessor`
+	// and the `Resource` class are gone), so it is built here, once the processor exists.
+	//
+	// `@honeycombio/opentelemetry-node` is end-of-life and bundles its own OpenTelemetry 1.x SDK, which cannot
+	// drive a 2.x span processor. Honeycomb is therefore served like every other provider: the OTLP exporter
+	// configured above already sends to Honeycomb with the `x-honeycomb-team` header. The distro path is kept
+	// behind `OTEL_HONEYCOMB_DISTRO=true` for a deployment that still pins OpenTelemetry 1.x.
+	const useHoneycombDistro = process.env.OTEL_PROVIDER === 'honeycomb' && process.env.OTEL_HONEYCOMB_DISTRO === 'true';
+
+	if (!useHoneycombDistro) {
+		provider = new NodeTracerProvider({
+			resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: serviceName }),
+			spanProcessors: isConsole ? [new SimpleSpanProcessor(new ConsoleSpanExporter())] : [spanProcessor]
+		});
+
+		provider.register();
+	}
+
+	if (useHoneycombDistro) {
 		if (process.env.HONEYCOMB_API_KEY) {
 			/*
 			const metricReader = new PeriodicExportingMetricReader({
@@ -265,7 +275,8 @@ if (process.env.OTEL_ENABLED === 'true') {
 			};
 
 			if (isConsole) {
-				params.traceExporter = new ConsoleSpanExporter();
+				// The distro is typed against its own OpenTelemetry 1.x copy.
+				params.traceExporter = new ConsoleSpanExporter() as unknown as HoneycombOptions['traceExporter'];
 			} else {
 				params.spanProcessor = spanProcessor;
 			}
@@ -294,8 +305,6 @@ if (process.env.OTEL_ENABLED === 'true') {
 		} else {
 			params.spanProcessor = spanProcessor;
 		}
-
-		provider.addSpanProcessor(spanProcessor);
 
 		console.log('Tracing SDK initialized');
 	}

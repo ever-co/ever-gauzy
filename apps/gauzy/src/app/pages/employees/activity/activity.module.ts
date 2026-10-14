@@ -1,7 +1,7 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BookmarkQueryParamsResolver, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	ActivityItemModule,
@@ -20,7 +20,7 @@ import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.com
 		RouterModule.forChild([]),
 		NbCardModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ActivityItemModule,
 		DynamicTabsModule,
 		GauzyFiltersModule,

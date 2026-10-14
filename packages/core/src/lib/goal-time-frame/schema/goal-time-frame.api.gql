@@ -1,0 +1,112 @@
+# The goal time frame domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/goal-time-frame` routes already serve, under the same
+# guard and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other.
+# `GoalTimeFrameController` carries `TenantPermissionGuard` on the class and states no permission at
+# all — not on the five routes it declares and not on any of the five it inherits from the CRUD base —
+# so every field here runs under the same tenant guard and demands no permission. The resolver's spec
+# reads those two facts off the controller's own metadata and compares them with the resolver's.
+#
+# **The by-name route is this connection narrowed, not a second list.** `GET /goal-time-frame/:name`
+# answers the period rows whose `name` is the segment it was given — the same reader the list route
+# uses, handed one more criterion — so it is `goalTimeFrames(filter: { name: { eq: … } })`. A root
+# field per narrowing would be a second surface over the same rows, free to disagree with this one
+# about the ordering and the page.
+#
+# **One fact about the delivered router is stated here rather than left to be discovered.** The
+# controller's own `GET /:name` is registered before the routes it inherits, because a router walks a
+# class's own methods before the base class's, and a single-segment pattern matches every
+# single-segment path. `GET /goal-time-frame/count`, `GET /goal-time-frame/pagination` and
+# `GET /goal-time-frame/:id` therefore reach the by-name read on REST and answer a by-name list. This
+# surface states each capability where the controller declares it — the count as `goalTimeFrameCount`,
+# the node as `goalTimeFrame(id)`, and the by-name read as the connection's `name` filter — because
+# the capability is what the controller declares, and a routing order is not a narrowing anybody
+# designed. The resolver's spec asserts the ordering that makes the shadowing real.
+#
+# **The list is the connection.** The controller serves its list twice — `GET /` and the inherited
+# `GET /pagination` — and the two answer the same rows under the same filters. That is one capability,
+# so it is one field, and the connection's own `limit`/`offset` already are the page the paginated
+# spelling performs.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Removals, withdrawals and restorations are all delivered routes, so
+# all three are fields, and the object type carries `deletedAt` because that column is the whole of
+# what the withdrawal writes.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The periods of the caller's tenant, in the taxonomy's own order. One period by its name is this
+	connection narrowed by `name`, which is the read the delivered by-name route performs.
+	"""
+	goalTimeFrames(
+		filter: GoalTimeFrameFilter
+		sort: [GoalTimeFrameSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): GoalTimeFrameConnection!
+
+	"""
+	One period of the caller's tenant, or null when there is none.
+
+	This is the capability the CRUD base's `GET /:id` route declares. On the delivered router that path
+	is answered by the controller's own by-name read instead, for the ordering reason stated above; the
+	capability is unchanged, so it is stated here under its own name.
+	"""
+	goalTimeFrame(id: ID!): GoalTimeFrame
+
+	"""
+	How many periods the caller's tenant holds.
+	"""
+	goalTimeFrameCount: Int
+}
+
+extend type Mutation {
+	"""
+	Opens a period, and answers the row it wrote.
+	"""
+	createGoalTimeFrame(input: CreateGoalTimeFrameInput!): GoalTimeFrame!
+
+	"""
+	Changes a period. The delivered route is an update-through-create, so a member the caller leaves out
+	is left as it is; see `UpdateGoalTimeFrameInput`.
+	"""
+	updateGoalTimeFrame(input: UpdateGoalTimeFrameInput!): GoalTimeFrame!
+
+	"""
+	Removes a period outright. The delivered route answers the store's delete result rather than a row,
+	so this field answers whether the removal was performed.
+	"""
+	deleteGoalTimeFrame(id: ID!): Boolean!
+
+	"""
+	Withdraws a period without removing it. The answer is the withdrawn row, whose `deletedAt` says when
+	it happened.
+	"""
+	softDeleteGoalTimeFrame(id: ID!): GoalTimeFrame!
+
+	"""
+	Puts a withdrawn period back.
+	"""
+	recoverGoalTimeFrame(id: ID!): GoalTimeFrame!
+}

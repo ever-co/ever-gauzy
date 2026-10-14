@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -23,7 +23,8 @@ import {
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
@@ -31,6 +32,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 
 @NgModule({
 	imports: [
+		RecordViewModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
@@ -47,7 +49,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		NbTooltipModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,

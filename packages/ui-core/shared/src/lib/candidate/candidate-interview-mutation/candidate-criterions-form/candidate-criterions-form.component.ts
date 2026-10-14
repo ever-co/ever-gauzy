@@ -1,5 +1,5 @@
 import { ICandidateTechnologies, ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
@@ -9,6 +9,7 @@ import { CandidatePersonalQualitiesService, CandidateTechnologiesService } from 
     selector: 'ga-candidate-criterions-form',
     templateUrl: 'candidate-criterions-form.component.html',
     styleUrls: ['candidate-criterions-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {

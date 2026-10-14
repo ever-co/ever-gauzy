@@ -1,9 +1,9 @@
 import { EventSubscriber } from 'typeorm';
 import { shuffle } from 'underscore';
-import { gauzyToggleFeatures } from '@gauzy/config';
 import { FeatureStatusEnum, FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from './../core/file-storage/file-storage';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
+import { isFeatureEnabledByDefault } from './feature-default-state';
 import { Feature } from './feature.entity';
 
 @EventSubscriber()
@@ -26,7 +26,7 @@ export class FeatureSubscriber extends BaseEntityEventSubscriber<Feature> {
 			entity.status = entity.status ?? shuffle(Object.values(FeatureStatusEnum))[0];
 
 			// Check and set isEnabled based on gauzyToggleFeatures
-			entity.isEnabled = gauzyToggleFeatures[entity.code] ?? true;
+			entity.isEnabled = isFeatureEnabledByDefault(entity.code);
 
 			// Set imageUrl based on the entity's image property
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {

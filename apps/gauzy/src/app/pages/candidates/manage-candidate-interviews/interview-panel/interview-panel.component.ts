@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { filter, firstValueFrom, Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -49,6 +49,7 @@ import {
     selector: 'ga-interview-panel',
     templateUrl: './interview-panel.component.html',
     styleUrls: ['./interview-panel.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InterviewPanelComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

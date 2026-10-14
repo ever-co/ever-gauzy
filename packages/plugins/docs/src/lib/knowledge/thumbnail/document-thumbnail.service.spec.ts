@@ -1,3 +1,4 @@
+// cspell:ignore noext
 /**
  * Thumbnail generation (07 §4.4).
  *
@@ -20,27 +21,28 @@ const providerStub = {
 	url: jest.fn()
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FileStorage: class {
-			setProvider() {
-				return this;
-			}
-			getProviderInstance() {
-				return providerStub;
-			}
+jest.mock('@gauzy/core', () => ({
+	FileStorage: class {
+		setProvider() {
+			return this;
 		}
-	}),
-	{ virtual: true }
-);
+		getProviderInstance() {
+			return providerStub;
+		}
+	}
+}));
 jest.mock('../../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));
 
-import * as sharp from 'sharp';
+import * as sharpModule from 'sharp';
 import { DocumentKindEnum } from '@gauzy/contracts';
 import { DocumentThumbnailService } from './document-thumbnail.service';
 import { DOCS_THUMBNAIL_MAX_PX, isThumbnailableMime, thumbnailKeyFor } from './thumbnail.constants';
+
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
 
 /** A real 600x400 PNG, so `sharp` genuinely resizes rather than being mocked away. */
 const realPng = async (): Promise<Buffer> =>

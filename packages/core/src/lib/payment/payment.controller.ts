@@ -22,7 +22,7 @@ import {
 	PermissionsEnum,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { CrudController, BaseQueryDTO } from '../core';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';

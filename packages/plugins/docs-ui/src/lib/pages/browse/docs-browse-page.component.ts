@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbDialogService, NbMenuItem, NbMenuService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -64,6 +64,7 @@ import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 	selector: 'gz-docs-browse-page',
 	templateUrl: './docs-browse-page.component.html',
 	styleUrls: ['./docs-browse-page.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsBrowsePageComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

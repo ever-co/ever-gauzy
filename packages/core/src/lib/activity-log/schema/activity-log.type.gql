@@ -1,0 +1,162 @@
+# The activity log's object type.
+#
+# A log row is not the record it describes: it is the platform's own account of what happened to that
+# record, written by the subscribers that watch every other table. That is why the type carries the
+# polymorphic pair — `entity` names the kind of record and `entityId` names the row — instead of a
+# relation to any one domain: one log table serves every aggregate in the platform, so a foreign key
+# to one of them would be a column that is null on every row about the others.
+#
+# **The update-detail members are documents rather than columns with one meaning.** A creation writes
+# `data` and leaves the four empty; an update writes `updatedFields` and the two value lists — the
+# field names that changed, their values before and their values after — and a bulk update writes the
+# two entity lists beside them. They are carried as the kernel's `JSON` scalar because that is what
+# they are: a document whose shape depends on the action that wrote the row, which an input type cannot
+# state and which a client narrows on the `action` member instead.
+#
+# `action` and `actorType` are carried as their values rather than declared as schema enums. The two
+# vocabularies are the kernel's own (`ActionTypeEnum` and `ActorTypeEnum`), shared with the entities and
+# DTOs that write them, so declaring them here would claim a vocabulary this domain does not own.
+#
+# **No relation is carried as an object.** The delivered list read joins only the relations its caller
+# names in its query string, and this surface's read names none, so `employee` would be absent on every
+# row answered here. What always travels is the row's own foreign key, so the author is carried as
+# `employeeId` and the person behind it is read from the employee domain.
+#
+# The base row's audit stamps (`createdByUserId`, `updatedByUserId`, `deletedByUserId`) are not carried
+# either: this resource serves no write that could set them, so a member for any of them would answer
+# the audit trail of the audit trail. `archivedAt` is carried for the same reason `isArchived` is — the
+# delivered read narrows by the flag and answers the row, so a client reading why a row left the list
+# needs the timestamp beside it.
+
+"""
+One recorded action against one platform record.
+"""
+type ActivityLog {
+	id: ID!
+	"The kind of record the action was performed on, as the kernel's own entity vocabulary names it."
+	entity: String!
+	"The row the action was performed on, by identifier. The record behind it is read from the domain that owns it."
+	entityId: ID!
+	"The action that was performed, as the kernel's own action vocabulary names it."
+	action: String!
+	"Who performed the action: a person or the system itself."
+	actorType: String
+	"The sentence the writer composed for this row, describing what happened."
+	description: String
+	"The names of the fields an update changed. Empty on a creation or a removal."
+	updatedFields: JSON
+	"The values those fields held before the update, one document per changed row."
+	previousValues: JSON
+	"The values those fields hold after the update, one document per changed row."
+	updatedValues: JSON
+	"The records as they stood before a bulk update."
+	previousEntities: JSON
+	"The records as they stand after a bulk update."
+	updatedEntities: JSON
+	"The record the action produced, as it was written."
+	data: JSON
+	"The person the action is attributed to, by identifier. The employee row is not joined by this read."
+	employeeId: ID
+	"The tenant the action was taken in, by identifier."
+	tenantId: ID
+	"The organization the action was taken in, by identifier."
+	organizationId: ID
+	"Whether the row is active. A flag the writer sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the row is archived. A flag the writer sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the row was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the row was withdrawn, or null while it is live. The delivered list read selects on this
+	column rather than offering an argument for it, so a client that must see withdrawn rows states the
+	`deletedAt` filter below.
+	"""
+	deletedAt: DateTime
+	"When the action was recorded."
+	createdAt: DateTime
+	"When the row was last changed. A log row is written once, so this is normally the same instant."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of log rows.
+"""
+type ActivityLogEdge {
+	node: ActivityLog!
+	cursor: String!
+}
+
+"""
+One page of log rows, with the total the filters select and the boundary cursors.
+"""
+type ActivityLogConnection {
+	nodes: [ActivityLog!]!
+	edges: [ActivityLogEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a log list may be sorted by.
+
+Exactly the four the delivered read accepts an order for — `createdAt`, `updatedAt`, `entity` and
+`action` are that reader's own allow-list, and a value outside it is answered with the field's own
+default rather than refused. Stating the same four here keeps the two surfaces' order vocabularies one
+vocabulary: a REST caller that sorts by `actorType` is silently given `createdAt`, and a schema that
+offered `actorType` would make GraphQL promise an order the route does not apply.
+"""
+enum ActivityLogSortField {
+	createdAt
+	updatedAt
+	entity
+	action
+}
+
+"""
+The order the log rows are returned in. At most three keys are accepted.
+"""
+input ActivityLogSort {
+	field: ActivityLogSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a log list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the log row, because the connection narrows the rows the delivered read
+returned rather than restating the criterion it was handed. `entity` and `entityId` are the pair that
+makes this a per-record history — one record's timeline is this connection narrowed by both — and
+`employeeId` is the per-actor view of the same rows.
+
+The five document members carry the kernel's `JSON` operators: a `contains` is a substring match over
+the serialised document rather than a query into it, which is what the query protocol's own `JSON`
+condition means on every resource that declares one.
+"""
+input ActivityLogFilter {
+	id: IDFilter
+	entity: StringFilter
+	entityId: IDFilter
+	action: StringFilter
+	actorType: StringFilter
+	description: StringFilter
+	updatedFields: JSONFilter
+	previousValues: JSONFilter
+	updatedValues: JSONFilter
+	previousEntities: JSONFilter
+	updatedEntities: JSONFilter
+	data: JSONFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [ActivityLogFilter!]
+	or: [ActivityLogFilter!]
+	not: ActivityLogFilter
+}

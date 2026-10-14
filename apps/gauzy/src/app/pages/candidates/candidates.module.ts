@@ -33,7 +33,7 @@ import {
 	OrganizationEmploymentTypesService,
 	OrganizationsService
 } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CandidateCriterionCardModule,
@@ -166,7 +166,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import {
 	BaseEmployeeChartWidgetComponent,
@@ -33,7 +33,7 @@ import {
 	templateUrl: './employee-statistics-chart-widget.component.html',
 	styleUrls: ['./employee-statistics-chart-widget.component.scss'],
 	standalone: true,
-	imports: [NbSelectModule, TranslateModule, EmployeeChartCardComponent],
+	imports: [NbSelectModule, TranslatePipe, EmployeeChartCardComponent],
 	providers: EMPLOYEE_CHART_WIDGET_PROVIDERS,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })

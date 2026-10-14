@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 /** One entry in {@link EmployeeChartLegendComponent}. */
 export interface IEmployeeChartLegendItem {
@@ -120,6 +120,7 @@ export interface IEmployeeChartLegendItem {
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmployeeChartLegendComponent {

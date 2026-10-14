@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -19,6 +19,7 @@ import { EmployeesService, GoalSettingsService, Store, ToastrService } from '@ga
 	selector: 'ga-edit-kpi',
 	templateUrl: './edit-kpi.component.html',
 	styleUrls: ['./edit-kpi.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditKpiComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

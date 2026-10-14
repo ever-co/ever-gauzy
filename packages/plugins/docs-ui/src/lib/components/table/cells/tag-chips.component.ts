@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IDocument, ITag } from '@gauzy/contracts';
 
 /** Tag chips: core tag colors, up to 3 + "+N" overflow. */
@@ -52,6 +52,7 @@ import { IDocument, ITag } from '@gauzy/contracts';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TagChipsComponent {

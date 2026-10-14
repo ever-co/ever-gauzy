@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
@@ -16,6 +16,7 @@ import { PublicPageEmployeeMutationComponent } from '../mutation/public-page-emp
 	selector: 'ngx-employee-share',
 	templateUrl: './employee.component.html',
 	styleUrls: ['./employee.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

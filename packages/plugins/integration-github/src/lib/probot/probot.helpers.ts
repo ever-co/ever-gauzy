@@ -1,4 +1,9 @@
-import SmeeClient from 'smee-client';
+// smee-client 5 is an ES module whose CommonJS face (`module.exports`) is the class itself. It is typed from its ES
+// default and loaded with require, the one form that holds both in this package's build (nodenext) and in the API
+// bundle's (node10, external at run time).
+type SmeeClient = InstanceType<typeof import('smee-client').default>;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const SmeeClient: typeof import('smee-client').default = require('smee-client');
 import type { Probot } from 'probot';
 import type { Octokit } from '@octokit/rest';
 import { OctokitConfig, ProbotConfig } from './probot.types';

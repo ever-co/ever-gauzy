@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, forwardRef, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { ContactType, IEmployee, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
@@ -21,6 +21,7 @@ import { OrganizationContactService } from '@gauzy/ui-core/core';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestroy {

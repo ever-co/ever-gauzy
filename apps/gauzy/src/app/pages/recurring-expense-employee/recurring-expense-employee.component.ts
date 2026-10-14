@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,12 +29,14 @@ import {
 	RecurringExpenseMutationComponent,
 	RecurringExpenseDeleteConfirmationComponent
 } from '@gauzy/ui-core/shared';
+import { buildEmployeeRecurringExpenseViewSections } from '../expense-recurring/recurring-expense-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-recurring-expenses-employee',
     templateUrl: './recurring-expense-employee.component.html',
     styleUrls: ['./recurring-expense-employee.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
@@ -192,32 +194,12 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			return;
 		}
 
-		this.viewSections = this.buildViewSections(expense);
+		this.viewSections = buildEmployeeRecurringExpenseViewSections(expense, (key) => this.getTranslation(key));
 		this.viewedRecurringExpense = expense;
 	}
 
 	closeView(): void {
 		this.viewedRecurringExpense = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the block row's columns, read vertically,
-	 * then the fields the row has no room for.
-	 */
-	private buildViewSections(expense: IEmployeeRecurringExpense): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'POP_UPS.EMPLOYEE', key: 'employee', type: 'person' },
-					// Default categories are stored as enum keys — show them translated,
-					// exactly as the block row does.
-					{ label: 'POP_UPS.CATEGORY_NAME', value: this.getCategoryName(expense.categoryName) },
-					{ label: 'POP_UPS.STARTS_ON', key: 'startDate', type: 'date' },
-					{ label: 'POP_UPS.EXPENSE_VALUE', key: 'value', type: 'money' },
-					{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' }
-				]
-			}
-		];
 	}
 
 	async editEmployeeRecurringExpense() {

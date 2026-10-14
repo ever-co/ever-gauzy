@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'gauzy-task-due-date',
     templateUrl: './task-due-date.component.html',
     styleUrls: ['./task-due-date.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [TranslatePipe]
 })
 export class TaskDueDateComponent {

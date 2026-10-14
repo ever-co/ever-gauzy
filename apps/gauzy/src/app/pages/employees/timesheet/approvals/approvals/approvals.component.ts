@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	ISubmitTimesheetInput,
@@ -21,6 +21,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 	selector: 'ngx-timesheet-approvals',
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ApprovalsComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {

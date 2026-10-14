@@ -9,7 +9,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule, WorkInProgressModule } from '@gauzy/ui-core/shared';
 import { IntegrationAiRoutes } from './integration-ai.routes';
 import { IntegrationAILayoutComponent } from './integration-ai.layout.component';
@@ -33,7 +33,7 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		IntegrationAiRoutes,
 		WorkInProgressModule,
 		SharedModule

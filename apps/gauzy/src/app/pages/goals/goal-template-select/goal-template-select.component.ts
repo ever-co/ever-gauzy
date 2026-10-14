@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IGoalTemplate,
 	IGoalTimeFrame,
@@ -32,6 +32,7 @@ import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-f
     selector: 'ga-goal-template-select',
     templateUrl: './goal-template-select.component.html',
     styleUrls: ['./goal-template-select.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalTemplateSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

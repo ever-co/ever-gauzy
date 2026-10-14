@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,6 +19,7 @@ import { Store, ToastrService } from '@gauzy/ui-core/core';
     selector: 'ga-teams-mutation',
     templateUrl: './teams-mutation.component.html',
     styleUrls: ['./teams-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TeamsMutationComponent implements OnInit {

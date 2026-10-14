@@ -120,6 +120,19 @@ export const DOCUMENT_LIST_COLUMNS = [
 	'externalId'
 ];
 
+/**
+ * The concurrency token a content save writes: now, at millisecond resolution — and never the token
+ * it replaces, even when the clock has not moved past it (same millisecond, or a clock behind the
+ * replica that wrote the last one), so every accepted save hands out a token no earlier editor holds.
+ *
+ * @param loaded The `updatedAt` the save replaces.
+ */
+export function nextContentToken(loaded?: Date | string | null): Date {
+	const previous = loaded ? new Date(loaded).getTime() : Number.NaN;
+	const now = Date.now();
+	return new Date(Number.isFinite(previous) ? Math.max(now, previous + 1) : now);
+}
+
 @FavoriteService(BaseEntityEnum.Document)
 @Injectable()
 export class DocumentService extends TenantAwareCrudService<Document> {
@@ -394,7 +407,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 
 		// The create DTO accepts `mentionEmployeeIds`, so it has to mean something: without this
 		// the field was whitelisted, parsed and silently dropped.
-		await this.syncMentions(document.id, input.mentionEmployeeIds);
+		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId ?? organizationId);
 		await this.syncDocumentLinks(document, contentJson);
 		this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
 
@@ -538,9 +551,18 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			force: input.forceSnapshot === true
 		});
 
+		// 🛑 The loaded `updatedAt` must not travel with the save. It is the concurrency token, and the
+		// snapshot above may have just moved the row (its `version` update stamps `updatedAt`): spread
+		// back, the stale value read as a change to TypeORM, which then WROTE it — the token stayed put
+		// on the first save of every snapshot window, and so did the one the response handed the editor.
+		// Nor can the ORM's own stamp be relied on: on SQLite `CURRENT_TIMESTAMP` has one-second
+		// precision, so two saves inside one second would share a token. The save states its own,
+		// strictly newer than the one it replaces (see `nextContentToken`).
+		const { updatedAt: loadedToken, ...current } = document;
 		const updated = await this.save({
-			...document,
+			...current,
 			id: document.id,
+			updatedAt: nextContentToken(loadedToken),
 			contentJson,
 			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only
@@ -556,7 +578,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// (`MentionService.updateEntityMentions`: publish the newly added ids, delete the ones the
 		// editor dropped). Awaited so the fan-out is done before the response, but best-effort by
 		// contract: a failure logs and never rolls back the content save.
-		await this.syncMentions(document.id, input.mentionEmployeeIds);
+		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId);
 		// The `+` cross-link half of the same idea (`05-editor-spec.md` §7.2).
 		await this.syncDocumentLinks(updated, contentJson);
 
@@ -749,13 +771,26 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 *
 	 * @param documentId The document the mentions belong to.
 	 * @param mentionEmployeeIds The editor's current mention id set (omitted = no-op).
+	 * @param organizationId The document's organization: the new mentions, their notification and their
+	 *   subscription belong to it (as the task and comment edits pass theirs, develop #10531).
 	 */
-	private async syncMentions(documentId: ID, mentionEmployeeIds?: ID[]): Promise<void> {
+	private async syncMentions(
+		documentId: ID,
+		mentionEmployeeIds: ID[] | undefined,
+		organizationId: ID
+	): Promise<void> {
 		if (!Array.isArray(mentionEmployeeIds)) {
 			return;
 		}
 		try {
-			await this._mentionService.updateEntityMentions(BaseEntityEnum.Document, documentId, mentionEmployeeIds);
+			await this._mentionService.updateEntityMentions(
+				BaseEntityEnum.Document,
+				documentId,
+				mentionEmployeeIds,
+				undefined,
+				undefined,
+				organizationId
+			);
 		} catch (error) {
 			this.logger.warn(`Failed to sync mentions for document ${documentId}: ${(error as Error).message}`);
 		}

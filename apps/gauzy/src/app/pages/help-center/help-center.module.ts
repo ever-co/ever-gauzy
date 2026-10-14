@@ -9,7 +9,7 @@ import {
 	NbTooltipModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	EmployeeMultiSelectModule,
 	SmartDataViewLayoutModule,
@@ -39,7 +39,7 @@ import { AddArticleModule } from './add-article/add-article.module';
 		NbSpinnerModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule,
 		SharedModule
 	],

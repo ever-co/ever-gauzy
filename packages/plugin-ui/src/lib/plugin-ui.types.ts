@@ -1,4 +1,4 @@
-import { EnvironmentProviders, Injector, InjectionToken, Provider, Type } from '@angular/core';
+import { EnvironmentProviders, Injector, InjectionToken, type Provider, Type } from '@angular/core';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import type { UiBridgeFramework } from './ui-bridge/ui-bridge.interface';
 

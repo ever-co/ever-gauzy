@@ -8,7 +8,8 @@ import {
 	OnDestroy,
 	OnInit,
 	Optional,
-	ViewChild
+	ViewChild,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -64,6 +65,7 @@ import { PermissionManagerComponent } from '../permission-manager/permission-man
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbLayoutModule,
 		NbSpinnerModule,

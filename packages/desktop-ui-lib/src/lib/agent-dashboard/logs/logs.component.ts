@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { LogEntry } from '../models/logs.models';
 import { LogService } from '../services/logs.service';
@@ -10,6 +10,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
 	selector: 'app-logs-page',
 	templateUrl: './logs.component.html',
 	styleUrls: ['./logs.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbCardModule,
 		NbSelectModule,

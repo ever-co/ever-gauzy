@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 export type SkeletonVariant = 'lines' | 'table' | 'cards';
 
@@ -23,6 +23,7 @@ const CARD_BARS: number[] = [0, 1, 2];
 	selector: 'ngx-skeleton',
 	templateUrl: './skeleton.component.html',
 	styleUrls: ['./skeleton.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SkeletonComponent {

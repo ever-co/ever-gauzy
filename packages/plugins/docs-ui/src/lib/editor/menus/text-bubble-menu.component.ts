@@ -11,13 +11,13 @@ import {
 	OnChanges,
 	OnDestroy,
 	Output,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild,
 	inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Editor } from '@tiptap/core';
 import { BubbleMenuPlugin } from '@tiptap/extension-bubble-menu';
 import { NodeSelection, PluginKey } from '@tiptap/pm/state';
@@ -63,7 +63,7 @@ type TurnInto =
 @Component({
 	selector: 'gz-text-bubble-menu',
 	standalone: true,
-	imports: [CommonModule, FormsModule, TranslateModule, NbButtonModule, NbIconModule, NbInputModule, NbTooltipModule],
+	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbIconModule, NbInputModule, NbTooltipModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-bubble-menu" #menu>

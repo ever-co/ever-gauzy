@@ -472,7 +472,7 @@ export class StatisticService {
 				.groupByRaw('1');
 		} else {
 			const buckets = buildProfileActivityDayBuckets(request);
-			const dateBindings: unknown[] = [];
+			const dateBindings: Knex.RawBinding[] = [];
 			const cases = buckets.map((bucket) => {
 				dateBindings.push(
 					'time_log.startedAt',

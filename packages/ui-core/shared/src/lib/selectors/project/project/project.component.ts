@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
@@ -36,6 +36,7 @@ import { entitySelectPanelClass } from '../../entity-select-panel-class';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {

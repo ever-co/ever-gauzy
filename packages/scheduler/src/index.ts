@@ -8,6 +8,7 @@ export * from './lib/interfaces/scheduled-job-options.interface';
 export * from './lib/interfaces/scheduler-job-descriptor.interface';
 export * from './lib/interfaces/scheduler-module-options.interface';
 export * from './lib/interfaces/scheduler-queue-job.interface';
+export * from './lib/interfaces/scheduler-run-recorder.interface';
 export * from './lib/hosts/queue-worker.host';
 export * from './lib/utils/is-queue-root-enabled';
 export * from './lib/services/scheduler-queue.service';

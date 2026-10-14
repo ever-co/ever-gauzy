@@ -33,6 +33,17 @@
 <!-- Buttons for the invoice view component -->
 <ng-template #buttons>
   <div class="button-container">
+    <!-- Favorite: the sidebar entry opens this page (an estimate opens the estimate view). -->
+    @if (invoice?.id) {
+      <ngx-favorite-toggle
+        [entityType]="documentEntity"
+        [entityId]="invoice.id"
+        [entityName]="documentLabel(invoice)"
+        size="small"
+        status="basic"
+        spacing="list"
+      ></ngx-favorite-toggle>
+    }
     <button nbButton type="button" status="basic" class="action secondary" size="small" (click)="print()">
       <nb-icon icon="printer-outline" pack="eva"></nb-icon>
       {{ 'BUTTONS.PRINT' | translate }}

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, Validators, UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 
@@ -23,6 +23,7 @@ export interface PromptDialogOptions {
     selector: 'ngx-prompt',
     templateUrl: './prompt.component.html',
     styleUrls: ['./prompt.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PromptComponent implements OnInit {

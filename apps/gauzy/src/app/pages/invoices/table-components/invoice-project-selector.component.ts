@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { DefaultEditor } from 'angular2-smart-table';
@@ -22,6 +22,7 @@ import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 		</nb-select>
 		`,
     styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceProjectsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {

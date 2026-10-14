@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
     styleUrls: ['./accept-invite.component.scss'],
     templateUrl: './accept-invite.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AcceptInviteComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

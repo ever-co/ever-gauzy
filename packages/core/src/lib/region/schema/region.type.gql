@@ -1,0 +1,190 @@
+# The region domain's GraphQL types.
+#
+# A region is the commercial geography: the place a cart's currency, tax-inclusivity and provider
+# selection are decided. The type therefore carries those three, its country set as the pivot rows
+# themselves — each of which holds its own tax-exemption flag and province scope — and the status
+# vocabulary it shares with the channel so that one filter covers both.
+
+"""
+The commercial geography — a currency, a tax-inclusivity default, a country set and the provider keys
+enabled for it.
+"""
+type Region {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	name: String!
+	"""Stable key, unique per organization among the live rows."""
+	code: String!
+	"""The region's currency, naming a row of the platform's currency master. A three-letter ISO code."""
+	currency: String!
+	"""Whether this is the organization's default region. At most one live row carries it."""
+	isDefault: Boolean!
+	"""Whether displayed prices include tax in this region."""
+	isTaxInclusive: Boolean!
+	"""Registered tax-provider strategy key. Absent means the platform's built-in tax engine."""
+	taxProviderKey: String
+	"""Allowed payment-provider codes. Absent means every enabled provider."""
+	paymentProviderKeys: [String!]
+	"""Allowed shipping and carrier provider keys. Absent means every enabled provider."""
+	fulfillmentProviderKeys: [String!]
+	"""Only `ACTIVE` regions are offered by their channels. `ARCHIVED` is terminal."""
+	status: ChannelStatus!
+	"""Tenant extras."""
+	metadata: JSON
+	"""The countries the region serves, one row per country, when they are expanded."""
+	countries: [RegionCountry!]
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+One country inside one commercial geography.
+
+The row answers two questions in one read: whether a shipping address is inside the region, and
+whether sales into that country are exempt there. That is why the membership is a table rather than a
+list of identifiers on the region.
+"""
+type RegionCountry {
+	id: ID!
+	regionId: ID!
+	region: Region
+	countryId: ID!
+	"""Whether sales into this country carry no tax in this region — an export sale."""
+	isTaxExempt: Boolean!
+	"""
+	Optional sub-national scope: when set, only these province or state codes are in the region.
+	Absent means the whole country.
+	"""
+	provinceCodes: [String!]
+	tenantId: ID
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of regions.
+"""
+type RegionEdge {
+	node: Region!
+	cursor: String!
+}
+
+"""
+One page of regions, with the total the filters select and the boundary cursors.
+"""
+type RegionConnection {
+	nodes: [Region!]!
+	edges: [RegionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a region may be sorted by.
+"""
+enum RegionSortField {
+	createdAt
+	updatedAt
+	name
+	code
+	currency
+	status
+	isDefault
+}
+
+"""
+The order the regions are returned in. At most three keys are accepted.
+"""
+input RegionSort {
+	field: RegionSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the lifecycle status.
+"""
+input RegionStatusFilter {
+	eq: ChannelStatus
+	ne: ChannelStatus
+	in: [ChannelStatus!]
+	nin: [ChannelStatus!]
+	isNull: Boolean
+}
+
+"""
+The fields a region list may be narrowed by.
+"""
+input RegionFilter {
+	id: IDFilter
+	name: StringFilter
+	code: StringFilter
+	currency: StringFilter
+	status: RegionStatusFilter
+	isDefault: BooleanFilter
+	taxProviderKey: StringFilter
+	isTaxInclusive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [RegionFilter!]
+	or: [RegionFilter!]
+	not: RegionFilter
+}
+
+"""
+What a caller states when it opens a commercial geography.
+
+`currency` is required and checked against the platform's currency master before the row is written.
+The country set is not part of this input: membership is a pivot the region's own operation writes.
+"""
+input CreateRegionInput {
+	organizationId: ID!
+	name: String!
+	code: String!
+	currency: String!
+	isTaxInclusive: Boolean
+	taxProviderKey: String
+	paymentProviderKeys: [String!]
+	fulfillmentProviderKeys: [String!]
+	metadata: JSON
+}
+
+"""
+What a caller may change on a region that exists.
+
+A currency change is re-checked against the currency master like the creation is. `isDefault` and
+`status` are absent: each has an operation of its own.
+"""
+input UpdateRegionInput {
+	id: ID!
+	organizationId: ID!
+	name: String
+	code: String
+	currency: String
+	isTaxInclusive: Boolean
+	taxProviderKey: String
+	paymentProviderKeys: [String!]
+	fulfillmentProviderKeys: [String!]
+	metadata: JSON
+}
+
+"""
+One member of a region's country set.
+"""
+input RegionCountryInput {
+	countryId: ID!
+	isTaxExempt: Boolean
+	provinceCodes: [String!]
+}
+
+"""
+The country set a region serves afterwards.
+
+A set rather than a member-per-call pair, so a half-applied replacement is not a state a client can
+observe.
+"""
+input ReplaceRegionCountriesInput {
+	id: ID!
+	countries: [RegionCountryInput!]!
+}

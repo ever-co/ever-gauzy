@@ -2,7 +2,7 @@
 	@for (item of items; track item.id) {
 		@if (!item?.hidden) {
 			<ga-menu-item
-				[id]="item?.id"
+				[id]="$safeNavigationMigration(item?.id)"
 				(selectedChange)="focusOn($event)"
 				[item]="item"
 				[selected]="isSelected(item)"

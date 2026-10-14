@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IPipelineStageUpdateInput } from '@gauzy/contracts';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -10,6 +10,7 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
 	templateUrl: './stage-form.component.html',
 	selector: 'ga-stage-form',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class StageFormComponent implements OnInit {

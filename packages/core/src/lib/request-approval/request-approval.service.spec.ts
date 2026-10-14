@@ -49,7 +49,7 @@ describe('RequestApprovalService.findAllRequestApprovals joins (TypeORM, MySQL)'
 
 	it('joins equipment sharings on their own id', async () => {
 		const query: Record<string, jest.Mock> = {};
-		for (const method of ['leftJoinAndSelect', 'setFindOptions', 'where', 'orWhere']) {
+		for (const method of ['leftJoinAndSelect', 'setFindOptions', 'where', 'andWhere', 'orWhere']) {
 			query[method] = jest.fn(() => query);
 		}
 		query.leftJoinAndSelect.mockImplementation((...args: [string, string, string]) => {

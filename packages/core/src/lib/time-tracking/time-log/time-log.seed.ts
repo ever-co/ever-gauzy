@@ -47,7 +47,8 @@ export const createRandomTimeLogs = async (
 		.getMany();
 	if (isEmpty(projects)) {
 		console.warn(`Warning: projects not found for tenantId: ${tenant.id}, RandomTimesheet will not be created`);
-		return;
+		// No slots rather than nothing: the callers recalculate and seed activities over the list
+		return [];
 	}
 	const timeSheetChunk = chunk(timeSheets, 5) as Array<ITimesheet[]>;
 	const allTimeSlots: ITimeSlot[] = [];

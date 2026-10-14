@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 /**
@@ -14,6 +14,7 @@ interface IChatwootWidget {
 	selector: 'ngx-help',
 	templateUrl: './help.component.html',
 	styleUrls: ['./help.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class HelpComponent implements OnDestroy {

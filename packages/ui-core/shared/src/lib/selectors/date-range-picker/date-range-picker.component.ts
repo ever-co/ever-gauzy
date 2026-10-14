@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, combineLatest, of, Subject, switchMap, take } from 'rxjs';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
@@ -35,6 +35,7 @@ import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 	selector: 'ngx-date-range-picker',
 	templateUrl: './date-range-picker.component.html',
 	styleUrls: ['./date-range-picker.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DateRangePickerComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

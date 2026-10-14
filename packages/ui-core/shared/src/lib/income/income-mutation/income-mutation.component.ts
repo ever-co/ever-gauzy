@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { IIncome, ITag, IOrganization, ICurrency, ISelectedEmployee } from '@gauzy/contracts';
@@ -15,6 +15,7 @@ import { FormHelpers } from '../../forms/helpers';
     selector: 'ngx-income-mutation',
     templateUrl: './income-mutation.component.html',
     styleUrls: ['./income-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IncomeMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

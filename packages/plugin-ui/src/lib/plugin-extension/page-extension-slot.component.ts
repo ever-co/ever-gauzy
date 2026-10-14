@@ -12,7 +12,7 @@ import {
 	OnDestroy,
 	OnInit,
 	Type,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewContainerRef
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -120,8 +120,8 @@ interface MountedExtension {
 											[frameworkId]="mounted.extension.frameworkId!"
 											[component]="mounted.resolvedFrameworkComponent"
 											[loadComponent]="mounted.loadFrameworkComponent"
-											[props]="$any(mounted.extension.config)?.props"
-											[context]="$any(mounted.extension.config)?.context"
+											[props]="$safeNavigationMigration($any(mounted.extension.config)?.props)"
+											[context]="$safeNavigationMigration($any(mounted.extension.config)?.context)"
 										/>
 									</nb-card-body>
 								</nb-card>
@@ -133,8 +133,8 @@ interface MountedExtension {
 											[frameworkId]="mounted.extension.frameworkId!"
 											[component]="mounted.resolvedFrameworkComponent"
 											[loadComponent]="mounted.loadFrameworkComponent"
-											[props]="$any(mounted.extension.config)?.props"
-											[context]="$any(mounted.extension.config)?.context"
+											[props]="$safeNavigationMigration($any(mounted.extension.config)?.props)"
+											[context]="$safeNavigationMigration($any(mounted.extension.config)?.context)"
 										/>
 									</nb-card-body>
 								</nb-card>
@@ -155,8 +155,8 @@ interface MountedExtension {
 											[frameworkId]="mounted.extension.frameworkId!"
 											[component]="mounted.resolvedFrameworkComponent"
 											[loadComponent]="mounted.loadFrameworkComponent"
-											[props]="$any(mounted.extension.config)?.props"
-											[context]="$any(mounted.extension.config)?.context"
+											[props]="$safeNavigationMigration($any(mounted.extension.config)?.props)"
+											[context]="$safeNavigationMigration($any(mounted.extension.config)?.context)"
 										/>
 									</nb-card-body>
 								</nb-card>
@@ -176,8 +176,8 @@ interface MountedExtension {
 											[frameworkId]="mounted.extension.frameworkId!"
 											[component]="mounted.resolvedFrameworkComponent"
 											[loadComponent]="mounted.loadFrameworkComponent"
-											[props]="$any(mounted.extension.config)?.props"
-											[context]="$any(mounted.extension.config)?.context"
+											[props]="$safeNavigationMigration($any(mounted.extension.config)?.props)"
+											[context]="$safeNavigationMigration($any(mounted.extension.config)?.context)"
 										/>
 									</div>
 								</div>
@@ -187,8 +187,8 @@ interface MountedExtension {
 									[frameworkId]="mounted.extension.frameworkId!"
 									[component]="mounted.resolvedFrameworkComponent"
 									[loadComponent]="mounted.loadFrameworkComponent"
-									[props]="$any(mounted.extension.config)?.props"
-									[context]="$any(mounted.extension.config)?.context"
+									[props]="$safeNavigationMigration($any(mounted.extension.config)?.props)"
+									[context]="$safeNavigationMigration($any(mounted.extension.config)?.context)"
 								/>
 							}
 						}

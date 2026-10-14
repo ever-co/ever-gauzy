@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, tap } from 'rxjs';
 import { IAppVersionInfo } from '@gauzy/contracts';
@@ -14,6 +14,7 @@ interface IVersionRow {
 	selector: 'ngx-about',
 	templateUrl: './about.component.html',
 	styleUrls: ['./about.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AboutComponent implements OnInit, OnDestroy {

@@ -12,7 +12,7 @@ import {
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CrudController, BaseQueryDTO } from '../core';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
 import {

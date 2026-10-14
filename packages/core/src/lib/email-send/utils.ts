@@ -50,7 +50,6 @@ export class SMTPUtils {
 			// Port 465 => implicit TLS; otherwise respect provided secure value
 			const secure = SMTPUtils.normalizeSecure(port, config.secure);
 			const transporter = nodemailer.createTransport({
-				from: config.fromAddress,
 				host: config.host,
 				port,
 				secure,
@@ -60,7 +59,9 @@ export class SMTPUtils {
 					user: config.username,
 					pass: config.password
 				}
-			});
+			},
+			// The sender is a message default (nodemailer 10 types it as such, not as a transport option).
+			{ from: config.fromAddress });
 			// Verify the transporter
 			return await transporter.verify(); // Configuration is valid / invalid;
 		} catch (error) {

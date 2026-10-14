@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { ICandidate } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { CandidatesService, ErrorHandlingService } from '@gauzy/ui-core/core';
@@ -8,6 +8,7 @@ import { BaseCandidateSelectorComponent } from '../base-candidate-selector.compo
     selector: 'ga-candidate-multi-select',
     templateUrl: './candidate-multi-select.component.html',
     styleUrls: ['../base-candidate-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateMultiSelectComponent extends BaseCandidateSelectorComponent implements OnInit {

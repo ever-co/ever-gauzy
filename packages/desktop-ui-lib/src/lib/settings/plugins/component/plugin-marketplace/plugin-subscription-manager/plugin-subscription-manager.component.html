@@ -1,7 +1,7 @@
 <!-- Installed and Installing Status -->
-@let installed = installationQuery.installed$(plugin?.id) | async;
+@let installed = installationQuery.installed$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Loading State -->
-@let installing = installationQuery.installing$(plugin?.id) |async;
+@let installing = installationQuery.installing$($safeNavigationMigration(plugin?.id)) |async;
 <!-- Current Subscription -->
 @let canChangePlan = !currentSubscription?.parentId;
 <!-- Loading -->
@@ -60,7 +60,7 @@
 					<div class="subscription-info">
 						<div class="plan-badge-wrapper">
 							<span class="plan-type-badge" [class]="currentPlan?.type">
-								{{ currentPlan?.type | titlecase }}
+								{{ $safeNavigationMigration(currentPlan?.type) | titlecase }}
 							</span>
 							@if(installed) {
 							<span class="installed-badge">

@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
+import { HttpErrorResponse, type HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { NbAuthResult } from '@nebular/auth';
 import { Observable, take, throwError } from 'rxjs';

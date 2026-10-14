@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NbPopoverDirective, NbThemeService } from '@nebular/theme';
 import { Store } from '@gauzy/ui-core/core';
 import { ThemeSelectorComponent } from '../theme-selector.component';
@@ -7,6 +7,7 @@ import { ThemeSelectorComponent } from '../theme-selector.component';
 	selector: 'gauzy-theme-selector-image',
 	templateUrl: './theme-selector-image.component.html',
 	styleUrls: ['./theme-selector-image.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ThemeSelectorImageComponent extends ThemeSelectorComponent {

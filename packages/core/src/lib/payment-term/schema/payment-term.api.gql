@@ -1,0 +1,26 @@
+# The settlement-term domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+
+extend type Query {
+	paymentTerms: [PaymentTerm!]!
+	paymentTerm(id: ID!): PaymentTerm
+	paymentTermSchedule(id: ID!, total: String!, basisDate: String!, currencyDecimals: Int, currency: String): PaymentTermSchedule!
+}
+
+extend type Mutation {
+	createPaymentTerm(input: CreatePaymentTermInput!): PaymentTerm!
+	updatePaymentTerm(input: UpdatePaymentTermInput!): PaymentTerm!
+	updatePaymentTermLines(input: UpdatePaymentTermLinesInput!): PaymentTerm!
+	archivePaymentTerm(id: ID!): Boolean!
+	"""
+	Withdraws a payment term without removing it — `DELETE /payment-terms/:id/soft`. It requires the edit grant the change
+	requires, as the route does: a role that may only read cannot withdraw one.
+	"""
+	softDeletePaymentTerm(id: ID!): PaymentTerm!
+	"""
+	Restores a withdrawn payment term — `PUT /payment-terms/:id/recover` — under the same edit grant: restoring undoes a removal.
+	"""
+	recoverPaymentTerm(id: ID!): PaymentTerm!
+}

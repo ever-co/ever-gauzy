@@ -30,6 +30,7 @@
 		"artifactName": "${name}-${arch}-${version}.${ext}",
 		"productName": "Ever Gauzy MCP Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"beforeBuild": "tools/electron/before-build.js",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false,
@@ -53,6 +54,7 @@
 			}
 		],
 		"mac": {
+			"minimumSystemVersion": "13.0",
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.icns",
 			"target": {
@@ -122,21 +124,22 @@
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
-		"@modelcontextprotocol/sdk": "^1.13.1",
-		"axios": "^1.18.0",
-		"dotenv": "^17.2.4",
-		"zod": "^4.3.5",
-		"@sentry/electron": "7.7.1",
-		"@sentry/node": "10.36.0",
-		"@sentry/profiling-node": "10.36.0",
-		"@sentry/core": "10.36.0",
-		"electron-log": "^4.4.8",
-		"electron-store": "^8.1.0",
-		"electron-updater": "^6.1.7",
-		"electron-util": "^0.18.1",
+		"@modelcontextprotocol/sdk": "^1.32.1",
+		"axios": "^1.20.0",
+		"dotenv": "^18.0.7",
+		"zod": "^4.6.7",
+		"@sentry/electron": "8.1.0",
+		"@sentry/node": "11.4.0",
+		"@sentry/profiling-node": "11.4.0",
+		"@sentry/core": "11.4.0",
+		"electron-log": "^5.4.4",
+		"electron-store": "^12.0.0",
+		"electron-updater": "^6.8.9",
+		"electron-util": "^1.0.0",
 		"custom-electron-titlebar": "^4.4.1"
 	},
 	"resolutions": {
+		"**/@mikro-orm/better-sqlite/better-sqlite3": "13.0.3",
 		"@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
 		"@gauzy/config": "file:../../../dist/packages/config",
@@ -144,7 +147,7 @@
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
-		"knex": "3.1.0"
+		"knex": "3.3.0"
 	},
 	"pkg": {
 		"assets": [],

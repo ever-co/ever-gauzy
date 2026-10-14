@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
 import { EMPTY } from 'rxjs';
@@ -30,6 +30,7 @@ import { SettingTitlesEnum } from '../integration-setting-card/integration-setti
 	styleUrls: ['./view.component.scss'],
 	templateUrl: './view.component.html',
 	providers: [TitleCasePipe],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class IntegrationAIViewComponent extends TranslationBaseComponent implements OnInit {

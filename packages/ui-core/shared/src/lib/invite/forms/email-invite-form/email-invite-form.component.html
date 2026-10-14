@@ -222,7 +222,7 @@
 					formControlName="invitationExpirationPeriod"
 				>
 					@for (option of invitationExpiryOptions; track option) {
-					<nb-option [value]="option?.value">
+					<nb-option [value]="$safeNavigationMigration(option?.value)">
 						{{ option?.label }}
 					</nb-option>
 					}

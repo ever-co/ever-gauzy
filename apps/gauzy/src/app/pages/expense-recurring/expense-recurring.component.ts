@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,12 +27,14 @@ import {
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
 } from '@gauzy/ui-core/shared';
+import { buildOrganizationRecurringExpenseViewSections } from './recurring-expense-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-expense-recurring',
     templateUrl: './expense-recurring.component.html',
     styleUrls: ['./expense-recurring.component.scss', '../dashboard/dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpenseRecurringComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
@@ -192,32 +194,12 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 			return;
 		}
 
-		this.viewSections = this.buildViewSections(expense);
+		this.viewSections = buildOrganizationRecurringExpenseViewSections(expense, (key) => this.getTranslation(key));
 		this.viewedRecurringExpense = expense;
 	}
 
 	closeView(): void {
 		this.viewedRecurringExpense = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the block row's columns, read vertically,
-	 * then the fields the row has no room for.
-	 */
-	private buildViewSections(expense: IOrganizationRecurringExpense): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					// Default categories are stored as enum keys — show them translated,
-					// exactly as the block row does.
-					{ label: 'POP_UPS.CATEGORY_NAME', value: this.getCategoryName(expense.categoryName) },
-					{ label: 'POP_UPS.DATE', key: 'startDate', type: 'date' },
-					{ label: 'POP_UPS.EXPENSE_VALUE', key: 'value', type: 'money' },
-					{ label: 'EXPENSES_PAGE.SPLIT_EXPENSE', key: 'splitExpense', type: 'boolean' },
-					{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' }
-				]
-			}
-		];
 	}
 
 	async editOrganizationRecurringExpense() {

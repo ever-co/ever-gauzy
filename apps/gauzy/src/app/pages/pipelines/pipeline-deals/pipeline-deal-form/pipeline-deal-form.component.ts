@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { catchError, filter, map, Observable, of, switchMap, tap } from 'rxjs';
@@ -20,6 +20,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-pipeline-deals-form',
 	  templateUrl: './pipeline-deal-form.component.html',
 	  styleUrls: ['./pipeline-deal-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PipelineDealFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

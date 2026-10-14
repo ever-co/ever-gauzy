@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -16,6 +16,7 @@ export interface EmployeeSchedule {
 @Component({
 	selector: 'ga-employee-schedules',
 	templateUrl: './employee-schedule.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmployeeScheduleComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +18,7 @@ import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-co
     selector: 'ngx-view-inventory-item',
     templateUrl: './view-inventory-item.component.html',
     styleUrls: ['./view-inventory-item.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InventoryItemViewComponent extends TranslationBaseComponent implements OnInit {

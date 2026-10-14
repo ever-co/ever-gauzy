@@ -16,7 +16,7 @@ import {
 	NbLayoutModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	EmployeeMultiSelectModule,
@@ -72,7 +72,7 @@ import { BaseChartDirective } from 'ng2-charts';
 		GoalTemplateSelectModule,
 		GoalLevelSelectModule,
 		TaskSelectModule,
-		TranslateModule,
+		TranslatePipe,
 		NgxPermissionsModule,
 		EmployeeMultiSelectModule,
 		BaseChartDirective

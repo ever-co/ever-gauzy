@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ID, IEmployee } from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -8,6 +8,7 @@ import { AsyncPipe } from '@angular/common';
 	selector: 'ngx-avatar',
 	templateUrl: './avatar.component.html',
 	styleUrls: ['./avatar.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [AsyncPipe]
 })
 export class AvatarComponent implements OnInit {

@@ -10,7 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbButtonModule, NbDialogService } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom, Observable } from 'rxjs';
 // Registers the `<swiper-container>` / `<swiper-slide>` custom elements. Kept as
 // a module-level side effect (like the legacy dashboard component) because the
@@ -84,7 +84,7 @@ register();
 	standalone: true,
 	imports: [
 		NbButtonModule,
-		TranslateModule,
+		TranslatePipe,
 		ComponentsModule,
 		DateFormatPipe,
 		UtcToLocalPipe,

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, Validators, UntypedFormGroup, FormArray, FormControl } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,6 +37,7 @@ import { FeedbackStatusTableComponent } from './table-components';
     selector: 'ga-edit-candidate-feedbacks',
     templateUrl: './edit-candidate-feedbacks.component.html',
     styleUrls: ['./edit-candidate-feedbacks.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateFeedbacksComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

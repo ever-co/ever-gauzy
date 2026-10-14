@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IVisibilityJobPostInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -9,6 +9,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     templateUrl: './job-title-description-details.component.html',
     styleUrls: ['./job-title-description-details.component.scss'],
     providers: [CurrencyPipe],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, ITask } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -23,6 +23,7 @@ import { Store, TasksStoreService } from '@gauzy/ui-core/core';
 		</nb-select>
 		`,
     styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {

@@ -173,6 +173,35 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 * @param entity - The input data for updating the organization team member
 	 * @returns The updated OrganizationTeamEmployee or UpdateResult
 	 */
+	/**
+	 * The members of one team as the set-based edit states them: every employee on it, and the managers among
+	 * them.
+	 *
+	 * Read past the employee filter, as `updateOrganizationTeam` reads the same rows: with the filter on, a
+	 * manager without `CHANGE_SELECTED_EMPLOYEE` would see only their own row, and a set rebuilt from that
+	 * would remove every other member. Scoped by the caller's tenant and the organization named.
+	 *
+	 * @param organizationTeamId The team.
+	 * @param organizationId The organization the team belongs to.
+	 * @returns The employees on the team, and the managers among them.
+	 */
+	async findMemberSets(organizationTeamId: ID, organizationId: ID): Promise<{ memberIds: ID[]; managerIds: ID[] }> {
+		const tenantId = RequestContext.currentTenantId();
+		const members = await this.withoutEmployeeFilter(() =>
+			this.find({
+				where: { tenantId, organizationId, organizationTeamId },
+				relations: { role: true }
+			})
+		);
+
+		const memberIds = (members ?? []).map((member) => member.employeeId);
+		const managerIds = (members ?? [])
+			.filter((member) => member.isManager === true || member.role?.name === RolesEnum.MANAGER)
+			.map((member) => member.employeeId);
+
+		return { memberIds, managerIds };
+	}
+
 	public async update(
 		memberId: ID,
 		entity: IOrganizationTeamEmployeeUpdateInput

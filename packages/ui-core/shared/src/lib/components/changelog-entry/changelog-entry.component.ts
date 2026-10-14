@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IChangelog } from '@gauzy/contracts';
 
 /**
@@ -17,8 +17,9 @@ import { IChangelog } from '@gauzy/contracts';
 @Component({
 	selector: 'ngx-changelog-entry',
 	standalone: true,
-	imports: [CommonModule, NbIconModule, TranslateModule],
+	imports: [CommonModule, NbIconModule, TranslatePipe],
 	templateUrl: './changelog-entry.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./changelog-entry.component.scss']
 })
 export class ChangelogEntryComponent {

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 
 @Component({
@@ -7,6 +7,7 @@ import { Cell, DefaultEditor } from 'angular2-smart-table';
 			{{ cellValue }}
 		</div>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NonEditableNumberEditorComponent extends DefaultEditor implements OnInit {

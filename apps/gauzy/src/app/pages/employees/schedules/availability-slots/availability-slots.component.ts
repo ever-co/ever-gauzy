@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -33,6 +33,7 @@ import { AvailabilitySlotsService, TimeOffService } from '@gauzy/ui-core/core';
 	selector: 'ngx-availability-slots',
 	templateUrl: './availability-slots.component.html',
 	styleUrls: ['./availability-slots.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AvailabilitySlotsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -48,7 +48,7 @@
 			"cache": false,
 			"options": {
 				"commands": [
-					"node node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathPatterns db.spec"
+					"node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathPatterns db.spec"
 				],
 				"parallel": false
 			}
@@ -57,7 +57,7 @@
 			"executor": "nx:run-commands",
 			"cache": false,
 			"options": {
-				"command": "node node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathPatterns mock-platform"
+				"command": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathPatterns mock-platform"
 			}
 		}
 	}

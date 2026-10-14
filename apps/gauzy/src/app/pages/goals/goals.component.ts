@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -31,7 +31,7 @@ import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalTemplateSelectComponent } from './goal-template-select/goal-template-select.component';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -53,10 +53,11 @@ import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 	templateUrl: './goals.component.html',
 	styleUrls: ['./goals.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		GoalsComponentsModule,
 		CommonModule,
-		TranslateModule,
+		TranslatePipe,
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,

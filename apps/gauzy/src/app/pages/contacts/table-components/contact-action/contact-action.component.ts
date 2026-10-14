@@ -1,10 +1,11 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
     selector: 'ngx-contact-action',
     templateUrl: './contact-action.component.html',
     styleUrls: ['../../contacts.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ContactActionComponent {

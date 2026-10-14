@@ -14,7 +14,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -43,7 +43,7 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 		CardGridModule,
 		EquipmentSharingPolicyMutationModule,
 		EquipmentSharingPolicyRoutingModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
 		TableComponentsModule

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import {
@@ -33,6 +33,7 @@ let railFlyoutSequence = 0;
 	templateUrl: './menu-item.component.html',
 	styleUrls: ['./menu-item.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		CommonModule,
 		NbAccordionModule,

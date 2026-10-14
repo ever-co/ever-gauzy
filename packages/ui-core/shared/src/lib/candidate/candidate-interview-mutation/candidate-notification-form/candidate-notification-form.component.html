@@ -6,11 +6,11 @@
 			<p class="summary-text">
 				<strong>{{ interview?.title }}</strong>
 				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON' | translate }}
-				<strong>{{ interview?.startTime | date: 'fullDate' }}</strong>
+				<strong>{{ $safeNavigationMigration(interview?.startTime) | date: 'fullDate' }}</strong>
 				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM' | translate }}
-				<strong>{{ interview?.startTime | date: 'shortTime' }}</strong>
+				<strong>{{ $safeNavigationMigration(interview?.startTime) | date: 'shortTime' }}</strong>
 				–
-				<strong>{{ interview?.endTime | date: 'shortTime' }}</strong>
+				<strong>{{ $safeNavigationMigration(interview?.endTime) | date: 'shortTime' }}</strong>
 				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH' | translate }}
 				<strong>{{ selectedCandidate?.user?.name }}</strong>
 			</p>
@@ -18,9 +18,9 @@
 				@for (employee of employees; track employee) {
 					<img
 						class="interviewer-avatar"
-						[src]="employee?.user?.imageUrl"
-						[alt]="employee?.user?.name"
-						[nbTooltip]="employee?.user?.name"
+						[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+						[alt]="$safeNavigationMigration(employee?.user?.name)"
+						[nbTooltip]="$safeNavigationMigration(employee?.user?.name)"
 						nbTooltipPlacement="top"
 					/>
 				}

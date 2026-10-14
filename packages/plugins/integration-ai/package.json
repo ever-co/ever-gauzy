@@ -27,32 +27,34 @@
 		"lib:watch": "yarn nx build plugin-integration-ai --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.26",
-		"@nestjs/core": "^11.1.26"
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
 	},
 	"dependencies": {
-		"@apollo/client": "^3.13.8",
+		"@apollo/client": "^4.3.3",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
+		"@graphql-typed-document-node/core": "^3.1.1",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/cache-manager": "^3.1.3",
-		"@nestjs/config": "^4.0.4",
-		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.4.4",
-		"axios": "^1.18.0",
-		"cache-manager": "^6.4.2",
+		"@nestjs/cache-manager": "^12.0.1",
+		"@nestjs/config": "^12.0.1",
+		"@nestjs/cqrs": "^12.1.0",
+		"@nestjs/swagger": "^12.0.2",
+		"axios": "^1.20.0",
+		"cache-manager": "^7.2.9",
 		"chalk": "^4.1.0",
-		"express": "^5.2.1",
-		"form-data": "^4.0.1",
+		"express": "^5.3.0",
+		"form-data": "^4.0.6",
+		"qs": "^6.16.0",
 		"rxjs": "^7.8.2"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
 	},
 	"keywords": [
 		"Ever Gauzy",
@@ -66,7 +68,7 @@
 		"automation"
 	],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

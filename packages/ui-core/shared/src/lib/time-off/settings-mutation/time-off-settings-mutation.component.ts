@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -10,6 +10,7 @@ import { EmployeesService, Store } from '@gauzy/ui-core/core';
     selector: 'ngx-time-off-settings-mutation',
     templateUrl: './time-off-settings-mutation.component.html',
     styleUrls: ['../time-off-mutation.components.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {

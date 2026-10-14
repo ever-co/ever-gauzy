@@ -28,10 +28,8 @@ jest.mock('opentelemetry-instrumentation-typeorm', () => ({ TypeormInstrumentati
 jest.mock('@opentelemetry/sdk-trace-node', () => ({
 	NodeTracerProvider: jest.fn(() => ({ register: jest.fn(), addSpanProcessor: jest.fn(), shutdown: jest.fn() }))
 }));
-jest.mock('@opentelemetry/resources', () => ({ Resource: jest.fn() }));
-jest.mock('@opentelemetry/semantic-conventions', () => ({
-	SemanticResourceAttributes: { SERVICE_NAME: 'service.name' }
-}));
+jest.mock('@opentelemetry/resources', () => ({ resourceFromAttributes: jest.fn() }));
+jest.mock('@opentelemetry/semantic-conventions', () => ({ ATTR_SERVICE_NAME: 'service.name' }));
 jest.mock('@opentelemetry/instrumentation', () => ({ registerInstrumentations: jest.fn() }));
 
 /**
@@ -50,6 +48,7 @@ describe('tracer boot logging', () => {
 		'OTEL_EXPORTER_OTLP_HEADERS',
 		'HONEYCOMB_API_KEY',
 		'HONEYCOMB_ENABLE_LOCAL_VISUALIZATIONS',
+		'OTEL_HONEYCOMB_DISTRO',
 		'ASPECTO_API_KEY',
 		'CLOUD_PROVIDER',
 		'DB_ORM',
@@ -76,6 +75,8 @@ describe('tracer boot logging', () => {
 		const ENDPOINT_PASSWORD = 'dummy-endpoint-password';
 		process.env.OTEL_ENABLED = 'true';
 		process.env.OTEL_PROVIDER = 'honeycomb';
+		// The end-of-life Honeycomb distro still receives the key when it is explicitly opted into.
+		process.env.OTEL_HONEYCOMB_DISTRO = 'true';
 		process.env.HONEYCOMB_API_KEY = API_KEY;
 		process.env.OTEL_EXPORTER_OTLP_HEADERS = `x-honeycomb-team=${HEADER_KEY}`;
 		process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = `https://collector:${ENDPOINT_PASSWORD}@otel.example.com/v1/traces`;
@@ -100,6 +101,24 @@ describe('tracer boot logging', () => {
 		expect(output).not.toContain(API_KEY);
 		expect(output).not.toContain(HEADER_KEY);
 		expect(output).not.toContain(ENDPOINT_PASSWORD);
+	});
+
+	it('serves Honeycomb through the standard OTLP provider unless the distro is opted into', () => {
+		process.env.OTEL_ENABLED = 'true';
+		process.env.OTEL_PROVIDER = 'honeycomb';
+		process.env.HONEYCOMB_API_KEY = 'dummy-honeycomb-api-key';
+
+		let provider: jest.Mock;
+		let honeycombSdk: jest.Mock;
+		jest.isolateModules(() => {
+			require('./tracer');
+			provider = require('@opentelemetry/sdk-trace-node').NodeTracerProvider;
+			honeycombSdk = require('@honeycombio/opentelemetry-node').HoneycombSDK;
+		});
+
+		// OpenTelemetry 2.x: the span processor is handed to the provider at construction.
+		expect(provider).toHaveBeenCalledWith(expect.objectContaining({ spanProcessors: [expect.anything()] }));
+		expect(honeycombSdk).not.toHaveBeenCalled();
 	});
 
 	it('logs the SigNoz ingestion header by name only and keeps a credential-free URL as-is', () => {

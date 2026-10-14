@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, filter, of, tap } from 'rxjs';
@@ -11,6 +11,7 @@ import { ErrorHandlingService, HubstaffService, IntegrationsService, Store } fro
     selector: 'ngx-hubstaff-authorize',
     templateUrl: './hubstaff-authorize.component.html',
     styleUrls: ['./hubstaff-authorize.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {

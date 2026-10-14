@@ -2,6 +2,7 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
+		"types": ["node", "google.maps"],
 		"declaration": true,
 		"declarationMap": true,
 		"inlineSources": true,

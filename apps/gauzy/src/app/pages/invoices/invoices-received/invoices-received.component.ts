@@ -1,4 +1,4 @@
-import { OnInit, Component, OnDestroy, Input } from '@angular/core';
+import { OnInit, Component, OnDestroy, Input, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,6 +47,7 @@ import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-do
     selector: 'ga-invoices-received',
     templateUrl: './invoices-received.component.html',
     styleUrls: ['./invoices-received.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

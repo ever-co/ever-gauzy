@@ -80,7 +80,7 @@
         } @else {
           <ga-card-grid
             [loading]="loading"
-            [totalItems]="pagination?.totalItems"
+            [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
             [settings]="settingsSmartTable"
             [source]="tags"
             (onSelectedItem)="selectTag($event)"

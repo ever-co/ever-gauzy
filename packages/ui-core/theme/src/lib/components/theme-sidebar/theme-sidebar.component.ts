@@ -3,7 +3,6 @@ import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
-	ComponentFactoryResolver,
 	ComponentRef,
 	Input,
 	OnDestroy,
@@ -27,10 +26,7 @@ export class ThemeSidebarComponent implements AfterViewInit, OnDestroy {
 
 	private componentRef: ComponentRef<any>;
 
-	constructor(
-		private componentFactoryResolver: ComponentFactoryResolver,
-		private changeDetectorRef: ChangeDetectorRef
-	) {}
+	constructor(private changeDetectorRef: ChangeDetectorRef) {}
 
 	ngAfterViewInit(): void {
 		this.loadComponent();
@@ -41,9 +37,8 @@ export class ThemeSidebarComponent implements AfterViewInit, OnDestroy {
 		const renderComponent = this.config.loadComponent();
 		const component = renderComponent instanceof Promise ? await renderComponent : renderComponent;
 
-		const componentFactory = this.componentFactoryResolver.resolveComponentFactory(component);
-
-		this.componentRef = this.container.createComponent(componentFactory);
+		// Angular 22 removed ComponentFactoryResolver: the container creates the component from its class.
+		this.componentRef = this.container.createComponent(component);
 		this.componentRef.changeDetectorRef.markForCheck();
 	}
 

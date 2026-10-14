@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnInit, Renderer2, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
@@ -21,6 +21,7 @@ import { AppService } from './app.service';
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit {

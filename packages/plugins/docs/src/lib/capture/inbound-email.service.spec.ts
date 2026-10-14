@@ -25,10 +25,9 @@ jest.mock(
 		},
 		TenantSetting: class {},
 		RequestContext: { currentUserId: () => undefined }
-	}),
-	{ virtual: true }
+	})
 );
-jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }), { virtual: true });
+jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }));
 jest.mock('../docs.config', () => ({
 	getDocsConfig: () => ({
 		inboundEmailEnabled: true,

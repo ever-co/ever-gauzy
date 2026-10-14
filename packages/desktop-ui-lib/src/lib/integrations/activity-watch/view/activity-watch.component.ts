@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ActivityWatchViewService } from '../activity-watch-view.service';
 import { NbTooltipModule, NbToggleModule, NbIconModule } from '@nebular/theme';
@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'gauzy-activity-watch',
     templateUrl: './activity-watch.component.html',
     styleUrls: ['./activity-watch.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbTooltipModule, NbToggleModule, NbIconModule, AsyncPipe, TranslatePipe]
 })
 export class ActivityWatchComponent {

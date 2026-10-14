@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, finalize, switchMap, timeout } from 'rxjs/operators';
 import { EMPTY, TimeoutError } from 'rxjs';
@@ -12,6 +12,7 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-hooks',
 	templateUrl: './make-com-hooks.component.html',
 	styleUrls: ['./make-com-hooks.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class MakeComHooksComponent extends TranslationBaseComponent implements OnInit {

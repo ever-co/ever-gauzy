@@ -1,0 +1,64 @@
+@use 'themes' as *;
+
+:host {
+  display: block;
+}
+
+.record-page {
+  margin-bottom: 0;
+  min-height: 12rem;
+}
+
+.record-page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.record-page-back {
+  flex: 0 0 auto;
+  padding: 0 0.25rem;
+}
+
+.record-page-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.record-page-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.record-page-subtitle {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: nb-theme(text-hint-color);
+  overflow-wrap: anywhere;
+}
+
+.record-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.record-page-body {
+  // The record reads as a document: wide enough for long descriptions, but the
+  // label/value rows stay readable on very wide screens.
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+.record-page-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 0;
+  color: nb-theme(text-hint-color);
+}

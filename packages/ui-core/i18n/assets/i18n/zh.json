@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "添加更多来源",
 		"REMOVE_FROM_FAVORITES": "从收藏夹中移除",
 		"ADD_TO_FAVORITES": "添加到收藏夹",
+		"EXPAND_FULL_WIDTH": "展开为全宽",
 		"UNSELECT_ALL": "取消全选",
 		"START_TIMER_ANYWAY": "仍然开始",
 		"OPEN_SETTING": "打开设置"
@@ -2796,6 +2797,12 @@
 				"SETTINGS_INTEGRATIONS": "设置与集成",
 				"DATA_LOGS": "数据与日志",
 				"DOCUMENTS": "文档",
+				"COMMERCE_PLATFORM": "商务：平台",
+				"COMMERCE_CATALOG": "商务：目录与价格",
+				"COMMERCE_ORDERS": "商务：订单与客户",
+				"COMMERCE_FULFILLMENT": "商务：库存与履约",
+				"COMMERCE_PAYMENTS": "商务：支付",
+				"COMMERCE_MARKETPLACE": "商务：多商户市场",
 				"OTHER": "其他"
 			},
 			"ORG_PAYROLL_VIEW": "查看薪资",
@@ -2874,6 +2881,180 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "创建组织战略举措",
 			"ORG_STRATEGIC_INITIATIVE_READ": "查看组织战略举措",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "更新组织战略举措",
+			"CHANNELS_VIEW": "查看渠道",
+			"CHANNELS_CREATE": "创建渠道",
+			"CHANNELS_EDIT": "编辑渠道",
+			"CHANNELS_DELETE": "删除渠道",
+			"REGIONS_VIEW": "查看区域",
+			"REGIONS_CREATE": "创建区域",
+			"REGIONS_EDIT": "编辑区域",
+			"REGIONS_DELETE": "删除区域",
+			"RULES_VIEW": "查看规则",
+			"RULES_EDIT": "编辑规则",
+			"SEQUENCES_VIEW": "查看编号序列",
+			"SEQUENCES_EDIT": "编辑编号序列",
+			"UNITS_VIEW": "查看计量单位",
+			"UNITS_EDIT": "编辑计量单位",
+			"PAYMENT_TERMS_VIEW": "查看付款条件",
+			"PAYMENT_TERMS_EDIT": "编辑付款条件",
+			"PROVIDERS_VIEW": "查看提供商",
+			"OPERATIONS_VIEW": "查看后台操作",
+			"OPERATIONS_CANCEL": "取消后台操作",
+			"EVENT_OUTBOX_VIEW": "查看事件发件箱",
+			"EVENT_OUTBOX_RETRY": "重试事件发件箱消息",
+			"IDEMPOTENCY_KEYS_VIEW": "查看幂等键",
+			"IDEMPOTENCY_KEYS_DELETE": "删除幂等键",
+			"WEBHOOKS_VIEW": "查看 Webhook",
+			"WEBHOOKS_CREATE": "创建 Webhook",
+			"WEBHOOKS_EDIT": "编辑 Webhook",
+			"WEBHOOKS_DELETE": "删除 Webhook",
+			"WEBHOOK_DELIVERIES_RETRY": "重试 Webhook 投递",
+			"SEARCH_VIEW": "使用全局搜索",
+			"SEARCH_REINDEX": "重建搜索索引",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "查看搜索索引定义",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "编辑搜索索引定义",
+			"PRODUCTS_VIEW": "查看产品",
+			"PRODUCTS_EDIT": "编辑产品",
+			"PRODUCTS_DELETE": "删除产品",
+			"PRODUCTS_BULK_IMPORT": "批量导入产品",
+			"COLLECTIONS_VIEW": "查看商品系列",
+			"COLLECTIONS_CREATE": "创建商品系列",
+			"COLLECTIONS_EDIT": "编辑商品系列",
+			"COLLECTIONS_DELETE": "删除商品系列",
+			"PRICE_LISTS_VIEW": "查看价目表",
+			"PRICE_LISTS_CREATE": "创建价目表",
+			"PRICE_LISTS_EDIT": "编辑价目表",
+			"PRICE_LISTS_DELETE": "删除价目表",
+			"PRICE_LISTS_SIMULATE": "模拟价目表",
+			"PRODUCT_PRICES_VIEW": "查看产品价格",
+			"PRODUCT_PRICES_EDIT": "编辑产品价格",
+			"PRODUCT_PRICES_BULK_EDIT": "批量编辑产品价格",
+			"EXCHANGE_RATES_VIEW": "查看汇率",
+			"EXCHANGE_RATES_EDIT": "编辑汇率",
+			"TAX_CATEGORIES_VIEW": "查看税务类别",
+			"TAX_CATEGORIES_EDIT": "编辑税务类别",
+			"TAX_RATES_VIEW": "查看税率",
+			"TAX_RATES_EDIT": "编辑税率",
+			"TAX_REGIMES_VIEW": "查看税制",
+			"TAX_REGIMES_EDIT": "编辑税制",
+			"PROMOTIONS_VIEW": "查看促销",
+			"PROMOTIONS_CREATE": "创建促销",
+			"PROMOTIONS_EDIT": "编辑促销",
+			"PROMOTIONS_DELETE": "删除促销",
+			"PROMOTIONS_SIMULATE": "模拟促销",
+			"COUPONS_VIEW": "查看优惠券",
+			"COUPONS_CREATE": "创建优惠券",
+			"COUPONS_EDIT": "编辑优惠券",
+			"COUPONS_DELETE": "删除优惠券",
+			"GIFT_CARDS_VIEW": "查看礼品卡",
+			"GIFT_CARDS_ISSUE": "发行礼品卡",
+			"GIFT_CARDS_EDIT": "编辑礼品卡",
+			"CARTS_VIEW": "查看购物车",
+			"CARTS_EDIT": "编辑购物车",
+			"CARTS_DELETE": "删除购物车",
+			"CARTS_CHECKOUT": "完成结账",
+			"ORDERS_VIEW": "查看订单",
+			"ORDERS_CREATE": "创建订单",
+			"ORDERS_EDIT": "编辑订单",
+			"ORDERS_CANCEL": "取消订单",
+			"ORDERS_APPROVE": "审批订单",
+			"RETURNS_VIEW": "查看退货",
+			"RETURNS_CREATE": "创建退货",
+			"RETURNS_APPROVE": "审批退货",
+			"RETURNS_REJECT": "拒绝退货",
+			"RETURNS_RECEIVE": "接收退货",
+			"CLAIMS_VIEW": "查看索赔",
+			"CLAIMS_CREATE": "创建索赔",
+			"CLAIMS_RESOLVE": "处理索赔",
+			"EXCHANGES_VIEW": "查看换货",
+			"EXCHANGES_CREATE": "创建换货",
+			"EXCHANGES_RESOLVE": "处理换货",
+			"SUBSCRIPTIONS_VIEW": "查看订阅",
+			"SUBSCRIPTIONS_CREATE": "创建订阅",
+			"SUBSCRIPTIONS_EDIT": "编辑订阅",
+			"SUBSCRIPTIONS_BILL": "订阅计费",
+			"ENTITLEMENTS_VIEW": "查看权益",
+			"ENTITLEMENTS_GRANT": "授予权益",
+			"ENTITLEMENTS_EDIT": "编辑权益",
+			"CONTACT_GROUPS_VIEW": "查看联系人组",
+			"CONTACT_GROUPS_CREATE": "创建联系人组",
+			"CONTACT_GROUPS_EDIT": "编辑联系人组",
+			"CONTACT_GROUPS_DELETE": "删除联系人组",
+			"CONTACT_CREDENTIALS_VIEW": "查看联系人凭据",
+			"CONTACT_CREDENTIALS_MANAGE": "管理联系人凭据",
+			"CONTACT_CREDITS_EDIT": "编辑联系人信用额度",
+			"CONTACT_TAX_IDENTITY_EDIT": "编辑联系人税务身份",
+			"STOCK_VIEW": "查看库存",
+			"STOCK_EDIT": "编辑库存",
+			"STOCK_RECONCILE": "库存对账",
+			"STOCK_TRANSFER_VIEW": "查看库存调拨",
+			"STOCK_TRANSFER_CREATE": "创建库存调拨",
+			"STOCK_TRANSFER_APPROVE": "审批库存调拨",
+			"STOCK_TRANSFER_SHIP": "发运库存调拨",
+			"STOCK_TRANSFER_RECEIVE": "接收库存调拨",
+			"STOCK_TRANSFER_CANCEL": "取消库存调拨",
+			"WAREHOUSE_ZONES_VIEW": "查看仓库区域",
+			"WAREHOUSE_ZONES_CREATE": "创建仓库区域",
+			"WAREHOUSE_ZONES_EDIT": "编辑仓库区域",
+			"WAREHOUSE_ZONES_DELETE": "删除仓库区域",
+			"WAREHOUSE_BINS_VIEW": "查看仓库库位",
+			"WAREHOUSE_BINS_CREATE": "创建仓库库位",
+			"WAREHOUSE_BINS_EDIT": "编辑仓库库位",
+			"WAREHOUSE_BINS_DELETE": "删除仓库库位",
+			"PICK_LISTS_VIEW": "查看拣货单",
+			"PICK_LISTS_EDIT": "编辑拣货单",
+			"PICK_LISTS_PICK": "按拣货单拣货",
+			"PICK_LISTS_CANCEL": "取消拣货单",
+			"FULFILLMENTS_VIEW": "查看履约单",
+			"FULFILLMENTS_CREATE": "创建履约单",
+			"FULFILLMENTS_EDIT": "编辑履约单",
+			"SHIPPING_OPTIONS_VIEW": "查看配送选项",
+			"SHIPPING_OPTIONS_CREATE": "创建配送选项",
+			"SHIPPING_OPTIONS_EDIT": "编辑配送选项",
+			"SHIPPING_OPTIONS_DELETE": "删除配送选项",
+			"PURCHASE_ORDERS_VIEW": "查看采购订单",
+			"PURCHASE_ORDERS_CREATE": "创建采购订单",
+			"PURCHASE_ORDERS_EDIT": "编辑采购订单",
+			"PURCHASE_ORDERS_APPROVE": "审批采购订单",
+			"PURCHASE_ORDERS_SEND": "发送采购订单",
+			"GOODS_RECEIPTS_VIEW": "查看收货单",
+			"GOODS_RECEIPTS_CREATE": "创建收货单",
+			"VENDOR_TERMS_VIEW": "查看供应商条款",
+			"VENDOR_TERMS_EDIT": "编辑供应商条款",
+			"PAYMENT_PROVIDERS_VIEW": "查看支付服务商",
+			"PAYMENT_PROVIDERS_CREATE": "创建支付服务商",
+			"PAYMENT_PROVIDERS_EDIT": "编辑支付服务商",
+			"PAYMENT_PROVIDERS_DELETE": "删除支付服务商",
+			"PAYMENT_SESSIONS_VIEW": "查看支付会话",
+			"PAYMENT_SESSIONS_AUTHORIZE": "授权付款",
+			"PAYMENT_SESSIONS_CAPTURE": "收取付款",
+			"PAYMENT_SESSIONS_CANCEL": "取消支付会话",
+			"REFUNDS_VIEW": "查看退款",
+			"REFUNDS_CREATE": "创建退款",
+			"REFUNDS_APPROVE": "审批退款",
+			"PAYMENT_CALLBACKS_VIEW": "查看服务商回调",
+			"PAYMENT_CALLBACKS_REPROCESS": "重新处理服务商回调",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "查看支付账户持有人",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "编辑支付账户持有人",
+			"PAYMENT_METHOD_TOKENS_VIEW": "查看已保存的支付方式",
+			"PAYMENT_METHOD_TOKENS_EDIT": "编辑已保存的支付方式",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "从已保存的支付方式扣款",
+			"SELLERS_VIEW": "查看卖家",
+			"SELLERS_CREATE": "创建卖家",
+			"SELLERS_EDIT": "编辑卖家",
+			"SELLERS_DELETE": "删除卖家",
+			"SELLER_OFFERINGS_VIEW": "查看卖家商品报价",
+			"SELLER_OFFERINGS_EDIT": "编辑卖家商品报价",
+			"SELLER_COMMISSIONS_VIEW": "查看卖家佣金",
+			"SELLER_COMMISSIONS_EDIT": "编辑卖家佣金",
+			"SELLER_TRANSACTIONS_VIEW": "查看卖家交易",
+			"SELLER_TRANSACTIONS_SETTLE": "结算卖家交易",
+			"SELLER_SETTLEMENTS_VIEW": "查看卖家结算",
+			"SELLER_SETTLEMENTS_EDIT": "编辑卖家结算",
+			"SELLER_PAYOUTS_VIEW": "查看卖家付款",
+			"SELLER_PAYOUTS_CREATE": "创建卖家付款",
+			"SELLER_PAYOUTS_APPROVE": "审批卖家付款",
+			"SELLER_PAYOUTS_CANCEL": "取消卖家付款",
 			"ORG_STRATEGIC_INITIATIVE_DELETE": "删除组织战略举措"
 		},
 		"BILLING": "计费",
@@ -3956,6 +4137,12 @@
 		"FOR": "为了",
 		"FROM": "从"
 	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "返回列表",
+		"NOT_FOUND": "该记录不存在或已被删除。",
+		"FORBIDDEN": "您无权查看此记录。",
+		"ERROR": "无法加载该记录。"
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "页面未找到",
 		"TAKE_ME_HOME": "带我回家",
@@ -4077,6 +4264,39 @@
 		"TIME_TRACKING": "时间跟踪",
 		"ESTIMATE": "估计",
 		"DASHBOARD": "仪表板",
+		"ORDERS": "订单",
+		"CART": "购物车",
+		"CATALOG": "目录",
+		"PRICING": "定价",
+		"TAX": "税务",
+		"PROMOTIONS": "促销",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "库存台账与预留",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "仓库管理",
+		"FULFILLMENT": "履约",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "退货、索赔与换货",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "订阅与周期性计费",
+		"PURCHASING": "采购",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "权益、激活与许可证密钥",
+		"MARKETPLACE": "多商户市场",
+		"GLOBAL_SEARCH": "全局搜索",
+		"MULTI-CURRENCY_PRICING": "多币种定价",
+		"MULTI-REGION_PRICING": "多区域定价",
+		"MULTI-LOCATION_ALLOCATION": "多地点分配",
+		"B2B_CREDIT": "B2B 信用",
+		"ORDER_APPROVALS": "订单审批",
+		"GIFT_CARDS": "礼品卡",
+		"WEBHOOKS": "Webhook",
+		"EXTERNAL_SEARCH_ENGINE": "外部搜索引擎",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "从搜索索引读取",
+		"BACKORDERS": "缺货预订",
+		"PRICE_TIERS": "阶梯价格",
+		"BULK_API": "批量 API",
+		"DATA_EXPORT": "数据导出",
+		"TAX_PROVIDER": "税务服务商",
+		"SUBSCRIPTION_BILLING_RUN": "订阅计费运行",
+		"MARKETPLACE_PAYOUTS": "市场付款",
+		"SCHEDULED_SELLER_PAYOUTS": "定时卖家付款",
 		"DOCUMENTS": "文档"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4175,6 +4395,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "前往仪表盘，管理员工统计数据，时间追踪仪表盘。"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "订单、订单行、订单变更、订单时间线以及与发票的衔接。"
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "购物车以及将购物车转换为订单的结账会话。"
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "产品和商品系列的发布、变体分面、关联关系以及目录批量接口。"
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "价目表、产品价格、价格偏好、汇率以及模拟接口。"
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "税务类别、税率以及确定单据计税方式的规则。"
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "促销、营销活动、优惠券以及评估它们的折扣引擎。"
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "库存变动、预留、调拨、预警、调整、盘点和对账。"
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "GraphQL 接口及其解析器，采用与 REST 相同的守卫和权限。"
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "库区、库位、拣货波次、拣货单、包装以及承运商舱单。"
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "配送方案与选项、履约单、标签以及包装和舱单流程。"
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "售后流程：退货、索赔和换货，包括其原因及对库存的影响。"
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "套餐、订阅和计费历史；周期性扣款由单独的开关控制。"
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "采购订单、供应商条款和收货单。"
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "权益、其激活记录以及为其签发的密钥。"
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "卖家、商品报价、佣金、付款和结算。"
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "搜索、建议和分面接口，以及它们读取的索引定义。"
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "一个渠道支持多种货币：使用汇率、货币覆盖和外汇换算。"
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "每个渠道支持多个区域，并按区域设置税费和配送。"
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "在多个库存地点之间拆分分配，按地点显示可用量，并支持地点间调拨。"
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "信用额度、结算条款、周期性支出限额以及下单时的信用检查。"
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "在下单前将订单提交至审批模块。"
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "礼品卡的发行与兑换，以及余额查询接口。"
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "出站 Webhook 订阅及其投递记录。"
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "使用外部搜索引擎代替内置数据库提供程序进行全局搜索。"
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "将读取请求路由到搜索投影，而不是源数据表。"
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "允许订购超过现有库存的数量，以及可缺货预订的可用性响应。"
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "按数量区间定价以及按联系人组定价。"
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "批量创建与编辑接口。"
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "以流式方式导出目录和订单单据。"
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "通过已配置的集成凭据，将税费计算委托给外部引擎。"
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "周期性计费运行和自动扣款流程。"
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "通过支付服务商生成、审批并执行付款。"
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "按卖家付款计划自动执行付款。"
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "公司文档中心：上传、Wiki 页面、审阅和 AI 知识"

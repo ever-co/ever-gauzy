@@ -107,7 +107,7 @@
 						}
 					],
 					"outputHashing": "all",
-					"statsJson": true
+					"statsJson": false
 				},
 				"development": {
 					"optimization": false,

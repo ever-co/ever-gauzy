@@ -27,6 +27,7 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { RequestContext } from '../core/context';
@@ -265,7 +266,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						limit: options?.take || 10,
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						...(options?.relations ? { populate: options.relations as any[] } : {}),
-						...(options?.order ? { orderBy: options.order as any } : {})
+						...(options?.order ? { orderBy: options.order as any } : {}),
+						// The soft-delete filter is a named filter in this dialect, and a reader that builds its
+						// own options has to lift it by name — the base read is where that usually happens.
+						...(options?.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
 				}
@@ -278,6 +282,13 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					// Apply pagination and query options
 					this.applyPaginationAndOptions(query, options);
+
+					// The query builder states its own soft-delete condition, so the flag is what lifts it —
+					// the same call the base read makes on a client's behalf, made here because this reader
+					// builds its own query.
+					if (options?.withDeleted) {
+						query.withDeleted();
+					}
 
 					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 						const subQuery = qb.subQuery();
@@ -387,7 +398,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						limit: options?.take || 10,
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						...(options?.relations ? { populate: options.relations as any[] } : {}),
-						...(options?.order ? { orderBy: options.order as any } : {})
+						...(options?.order ? { orderBy: options.order as any } : {}),
+						// The soft-delete filter is a named filter in this dialect, and a reader that builds its
+						// own options has to lift it by name — the base read is where that usually happens.
+						...(options?.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
 				}
@@ -401,6 +415,13 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					// Apply pagination and query options
 					this.applyPaginationAndOptions(query, options);
+
+					// The query builder states its own soft-delete condition, so the flag is what lifts it —
+					// the same call the base read makes on a client's behalf, made here because this reader
+					// builds its own query.
+					if (options?.withDeleted) {
+						query.withDeleted();
+					}
 
 					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 						const subQuery = qb.subQuery();

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
@@ -40,6 +40,7 @@ import {
 	selector: 'ga-vendors',
 	templateUrl: './vendors.component.html',
 	styleUrls: ['vendors.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

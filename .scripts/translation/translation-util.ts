@@ -1,9 +1,13 @@
-import { argv } from 'yargs';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import fetch from 'node-fetch';
 import * as path from 'path';
 import * as fs from 'fs';
 import { env } from '../env';
 import { SupportedLanguage } from './supported-language';
+
+// yargs 18 has no `argv` singleton: the process arguments are parsed explicitly.
+const argv = yargs(hideBin(process.argv)).parseSync();
 
 export class TranslationUtil {
 	public readonly desktop: string;

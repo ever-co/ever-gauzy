@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Shows a report: pretty-printed for reading, with the size and, for a sent report, when it was sent
@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
 @Component({
 	selector: 'ngx-ever-stats-payload-viewer',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, TranslateModule],
+	imports: [DatePipe, TranslatePipe],
 	template: `
 		<dl class="meta">
 			<dt>{{ 'EVER_STATS.BYTES' | translate }}</dt>

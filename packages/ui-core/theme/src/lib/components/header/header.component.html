@@ -31,8 +31,8 @@
           >
           <ga-team-selector
             dropdownClass="header-entity-select"
-            [employeeId]="(employee$ | async)?.id"
-            [projectId]="(project$ | async)?.id"
+            [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
+            [projectId]="$safeNavigationMigration((project$ | async)?.id)"
             [shortened]="true"
             class="header-selector team-selector"
           ></ga-team-selector>
@@ -45,7 +45,7 @@
           >
           <ga-project-selector
             dropdownClass="header-entity-select"
-            [employeeId]="(employee$ | async)?.id"
+            [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
             [shortened]="true"
             class="header-selector project-selector"
           ></ga-project-selector>
@@ -127,8 +127,8 @@
         </div>
         <ga-team-selector
           dropdownClass="header-entity-select"
-          [employeeId]="(employee$ | async)?.id"
-          [projectId]="(project$ | async)?.id"
+          [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
+          [projectId]="$safeNavigationMigration((project$ | async)?.id)"
           [shortened]="true"
           class="header-selector team-selector"
         ></ga-team-selector>
@@ -139,7 +139,7 @@
         </div>
         <ga-project-selector
           dropdownClass="header-entity-select"
-          [employeeId]="(employee$ | async)?.id"
+          [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
           [shortened]="true"
           class="header-selector project-selector"
         ></ga-project-selector>

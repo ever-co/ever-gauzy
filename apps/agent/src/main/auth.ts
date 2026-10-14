@@ -5,7 +5,7 @@ import {
 	TranslateService
 } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';
-import * as isOnline from 'is-online';
+import isOnline from 'is-online';
 import { ApiService } from './api';
 const apiService = ApiService.getInstance();
 function getAuthConfig() {

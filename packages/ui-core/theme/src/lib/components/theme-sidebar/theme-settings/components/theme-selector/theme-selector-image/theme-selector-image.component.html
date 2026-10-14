@@ -13,7 +13,7 @@
 	>
 		<span class="theme-trigger-label">{{ 'SETTINGS_MENU.THEMES' | translate }}</span>
 		<span class="theme-trigger-value">
-			<span class="theme-trigger-name">{{ (selected | async)?.name | translate }}</span>
+			<span class="theme-trigger-name">{{ $safeNavigationMigration((selected | async)?.name) | translate }}</span>
 			<nb-icon class="theme-trigger-chevron" icon="chevron-down-outline"></nb-icon>
 		</span>
 	</button>

@@ -131,9 +131,9 @@
 		@if (employee) {
 			<ngx-avatar
 				class="report-table"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id"
+				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+				[name]="$safeNavigationMigration(employee?.user?.name)"
+				[id]="$safeNavigationMigration(employee?.id)"
 				[employee]="employee"
 			>
 			</ngx-avatar>
@@ -169,7 +169,7 @@
 		<div class="responsive-table-content project-name">
 			<ng-container
 				[ngTemplateOutlet]="employeeEl"
-				[ngTemplateOutletContext]="{ $implicit: timeLogRow?.employee }"
+				[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(timeLogRow?.employee) }"
 			>
 			</ng-container>
 		</div>
@@ -235,7 +235,7 @@
 		<div class="responsive-table-content project-name">
 			<ng-container
 				[ngTemplateOutlet]="employeeEl"
-				[ngTemplateOutletContext]="{ $implicit: timeLogRow?.employee }"
+				[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(timeLogRow?.employee) }"
 			>
 			</ng-container>
 		</div>

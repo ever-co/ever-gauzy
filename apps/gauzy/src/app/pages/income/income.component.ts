@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { combineLatest, Subject } from 'rxjs';
@@ -44,11 +44,13 @@ import {
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
+import { buildIncomeViewSections } from './income-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     templateUrl: './income.component.html',
     styleUrls: ['./income.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IncomeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -408,42 +410,12 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 			return;
 		}
 
-		this.viewSections = this.buildViewSections();
+		this.viewSections = buildIncomeViewSections();
 		this.viewedIncome = income;
 	}
 
 	closeView(): void {
 		this.viewedIncome = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the grid columns, read vertically.
-	 */
-	private buildViewSections(): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'SM_TABLE.DATE', key: 'valueDate', type: 'date' },
-					{ label: 'SM_TABLE.VALUE', key: 'amount', type: 'money' },
-					{ label: 'SM_TABLE.BONUS', key: 'isBonus', type: 'boolean' },
-					{ label: 'SM_TABLE.CONTACT', key: 'client.name' },
-					{
-						label: 'SM_TABLE.EMPLOYEE',
-						key: 'employee',
-						type: 'person',
-						// Same rule the grid applies: without this permission the
-						// employee column is removed, so the View must not show it either.
-						permission: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					}
-				]
-			},
-			{
-				fields: [
-					{ label: 'SM_TABLE.NOTES', key: 'notes', type: 'multiline', wide: true },
-					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
-				]
-			}
-		];
 	}
 
 	/**

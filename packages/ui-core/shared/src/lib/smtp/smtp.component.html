@@ -11,9 +11,9 @@
 					<div class="smtp-heading">
 						<h6 class="smtp-title">
 							@if (isOrganization) {
-								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: organization?.name } }}
+								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: $safeNavigationMigration(organization?.name) } }}
 							} @else {
-								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: user?.tenant?.name } }}
+								{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate: { name: $safeNavigationMigration(user?.tenant?.name) } }}
 							}
 						</h6>
 						<!-- Sending looks up the organization's SMTP, then the tenant's, then the server default. -->
@@ -171,17 +171,20 @@
 					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 					{{ 'BUTTONS.VALIDATED' | translate }}
 				</button>
-				<button
-					type="button"
-					nbButton
-					size="small"
-					status="primary"
-					(click)="formDirective.ngSubmit.emit()"
-					[disabled]="form.invalid || isWrapped"
-				>
-					<nb-icon icon="save-outline"></nb-icon>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+				<!-- Saving writes the configuration, which requires the write grant; reading and validating do not. -->
+				<ng-template [ngxPermissionsOnly]="PermissionsEnum.CUSTOM_SMTP_EDIT">
+					<button
+						type="button"
+						nbButton
+						size="small"
+						status="primary"
+						(click)="formDirective.ngSubmit.emit()"
+						[disabled]="form.invalid || isWrapped"
+					>
+						<nb-icon icon="save-outline"></nb-icon>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</ng-template>
 			} @else {
 				<button
 					type="button"

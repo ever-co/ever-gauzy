@@ -34,7 +34,7 @@
 					<div class="details-identity-text">
 						<ngx-avatar
 							class="report-table"
-							[id]="member.employee?.id"
+							[id]="$safeNavigationMigration(member.employee?.id)"
 							[name]="member.name"
 							[src]="member.imageUrl"
 							[employee]="member.employee"
