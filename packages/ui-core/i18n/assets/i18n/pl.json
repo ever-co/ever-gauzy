@@ -2466,6 +2466,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń organizację",
+			"WARNING": "{{ name }} zostanie trwale usunięta. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz {{ name }}, aby potwierdzić.",
+			"CONFIRM": "Usuń organizację"
+		},
 		"ORGANIZATIONS": "Organizacje",
 		"EMPLOYEES": "Pracownicy",
 		"POSITIONS": "Stanowiska",

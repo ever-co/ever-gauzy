@@ -2467,6 +2467,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Organisatie verwijderen",
+			"WARNING": "{{ name }} wordt permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+			"TYPE_TO_CONFIRM": "Typ {{ name }} om te bevestigen.",
+			"CONFIRM": "Organisatie verwijderen"
+		},
 		"ORGANIZATIONS": "Organisaties",
 		"EMPLOYEES": "Werknemers",
 		"POSITIONS": "Functies",

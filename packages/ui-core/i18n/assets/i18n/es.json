@@ -2469,6 +2469,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Eliminar organización",
+			"WARNING": "{{ name }} se eliminará de forma permanente. Esta acción no se puede deshacer.",
+			"TYPE_TO_CONFIRM": "Escriba {{ name }} para confirmar.",
+			"CONFIRM": "Eliminar organización"
+		},
 		"ORGANIZATIONS": "Organizaciones",
 		"EMPLOYEES": "Empleados",
 		"POSITIONS": "Puestos",

@@ -2467,6 +2467,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Organisation löschen",
+			"WARNING": "{{ name }} wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+			"TYPE_TO_CONFIRM": "Geben Sie {{ name }} zur Bestätigung ein.",
+			"CONFIRM": "Organisation löschen"
+		},
 		"ORGANIZATIONS": "Organisationen",
 		"EMPLOYEES": "Mitarbeiter",
 		"POSITIONS": "Positionen",

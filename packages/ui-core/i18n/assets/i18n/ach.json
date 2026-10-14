@@ -2350,6 +2350,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Delete organization",
+			"WARNING": "{{ name }} will be permanently deleted. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type {{ name }} to confirm.",
+			"CONFIRM": "Delete organization"
+		},
 		"ORGANIZATIONS": "crwdns238:0crwdne238:0",
 		"EMPLOYEES": "crwdns240:0crwdne240:0",
 		"POSITIONS": "crwdns7832:0crwdne7832:0",
