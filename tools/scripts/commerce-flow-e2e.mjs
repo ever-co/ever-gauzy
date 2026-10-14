@@ -215,6 +215,23 @@ async function call(method, url, options = {}) {
 	return { status: response.status, json, text, headers: response.headers };
 }
 
+/**
+ * An amount as a canonical decimal string, so two surfaces that state the same value in different shapes compare
+ * equal: `62`, `62.0` and `"62.000000"` all become `"62"`, `"-0.50"` becomes `"-0.5"`. Exact — no float conversion.
+ *
+ * @param {unknown} value A number or a decimal string.
+ * @returns {string | null} The canonical form, or null when the value is not a decimal.
+ */
+function decimalValue(value) {
+	if (value === null || value === undefined) return null;
+	const match = /^\s*([+-]?)(\d*)(?:\.(\d*))?\s*$/.exec(String(value));
+	if (!match || (match[2] === '' && (match[3] ?? '') === '')) return null;
+	const whole = match[2].replace(/^0+(?=\d)/, '') || '0';
+	const fraction = (match[3] ?? '').replace(/0+$/, '');
+	const sign = match[1] === '-' && (whole !== '0' || fraction !== '') ? '-' : '';
+	return `${sign}${whole}${fraction ? `.${fraction}` : ''}`;
+}
+
 /** @param {{json: any, text: string}} result A response. @returns {string} A short description. */
 function brief(result) {
 	return (result.json ? JSON.stringify(result.json) : result.text).slice(0, 300);
@@ -835,7 +852,13 @@ async function main() {
 				);
 				record(
 					"the request carries the order's amount and currency",
-					String(filed.amount) === String(stored.grandTotal) && filed.currency === stored.currency,
+					// Compared by value: the two surfaces deliberately keep their own shapes. The approval register is
+					// develop's kernel and has always served `amount` as a number; commerce money is a decimal string
+					// (#10545). On PostgreSQL that reads `62` against `"62.000000"` — the same amount — which a string
+					// comparison called a mismatch (upgrade-test run 38543160016). The owner may still want one shape.
+					decimalValue(filed.amount) !== null &&
+						decimalValue(filed.amount) === decimalValue(stored.grandTotal) &&
+						filed.currency === stored.currency,
 					`amount=${filed.amount} ${filed.currency} vs order grandTotal=${stored.grandTotal} ${stored.currency}`
 				);
 			} else {
