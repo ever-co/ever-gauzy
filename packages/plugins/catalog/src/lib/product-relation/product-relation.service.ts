@@ -41,7 +41,11 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 		// inside. It was written with a NULL organization and no read ever found it again (review R2-23). An
 		// organization the request stated is kept: REST validates it against the caller. With neither, there
 		// is no organization it could be found in, so it is refused rather than written unreachable.
-		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId();
+		// REST also accepts the relation form `organization: { id }`, which its DTO validates the same way.
+		const organizationId =
+			entity.organizationId ??
+			(entity.organization as { id?: string } | undefined)?.id ??
+			RequestContext.currentOrganizationId();
 
 		if (!organizationId) {
 			throw new BadRequestException(

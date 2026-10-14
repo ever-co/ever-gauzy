@@ -426,6 +426,15 @@ describe('CollectionService — creation and the slug scope (doc 05 §4.3)', () 
 		expect(fixture.tables.collection).toHaveLength(0);
 	});
 
+	it('accepts the organization stated in its relation form, as the REST DTO allows', async () => {
+		const fixture = collectionFixture();
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+		const created = await fixture.service.create({ name: 'Summer', slug: 'summer', organization: { id: OTHER_ORG } } as never);
+
+		expect(created.organizationId).toBe(OTHER_ORG);
+	});
+
 	it('keeps an organization the request stated (REST validates it against the caller)', async () => {
 		const fixture = collectionFixture();
 
