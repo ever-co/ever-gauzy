@@ -45,14 +45,16 @@ export class GiftCardTransactionController extends CrudController<GiftCardTransa
 	}
 
 	/**
-	 * Appends one movement to a card's ledger, recording the balance it left behind.
+	 * Refused: a movement is appended by the card operation that causes it (issue, redeem, refund, adjust,
+	 * expire), never written directly (review R3-06). The service answers `GIFT_CARD_TRANSACTION_APPEND_ONLY`;
+	 * a balance correction is `POST /gift-cards/:id/adjust`. The route stays so a client gets that answer
+	 * rather than a 404.
 	 *
-	 * @param entity The movement to append.
-	 * @returns The stored movement.
+	 * @param entity The refused movement.
+	 * @returns Never.
 	 */
-	@ApiOperation({ summary: 'Append a gift card transaction' })
-	@ApiResponse({ status: HttpStatus.CREATED, description: 'Transaction appended' })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid transaction input' })
+	@ApiOperation({ summary: 'Append a gift card transaction (refused: the ledger is written by the card operations)' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'GIFT_CARD_TRANSACTION_APPEND_ONLY' })
 	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -61,14 +63,15 @@ export class GiftCardTransactionController extends CrudController<GiftCardTransa
 	}
 
 	/**
-	 * Corrects a movement in a card's ledger.
+	 * Refused: a movement is never edited (`GIFT_CARD_TRANSACTION_APPEND_ONLY`); the correction is an
+	 * adjustment. The same answer comes from the delete, soft-delete and recover routes below.
 	 *
-	 * @param id The movement to change.
-	 * @param entity The fields to change.
-	 * @returns The result of the update.
+	 * @param id The movement.
+	 * @param entity The refused fields.
+	 * @returns Never.
 	 */
-	@ApiOperation({ summary: 'Update a gift card transaction' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Transaction updated' })
+	@ApiOperation({ summary: 'Update a gift card transaction (refused: the ledger is append-only)' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'GIFT_CARD_TRANSACTION_APPEND_ONLY' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Transaction not found' })
 	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
 	@HttpCode(HttpStatus.ACCEPTED)

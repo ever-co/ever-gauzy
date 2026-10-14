@@ -659,20 +659,35 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 
 		for (const fulfillment of selected) {
 			if (isCountedShipment(fulfillment)) {
-				throw new ConflictException({
-					message: `FULFILLMENT_NOT_DELETABLE: fulfillment '${fulfillment.id}' is ${fulfillment.status}, so the order line still counts its units; cancel it before removing it, or keep it as the record of goods that left.`,
-					code: 'FULFILLMENT_NOT_DELETABLE',
-					details: {
-						fulfillmentId: fulfillment.id,
-						status: fulfillment.status,
-						direction: fulfillment.direction ?? FulfillmentDirection.OUTBOUND,
-						deletableFrom: [FulfillmentStatusDetail.CANCELED]
-					}
-				});
+				throw shipmentNotDeletable(fulfillment);
 			}
 		}
 
 		return super.delete(where);
+	}
+
+	/**
+	 * Retires a shipment, by the same rule as `delete` (review R3-16).
+	 *
+	 * `DELETE /fulfillments/:id/soft` and `softDeleteFulfillment` used to retire a `PENDING` shipment the order line
+	 * still counted: `fulfilledQuantity` kept its units, every new shipment of the line was refused with
+	 * `FULFILLMENT_QUANTITY_EXCEEDED`, and `cancel` - which reads live rows only - could no longer find the shipment
+	 * to give the units back. A retired shipment is still counted, so retiring one is refused exactly where removing
+	 * it is: cancel it first.
+	 *
+	 * @param id The shipment to retire.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The retired shipment.
+	 * @throws ConflictException with `FULFILLMENT_NOT_DELETABLE` when the order line still counts the shipment.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<Fulfillment> {
+		const [shipment] = await this.find({ where: removalCriteria(id) as FindOptionsWhere<Fulfillment> });
+
+		if (shipment && isCountedShipment(shipment)) {
+			throw shipmentNotDeletable(shipment);
+		}
+
+		return super.softRemove(id, rest[0], rest[1]);
 	}
 
 	/**
@@ -1182,4 +1197,23 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 
 		return String(stated) === String(held);
 	}
+}
+
+/**
+ * The refusal of a removal or a retirement of a shipment the order line still counts.
+ *
+ * @param fulfillment The shipment.
+ * @returns The exception, naming the way out (cancel first).
+ */
+function shipmentNotDeletable(fulfillment: Fulfillment): ConflictException {
+	return new ConflictException({
+		message: `FULFILLMENT_NOT_DELETABLE: fulfillment '${fulfillment.id}' is ${fulfillment.status}, so the order line still counts its units; cancel it before removing it, or keep it as the record of goods that left.`,
+		code: 'FULFILLMENT_NOT_DELETABLE',
+		details: {
+			fulfillmentId: fulfillment.id,
+			status: fulfillment.status,
+			direction: fulfillment.direction ?? FulfillmentDirection.OUTBOUND,
+			deletableFrom: [FulfillmentStatusDetail.CANCELED]
+		}
+	});
 }

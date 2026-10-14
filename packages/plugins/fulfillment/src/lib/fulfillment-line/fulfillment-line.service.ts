@@ -156,20 +156,35 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 
 		for (const line of selected) {
 			if (isCountedShipment(line.fulfillment)) {
-				throw new ConflictException({
-					message: `FULFILLMENT_LINE_NOT_DELETABLE: fulfilment line '${line.id}' belongs to a shipment the order line still counts; cancel fulfillment '${line.fulfillmentId}' before removing its lines.`,
-					code: 'FULFILLMENT_LINE_NOT_DELETABLE',
-					details: {
-						fulfillmentLineId: line.id,
-						fulfillmentId: line.fulfillmentId,
-						status: line.fulfillment?.status ?? null,
-						direction: line.fulfillment?.direction ?? null
-					}
-				});
+				throw lineNotDeletable(line);
 			}
 		}
 
 		return super.delete(where);
+	}
+
+	/**
+	 * Retires a line, by the same rule as `delete` (review R3-16): a retired line of a shipment the order line still
+	 * counts leaves the counter holding units no live line explains, so it is refused until the shipment is
+	 * cancelled. The shipment is read with the line, retired rows included, as `delete` reads it.
+	 *
+	 * @param id The line to retire.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The retired line.
+	 * @throws ConflictException with `FULFILLMENT_LINE_NOT_DELETABLE` when the shipment is still counted.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<FulfillmentLine> {
+		const [line] = await this.find({
+			where: removalCriteria(id) as FindOptionsWhere<FulfillmentLine>,
+			relations: ['fulfillment'],
+			withDeleted: true
+		});
+
+		if (line && isCountedShipment(line.fulfillment)) {
+			throw lineNotDeletable(line);
+		}
+
+		return super.softRemove(id, rest[0], rest[1]);
 	}
 
 	/**
@@ -192,4 +207,23 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 			return false;
 		}
 	}
+}
+
+/**
+ * The refusal of a removal or a retirement of a line whose shipment the order line still counts.
+ *
+ * @param line The line, read with its shipment.
+ * @returns The exception, naming the way out (cancel the shipment first).
+ */
+function lineNotDeletable(line: FulfillmentLine): ConflictException {
+	return new ConflictException({
+		message: `FULFILLMENT_LINE_NOT_DELETABLE: fulfilment line '${line.id}' belongs to a shipment the order line still counts; cancel fulfillment '${line.fulfillmentId}' before removing its lines.`,
+		code: 'FULFILLMENT_LINE_NOT_DELETABLE',
+		details: {
+			fulfillmentLineId: line.id,
+			fulfillmentId: line.fulfillmentId,
+			status: line.fulfillment?.status ?? null,
+			direction: line.fulfillment?.direction ?? null
+		}
+	});
 }

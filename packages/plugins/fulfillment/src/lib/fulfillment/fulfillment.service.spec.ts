@@ -110,6 +110,16 @@ jest.mock('@gauzy/core', () => {
 		async delete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.delete(criteria);
 		}
+
+		/** The kernel's retirement: the row is read in the caller's scope, then stamped. */
+		async softRemove(id: any): Promise<any> {
+			const record = await this.findOneByIdString(id);
+			const deletedAt = new Date();
+
+			await this.typeOrmRepository.update(id, { deletedAt });
+
+			return { ...record, deletedAt };
+		}
 	}
 
 	return {
@@ -2047,6 +2057,27 @@ describe('FulfillmentService — a shipment the order line still counts is not r
 
 		expect(again.status).toBe(FulfillmentStatusDetail.PENDING);
 		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+	});
+
+	it('refuses to retire a shipment the order line still counts, and retires one once it was cancelled (R3-16)', async () => {
+		// `DELETE /fulfillments/:id/soft` and `softDeleteFulfillment` used to retire the pending shipment: the five
+		// units stayed counted, and `cancel`, which reads live rows only, could no longer find it to give them back.
+		const fixture = counted();
+
+		await expect(fixture.service.softRemove('five')).rejects.toMatchObject({
+			response: {
+				code: 'FULFILLMENT_NOT_DELETABLE',
+				details: { fulfillmentId: 'five', status: FulfillmentStatusDetail.PENDING }
+			}
+		});
+		expect(fixture.row('five')!.deletedAt).toBeUndefined();
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+
+		await fixture.service.cancel('five');
+		await fixture.service.softRemove('five');
+
+		expect(fixture.row('five')!.deletedAt).toBeInstanceOf(Date);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
 	});
 
 	it('removes a return leg at any point, because it never moved a counter', async () => {

@@ -92,6 +92,16 @@ jest.mock('@gauzy/core', () => {
 		async delete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.delete(criteria);
 		}
+
+		/** The kernel's retirement: the row is read in the caller's scope, then stamped. */
+		async softRemove(id: any): Promise<any> {
+			const record = await this.findOneByIdString(id);
+			const deletedAt = new Date();
+
+			await this.typeOrmRepository.update(id, { deletedAt });
+
+			return { ...record, deletedAt };
+		}
 	}
 
 	return {
@@ -662,6 +672,24 @@ describe('FulfillmentLineService — a correction or a removal never strands the
 		await expect(fixture.service.delete('one-a')).resolves.toMatchObject({ affected: 1 });
 		await expect(fixture.service.delete('two-a')).resolves.toMatchObject({ affected: 1 });
 		expect(fixture.tables.fulfillment_line).toEqual([]);
+	});
+
+	it('refuses to retire a line of a shipment the order line still counts, and retires one of a cancelled shipment (R3-16)', async () => {
+		const fixture = lineFixture({
+			fulfillment: [shipmentOf(SHIPMENT_ONE, 'PENDING'), shipmentOf(SHIPMENT_TWO, 'CANCELED')],
+			fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5), settled('two-a', SHIPMENT_TWO, LINE_A, 2)]
+		});
+
+		await expect(fixture.service.softRemove('one-a')).rejects.toMatchObject({
+			response: {
+				code: 'FULFILLMENT_LINE_NOT_DELETABLE',
+				details: { fulfillmentLineId: 'one-a', fulfillmentId: SHIPMENT_ONE, status: 'PENDING' }
+			}
+		});
+		expect(fixture.row('one-a').deletedAt).toBeUndefined();
+
+		await fixture.service.softRemove('two-a');
+		expect(fixture.row('two-a').deletedAt).toBeInstanceOf(Date);
 	});
 
 	it('refuses a line whose shipment cannot be read, rather than guessing it counts nothing', async () => {

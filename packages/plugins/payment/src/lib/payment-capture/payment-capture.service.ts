@@ -265,6 +265,37 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 	}
 
 	/**
+	 * Refuses to retire a capture (review R3-17).
+	 *
+	 * `sumCapturedForPayment` - the refund ceiling - reads live rows only, while `payment.capturedAmount` keeps
+	 * counting a retired one: retiring a capture lowered the refundable figure without moving the payment, and
+	 * recovering it raised the figure again, with nothing to reconcile the two. A capture is a fact about money that
+	 * was taken; the correction is a refund.
+	 *
+	 * @param id The capture that was to be retired.
+	 * @throws BadRequestException always.
+	 */
+	async softRemove(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw new BadRequestException('PAYMENT_CAPTURE_APPEND_ONLY');
+	}
+
+	/**
+	 * Refuses to restore a retired capture, for the reason `softRemove` gives.
+	 *
+	 * @param id The capture that was to be restored.
+	 * @throws BadRequestException always.
+	 */
+	async softRecover(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw new BadRequestException('PAYMENT_CAPTURE_APPEND_ONLY');
+	}
+
+	/**
 	 * Loads a capture that belongs to the caller's organization.
 	 *
 	 * @param id The capture to load.
