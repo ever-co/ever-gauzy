@@ -66,7 +66,8 @@ export class CreateSubscriptionDTO extends SubscriptionDTO {
 	@ApiPropertyOptional({
 		type: () => Boolean,
 		default: false,
-		description: 'Bill the first period as part of creation instead of leaving the subscription pending.'
+		description:
+			'Start the subscription at creation instead of leaving it pending: its first period is due at once, and the next billing run bills it.'
 	})
 	@IsOptional()
 	@IsBoolean()

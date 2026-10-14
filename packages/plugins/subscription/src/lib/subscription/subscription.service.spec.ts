@@ -171,6 +171,15 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
+/**
+ * The entitlement package's consumer of `subscription.canceled` is the real one (see the contract suite at
+ * the end of this file); the service it writes through is the one module of that package replaced, because
+ * it reaches the entitlement tables, and the contract is what the consumer decides from the payload.
+ */
+jest.mock('@gauzy/plugin-entitlement/src/lib/entitlement/entitlement.service', () => ({
+	EntitlementService: class EntitlementService {}
+}));
+
 import { NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import {
@@ -264,6 +273,8 @@ function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity
 					return (expected.value ?? []).some((candidate: unknown) => matchesValue(value, candidate));
 				case 'lessThanOrEqual':
 					return instant(value ?? 0) <= instant(expected.value ?? 0);
+				case 'isNull':
+					return value === null || value === undefined;
 				default:
 					throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 			}
@@ -786,7 +797,8 @@ describe('SubscriptionService — putting a customer on a plan (doc 11 §10.4)',
 			organizationId: ORG
 		});
 		expect(created.currentPeriodStart).toBeInstanceOf(Date);
-		expect(created.nextBillingAt).toEqual(created.currentPeriodEnd);
+		// The opening period is the first one billed, so the next billing instant is its start.
+		expect(created.nextBillingAt).toEqual(created.currentPeriodStart);
 		expect(created.currentPeriodEnd).toEqual(monthAfter(created.currentPeriodStart as Date));
 
 		expect(fixture.items(created.id)).toHaveLength(1);
@@ -1055,7 +1067,8 @@ describe('SubscriptionService — activate, pause, resume, cancel, expire (doc 1
 
 		expect(activated.status).toBe(SubscriptionStatus.ACTIVE);
 		expect((activated.currentPeriodStart as Date).getUTCFullYear()).toBeGreaterThan(2020);
-		expect(activated.nextBillingAt).toEqual(activated.currentPeriodEnd);
+		// The activation's period is the first one billed.
+		expect(activated.nextBillingAt).toEqual(activated.currentPeriodStart);
 		expect(activated.currentPeriodEnd).toEqual(monthAfter(activated.currentPeriodStart as Date));
 		expect(fixture.events.map((event) => event.name)).toEqual(['subscription.activated']);
 	});
@@ -1075,6 +1088,8 @@ describe('SubscriptionService — activate, pause, resume, cancel, expire (doc 1
 
 		expect(activated.currentPeriodStart).toEqual(trialEnd);
 		expect(activated.currentPeriodEnd).toEqual(monthAfter(trialEnd));
+		// The first paid period is billed once the trial is over, not one period later.
+		expect(activated.nextBillingAt).toEqual(trialEnd);
 	});
 
 	it('activates an already active subscription as a no-op', async () => {
@@ -2531,5 +2546,246 @@ describe('SubscriptionService — the versioned write', () => {
 			billingCycleCount: 0,
 			version: 1
 		});
+	});
+});
+
+describe('SubscriptionService — the opening period is billed, from creation to the first run', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('bills the period a subscription is created active with on the first run, setup fee included, on the cycle written at creation', async () => {
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)],
+			subscriptions: [],
+			items: [],
+			billings: []
+		});
+
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			activate: true,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const start = created.currentPeriodStart as Date;
+		const end = created.currentPeriodEnd as Date;
+		const [opening] = fixture.billings(created.id);
+
+		expect(opening).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			periodStart: start,
+			periodEnd: end
+		});
+
+		// The first run, at the instant the subscription started: the opening period is owed now.
+		const run = await fixture.service.runBilling({ asOf: start });
+
+		expect(run).toMatchObject({ examined: 1, billed: 1, failed: 0 });
+		expect(run.results[0]).toMatchObject({ billingId: opening.id, periodStart: start, periodEnd: end });
+		// One order, for the opening period, and the setup fee is charged with it: the first paid cycle.
+		expect(fixture.orderCalls).toHaveLength(1);
+		expect(fixture.orderCalls[0]).toMatchObject({ setupFee: '25.000000', firstCycle: true });
+		// The cycle written at creation is the one settled: no second row, and none left pending.
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID })
+		]);
+		expect(fixture.subscription(created.id)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			billingCycleCount: 1,
+			currentPeriodStart: start,
+			currentPeriodEnd: end,
+			nextBillingAt: end
+		});
+	});
+
+	it('bills the period a later activation starts on the first run, on the cycle written at creation', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		// Read now: the fixture answers the stored row itself, which the activation then moves.
+		const createdAt = new Date(created.currentPeriodStart as Date);
+		const [opening] = fixture.billings(created.id);
+
+		expect(created.status).toBe(SubscriptionStatus.PENDING);
+		expect(opening).toMatchObject({ status: SubscriptionBillingStatus.PENDING, periodStart: createdAt });
+
+		// Activated later: the first period starts then, and the opening cycle moves with it.
+		await new Promise((resolve) => setTimeout(resolve, 5));
+		const activated = await fixture.service.activate(created.id);
+		const start = activated.currentPeriodStart as Date;
+
+		expect(start.getTime()).toBeGreaterThan(createdAt.getTime());
+		expect(activated).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			nextBillingAt: start
+		});
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({
+				id: opening.id,
+				status: SubscriptionBillingStatus.PENDING,
+				periodStart: start,
+				periodEnd: activated.currentPeriodEnd,
+				dueAt: start
+			})
+		]);
+
+		const run = await fixture.service.runBilling({ asOf: start });
+
+		expect(run).toMatchObject({ examined: 1, billed: 1, failed: 0 });
+		expect(run.results[0]).toMatchObject({ billingId: opening.id, periodStart: start });
+		expect(fixture.orderCalls).toHaveLength(1);
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID, periodStart: start })
+		]);
+	});
+
+	it('does not move a cycle that records an attempt', async () => {
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'billing-attempted',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: MARCH,
+					periodEnd: APRIL,
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PENDING,
+					dueAt: MARCH,
+					attemptCount: 1
+				}
+			]
+		});
+
+		const answered = await fixture.billingService.reschedulePending('billing-attempted', {
+			start: MID_MARCH,
+			end: monthAfter(MID_MARCH)
+		});
+
+		expect(answered).toMatchObject({ periodStart: MARCH, periodEnd: APRIL, dueAt: MARCH });
+		expect(fixture.billings()[0]).toMatchObject({ periodStart: MARCH, periodEnd: APRIL, dueAt: MARCH });
+	});
+
+	it('does not move a cycle a charge reached between the read and the write', async () => {
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'billing-opening',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: MARCH,
+					periodEnd: APRIL,
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PENDING,
+					dueAt: MARCH,
+					attemptCount: 0
+				}
+			]
+		});
+		const read = fixture.billingService.findOneScoped.bind(fixture.billingService);
+
+		jest.spyOn(fixture.billingService, 'findOneScoped').mockImplementationOnce(async (id) => {
+			// What the read saw, before the billing run raises the cycle's order right after it.
+			const cycle = { ...(await read(id)) };
+
+			Object.assign(fixture.billings()[0], { orderId: 'order-raced', attemptCount: 1 });
+
+			return cycle;
+		});
+
+		const answered = await fixture.billingService.reschedulePending('billing-opening', {
+			start: MID_MARCH,
+			end: monthAfter(MID_MARCH)
+		});
+
+		expect(answered).toMatchObject({ orderId: 'order-raced', periodStart: MARCH, periodEnd: APRIL, dueAt: MARCH });
+	});
+});
+
+describe('SubscriptionService → EntitlementGrantConsumer — the cancellation the consumer is sent', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/**
+	 * Hands an appended event to the entitlement package's real consumer, as the dispatcher would: in the
+	 * envelope the outbox builds from its stored row (`EventOutboxService.toEnvelope`), whose payload went
+	 * through a JSON column. The rights the subscription carries are one entitlement.
+	 *
+	 * @param appended The outbox row the subscription service appended.
+	 * @returns The revocations the consumer made.
+	 */
+	async function deliver(appended: Row): Promise<unknown[][]> {
+		const { EntitlementGrantConsumer } = jest.requireActual(
+			'@gauzy/plugin-entitlement/src/lib/events/entitlement-grant.consumer'
+		);
+		const revoked: unknown[][] = [];
+		const entitlementService = {
+			find: async (options: Row) => [{ id: 'entitlement-1', subscriptionId: options.where.subscriptionId }],
+			revoke: async (...args: unknown[]) => {
+				revoked.push(args);
+			}
+		};
+
+		await new EntitlementGrantConsumer(entitlementService).handle(
+			{
+				id: 'event-1',
+				name: appended.name,
+				tenantId: appended.tenantId,
+				organizationId: appended.organizationId,
+				aggregate: { type: appended.aggregateType, id: appended.aggregateId },
+				data: JSON.parse(JSON.stringify(appended.data))
+			},
+			{ assertOrder: async () => undefined, alreadyDelivered: async () => false }
+		);
+
+		return revoked;
+	}
+
+	const canceled = (events: Row[]) => events.filter((event) => event.name === 'subscription.canceled');
+
+	it('withdraws the rights of a subscription cancelled with immediate effect', async () => {
+		const fixture = subscriptionFixture();
+
+		await fixture.service.cancel(SUBSCRIPTION, { reason: 'customer left', immediate: true });
+
+		expect(await deliver(canceled(fixture.events)[0])).toEqual([
+			['entitlement-1', 'SUBSCRIPTION_ENDED', { tenantId: TENANT, organizationId: ORG }]
+		]);
+	});
+
+	it('leaves them for the period paid for, and withdraws them when the billing run ends it', async () => {
+		const fixture = subscriptionFixture();
+
+		await fixture.service.cancel(SUBSCRIPTION, { reason: 'at the end of the month' });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.ACTIVE });
+		expect(await deliver(canceled(fixture.events)[0])).toEqual([]);
+
+		// The period runs out: the run cancels it with immediate effect, and that event ends the rights.
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.CANCELED });
+		expect(await deliver(canceled(fixture.events)[1])).toEqual([
+			['entitlement-1', 'SUBSCRIPTION_ENDED', { tenantId: TENANT, organizationId: ORG }]
+		]);
 	});
 });

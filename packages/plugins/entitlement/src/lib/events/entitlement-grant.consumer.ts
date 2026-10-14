@@ -396,9 +396,16 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	/**
 	 * Ends the rights a cancelled subscription carried.
 	 *
-	 * A subscription cancelled with immediate effect and no proration credit withdraws the right at
-	 * the moment of cancellation; one cancelled at the end of a paid period leaves the right alone
-	 * until it lapses, because the customer has paid for the period they are in.
+	 * A subscription cancelled with immediate effect (`immediate: true`) is `CANCELED` from that
+	 * instant, and its rights are withdrawn with it. One cancelled at the end of a paid period
+	 * (`immediate: false`) leaves them alone, because the customer has paid for the period they are in;
+	 * when that period runs out, the billing run cancels it with immediate effect, and that event is
+	 * the one that withdraws them.
+	 *
+	 * `immediate` is the field `SubscriptionService.cancel` states. This handler also required a
+	 * `noProrationCredit` flag, which no producer has ever stated, so it returned early on every
+	 * cancellation and a cancelled subscriber kept every right. Whether a credit is given back
+	 * does not change the answer: the subscription has ended either way.
 	 *
 	 * @param event The `subscription.canceled` event.
 	 * @param scope The tenant and organization the event belongs to.
@@ -411,11 +418,8 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		const immediate = data.immediate === true;
-		const noProrationCredit = data.noProrationCredit === true;
-
-		if (!immediate || !noProrationCredit) {
-			// The right runs to its end date and the expiry pass closes it there.
+		if (data.immediate !== true) {
+			// The subscription runs to the end of the period it paid for, and so do its rights.
 			return;
 		}
 

@@ -440,7 +440,7 @@ export interface ICreateSubscriptionInput {
 	items?: ISubscriptionItemInput[];
 	paymentAccountHolderId?: ID;
 	paymentMethodTokenId?: ID;
-	/** When true the subscription bills its first period immediately instead of waiting to be activated. */
+	/** When true the subscription is active from creation, its first period due at once for the next billing run, instead of waiting to be activated. */
 	activate?: boolean;
 	/** Skips the first paid period and leaves the subscription inside its trial. */
 	startTrial?: boolean;
