@@ -4,12 +4,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { BaseEntityEnum } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/core';
 import { IRecordViewRouteData, RecordViewRoutePageComponent } from './record-view-route-page.component';
 
 const ID = 'aaaaaaaa-1111-4111-8111-111111111111';
 const OTHER = 'bbbbbbbb-2222-4222-8222-222222222222';
 /** The page's own (element) injector: whatever it is, it resolves services. */
 const anInjector = expect.objectContaining({ get: expect.any(Function) });
+const TENANT = 'eeeeeeee-5555-4555-8555-555555555555';
+const ORGANIZATION = 'cccccccc-3333-4333-8333-333333333333';
+const OTHER_ORGANIZATION = 'dddddddd-4444-4444-8444-444444444444';
+const scopeOf = (organizationId: string) => ({ organizationId, tenantId: TENANT });
 
 /**
  * A record's full-width page driven by its route (`view/:id` + `data.recordView`): what a sidebar favorite
@@ -18,12 +23,18 @@ const anInjector = expect.objectContaining({ get: expect.any(Function) });
 describe('RecordViewRoutePageComponent', () => {
 	let fixture: ComponentFixture<RecordViewRoutePageComponent>;
 	let params$: BehaviorSubject<ParamMap>;
+	let organization$: BehaviorSubject<{ id: string; tenantId: string }>;
 	let load: jest.Mock;
 	let config: IRecordViewRouteData;
 
 	beforeEach(async () => {
 		params$ = new BehaviorSubject(convertToParamMap({ id: ID }));
-		load = jest.fn(async (id: string) => ({ id, name: `Record ${id.slice(0, 4)}` }));
+		organization$ = new BehaviorSubject({ id: ORGANIZATION, tenantId: TENANT });
+		load = jest.fn(async (id: string, _injector: unknown, scope: { organizationId: string }) => ({
+			id,
+			name: `Record ${id.slice(0, 4)}`,
+			organizationId: scope.organizationId
+		}));
 		config = {
 			heading: 'EXPENSES_PAGE.EXPENSES',
 			backLink: '/pages/accounting/expenses',
@@ -38,7 +49,8 @@ describe('RecordViewRoutePageComponent', () => {
 				{
 					provide: ActivatedRoute,
 					useValue: { paramMap: params$.asObservable(), data: new BehaviorSubject({ recordView: config }) }
-				}
+				},
+				{ provide: Store, useValue: { selectedOrganization$: organization$.asObservable() } }
 			],
 			schemas: [NO_ERRORS_SCHEMA]
 		}).compileComponents();
@@ -54,7 +66,7 @@ describe('RecordViewRoutePageComponent', () => {
 	it('loads the record the URL names through the route config, with the page injector', async () => {
 		await settle();
 
-		expect(load).toHaveBeenCalledWith(ID, anInjector);
+		expect(load).toHaveBeenCalledWith(ID, anInjector, scopeOf(ORGANIZATION));
 		expect(fixture.componentInstance.state).toBe('ready');
 		expect(fixture.componentInstance.sections).toEqual([
 			{ fields: [{ label: 'SM_TABLE.NAME', value: 'Record aaaa' }] }
@@ -77,7 +89,7 @@ describe('RecordViewRoutePageComponent', () => {
 		params$.next(convertToParamMap({ id: OTHER }));
 		await settle();
 
-		expect(load).toHaveBeenLastCalledWith(OTHER, anInjector);
+		expect(load).toHaveBeenLastCalledWith(OTHER, anInjector, scopeOf(ORGANIZATION));
 		expect(fixture.componentInstance.record.id).toBe(OTHER);
 	});
 
@@ -97,5 +109,36 @@ describe('RecordViewRoutePageComponent', () => {
 		await settle();
 
 		expect(fixture.componentInstance.state).toBe(state);
+	});
+
+	it('reloads within the new organization when the header switches it', async () => {
+		await settle();
+		organization$.next({ id: OTHER_ORGANIZATION, tenantId: TENANT });
+		await settle();
+
+		expect(load).toHaveBeenLastCalledWith(ID, anInjector, scopeOf(OTHER_ORGANIZATION));
+		expect(fixture.componentInstance.state).toBe('ready');
+	});
+
+	it('reads "not found" for a record of another organization, so its star cannot file it there', async () => {
+		load.mockResolvedValueOnce({ id: ID, name: 'Elsewhere', organizationId: OTHER_ORGANIZATION });
+		await settle();
+
+		expect(fixture.componentInstance.state).toBe('not-found');
+		expect(fixture.componentInstance.record).toBeNull();
+	});
+
+	it('discards a load that a newer organization switch overtook', async () => {
+		let answerFirst: (record: unknown) => void;
+		load.mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve)));
+		fixture.detectChanges(); // first load, still pending
+		organization$.next({ id: OTHER_ORGANIZATION, tenantId: TENANT });
+		await settle();
+
+		answerFirst({ id: ID, name: 'Stale', organizationId: ORGANIZATION });
+		await settle();
+
+		expect(fixture.componentInstance.record.organizationId).toBe(OTHER_ORGANIZATION);
+		expect(fixture.componentInstance.state).toBe('ready');
 	});
 });

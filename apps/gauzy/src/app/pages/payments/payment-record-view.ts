@@ -2,7 +2,7 @@ import { Injector } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BaseEntityEnum, IPayment } from '@gauzy/contracts';
 import { PaymentService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** Relations a payment's View reads — the same the payments grid loads. */
 export const PAYMENT_VIEW_RELATIONS = [
@@ -56,8 +56,15 @@ export function buildPaymentViewSections(payment: IPayment, translate: (key: str
 export const PAYMENT_RECORD_VIEW: IRecordViewRouteData<IPayment> = {
 	heading: 'PAYMENTS_PAGE.HEADER',
 	backLink: '/pages/accounting/payments',
-	load: async (id: string, injector: Injector) => {
-		const { items } = await injector.get(PaymentService).getAll(PAYMENT_VIEW_RELATIONS, { id } as any);
+	// The payments read requires the organization and tenant in its filter (400 without them).
+	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
+		const { items } = await injector
+			.get(PaymentService)
+			.getAll(PAYMENT_VIEW_RELATIONS, {
+				id,
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId
+			} as any);
 		return items?.[0] ?? null;
 	},
 	sections: (payment, injector) => {

@@ -1,7 +1,7 @@
 import { Injector } from '@angular/core';
 import { BaseEntityEnum, IOrganizationTeam, IOrganizationTeamEmployee, RolesEnum } from '@gauzy/contracts';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** Relations a team's View reads — the same the teams page loads. */
 export const TEAM_VIEW_RELATIONS = ['members.role', 'members.employee.user', 'tags', 'projects'];
@@ -38,8 +38,10 @@ export function buildTeamViewSections(team: IOrganizationTeam): IRecordViewSecti
 export const TEAM_RECORD_VIEW: IRecordViewRouteData<IOrganizationTeam> = {
 	heading: 'ORGANIZATIONS_PAGE.TEAMS',
 	backLink: '/pages/organization/teams',
-	load: async (id: string, injector: Injector) => {
-		const { items } = await injector.get(OrganizationTeamsService).getAll(TEAM_VIEW_RELATIONS, { id } as any);
+	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
+		const { items } = await injector
+			.get(OrganizationTeamsService)
+			.getAll(TEAM_VIEW_RELATIONS, { id, organizationId: scope.organizationId, tenantId: scope.tenantId } as any);
 		return items?.[0] ?? null;
 	},
 	sections: (team) => buildTeamViewSections(team),

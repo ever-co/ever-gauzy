@@ -1,7 +1,7 @@
 import { Injector } from '@angular/core';
 import { BaseEntityEnum, IOrganizationVendor } from '@gauzy/contracts';
 import { OrganizationVendorsService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** A vendor, described for `ngx-record-view` — the vendors grid's columns read vertically. */
 export function buildVendorViewSections(): IRecordViewSection[] {
@@ -22,8 +22,10 @@ export function buildVendorViewSections(): IRecordViewSection[] {
 export const VENDOR_RECORD_VIEW: IRecordViewRouteData<IOrganizationVendor> = {
 	heading: 'ORGANIZATIONS_PAGE.VENDORS',
 	backLink: '/pages/organization/vendors',
-	load: async (id: string, injector: Injector) => {
-		const { items } = await injector.get(OrganizationVendorsService).getAll({ id } as any, ['tags']);
+	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
+		const { items } = await injector
+			.get(OrganizationVendorsService)
+			.getAll({ id, organizationId: scope.organizationId, tenantId: scope.tenantId } as any, ['tags']);
 		return items?.[0] ?? null;
 	},
 	sections: () => buildVendorViewSections(),

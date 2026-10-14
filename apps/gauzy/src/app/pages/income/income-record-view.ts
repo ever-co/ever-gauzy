@@ -2,7 +2,7 @@ import { Injector } from '@angular/core';
 import { BaseEntityEnum, IIncome, PermissionsEnum } from '@gauzy/contracts';
 import { employeeMapper } from '@gauzy/ui-core/common';
 import { IncomeService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** Relations an income's View reads — the same the income grid loads. */
 export const INCOME_VIEW_RELATIONS = ['employee', 'employee.user', 'tags', 'organization', 'client'];
@@ -42,8 +42,14 @@ export function buildIncomeViewSections(): IRecordViewSection[] {
 export const INCOME_RECORD_VIEW: IRecordViewRouteData<IIncome> = {
 	heading: 'INCOME_PAGE.INCOME',
 	backLink: '/pages/accounting/income',
-	load: async (id: string, injector: Injector) => {
-		const { items } = await injector.get(IncomeService).getAll(INCOME_VIEW_RELATIONS, { id } as any);
+	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
+		const { items } = await injector
+			.get(IncomeService)
+			.getAll(INCOME_VIEW_RELATIONS, {
+				id,
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId
+			} as any);
 		const income = items?.[0];
 		return income ? ({ ...income, employee: { ...employeeMapper(income) } } as any) : null;
 	},

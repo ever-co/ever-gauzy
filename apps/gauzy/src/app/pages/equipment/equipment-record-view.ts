@@ -1,7 +1,7 @@
 import { Injector } from '@angular/core';
 import { BaseEntityEnum, IEquipment } from '@gauzy/contracts';
 import { EquipmentService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** A piece of equipment, described for `ngx-record-view` — the equipment grid's columns read vertically. */
 export function buildEquipmentViewSections(): IRecordViewSection[] {
@@ -26,8 +26,10 @@ export function buildEquipmentViewSections(): IRecordViewSection[] {
 export const EQUIPMENT_RECORD_VIEW: IRecordViewRouteData<IEquipment> = {
 	heading: 'EQUIPMENT_PAGE.HEADER',
 	backLink: '/pages/organization/equipment',
-	load: async (id: string, injector: Injector) => {
-		const { items } = await injector.get(EquipmentService).getAll(['tags'], { id } as any);
+	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
+		const { items } = await injector
+			.get(EquipmentService)
+			.getAll(['tags'], { id, organizationId: scope.organizationId, tenantId: scope.tenantId } as any);
 		return items?.[0] ?? null;
 	},
 	sections: () => buildEquipmentViewSections(),

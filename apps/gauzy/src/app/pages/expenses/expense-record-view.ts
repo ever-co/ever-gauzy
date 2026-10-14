@@ -2,7 +2,7 @@ import { Injector } from '@angular/core';
 import { BaseEntityEnum, ExpenseStatusesEnum, IExpense, PermissionsEnum } from '@gauzy/contracts';
 import { employeeMapper } from '@gauzy/ui-core/common';
 import { ExpensesService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** Relations an expense's View reads — the same the expenses grid loads. */
 export const EXPENSE_VIEW_RELATIONS = [
@@ -16,7 +16,10 @@ export const EXPENSE_VIEW_RELATIONS = [
 ];
 
 /** The status badge of the expenses grid: paid green, invoiced amber, otherwise red. */
-export function expenseStatusBadge(value: ExpenseStatusesEnum | string): { text: string; class: string | null } {
+export function expenseStatusBadge(value: ExpenseStatusesEnum | string): { text: string; class: string | null } | null {
+	if (!value) {
+		return null; // no status: no badge (the row is left out)
+	}
 	const badgeClass =
 		value === ExpenseStatusesEnum.PAID ? 'success' : value === ExpenseStatusesEnum.INVOICED ? 'warning' : 'danger';
 	return { text: String(value ?? '').replace(/_/g, ' '), class: badgeClass };
@@ -63,8 +66,14 @@ export function buildExpenseViewSections(): IRecordViewSection[] {
 export const EXPENSE_RECORD_VIEW: IRecordViewRouteData<IExpense> = {
 	heading: 'EXPENSES_PAGE.EXPENSES',
 	backLink: '/pages/accounting/expenses',
-	load: async (id: string, injector: Injector) => {
-		const { items } = await injector.get(ExpensesService).getAll(EXPENSE_VIEW_RELATIONS, { id } as any);
+	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
+		const { items } = await injector
+			.get(ExpensesService)
+			.getAll(EXPENSE_VIEW_RELATIONS, {
+				id,
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId
+			} as any);
 		const expense = items?.[0];
 		return expense
 			? ({
