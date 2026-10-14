@@ -5,6 +5,26 @@ import { environment } from '@gauzy/config';
 import { resolveThrottlerTracker } from './tracker';
 
 /**
+ * The metadata key `@Throttle` writes a limit under, followed by the throttler's name.
+ *
+ * `@nestjs/throttler` does not export its constants from the package root, and this package does not
+ * reach into `dist/`; the spec pins the value against the package's own constant.
+ */
+export const THROTTLER_LIMIT_METADATA = 'THROTTLER:LIMIT';
+
+/**
+ * The bucket every socket-delivered operation of a rate-limited field is counted in.
+ *
+ * A graphql-ws operation's request is assembled from the connection's headers and carries no client
+ * address, so there is nothing to tell two socket clients apart by: they share one bucket per field,
+ * separate from every HTTP client's.
+ */
+export const SOCKET_THROTTLER_TRACKER = 'graphql-socket';
+
+/** Marks the request a socket-delivered operation is counted with. */
+const SOCKET_OPERATION = '__graphqlSocketOperation';
+
+/**
  * Rate-limit guard for deployments that sit behind a reverse proxy.
  *
  * The bucket key comes from {@link resolveThrottlerTracker}, which only believes
@@ -20,12 +40,23 @@ import { resolveThrottlerTracker } from './tracker';
  * request and response. The bucket was then keyed on a root value with no address — every GraphQL
  * client of the deployment shared one bucket — and no rate-limit header reached the response. The
  * request and response are read from the GraphQL context instead (it carries the Express request, see
- * `graphql-helper.ts`). An operation with no HTTP request behind it (a subscription event over the
- * socket) is not throttled here: its connection was an HTTP upgrade that the edge rate-limits.
+ * `graphql-helper.ts`).
+ *
+ * **An operation delivered over the socket** has no HTTP exchange of its own. It is not throttled by
+ * the installation-wide default — its connection was an HTTP upgrade the edge rate-limits — **except on
+ * a field that states its own limit**. Those are the public credential checks (`inviteByToken`,
+ * `inviteByCode`, the join-request code, …): a socket accepts any credential-shaped string at connect
+ * time and `@Public()` skips its verification, so skipping them would leave an unlimited guessing channel
+ * beside the limited HTTP one (review R7-09). They are counted in one bucket per field for every socket
+ * client ({@link SOCKET_THROTTLER_TRACKER}), since the operation carries no address; the HTTP endpoint
+ * keeps its per-client buckets.
  */
 @Injectable()
 export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
 	protected async getTracker(req: Record<string, any>): Promise<string> {
+		if (req?.[SOCKET_OPERATION]) {
+			return SOCKET_THROTTLER_TRACKER;
+		}
 		return resolveThrottlerTracker(req, {
 			trustCloudflareConnectingIp: environment.THROTTLE_TRUST_CF_CONNECTING_IP === true
 		});
@@ -36,19 +67,42 @@ export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
 			return super.getRequestResponse(context);
 		}
 		const req = graphqlHttpRequest(context);
-		return { req, res: req?.res };
+		if (req) {
+			return { req, res: req.res };
+		}
+		// A socket-delivered operation of a field that states its own limit (see `shouldSkip`): counted as
+		// one socket client, with no response to write rate-limit headers to.
+		const operation = GqlExecutionContext.create(context).getContext<{ req?: Record<string, any> }>();
+		return { req: { headers: operation?.req?.headers ?? {}, [SOCKET_OPERATION]: true }, res: {} };
 	}
 
 	protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
 		if (context.getType<GqlContextType>() === 'graphql' && !graphqlHttpRequest(context)) {
-			return true;
+			return !this.statesOwnLimit(context);
 		}
 		return super.shouldSkip(context);
+	}
+
+	/**
+	 * Whether the handler or its class states a limit of its own with `@Throttle`, for any throttler.
+	 *
+	 * @param context The execution context.
+	 * @returns True when a route- or class-level limit is declared.
+	 */
+	private statesOwnLimit(context: ExecutionContext): boolean {
+		const targets = [context.getHandler(), context.getClass()];
+
+		return (this.throttlers ?? []).some(
+			(throttler) =>
+				this.reflector.getAllAndOverride(`${THROTTLER_LIMIT_METADATA}${throttler.name}`, targets) !== undefined
+		);
 	}
 }
 
 /** The Express request behind a GraphQL operation, or `undefined` for a socket-delivered operation. */
-function graphqlHttpRequest(context: ExecutionContext): (Record<string, any> & { res?: Record<string, any> }) | undefined {
+function graphqlHttpRequest(
+	context: ExecutionContext
+): (Record<string, any> & { res?: Record<string, any> }) | undefined {
 	const operation = GqlExecutionContext.create(context).getContext<{ req?: Record<string, any> }>();
 	const req = operation?.req;
 	// An HTTP operation's request is Express's, which links its response; a socket's upgrade request

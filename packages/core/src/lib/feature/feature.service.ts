@@ -4,6 +4,7 @@ import { FeatureEnum, ID, IFeature, IPagination } from '@gauzy/contracts';
 import { gauzyToggleFeatures } from '@gauzy/config';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature-organization.entity';
+import { isFeatureEnabledByDefault } from './feature-default-state';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
@@ -68,8 +69,17 @@ export class FeatureService extends CrudService<Feature> {
 	 * 3. **nothing has answered**, so the deployment's own configured toggle for the code decides.
 	 *
 	 * The method never raises. It runs from guards on routes that carry no request context, and a
-	 * resolution there has to produce a stable answer: with no tenant to scope by, and for a code the
-	 * catalogue does not hold at all, the configured toggle is that answer.
+	 * resolution there has to produce a stable answer: for a code the catalogue does not hold at all, the
+	 * configured toggle is that answer.
+	 *
+	 * **With no tenant to scope by, the answer is the code's default**: the configured toggle when
+	 * configuration names the code, and the catalogue's `defaultEnabled` when it does not
+	 * (`isFeatureEnabledByDefault`, the same answer a new tenant's toggle row is created with). A
+	 * `@Public()` handler is that case: it runs without the tenant guard, so no stored toggle can answer
+	 * for it. Reading only the configured toggle there answered `false` for every catalogue code that
+	 * configuration does not name — `FEATURE_GRAPHQL` among them — so every `@Public()` GraphQL field
+	 * (`inviteByToken`, `invoiceByToken`, `termsAcceptanceDocuments`, …) was refused while the REST
+	 * route it mirrors answered (review R7-F3). A code the catalogue marks off still resolves off.
 	 *
 	 * @param flag The feature code to resolve.
 	 * @returns Whether the code is enabled for the caller's scope.
@@ -78,10 +88,10 @@ export class FeatureService extends CrudService<Feature> {
 		try {
 			const { tenantId, organizationId } = this.featureToggleScope();
 
-			// Nothing to scope the stored toggles by, so none of them can answer: the configured toggle
-			// is the only answer that is the same for every scope.
+			// Nothing to scope the stored toggles by, so none of them can answer: the code's default —
+			// configured, or the catalogue's — is the only answer that is the same for every scope.
 			if (!tenantId) {
-				return this.configuredFeatureState(flag);
+				return isFeatureEnabledByDefault(flag);
 			}
 
 			// The catalogue entry, read for its id: the toggles hang off it. A code with no catalogue

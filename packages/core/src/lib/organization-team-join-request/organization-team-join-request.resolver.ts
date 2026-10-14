@@ -1,6 +1,7 @@
 import { ParseEnumPipe, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Throttle } from '@nestjs/throttler';
 import { FeatureFlag, IAppIntegrationConfig, Public } from '@gauzy/common';
 import {
 	ID as Id,
@@ -136,22 +137,21 @@ const ORGANIZATION_TEAM_JOIN_REQUEST_DEFAULT_SORT: readonly ConnectionSortKey[] 
  * controller states no class-level permission either, so there is none to restate here — a permission
  * on this class would narrow every field below it below the route each mirrors.
  *
- * **The gate is the catalogue's, and it is the one thing this surface cannot express fully.**
- * `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the GraphQL endpoint and its
- * resolvers, and `FeatureFlagGuard` reads it from `FEATURE_METADATA` over the handler and then the
- * class — which is why it is stated once here, on the class, and appended to the guard chain the routes
- * below already carry rather than replacing any part of it. The capability it resolves is
- * tenant-scoped: `FeatureService.isFeatureEnabled` answers from the caller's own toggle rows when the
- * request carries a tenant, and falls back to the deployment's configured state when it does not — and
- * `FEATURE_GRAPHQL` is not a code that configuration names, so a request that carries no tenant scope
- * resolves the capability as disabled and is refused. The three `@Public()` routes below are the case
- * that exposes it: their fields are served only when the capability resolves for the caller's scope,
- * which is a narrower door than the routes they mirror, and the delivery has no way to state otherwise
- * — a field cannot be more open than the gate over it. Nothing narrower is stated on those three fields
- * either, because a guard or a permission there would refuse a caller the REST route serves. Dropping
- * the gate to work around the limitation is not an option this delivery has: it would leave the whole
- * endpoint served to a deployment that switched the capability off, which is the defect the gate exists
- * to prevent. The limitation is therefore stated here rather than worked around.
+ * **The gate is the catalogue's.** `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+ * GraphQL endpoint and its resolvers, and `FeatureFlagGuard` reads it from `FEATURE_METADATA` over the
+ * handler and then the class — which is why it is stated once here, on the class, and appended to the
+ * guard chain the routes below already carry rather than replacing any part of it. The capability it
+ * resolves is tenant-scoped: `FeatureService.isFeatureEnabled` answers from the caller's own toggle rows
+ * when the request carries a tenant, and from the code's default when it does not — the configured
+ * toggle, else the catalogue's `defaultEnabled`, which is on for `FEATURE_GRAPHQL`. The three `@Public()`
+ * fields below are the requests that carry no tenant, so they are served while the endpoint is on by
+ * default, as the routes they mirror are. (Until R7-F3 the tenant-less answer read the configured toggle
+ * alone, which does not name `FEATURE_GRAPHQL`, and refused all three.)
+ *
+ * **The public fields carry their routes' rate limits.** The join request's confirmation code is a
+ * credential and the resend mails one, so the routes limit them with `@Throttle`; each public field
+ * states the same limit as its route, and since the throttler guard runs per resolved field, every alias
+ * in one request spends one request of the allowance (review R7-09).
  */
 @Resolver('OrganizationTeamJoinRequest')
 @UseGuards(FeatureFlagGuard)
@@ -215,6 +215,7 @@ export class OrganizationTeamJoinRequestResolver {
 	 */
 	@Mutation('createOrganizationTeamJoinRequest')
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async createOrganizationTeamJoinRequest(
 		@Args('input') input: ICreateOrganizationTeamJoinRequestInput
 	): Promise<IOrganizationTeamJoinRequestOutcome> {
@@ -245,6 +246,7 @@ export class OrganizationTeamJoinRequestResolver {
 	 */
 	@Mutation('validateOrganizationTeamJoinRequest')
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async validateOrganizationTeamJoinRequest(
 		@Args('input') input: IValidateOrganizationTeamJoinRequestInput
 	): Promise<IOrganizationTeamJoinRequest> {
@@ -269,6 +271,7 @@ export class OrganizationTeamJoinRequestResolver {
 	 */
 	@Mutation('resendOrganizationTeamJoinRequestCode')
 	@Public()
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async resendOrganizationTeamJoinRequestCode(
 		@Args('input') input: IResendOrganizationTeamJoinRequestCodeInput
 	): Promise<IOrganizationTeamJoinRequestOutcome> {

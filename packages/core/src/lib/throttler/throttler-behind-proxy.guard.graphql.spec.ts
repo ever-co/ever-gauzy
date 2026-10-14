@@ -4,9 +4,10 @@ import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-hos
 import { Test } from '@nestjs/testing';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
-import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
+import { Throttle, ThrottlerException, ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
+import { THROTTLER_LIMIT } from '@nestjs/throttler/dist/throttler.constants';
 import * as request from 'supertest';
-import { ThrottlerBehindProxyGuard } from './throttler-behind-proxy.guard';
+import { THROTTLER_LIMIT_METADATA, ThrottlerBehindProxyGuard } from './throttler-behind-proxy.guard';
 
 /**
  * With `THROTTLE_ENABLED=true` (stage sets it) the throttler is a global `APP_GUARD`, so it also runs
@@ -26,6 +27,13 @@ class PingResolver {
 	@Query(() => String)
 	ping(): string {
 		return 'pong';
+	}
+
+	/** A field that states its own limit, as the public credential checks do. */
+	@Query(() => String)
+	@Throttle({ default: { limit: 2, ttl: 60_000 } })
+	guess(): string {
+		return 'no';
 	}
 }
 
@@ -64,8 +72,11 @@ describe('ThrottlerBehindProxyGuard on GraphQL operations', () => {
 	});
 
 	/** A GraphQL execution context whose operation context carries `req` (or nothing). */
-	const graphqlContext = (operationContext: Record<string, unknown>): ExecutionContext => {
-		const host = new ExecutionContextHost([undefined, {}, operationContext, {}], PingResolver, PingResolver.prototype.ping);
+	const graphqlContext = (
+		operationContext: Record<string, unknown>,
+		handler: (...args: unknown[]) => unknown = PingResolver.prototype.ping
+	): ExecutionContext => {
+		const host = new ExecutionContextHost([undefined, {}, operationContext, {}], PingResolver, handler);
 		host.setType('graphql');
 		return host;
 	};
@@ -116,5 +127,25 @@ describe('ThrottlerBehindProxyGuard on GraphQL operations', () => {
 
 		expect(other.body.errors).toBeUndefined();
 		expect(other.body.data).toEqual({ ping: 'pong' });
+	});
+
+	it('counts a socket-delivered operation of a field that states its own limit (R7-09)', async () => {
+		// A public credential check reached over graphql-ws: no HTTP request behind it. Skipping it, as the
+		// guard skips every other socket operation, left an unlimited guessing channel beside the limited
+		// HTTP one. Socket operations carry no client address, so they share one bucket per field.
+		const guard = app.get(APP_GUARD_INSTANCE);
+		const socketOperation = { req: { headers: { authorization: 'Bearer anything' } } };
+		const guess = PingResolver.prototype.guess as (...args: unknown[]) => unknown;
+
+		await expect(guard.canActivate(graphqlContext(socketOperation, guess))).resolves.toBe(true);
+		await expect(guard.canActivate(graphqlContext(socketOperation, guess))).resolves.toBe(true);
+		await expect(guard.canActivate(graphqlContext(socketOperation, guess))).rejects.toBeInstanceOf(ThrottlerException);
+
+		// CONTROL: a socket operation of a field with no limit of its own is still not counted.
+		await expect(guard.canActivate(graphqlContext(socketOperation))).resolves.toBe(true);
+	});
+
+	it('reads the limit under the key @Throttle writes it to', () => {
+		expect(THROTTLER_LIMIT_METADATA).toBe(THROTTLER_LIMIT);
 	});
 });

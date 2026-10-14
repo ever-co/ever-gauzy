@@ -14,11 +14,13 @@ import { buildSchema, printSchema } from 'graphql';
 import { RolesEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA, ROLES_METADATA } from '@gauzy/constants';
 import { RequestContext } from '../core/context';
+import { MultiORMEnum } from '../core/utils';
 import { FeatureModule } from '../feature/feature.module';
 import { FeatureFlagGuard, RoleGuard } from '../shared/guards';
 import { TenantController } from './tenant.controller';
 import { TenantModule } from './tenant.module';
 import { TenantResolver } from './tenant.resolver';
+import { TenantService } from './tenant.service';
 
 /**
  * The tenant over GraphQL.
@@ -73,6 +75,7 @@ function surfaces() {
 		findOneByIdString: jest.fn().mockResolvedValue(ROW),
 		onboardTenant: jest.fn().mockResolvedValue(ROW),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
+		updateProfile: jest.fn().mockResolvedValue({ affected: 1 }),
 		delete: jest.fn().mockResolvedValue({ affected: 1 })
 	};
 
@@ -308,13 +311,52 @@ describe('TenantResolver — one concept, two protocols, the same operations', (
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 
 		expect(await resolver.updateTenant({ name: 'Ever Technologies OÜ' })).toBe(ROW);
-		expect(tenantService.update).toHaveBeenCalledWith(
+		// `PUT /api/tenant` edits through `updateProfile` — the method that owns the logo rules — so the
+		// field does too, rather than reaching past it to the generic `update`.
+		expect(tenantService.updateProfile).toHaveBeenCalledWith(
 			TENANT,
 			expect.objectContaining({ name: 'Ever Technologies OÜ' })
 		);
+		expect(tenantService.update).not.toHaveBeenCalled();
 		// The delivered route answers the store's own update result; the field answers the tenant,
 		// which is what a client reads next.
 		expect(tenantService.findOneByIdString).toHaveBeenCalledWith(TENANT);
+	});
+
+	it('refuses another tenant’s image asset as the delivered edit does, and writes nothing', async () => {
+		// The logo is an image asset id, a bare UUID. The route refuses one that is not the caller's
+		// tenant's own (`TenantService.assertImageInTenant`); `Tenant.image` is eager and the type serves
+		// `image { fullUrl }`, so a field that skipped the check would hand out another tenant's file.
+		// The real service method runs here, over a store holding one image in each tenant.
+		const OWN_IMAGE = '00000000-0000-4000-8000-000000000044';
+		const FOREIGN_IMAGE = '00000000-0000-4000-8000-000000000055';
+		const owners: Record<string, string> = {
+			[OWN_IMAGE]: TENANT,
+			[FOREIGN_IMAGE]: '00000000-0000-4000-8000-000000000002'
+		};
+		const existsBy = jest.fn(
+			async (where: { id: string; tenantId: string }) => owners[where.id] === where.tenantId
+		);
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the protected repositories are scripted
+		const service: any = Object.create(TenantService.prototype);
+		Object.defineProperty(service, 'ormType', { get: () => MultiORMEnum.TypeORM });
+		service.typeOrmRepository = { manager: { getRepository: () => ({ existsBy }) } };
+		const update = jest.fn().mockResolvedValue({ affected: 1 });
+		service.update = update;
+		service.findOneByIdString = jest.fn().mockResolvedValue(ROW);
+		const resolver = new TenantResolver(service);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+
+		await expect(
+			resolver.updateTenant({ name: 'Ever Technologies', imageId: FOREIGN_IMAGE })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(existsBy).toHaveBeenCalledWith({ id: FOREIGN_IMAGE, tenantId: TENANT });
+		expect(update).not.toHaveBeenCalled();
+
+		// The caller's own asset still links, through the same method.
+		expect(await resolver.updateTenant({ name: 'Ever Technologies', imageId: OWN_IMAGE })).toBe(ROW);
+		expect(update).toHaveBeenCalledWith(TENANT, { name: 'Ever Technologies', imageId: OWN_IMAGE });
 	});
 
 	it('removes the caller’s tenant through the same service method the route calls', async () => {

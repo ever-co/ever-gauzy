@@ -30,11 +30,11 @@
 # **The three `@Public()` fields are behind the same tenant-scoped capability as every other field
 # here.** `FEATURE_GRAPHQL` is resolved by `FeatureFlagGuard` from `FEATURE_METADATA`, and that
 # resolution is scoped to the request: `FeatureService.isFeatureEnabled` answers from the caller's own
-# toggle rows when the request carries a tenant, and from the deployment's configured state when it
-# does not — and `FEATURE_GRAPHQL` is not a code that configuration names, so a request that carries no
-# tenant scope resolves the capability as disabled and is refused. The delivery cannot express
-# otherwise: a field cannot be more open than the gate over it, and nothing narrower is stated on those
-# three fields, because a guard or a permission there would refuse a caller the REST route serves.
+# toggle rows when the request carries a tenant, and from the code's default when it does not — the
+# configured toggle, else the catalogue's `defaultEnabled`, which is on for `FEATURE_GRAPHQL` — so the
+# three fields are served to an anonymous caller as their REST routes are (review R7-F3). Nothing
+# narrower is stated on them, because a guard or a permission there would refuse a caller the REST route
+# serves; each carries its route's `@Throttle` limit, spent once per alias (review R7-09).
 #
 # **The action is a closed set rather than a free string.** `PUT /:id/:action` takes the move as a path
 # segment, and the delivered writer switches on exactly two of the three members of the contracts
