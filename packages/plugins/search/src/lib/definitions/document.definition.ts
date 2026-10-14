@@ -13,9 +13,9 @@ import { DocumentVisibilityEnum, ISearchIndexRegistration, PermissionsEnum, Sear
  * holding `DOCS_MANAGE` and the people it is shared with (`document-access.predicate.ts` in the docs
  * plugin). Search applied no such row rule, so any `DOCS_READ` holder found other people's private
  * documents by name, description and file name (review R7-05). Until a declaration can carry that
- * per-caller predicate, a `PRIVATE` document is not indexed and a stored one is not matched:
- * `visibility` is promoted so the query can tell, and `visibleWhen` admits `ORGANIZATION` only. The
- * documents API remains the way to find one's own private documents.
+ * per-caller predicate, `visibleWhen` admits `ORGANIZATION` only: a `PRIVATE` document is not
+ * indexed, and a stored document is matched only while its source row is organization-wide, read at
+ * query time. The documents API remains the way to find one's own private documents.
  */
 export const DOCUMENT_INDEX: ISearchIndexRegistration = {
 	entity: 'document',
@@ -24,7 +24,7 @@ export const DOCUMENT_INDEX: ISearchIndexRegistration = {
 	relations: ['tags'],
 	titleTemplate: '{{name}}',
 	bodyTemplate: '{{description}} {{originalFilename}}',
-	keywordFields: ['originalFilename', 'mimeType', 'kind', 'status', 'visibility'],
+	keywordFields: ['originalFilename', 'mimeType', 'kind', 'status'],
 	visibleWhen: { field: 'visibility', values: [DocumentVisibilityEnum.ORGANIZATION] },
 	sourceUpdatedAtField: 'updatedAt',
 	defaultWeight: 1,

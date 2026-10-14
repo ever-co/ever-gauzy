@@ -55,7 +55,7 @@ import { ISearchIndexRegistration } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { DOCUMENT_INDEX } from '../definitions/document.definition';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
-import { buildDocument, isRowVisible, visibleRowTokens } from '../services/search-document.builder';
+import { buildDocument, isRowVisible } from '../services/search-document.builder';
 import { DatabaseSearchProvider } from './database-search.provider';
 
 /**
@@ -67,14 +67,16 @@ import { DatabaseSearchProvider } from './database-search.provider';
  * employee found a colleague's private documents by name, description and file name, in the page, the
  * total, the suggestions and the facets.
  *
- * Three documents of one tenant and one organization, all matching "salary":
- * - an organization-wide one, indexed under the shipped declaration — the one hit there should be;
- * - a private one indexed **before** the row rule existed (no visibility token at all), as every
- *   installation that ran search before this change holds it;
- * - a private one whose stored tokens say so, as a document whose row became private after it was
- *   indexed would hold it.
+ * Four indexed documents of one tenant and one organization, all matching "salary", and their source
+ * rows in the documents table:
+ * - A, organization-wide, indexed under the shipped declaration — a hit;
+ * - B, private, indexed before the row rule existed, as every installation that ran search holds it;
+ * - C, organization-wide when it was indexed and made private since, before the change event reached
+ *   the indexer — the stored document still says what it said then;
+ * - D, organization-wide, indexed before the row rule existed — still a hit, with no reindex needed.
  */
 class SearchDocumentRow {}
+class DocumentRow {}
 
 const SEARCH_DOCUMENT_SCHEMA = new EntitySchema<any>({
 	name: 'SearchDocument',
@@ -100,7 +102,23 @@ const SEARCH_DOCUMENT_SCHEMA = new EntitySchema<any>({
 	}
 });
 
+/** The documents table the rule is read from: the columns the predicate touches. */
+const DOCUMENT_SCHEMA = new EntitySchema<any>({
+	name: 'Document',
+	target: DocumentRow,
+	tableName: 'document',
+	columns: {
+		id: { type: 'varchar', primary: true },
+		deletedAt: { type: 'datetime', nullable: true, deleteDate: true },
+		tenantId: { type: 'varchar', nullable: true },
+		organizationId: { type: 'varchar', nullable: true },
+		name: { type: 'varchar' },
+		visibility: { type: 'varchar', length: 16, default: 'ORGANIZATION' }
+	}
+});
+
 const TENANT = '00000000-0000-4000-8000-000000000001';
+const OTHER_TENANT = '00000000-0000-4000-8000-000000000009';
 const ORG = '00000000-0000-4000-8000-000000000002';
 
 /** A source row of the documents table, as the indexer reads it. */
@@ -119,19 +137,16 @@ const documentRow = (id: string, name: string, visibility: string) => ({
 	updatedAt: new Date('2026-10-01T10:00:00.000Z')
 });
 
-const ORGANIZATION_DOCUMENT = documentRow('00000000-0000-4000-8000-00000000000a', 'Salary bands 2026', 'ORGANIZATION');
-const PRIVATE_BEFORE_THE_RULE = documentRow('00000000-0000-4000-8000-00000000000b', 'Salary of Alice', 'PRIVATE');
-const PRIVATE_WITH_TOKENS = documentRow('00000000-0000-4000-8000-00000000000c', 'Salary of Bob', 'PRIVATE');
+const A = documentRow('00000000-0000-4000-8000-00000000000a', 'Salary bands 2026', 'ORGANIZATION');
+const B = documentRow('00000000-0000-4000-8000-00000000000b', 'Salary of Alice', 'PRIVATE');
+const C = documentRow('00000000-0000-4000-8000-00000000000c', 'Salary of Bob', 'ORGANIZATION');
+const D = documentRow('00000000-0000-4000-8000-00000000000d', 'Salary policy', 'ORGANIZATION');
 
 /** The document declaration as it stood before it carried a row rule. */
 function declarationBeforeTheRule(): ISearchIndexRegistration {
 	const { visibleWhen: _rule, ...rest } = DOCUMENT_INDEX as ISearchIndexRegistration & { visibleWhen?: unknown };
 
-	return {
-		...rest,
-		keywordFields: (rest.keywordFields ?? []).filter((name) => name !== 'visibility'),
-		fields: rest.fields.filter((field) => field.name !== 'visibility')
-	};
+	return { ...rest, fields: rest.fields.filter((field) => field.name !== 'visibility') };
 }
 
 describe('search does not show PRIVATE documents (R7-05), on a real database', () => {
@@ -142,7 +157,7 @@ describe('search does not show PRIVATE documents (R7-05), on a real database', (
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [SEARCH_DOCUMENT_SCHEMA],
+			entities: [SEARCH_DOCUMENT_SCHEMA, DOCUMENT_SCHEMA],
 			synchronize: true,
 			logging: false
 		});
@@ -154,10 +169,31 @@ describe('search does not show PRIVATE documents (R7-05), on a real database', (
 
 		const scope = { tenantId: TENANT, organizationId: ORG, channelIds: [] };
 		await provider.index([
-			buildDocument(DOCUMENT_INDEX, ORGANIZATION_DOCUMENT, scope),
-			buildDocument(declarationBeforeTheRule(), PRIVATE_BEFORE_THE_RULE, scope),
-			buildDocument(DOCUMENT_INDEX, PRIVATE_WITH_TOKENS, scope)
+			buildDocument(DOCUMENT_INDEX, A, scope),
+			buildDocument(declarationBeforeTheRule(), B, scope),
+			buildDocument(DOCUMENT_INDEX, C, scope),
+			buildDocument(declarationBeforeTheRule(), D, scope)
 		]);
+
+		const documents = dataSource.getRepository(DocumentRow);
+		for (const row of [A, B, C, D]) {
+			await documents.insert({
+				id: row.id,
+				tenantId: row.tenantId,
+				organizationId: row.organizationId,
+				name: row.name,
+				visibility: row.visibility
+			});
+		}
+		// C is made private after it was indexed; the change event has not reached the indexer yet.
+		await documents.update({ id: C.id }, { visibility: 'PRIVATE' });
+		// Another tenant's row that happens to carry A's id must not decide A's visibility, nor vice versa.
+		await documents.insert({
+			id: 'other-tenant-row',
+			tenantId: OTHER_TENANT,
+			name: 'x',
+			visibility: 'ORGANIZATION'
+		});
 	});
 
 	afterAll(async () => {
@@ -171,61 +207,72 @@ describe('search does not show PRIVATE documents (R7-05), on a real database', (
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('CONTROL: all three documents are stored and match the text', async () => {
+	it('CONTROL: all four documents are stored and match the text', async () => {
 		const stored = await dataSource.query(
 			`SELECT "entityId", "title" FROM "search_document" WHERE "deletedAt" IS NULL`
 		);
 
-		expect(stored).toHaveLength(3);
+		expect(stored).toHaveLength(4);
 		expect(stored.every((row: { title: string }) => /salary/i.test(row.title))).toBe(true);
 	});
 
-	it('answers only the organization-wide document, and counts only it', async () => {
+	it('answers only the documents whose row is organization-wide now, and counts only them', async () => {
 		const result = await provider.query({ q: 'salary', organizationId: ORG }, ['document']);
 
-		expect(result.items.map((hit) => hit.entityId)).toEqual([ORGANIZATION_DOCUMENT.id]);
-		// The total is what the caller may see: a total of 3 beside one hit would be the leak itself.
-		expect(result.total).toBe(1);
+		expect(result.items.map((hit) => hit.entityId).sort()).toEqual([A.id, D.id].sort());
+		// The total is what the caller may see: a total of 4 beside two hits would be the leak itself.
+		expect(result.total).toBe(2);
 	});
 
-	it('suggests only the organization-wide document', async () => {
-		const suggestions = await provider.suggest({ q: 'salary', organizationId: ORG }, ['document'], 10);
+	it('suggests only those documents', async () => {
+		const suggestions = JSON.stringify(
+			await provider.suggest({ q: 'salary', organizationId: ORG }, ['document'], 10)
+		);
 
-		expect(JSON.stringify(suggestions)).toContain('Salary bands 2026');
-		expect(JSON.stringify(suggestions)).not.toMatch(/Alice|Bob/);
+		expect(suggestions).toContain('Salary bands 2026');
+		expect(suggestions).toContain('Salary policy');
+		expect(suggestions).not.toMatch(/Alice|Bob/);
 	});
 
-	it('counts only the organization-wide document in a facet', async () => {
+	it('counts only those documents in a facet', async () => {
 		const result = await provider.query({ q: 'salary', organizationId: ORG, facets: ['kind'] }, ['document']);
-		const counted = JSON.stringify(result.facets);
 
-		expect(counted).toContain('"count":1');
-		expect(counted).not.toContain('"count":3');
+		expect(result.facets).toEqual([{ attribute: 'kind', values: [{ value: 'file', count: 2 }] }]);
+	});
+
+	it('hides a document whose row was deleted, and one whose row belongs to another tenant', async () => {
+		await dataSource.getRepository(DocumentRow).softDelete({ id: D.id });
+		await dataSource.query(`UPDATE "document" SET "tenantId" = ? WHERE "id" = ?`, [OTHER_TENANT, A.id]);
+
+		const result = await provider.query({ q: 'salary', organizationId: ORG }, ['document']);
+
+		expect(result.items).toEqual([]);
+		expect(result.total).toBe(0);
 	});
 });
 
 describe('a declaration row rule (R7-05)', () => {
 	const registryOf = () => new SearchIndexRegistry({ entityMetadatas: [] } as unknown as DataSource);
 
-	it('the shipped document declaration admits ORGANIZATION documents only, over a promoted field', () => {
+	it('the shipped document declaration admits ORGANIZATION documents only', () => {
 		expect(DOCUMENT_INDEX.visibleWhen).toEqual({ field: 'visibility', values: ['ORGANIZATION'] });
-		expect(DOCUMENT_INDEX.keywordFields).toContain('visibility');
-		expect(visibleRowTokens(DOCUMENT_INDEX)).toEqual(['visibility:organization']);
-		expect(isRowVisible(DOCUMENT_INDEX, ORGANIZATION_DOCUMENT)).toBe(true);
-		expect(isRowVisible(DOCUMENT_INDEX, PRIVATE_WITH_TOKENS)).toBe(false);
+		expect(isRowVisible(DOCUMENT_INDEX, A)).toBe(true);
+		expect(isRowVisible(DOCUMENT_INDEX, B)).toBe(false);
 		// A row with no value is outside the rule: closed, not open.
-		expect(isRowVisible(DOCUMENT_INDEX, { ...ORGANIZATION_DOCUMENT, visibility: null })).toBe(false);
+		expect(isRowVisible(DOCUMENT_INDEX, { ...A, visibility: null })).toBe(false);
 	});
 
-	it('is refused over a field that is not promoted, since no query could apply it', () => {
-		const { keywordFields, ...rest } = DOCUMENT_INDEX;
+	it('is refused over a field read through a relation path, or one that is not declared', () => {
+		const viaRelation = DOCUMENT_INDEX.fields.map((field) =>
+			field.name === 'visibility' ? { ...field, source: 'folder.visibility' } : field
+		);
 
+		expect(() => registryOf().register({ ...DOCUMENT_INDEX, fields: viaRelation })).toThrow(
+			/column of the source row/
+		);
 		expect(() =>
-			registryOf().register({
-				...rest,
-				keywordFields: (keywordFields ?? []).filter((name) => name !== 'visibility')
-			})
-		).toThrow(/not promoted/);
+			registryOf().register({ ...DOCUMENT_INDEX, visibleWhen: { field: 'nothing', values: ['ORGANIZATION'] } })
+		).toThrow(/column of the source row/);
 	});
 
 	it('is refused when it admits no value, since no row could ever be found', () => {

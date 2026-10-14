@@ -411,27 +411,6 @@ export function buildKeywords(
 }
 
 /**
- * The promoted tokens a document must carry one of to be matched, under the declaration's row rule.
- *
- * They are spelled exactly as `buildKeywords` writes the rule's field, so a document indexed under the
- * rule carries one of them and a document written before the rule existed carries none.
- *
- * @param definition The declaration.
- * @returns The admitting tokens, or `null` when the declaration states no row rule.
- */
-export function visibleRowTokens(definition: ISearchIndexRegistration | undefined): string[] | null {
-	const rule = definition?.visibleWhen;
-
-	if (!rule) {
-		return null;
-	}
-
-	const name = String(rule.field).toLowerCase();
-
-	return (rule.values ?? []).map((value) => `${name}:${String(value).toLowerCase()}`);
-}
-
-/**
  * Whether a source row may be shown by a search at all, under the declaration's row rule.
  *
  * The entity permission decides whether a caller may see hits of an entity type; this decides which

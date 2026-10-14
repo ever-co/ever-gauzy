@@ -23,7 +23,6 @@ import {
 import { RequestContext, SearchDocument, TypeOrmSearchDocumentRepository } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SEARCH_SETTING_DEFAULTS } from '../search.settings';
-import { visibleRowTokens } from '../services/search-document.builder';
 
 /** The dialect family a query is written for. */
 type SearchDialect = 'postgres' | 'mysql' | 'sqlite';
@@ -594,15 +593,20 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	}
 
 	/**
-	 * Restricts each entity in scope to the rows its declaration's row rule admits.
+	 * Restricts each entity in scope to the rows its declaration's row rule admits, read from the source.
 	 *
 	 * The entity permission decides whether a caller sees hits of an entity type at all. A declaration
 	 * that states `visibleWhen` also has rows that permission does not cover — a `PRIVATE` document is
 	 * readable by its creator, an administrator and the people it is shared with, not by every holder of
-	 * `DOCS_READ` (review R7-05). The indexer does not write such rows, and this predicate is what keeps a
-	 * document indexed before the rule existed, or before its row moved outside it, out of the page, the
-	 * total, the suggestions and the facets alike: a document of the entity is matched only when it
-	 * carries one of the admitting promoted tokens, and a document that carries none is not matched.
+	 * `DOCS_READ` (review R7-05). A document of a ruled entity is matched only while **its source row**
+	 * holds an admitted value, so the rule is decided by the row as it stands at query time rather than
+	 * by anything the index stored: a document indexed before the rule existed, or before its row moved
+	 * outside the rule and the change event reached the indexer, cannot be returned — not in the page,
+	 * the total, the suggestions or the facets, which all start from this statement. The source row must
+	 * also be the same tenant's and not deleted.
+	 *
+	 * A ruled entity whose source table this connection does not map, or whose rule names no column of
+	 * it, is not matched at all: the rule fails closed.
 	 *
 	 * @param query The builder.
 	 * @param context The query context.
@@ -614,19 +618,85 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		params: Record<string, unknown>
 	): void {
 		for (const entity of context.entities) {
-			const tokens = visibleRowTokens(this.indexRegistry.get(entity));
+			const definition = this.indexRegistry.get(entity);
+			const rule = definition?.visibleWhen;
 
-			if (!tokens) {
+			if (!rule) {
 				continue;
 			}
 
-			const admitting = tokens.map((token) => this.tokenFragment(params, this.keywordsExpression(), token, 'EQ'));
 			const ruled = this.addParam(params, 'ruledEntity', entity);
-			// An empty rule is refused at registration; `1 = 0` keeps a rule that reached here empty closed.
-			const admitted = admitting.length > 0 ? admitting.join(' OR ') : '1 = 0';
+			const admitting = this.rowRuleSource(definition);
 
-			query.andWhere(`(doc.entity <> :${ruled} OR (${admitted}))`, params);
+			if (!admitting) {
+				query.andWhere(`doc.entity <> :${ruled}`, params);
+				continue;
+			}
+
+			const values = this.addParam(
+				params,
+				'ruledValues',
+				(rule.values ?? []).map((value) => String(value))
+			);
+			const source = this.typeOrmSearchDocumentRepository.manager
+				.createQueryBuilder(admitting.target, 'src')
+				.select('1')
+				.where(`src.${admitting.id} = doc.entityId`)
+				.andWhere(`src.${admitting.column} IN (:...${values})`);
+
+			if (admitting.tenant) {
+				source.andWhere(`src.${admitting.tenant} = doc.tenantId`);
+			}
+
+			if (admitting.deletedAt) {
+				source.andWhere(`src.${admitting.deletedAt} IS NULL`);
+			}
+
+			query.andWhere(`(doc.entity <> :${ruled} OR EXISTS (${source.getQuery()}))`, params);
 		}
+	}
+
+	/**
+	 * The source entity and properties a row rule is read from, or `null` when they cannot be resolved.
+	 *
+	 * The declaration's entity key is the source table's name, as the registry and the indexer read it.
+	 * The rule's field must be a column of that table: the field's own name, or its single-segment source.
+	 *
+	 * @param definition The declaration.
+	 * @returns The source target and the property names the predicate compares.
+	 */
+	private rowRuleSource(definition: ISearchIndexRegistration | undefined): {
+		target: Function | string;
+		id: string;
+		column: string;
+		tenant?: string;
+		deletedAt?: string;
+	} | null {
+		const rule = definition?.visibleWhen;
+		const metadata = (this.typeOrmSearchDocumentRepository.manager?.connection?.entityMetadatas ?? []).find(
+			(candidate) => candidate.tableName === definition?.entity
+		);
+
+		if (!rule || !metadata) {
+			return null;
+		}
+
+		const field = (definition.fields ?? []).find((candidate) => candidate.name === rule.field);
+		const property = String(field?.source ?? field?.name ?? '');
+		const column = property && !property.includes('.') ? metadata.findColumnWithPropertyName(property) : undefined;
+		const id = metadata.primaryColumns?.[0]?.propertyName;
+
+		if (!column || !id) {
+			return null;
+		}
+
+		return {
+			target: metadata.target,
+			id,
+			column: column.propertyName,
+			tenant: metadata.findColumnWithPropertyName('tenantId')?.propertyName,
+			deletedAt: metadata.deleteDateColumn?.propertyName
+		};
 	}
 
 	/**

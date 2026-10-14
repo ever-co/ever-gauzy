@@ -263,12 +263,16 @@ export class SearchIndexRegistry {
 			const rule = definition.visibleWhen;
 			const values = Array.isArray(rule.values) ? rule.values.filter((value) => String(value ?? '').trim()) : [];
 
-			// The query reads the rule from the promoted tokens, so a rule over a field that is not promoted
-			// could never match a document — and one that admits no value would hide the whole entity.
-			if (!(definition.keywordFields ?? []).includes(rule.field)) {
+			// The query reads the rule from the source row's own column, so the field must be declared and
+			// read from a column of the source table rather than through a relation path — and a rule that
+			// admits no value would hide the whole entity.
+			const field = (definition.fields ?? []).find((candidate) => candidate.name === rule.field);
+			const source = String(field?.source ?? field?.name ?? '');
+
+			if (!field || source.includes('.')) {
 				throw new Error(
-					`The index definition for "${entity}" states a row rule over "${rule.field}", which is not ` +
-						'promoted into its keywords. A query can only apply the rule to a promoted field.'
+					`The index definition for "${entity}" states a row rule over "${rule.field}", which is not a ` +
+						'declared field read from a column of the source row. A query can only apply the rule to one.'
 				);
 			}
 
