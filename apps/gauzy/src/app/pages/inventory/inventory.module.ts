@@ -37,7 +37,8 @@ import {
 	ProductTypeSelectorModule,
 	SelectAssetModule,
 	SharedModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
@@ -83,6 +84,7 @@ const NB_MODULES = [
 		VariantTableComponent
 	],
 	imports: [
+		FavoriteToggleModule,
 		CardGridModule,
 		CurrencyModule,
 		ImageAssetModule,

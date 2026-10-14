@@ -35,8 +35,20 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.Language]: 'fas fa-language',
 	[BaseEntityEnum.Organization]: 'fas fa-building',
 	[BaseEntityEnum.Broadcast]: 'fas fa-broadcast-tower',
-	[BaseEntityEnum.OrganizationStrategicInitiative]: 'fas fa-bullseye'
+	[BaseEntityEnum.OrganizationStrategicInitiative]: 'fas fa-bullseye',
+	[BaseEntityEnum.Equipment]: 'fas fa-tools',
+	[BaseEntityEnum.Payment]: 'fas fa-credit-card',
+	[BaseEntityEnum.Product]: 'fas fa-box',
+	[BaseEntityEnum.Proposal]: 'fas fa-file-signature'
 };
+
+/** Record-specific icons, where one type holds two kinds of record (an estimate is an invoice row). */
+export function favoriteIcon(entity: BaseEntityEnum, record?: IFavoriteRecord): string {
+	if (entity === BaseEntityEnum.Invoice && record?.['isEstimate']) {
+		return 'fas fa-file-contract';
+	}
+	return ENTITY_ICONS[entity];
+}
 
 /**
  * The record a favorite points at, as the favorite details endpoint (`GET /favorite/type`) returned it.
@@ -120,5 +132,67 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.Language]: () => `/pages/settings/general`,
 	[BaseEntityEnum.Organization]: (id) => `/pages/organizations/edit/${id}`,
 	[BaseEntityEnum.Broadcast]: () => `/pages/dashboard`,
-	[BaseEntityEnum.OrganizationStrategicInitiative]: () => `/pages/goals`
+	[BaseEntityEnum.OrganizationStrategicInitiative]: () => `/pages/goals`,
+	[BaseEntityEnum.Equipment]: () => `/pages/organization/equipment`,
+	[BaseEntityEnum.Payment]: () => `/pages/accounting/payments`,
+	[BaseEntityEnum.Product]: (id) => `/pages/organization/inventory/view/${id}`,
+	[BaseEntityEnum.Proposal]: (id) => `/pages/sales/proposals/details/${id}`
+};
+
+/** `120 USD` — an amount with its currency, as a record's name when it has no other. */
+function amountOf(record: IFavoriteRecord): string | undefined {
+	const amount = record?.['amount'];
+	if (amount === undefined || amount === null || amount === '') {
+		return undefined;
+	}
+	return [amount, record['currency']].filter((part) => part !== undefined && part !== null).join(' ');
+}
+
+/** The parts that are there, joined: `#12 · Acme`. */
+function joined(...parts: unknown[]): string | undefined {
+	const present = parts.filter((part) => typeof part === 'string' || typeof part === 'number').map(String);
+	return present.filter((part) => part.trim()).join(' · ') || undefined;
+}
+
+const nameOf = (value: unknown): string | undefined => (value as { name?: string } | undefined)?.name;
+
+/**
+ * Text of rich-text HTML (a proposal's job post), for a sidebar label. Parsed by the browser's inert
+ * DOMParser: nothing is executed or rendered, and the result is only ever bound as text.
+ */
+function textOf(html: unknown): string | undefined {
+	if (typeof html !== 'string' || !html.trim()) {
+		return undefined;
+	}
+	if (typeof DOMParser === 'undefined') {
+		return html;
+	}
+	const text = new DOMParser().parseFromString(html, 'text/html').body?.textContent ?? '';
+	return text.replace(/\s+/g, ' ').trim() || undefined;
+}
+
+/**
+ * The sidebar label of a favorite whose record has no `name` / `title` of its own: an invoice is
+ * known by its number and client, an expense by its vendor and amount, a product by its translated name.
+ * The relations these read are joined by the favorite details read (API `FAVORITE_DETAILS`).
+ */
+export const ENTITY_TITLES: Partial<Record<BaseEntityEnum, (record: IFavoriteRecord) => string | undefined>> = {
+	[BaseEntityEnum.Invoice]: (record) =>
+		joined(record['invoiceNumber'] ? `#${record['invoiceNumber']}` : undefined, nameOf(record['toContact'])),
+	[BaseEntityEnum.Expense]: (record) =>
+		joined(
+			nameOf(record['vendor']) || nameOf(record['category']) || (record['purpose'] as string),
+			amountOf(record)
+		),
+	[BaseEntityEnum.Income]: (record) =>
+		joined(nameOf(record['organizationContact']) || (record['clientName'] as string), amountOf(record)),
+	[BaseEntityEnum.Payment]: (record) => {
+		const invoiceNumber = (record['invoice'] as { invoiceNumber?: unknown } | undefined)?.invoiceNumber;
+		return joined(amountOf(record), invoiceNumber ? `#${invoiceNumber}` : nameOf(record['organizationContact']));
+	},
+	[BaseEntityEnum.Proposal]: (record) => textOf(record['jobPostContent']) || (record['jobPostUrl'] as string),
+	[BaseEntityEnum.Product]: (record) => {
+		const translations = record['translations'] as { name?: string }[] | undefined;
+		return translations?.find((translation) => translation?.name)?.name;
+	}
 };

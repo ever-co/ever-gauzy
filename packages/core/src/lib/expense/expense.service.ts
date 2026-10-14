@@ -3,6 +3,7 @@ import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike }
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import {
+	BaseEntityEnum,
 	DecimalString,
 	ID,
 	IDateRangePicker,
@@ -20,6 +21,7 @@ import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from './../core
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
+import { FavoriteService } from '../core/decorators';
 
 /** One total of expense amounts: how many rows, and their exact sum, in one currency. */
 export interface IExpenseTotal {
@@ -50,6 +52,7 @@ export interface IExpenseStatistics {
 	byProject: IExpenseGroupTotal[];
 }
 
+@FavoriteService(BaseEntityEnum.Expense)
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(

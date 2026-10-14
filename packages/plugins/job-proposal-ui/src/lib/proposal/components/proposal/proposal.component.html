@@ -73,6 +73,16 @@
 <!--  -->
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
+		<!-- Favorite the selected proposal: its sidebar entry opens the proposal's details page. -->
+		@if ((selectedItem || selectedProposal)?.id; as favoriteId) {
+			<ngx-favorite-toggle
+				[entityType]="'Proposal'"
+				[entityId]="favoriteId"
+				size="small"
+				status="basic"
+				spacing="list"
+			></ngx-favorite-toggle>
+		}
 		<!-- View carries the record's OWN guard (the one the details route
 		     enforces), not the edit guard the mutating actions sit behind. It
 		     opens the existing read-only details page, which made the former

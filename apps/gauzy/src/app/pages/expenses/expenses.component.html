@@ -69,6 +69,17 @@
   let-selectedItem="selectedItem"
   >
   <div class="btn-group actions">
+    <!-- Favorite the selected record: its sidebar entry opens the record. -->
+    @if ((selectedItem || selectedExpense)?.id; as favoriteId) {
+      <ngx-favorite-toggle
+        [entityType]="'Expense'"
+        [entityId]="favoriteId"
+        [entityName]="(selectedItem || selectedExpense).vendor?.name || ''"
+        size="small"
+        status="basic"
+        spacing="list"
+      ></ngx-favorite-toggle>
+    }
     <!-- View carries the record's OWN guard (the one the route enforces), not
          the edit guard it used to sit behind — it shows nothing a reader of
          this page cannot already see in the grid. -->

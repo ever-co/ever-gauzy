@@ -18,14 +18,46 @@ import { EmployeeService } from '../employee/employee.service';
 import { GlobalFavoriteDiscoveryService } from './global-favorite-service.service';
 
 /**
- * Relations to load with a favorite's entity so it can be given a display name, and the permission
- * the caller needs to receive them (GET /favorite/type has no entity-view permission of its own).
+ * How the details of a favorited record are read (GET /favorite/type has no entity-view permission of its own).
+ *
+ * - `relations`: what gives the record its display name in the sidebar (an employee's user, an invoice's
+ *   client…), joined only for a caller holding `relationsPermission` when one is set; others get the
+ *   record without them.
+ * - `access`: the permissions (any one) a caller needs to receive the record AT ALL — set for the types that
+ *   carry business data of their own (amounts, clients, prices). A favorite is created from an id alone,
+ *   so without this a caller could read such a record through the favorites list without being allowed to
+ *   open it. Each mirrors the view permission of the type's own read route; a function when it depends on
+ *   the row (an estimate is an invoice row read with `ESTIMATES_VIEW`).
  */
-const FAVORITE_DETAIL_RELATIONS: Partial<Record<BaseEntityEnum, { relations: string[]; permission: PermissionsEnum }>> =
-	{
-		[BaseEntityEnum.Employee]: { relations: ['user'], permission: PermissionsEnum.ORG_EMPLOYEES_VIEW },
-		[BaseEntityEnum.Candidate]: { relations: ['user'], permission: PermissionsEnum.ORG_CANDIDATES_VIEW }
-	};
+interface IFavoriteDetailOptions {
+	relations?: string[];
+	relationsPermission?: PermissionsEnum;
+	access?: (record: Record<string, unknown>) => PermissionsEnum[];
+}
+
+const FAVORITE_DETAILS: Partial<Record<BaseEntityEnum, IFavoriteDetailOptions>> = {
+	[BaseEntityEnum.Employee]: { relations: ['user'], relationsPermission: PermissionsEnum.ORG_EMPLOYEES_VIEW },
+	[BaseEntityEnum.Candidate]: { relations: ['user'], relationsPermission: PermissionsEnum.ORG_CANDIDATES_VIEW },
+	[BaseEntityEnum.Invoice]: {
+		relations: ['toContact'],
+		access: (record) => [record?.['isEstimate'] ? PermissionsEnum.ESTIMATES_VIEW : PermissionsEnum.INVOICES_VIEW]
+	},
+	[BaseEntityEnum.Expense]: {
+		relations: ['vendor', 'category'],
+		access: () => [PermissionsEnum.ORG_EXPENSES_VIEW]
+	},
+	[BaseEntityEnum.Income]: {
+		relations: ['organizationContact'],
+		access: () => [PermissionsEnum.ORG_INCOMES_VIEW]
+	},
+	[BaseEntityEnum.Payment]: {
+		relations: ['invoice', 'organizationContact'],
+		access: () => [PermissionsEnum.ORG_PAYMENT_VIEW]
+	},
+	[BaseEntityEnum.Proposal]: { access: () => [PermissionsEnum.ORG_PROPOSALS_VIEW] },
+	[BaseEntityEnum.Equipment]: { access: () => [PermissionsEnum.ORG_EQUIPMENT_VIEW] },
+	[BaseEntityEnum.Product]: { relations: ['translations'], access: () => [PermissionsEnum.ORG_INVENTORY_VIEW] }
+};
 
 @Injectable()
 export class FavoriteService extends TenantAwareCrudService<Favorite> {
@@ -120,6 +152,27 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	}
 
 	/**
+	 * The favorited records of a type with an `access` rule, reduced to the ones the caller holds a read
+	 * permission for. The result keeps the shape the type's `findAll` answered with (a page or a list).
+	 */
+	private readableDetails<T>(found: T, details?: IFavoriteDetailOptions): T {
+		if (!details?.access) {
+			return found;
+		}
+		const canRead = (record: Record<string, unknown>) =>
+			!!record && RequestContext.hasAnyPermission(details.access(record));
+		if (Array.isArray(found)) {
+			return found.filter(canRead) as T;
+		}
+		const page = found as unknown as IPagination<Record<string, unknown>>;
+		if (Array.isArray(page?.items)) {
+			const items = page.items.filter(canRead);
+			return { ...page, items, total: items.length } as T;
+		}
+		return found;
+	}
+
+	/**
 	 * Checks if the current user has an admin or super admin role
 	 */
 	private hasAdminRole(): boolean {
@@ -189,12 +242,13 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 			// related entity where condition (Filtered records with passed IDs)
 			const whereCondition = { id: In(entityIds) };
 
-			// Employees and candidates carry no name of their own: it lives on the linked user. Only load it
-			// for callers allowed to view that entity type; others get the records without it.
-			const detailRelations = FAVORITE_DETAIL_RELATIONS[favoriteType];
+			// Some types carry no name of their own (an employee's lives on the linked user, an invoice is named
+			// after its number and client): join what names them, for callers allowed to see it.
+			const details = FAVORITE_DETAILS[favoriteType];
 			const relations =
-				detailRelations && RequestContext.hasPermission(detailRelations.permission)
-					? detailRelations.relations
+				details?.relations &&
+				(!details.relationsPermission || RequestContext.hasPermission(details.relationsPermission))
+					? details.relations
 					: undefined;
 
 			// Get related favorite records using findAll method and passing query params
@@ -203,8 +257,8 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				...(relations && { relations })
 			});
 
-			// return found records for specific service
-			return items;
+			// return found records for specific service, without the ones the caller may not read
+			return this.readableDetails(items, details);
 		} catch (error) {
 			console.error('Error while retrieving favorite details:', error);
 			throw new BadRequestException(error);

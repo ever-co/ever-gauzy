@@ -14,7 +14,8 @@ import {
 	EquipmentMutationModule,
 	SharedModule,
 	TableComponentsModule,
-	UserFormsModule
+	UserFormsModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { EquipmentRoutingModule } from './equipment-routing.module';
 import { EquipmentComponent } from './equipment.component';
@@ -22,6 +23,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		EquipmentRoutingModule,
 		SharedModule,
 		UserFormsModule,

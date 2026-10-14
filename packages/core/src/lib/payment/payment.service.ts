@@ -3,6 +3,7 @@ import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder 
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import {
+	BaseEntityEnum,
 	ID,
 	IDateRangePicker,
 	IGetPaymentInput,
@@ -22,7 +23,9 @@ import { EmailService } from './../email-send/email.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Payment)
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(

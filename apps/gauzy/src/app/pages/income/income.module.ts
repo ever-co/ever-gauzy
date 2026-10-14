@@ -20,13 +20,15 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	TableFiltersModule,
-	UserFormsModule
+	UserFormsModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		NbBadgeModule,
 		IncomeRoutingModule,
 		NbCardModule,
