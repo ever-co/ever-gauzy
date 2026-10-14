@@ -27,6 +27,7 @@ import { WebhookEventPublisher, WEBHOOK_EVENT_NAMES } from './webhook-event.publ
 import { WebhookModule } from './webhook.module';
 import { WebhookResolver } from './webhook.resolver';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
+import { WebhookTransport } from './webhook-transport';
 
 /**
  * The webhook kernel over GraphQL.
@@ -181,7 +182,7 @@ function surfaces() {
 		getRedactedSubscription: jest.fn().mockResolvedValue(SUBSCRIPTIONS[0]),
 		createSubscription: jest.fn().mockResolvedValue(CREDENTIAL),
 		updateSubscription: jest.fn().mockResolvedValue(SUBSCRIPTIONS[0]),
-		delete: jest.fn().mockResolvedValue({ affected: 1 }),
+		deleteSubscription: jest.fn().mockResolvedValue({ affected: 1 }),
 		redact: jest.fn((row: unknown) => row),
 		rotateSecret: jest.fn().mockResolvedValue({
 			...CREDENTIAL,
@@ -1046,7 +1047,7 @@ describe('WebhookResolver — one resource, two protocols, the same operations',
 		// The delivered store answers its delete result, which is not a row: the field answers the one
 		// fact the removal establishes.
 		expect(await resolver.deleteWebhookSubscription(SUBSCRIPTION)).toBe(true);
-		expect(webhookSubscriptionService.delete).toHaveBeenCalledWith(SUBSCRIPTION);
+		expect(webhookSubscriptionService.deleteSubscription).toHaveBeenCalledWith(SUBSCRIPTION);
 	});
 
 	it('rotates the signing secret through the same service method the REST route calls', async () => {
@@ -1108,8 +1109,6 @@ describe('WebhookResolver — one resource, two protocols, the same operations',
 });
 
 describe('WebhookResolver — the streamed facts are produced by the services both protocols call', () => {
-	/** The process's own client, so a stubbed one never leaks out of this suite. */
-	const originalFetch = globalThis.fetch;
 	let tenant: jest.SpyInstance;
 
 	beforeEach(() => {
@@ -1117,7 +1116,6 @@ describe('WebhookResolver — the streamed facts are produced by the services bo
 	});
 
 	afterEach(() => {
-		globalThis.fetch = originalFetch;
 		tenant.mockRestore();
 		jest.restoreAllMocks();
 	});
@@ -1159,7 +1157,7 @@ describe('WebhookResolver — the streamed facts are produced by the services bo
 	it('streams a refused attempt that the delivery service recorded', async () => {
 		const { pubSub, publisher } = streaming();
 		const subscriptions = {
-			getSubscription: jest.fn().mockResolvedValue({
+			getSubscriptionForDelivery: jest.fn().mockResolvedValue({
 				id: SUBSCRIPTION,
 				url: 'https://receiver.example.test/hooks/orders',
 				isActive: true,
@@ -1194,7 +1192,9 @@ describe('WebhookResolver — the streamed facts are produced by the services bo
 		// The stream is opened through the resolver — the same `@Subscription` field a client selects —
 		// and the attempt is made through the service the REST route and the mutation both reach.
 		const stream = resolver.webhookDeliveryFailed(SUBSCRIPTION);
-		globalThis.fetch = (async () => ({ ok: false, status: 500, text: async () => 'upstream down' })) as never;
+		jest
+			.spyOn(WebhookTransport.prototype, 'post')
+			.mockResolvedValue({ ok: false, status: 500, body: 'upstream down', truncated: false });
 
 		await deliveries.deliver(DELIVERY);
 

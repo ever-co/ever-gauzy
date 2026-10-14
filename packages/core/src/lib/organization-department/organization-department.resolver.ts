@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationDepartmentEditByEmployeeCommand, OrganizationDepartmentUpdateCommand } from './commands';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationDepartmentInput` declares in the schema. */
 export interface ICreateOrganizationDepartmentInput {
@@ -333,9 +334,7 @@ export class OrganizationDepartmentResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async deleteOrganizationDepartment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationDepartmentService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationDepartmentService.delete(id));
 	}
 
 	/**

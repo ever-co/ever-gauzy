@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { FindManyOptions, In, MoreThan, MoreThanOrEqual } from 'typeorm';
+import { EntityManager, FindManyOptions, In, MoreThan, MoreThanOrEqual } from 'typeorm';
+import { EntityManager as MikroOrmEntityManager, TransactionContext } from '@mikro-orm/core';
 import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
@@ -14,10 +15,13 @@ import {
 	TaxLineOwnerType
 } from '@gauzy/contracts';
 import {
+	Adjustment,
 	AdjustmentService,
 	ApiErrorCode,
 	ApiException,
 	CrudService,
+	IVersionedWriter,
+	TaxLine,
 	TaxLineService,
 	EventOutboxService,
 	addDecimalStrings,
@@ -99,6 +103,69 @@ export interface IOrderRecalculation {
 	 * be ignored — the conditional update decides the version, never the caller.
 	 */
 	patch?: Record<string, unknown>;
+
+	/**
+	 * The transaction the triggering move runs in, when its caller opened one.
+	 *
+	 * **This is what makes ADR-26's "inside the same transaction" expressible.** The ADR requires the order's
+	 * derived columns to be "recomputed by a single function from the ledgers every time a transaction,
+	 * fulfillment, return, claim or exchange changes, inside the same transaction". Without this the
+	 * re-derivation could only ever be a second write after the move had committed — every read and write
+	 * here went through this service's own injected repositories — so a failure between the two left the
+	 * order's cached status stale until the nightly reconciliation noticed (handover §7.65 item 22).
+	 *
+	 * **The manager decides the ORM, as the outbox's does**, and it has to be the configured one:
+	 *
+	 * - a **TypeORM** manager — a `DataSource.transaction` callback's, or a query runner's — carries every
+	 *   statement of the re-derivation: the order's read, every ledger read (lines, delivery choices, credit
+	 *   lines, money ledger, adjustments, tax lines), the version-predicated update, the summary row, the
+	 *   `order.*` outbox row and the final read. Nothing goes through an injected repository, which on
+	 *   PostgreSQL and MySQL would be another pooled connection: reading outside the caller's transaction
+	 *   derives the order from ledgers that do not yet hold the caller's move, and writing a row the
+	 *   transaction has locked from another connection waits on it forever;
+	 * - a **MikroORM** manager — the fork `em.transactional` hands its callback — is made the transaction
+	 *   context the re-derivation runs in (`TransactionContext.create`), so every repository the platform holds
+	 *   resolves to it, which is how MikroORM joins a transaction (`EntityManager.getContext` prefers the
+	 *   transaction context over the request's).
+	 *
+	 * A manager of the other ORM is refused (`ORDER_RECOMPUTE_MANAGER_ORM_MISMATCH`): under MikroORM the
+	 * TypeORM entity metadata carries the base columns only, and silently ignoring the manager would run the
+	 * write outside the transaction the caller believes it is in. Omitted, nothing changes: every caller that
+	 * opens no transaction runs exactly as it always did.
+	 *
+	 * **On MySQL the caller's transaction must be `READ COMMITTED`.** The order is read `FOR UPDATE`, but the
+	 * ledgers are plain reads, and under MySQL's default `REPEATABLE READ` those come from the snapshot of the
+	 * transaction's first plain read: a caller that waited for the order's lock would derive the status from
+	 * ledgers that miss what the transaction it waited for committed (Greptile on #10555; reproduced on MySQL
+	 * 8.0). `FulfillmentService.cancel` opens its transaction that way; PostgreSQL defaults to it.
+	 */
+	manager?: EntityManager | MikroOrmEntityManager;
+}
+
+/**
+ * Where one re-derivation reads its order and its ledgers from.
+ *
+ * Two implementations, chosen per call: the injected services (the path every caller without a transaction
+ * takes, unchanged), and a caller's TypeORM transaction (`IOrderRecalculation.manager`). They read the same
+ * rows — the transaction reader scopes each ledger read by the order's own tenant and organization, which is
+ * what the ledger rows carry — so the derivation cannot tell them apart, and only the connection changes.
+ */
+interface IOrderLedgerReader {
+	order(orderId: ID): Promise<Order | null>;
+	lines(order: Order): Promise<OrderLine[]>;
+	shippingMethods(order: Order): Promise<OrderShippingMethod[]>;
+	creditLines(order: Order): Promise<OrderCreditLine[]>;
+	transactions(order: Order): Promise<OrderTransaction[]>;
+	adjustments(order: Order, ownerType: AdjustmentOwnerType, ownerId: ID): Promise<Adjustment[]>;
+	taxLines(order: Order, ownerType: TaxLineOwnerType, ownerId: ID): Promise<TaxLine[]>;
+}
+
+/** Where one re-derivation writes the order, its summary row and its event. */
+interface IOrderTotalsWriter {
+	/** The writer the version-predicated update runs through. */
+	order: IVersionedWriter<Order>;
+	/** The transaction the summary row and the outbox row join, when the caller opened one. */
+	manager?: EntityManager;
 }
 
 /**
@@ -266,7 +333,10 @@ export interface IOrderTotalsBreakdown {
  * returned, which is what keeps "one row per committed version, never skipped" true.
  *
  * Everything happens in one call and is meant to run inside the transaction of the write that triggered
- * it, so a reader never sees a total that disagrees with the lines it was computed from.
+ * it, so a reader never sees a total that disagrees with the lines it was computed from. A caller that opened
+ * a transaction states it (`IOrderRecalculation.manager`) and every statement of the call joins it; a caller
+ * that opened none gets the re-derivation as a write of its own after its move, which the nightly
+ * reconciliation (`auditRecent`) is the safety net for.
  *
  * **The order's events leave from here too, for the same reason the summary row does.** The package's
  * README says observable changes are emitted through the core `event_outbox`, and this is the one
@@ -321,13 +391,39 @@ export class OrderTotalsService {
 	 * or when a re-derivation lost it on every attempt.
 	 */
 	public async recompute(orderId: ID, reason: string, options: IOrderRecalculation = {}): Promise<Order> {
+		const { manager, ...rest } = options;
+
+		if (manager) {
+			const usesMikroOrm = this.unitOfWork?.usesMikroOrm === true;
+
+			if (isMikroOrmManager(manager) !== usesMikroOrm) {
+				throw new InternalServerErrorException(
+					`ORDER_RECOMPUTE_MANAGER_ORM_MISMATCH: the order is re-derived through ${
+						usesMikroOrm ? 'MikroORM' : 'TypeORM'
+					}, and the transaction handed to it is not that ORM's.`
+				);
+			}
+
+			if (isMikroOrmManager(manager)) {
+				// MikroORM joins a transaction through its context: inside it every repository the platform
+				// holds resolves to this fork, so the re-derivation below runs as it always does and lands in
+				// the caller's transaction.
+				return TransactionContext.create(manager, () => this.recompute(orderId, reason, rest));
+			}
+		}
+
+		// What is left is a TypeORM transaction, or none.
+		const transaction = manager as EntityManager | undefined;
+		const reader = transaction ? this.transactionReader(transaction) : this.serviceReader();
+		const writer: IOrderTotalsWriter = transaction
+			? { order: this.transactionOrderWriter(transaction), manager: transaction }
+			: { order: this.orderWriter() };
 		const retried =
-			(options.expectation ?? ANY_ORDER_VERSION).wildcard === true &&
-			Object.keys(options.patch ?? {}).length === 0;
+			(rest.expectation ?? ANY_ORDER_VERSION).wildcard === true && Object.keys(rest.patch ?? {}).length === 0;
 
 		for (let attempt = 1; ; attempt++) {
 			try {
-				return await this.recomputeOnce(orderId, reason, options);
+				return await this.recomputeOnce(orderId, reason, rest, reader, writer);
 			} catch (error) {
 				if (!retried || attempt >= ORDER_RECOMPUTE_ATTEMPTS || !isVersionConflict(error)) {
 					throw error;
@@ -344,10 +440,18 @@ export class OrderTotalsService {
 	 * @param reason Why the totals moved, recorded on the summary row.
 	 * @param options The version the caller read the order at, and the columns the move commits with the
 	 * totals.
+	 * @param reader Where the order and its ledgers are read from.
+	 * @param writer Where the order, its summary row and its event are written.
 	 * @returns The order, as written.
 	 */
-	private async recomputeOnce(orderId: ID, reason: string, options: IOrderRecalculation): Promise<Order> {
-		const order = await this.readOrder(orderId);
+	private async recomputeOnce(
+		orderId: ID,
+		reason: string,
+		options: IOrderRecalculation,
+		reader: IOrderLedgerReader,
+		writer: IOrderTotalsWriter
+	): Promise<Order> {
+		const order = await reader.order(orderId);
 
 		if (!order) {
 			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
@@ -357,10 +461,10 @@ export class OrderTotalsService {
 		// the order's own status, so a placement or a cancellation has to be read through the columns it
 		// is about to write rather than from the row as it still stands.
 		const moved: Order = { ...order, ...(options.patch ?? {}) } as Order;
-		const snapshot = await this.computeTotals(moved);
-		const paymentStatus = await this.derivePaymentStatus(moved, snapshot);
-		const fulfillmentStatus = await this.deriveFulfillmentStatus(moved);
-		const promisedAt = await this.promisedDate(moved);
+		const snapshot = this.totalsOf((await this.readTotalsContext(moved, reader)).context);
+		const paymentStatus = await this.paymentStatusFrom(moved, snapshot, reader);
+		const fulfillmentStatus = await this.fulfillmentStatusFrom(moved, reader);
+		const promisedAt = await this.promisedDate(moved, reader);
 
 		// `version` is deliberately absent: the conditional update writes the next version in the same
 		// statement that checks the current one, and a patch that carried one would move the row past
@@ -373,7 +477,7 @@ export class OrderTotalsService {
 		// come from the row this call just read, which is the same source `OrderReturnService` and
 		// `FulfillmentService` take theirs from, and it is the only source available on the paths that
 		// run with no request behind them: the checkout handler, a recurrence and the staleness sweep.
-		const { version } = await commitVersionedUpdate<Order>(this.orderWriter(), {
+		const { version } = await commitVersionedUpdate<Order>(writer.order, {
 			id: orderId,
 			expectation: options.expectation ?? ANY_ORDER_VERSION,
 			where: {
@@ -397,7 +501,7 @@ export class OrderTotalsService {
 				outstandingTotal: snapshot.outstandingTotal,
 				paymentStatus,
 				fulfillmentStatus,
-				sellerCount: await this.countSellers(moved),
+				sellerCount: await this.countSellers(moved, reader),
 				promisedAt
 			} as Record<string, unknown>
 		});
@@ -414,14 +518,113 @@ export class OrderTotalsService {
 		// from, and wrote the summary of a repair with no tenant at all.
 		await this.summaryService.append(
 			{ orderId, version, totals: { ...snapshot }, currency: order.currency, reason },
-			scopeOfOrderRow(order)
+			scopeOfOrderRow(order),
+			writer.manager
 		);
 
 		if (options.event) {
-			await this.announce(moved, version, snapshot, options.event);
+			await this.announce(moved, version, snapshot, options.event, writer.manager);
 		}
 
-		return this.readOrder(orderId);
+		return reader.order(orderId);
+	}
+
+	/**
+	 * The reader every caller without a transaction uses: the injected services and repositories, exactly
+	 * the calls this service has always made.
+	 *
+	 * @returns The reader.
+	 */
+	private serviceReader(): IOrderLedgerReader {
+		const items = async <R>(read: Promise<unknown>): Promise<R[]> => ((await read) as IPagination<R>).items;
+
+		return {
+			order: (orderId) => this.readOrder(orderId),
+			lines: (order) => items<OrderLine>(this.lineService.findAll({ where: { orderId: order.id } })),
+			shippingMethods: (order) =>
+				items<OrderShippingMethod>(this.shippingMethodService.findAll({ where: { orderId: order.id } })),
+			creditLines: (order) =>
+				items<OrderCreditLine>(this.creditLineService.findAll({ where: { orderId: order.id } })),
+			transactions: (order) =>
+				items<OrderTransaction>(this.transactionService.findAll({ where: { orderId: order.id } })),
+			adjustments: (_order, ownerType, ownerId) => this.adjustmentService.findByOwner(ownerType, ownerId),
+			taxLines: (_order, ownerType, ownerId) => this.taxLineService.findByOwner(ownerType, ownerId)
+		};
+	}
+
+	/**
+	 * The reader a caller's TypeORM transaction gives: every read through the transaction's own manager.
+	 *
+	 * The ledger reads are scoped by the order's own tenant — the criterion the tenant-aware services add inside
+	 * a request, and the one every ledger row carries (the tenant-aware create stamps the tenant and not always
+	 * the organization, so an organization criterion could miss a row the services find). The rows are keyed by
+	 * the order or by an owner row of it, so the tenant is a guard rather than the selector. The order itself is
+	 * read by id, as {@link readOrder} reads it, and the two ledgers keyed by owner are ordered as their
+	 * services order them.
+	 *
+	 * @param manager The caller's transaction.
+	 * @returns The reader.
+	 */
+	private transactionReader(manager: EntityManager): IOrderLedgerReader {
+		const scope = (order: Order): Record<string, unknown> => (order.tenantId ? { tenantId: order.tenantId } : {});
+		const ownerOrder = { createdAt: 'ASC', id: 'ASC' } as const;
+
+		// The order is read under a row lock where the dialect has one (see `rowLockOf`): it is the row this
+		// re-derivation writes, and a retry after a lost race has to see the version that won.
+		const locked = rowLockOf(manager);
+
+		return {
+			order: (orderId) => manager.getRepository(Order).findOne({ where: { id: orderId }, ...locked } as never),
+			lines: (order) =>
+				manager.getRepository(OrderLine).find({ where: { orderId: order.id, ...scope(order) } as never }),
+			shippingMethods: (order) =>
+				manager
+					.getRepository(OrderShippingMethod)
+					.find({ where: { orderId: order.id, ...scope(order) } as never }),
+			creditLines: (order) =>
+				manager.getRepository(OrderCreditLine).find({ where: { orderId: order.id, ...scope(order) } as never }),
+			transactions: (order) =>
+				manager.getRepository(OrderTransaction).find({ where: { orderId: order.id, ...scope(order) } as never }),
+			adjustments: (order, ownerType, ownerId) =>
+				manager
+					.getRepository(Adjustment)
+					.find({ where: { ownerType, ownerId, ...scope(order) } as never, order: ownerOrder as never }),
+			taxLines: (order, ownerType, ownerId) =>
+				manager
+					.getRepository(TaxLine)
+					.find({ where: { ownerType, ownerId, ...scope(order) } as never, order: ownerOrder as never })
+		};
+	}
+
+	/**
+	 * The order's versioned writer inside a caller's TypeORM transaction.
+	 *
+	 * It is the two members `commitVersionedUpdate` uses, run on the transaction's manager: the update by
+	 * criteria answers the affected-row count the conflict decision is read from, and the read by id answers
+	 * `NotFoundException` for an order that is not there, as the CRUD service's read does. The criteria are the
+	 * ones the kernel builds — the id, the version it is predicated on, the caller's scope and the order's own
+	 * tenancy — so the statement is the one the service would have run, on the caller's connection.
+	 *
+	 * @param manager The caller's transaction.
+	 * @returns The writer.
+	 */
+	private transactionOrderWriter(manager: EntityManager): IVersionedWriter<Order> {
+		const orders = manager.getRepository(Order);
+
+		const locked = rowLockOf(manager);
+
+		return {
+			update: (criteria, patch) => orders.update(criteria as never, patch as never),
+			findOneByIdString: async (id) => {
+				const order = await orders.findOne({ where: { id }, ...locked } as never);
+
+				if (!order) {
+					throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${id}.`);
+				}
+
+				return order;
+			}
+		} as IVersionedWriter<Order>;
 	}
 
 	/**
@@ -730,12 +933,15 @@ export class OrderTotalsService {
 	 * @param version The version the conditional update produced.
 	 * @param snapshot The totals written with it.
 	 * @param event The fact to announce.
+	 * @param manager The caller's TypeORM transaction, when the re-derivation runs inside one; the row then
+	 * joins it like every other statement of the re-derivation.
 	 */
 	private async announce(
 		order: Order,
 		version: number,
 		snapshot: IOrderTotals,
-		event: IOrderEvent
+		event: IOrderEvent,
+		manager?: EntityManager
 	): Promise<void> {
 		const input: IOutboxWriteInput = {
 			name: event.name,
@@ -760,9 +966,10 @@ export class OrderTotalsService {
 		};
 
 		await this.outbox.append(
-			this.unitOfWork?.usesMikroOrm
-				? this.outbox.mikroOrmEventOutboxRepository.getEntityManager()
-				: this.typeOrmOrderRepository.manager,
+			manager ??
+				(this.unitOfWork?.usesMikroOrm
+					? this.outbox.mikroOrmEventOutboxRepository.getEntityManager()
+					: this.typeOrmOrderRepository.manager),
 			input
 		);
 	}
@@ -802,7 +1009,7 @@ export class OrderTotalsService {
 	 * @returns The computed totals, including the order-only tail.
 	 */
 	public async computeTotals(order: Order): Promise<IOrderTotals> {
-		const { context } = await this.readTotalsContext(order);
+		const { context } = await this.readTotalsContext(order, this.serviceReader());
 
 		return this.totalsOf(context);
 	}
@@ -827,7 +1034,7 @@ export class OrderTotalsService {
 	 * sum to the totals.
 	 */
 	public async computeBreakdown(order: Order): Promise<IOrderTotalsBreakdown> {
-		const { lines, shippingMethods, context } = await this.readTotalsContext(order);
+		const { lines, shippingMethods, context } = await this.readTotalsContext(order, this.serviceReader());
 		const totals = this.totalsOf(context);
 		const alone = (part: Partial<ITotalsContext>): ITotalsSnapshot =>
 			TotalsCalculator.compute({
@@ -933,23 +1140,17 @@ export class OrderTotalsService {
 	 * its credit lines and its money ledger — and states it as the calculator's context.
 	 *
 	 * @param order The order.
+	 * @param reader Where the rows are read from.
 	 * @returns The rows read, and the context built from them.
 	 */
 	private async readTotalsContext(
-		order: Order
+		order: Order,
+		reader: IOrderLedgerReader
 	): Promise<{ lines: OrderLine[]; shippingMethods: OrderShippingMethod[]; context: ITotalsContext }> {
-		const lines = ((await this.lineService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderLine>).items;
-		const shippingMethods = ((await this.shippingMethodService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderShippingMethod>).items;
-		const creditLines = ((await this.creditLineService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderCreditLine>).items;
-		const transactions = ((await this.transactionService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderTransaction>).items;
+		const lines = await reader.lines(order);
+		const shippingMethods = await reader.shippingMethods(order);
+		const creditLines = await reader.creditLines(order);
+		const transactions = await reader.transactions(order);
 
 		const lineAdjustments: ITotalsAdjustment[] = [];
 		const shippingAdjustments: ITotalsAdjustment[] = [];
@@ -957,7 +1158,7 @@ export class OrderTotalsService {
 		const shippingTaxLines: ITotalsTaxLine[] = [];
 
 		for (const line of lines) {
-			for (const adjustment of await this.adjustmentService.findByOwner(AdjustmentOwnerType.ORDER_LINE, line.id)) {
+			for (const adjustment of await reader.adjustments(order, AdjustmentOwnerType.ORDER_LINE, line.id)) {
 				lineAdjustments.push({
 					ownerId: line.id,
 					amount: Number(adjustment.amount),
@@ -966,16 +1167,13 @@ export class OrderTotalsService {
 				});
 			}
 
-			for (const taxLine of await this.taxLineService.findByOwner(TaxLineOwnerType.ORDER_LINE, line.id)) {
+			for (const taxLine of await reader.taxLines(order, TaxLineOwnerType.ORDER_LINE, line.id)) {
 				lineTaxLines.push({ ownerId: line.id, amount: Number(taxLine.amount) });
 			}
 		}
 
 		for (const method of shippingMethods) {
-			for (const adjustment of await this.adjustmentService.findByOwner(
-				AdjustmentOwnerType.ORDER_SHIPPING,
-				method.id
-			)) {
+			for (const adjustment of await reader.adjustments(order, AdjustmentOwnerType.ORDER_SHIPPING, method.id)) {
 				shippingAdjustments.push({
 					ownerId: method.id,
 					amount: Number(adjustment.amount),
@@ -984,7 +1182,7 @@ export class OrderTotalsService {
 				});
 			}
 
-			for (const taxLine of await this.taxLineService.findByOwner(TaxLineOwnerType.ORDER_SHIPPING, method.id)) {
+			for (const taxLine of await reader.taxLines(order, TaxLineOwnerType.ORDER_SHIPPING, method.id)) {
 				shippingTaxLines.push({ ownerId: method.id, amount: Number(taxLine.amount) });
 			}
 		}
@@ -1035,9 +1233,23 @@ export class OrderTotalsService {
 	 * @returns The payment status.
 	 */
 	public async derivePaymentStatus(order: Order, snapshot: ITotalsSnapshot): Promise<OrderPaymentStatus> {
-		const transactions = ((await this.transactionService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderTransaction>).items;
+		return this.paymentStatusFrom(order, snapshot, this.serviceReader());
+	}
+
+	/**
+	 * {@link derivePaymentStatus}, reading the money ledger from the reader it is handed.
+	 *
+	 * @param order The order.
+	 * @param snapshot The totals just computed.
+	 * @param reader Where the ledger is read from.
+	 * @returns The payment status.
+	 */
+	private async paymentStatusFrom(
+		order: Order,
+		snapshot: ITotalsSnapshot,
+		reader: IOrderLedgerReader
+	): Promise<OrderPaymentStatus> {
+		const transactions = await reader.transactions(order);
 
 		const sumOf = (types: OrderTransactionType[], positive: boolean): string =>
 			transactions
@@ -1084,9 +1296,18 @@ export class OrderTotalsService {
 	 * @returns The fulfilment status.
 	 */
 	public async deriveFulfillmentStatus(order: Order): Promise<FulfillmentStatus> {
-		const lines = ((await this.lineService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderLine>).items;
+		return this.fulfillmentStatusFrom(order, this.serviceReader());
+	}
+
+	/**
+	 * {@link deriveFulfillmentStatus}, reading the lines from the reader it is handed.
+	 *
+	 * @param order The order.
+	 * @param reader Where the lines are read from.
+	 * @returns The fulfilment status.
+	 */
+	private async fulfillmentStatusFrom(order: Order, reader: IOrderLedgerReader): Promise<FulfillmentStatus> {
+		const lines = await reader.lines(order);
 
 		const total = (field: keyof OrderLine): string =>
 			lines.reduce<string>((sum, line) => addDecimalStrings(sum, this.decimalOf(line[field] ?? 0)), '0');
@@ -1183,12 +1404,11 @@ export class OrderTotalsService {
 	 * rather than a fabricated one.
 	 *
 	 * @param order The order.
+	 * @param reader Where the lines are read from.
 	 * @returns The latest promised date among the lines, or null when none of them carries one.
 	 */
-	private async promisedDate(order: Order): Promise<Date | null> {
-		const lines = ((await this.lineService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderLine>).items;
+	private async promisedDate(order: Order, reader: IOrderLedgerReader): Promise<Date | null> {
+		const lines = await reader.lines(order);
 
 		const promised = lines
 			.map((line) => line.promisedAt)
@@ -1202,12 +1422,11 @@ export class OrderTotalsService {
 	 * Counts the distinct sellers among the lines, which is derived and never authored.
 	 *
 	 * @param order The order.
+	 * @param reader Where the lines are read from.
 	 * @returns The number of distinct sellers.
 	 */
-	private async countSellers(order: Order): Promise<number> {
-		const lines = ((await this.lineService.findAll({
-			where: { orderId: order.id }
-		})) as IPagination<OrderLine>).items;
+	private async countSellers(order: Order, reader: IOrderLedgerReader): Promise<number> {
+		const lines = await reader.lines(order);
 
 		return new Set(lines.map((line) => line.sellerId).filter(Boolean)).size;
 	}
@@ -1364,6 +1583,48 @@ function orderIdOf(row: { orderId?: ID; order?: unknown }): ID | undefined {
 	}
 
 	return (row.order as { id?: ID } | null | undefined)?.id ?? undefined;
+}
+
+/**
+ * The row lock a transaction's read of the row it is about to write takes, where the dialect has one.
+ *
+ * Inside a transaction a plain read is a snapshot: on MySQL's default `REPEATABLE READ` it is the snapshot of
+ * the transaction's first read, so a row another transaction changed and committed since is still read as it
+ * was — the version a conditional write is then predicated on is stale, the write matches nothing, and the
+ * conflict's own read-back sees the same stale row. A locking read (`SELECT … FOR UPDATE`) reads the latest
+ * committed row and holds it until the transaction ends, so the version the re-derivation reads is the one its update is predicated on. PostgreSQL and MySQL have it; SQLite has
+ * no row locks (TypeORM refuses the option there) and serialises writers on its one connection instead, which
+ * is the lock.
+ *
+ * @param manager The transaction's manager.
+ * @returns The find option that takes the lock, or nothing where the dialect has none.
+ */
+function rowLockOf(manager: EntityManager): { lock?: { mode: 'pessimistic_write' } } {
+	const type = String((manager?.connection?.options as { type?: string } | undefined)?.type ?? '');
+
+	return ['postgres', 'cockroachdb', 'mysql', 'mariadb', 'aurora-mysql'].includes(type)
+		? { lock: { mode: 'pessimistic_write' } }
+		: {};
+}
+
+/**
+ * Whether a manager a caller handed over is MikroORM's.
+ *
+ * The same test the platform's outbox makes (`isMikroOrmEntityManager`, which the core package does not
+ * export): the class, and the shape for a manager that reached this module through a second copy of
+ * `@mikro-orm/core`. A TypeORM manager has neither member.
+ *
+ * @param manager The manager.
+ * @returns True when it is a MikroORM entity manager.
+ */
+function isMikroOrmManager(manager: unknown): manager is MikroOrmEntityManager {
+	if (manager instanceof MikroOrmEntityManager) {
+		return true;
+	}
+
+	const candidate = manager as { getUnitOfWork?: unknown; nativeUpdate?: unknown } | null | undefined;
+
+	return typeof candidate?.getUnitOfWork === 'function' && typeof candidate?.nativeUpdate === 'function';
 }
 
 /**

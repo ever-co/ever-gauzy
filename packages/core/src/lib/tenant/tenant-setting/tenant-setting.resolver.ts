@@ -33,6 +33,7 @@ import {
 	TenantSettingSaveCommand
 } from './commands';
 import { normalizePreferredUi } from './tenant-ui-preferences.controller';
+import { deleteRemovedRows } from '../../graphql/delete-answer';
 
 /** The members `UpdateTenantSettingInput` declares in the schema. */
 export interface IUpdateTenantSettingInput {
@@ -378,9 +379,7 @@ export class TenantSettingResolver {
 	@Mutation('deleteTenantSetting')
 	@Permissions(PermissionsEnum.TENANT_SETTING)
 	async deleteTenantSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.tenantSettingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.tenantSettingService.delete(id));
 	}
 
 	/**

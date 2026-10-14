@@ -20,6 +20,7 @@ import {
 	CandidateCriterionsRatingBulkDeleteCommand,
 	CandidateCriterionsRatingBulkUpdateCommand
 } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateCandidateCriterionsRatingInput` declares in the schema. */
 export interface ICreateCandidateCriterionsRatingInput {
@@ -219,9 +220,7 @@ export class CandidateCriterionsRatingResolver {
 	@Mutation('deleteCandidateCriterionsRating')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	async deleteCandidateCriterionsRating(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateCriterionsRatingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateCriterionsRatingService.delete(id));
 	}
 
 	/** Withdraws one criterion rating without removing it. */

@@ -192,6 +192,7 @@ export class AddPaymentOrderForeignKey1791000000230 implements MigrationInterfac
 		columnFragment: string
 	): Promise<void> {
 		const definition = await this.sqliteDefinitionOf(queryRunner, table);
+		const indexes = await this.sqliteIndexesOf(queryRunner, table);
 
 		if (!definition || definition.includes('FK_' + table + '_order')) {
 			return;
@@ -222,6 +223,11 @@ export class AddPaymentOrderForeignKey1791000000230 implements MigrationInterfac
 			await queryRunner.query(`PRAGMA legacy_alter_table = OFF`);
 		}
 
+		// The indexes went with the backup table; put them back on the rebuilt one.
+		for (const index of indexes) {
+			await queryRunner.query(index);
+		}
+
 		console.log(chalk.gray(`Rebuilt ${table} with the order foreign key (${columnFragment}).`));
 	}
 
@@ -233,6 +239,7 @@ export class AddPaymentOrderForeignKey1791000000230 implements MigrationInterfac
 	 */
 	private async rebuildSqliteTableWithoutOrderForeignKey(queryRunner: QueryRunner, table: string): Promise<void> {
 		const definition = await this.sqliteDefinitionOf(queryRunner, table);
+		const indexes = await this.sqliteIndexesOf(queryRunner, table);
 
 		if (!definition || !definition.includes('FK_' + table + '_order')) {
 			return;
@@ -254,6 +261,31 @@ export class AddPaymentOrderForeignKey1791000000230 implements MigrationInterfac
 		} finally {
 			await queryRunner.query(`PRAGMA legacy_alter_table = OFF`);
 		}
+
+		// The indexes went with the backup table; put them back on the rebuilt one.
+		for (const index of indexes) {
+			await queryRunner.query(index);
+		}
+	}
+
+	/**
+	 * Reads the `CREATE INDEX` statements of a SQLite table, to replay after a rebuild.
+	 *
+	 * A rename-aside rebuild moves the table's indexes onto the backup table, and dropping the backup drops them, so
+	 * every rebuild reads them first and replays them on the rebuilt table (R5-04: these rebuilds used to leave
+	 * the table with no index at all, unique ones included).
+	 *
+	 * @param queryRunner The query runner.
+	 * @param table The table.
+	 * @returns The statements, in the order SQLite holds them.
+	 */
+	private async sqliteIndexesOf(queryRunner: QueryRunner, table: string): Promise<string[]> {
+		const rows: Array<{ sql?: string }> = await queryRunner.query(
+			`SELECT sql FROM sqlite_master WHERE type = 'index' AND tbl_name = ? AND sql IS NOT NULL`,
+			[table]
+		);
+
+		return (rows ?? []).map((row) => row.sql).filter((sql): sql is string => Boolean(sql));
 	}
 
 	/**
