@@ -8,7 +8,7 @@ import { PurchasingPermissions } from '../../purchasing.permissions';
 import { VendorTermStatus } from '../../purchasing.types';
 import { VendorProductTermService } from '../../vendor-product-term/vendor-product-term.service';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
-import { toUserError } from '../wire';
+import { deleteOutcome, toUserError } from '../wire';
 
 /** The request that writes a term, as the schema declares it. */
 interface IVendorProductTermInputArgs {
@@ -237,9 +237,11 @@ export class VendorProductTermResolver {
 	@Permissions(PurchasingPermissions.VENDOR_TERMS_EDIT)
 	async deleteVendorProductTerm(@Args('id') id: ID) {
 		try {
-			await this.vendorProductTermService.delete(id);
+			// The identity is answered only for a removal that reached a row: an identifier that names none of
+			// the caller's deletes nothing and raises nothing, and is answered `NOT_FOUND` (`deleteOutcome`).
+			const userErrors = deleteOutcome(await this.vendorProductTermService.delete(id), id);
 
-			return { id, userErrors: [] };
+			return { id: userErrors.length ? null : id, userErrors };
 		} catch (error) {
 			return { id: null, userErrors: [toUserError(error)] };
 		}

@@ -376,6 +376,16 @@ jobs:
         if: always()
         run: node tools/scripts/entity-column-dialect-check.mjs
 
+      # The kernel's hard delete checks no existence: an identifier that names no row of the caller deletes
+      # nothing and raises nothing (`affected: 0`). Ninety-odd GraphQL delete fields dropped that result and
+      # answered `true` — "removed" for a row that was never there — while the REST route reported the
+      # `affected: 0` it got (handover 2026-09-20 §7.65 item 21). Every delete field consults the result now.
+      - name: Every GraphQL delete field answers what its delete did
+        if: always()
+        run: |
+          node --test tools/scripts/graphql-delete-answer-check.test.mjs
+          node tools/scripts/graphql-delete-answer-check.mjs
+
       # Subscriptions were the one design dimension nothing measured: the design promised 86, the schema served
       # about 31, and no gate noticed (handover 2026-09-20 §7.65 item 19). Owner decision 8 (2026-10-13): "Add a
       # gate + build backlog". The gate records every promised stream, derives a typed field for every durable

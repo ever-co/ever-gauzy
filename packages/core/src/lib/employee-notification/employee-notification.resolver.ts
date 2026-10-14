@@ -21,6 +21,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeNotification } from './employee-notification.entity';
 import { EmployeeNotificationService } from './employee-notification.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /**
  * The members `UpdateEmployeeNotificationInput` declares in the schema: the delivered edit input, plus
@@ -260,9 +261,7 @@ export class EmployeeNotificationResolver {
 	 */
 	@Mutation('deleteEmployeeNotification')
 	async deleteEmployeeNotification(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeNotificationService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeNotificationService.delete(id));
 	}
 
 	/**

@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { ProductCategoryCreateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /**
  * One language's copy of a category's descriptive facts, as `ProductCategoryTranslationInput` declares
@@ -241,9 +242,7 @@ export class ProductCategoryResolver {
 	@Mutation('deleteProductCategory')
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 	async deleteProductCategory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productCategoryService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.productCategoryService.delete(id));
 	}
 
 	/**

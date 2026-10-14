@@ -17,6 +17,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { Dashboard } from './dashboard.entity';
 import { DashboardService } from './dashboard.service';
 import { DashboardCreateCommand, DashboardUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /**
  * The members `CreateDashboardInput` declares in the schema.
@@ -238,9 +239,7 @@ export class DashboardResolver {
 	@Mutation('deleteDashboard')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DASHBOARD_DELETE)
 	async deleteDashboard(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.dashboardService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.dashboardService.delete(id));
 	}
 
 	/**

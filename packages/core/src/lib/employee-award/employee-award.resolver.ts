@@ -15,6 +15,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeAward } from './employee-award.entity';
 import { EmployeeAwardService } from './employee-award.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEmployeeAwardInput` declares in the schema. */
 export interface ICreateEmployeeAwardInput {
@@ -240,9 +241,7 @@ export class EmployeeAwardResolver {
 	@Mutation('deleteEmployeeAward')
 	@Permissions(PermissionsEnum.PUBLIC_PAGE_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	async deleteEmployeeAward(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeAwardService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeAwardService.delete(id));
 	}
 
 	/**
