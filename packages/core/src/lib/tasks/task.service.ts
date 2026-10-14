@@ -183,7 +183,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
-				await this.syncTaskMentions(id, mentionEmployeeIds);
+				// The saved organization: the edit may have moved the task to another one
+				await this.syncTaskMentions(id, mentionEmployeeIds, updatedTask.organizationId ?? task.organizationId);
 			}
 
 			const { organizationId } = updatedTask;
@@ -225,9 +226,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param taskId - The ID of the updated task
 	 * @param mentionEmployeeIds - The IDs of the employees mentioned in the description
 	 */
-	private async syncTaskMentions(taskId: ID, mentionEmployeeIds: ID[]): Promise<void> {
+	private async syncTaskMentions(taskId: ID, mentionEmployeeIds: ID[], organizationId: ID): Promise<void> {
 		try {
-			await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, taskId, mentionEmployeeIds);
+			await this._mentionService.updateEntityMentions(
+				BaseEntityEnum.Task,
+				taskId,
+				mentionEmployeeIds,
+				undefined,
+				undefined,
+				organizationId
+			);
 		} catch (error) {
 			console.error('Error synchronizing mentions:', error);
 		}
