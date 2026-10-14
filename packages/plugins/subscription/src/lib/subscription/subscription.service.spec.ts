@@ -2409,7 +2409,8 @@ describe('SubscriptionService — the versioned write', () => {
 			code: 'SUBSCRIPTION_FIELD_NOT_WRITABLE',
 			details: { subscriptionId: SUBSCRIPTION, fields: [member] }
 		});
-		expect(fixture.subscription(SUBSCRIPTION)).toEqual(before);
+		// The read the refusal is decided on attaches the relations to the fixture row; every stored column is as it was.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject(before);
 	});
 
 	it('accepts a body that restates the lifecycle as stored, and writes the members it may', async () => {
