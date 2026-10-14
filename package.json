@@ -74,7 +74,7 @@
 		"build:gauzy:prod": "yarn run config:prod && yarn ng:prod build gauzy -c=production --prod --verbose",
 		"build:gauzy:prod:quiet": "yarn run config:prod && yarn ng:prod build gauzy -c=production --prod",
 		"build:gauzy:prod:docker": "yarn run config:prod && yarn ng:docker build gauzy -c=production --prod --verbose",
-		"build:gauzy:dev:docker": "yarn run config:dev && yarn ng:dev:docker build gauzy -c=development --verbose",
+		"build:gauzy:dev:docker": "yarn run config:dev && yarn ng:dev:docker build gauzy -c=development --output-hashing=all --verbose",
 		"build:gauzy:prod:ci": "yarn run config:prod && yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci build gauzy -c=production --prod --verbose",
 		"build:api": "yarn ng build api --configuration=development",
 		"build:api:prod": "yarn ng:prod build api --configuration=production",
