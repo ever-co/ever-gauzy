@@ -1,4 +1,4 @@
-import { QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from 'typeorm';
 import { CreateTaxRatePartTable1791000000145 } from './1791000000145-CreateTaxRatePartTable';
 import { CreateTaxRegimeTables1791000000146 } from './1791000000146-CreateTaxRegimeTables';
 
@@ -9,13 +9,14 @@ import { CreateTaxRegimeTables1791000000146 } from './1791000000146-CreateTaxReg
  * 38525121055) — SQLite and MySQL, which do bind `?`, never showed it.
  *
  * The runner below answers the way PostgreSQL does: a parameterised statement must use `$n` placeholders, exactly as
- * many as there are parameters.
+ * many as there are parameters. `columnsExist` decides what `hasColumn` answers, because both migrations branch on
+ * it (146 probes its foreign keys on `up` only when the party columns are there).
  */
-function postgresRunner(): { runner: QueryRunner; statements: string[] } {
-	const statements: string[] = [];
+function postgresRunner(columnsExist: boolean): { runner: QueryRunner; statements: string[] } {
+	let statements: string[] = [];
 	const runner = {
 		connection: { options: { type: 'postgres' } },
-		hasColumn: async () => false,
+		hasColumn: async () => columnsExist,
 		query: async (sql: string, parameters?: unknown[]) => {
 			statements.push(sql);
 			if (parameters?.length) {
@@ -35,18 +36,34 @@ function postgresRunner(): { runner: QueryRunner; statements: string[] } {
 	return { runner, statements };
 }
 
+const probesForeignKeys = (statements: string[]) =>
+	statements.some((sql) => /information_schema\.table_constraints/i.test(sql));
+
+const migrations: Array<[string, () => MigrationInterface]> = [
+	['CreateTaxRatePartTable1791000000145', () => new CreateTaxRatePartTable1791000000145()],
+	['CreateTaxRegimeTables1791000000146', () => new CreateTaxRegimeTables1791000000146()]
+];
+
 describe('tax migrations on PostgreSQL bind their parameters as $n', () => {
-	it.each([
-		['CreateTaxRatePartTable1791000000145', () => new CreateTaxRatePartTable1791000000145()],
-		['CreateTaxRegimeTables1791000000146', () => new CreateTaxRegimeTables1791000000146()]
-	])('%s runs up and down', async (_name, create) => {
-		const migration = create();
-		const { runner, statements } = postgresRunner();
+	describe.each([
+		['columns absent', false],
+		['columns present', true]
+	])('%s', (_label, columnsExist) => {
+		it.each(migrations)('%s up', async (_name, create) => {
+			const { runner, statements } = postgresRunner(columnsExist);
 
-		await expect(migration.up(runner)).resolves.toBeUndefined();
-		await expect(migration.down(runner)).resolves.toBeUndefined();
+			await expect(create().up(runner)).resolves.toBeUndefined();
 
-		// The foreign-key existence checks are among the statements that ran, so the case covers the helper.
-		expect(statements.some((sql) => /information_schema\.table_constraints/i.test(sql))).toBe(true);
+			// With the columns present both migrations probe their foreign keys on the way up.
+			if (columnsExist) expect(probesForeignKeys(statements)).toBe(true);
+		});
+
+		it.each(migrations)('%s down', async (_name, create) => {
+			const { runner, statements } = postgresRunner(columnsExist);
+
+			await expect(create().down(runner)).resolves.toBeUndefined();
+
+			if (columnsExist) expect(probesForeignKeys(statements)).toBe(true);
+		});
 	});
 });
