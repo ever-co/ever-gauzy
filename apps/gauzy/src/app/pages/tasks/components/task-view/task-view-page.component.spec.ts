@@ -112,7 +112,7 @@ describe('TaskViewPageComponent', () => {
 	});
 
 	/*
-	 * Review (Greptile, #10589): the page used to keep showing a task after the header switched organization,
+	 * Review on #10589: the page used to keep showing a task after the header switched organization,
 	 * while its favorite star already used the new one — so the star could file organization A's task under
 	 * organization B.
 	 */
