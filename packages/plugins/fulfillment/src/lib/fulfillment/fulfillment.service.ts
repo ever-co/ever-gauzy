@@ -8,7 +8,7 @@ import {
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeepPartial, DeleteResult, EntityManager, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	FulfillmentDirection,
@@ -22,13 +22,15 @@ import {
 	ApiException,
 	EventOutboxService,
 	IVersionExpectation,
+	IVersionedWriter,
+	MultiORMEnum,
 	RequestContext,
 	TenantAwareCrudService,
 	commitVersionedUpdate,
 	compareDecimalStrings,
 	subtractDecimalStrings
 } from '@gauzy/core';
-import { OrderLineService, OrderTotalsService } from '@gauzy/plugin-order';
+import { OrderLine, OrderLineService, OrderTotalsService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
@@ -136,10 +138,11 @@ type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
  * Quantity is checked against what the order line has **left**, not against what was ordered: a second
  * partial shipment of the same line is a second fulfilment, and the order line's own counters are the
  * authority on how much is outstanding. Those counters are maintained here, one statement at a time:
- * **this path holds no transaction** — neither this service nor the concurrency kernel opens one, and
- * `CrudService.create` and `CrudService.update` each run one statement — so a failure between two of
- * them leaves the earlier one committed. The consequence is stated where it matters rather than
- * implied, and it is the reason the recompute below is a second write rather than part of the first.
+ * **`create`, `ship`, `deliver` and a MikroORM `cancel` hold no transaction** — `CrudService.create` and
+ * `CrudService.update` each run one statement — so a failure between two of them leaves the earlier one
+ * committed. The consequence is stated where it matters rather than implied, and it is the reason the
+ * recompute below is a second write rather than part of the first on those paths. `cancel` on TypeORM is
+ * the exception, stated below.
  *
  * Every quantity on that path is an exact decimal and is computed as one — the remainder, the
  * comparison against it and the counters themselves all go through `fulfillment.quantity.ts` — because
@@ -171,11 +174,20 @@ type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
  * fresh read (`RECOMPUTE_ATTEMPTS`); anything that still fails is logged and left to the nightly
  * `OrderTotalsReconciliationScheduler`, which selects every order whose lines moved in its window and
  * re-derives the ones whose columns disagree with their ledgers — precisely the order a failed
- * re-derivation leaves behind. What is *not* delivered is ADR-26's "inside the same transaction as the
- * change": there is no transaction on this path to be inside, and creating one means threading a manager
- * through `commitVersionedUpdate`, which takes a `CrudService` and lives in the concurrency kernel. That
- * is a change to `packages/core` and to the order package rather than to this file, and it is reported
- * rather than faked.
+ * re-derivation leaves behind.
+ *
+ * **ADR-26's "inside the same transaction as the change" is delivered for `cancel` on TypeORM, and not yet
+ * for `create`** (handover §7.65 item 22). `commitVersionedUpdate` accepts a writer bound to a transaction and
+ * `OrderTotalsService.recompute` accepts the caller's manager, so `cancel` runs the shipment's write, its event,
+ * the counters it gives back and the order's re-derivation on one transaction (`cancelInTransaction`), and a
+ * failed re-derivation rolls the cancelation back. `create` cannot do the same yet: its rows are written
+ * through `TenantAwareCrudService.create` — the shipment by this class and its lines by the line service — whose
+ * tenancy checks (the foreign-row and nested-graph ownership assertions) have no transaction-bound form, and
+ * writing them on a manager directly would drop those checks. Until the CRUD kernel's create takes a manager,
+ * `create` keeps the second-write shape above and the reconciliation as its safety net. MikroORM installations
+ * keep it for `cancel` too: there a transaction is joined through MikroORM's context (which `recompute` already
+ * supports), but this class's outbox append is handed the TypeORM manager on every ORM, so the move is not yet
+ * expressible as one MikroORM transaction.
  *
  * **A shipment the order line still counts is never removed outright.** The counters are given back by
  * `cancel` and by nothing else, so `delete` refuses an outbound shipment until it is cancelled — the rule
@@ -517,10 +529,36 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			});
 		}
 
-		const { fulfillment } = await this.move(fulfillmentId, FulfillmentStatusDetail.CANCELED, expectation, {
+		const patch = {
 			canceledAt: new Date(),
 			metadata: { ...(current.metadata ?? {}), ...(reason ? { cancelReason: reason } : {}) }
-		});
+		};
+
+		// **On TypeORM the cancelation and the order's re-derivation are one transaction** (ADR-26: "recomputed
+		// … inside the same transaction"; handover §7.65 item 22). Every statement of the move — the shipment's
+		// conditional write and its event, the counters given back, and the whole re-derivation — runs on the
+		// transaction's manager, so a re-derivation that fails takes the cancelation down with it instead of
+		// leaving an order whose status no longer matches its lines until the nightly reconciliation. On
+		// MikroORM, and for a return leg (which moves no counter and is re-derived by nothing), the path below
+		// is the one this method always had.
+		if (this.ormType === MultiORMEnum.TypeORM && current.direction !== FulfillmentDirection.RETURN) {
+			const fulfillment = await this.typeOrmFulfillmentRepository.manager.transaction((manager) =>
+				this.cancelInTransaction(fulfillmentId, expectation, patch, manager)
+			);
+
+			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		}
+
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.CANCELED, expectation, patch);
+
+		// Another cancelation of the same shipment won the conditional write after both read it `PENDING`, and
+		// the move answers this one as a racer that lost to a mover heading for the same status. The winner gave
+		// the units back and re-derived the order; giving them back again — what this path used to do — left the
+		// line with less fulfilled than the shipments that exist. It is the repeat submission's no-op instead.
+		if (!moved) {
+			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		}
+
 		const lines = ((await this.lineService.findAll({
 			where: { fulfillmentId }
 		})) as IPagination<FulfillmentLine>).items;
@@ -547,6 +585,64 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * The cancelation of an outbound shipment, every statement on one TypeORM transaction.
+	 *
+	 * It is the path above, statement for statement, with the transaction's manager carried into each: the
+	 * shipment's conditional write and its event (`move`), the read of its lines, the counters given back
+	 * (`bumpOrderLineCounters`) and the order's re-derivation (`OrderTotalsService.recompute` with the manager).
+	 * Nothing here reaches an injected repository — on PostgreSQL and MySQL that would be another pooled
+	 * connection, outside the transaction, waiting on the rows it holds.
+	 *
+	 * **The re-derivation's failure is the cancelation's failure here**, which is the opposite of the
+	 * transaction-less path and the point of the change: there the shipment had committed before the
+	 * re-derivation ran, so a failure could only be logged and left to the nightly reconciliation; here
+	 * nothing has committed, the transaction rolls back, and the caller is told the truth — the shipment is
+	 * still pending. A re-derivation that loses the order's version race is retried inside the call
+	 * (`ORDER_RECOMPUTE_ATTEMPTS`, each attempt a fresh read on the same transaction).
+	 *
+	 * @param fulfillmentId The shipment.
+	 * @param expectation The version the caller read the shipment at.
+	 * @param patch The columns the cancelation writes with the status.
+	 * @param manager The transaction.
+	 * @returns The shipment as the move left it.
+	 */
+	private async cancelInTransaction(
+		fulfillmentId: ID,
+		expectation: IVersionExpectation,
+		patch: Record<string, unknown>,
+		manager: EntityManager
+	): Promise<Fulfillment> {
+		const { fulfillment, moved } = await this.move(
+			fulfillmentId,
+			FulfillmentStatusDetail.CANCELED,
+			expectation,
+			patch,
+			manager
+		);
+
+		// Another cancelation won the row between this one's read and its write: the winner gave the units back
+		// and re-derived the order, so this one is the documented no-op (see `cancel`).
+		if (!moved) {
+			return fulfillment;
+		}
+
+		const lines = await manager.getRepository(FulfillmentLine).find({ where: { fulfillmentId } });
+
+		for (const line of lines) {
+			await this.bumpOrderLineCounters(
+				line.orderLineId,
+				subtractDecimalStrings('0', `${line.quantity ?? 0}`),
+				'FULFILLED',
+				manager
+			);
+		}
+
+		await this.orderTotals.recompute(fulfillment.orderId as ID, FULFILLMENT_COMMITTED, { manager });
+
+		return fulfillment;
 	}
 
 	/**
@@ -813,15 +909,20 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * @param patch The columns that belong to this move — the tracking a hand-over carries, the instant
 	 * a delivery happened, the reason a cancelation records. They ride the same statement as the status
 	 * so that one move is one version, and so that the event describes a complete row.
+	 * @param manager The TypeORM transaction the move runs in, when its caller opened one: the read, the
+	 * conditional write and the event then all run on it (see {@link cancelInTransaction}).
 	 * @returns The fulfilment, and whether the move happened.
 	 */
 	private async move(
 		fulfillmentId: ID,
 		to: FulfillmentStatusDetail,
 		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION,
-		patch: Record<string, unknown> = {}
+		patch: Record<string, unknown> = {},
+		manager?: EntityManager
 	): Promise<{ fulfillment: Fulfillment; moved: boolean }> {
-		const fulfillment = await this.findOneByIdString(fulfillmentId);
+		const writer = manager ? this.transactionWriter(manager) : this;
+		const read = (id: ID) => writer.findOneByIdString(id);
+		const fulfillment = await read(fulfillmentId);
 
 		if (!fulfillment) {
 			throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${fulfillmentId}.`);
@@ -844,7 +945,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			// conditional update writes the next version in the statement that checks the current one,
 			// and the tenancy columns are criteria so that the row this statement may touch is the
 			// caller's row and not merely a row with this id.
-			const { version } = await commitVersionedUpdate<Fulfillment>(this, {
+			const { version } = await commitVersionedUpdate<Fulfillment>(writer, {
 				id: fulfillment.id,
 				expectation,
 				patch: { ...patch, status: to },
@@ -854,13 +955,13 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				}
 			});
 
-			await this.announce(FULFILLMENT_EVENTS[to], { ...fulfillment, ...patch, status: to }, version);
+			await this.announce(FULFILLMENT_EVENTS[to], { ...fulfillment, ...patch, status: to }, version, manager);
 		} catch (error) {
 			if (!isVersionConflict(error)) {
 				throw error;
 			}
 
-			const current = await this.findOneByIdString(fulfillment.id);
+			const current = await read(fulfillment.id);
 
 			if (current?.status !== to) {
 				throw error;
@@ -869,7 +970,35 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			return { fulfillment: current, moved: false };
 		}
 
-		return { fulfillment: await this.findOneByIdString(fulfillment.id), moved: true };
+		return { fulfillment: await read(fulfillment.id), moved: true };
+	}
+
+	/**
+	 * The shipment's versioned writer inside a caller's TypeORM transaction.
+	 *
+	 * The two members `commitVersionedUpdate` uses, run on the transaction's manager, with the scoping the
+	 * tenant-aware service applies: a read by id inside the caller's tenant that answers `NotFoundException`
+	 * for a shipment that is not there, and an update by the criteria the kernel builds.
+	 *
+	 * @param manager The transaction.
+	 * @returns The writer.
+	 */
+	private transactionWriter(manager: EntityManager): IVersionedWriter<Fulfillment> {
+		const shipments = manager.getRepository(Fulfillment);
+		const tenantId = RequestContext.currentTenantId();
+
+		return {
+			update: (criteria, partial) => shipments.update(criteria as never, partial as never),
+			findOneByIdString: async (id) => {
+				const shipment = await shipments.findOne({ where: { id, ...(tenantId ? { tenantId } : {}) } as never });
+
+				if (!shipment) {
+					throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${id}.`);
+				}
+
+				return shipment;
+			}
+		} as IVersionedWriter<Fulfillment>;
 	}
 
 	/**
@@ -888,9 +1017,10 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * @param name The event name, taken from the status the shipment reached.
 	 * @param fulfillment The shipment as the move left it.
 	 * @param version The version the conditional update produced.
+	 * @param manager The caller's TypeORM transaction, when the move runs in one; the row joins it.
 	 */
-	private async announce(name: string, fulfillment: Fulfillment, version: number): Promise<void> {
-		await this.outbox.append(this.typeOrmFulfillmentRepository.manager, {
+	private async announce(name: string, fulfillment: Fulfillment, version: number, manager?: EntityManager): Promise<void> {
+		await this.outbox.append(manager ?? this.typeOrmFulfillmentRepository.manager, {
 			name,
 			aggregateType: FULFILLMENT_AGGREGATE_TYPE,
 			aggregateId: fulfillment.id,
@@ -994,13 +1124,20 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * @param orderLineId The order line.
 	 * @param delta The signed quantity.
 	 * @param counter Which counter to move.
+	 * @param manager The caller's TypeORM transaction, when the move runs in one: the line is then read and
+	 * written on it, inside the caller's tenant, as the order-line service would scope them.
 	 */
 	private async bumpOrderLineCounters(
 		orderLineId: ID,
 		delta: Quantity,
-		counter: 'FULFILLED' | 'SHIPPED' | 'DELIVERED'
+		counter: 'FULFILLED' | 'SHIPPED' | 'DELIVERED',
+		manager?: EntityManager
 	): Promise<void> {
-		const line: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
+		const tenantId = RequestContext.currentTenantId();
+		const scoped = { id: orderLineId, ...(tenantId ? { tenantId } : {}) };
+		const line: IOrderLine = manager
+			? await manager.getRepository(OrderLine).findOne({ where: scoped as never })
+			: await this.orderLineService.findOneByIdString(orderLineId);
 
 		if (!line) {
 			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);
@@ -1028,6 +1165,12 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			case 'DELIVERED':
 				changes['deliveredQuantity'] = moved(line.deliveredQuantity);
 				break;
+		}
+
+		if (manager) {
+			await manager.getRepository(OrderLine).update(scoped as never, changes as never);
+
+			return;
 		}
 
 		await this.orderLineService.update(orderLineId, changes as any);
