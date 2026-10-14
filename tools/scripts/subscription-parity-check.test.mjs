@@ -89,6 +89,42 @@ test('a declaration the reader cannot resolve is reported, never skipped', () =>
 	assert.match(unreadable[0], /SOMEWHERE_ELSE/);
 });
 
+test('a catalogue member that is not a string literal is reported, never skipped', () => {
+	const { names, unreadable } = readStreamedCatalogues(
+		new Map([
+			[
+				'a.ts',
+				"export const A_STREAMED_EVENTS = [ORDER_EVENTS.PLACED, 'a.created'];\n" +
+					'declareStreamedEvents(this.catalogue, this.consumer, ...A_STREAMED_EVENTS);'
+			],
+			['b.ts', 'export const B_STREAMED_EVENTS = [...OTHER_NAMES];']
+		])
+	);
+	assert.deepEqual(names.map((entry) => entry.name), ['a.created']);
+	assert.equal(unreadable.length, 2);
+	assert.match(unreadable[0], /A_STREAMED_EVENTS holds a member that is not a string literal \(ORDER_EVENTS\.PLACED\)/);
+	assert.match(unreadable[1], /B_STREAMED_EVENTS holds a member that is not a string literal \(\.\.\.OTHER_NAMES\)/);
+});
+
+test('an event imported under an alias is still checked, against its producers under either name', () => {
+	const aliased = RESOLVER.replace(
+		"import { WidgetChangedEvent } from './widget.events';",
+		"import { WidgetChangedEvent as Changed } from './widget.events';"
+	).replace('ofType(WidgetChangedEvent)', 'ofType(Changed)');
+	const silent = (producer) =>
+		findSilentStreams(new Map([['widget.resolver.ts', aliased], ['widget.service.ts', producer]]));
+
+	// No producer: the aliased stream is reported under the event's own name.
+	assert.equal(silent('this.eventBus.publish(other);').length, 1);
+	assert.match(silent('this.eventBus.publish(other);')[0], /WidgetChangedEvent$/);
+	// A producer that publishes it by its own name, or under an alias of its own, keeps the stream able to fire.
+	assert.deepEqual(silent('await this.eventBus.publish(WidgetChangedEvent.from(row));'), []);
+	assert.deepEqual(
+		silent("import { WidgetChangedEvent as Fact } from './widget.events';\nawait this.eventBus.publish(Fact.from(row));"),
+		[]
+	);
+});
+
 test('a description is never read as a Subscription field', () => {
 	const sdl = [
 		'type Subscription {',

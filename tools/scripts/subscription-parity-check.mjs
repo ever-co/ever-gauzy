@@ -235,6 +235,10 @@ export function readStreamedCatalogues(sources) {
 			const literals = literalsOf(match[2]);
 			catalogues.set(match[1], literals);
 			for (const name of literals) names.push({ name, file });
+			// A member that is not a string literal — a constant (`ORDER_EVENTS.PLACED`), a spread — cannot be read
+			// here, and a name this reader cannot see is an aggregate the promised-field check never asks about.
+			const rest = match[2].replace(/(['"`])(?:(?!\1)[^\\]|\\.)*\1/g, '').replace(/[\s,]/g, '');
+			if (rest !== '') unreadable.push(`${file}: ${match[1]} holds a member that is not a string literal (${rest.slice(0, 60)})`);
 		}
 	}
 
@@ -285,31 +289,47 @@ export function findSilentStreams(sources) {
 		return found;
 	};
 
+	/** The local names an event goes by in one source: its own, and any `import { Event as Local }` alias. */
+	const localNamesOf = (source, event) => {
+		const local = new Set([event]);
+		for (const statement of source.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"][^'"]+['"]/g)) {
+			for (const member of statement[1].split(',')) {
+				const [imported, alias] = member.trim().split(/\s+as\s+/);
+				if (imported === event && alias) local.add(alias.trim());
+			}
+		}
+		return [...local];
+	};
+
 	const publishes = (source, event) => {
-		const construction = `(?:new\\s+${event}\\s*\\(|\\b${event}\\.from\\s*\\()`;
 		const handed = publishArguments(source);
-		if (handed.some((argument) => new RegExp(construction).test(argument))) return true;
-		// `const event = X.from(row); … publish(event)`: a variable built from the event and handed to a publish.
-		const assigned = new RegExp(`\\b(?:const|let|var)\\s+(\\w+)\\s*=\\s*(?:await\\s+)?${construction}`, 'g');
-		for (const assignment of source.matchAll(assigned)) {
-			if (handed.some((argument) => new RegExp(`^\\s*${assignment[1]}\\b`).test(argument))) return true;
+		for (const name of localNamesOf(source, event)) {
+			const construction = `(?:new\\s+${name}\\s*\\(|\\b${name}\\.from\\s*\\()`;
+			if (handed.some((argument) => new RegExp(construction).test(argument))) return true;
+			// `const event = X.from(row); … publish(event)`: a variable built from the event and handed to a publish.
+			const assigned = new RegExp(`\\b(?:const|let|var)\\s+(\\w+)\\s*=\\s*(?:await\\s+)?${construction}`, 'g');
+			for (const assignment of source.matchAll(assigned)) {
+				if (handed.some((argument) => new RegExp(`^\\s*${assignment[1]}\\b`).test(argument))) return true;
+			}
 		}
 		return false;
 	};
 
 	for (const [file, source] of stripped) {
 		if (!/@Subscription\(/.test(source)) continue;
-		const imported = new Set();
+		// The event's identity is the name it is exported under; the resolver may know it by an alias
+		// (`import { WidgetChangedEvent as Changed }`), and it is the alias the stream is built with.
+		const imported = new Map();
 		for (const statement of source.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"][^'"]+['"]/g)) {
 			for (const member of statement[1].split(',')) {
-				const name = member.trim().split(/\s+as\s+/)[0];
-				if (/^[A-Z]\w*Event$/.test(name)) imported.add(name);
+				const [name, alias] = member.trim().split(/\s+as\s+/);
+				if (/^[A-Z]\w*Event$/.test(name)) imported.set(name, (alias ?? name).trim());
 			}
 		}
 		const body = source.replace(/import[\s\S]*?;\r?\n/g, '');
-		for (const event of imported) {
+		for (const [event, local] of imported) {
 			// Only an event the resolver hands to a stream (an argument, not a type annotation) is one it delivers.
-			if (!new RegExp(`[(,]\\s*${event}\\s*[,)]`).test(body)) continue;
+			if (!new RegExp(`[(,]\\s*${local}\\s*[,)]`).test(body)) continue;
 			const produced = [...stripped].some(
 				([other, otherSource]) => other !== file && !/\.resolver\.ts$/.test(other) && publishes(otherSource, event)
 			);
