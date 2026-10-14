@@ -1386,22 +1386,47 @@ describe('inventory domain verbs keep to the caller’s tenant (DB-backed, two t
 			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 0, reservedQuantity: 0 });
 		});
 
-		it('refuses a negative damaged quantity and a received quantity that is not a finite number', async () => {
+		it('refuses a negative or non-finite damaged quantity and a non-finite received quantity', async () => {
 			const { transferId, lineId } = await shippedTransferOfA();
 			await h.transfers.receive(transferId, [{ lineId, receivedQuantity: 4, damagedQuantity: 2 }]);
+			const movementsBefore = await h.countOf('stock_movement');
 
-			await expect(
-				h.transfers.receive(transferId, [{ lineId, receivedQuantity: 0, damagedQuantity: -2 }])
-			).rejects.toMatchObject({ status: 400 });
-			await expect(
-				h.transfers.receive(transferId, [{ lineId, receivedQuantity: Number.NaN }])
-			).rejects.toMatchObject({ status: 400 });
-			await expect(
-				h.transfers.receive(transferId, [{ lineId, receivedQuantity: Number.NEGATIVE_INFINITY }])
-			).rejects.toMatchObject({ status: 400 });
+			for (const refused of [
+				{ receivedQuantity: 0, damagedQuantity: -2 },
+				{ receivedQuantity: 0, damagedQuantity: Number.NaN },
+				{ receivedQuantity: 0, damagedQuantity: Number.POSITIVE_INFINITY },
+				{ receivedQuantity: Number.NaN },
+				{ receivedQuantity: Number.NEGATIVE_INFINITY },
+				{ receivedQuantity: Number.POSITIVE_INFINITY }
+			]) {
+				await expect(h.transfers.receive(transferId, [{ lineId, ...refused }])).rejects.toMatchObject({
+					status: 400
+				});
+			}
 
 			expect(await lineOf(lineId)).toEqual({ received: 4, damaged: 2 });
 			expect(await destinationOnHand()).toBe(4);
+			expect((await h.row('stock_transfer', transferId))?.status).toBe(StockTransferStatus.PARTIALLY_RECEIVED);
+			expect(await h.countOf('stock_movement')).toBe(movementsBefore);
+		});
+
+		it('refuses to ship a quantity that is not a finite number, and leaves the source and the transfer as they were', async () => {
+			actAs(TENANT_A, ORG_A);
+			const transfer = await h.transfers.createTransfer({ fromWarehouseId: WAREHOUSE_A, toWarehouseId: WAREHOUSE_A2 });
+			const line = await h.transferLines.addLine({ transferId: transfer.id, variantId: VARIANT_A, requestedQuantity: 10 });
+			await h.transfers.request(transfer.id);
+			await h.transfers.approve(transfer.id);
+
+			for (const shippedQuantity of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -1]) {
+				await expect(
+					h.transfers.ship(transfer.id, [{ lineId: line.id, shippedQuantity }])
+				).rejects.toMatchObject({ response: { code: 'STOCK_TRANSFER_OVER_RECEIPT' } });
+			}
+
+			expect((await h.row('stock_transfer', transfer.id))?.status).toBe(StockTransferStatus.APPROVED);
+			expect(Number((await h.row('stock_transfer_line', line.id))?.shippedQuantity)).toBe(0);
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 0 });
+			expect(await h.countOf('stock_movement')).toBe(0);
 		});
 	});
 });
