@@ -79,6 +79,21 @@ describe('FavoriteService.getFavoriteDetails', () => {
 	const read = (entity: BaseEntityEnum) =>
 		service.getFavoriteDetails({ where: { entity, organizationId: ORGANIZATION, tenantId: TENANT } } as any);
 
+	/*
+	 * Review on #10590: proposals' `findAll` paginates (default page of 10), so without an explicit size the
+	 * sidebar silently lost every favorited proposal past the first page.
+	 */
+	it('asks the type for every favorited record, not its default first page', async () => {
+		granted = [PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ESTIMATES_VIEW];
+		await read(BaseEntityEnum.Invoice);
+
+		expect(callMethod).toHaveBeenCalledWith(
+			BaseEntityEnum.Invoice,
+			'findAll',
+			expect.objectContaining({ take: 2, skip: 0 })
+		);
+	});
+
 	it('names an invoice after its client: the client is joined', async () => {
 		granted = [PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ESTIMATES_VIEW];
 		await read(BaseEntityEnum.Invoice);
@@ -133,7 +148,11 @@ describe('FavoriteService.getFavoriteDetails', () => {
 		callMethod.mockResolvedValue({ items: [task], total: 1 });
 
 		await expect(read(BaseEntityEnum.Task)).resolves.toEqual({ items: [task], total: 1 });
-		expect(callMethod).toHaveBeenCalledWith(BaseEntityEnum.Task, 'findAll', { where: expect.anything() });
+		expect(callMethod).toHaveBeenCalledWith(
+			BaseEntityEnum.Task,
+			'findAll',
+			expect.not.objectContaining({ relations: expect.anything() })
+		);
 	});
 
 	it('still joins an employee user only for a caller allowed to view employees', async () => {
@@ -141,7 +160,11 @@ describe('FavoriteService.getFavoriteDetails', () => {
 		callMethod.mockResolvedValue({ items: [employee], total: 1 });
 
 		await read(BaseEntityEnum.Employee);
-		expect(callMethod).toHaveBeenLastCalledWith(BaseEntityEnum.Employee, 'findAll', { where: expect.anything() });
+		expect(callMethod).toHaveBeenLastCalledWith(
+			BaseEntityEnum.Employee,
+			'findAll',
+			expect.not.objectContaining({ relations: expect.anything() })
+		);
 
 		granted = [PermissionsEnum.ORG_EMPLOYEES_VIEW];
 		await read(BaseEntityEnum.Employee);
