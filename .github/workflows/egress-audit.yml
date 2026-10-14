@@ -204,6 +204,9 @@ jobs:
               --base "$BASE" --config "$AUDIT_CONFIG" $flag
           fi
 
+      - name: The mock platform's clock patch applies to the pinned harness, and does what it says
+        run: node --test tools/egress-audit/patch-mock-clock.test.mjs
+
       - name: No Ever host named outside the Ever Platform modules beyond the baseline (sources)
         run: node --test tools/egress-audit/static-hostnames.test.mjs
 
@@ -333,6 +336,9 @@ jobs:
       - name: Install the harness (tools/egress-audit/package-lock.json)
         run: |
           npm ci --prefix "$AUDIT_DIR" --ignore-scripts --no-audit --no-fund
+          # The mock platform's rate limiter, made to survive the clock moves of entitlement_ladder
+          # (the script says why, and refuses a harness it was not written for).
+          node "$AUDIT_DIR/patch-mock-clock.mjs"
           harness="$PWD/$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs"
           node "$harness" --help > /dev/null
           echo "EGRESS_AUDIT=$harness" >> "$GITHUB_ENV"
