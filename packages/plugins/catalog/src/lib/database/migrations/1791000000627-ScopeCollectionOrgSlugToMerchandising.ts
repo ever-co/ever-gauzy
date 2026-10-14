@@ -24,7 +24,9 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *
  * Narrowing a unique index cannot fail on existing data: every set of rows the old index accepted, the new
  * one accepts. Widening it again on the way down can — once two buyers hold lists of one slug, the old rule
- * no longer holds for the data, and `down` fails rather than deleting either list.
+ * no longer holds for the data, and `down` fails rather than deleting either list. It fails with the current
+ * index still in place on every dialect: Postgres and SQLite roll the migration's DDL back, and on MySQL,
+ * which commits each DDL statement, the replacement index is built before the current one is dropped.
  */
 export class ScopeCollectionOrgSlugToMerchandising1791000000627 implements MigrationInterface {
 	name = 'ScopeCollectionOrgSlugToMerchandising1791000000627';
@@ -140,28 +142,56 @@ export class ScopeCollectionOrgSlugToMerchandising1791000000627 implements Migra
 	/**
 	 * MySQL Up Migration
 	 *
+	 * MySQL commits every DDL statement on its own, so the migration's transaction cannot put back an index
+	 * that a statement dropped before a later one failed. The replacement is therefore built under a
+	 * temporary name first and swapped in only once it exists: whichever statement fails, the collection is
+	 * never left without a slug rule. The key column is only added when it is missing, so a retried run
+	 * continues where the failed one stopped.
+	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(
-			`ALTER TABLE \`collection\` ADD \`noCustomerKey\` varchar(36) GENERATED ALWAYS AS (IF(\`customerId\` IS NULL, '0', \`id\`)) VIRTUAL`
-		);
-		await queryRunner.query(`DROP INDEX \`UQ_collection_org_slug\` ON \`collection\``);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_collection_org_slug\` ON \`collection\` (\`organizationKey\`, \`slug\`, \`noCustomerKey\`, \`deletedKey\`)`
-		);
+		if (!(await queryRunner.hasColumn('collection', 'noCustomerKey'))) {
+			await queryRunner.query(
+				`ALTER TABLE \`collection\` ADD \`noCustomerKey\` varchar(36) GENERATED ALWAYS AS (IF(\`customerId\` IS NULL, '0', \`id\`)) VIRTUAL`
+			);
+		}
+		await this.mysqlSwapIndex(queryRunner, `(\`organizationKey\`, \`slug\`, \`noCustomerKey\`, \`deletedKey\`)`);
 	}
 
 	/**
 	 * MySQL Down Migration — the index as `1791000000100` created it, then the key column it no longer uses.
 	 *
+	 * The wider index is built under a temporary name before the current one is dropped. When the data no
+	 * longer satisfies the old rule (two buyers' lists of one slug), the run fails on that `CREATE` with
+	 * `1062` and the current index is still in place.
+	 *
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await this.mysqlSwapIndex(queryRunner, `(\`organizationKey\`, \`slug\`, \`deletedKey\`)`);
+		await queryRunner.query(`ALTER TABLE \`collection\` DROP COLUMN \`noCustomerKey\``);
+	}
+
+	/**
+	 * Replaces `UQ_collection_org_slug` by an index over `columns`: built as `UQ_collection_org_slug_next`,
+	 * then the current index is dropped and the new one renamed into its place.
+	 *
+	 * @param queryRunner
+	 * @param columns The new index's column list, parenthesised.
+	 */
+	private async mysqlSwapIndex(queryRunner: QueryRunner, columns: string): Promise<void> {
+		// Left behind by a run that failed after building it: rebuilt, since it may be of the other shape.
+		const leftover = await queryRunner.query(
+			`SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'collection' AND INDEX_NAME = 'UQ_collection_org_slug_next' LIMIT 1`
+		);
+		if (leftover.length > 0) {
+			await queryRunner.query(`DROP INDEX \`UQ_collection_org_slug_next\` ON \`collection\``);
+		}
+		await queryRunner.query(`CREATE UNIQUE INDEX \`UQ_collection_org_slug_next\` ON \`collection\` ${columns}`);
 		await queryRunner.query(`DROP INDEX \`UQ_collection_org_slug\` ON \`collection\``);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_collection_org_slug\` ON \`collection\` (\`organizationKey\`, \`slug\`, \`deletedKey\`)`
+			`ALTER TABLE \`collection\` RENAME INDEX \`UQ_collection_org_slug_next\` TO \`UQ_collection_org_slug\``
 		);
-		await queryRunner.query(`ALTER TABLE \`collection\` DROP COLUMN \`noCustomerKey\``);
 	}
 }
