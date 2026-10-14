@@ -1,13 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
+import { restatesStoredValue } from '@gauzy/common';
 
 /**
  * The members of a patch that would change what a row already holds.
  *
  * A member the patch does not state is not a change. A member it states with the value the row already holds is
  * not a change either, so a client that sends a whole row back with one descriptive member edited is not refused
- * for the members it did not touch. A date is compared as an instant, because a column reads back as a `Date`
- * while a body states an ISO string; everything else this is used for — identifiers and enumerations — is compared
- * as text.
+ * for the members it did not touch. What counts as the value already held is `restatesStoredValue`'s rule
+ * (`@gauzy/common`): a date is compared as an instant, because a column reads back as a `Date` while a body states an
+ * ISO string; everything else this is used for — identifiers and enumerations — is compared as text, and a body
+ * value that only stringifies to the stored one (an array holding it) is a change.
  *
  * @param stored The row as it is stored.
  * @param patch The members a caller asked to write.
@@ -19,23 +21,11 @@ export function movedMembers(
 	patch: Record<string, unknown>,
 	members: readonly string[]
 ): string[] {
-	return members.filter((member) => patch[member] !== undefined && !restates(stored[member], patch[member]));
+	return members.filter(
+		(member) => patch[member] !== undefined && !restatesStoredValue(stored[member], patch[member])
+	);
 }
 
-/** Whether a stated value is the value already stored. */
-function restates(stored: unknown, stated: unknown): boolean {
-	if (stated === null || stored === null || stored === undefined) {
-		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
-	}
-	if (stored instanceof Date || stated instanceof Date) {
-		const held = new Date(stored as string | Date).getTime();
-		const wanted = new Date(stated as string | Date).getTime();
-
-		return Number.isFinite(held) && held === wanted;
-	}
-
-	return String(stated) === String(stored);
-}
 
 /**
  * The refusal for a correction that would move a member a posted document's movements were decided on.

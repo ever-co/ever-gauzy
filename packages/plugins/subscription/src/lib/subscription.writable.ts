@@ -1,11 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
+import { restatesStoredValue } from '@gauzy/common';
 
 /**
  * The members of a write that would move a value the caller may not move, given the row as stored.
  *
  * A member the write does not name, or names with the value the row already holds, is not a move: a client that
- * echoes the record back is not refused for stating what is there. A date is compared by its instant, a decimal by
- * its value (`'10'` restates `'10.000000'`, the column's scale), anything else as text.
+ * echoes the record back is not refused for stating what is there. What counts as the value already held is
+ * `restatesStoredValue`'s rule (`@gauzy/common`): a date by its instant, a decimal by its value (`'10'` restates
+ * `'10.000000'`, the column's scale), an object or an array by its content, anything else as text.
  *
  * @param stored The row as stored.
  * @param patch The members the write states.
@@ -18,7 +20,10 @@ export function movedReadOnlyMembers(
 	writable: readonly string[]
 ): string[] {
 	return Object.keys(patch).filter(
-		(member) => patch[member] !== undefined && !writable.includes(member) && !restates(stored[member], patch[member])
+		(member) =>
+			patch[member] !== undefined &&
+			!writable.includes(member) &&
+			!restatesStoredValue(stored[member], patch[member])
 	);
 }
 
@@ -34,31 +39,6 @@ export function notWritable(code: string, message: string, details: Record<strin
 	return new BadRequestException({ message: `${code}: ${message}`, code, details });
 }
 
-/** Whether a stated value is the value already stored. */
-function restates(stored: unknown, stated: unknown): boolean {
-	if (stated === null || stored === null || stored === undefined) {
-		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
-	}
-	if (stored instanceof Date || stated instanceof Date) {
-		const held = new Date(stored as string | Date).getTime();
-		const wanted = new Date(stated as string | Date).getTime();
-
-		return Number.isFinite(held) && held === wanted;
-	}
-
-	const decimal = /^[+-]?\d+(\.\d+)?$/;
-	const canonical = (value: string) =>
-		value
-			.replace(/^\+/, '')
-			.replace(/(\.\d*?)0+$/, '$1')
-			.replace(/\.$/, '');
-
-	if (decimal.test(String(stored)) && decimal.test(String(stated))) {
-		return canonical(String(stored)) === canonical(String(stated));
-	}
-
-	return String(stated) === String(stored);
-}
 
 /**
  * The members of a patch a caller may move, and nothing else: a member checked as a restatement is not written back,
