@@ -168,7 +168,7 @@
 	so the record renderer is built fresh for each user that is opened. -->
 <ngx-record-view-drawer
 	[open]="!!viewedUser"
-	[fullViewLink]="viewedUser ? '/pages/users/edit/' + viewedUser.id : null"
+	[fullViewLink]="viewedUser && canOpenUserPage ? '/pages/users/edit/' + viewedUser.id : null"
 	heading="USERS_PAGE.HEADER"
 	[subtitle]="$safeNavigationMigration(viewedUser?.fullName)"
 	(closed)="closeView()"

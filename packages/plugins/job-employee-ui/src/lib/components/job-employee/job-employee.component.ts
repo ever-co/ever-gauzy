@@ -128,6 +128,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/** Initialize permissions, locale, page tabs/columns, smart table settings, and translation listener. */
+	/**
+	 * The drawer's "expand to full width" icon leads to the employee's page, which requires
+	 * ORG_EMPLOYEES_VIEW; viewers without it get no icon rather than a redirect.
+	 */
+	get canOpenEmployeePage(): boolean {
+		return this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
+	}
+
 	ngOnInit(): void {
 		this._initializeUiPermissions();
 		this._initializeUiLanguagesAndLocale();

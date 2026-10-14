@@ -58,14 +58,12 @@ export const PAYMENT_RECORD_VIEW: IRecordViewRouteData<IPayment> = {
 	backLink: '/pages/accounting/payments',
 	// The payments read requires the organization and tenant in its filter (400 without them).
 	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector
-			.get(PaymentService)
-			.getAll(PAYMENT_VIEW_RELATIONS, {
-				id,
-				organizationId: scope.organizationId,
-				tenantId: scope.tenantId
-			} as any);
-		return items?.[0] ?? null;
+		const { items } = await injector.get(PaymentService).getAll(PAYMENT_VIEW_RELATIONS, {
+			id,
+			organizationId: scope.organizationId,
+			tenantId: scope.tenantId
+		} as any);
+		return items?.find((item) => item.id === id) ?? null;
 	},
 	sections: (payment, injector) => {
 		const translateService = injector.get(TranslateService);

@@ -96,6 +96,14 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		this.setView();
 	}
 
+	/**
+	 * The drawer's "expand to full width" icon leads to the user's edit page, which requires ORG_USERS_EDIT;
+	 * a view-only viewer (the drawer needs ORG_USERS_VIEW) would only be redirected away, so they get no icon.
+	 */
+	get canOpenUserPage(): boolean {
+		return this.store.hasPermission(PermissionsEnum.ORG_USERS_EDIT);
+	}
+
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();

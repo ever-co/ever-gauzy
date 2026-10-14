@@ -141,4 +141,33 @@ describe('RecordViewRoutePageComponent', () => {
 		expect(fixture.componentInstance.record.organizationId).toBe(OTHER_ORGANIZATION);
 		expect(fixture.componentInstance.state).toBe('ready');
 	});
+
+	/*
+	 * Review on #10594: a list read can answer with another record than the one the URL names (a team read
+	 * narrowed to the caller's own teams replaced the id filter), and the page showed the first result.
+	 */
+	it('reads "not found" when the loader answers with another record than the URL names', async () => {
+		load.mockResolvedValueOnce({ id: OTHER, name: 'Someone else', organizationId: ORGANIZATION });
+		await settle();
+
+		expect(fixture.componentInstance.state).toBe('not-found');
+		expect(fixture.componentInstance.record).toBeNull();
+	});
+
+	it('clears the previous record from the header (name, star) as soon as another one loads', async () => {
+		await settle();
+		let answer: (record: unknown) => void;
+		load.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+		params$.next(convertToParamMap({ id: OTHER }));
+		fixture.detectChanges();
+
+		expect(fixture.componentInstance.subtitle).toBeNull();
+		expect(fixture.componentInstance.favoriteName).toBeNull();
+		expect(fixture.componentInstance.sections).toEqual([]);
+		expect(fixture.nativeElement.querySelector('ngx-favorite-toggle')).toBeNull();
+
+		answer({ id: OTHER, name: 'Record bbbb', organizationId: ORGANIZATION });
+		await settle();
+		expect(fixture.componentInstance.subtitle).toBe('Record bbbb');
+	});
 });

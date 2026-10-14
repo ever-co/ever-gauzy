@@ -42,7 +42,7 @@ export const TEAM_RECORD_VIEW: IRecordViewRouteData<IOrganizationTeam> = {
 		const { items } = await injector
 			.get(OrganizationTeamsService)
 			.getAll(TEAM_VIEW_RELATIONS, { id, organizationId: scope.organizationId, tenantId: scope.tenantId } as any);
-		return items?.[0] ?? null;
+		return items?.find((item) => item.id === id) ?? null;
 	},
 	sections: (team) => buildTeamViewSections(team),
 	subtitle: (team) => team.name,

@@ -30,7 +30,7 @@ export const EQUIPMENT_RECORD_VIEW: IRecordViewRouteData<IEquipment> = {
 		const { items } = await injector
 			.get(EquipmentService)
 			.getAll(['tags'], { id, organizationId: scope.organizationId, tenantId: scope.tenantId } as any);
-		return items?.[0] ?? null;
+		return items?.find((item) => item.id === id) ?? null;
 	},
 	sections: () => buildEquipmentViewSections(),
 	subtitle: (equipment) => equipment.name,

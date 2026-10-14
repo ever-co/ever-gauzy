@@ -43,14 +43,12 @@ export const INCOME_RECORD_VIEW: IRecordViewRouteData<IIncome> = {
 	heading: 'INCOME_PAGE.INCOME',
 	backLink: '/pages/accounting/income',
 	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector
-			.get(IncomeService)
-			.getAll(INCOME_VIEW_RELATIONS, {
-				id,
-				organizationId: scope.organizationId,
-				tenantId: scope.tenantId
-			} as any);
-		const income = items?.[0];
+		const { items } = await injector.get(IncomeService).getAll(INCOME_VIEW_RELATIONS, {
+			id,
+			organizationId: scope.organizationId,
+			tenantId: scope.tenantId
+		} as any);
+		const income = items?.find((item) => item.id === id);
 		return income ? ({ ...income, employee: { ...employeeMapper(income) } } as any) : null;
 	},
 	sections: () => buildIncomeViewSections(),

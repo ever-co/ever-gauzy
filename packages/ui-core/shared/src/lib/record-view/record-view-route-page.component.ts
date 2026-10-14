@@ -138,15 +138,25 @@ export class RecordViewRoutePageComponent implements OnInit {
 			return;
 		}
 		const sequence = ++this.loadSequence;
-		// Nothing of the previous record (or organization) stays on screen — nor reachable by the star.
+		// Nothing of the previous record (or organization) stays on screen — not its name in the header, not
+		// its star, not its sections — while this one loads or if it fails.
 		this.record = null;
+		this.sections = [];
+		this.subtitle = null;
+		this.favoriteName = null;
 		this.state = 'loading';
 		try {
 			const record = await config.load(id, this.injector, scope);
 			if (sequence !== this.loadSequence) {
 				return; // a newer navigation or organization switch owns the page
 			}
-			if (!record || (record.organizationId && record.organizationId !== scope.organizationId)) {
+			// The record must be the one the URL names (a list read can widen or replace the id filter — e.g.
+			// a team read scoped to the caller's own teams) and belong to the selected organization.
+			if (
+				!record ||
+				String(record.id) !== String(id) ||
+				(record.organizationId && record.organizationId !== scope.organizationId)
+			) {
 				throw { status: 404 };
 			}
 			this.record = record;

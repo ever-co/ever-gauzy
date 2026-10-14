@@ -67,14 +67,12 @@ export const EXPENSE_RECORD_VIEW: IRecordViewRouteData<IExpense> = {
 	heading: 'EXPENSES_PAGE.EXPENSES',
 	backLink: '/pages/accounting/expenses',
 	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector
-			.get(ExpensesService)
-			.getAll(EXPENSE_VIEW_RELATIONS, {
-				id,
-				organizationId: scope.organizationId,
-				tenantId: scope.tenantId
-			} as any);
-		const expense = items?.[0];
+		const { items } = await injector.get(ExpensesService).getAll(EXPENSE_VIEW_RELATIONS, {
+			id,
+			organizationId: scope.organizationId,
+			tenantId: scope.tenantId
+		} as any);
+		const expense = items?.find((item) => item.id === id);
 		return expense
 			? ({
 					...expense,

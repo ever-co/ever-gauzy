@@ -26,7 +26,7 @@ export const VENDOR_RECORD_VIEW: IRecordViewRouteData<IOrganizationVendor> = {
 		const { items } = await injector
 			.get(OrganizationVendorsService)
 			.getAll({ id, organizationId: scope.organizationId, tenantId: scope.tenantId } as any, ['tags']);
-		return items?.[0] ?? null;
+		return items?.find((item) => item.id === id) ?? null;
 	},
 	sections: () => buildVendorViewSections(),
 	subtitle: (vendor) => vendor.name,
