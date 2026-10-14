@@ -191,6 +191,31 @@ export class ChannelDomainResolver {
 	}
 
 	/**
+	 * Withdraws a channel domain without removing the row — the GraphQL counterpart of `DELETE /channel-domains/:id/soft`.
+	 *
+	 * The same service method the route reaches, under the same grant: the edit grant its `update` states, which
+	 * the controller now states on the route too (owner decision 5, 2026-10-13 — the soft-delete/recover pair
+	 * requires the controller's own edit grant). The route used to be inherited from `CrudController` with no
+	 * permission of its own and so stood on the class's `CHANNELS_VIEW`; a field mirroring it then would have
+	 * carried that read grant, which is why the pair is delivered together with the route's grant.
+	 */
+	@Mutation('softDeleteChannelDomain')
+	@Permissions(PermissionsEnum.CHANNELS_EDIT)
+	async softDeleteChannelDomain(@Args('id', { type: () => ID }) id: Id): Promise<IChannelDomain> {
+		return this.channelDomainService.softRemove(id);
+	}
+
+	/**
+	 * Restores a withdrawn row — the GraphQL counterpart of `PUT /channel-domains/:id/recover`, under the withdrawal's
+	 * grant: restoring undoes a removal.
+	 */
+	@Mutation('recoverChannelDomain')
+	@Permissions(PermissionsEnum.CHANNELS_EDIT)
+	async recoverChannelDomain(@Args('id', { type: () => ID }) id: Id): Promise<IChannelDomain> {
+		return this.channelDomainService.softRecover(id);
+	}
+
+	/**
 	 * Announces the channel a hostname change belongs to.
 	 *
 	 * @param channelId The channel the hostname resolves to.
