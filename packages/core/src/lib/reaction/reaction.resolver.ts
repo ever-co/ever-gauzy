@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Reaction } from './reaction.entity';
 import { ReactionService } from './reaction.service';
 import { ReactionCreateCommand, ReactionUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateReactionInput` declares in the schema. */
 export interface ICreateReactionInput {
@@ -239,9 +240,7 @@ export class ReactionResolver {
 	 */
 	@Mutation('deleteReaction')
 	async deleteReaction(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.reactionService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.reactionService.delete(id));
 	}
 
 	/**

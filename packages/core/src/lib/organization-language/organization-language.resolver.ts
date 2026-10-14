@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationLanguage } from './organization-language.entity';
 import { OrganizationLanguageService } from './organization-language.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationLanguageInput` declares in the schema. */
 export interface ICreateOrganizationLanguageInput {
@@ -219,9 +220,7 @@ export class OrganizationLanguageResolver {
 	 */
 	@Mutation('deleteOrganizationLanguage')
 	async deleteOrganizationLanguage(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationLanguageService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationLanguageService.delete(id));
 	}
 
 	/**

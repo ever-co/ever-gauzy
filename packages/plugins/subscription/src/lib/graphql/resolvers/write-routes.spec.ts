@@ -12,23 +12,22 @@
  *   `runSubscriptionBilling`. In each the verb and the resource are contiguous in neither direction, which
  *   is all the instrument looks for. The suite drives every one of the five on both surfaces and compares
  *   the service call, so the collapse is a test rather than a paragraph.
- * - **one route was not answered**: `DELETE /subscriptions/:id`. The controller declares it and overrides
- *   `CrudController`'s own only to state the permission the base leaves unstated, and it reaches
- *   `super.delete(id)` — the CRUD base's `delete`, which removes the row. The document answered the
- *   *recoverable* half of the pair (`softDeleteSubscription`, `recoverSubscription`) and not the hard one,
- *   so a subscription could be retired over GraphQL and only deleted over REST. It is the field this suite
- *   delivers, and its distinction from the soft pair is the whole of what it says: a soft delete sets
- *   `deletedAt` and leaves the lines and the billing history answerable, this removes the row.
+ * - **one route was not answered**: `DELETE /subscriptions/:id`. The controller declares it, and the document
+ *   answered only the *recoverable* half of the pair (`softDeleteSubscription`, `recoverSubscription`), so it
+ *   is the field this suite delivers, `deleteSubscription`. Both used to reach the CRUD base's hard `delete` —
+ *   which the database cascades into `subscription_billing` (`FK_subscription_billing_subscription` is
+ *   `ON DELETE CASCADE`), erasing the cycles §11.4 below keeps. Since the owner's soft-delete-only decision
+ *   (2026-10-13, decisions 4 and 10) both surfaces **retire** the subscription through `softRemove` — the act
+ *   `softDeleteSubscription` performs — so the row, its lines and its billing history stay, recoverably.
  * - **one route must not be mirrored**: `DELETE /subscription-billings/:id`, the same inherited shape on
  *   the billing-cycle controller. `13-migration-and-rollout-plan.md` §11.4 names the table by hand —
  *   *"`order*`, `payment` (the columns this programme adds), `payment_capture`, `refund`, `tax_line`,
  *   `adjustment`, **`subscription_billing`**, `order_return*` | **Indefinite** | Soft delete only
- *   (`deletedAt`); **no hard delete through the API**"* — so the route is refused because mirroring it
- *   would put an operation the retention policy forbids into a second published contract. **The refusal is
- *   also a finding**: REST serves the route today, so the REST surface is the one out of step with §11.4,
- *   and closing it means removing a route from a published contract, which is the owner's call. It is
- *   reported and left open, and the recoverable pair beside it (`softDeleteSubscriptionBilling`,
- *   `recoverSubscriptionBilling`) already answers the removal the policy allows.
+ *   (`deletedAt`); **no hard delete through the API**"* — so a hard-delete field is refused because it would
+ *   put an operation the retention policy forbids into a second published contract. The REST route was the
+ *   one out of step with §11.4; since the owner's soft-delete-only decision (2026-10-13) it **retires** the
+ *   cycle through `softRemove` — exactly the act `softDeleteSubscriptionBilling` performs — so the capability
+ *   the route serves is answered by that field, and a `deleteSubscriptionBilling` would be a second door to it.
  *
  * Three properties are pinned for the delivered field: it is **declared** with the arguments the route
  * takes; it **states its own route's permission**, read from the route's metadata rather than restated
@@ -104,8 +103,8 @@ const DELIVERED = {
 	answers: 'DeleteSubscriptionPayload',
 	/** The grant the route's own handler states. */
 	grant: SubscriptionPermissions.SUBSCRIPTIONS_EDIT,
-	/** The method both surfaces must reach. */
-	method: 'delete'
+	/** The method both surfaces must reach: the retirement, never the hard delete (soft delete only). */
+	method: 'softRemove'
 };
 
 /** One collapsed route, its two surfaces, and the method both must reach. */
@@ -218,7 +217,9 @@ const REFUSED = {
 	resource: 'SubscriptionBilling',
 	route: 'delete',
 	names: ['deleteSubscriptionBilling', 'hardDeleteSubscriptionBilling'],
-	because: '13 §11.4 names subscription_billing: soft delete only, no hard delete through the API'
+	because:
+		'13 §11.4 names subscription_billing: soft delete only, no hard delete through the API; the route retires ' +
+		'the cycle as softDeleteSubscriptionBilling does'
 };
 
 /**
@@ -433,39 +434,40 @@ describe('the subscription document — the route no field answered is declared'
  * The two surfaces are one act stated twice, so the route is driven as well as the field: what is compared
  * is the call each of them makes on its own stub, not a service method named only in this file.
  */
-describe('deleteSubscription — the two protocols remove the same row the same way', () => {
+describe('deleteSubscription — the two protocols retire the same row the same way', () => {
 	it('reaches the service method the delete route reaches', async () => {
 		const { service, controller, resolver } = surfaces();
 
 		const overRest = await controller.delete(SUBSCRIPTION);
 		const overGraphql = await resolver.deleteSubscription(SUBSCRIPTION);
 
-		expect(service.delete).toHaveBeenNthCalledWith(1, ...DELIVERED.serviceArgs);
-		expect(service.delete).toHaveBeenNthCalledWith(2, ...DELIVERED.serviceArgs);
-		expect(service.delete).toHaveBeenCalledTimes(2);
+		expect(service.softRemove).toHaveBeenNthCalledWith(1, ...DELIVERED.serviceArgs);
+		expect(service.softRemove).toHaveBeenNthCalledWith(2, ...DELIVERED.serviceArgs);
+		expect(service.softRemove).toHaveBeenCalledTimes(2);
 
-		// The route answers the deletion result and the field answers its payload, so the comparison is of
-		// the call rather than of the envelope — and the payload names the row that is gone.
-		expect(overRest).toBeDefined();
+		// The route answers the retired row and the field answers its payload, so the comparison is of the
+		// call rather than of the envelope — and the payload names the row that was retired.
+		expect(overRest).toEqual(SUBSCRIPTION_ROW);
 		expect(overGraphql).toEqual({ id: SUBSCRIPTION, userErrors: [] });
 	});
 
-	it('is a hard removal and not the recoverable one beside it', async () => {
-		// The distinction the field exists for: `softDeleteSubscription` reaches `softRemove`, which sets
-		// `deletedAt` and leaves the row; this reaches `delete`, which removes it. A field that reached the
-		// soft method would answer the pair that already existed.
-		const { service, resolver } = surfaces();
+	it('retires the row and never erases it (soft delete only, owner decision 2026-10-13)', async () => {
+		// Before the decision both surfaces reached `delete`, which the database cascades into every billing
+		// cycle of the subscription (`FK_subscription_billing_subscription` is ON DELETE CASCADE).
+		const { service, controller, resolver } = surfaces();
 
+		await controller.delete(SUBSCRIPTION);
 		await resolver.deleteSubscription(SUBSCRIPTION);
 
-		expect(service.delete).toHaveBeenCalledWith(SUBSCRIPTION);
-		expect(service.softRemove).not.toHaveBeenCalled();
+		expect(service.softRemove).toHaveBeenCalledWith(SUBSCRIPTION);
+		// CONTROL: the hard delete is reached by neither surface.
+		expect(service.delete).not.toHaveBeenCalled();
 		expect(service.softRecover).not.toHaveBeenCalled();
 	});
 
 	it('reports a refusal in the payload rather than throwing it away', async () => {
 		const { service, resolver } = surfaces();
-		service.delete.mockRejectedValueOnce(new Error('the subscription is billed'));
+		service.softRemove.mockRejectedValueOnce(new Error('the subscription is billed'));
 
 		await expect(resolver.deleteSubscription(SUBSCRIPTION)).resolves.toEqual({
 			id: null,
@@ -586,8 +588,8 @@ describe('the seven flagged routes — five collapsed, one delivered, one refuse
 		expect(34).toBeGreaterThan(7);
 
 		// The five collapsed are the subscription's own plan change, its two line writes, its line removal
-		// and the billing pass; the delivered one is the hard delete; the refused one is the billing
-		// cycle's hard delete.
+		// and the billing pass; the delivered one is the subscription's delete (a retirement since the
+		// soft-delete-only decision); the refused one is a hard-delete field for the billing cycle.
 		expect(COLLAPSED.map(({ method }) => method).sort()).toEqual(
 			['addItem', 'changeItemQuantity', 'changePlan', 'removeItem', 'runBilling'].sort()
 		);
@@ -609,8 +611,9 @@ describe('the seven flagged routes — five collapsed, one delivered, one refuse
 
 	it('answers the billing cycle under the names its routes have, and not the hard delete', () => {
 		// The cycle's own writes are all answered: opening one, correcting one, billing one, recording that
-		// its money arrived, waiving it, refunding it, and the recoverable removal. Only the hard delete is
-		// refused, and it is refused because the table it would remove is the record of money billed.
+		// its money arrived, waiving it, refunding it, and the recoverable removal — which is also what
+		// `DELETE /subscription-billings/:id` does now. Only a hard-delete field is refused, because the table
+		// it would remove is the record of money billed.
 		for (const name of [
 			'createSubscriptionBilling',
 			'updateSubscriptionBilling',
@@ -631,5 +634,42 @@ describe('the seven flagged routes — five collapsed, one delivered, one refuse
 		expect(typeof handlersOf(SubscriptionBillingController).softRemove).toBe('function');
 		expect(typeof handlersOf(SubscriptionBillingController).softRecover).toBe('function');
 		expect(BILLING).toBeDefined();
+	});
+});
+
+/**
+ * Both DELETE routes of the package retire and never erase (owner decision 2026-10-13: soft delete only).
+ *
+ * `DELETE /subscription-billings/:id` reached the CRUD base's `delete`: `SubscriptionBillingService.delete` refuses
+ * a cycle that records money billed, but it still erased a `PENDING` cycle — a hard delete through the API, which
+ * §11.4 forbids for `subscription_billing`. `DELETE /subscriptions/:id` reached it too, and the database cascades
+ * that delete into every cycle. Both routes now reach `softRemove`, the act their `DELETE /:id/soft` siblings
+ * perform, so `PUT /:id/recover` brings the row back.
+ */
+describe('DELETE /:id retires and never erases', () => {
+	const ROUTES: Array<[string, new (service: any) => Row, string]> = [
+		['subscriptions', SubscriptionController as never, SUBSCRIPTION],
+		['subscription-billings', SubscriptionBillingController as never, BILLING]
+	];
+
+	it.each(ROUTES)('DELETE /%s/:id reaches softRemove, not delete', async (_path, Controller, id) => {
+		const service = {
+			softRemove: jest.fn().mockResolvedValue({ id, deletedAt: new Date(0) }),
+			delete: jest.fn().mockResolvedValue({ affected: 1 })
+		};
+		const controller = new Controller(service);
+
+		await expect(controller.delete(id)).resolves.toEqual({ id, deletedAt: new Date(0) });
+
+		expect(service.softRemove).toHaveBeenCalledTimes(1);
+		expect(service.softRemove).toHaveBeenCalledWith(id);
+		// CONTROL: the hard delete is not reached.
+		expect(service.delete).not.toHaveBeenCalled();
+	});
+
+	it.each(ROUTES)('DELETE /%s/:id keeps the edit grant it stated before', (_path, Controller) => {
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(Controller).delete)).toEqual([
+			SubscriptionPermissions.SUBSCRIPTIONS_EDIT
+		]);
 	});
 });

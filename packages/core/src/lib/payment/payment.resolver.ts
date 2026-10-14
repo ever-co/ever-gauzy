@@ -24,6 +24,7 @@ import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Payment } from './payment.entity';
 import { PaymentService } from './payment.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreatePaymentInput` declares in the schema. */
 export interface ICreatePaymentInput {
@@ -327,14 +328,13 @@ export class PaymentResolver {
 	 *
 	 * The same service method the REST route calls. The delivered store answers its own delete result —
 	 * a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deletePayment` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deletePayment` may return; the field answers whether the removal reached a row —
+	 * `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
 	 */
 	@Mutation('deletePayment')
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	async deletePayment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.paymentService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.paymentService.delete(id));
 	}
 
 	/**

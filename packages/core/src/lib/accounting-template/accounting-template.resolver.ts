@@ -27,6 +27,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
 import { AccountingTemplateQuery } from './queries';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateAccountingTemplateInput` declares in the schema. */
 export interface ICreateAccountingTemplateInput {
@@ -284,9 +285,7 @@ export class AccountingTemplateResolver {
 	@Mutation('deleteAccountingTemplate')
 	@Permissions(PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES)
 	async deleteAccountingTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.accountingTemplateService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.accountingTemplateService.delete(id));
 	}
 
 	/**

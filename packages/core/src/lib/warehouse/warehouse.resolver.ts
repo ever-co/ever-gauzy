@@ -25,6 +25,7 @@ import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseService } from './warehouse.service';
 import { WarehouseProductService } from './warehouse-product-service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateWarehouseInput` declares in the schema. */
 export interface ICreateWarehouseInput {
@@ -328,9 +329,7 @@ export class WarehouseResolver {
 	@Mutation('deleteWarehouse')
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	async deleteWarehouse(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.warehouseService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.warehouseService.delete(id));
 	}
 
 	/**
