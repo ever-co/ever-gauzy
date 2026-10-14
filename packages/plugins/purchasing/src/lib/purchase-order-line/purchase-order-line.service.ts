@@ -7,6 +7,7 @@ import {
 	IPurchaseOrderLine,
 	IPurchaseOrderLineInput,
 	IVendorTermLinePricing,
+	PURCHASE_ORDER_EDITABLE_STATUSES,
 	PurchaseBillingPolicy,
 	PurchasingCodes
 } from '../purchasing.types';
@@ -514,6 +515,84 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 		}
 
 		return line;
+	}
+
+	/**
+	 * Withdraws a line of a draft order (review R2-11).
+	 *
+	 * The hard delete of a line requires its order to be `DRAFT`; the inherited withdrawal checked nothing, so a
+	 * line of a sent order disappeared from every read of the line set (`findForOrder` skips retired rows) while the
+	 * order still counted it — and once the remaining lines were received the order read `RECEIVED` although the
+	 * withdrawn line never arrived. The rule is the order's, read here without the order service (which depends on
+	 * this one): `DRAFT` only. The totals are the order service's to rewrite, which is why the line surface calls
+	 * `PurchaseOrderService.softRemoveLine`.
+	 *
+	 * @param id The line to withdraw.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The withdrawn line.
+	 * @throws NotFoundException when the line or its order is not the caller's.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<PurchaseOrderLine> {
+		const line = await this.findScoped(id);
+
+		await this.assertOrderEditable(line.purchaseOrderId as ID);
+
+		return await super.softRemove(id, rest[0], rest[1]);
+	}
+
+	/**
+	 * Puts a withdrawn line back, by the same rule as `softRemove` (review R2-11).
+	 *
+	 * @param id The line to restore.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The restored line.
+	 * @throws NotFoundException when the line or its order is not the caller's.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`.
+	 */
+	public async softRecover(id: ID, ...rest: any[]): Promise<PurchaseOrderLine> {
+		const line = await this.typeOrmPurchaseOrderLineRepository.findOne({
+			where: {
+				id,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as any,
+			withDeleted: true
+		});
+
+		if (!line) {
+			throw new NotFoundException(`PURCHASE_ORDER_LINE_NOT_FOUND: purchase-order line '${id}' could not be found.`);
+		}
+
+		await this.assertOrderEditable(line.purchaseOrderId as ID);
+
+		return await super.softRecover(id, rest[0], rest[1]);
+	}
+
+	/**
+	 * Refuses a change to the line set of an order that has left `DRAFT` — the rule
+	 * `PurchaseOrderService.assertEditable` states, answered in the same words.
+	 *
+	 * @param purchaseOrderId The order.
+	 */
+	private async assertOrderEditable(purchaseOrderId: ID): Promise<void> {
+		const purchaseOrder = await this.typeOrmPurchaseOrderLineRepository.manager.findOne(PurchaseOrder, {
+			where: {
+				id: purchaseOrderId,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as any
+		});
+
+		if (!purchaseOrder) {
+			throw new NotFoundException(`PURCHASE_ORDER_NOT_FOUND: purchase order '${purchaseOrderId}' could not be found.`);
+		}
+
+		if (!PURCHASE_ORDER_EDITABLE_STATUSES.includes(purchaseOrder.status)) {
+			throw new ConflictException(
+				`PURCHASE_ORDER_INVALID_STATE: purchase order '${purchaseOrder.number}' cannot be amended in status ${purchaseOrder.status}.`
+			);
+		}
 	}
 
 	/**

@@ -52,6 +52,12 @@ export enum PurchaseOrderStatus {
 }
 
 /**
+ * The statuses in which an order's line set may still be written, withdrawn or put back: `DRAFT` only. Shared by the
+ * order service and the line service, which cannot depend on the order service (review R2-11).
+ */
+export const PURCHASE_ORDER_EDITABLE_STATUSES: readonly PurchaseOrderStatus[] = [PurchaseOrderStatus.DRAFT];
+
+/**
  * Where a goods receipt is in its lifecycle.
  *
  * A receipt is written once and is never edited: correcting it means reversing it, which writes the

@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, EntityManager, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { GoodsReceipt } from '../goods-receipt/goods-receipt.entity';
+import { GoodsReceiptStatus } from '../purchasing.types';
 import { immutableMembers, movedMembers } from '../purchasing.immutable';
 import { GoodsReceiptLine } from './goods-receipt-line.entity';
 
@@ -99,6 +101,108 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 		}
 
 		return super.update(id as any, partialEntity);
+	}
+
+	/**
+	 * Removes receipt lines, refusing a line of a receipt that is still posted (review R2-10).
+	 *
+	 * `DELETE /goods-receipt-lines/:id` and `deleteGoodsReceiptLine` reached the inherited removal, so a line of a
+	 * `POSTED` receipt went while the movement it wrote and the order line's received counter stayed — the same
+	 * defect as removing the receipt, one line at a time. The line is the ledger's explanation for its movement
+	 * for as long as its receipt is posted; once the receipt is reversed (`CANCELED`) it may go.
+	 *
+	 * The read that decides includes retired rows and selects exactly what the removal selects, so a line the
+	 * caller cannot see is neither refused nor removed.
+	 *
+	 * @param criteria The line's identifier, or the conditions that select the lines to remove.
+	 * @param options The base class's legacy find options, forwarded.
+	 * @returns The result of the removal.
+	 * @throws ConflictException with `GOODS_RECEIPT_LINE_NOT_DELETABLE` when a selected line's receipt is `POSTED`.
+	 */
+	public async delete(criteria: ID | FindOptionsWhere<GoodsReceiptLine>, options?: any): Promise<DeleteResult> {
+		const where = {
+			...(typeof criteria === 'string' ? { id: criteria } : criteria),
+			...this.statementScope()
+		} as FindOptionsWhere<GoodsReceiptLine>;
+
+		await this.assertLinesRemovable(await this.typeOrmGoodsReceiptLineRepository.find({ where, withDeleted: true }));
+
+		return super.delete(where, options);
+	}
+
+	/**
+	 * Withdraws a receipt line by the same rule as `delete` (review R2-10).
+	 *
+	 * @param id The line to withdraw.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The withdrawn line.
+	 * @throws NotFoundException when the line is not the caller's.
+	 * @throws ConflictException with `GOODS_RECEIPT_LINE_NOT_DELETABLE` when its receipt is `POSTED`.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<GoodsReceiptLine> {
+		const line = await this.typeOrmGoodsReceiptLineRepository.findOne({
+			where: { id, ...this.statementScope() } as FindOptionsWhere<GoodsReceiptLine>
+		});
+
+		if (!line) {
+			throw new NotFoundException(`Goods-receipt line '${id}' could not be found.`);
+		}
+
+		await this.assertLinesRemovable([line]);
+
+		return super.softRemove(id, rest[0], rest[1]);
+	}
+
+	/**
+	 * Refuses lines whose receipt is still posted. A receipt withdrawn before this guard existed is read too: it is
+	 * still posted, and its lines still explain their movements.
+	 *
+	 * @param lines The lines about to be removed or withdrawn.
+	 * @throws ConflictException with `GOODS_RECEIPT_LINE_NOT_DELETABLE`.
+	 */
+	private async assertLinesRemovable(lines: GoodsReceiptLine[]): Promise<void> {
+		const receiptIds = [...new Set(lines.map((line) => line.receiptId).filter((id): id is ID => !!id))];
+
+		if (!receiptIds.length) {
+			return;
+		}
+
+		const posted = new Map(
+			(
+				(await this.typeOrmGoodsReceiptLineRepository.manager.find(GoodsReceipt, {
+					where: { id: In(receiptIds), status: GoodsReceiptStatus.POSTED } as never,
+					withDeleted: true
+				})) as GoodsReceipt[]
+			).map((receipt) => [receipt.id, receipt])
+		);
+
+		for (const line of lines) {
+			const receipt = line.receiptId ? posted.get(line.receiptId) : undefined;
+
+			if (receipt) {
+				throw new ConflictException({
+					message: `GOODS_RECEIPT_LINE_NOT_DELETABLE: goods receipt line '${line.id}' belongs to POSTED receipt '${receipt.number ?? receipt.id}', so the stock movement it wrote and its order line's received quantity still stand; reverse the receipt (POST /goods-receipts/:id/cancel) before removing its lines.`,
+					code: 'GOODS_RECEIPT_LINE_NOT_DELETABLE',
+					details: {
+						goodsReceiptLineId: line.id,
+						goodsReceiptId: receipt.id,
+						status: receipt.status,
+						deletableFrom: [GoodsReceiptStatus.CANCELED]
+					}
+				});
+			}
+		}
+	}
+
+	/** The caller's tenant and organization, as the statements of this service state them. */
+	private statementScope(): Record<string, unknown> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return {
+			...(tenantId ? { tenantId } : {}),
+			...(organizationId ? { organizationId } : {})
+		};
 	}
 
 	/**

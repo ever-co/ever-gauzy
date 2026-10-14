@@ -135,7 +135,8 @@ export class PurchaseOrderLineResolver {
 	@Mutation('softDeletePurchaseOrderLine')
 	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	async softDeletePurchaseOrderLine(@Args('id') id: ID): Promise<PurchaseOrderLine> {
-		return await this.purchaseOrderLineService.softRemove(id);
+		// The order service guards the withdrawal (DRAFT only) and rewrites the totals, as the route does (R2-11).
+		return await this.purchaseOrderService.softRemoveLine(id);
 	}
 
 	/**
@@ -147,6 +148,6 @@ export class PurchaseOrderLineResolver {
 	@Mutation('recoverPurchaseOrderLine')
 	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	async recoverPurchaseOrderLine(@Args('id') id: ID): Promise<PurchaseOrderLine> {
-		return await this.purchaseOrderLineService.softRecover(id);
+		return await this.purchaseOrderService.softRecoverLine(id);
 	}
 }

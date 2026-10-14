@@ -7,7 +7,7 @@ import {
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { EntityManager, FindOptionsWhere, In, IsNull, UpdateResult } from 'typeorm';
+import { DeleteResult, EntityManager, FindOptionsWhere, In, IsNull, UpdateResult } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
@@ -232,6 +232,65 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		}
 
 		return super.update(id as any, partialEntity);
+	}
+
+	/**
+	 * Removes a receipt, refusing one that is still posted (review R2-10).
+	 *
+	 * `DELETE /goods-receipts/:id` and `deleteGoodsReceipt` reached the inherited removal, which took a `POSTED`
+	 * receipt and — `FK_goods_receipt_line_receipt` is `ON DELETE CASCADE` — its lines, while the stock movements
+	 * they wrote (append-only) and the order lines' received counters stayed: 50 units on hand, the order still
+	 * `RECEIVED`, the document that explained both gone and `POST …/cancel` answering 404. A posted receipt is
+	 * reversed first (`POST /goods-receipts/:id/cancel`), which takes the stock back and puts the counters back in
+	 * one transaction; a `CANCELED` receipt explains movements that already net to nothing, and may go.
+	 *
+	 * The read that decides includes a retired row, because a receipt withdrawn before this guard existed is still
+	 * posted, and selects exactly what the removal selects — the caller's tenant through the base class and the
+	 * organization the request states — so a receipt the caller cannot see is neither refused nor removed.
+	 *
+	 * @param criteria The receipt's identifier, or the conditions that select the receipts to remove.
+	 * @param options The base class's legacy find options, forwarded.
+	 * @returns The result of the removal.
+	 * @throws ConflictException with `GOODS_RECEIPT_NOT_DELETABLE` when a selected receipt is `POSTED`.
+	 */
+	public async delete(criteria: ID | FindOptionsWhere<GoodsReceipt>, options?: any): Promise<DeleteResult> {
+		const where = {
+			...(typeof criteria === 'string' ? { id: criteria } : criteria),
+			...this.statementScope()
+		} as FindOptionsWhere<GoodsReceipt>;
+
+		for (const receipt of await this.typeOrmGoodsReceiptRepository.find({ where, withDeleted: true })) {
+			assertReceiptRemovable(receipt);
+		}
+
+		return super.delete(where, options);
+	}
+
+	/**
+	 * Withdraws a receipt by the same rule as `delete` (review R2-10).
+	 *
+	 * `DELETE /goods-receipts/:id/soft` and `softDeleteGoodsReceipt` withdrew a `POSTED` receipt without reversing
+	 * anything, and a withdrawn receipt can no longer be reversed, because every read of one skips retired rows
+	 * (`findOneDetailed`). Only a `CANCELED` receipt is withdrawn; a posted one is reversed first.
+	 *
+	 * @param id The receipt to withdraw.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The withdrawn receipt.
+	 * @throws NotFoundException when the receipt is not the caller's.
+	 * @throws ConflictException with `GOODS_RECEIPT_NOT_DELETABLE` when it is `POSTED`.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<GoodsReceipt> {
+		const receipt = await this.typeOrmGoodsReceiptRepository.findOne({
+			where: { id, ...this.statementScope() } as FindOptionsWhere<GoodsReceipt>
+		});
+
+		if (!receipt) {
+			throw new NotFoundException(`GOODS_RECEIPT_NOT_FOUND: goods receipt '${id}' could not be found.`);
+		}
+
+		assertReceiptRemovable(receipt);
+
+		return super.softRemove(id, rest[0], rest[1]);
 	}
 
 	/**
@@ -1488,5 +1547,21 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 
 			throw error;
 		}
+	}
+}
+
+/**
+ * Refuses the removal or withdrawal of a receipt whose movements are still the ledger's (review R2-10).
+ *
+ * @param receipt The receipt.
+ * @throws ConflictException with `GOODS_RECEIPT_NOT_DELETABLE` when it is `POSTED`.
+ */
+function assertReceiptRemovable(receipt: Pick<GoodsReceipt, 'id' | 'number' | 'status'>): void {
+	if (receipt.status === GoodsReceiptStatus.POSTED) {
+		throw new ConflictException({
+			message: `GOODS_RECEIPT_NOT_DELETABLE: goods receipt '${receipt.number ?? receipt.id}' is POSTED, so its stock movements and its order lines' received quantities still stand; reverse it (POST /goods-receipts/:id/cancel) before removing it.`,
+			code: 'GOODS_RECEIPT_NOT_DELETABLE',
+			details: { goodsReceiptId: receipt.id, status: receipt.status, deletableFrom: [GoodsReceiptStatus.CANCELED] }
+		});
 	}
 }
