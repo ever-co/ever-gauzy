@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickListLineService } from '../pick-list-line/pick-list-line.service';
@@ -21,6 +22,7 @@ import {
 	WAREHOUSE_FULFILLMENT,
 	WAREHOUSE_STOCK_LEDGER
 } from '../warehouse.types';
+import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { isPositiveQuantity, normalizeQuantity } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickList } from './pick-list.entity';
@@ -39,6 +41,13 @@ import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repos
  * pickable bins of the location in walking order. A line with no bin is a line nobody can release,
  * which is why the wave's release check refuses one.
  */
+/**
+ * What an edit of a pick list may change (review R2-13): the assignee, the priority and the picker-facing note, as
+ * `UpdatePickListDTO` says, and the free-form metadata nothing in this package writes. The status, the counters, the
+ * timestamps, the version and what the list was derived from are the list's operations' to move.
+ */
+const PICK_LIST_WRITABLE_MEMBERS = ['assignedToUserId', 'priority', 'note', 'metadata'] as const;
+
 @Injectable()
 export class PickListService extends TenantAwareCrudService<PickList> {
 	constructor(
@@ -58,6 +67,48 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		private readonly stockLedger?: IWarehouseStockLedgerPort
 	) {
 		super(typeOrmPickListRepository, mikroOrmPickListRepository);
+	}
+
+	/**
+	 * Edits a pick list, refusing what only its operations move (review R2-13).
+	 *
+	 * `PUT /pick-lists/:id` and `updatePickList` reached the inherited update with a body that declares the status,
+	 * the counters, the timestamps and the version, so `{status: "PICKED"}` completed a list nobody picked. Only the
+	 * members `PICK_LIST_WRITABLE_MEMBERS` names are written; any other member the body would move is refused with
+	 * `PICK_LIST_FIELD_NOT_WRITABLE`, and one it merely restates is accepted and not written. The list's own
+	 * operations write through the base class and are not affected.
+	 *
+	 * @param id The list.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, or the list as stored when the edit changed nothing.
+	 * @throws BadRequestException with `PICK_LIST_FIELD_NOT_WRITABLE`.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<PickList>,
+		partialEntity: QueryDeepPartialEntity<PickList>
+	): Promise<PickList | UpdateResult> {
+		if (typeof id !== 'string') {
+			throw editByIdOnly('PICK_LIST_FIELD_NOT_WRITABLE', 'A pick list');
+		}
+
+		const stored = await this.findOneScoped(id);
+		const edit = warehouseEditOf(stored, partialEntity as Record<string, unknown>, PICK_LIST_WRITABLE_MEMBERS, {
+			code: 'PICK_LIST_FIELD_NOT_WRITABLE',
+			document: 'pick list',
+			operations: 'a list moves through assign, start, complete and cancel, and its counters follow its lines.'
+		});
+
+		if (!Object.keys(edit).length) {
+			return stored;
+		}
+
+		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
+		return await landEdit(
+			() => super.update({ id, status: stored.status } as FindOptionsWhere<PickList>, edit as QueryDeepPartialEntity<PickList>),
+			'PICK_LIST_EDIT_CONFLICT',
+			'pick list',
+			id
+		);
 	}
 
 	/**
@@ -307,7 +358,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		} as any);
 
 		for (const line of lines) {
-			await this.pickListLineService.update(line.id, { status: 'CANCELED' } as any);
+			await this.pickListLineService.cancelOpenLine(line.id);
 		}
 
 		if (list.waveId) {

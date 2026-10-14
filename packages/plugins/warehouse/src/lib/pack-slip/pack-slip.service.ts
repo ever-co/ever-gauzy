@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickListService } from '../pick-list/pick-list.service';
@@ -11,6 +12,7 @@ import {
 	PickListLineStatus,
 	PickListStatus
 } from '../warehouse.types';
+import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { normalizeQuantity } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PackSlip } from './pack-slip.entity';
@@ -31,6 +33,14 @@ import { TypeOrmPackSlipRepository } from './repository/type-orm-pack-slip.repos
  * A slip carries no manifest reference. A manifest covers shipments, a shipment may contain several
  * packages, and the shipment is the row that knows which carrier took it.
  */
+/**
+ * What an edit of an `OPEN` pack slip may change (review R2-13): the carrier, the package count, the weight and
+ * volume, the note and the metadata. A `PACKED` slip is immutable and a re-pack cancels it (`UpdatePackSlipDTO`),
+ * so nothing is writable once it has left `OPEN`. The status, the packing facts and the tracking number and label
+ * are written by pack, which checks the tracking number is not already in use.
+ */
+const PACK_SLIP_WRITABLE_MEMBERS = ['carrierKey', 'packageCount', 'totalWeight', 'totalVolume', 'note', 'metadata'] as const;
+
 @Injectable()
 export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 	constructor(
@@ -41,6 +51,49 @@ export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 		private readonly sequenceService: SequenceService
 	) {
 		super(typeOrmPackSlipRepository, mikroOrmPackSlipRepository);
+	}
+
+	/**
+	 * Edits an open pack slip, refusing what only packing moves (review R2-13).
+	 *
+	 * `PUT /pack-slips/:id` and `updatePackSlip` reached the inherited update with a body that declares the status,
+	 * the tracking number and the packing facts, so a slip could be marked `PACKED` without `pack` — which checks
+	 * every line has an outcome and the tracking number is free — and a `PACKED` slip, documented as immutable, could
+	 * be rewritten. Only `PACK_SLIP_WRITABLE_MEMBERS` of an `OPEN` slip are written; anything else is refused with
+	 * `PACK_SLIP_FIELD_NOT_WRITABLE`.
+	 *
+	 * @param id The slip.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, or the slip as stored when the edit changed nothing.
+	 * @throws BadRequestException with `PACK_SLIP_FIELD_NOT_WRITABLE`.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<PackSlip>,
+		partialEntity: QueryDeepPartialEntity<PackSlip>
+	): Promise<PackSlip | UpdateResult> {
+		if (typeof id !== 'string') {
+			throw editByIdOnly('PACK_SLIP_FIELD_NOT_WRITABLE', 'A pack slip');
+		}
+
+		const stored = await this.findOneScoped(id);
+		const writable = stored.status === PackSlipStatus.OPEN ? PACK_SLIP_WRITABLE_MEMBERS : [];
+		const edit = warehouseEditOf(stored, partialEntity as Record<string, unknown>, writable, {
+			code: 'PACK_SLIP_FIELD_NOT_WRITABLE',
+			document: 'pack slip',
+			operations: 'a slip is packed or voided through its own routes, and a packed slip is immutable; a re-pack voids it and opens a new one.'
+		});
+
+		if (!Object.keys(edit).length) {
+			return stored;
+		}
+
+		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
+		return await landEdit(
+			() => super.update({ id, status: stored.status } as FindOptionsWhere<PackSlip>, edit as QueryDeepPartialEntity<PackSlip>),
+			'PACK_SLIP_EDIT_CONFLICT',
+			'pack slip',
+			id
+		);
 	}
 
 	/**
