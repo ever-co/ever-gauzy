@@ -1,11 +1,12 @@
 import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, IsNull } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import {
 	ApiErrorCode,
 	OrganizationVendor,
 	RequestContext,
+	readAffectedRows,
 	SequenceService,
 	TenantAwareCrudService,
 	commitVersionedUpdate
@@ -297,70 +298,174 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 	 * lifecycle check, so an order the supplier had been told about — or one goods had arrived against — vanished
 	 * from every read (`findOneScoped` skips retired rows), and nothing could receive against it, cancel it or close
 	 * it. Only a draft is withdrawn; a sent order is cancelled and a received one is closed, because both of those
-	 * leave a document that explains what happened.
+	 * leave a document that explains what happened. The withdrawal is made under a claim on the draft
+	 * (`whileDraft`), so a `send` racing it cannot leave a sent order withdrawn.
 	 *
 	 * Recovering an order is not guarded: a withdrawal moves no counter and no total, so putting an order back
 	 * restores exactly the state it was withdrawn in — which is also how an order withdrawn before this guard
 	 * existed is brought back.
 	 *
 	 * @param id The order to withdraw.
-	 * @param rest The find and save options the base method takes.
+	 * @param rest The find and save options the base method takes; the withdrawal takes none.
 	 * @returns The withdrawn order.
 	 * @throws NotFoundException when the order is not the caller's.
-	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when it has left `DRAFT`.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when it has left `DRAFT`, or
+	 * `PURCHASE_ORDER_VERSION_CONFLICT` when it moved on while it was being withdrawn.
 	 */
 	public async softRemove(id: ID, ...rest: any[]): Promise<PurchaseOrder> {
-		const purchaseOrder = await this.findOneScoped(id);
+		await this.whileDraft(id, 'deleted', async (manager) => {
+			await manager.softDelete(PurchaseOrder, { id, ...this.writeScope } as never);
+		});
 
-		this.assertStatus(purchaseOrder, EDITABLE_STATUSES, 'deleted');
-
-		return await super.softRemove(id, rest[0], rest[1]);
+		return (await this.typeOrmPurchaseOrderRepository.findOne({
+			where: { id, ...this.writeScope } as never,
+			withDeleted: true
+		})) as PurchaseOrder;
 	}
 
 	/**
 	 * Withdraws one line of a draft order and rewrites the totals, as removing it does (review R2-11).
 	 *
-	 * The line's own `softRemove` refuses a line of an order that has left `DRAFT`; this is the operation the line
-	 * surface calls (`DELETE /purchase-order-lines/:id/soft`, `softDeletePurchaseOrderLine`), because the header is a
-	 * function of the whole line set and a withdrawn line has to leave it exactly as a removed one does. It used to
-	 * leave the header counting the line.
+	 * This is the operation the line surface calls (`DELETE /purchase-order-lines/:id/soft`,
+	 * `softDeletePurchaseOrderLine`), because the header is a function of the whole line set and a withdrawn line
+	 * has to leave it exactly as a removed one does; the inherited withdrawal left the header counting the line, on
+	 * an order of any status. The withdrawal, the lines' derived totals and the header's are one transaction under a
+	 * claim on the draft, so the order moves one version step and a racing `send` is refused or wins outright.
 	 *
 	 * @param lineId The line to withdraw.
 	 * @returns The withdrawn line.
-	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`.
+	 * @throws NotFoundException when the line or its order is not the caller's.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`, or
+	 * `PURCHASE_ORDER_VERSION_CONFLICT` when it moved on meanwhile.
 	 */
 	public async softRemoveLine(lineId: ID): Promise<PurchaseOrderLine> {
-		const line = await this.lineService.softRemove(lineId);
+		const line = await this.lineService.findScoped(lineId);
 
-		await this.rewriteTotalsAfterLineChange(line.purchaseOrderId as ID);
+		await this.whileDraft(line.purchaseOrderId as ID, 'amended', async (manager, purchaseOrder) => {
+			await manager.softDelete(PurchaseOrderLine, { id: lineId, ...this.writeScope } as never);
 
-		return line;
+			return await this.totalsOn(manager, purchaseOrder);
+		});
+
+		return (await this.typeOrmPurchaseOrderRepository.manager.findOne(PurchaseOrderLine, {
+			where: { id: lineId, ...this.writeScope } as never,
+			withDeleted: true
+		})) as PurchaseOrderLine;
 	}
 
 	/**
 	 * Puts a withdrawn line back into a draft order and rewrites the totals (review R2-11).
 	 *
-	 * The line's own `softRecover` refuses an order that has left `DRAFT`: putting a line back into a sent order
-	 * would change what the supplier was told and what the order is waiting for.
+	 * Putting a line back into a sent order would change what the supplier was told and what the order is waiting
+	 * for, so it is made under the same claim as the withdrawal. The line is read back after the totals are
+	 * rewritten, so the answer carries the total the order now holds for it.
 	 *
 	 * @param lineId The line to restore.
 	 * @returns The restored line.
-	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`.
+	 * @throws NotFoundException when the line or its order is not the caller's.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`, or
+	 * `PURCHASE_ORDER_VERSION_CONFLICT` when it moved on meanwhile.
 	 */
 	public async softRecoverLine(lineId: ID): Promise<PurchaseOrderLine> {
-		const line = await this.lineService.softRecover(lineId);
+		const line = (await this.typeOrmPurchaseOrderRepository.manager.findOne(PurchaseOrderLine, {
+			where: { id: lineId, ...this.writeScope } as never,
+			withDeleted: true
+		})) as PurchaseOrderLine | null;
 
-		await this.rewriteTotalsAfterLineChange(line.purchaseOrderId as ID);
+		if (!line) {
+			throw new NotFoundException(`PURCHASE_ORDER_LINE_NOT_FOUND: purchase-order line '${lineId}' could not be found.`);
+		}
 
-		return line;
+		await this.whileDraft(line.purchaseOrderId as ID, 'amended', async (manager, purchaseOrder) => {
+			await manager.restore(PurchaseOrderLine, { id: lineId, ...this.writeScope } as never);
+
+			return await this.totalsOn(manager, purchaseOrder);
+		});
+
+		return await this.lineService.findScoped(lineId);
 	}
 
-	/** The lines' derived totals, then the header's — what the hard delete of a line does after it. */
-	private async rewriteTotalsAfterLineChange(purchaseOrderId: ID): Promise<void> {
-		const purchaseOrder = await this.findOneScoped(purchaseOrderId);
+	/**
+	 * Makes one change to a draft order under a claim on it.
+	 *
+	 * The order's version moves first, conditionally on the order still being `DRAFT` at the version this call read,
+	 * in the same transaction as the change: the statement takes the order's row lock, so a `send` — or any other
+	 * versioned transition — that read the same version either committed first, and the claim matches nothing, or
+	 * finds the version moved when it writes, and is refused. A change that answers a patch (the totals) writes it in
+	 * the same transaction, without a second version step.
+	 *
+	 * @param purchaseOrderId The order.
+	 * @param action The act, named in the refusal.
+	 * @param change The change, run on the transaction once the claim holds.
+	 * @throws NotFoundException when the order is not the caller's.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` or `PURCHASE_ORDER_VERSION_CONFLICT`.
+	 */
+	private async whileDraft(
+		purchaseOrderId: ID,
+		action: string,
+		change: (manager: EntityManager, purchaseOrder: PurchaseOrder) => Promise<Record<string, unknown> | void>
+	): Promise<void> {
+		await this.typeOrmPurchaseOrderRepository.manager.transaction(async (manager: EntityManager) => {
+			const purchaseOrder = (await manager.findOne(PurchaseOrder, {
+				where: { id: purchaseOrderId, ...this.writeScope } as never
+			})) as PurchaseOrder | null;
 
-		await this.lineService.rewriteLineTotals(purchaseOrder.id, purchaseOrder.currency);
-		await this.recomputeTotalsFor(purchaseOrder.id);
+			if (!purchaseOrder) {
+				throw new NotFoundException(`PURCHASE_ORDER_NOT_FOUND: purchase order '${purchaseOrderId}' could not be found.`);
+			}
+
+			this.assertStatus(purchaseOrder, EDITABLE_STATUSES, action);
+
+			const read = purchaseOrder.version;
+			const claimed = await manager.update(
+				PurchaseOrder,
+				{
+					id: purchaseOrder.id,
+					status: PurchaseOrderStatus.DRAFT,
+					version: read === null || read === undefined ? IsNull() : read,
+					...this.writeScope
+				} as never,
+				{ version: (read ?? 1) + 1 } as never
+			);
+
+			if (readAffectedRows(claimed) === 0) {
+				throw new ConflictException(
+					`PURCHASE_ORDER_VERSION_CONFLICT: purchase order '${purchaseOrder.number}' changed while it was being ${action}. Read it again.`
+				);
+			}
+
+			const patch = await change(manager, purchaseOrder);
+
+			if (patch && Object.keys(patch).length) {
+				await manager.update(PurchaseOrder, { id: purchaseOrder.id, ...this.writeScope } as never, patch as never);
+			}
+		});
+	}
+
+	/**
+	 * Rewrites the derived total of every live line of an order on a transaction, and answers the header totals they
+	 * sum to — what `rewriteLineTotals` and `recomputeTotalsFor` do after a line is removed, on the change's own
+	 * transaction.
+	 *
+	 * @param manager The open transaction.
+	 * @param purchaseOrder The order, as the claim read it.
+	 * @returns The header totals.
+	 */
+	private async totalsOn(manager: EntityManager, purchaseOrder: PurchaseOrder): Promise<Record<string, unknown>> {
+		const lines = (await manager.find(PurchaseOrderLine, {
+			where: { purchaseOrderId: purchaseOrder.id, ...this.writeScope } as never,
+			order: { createdAt: 'ASC' } as never
+		})) as PurchaseOrderLine[];
+
+		for (const line of lines) {
+			line.total = this.lineService.computeLineAmounts(
+				{ quantity: line.quantity, unitCost: line.unitCost, taxRate: line.taxRate, discountTotal: line.discountTotal },
+				purchaseOrder.currency
+			).total;
+			await manager.save(PurchaseOrderLine, line);
+		}
+
+		return { ...this.lineService.computeTotalsForLines(lines, purchaseOrder.currency, purchaseOrder.shippingTotal) };
 	}
 
 	/*

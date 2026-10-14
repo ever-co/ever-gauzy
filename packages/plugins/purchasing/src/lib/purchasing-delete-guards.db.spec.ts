@@ -531,14 +531,24 @@ describe('removing a purchasing document keeps to its lifecycle (DB-backed)', ()
 
 			await h.orders.softRemoveLine(LINE_B);
 			expect((await h.row('purchase_order_line', LINE_B))?.deletedAt).not.toBeNull();
-			expect(Number((await h.row('purchase_order', ORDER))?.grandTotal)).toBe(20);
+			const withdrawn = await h.row('purchase_order', ORDER);
+			// The withdrawal and the totals are one change: one version step.
+			expect([Number(withdrawn?.grandTotal), withdrawn?.version]).toEqual([20, 2]);
 
-			await h.orders.softRecoverLine(LINE_B);
+			// A transition decided on the order as it was before the withdrawal is refused, so a `send` racing the
+			// withdrawal cannot send the line set the supplier was about to be told about.
+			await expect(h.orders.send(ORDER, { expectedVersion: 1 })).rejects.toMatchObject({ status: 409 });
+
+			const recovered = await h.orders.softRecoverLine(LINE_B);
 			expect((await h.row('purchase_order_line', LINE_B))?.deletedAt).toBeNull();
-			expect(Number((await h.row('purchase_order', ORDER))?.grandTotal)).toBe(35);
+			const restored = await h.row('purchase_order', ORDER);
+			expect([Number(restored?.grandTotal), restored?.version]).toEqual([35, 3]);
+			// The answer carries the total the order now holds for the line.
+			expect(Number(recovered.total)).toBe(15);
 
 			await h.orders.softRemove(ORDER);
 			expect((await h.row('purchase_order', ORDER))?.deletedAt).not.toBeNull();
+			expect((await h.row('purchase_order', ORDER))?.version).toBe(4);
 		});
 	});
 });
