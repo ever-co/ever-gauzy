@@ -35,10 +35,14 @@
  * 5. A row the design promised and the platform's own subscription doctrine refuses is listed in `REFUSED` with the
  *    reason, never silently dropped; a refused name that becomes served fails.
  *
+ * The readers are exported and held to every shape they must read by `subscription-parity-check.test.mjs`
+ * (`node --test tools/scripts/subscription-parity-check.test.mjs`): a commented-out publish is not a producer, and a
+ * catalogue in any quote style or with `as const` is read — a declaration the reader cannot resolve fails the gate.
+ *
  * Run from the repository root: `node tools/scripts/subscription-parity-check.mjs [--list]`
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
@@ -155,23 +159,175 @@ const REFUSED = new Map([
 const AGGREGATES_WITHOUT_A_FIELD = new Map([]);
 
 // ————————————————————————————————————————————————————————————————————————————————————————————————————————————
+// The readers. Pure functions over source text, exported so `subscription-parity-check.test.mjs` can hold each one
+// to the shapes it must read — a reader that silently skips a shape is how a gate stops measuring.
 
-/** Every `.ts` source under a directory, suites and build output skipped. */
-function sources(directory, found = []) {
-	for (const entry of readdirSync(directory)) {
-		if (entry === 'node_modules' || entry === 'dist' || entry === 'migrations') continue;
-		const path = join(directory, entry);
-		if (statSync(path).isDirectory()) sources(path, found);
-		else if (entry.endsWith('.ts') && !entry.endsWith('.spec.ts')) found.push(path);
+/**
+ * Source text with its comments removed, so a commented-out call is not read as a call.
+ *
+ * Strings are kept intact — a `//` inside a quoted URL is not a comment — by walking the text once.
+ *
+ * @param {string} source
+ * @returns {string}
+ */
+export function stripComments(source) {
+	let out = '';
+	let quote = null;
+	for (let index = 0; index < source.length; index++) {
+		const character = source[index];
+		const next = source[index + 1];
+		if (quote) {
+			out += character;
+			if (character === '\\') {
+				out += next ?? '';
+				index++;
+			} else if (character === quote) {
+				quote = null;
+			}
+			continue;
+		}
+		if (character === "'" || character === '"' || character === '`') {
+			quote = character;
+			out += character;
+			continue;
+		}
+		if (character === '/' && next === '/') {
+			while (index < source.length && source[index] !== '\n') index++;
+			out += '\n';
+			continue;
+		}
+		if (character === '/' && next === '*') {
+			const end = source.indexOf('*/', index + 2);
+			const comment = source.slice(index, end < 0 ? source.length : end + 2);
+			out += comment.replace(/[^\n]/g, ' ');
+			index = end < 0 ? source.length : end + 1;
+			continue;
+		}
+		out += character;
 	}
-	return found;
+	return out;
 }
 
-/** The Subscription root fields the composed schema serves, read with every description removed. */
-function servedSubscriptions() {
-	const schema = readFileSync(SDL, 'utf8')
-		.replace(/"""[\s\S]*?"""/g, '')
-		.replace(/^[ \t]*"(?:[^"\\]|\\.)*"[ \t]*$/gm, '');
+/** The string literals of an array body, in any quote style. */
+function literalsOf(body) {
+	return [...body.matchAll(/(['"`])((?:(?!\1)[^\\]|\\.)*)\1/g)].map((match) => match[2]);
+}
+
+/**
+ * The durable event names the plugins stream, and every declaration the reader could not resolve.
+ *
+ * A catalogue is `export const <NAME>_STREAMED_EVENTS … = [ … ]` with or without a type annotation or `as const`,
+ * and any quote style. Every `declareStreamedEvents(catalogue, consumer, ...names)` call must hand over string
+ * literals or spreads of catalogues read here: a call this reader cannot resolve is reported, never skipped, so a
+ * new way of declaring names cannot walk past the promised-field check.
+ *
+ * @param {Map<string, string>} sources file → text
+ * @returns {{ names: { name: string, file: string }[], unreadable: string[] }}
+ */
+export function readStreamedCatalogues(sources) {
+	const names = [];
+	const catalogues = new Map();
+	const unreadable = [];
+
+	for (const [file, raw] of sources) {
+		const source = stripComments(raw);
+		for (const match of source.matchAll(/export\s+const\s+(\w+_STREAMED_EVENTS)\b[^=]*=\s*\[([\s\S]*?)\]/g)) {
+			const literals = literalsOf(match[2]);
+			catalogues.set(match[1], literals);
+			for (const name of literals) names.push({ name, file });
+		}
+	}
+
+	for (const [file, raw] of sources) {
+		const source = stripComments(raw);
+		for (const call of source.matchAll(/\bdeclareStreamedEvents\s*\(([^)]*)\)/g)) {
+			if (/function\s+declareStreamedEvents/.test(source.slice(Math.max(0, call.index - 40), call.index + 30))) continue;
+			const args = call[1].split(',').slice(2).map((arg) => arg.trim()).filter(Boolean);
+			for (const arg of args) {
+				const spread = /^\.\.\.\s*(\w+)$/.exec(arg);
+				const literal = /^(['"`])([^'"`]+)\1$/.exec(arg);
+				if (literal) names.push({ name: literal[2], file });
+				else if (!(spread && catalogues.has(spread[1]))) unreadable.push(`${file}: declareStreamedEvents(…, ${arg})`);
+			}
+		}
+	}
+
+	return { names, unreadable };
+}
+
+/**
+ * The in-process events a subscription resolver streams that nothing publishes.
+ *
+ * A producer is a source file that is neither a resolver nor a suite and **publishes the event it constructs**:
+ * `publish(new X(…))`, `publish(X.from(…))`, or a variable built from `new X(` / `X.from(` that the same file then
+ * hands to `publish(`. Comments are stripped first, so a commented-out publish is not a producer.
+ *
+ * @param {Map<string, string>} sources file → text
+ * @returns {string[]} `file: Event` for every silent stream
+ */
+export function findSilentStreams(sources) {
+	const stripped = new Map([...sources].map(([file, source]) => [file, stripComments(source)]));
+	const silent = [];
+
+	/** The argument text of every `publish(…)` call in a source, read to its matching parenthesis. */
+	const publishArguments = (source) => {
+		const found = [];
+		for (const call of source.matchAll(/\bpublish\s*\(/g)) {
+			let depth = 1;
+			let index = call.index + call[0].length;
+			const begin = index;
+			for (; index < source.length && depth > 0; index++) {
+				if (source[index] === '(') depth++;
+				else if (source[index] === ')') depth--;
+			}
+			found.push(source.slice(begin, index - 1));
+		}
+		return found;
+	};
+
+	const publishes = (source, event) => {
+		const construction = `(?:new\\s+${event}\\s*\\(|\\b${event}\\.from\\s*\\()`;
+		const handed = publishArguments(source);
+		if (handed.some((argument) => new RegExp(construction).test(argument))) return true;
+		// `const event = X.from(row); … publish(event)`: a variable built from the event and handed to a publish.
+		const assigned = new RegExp(`\\b(?:const|let|var)\\s+(\\w+)\\s*=\\s*(?:await\\s+)?${construction}`, 'g');
+		for (const assignment of source.matchAll(assigned)) {
+			if (handed.some((argument) => new RegExp(`^\\s*${assignment[1]}\\b`).test(argument))) return true;
+		}
+		return false;
+	};
+
+	for (const [file, source] of stripped) {
+		if (!/@Subscription\(/.test(source)) continue;
+		const imported = new Set();
+		for (const statement of source.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"][^'"]+['"]/g)) {
+			for (const member of statement[1].split(',')) {
+				const name = member.trim().split(/\s+as\s+/)[0];
+				if (/^[A-Z]\w*Event$/.test(name)) imported.add(name);
+			}
+		}
+		const body = source.replace(/import[\s\S]*?;\r?\n/g, '');
+		for (const event of imported) {
+			// Only an event the resolver hands to a stream (an argument, not a type annotation) is one it delivers.
+			if (!new RegExp(`[(,]\\s*${event}\\s*[,)]`).test(body)) continue;
+			const produced = [...stripped].some(
+				([other, otherSource]) => other !== file && !/\.resolver\.ts$/.test(other) && publishes(otherSource, event)
+			);
+			if (!produced) silent.push(`${relative(ROOT, file).replace(/\\/g, '/')}: ${event}`);
+		}
+	}
+
+	return silent;
+}
+
+/**
+ * The Subscription root fields an SDL serves, read with every description removed.
+ *
+ * @param {string} sdl
+ * @returns {string[]}
+ */
+export function readServedSubscriptions(sdl) {
+	const schema = sdl.replace(/"""[\s\S]*?"""/g, '').replace(/^[ \t]*"(?:[^"\\]|\\.)*"[ \t]*$/gm, '');
 	const fields = [];
 	let inside = false;
 	for (const line of schema.split(/\r?\n/)) {
@@ -186,116 +342,101 @@ function servedSubscriptions() {
 	return fields;
 }
 
-const files = SOURCE_ROOTS.flatMap((root) => sources(root));
-const text = new Map(files.map((file) => [file, readFileSync(file, 'utf8')]));
-
-/** The durable event names the plugins stream, from their `*_STREAMED_EVENTS` catalogues. */
-const streamedNames = [];
-for (const [file, source] of text) {
-	for (const catalogue of source.matchAll(/export const \w+_STREAMED_EVENTS\s*:\s*readonly string\[\]\s*=\s*\[([\s\S]*?)\]/g)) {
-		for (const name of catalogue[1].matchAll(/'([^']+)'/g)) streamedNames.push({ name: name[1], file });
+/** Every `.ts` source under a directory, suites and build output skipped. */
+function sources(directory, found = []) {
+	for (const entry of readdirSync(directory)) {
+		if (entry === 'node_modules' || entry === 'dist' || entry === 'migrations') continue;
+		const path = join(directory, entry);
+		if (statSync(path).isDirectory()) sources(path, found);
+		else if (entry.endsWith('.ts') && !entry.endsWith('.spec.ts')) found.push(path);
 	}
+	return found;
 }
+
 const aggregateOf = (name) => name.split('.').slice(0, -1).join('.');
-const streamedAggregates = [...new Set(streamedNames.map((entry) => aggregateOf(entry.name)))].sort();
-
-/**
- * The in-process events a subscription resolver streams, and whether anything publishes each one.
- *
- * A producer is a source file that is neither a resolver nor a suite, calls `publish(`, and constructs the event
- * (`new X(` or `X.from(`) — the shape every producer on this branch has (`eventBus.publish(X.from(row))`).
- */
-const silent = [];
-for (const [file, source] of text) {
-	if (!/@Subscription\(/.test(source)) continue;
-	const imported = new Set();
-	for (const statement of source.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*'[^']+'/g)) {
-		for (const member of statement[1].split(',')) {
-			const name = member.trim().split(/\s+as\s+/)[0];
-			if (/^[A-Z]\w*Event$/.test(name)) imported.add(name);
-		}
-	}
-	const body = source.replace(/import[\s\S]*?;\r?\n/g, '');
-	for (const event of imported) {
-		// Only an event the resolver hands to a stream (an argument, not a type annotation) is one it delivers.
-		if (!new RegExp(`[(,]\\s*${event}\\s*[,)]`).test(body)) continue;
-		const produced = [...text].some(
-			([other, otherSource]) =>
-				other !== file &&
-				!/\.resolver\.ts$/.test(other) &&
-				/\bpublish\s*\(/.test(otherSource) &&
-				new RegExp(`(new\\s+${event}\\s*\\(|\\b${event}\\.from\\s*\\()`).test(otherSource)
-		);
-		if (!produced) silent.push(`${relative(ROOT, file).replace(/\\/g, '/')}: ${event}`);
-	}
-}
 
 // ————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
-const served = servedSubscriptions();
-const promisedNames = new Set(PROMISED.map((row) => row.name));
-const failures = [];
+function main() {
+	const files = SOURCE_ROOTS.flatMap((root) => sources(root));
+	const text = new Map(files.map((file) => [file, readFileSync(file, 'utf8')]));
 
-const duplicates = PROMISED.map((row) => row.name).filter((name, index, all) => all.indexOf(name) !== index);
-for (const name of duplicates) failures.push(`${name} is promised twice`);
+	const { names: streamedNames, unreadable } = readStreamedCatalogues(text);
+	const streamedAggregates = [...new Set(streamedNames.map((entry) => aggregateOf(entry.name)))].sort();
+	const silent = findSilentStreams(text);
+	const served = readServedSubscriptions(readFileSync(SDL, 'utf8'));
+	const promisedNames = new Set(PROMISED.map((row) => row.name));
+	const failures = [];
 
-for (const name of served) {
-	if (REFUSED.has(name)) failures.push(`${name} is served and recorded as refused — take it out of REFUSED and promise it`);
-	else if (!promisedNames.has(name)) failures.push(`Subscription.${name} is served and not recorded in PROMISED — add its row`);
-}
-
-for (const row of PROMISED) {
-	if (row.source === 'served' && !served.includes(row.name)) {
-		failures.push(`${row.name} is recorded as served and the composed schema does not serve it`);
+	for (const declaration of unreadable) {
+		failures.push(`a streamed-event declaration this gate cannot read: ${relative(ROOT, declaration).replace(/\\/g, '/')} — state the names in a *_STREAMED_EVENTS catalogue`);
 	}
-	if (REFUSED.has(row.name)) failures.push(`${row.name} is both promised and refused`);
-}
 
-const covered = new Set(PROMISED.flatMap((row) => row.aggregates ?? []));
-for (const aggregate of streamedAggregates) {
-	if (!covered.has(aggregate) && !AGGREGATES_WITHOUT_A_FIELD.has(aggregate)) {
-		const example = streamedNames.find((entry) => aggregateOf(entry.name) === aggregate);
-		failures.push(
-			`the durable aggregate \`${aggregate}\` is streamed (${example.name}, ${relative(ROOT, example.file).replace(/\\/g, '/')}) ` +
-				'and no promised field covers it — promise a typed field or record why not in AGGREGATES_WITHOUT_A_FIELD'
-		);
+	const duplicates = PROMISED.map((row) => row.name).filter((name, index, all) => all.indexOf(name) !== index);
+	for (const name of duplicates) failures.push(`${name} is promised twice`);
+
+	for (const name of served) {
+		if (REFUSED.has(name)) failures.push(`${name} is served and recorded as refused — take it out of REFUSED and promise it`);
+		else if (!promisedNames.has(name)) failures.push(`Subscription.${name} is served and not recorded in PROMISED — add its row`);
 	}
-}
-for (const aggregate of AGGREGATES_WITHOUT_A_FIELD.keys()) {
-	if (!streamedAggregates.includes(aggregate)) failures.push(`AGGREGATES_WITHOUT_A_FIELD names \`${aggregate}\`, which nothing streams any more`);
+
+	for (const row of PROMISED) {
+		if (row.source === 'served' && !served.includes(row.name)) {
+			failures.push(`${row.name} is recorded as served and the composed schema does not serve it`);
+		}
+		if (REFUSED.has(row.name)) failures.push(`${row.name} is both promised and refused`);
+	}
+
+	const covered = new Set(PROMISED.flatMap((row) => row.aggregates ?? []));
+	for (const aggregate of streamedAggregates) {
+		if (!covered.has(aggregate) && !AGGREGATES_WITHOUT_A_FIELD.has(aggregate)) {
+			const example = streamedNames.find((entry) => aggregateOf(entry.name) === aggregate);
+			failures.push(
+				`the durable aggregate \`${aggregate}\` is streamed (${example.name}, ${relative(ROOT, example.file).replace(/\\/g, '/')}) ` +
+					'and no promised field covers it — promise a typed field or record why not in AGGREGATES_WITHOUT_A_FIELD'
+			);
+		}
+	}
+	for (const aggregate of AGGREGATES_WITHOUT_A_FIELD.keys()) {
+		if (!streamedAggregates.includes(aggregate)) failures.push(`AGGREGATES_WITHOUT_A_FIELD names \`${aggregate}\`, which nothing streams any more`);
+	}
+
+	const backlog = PROMISED.filter((row) => !served.includes(row.name));
+	if (backlog.length > BACKLOG_BASELINE) {
+		failures.push(`${backlog.length} promised subscriptions are not served and the baseline is ${BACKLOG_BASELINE}: the backlog only shrinks`);
+	} else if (backlog.length < BACKLOG_BASELINE) {
+		failures.push(`the backlog shrank to ${backlog.length} — lower BACKLOG_BASELINE to ${backlog.length} so it cannot grow back`);
+	}
+
+	if (silent.length > SILENT_BASELINE) {
+		failures.push(`${silent.length} served streams have no producer and the baseline is ${SILENT_BASELINE}:\n    ${silent.join('\n    ')}`);
+	} else if (silent.length < SILENT_BASELINE) {
+		failures.push(`only ${silent.length} served stream(s) are silent now — lower SILENT_BASELINE to ${silent.length}`);
+	}
+
+	if (process.argv.includes('--list')) {
+		console.log(`served (${served.length}): ${served.join(', ')}`);
+		console.log(`backlog (${backlog.length}): ${backlog.map((row) => `${row.name} [${row.owner}, ${row.source}]`).join(', ')}`);
+		console.log(`refused (${REFUSED.size}): ${[...REFUSED.keys()].join(', ')}`);
+		console.log(`silent (${silent.length}):\n  ${silent.join('\n  ')}`);
+		console.log(`streamed durable aggregates (${streamedAggregates.length}): ${streamedAggregates.join(', ')}`);
+	}
+
+	if (failures.length > 0) {
+		console.error('FAILED — the subscription dimension moved:');
+		for (const failure of failures) console.error(`  ${failure}`);
+		process.exit(1);
+	}
+
+	console.log(
+		`PASSED — ${PROMISED.length} subscription(s) promised (${PROMISED.filter((row) => row.source === 'served').length} served, ` +
+			`${PROMISED.filter((row) => row.source === 'design').length} named by the design, ${PROMISED.filter((row) => row.source === 'event').length} derived from ` +
+			`${streamedAggregates.length} streamed durable aggregates); ${served.length} served, ${backlog.length} in the backlog ` +
+			`(baseline ${BACKLOG_BASELINE}, only shrinks), ${silent.length} served stream(s) with no producer (baseline ${SILENT_BASELINE}), ` +
+			`${REFUSED.size} refused with a reason.`
+	);
 }
 
-const backlog = PROMISED.filter((row) => !served.includes(row.name));
-if (backlog.length > BACKLOG_BASELINE) {
-	failures.push(`${backlog.length} promised subscriptions are not served and the baseline is ${BACKLOG_BASELINE}: the backlog only shrinks`);
-} else if (backlog.length < BACKLOG_BASELINE) {
-	failures.push(`the backlog shrank to ${backlog.length} — lower BACKLOG_BASELINE to ${backlog.length} so it cannot grow back`);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+	main();
 }
-
-if (silent.length > SILENT_BASELINE) {
-	failures.push(`${silent.length} served streams have no producer and the baseline is ${SILENT_BASELINE}:\n    ${silent.join('\n    ')}`);
-} else if (silent.length < SILENT_BASELINE) {
-	failures.push(`only ${silent.length} served stream(s) are silent now — lower SILENT_BASELINE to ${silent.length}`);
-}
-
-if (process.argv.includes('--list')) {
-	console.log(`served (${served.length}): ${served.join(', ')}`);
-	console.log(`backlog (${backlog.length}): ${backlog.map((row) => `${row.name} [${row.owner}, ${row.source}]`).join(', ')}`);
-	console.log(`refused (${REFUSED.size}): ${[...REFUSED.keys()].join(', ')}`);
-	console.log(`silent (${silent.length}):\n  ${silent.join('\n  ')}`);
-	console.log(`streamed durable aggregates (${streamedAggregates.length}): ${streamedAggregates.join(', ')}`);
-}
-
-if (failures.length > 0) {
-	console.error('FAILED — the subscription dimension moved:');
-	for (const failure of failures) console.error(`  ${failure}`);
-	process.exit(1);
-}
-
-console.log(
-	`PASSED — ${PROMISED.length} subscription(s) promised (${PROMISED.filter((row) => row.source === 'served').length} served, ` +
-		`${PROMISED.filter((row) => row.source === 'design').length} named by the design, ${PROMISED.filter((row) => row.source === 'event').length} derived from ` +
-		`${streamedAggregates.length} streamed durable aggregates); ${served.length} served, ${backlog.length} in the backlog ` +
-		`(baseline ${BACKLOG_BASELINE}, only shrinks), ${silent.length} served stream(s) with no producer (baseline ${SILENT_BASELINE}), ` +
-		`${REFUSED.size} refused with a reason.`
-);

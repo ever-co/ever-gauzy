@@ -375,3 +375,10 @@ jobs:
       - name: Every promised subscription is served or in a backlog that only shrinks
         if: always()
         run: node tools/scripts/subscription-parity-check.mjs
+
+      # The gate's readers, held to every shape they must read (a commented-out publish is not a producer; a
+      # catalogue in any quote style or `as const` is read; an unreadable declaration fails): a reader that skips a
+      # shape is a gate that stops measuring without going red.
+      - name: The subscription gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/subscription-parity-check.test.mjs
