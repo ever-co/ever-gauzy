@@ -18,16 +18,33 @@
 				<span class="record-drawer-subtitle">{{ subtitle }}</span>
 			}
 		</div>
-		<button
-			nbButton
-			ghost
-			size="small"
-			class="record-drawer-close"
-			(click)="close()"
-			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
-		>
-			<nb-icon icon="close-outline"></nb-icon>
-		</button>
+		<div class="record-drawer-actions">
+			<!-- The record's own full-width page: a real link, so it can also be opened in a new tab or copied. -->
+			@if (fullViewLink) {
+				<a
+					nbButton
+					ghost
+					size="small"
+					class="record-drawer-expand"
+					[routerLink]="fullViewLink"
+					[attr.aria-label]="'BUTTONS.EXPAND_FULL_WIDTH' | translate"
+					[nbTooltip]="'BUTTONS.EXPAND_FULL_WIDTH' | translate"
+					nbTooltipPlacement="bottom"
+				>
+					<nb-icon icon="expand-outline"></nb-icon>
+				</a>
+			}
+			<button
+				nbButton
+				ghost
+				size="small"
+				class="record-drawer-close"
+				(click)="close()"
+				[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
 	</header>
 	<div class="record-drawer-body">
 		<ng-content></ng-content>

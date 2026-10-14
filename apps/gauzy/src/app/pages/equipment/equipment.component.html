@@ -56,6 +56,17 @@
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
   <div class="btn-group actions">
+    <!-- Favorite the selected record: its sidebar entry opens the record. -->
+    @if ((selectedItem || selectedEquipment)?.id; as favoriteId) {
+      <ngx-favorite-toggle
+        [entityType]="'Equipment'"
+        [entityId]="favoriteId"
+        [entityName]="(selectedItem || selectedEquipment).name"
+        size="small"
+        status="basic"
+        spacing="list"
+      ></ngx-favorite-toggle>
+    }
     <button
       (click)="save(this.selectedEquipment)"
       nbButton

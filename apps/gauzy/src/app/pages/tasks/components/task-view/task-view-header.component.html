@@ -1,0 +1,22 @@
+<header class="task-view-header" [class.is-large]="large">
+	<div class="task-view-crumbs">
+		@if (task?.project?.name) {
+			<span class="task-view-project">
+				@if (task.project.imageUrl) {
+					<img [src]="task.project.imageUrl" alt="" />
+				} @else {
+					<nb-icon icon="folder-outline"></nb-icon>
+				}
+				<span class="task-view-project-name">{{ task.project.name }}</span>
+			</span>
+			<nb-icon class="task-view-sep" icon="chevron-right-outline"></nb-icon>
+		}
+		<span class="task-view-key">{{ $any(task)?.taskNumber | hash }}</span>
+	</div>
+	<h2 class="task-view-title">{{ task?.title }}</h2>
+	@if (status) {
+		<span class="task-view-status" [class]="'tone-' + status.tone" [style.--status-color]="status.color">{{
+			status.text
+		}}</span>
+	}
+</header>

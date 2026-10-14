@@ -74,6 +74,17 @@
 </ng-template>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
+		<!-- Favorite the selected item: its sidebar entry opens the item's view page. -->
+		@if ((selectedItem || selectedProduct)?.id; as favoriteId) {
+			<ngx-favorite-toggle
+				[entityType]="'Product'"
+				[entityId]="favoriteId"
+				[entityName]="$any(selectedItem || selectedProduct).name || ''"
+				size="small"
+				status="basic"
+				spacing="list"
+			></ngx-favorite-toggle>
+		}
 		<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
 			<button
 				(click)="onViewInventoryItem(selectedItem)"

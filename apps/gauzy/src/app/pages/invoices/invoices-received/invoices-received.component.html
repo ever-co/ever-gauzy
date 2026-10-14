@@ -46,6 +46,17 @@
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
   <div class="btn-group actions">
+    <!-- Favorite the selected received invoice / estimate: its sidebar entry opens its view page. -->
+    @if ((selectedItem || selectedInvoice)?.id; as favoriteId) {
+      <ngx-favorite-toggle
+        [entityType]="'Invoice'"
+        [entityId]="favoriteId"
+        [entityName]="'#' + (selectedItem || selectedInvoice).invoiceNumber"
+        size="small"
+        status="basic"
+        spacing="list"
+      ></ngx-favorite-toggle>
+    }
     <!-- `view()` navigates to the invoice/estimate view page; the leftover
          `underConstruction` directive was opening the placeholder dialog on top
          of it on every click. -->

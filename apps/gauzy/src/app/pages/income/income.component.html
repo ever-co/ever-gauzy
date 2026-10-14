@@ -56,6 +56,17 @@
   let-selectedItem="selectedItem"
   >
   <div class="btn-group actions">
+    <!-- Favorite the selected record: its sidebar entry opens the record. -->
+    @if ((selectedItem || selectedIncome)?.id; as favoriteId) {
+      <ngx-favorite-toggle
+        [entityType]="'Income'"
+        [entityId]="favoriteId"
+        [entityName]="(selectedItem || selectedIncome).notes || ''"
+        size="small"
+        status="basic"
+        spacing="list"
+      ></ngx-favorite-toggle>
+    }
     <!-- View carries the record's OWN guard (the one the route enforces), not
          the edit guard it used to sit behind — it shows nothing a reader of
          this page cannot already see in the grid. -->
@@ -116,6 +127,7 @@
        so the record renderer is built fresh for each entry that is opened. -->
   <ngx-record-view-drawer
     [open]="!!viewedIncome"
+    [fullViewLink]="viewedIncome ? '/pages/accounting/income/view/' + viewedIncome.id : null"
     heading="INCOME_PAGE.INCOME"
     [subtitle]="$safeNavigationMigration(viewedIncome?.client?.name)"
     (closed)="closeView()"

@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen",
 		"REMOVE_FROM_FAVORITES": "Aus Favoriten entfernen",
 		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen",
+		"EXPAND_FULL_WIDTH": "Auf volle Breite erweitern",
 		"UNSELECT_ALL": "Alle abwählen",
 		"START_TIMER_ANYWAY": "Trotzdem starten",
 		"OPEN_SETTING": "Einstellung öffnen"
@@ -3919,6 +3920,12 @@
 	"HEADER_TITLE": {
 		"FOR": "für",
 		"FROM": "aus"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Zurück zur Liste",
+		"NOT_FOUND": "Dieser Datensatz existiert nicht oder wurde entfernt.",
+		"FORBIDDEN": "Sie haben keine Berechtigung, diesen Datensatz anzuzeigen.",
+		"ERROR": "Der Datensatz konnte nicht geladen werden."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Seite nicht gefunden",

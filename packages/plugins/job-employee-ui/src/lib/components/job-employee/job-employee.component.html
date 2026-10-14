@@ -120,6 +120,7 @@
      so the record renderer is built fresh for each entry that is opened. -->
 <ngx-record-view-drawer
 	[open]="!!viewedEmployee"
+	[fullViewLink]="viewedEmployee && canOpenEmployeePage ? '/pages/employees/view/' + viewedEmployee.id : null"
 	heading="JOB_EMPLOYEE.EMPLOYEE"
 	[subtitle]="$safeNavigationMigration(viewedEmployee?.user?.name)"
 	(closed)="closeView()"

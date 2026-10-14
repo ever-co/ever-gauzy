@@ -6,7 +6,16 @@
         {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
       </h4>
     </div>
-    <div>
+    <div class="d-flex align-items-center">
+      @if (proposal?.id) {
+        <ngx-favorite-toggle
+          [entityType]="'Proposal'"
+          [entityId]="proposal.id"
+          size="small"
+          status="basic"
+          spacing="list"
+        ></ngx-favorite-toggle>
+      }
       <button (click)="edit()" nbButton type="button" status="basic" class="action primary" size="small">
         <nb-icon icon="edit-outline"></nb-icon>
         {{ 'BUTTONS.EDIT' | translate }}

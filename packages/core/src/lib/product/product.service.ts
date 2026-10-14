@@ -2,6 +2,7 @@ import { EntityManager, FindManyOptions, FindOptionsWhere, Repository } from 'ty
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import {
+	BaseEntityEnum,
 	ID,
 	IImageAsset,
 	IPagination,
@@ -24,6 +25,7 @@ import { IBulkProductItem } from './product.bulk';
 import { TypeOrmProductRepository } from './repository/type-orm-product.repository';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
+import { FavoriteService } from '../core/decorators';
 
 /** Largest page `findAllProducts` serves when paging is requested. */
 export const MAX_PRODUCTS_PAGE_SIZE = 100;
@@ -52,6 +54,7 @@ function toPositiveInteger(value: unknown): number | undefined {
 	return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+@FavoriteService(BaseEntityEnum.Product)
 @Injectable()
 export class ProductService extends TenantAwareCrudService<Product> {
 	propsTranslate: TranslatePropertyInput[] = [

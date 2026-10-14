@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "Adicionar mais fontes",
 		"REMOVE_FROM_FAVORITES": "Remover dos favoritos",
 		"ADD_TO_FAVORITES": "Adicionar aos favoritos",
+		"EXPAND_FULL_WIDTH": "Expandir para largura total",
 		"UNSELECT_ALL": "Desmarcar tudo",
 		"START_TIMER_ANYWAY": "Iniciar mesmo assim",
 		"OPEN_SETTING": "Abrir configuração"
@@ -3923,6 +3924,12 @@
 	"HEADER_TITLE": {
 		"FOR": "para",
 		"FROM": "de"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Voltar à lista",
+		"NOT_FOUND": "Este registo não existe ou foi removido.",
+		"FORBIDDEN": "Não tem permissão para ver este registo.",
+		"ERROR": "Não foi possível carregar o registo."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Página não encontrada",

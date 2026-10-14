@@ -181,6 +181,7 @@
 		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
 		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
 		"ADD_TO_FAVORITES": "הוסף למועדפים",
+		"EXPAND_FULL_WIDTH": "הרחב לרוחב מלא",
 		"UNSELECT_ALL": "בטל בחירת הכל",
 		"START_TIMER_ANYWAY": "התחל בכל זאת",
 		"OPEN_SETTING": "פתח הגדרות"
@@ -3946,6 +3947,12 @@
 	"HEADER_TITLE": {
 		"FOR": "for",
 		"FROM": "from"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "חזרה לרשימה",
+		"NOT_FOUND": "רשומה זו אינה קיימת או שהוסרה.",
+		"FORBIDDEN": "אין לך הרשאה לצפות ברשומה זו.",
+		"ERROR": "לא ניתן היה לטעון את הרשומה."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",

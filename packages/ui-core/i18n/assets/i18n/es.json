@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "Añadir más fuentes",
 		"REMOVE_FROM_FAVORITES": "Quitar de favoritos",
 		"ADD_TO_FAVORITES": "Agregar a favoritos",
+		"EXPAND_FULL_WIDTH": "Expandir a ancho completo",
 		"UNSELECT_ALL": "Deseleccionar todo",
 		"START_TIMER_ANYWAY": "Iniciar de todos modos",
 		"OPEN_SETTING": "Abrir configuración"
@@ -3925,6 +3926,12 @@
 	"HEADER_TITLE": {
 		"FOR": "para",
 		"FROM": "de"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Volver a la lista",
+		"NOT_FOUND": "Este registro no existe o ha sido eliminado.",
+		"FORBIDDEN": "No tiene permiso para ver este registro.",
+		"ERROR": "No se pudo cargar el registro."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Página no encontrada",

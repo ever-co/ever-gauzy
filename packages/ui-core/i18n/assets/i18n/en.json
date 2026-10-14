@@ -192,6 +192,7 @@
 		"ADD_MORE_SOURCES": "Add More Sources",
 		"REMOVE_FROM_FAVORITES": "Remove from favorites",
 		"ADD_TO_FAVORITES": "Add to favorites",
+		"EXPAND_FULL_WIDTH": "Expand to full width",
 		"DONE": "Done",
 		"SKIP": "Skip",
 		"UNSELECT_ALL": "Deselect All",
@@ -4483,6 +4484,12 @@
 	"HEADER_TITLE": {
 		"FOR": "for",
 		"FROM": "from"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Back to the list",
+		"NOT_FOUND": "This record does not exist or has been removed.",
+		"FORBIDDEN": "You do not have permission to view this record.",
+		"ERROR": "The record could not be loaded."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",

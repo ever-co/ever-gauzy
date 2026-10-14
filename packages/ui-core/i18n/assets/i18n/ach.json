@@ -133,6 +133,7 @@
 		"ADD_MODULE": "Yamo Module",
 		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
 		"ADD_TO_FAVORITES": "Med i jami me ayera",
+		"EXPAND_FULL_WIDTH": "Expand to full width",
 		"UNSELECT_ALL": "Gony ayera weng",
 		"START_TIMER_ANYWAY": "Cak keken",
 		"OPEN_SETTING": "Yam yubo"
@@ -3628,6 +3629,12 @@
 	"HEADER_TITLE": {
 		"FOR": "crwdns10284:0crwdne10284:0",
 		"FROM": "crwdns10286:0crwdne10286:0"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Back to the list",
+		"NOT_FOUND": "This record does not exist or has been removed.",
+		"FORBIDDEN": "You do not have permission to view this record.",
+		"ERROR": "The record could not be loaded."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "crwdns2249:0crwdne2249:0",

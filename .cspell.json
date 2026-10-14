@@ -1546,7 +1546,9 @@
 		"regedit",
 		"taskkill",
 		"requestfailed",
-		"subkeys"
+		"subkeys",
+		"favorited",
+		"bookmarkable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

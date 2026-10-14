@@ -47,6 +47,8 @@ import {
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 import { TaskComponent } from './components/task/task.component';
+import { TaskViewHeaderComponent } from './components/task-view/task-view-header.component';
+import { TaskViewPageComponent } from './components/task-view/task-view-page.component';
 import { TasksRoutingModule } from './tasks-routing.module';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
@@ -58,6 +60,8 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 @NgModule({
 	declarations: [
 		TaskComponent,
+		TaskViewHeaderComponent,
+		TaskViewPageComponent,
 		MyTaskDialogComponent,
 		TeamTaskDialogComponent,
 		TaskSettingsComponent,

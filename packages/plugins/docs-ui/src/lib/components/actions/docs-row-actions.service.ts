@@ -57,13 +57,10 @@ export class DocsRowActionsService implements OnDestroy {
 		private readonly genericFavoriteService: GenericFavoriteService,
 		private readonly store: Store
 	) {
-		// The store already loads (and reloads) favorites per organization; the
-		// Documents entries carry `/pages/documents?id=<uuid>` links, so the starred
-		// ids come off that stream instead of a second round trip per rendered row.
+		// The store already loads (and reloads) favorites per organization, so the
+		// starred ids come off that stream instead of a second round trip per rendered row.
 		this.favoritesSubscription = this.favoriteStore.favoriteItems$.subscribe((items) => {
-			const ids = (items ?? [])
-				.map((item) => this.documentIdOfLink(item?.link))
-				.filter((id): id is string => !!id);
+			const ids = (items ?? []).map((item) => this.documentIdOfFavorite(item)).filter((id): id is string => !!id);
 			this._favoriteIds$.next(new Set(ids));
 		});
 	}
@@ -318,10 +315,27 @@ export class DocsRowActionsService implements OnDestroy {
 		return this.translateService.instant(key, params);
 	}
 
-	/** `/pages/documents?id=<uuid>` → `<uuid>`; anything else is not a Documents favorite. */
+	/**
+	 * The document a sidebar favorite points at. The store names every entry `favorite-<entity>-<id>`, which
+	 * holds whatever the link looks like; the link is the fallback, in each shape a Documents favorite opens
+	 * (`/pages/documents/page/<uuid>` for a page, `?folder=<uuid>` for a folder, `?id=<uuid>` otherwise).
+	 */
+	private documentIdOfFavorite(item: { id?: unknown; link?: unknown } | null | undefined): string | null {
+		const entryId = String(item?.id ?? '');
+		const prefix = `favorite-${BaseEntityEnum.Document}-`;
+		if (entryId.startsWith(prefix)) return entryId.slice(prefix.length) || null;
+		if (entryId.startsWith('favorite-')) return null; // another entity type's entry
+		return this.documentIdOfLink(item?.link);
+	}
+
+	/** A Documents favorite link → the document's id; anything else is not a Documents favorite. */
 	private documentIdOfLink(link: unknown): string | null {
 		const value = String(link ?? '');
 		if (!value.startsWith(DOCS_PAGE_LINK)) return null;
-		return value.split('?id=')[1]?.split('&')[0] || null;
+		const [path, query = ''] = value.split('?');
+		const page = path.slice(DOCS_PAGE_LINK.length).match(/^\/page\/([^/]+)$/);
+		if (page) return page[1];
+		const params = new URLSearchParams(query);
+		return params.get('id') || params.get('folder') || null;
 	}
 }
