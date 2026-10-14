@@ -9,7 +9,7 @@
     <div class="d-flex align-items-center">
       @if (proposal?.id) {
         <ngx-favorite-toggle
-          [entityType]="'Proposal'"
+          [entityType]="BaseEntityEnum.Proposal"
           [entityId]="proposal.id"
           size="small"
           status="basic"

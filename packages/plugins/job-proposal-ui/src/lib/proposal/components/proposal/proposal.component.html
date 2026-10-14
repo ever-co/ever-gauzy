@@ -76,7 +76,7 @@
 		<!-- Favorite the selected proposal: its sidebar entry opens the proposal's details page. -->
 		@if ((selectedItem || selectedProposal)?.id; as favoriteId) {
 			<ngx-favorite-toggle
-				[entityType]="'Proposal'"
+				[entityType]="BaseEntityEnum.Proposal"
 				[entityId]="favoriteId"
 				size="small"
 				status="basic"

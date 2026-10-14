@@ -3,7 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { IEmployee, IProposal, IUser } from '@gauzy/contracts';
+import { BaseEntityEnum, IEmployee, IProposal, IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -15,6 +15,8 @@ import { Store } from '@gauzy/ui-core/core';
     standalone: false
 })
 export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
+	/** The favorite toggle binds the enum member: the library compiles its templates strictly. */
+	protected readonly BaseEntityEnum = BaseEntityEnum;
 	public user: IUser;
 	public employee: IEmployee;
 	public proposal: IProposal;
