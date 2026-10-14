@@ -2771,7 +2771,9 @@ describe('the marketplace feature switches (R4-11)', () => {
 		'retrySellerPayout', 'deleteSellerPayout', 'softDeleteSellerPayout', 'recoverSellerPayout',
 		'deleteSellerPayoutLine', 'softDeleteSellerPayoutLine', 'recoverSellerPayoutLine', 'createSellerSettlement',
 		'updateSellerSettlement', 'reconcileSellerSettlement', 'closeSellerSettlement', 'disputeSellerSettlement',
-		'deleteSellerSettlement', 'softDeleteSellerSettlement', 'recoverSellerSettlement'
+		'deleteSellerSettlement', 'softDeleteSellerSettlement', 'recoverSellerSettlement',
+		// The statement carries the seller's payouts and settlements.
+		'sellerStatement'
 	];
 
 	it.each([
@@ -2787,11 +2789,17 @@ describe('the marketplace feature switches (R4-11)', () => {
 			[...codes].sort()
 		);
 
-		// A route that stated a code of its own would be checked against that code *instead of* these.
+		// A route that stated a code of its own would be checked against that code *instead of* these, so
+		// the one route that does — the statement, which carries payouts and settlements — states both.
 		for (const handler of Object.getOwnPropertyNames(controller.prototype)) {
-			if (handler !== 'constructor') {
-				expect(Reflect.getMetadata(FEATURE_METADATA, controller.prototype[handler])).toBeUndefined();
+			if (handler === 'constructor') {
+				continue;
 			}
+			if (controller === SellerController && handler === 'statement') {
+				expect(required(SellerController, 'statement').sort()).toEqual([MARKETPLACE, PAYOUTS].sort());
+				continue;
+			}
+			expect(Reflect.getMetadata(FEATURE_METADATA, controller.prototype[handler])).toBeUndefined();
 		}
 	});
 

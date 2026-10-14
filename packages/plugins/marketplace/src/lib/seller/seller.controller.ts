@@ -265,6 +265,11 @@ export class SellerController extends CrudController<Seller> {
 	 */
 	@ApiOperation({ summary: 'Read a seller statement' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Statement retrieved successfully' })
+	// The statement carries the seller's payouts and settlements, which the payout and settlement routes
+	// serve only with FEATURE_MARKETPLACE_PAYOUTS on, so the statement requires it too. A route's codes
+	// replace its class's, so the marketplace's own code is restated (review R4-11).
+	@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
+	@FeatureFlag(MarketplaceFeatures.PAYOUTS)
 	@Get('/:id/statement')
 	async statement(
 		@Req() request: any,

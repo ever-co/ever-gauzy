@@ -71,7 +71,8 @@ import {
 /**
  * The codes a payout, payout-line or settlement field requires: the endpoint, the marketplace and its
  * payouts, which is what `SellerPayoutController`, `SellerPayoutLineController` and
- * `SellerSettlementController` require of their routes. A field-level statement replaces the class's
+ * `SellerSettlementController` require of their routes — and `sellerStatement`, which carries the
+ * seller's payouts and settlements, as `GET /sellers/:id/statement` does. A field-level statement replaces the class's
  * codes for that field, so all three are stated here.
  */
 const MarketplacePayoutsGate = () =>
@@ -260,6 +261,7 @@ export class SellerEntityResolver {
 	}
 
 	/** The seller's statement over a period. */
+	@MarketplacePayoutsGate()
 	@Query(() => SellerStatementType, { name: 'sellerStatement', nullable: true })
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
 	async sellerStatement(
