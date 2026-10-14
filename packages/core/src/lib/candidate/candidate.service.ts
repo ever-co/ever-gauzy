@@ -127,6 +127,8 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 					 * rely on explicitly instead.
 					 */
 					query.leftJoin(`${query.alias}.user`, 'user');
+					// The tags filter below reads `"tags"."id"`: without this join it failed with a missing-table error
+					query.leftJoin(`${query.alias}.tags`, 'tags');
 					query.where((qb: SelectQueryBuilder<Candidate>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
