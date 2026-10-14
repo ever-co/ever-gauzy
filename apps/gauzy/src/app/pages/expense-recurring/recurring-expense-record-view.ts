@@ -87,11 +87,17 @@ export const EMPLOYEE_RECURRING_EXPENSE_RECORD_VIEW: IRecordViewRouteData<IEmplo
 	heading: 'EMPLOYEES_PAGE.RECURRING_EXPENSE',
 	backLink: '/pages/employees/recurring-expenses',
 	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector.get(EmployeeRecurringExpenseService).getAll(['employee', 'employee.user'], {
-			id,
-			organizationId: scope.organizationId,
-			tenantId: scope.tenantId
-		} as any);
+		const { items } = await injector.get(EmployeeRecurringExpenseService).getAll(
+			['employee', 'employee.user'],
+			{
+				id,
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId
+			} as any,
+			// The read requires an order: without one the service sends `order=undefined`, which the API
+			// answers with a 500 (found in the browser check).
+			{ startDate: 'ASC' } as any
+		);
 		return items?.find((item) => item.id === id) ?? null;
 	},
 	sections: (expense, injector) => buildEmployeeRecurringExpenseViewSections(expense, translatorOf(injector)),
