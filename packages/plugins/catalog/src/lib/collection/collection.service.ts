@@ -29,12 +29,32 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	/**
 	 * Creates a collection after checking the two rules a slug has to satisfy.
 	 *
+	 * A collection created without an organization is stamped with the caller's (see the note below).
+	 *
 	 * @param entity The collection to create.
 	 * @returns The persisted collection.
 	 * @throws BadRequestException When the type and the owner disagree — a customer-owned list may not
-	 * carry rules — or when the slug is already taken in the scope it has to be unique in.
+	 * carry rules — when the slug is already taken in the scope it has to be unique in, or when neither
+	 * the input nor the request states an organization.
 	 */
 	public async create(entity: DeepPartial<Collection>): Promise<Collection> {
+		// The GraphQL input declares no organization and the base class stamps only the tenant, so a collection
+		// created without one belongs to the caller's organization — the scope every read of it is answered
+		// inside. It was written with a NULL organization and no read ever found it again (review R2-23). An
+		// organization the request stated is kept: REST validates it against the caller. With neither, there
+		// is no organization it could be found in, so it is refused rather than written unreachable.
+		// REST also accepts the relation form `organization: { id }`, which its DTO validates the same way.
+		const organizationId =
+			entity.organizationId ??
+			(entity.organization as { id?: string } | undefined)?.id ??
+			RequestContext.currentOrganizationId();
+
+		if (!organizationId) {
+			throw new BadRequestException(
+				'A collection belongs to an organization: state one, or select one for the request.'
+			);
+		}
+
 		if (entity.customerId && entity.type && entity.type !== CollectionType.MANUAL) {
 			throw new BadRequestException(
 				'A collection owned by a customer is a saved list and cannot be rule-based. Create it as MANUAL.'
@@ -50,7 +70,8 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			status: PublicationStatus.DRAFT,
 			sortOrder: 0,
 			isFeatured: false,
-			...entity
+			...entity,
+			organizationId
 		});
 
 		await this.eventBus.publish(CollectionChangedEvent.from(collection));

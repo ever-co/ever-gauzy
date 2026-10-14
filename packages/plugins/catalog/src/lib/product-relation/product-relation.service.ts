@@ -28,17 +28,36 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 	 *
 	 * @param entity The relation to create.
 	 * @returns The persisted relation.
-	 * @throws BadRequestException When the link points a product at itself.
+	 * @throws BadRequestException When the link points a product at itself, or when neither the input nor
+	 * the request states an organization.
 	 */
 	public async create(entity: DeepPartial<ProductRelation>): Promise<ProductRelation> {
 		if (entity.productId && entity.productId === entity.relatedProductId) {
 			throw new BadRequestException('A product cannot be related to itself.');
 		}
 
+		// The GraphQL input declares no organization and the base class stamps only the tenant, so a relation
+		// created without one belongs to the caller's organization — the scope every read of it is answered
+		// inside. It was written with a NULL organization and no read ever found it again (review R2-23). An
+		// organization the request stated is kept: REST validates it against the caller. With neither, there
+		// is no organization it could be found in, so it is refused rather than written unreachable.
+		// REST also accepts the relation form `organization: { id }`, which its DTO validates the same way.
+		const organizationId =
+			entity.organizationId ??
+			(entity.organization as { id?: string } | undefined)?.id ??
+			RequestContext.currentOrganizationId();
+
+		if (!organizationId) {
+			throw new BadRequestException(
+				'A product relation belongs to an organization: state one, or select one for the request.'
+			);
+		}
+
 		return super.create({
 			type: ProductRelationType.RELATED,
 			position: 0,
-			...entity
+			...entity,
+			organizationId
 		});
 	}
 
