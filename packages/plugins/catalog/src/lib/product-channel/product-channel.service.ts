@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { EventBus, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventBus, Product, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
 import { ProductPublishedEvent, ProductUnpublishedEvent } from '../events';
 import { ProductChannel } from './product-channel.entity';
@@ -32,7 +33,7 @@ export class ProductChannelService extends TenantAwareCrudService<ProductChannel
 	 */
 	public async findByProduct(productId: ID): Promise<ProductChannel[]> {
 		return this.typeOrmProductChannelRepository.find({
-			where: { productId, organizationId: RequestContext.currentOrganizationId() },
+			where: { productId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
 			order: { sortOrder: 'ASC' }
 		});
 	}
@@ -43,12 +44,17 @@ export class ProductChannelService extends TenantAwareCrudService<ProductChannel
 	 * The first transition to `ACTIVE` stamps `publishedAt` and no later transition clears it;
 	 * `unpublishedAt` is maintained as the exact complement, non-null while the row is not `ACTIVE`.
 	 *
+	 * **The product has to be the caller's, and only its rows are written** (review R2-20). The rows used to be
+	 * read by `productId` alone and updated by id, so a caller naming another tenant's product archived that
+	 * tenant's live listing — and was answered `[]`, because the read-back is scoped, so the write was invisible.
+	 *
 	 * @param productId The product being published.
 	 * @param channelIds The channels the operation applies to.
 	 * @param status The publication state to move to.
 	 * @param moment The instant to stamp, defaulting to now.
 	 * @returns The publication rows after the write.
 	 * @throws BadRequestException When no channel is named.
+	 * @throws NotFoundException When the product is not the caller's.
 	 */
 	public async setPublication(
 		productId: ID,
@@ -62,7 +68,9 @@ export class ProductChannelService extends TenantAwareCrudService<ProductChannel
 
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
-		const existing = await this.typeOrmProductChannelRepository.find({ where: { productId } });
+		await assertInCallerScope(this.typeOrmProductChannelRepository.manager, Product, productId, 'product');
+
+		const existing = await this.typeOrmProductChannelRepository.find({ where: { productId, ...callerScope() } });
 
 		await this.typeOrmProductChannelRepository.manager.transaction(async (manager) => {
 			for (const channelId of channelIds) {
@@ -109,7 +117,7 @@ export class ProductChannelService extends TenantAwareCrudService<ProductChannel
 	 */
 	public async isPublishedOn(productId: ID, channelId: ID): Promise<boolean> {
 		const count = await this.typeOrmProductChannelRepository.count({
-			where: { productId, channelId, status: PublicationStatus.ACTIVE }
+			where: { productId, channelId, status: PublicationStatus.ACTIVE, ...callerScope() }
 		});
 
 		return count > 0;

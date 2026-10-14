@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { TagProductVariant } from './tag-product-variant.entity';
 import { MikroOrmTagProductVariantRepository } from './repository/mikro-orm-tag-product-variant.repository';
 import { TypeOrmTagProductVariantRepository } from './repository/type-orm-tag-product-variant.repository';
@@ -30,7 +31,7 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 	 */
 	public async findByVariant(variantId: ID): Promise<TagProductVariant[]> {
 		return this.typeOrmTagProductVariantRepository.find({
-			where: { productVariantId: variantId, organizationId: RequestContext.currentOrganizationId() },
+			where: { productVariantId: variantId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
 			relations: { tag: true }
 		});
 	}
@@ -42,6 +43,8 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 	 * @param tagIds The complete set of facet values the variant should carry.
 	 * @returns The facet rows after the write.
 	 * @throws BadRequestException When a facet value is listed twice.
+	 * @throws NotFoundException When the variant is not the caller's (review R2-19: the facets used to be read by
+	 * `productVariantId` alone and the ones missing from the new set deleted by id, whoever owned them).
 	 */
 	public async replaceTags(variantId: ID, tagIds: ID[]): Promise<TagProductVariant[]> {
 		if (new Set(tagIds).size !== tagIds.length) {
@@ -50,8 +53,10 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
+		await assertInCallerScope(this.typeOrmTagProductVariantRepository.manager, ProductVariant, variantId, 'variant');
+
 		const existing = await this.typeOrmTagProductVariantRepository.find({
-			where: { productVariantId: variantId }
+			where: { productVariantId: variantId, ...callerScope() }
 		});
 		const kept = new Set(tagIds);
 		const removed = existing.filter((row) => !kept.has(row.tagId));
@@ -81,11 +86,14 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 	/**
 	 * Detaches one facet value from a variant.
 	 *
+	 * The delete is narrowed to the caller's tenant and organization, so it can only ever remove a facet row of
+	 * the caller's own; one of another tenant is left where it is (review R2-19).
+	 *
 	 * @param variantId The variant.
 	 * @param tagId The facet value to detach.
 	 */
 	public async detach(variantId: ID, tagId: ID): Promise<void> {
-		await this.typeOrmTagProductVariantRepository.delete({ productVariantId: variantId, tagId });
+		await this.typeOrmTagProductVariantRepository.delete({ productVariantId: variantId, tagId, ...callerScope() });
 	}
 
 	/**

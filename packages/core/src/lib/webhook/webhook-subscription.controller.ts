@@ -159,7 +159,7 @@ export class WebhookSubscriptionController {
 	@HttpCode(HttpStatus.OK)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<DeleteResult> {
-		return this.webhookSubscriptionService.delete(id);
+		return this.webhookSubscriptionService.deleteSubscription(id);
 	}
 
 	/**

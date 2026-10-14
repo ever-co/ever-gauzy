@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import {
 	InviteStatusEnum,
 	ContactOrganizationInviteStatus,
@@ -14,6 +14,7 @@ import { UpdateResult } from 'typeorm';
 import { TenantFeatureOrganizationCreateCommand } from './../../../tenant/commands';
 import { AuthService } from '../../../auth/auth.service';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
+import { OrganizationCommerceDefaultsCreateCommand } from '../../../organization/commands';
 import { OrganizationService } from '../../../organization/organization.service';
 import { TenantRoleBulkCreateCommand } from '../../../role/commands';
 import { RoleService } from '../../../role/role.service';
@@ -73,6 +74,8 @@ export function sanitizeContactOrganization(contactOrganization: IOrganizationCr
 @CommandHandler(InviteAcceptOrganizationContactCommand)
 export class InviteAcceptOrganizationContactHandler
 	implements ICommandHandler<InviteAcceptOrganizationContactCommand> {
+	private readonly logger = new Logger(InviteAcceptOrganizationContactHandler.name);
+
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
@@ -161,6 +164,17 @@ export class InviteAcceptOrganizationContactHandler
 			await this.commandBus.execute(
 				new ReportOrganizationCreateCommand(organization)
 			);
+
+			// 5.1 Seed the commerce defaults (default channel and region, numbering series, …) every
+			// organization needs before it can issue a document (R5-05). Logged, not thrown: the tenant and
+			// the organization are already committed, and the step is idempotent.
+			try {
+				await this.commandBus.execute(new OrganizationCommerceDefaultsCreateCommand(organization));
+			} catch (error) {
+				this.logger.error(
+					`Could not seed the commerce defaults of organization ${organization.id}: ${error?.message}`
+				);
+			}
 
 			// 6. Create contact details of created organization
 			const { id: organizationId } = organization;
