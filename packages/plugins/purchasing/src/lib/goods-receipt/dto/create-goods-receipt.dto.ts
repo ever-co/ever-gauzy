@@ -50,6 +50,8 @@ export class CreateGoodsReceiptLineInputDTO {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
+	// A JSON body (REST) and a GraphQL `DateTime` input both carry a string: convert it, or `@IsDate()` refuses every value
+	@Type(() => Date)
 	@IsDate()
 	readonly expiresAt?: Date;
 
