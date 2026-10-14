@@ -18,6 +18,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductType } from './product-type.entity';
 import { ProductTypeService } from './product-type.service';
 import { ProductTypeCreateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /**
  * One language's copy of a type's descriptive facts, as `ProductTypeTranslationInput` declares it.
@@ -207,9 +208,7 @@ export class ProductTypeResolver {
 	@Mutation('deleteProductType')
 	@Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
 	async deleteProductType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productTypeService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.productTypeService.delete(id));
 	}
 
 	/**

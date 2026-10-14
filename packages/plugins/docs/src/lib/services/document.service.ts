@@ -120,6 +120,19 @@ export const DOCUMENT_LIST_COLUMNS = [
 	'externalId'
 ];
 
+/**
+ * The concurrency token a content save writes: now, at millisecond resolution — and never the token
+ * it replaces, even when the clock has not moved past it (same millisecond, or a clock behind the
+ * replica that wrote the last one), so every accepted save hands out a token no earlier editor holds.
+ *
+ * @param loaded The `updatedAt` the save replaces.
+ */
+export function nextContentToken(loaded?: Date | string | null): Date {
+	const previous = loaded ? new Date(loaded).getTime() : Number.NaN;
+	const now = Date.now();
+	return new Date(Number.isFinite(previous) ? Math.max(now, previous + 1) : now);
+}
+
 @FavoriteService(BaseEntityEnum.Document)
 @Injectable()
 export class DocumentService extends TenantAwareCrudService<Document> {
@@ -538,9 +551,18 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			force: input.forceSnapshot === true
 		});
 
+		// 🛑 The loaded `updatedAt` must not travel with the save. It is the concurrency token, and the
+		// snapshot above may have just moved the row (its `version` update stamps `updatedAt`): spread
+		// back, the stale value read as a change to TypeORM, which then WROTE it — the token stayed put
+		// on the first save of every snapshot window, and so did the one the response handed the editor.
+		// Nor can the ORM's own stamp be relied on: on SQLite `CURRENT_TIMESTAMP` has one-second
+		// precision, so two saves inside one second would share a token. The save states its own,
+		// strictly newer than the one it replaces (see `nextContentToken`).
+		const { updatedAt: loadedToken, ...current } = document;
 		const updated = await this.save({
-			...document,
+			...current,
 			id: document.id,
+			updatedAt: nextContentToken(loadedToken),
 			contentJson,
 			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only

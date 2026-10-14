@@ -25,6 +25,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationProjectModuleCreateCommand, OrganizationProjectModuleUpdateCommand } from './commands';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { OrganizationProjectModuleService } from './organization-project-module.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationProjectModuleInput` declares in the schema. */
 export interface ICreateOrganizationProjectModuleInput {
@@ -413,9 +414,7 @@ export class OrganizationProjectModuleResolver {
 	@Mutation('deleteOrganizationProjectModule')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.PROJECT_MODULE_DELETE)
 	async deleteOrganizationProjectModule(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationProjectModuleService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationProjectModuleService.delete(id));
 	}
 
 	/**

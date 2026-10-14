@@ -29,6 +29,7 @@ import {
 	IWebhookSubscriptionDisabledEnvelope,
 	WEBHOOK_EVENT_NAMES
 } from './webhook-event.publisher';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateWebhookSubscriptionInput` declares in the schema. */
 export interface ICreateWebhookSubscriptionInput {
@@ -348,14 +349,13 @@ export class WebhookResolver {
 	 *
 	 * The delivered store answers its own delete result — a statement about the write, `{ affected }` —
 	 * which is not a row and not what a field named `deleteWebhookSubscription` may return; the field
-	 * answers the one fact the removal establishes, that it ran.
+	 * answers whether the removal reached a row —
+	 * `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
 	 */
 	@Mutation('deleteWebhookSubscription')
 	@Permissions(PermissionsEnum.WEBHOOKS_DELETE)
 	async deleteWebhookSubscription(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.webhookSubscriptionService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.webhookSubscriptionService.delete(id));
 	}
 
 	/**

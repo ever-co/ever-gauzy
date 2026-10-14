@@ -544,18 +544,21 @@ describe('CustomSmtpResolver — the guard stack and the permission are the cont
 		expect(stated).toEqual(expected);
 	});
 
-	it('states the one permission the controller states, on the class and on every field', () => {
-		// No handler on this controller states a permission of its own — the creation, the edit and the
-		// validator included — so the class-level one is the whole of every route's scope.
-		for (const { handler } of ROUTES) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(CustomSmtpController)[handler])).toBeUndefined();
-			expect(permissionOfRoute(handler)).toEqual([PermissionsEnum.CUSTOM_SMTP_VIEW]);
-		}
+	it('states the read grant on the class, the reads and the validator, and the write grant on every write', () => {
+		// The family had one grant until owner decision 5 (2026-10-13) needed a write grant for the
+		// soft-delete/recover pair: the reads and the validator (which stores nothing) keep the class's
+		// CUSTOM_SMTP_VIEW, and every write — the creation, the edit, the removal and the two lifecycle
+		// moves — states CUSTOM_SMTP_EDIT on its route and on its field.
+		const writes = new Set(['create', 'update', 'delete', 'softRemove', 'softRecover']);
 
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, CustomSmtpController)).toEqual([PermissionsEnum.CUSTOM_SMTP_VIEW]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, CustomSmtpResolver)).toEqual([PermissionsEnum.CUSTOM_SMTP_VIEW]);
 
-		for (const { field } of ROUTES) {
-			expect(permissionOfField(field)).toEqual([PermissionsEnum.CUSTOM_SMTP_VIEW]);
+		for (const { field, handler } of ROUTES) {
+			const grant = writes.has(handler) ? PermissionsEnum.CUSTOM_SMTP_EDIT : PermissionsEnum.CUSTOM_SMTP_VIEW;
+
+			expect({ handler, grant: permissionOfRoute(handler) }).toEqual({ handler, grant: [grant] });
+			expect({ field, grant: permissionOfField(field) }).toEqual({ field, grant: [grant] });
 		}
 	});
 });

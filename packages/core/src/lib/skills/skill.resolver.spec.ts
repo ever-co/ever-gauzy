@@ -339,6 +339,15 @@ describe('SkillResolver — one concept, two protocols, the same operations', ()
 		expect(skillService.delete).toHaveBeenCalledWith(FIRST);
 	});
 
+	it('answers false when the identifier names no skill of the caller — the delete matched nothing (§7.65 item 21)', async () => {
+		const { resolver, skillService } = surfaces();
+		// What the kernel's tenant-aware delete answers for a missing row: no error, nothing affected.
+		skillService.delete.mockResolvedValueOnce({ raw: [], affected: 0 });
+
+		expect(await resolver.deleteSkill(FIRST)).toBe(false);
+		expect(skillService.delete).toHaveBeenCalledWith(FIRST);
+	});
+
 	it('withdraws and restores a skill through the same service methods the REST routes call', async () => {
 		const { resolver, skillService } = surfaces();
 

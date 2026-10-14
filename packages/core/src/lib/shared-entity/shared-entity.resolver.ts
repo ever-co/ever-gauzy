@@ -23,6 +23,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { SharedEntity } from './shared-entity.entity';
 import { SharedEntityService } from './shared-entity.service';
 import { SharedEntityCreateCommand, SharedEntityUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateSharedEntityInput` declares in the schema. */
 export interface ICreateSharedEntityInput {
@@ -233,9 +234,7 @@ export class SharedEntityResolver {
 	 */
 	@Mutation('deleteSharedEntity')
 	async deleteSharedEntity(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.sharedEntityService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.sharedEntityService.delete(id));
 	}
 
 	/**
