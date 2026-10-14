@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Inject, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { DeepPartial } from 'typeorm';
 import {
@@ -48,6 +48,7 @@ import {
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 import { currentScope } from '../subscription.scope';
+import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionItemService } from '../subscription-item/subscription-item.service';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
@@ -65,6 +66,21 @@ import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscriptio
  * Either way the check and the increment are one statement rather than two.
  */
 const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The members of a subscription an edit may move (review R4-07): the payer, the quantity and the metadata - the
+ * members the GraphQL `UpdateSubscriptionInput` admits. Everything else moves through the subscription's own actions.
+ */
+export const SUBSCRIPTION_WRITABLE_MEMBERS: readonly string[] = [
+	'paymentAccountHolderId',
+	'paymentMethodTokenId',
+	'quantity',
+	'metadata',
+	// The concurrency and retry controls the GraphQL input carries beside the fields; they are read by the write and
+	// the retry kernel, never stored as values of the subscription.
+	'version',
+	'idempotencyKey'
+];
 
 /**
  * The version each write of one request is predicated on, handed out one write at a time.
@@ -155,6 +171,8 @@ const UNUSABLE_INSTRUMENT_CODES: ReadonlyArray<string> = [
  */
 @Injectable()
 export class SubscriptionService extends TenantAwareCrudService<Subscription> {
+	private readonly logger = new Logger(SubscriptionService.name);
+
 	constructor(
 		readonly typeOrmSubscriptionRepository: TypeOrmSubscriptionRepository,
 		readonly mikroOrmSubscriptionRepository: MikroOrmSubscriptionRepository,
@@ -193,13 +211,42 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		changes: DeepPartial<Subscription>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Subscription> {
+		// The edit moves the payer, the quantity and the metadata only (review R4-07): the lifecycle moves through
+		// pause, resume, cancel and expire, the plan through the plan change, and the billing schedule through the
+		// billing run. `PUT /subscriptions/:id {status:"ACTIVE", nextBillingAt:…}` reactivated a cancelled
+		// subscription for the next run to charge; the GraphQL input never admitted those members.
+		// A subscription that is not the caller's is left to the conditional write below, which answers it as before.
+		const stored = await this.findOneDetailed(id).catch((error) => {
+			if (error instanceof NotFoundException) return null;
+			throw error;
+		});
+		const moved = stored
+			? movedReadOnlyMembers(
+					stored as unknown as Record<string, unknown>,
+					(changes ?? {}) as Record<string, unknown>,
+					SUBSCRIPTION_WRITABLE_MEMBERS
+				)
+			: [];
+
+		if (moved.length > 0) {
+			throw notWritable(
+				'SUBSCRIPTION_FIELD_NOT_WRITABLE',
+				`${moved.join(', ')} of subscription '${id}' ${moved.length === 1 ? 'is' : 'are'} moved by its lifecycle ` +
+					`(pause, resume, cancel, expire, the plan change and the billing run), not by an edit.`,
+				{ subscriptionId: id, fields: moved, writable: SUBSCRIPTION_WRITABLE_MEMBERS }
+			);
+		}
+
 		await commitVersionedUpdate<Subscription>(this, {
 			where: currentScope(),
 			id,
 			expectation,
 			// The version is written by the conditional update and never by the caller's payload, so a body
 			// that named one cannot move the row past the version the write was predicated on.
-			patch: { ...(changes as Record<string, unknown>) } as Record<string, unknown> & Partial<Subscription>
+			// Only the writable members are written: a restated lifecycle member was checked above and is not echoed
+			// back over a cancellation that lands between the check and this statement.
+			patch: writableOnly(changes as Record<string, unknown>, SUBSCRIPTION_WRITABLE_MEMBERS) as Record<string, unknown> &
+				Partial<Subscription>
 		});
 
 		return await this.findOneDetailed(id);
@@ -1347,11 +1394,25 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 
 			if (result.paid) {
-				await this.billingService.markPaid(billing.id, {
-					paidAt: result.paidAt ?? new Date(),
-					orderId: result.orderId,
-					attemptCount: billing.attemptCount ?? 0
-				});
+				try {
+					await this.billingService.markPaid(billing.id, {
+						paidAt: result.paidAt ?? new Date(),
+						orderId: result.orderId,
+						attemptCount: billing.attemptCount ?? 0
+					});
+				} catch (error) {
+					// The money was taken; an operator settled the cycle another way (waived or refunded it) while the
+					// charge was in flight. That is not a failed charge, and reporting it as one would schedule a retry -
+					// a second charge. The cycle keeps the operator's decision and the conflict is logged for follow-up.
+					if ((error as { response?: { code?: string } })?.response?.code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
+						throw error;
+					}
+
+					this.logger.warn(
+						`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
+							`(order ${result.orderId}) succeeded; the cycle keeps the operator's status.`
+					);
+				}
 			} else {
 				await this.billingService.markInvoiced(billing.id, result.orderId, net.toStorageString());
 			}

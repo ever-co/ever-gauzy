@@ -1789,6 +1789,33 @@ describe('SubscriptionService — a failure is a state, not an exception (doc 11
 		expect(fixture.events.map((event) => event.name)).toEqual(['subscription.payment-failed']);
 	});
 
+	it.each([SubscriptionBillingStatus.PAID, SubscriptionBillingStatus.WAIVED])(
+		'does not turn a charge that succeeded into a failed attempt when an operator settled the cycle (%s) meanwhile (Greptile)',
+		async (settledAs) => {
+			// The charge is in flight when an operator records the cycle another way; the run's own `markPaid` then
+			// meets a cycle that is no longer payable. Reporting that as a failed charge would schedule a retry - a
+			// second charge of money already taken.
+			let fixture: ReturnType<typeof subscriptionFixture>;
+			fixture = subscriptionFixture({
+				orders: () => {
+					Object.assign(fixture.cycle(APRIL)!, {
+						status: settledAs,
+						paidAt: settledAs === SubscriptionBillingStatus.PAID ? new Date(APRIL) : null
+					});
+
+					return { orderId: 'order-1', paid: true };
+				}
+			});
+
+			const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			expect(outcome.status).not.toBe(SubscriptionBillingStatus.FAILED);
+			expect(fixture.cycle(APRIL)).toMatchObject({ status: settledAs });
+			expect(fixture.cycle(APRIL)?.nextRetryAt ?? null).toBeNull();
+			expect(fixture.events.map((event) => event.name)).not.toContain('subscription.payment-failed');
+		}
+	);
+
 	it('does not attempt the next charge before the dunning schedule says so', async () => {
 		// The retry instant lives on the cycle's own row, and the subscription is still selected by the due
 		// scan — so the pass has to respect the row rather than the calendar. The lock the failed attempt
@@ -2374,6 +2401,74 @@ describe('SubscriptionService — the versioned write', () => {
 		const changed = await fixture.service.applyChanges(SUBSCRIPTION, { quantity: '3' }, asReadByTheCaller);
 
 		expect(changed).toMatchObject({ quantity: '3', version: 2 });
+	});
+
+	/**
+	 * R4-07: `PUT /subscriptions/:id` and `updateSubscription` both reach `applyChanges`, and it wrote whatever it was
+	 * handed - `{status:"ACTIVE", nextBillingAt:"2020-01-01"}` reactivated a cancelled subscription for the next run to
+	 * charge, `billingCycleCount: 0` re-charged the setup fee, a new `currency` desynchronised the items' prices. The
+	 * edit moves the payer, the quantity and the metadata; the rest moves through the subscription's own actions.
+	 */
+	it.each([
+		['status', SubscriptionStatus.ACTIVE],
+		['nextBillingAt', new Date('2020-01-01T00:00:00.000Z')],
+		['billingCycleCount', 0],
+		['currency', 'EUR'],
+		['customerId', 'another-customer'],
+		['canceledAt', null]
+	])('refuses to move %s through the edit, and leaves the row as it was', async (member, value) => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					status: SubscriptionStatus.CANCELED,
+					canceledAt: new Date('2026-09-01T00:00:00.000Z'),
+					billingCycleCount: 4
+				})
+			]
+		});
+		const before = { ...fixture.subscription(SUBSCRIPTION) };
+
+		const refusal = await fixture.service
+			.applyChanges(SUBSCRIPTION, { [member]: value } as never, asReadByTheCaller)
+			.catch((error) => error);
+
+		expect(refusal.response).toMatchObject({
+			code: 'SUBSCRIPTION_FIELD_NOT_WRITABLE',
+			details: { subscriptionId: SUBSCRIPTION, fields: [member] }
+		});
+		// The read the refusal is decided on attaches the relations to the fixture row; every stored column is as it was.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject(before);
+	});
+
+	it('accepts a body that restates the lifecycle as stored, and writes the members it may', async () => {
+		const fixture = subscriptionFixture();
+		const stored = fixture.subscription(SUBSCRIPTION)!;
+
+		const changed = await fixture.service.applyChanges(
+			SUBSCRIPTION,
+			{ status: stored.status, currency: stored.currency, quantity: '2', metadata: { seat: 'B' } } as never,
+			asReadByTheCaller
+		);
+
+		expect(changed).toMatchObject({ status: stored.status, quantity: '2', metadata: { seat: 'B' } });
+	});
+
+	it('does not write a restated lifecycle member back over a cancellation that landed after the check (Greptile)', async () => {
+		const fixture = subscriptionFixture();
+		const stored = fixture.subscription(SUBSCRIPTION)!;
+
+		// The edit was read and checked while ACTIVE; a cancellation lands before the statement runs.
+		const original = fixture.service.findOneDetailed.bind(fixture.service);
+		jest.spyOn(fixture.service, 'findOneDetailed').mockImplementationOnce(async (id: string) => {
+			// What the check saw, as a snapshot: the row itself moves on after the read.
+			const read = { ...(await original(id)) };
+			stored.status = SubscriptionStatus.CANCELED;
+			return read as never;
+		});
+
+		await fixture.service.applyChanges(SUBSCRIPTION, { status: SubscriptionStatus.ACTIVE, quantity: '2' } as never);
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.CANCELED, quantity: '2' });
 	});
 
 	it('refuses a change predicated on a version the subscription no longer holds', async () => {

@@ -48,6 +48,7 @@ import { EntitlementKeyService } from '../entitlement-key/entitlement-key.servic
 import { EntitlementConditionDTO } from './dto/entitlement.dto';
 import { MikroOrmEntitlementRepository } from './repository/mikro-orm-entitlement.repository';
 import { TypeOrmEntitlementRepository } from './repository/type-orm-entitlement.repository';
+import { movedReadOnlyMembers, notWritable, writableOnly } from '../entitlement.writable';
 
 /** Statuses from which a right may be extended by a renewal. */
 const EXTENDABLE_STATUSES: EntitlementStatus[] = [
@@ -69,6 +70,24 @@ const SUSPENDABLE_STATUSES: EntitlementStatus[] = [EntitlementStatus.PENDING, En
  * Either way the check and the increment are one statement rather than two.
  */
 const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The members of a right an edit may move (review R4-09): its term, its ceiling, its activation limit and its extras -
+ * the members the GraphQL `UpdateEntitlementInput` admits (the conditions are replaced on their own). The state, the
+ * provenance (customer, order, order line, subscription), the number and the kind move only through the right's own
+ * actions: grant, activate, suspend, reinstate, revoke, expire.
+ */
+export const ENTITLEMENT_WRITABLE_MEMBERS: readonly string[] = [
+	'quantity',
+	'startsAt',
+	'endsAt',
+	'gracePeriodDays',
+	'activationLimit',
+	'metadata',
+	// Concurrency and retry controls a caller may state beside the fields; never stored as values of the right.
+	'version',
+	'idempotencyKey'
+];
 
 /**
  * The right itself: granting it, and the transitions that end or bend it.
@@ -118,12 +137,35 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		changes: Record<string, unknown>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Entitlement> {
+		// `PUT /entitlements/:id {status:"ACTIVE"}` resurrected a REVOKED (terminal) right with no event, and
+		// `{customerId:X}` moved a licence to another customer (review R4-09). The edit moves the term and the ceiling
+		// only; a value the caller restates as stored is not a move.
+		// A right that is not the caller's is left to the conditional write below, which answers it as before.
+		const stored = await this.findOneScoped(id).catch((error) => {
+			if (error instanceof NotFoundException) return null;
+			throw error;
+		});
+		const moved = stored
+			? movedReadOnlyMembers(stored as unknown as Record<string, unknown>, changes ?? {}, ENTITLEMENT_WRITABLE_MEMBERS)
+			: [];
+
+		if (moved.length > 0) {
+			throw notWritable(
+				'ENTITLEMENT_FIELD_NOT_WRITABLE',
+				`${moved.join(', ')} of entitlement '${id}' ${moved.length === 1 ? 'is' : 'are'} moved by its own actions ` +
+					`(grant, activate, suspend, reinstate, revoke, expire), not by an edit.`,
+				{ entitlementId: id, fields: moved, writable: ENTITLEMENT_WRITABLE_MEMBERS }
+			);
+		}
+
 		await commitVersionedUpdate(this, {
 			id,
 			expectation,
 			// The version is written by the conditional update and never by the caller's payload, so a
 			// body that carried one cannot move the row past the version the write was predicated on.
-			patch: { ...changes }
+			// Only the writable members are written: a restated state member was checked above and is not echoed back
+			// over a revocation that lands between the check and this statement.
+			patch: writableOnly(changes, ENTITLEMENT_WRITABLE_MEMBERS)
 		});
 
 		return await this.findOneDetailed(id);

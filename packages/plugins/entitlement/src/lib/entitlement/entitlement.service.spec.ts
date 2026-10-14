@@ -1423,6 +1423,57 @@ describe('EntitlementService — editing under the version the caller read (doc 
 			fixture.service.applyChanges('missing', { quantity: 4 }, { wildcard: false, versions: [2] })
 		).rejects.toMatchObject({ status: 404, code: ApiErrorCode.RESOURCE_NOT_FOUND });
 	});
+
+	/**
+	 * R4-09: `PUT /entitlements/:id` and `updateEntitlement` both reach `applyChanges`, which wrote what it was handed -
+	 * `{status:"ACTIVE"}` resurrected a `REVOKED` (terminal) right with no event, `{customerId:X}` moved a licence to
+	 * another customer. The edit moves the term, the ceiling, the activation limit and the extras; the state and the
+	 * provenance move through the right's own actions.
+	 */
+	it.each([
+		['status', EntitlementStatus.ACTIVE],
+		['customerId', 'another-customer'],
+		['orderId', 'another-order'],
+		['subscriptionId', 'another-subscription'],
+		['number', 'ENT-forged'],
+		['revokedReason', null]
+	])('refuses to move %s through the edit, and writes nothing', async (member, value) => {
+		const fixture = entitlementFixture({
+			rights: [
+				rightRow('a', {
+					version: 2,
+					status: EntitlementStatus.REVOKED,
+					revokedReason: 'chargeback',
+					customerId: 'customer-1',
+					orderId: 'order-1',
+					subscriptionId: 'subscription-1'
+				})
+			]
+		});
+		const before = { ...fixture.store('a') };
+
+		const refusal = await fixture.service
+			.applyChanges('a', { [member]: value }, { wildcard: false, versions: [2] })
+			.catch((error) => error);
+
+		expect(refusal.response).toMatchObject({
+			code: 'ENTITLEMENT_FIELD_NOT_WRITABLE',
+			details: { entitlementId: 'a', fields: [member] }
+		});
+		expect(fixture.store('a')).toEqual(before);
+	});
+
+	it('writes the term and the ceiling, and accepts a body that restates the state as stored', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		await fixture.service.applyChanges(
+			'a',
+			{ quantity: 5, gracePeriodDays: 7, status: EntitlementStatus.ACTIVE },
+			{ wildcard: false, versions: [2] }
+		);
+
+		expect(fixture.store('a')).toMatchObject({ quantity: 5, gracePeriodDays: 7, status: EntitlementStatus.ACTIVE });
+	});
 });
 
 /**

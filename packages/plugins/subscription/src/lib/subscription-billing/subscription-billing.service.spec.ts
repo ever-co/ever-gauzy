@@ -164,6 +164,8 @@ function repository(rows: Row[], options: { onSave?: (entity: Row) => void } = {
 					return (expected.value ?? []).some((candidate: unknown) => matchesValue(value, candidate));
 				case 'lessThanOrEqual':
 					return instant(value ?? 0) <= instant(expected.value ?? 0);
+				case 'isNull':
+					return value === null || value === undefined;
 				default:
 					throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 			}
@@ -245,9 +247,11 @@ function repository(rows: Row[], options: { onSave?: (entity: Row) => void } = {
 
 			return created;
 		},
+		// TypeORM's `update` applies the whole criteria it is handed - the conditional writes predicate the status
+		// and the billing history in it - so the double matches every member, not the id alone.
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows.findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows.findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(rows[index], partial);
@@ -668,6 +672,155 @@ describe('SubscriptionBillingService — the attempt history on the row (doc 11 
 		await expect(fixture.service.markWaived('theirs')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.markRefunded('theirs')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findOneScoped('no-such-cycle')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+/**
+ * R4-08 and R4-17: the correction route and the settling actions.
+ *
+ * `PUT /subscription-billings/:id` and `updateSubscriptionBilling` say "corrects a cycle that has not been charged",
+ * but wrote `status`, `paidAt`, `attemptCount` and `orderId` verbatim (`{status:"PAID"}` marked a cycle paid with no
+ * order) and rewrote the amount of a `PAID` cycle. `pay` turned a `REFUNDED` or `WAIVED` cycle back into `PAID`, and
+ * `waive` turned a `PAID` one into `WAIVED`, erasing the revenue it recorded.
+ */
+describe('SubscriptionBillingService — a correction moves an uncharged cycle’s amount, due date and metadata only', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each([
+		['status', SubscriptionBillingStatus.PAID],
+		['paidAt', new Date('2026-03-02T00:00:00.000Z')],
+		['attemptCount', 3],
+		['orderId', 'order-9'],
+		['periodStart', new Date('2025-01-01T00:00:00.000Z')]
+	])('refuses to write %s, and leaves the cycle as it was', async (member, value) => {
+		const fixture = billingFixture([billingRow('billing-1')]);
+		const before = { ...fixture.billing('billing-1') };
+
+		await expect(fixture.service.update('billing-1', { [member]: value })).rejects.toMatchObject({
+			response: { code: 'SUBSCRIPTION_BILLING_FIELD_NOT_WRITABLE', details: { fields: [member] } }
+		});
+		expect(fixture.billing('billing-1')).toEqual(before);
+	});
+
+	it('refuses any correction of a cycle that records money billed', async () => {
+		const fixture = billingFixture([
+			billingRow('paid', { status: SubscriptionBillingStatus.PAID, paidAt: new Date(), orderId: 'order-1' }),
+			billingRow('attempted', { attemptCount: 1 })
+		]);
+
+		for (const id of ['paid', 'attempted']) {
+			await expect(fixture.service.update(id, { amount: '0' })).rejects.toMatchObject({
+				response: { code: 'SUBSCRIPTION_BILLING_SETTLED' }
+			});
+		}
+		expect(fixture.billing('paid')?.amount).toBe('120.000000');
+	});
+
+	it('corrects the amount, the due date and the metadata of an uncharged cycle, restated members accepted', async () => {
+		const fixture = billingFixture([billingRow('billing-1')]);
+		const dueAt = new Date('2026-03-05T00:00:00.000Z');
+
+		await fixture.service.update('billing-1', {
+			amount: '99.5',
+			dueAt,
+			metadata: { note: 'agreed discount' },
+			status: SubscriptionBillingStatus.PENDING
+		});
+
+		expect(fixture.billing('billing-1')).toMatchObject({
+			amount: '99.500000',
+			dueAt,
+			metadata: { note: 'agreed discount' },
+			status: SubscriptionBillingStatus.PENDING
+		});
+	});
+
+	it('answers a cycle that is already paid as settled, without writing it again', async () => {
+		const paidAt = new Date('2026-03-02T00:00:00.000Z');
+		const fixture = billingFixture([billingRow('billing-1', { status: SubscriptionBillingStatus.PAID, paidAt, orderId: 'order-1' })]);
+
+		const paid = await fixture.service.markPaid('billing-1', { paidAt: new Date(), orderId: 'order-2' });
+
+		expect(paid).toMatchObject({ status: SubscriptionBillingStatus.PAID, paidAt, orderId: 'order-1' });
+	});
+
+	it.each([SubscriptionBillingStatus.REFUNDED, SubscriptionBillingStatus.WAIVED])(
+		'refuses to pay a %s cycle',
+		async (status) => {
+			const fixture = billingFixture([billingRow('billing-1', { status, paidAt: null })]);
+
+			await expect(fixture.service.markPaid('billing-1')).rejects.toMatchObject({
+				response: { code: 'SUBSCRIPTION_BILLING_TRANSITION_INVALID', details: { status } }
+			});
+			expect(fixture.billing('billing-1')?.status).toBe(status);
+		}
+	);
+
+	it.each([SubscriptionBillingStatus.PAID, SubscriptionBillingStatus.REFUNDED, SubscriptionBillingStatus.INVOICED])(
+		'refuses to waive a %s cycle',
+		async (status) => {
+			const fixture = billingFixture([billingRow('billing-1', { status })]);
+
+			await expect(fixture.service.markWaived('billing-1', { reason: 'goodwill' })).rejects.toMatchObject({
+				response: { code: 'SUBSCRIPTION_BILLING_TRANSITION_INVALID', details: { status } }
+			});
+			expect(fixture.billing('billing-1')?.status).toBe(status);
+		}
+	);
+
+	it('decides the write on the cycle as the statement finds it, not as an earlier read saw it (Greptile)', async () => {
+		// A charge lands between the correction's read and its write, and a waiver races a payment: the read says
+		// PENDING while the row is already PAID. The conditional statement matches nothing and the caller is refused.
+		const fixture = billingFixture([
+			billingRow('billing-1', { status: SubscriptionBillingStatus.PAID, paidAt: new Date(), orderId: 'order-1' })
+		]);
+		const stale = { ...fixture.billing('billing-1'), status: SubscriptionBillingStatus.PENDING, paidAt: null, orderId: null };
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockResolvedValueOnce(stale as never);
+		await expect(fixture.service.update('billing-1', { amount: '0' })).rejects.toMatchObject({
+			response: { code: 'SUBSCRIPTION_BILLING_SETTLED', details: { status: SubscriptionBillingStatus.PAID } }
+		});
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockResolvedValueOnce(stale as never);
+		await expect(fixture.service.markWaived('billing-1', { reason: 'goodwill' })).rejects.toMatchObject({
+			response: { code: 'SUBSCRIPTION_BILLING_TRANSITION_INVALID', details: { status: SubscriptionBillingStatus.PAID } }
+		});
+
+		expect(fixture.billing('billing-1')).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '120.000000' });
+		expect(fixture.billing('billing-1')?.paidAt).toBeInstanceOf(Date);
+	});
+
+	it('writes back none of the restated members it checked', async () => {
+		const fixture = billingFixture([billingRow('billing-1')]);
+		const update = jest.spyOn((fixture.service as any).typeOrmSubscriptionBillingRepository, 'update');
+
+		await fixture.service.update('billing-1', { amount: '99', status: SubscriptionBillingStatus.PENDING, attemptCount: 0 });
+
+		expect(update).toHaveBeenLastCalledWith(expect.anything(), { amount: '99.000000' });
+	});
+
+	it('pays a cycle that is due, invoiced or retrying, and waives one that is due or retrying', async () => {
+		const fixture = billingFixture([
+			billingRow('due'),
+			billingRow('invoiced', { status: SubscriptionBillingStatus.INVOICED }),
+			billingRow('failed', { status: SubscriptionBillingStatus.FAILED }),
+			billingRow('waive-due'),
+			billingRow('waive-failed', { status: SubscriptionBillingStatus.FAILED })
+		]);
+
+		for (const id of ['due', 'invoiced', 'failed']) {
+			expect((await fixture.service.markPaid(id)).status).toBe(SubscriptionBillingStatus.PAID);
+		}
+		for (const id of ['waive-due', 'waive-failed']) {
+			expect((await fixture.service.markWaived(id, { reason: 'goodwill' })).status).toBe(
+				SubscriptionBillingStatus.WAIVED
+			);
+		}
 	});
 });
 
