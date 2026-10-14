@@ -49,5 +49,5 @@ export class RecordViewPageComponent {
 	@Input() state: RecordViewPageState = 'loading';
 
 	/** The viewer asked to load the record again after a load error. */
-	@Output() retry = new EventEmitter<void>();
+	@Output() readonly retry = new EventEmitter<void>();
 }

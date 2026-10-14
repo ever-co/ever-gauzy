@@ -25,7 +25,7 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Actions } from '@ngneat/effects-ng';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { distinctUntilChanged, filter, firstValueFrom, map } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, firstValueFrom, map } from 'rxjs';
 import {
 	BaseEntityEnum,
 	DocumentKindEnum,
@@ -49,7 +49,7 @@ import { DocsExportService } from '../../services/docs-export.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
-import { documentPageLayoutOf, documentPageLayoutOnViewChange } from './document-page-view';
+import { documentPageLayouts } from './document-page-view';
 
 type RailTab = 'toc' | 'info' | 'comments';
 
@@ -126,8 +126,6 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	public menuOpen = false;
 	public iconPickerOpen = false;
 	public fullWidth = false;
-	/** Whether the current width / rail came from the `?view=full` parameter (a favorite), not the viewer. */
-	private layoutFromView = false;
 
 	public titleDraft = '';
 	public iconDraft = '';
@@ -211,16 +209,18 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		// `?view=full`: a sidebar favorite opens the page as wide as the shell allows, right rail closed
 		// (handover §4.P). Only that entry point carries it; the viewer can still toggle both afterwards.
 		// Normal navigation away from it (breadcrumb, tree) restores the defaults, as the component is reused.
-		this.route.queryParamMap
-			.pipe(
-				map((params) => params.get('view')),
-				distinctUntilChanged(),
-				takeUntilDestroyed(this.destroyRef)
-			)
-			.subscribe((view) => {
-				const layout = documentPageLayoutOnViewChange(view, this.layoutFromView);
-				this.layoutFromView = !!documentPageLayoutOf(view);
-				if (!layout) return;
+		// Keyed on the document too, so a second favorite re-applies the full view (`documentPageLayouts`).
+		documentPageLayouts(
+			combineLatest([
+				this.route.paramMap.pipe(
+					map((params) => params.get('id')),
+					filter((id): id is string => !!id)
+				),
+				this.route.queryParamMap.pipe(map((params) => params.get('view')))
+			]).pipe(map(([id, view]) => ({ id, view })))
+		)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((layout) => {
 				this.fullWidth = layout.fullWidth;
 				this.railOpen = layout.railOpen;
 				this.cdr.markForCheck();
