@@ -46,7 +46,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
 const SOURCE_ROOTS = [join(ROOT, 'packages', 'plugins'), join(ROOT, 'packages', 'core', 'src', 'lib')];
 
 /** Promised subscription fields not yet served. Only shrinks (rule 3). */
-const BACKLOG_BASELINE = 14;
+const BACKLOG_BASELINE = 12;
 
 /** Served plugin streams no producer feeds. Only shrinks (rule 4). */
 const SILENT_BASELINE = 6;
