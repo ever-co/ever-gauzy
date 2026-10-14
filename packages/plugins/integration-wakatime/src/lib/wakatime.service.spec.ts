@@ -44,10 +44,11 @@ describe('splitDuration (WakaTime summary)', () => {
 });
 
 describe('WakatimeService.getSummaries', () => {
-	// The tests run with the default ORM (TypeORM), so the sum comes from `typeOrmWakatimeRepository.query`
+	// Both repositories return the rows, so the tests hold whichever ORM (DB_ORM) the service was loaded with
 	const summaryFor = async (rows: any[]) => {
 		const query = jest.fn().mockResolvedValue(rows);
-		const service = new WakatimeService({ query } as any, {} as any);
+		const knex = { raw: jest.fn().mockResolvedValue(rows) };
+		const service = new WakatimeService({ query } as any, { getKnex: () => knex } as any);
 		const { data } = await service.getSummaries({});
 		return data[0].grand_total;
 	};
