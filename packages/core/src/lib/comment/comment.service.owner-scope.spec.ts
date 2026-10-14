@@ -26,6 +26,8 @@ import { CommentService } from './comment.service';
 describe('CommentService — withdrawing, restoring and removing a comment follow the rule editing it follows', () => {
 	const OWN = 'comment-own';
 	const THEIRS = 'comment-theirs';
+	/** An author-less comment a caller with no employee record posted. */
+	const POSTED = 'comment-posted-without-employee';
 
 	let service: CommentService;
 	let findOne: jest.Mock;
@@ -33,8 +35,9 @@ describe('CommentService — withdrawing, restoring and removing a comment follo
 	let baseSoftRecover: jest.SpyInstance;
 	let baseDelete: jest.SpyInstance;
 
-	const as = (employeeId: string | null, canChangeSelectedEmployee: boolean) => {
+	const as = (employeeId: string | null, canChangeSelectedEmployee: boolean, userId: string | null = 'user-me') => {
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(employeeId as any);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(userId as any);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
 			(permission: PermissionsEnum) => canChangeSelectedEmployee && permission === PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
@@ -44,12 +47,21 @@ describe('CommentService — withdrawing, restoring and removing a comment follo
 		service = Object.create(CommentService.prototype);
 		// The tenant-scoped lookup: a comment is found by its id, and — when the caller states an author — only
 		// when it is that author's.
-		findOne = jest.fn(async (id: string, options?: { where?: { employeeId?: string } }) => {
-			const author = id === OWN ? 'employee-me' : 'employee-other';
-			if (options?.where?.employeeId && options.where.employeeId !== author) {
+		findOne = jest.fn(async (id: string, options?: { where?: { employeeId?: string; createdByUserId?: string } }) => {
+			const row =
+				id === OWN
+					? { id, employeeId: 'employee-me', createdByUserId: 'user-me' }
+					: id === POSTED
+					? { id, employeeId: null, createdByUserId: 'user-me' }
+					: { id, employeeId: 'employee-other', createdByUserId: 'user-other' };
+			const where = options?.where ?? {};
+			if (
+				('employeeId' in where && where.employeeId !== row.employeeId) ||
+				('createdByUserId' in where && where.createdByUserId !== row.createdByUserId)
+			) {
 				throw new NotFoundException('The requested record was not found');
 			}
-			return { id, employeeId: author };
+			return row;
 		});
 		(service as any).findOneByIdString = findOne;
 		baseSoftRemove = jest.spyOn(CrudService.prototype, 'softRemove').mockResolvedValue({ deletedAt: new Date() } as any);
@@ -80,14 +92,30 @@ describe('CommentService — withdrawing, restoring and removing a comment follo
 		expect(baseDelete).not.toHaveBeenCalled();
 	});
 
-	it('refuses a caller with no employee identity who may not act for others — the hole the base scope left open', async () => {
+	it('refuses everybody else’s comments to a caller with no employee identity — the hole the base scope left open', async () => {
 		as(null, false);
 
-		await expect(service.softRemove(THEIRS)).rejects.toBeInstanceOf(ForbiddenException);
-		await expect(service.softRecover(THEIRS)).rejects.toBeInstanceOf(ForbiddenException);
-		await expect(service.delete(THEIRS)).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(service.softRemove(THEIRS)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.softRecover(THEIRS)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.delete(THEIRS)).rejects.toBeInstanceOf(NotFoundException);
 		expect(baseSoftRemove).not.toHaveBeenCalled();
 		expect(baseSoftRecover).not.toHaveBeenCalled();
+		expect(baseDelete).not.toHaveBeenCalled();
+	});
+
+	it('still lets a caller with no employee identity remove the comment they posted themselves', async () => {
+		as(null, false);
+
+		await expect(service.delete(POSTED)).resolves.toEqual({ affected: 1, raw: [] });
+		await expect(service.softRemove(POSTED)).resolves.toBeDefined();
+		expect(findOne).toHaveBeenCalledWith(POSTED, { where: { createdByUserId: 'user-me' } });
+	});
+
+	it('refuses a caller with no identity at all', async () => {
+		as(null, false, null);
+
+		await expect(service.delete(POSTED)).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(service.softRemove(POSTED)).rejects.toBeInstanceOf(ForbiddenException);
 		expect(baseDelete).not.toHaveBeenCalled();
 	});
 

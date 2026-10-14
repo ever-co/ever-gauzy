@@ -220,20 +220,26 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	}
 
 	/**
-	 * The rule `update` applies to whose comment a caller may change, applied to withdrawing, restoring and removing
-	 * one (owner decision 5, 2026-10-13: these routes stay equal to `update` — which states no permission, and
-	 * enforces this instead).
+	 * Who may withdraw, restore or remove a comment: the rule `update` applies to whose comment a caller may change
+	 * (owner decision 5, 2026-10-13: these routes stay equal to `update` — which states no permission, and enforces
+	 * this instead), with one addition so that no author loses a removal they have today.
 	 *
-	 * A CHANGE_SELECTED_EMPLOYEE holder may act on any comment of the tenant (the base scope already keeps it to the
-	 * tenant). Anyone else must have an employee identity, and the comment must be that employee's own: the read
-	 * goes through the tenant-scoped finder with the author stated, so another employee's comment answers 404 — and
-	 * it reads withdrawn rows when the act is a restoration. The refusal is raised before the base method runs,
-	 * because the base rethrows whatever fails inside it as a 404.
+	 * - A CHANGE_SELECTED_EMPLOYEE holder may act on any comment of the tenant (the base scope keeps it to the tenant).
+	 * - A caller with an employee identity may act on that employee's comments only — the read goes through the
+	 *   tenant-scoped finder with the author stated, so another employee's comment answers 404.
+	 * - A caller with no employee identity may act only on the comments they posted themselves (`createdByUserId`).
+	 *   `create` lets such a caller post an author-less comment, and the documents UI removes a comment with
+	 *   `DELETE /comment/:id`; `update` refuses them outright, but refusing the removal of their own comment
+	 *   would take away a flow they have. What they lose is what the base scope wrongly gave them: every other
+	 *   comment of the tenant.
+	 *
+	 * A restoration reads among withdrawn rows. The refusal is raised before the base method runs, because the base
+	 * rethrows whatever fails inside it as a 404.
 	 *
 	 * @param id - The comment acted on.
 	 * @param withDeleted - Whether the comment is read among withdrawn rows (a restoration).
-	 * @throws {ForbiddenException} When the caller has no employee identity and may not act for others.
-	 * @throws {NotFoundException} When the comment is not the caller's own.
+	 * @throws {ForbiddenException} When the caller has neither an employee identity nor a user identity.
+	 * @throws {NotFoundException} When the comment is not one the caller may act on.
 	 */
 	private async assertMayManage(id: ID, withDeleted: boolean): Promise<void> {
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
@@ -241,13 +247,12 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		const employeeId = RequestContext.currentEmployeeId();
-		if (!employeeId) {
+		const userId = RequestContext.currentUserId();
+		if (!employeeId && !userId) {
 			throw new ForbiddenException(`You don't have permission to manage this comment`);
 		}
 
-		await this.findOneByIdString(id, {
-			where: { employeeId } as FindOptionsWhere<Comment>,
-			...(withDeleted ? { withDeleted: true } : {})
-		});
+		const own = (employeeId ? { employeeId } : { createdByUserId: userId }) as FindOptionsWhere<Comment>;
+		await this.findOneByIdString(id, { where: own, ...(withDeleted ? { withDeleted: true } : {}) });
 	}
 }
