@@ -657,9 +657,6 @@ function subscriptionFixture(
 
 			return record ? { ...record, status: record.response ? 'COMPLETED' : 'IN_PROGRESS' } : null;
 		},
-		/** The platform's side-effect-free lease check, on this store's clock. */
-		isLeaseLive: (record: Row) =>
-			record.status === 'IN_PROGRESS' && !!record.lockedAt && storeNow() - record.lockedAt <= staleLockMs,
 		/** Models a restarted store: the claims are gone, the rows the store protected are not. */
 		forget: () => records.clear(),
 		/** Models the passage of time, which is what ages a lock out between two attempts. */
@@ -2971,9 +2968,10 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		});
 	});
 
-	it('restarts the opening period at the resume when the claim on it was left stale by a pass that stopped', async () => {
-		// CodeRabbit on #10635: a claim held past the stale-lock window is not a running charge — the next pass
-		// takes it over — so it does not keep the period the customer paused before paying for.
+	it('keeps the opening period while a pass holds its claim, even past the stale-lock window', async () => {
+		// Greptile on #10635 ("Slow billing loses its protection"): a pass neither refreshes its claim nor stops
+		// when the stale-lock window passes, so a claim's age cannot show that its charge stopped — moving the
+		// cycle under a slow charge would put the order, the cycle and the subscription on different dates.
 		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
 		const created = await fixture.service.createSubscription({
 			planId: PLAN,
@@ -2996,8 +2994,8 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		const resumedAt = new Date(start.getTime() + 10 * 24 * 60 * 60 * 1000);
 		const resumed = await fixture.service.resume(created.id, resumedAt);
 
-		expect(resumed).toMatchObject({ currentPeriodStart: resumedAt, nextBillingAt: resumedAt });
-		expect(fixture.billings(created.id)).toEqual([expect.objectContaining({ id: opening.id, periodStart: resumedAt })]);
+		expect(resumed).toMatchObject({ currentPeriodStart: start, nextBillingAt: start });
+		expect(fixture.billings(created.id)).toEqual([expect.objectContaining({ id: opening.id, periodStart: start })]);
 	});
 
 	it('reads the running charge’s claim before the resume opens its transaction', async () => {
