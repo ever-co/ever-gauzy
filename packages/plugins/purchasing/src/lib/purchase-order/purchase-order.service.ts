@@ -15,6 +15,7 @@ import {
 	IPurchaseOrder,
 	IPurchaseOrderInput,
 	IPurchaseOrderLineInput,
+	PURCHASE_ORDER_EDITABLE_STATUSES,
 	PURCHASING_APPROVAL,
 	PurchaseOrderStatus
 } from '../purchasing.types';
@@ -29,7 +30,7 @@ import { TypeOrmPurchaseOrderRepository } from './repository/type-orm-purchase-o
 const PURCHASE_ORDER_NUMBER_KEY = 'PO';
 
 /** The statuses a purchase order may still be edited in. */
-const EDITABLE_STATUSES: PurchaseOrderStatus[] = [PurchaseOrderStatus.DRAFT];
+const EDITABLE_STATUSES: PurchaseOrderStatus[] = [...PURCHASE_ORDER_EDITABLE_STATUSES];
 
 /** The statuses an order may still be sent from. */
 const SENDABLE_STATUSES: PurchaseOrderStatus[] = [PurchaseOrderStatus.DRAFT];
@@ -287,6 +288,79 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		this.assertStatus(purchaseOrder, EDITABLE_STATUSES, 'deleted');
 
 		return await super.delete(id);
+	}
+
+	/**
+	 * Withdraws a draft purchase order, by the same rule as `delete` (review R2-11).
+	 *
+	 * `DELETE /purchase-orders/:id/soft` and `softDeletePurchaseOrder` reached the inherited withdrawal with no
+	 * lifecycle check, so an order the supplier had been told about — or one goods had arrived against — vanished
+	 * from every read (`findOneScoped` skips retired rows), and nothing could receive against it, cancel it or close
+	 * it. Only a draft is withdrawn; a sent order is cancelled and a received one is closed, because both of those
+	 * leave a document that explains what happened.
+	 *
+	 * Recovering an order is not guarded: a withdrawal moves no counter and no total, so putting an order back
+	 * restores exactly the state it was withdrawn in — which is also how an order withdrawn before this guard
+	 * existed is brought back.
+	 *
+	 * @param id The order to withdraw.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The withdrawn order.
+	 * @throws NotFoundException when the order is not the caller's.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when it has left `DRAFT`.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<PurchaseOrder> {
+		const purchaseOrder = await this.findOneScoped(id);
+
+		this.assertStatus(purchaseOrder, EDITABLE_STATUSES, 'deleted');
+
+		return await super.softRemove(id, rest[0], rest[1]);
+	}
+
+	/**
+	 * Withdraws one line of a draft order and rewrites the totals, as removing it does (review R2-11).
+	 *
+	 * The line's own `softRemove` refuses a line of an order that has left `DRAFT`; this is the operation the line
+	 * surface calls (`DELETE /purchase-order-lines/:id/soft`, `softDeletePurchaseOrderLine`), because the header is a
+	 * function of the whole line set and a withdrawn line has to leave it exactly as a removed one does. It used to
+	 * leave the header counting the line.
+	 *
+	 * @param lineId The line to withdraw.
+	 * @returns The withdrawn line.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`.
+	 */
+	public async softRemoveLine(lineId: ID): Promise<PurchaseOrderLine> {
+		const line = await this.lineService.softRemove(lineId);
+
+		await this.rewriteTotalsAfterLineChange(line.purchaseOrderId as ID);
+
+		return line;
+	}
+
+	/**
+	 * Puts a withdrawn line back into a draft order and rewrites the totals (review R2-11).
+	 *
+	 * The line's own `softRecover` refuses an order that has left `DRAFT`: putting a line back into a sent order
+	 * would change what the supplier was told and what the order is waiting for.
+	 *
+	 * @param lineId The line to restore.
+	 * @returns The restored line.
+	 * @throws ConflictException with `PURCHASE_ORDER_INVALID_STATE` when the order has left `DRAFT`.
+	 */
+	public async softRecoverLine(lineId: ID): Promise<PurchaseOrderLine> {
+		const line = await this.lineService.softRecover(lineId);
+
+		await this.rewriteTotalsAfterLineChange(line.purchaseOrderId as ID);
+
+		return line;
+	}
+
+	/** The lines' derived totals, then the header's — what the hard delete of a line does after it. */
+	private async rewriteTotalsAfterLineChange(purchaseOrderId: ID): Promise<void> {
+		const purchaseOrder = await this.findOneScoped(purchaseOrderId);
+
+		await this.lineService.rewriteLineTotals(purchaseOrder.id, purchaseOrder.currency);
+		await this.recomputeTotalsFor(purchaseOrder.id);
 	}
 
 	/*

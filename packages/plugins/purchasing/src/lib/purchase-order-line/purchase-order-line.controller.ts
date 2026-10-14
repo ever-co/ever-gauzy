@@ -182,19 +182,22 @@ export class PurchaseOrderLineController extends CrudController<PurchaseOrderLin
 	 * demanding only this controller's class-level view grant. It now states `PURCHASE_ORDERS_EDIT`, the
 	 * grant the order these rows belong to is amended and deleted under.
 	 *
+	 * The withdrawal keeps to the hard delete's rule (review R2-11): only a line of a `DRAFT` order, and the line
+	 * and header totals are rewritten after it — `PurchaseOrderService.softRemoveLine` does both.
+	 *
 	 * @param id The line to soft delete.
-	 * @param options The inherited options, forwarded to the service.
+	 * @param options The inherited options; the withdrawal takes none.
 	 * @returns The soft-deleted line.
 	 */
 	@ApiOperation({ summary: 'Soft delete a record by ID' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The order has left DRAFT.' })
 	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	@Delete(':id/soft')
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		// The base hands this same array over; the service's signature names find options, hence the cast.
-		return await super.softRemove(id, ...options);
+		return await this.purchaseOrderService.softRemoveLine(id);
 	}
 
 	/**
@@ -208,18 +211,21 @@ export class PurchaseOrderLineController extends CrudController<PurchaseOrderLin
 	 * demanding only this controller's class-level view grant. It now states `PURCHASE_ORDERS_EDIT`, the
 	 * grant the order these rows belong to is amended and deleted under.
 	 *
+	 * Putting a line back keeps to the same rule (review R2-11): only into a `DRAFT` order, with the totals
+	 * rewritten — `PurchaseOrderService.softRecoverLine`.
+	 *
 	 * @param id The line to restore.
-	 * @param options The inherited options, forwarded to the service.
+	 * @param options The inherited options; the recovery takes none.
 	 * @returns The restored line.
 	 */
 	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The order has left DRAFT.' })
 	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	@Put(':id/recover')
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		// The base hands this same array over; the service's signature names find options, hence the cast.
-		return await super.softRecover(id, ...options);
+		return await this.purchaseOrderService.softRecoverLine(id);
 	}
 }

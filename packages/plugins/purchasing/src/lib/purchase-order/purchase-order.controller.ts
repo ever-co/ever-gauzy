@@ -345,6 +345,7 @@ export class PurchaseOrderController extends CrudController<PurchaseOrder> {
 	 */
 	@ApiOperation({ summary: 'Soft delete a record by ID' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The order has left DRAFT.' })
 	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	@Delete(':id/soft')
 	@HttpCode(HttpStatus.ACCEPTED)

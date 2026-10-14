@@ -182,6 +182,7 @@ export class GoodsReceiptController extends CrudController<GoodsReceipt> {
 	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record deleted successfully' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The receipt is POSTED; reverse it first (GOODS_RECEIPT_NOT_DELETABLE).' })
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
@@ -206,6 +207,7 @@ export class GoodsReceiptController extends CrudController<GoodsReceipt> {
 	 */
 	@ApiOperation({ summary: 'Soft delete a record by ID' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The receipt is POSTED; reverse it first (GOODS_RECEIPT_NOT_DELETABLE).' })
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	@Delete(':id/soft')
 	@HttpCode(HttpStatus.ACCEPTED)
