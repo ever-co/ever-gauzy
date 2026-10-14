@@ -375,3 +375,7 @@ jobs:
       - name: Every package the API and worker images load at runtime is installed in them
         if: always()
         run: node tools/scripts/runtime-dependency-check.mjs
+
+      - name: The runtime dependency check's own cases
+        if: always()
+        run: node --test tools/scripts/runtime-dependency-check.test.mjs
