@@ -68,25 +68,33 @@ export class OrderAddressController extends CrudController<OrderAddress> {
 	}
 
 	/**
-	 * Deletes an order address by id.
+	 * Retires an order address. This route no longer erases one.
 	 *
-	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
-	 * `PermissionGuard` answers `true` to empty metadata — its `isEmpty(permissions)` return in
-	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler demanded nothing
-	 * beyond this controller's class-level view grant. This override exists only to state that permission:
-	 * the path and the body are the base class's, and the grant is `ORDERS_EDIT`, the same one this
-	 * resource's update route already requires.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row. `13` §11.4 keeps every
+	 * order table in one retention row — "`order*`, `payment` (the columns this programme adds), `payment_capture`,
+	 * `refund`, `tax_line`, `adjustment`, `subscription_billing`, `order_return*` | Indefinite | Soft delete only
+	 * (`deletedAt`); no hard delete through the API" — and the owner decided it again on 2026-10-13 ("Soft delete
+	 * only").
 	 *
-	 * @param id The order address.
-	 * @returns The result of the delete.
+	 * An address of an order is the snapshot the order was placed, and shipped, with.
+	 *
+	 * The route therefore retires the row exactly as `DELETE ':id/soft'` does: through the service's `softRemove`,
+	 * which keeps the row with `deletedAt` set and lets `PUT ':id/recover'` bring it back. There is no hard-delete path
+	 * through the API. The route's path, its status and its permission — `ORDERS_EDIT`, which the base class leaves
+	 * unstated — are unchanged.
+	 *
+	 * @param id The order address to retire.
+	 * @param options The inherited rest parameter; the retirement reads the row in the caller's scope.
+	 * @returns The retired order address.
 	 */
-	@ApiOperation({ summary: 'Delete an order address' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order address was deleted' })
+	@ApiOperation({ summary: 'Retire an order address (soft delete; it is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order address was retired' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order address not found' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.service.softRemove(id);
 	}
 
 	/**

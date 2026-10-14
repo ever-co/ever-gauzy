@@ -22,6 +22,7 @@ import { DateRangePickerComponent, dayOfWeekAsString } from './date-range-picker
 import { EmployeeSelectorComponent } from './employee/employee.component';
 import { ProjectSelectModule } from './project/project.module';
 import { TeamSelectModule } from './team/team.module';
+import { EntitySelectPanelDirective } from './entity-select-panel.directive';
 
 const COMPONENTS = [
 	DateRangePickerComponent,
@@ -50,6 +51,7 @@ const MODULES = [ProjectSelectModule, TeamSelectModule];
 		NgSelectModule,
 		TranslatePipe,
 		DirectivesModule,
+		EntitySelectPanelDirective,
 		...MODULES
 	],
 	exports: [...COMPONENTS, ...MODULES],

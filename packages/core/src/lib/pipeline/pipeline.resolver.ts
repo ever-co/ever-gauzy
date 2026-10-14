@@ -18,6 +18,7 @@ import { Deal } from '../deal/deal.entity';
 import { DEAL_FILTERABLE, DEAL_SORTABLE } from '../deal/deal.resolver';
 import { Pipeline } from './pipeline.entity';
 import { PipelineService } from './pipeline.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** One stage of a pipeline, as `PipelineStageInput` declares it. */
 export interface IPipelineStageInput {
@@ -265,9 +266,7 @@ export class PipelineResolver {
 	@Mutation('deletePipeline')
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	async deletePipeline(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.pipelineService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.pipelineService.delete(id));
 	}
 
 	/**

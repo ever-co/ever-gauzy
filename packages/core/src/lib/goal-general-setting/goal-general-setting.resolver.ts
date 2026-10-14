@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateGoalGeneralSettingInput` declares in the schema. */
 export interface ICreateGoalGeneralSettingInput {
@@ -203,9 +204,7 @@ export class GoalGeneralSettingResolver {
 	 */
 	@Mutation('deleteGoalGeneralSetting')
 	async deleteGoalGeneralSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalGeneralSettingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.goalGeneralSettingService.delete(id));
 	}
 
 	/**

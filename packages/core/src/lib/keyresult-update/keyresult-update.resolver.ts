@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateKeyResultUpdateInput` declares in the schema. */
 export interface ICreateKeyResultUpdateInput {
@@ -226,9 +227,7 @@ export class KeyResultUpdateResolver {
 	 */
 	@Mutation('deleteKeyResultUpdate')
 	async deleteKeyResultUpdate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.keyResultUpdateService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.keyResultUpdateService.delete(id));
 	}
 
 	/**

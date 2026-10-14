@@ -19,6 +19,7 @@ import { ScreeningTask } from './screening-task.entity';
 import { ScreeningTasksService } from './screening-tasks.service';
 import { ScreeningTaskCreateCommand, ScreeningTaskUpdateCommand } from './commands';
 import { ICreateTaskInput } from '../task.resolver';
+import { deleteRemovedRows } from '../../graphql/delete-answer';
 
 /** The members `CreateScreeningTaskInput` declares in the schema. */
 export interface ICreateScreeningTaskInput {
@@ -181,9 +182,7 @@ export class ScreeningTaskResolver {
 	 */
 	@Mutation('deleteScreeningTask')
 	async deleteScreeningTask(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.screeningTasksService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.screeningTasksService.delete(id));
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import { Field, Float, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
 	CommissionBasis,
 	DecimalString,
@@ -131,7 +131,7 @@ export class SellerType {
 	 * The seller's own commission rate. A seller reads its own; another seller's is a scope violation
 	 * rather than a hidden field.
 	 */
-	@Field(() => Float, { nullable: true })
+	@Field(() => DecimalScalar, { nullable: true })
 	defaultCommissionRate?: number;
 
 	@Field(() => CommissionBasis, { nullable: true })
@@ -149,7 +149,7 @@ export class SellerType {
 	@Field(() => DecimalScalar)
 	payoutThreshold: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	reservePercent: number;
 
 	@Field(() => Int)
@@ -176,19 +176,19 @@ export class SellerBalanceType {
 	@Field(() => String)
 	currency: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	available: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	pending: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	held: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	negativeCarryForward: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	reserveNextRun: number;
 
 	@Field(() => Date, { nullable: true })
@@ -250,10 +250,10 @@ export class SellerStatementType {
 	@Field(() => DecimalScalar)
 	closingBalance: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	negativeCarryForward: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	reserveNextRun: number;
 }
 
@@ -287,10 +287,10 @@ export class SellerTransactionType {
 	@Field(() => DecimalScalar)
 	taxAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	sellerDiscountAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	platformDiscountAmount: number;
 
 	@Field(() => CommissionBasis)
@@ -299,7 +299,7 @@ export class SellerTransactionType {
 	@Field(() => DecimalScalar)
 	commissionBasisAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	commissionRate: number;
 
 	@Field(() => DecimalScalar)
@@ -351,7 +351,7 @@ export class SellerOfferingType {
 	@Field(() => String, { nullable: true })
 	priceCurrency?: string;
 
-	@Field(() => Float, { nullable: true })
+	@Field(() => DecimalScalar, { nullable: true })
 	commissionRate?: number;
 
 	@Field(() => OfferingStatus)
@@ -494,15 +494,15 @@ export class SellerSplitReconciliationType {
 	@Field(() => DecimalScalar)
 	sumCommission: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	platformDiscount: number;
 
 	/** A non-zero delta is a defect, not a rounding curiosity. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	splitDelta: number;
 
 	/** What the platform kept on the seller-owned part; legitimately negative. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	platformRetained: number;
 }
 
@@ -612,7 +612,7 @@ export class SellerPayoutRunResultType {
 	reserveAmount: number;
 
 	/** What was payable after the reserve and the hold window. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	payable: number;
 
 	/** The payout the run created, absent when it created none. */

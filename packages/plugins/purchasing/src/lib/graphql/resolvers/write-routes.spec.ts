@@ -74,6 +74,7 @@ import { schemaExtensions } from '../schema-extensions';
 import { GoodsReceiptResolver } from './goods-receipt.resolver';
 import { GoodsReceiptLineResolver } from './goods-receipt-line.resolver';
 import { PurchaseOrderResolver } from './purchase-order.resolver';
+import { VendorProductTermResolver } from './vendor-product-term.resolver';
 
 type Row = Record<string, any>;
 
@@ -833,5 +834,56 @@ describe('the nine flagged routes — two collapsed, three through a parent, two
 		expect(declares('deleteGoodsReceipt')).toBe(true);
 		expect(declares('deleteGoodsReceiptLine')).toBe(true);
 		expect(ORDER).toBeDefined();
+	});
+});
+
+/**
+ * The four hard-delete fields answer what the delete did (handover 2026-09-20 §7.65 item 21).
+ *
+ * The receipt and receipt-line services' `delete` is the kernel's, which checks no existence: an identifier that
+ * names no row of the caller matches nothing, answers `affected: 0` and raises nothing — and each field used to
+ * answer `{ id, userErrors: [] }`, "carrying the identity that was removed", for a row that was never there. The
+ * purchase order's and the vendor term's `delete` read the row first, so for them the change is the shared
+ * reading, and a vendor term in use is deactivated rather than removed (its service answers the row), which
+ * still reads as done.
+ */
+describe('the delete fields answer NOT_FOUND for a delete that removed nothing', () => {
+	const FIELDS: Array<[string, (service: any) => any]> = [
+		['deleteGoodsReceipt', (service) => new GoodsReceiptResolver(service, {} as never)],
+		['deleteGoodsReceiptLine', (service) => new GoodsReceiptLineResolver({} as never, service)],
+		['deletePurchaseOrder', (service) => new PurchaseOrderResolver(service, {} as never, {} as never)],
+		['deleteVendorProductTerm', (service) => new VendorProductTermResolver(service)]
+	];
+
+	it.each(FIELDS)('%s answers NOT_FOUND on the id, and no identity, when the delete matched no row', async (field, build) => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 0 }) };
+
+		await expect(build(service)[field](RECEIPT)).resolves.toEqual({
+			id: null,
+			userErrors: [
+				{
+					code: 'NOT_FOUND',
+					message: `NOT_FOUND: no record with id ${RECEIPT} was found to delete.`,
+					path: ['id'],
+					details: { id: RECEIPT }
+				}
+			]
+		});
+		expect(service.delete).toHaveBeenCalledWith(RECEIPT);
+	});
+
+	it.each(FIELDS)('%s answers the identity when the delete removed the row', async (field, build) => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 1 }) };
+
+		await expect(build(service)[field](RECEIPT)).resolves.toEqual({ id: RECEIPT, userErrors: [] });
+	});
+
+	it('reads a vendor term that was deactivated rather than removed as done: the service answered the row', async () => {
+		const service = { delete: jest.fn().mockResolvedValue({ id: RECEIPT, status: 'INACTIVE' }) };
+
+		await expect(new VendorProductTermResolver(service as never).deleteVendorProductTerm(RECEIPT)).resolves.toEqual({
+			id: RECEIPT,
+			userErrors: []
+		});
 	});
 });

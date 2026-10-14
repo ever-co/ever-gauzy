@@ -39,6 +39,7 @@ import {
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { FindInviteByEmailCodeQuery, FindInviteByEmailTokenQuery } from './queries';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateInvitesInput` declares in the schema. */
 export interface ICreateInvitesInput {
@@ -451,9 +452,7 @@ export class InviteResolver {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	async deleteInvite(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.inviteService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.inviteService.delete(id));
 	}
 
 	/**

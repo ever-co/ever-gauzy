@@ -17,6 +17,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { ExpenseCategoryCreateCommand, ExpenseCategoryUpdateCommand } from './commands';
 import { ExpenseCategory } from './expense-category.entity';
 import { ExpenseCategoriesService } from './expense-categories.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateExpenseCategoryInput` declares in the schema. */
 export interface ICreateExpenseCategoryInput {
@@ -220,16 +221,15 @@ export class ExpenseCategoriesResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own
 	 * delete result — a statement about the write, `{ affected }` — which is not a row and not what a
-	 * field named `deleteExpenseCategory` may return; the field answers the one fact the removal
-	 * establishes, that it ran. A category an expense still points at is the store's own constraint to
+	 * field named `deleteExpenseCategory` may return; the field answers whether the removal reached a row
+	 * — `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
+	 * A category an expense still points at is the store's own constraint to
 	 * refuse, and this field does not pre-empt it.
 	 */
 	@Mutation('deleteExpenseCategory')
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	async deleteExpenseCategory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.expenseCategoriesService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.expenseCategoriesService.delete(id));
 	}
 
 	/**

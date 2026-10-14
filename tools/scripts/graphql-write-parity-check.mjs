@@ -49,6 +49,15 @@ const OUTSTANDING = {
 
 };
 
+/**
+ * Controllers whose GraphQL type has a different name from the resource the controller is named after, mapped
+ * to that type's name. Only a name the SDL actually declares belongs here — the entry is checked by the pair
+ * being found under it, so a wrong one fails like a missing pair.
+ */
+const TYPE_NAMES = {
+	CustomSmtp: 'SmtpSetting'
+};
+
 /** Every file under a directory whose name ends with a suffix, skipping build output. */
 function walk(directory, suffix, found = []) {
 	for (const entry of readdirSync(directory)) {
@@ -130,15 +139,21 @@ for (const root of ROOTS) {
 			// `ScreeningTasksController`) while their GraphQL type, and so its fields, are singular
 			// (`softDeleteCandidateFeedback`). The type's name is the one the convention follows, so the
 			// singular spelling answers the pair as well.
-			const names = /s$/.test(resource) ? [resource, resource.slice(0, -1)] : [resource];
+			// And one controller is named after its table while its GraphQL type is named after the concept:
+			// `CustomSmtpController` serves the type `SmtpSetting`, whose fields are `softDeleteSmtpSetting` and
+			// `recoverSmtpSetting`. The type's name is the one the convention follows, so it answers the pair too.
+			const names = [
+				...(/s$/.test(resource) ? [resource, resource.slice(0, -1)] : [resource]),
+				...(TYPE_NAMES[resource] ? [TYPE_NAMES[resource]] : [])
+			];
 			const softDelete = names.map((name) => `softDelete${name}`).find((name) => fields.has(name)) ?? `softDelete${resource}`;
-			// The act has two names in this repository and both are correct. §10's table gives
-			// `PUT /<resource>/:id/recover` the field name `restore<Type>`, while a hundred and eleven of the
-			// delivered fields spell it `recover<Type>`; `restoreSeller` is the one that follows the table.
-			// A gate that accepted only one spelling would fail the other, so it accepts either — the
-			// divergence between the table and the surface is recorded in the specification, not settled here.
-			const recovered =
-				names.flatMap((name) => [`recover${name}`, `restore${name}`]).find((name) => fields.has(name)) ?? null;
+			// The act has one name: `recover<Type>`. §10's table used to give `PUT /<resource>/:id/recover` the
+			// field name `restore<Type>` while a hundred and eleven delivered fields spelt it `recover<Type>`, and
+			// this gate accepted either. The owner settled it on 2026-10-13 — "what is NOT deprecated should
+			// win", i.e. the live `recover*` spelling — so the table is amended, `restoreSeller` (the one field
+			// that followed it) is deprecated in favour of `recoverSeller`, and a deprecated spelling no longer
+			// answers the pair: a new resource that named its field `restore<Type>` would fail here.
+			const recovered = names.map((name) => `recover${name}`).find((name) => fields.has(name)) ?? null;
 
 			if (fields.has(softDelete) && recovered) {
 				checked.answered += 1;
@@ -187,7 +202,7 @@ for (const [unit, resources] of Object.entries(OUTSTANDING)) {
 	}
 
 	for (const resource of resources) {
-		const recovered = [`recover${resource}`, `restore${resource}`].some((name) => fields.has(name));
+		const recovered = fields.has(`recover${resource}`);
 
 		if (fields.has(`softDelete${resource}`) && recovered) {
 			stale.push(`${unit}: ${resource} now answers the pair, so its baseline row is delivered`);

@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { ProductVariantPriceService } from './product-variant-price.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateProductVariantPriceInput` declares in the schema. */
 export interface ICreateProductVariantPriceInput {
@@ -212,9 +213,7 @@ export class ProductVariantPriceResolver {
 	 */
 	@Mutation('deleteProductVariantPrice')
 	async deleteProductVariantPrice(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productVariantPriceService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.productVariantPriceService.delete(id));
 	}
 
 	/**

@@ -96,28 +96,53 @@ export class OrderTotalsReconciliationScheduler {
 	 */
 	private reportDrift(report: IOrderTotalsAuditReport): void {
 		const examined = `${report.examined} order(s) touched in the last ${report.windowDays} day(s)`;
+		const failed = report.failed ?? [];
+
+		// **The orders a pass could not examine are reported whatever else it found.** They used to be
+		// written only inside the drift branch, so a run in which nothing drifted — including a run in which
+		// every examination failed — printed "no drift" and nothing else, and the one line an operator reads
+		// said the opposite of what the report held. A failed order is not an order found in agreement.
+		//
+		// `failed` holds two different failures, and the log names each for what it is: an order whose
+		// derivation could not be read was never examined, while an order that is also in `drifted` was
+		// examined, found to drift, and its repair failed — the operator retries the second and reads the row
+		// of the first.
+		const driftedIds = new Set(report.drifted.map((drift) => drift.orderId));
+		const unrepaired = failed.filter((failure) => driftedIds.has(failure.orderId)).length;
+		const unexamined = [
+			unrepaired > 0 ? `; ${unrepaired} drifted order(s) could not be repaired` : '',
+			failed.length - unrepaired > 0 ? `; ${failed.length - unrepaired} could not be examined` : ''
+		].join('');
 
 		if (report.drifted.length === 0) {
-			this.logger.log(`Order totals reconciliation examined ${examined}; no drift.`);
+			if (failed.length === 0) {
+				this.logger.log(`Order totals reconciliation examined ${examined}; no drift.`);
+			} else {
+				this.logger.error(
+					`Order totals reconciliation examined ${examined}; none of the orders it could read drifted${unexamined}.`
+				);
+			}
+		} else {
+			this.logger.warn(
+				`Order totals reconciliation examined ${examined} and found ${report.drifted.length} order(s) whose ` +
+					`derived columns disagree with their ledgers; repaired ${report.repaired.length}${unexamined}.`
+			);
 
-			return;
+			for (const drift of report.drifted) {
+				const columns = drift.columns
+					.map((column) => `${column}: stored ${drift.stored[column]}, derived ${drift.derived[column]}`)
+					.join('; ');
+
+				this.logger.warn(`Order ${drift.orderId} drifted — ${columns}.`);
+			}
 		}
 
-		this.logger.warn(
-			`Order totals reconciliation examined ${examined} and found ${report.drifted.length} order(s) whose ` +
-				`derived columns disagree with their ledgers; repaired ${report.repaired.length}.`
-		);
-
-		for (const drift of report.drifted) {
-			const columns = drift.columns
-				.map((column) => `${column}: stored ${drift.stored[column]}, derived ${drift.derived[column]}`)
-				.join('; ');
-
-			this.logger.warn(`Order ${drift.orderId} drifted — ${columns}.`);
-		}
-
-		for (const failure of report.failed) {
-			this.logger.error(`Order ${failure.orderId} could not be examined: ${failure.message}`);
+		for (const failure of failed) {
+			this.logger.error(
+				driftedIds.has(failure.orderId)
+					? `Order ${failure.orderId} drifted and could not be repaired: ${failure.message}`
+					: `Order ${failure.orderId} could not be examined: ${failure.message}`
+			);
 		}
 	}
 }

@@ -490,3 +490,23 @@ describe('the node queries — the permission and the guards are the route’s',
 		}
 	});
 });
+
+/**
+ * `deleteStockAlert` answers what the delete did (handover 2026-09-20 §7.65 item 21): the service's `delete` is
+ * the kernel's, which answers `affected: 0` for an identifier that names no rule of the caller and raises
+ * nothing — and the field used to answer `true` for it.
+ */
+describe('deleteStockAlert answers whether a rule was removed', () => {
+	it('answers false for an identifier that names no rule of the caller', async () => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 0 }) };
+
+		await expect(new StockAlertResolver(service as never).deleteStockAlert(ID)).resolves.toBe(false);
+		expect(service.delete).toHaveBeenCalledWith(ID);
+	});
+
+	it('answers true when the delete removed the rule', async () => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 1 }) };
+
+		await expect(new StockAlertResolver(service as never).deleteStockAlert(ID)).resolves.toBe(true);
+	});
+});
