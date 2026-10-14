@@ -1,35 +1,45 @@
 # Platform extensions — the phantom design names, triaged
 
-**What this is.** The platform-extensions design (`17` §3.2's rows) promised GraphQL root fields by name. The
-audit of every row against the composed schema (handover 2026-09-20 §7.68) found **81 names in the queries and
-mutations cells that appeared nowhere in the code** — the six of §7.67 triaged by hand, seventy-five recorded
-unclassified because the block mixed a *naming* class (fixed in the design) with a *missing* class (fixed in the
-code). **Owner decision 12 (2026-10-13): "I want to triage each, but in the end implement all we need really!"**
+**What this is.** The platform-extensions design (`17` §3.2) promised GraphQL
+root fields by name. The audit of every row against the composed schema
+(handover 2026-09-20 §7.68) found **81 names in the queries and mutations cells
+that appeared nowhere in the code** — six triaged by hand in §7.67, the rest
+recorded unclassified because the block mixed a *naming* class (fixed in the
+design) with a *missing* class (fixed in the code). **Owner decision 12
+(2026-10-13): "I want to triage each, but in the end implement all we need
+really!"**
 
-**Method.** Each name was re-measured against `packages/core/src/lib/graphql/schema/schema.graphql` on
-`feat/platform-extensions` (2026-10-14): served under its own name → `delivered`; the capability served under
-another root field (checked by reading the delivered route and field, not by name similarity) → `naming`;
-retired/rejected by the design itself → `retired`; neither surface (REST nor GraphQL) serves the capability →
-`build`; not a concept of this platform → `drop`. The table is **data in
-[`tools/scripts/design-name-triage-check.mjs`](../../tools/scripts/design-name-triage-check.mjs)**, which CI runs
-(`static-checks.yml`): every `delivered` name must stay served, every served equivalent must exist, a `build` name
-that becomes served must move to `delivered`, and the build backlog may only shrink. This page is generated:
-`node tools/scripts/design-name-triage-check.mjs --markdown`.
+**Method.** Each name is measured against
+`packages/core/src/lib/graphql/schema/schema.graphql`: served under its own name
+→ `delivered`; the capability served under another root field of the same kind
+(checked by reading the delivered route and field, not by name similarity) →
+`naming`; retired or rejected by the design itself → `retired`; served by
+neither REST nor GraphQL → `build`; not a concept of this platform → `drop`.
 
-**Totals (2026-10-14):** 81 names — **22 delivered** (17 of them since the §7.68 audit, e.g. `payrollItems`,
-`reportMenuItems`, `termsAcceptances`), **49 served under another name**, **2 retired**, **7 to build**, **1 dropped**.
+**This page is generated** from the table in
+`tools/scripts/design-name-triage-check.mjs` (`node
+tools/scripts/design-name-triage-check.mjs --write`), and the gate — which CI
+runs in `static-checks.yml` — fails when the page and the table differ, when a
+`delivered` name stops being served, when an equivalent is not served as the
+same kind, when a name that is not `delivered` becomes served, when one of the
+81 rows disappears, and when the build backlog grows.
 
-**Design-doc amendments (pending: the design documents are not in this repository).** Every `naming` row: replace
-the design's name with the served one in `17` §3.2 (and Appendix A's derived counts). Every `retired` row: mark it
-`(n-a — retired)` beside its replacement. The `drop` row: remove it, with the reason given.
+**Totals:** 81 names — **22 delivered**, **49 served under another name**, **2
+retired**, **7 to build**, **1 dropped**.
 
-**Dropped, for the owner to confirm:** `markEntitySubscriptionRead` — an entity subscription carries no read state;
-the read state belongs to the notification (`updateEmployeeNotification` / `markAllEmployeeNotificationsAsRead`).
+**Design-doc amendments (pending: the design documents are not in this
+repository).** Every `naming` row: replace the design name with the served one
+in `17` §3.2 (and in Appendix A’s derived counts). Every `retired` row: mark it
+`(n-a — retired)` beside its replacement. Every `drop` row: remove it, with the
+reason given.
 
-**To build (the backlog the gate counts):** `bulkCreateExpenses`, `bulkCreateOrganizations`, `bulkCreateTags`,
-`bulkCreateTasks`, `bulkCreateTimeLogs`, `bulkCreateUsers` (no REST bulk route either — both surfaces, on the
-platform's bulk kernel as `bulkCreateProducts`/`bulkCreateTenantRoles` are), and `upcomingSubscriptionBilling` (a
-read-only preview of a subscription's next billing; no REST route either).
+**To build (the backlog the gate counts, 7):** `bulkCreateExpenses`,
+`bulkCreateOrganizations`, `bulkCreateTags`, `bulkCreateTasks`,
+`bulkCreateTimeLogs`, `bulkCreateUsers`, `upcomingSubscriptionBilling`.
+
+**Dropped, for the owner to confirm (1):** `markEntitySubscriptionRead` — an
+entity subscription carries no read state (the read state is the notification’s,
+see `markEmployeeNotificationRead`).
 
 | # | design name | kind | class | served equivalent | decision / note |
 |---|---|---|---|---|---|

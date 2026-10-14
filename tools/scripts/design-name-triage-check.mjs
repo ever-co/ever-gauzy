@@ -23,12 +23,12 @@
  *
  * The design documents are not in this repository (`PLATFORM-EXTENSIONS.md`, "Where the design lives"); the amendments
  * the `naming`, `retired` and `drop` rows imply are recorded in `docs/platform-extensions/design-name-triage.md`, which
- * `--markdown` regenerates from the table below.
+ * `--write` regenerates from the table below (`--markdown` prints it).
  *
- * Run from the repository root: `node tools/scripts/design-name-triage-check.mjs [--markdown]`
+ * Run from the repository root: `node tools/scripts/design-name-triage-check.mjs [--write | --markdown]`
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
@@ -186,6 +186,15 @@ const TRIAGE = [
 	}
 ];
 
+/**
+ * How many names the §7.68 audit found unserved anywhere in the code. Every one of them keeps a row: a row removed
+ * from the table would let a design promise disappear without a decision, and nothing else would notice.
+ */
+const AUDITED_NAMES = 81;
+
+/** Where the human-readable copy of this table lives; the gate refuses a copy that has drifted from the table. */
+const MARKDOWN = join(ROOT, 'docs', 'platform-extensions', 'design-name-triage.md');
+
 const schema = readFileSync(SDL, 'utf8').replace(/"""[\s\S]*?"""/g, '');
 
 /** The root fields the composed schema serves, by root type. */
@@ -205,27 +214,116 @@ for (const line of schema.split(/\r?\n/)) {
 	if (root && field) served.set(field[1], root);
 }
 
+const count = (decision) => TRIAGE.filter((row) => row.decision === decision).length;
+const code = (name) => `\`${name}\``;
+
+/**
+ * The human-readable copy of the table: prose wrapped at 80 columns, then one table row per name.
+ *
+ * @returns The whole of `docs/platform-extensions/design-name-triage.md`.
+ */
+function renderMarkdown() {
+	const backlog = TRIAGE.filter((row) => row.decision === 'build').map((row) => code(row.name));
+	const dropped = TRIAGE.filter((row) => row.decision === 'drop');
+	const action = {
+		delivered: 'nothing: the design row is right',
+		naming: 'amend the design row to the served name',
+		retired: 'mark the design row n-a (retired)',
+		build: 'build (REST + GraphQL), then `delivered`',
+		drop: 'drop from the design (listed for the owner)'
+	};
+	const wrap = (text) => {
+		const lines = [];
+		let line = '';
+		for (const word of text.split(/\s+/).filter(Boolean)) {
+			if (line !== '' && line.length + 1 + word.length > 80) {
+				lines.push(line);
+				line = word;
+			} else {
+				line = line === '' ? word : `${line} ${word}`;
+			}
+		}
+		if (line !== '') lines.push(line);
+		return lines.join('\n');
+	};
+
+	const paragraphs = [
+		'# Platform extensions — the phantom design names, triaged',
+		wrap(
+			'**What this is.** The platform-extensions design (`17` §3.2) promised GraphQL root fields by name. ' +
+				'The audit of every row against the composed schema (handover 2026-09-20 §7.68) found ' +
+				`**${AUDITED_NAMES} names in the queries and mutations cells that appeared nowhere in the code** — ` +
+				'six triaged by hand in §7.67, the rest recorded unclassified because the block mixed a *naming* ' +
+				'class (fixed in the design) with a *missing* class (fixed in the code). **Owner decision 12 ' +
+				'(2026-10-13): "I want to triage each, but in the end implement all we need really!"**'
+		),
+		wrap(
+			'**Method.** Each name is measured against `packages/core/src/lib/graphql/schema/schema.graphql`: ' +
+				'served under its own name → `delivered`; the capability served under another root field of the ' +
+				'same kind (checked by reading the delivered route and field, not by name similarity) → `naming`; ' +
+				'retired or rejected by the design itself → `retired`; served by neither REST nor GraphQL → `build`; ' +
+				'not a concept of this platform → `drop`.'
+		),
+		wrap(
+			'**This page is generated** from the table in `tools/scripts/design-name-triage-check.mjs` ' +
+				'(`node tools/scripts/design-name-triage-check.mjs --write`), and the gate — which CI runs in ' +
+				'`static-checks.yml` — fails when the page and the table differ, when a `delivered` name stops being ' +
+				'served, when an equivalent is not served as the same kind, when a name that is not `delivered` ' +
+				`becomes served, when one of the ${AUDITED_NAMES} rows disappears, and when the build backlog grows.`
+		),
+		wrap(
+			`**Totals:** ${TRIAGE.length} names — **${count('delivered')} delivered**, ` +
+				`**${count('naming')} served under another name**, **${count('retired')} retired**, ` +
+				`**${count('build')} to build**, **${count('drop')} dropped**.`
+		),
+		wrap(
+			'**Design-doc amendments (pending: the design documents are not in this repository).** Every ' +
+				'`naming` row: replace the design name with the served one in `17` §3.2 (and in Appendix A’s ' +
+				'derived counts). Every `retired` row: mark it `(n-a — retired)` beside its replacement. Every ' +
+				'`drop` row: remove it, with the reason given.'
+		),
+		wrap(
+			`**To build (the backlog the gate counts, ${backlog.length}):** ${backlog.join(', ') || 'none'}.`
+		),
+		wrap(
+			`**Dropped, for the owner to confirm (${dropped.length}):** ` +
+				(dropped.map((row) => `${code(row.name)} — ${row.note}`).join('; ') || 'none') +
+				'.'
+		)
+	];
+
+	const table = [
+		'| # | design name | kind | class | served equivalent | decision / note |',
+		'|---|---|---|---|---|---|',
+		...TRIAGE.map((row, index) => {
+			const equivalent = row.decision === 'delivered' ? code(row.name) : row.served.map(code).join(', ') || '—';
+			return `| ${index + 1} | ${code(row.name)} | ${row.kind} | ${row.decision} | ${equivalent} | ${action[row.decision]} — ${row.note} |`;
+		})
+	];
+
+	return `${paragraphs.join('\n\n')}\n\n${table.join('\n')}\n`;
+}
+
 if (process.argv.includes('--markdown')) {
-	const label = { delivered: 'delivered', naming: 'naming', retired: 'retired', build: 'build', drop: 'drop' };
-	console.log('| # | design name | kind | class | served equivalent | decision / note |');
-	console.log('|---|---|---|---|---|---|');
-	TRIAGE.forEach((row, index) => {
-		const equivalent =
-			row.decision === 'delivered' ? `\`${row.name}\`` : row.served.map((name) => `\`${name}\``).join(', ') || '—';
-		const action = {
-			delivered: 'nothing: the design row is right',
-			naming: 'amend the design row to the served name',
-			retired: 'mark the design row n-a (retired)',
-			build: 'build (REST + GraphQL), then `delivered`',
-			drop: 'drop from the design (listed for the owner)'
-		}[row.decision];
-		console.log(`| ${index + 1} | \`${row.name}\` | ${row.kind} | ${label[row.decision]} | ${equivalent} | ${action} — ${row.note} |`);
-	});
+	process.stdout.write(renderMarkdown());
+	process.exit(0);
+}
+
+if (process.argv.includes('--write')) {
+	writeFileSync(MARKDOWN, renderMarkdown());
+	console.log(`wrote ${relative(ROOT, MARKDOWN)}`);
 	process.exit(0);
 }
 
 const failures = [];
 const seen = new Set();
+
+if (TRIAGE.length !== AUDITED_NAMES) {
+	failures.push(
+		`${TRIAGE.length} names are triaged and the audit found ${AUDITED_NAMES}: every audited name keeps its row ` +
+			'(a delivered or renamed one stays, with its decision)'
+	);
+}
 
 for (const row of TRIAGE) {
 	if (seen.has(row.name)) failures.push(`${row.name} is triaged twice`);
@@ -250,7 +348,12 @@ for (const row of TRIAGE) {
 	if (row.decision === 'naming' && row.served.length === 0) failures.push(`${row.name} is \`naming\` but names no served equivalent`);
 
 	for (const equivalent of row.served) {
-		if (!served.has(equivalent)) failures.push(`${row.name}: its served equivalent \`${equivalent}\` is not served`);
+		if (!served.has(equivalent)) {
+			failures.push(`${row.name}: its served equivalent \`${equivalent}\` is not served`);
+		} else if (served.get(equivalent) !== row.kind) {
+			// A caller of the design's mutation cannot use a query in its place, and the reverse.
+			failures.push(`${row.name} is a ${row.kind} and its equivalent \`${equivalent}\` is served as a ${served.get(equivalent)}`);
+		}
 	}
 
 	if (row.note.trim() === '') failures.push(`${row.name} carries no reason`);
@@ -266,15 +369,24 @@ if (backlog.length > BUILD_BASELINE) {
 	failures.push(`the backlog shrank to ${backlog.length} — lower BUILD_BASELINE to ${backlog.length} so it cannot grow back`);
 }
 
+let committed = null;
+try {
+	committed = readFileSync(MARKDOWN, 'utf8').replace(/\r\n/g, '\n');
+} catch {
+	failures.push(`${relative(ROOT, MARKDOWN)} is missing — run with --write`);
+}
+if (committed !== null && committed !== renderMarkdown()) {
+	failures.push(`${relative(ROOT, MARKDOWN)} differs from the table — run \`node tools/scripts/design-name-triage-check.mjs --write\``);
+}
+
 if (failures.length > 0) {
 	console.error('FAILED — the design-name triage no longer matches the composed schema:');
 	for (const failure of failures) console.error(`  ${failure}`);
 	process.exit(1);
 }
 
-const count = (decision) => TRIAGE.filter((row) => row.decision === decision).length;
 console.log(
 	`PASSED — ${TRIAGE.length} design name(s) triaged against the composed schema: ${count('delivered')} delivered, ` +
 		`${count('naming')} served under another name, ${count('retired')} retired, ${count('build')} to build ` +
-		`(baseline ${BUILD_BASELINE}, only shrinks), ${count('drop')} dropped.`
+		`(baseline ${BUILD_BASELINE}, only shrinks), ${count('drop')} dropped; the published table matches.`
 );
