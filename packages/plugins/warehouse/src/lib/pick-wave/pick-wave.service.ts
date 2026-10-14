@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
@@ -7,6 +8,7 @@ import { TypeOrmPickListRepository } from '../pick-list/repository/type-orm-pick
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { TypeOrmPickListLineRepository } from '../pick-list-line/repository/type-orm-pick-list-line.repository';
 import { PICK_NUMBER_KEY, PickListStatus, PickWaveStatus, PickWaveStrategy } from '../warehouse.types';
+import { editByIdOnly, warehouseEditOf } from '../warehouse.writable';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickWave } from './pick-wave.entity';
 import { MikroOrmPickWaveRepository } from './repository/mikro-orm-pick-wave.repository';
@@ -24,6 +26,15 @@ import { TypeOrmPickWaveRepository } from './repository/type-orm-pick-wave.repos
  * Cancelling a wave cancels its lists and touches neither reservations nor stock: picking consumes a
  * reservation that checkout already took, so a cancellation is not a stock event.
  */
+/**
+ * What an edit of a wave may change (review R2-13): its priority, its picker and its planned time at any status, and
+ * — while it is still a `DRAFT` — its strategy and its channel, which decide what it contains: once released, a wave's
+ * contents are frozen (`UpdatePickWaveDTO`). Its status, timestamps, counters and version are its operations', and
+ * its metadata carries what cancel and close-short record, so it is not an edit's either.
+ */
+const PICK_WAVE_WRITABLE_MEMBERS = ['priority', 'pickerUserId', 'plannedAt'] as const;
+const PICK_WAVE_DRAFT_WRITABLE_MEMBERS = ['strategy', 'channelId'] as const;
+
 @Injectable()
 export class PickWaveService extends TenantAwareCrudService<PickWave> {
 	constructor(
@@ -34,6 +45,42 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 		private readonly sequenceService: SequenceService
 	) {
 		super(typeOrmPickWaveRepository, mikroOrmPickWaveRepository);
+	}
+
+	/**
+	 * Edits a wave, refusing what only its operations move (review R2-13).
+	 *
+	 * `PUT /pick-waves/:id` and `updatePickWave` reached the inherited update with a body that declares the status,
+	 * the release, start and completion times and the counters, so a wave could be released or completed by edit with
+	 * none of the lists release derives. Only the members above are written; any other member the body would move is
+	 * refused with `PICK_WAVE_FIELD_NOT_WRITABLE`.
+	 *
+	 * @param id The wave.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, or the wave as stored when the edit changed nothing.
+	 * @throws BadRequestException with `PICK_WAVE_FIELD_NOT_WRITABLE`.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<PickWave>,
+		partialEntity: QueryDeepPartialEntity<PickWave>
+	): Promise<PickWave | UpdateResult> {
+		if (typeof id !== 'string') {
+			throw editByIdOnly('PICK_WAVE_FIELD_NOT_WRITABLE', 'A pick wave');
+		}
+
+		const stored = await this.findOneScoped(id);
+		const writable =
+			stored.status === PickWaveStatus.DRAFT
+				? [...PICK_WAVE_WRITABLE_MEMBERS, ...PICK_WAVE_DRAFT_WRITABLE_MEMBERS]
+				: [...PICK_WAVE_WRITABLE_MEMBERS];
+		const edit = warehouseEditOf(stored, partialEntity as Record<string, unknown>, writable, {
+			code: 'PICK_WAVE_FIELD_NOT_WRITABLE',
+			document: 'pick wave',
+			operations:
+				'a wave moves through release, start, complete, close-short, close and cancel, and its contents are frozen once it is released.'
+		});
+
+		return Object.keys(edit).length ? await super.update(id, edit as QueryDeepPartialEntity<PickWave>) : stored;
 	}
 
 	/**

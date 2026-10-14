@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import {
@@ -9,6 +10,7 @@ import {
 	MANIFEST_NUMBER_KEY,
 	WAREHOUSE_FULFILLMENT
 } from '../warehouse.types';
+import { editByIdOnly, warehouseEditOf } from '../warehouse.writable';
 import { sumQuantities } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { CarrierManifest } from './carrier-manifest.entity';
@@ -42,6 +44,14 @@ const MANIFEST_MEMBERS_KEY = 'memberFulfillmentIds';
  * table holds no member table: a manifest covers shipments, a shipment may contain several packages,
  * and the shipment is the row that knows which carrier took it.
  */
+/**
+ * What an edit of a `DRAFT` manifest may change (review R2-13): the window, the day and the note
+ * (`UpdateCarrierManifestDTO`). Membership is read-only at every status — a draft resolves it from the shipments and
+ * a closed manifest records it, frozen, in its metadata — so the metadata is not an edit's; neither are the status,
+ * the counters, the timestamps or the document, which close, hand-over and cancel write.
+ */
+const CARRIER_MANIFEST_WRITABLE_MEMBERS = ['manifestDate', 'windowFrom', 'windowTo', 'note'] as const;
+
 @Injectable()
 export class CarrierManifestService extends TenantAwareCrudService<CarrierManifest> {
 	constructor(
@@ -53,6 +63,39 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 		private readonly fulfillment?: IWarehouseFulfillmentPort
 	) {
 		super(typeOrmCarrierManifestRepository, mikroOrmCarrierManifestRepository);
+	}
+
+	/**
+	 * Edits a draft manifest, refusing what only its operations move (review R2-13).
+	 *
+	 * `PUT /carrier-manifests/:id` and `updateCarrierManifest` reached the inherited update with a body that declares
+	 * the status, the counters, the timestamps and the metadata, so `{status: "HANDED_OVER"}` skipped `handOver` and
+	 * a body could rewrite the membership a closed manifest froze in its metadata. Only
+	 * `CARRIER_MANIFEST_WRITABLE_MEMBERS` of a `DRAFT` manifest are written; anything else is refused with
+	 * `CARRIER_MANIFEST_FIELD_NOT_WRITABLE`.
+	 *
+	 * @param id The manifest.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, or the manifest as stored when the edit changed nothing.
+	 * @throws BadRequestException with `CARRIER_MANIFEST_FIELD_NOT_WRITABLE`.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<CarrierManifest>,
+		partialEntity: QueryDeepPartialEntity<CarrierManifest>
+	): Promise<CarrierManifest | UpdateResult> {
+		if (typeof id !== 'string') {
+			throw editByIdOnly('CARRIER_MANIFEST_FIELD_NOT_WRITABLE', 'A carrier manifest');
+		}
+
+		const stored = await this.findOneScoped(id);
+		const writable = stored.status === CarrierManifestStatus.DRAFT ? CARRIER_MANIFEST_WRITABLE_MEMBERS : [];
+		const edit = warehouseEditOf(stored, partialEntity as Record<string, unknown>, writable, {
+			code: 'CARRIER_MANIFEST_FIELD_NOT_WRITABLE',
+			document: 'carrier manifest',
+			operations: 'a manifest moves through submit (close), hand-over and cancel, and its membership is never edited.'
+		});
+
+		return Object.keys(edit).length ? await super.update(id, edit as QueryDeepPartialEntity<CarrierManifest>) : stored;
 	}
 
 	/**

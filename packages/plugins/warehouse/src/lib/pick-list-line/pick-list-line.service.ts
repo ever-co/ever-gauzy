@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
@@ -13,6 +14,7 @@ import {
 	WAREHOUSE_STOCK_LEDGER,
 	WarehouseStockMovementKind
 } from '../warehouse.types';
+import { editByIdOnly, warehouseEditOf } from '../warehouse.writable';
 import {
 	fromQuantityUnits,
 	isPositiveQuantity,
@@ -42,6 +44,14 @@ import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-l
  * A substitution is recorded on the line as what was actually taken, and the price difference it may
  * imply is priced by the order change that authorises it — never here.
  */
+/**
+ * What an edit of a pick line may change (review R2-13): its note and its free-form metadata. Its outcome — the status,
+ * the picked and short quantities, the substitute, the pick facts — is written by pick, substitute and skip, each of
+ * which writes the stock movement it implies; its position, bin and quantity are the list's route, frozen once a
+ * picker owns it; its slip is attached and detached by packing.
+ */
+const PICK_LIST_LINE_WRITABLE_MEMBERS = ['note', 'metadata'] as const;
+
 @Injectable()
 export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	constructor(
@@ -53,6 +63,47 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 		private readonly stockLedger?: IWarehouseStockLedgerPort
 	) {
 		super(typeOrmPickListLineRepository, mikroOrmPickListLineRepository);
+	}
+
+	/**
+	 * Edits a pick line, refusing its outcome and its route (review R2-13).
+	 *
+	 * `PUT /pick-list-lines/:id` reached the inherited update with a body that declares the status and the picked and
+	 * short quantities, so a line recorded `SHORT` — which wrote its shortfall movement — could be put back to
+	 * `PENDING` and picked again, writing a second movement. Only `PICK_LIST_LINE_WRITABLE_MEMBERS` are written; any
+	 * other member the body would move is refused with `PICK_LIST_LINE_FIELD_NOT_WRITABLE`.
+	 *
+	 * @param id The line.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, or the line as stored when the edit changed nothing.
+	 * @throws BadRequestException with `PICK_LIST_LINE_FIELD_NOT_WRITABLE`.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<PickListLine>,
+		partialEntity: QueryDeepPartialEntity<PickListLine>
+	): Promise<PickListLine | UpdateResult> {
+		if (typeof id !== 'string') {
+			throw editByIdOnly('PICK_LIST_LINE_FIELD_NOT_WRITABLE', 'A pick line');
+		}
+
+		const stored = await this.findOneScoped(id);
+		const edit = warehouseEditOf(stored, partialEntity as Record<string, unknown>, PICK_LIST_LINE_WRITABLE_MEMBERS, {
+			code: 'PICK_LIST_LINE_FIELD_NOT_WRITABLE',
+			document: 'pick line',
+			operations: 'an outcome is recorded through pick, substitute and skip, and the route is fixed when the list is released.'
+		});
+
+		return Object.keys(edit).length ? await super.update(id, edit as QueryDeepPartialEntity<PickListLine>) : stored;
+	}
+
+	/**
+	 * Closes a line that never got an outcome, because its list was cancelled. The list's cancellation is the one
+	 * caller; it writes the status through the base class, which the guarded edit above refuses.
+	 *
+	 * @param id The line.
+	 */
+	public async cancelOpenLine(id: ID): Promise<void> {
+		await super.update(id, { status: PickListLineStatus.CANCELED } as QueryDeepPartialEntity<PickListLine>);
 	}
 
 	/**
