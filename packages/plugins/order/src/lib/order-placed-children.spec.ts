@@ -290,6 +290,29 @@ describe('the GraphQL fields that retire and restore a placed order child', () =
 		await resolver.softDeleteOrderAddress('draft-row');
 		expect(address.softRemove).toHaveBeenCalledWith('draft-row');
 	});
+
+	it('updateOrderCreditLine refuses a credit line of a placed order, as PUT /order-credit-lines/:id does', async () => {
+		const credit = childService();
+		const none = {} as never;
+		const resolver = new OrderResolver(
+			none,
+			none,
+			none,
+			none,
+			none,
+			credit as never,
+			none,
+			none,
+			none,
+			guard()
+		) as any;
+
+		await expect(resolver.updateOrderCreditLine('placed-row', { amount: '1.00' })).rejects.toMatchObject(IMMUTABLE);
+		expect(credit.update).not.toHaveBeenCalled();
+
+		await resolver.updateOrderCreditLine('draft-row', { amount: '1.00' });
+		expect(credit.update).toHaveBeenCalledWith('draft-row', { amount: '1.00' });
+	});
 });
 
 describe('the order ledgers are append-only, and the one direct write is a MANUAL correction', () => {

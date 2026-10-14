@@ -663,6 +663,8 @@ export class OrderResolver {
 		@Args('id', { type: () => ID }) id: string,
 		@Args('input', { type: () => Object }) input: Record<string, any>
 	): Promise<OrderCreditLine> {
+		// A placed order's credit line is changed through an order change, as on `PUT /order-credit-lines/:id`.
+		await this.assertChildEditable(this.creditLineService as never, id, 'order credit line');
 		await this.creditLineService.update(id, input as any);
 
 		return this.creditLineService.findOneByIdString(id);
