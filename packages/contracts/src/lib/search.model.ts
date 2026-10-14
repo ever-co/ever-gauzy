@@ -371,4 +371,25 @@ export interface ISearchIndexRegistration {
 	isSystem?: boolean;
 	/** Whether the declaration is active on a fresh installation. */
 	isActive?: boolean;
+	/**
+	 * A row-level rule the entity's own API applies beyond `permission`, such as a document that only
+	 * its creator may read.
+	 *
+	 * A source row is indexed only when its `field` holds one of `values`, and a query matches a
+	 * document of this entity only when the document carries one of them as its promoted
+	 * `field:value` token, so `field` must be one of `keywordFields`. A row outside the rule has its
+	 * document removed the next time it is indexed. A document written before the rule existed carries
+	 * no such token and is not matched until it is re-indexed, so the rule fails closed.
+	 */
+	visibleWhen?: ISearchRowRule;
+}
+
+/**
+ * The rows of an entity a search may show: those whose `field` holds one of `values`.
+ */
+export interface ISearchRowRule {
+	/** The declared field the rule reads; it must be promoted into the declaration's keywords. */
+	field: string;
+	/** The values that admit a row, compared without regard to case. */
+	values: string[];
 }

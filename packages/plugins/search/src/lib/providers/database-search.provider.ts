@@ -23,6 +23,7 @@ import {
 import { RequestContext, SearchDocument, TypeOrmSearchDocumentRepository } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SEARCH_SETTING_DEFAULTS } from '../search.settings';
+import { visibleRowTokens } from '../services/search-document.builder';
 
 /** The dialect family a query is written for. */
 type SearchDialect = 'postgres' | 'mysql' | 'sqlite';
@@ -587,7 +588,45 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			query.andWhere(fragment, params);
 		}
 
+		this.applyRowRules(query, context, params);
+
 		return query;
+	}
+
+	/**
+	 * Restricts each entity in scope to the rows its declaration's row rule admits.
+	 *
+	 * The entity permission decides whether a caller sees hits of an entity type at all. A declaration
+	 * that states `visibleWhen` also has rows that permission does not cover — a `PRIVATE` document is
+	 * readable by its creator, an administrator and the people it is shared with, not by every holder of
+	 * `DOCS_READ` (review R7-05). The indexer does not write such rows, and this predicate is what keeps a
+	 * document indexed before the rule existed, or before its row moved outside it, out of the page, the
+	 * total, the suggestions and the facets alike: a document of the entity is matched only when it
+	 * carries one of the admitting promoted tokens, and a document that carries none is not matched.
+	 *
+	 * @param query The builder.
+	 * @param context The query context.
+	 * @param params The parameter bag shared by the whole statement.
+	 */
+	private applyRowRules(
+		query: SelectQueryBuilder<SearchDocument>,
+		context: ISearchQueryContext,
+		params: Record<string, unknown>
+	): void {
+		for (const entity of context.entities) {
+			const tokens = visibleRowTokens(this.indexRegistry.get(entity));
+
+			if (!tokens) {
+				continue;
+			}
+
+			const admitting = tokens.map((token) => this.tokenFragment(params, this.keywordsExpression(), token, 'EQ'));
+			const ruled = this.addParam(params, 'ruledEntity', entity);
+			// An empty rule is refused at registration; `1 = 0` keeps a rule that reached here empty closed.
+			const admitted = admitting.length > 0 ? admitting.join(' OR ') : '1 = 0';
+
+			query.andWhere(`(doc.entity <> :${ruled} OR (${admitted}))`, params);
+		}
 	}
 
 	/**

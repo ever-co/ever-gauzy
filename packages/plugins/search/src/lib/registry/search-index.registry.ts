@@ -258,6 +258,27 @@ export class SearchIndexRegistry {
 				);
 			}
 		}
+
+		if (definition.visibleWhen !== undefined && definition.visibleWhen !== null) {
+			const rule = definition.visibleWhen;
+			const values = Array.isArray(rule.values) ? rule.values.filter((value) => String(value ?? '').trim()) : [];
+
+			// The query reads the rule from the promoted tokens, so a rule over a field that is not promoted
+			// could never match a document — and one that admits no value would hide the whole entity.
+			if (!(definition.keywordFields ?? []).includes(rule.field)) {
+				throw new Error(
+					`The index definition for "${entity}" states a row rule over "${rule.field}", which is not ` +
+						'promoted into its keywords. A query can only apply the rule to a promoted field.'
+				);
+			}
+
+			if (values.length === 0) {
+				throw new Error(
+					`The index definition for "${entity}" states a row rule over "${rule.field}" that admits no ` +
+						'value, so no row of the entity could ever be found.'
+				);
+			}
+		}
 	}
 
 	/**

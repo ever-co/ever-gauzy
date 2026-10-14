@@ -15,6 +15,8 @@ jest.mock('@gauzy/core', () => {
 	class BaseEntity {}
 
 	return {
+		// The shared GraphQL gate, the declaring module's own value, so the assertions compare against it.
+		FEATURE_GRAPHQL: jest.requireActual('@gauzy/core/src/lib/feature/graphql-feature.code').FEATURE_GRAPHQL,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
@@ -60,8 +62,9 @@ jest.mock('../../services/search-reindex.service', () => ({
 	SearchReindexService: class SearchReindexService {}
 }));
 
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { featureFlagsOf } from '@gauzy/common';
+import { FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { SearchPermissions } from '../../search.permissions';
 import { SearchIndexDefinitionResolver } from './search-index-definition.resolver';
 import { SearchResolver } from './search.resolver';
@@ -126,6 +129,35 @@ describe('the search resolvers — the guard chain their controller carries (17 
 			expect(
 				Reflect.getMetadata(PERMISSIONS_METADATA, (SearchIndexDefinitionResolver.prototype as never)[handler])
 			).toEqual([permission]);
+		}
+	});
+});
+
+/**
+ * The search capability's own switch, on the GraphQL surface (reviews R2-16 / R4-24).
+ *
+ * `SearchController` states `@FeatureFlag(SearchFeatures.SEARCH)`, and `FEATURE_SEARCH` is off by
+ * default, so a tenant that never switched search on is answered 404 on `/api/search`. Both resolvers
+ * stated only `FEATURE_GRAPHQL`, so the same tenant ran `search`, the reindex mutations and the
+ * definition edits over GraphQL. The guard requires every code a class states, so each resolver must
+ * state both — and no field may state one of its own, because a handler's codes replace its class's.
+ */
+describe('the search resolvers — the feature switches their controller carries', () => {
+	it.each([
+		['SearchResolver', SearchResolver],
+		['SearchIndexDefinitionResolver', SearchIndexDefinitionResolver]
+	])('%s requires FEATURE_GRAPHQL and FEATURE_SEARCH', (_name, surface) => {
+		const flags = featureFlagsOf(Reflect.getMetadata(FEATURE_METADATA, surface));
+
+		expect(FEATURE_GRAPHQL).toBe('FEATURE_GRAPHQL');
+		expect(flags).toEqual(expect.arrayContaining(['FEATURE_GRAPHQL', 'FEATURE_SEARCH']));
+		expect(flags).toHaveLength(2);
+
+		for (const handler of Object.getOwnPropertyNames(surface.prototype)) {
+			if (handler === 'constructor') {
+				continue;
+			}
+			expect(Reflect.getMetadata(FEATURE_METADATA, (surface.prototype as never)[handler])).toBeUndefined();
 		}
 	});
 });

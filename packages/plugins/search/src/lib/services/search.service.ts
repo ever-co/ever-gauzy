@@ -16,7 +16,7 @@ import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SearchProviderRegistry } from '../providers/search-provider.registry';
 import { SearchIndexerService } from './search-indexer.service';
 import { SearchReindexService } from './search-reindex.service';
-import { buildAttributes, normalisedWeight, SearchSourceRow } from './search-document.builder';
+import { buildAttributes, isRowVisible, normalisedWeight, SearchSourceRow } from './search-document.builder';
 import { ISearchPage, ISearchPageInfo, ISearchRequestInput, toSearchRequest } from '../search.types';
 import { SEARCH_SETTING_DEFAULTS } from '../search.settings';
 
@@ -338,7 +338,9 @@ export class SearchService {
 			for (const hit of group) {
 				const row = byId.get(String(hit.entityId));
 
-				if (row) {
+				// A row its declaration's row rule no longer admits is dropped like a row that is gone: the
+				// index may predate the rule or the row's move outside it (a document made PRIVATE, R7-05).
+				if (row && isRowVisible(definition, row)) {
 					rendered.push({ hit, row });
 				}
 			}
