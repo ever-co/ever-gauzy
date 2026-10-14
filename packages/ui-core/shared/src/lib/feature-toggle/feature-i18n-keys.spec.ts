@@ -38,7 +38,7 @@ function loadCatalogue(): ICatalogueEntry[] {
 	const { outputText } = ts.transpileModule(readFileSync(CATALOGUE_FILE, 'utf8'), {
 		compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
 	});
-	const exported: { COMMERCE_CATALOGUE?: ICatalogueEntry[] } = {};
+	let exported: { COMMERCE_CATALOGUE?: ICatalogueEntry[] } = {};
 	const requireNothing = (specifier: string) => {
 		throw new Error(`commerce-feature-catalogue.ts now imports '${specifier}'; load it another way`);
 	};
@@ -47,7 +47,7 @@ function loadCatalogue(): ICatalogueEntry[] {
 }
 
 function loadLanguages(): Map<string, Record<string, unknown>> {
-	const languages = new Map<string, Record<string, unknown>>();
+	let languages = new Map<string, Record<string, unknown>>();
 	for (const file of readdirSync(I18N_DIR)
 		.filter((name) => name.endsWith('.json'))
 		.sort()) {

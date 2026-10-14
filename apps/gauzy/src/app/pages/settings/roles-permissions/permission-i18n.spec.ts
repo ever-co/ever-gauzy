@@ -25,7 +25,7 @@ const I18N_DIR = join(__dirname, '../../../../../../../packages/ui-core/i18n/ass
 type Dictionary = Record<string, unknown>;
 
 function loadLanguages(): Map<string, Dictionary> {
-	const languages = new Map<string, Dictionary>();
+	let languages = new Map<string, Dictionary>();
 	for (const file of readdirSync(I18N_DIR)
 		.filter((name) => name.endsWith('.json'))
 		.sort()) {

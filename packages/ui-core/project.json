@@ -45,6 +45,15 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
+			"inputs": [
+				"default",
+				"^production",
+				"{workspaceRoot}/jest.preset.js",
+				"{workspaceRoot}/jest.resolver.js",
+				"{workspaceRoot}/jest.interop.js",
+				"{workspaceRoot}/jest.angular-defaults.ts",
+				"{workspaceRoot}/packages/core/src/lib/feature/commerce-feature-catalogue.ts"
+			],
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/ui-core/jest.config.ts",
