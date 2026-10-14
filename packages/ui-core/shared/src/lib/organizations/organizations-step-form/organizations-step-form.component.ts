@@ -3,6 +3,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	EventEmitter,
+	HostBinding,
 	Input,
 	OnDestroy,
 	OnInit,
@@ -16,6 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import moment from 'moment';
 import { filter, tap } from 'rxjs/operators';
+import { NbStepperComponent } from '@nebular/theme';
 import { DEFAULT_DATE_FORMATS } from '@gauzy/constants';
 import {
 	BonusTypeEnum,
@@ -38,10 +40,7 @@ import { FormHelpers, LeafletMapComponent, LocationFormComponent } from '../../f
 @Component({
 	selector: 'ga-organizations-step-form',
 	templateUrl: './organizations-step-form.component.html',
-	styleUrls: [
-		'./organizations-step-form.component.scss',
-		'./../../user/edit-profile-form/edit-profile-form.component.scss'
-	],
+	styleUrls: ['./organizations-step-form.component.scss'],
 	standalone: false
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -65,6 +64,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterV
 
 	@ViewChild('locationFormDirective') locationFormDirective: LocationFormComponent;
 	@ViewChild('leafletTemplate') leafletTemplate: LeafletMapComponent;
+	@ViewChild('stepper') stepper: NbStepperComponent;
 
 	/*
 	 * Getter & Setter for onboarding
@@ -89,6 +89,70 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterV
 	}
 
 	@Input() loading: boolean = false;
+
+	/** The closable form is the Add Organization dialog; onboarding pages embed it inline. */
+	@HostBinding('class.is-dialog')
+	get isDialog(): boolean {
+		return this.closable;
+	}
+
+	/** Labels of the custom step indicator, in stepper order. */
+	protected get steps(): string[] {
+		const steps = [
+			'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.STEP_DETAILS',
+			'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.STEP_LOCATION',
+			'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.STEP_BONUS',
+			'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.STEP_SETTINGS'
+		];
+		return this.isOnboarding ? [...steps, 'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.STEP_EMPLOYEE'] : steps;
+	}
+
+	/** Index of the step that creates the organization. */
+	protected get lastStepIndex(): number {
+		return this.steps.length - 1;
+	}
+
+	/** An organization logo is set. */
+	protected get hasLogo(): boolean {
+		return !!this.orgMainForm.get('imageUrl').value;
+	}
+
+	/**
+	 * Whether a step's form allows moving on (or creating, on the last step).
+	 * Takes the index from the template's stepper reference, which exists before the view query resolves.
+	 *
+	 * @param index Index of the step.
+	 */
+	protected canContinue(index: number): boolean {
+		switch (index) {
+			case 0:
+				return this.orgMainForm.valid;
+			case 2:
+				return this.orgBonusForm.valid;
+			case 3:
+				return this.orgSettingsForm.valid;
+			case 4:
+				return this.employeeFeatureForm.valid;
+			default:
+				return true;
+		}
+	}
+
+	/**
+	 * Footer primary action: go to the next step, or create the organization on the last one.
+	 */
+	protected goNext(): void {
+		if (!this.canContinue(this.stepper.selectedIndex) || this.loading) {
+			return;
+		}
+		if (this.stepper.selectedIndex < this.lastStepIndex) {
+			this.stepper.next();
+		} else if (this.isOnboarding) {
+			this.submitEmployeeFeature();
+		} else {
+			this.addOrganization();
+		}
+	}
 
 	/*
 	 * Organization Main Mutation Form
