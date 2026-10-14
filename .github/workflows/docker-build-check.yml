@@ -226,7 +226,7 @@ jobs:
           script=$(grep -o 'src="main[^"]*\.js"' /tmp/index.html | head -1 | sed 's/src="//; s/"$//')
           [ -n "$script" ] || { echo "::error::no main bundle referenced"; exit 1; }
           # nginx answers unknown paths with index.html, so a 200 alone does not prove the bundle is there.
-          read -r code type < <(curl -s -o /tmp/main.js -w '%{http_code} %{content_type}' "http://127.0.0.1:4200/$script")
+          read -r code type < <(curl -s -o /tmp/main.js -w '%{http_code} %{content_type}\n' "http://127.0.0.1:4200/$script")
           [ "$code" = "200" ] || { echo "::error::GET /$script answered $code"; exit 1; }
           grep -qi 'javascript' <<<"$type" || { echo "::error::GET /$script is $type, not JavaScript"; exit 1; }
           if grep -q '<ga-app' /tmp/main.js; then echo "::error::GET /$script returned the HTML shell"; exit 1; fi
