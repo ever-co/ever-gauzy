@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext, HttpStatus, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, HttpException, HttpStatus, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
@@ -6,7 +6,7 @@ import { Observable, from, lastValueFrom } from 'rxjs';
 import type { ID, JsonData } from '@gauzy/contracts';
 import { executionRequest, executionResponse, readRequestHeader, setResponseHeader } from '../core/context/execution-context.util';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
-import { ApiException } from '../core/errors/api-exception';
+import { ApiException, reasonPhrase } from '../core/errors/api-exception';
 import { IdempotencyService } from './idempotency.service';
 import {
 	IDEMPOTENT_METADATA_KEY,
@@ -172,6 +172,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
 					setResponseHeader(response, IDEMPOTENCY_ORIGINAL_REQUEST_HEADER, settled.replayedAt);
 				}
 
+				// A refusal replayed over GraphQL is raised again rather than answered as the field's value:
+				// the stored body is an error envelope, not the field's type, and the response is the whole
+				// document's, so one field has no status of its own to set (R1-07 of the #10254 review).
+				if (isGraphql && settled.status >= 400) {
+					throw replayedRefusal(settled.status, settled.body);
+				}
+
 				if (typeof response?.status === 'function') {
 					response.status(settled.status);
 				}
@@ -334,6 +341,36 @@ function resolveErrorStatus(error: unknown): number {
 	const status = (error as { getStatus?: () => number })?.getStatus?.();
 
 	return typeof status === 'number' ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+}
+
+/**
+ * The refusal a GraphQL retry of a refused mutation is answered with.
+ *
+ * The stored body is the envelope the first caller saw. When it carries a catalogued `code` the refusal is
+ * rebuilt as the `ApiException` it was — status, code, message and details — so the client's error
+ * extensions read the same on the retry as on the first attempt; any other body is raised as an
+ * `HttpException` of the stored status.
+ *
+ * @param status The stored status, 400 or above.
+ * @param body The stored body.
+ * @returns The exception to raise.
+ */
+function replayedRefusal(status: number, body: unknown): HttpException {
+	const envelope =
+		body !== null && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, any>) : {};
+
+	if (typeof envelope.code === 'string') {
+		const details = envelope.details;
+
+		return new ApiException(
+			status,
+			envelope.code as ApiErrorCode,
+			typeof envelope.message === 'string' ? envelope.message : reasonPhrase(status),
+			details !== null && typeof details === 'object' && !Array.isArray(details) ? details : undefined
+		);
+	}
+
+	return new HttpException((body as string | Record<string, any>) ?? reasonPhrase(status), status);
 }
 
 /**

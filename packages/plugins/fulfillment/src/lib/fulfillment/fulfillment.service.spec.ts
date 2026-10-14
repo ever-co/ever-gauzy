@@ -146,6 +146,8 @@ jest.mock('@gauzy/core', () => {
 		ApiException: apiException.ApiException,
 		ApiErrorCode: apiErrorCodes.ApiErrorCode,
 		EventOutboxService: class {},
+		// Which ORM the CRUD kernel runs on: the cancelation opens its transaction on TypeORM only.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 		VERSION_EXPECTATION_PROPERTY: 'versionExpectation',
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
@@ -172,6 +174,8 @@ jest.mock('@gauzy/plugin-order', () => ({
 	// The counter writer is a collaborator of this package, not of the thing under test: the suite
 	// hands the service its own line service below, so the class here is only the module's identity.
 	OrderLineService: class OrderLineService {},
+	// The order line's entity class, which a repository is resolved by inside the cancelation's transaction.
+	OrderLine: class OrderLine {},
 	// The re-derivation is a collaborator for the same reason — the suite hands the service its own
 	// double below — and its class is stated rather than left out so that the service's emitted
 	// `design:paramtypes` names a class at that slot rather than an empty hole.
@@ -193,7 +197,9 @@ import { ApiErrorCode, ApiException, RequestContext } from '@gauzy/core';
 // from the package: that mock substitutes the module's collaborators and passes this one through, so this
 // import is the platform's own function and not a double of it.
 import { OrderStateMachine } from '@gauzy/plugin-order';
+import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { Fulfillment } from './fulfillment.entity';
 import { FulfillmentService } from './fulfillment.service';
 
 /**
@@ -509,10 +515,8 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		fulfillment: [...(options.seed?.fulfillment ?? [])],
 		fulfillment_line: [...(options.seed?.fulfillment_line ?? [])]
 	};
-	const lineService = new FulfillmentLineService(
-		repository(tables, 'fulfillment_line') as never,
-		{} as never
-	);
+	const lineRepository = repository(tables, 'fulfillment_line');
+	const lineService = new FulfillmentLineService(lineRepository as never, {} as never);
 	/** Every `fulfillment.*` row the service appended, in the order it appended them. */
 	const events: Row[] = [];
 	/**
@@ -544,8 +548,57 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		}
 	);
 
-	// The entity manager the conditional update and the event both go through.
-	(fulfillmentRepository as Row).manager = { name: 'fulfillment-manager' };
+	/**
+	 * The manager a TypeORM transaction hands its callback: every repository resolved by entity class, over
+	 * the same in-memory tables.
+	 */
+	const transactionManager = {
+		name: 'transaction-manager',
+		getRepository: (target: unknown) => {
+			const resolved = new Map<unknown, unknown>([
+				[Fulfillment, fulfillmentRepository],
+				[FulfillmentLine, lineRepository],
+				[jest.requireMock('@gauzy/plugin-order').OrderLine, repository(tables, 'order_line')]
+			]).get(target);
+
+			if (!resolved) {
+				throw new Error('the transaction double resolves no repository for that entity');
+			}
+
+			return resolved;
+		}
+	};
+	/** Every transaction the service opened, and whether it committed or rolled back. */
+	let transactions: Array<'committed' | 'rolled back'> = [];
+	/** The isolation level each transaction was opened with (`undefined` = the server's default). */
+	let isolationLevels: Array<string | undefined> = [];
+	// The entity manager the conditional update and the event both go through. Its `transaction` behaves as the
+	// database's: the work runs on the transaction's manager, and a failure puts every table back as it was.
+	(fulfillmentRepository as Row).manager = {
+		name: 'fulfillment-manager',
+		// TypeORM's two forms: `transaction(work)` and `transaction(isolationLevel, work)`
+		transaction: async (...args: unknown[]) => {
+			const work = args[args.length - 1] as (manager: unknown) => Promise<unknown>;
+			isolationLevels.push(args.length > 1 ? (args[0] as string) : undefined);
+			const before = structuredClone(tables);
+
+			try {
+				const answer = await work(transactionManager);
+
+				transactions.push('committed');
+
+				return answer;
+			} catch (error) {
+				for (const table of Object.keys(tables) as Array<keyof ITables>) {
+					tables[table].splice(0, tables[table].length, ...before[table]);
+				}
+
+				transactions.push('rolled back');
+
+				throw error;
+			}
+		}
+	};
 	/**
 	 * Every re-derivation the service asked the order aggregate for, in the order it asked.
 	 *
@@ -557,7 +610,7 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 	 */
 	const recomputed: { orderId: string; reason: string }[] = [];
 	const orderTotals = {
-		recompute: jest.fn(async (orderId: string, reason: string) => {
+		recompute: jest.fn(async (orderId: string, reason: string, _options?: unknown) => {
 			recomputed.push({ orderId, reason });
 
 			return {} as never;
@@ -579,6 +632,9 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		events,
 		recomputed,
 		orderTotals,
+		transactions,
+		isolationLevels,
+		transactionManager,
 		manager: (fulfillmentRepository as Row).manager,
 		line: (id: string = LINE_A) => tables.order_line.find((row) => row.id === id),
 		row: (id: string) => tables.fulfillment.find((row) => row.id === id),
@@ -1742,6 +1798,220 @@ describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)
 		expect(fixture.recomputed).toEqual([{ orderId: ORDER, reason: REASON }]);
 	});
 
+	/**
+	 * ADR-26's "inside the same transaction" (handover §7.65 item 22): on TypeORM the cancelation and the
+	 * order's re-derivation are one transaction. Every statement of the move runs on the transaction's manager
+	 * — the shipment's conditional write and its event, the counters given back, and the re-derivation, which
+	 * is handed the manager — and a re-derivation that fails rolls the whole cancelation back.
+	 */
+	it('cancels inside one transaction, and hands the re-derivation that transaction', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await expect(fixture.service.cancel('pending', 'CHANGED_MIND')).resolves.toMatchObject({
+			status: FulfillmentStatusDetail.CANCELED
+		});
+
+		expect(fixture.transactions).toEqual(['committed']);
+		expect(fixture.orderTotals.recompute).toHaveBeenCalledTimes(1);
+		expect(fixture.orderTotals.recompute).toHaveBeenCalledWith(ORDER, REASON, { manager: fixture.transactionManager });
+		// The event rode the transaction too, so it commits — or not — with the move it describes.
+		expect(fixture.events.map((event) => [event.name, event.manager])).toEqual([
+			['fulfillment.canceled', fixture.transactionManager]
+		]);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it.each([
+		['mysql', true],
+		['postgres', true],
+		['better-sqlite3', false]
+	])('reads the shipment and its order line under a row lock where the dialect has one (%s)', async (type, locks) => {
+		// Greptile on #10555: on MySQL's `REPEATABLE READ` a plain read inside the transaction is a snapshot, so
+		// the loser of two concurrent cancelations would read the shipment `PENDING` after the winner committed and
+		// answer a conflict instead of the no-op. Read `FOR UPDATE`, the second cancelation queues on the row and
+		// reads it `CANCELED`. SQLite has no row locks and is asked for none.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+		// Only the reads made on the transaction's manager are recorded: the cancelation's first read of the
+		// shipment is made before the transaction opens, through the service's own repository, and takes no lock.
+		let reads: Array<[string, Row]> = [];
+		const getRepository = fixture.transactionManager.getRepository;
+
+		(fixture.transactionManager as Row).getRepository = (entity: unknown) => {
+			const repository = getRepository(entity) as Row;
+
+			if (entity !== Fulfillment) {
+				return repository;
+			}
+
+			return {
+				...repository,
+				findOne: async (options: Row = {}) => {
+					reads.push(['fulfillment', options]);
+
+					return repository.findOne(options);
+				}
+			};
+		};
+		(fixture.transactionManager as Row).connection = { options: { type } };
+
+		await fixture.service.cancel('pending');
+
+		const shipmentReads = reads.filter(([name]) => name === 'fulfillment');
+		expect(shipmentReads.length).toBeGreaterThan(0);
+		for (const [, options] of shipmentReads) {
+			expect(options.lock).toEqual(locks ? { mode: 'pessimistic_write' } : undefined);
+		}
+		expect(fixture.row('pending').status).toBe(FulfillmentStatusDetail.CANCELED);
+	});
+
+	it.each([
+		['mysql', 'READ COMMITTED'],
+		['mariadb', 'READ COMMITTED'],
+		['postgres', undefined],
+		['better-sqlite3', undefined]
+	])(
+		"opens the cancelation's transaction READ COMMITTED on MySQL, at the default elsewhere (%s)",
+		async (type, level) => {
+			// Greptile on #10555: under MySQL's REPEATABLE READ the cancelation that waited for the order's row lock
+			// would still read the order's other ledgers from its first snapshot — before the other cancelation had
+			// committed — and derive the order's status from them. READ COMMITTED reads every statement afresh.
+			const fixture = fulfillmentFixture({
+				seed: {
+					order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+					fulfillment: [shipment('pending')],
+					fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+				}
+			});
+			(fixture.manager as Row).connection = { options: { type } };
+
+			await fixture.service.cancel('pending');
+
+			expect(fixture.isolationLevels).toEqual([level]);
+			expect(fixture.transactions).toEqual(['committed']);
+			expect(fixture.row('pending').status).toBe(FulfillmentStatusDetail.CANCELED);
+		}
+	);
+
+	it('locks the order lines in id order whatever order the shipment lists them in', async () => {
+		// Greptile on #10555: each order line stays locked until the transaction ends, so two cancelations of
+		// shipments that share lines and list them in opposite orders would deadlock. They are taken by id.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [
+					orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 }),
+					orderLine(LINE_B, { quantity: 5, fulfilledQuantity: 2 })
+				],
+				fulfillment: [shipment('pending')],
+				// Listed B first
+				fulfillment_line: [
+					shipmentLine('line-b', 'pending', LINE_B, 2),
+					shipmentLine('line-a', 'pending', LINE_A, 3)
+				]
+			}
+		});
+		let locked: unknown[] = [];
+		const getRepository = fixture.transactionManager.getRepository;
+		(fixture.transactionManager as Row).getRepository = (entity: unknown) => {
+			const repository = getRepository(entity) as Row;
+
+			if (entity !== jest.requireMock('@gauzy/plugin-order').OrderLine) {
+				return repository;
+			}
+
+			return {
+				...repository,
+				findOne: async (options: Row = {}) => {
+					locked.push((options.where as Row).id);
+
+					return repository.findOne(options);
+				}
+			};
+		};
+
+		await fixture.service.cancel('pending');
+
+		expect(locked).toEqual([LINE_A, LINE_B]);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(0);
+	});
+
+	it('rolls the cancelation back when the order cannot be re-derived, and says so', async () => {
+		// The opposite of the second-write shape, and the point of the change: nothing has committed when the
+		// re-derivation fails, so the caller is told the truth — the shipment is still pending — rather than a
+		// cancelation that landed beside an order whose status no longer matches its lines.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		fixture.orderTotals.recompute.mockRejectedValueOnce(new Error('TOTALS_NOT_SETTLED: the ledger does not settle'));
+
+		await expect(fixture.service.cancel('pending', 'CHANGED_MIND')).rejects.toThrow(/TOTALS_NOT_SETTLED/);
+
+		expect(fixture.transactions).toEqual(['rolled back']);
+		expect(fixture.row('pending')).toMatchObject({ status: FulfillmentStatusDetail.PENDING, version: 1 });
+		expect(fixture.row('pending').canceledAt).toBeUndefined();
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+	});
+
+	/**
+	 * Two cancelations of one pending shipment read it `PENDING` at the same moment. One wins the conditional
+	 * write; the other's write is refused, and the move answers it as a racer that lost to a mover heading for
+	 * the same status (`moved: false`) — the documented no-op. The loser used to go on and give the shipment's
+	 * units back **a second time**, so the line ended with less fulfilled than the shipments that exist, and
+	 * re-derived the order for a move it did not make. It now stops where the repeat submission stops.
+	 */
+	it.each([
+		['typeorm', 'in one transaction'],
+		['mikro-orm', 'without a transaction']
+	])('gives nothing back for a cancelation that lost the race to another (%s, %s)', async (orm) => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 6, fulfilledQuantity: 6 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+		// The shipment table's repository: the same one the service writes through on either path.
+		const shipments = fixture.transactionManager.getRepository(Fulfillment) as Row;
+		const update = shipments.update;
+
+		jest.spyOn(fixture.service, 'ormType', 'get').mockReturnValue(orm as never);
+		// The winner's write lands between this caller's read and its own conditional write: the row is
+		// cancelled at version 2, the units given back once, and this caller's write matches no row.
+		shipments.update = async (criteria: any, partial: Row) => {
+			shipments.update = update;
+			Object.assign(fixture.row('pending'), { status: FulfillmentStatusDetail.CANCELED, version: 2 });
+			fixture.line(LINE_A).fulfilledQuantity = 3;
+
+			return update(criteria, partial);
+		};
+
+		await expect(fixture.service.cancel('pending')).resolves.toMatchObject({
+			status: FulfillmentStatusDetail.CANCELED
+		});
+
+		// Given back once, by the winner — not again by the loser.
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(fixture.recomputed).toEqual([]);
+		jest.restoreAllMocks();
+	});
+
 	it('re-derives nothing for a return leg, which moves no counter', async () => {
 		// A return is raised with no lines and moves no counter — the rule `createReturnLeg` states — so
 		// there is nothing for the derivation to see differently. The assertion is on the call, because
@@ -1943,7 +2213,10 @@ describe('FulfillmentService — a re-derivation that lost a version race is not
 		expect(warn.mock.calls[0][0]).toContain(`${ATTEMPTS} attempt(s)`);
 	});
 
-	it('answers a committed cancelation as cancelled when its re-derivation lost the race', async () => {
+	it('answers a committed cancelation as cancelled when its re-derivation lost the race (MikroORM: no transaction)', async () => {
+		// On TypeORM the cancelation and its re-derivation are one transaction, and a re-derivation that cannot
+		// land takes the cancelation down with it (see the transaction cases below). An installation on MikroORM
+		// keeps the second-write shape, and this is its answer.
 		warnings();
 		const fixture = fulfillmentFixture({
 			seed: {
@@ -1954,6 +2227,7 @@ describe('FulfillmentService — a re-derivation that lost a version race is not
 		});
 
 		fixture.orderTotals.recompute.mockRejectedValueOnce(lostRace());
+		jest.spyOn(fixture.service, 'ormType', 'get').mockReturnValue('mikro-orm' as never);
 
 		const cancelled = await fixture.service.cancel('pending', 'customer changed their mind');
 

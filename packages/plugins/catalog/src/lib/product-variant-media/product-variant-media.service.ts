@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { MikroOrmProductVariantMediaRepository } from './repository/mikro-orm-product-variant-media.repository';
 import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-product-variant-media.repository';
@@ -29,7 +30,7 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 	 */
 	public async findByVariant(variantId: ID): Promise<ProductVariantMedia[]> {
 		return this.typeOrmProductVariantMediaRepository.find({
-			where: { variantId, organizationId: RequestContext.currentOrganizationId() },
+			where: { variantId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
 			order: { position: 'ASC' }
 		});
 	}
@@ -42,6 +43,8 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 	 * @param primaryImageAssetId The thumbnail, which must be one of the set.
 	 * @returns The gallery rows after the write.
 	 * @throws BadRequestException When an image is listed twice or the primary is not in the set.
+	 * @throws NotFoundException When the variant is not the caller's (review R2-19: the gallery used to be read
+	 * by `variantId` alone and the images missing from the new set deleted by id, whoever owned them).
 	 */
 	public async replaceMedia(
 		variantId: ID,
@@ -58,7 +61,11 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
-		const existing = await this.typeOrmProductVariantMediaRepository.find({ where: { variantId } });
+		await assertInCallerScope(this.typeOrmProductVariantMediaRepository.manager, ProductVariant, variantId, 'variant');
+
+		const existing = await this.typeOrmProductVariantMediaRepository.find({
+			where: { variantId, ...callerScope() }
+		});
 		const kept = new Set(imageAssetIds);
 		const removed = existing.filter((row) => !kept.has(row.imageAssetId));
 
@@ -99,7 +106,7 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 	 * @throws NotFoundException When the image is not in the variant's gallery.
 	 */
 	public async setPrimary(variantId: ID, imageAssetId: ID): Promise<ProductVariantMedia[]> {
-		const rows = await this.typeOrmProductVariantMediaRepository.find({ where: { variantId } });
+		const rows = await this.typeOrmProductVariantMediaRepository.find({ where: { variantId, ...callerScope() } });
 		const target = rows.find((row) => row.imageAssetId === imageAssetId);
 
 		if (!target) {
@@ -124,11 +131,12 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 	 *
 	 * @param variantId The variant.
 	 * @param imageAssetId The image to detach.
-	 * @throws NotFoundException When the image is not in the variant's gallery.
+	 * @throws NotFoundException When the image is not in the caller's gallery of the variant — another tenant's
+	 * gallery row is answered as one that is not there (review R2-19).
 	 */
 	public async detach(variantId: ID, imageAssetId: ID): Promise<void> {
 		const row = await this.typeOrmProductVariantMediaRepository.findOne({
-			where: { variantId, imageAssetId }
+			where: { variantId, imageAssetId, ...callerScope() }
 		});
 
 		if (!row) {
@@ -141,7 +149,7 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 			// variant is never left without the thumbnail existing screens read.
 			if (row.isPrimary) {
 				const remaining = await manager.find(ProductVariantMedia, {
-					where: { variantId },
+					where: { variantId, ...callerScope() },
 					order: { position: 'ASC' }
 				});
 
