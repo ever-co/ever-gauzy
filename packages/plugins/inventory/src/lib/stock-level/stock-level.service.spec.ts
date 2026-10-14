@@ -563,7 +563,7 @@ function datastore(
 		 * model, and it says so instead of answering.
 		 */
 		query: async (sql: string, params: any[] = []) => {
-			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout/.test(sql)) {
+			if (/SET LOCAL lock_timeout|set_config\('lock_timeout'|SET SESSION innodb_lock_wait_timeout/.test(sql)) {
 				queries.push(sql.trim());
 
 				return [];
@@ -1415,7 +1415,7 @@ describe('StockLevelService — the concurrency rule the package states (doc 09 
 		await postgres.service.applyMovement(movement({ quantityDelta: 1 }) as never);
 
 		expect(postgres.store.queries).toEqual([
-			'SET LOCAL lock_timeout = $1',
+			`SELECT set_config('lock_timeout', $1, true)`,
 			'SELECT "id" FROM "warehouse_product_variant" WHERE "id" = $1 FOR UPDATE'
 		]);
 
@@ -1424,6 +1424,20 @@ describe('StockLevelService — the concurrency rule the package states (doc 09 
 		await sqlite.service.applyMovement(movement({ quantityDelta: 1 }) as never);
 
 		expect(sqlite.store.queries).toEqual([]);
+	});
+
+	it('sets the lock timeout in a statement PostgreSQL accepts a parameter in', async () => {
+		// PostgreSQL's SET takes no bind parameter: `SET LOCAL lock_timeout = $1` is answered
+		// `syntax error at or near "$1"`, so every stock movement on PostgreSQL failed before it took the row
+		// lock (upgrade-test run 38543160016: the return receipt answered HTTP 500). `set_config(name, value,
+		// true)` is the parameterised form of SET LOCAL.
+		const postgres = levelFixture({ level: { quantity: 5 }, dialect: 'postgres' });
+
+		await postgres.service.applyMovement(movement({ quantityDelta: 1 }) as never);
+
+		const parameterisedSet = postgres.store.queries.filter((sql: string) => /^\s*SET\b[^;]*\$\d/i.test(sql));
+		expect(parameterisedSet).toEqual([]);
+		expect(postgres.store.queries).toContain(`SELECT set_config('lock_timeout', $1, true)`);
 	});
 
 	it('guards the write with a compare-and-set on the level’s version', async () => {

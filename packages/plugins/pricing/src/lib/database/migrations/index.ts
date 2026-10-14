@@ -16,4 +16,4 @@ export { CreatePricingTables1791000000120 } from './1791000000120-CreatePricingT
 export { AddPriceListForeignKeys1791000000130 } from './1791000000130-AddPriceListForeignKeys';
 export { AddPriceComputationColumns1791000000135 } from './1791000000135-AddPriceComputationColumns';
 export { AddPriceUnitForeignKey1791000000186 } from './1791000000186-AddPriceUnitForeignKey';
-
+export { AddProductPriceSellerColumn1791000000652 } from './1791000000652-AddProductPriceSellerColumn';

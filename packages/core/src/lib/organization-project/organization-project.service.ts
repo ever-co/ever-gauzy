@@ -345,10 +345,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._entitySubscriptionService.delete({
+							// `member.employee` is not loaded (it threw, swallowed below, and the removed member stayed
+							// subscribed); `deleteForEmployee` reaches that member's row for a manager without
+							// CHANGE_SELECTED_EMPLOYEE, whose own employee `delete()` would target instead.
+							await this._entitySubscriptionService.deleteForEmployee({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								employeeId: member.employee.id,
+								employeeId: member.employeeId,
 								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId

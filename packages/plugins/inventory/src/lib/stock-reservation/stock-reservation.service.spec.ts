@@ -523,7 +523,7 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 			return { affected };
 		},
 		query: async (sql: string, params: any[] = []) => {
-			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout/.test(sql)) {
+			if (/SET LOCAL lock_timeout|set_config\('lock_timeout'|SET SESSION innodb_lock_wait_timeout/.test(sql)) {
 				return [];
 			}
 			if (/FOR UPDATE/.test(sql)) {

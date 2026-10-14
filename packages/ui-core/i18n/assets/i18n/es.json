@@ -4279,7 +4279,40 @@
 		"UNTAGGED": "build sin etiqueta",
 		"API_UNAVAILABLE": "Versión de la API no disponible",
 		"LEARN_MORE": "Más información",
-		"ABOUT": "Sobre"
+		"ABOUT": "Sobre",
+		"GITHUB": {
+			"TITLE": "En GitHub",
+			"DESCRIPTION": "Ever Gauzy se desarrolla de forma abierta: sigue las versiones, informa de un problema o contribuye.",
+			"RELEASES": "Versiones",
+			"ISSUES": "Incidencias",
+			"PULL_REQUESTS": "Pull requests",
+			"CONTRIBUTORS": "Colaboradores",
+			"CONTRIBUTING": "Guía de contribución",
+			"CODE_OF_CONDUCT": "Código de conducta",
+			"LICENSE_FILE": "Licencia"
+		},
+		"CARD": {
+			"IN_SYNC": "Sincronizado",
+			"DIFFERENT": "Compilaciones distintas",
+			"RELEASE_NOTES": "Notas de la versión",
+			"COMMIT": "Commit",
+			"REPOSITORY": "Repositorio"
+		},
+		"ENV": {
+			"TITLE": "Entorno",
+			"BUILD": "Compilación",
+			"PRODUCTION": "Producción",
+			"DEVELOPMENT": "Desarrollo",
+			"MODE": "Modo",
+			"DEMO": "Demo",
+			"STANDARD": "Estándar",
+			"RUNNING_IN": "Se ejecuta en",
+			"DESKTOP": "Aplicación de escritorio",
+			"BROWSER": "Navegador",
+			"API_ADDRESS": "Dirección de la API",
+			"WEB_ADDRESS": "Dirección web",
+			"COPY": "Copiar {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "por",

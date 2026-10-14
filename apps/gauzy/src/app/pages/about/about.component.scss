@@ -1,51 +1,488 @@
-.about-body {
+// About: two columns and ONE card style — a titled card whose content is a list of rows
+// (icon, label, detail or arrow), hairlines between rows, no underlines, 12px body. Every
+// custom property carries a fallback (`--gauzy-*` is undefined in the material themes); font
+// sizes are set on each text element because the theme's global paragraph rule (~15px) beats
+// an inherited size.
+$border: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+$divider: 1px solid $border;
+$hairline: inset 0 0 0 1px $border;
+$muted: var(--text-hint-color, rgba(126, 126, 143, 1));
+$radius: var(--gauzy-radius-sm, 0.5rem);
+$tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.08));
+$mono: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+
+// ── Layout ──────────────────────────────────────────────────────────────
+.about-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.65fr) minmax(16rem, 1fr);
+	align-items: start;
+	gap: 1rem;
+	max-width: 68rem;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+
+	@media (max-width: 991.98px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.about-main {
 	display: flex;
 	flex-direction: column;
-	gap: 1.25rem;
-	max-width: 44rem;
+	gap: 1rem;
+	min-width: 0;
+}
 
-	section h5 {
-		margin-bottom: 0.35rem;
+// ── The one card style (not `.card`: Bootstrap styles that globally) ──────────────────────────────────────────────────
+.ab-card {
+	overflow: hidden;
+	border-radius: $radius;
+	box-shadow: $hairline;
+}
+
+.ab-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.875rem 1rem 0.75rem;
+}
+
+// A second group inside the same card (On GitHub under Learn More).
+.group-header {
+	display: block;
+	border-top: $divider;
+}
+
+.ab-title {
+	margin: 0;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: $muted;
+}
+
+.ab-subtitle {
+	margin: 0.25rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: $muted;
+}
+
+.ab-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.625rem 1rem;
+	border-top: $divider;
+	font-size: 0.75rem;
+}
+
+.rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-top: $divider;
+
+	> li + li {
+		border-top: $divider;
 	}
-	section h6 {
-		margin-bottom: 0.5rem;
+}
+
+.row-icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: $radius;
+	background: $tint;
+	color: var(--text-basic-color);
+
+	nb-icon {
+		font-size: 1rem;
+	}
+}
+
+.row-label {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: var(--text-basic-color);
+}
+
+.muted {
+	color: $muted;
+}
+
+// ── Product ─────────────────────────────────────────────────────────────
+.intro {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	padding: 1.25rem;
+}
+
+.brand-logo {
+	display: block;
+	flex: 0 0 auto;
+	width: 4rem;
+	height: 4rem;
+	border-radius: 0.875rem;
+	object-fit: cover;
+	// A hairline so the dark tile keeps its edge on the dark theme's dark card.
+	box-shadow: $hairline;
+}
+
+.intro-copy {
+	min-width: 0;
+}
+
+.product-name {
+	margin: 0 0 0.25rem;
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.5rem;
+}
+
+// A subtitle under the name: muted and 12px (was full-contrast 13px, which competed with the
+// name), with a line length that stays readable.
+.product-description {
+	max-width: 60ch;
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 400;
+	line-height: 1.25rem;
+	color: $muted;
+}
+
+.license {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	margin: 0.75rem 0 0;
+	padding: 0.1875rem 0.625rem;
+	border-radius: 999px;
+	background: $tint;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: $muted;
+
+	nb-icon {
+		font-size: 0.875rem;
 	}
 
-	.license,
-	.muted {
-		opacity: 0.7;
-	}
+	a {
+		font-weight: 500;
+		text-decoration: none;
 
-	.mismatch {
-		font-size: 0.8125rem;
-		opacity: 0.85;
-	}
-
-	.versions table {
-		border-collapse: collapse;
-
-		th {
-			text-align: left;
-			font-weight: 600;
-			padding: 0.25rem 1.25rem 0.25rem 0;
+		&:hover,
+		&:focus-visible {
+			text-decoration: underline;
 		}
-		td {
-			padding: 0.25rem 1.25rem 0.25rem 0;
-		}
+	}
+}
+
+// ── Builds ──────────────────────────────────────────────────────────────
+.sync {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--color-success-default);
+
+	.dot {
+		background: currentColor;
 	}
 
-	.links ul {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem;
+	&.is-different {
+		color: var(--color-warning-default);
+	}
+}
+
+.mismatch {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0.625rem 1rem;
+	border-top: $divider;
+	background: var(--color-warning-transparent-default, rgba(255, 170, 0, 0.08));
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: var(--text-basic-color);
+
+	nb-icon {
+		flex: 0 0 auto;
+		margin-top: 0.0625rem;
+		font-size: 0.875rem;
+		color: var(--color-warning-default);
+	}
+}
+
+.build-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+}
+
+.build-main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.build-name {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.build-facts {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+	font-size: 0.75rem;
+}
+
+.dot {
+	display: inline-block;
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: var(--color-basic-500, rgba(126, 126, 143, 0.6));
+
+	&.is-live {
+		background: var(--color-success-default);
 	}
 
-	.copyright {
+	&.is-different {
+		background: var(--color-warning-default);
+	}
+}
+
+.commit-chip {
+	padding: 0.0625rem 0.4375rem;
+	border-radius: 0.375rem;
+	box-shadow: inset 0 0 0 1px $border;
+	font-family: $mono;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	color: var(--text-basic-color);
+	text-decoration: none;
+	transition:
+		box-shadow 0.15s ease,
+		color 0.15s ease;
+
+	&:hover,
+	&:focus-visible {
+		box-shadow: inset 0 0 0 1px var(--color-primary-default);
+		color: var(--color-primary-default);
+		text-decoration: none;
+	}
+}
+
+// The version tag links to its release.
+.version {
+	font-family: $mono;
+	font-size: 0.6875rem;
+	color: $muted;
+	text-decoration: none;
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-primary-default);
+		text-decoration: underline;
+	}
+}
+
+.build-actions {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 0.25rem;
+}
+
+// Square icon buttons for release notes / commit.
+.icon-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: $radius;
+	color: $muted;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+
+	nb-icon {
+		font-size: 1rem;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: $tint;
+		color: var(--color-primary-default);
+	}
+}
+
+// ── Environment ─────────────────────────────────────────────────────────
+// A sub-group inside the Version card: small-caps title, then label | value rows.
+.ab-group-title {
+	margin: 0;
+	padding: 0.875rem 1rem 0.375rem;
+	border-top: $divider;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: $muted;
+}
+
+.facts {
+	margin: 0;
+	padding: 0 1rem 0.5rem;
+}
+
+.fact {
+	display: grid;
+	grid-template-columns: 8.5rem minmax(0, 1fr);
+	align-items: center;
+	gap: 0.25rem 1rem;
+	min-height: 2.25rem;
+
+	& + .fact {
+		border-top: $divider;
+	}
+
+	@media (max-width: 575.98px) {
+		grid-template-columns: minmax(0, 1fr);
+		padding: 0.375rem 0;
+	}
+
+	dt {
 		font-size: 0.75rem;
-		opacity: 0.6;
-		margin-top: 0.5rem;
+		font-weight: 400;
+		color: $muted;
 	}
+
+	dd {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+		margin: 0;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--text-basic-color);
+	}
+
+	.icon-link {
+		width: 1.75rem;
+		height: 1.75rem;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		cursor: pointer;
+
+		nb-icon {
+			font-size: 0.875rem;
+		}
+	}
+}
+
+// An address: monospace, ellipsised when long (full value in the title).
+.address {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0.0625rem 0.375rem;
+	border-radius: 0.25rem;
+	background: $tint;
+	font-family: $mono;
+	font-size: 0.6875rem;
+	font-weight: 400;
+	color: var(--text-basic-color);
+}
+
+.mono-chip {
+	padding: 0.0625rem 0.375rem;
+	border-radius: 0.25rem;
+	background: $tint;
+	font-family: $mono;
+	font-size: 0.6875rem;
+	color: var(--text-basic-color);
+	text-decoration: none;
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-primary-default);
+	}
+}
+
+// ── Resources ───────────────────────────────────────────────────────────
+.link-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 1rem;
+	text-decoration: none;
+	transition: background-color 0.15s ease;
+
+	.row-icon {
+		width: 1.75rem;
+		height: 1.75rem;
+
+		nb-icon {
+			font-size: 0.9375rem;
+		}
+	}
+
+	.row-label {
+		flex: 1 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 0.75rem;
+	}
+
+	.row-trailing {
+		flex: 0 0 auto;
+		font-size: 0.875rem;
+		color: $muted;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: $tint;
+		text-decoration: none;
+
+		.row-label {
+			color: var(--color-primary-default);
+		}
+
+		.row-trailing {
+			opacity: 1;
+		}
+	}
+}
+
+.copyright {
+	margin: 1.25rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: $muted;
 }

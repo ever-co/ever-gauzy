@@ -138,12 +138,14 @@ describe('AddFulfillmentVersionColumn1791000000610 — what it issues', () => {
 		);
 	});
 
-	it('is the last tick of the plugin’s set', () => {
+	it('runs after every tick the set held when it shipped, and the set stays in timestamp order', () => {
 		// A migration's timestamp is frozen once it has shipped, so this one runs after every file the
-		// set already holds and cannot be inserted between two of them.
-		expect(ALL_FULFILLMENT_MIGRATIONS[ALL_FULFILLMENT_MIGRATIONS.length - 1]).toBe(
-			AddFulfillmentVersionColumn1791000000610
-		);
+		// set already held and cannot be inserted between two of them; a later tick (the seller column the
+		// marketplace used to be the only one to create, review R5-14) is appended after it.
+		const timestamps = ALL_FULFILLMENT_MIGRATIONS.map((migration) => Number(/(\d{13})$/.exec(migration.name)?.[1]));
+
 		expect(ALL_FULFILLMENT_MIGRATIONS).toContain(AddFulfillmentVersionColumn1791000000610);
+		expect(ALL_FULFILLMENT_MIGRATIONS.indexOf(AddFulfillmentVersionColumn1791000000610)).toBe(2);
+		expect(timestamps).toEqual([...timestamps].sort((left, right) => left - right));
 	});
 });

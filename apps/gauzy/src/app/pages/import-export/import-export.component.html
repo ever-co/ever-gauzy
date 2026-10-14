@@ -13,96 +13,135 @@
     </h4>
   </nb-card-header>
   <nb-card-body>
-    <div class="row">
-      <div class="col-sm-12 button-imports">
-        <div class="button-import">
-          <!--
-            `shape="round"` was dropped: this was the only button in this row
-            that asked for a pill, so it sat next to rectangles. (The row holds
-            up to four — Migrate To Cloud is behind `!environment.DEMO` and the
-            MIGRATE_GAUZY_CLOUD permission, so on a demo build there are fewer.)
+    <!--
+      One row per action, as in Settings > General / File Storage: an icon, the action's title
+      and description, and its button on the end side. The buttons used to sit in a separate
+      tray row with the descriptions as loose lines underneath.
+    -->
+    <section class="actions-panel">
+      <div class="action-row">
+        <span class="action-mark is-success" aria-hidden="true">
+          <nb-icon icon="upload-outline"></nb-icon>
+        </span>
+        <div class="action-copy">
+          <h6 class="action-title">{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</h6>
+          <p class="info">{{ 'MENU.IMPORT_EXPORT.IMPORT_INFO' | translate }}</p>
+        </div>
+        <button class="action" nbButton status="success" size="small" (click)="importPage()">
+          <nb-icon icon="upload-outline"></nb-icon>
+          {{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+        </button>
+      </div>
 
-            This is a deliberate restyle of something that did render, not the
-            removal of a rule that never applied.
-          -->
+      <div class="action-row">
+        <span class="action-mark is-info" aria-hidden="true">
+          <nb-icon icon="download-outline"></nb-icon>
+        </span>
+        <div class="action-copy">
+          <h6 class="action-title">{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}</h6>
+          <p class="info">{{ 'MENU.IMPORT_EXPORT.EXPORT_INFO' | translate }}</p>
+        </div>
+        <button class="action" nbButton status="info" size="small" (click)="exportPage()">
+          <nb-icon icon="download-outline"></nb-icon>
+          {{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+        </button>
+      </div>
+
+      <div class="action-row">
+        <span class="action-mark" aria-hidden="true">
+          <nb-icon icon="file-text-outline"></nb-icon>
+        </span>
+        <div class="action-copy">
+          <h6 class="action-title">{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}</h6>
+          <p class="info">{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES_INFO' | translate }}</p>
+        </div>
+        <button class="action" nbButton status="basic" size="small" (click)="onDownloadTemplates()">
+          <nb-icon icon="file-text-outline"></nb-icon>
+          {{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
+        </button>
+      </div>
+
+      <!-- Migrate To Cloud: not on demo builds, and the button only with MIGRATE_GAUZY_CLOUD. -->
+      @if (!environment.DEMO) {
+        <div class="action-row">
+          <span class="action-mark is-warning" aria-hidden="true">
+            <nb-icon icon="cloud-upload-outline"></nb-icon>
+          </span>
+          <div class="action-copy">
+            <h6 class="action-title">{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate }}</h6>
+            <p class="info">{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD_INFO' | translate }}</p>
+          </div>
           <button
+            *ngxPermissionsOnly="[permissionsEnum.MIGRATE_GAUZY_CLOUD]"
             class="action"
             nbButton
-            status="success"
             size="small"
-            (click)="importPage()"
+            status="warning"
+            ngxPromptDialog
+            [inputType]="'password'"
+            [title]="'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate"
+            [placeholder]="'FORM.PASSWORD' | translate"
+            [label]="'FORM.PASSWORD' | translate"
+            (callback)="onMigrateIntoCloud($event)"
             >
             <nb-icon icon="upload-outline"></nb-icon>
-            {{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+            {{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate }}
           </button>
         </div>
-        <div class="button-import">
-          <button
-            class="action"
-            nbButton
-            status="info"
-            size="small"
-            (click)="exportPage()"
-            >
-            <nb-icon icon="download-outline"></nb-icon>
-            {{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
-          </button>
-        </div>
-        <div class="button-import">
-          <button
-            class="action"
-            nbButton
-            size="small"
-            (click)="onDownloadTemplates()"
-            >
-            <nb-icon icon="file-text-outline"></nb-icon>
-            {{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate
-            }}
-          </button>
-        </div>
-        @if (!environment.DEMO) {
-          <div class="button-import">
-            <button
-              *ngxPermissionsOnly="[permissionsEnum.MIGRATE_GAUZY_CLOUD]"
-              class="action"
-              nbButton
-              size="small"
-              status="warning"
-              ngxPromptDialog
-              [inputType]="'password'"
-              [title]="'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate"
-              [placeholder]="'FORM.PASSWORD' | translate"
-              [label]="'FORM.PASSWORD' | translate"
-              (callback)="onMigrateIntoCloud($event)"
-              >
-              <nb-icon icon="upload-outline"></nb-icon>
-              {{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate
-              }}
-            </button>
+      }
+    </section>
+
+    <!-- The newest imports, from the Import page's own history request. -->
+    <ng-container *ngxPermissionsOnly="[permissionsEnum.ALL_ORG_VIEW, permissionsEnum.IMPORT_ADD]">
+      @if (historyAvailable) {
+        <section class="history-panel" aria-labelledby="import-history-title">
+          <header class="history-header">
+            <div>
+              <h6 class="history-title" id="import-history-title">{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}</h6>
+              <p class="info muted">{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate }}</p>
+            </div>
+          </header>
+          <!-- ARIA table roles on the CSS grid, so each value is announced with its column name. -->
+          <div class="history-table" role="table" aria-labelledby="import-history-title">
+            <div class="history-row history-head" role="row">
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</span>
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</span>
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.IMPORT_DATE_TIME' | translate }}</span>
+              <span role="columnheader">{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}</span>
+              <span class="history-actions" role="columnheader">{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}</span>
+            </div>
+            @for (item of recentImports; track item.id) {
+              <div class="history-row" role="row">
+                <span class="history-file" role="cell" [attr.title]="item.file">{{ item.file }}</span>
+                <span class="history-size" role="cell">{{ item.size | fileSize }}</span>
+                <!-- Angular's `date`, not the shared `dateTimeFormat`: that pipe feeds its Angular-style
+                     default ('d MMMM, y H:mm') to moment, where `d` is the weekday number. -->
+                <span class="history-date" role="cell">{{ item.importDate ? (item.importDate | date: 'medium') : '—' }}</span>
+                <span class="history-status" role="cell">
+                  <span
+                    class="status-dot"
+                    [class.is-success]="item.status === importStatus.SUCCESS"
+                    [class.is-danger]="item.status === importStatus.FAILED"
+                    [class.is-warning]="item.status === importStatus.IN_PROGRESS"
+                    aria-hidden="true"
+                  ></span>
+                  {{ item.status }}
+                </span>
+                <!-- Same archive download as the Import page's history. -->
+                <span class="history-actions" role="cell">
+                  <button nbButton ghost status="primary" size="small" (click)="downloadImport(item)">
+                    <nb-icon icon="download-outline"></nb-icon>
+                    {{ 'BUTTONS.DOWNLOAD' | translate }}
+                  </button>
+                </span>
+              </div>
+            } @empty {
+              <div class="history-row history-empty" role="row"><span role="cell">—</span></div>
+            }
           </div>
-        }
-      </div>
-    </div>
-    <div class="row mt-4">
-      <div class="col-sm-12">
-        <div class="info">
-          {{ 'MENU.IMPORT_EXPORT.IMPORT_INFO' | translate }}
-        </div>
-        <div class="info">
-          {{ 'MENU.IMPORT_EXPORT.EXPORT_INFO' | translate }}
-        </div>
-        <div class="info">
-          {{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES_INFO' | translate
-          }}
-        </div>
-        @if (!environment.DEMO) {
-          <div class="info">
-            {{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD_INFO' |
-            translate }}
-          </div>
-        }
-      </div>
-    </div>
+        </section>
+      }
+    </ng-container>
   </nb-card-body>
 </nb-card>
 <router-outlet></router-outlet>

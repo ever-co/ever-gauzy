@@ -31,19 +31,36 @@ import { TranslatePipe } from '@ngx-translate/core';
 	`,
 	styles: [
 		`
+			/* Same scale as the settings page around it: 12px meta, a hairline code well. */
 			.meta {
 				display: grid;
 				grid-template-columns: max-content auto;
-				gap: 4px 12px;
-				margin: 0 0 8px;
+				gap: 0.25rem 0.75rem;
+				margin: 0 0 0.5rem;
+				font-size: 0.75rem;
+				line-height: 1.125rem;
+			}
+			.meta dt {
+				font-weight: 400;
+				color: var(--text-hint-color, rgba(126, 126, 143, 1));
+			}
+			.meta dd {
+				margin: 0;
+				font-weight: 400;
+				font-variant-numeric: tabular-nums;
 			}
 			pre {
 				max-height: 420px;
 				overflow: auto;
-				padding: 12px;
-				border-radius: 4px;
-				background: var(--background-basic-color-2, #f7f9fc);
-				font-size: 12px;
+				margin: 0 0 0.5rem;
+				padding: 0.75rem;
+				border-radius: var(--gauzy-radius-sm, 0.5rem);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.06));
+				box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+				font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+				font-size: 0.6875rem;
+				line-height: 1rem;
+				color: var(--text-basic-color);
 				white-space: pre;
 			}
 			.toggle {
@@ -51,8 +68,13 @@ import { TranslatePipe } from '@ngx-translate/core';
 				border: none;
 				padding: 0;
 				cursor: pointer;
+				font-size: 0.75rem;
+				font-weight: 500;
+				color: var(--text-primary-color, var(--color-primary-default));
+			}
+			.toggle:hover,
+			.toggle:focus-visible {
 				text-decoration: underline;
-				color: inherit;
 			}
 		`
 	]

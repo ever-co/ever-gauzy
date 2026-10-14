@@ -4,6 +4,7 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { CreateReturnTables1791000000300 } from './database/migrations/1791000000300-CreateReturnTables';
 import { AddReturnsLinePositiveChecks1791000000432 } from './database/migrations/1791000000432-AddReturnsLinePositiveChecks';
 import { AddOrderReturnVersionColumn1791000000590 } from './database/migrations/1791000000590-AddOrderReturnVersionColumn';
+import { AddOrderReturnSellerColumn1791000000655 } from './database/migrations/1791000000655-AddOrderReturnSellerColumn';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { RETURNS_FEATURES } from './returns.features';
@@ -46,7 +47,8 @@ const RETURNS_DEPENDS_ON: string[] = ['@gauzy/plugin-order', '@gauzy/plugin-paym
 	migrations: [
 		CreateReturnTables1791000000300,
 		AddReturnsLinePositiveChecks1791000000432,
-		AddOrderReturnVersionColumn1791000000590
+		AddOrderReturnVersionColumn1791000000590,
+		AddOrderReturnSellerColumn1791000000655
 	],
 	/**
 	 * The permissions the plugin contributes to the platform role model.

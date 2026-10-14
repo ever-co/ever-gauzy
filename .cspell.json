@@ -1542,6 +1542,11 @@
 		"weightable",
 		"workstream",
 		"describedby",
+		"HKCU",
+		"regedit",
+		"taskkill",
+		"requestfailed",
+		"subkeys",
 		"favorited",
 		"bookmarkable"
 	],
