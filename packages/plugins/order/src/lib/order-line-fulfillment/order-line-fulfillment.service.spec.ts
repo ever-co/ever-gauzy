@@ -296,7 +296,11 @@ function typeOrmRepository(db: ISqliteDatabase, table: string, statements: IStat
 		},
 		release: async () => {
 			runner.released += 1;
-		}
+		},
+		// A transaction on the store itself, so a rollback is the database's.
+		startTransaction: async () => db.exec('BEGIN'),
+		commitTransaction: async () => db.exec('COMMIT'),
+		rollbackTransaction: async () => db.exec('ROLLBACK')
 	};
 
 	return {
@@ -346,8 +350,8 @@ function mikroOrmRepository(db: ISqliteDatabase, table: string, statements: ISta
 		// MikroORM's `execute` inlines the values into its `?` placeholders before the driver sees the
 		// statement, and in `run` mode answers `{ affectedRows }` on every driver; binding them here is
 		// the same statement.
-		getEntityManager: () => ({
-			getConnection: () => ({
+		getEntityManager: () => {
+			const connection = {
 				execute: async (sql: string, parameters: unknown[] = [], method?: string) => {
 					statements.push({ orm: 'mikro-orm', sql, parameters, method });
 
@@ -355,8 +359,28 @@ function mikroOrmRepository(db: ISqliteDatabase, table: string, statements: ISta
 
 					return { affectedRows: result.changes, insertId: result.lastInsertRowid };
 				}
-			})
-		})
+			};
+
+			return {
+				getConnection: () => connection,
+				// `em.transactional`, over the store's own transaction.
+				transactional: async (work: (tx: unknown) => Promise<unknown>) => {
+					db.exec('BEGIN');
+
+					try {
+						const answer = await work({ getConnection: () => connection, getTransactionContext: () => 'tx' });
+
+						db.exec('COMMIT');
+
+						return answer;
+					} catch (error) {
+						db.exec('ROLLBACK');
+
+						throw error;
+					}
+				}
+			};
+		}
 	};
 }
 
@@ -1205,6 +1229,35 @@ describe('OrderLineFulfillmentService — doc 10 invariant I-12', () => {
 
 		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 2 });
 		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 1 });
+	});
+
+	it.each([
+		['typeorm', 'better-sqlite3'],
+		['mikro-orm', 'postgres']
+	])('runs a call of several moves as one transaction and undoes a refused one by rolling back (%s)', async (orm, dialect) => {
+		// Greptile on #10546 (second P1): undoing the landed moves with statements of their own is a window. Run
+		// with the I-12 guard the undo refused to put back a repair; run without it, it could put back a value a
+		// concurrent move (another call dismissing units on the same line) had since made invalid. One
+		// transaction has no such window: the first move holds the line until the call ends, a concurrent move
+		// waits for it, and a refusal is the database's rollback — so no compensating statement is ever issued.
+		mockOrm.type = orm;
+		mockDialect.type = dialect;
+		const { service, counters, statements } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 1, returnRequestedQuantity: 1, returnReceivedQuantity: 1, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 1, returnRequestedQuantity: 1, returnReceivedQuantity: 0, position: 2 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '-1' },
+				{ orderLineId: 'line-2', quantityDelta: '-1' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		// Two statements — the two moves — and no third that undoes the first.
+		expect(statements.map((statement) => statement.parameters[0])).toEqual(['-1.000000', '-1.000000']);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1 });
+		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 0 });
 	});
 
 	it('leaves the written-off counter to its floor alone, because it is not part of I-12', async () => {

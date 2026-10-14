@@ -197,6 +197,12 @@ interface IOrderScope {
 	organizationId: ID;
 }
 
+/** Runs one counter statement inside the transaction a call opened, and answers how many rows it changed. */
+type IStatementRunner = (sql: string, parameters: Record<string, unknown>) => Promise<number>;
+
+/** Raised inside a batch's transaction to roll it back when one of its moves changed no row. */
+class CounterMoveRefused extends Error {}
+
 /** One move, once its delta was read as an exact decimal at the column's scale. */
 interface IStatedMove {
 	orderLineId: ID;
@@ -455,6 +461,68 @@ export class OrderLineFulfillmentService {
 		}
 
 		const scope = await this.readOrderScope(orderId);
+
+		// One move is one statement, and a statement is atomic on its own.
+		if (stated.length === 1) {
+			const [move] = stated;
+
+			if ((await this.moveCounter(counter, scope, move.orderLineId, move.delta)) === 0) {
+				await this.refuseMove(counter, scope, move);
+			}
+
+			return;
+		}
+
+		// **Several moves are one transaction**, so a call is all or nothing by the database's own rollback
+		// rather than by undoing what landed. Undoing was a second set of statements: run with the I-12 guard it
+		// refused to put back a repair the call had made (a line already outside I-12), and run without it, it
+		// could put back a value a concurrent move had since made invalid — another call dismissing units on the
+		// same line between this call's move and its undo. Inside one transaction the first move holds the
+		// line until the call ends, a concurrent move waits for it, and a refusal leaves every line exactly as
+		// the call found it.
+		let refused: IStatedMove | undefined;
+		const ran = await this.inTransaction(async (run) => {
+			for (const move of stated) {
+				if ((await this.moveCounter(counter, scope, move.orderLineId, move.delta, run)) === 0) {
+					refused = move;
+
+					throw new CounterMoveRefused();
+				}
+			}
+		}).then(
+			(answer) => answer,
+			(error) => {
+				if (error instanceof CounterMoveRefused) {
+					return true;
+				}
+
+				throw error;
+			}
+		);
+
+		if (ran === null) {
+			return this.moveCountersOneByOne(counter, scope, stated);
+		}
+
+		if (refused) {
+			// Explained after the rollback, from the line as it now stands — which is as this call found it.
+			await this.refuseMove(counter, scope, refused);
+		}
+	}
+
+	/**
+	 * The batch without a transaction, for a connection that cannot open one.
+	 *
+	 * Every connection the platform configures can — TypeORM's query runner and MikroORM's `transactional`
+	 * both exist on every dialect — so this is the shape a hand-built service (a test double without a
+	 * transaction, a script) falls back to. Each move is its own statement, and a refusal undoes the moves
+	 * before it (see {@link reverse}).
+	 *
+	 * @param counter The counter to move.
+	 * @param scope The order the lines belong to.
+	 * @param stated The moves.
+	 */
+	private async moveCountersOneByOne(counter: ReturnCounter, scope: IOrderScope, stated: readonly IStatedMove[]): Promise<void> {
 		const applied: IStatedMove[] = [];
 
 		try {
@@ -472,6 +540,75 @@ export class OrderLineFulfillmentService {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * Runs statements in one transaction on the configured ORM's connection.
+	 *
+	 * On TypeORM a query runner of its own is taken, a transaction opened on it, and every statement the work
+	 * runs goes through that runner; a manager that already carries an open transaction (a caller's) is joined
+	 * instead, and the caller's transaction decides. On MikroORM it is `em.transactional`, and every statement
+	 * is run with that transaction's context.
+	 *
+	 * @param work The statements, given the runner each one goes through.
+	 * @returns `true` once the work committed, or `null` when the connection cannot open a transaction.
+	 * @throws Whatever the work threw, after the transaction was rolled back.
+	 */
+	private async inTransaction(work: (run: IStatementRunner) => Promise<void>): Promise<true | null> {
+		if (this.usesMikroOrm) {
+			const em = this.mikroOrmOrderLineRepository.getEntityManager() as unknown as {
+				transactional?: <R>(callback: (tx: any) => Promise<R>) => Promise<R>;
+			};
+
+			if (typeof em?.transactional !== 'function') {
+				return null;
+			}
+
+			await em.transactional(async (tx) =>
+				work(async (sql, parameters) => {
+					const bound = toQuestionMarkStatement(sql, parameters);
+
+					return readAffectedRows(
+						await tx.getConnection().execute(bound.sql, bound.parameters, 'run', tx.getTransactionContext())
+					);
+				})
+			);
+
+			return true;
+		}
+
+		const manager = this.typeOrmOrderLineRepository.manager;
+
+		if (manager.queryRunner?.isTransactionActive) {
+			await work((sql, parameters) => this.runOn(manager.queryRunner, sql, parameters));
+
+			return true;
+		}
+
+		const runner = manager.dataSource.createQueryRunner();
+
+		if (typeof runner.startTransaction !== 'function') {
+			await runner.release();
+
+			return null;
+		}
+
+		try {
+			await runner.startTransaction();
+
+			try {
+				await work((sql, parameters) => this.runOn(runner, sql, parameters));
+				await runner.commitTransaction();
+			} catch (error) {
+				await runner.rollbackTransaction();
+
+				throw error;
+			}
+		} finally {
+			await runner.release();
+		}
+
+		return true;
 	}
 
 	/**
@@ -534,10 +671,7 @@ export class OrderLineFulfillmentService {
 	 * @param scope The order the line must belong to, and its tenant and organization.
 	 * @param orderLineId The line to move.
 	 * @param delta The exact delta, never zero.
-	 * @param guarded Whether the move is checked against doc 10 I-12. Every move a caller states is; the one
-	 * that is not is {@link reverse}'s, which puts back the exact value this call found on the line — a
-	 * state the line was already in — and refusing it would leave the call half-applied after telling the
-	 * caller it failed, on precisely the lines a repair move is allowed to touch.
+	 * @param run The transaction the statement runs in, when the call opened one.
 	 * @returns How many rows the statement changed: one when the move landed, none when it was refused.
 	 */
 	private async moveCounter(
@@ -545,14 +679,14 @@ export class OrderLineFulfillmentService {
 		scope: IOrderScope,
 		orderLineId: ID,
 		delta: DecimalString,
-		guarded = true
+		run?: IStatementRunner
 	): Promise<number> {
 		const q = quoteIdentifier;
 		const column = q(counter.column);
 		const moved = `ROUND(${column} + CAST(:delta AS DECIMAL(20,6)), 6)`;
 		// The half of doc 10 I-12 this move can break rides the same `WHERE` as the floor (see
 		// `returnInvariantHalf`), so a move that would leave the line outside it changes no row.
-		const invariant = guarded ? returnInvariantHalf(counter, !delta.startsWith('-'), moved, q) : null;
+		const invariant = returnInvariantHalf(counter, !delta.startsWith('-'), moved, q);
 		const sql =
 			`UPDATE ${q('order_line')} SET ${column} = ${moved} ` +
 			`WHERE ${q('id')} = :orderLineId AND ${q('orderId')} = :orderId ` +
@@ -560,13 +694,15 @@ export class OrderLineFulfillmentService {
 			`AND ${q('deletedAt')} IS NULL AND ${moved} >= 0` +
 			(invariant ? ` AND ${invariant.condition}` : '');
 
-		return await this.execute(sql, {
+		const parameters = {
 			delta,
 			orderLineId,
 			orderId: scope.orderId,
 			tenantId: scope.tenantId,
 			organizationId: scope.organizationId
-		});
+		};
+
+		return run ? await run(sql, parameters) : await this.execute(sql, parameters);
 	}
 
 	/**
@@ -635,7 +771,8 @@ export class OrderLineFulfillmentService {
 	}
 
 	/**
-	 * Undoes the moves of a call that were applied before one of its moves was refused.
+	 * Undoes the moves of a call that were applied before one of its moves was refused — on a connection that
+	 * could not open a transaction (see {@link moveCountersOneByOne}); everywhere else the rollback does it.
 	 *
 	 * The reversal is best-effort by nature — it is undoing writes that only partly landed — so a
 	 * reversal that fails is logged rather than raised: the failure the caller must see is the move that
@@ -649,8 +786,9 @@ export class OrderLineFulfillmentService {
 		for (const move of [...applied].reverse()) {
 			try {
 				const opposite = move.delta.startsWith('-') ? move.delta.slice(1) : `-${move.delta}`;
-				// Unguarded for I-12: this restores the value the line held before this call (see `moveCounter`).
-				const affected = await this.moveCounter(counter, scope, move.orderLineId, opposite, false);
+				// Guarded like any move: on this path another call may have moved the line since, and putting back a
+				// value that is no longer valid would break I-12 to undo a failure.
+				const affected = await this.moveCounter(counter, scope, move.orderLineId, opposite);
 
 				if (affected === 0) {
 					throw new Error(`the reversal of ${move.delta} was refused`);
@@ -787,21 +925,37 @@ export class OrderLineFulfillmentService {
 			return readAffectedRows(await connection.execute(bound.sql, bound.parameters, 'run'));
 		}
 
-		const bound = toPositionalStatement(sql, parameters);
 		const manager = this.typeOrmOrderLineRepository.manager;
 		// A manager bound to a transaction carries its runner, and the statement joins that transaction;
 		// otherwise a runner of its own is taken from the pool and given back.
 		const runner = manager.queryRunner ?? manager.dataSource.createQueryRunner();
 
 		try {
-			const result = await runner.query(bound.sql, bound.parameters, true);
-
-			return typeof result?.affected === 'number' ? result.affected : readAffectedRows(result?.raw);
+			return await this.runOn(runner, sql, parameters);
 		} finally {
 			if (runner !== manager.queryRunner) {
 				await runner.release();
 			}
 		}
+	}
+
+	/**
+	 * Runs one TypeORM statement on a given query runner and answers how many rows it changed.
+	 *
+	 * @param runner The runner — a borrowed one, or the one a transaction holds.
+	 * @param sql The statement, with `:name` parameters and dialect-quoted identifiers.
+	 * @param parameters The values, keyed by name.
+	 * @returns The affected-row count, read from the runner's structured result (see {@link execute}).
+	 */
+	private async runOn(
+		runner: { query: (sql: string, parameters: unknown[], structured: true) => Promise<any> },
+		sql: string,
+		parameters: Record<string, unknown>
+	): Promise<number> {
+		const bound = toPositionalStatement(sql, parameters);
+		const result = await runner.query(bound.sql, bound.parameters, true);
+
+		return typeof result?.affected === 'number' ? result.affected : readAffectedRows(result?.raw);
 	}
 }
 
