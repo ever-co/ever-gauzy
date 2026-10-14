@@ -314,6 +314,33 @@ describe('FeatureService.isFeatureEnabled', () => {
 		expect(toggles.find).not.toHaveBeenCalled();
 	});
 
+	it('answers a resolution that carries no tenant from the catalogue default when configuration does not name the code', async () => {
+		// A `@Public()` handler runs without the tenant guard, so this is how every public GraphQL field
+		// resolves `FEATURE_GRAPHQL`: configuration does not name it and the catalogue marks it on. Read
+		// from the configuration alone it answered `false` and every public field was refused (R7-F3).
+		const catalogue = createTypeOrmFeatureRepository(CATALOGUE);
+		const toggles = createTypeOrmToggleRepository([toggle(ORDER_FEATURE_ID, false)]);
+		const service = new FeatureService(
+			catalogue as any,
+			createMikroOrmFeatureRepository(CATALOGUE) as any,
+			toggles as any,
+			createMikroOrmToggleRepository([]) as any
+		);
+		const GRAPHQL = commerceCode('FEATURE_GRAPHQL');
+
+		expect(gauzyToggleFeatures['FEATURE_GRAPHQL']).toBeUndefined();
+		await expect(service.isFeatureEnabled(GRAPHQL)).resolves.toBe(true);
+		await expect(service.isFeatureEnabled(ORDER)).resolves.toBe(true);
+		// a code the catalogue marks off stays off, and a code configuration names keeps its answer
+		await expect(service.isFeatureEnabled(WAREHOUSE)).resolves.toBe(false);
+		await expect(service.isFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)).resolves.toBe(
+			!!gauzyToggleFeatures[FeatureEnum.FEATURE_DOCUMENTS]
+		);
+		// still no stored toggle was read: another tenant's switched-off row cannot answer for nobody
+		expect(catalogue.findOneBy).not.toHaveBeenCalled();
+		expect(toggles.find).not.toHaveBeenCalled();
+	});
+
 	it('answers from the deployment configuration when the scope cannot be read at all', async () => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockImplementation(() => {
 			throw new Error('no request context');

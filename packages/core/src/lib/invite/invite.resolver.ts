@@ -1,6 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Throttle } from '@nestjs/throttler';
 import { FeatureFlag, Public } from '@gauzy/common';
 import {
 	ICreateEmailInvitesInput,
@@ -182,22 +183,21 @@ const INVITE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * route's own permission on the guarded fields, and nothing at all on the five public ones. A
  * permission on this class would narrow every field below it below the route each mirrors.
  *
- * **The gate is the catalogue's, and it is the one thing this surface cannot express fully.**
- * `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the GraphQL endpoint and its
- * resolvers, and `FeatureFlagGuard` reads it from `FEATURE_METADATA` over the handler and then the
- * class — which is why it is stated once here, on the class, and appended to the guard chain the routes
- * below already carry rather than replacing any part of it. The capability it resolves is
- * tenant-scoped: `FeatureService.isFeatureEnabled` answers from the caller's own toggle rows when the
- * request carries a tenant, and falls back to the deployment's configured state when it does not — and
- * `FEATURE_GRAPHQL` is not a code that configuration names, so a request that carries no tenant scope
- * resolves the capability as disabled and is refused. The five `@Public()` routes below are the case
- * that exposes it: their fields are served only when the capability resolves for the caller's scope,
- * which is a narrower door than the routes they mirror, and the delivery has no way to state otherwise
- * — a field cannot be more open than the gate over it. Nothing narrower is stated on those five fields
- * either, because a guard or a permission there would refuse a caller the REST route serves. Dropping
- * the gate to work around the limitation is not an option this delivery has: it would leave the whole
- * endpoint served to a deployment that switched the capability off, which is the defect the gate exists
- * to prevent. The limitation is therefore stated here rather than worked around.
+ * **The gate is the catalogue's.** `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+ * GraphQL endpoint and its resolvers, and `FeatureFlagGuard` reads it from `FEATURE_METADATA` over the
+ * handler and then the class — which is why it is stated once here, on the class, and appended to the
+ * guard chain the routes below already carry rather than replacing any part of it. The capability it
+ * resolves is tenant-scoped: `FeatureService.isFeatureEnabled` answers from the caller's own toggle rows
+ * when the request carries a tenant, and from the code's default when it does not — the configured
+ * toggle, else the catalogue's `defaultEnabled`, which is on for `FEATURE_GRAPHQL`. The five `@Public()`
+ * fields below are the requests that carry no tenant, so they are served while the endpoint is on by
+ * default, as the routes they mirror are. (Until R7-F3 the tenant-less answer read the configured toggle
+ * alone, which does not name `FEATURE_GRAPHQL`, and refused all five.)
+ *
+ * **The public fields carry their routes' rate limits.** An invite token or code is a credential, and
+ * the routes limit guessing with `@Throttle` (GHSA-86mw-2crg-vmhc); each public field states the same
+ * limit as its route. One GraphQL request can name a field under many aliases, and the throttler guard
+ * runs per resolved field, so every alias spends one request of the allowance (review R7-09).
  */
 @Resolver('Invite')
 @UseGuards(FeatureFlagGuard)
@@ -292,6 +292,7 @@ export class InviteResolver {
 	 */
 	@Query('inviteByToken')
 	@Public()
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	async inviteByToken(
 		@Args('email', { type: () => String }) email: string,
 		@Args('token', { type: () => String }) token: string
@@ -308,6 +309,7 @@ export class InviteResolver {
 	 */
 	@Query('inviteByCode')
 	@Public()
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	async inviteByCode(
 		@Args('email', { type: () => String }) email: string,
 		@Args('code', { type: () => String }) code: string
@@ -370,6 +372,7 @@ export class InviteResolver {
 	 */
 	@Mutation('acceptInvite')
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async acceptInvite(@Args('input') input: IAcceptInviteInput): Promise<unknown> {
 		return await this.commandBus.execute(
 			new InviteAcceptCommand(
@@ -388,6 +391,7 @@ export class InviteResolver {
 	 */
 	@Mutation('rejectInvite')
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async rejectInvite(@Args('input') input: IRejectInviteInput): Promise<unknown> {
 		return await this.commandBus.execute(new InviteRejectCommand(input as unknown as IInviteRejectInput));
 	}
@@ -405,6 +409,7 @@ export class InviteResolver {
 	 */
 	@Mutation('acceptOrganizationContactInvite')
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async acceptOrganizationContactInvite(
 		@Args('input') input: IAcceptOrganizationContactInviteInput
 	): Promise<unknown> {

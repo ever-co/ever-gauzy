@@ -913,15 +913,14 @@ describe('InviteResolver — a capability that is switched off is not served', (
 		expect((refusal as NotFoundException).getStatus()).toBe(404);
 	});
 
-	it('refuses the public routes’ fields too, which is the limitation the class comment records', async () => {
+	it('refuses the public routes’ fields too when the capability is off', async () => {
 		const { guard } = gate(false);
 
-		// The gate is read with `getAllAndOverride` over the handler and then the class, and it is stated
-		// on the class rather than restated per field — so a field that states no guard of its own, and
-		// no permission either, is still refused when the capability is off. That is the limitation in
-		// metadata rather than in prose: the five `@Public()` fields are served behind a narrower door
-		// than the routes they mirror, because the capability they are behind resolves a request that
-		// carries no tenant as disabled. What none of them carries is anything narrower.
+		// The gate is read over the handler and then the class, and it is stated on the class rather
+		// than restated per field — so a field that states no guard of its own, and no permission
+		// either, is still refused when the capability is off. A request that carries no tenant resolves
+		// the capability from its default, which is on (R7-F3; `public-fields.http.spec.ts` serves these
+		// fields end to end). What none of them carries is anything narrower.
 		for (const [field] of PUBLIC_ROUTES) {
 			expect(Reflect.getMetadata(FEATURE_METADATA, (InviteResolver.prototype as never)[field])).toBeUndefined();
 			expect(

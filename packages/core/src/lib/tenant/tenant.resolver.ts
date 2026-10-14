@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, ITenantCreateInput, RolesEnum } from '@gauzy/contracts';
+import { ID as Id, ITenantCreateInput, ITenantUpdateInput, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { Roles } from '../shared/decorators';
 import { FeatureFlagGuard, RoleGuard } from '../shared/guards';
@@ -106,7 +106,12 @@ export class TenantResolver {
 	 * Replaces the caller's own tenant.
 	 *
 	 * The delivered edit takes no identifier — it edits the tenant of the credential — so the field
-	 * takes none either, and the write travels to the same service method with the same body.
+	 * takes none either, and the write travels to the same service method with the same body:
+	 * `updateProfile`, which is what `PUT /api/tenant` calls. That method owns the logo rules — an
+	 * `imageId` must name an image asset of the caller's own tenant, and under MikroORM the relation is
+	 * written rather than its read-only id mirror. The generic `update` this field used to call applied
+	 * neither, and `Tenant.image` is eager and served as `image { fullUrl }`, so a logo pointed at another
+	 * tenant's asset id handed out that tenant's file (review R7-04).
 	 *
 	 * The answer is the row read back rather than the write's own result, which is what the delivered
 	 * route answers with: that result is `{ affected }`, a statement about the write, and it is not the
@@ -119,7 +124,7 @@ export class TenantResolver {
 	async updateTenant(@Args('input') input: IUpdateTenantInput): Promise<Tenant> {
 		const tenantId = RequestContext.currentTenantId();
 
-		await this.tenantService.update(tenantId, input as unknown as Partial<Tenant>);
+		await this.tenantService.updateProfile(tenantId, input as unknown as ITenantUpdateInput);
 
 		return await this.tenantService.findOneByIdString(tenantId);
 	}

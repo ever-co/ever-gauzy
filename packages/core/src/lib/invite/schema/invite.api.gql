@@ -36,17 +36,11 @@
 # reads it from `FEATURE_METADATA` over the handler and then the class — which is why it is stated once
 # here, on the class, and appended to the guard chain the routes below already carry rather than
 # replacing any part of it. The capability it resolves is tenant-scoped: `FeatureService.isFeatureEnabled`
-# answers from the caller's own toggle rows when the request carries a tenant, and falls back to the
-# deployment's configured state when it does not — and `FEATURE_GRAPHQL` is not a code that
-# configuration names, so a request that carries no tenant scope resolves the capability as disabled and
-# is refused. The five `@Public()` routes below are the case that exposes it: their fields are served
-# only when the capability resolves for the caller's scope, which is a narrower door than the routes
-# they mirror, and the delivery has no way to state otherwise — a field cannot be more open than the gate
-# over it. Nothing narrower is stated on those five fields either, because a guard or a permission there
-# would refuse a caller the REST route serves. Dropping the gate to work around the limitation is not an
-# option this delivery has: it would leave the whole endpoint served to a deployment that switched the
-# capability off, which is the defect the gate exists to prevent. The limitation is therefore stated
-# here rather than worked around.
+# answers from the caller's own toggle rows when the request carries a tenant, and from the code's
+# default when it does not — the configured toggle, else the catalogue's `defaultEnabled`, which is on
+# for `FEATURE_GRAPHQL`. The five `@Public()` fields below carry no tenant, so they are served while the
+# endpoint is on by default, as the routes they mirror are, and each carries its route's `@Throttle`
+# limit, spent once per alias (reviews R7-F3, R7-09).
 #
 # The register is a connection rather than a bare array. It takes the same query protocol the REST list
 # route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
