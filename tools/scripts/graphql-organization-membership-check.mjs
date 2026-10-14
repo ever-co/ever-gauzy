@@ -62,55 +62,80 @@ if (interceptor && !/checkOrganizationExistence\(/.test(interceptor)) {
 
 /* -------- 2. which root fields take an organization -------- */
 
-/** The SDL without descriptions, strings, comments and directives, so only structure is left. */
-const sdl = readFileSync(SCHEMA, 'utf8')
-	.replace(/"""[\s\S]*?"""/g, ' ')
-	.replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
-	.replace(/#[^\n]*/g, ' ')
-	.replace(/@\w+(?:\([^)]*\))?/g, ' ');
+/**
+ * The root fields of an SDL document whose arguments reach an `organizationId`, as `<Operation>.<field>`.
+ *
+ * Reachability is a fixpoint, not a cached depth-first walk: input types can refer to each other
+ * (`A { b: B, organizationId: ID }`, `B { a: A }`), and a walk that caches "does not reach" for a type it only
+ * left because of the cycle would answer `false` for `B` forever (Greptile on #10582). Starting from the inputs that
+ * declare `organizationId` themselves and adding every input with a field of a reaching type until nothing changes
+ * gives the same answer whatever order the fields are read in.
+ *
+ * @param text - The SDL.
+ * @returns The root fields that take an organization.
+ */
+function fieldsTakingOrganization(text) {
+	// Without descriptions, strings, comments and directives, so only structure is left.
+	const sdl = text
+		.replace(/"""[\s\S]*?"""/g, ' ')
+		.replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+		.replace(/#[^\n]*/g, ' ')
+		.replace(/@\w+(?:\([^)]*\))?/g, ' ');
 
-const blocks = new Map(); // `type:Name` / `input:Name` → body
-for (const match of sdl.matchAll(/(?:extend\s+)?(type|input)\s+(\w+)[^{]*\{([^}]*)\}/g)) {
-	const key = `${match[1]}:${match[2]}`;
-	blocks.set(key, (blocks.get(key) ?? '') + '\n' + match[3]);
-}
+	const blocks = new Map(); // `type:Name` / `input:Name` → body
+	for (const match of sdl.matchAll(/(?:extend\s+)?(type|input)\s+(\w+)[^{]*\{([^}]*)\}/g)) {
+		const key = `${match[1]}:${match[2]}`;
+		blocks.set(key, (blocks.get(key) ?? '') + '\n' + match[3]);
+	}
 
-/** `name: Type` pairs of an input type, named-type only. */
-const inputFields = new Map();
-for (const [key, body] of blocks) {
-	if (!key.startsWith('input:')) continue;
-	const fields = new Map();
-	for (const field of body.matchAll(/(\w+)\s*:\s*\[*\s*(\w+)/g)) fields.set(field[1], field[2]);
-	inputFields.set(key.slice(6), fields);
-}
+	// `name: Type` pairs of each input type, named type only.
+	const inputFields = new Map();
+	for (const [key, body] of blocks) {
+		if (!key.startsWith('input:')) continue;
+		const fields = new Map();
+		for (const field of body.matchAll(/(\w+)\s*:\s*\[*\s*(\w+)/g)) fields.set(field[1], field[2]);
+		inputFields.set(key.slice(6), fields);
+	}
 
-const reachesCache = new Map();
-function inputReaches(typeName, seen = new Set()) {
-	if (reachesCache.has(typeName)) return reachesCache.get(typeName);
-	const fields = inputFields.get(typeName);
-	if (!fields || seen.has(typeName)) return false;
-	seen.add(typeName);
-	let reaches = false;
-	for (const [name, type] of fields) {
-		if (name === 'organizationId' || inputReaches(type, seen)) {
-			reaches = true;
-			break;
+	const reaching = new Set([...inputFields].filter(([, fields]) => fields.has('organizationId')).map(([name]) => name));
+	for (let changed = true; changed; ) {
+		changed = false;
+		for (const [name, fields] of inputFields) {
+			if (!reaching.has(name) && [...fields.values()].some((type) => reaching.has(type))) {
+				reaching.add(name);
+				changed = true;
+			}
 		}
 	}
-	reachesCache.set(typeName, reaches);
-	return reaches;
-}
 
-const takesOrganization = new Set();
-for (const operation of ['Query', 'Mutation', 'Subscription']) {
-	const body = blocks.get(`type:${operation}`) ?? '';
-	for (const field of body.matchAll(/(\w+)\s*(?:\(([^)]*)\))?\s*:\s*[\[\]\w!]+/g)) {
-		const args = [...(field[2] ?? '').matchAll(/(\w+)\s*:\s*\[*\s*(\w+)/g)];
-		if (args.some(([, name, type]) => name === 'organizationId' || inputReaches(type))) {
-			takesOrganization.add(`${operation}.${field[1]}`);
+	const found = new Set();
+	for (const operation of ['Query', 'Mutation', 'Subscription']) {
+		const body = blocks.get(`type:${operation}`) ?? '';
+		for (const field of body.matchAll(/(\w+)\s*(?:\(([^)]*)\))?\s*:\s*[\[\]\w!]+/g)) {
+			const args = [...(field[2] ?? '').matchAll(/(\w+)\s*:\s*\[*\s*(\w+)/g)];
+			if (args.some(([, name, type]) => name === 'organizationId' || reaching.has(type))) {
+				found.add(`${operation}.${field[1]}`);
+			}
 		}
 	}
+	return found;
 }
+
+// The reader checks itself first: two inputs that refer to each other, read with the root fields in both orders.
+for (const order of [['viaA', 'viaB'], ['viaB', 'viaA']]) {
+	const fixture = `
+		input A { b: B, organizationId: ID }
+		input B { a: A }
+		input C { name: String }
+		type Query { ${order.map((field) => `${field}(input: ${field === 'viaA' ? 'A' : 'B'}): Int`).join(' ')} plain(input: C): Int direct(organizationId: ID!): Int }
+	`;
+	const read = [...fieldsTakingOrganization(fixture)].sort().join(',');
+	if (read !== 'Query.direct,Query.viaA,Query.viaB') {
+		failures.push(`the schema reader misreads cyclic inputs (root fields ${order.join(', ')}): read ${read || 'nothing'}`);
+	}
+}
+
+const takesOrganization = fieldsTakingOrganization(readFileSync(SCHEMA, 'utf8'));
 if (takesOrganization.size < 100) {
 	failures.push(`only ${takesOrganization.size} root field(s) read as taking an organization — the schema reading is broken`);
 }
