@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { BaseEntityEnum, ITask } from '@gauzy/contracts';
-import { TasksService } from '@gauzy/ui-core/core';
+import { BaseEntityEnum, IOrganization, ITask } from '@gauzy/contracts';
+import { Store, TasksService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	HashNumberPipe,
@@ -19,6 +20,10 @@ import { buildTaskViewSections, taskStatusOf, TASK_VIEW_RELATIONS } from './task
  * A task on its own full-width page, `/pages/tasks/view/:id` (handover §4.P): what a task favorite in the
  * sidebar opens, and where the task drawer's "expand to full width" icon leads. The URL is the task's —
  * bookmark it, share it, reload it. It renders the very sections the drawer shows, from the same builder.
+ *
+ * The page belongs to the organization selected in the header, like the task lists: a task of another
+ * organization reads "not found" (its favorite star would otherwise file it under the wrong organization),
+ * and switching the organization reloads the page, discarding any load still in flight.
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,27 +43,38 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	state: RecordViewPageState = 'loading';
 
 	private taskId: string = null;
+	private organizationId: string = null;
+	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
+	private loadSequence = 0;
 	private readonly hashNumberPipe = new HashNumberPipe();
 
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
-		private readonly tasksService: TasksService
+		private readonly tasksService: TasksService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		// The component is reused across `view/:id` navigations, so the id stream is what loads.
-		this.route.paramMap
-			.pipe(
-				map((params) => params.get('id')),
-				filter((id): id is string => !!id),
-				distinctUntilChanged(),
-				untilDestroyed(this)
-			)
-			.subscribe((id) => {
+		// The component is reused across `view/:id` navigations, and the page follows the header's
+		// organization: either changing reloads.
+		const id$ = this.route.paramMap.pipe(
+			map((params) => params.get('id')),
+			filter((id): id is string => !!id),
+			distinctUntilChanged()
+		);
+		const organizationId$ = this.store.selectedOrganization$.pipe(
+			filter((organization: IOrganization) => !!organization?.id),
+			map((organization: IOrganization) => organization.id),
+			distinctUntilChanged()
+		);
+		combineLatest([id$, organizationId$])
+			.pipe(untilDestroyed(this))
+			.subscribe(([id, organizationId]) => {
 				this.taskId = id;
+				this.organizationId = organizationId;
 				void this.load();
 			});
 		// The estimate is spelled out in the viewer's language.
@@ -68,23 +84,27 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	/** Loads (or reloads, after an error) the task the URL names. */
 	async load(): Promise<void> {
 		const id = this.taskId;
-		if (!id) {
+		const organizationId = this.organizationId;
+		if (!id || !organizationId) {
 			return;
 		}
+		const sequence = ++this.loadSequence;
+		// Nothing of the previous task (or organization) stays on screen — nor reachable by the star.
+		this.task = null;
 		this.state = 'loading';
 		try {
 			const task = await this.tasksService.getById(id, TASK_VIEW_RELATIONS);
-			if (id !== this.taskId) {
-				return; // a newer navigation owns the page
+			if (sequence !== this.loadSequence) {
+				return; // a newer navigation or organization switch owns the page
 			}
-			if (!task?.id) {
+			if (!task?.id || (task.organizationId && task.organizationId !== organizationId)) {
 				throw { status: 404 };
 			}
 			this.task = task;
 			this.buildSections();
 			this.state = 'ready';
 		} catch (error) {
-			if (id !== this.taskId) {
+			if (sequence !== this.loadSequence) {
 				return;
 			}
 			this.task = null;

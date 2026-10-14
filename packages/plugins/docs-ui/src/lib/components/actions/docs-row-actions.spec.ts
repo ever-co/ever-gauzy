@@ -187,7 +187,7 @@ describe('DocsRowActionsService — favorites', () => {
 		const { service } = createService({
 			favoriteStore: {
 				favoriteItems$: of([
-					{ id: `favorite-Document-${DOCUMENT_ID}`, link: `/pages/documents/page/${DOCUMENT_ID}` },
+					{ id: `favorite-Document-${DOCUMENT_ID}`, link: `/pages/documents/page/${DOCUMENT_ID}?view=full` },
 					{ id: `favorite-Document-${OTHER_ID}`, link: `/pages/documents?folder=${OTHER_ID}` }
 				])
 			}

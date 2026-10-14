@@ -4,7 +4,9 @@
  */
 import '../core/entities/internal';
 
+import { getMetadataArgsStorage } from 'typeorm';
 import { BaseEntityEnum, PermissionsEnum } from '@gauzy/contracts';
+import { Candidate, Employee, Equipment, Expense, Income, Invoice, Payment, Product } from '../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { FAVORITABLE_TYPE } from '../core/decorators/is-favoritable';
@@ -14,7 +16,7 @@ import { IncomeService } from '../income/income.service';
 import { InvoiceService } from '../invoice/invoice.service';
 import { PaymentService } from '../payment/payment.service';
 import { ProductService } from '../product/product.service';
-import { FavoriteService } from './favorite.service';
+import { FAVORITE_DETAILS, FavoriteService } from './favorite.service';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORGANIZATION = '00000000-0000-4000-8000-000000000002';
@@ -149,4 +151,38 @@ describe('FavoriteService.getFavoriteDetails', () => {
 			expect.objectContaining({ relations: ['user'] })
 		);
 	});
+});
+
+/*
+ * Review on #10590: the income details asked for `organizationContact`, a relation an income does not have
+ * (it is `client`), so the read failed and every income favorite vanished from the sidebar. The mocked
+ * reads above cannot see that, so check each joined relation against the entity's real ORM metadata.
+ */
+describe('favorite details joins', () => {
+	const ENTITIES: Partial<Record<BaseEntityEnum, Function>> = {
+		[BaseEntityEnum.Employee]: Employee,
+		[BaseEntityEnum.Candidate]: Candidate,
+		[BaseEntityEnum.Invoice]: Invoice,
+		[BaseEntityEnum.Expense]: Expense,
+		[BaseEntityEnum.Income]: Income,
+		[BaseEntityEnum.Payment]: Payment,
+		[BaseEntityEnum.Equipment]: Equipment,
+		[BaseEntityEnum.Product]: Product
+	};
+
+	const relationsOf = (entity: Function): string[] =>
+		getMetadataArgsStorage()
+			.relations.filter((relation) => relation.target === entity)
+			.map((relation) => relation.propertyName);
+
+	it.each(Object.entries(FAVORITE_DETAILS).filter(([, details]) => details.relations?.length))(
+		'%s joins only relations its entity has',
+		(type, details) => {
+			const entity = ENTITIES[type as BaseEntityEnum];
+			expect(entity).toBeDefined();
+			for (const relation of details.relations) {
+				expect(relationsOf(entity)).toContain(relation.split('.')[0]);
+			}
+		}
+	);
 });
