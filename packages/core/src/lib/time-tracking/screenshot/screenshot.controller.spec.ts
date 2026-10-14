@@ -10,6 +10,7 @@
  * bootstraps the entity graph before the service layer.
  */
 import '../../core/entities/internal';
+import { Readable } from 'node:stream';
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RequestContext } from '../../core/context';
@@ -51,8 +52,13 @@ describe('Screenshot Controller — upload of an empty file', () => {
 	};
 
 	beforeEach(async () => {
+		jest.clearAllMocks();
 		const module: TestingModule = await Test.createTestingModule({ controllers: [ScreenshotController] })
-			.useMocker(() => ({ create: jest.fn(), findOneByIdString: jest.fn(), publish: jest.fn() }))
+			.useMocker(() => ({
+				create: jest.fn().mockResolvedValue({ id: 'shot-1' }),
+				findOneByIdString: jest.fn().mockResolvedValue({ id: 'shot-1' }),
+				publish: jest.fn()
+			}))
 			.compile();
 		controller = module.get<ScreenshotController>(ScreenshotController);
 		jest.spyOn(FileStorage.prototype, 'getProvider').mockReturnValue(provider as never);
@@ -61,6 +67,7 @@ describe('Screenshot Controller — upload of an empty file', () => {
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
 		provider.getFile.mockResolvedValue(Buffer.alloc(0));
 		provider.deleteFile.mockResolvedValue(undefined);
+		provider.putFile.mockResolvedValue({ key: 'screenshots/thumb-e.png' });
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -71,5 +78,27 @@ describe('Screenshot Controller — upload of an empty file', () => {
 		await expect(upload).rejects.toBeInstanceOf(BadRequestException);
 		expect(provider.deleteFile).toHaveBeenCalledWith('screenshots/e.png');
 		expect(provider.putFile).not.toHaveBeenCalled();
+	});
+
+	// The S3, Wasabi and DigitalOcean providers return the SDK's stream, not a Buffer.
+	it('is refused as well when the provider returns the stored object as a stream', async () => {
+		provider.getFile.mockResolvedValue(Readable.from([]));
+
+		await expect(
+			controller.create({ organizationId: 'org-1' } as never, { key: 'screenshots/e.png', filename: 'e.png' } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(provider.deleteFile).toHaveBeenCalledWith('screenshots/e.png');
+	});
+
+	it('still records a real image that a provider returns as a stream', async () => {
+		// A 1x1 PNG.
+		const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+		provider.getFile.mockResolvedValue(Readable.from([png]));
+
+		const shot = await controller.create({ organizationId: 'org-1' } as never, { key: 'screenshots/s.png', filename: 's.png' } as never);
+
+		expect(shot).toEqual({ id: 'shot-1' });
+		expect(provider.putFile).toHaveBeenCalledWith(expect.any(Buffer), 'screenshots/thumb-s.png');
+		expect(provider.deleteFile).not.toHaveBeenCalled();
 	});
 });

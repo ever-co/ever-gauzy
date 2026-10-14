@@ -14,7 +14,7 @@ describe('withoutEmptyImages', () => {
 	});
 
 	it('drops a display whose capture is empty, and reports which one', () => {
-		const skipped: string[] = [];
+		let skipped: string[] = [];
 		const kept = withoutEmptyImages([png(10), png(0), { img: undefined as unknown as Buffer, name: 'gone', id: 'x' }], (s) =>
 			skipped.push(s.name)
 		);

@@ -37,6 +37,27 @@ import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 
+/**
+ * The stored file's bytes as a Buffer. The local provider returns a Buffer; the S3, Wasabi and DigitalOcean
+ * providers return the SDK's stream (`GetObjectCommandOutput.Body`). `undefined` when the provider returned nothing.
+ */
+async function toBuffer(content: unknown): Promise<Buffer | undefined> {
+	if (content === null || content === undefined) return undefined;
+	if (Buffer.isBuffer(content)) return content;
+	if (content instanceof Uint8Array) return Buffer.from(content);
+	if (typeof content === 'string') return Buffer.from(content);
+	const body = content as { transformToByteArray?: () => Promise<Uint8Array> };
+	if (typeof body.transformToByteArray === 'function') return Buffer.from(await body.transformToByteArray());
+	if (typeof (content as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
+		const chunks: Buffer[] = [];
+		for await (const chunk of content as AsyncIterable<Buffer | Uint8Array | string>) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
+		}
+		return Buffer.concat(chunks);
+	}
+	return undefined;
+}
+
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
@@ -99,13 +120,13 @@ export class ScreenshotController {
 		// Initialize file storage provider and process thumbnail
 		const provider = new FileStorage().getProvider();
 
-		// Retrieve file content from the file storage provider
-		const fileContent = await provider.getFile(file.key);
+		// Retrieve file content from the file storage provider (the S3-family providers return a stream)
+		const fileContent = await toBuffer(await provider.getFile(file.key));
 
 		// An empty upload (a display the desktop timer could not capture) has no image to record. Refuse it here,
 		// OUTSIDE the try/catch below: in there the thumbnail step failed on it, the error was swallowed and the
 		// client got a 201 with no screenshot while the 0-byte file stayed on disk.
-		if (!fileContent?.length) {
+		if (fileContent?.length === 0) {
 			try {
 				await provider.deleteFile(file.key);
 			} catch {
