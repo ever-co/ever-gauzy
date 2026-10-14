@@ -8,6 +8,7 @@ import { schemaExtensions } from './graphql/schema-extensions';
 import { resolvers } from './graphql/resolvers';
 import { CreatePromotionTables1791000000260 } from './migrations/1791000000260-CreatePromotionTables';
 import { AddPromotionCheckConstraints1791000000433 } from './migrations/1791000000433-AddPromotionCheckConstraints';
+import { AddPromotionFundingColumns1791000000653 } from './migrations/1791000000653-AddPromotionFundingColumns';
 import { ALL_PROMOTION_ENTITIES } from './promotion.entities';
 
 /**
@@ -36,7 +37,11 @@ type PluginDependencies = NonNullable<Parameters<typeof Plugin>[0]['dependsOn']>
 @Plugin({
 	imports: [PromotionModule],
 	entities: ALL_PROMOTION_ENTITIES,
-	migrations: [CreatePromotionTables1791000000260, AddPromotionCheckConstraints1791000000433],
+	migrations: [
+		CreatePromotionTables1791000000260,
+		AddPromotionCheckConstraints1791000000433,
+		AddPromotionFundingColumns1791000000653
+	],
 	permissions: PROMOTION_PERMISSIONS,
 	features: PROMOTION_FEATURES,
 	settings: PROMOTION_SETTINGS,
