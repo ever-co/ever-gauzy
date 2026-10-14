@@ -108,6 +108,13 @@ COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packa
 COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
 COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
+COPY --chown=node:node packages/plugins/catalog/package.json ./packages/plugins/catalog/
+COPY --chown=node:node packages/plugins/pricing/package.json ./packages/plugins/pricing/
+COPY --chown=node:node packages/plugins/tax/package.json ./packages/plugins/tax/
+COPY --chown=node:node packages/plugins/inventory/package.json ./packages/plugins/inventory/
+COPY --chown=node:node packages/plugins/cart/package.json ./packages/plugins/cart/
+COPY --chown=node:node packages/plugins/order/package.json ./packages/plugins/order/
+COPY --chown=node:node packages/plugins/subscription/package.json ./packages/plugins/subscription/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -229,6 +236,13 @@ COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packa
 COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
 COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
+COPY --chown=node:node packages/plugins/catalog/package.json ./packages/plugins/catalog/
+COPY --chown=node:node packages/plugins/pricing/package.json ./packages/plugins/pricing/
+COPY --chown=node:node packages/plugins/tax/package.json ./packages/plugins/tax/
+COPY --chown=node:node packages/plugins/inventory/package.json ./packages/plugins/inventory/
+COPY --chown=node:node packages/plugins/cart/package.json ./packages/plugins/cart/
+COPY --chown=node:node packages/plugins/order/package.json ./packages/plugins/order/
+COPY --chown=node:node packages/plugins/subscription/package.json ./packages/plugins/subscription/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -274,6 +288,10 @@ RUN rm -r node_modules/@angular
 
 FROM node:26.11.1-alpine3.24 AS development
 
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
+
 USER node:node
 
 WORKDIR /srv/gauzy
@@ -283,6 +301,10 @@ COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
 FROM node:26.11.1-alpine3.24 AS build
+
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
 
 WORKDIR /srv/gauzy
 
@@ -428,7 +450,14 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/ai-provider-localai/node_modules ./node_modules/@gauzy/plugin-ai-provider-localai/ && \
     cp -r /mnt/packages/plugins/ai-provider-whisper-cpp/node_modules ./node_modules/@gauzy/plugin-ai-provider-whisper-cpp/ && \
     cp -r /mnt/packages/plugins/ai-provider-openai-compatible/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai-compatible/ && \
-    cp -r /mnt/packages/plugins/docs/node_modules ./node_modules/@gauzy/plugin-docs/
+    cp -r /mnt/packages/plugins/docs/node_modules ./node_modules/@gauzy/plugin-docs/ && \
+    if [ -d /mnt/packages/plugins/catalog/node_modules ]; then cp -r /mnt/packages/plugins/catalog/node_modules ./node_modules/@gauzy/plugin-catalog/; fi && \
+    if [ -d /mnt/packages/plugins/pricing/node_modules ]; then cp -r /mnt/packages/plugins/pricing/node_modules ./node_modules/@gauzy/plugin-pricing/; fi && \
+    if [ -d /mnt/packages/plugins/tax/node_modules ]; then cp -r /mnt/packages/plugins/tax/node_modules ./node_modules/@gauzy/plugin-tax/; fi && \
+    if [ -d /mnt/packages/plugins/inventory/node_modules ]; then cp -r /mnt/packages/plugins/inventory/node_modules ./node_modules/@gauzy/plugin-inventory/; fi && \
+    if [ -d /mnt/packages/plugins/cart/node_modules ]; then cp -r /mnt/packages/plugins/cart/node_modules ./node_modules/@gauzy/plugin-cart/; fi && \
+    if [ -d /mnt/packages/plugins/order/node_modules ]; then cp -r /mnt/packages/plugins/order/node_modules ./node_modules/@gauzy/plugin-order/; fi && \
+    if [ -d /mnt/packages/plugins/subscription/node_modules ]; then cp -r /mnt/packages/plugins/subscription/node_modules ./node_modules/@gauzy/plugin-subscription/; fi
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
