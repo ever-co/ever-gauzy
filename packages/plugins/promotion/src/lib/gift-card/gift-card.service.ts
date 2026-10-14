@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, timingSafeEqual } from 'crypto';
-import { EntityManager, IsNull } from 'typeorm';
+import { EntityManager, FindOptionsWhere, IsNull, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { EventBus, Money, readAffectedRows, RequestContext } from '@gauzy/core';
+import { EventBus, Money, normalizeDecimalString, readAffectedRows, RequestContext } from '@gauzy/core';
 import { GiftCardRedeemedEvent } from '../events';
 import { GiftCard } from './gift-card.entity';
 import { TypeOrmGiftCardRepository } from './repository/type-orm-gift-card.repository';
@@ -18,6 +19,14 @@ import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
  * predicate falls back on where no row lock is taken.
  */
 const MOVEMENT_ATTEMPTS = 3;
+
+/**
+ * The members of a card only its own movements write (review R3-06). The balance is what the ledger says it is,
+ * `initialAmount` is the ledger's base, the currency is what every movement was counted in, and the status moves
+ * through `cancel`, `expire` and the redemptions that empty a card - so `PUT /gift-cards/:id {"balance":"5000"}`
+ * minted stored value with no ledger row, and a cancelled card came back as `ACTIVE`.
+ */
+export const GIFT_CARD_LEDGER_MEMBERS = ['initialAmount', 'balance', 'currency', 'status'] as const;
 
 /**
  * What a movement does to a card, decided against the card as it was read under its lock.
@@ -280,7 +289,8 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	async cancel(giftCardId: ID, reason?: string): Promise<IGiftCard> {
 		const card = await this.findCardOrFail(giftCardId);
 
-		await this.update(card.id, {
+		// The card's own lifecycle write: the base class's update, past the refusal `update` states for callers.
+		await super.update(card.id, {
 			status: GiftCardStatus.CANCELED,
 			metadata: { ...(card.metadata ?? {}), canceledReason: reason ?? null, canceledAt: new Date().toISOString() }
 		} as never);
@@ -360,6 +370,52 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	 */
 	async findGiftCards(options: Record<string, unknown> = {}): Promise<IPagination<IGiftCard>> {
 		return this.findAll({ ...options, where: { ...((options.where as object) ?? {}), ...this.scope } } as never);
+	}
+
+	/**
+	 * Writes the descriptive fields of a card: its code, holder, issuing order, expiry and metadata.
+	 *
+	 * The ledger members (`GIFT_CARD_LEDGER_MEMBERS`) are refused with `GIFT_CARD_FIELD_NOT_WRITABLE` when the write
+	 * would change them: the balance moves through `redeem`, `refund` and `adjust`, each of which appends the
+	 * movement that explains it, and the status through `cancel` and `expire`. Both surfaces reach this method -
+	 * `PUT /gift-cards/:id` and `updateGiftCard` - so the rule is stated once, below both. A body that restates the
+	 * stored value is accepted and the member left out of the write. The card's own lifecycle writes go through the
+	 * base class and are not affected.
+	 *
+	 * @param id The card, or the conditions that select the cards to change.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException with `GIFT_CARD_FIELD_NOT_WRITABLE` when the write would move a ledger member.
+	 */
+	public async update(
+		id: string | number | FindOptionsWhere<GiftCard>,
+		partialEntity: QueryDeepPartialEntity<GiftCard>
+	): Promise<UpdateResult | GiftCard> {
+		let patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+		const named = GIFT_CARD_LEDGER_MEMBERS.filter((member) => patch[member] !== undefined);
+
+		if (named.length > 0) {
+			const stored =
+				typeof id === 'string' ? ((await this.findCardOrFail(id)) as unknown as Record<string, unknown>) : null;
+			const moved = named.filter((member) => !stored || !restatesStoredValue(stored[member], patch[member]));
+
+			if (moved.length > 0) {
+				throw new BadRequestException({
+					message:
+						`GIFT_CARD_FIELD_NOT_WRITABLE: ${moved.join(', ')} of a gift card ${moved.length === 1 ? 'is' : 'are'} ` +
+						`moved by its ledger only: correct the balance with POST /gift-cards/:id/adjust, and withdraw or ` +
+						`expire a card with POST /gift-cards/:id/cancel or /expire.`,
+					code: 'GIFT_CARD_FIELD_NOT_WRITABLE',
+					details: { giftCardId: typeof id === 'string' ? id : null, fields: moved }
+				});
+			}
+
+			for (const member of named) {
+				delete patch[member];
+			}
+		}
+
+		return super.update(id, patch as QueryDeepPartialEntity<GiftCard>);
 	}
 
 	/**
@@ -619,4 +675,31 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 
 		return bytes;
 	}
+}
+
+/**
+ * Whether a value a write states is the value already stored, so restating it is not a change. A decimal is compared
+ * by value (`'100'` restates `'100.000000'`, the column's scale); anything else as text.
+ */
+function restatesStoredValue(stored: unknown, stated: unknown): boolean {
+	if (stated === null || stored === null || stored === undefined) {
+		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
+	}
+
+	// A decimal is compared by value with the platform's own normaliser, which reads what `IsDecimalAmount` accepts
+	// (leading zeros, a sign, the column's trailing zeros, surrounding blanks); anything else is compared as text.
+	const asDecimal = (value: unknown): string | null => {
+		try {
+			return normalizeDecimalString(String(value).trim());
+		} catch {
+			return null;
+		}
+	};
+	const [held, wanted] = [asDecimal(stored), asDecimal(stated)];
+
+	if (held !== null && wanted !== null) {
+		return held === wanted;
+	}
+
+	return String(stated) === String(stored);
 }

@@ -110,6 +110,16 @@ jest.mock('@gauzy/core', () => {
 		async delete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.delete(criteria);
 		}
+
+		/** The kernel's retirement: the row is read in the caller's scope, then stamped. */
+		async softRemove(id: any): Promise<any> {
+			const record = await this.findOneByIdString(id);
+			const deletedAt = new Date();
+
+			await this.typeOrmRepository.update(id, { deletedAt });
+
+			return { ...record, deletedAt };
+		}
 	}
 
 	return {
@@ -2323,6 +2333,27 @@ describe('FulfillmentService — a shipment the order line still counts is not r
 		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
 	});
 
+	it('refuses to retire a shipment the order line still counts, and retires one once it was cancelled (R3-16)', async () => {
+		// `DELETE /fulfillments/:id/soft` and `softDeleteFulfillment` used to retire the pending shipment: the five
+		// units stayed counted, and `cancel`, which reads live rows only, could no longer find it to give them back.
+		const fixture = counted();
+
+		await expect(fixture.service.softRemove('five')).rejects.toMatchObject({
+			response: {
+				code: 'FULFILLMENT_NOT_DELETABLE',
+				details: { fulfillmentId: 'five', status: FulfillmentStatusDetail.PENDING }
+			}
+		});
+		expect(fixture.row('five')!.deletedAt).toBeUndefined();
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+
+		await fixture.service.cancel('five');
+		await fixture.service.softRemove('five');
+
+		expect(fixture.row('five')!.deletedAt).toBeInstanceOf(Date);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
 	it('removes a return leg at any point, because it never moved a counter', async () => {
 		const fixture = fulfillmentFixture({
 			seed: {
@@ -2364,6 +2395,23 @@ describe('FulfillmentService — a shipment the order line still counts is not r
 
 		await expect(fixture.service.delete('theirs')).resolves.toMatchObject({ affected: 1 });
 		expect(fixture.row('theirs')).toBeUndefined();
+	});
+
+	it('does not retire a counted shipment of another organization that the check could not see (Greptile)', async () => {
+		// The check reads in the organization the request states; the base retirement scopes by tenant alone. A
+		// counted shipment of another organization of the same tenant used to slip between the two and be retired.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('theirs')],
+				fulfillment_line: [shipmentLine('theirs-a', 'theirs', LINE_A, 5)]
+			}
+		});
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(UNKNOWN as never);
+
+		await expect(fixture.service.softRemove('theirs')).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.row('theirs')!.deletedAt).toBeUndefined();
 	});
 });
 

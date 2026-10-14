@@ -282,7 +282,9 @@ describe('PaymentScopedCrudService — the soft-delete pair stays inside the cal
 	}
 
 	describe.each(ORMS)('on the %s branch', (ormType) => {
-		describe.each(SERVICES)('$name', ({ build }) => {
+		// The capture ledger is left out of the pair as it is out of the delete below: it refuses to retire or restore
+		// a capture on its own (`PAYMENT_CAPTURE_APPEND_ONLY`, review R3-17), which its service spec pins.
+		describe.each(SERVICES.filter(({ name }) => name !== 'PaymentCaptureService'))('$name', ({ build }) => {
 			it('retires the caller’s own row, and answers with it', async () => {
 				const { typeOrm, mikroOrm, stored } = await arrange(ormType);
 				const service = build(typeOrm, mikroOrm);

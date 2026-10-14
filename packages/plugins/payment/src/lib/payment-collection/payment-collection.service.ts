@@ -161,7 +161,7 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 
 		// A server-owned member left here restates the stored value (anything else was refused above), so it is
 		// lifted off the input rather than written.
-		const changes = Object.fromEntries(
+		let changes = Object.fromEntries(
 			Object.entries(stated).filter(
 				([member]) => !(PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS as readonly string[]).includes(member)
 			)

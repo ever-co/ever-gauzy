@@ -590,6 +590,98 @@ describe('GiftCardService.expire, cancel and balanceByCode (doc 08 §13.3)', () 
 });
 
 /**
+ * R3-06: a card's balance, its ledger base, its currency and its status move through the card's own operations, which
+ * each append the movement that explains them. `PUT /gift-cards/:id` and `updateGiftCard` both reach `update`, and it
+ * used to write them verbatim: `{"balance":"5000"}` minted stored value with no ledger row, and a cancelled card came
+ * back `ACTIVE`. The ledger's own routes wrote, edited, erased and retired movements that `refund()` measures its
+ * ceiling from.
+ */
+describe('GiftCardService — the balance and the status move through the ledger only (R3-06)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each([
+		['balance', '5000'],
+		['initialAmount', '5000'],
+		['currency', 'EUR'],
+		['status', GiftCardStatus.REDEEMED]
+	])('refuses to write %s through the edit', async (member, value) => {
+		const { service, cards, ledger } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })]);
+		const before = { ...cards[0] };
+
+		await expect(service.update('gc-1', { [member]: value } as never)).rejects.toMatchObject({
+			response: { code: 'GIFT_CARD_FIELD_NOT_WRITABLE', details: { giftCardId: 'gc-1', fields: [member] } }
+		});
+		expect(cards[0]).toEqual(before);
+		expect(ledger).toHaveLength(0);
+	});
+
+	it('does not bring a cancelled card back through the edit', async () => {
+		const { service, cards } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })]);
+
+		await service.cancel('gc-1', 'Reported lost');
+		await expect(service.update('gc-1', { status: GiftCardStatus.ACTIVE } as never)).rejects.toThrow(
+			/GIFT_CARD_FIELD_NOT_WRITABLE: status/
+		);
+		expect(cards[0].status).toBe(GiftCardStatus.CANCELED);
+	});
+
+	it('writes the descriptive fields, and accepts a body that restates the ledger members as they are', async () => {
+		const { service, cards } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })]);
+		const expiresAt = new Date('2027-01-01T00:00:00.000Z');
+
+		await service.update('gc-1', {
+			expiresAt,
+			metadata: { note: 'renewed' },
+			// Any spelling `IsDecimalAmount` accepts restates the stored value: leading zeros, the scale, blanks.
+			balance: ' 0100.00 ',
+			initialAmount: '+100',
+			currency: 'USD',
+			status: GiftCardStatus.ACTIVE
+		} as never);
+
+		expect(cards[0]).toMatchObject({
+			expiresAt,
+			metadata: { note: 'renewed' },
+			balance: '100.000000',
+			currency: 'USD',
+			status: GiftCardStatus.ACTIVE
+		});
+	});
+
+	it('refuses every write of the ledger that does not come from a card operation, and still appends through one', async () => {
+		const { service, ledger, giftCardTransactionService } = serviceUnderTest([
+			giftCard({ id: 'gc-1', code: 'GC-1000' })
+		]);
+		const movement = { giftCardId: 'gc-1', type: GiftCardTransactionType.REDEEM, amount: '-1000', balanceAfter: '0' };
+
+		await expect(giftCardTransactionService.create(movement as never)).rejects.toThrow(
+			/GIFT_CARD_TRANSACTION_APPEND_ONLY/
+		);
+		await expect(giftCardTransactionService.update('ledger-1', { amount: '-1' } as never)).rejects.toThrow(
+			/GIFT_CARD_TRANSACTION_APPEND_ONLY/
+		);
+		await expect(giftCardTransactionService.delete('ledger-1')).rejects.toThrow(/GIFT_CARD_TRANSACTION_APPEND_ONLY/);
+		await expect(giftCardTransactionService.softRemove('ledger-1')).rejects.toThrow(
+			/GIFT_CARD_TRANSACTION_APPEND_ONLY/
+		);
+		await expect(giftCardTransactionService.softRecover('ledger-1')).rejects.toThrow(
+			/GIFT_CARD_TRANSACTION_APPEND_ONLY/
+		);
+		expect(ledger).toHaveLength(0);
+
+		// The card's own operation still appends its movement.
+		await service.adjust('gc-1', '-10', 'damaged card');
+		expect(ledger).toHaveLength(1);
+		expect(ledger[0]).toMatchObject({ giftCardId: 'gc-1', type: GiftCardTransactionType.ADJUST });
+	});
+});
+
+/**
  * The cases each defect was found by. Each asserts what the domain requires, and each passes now
  * that the source does it.
  */

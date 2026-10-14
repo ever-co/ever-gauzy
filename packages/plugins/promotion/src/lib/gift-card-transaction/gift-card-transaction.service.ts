@@ -100,7 +100,74 @@ export class GiftCardTransactionService extends TenantScopedCrudService<GiftCard
 			)) as unknown as IGiftCardTransaction;
 		}
 
-		return this.create(row as never);
+		return super.create(row as never);
+	}
+
+	/**
+	 * Refuses a movement written from outside the card's own operations (review R3-06).
+	 *
+	 * `POST /gift-card-transactions` used to write whatever row it was given: a `REDEEM` of -1000 that no order
+	 * spent, which `refund()` then measured its ceiling from and credited back as money. A movement is appended by
+	 * the operation that causes it (`issue`, `redeem`, `refund`, `adjust`, `expire`, through `append`), and a
+	 * correction is `POST /gift-cards/:id/adjust`.
+	 *
+	 * @param entity The refused movement.
+	 * @throws BadRequestException with `GIFT_CARD_TRANSACTION_APPEND_ONLY`, always.
+	 */
+	async create(entity: unknown): Promise<never> {
+		void entity;
+
+		throw appendOnly('a movement is appended by the card operation that causes it; correct a balance with POST /gift-cards/:id/adjust');
+	}
+
+	/**
+	 * Refuses an edit of a movement. The balance is the sum of the rows, and an edited row is a balance nobody can
+	 * replay.
+	 *
+	 * @throws BadRequestException with `GIFT_CARD_TRANSACTION_APPEND_ONLY`, always.
+	 */
+	async update(id: unknown, partialEntity?: unknown): Promise<never> {
+		void id;
+		void partialEntity;
+
+		throw appendOnly('a movement is never edited; record the correction as an adjustment');
+	}
+
+	/**
+	 * Refuses to erase a movement.
+	 *
+	 * @throws BadRequestException with `GIFT_CARD_TRANSACTION_APPEND_ONLY`, always.
+	 */
+	async delete(criteria: unknown): Promise<never> {
+		void criteria;
+
+		throw appendOnly('a movement is never removed; record the correction as an adjustment');
+	}
+
+	/**
+	 * Refuses to retire a movement: a retired row drops out of the sum `refund()` measures its ceiling from while
+	 * the card's balance keeps it, and recovering it puts it back - the ledger and the card would disagree with
+	 * nothing to reconcile them.
+	 *
+	 * @throws BadRequestException with `GIFT_CARD_TRANSACTION_APPEND_ONLY`, always.
+	 */
+	async softRemove(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw appendOnly('a movement is never retired; record the correction as an adjustment');
+	}
+
+	/**
+	 * Refuses to restore a retired movement, for the reason `softRemove` gives.
+	 *
+	 * @throws BadRequestException with `GIFT_CARD_TRANSACTION_APPEND_ONLY`, always.
+	 */
+	async softRecover(id: unknown, ...options: unknown[]): Promise<never> {
+		void id;
+		void options;
+
+		throw appendOnly('a movement is never retired or restored; record the correction as an adjustment');
 	}
 
 	/**
@@ -171,4 +238,12 @@ export class GiftCardTransactionService extends TenantScopedCrudService<GiftCard
 
 		return rows.reduce<DecimalString>((sum, row) => addDecimalStrings(sum, row.amount), '0');
 	}
+}
+
+/** The refusal every write of the ledger outside `append` answers with. */
+function appendOnly(reason: string): BadRequestException {
+	return new BadRequestException({
+		message: `GIFT_CARD_TRANSACTION_APPEND_ONLY: ${reason}.`,
+		code: 'GIFT_CARD_TRANSACTION_APPEND_ONLY'
+	});
 }

@@ -604,6 +604,19 @@ describe('PaymentCaptureService — the ledger and the payment row move together
 		expect(fixture.tables.payment_capture[0].amount).toBe('40');
 	});
 
+	it('refuses to retire or restore a capture, which the refund ceiling would then stop or start counting (R3-17)', async () => {
+		// `sumCapturedForPayment` reads live rows only while `payment.capturedAmount` keeps a retired one, so a
+		// retirement lowered the refundable figure without moving the payment, and a recovery raised it again.
+		const fixture = captureFixture({
+			captures: [{ id: 'capture-1', tenantId: TENANT, organizationId: ORG, paymentId: PAYMENT, amount: '40' }]
+		});
+
+		await expect(fixture.service.softRemove('capture-1' as never)).rejects.toThrow(/PAYMENT_CAPTURE_APPEND_ONLY/);
+		await expect(fixture.service.softRecover('capture-1' as never)).rejects.toThrow(/PAYMENT_CAPTURE_APPEND_ONLY/);
+		expect(fixture.tables.payment_capture).toHaveLength(1);
+		expect(fixture.tables.payment_capture[0].deletedAt).toBeUndefined();
+	});
+
 	it('refuses a capture whose payment moved between the ceiling being measured and the row being written', async () => {
 		// The over-capture ceiling is computed from `capturedAmount` as this call read it, so the write
 		// has to be conditional on the payment still holding that figure. Two captures of the whole
