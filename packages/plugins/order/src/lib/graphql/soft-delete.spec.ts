@@ -32,14 +32,15 @@
  * handlers are restated in the shape `packages/core/src/lib/core/crud/crud.controller.ts` declares them,
  * handing the service the rest parameter as an ARRAY, because the real class reaches the entity graph.
  *
- * **The eight write routes beside the pair are held to the same three properties.** Five destructive
- * deletes — of the order, a frozen address, a change, one of a change's actions and a credit line — and
+ * **The eight write routes beside the pair are held to the same three properties.** Five `DELETE /:id`
+ * routes — of the order, a frozen address, a change, one of a change's actions and a credit line — and
  * three updates — of a change, of one of its actions and of a credit line — answered no field at all.
- * They are not the withdrawals above: the pair keeps the row and these remove it, which is why both
- * halves are served. The audit that reads route handler names against field names reported thirty-six
- * candidates for this plugin, and the rest of them are mirrored under other names or served through the
- * change a caller raises and confirms; the table below states the eight that were genuinely unserved,
- * and the comment above it states where the other twenty-eight are answered.
+ * The five deletes used to remove the row; since `13` §11.4's "Soft delete only" row (owner decision
+ * 2026-10-13) they retire it through the same `softRemove` the pair's first half reaches, and answer
+ * `{ id, deleted }` over GraphQL. The audit that reads route handler names against field names reported
+ * thirty-six candidates for this plugin, and the rest of them are mirrored under other names or served
+ * through the change a caller raises and confirms; the table below states the eight that were genuinely
+ * unserved, and the comment above it states where the other twenty-eight are answered.
  */
 jest.mock('@gauzy/plugin-cart', () => ({
 	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
@@ -153,6 +154,8 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { FieldDefinitionNode, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, TypeNode } from 'graphql';
+import { BadRequestException, NotFoundException, RequestMethod } from '@nestjs/common';
+import { HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
@@ -189,11 +192,12 @@ const RETIRED = { id: ID, deletedAt: new Date('2026-02-01T00:00:00.000Z') };
 const RESTORED = { id: ID, deletedAt: null };
 
 /**
- * What the other two kinds of write answer with.
+ * What the CRUD base's hard delete and an update answer with.
  *
- * A destructive delete cannot answer the row — the row is gone — so the driver's own result is what the
- * route hands back and what the field reads a count from; an update hands the ORM's result to the route,
- * while the field answers the row, because that is what the resource's sibling mutations answer.
+ * The hard delete answers the driver's count. No route or field of this domain reaches it any more — every
+ * `DELETE /:id` retires the row through `softRemove` — so the stub answers it only so that a regression that
+ * reached it again would be visible as a call rather than as a crash. An update hands the ORM's result to
+ * the route, while the field answers the row, because that is what the resource's sibling mutations answer.
  */
 const DELETED = { affected: 1 };
 const UPDATED = { id: ID, note: 'Bulk order' };
@@ -404,9 +408,10 @@ function resource(name: string): IResource {
  * One write route of this domain that no field answered, and the field that now mirrors it.
  *
  * `route` is the handler the controller declares and `method` the service method both surfaces must
- * reach; they are the same word for seven of the eight and differ once, because the change's update
- * route reaches `commitChange` — the method that writes a change's columns under the version of the
- * order it belongs to — rather than the base class's `update`.
+ * reach. They are the same word for two of the eight. The change's update route reaches `commitChange` —
+ * the method that writes a change's columns under the version of the order it belongs to — rather than
+ * the base class's `update`, and the five `delete` routes reach `softRemove`, because `13` §11.4 keeps
+ * every order table "Soft delete only (`deletedAt`); no hard delete through the API".
  */
 interface IWrite {
 	resource: IResource;
@@ -422,10 +427,11 @@ interface IWrite {
 /**
  * The eight write routes of this domain whose capability no field answered.
  *
- * Five of them are destructive deletes — of the order, a frozen address, a change, one of a change's
+ * Five of them are `DELETE /:id` routes — of the order, a frozen address, a change, one of a change's
  * actions and a credit line — and three are updates: of a change, of one of its actions and of a credit
- * line. The five deletes are not the recoverable withdrawals beside them: the pair keeps the row, and
- * these remove it, which is why the plugin serves both halves rather than one standing in for the other.
+ * line. The five deletes retire the row through the same `softRemove` the pair's first half reaches (they
+ * used to remove it); the field keeps the `{ id, deleted }` answer it was published with, where the
+ * `softDelete*` field answers the row.
  *
  * The rest of the audit's thirty-six are accounted for elsewhere: the six action routes of the order
  * controller and the two of the register are mirrored under other names (`place` and `placeOrder` were
@@ -436,12 +442,18 @@ interface IWrite {
  * never edited or deleted.
  */
 const WRITES: IWrite[] = [
-	{ resource: resource('Order'), field: 'deleteOrder', route: 'delete', method: 'delete', answers: 'OrderDeleteResult' },
+	{
+		resource: resource('Order'),
+		field: 'deleteOrder',
+		route: 'delete',
+		method: 'softRemove',
+		answers: 'OrderDeleteResult'
+	},
 	{
 		resource: resource('OrderAddress'),
 		field: 'deleteOrderAddress',
 		route: 'delete',
-		method: 'delete',
+		method: 'softRemove',
 		answers: 'OrderDeleteResult'
 	},
 	{
@@ -456,7 +468,7 @@ const WRITES: IWrite[] = [
 		resource: resource('OrderChange'),
 		field: 'deleteOrderChange',
 		route: 'delete',
-		method: 'delete',
+		method: 'softRemove',
 		answers: 'OrderDeleteResult'
 	},
 	{
@@ -471,7 +483,7 @@ const WRITES: IWrite[] = [
 		resource: resource('OrderChangeAction'),
 		field: 'deleteOrderChangeAction',
 		route: 'delete',
-		method: 'delete',
+		method: 'softRemove',
 		answers: 'OrderDeleteResult'
 	},
 	{
@@ -486,7 +498,7 @@ const WRITES: IWrite[] = [
 		resource: resource('OrderCreditLine'),
 		field: 'deleteOrderCreditLine',
 		route: 'delete',
-		method: 'delete',
+		method: 'softRemove',
 		answers: 'OrderDeleteResult'
 	}
 ];
@@ -824,8 +836,8 @@ describe('the order document — the write routes no field answered are declared
  * The authorisation is the route's, field by field — and so is the version declaration where the route
  * states one.
  *
- * Three of the eight are updates of a row the order's totals were read from and five remove a row
- * outright, so a field that left the grant to its class would turn the read permission into a write on
+ * Three of the eight are updates of a row the order's totals were read from and five retire a row out of
+ * every read, so a field that left the grant to its class would turn the read permission into a write on
  * both surfaces at once. The change's update route is the one of the eight that states `@Versioned({})`,
  * so its field states the same declaration and takes the version as the argument this resolver's other
  * change mutations take it as; none of the eight declares a retry scope, which is asserted rather than
@@ -938,25 +950,143 @@ describe('the write routes — the two protocols write the same row', () => {
 
 			const overRest = await controller[entry.route](ID);
 			const overGraphql = await resolver[entry.field](ID);
+			const method = service[entry.method];
 
-			expect(service.delete).toHaveBeenCalledTimes(2);
-			expect(service.delete.mock.calls.map((call: Row[]) => call[0])).toEqual([ID, ID]);
+			expect(method).toHaveBeenCalledTimes(2);
+			expect(method.mock.calls.map((call: Row[]) => call[0])).toEqual([ID, ID]);
+			// CONTROL: neither surface reaches the CRUD base's hard delete.
+			expect(service.delete).not.toHaveBeenCalled();
 
-			// The route answers the driver's result; the field answers what a delete has left — the
-			// identity it named and whether the row was there — which is the shape this domain's one
-			// pre-existing delete field answers with.
-			expect(overRest).toBe(DELETED);
+			// The route answers the row it retired, as `DELETE ':id/soft'` does; the field answers the
+			// identity it named and whether a row was there to retire — the shape it was published with,
+			// which is the shape this domain's one pre-existing delete field answers with.
+			expect(overRest).toBe(RETIRED);
 			expect(overGraphql).toEqual({ id: ID, deleted: true });
 		}
 	);
 
 	it('answers `deleted: false` when the row the delete named was not there', async () => {
-		// The control for the count above: the field reports what the driver reported rather than a
-		// constant, so a delete of a row that was already gone is distinguishable from one that removed it.
+		// The control for the `true` above: the field reports what the retirement found rather than a
+		// constant, so a delete of an identifier that names no row of the caller's is distinguishable from
+		// one that retired a row. The kernel's `softRemove` answers that case with a NotFoundException.
 		const { service, resolver } = surfaces(resource('Order'));
 
-		service.delete.mockResolvedValueOnce({ affected: 0 });
+		service.softRemove.mockRejectedValueOnce(new NotFoundException('The requested record was not found'));
 
 		expect(await resolver.deleteOrder(ID)).toEqual({ id: ID, deleted: false });
+	});
+});
+
+/**
+ * `DELETE /:id` retires and never erases, on both surfaces.
+ *
+ * `13` §11.4 keeps every order table in one retention row — "`order*`, `payment` (the columns this programme
+ * adds), `payment_capture`, `refund`, `tax_line`, `adjustment`, `subscription_billing`, `order_return*` |
+ * Indefinite | Soft delete only (`deletedAt`); no hard delete through the API" — and the owner decided it
+ * again on 2026-10-13 ("Soft delete only", decision 10; "Fix all on feat now", decision 4). Ten controllers of
+ * this domain declared `DELETE ':id'` as an override that reached `CrudController`'s hard `delete`, and five
+ * GraphQL fields mirrored it: the order ("the immutable commercial record", whose hard delete cascades into
+ * its lines, addresses, delivery choices, totals history, changes, credit lines, timeline and payment
+ * collection), the ledger ("never updated and never deleted"), the timeline ("never updated and never
+ * deleted while its order exists"), the totals history ("append-only"), a change and its actions (the one
+ * path that modifies a placed order, and so its audit), a credit line (money owed back), a line, an address
+ * and a delivery choice (the order as it was placed).
+ *
+ * Each route now reaches the service's `softRemove` — the act `DELETE ':id/soft'` performs — and answers the
+ * row it retired; each field reaches the same method and keeps its `{ id, deleted }` answer, reporting
+ * `deleted: false` when the identifier names no row of the caller's. The real-database half of this claim —
+ * the row is still stored with `deletedAt` set, and `PUT ':id/recover'` brings it back — is
+ * `order-delete-retires.db.spec.ts`.
+ */
+describe('DELETE /:id retires and never erases (13 §11.4: soft delete only)', () => {
+	/** The ten routes, by the path each controller is mounted at. */
+	const ROUTES: Array<[string, IResource]> = [
+		['orders', resource('Order')],
+		['order-lines', resource('OrderLine')],
+		['order-transactions', resource('OrderTransaction')],
+		['order-history', resource('OrderHistory')],
+		['order-summaries', resource('OrderSummary')],
+		['order-credit-lines', resource('OrderCreditLine')],
+		['order-changes', resource('OrderChange')],
+		['order-change-actions', resource('OrderChangeAction')],
+		['order-addresses', resource('OrderAddress')],
+		['order-shipping-methods', resource('OrderShippingMethod')]
+	];
+
+	/** The five fields that mirror five of those routes. */
+	const FIELDS: Array<[string, IResource]> = [
+		['deleteOrder', resource('Order')],
+		['deleteOrderAddress', resource('OrderAddress')],
+		['deleteOrderChange', resource('OrderChange')],
+		['deleteOrderChangeAction', resource('OrderChangeAction')],
+		['deleteOrderCreditLine', resource('OrderCreditLine')]
+	];
+
+	it.each(ROUTES)('DELETE /%s/:id reaches softRemove, not delete', async (_path, entry) => {
+		const { service, controller } = surfaces(entry);
+
+		const answer = await controller.delete(ID);
+
+		expect(service.softRemove).toHaveBeenCalledTimes(1);
+		expect(service.softRemove.mock.calls[0][0]).toBe(ID);
+		// CONTROL: the hard delete of the CRUD base is never reached.
+		expect(service.delete).not.toHaveBeenCalled();
+		// The route answers the row it retired, as `DELETE ':id/soft'` does.
+		expect(answer).toBe(RETIRED);
+	});
+
+	it.each(ROUTES)('DELETE /%s/:id keeps its path, its 202 and its ORDERS_EDIT permission', (_path, entry) => {
+		const handler = handlersOf(entry.controller).delete;
+
+		expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe(':id');
+		expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(RequestMethod.DELETE);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, handler)).toBe(202);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handler)).toEqual([EDIT]);
+	});
+
+	it.each(FIELDS)('%s retires through softRemove and answers { id, deleted: true }', async (field, entry) => {
+		const { service, resolver } = surfaces(entry);
+
+		await expect(resolver[field](ID)).resolves.toEqual({ id: ID, deleted: true });
+
+		expect(service.softRemove).toHaveBeenCalledTimes(1);
+		expect(service.softRemove.mock.calls[0][0]).toBe(ID);
+		// CONTROL: the hard delete of the CRUD base is never reached.
+		expect(service.delete).not.toHaveBeenCalled();
+	});
+
+	it.each(FIELDS)('%s answers deleted: false when the id names no row of the caller', async (field, entry) => {
+		const { service, resolver } = surfaces(entry);
+
+		// The kernel's `softRemove` answers a row it cannot find in the caller's scope with a NotFoundException.
+		service.softRemove.mockRejectedValueOnce(new NotFoundException('The requested record was not found'));
+
+		await expect(resolver[field](ID)).resolves.toEqual({ id: ID, deleted: false });
+		expect(service.delete).not.toHaveBeenCalled();
+	});
+
+	it.each(FIELDS)('%s rethrows anything but a NotFoundException', async (field, entry) => {
+		const { service, resolver } = surfaces(entry);
+
+		// A refusal is not "no row was there": it reaches the caller as the error it is.
+		service.softRemove.mockRejectedValueOnce(new BadRequestException('NOT_RETIRABLE'));
+
+		await expect(resolver[field](ID)).rejects.toBeInstanceOf(BadRequestException);
+		expect(service.delete).not.toHaveBeenCalled();
+	});
+
+	it('both surfaces retire the same row through the same method the soft route reaches', async () => {
+		for (const [field, entry] of FIELDS) {
+			const { service, controller, resolver } = surfaces(entry);
+
+			await controller.delete(ID);
+			await resolver[field](ID);
+			await controller.softRemove(ID);
+
+			// Three calls, one act: DELETE /:id, the field, and DELETE /:id/soft.
+			expect(service.softRemove).toHaveBeenCalledTimes(3);
+			expect(service.softRemove.mock.calls.map((call: unknown[]) => call[0])).toEqual([ID, ID, ID]);
+			expect(service.delete).not.toHaveBeenCalled();
+		}
 	});
 });
