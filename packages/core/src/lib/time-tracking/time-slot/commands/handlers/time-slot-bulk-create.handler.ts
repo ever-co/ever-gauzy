@@ -47,8 +47,12 @@ export class TimeSlotBulkCreateHandler implements ICommandHandler<TimeSlotBulkCr
 					!insertedSlots.find((insertedSlot) => moment(insertedSlot.startedAt).isSame(moment(slot.startedAt)))
 			);
 		}
+		// Every slot already exists — e.g. created a moment ago by an integration's slot mapping (Hubstaff), before
+		// the time log that owns them. Nothing to insert, but they are still handed back, merged as below, so the
+		// caller (TimeLogCreateHandler) links them to its log: an empty list left the log without slots, and the
+		// reports that read a log's slots left it out.
 		if (slots.length === 0) {
-			return [];
+			return await this.mergeSlots(insertedSlots, organizationId, employeeId);
 		}
 
 		const timeLogs = await this.typeOrmTimeLogRepository.find({
@@ -79,8 +83,13 @@ export class TimeSlotBulkCreateHandler implements ICommandHandler<TimeSlotBulkCr
 		if (slots.length > 0) {
 			await this.typeOrmTimeSlotRepository.save(slots);
 		}
-		slots = insertedSlots.concat(slots);
+		return await this.mergeSlots(insertedSlots.concat(slots), organizationId, employeeId);
+	}
 
+	/**
+	 * Merges the employee's slots over the span the given slots cover and returns the result.
+	 */
+	private async mergeSlots(slots: TimeSlot[], organizationId: string, employeeId: string): Promise<TimeSlot[]> {
 		const dates = slots.map((slot) => moment(slot.startedAt).toDate());
 		const minDate = dates.reduce(function (a, b) {
 			return a < b ? a : b;
