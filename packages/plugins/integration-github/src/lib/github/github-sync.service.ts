@@ -534,8 +534,9 @@ export class GithubSyncService {
 										);
 
 										try {
-											// Synchronize the issue as a task
-											return await this._commandBus.execute(
+											// Synchronize the issue as a task. Not returned: that ended the sync after the first
+											// issue of the first project, so the other projects linked to the repository were skipped.
+											await this._commandBus.execute(
 												new AutomationTaskSyncCommand(
 													{
 														entity: {
