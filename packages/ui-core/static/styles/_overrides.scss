@@ -1622,13 +1622,11 @@ angular2-smart-table {
 // now styles the pane that holds the panel (`:has()`); the bounding box spans
 // the viewport, so `right: 1rem` still means "1rem from the screen edge".
 // Entity selects are excluded here: they have their own rule below.
-@supports (max-width: max-content) and selector(:has(*)) {
-  html:not([dir='rtl'])
-    .cdk-overlay-pane:has(
-      > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select):not(.currency-selector):not(
-          .gauzy-entity-select
-        )
-    ) {
+// One selector per line on purpose: the build's PostCSS chain cannot parse a `:has()` broken across
+// lines or an `@supports selector()` query ("Unknown node type in node creation"). A browser without
+// `:has()` simply drops the rule, which is the same as the query would have done.
+@supports (max-width: max-content) {
+  html:not([dir='rtl']) .cdk-overlay-pane:has(> ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select):not(.currency-selector):not(.gauzy-entity-select)) {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
@@ -1653,7 +1651,7 @@ angular2-smart-table {
 // the job the old right-anchored, `min-width: xl`-only organization rule did.
 // The floor (never narrower than the trigger) is `NgSelectPanelSizingService`'s
 // `--gauzy-ng-select-trigger-width`, as for every other panel.
-@supports (max-width: max-content) and selector(:has(*)) {
+@supports (max-width: max-content) {
   .cdk-overlay-pane:has(> ng-dropdown-panel.ng-dropdown-panel.gauzy-entity-select) {
     width: max-content !important;
     max-width: min(32rem, calc(100vw - 2rem)) !important;

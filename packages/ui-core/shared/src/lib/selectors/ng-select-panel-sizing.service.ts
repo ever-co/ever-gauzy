@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { EnvironmentProviders, Injectable, NgZone, OnDestroy, inject, provideAppInitializer } from '@angular/core';
+import { Injectable, NgZone, OnDestroy, inject, provideAppInitializer, type EnvironmentProviders } from '@angular/core';
 
 /**
  * The CSS custom property every ng-select overlay pane carries: the width of the select it
