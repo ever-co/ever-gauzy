@@ -181,6 +181,7 @@
 		"ADD_MORE_SOURCES": "Добавить больше источников",
 		"REMOVE_FROM_FAVORITES": "Удалить из избранного",
 		"ADD_TO_FAVORITES": "Добавить в избранное",
+		"EXPAND_FULL_WIDTH": "Развернуть на всю ширину",
 		"UNSELECT_ALL": "Снять выделение",
 		"START_TIMER_ANYWAY": "Всё равно запустить",
 		"OPEN_SETTING": "Открыть настройки"
@@ -3952,6 +3953,12 @@
 	"HEADER_TITLE": {
 		"FOR": "для",
 		"FROM": "от"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Назад к списку",
+		"NOT_FOUND": "Эта запись не существует или была удалена.",
+		"FORBIDDEN": "У вас нет разрешения на просмотр этой записи.",
+		"ERROR": "Не удалось загрузить запись."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "страница не найдена",

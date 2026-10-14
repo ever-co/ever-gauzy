@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "Aggiungi più fonti",
 		"REMOVE_FROM_FAVORITES": "Rimuovi dai preferiti",
 		"ADD_TO_FAVORITES": "Aggiungi ai preferiti",
+		"EXPAND_FULL_WIDTH": "Espandi a larghezza intera",
 		"UNSELECT_ALL": "Deseleziona tutto",
 		"START_TIMER_ANYWAY": "Avvia comunque",
 		"OPEN_SETTING": "Apri impostazioni"
@@ -3923,6 +3924,12 @@
 	"HEADER_TITLE": {
 		"FOR": "per",
 		"FROM": "da"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Torna all'elenco",
+		"NOT_FOUND": "Questo record non esiste o è stato rimosso.",
+		"FORBIDDEN": "Non hai il permesso di visualizzare questo record.",
+		"ERROR": "Impossibile caricare il record."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Pagina non trovata",

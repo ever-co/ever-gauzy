@@ -6,7 +6,7 @@ import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteService } from './favorite.service';
 import { Store } from '../store/store.service';
 import { NavMenuSectionItem } from '../nav-builder/nav-builder-types';
-import { ENTITY_ICONS, ENTITY_LINKS } from './entities-mapping';
+import { ENTITY_ICONS, ENTITY_LINKS, IFavoriteRecord } from './entities-mapping';
 
 @UntilDestroy()
 @Injectable({
@@ -123,7 +123,7 @@ export class FavoriteStoreService {
 								id: `favorite-${entityType}-${item.id}`,
 								title,
 								icon: this._getFavoriteIcon(entityType as BaseEntityEnum),
-								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id),
+								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
 								data: {
 									translationKey: title
 								}
@@ -221,8 +221,12 @@ export class FavoriteStoreService {
 		return ENTITY_ICONS[entityType] || 'far fa-star';
 	}
 
-	private _getFavoriteLink(entityType: BaseEntityEnum, entityId: string): string {
+	/**
+	 * The record's own page. The details row is handed to the builder so a type with more than one full
+	 * view (a document's kind, an estimate) opens the right one.
+	 */
+	private _getFavoriteLink(entityType: BaseEntityEnum, entityId: string, record?: unknown): string {
 		const linkFn = ENTITY_LINKS[entityType];
-		return linkFn ? linkFn(entityId) : '/';
+		return linkFn ? linkFn(entityId, record as IFavoriteRecord) : '/';
 	}
 }

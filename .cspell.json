@@ -1541,7 +1541,9 @@
 		"upsell",
 		"weightable",
 		"workstream",
-		"describedby"
+		"describedby",
+		"favorited",
+		"bookmarkable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

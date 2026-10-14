@@ -189,6 +189,7 @@
 		"ADD_MORE_SOURCES": "Добавете още източници",
 		"REMOVE_FROM_FAVORITES": "Премахване от любими",
 		"ADD_TO_FAVORITES": "Добавете към любими",
+		"EXPAND_FULL_WIDTH": "Разгъване на цяла ширина",
 		"UNSELECT_ALL": "Премахни избора на всички",
 		"START_TIMER_ANYWAY": "Стартирай въпреки това",
 		"OPEN_SETTING": "Отвори настройките"
@@ -3979,6 +3980,12 @@
 	"HEADER_TITLE": {
 		"FOR": "за",
 		"FROM": "от"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Обратно към списъка",
+		"NOT_FOUND": "Този запис не съществува или е премахнат.",
+		"FORBIDDEN": "Нямате разрешение да преглеждате този запис.",
+		"ERROR": "Записът не можа да бъде зареден."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",

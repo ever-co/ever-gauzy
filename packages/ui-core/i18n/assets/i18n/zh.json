@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "添加更多来源",
 		"REMOVE_FROM_FAVORITES": "从收藏夹中移除",
 		"ADD_TO_FAVORITES": "添加到收藏夹",
+		"EXPAND_FULL_WIDTH": "展开为全宽",
 		"UNSELECT_ALL": "取消全选",
 		"START_TIMER_ANYWAY": "仍然开始",
 		"OPEN_SETTING": "打开设置"
@@ -3923,6 +3924,12 @@
 	"HEADER_TITLE": {
 		"FOR": "为了",
 		"FROM": "从"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "返回列表",
+		"NOT_FOUND": "该记录不存在或已被删除。",
+		"FORBIDDEN": "您无权查看此记录。",
+		"ERROR": "无法加载该记录。"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "页面未找到",

@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "إضافة مصدر آخر",
 		"REMOVE_FROM_FAVORITES": "إزالة من المفضلة",
 		"ADD_TO_FAVORITES": "إضافة إلى المفضلة",
+		"EXPAND_FULL_WIDTH": "توسيع إلى العرض الكامل",
 		"UNSELECT_ALL": "إلغاء تحديد الكل",
 		"START_TIMER_ANYWAY": "البدء على أي حال",
 		"OPEN_SETTING": "فتح الإعدادات"
@@ -3908,6 +3909,12 @@
 	"HEADER_TITLE": {
 		"FOR": "لـ",
 		"FROM": "من"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "العودة إلى القائمة",
+		"NOT_FOUND": "هذا السجل غير موجود أو تمت إزالته.",
+		"FORBIDDEN": "ليس لديك إذن لعرض هذا السجل.",
+		"ERROR": "تعذر تحميل السجل."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "الصفحة غير موجودة",

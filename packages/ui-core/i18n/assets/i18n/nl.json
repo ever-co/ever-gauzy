@@ -182,6 +182,7 @@
 		"ADD_MORE_SOURCES": "Meer bronnen toevoegen",
 		"REMOVE_FROM_FAVORITES": "Uit favorieten verwijderen",
 		"ADD_TO_FAVORITES": "Aan favorieten toevoegen",
+		"EXPAND_FULL_WIDTH": "Uitvouwen tot volledige breedte",
 		"UNSELECT_ALL": "Alles deselecteren",
 		"START_TIMER_ANYWAY": "Toch starten",
 		"OPEN_SETTING": "Instelling openen"
@@ -3923,6 +3924,12 @@
 	"HEADER_TITLE": {
 		"FOR": "voor",
 		"FROM": "van"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Terug naar de lijst",
+		"NOT_FOUND": "Dit record bestaat niet of is verwijderd.",
+		"FORBIDDEN": "U hebt geen toestemming om dit record te bekijken.",
+		"ERROR": "Het record kon niet worden geladen."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Pagina niet gevonden",

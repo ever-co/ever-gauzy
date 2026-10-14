@@ -1,4 +1,4 @@
-import { BaseEntityEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentKindEnum } from '@gauzy/contracts';
 
 /**
  * Maps entity types to their corresponding FontAwesome icon classes
@@ -38,36 +38,87 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.OrganizationStrategicInitiative]: 'fas fa-bullseye'
 };
 
-export const ENTITY_LINKS: Record<BaseEntityEnum, (id: string) => string> = {
+/**
+ * The record a favorite points at, as the favorite details endpoint (`GET /favorite/type`) returned it.
+ * Link builders read it when one entity type has more than one full view: a document's `kind`, an
+ * invoice that `isEstimate`, the project a sprint or module belongs to.
+ */
+export interface IFavoriteRecord {
+	id?: string;
+	[key: string]: unknown;
+}
+
+/** Builds the URL a favorite opens. `record` is absent when only the id is known. */
+export type FavoriteLinkBuilder = (id: string, record?: IFavoriteRecord) => string;
+
+/**
+ * A document favorite opens the document itself: a PAGE in the document page — inside the Documents
+ * shell, which keeps only the narrow "All documents" tree beside it (owner, 2026-10-13) — and a FOLDER as
+ * that folder. An uploaded FILE has no page of its own, so it (and a record whose kind is unknown) opens
+ * in the hub with its preview, which handles every kind.
+ */
+function documentLink(id: string, record?: IFavoriteRecord): string {
+	switch (record?.['kind']) {
+		case DocumentKindEnum.PAGE:
+			return `/pages/documents/page/${id}`;
+		case DocumentKindEnum.FOLDER:
+			return `/pages/documents?folder=${id}`;
+		default:
+			return `/pages/documents?id=${id}`;
+	}
+}
+
+/** An estimate is an invoice row flagged `isEstimate`; each has its own view page. */
+function invoiceLink(id: string, record?: IFavoriteRecord): string {
+	return record?.['isEstimate']
+		? `/pages/accounting/invoices/estimates/view/${id}`
+		: `/pages/accounting/invoices/view/${id}`;
+}
+
+/**
+ * Where a sidebar favorite takes the user: the record's own full page wherever one exists (handover §4.P).
+ *
+ * Every target must be a route the app serves — `apps/gauzy/src/app/pages/favorite-links.routes.spec.ts`
+ * resolves each one against the real router configuration. Types that have no page of their own yet land
+ * on the closest page that shows them; the backend only lets the types carrying `@FavoriteService` be
+ * favorited at all (see `GlobalFavoriteDiscoveryService`).
+ */
+export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.OrganizationProject]: (id) => `/pages/organization/projects/${id}/edit`,
-	[BaseEntityEnum.Task]: (id) => `/pages/tasks/dashboard?taskId=${id}`,
+	[BaseEntityEnum.Task]: (id) => `/pages/tasks/view/${id}`,
 	[BaseEntityEnum.Employee]: (id) => `/pages/employees/view/${id}`,
 	[BaseEntityEnum.Candidate]: (id) => `/pages/employees/candidates/edit/${id}`,
-	[BaseEntityEnum.Contact]: (id) => `/pages/contacts/view/${id}`,
+	// The address/contact-details row has no page; the contacts hub is where contacts are read.
+	[BaseEntityEnum.Contact]: () => `/pages/contacts`,
 	[BaseEntityEnum.OrganizationTeam]: () => `/pages/organization/teams`,
-	[BaseEntityEnum.OrganizationVendor]: (id) => `/pages/organization/vendors/edit/${id}`,
-	[BaseEntityEnum.OrganizationSprint]: (id) => `/pages/organization/sprints/edit/${id}`,
-	[BaseEntityEnum.OrganizationProjectModule]: (id) => `/pages/organization/projects/modules/${id}/edit`,
-	[BaseEntityEnum.TaskView]: (id) => `/pages/tasks/views/${id}`,
-	[BaseEntityEnum.OrganizationDepartment]: (id) => `/pages/organization/departments/edit/${id}`,
-	[BaseEntityEnum.OrganizationDocument]: (id) => `/pages/organization/documents/edit/${id}`,
-	[BaseEntityEnum.Document]: (id) => `/pages/documents?id=${id}`,
-	[BaseEntityEnum.Expense]: (id) => `/pages/accounting/expenses/edit/${id}`,
-	[BaseEntityEnum.Invoice]: (id) => `/pages/accounting/invoices/edit/${id}`,
-	[BaseEntityEnum.Income]: (id) => `/pages/accounting/income/edit/${id}`,
-	[BaseEntityEnum.DailyPlan]: (id) => `/pages/daily-plans/edit/${id}`,
+	[BaseEntityEnum.OrganizationVendor]: () => `/pages/organization/vendors`,
+	// Sprints are managed in their project's task settings; modules on their project's page.
+	[BaseEntityEnum.OrganizationSprint]: (_id, record) =>
+		record?.['projectId'] ? `/pages/tasks/settings/${record['projectId']}` : `/pages/tasks/dashboard`,
+	[BaseEntityEnum.OrganizationProjectModule]: (_id, record) =>
+		record?.['projectId']
+			? `/pages/organization/projects/${record['projectId']}/edit`
+			: `/pages/organization/projects`,
+	[BaseEntityEnum.TaskView]: () => `/pages/tasks/dashboard`,
+	[BaseEntityEnum.OrganizationDepartment]: () => `/pages/organization/departments`,
+	[BaseEntityEnum.OrganizationDocument]: () => `/pages/organization/documents`,
+	[BaseEntityEnum.Document]: documentLink,
+	[BaseEntityEnum.Expense]: () => `/pages/accounting/expenses`,
+	[BaseEntityEnum.Invoice]: invoiceLink,
+	[BaseEntityEnum.Income]: () => `/pages/accounting/income`,
+	[BaseEntityEnum.DailyPlan]: () => `/pages/tasks/me`,
 	[BaseEntityEnum.Dashboard]: () => `/pages/dashboard`,
 	[BaseEntityEnum.DashboardWidget]: () => `/pages/dashboard`,
-	[BaseEntityEnum.ResourceLink]: (id) => `/pages/resource-links/edit/${id}`,
-	[BaseEntityEnum.ScreeningTask]: (id) => `/pages/tasks/screening/edit/${id}`,
-	[BaseEntityEnum.TaskLinkedIssue]: (id) => `/pages/tasks/linked-issues/edit/${id}`,
+	[BaseEntityEnum.ResourceLink]: () => `/pages/dashboard`,
+	[BaseEntityEnum.ScreeningTask]: () => `/pages/tasks/dashboard`,
+	[BaseEntityEnum.TaskLinkedIssue]: () => `/pages/tasks/dashboard`,
 	[BaseEntityEnum.User]: (id) => `/pages/users/edit/${id}`,
-	[BaseEntityEnum.Tenant]: (id) => `/pages/tenants/edit/${id}`,
+	[BaseEntityEnum.Tenant]: () => `/pages/settings/general`,
 	[BaseEntityEnum.OrganizationContact]: (id) => `/pages/contacts/view/${id}`,
-	[BaseEntityEnum.Comment]: (id) => `/pages/comments/edit/${id}`,
-	[BaseEntityEnum.Currency]: (id) => `/pages/settings/currencies/edit/${id}`,
-	[BaseEntityEnum.Language]: (id) => `/pages/settings/languages/edit/${id}`,
-	[BaseEntityEnum.Organization]: (id) => `/pages/organization/edit/${id}`,
-	[BaseEntityEnum.Broadcast]: (id) => `/pages/broadcasts/edit/${id}`,
-	[BaseEntityEnum.OrganizationStrategicInitiative]: (id) => `/pages/organization/strategic-initiatives/edit/${id}`
+	[BaseEntityEnum.Comment]: () => `/pages/dashboard`,
+	[BaseEntityEnum.Currency]: () => `/pages/settings/general`,
+	[BaseEntityEnum.Language]: () => `/pages/settings/general`,
+	[BaseEntityEnum.Organization]: (id) => `/pages/organizations/edit/${id}`,
+	[BaseEntityEnum.Broadcast]: () => `/pages/dashboard`,
+	[BaseEntityEnum.OrganizationStrategicInitiative]: () => `/pages/goals`
 };
