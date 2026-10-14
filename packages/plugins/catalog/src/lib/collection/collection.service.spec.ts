@@ -414,6 +414,18 @@ describe('CollectionService — creation and the slug scope (doc 05 §4.3)', () 
 		expect((await fixture.service.findBySlug('summer')).id).toBe(created.id);
 	});
 
+	it('refuses a collection when neither the input nor the request states an organization, writing nothing', async () => {
+		// A credential can carry no organization (no preference, a failed membership lookup); the row would
+		// then be written where no organization-scoped read could ever find it.
+		const fixture = collectionFixture();
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+		await expect(fixture.service.create({ name: 'Summer', slug: 'summer' } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(fixture.tables.collection).toHaveLength(0);
+	});
+
 	it('keeps an organization the request stated (REST validates it against the caller)', async () => {
 		const fixture = collectionFixture();
 
@@ -697,6 +709,16 @@ describe('ProductRelationService — the organization of a relation created with
 		// `findByRelated` and the controller's list read inside the caller's organization; a NULL
 		// organization made the relation invisible to both.
 		expect(rows[0].organizationId).toBe(ORG);
+	});
+
+	it('refuses a relation when neither the input nor the request states an organization', async () => {
+		const { rows, service } = relationService();
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+		await expect(
+			service.create({ productId: 'product-a', relatedProductId: 'product-b' } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(rows).toHaveLength(0);
 	});
 
 	it('keeps an organization the request stated', async () => {
