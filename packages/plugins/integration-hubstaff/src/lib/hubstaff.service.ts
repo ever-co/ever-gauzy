@@ -716,9 +716,16 @@ export class HubstaffService {
 		timeSlots: IHubstaffTimeSlotActivity[]
 	): Promise<any> {
 		try {
-			return timeSlots
-				.filter(async (timeslot: IHubstaffTimeSlotActivity) => {
-					return !!(await this._commandBus.execute(
+			// Wait for every slot mapping. `Array.filter` does not await its callback: the promise it got was
+			// always truthy, so every slot was kept, the mappings ran unawaited after the time log was saved,
+			// and their failures escaped this try / catch as unhandled rejections.
+			// A failed mapping is logged, and its slot is still submitted with the time log, as it always was:
+			// the mapping only records the Hubstaff slot id, while the activity (keyboard, mouse, overall)
+			// travels in the time log. Dropping the slot would replace its activity with a blank slot, and
+			// since the time log is then mapped as imported, the next sync would not bring it back.
+			const mapped = await Promise.allSettled(
+				timeSlots.map((timeslot: IHubstaffTimeSlotActivity) =>
+					this._commandBus.execute(
 						new IntegrationMapSyncTimeSlotCommand({
 							entity: {
 								...timeslot,
@@ -728,15 +735,21 @@ export class HubstaffService {
 							integrationId,
 							organizationId
 						})
-					));
-				})
-				.map(({ keyboard, mouse, overall, tracked, time_slot }) => ({
-					keyboard,
-					mouse,
-					overall,
-					duration: tracked,
-					startedAt: time_slot
-				}));
+					)
+				)
+			);
+			mapped.forEach((result, index) => {
+				if (result.status === 'rejected') {
+					console.error(`Error syncing Hubstaff time slot ${timeSlots[index].id}:`, result.reason?.message);
+				}
+			});
+			return timeSlots.map(({ keyboard, mouse, overall, tracked, time_slot }) => ({
+				keyboard,
+				mouse,
+				overall,
+				duration: tracked,
+				startedAt: time_slot
+			}));
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
 		}
