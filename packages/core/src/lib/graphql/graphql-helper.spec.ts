@@ -53,6 +53,34 @@ describe('createGraphqlModuleOptions', () => {
 		});
 	});
 
+	describe('introspection', () => {
+		// Apollo Server applies its own default when the driver is handed no `introspection`: off whenever
+		// NODE_ENV is production. Every deploy image runs NODE_ENV=production, so GRAPHQL_INTROSPECTION=true was
+		// refused there ("GraphQL introspection is not allowed by Apollo Server … pass introspection: true to
+		// ApolloServer in production"), whatever the policy resolved — upgrade-test run 38533029531.
+		const withEnv = async (env: Record<string, string>, apiOptions: Partial<GraphQLApiConfigurationOptions> = {}) => {
+			const saved = { ...process.env };
+			Object.assign(process.env, env);
+			try {
+				return await build({}, apiOptions);
+			} finally {
+				process.env = saved;
+			}
+		};
+
+		it('is handed to the driver as the policy resolved it, so a production image honours GRAPHQL_INTROSPECTION', async () => {
+			const options = await withEnv({ NODE_ENV: 'production', GRAPHQL_INTROSPECTION: 'true' }, { playground: false });
+
+			expect(options.introspection).toBe(true);
+		});
+
+		it('stays off in production when nothing asks for it', async () => {
+			const options = await withEnv({ NODE_ENV: 'production', GRAPHQL_INTROSPECTION: '' }, { playground: false });
+
+			expect(options.introspection).toBe(false);
+		});
+	});
+
 	describe('the subscription socket', () => {
 		const socketOptions = async (apiOptions: Partial<GraphQLApiConfigurationOptions> = {}) => {
 			const options = await build({}, apiOptions);
