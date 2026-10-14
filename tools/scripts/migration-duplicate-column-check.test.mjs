@@ -100,3 +100,16 @@ test('an ADD after a CREATE TABLE that interpolates its members is reported as u
 		{ method: 'postgresUpQueryRunner', table: 'promotion', column: 'title' }
 	]);
 });
+
+test('every ADD clause of one ALTER TABLE is read, not only the first', () => {
+	const source = migration(
+		[
+			'		await queryRunner.query(`CREATE TABLE "widget" ("id" integer NOT NULL, "note" text)`);',
+			'		await queryRunner.query(`ALTER TABLE "widget" ADD COLUMN "code" integer, ADD COLUMN "note" text`);',
+			'		await queryRunner.query(`ALTER TABLE "widget" ADD CONSTRAINT "UQ_widget_code" UNIQUE ("code"), ADD "id" integer`);'
+		].join('\n'),
+		'postgresUpQueryRunner'
+	);
+
+	assert.deepEqual(found(source), ['widget.note', 'widget.id']);
+});

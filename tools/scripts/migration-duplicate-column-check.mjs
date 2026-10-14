@@ -29,7 +29,9 @@ const SKIP = new Set(['node_modules', 'dist', '.angular', 'coverage', '.nx']);
 /** An identifier as a migration's source writes it: bare, double-quoted, or backtick-quoted (escaped in a template). */
 const IDENT = String.raw`\\?[\x60"]?(\w+)\\?[\x60"]?`;
 const CREATE_TABLE = new RegExp(String.raw`CREATE TABLE (?:IF NOT EXISTS )?${IDENT}\s*\(`, 'g');
-const ADD_COLUMN = new RegExp(String.raw`ALTER TABLE ${IDENT}\s+ADD (?:COLUMN )?\\?[\x60"]?(\w+)\\?[\x60"]?\s`, 'g');
+const ALTER_TABLE = new RegExp(String.raw`ALTER TABLE ${IDENT}\s+`, 'g');
+/** One `ADD [COLUMN] <name>` clause of an `ALTER TABLE`, at the start of a top-level member of the statement. */
+const ADD_CLAUSE = new RegExp(String.raw`^ADD\s+(?:COLUMN\s+)?(?:IF NOT EXISTS\s+)?\\?[\x60"]?(\w+)\\?[\x60"]?`, 'i');
 /** What a member of a CREATE TABLE starts with when it declares a constraint or an index rather than a column. */
 const NOT_A_COLUMN = /^(CONSTRAINT|PRIMARY|INDEX|KEY|UNIQUE|FOREIGN|CHECK|FULLTEXT|SPATIAL)\b/i;
 /** `ADD CONSTRAINT …`, `ADD INDEX …` and the like add no column. */
@@ -68,6 +70,73 @@ export function balancedBody(text, open) {
 	}
 
 	return null;
+}
+
+/**
+ * The text of the statement that starts at `from`: up to the template literal's closing backtick, the end of a
+ * single- or double-quoted string, or the end of the source. An escaped backtick (\`) is MySQL quoting inside the
+ * template, not its end.
+ *
+ * @param {string} text The source.
+ * @param {number} from Where the statement starts.
+ * @returns {string} The statement's text.
+ */
+export function statementFrom(text, from) {
+	for (let index = from; index < text.length; index++) {
+		if (text[index] === '\x60' && text[index - 1] !== '\\') {
+			return text.slice(from, index);
+		}
+	}
+
+	return text.slice(from);
+}
+
+/**
+ * Splits text at its top-level commas: commas inside parentheses or quoted text do not split.
+ *
+ * @param {string} text The text.
+ * @returns {string[]} The members, trimmed.
+ */
+export function topLevelMembers(text) {
+	let parts = [];
+	let depth = 0;
+	let quote = null;
+	let current = '';
+
+	for (const char of text) {
+		if (quote) {
+			quote = char === quote ? null : quote;
+		} else if (char === "'") {
+			quote = char;
+		} else if (char === '(') {
+			depth += 1;
+		} else if (char === ')') {
+			depth -= 1;
+		} else if (char === ',' && depth === 0) {
+			parts.push(current.trim());
+			current = '';
+			continue;
+		}
+		current += char;
+	}
+	parts.push(current.trim());
+
+	return parts;
+}
+
+/**
+ * The columns an `ALTER TABLE` statement adds, from every one of its `ADD` clauses.
+ *
+ * MySQL and PostgreSQL both take several actions in one statement (`ADD COLUMN a …, ADD COLUMN b …`), so reading
+ * only the first clause let a repeated column in a later one through (Greptile, #10587).
+ *
+ * @param {string} actions The statement's text after `ALTER TABLE <table>`.
+ * @returns {string[]} The added column names; `ADD CONSTRAINT`, `ADD INDEX` and the like are not columns.
+ */
+export function addedColumns(actions) {
+	return topLevelMembers(actions)
+		.map((member) => ADD_CLAUSE.exec(member)?.[1])
+		.filter((column) => column && !NOT_A_COLUMN_ADD.test(column));
 }
 
 /**
@@ -136,17 +205,19 @@ export function findDuplicateColumnAdds(source) {
 				opaque: body === null || body.includes('${')
 			});
 		}
-		for (const match of branch.matchAll(ADD_COLUMN)) {
-			const [, table, column] = match;
+		for (const match of branch.matchAll(ALTER_TABLE)) {
+			const table = match[1];
 			const declared = created.get(table);
 
-			if (NOT_A_COLUMN_ADD.test(column) || !declared || match.index < declared.at) {
+			if (!declared || match.index < declared.at) {
 				continue;
 			}
-			if (declared.columns.has(column)) {
-				duplicates.push({ method, table, column });
-			} else if (declared.opaque) {
-				duplicates.push({ method, table, column, unverifiable: true });
+			for (const column of addedColumns(statementFrom(branch, match.index + match[0].length))) {
+				if (declared.columns.has(column)) {
+					duplicates.push({ method, table, column });
+				} else if (declared.opaque) {
+					duplicates.push({ method, table, column, unverifiable: true });
+				}
 			}
 		}
 	}
