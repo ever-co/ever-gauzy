@@ -35,6 +35,7 @@ import {
 } from './queries';
 import { OrganizationStrategicInitiative } from './organization-strategic-initiative.entity';
 import { OrganizationStrategicInitiativeService } from './organization-strategic-initiative.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationStrategicInitiativeInput` declares in the schema. */
 export interface ICreateOrganizationStrategicInitiativeInput {
@@ -312,9 +313,7 @@ export class OrganizationStrategicInitiativeResolver {
 	@Mutation('deleteOrganizationStrategicInitiative')
 	@Permissions(PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE)
 	async deleteOrganizationStrategicInitiative(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationStrategicInitiativeService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationStrategicInitiativeService.delete(id));
 	}
 
 	/**

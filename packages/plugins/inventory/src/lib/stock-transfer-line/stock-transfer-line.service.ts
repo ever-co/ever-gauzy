@@ -3,6 +3,7 @@ import { FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { assertVariantInScope, requestScope } from './../inventory.scope';
 import { StockTransferStatus } from './../inventory.enums';
 import { StockTransfer } from './../stock-transfer/stock-transfer.entity';
 import { StockTransferLine } from './stock-transfer-line.entity';
@@ -35,6 +36,10 @@ export class StockTransferLineService extends TenantAwareCrudService<StockTransf
 	 *
 	 * A line may only be added while the document is a draft: once it has been requested, the set of
 	 * things being moved is what was approved.
+	 *
+	 * The draft is loaded inside the request's tenant and organization and the variant has to be the
+	 * caller's, so a line can neither be written into another tenant's transfer nor name another
+	 * tenant's variant (review R2-01).
 	 */
 	public async addLine(input: {
 		transferId: ID;
@@ -44,7 +49,7 @@ export class StockTransferLineService extends TenantAwareCrudService<StockTransf
 		note?: string;
 	}): Promise<StockTransferLine> {
 		return await this.typeOrmStockTransferLineRepository.manager.transaction(async (manager) => {
-			const transfer = await manager.findOne(StockTransfer, { where: { id: input.transferId } });
+			const transfer = await manager.findOne(StockTransfer, { where: { id: input.transferId, ...requestScope() } });
 			if (!transfer) {
 				throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer does not exist.', {
 					notFound: true,
@@ -58,6 +63,7 @@ export class StockTransferLineService extends TenantAwareCrudService<StockTransf
 					{ details: { transferId: transfer.id, status: transfer.status } }
 				);
 			}
+			await assertVariantInScope(manager, input.variantId);
 
 			const existing = await manager.findOne(StockTransferLine, {
 				where: { transferId: transfer.id, variantId: input.variantId }

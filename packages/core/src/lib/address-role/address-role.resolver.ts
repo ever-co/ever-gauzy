@@ -98,4 +98,29 @@ export class AddressRoleResolver {
 
 		return true;
 	}
+
+	/**
+	 * Withdraws an address role without removing the row — the GraphQL counterpart of `DELETE /address-roles/:id/soft`.
+	 *
+	 * The same service method the route reaches, under the same grant: the edit grant its `update` states, which
+	 * the controller now states on the route too (owner decision 5, 2026-10-13 — the soft-delete/recover pair
+	 * requires the controller's own edit grant). The route used to be inherited from `CrudController` with no
+	 * permission of its own and so stood on the class's `ORG_CONTACT_VIEW`; a field mirroring it then would have
+	 * carried that read grant, which is why the pair is delivered together with the route's grant.
+	 */
+	@Mutation('softDeleteAddressRole')
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	async softDeleteAddressRole(@Args('id', ParseUUIDPipe) id: string): Promise<AddressRole> {
+		return this.addressRoleService.softRemove(id);
+	}
+
+	/**
+	 * Restores a withdrawn row — the GraphQL counterpart of `PUT /address-roles/:id/recover`, under the withdrawal's
+	 * grant: restoring undoes a removal.
+	 */
+	@Mutation('recoverAddressRole')
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	async recoverAddressRole(@Args('id', ParseUUIDPipe) id: string): Promise<AddressRole> {
+		return this.addressRoleService.softRecover(id);
+	}
 }

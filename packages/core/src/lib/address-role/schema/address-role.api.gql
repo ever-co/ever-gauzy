@@ -12,4 +12,13 @@ extend type Mutation {
 	assignAddressRole(input: CreateAddressRoleInput!): AddressRole!
 	setAddressRoleDefault(addressId: ID!, role: AddressRoleEnum!, ownerAddressIds: [ID!]!): AddressRole!
 	revokeAddressRole(addressId: ID!, role: AddressRoleEnum!): Boolean!
+	"""
+	Withdraws an address role without removing it — `DELETE /address-roles/:id/soft`. It requires the edit grant the change
+	requires, as the route does: a role that may only read cannot withdraw one.
+	"""
+	softDeleteAddressRole(id: ID!): AddressRole!
+	"""
+	Restores a withdrawn address role — `PUT /address-roles/:id/recover` — under the same edit grant: restoring undoes a removal.
+	"""
+	recoverAddressRole(id: ID!): AddressRole!
 }

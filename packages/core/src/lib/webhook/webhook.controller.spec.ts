@@ -134,7 +134,7 @@ function surfaces(overrides: Record<string, unknown> = {}) {
 		getRedactedSubscription: jest.fn().mockResolvedValue(SUBSCRIPTION_ROW),
 		createSubscription: jest.fn().mockResolvedValue({ subscription: SUBSCRIPTION_ROW, secret: SECRET }),
 		updateSubscription: jest.fn().mockResolvedValue(SUBSCRIPTION_ROW),
-		delete: jest.fn().mockResolvedValue({ affected: 1 }),
+		deleteSubscription: jest.fn().mockResolvedValue({ affected: 1 }),
 		rotateSecret: jest.fn().mockResolvedValue({
 			subscription: SUBSCRIPTION_ROW,
 			secret: SECRET,
@@ -301,7 +301,7 @@ describe('WebhookSubscriptionController — the routes (API specification §7.21
 
 		const answer = await subscriptions.delete(SUBSCRIPTION);
 
-		expect(webhookSubscriptionService.delete).toHaveBeenCalledWith(SUBSCRIPTION);
+		expect(webhookSubscriptionService.deleteSubscription).toHaveBeenCalledWith(SUBSCRIPTION);
 		// The route answers what the removal was: a statement about the write rather than a row.
 		expect(answer).toEqual({ affected: 1 });
 	});

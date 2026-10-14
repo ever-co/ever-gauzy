@@ -138,7 +138,7 @@ jest.mock(
 );
 
 import { FindOperator } from 'typeorm';
-import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, Warehouse, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockReservationReferenceType, StockReservationStatus } from '../inventory.enums';
 import { StockLevelService } from '../stock-level/stock-level.service';
 import { StockMovement } from '../stock-movement/stock-movement.entity';
@@ -202,6 +202,7 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 	const entityToTable = new Map<unknown, string>([
 		[Product, 'product'],
 		[ProductVariant, 'product_variant'],
+		[Warehouse, 'warehouse'],
 		[WarehouseProduct, 'warehouse_product'],
 		[WarehouseProductVariant, 'warehouse_product_variant'],
 		[StockMovement, 'stock_movement'],
@@ -625,10 +626,13 @@ function reservationFixture(
 ) {
 	const tables: Record<string, Row[]> = {
 		product: [{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }],
+		// The caller's own locations: a movement written for a request is refused at a location that is
+		// not the request tenant's (review R2-01).
+		warehouse: [{ id: WAREHOUSE, tenantId: TENANT, organizationId: ORG }],
 		// Where a variant says which product it belongs to: the answer the ledger engine resolves a
 		// first-time level from when a caller names no product, and the claim it checks a stated one
 		// against when a caller names something else.
-		product_variant: [{ id: VARIANT, productId: PRODUCT }],
+		product_variant: [{ id: VARIANT, productId: PRODUCT, tenantId: TENANT, organizationId: ORG }],
 		warehouse_product: [],
 		warehouse_product_variant: [],
 		stock_movement: [],

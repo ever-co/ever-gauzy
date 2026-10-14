@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEmployeeAvailabilityInput` declares in the schema. */
 export interface ICreateEmployeeAvailabilityInput {
@@ -284,9 +285,7 @@ export class EmployeeAvailabilityResolver {
 	 */
 	@Mutation('deleteEmployeeAvailability')
 	async deleteEmployeeAvailability(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeAvailabilityService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeAvailabilityService.delete(id));
 	}
 
 	/**

@@ -17,6 +17,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `OrganizationContactDetailInput` declares in the schema. */
 export interface IOrganizationContactDetailInput {
@@ -274,9 +275,7 @@ export class OrganizationResolver {
 	@Mutation('deleteOrganization')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganization(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationService.delete(id));
 	}
 
 	/**

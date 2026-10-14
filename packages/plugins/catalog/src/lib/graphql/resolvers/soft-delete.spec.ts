@@ -529,3 +529,30 @@ describe('the variant set as an addition and a removal — bound, and held to th
 		expect(service.removeVariant).not.toHaveBeenCalled();
 	});
 });
+
+/**
+ * The two hard-delete fields answer what the delete did (handover 2026-09-20 §7.65 item 21).
+ *
+ * The services' `delete` is the kernel's, which checks no existence: an identifier that names no row of the
+ * caller is a statement that matches nothing and answers `affected: 0` without raising — and both fields used
+ * to answer `true` for it, while `DELETE /:id` reported the `affected: 0` it got.
+ */
+describe('deleteCollection and deleteProductRelation answer whether a row was removed', () => {
+	const FIELDS: Array<[string, (service: any) => any]> = [
+		['deleteCollection', (service) => new CollectionResolver(service, { ofType: () => null } as never)],
+		['deleteProductRelation', (service) => new ProductRelationResolver(service)]
+	];
+
+	it.each(FIELDS)('%s answers false for an identifier that names no row of the caller', async (field, build) => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 0 }) };
+
+		await expect(build(service)[field](ID)).resolves.toBe(false);
+		expect(service.delete).toHaveBeenCalledWith(ID);
+	});
+
+	it.each(FIELDS)('%s answers true when the delete removed the row', async (field, build) => {
+		const service = { delete: jest.fn().mockResolvedValue({ raw: [], affected: 1 }) };
+
+		await expect(build(service)[field](ID)).resolves.toBe(true);
+	});
+});

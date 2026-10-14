@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateTimeOffRequestInput` declares in the schema. */
 export interface ICreateTimeOffRequestInput {
@@ -305,9 +306,7 @@ export class TimeOffRequestResolver {
 	@Mutation('deleteTimeOffRequest')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT)
 	async deleteTimeOffRequest(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.timeOffRequestService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.timeOffRequestService.delete(id));
 	}
 
 	/**
