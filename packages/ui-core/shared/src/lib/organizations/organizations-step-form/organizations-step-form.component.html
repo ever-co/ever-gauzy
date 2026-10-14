@@ -190,12 +190,13 @@
 				<form class="step-form" [formGroup]="orgBonusForm" (ngSubmit)="orgBonusForm.markAsDirty()">
 					<div class="grid">
 						<div class="form-group">
-							<label class="label">
+							<label class="label" for="bonusTypeSelect">
 								{{ 'FORM.LABELS.TYPE_OF_BONUS' | translate }}
 							</label>
 							<nb-select
 								size="medium"
 								formControlName="bonusType"
+								id="bonusTypeSelect"
 								[placeholder]="'FORM.PLACEHOLDERS.TYPE_OF_BONUS' | translate"
 								(selectedChange)="loadDefaultBonusPercentage($event)"
 								fullWidth
@@ -211,7 +212,7 @@
 							</nb-select>
 						</div>
 						<div class="form-group">
-							<label class="label">
+							<label class="label" for="bonusPercentageInput">
 								{{ 'FORM.LABELS.BONUS_PERCENTAGE' | translate }}
 							</label>
 							<input
@@ -219,6 +220,7 @@
 								type="number"
 								[min]="0"
 								formControlName="bonusPercentage"
+								id="bonusPercentageInput"
 								[placeholder]="'FORM.PLACEHOLDERS.BONUS_PERCENTAGE' | translate"
 								fullWidth
 								[status]="FormHelpers.isInvalidControl(orgBonusForm, 'bonusPercentage') ? 'danger' : 'basic'"
@@ -254,12 +256,13 @@
 								</nb-select>
 							</div>
 							<div class="form-group">
-								<label class="label">
+								<label class="label" for="dateTypeSelect">
 									{{ 'FORM.LABELS.DATE_TYPE' | translate }}
 								</label>
 								<nb-select
 									size="medium"
 									formControlName="defaultValueDateType"
+									id="dateTypeSelect"
 									[placeholder]="'FORM.PLACEHOLDERS.DATE_TYPE' | translate"
 									fullWidth
 								>
@@ -271,13 +274,14 @@
 								</nb-select>
 							</div>
 							<div class="form-group">
-								<label class="label">
+								<label class="label" for="regionCodeSelect">
 									{{ 'ORGANIZATIONS_PAGE.EDIT.REGIONS' | translate }}
 								</label>
 								<nb-select
 									size="medium"
 									[placeholder]="'FORM.PLACEHOLDERS.REGIONS' | translate"
 									formControlName="regionCode"
+									id="regionCodeSelect"
 									fullWidth
 								>
 									@for (code of regionCodes; track code) {
@@ -288,13 +292,14 @@
 								</nb-select>
 							</div>
 							<div class="form-group">
-								<label class="label">
+								<label class="label" for="numberFormatSelect">
 									{{ 'FORM.PLACEHOLDERS.NUMBER_FORMAT' | translate }}
 								</label>
 								<nb-select
 									size="medium"
 									[placeholder]="'FORM.PLACEHOLDERS.NUMBER_FORMAT' | translate"
 									formControlName="numberFormat"
+									id="numberFormatSelect"
 									fullWidth
 								>
 									@for (numFormat of numberFormats; track numFormat) {
@@ -305,12 +310,13 @@
 								</nb-select>
 							</div>
 							<div class="form-group">
-								<label class="label">
+								<label class="label" for="dateFormatSelect">
 									{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
 								</label>
 								<nb-select
 									size="medium"
 									formControlName="dateFormat"
+									id="dateFormatSelect"
 									[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
 									fullWidth
 								>
@@ -346,12 +352,13 @@
 						<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.ADD_ORGANIZATION.INVITES' | translate }}</h6>
 						<div class="grid">
 							<div class="form-group">
-								<label class="label">
+								<label class="label" for="invitesAllowedToggle">
 									{{ 'FORM.LABELS.ENABLE_DISABLE_INVITES' | translate }}
 								</label>
 								<nb-toggle
 									class="toggle"
 									formControlName="invitesAllowed"
+									id="invitesAllowedToggle"
 									status="primary"
 									labelPosition="end"
 									(checkedChange)="toggleExpiry($event)"
