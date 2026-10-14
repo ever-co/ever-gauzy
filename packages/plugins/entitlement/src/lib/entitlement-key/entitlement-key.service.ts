@@ -290,6 +290,12 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 	 * written. This is the one path that decrypts, and it is deliberate: validation never does, which
 	 * is what keeps a lookup to one indexed probe.
 	 *
+	 * 🛑 **No API route reaches this any more** (owner decision 9, 2026-10-13: "Shown once only"): a licence
+	 * key is shown once, at issue, so `POST /entitlement-keys/:id/reveal` answers `410
+	 * ENTITLEMENT_KEY_SHOWN_ONCE` without calling it and GraphQL declares no field that would. It is kept,
+	 * not removed, so the decision can be revisited without re-deriving the decryption; whether issuance
+	 * should keep writing `keyCiphertext` at all now that nothing reads it is an open question for the owner.
+	 *
 	 * @param id The key to re-display.
 	 * @returns The key in clear.
 	 * @throws BadRequestException when the key was issued write-only.
