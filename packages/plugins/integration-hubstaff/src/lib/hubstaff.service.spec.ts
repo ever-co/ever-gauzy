@@ -3,8 +3,8 @@ import { HubstaffService } from './hubstaff.service';
 
 /**
  * `syncTimeSlots` used `timeSlots.filter(async (slot) => …)`: the callback returns a promise, which is always
- * truthy, so every slot was kept whatever its mapping gave, and the mappings were still running (unawaited,
- * their rejections unhandled) when the time log was saved with the slots.
+ * truthy, so the mappings were still running (unawaited, their rejections unhandled) when the time log was saved
+ * with the slots.
  */
 describe('HubstaffService.syncTimeSlots', () => {
 	const slot = (id: number) => ({
@@ -73,20 +73,23 @@ describe('HubstaffService.syncTimeSlots', () => {
 		expect(result).toEqual([synced(1), synced(2)]);
 	});
 
-	it('drops only the slots whose mapping failed or gave nothing, without an unhandled rejection', async () => {
+	it("logs a failed mapping, still submits every slot's activity, and leaves no unhandled rejection", async () => {
 		const execute = jest
 			.fn()
 			.mockResolvedValueOnce({ id: 'map-1' })
 			.mockRejectedValueOnce(new Error('mapping failed'))
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce({ id: 'map-4' });
+			.mockResolvedValueOnce({ id: 'map-3' });
 		const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
-		const result = await setup(execute)([slot(1), slot(2), slot(3), slot(4)]);
+		const result = await setup(execute)([slot(1), slot(2), slot(3)]);
 		// Give a stray rejection the chance to surface
 		await new Promise((resolve) => setImmediate(resolve));
 
-		expect(result).toEqual([synced(1), synced(4)]);
+		// The mapping only records the Hubstaff slot id; the activity travels in the time log. Dropping slot 2
+		// would leave a blank slot in its place, and the imported time log would never be completed later.
+		expect(result).toEqual([synced(1), synced(2), synced(3)]);
+		expect(error).toHaveBeenCalledTimes(1);
+		expect(error.mock.calls[0][0]).toContain('2');
 		expect(unhandled).toEqual([]);
 		error.mockRestore();
 	});
