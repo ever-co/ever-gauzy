@@ -105,9 +105,12 @@ export async function createGraphqlModuleOptions(
 		// Depth, cost, aliases and introspection ride validation rules rather than the plugin array,
 		// so they hold even when `apolloServerPlugins` is empty.
 		validationRules,
-		// Introspection is a policy, not a leftover. Apollo Server 5 has no `introspection` flag of
-		// its own any more, which is why the refusal is a rule above: it is what carries the
-		// catalogued code instead of a generic validation error.
+		// Introspection is a policy, not a leftover. The refusal is a rule above, because the rule is what
+		// carries the catalogued code instead of a generic validation error. The flag is handed to the
+		// driver as well: Apollo Server keeps an `introspection` option of its own, and left unset it
+		// applies its own default — off whenever NODE_ENV is production, which every deploy image runs —
+		// so GRAPHQL_INTROSPECTION=true was refused in production whatever the policy resolved.
+		introspection: policy.introspection,
 		persistedQueries: policy.persistedQueries ? {} : false,
 		cors: {
 			origin: '*',
