@@ -37,7 +37,9 @@ import type { Job } from 'bullmq';
 import {
 	IDEMPOTENCY_CLEANUP_BATCH_SIZE,
 	IDEMPOTENCY_CLEANUP_JOB,
+	IDEMPOTENCY_CLEANUP_MAX_BATCHES,
 	IDEMPOTENCY_CLEANUP_SCHEDULE,
+	IDEMPOTENCY_CLEANUP_TIME_BUDGET_MS,
 	IDEMPOTENCY_QUEUE_NAME
 } from './idempotency-constant';
 import { IdempotencyCleanupScheduler } from './idempotency-cleanup.scheduler';
@@ -110,6 +112,57 @@ function scheduleOf(handler: string) {
 
 	return Reflect.getMetadata(SCHEDULED_JOB_METADATA, declared[handler]);
 }
+
+/**
+ * The sweep keeps up with the traffic (R1-09 of the #10254 review).
+ *
+ * One batch of 500 an hour removes at most 12,000 rows a day, while every keyed request on the ~40
+ * `@Idempotent` routes writes a row kept for 24 h: above that rate the table grew without bound, and the
+ * expired rows that lingered fed R1-08 (a reused key whose window had passed). A sweep now takes batch after
+ * batch while the store keeps answering full ones, bounded by a batch count and a time budget so one pass
+ * never holds the store for long.
+ */
+describe('IdempotencyCleanupWorker — a sweep drains the backlog in bounded batches', () => {
+	it('takes another batch while the store answers full ones, and stops at the first short one', async () => {
+		const purgeExpired = jest
+			.fn()
+			.mockResolvedValueOnce(IDEMPOTENCY_CLEANUP_BATCH_SIZE)
+			.mockResolvedValueOnce(IDEMPOTENCY_CLEANUP_BATCH_SIZE)
+			.mockResolvedValueOnce(120);
+		const { worker } = sweep(purgeExpired);
+
+		await worker.handleCleanup(queued());
+
+		expect(purgeExpired).toHaveBeenCalledTimes(3);
+		expect(purgeExpired.mock.calls.every((call) => call[0] === IDEMPOTENCY_CLEANUP_BATCH_SIZE)).toBe(true);
+		expect(logged()).toContain(`Deleted ${2 * IDEMPOTENCY_CLEANUP_BATCH_SIZE + 120} expired idempotency key(s)`);
+	});
+
+	it('stops after the batch cap even when every batch is full', async () => {
+		const purgeExpired = jest.fn().mockResolvedValue(IDEMPOTENCY_CLEANUP_BATCH_SIZE);
+		const { worker } = sweep(purgeExpired);
+
+		await worker.handleCleanup(queued());
+
+		expect(purgeExpired).toHaveBeenCalledTimes(IDEMPOTENCY_CLEANUP_MAX_BATCHES);
+	});
+
+	it('stops when the time budget is spent, whatever the store still holds', async () => {
+		let now = 1_000_000;
+		jest.spyOn(Date, 'now').mockImplementation(() => now);
+		const purgeExpired = jest.fn(async () => {
+			// Each batch takes a third of the budget: the third one spends it.
+			now += Math.ceil(IDEMPOTENCY_CLEANUP_TIME_BUDGET_MS / 3);
+
+			return IDEMPOTENCY_CLEANUP_BATCH_SIZE;
+		});
+		const { worker } = sweep(purgeExpired as unknown as jest.Mock);
+
+		await worker.handleCleanup(queued());
+
+		expect(purgeExpired).toHaveBeenCalledTimes(3);
+	});
+});
 
 describe('IdempotencyCleanupWorker — one bounded sweep', () => {
 	it('asks the store for one batch, bounded by the size the kernel declares', async () => {

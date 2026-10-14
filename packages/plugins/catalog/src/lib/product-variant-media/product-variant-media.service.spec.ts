@@ -230,6 +230,14 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 	const writeManager: any = {
 		rows,
 		/**
+		 * The ownership check a set write runs on its subject (the variant, product or collection it names)
+		 * before reading anything else. This double models no tenancy, so every subject it is asked about is
+		 * the caller's own; the refusal of another tenant's subject is pinned against a real database in
+		 * `catalog-tenant-scope.db.spec.ts`.
+		 */
+		count: async (entity: unknown, options: any = {}) =>
+			entityToTable.has(entity) ? rows(entity).filter((row: any) => same(row.id, options.where?.id)).length : 1,
+		/**
 		 * The transaction the write path asks for: the callback sees the same datastore, and a throw
 		 * from anywhere inside it leaves the datastore exactly as it was — which is the property every
 		 * "nothing was written" assertion below depends on.

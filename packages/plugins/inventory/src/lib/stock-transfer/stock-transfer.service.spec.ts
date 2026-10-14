@@ -157,7 +157,7 @@ jest.mock(
 	})
 );
 
-import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, Warehouse, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import {
 	StockMovementType,
 	StockMovementReferenceType,
@@ -228,6 +228,7 @@ function datastore(tables: Record<string, Row[]>) {
 		[Product, 'product'],
 		// The variant table is read through the repository rather than as raw SQL, so the double maps it.
 		[ProductVariant, 'product_variant'],
+		[Warehouse, 'warehouse'],
 		[WarehouseProduct, 'warehouse_product'],
 		[WarehouseProductVariant, 'warehouse_product_variant'],
 		[StockMovement, 'stock_movement'],
@@ -611,11 +612,14 @@ function datastore(tables: Record<string, Row[]>) {
 function transferFixture(options: { source?: number; destination?: number; seedDestination?: boolean } = {}) {
 	const tables: Record<string, Row[]> = {
 		product: [{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }],
+		// The caller's own locations: a movement written for a request is refused at a location that is
+		// not the request tenant's (review R2-01).
+		warehouse: [{ id: SOURCE, tenantId: TENANT, organizationId: ORG }, { id: DESTINATION, tenantId: TENANT, organizationId: ORG }],
 		// Where a variant says which product it belongs to: the answer a movement that names no product
 		// resolves a first-time level from.
 		product_variant: [
-			{ id: VARIANT, productId: PRODUCT },
-			{ id: OTHER_VARIANT, productId: PRODUCT }
+			{ id: VARIANT, productId: PRODUCT, tenantId: TENANT, organizationId: ORG },
+			{ id: OTHER_VARIANT, productId: PRODUCT, tenantId: TENANT, organizationId: ORG }
 		],
 		warehouse_product: [],
 		warehouse_product_variant: [],

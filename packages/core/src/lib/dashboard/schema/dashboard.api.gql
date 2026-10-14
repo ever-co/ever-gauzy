@@ -112,12 +112,15 @@ extend type Mutation {
 
 	"""
 	Withdraws a dashboard without removing it: the row keeps its identifier and stops being answered by
-	the list, and the restoration below brings it back.
+	the list, and the restoration below brings it back. It requires the edit grant the change above requires,
+	as the `DELETE /:id/soft` route it mirrors does, and only the user who created the dashboard may withdraw
+	it — the same terms as the edit and the removal.
 	"""
 	softDeleteDashboard(id: ID!): Dashboard!
 
 	"""
-	Puts a withdrawn dashboard back.
+	Puts a withdrawn dashboard back, under the same edit grant and for its creator only: restoring undoes a
+	removal.
 	"""
 	recoverDashboard(id: ID!): Dashboard!
 }
