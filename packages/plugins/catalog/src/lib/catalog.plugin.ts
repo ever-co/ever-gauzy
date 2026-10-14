@@ -8,6 +8,7 @@ import { CollectionChannel } from './collection-channel/collection-channel.entit
 import { CollectionProduct } from './collection-product/collection-product.entity';
 import { CollectionVariant } from './collection-variant/collection-variant.entity';
 import { CreateCatalogTables1791000000100 } from './database/migrations/1791000000100-CreateCatalogTables';
+import { ScopeCollectionOrgSlugToMerchandising1791000000627 } from './database/migrations/1791000000627-ScopeCollectionOrgSlugToMerchandising';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { ProductChannel } from './product-channel/product-channel.entity';
@@ -52,7 +53,7 @@ import { TagProductVariant } from './tag-product-variant/tag-product-variant.ent
 	/**
 	 * The database migrations this plugin owns.
 	 */
-	migrations: [CreateCatalogTables1791000000100],
+	migrations: [CreateCatalogTables1791000000100, ScopeCollectionOrgSlugToMerchandising1791000000627],
 	/**
 	 * The permissions this plugin contributes to the platform role model.
 	 */
