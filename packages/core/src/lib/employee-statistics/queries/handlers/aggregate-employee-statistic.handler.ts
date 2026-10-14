@@ -71,7 +71,7 @@ export class AggregateOrganizationQueryHandler
 		};
 
 		// Who worked in which month, shared by the totals and the chart below
-		const workingByMonth: WorkingEmployeesByMonth = new Map();
+		let workingByMonth: WorkingEmployeesByMonth = new Map();
 
 		if (employees.length > 0) {
 			await this._loadAllData(searchInput, employeeMap, organizationId, workingByMonth);
@@ -332,7 +332,14 @@ export class AggregateOrganizationQueryHandler
 					key,
 					this.employeeService
 						.findWorkingEmployees(organizationId, monthOf(new Date(month.year, month.month, 1)))
-						.then((result) => new Set((result?.items ?? []).map(({ id }) => id)))
+						.then((result) => {
+							// `findWorkingEmployees` answers undefined when its query fails: that is not "nobody
+							// worked", and reading it so would drop the month's split expenses from a successful answer
+							if (!result) {
+								throw new Error(`Could not read the employees working in ${key}`);
+							}
+							return new Set(result.items.map(({ id }) => id));
+						})
 				);
 			}
 			const working = await workingByMonth.get(key);

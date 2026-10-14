@@ -63,12 +63,22 @@ describe('AggregateOrganizationQueryHandler split expenses', () => {
 
 	it('does the same for the recurring split expenses, reading each month’s employees once per query', async () => {
 		const { handler, employeeService, employeeMap, searchInput } = setup();
-		const workingByMonth = new Map();
+		let workingByMonth = new Map();
 
 		await handler._loadOrganizationSplitExpenses(searchInput, employeeMap, 'org-1', workingByMonth);
 		await handler._loadOrganizationRecurringSplitExpenses(searchInput, employeeMap, 'org-1', workingByMonth);
 
 		expect(expenses(employeeMap)).toEqual({ A: 1600, B: 1600, C: 600 });
 		expect(employeeService.findWorkingEmployees).toHaveBeenCalledTimes(2);
+	});
+
+	it("fails the query when a month's employees cannot be read, instead of dropping its split expenses", async () => {
+		const { handler, employeeService, employeeMap, searchInput } = setup();
+		// What `findWorkingEmployees` answers when its query fails
+		employeeService.findWorkingEmployees.mockResolvedValueOnce(undefined as never);
+
+		await expect(
+			handler._loadOrganizationSplitExpenses(searchInput, employeeMap, 'org-1', new Map())
+		).rejects.toThrow('Could not read the employees working in 0-2024');
 	});
 });
