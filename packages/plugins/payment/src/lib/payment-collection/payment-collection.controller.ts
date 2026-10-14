@@ -130,26 +130,31 @@ export class PaymentCollectionController extends CrudController<PaymentCollectio
 	}
 
 	/**
-	 * Deletes a payment collection.
+	 * Retires a payment collection. A collection is the money side of an order, and this route no longer
+	 * erases one.
 	 *
-	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
-	 * permission it demands. The base declares the route with no permission metadata at all, so
-	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
-	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
-	 * class's read grant alone. It now states `PAYMENT_SESSIONS_AUTHORIZE`, the grant the create and
-	 * update routes here already carry.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row — while the
+	 * entity says the collection "is never hard-deleted while a payment references it", and nothing on the
+	 * route checked that. The collection aggregates what `13` §11.4 keeps "Soft delete only (`deletedAt`); no
+	 * hard delete through the API" — the `payment`, `payment_capture` and `refund` rows of the order — and the
+	 * platform-extensions reconnaissance recorded this delete beside the refund's against that row. So the
+	 * route now retires the collection exactly as `DELETE ':id/soft'` does — through the service's scoped
+	 * `softRemove`, which keeps the row with `deletedAt` set and lets `PUT ':id/recover'` bring it back. There
+	 * is no hard-delete path through the API. The route's path, status and permission are unchanged:
+	 * `PAYMENT_SESSIONS_AUTHORIZE`, the grant the create and update routes here carry.
 	 *
-	 * @param id The collection to delete.
-	 * @param options The inherited options, forwarded to the service.
-	 * @returns The result of the delete.
+	 * @param id The collection to retire.
+	 * @param options The inherited rest parameter; the retirement reads the collection in the caller's scope.
+	 * @returns The retired collection.
 	 */
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
+	@ApiOperation({ summary: 'Retire a payment collection (soft delete; a collection is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The collection was retired.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Collection not found' })
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.paymentCollectionService.softRemove(id);
 	}
 
 	/**
