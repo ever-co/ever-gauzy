@@ -17,9 +17,11 @@ import {
 	RequestContext,
 	TenantAwareCrudService,
 	addDecimalStrings,
+	compareDecimalStrings,
 	getORMType,
 	matchesExpectation,
-	parseEntityVersion
+	parseEntityVersion,
+	subtractDecimalStrings
 } from '@gauzy/core';
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
@@ -732,14 +734,18 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				// refuses a fulfilled line for the same reason; an update that lowered the quantity under the shipped
 				// units billed the order for fewer than left the building and reported it `FULFILLED`.
 				if (changes['quantity'] !== undefined) {
-					const quantity = Number(changes['quantity']);
-					const floor = Math.max(
-						Number(line.fulfilledQuantity ?? 0),
-						Number(line.invoicedQuantity ?? 0) - Number(line.creditedQuantity ?? 0),
-						Number(line.returnRequestedQuantity ?? 0)
-					);
+					// Exact decimals throughout: a quantity is `numeric(20,6)`, and `0.4 - 0.1` in floating point is
+					// `0.30000000000000004`, which would refuse a valid update to exactly `0.3`.
+					const counted = (value: unknown) => String(value ?? 0);
+					const floor = [
+						counted(line.fulfilledQuantity),
+						subtractDecimalStrings(counted(line.invoicedQuantity), counted(line.creditedQuantity)),
+						counted(line.returnRequestedQuantity)
+					].reduce((highest, candidate) => (compareDecimalStrings(candidate, highest) > 0 ? candidate : highest));
+					const quantity = String(changes['quantity']);
+					const isDecimal = /^[+-]?\d+(\.\d+)?$/.test(quantity.trim());
 
-					if (!Number.isFinite(quantity) || quantity < floor) {
+					if (!isDecimal || compareDecimalStrings(quantity.trim(), floor) < 0) {
 						throw new BadRequestException({
 							message:
 								`ORDER_CHANGE_NOT_APPLICABLE: line '${line.id}' cannot be set to ${changes['quantity']}; ` +

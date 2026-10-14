@@ -779,10 +779,42 @@ describe('OrderChangeService — the money a change moves (doc 10 §6.3, §6.6)'
 		} as never);
 
 		await expect(fixture.service.confirm(change.id)).rejects.toMatchObject({
-			response: { code: 'ORDER_CHANGE_NOT_APPLICABLE', details: { orderLineId: 'L1', minimumQuantity: minimum } }
+			response: { code: 'ORDER_CHANGE_NOT_APPLICABLE', details: { orderLineId: 'L1', minimumQuantity: String(minimum) } }
 		});
 		expect(Number(fixture.tables.order_line[0].quantity)).toBe(5);
 		expect(fixture.order.grandTotal).toBe(100);
+	});
+
+	it('compares fractional quantities exactly: 0.4 invoiced less 0.1 credited lets the line go to 0.3, not 0.29', async () => {
+		// In floating point 0.4 - 0.1 is 0.30000000000000004, which refused a valid update to exactly 0.3.
+		const fixture = orderFixture({
+			lines: [line('L1', { quantity: 1, unitPrice: 20, invoicedQuantity: 0.4, creditedQuantity: 0.1 })]
+		});
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const below = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity: 0.29 } }]
+		} as never);
+
+		await expect(fixture.service.confirm(below.id)).rejects.toMatchObject({
+			response: { code: 'ORDER_CHANGE_NOT_APPLICABLE', details: { minimumQuantity: '0.3' } }
+		});
+
+		// One open change per order: the refused one is withdrawn before the next is opened.
+		await fixture.service.cancel(below.id, 'superseded');
+
+		const exact = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity: 0.3 } }]
+		} as never);
+
+		await fixture.service.confirm(exact.id);
+
+		expect(Number(fixture.tables.order_line[0].quantity)).toBe(0.3);
 	});
 
 	it('still lowers a quantity to what has moved against the line, and no further', async () => {

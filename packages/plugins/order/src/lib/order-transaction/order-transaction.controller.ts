@@ -4,6 +4,7 @@ import { ID } from '@gauzy/contracts';
 import {
 	AbstractValidationPipe,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantOrganizationBaseDTO,
@@ -51,6 +52,9 @@ export class OrderTransactionController extends CrudController<OrderTransaction>
 	@ApiOperation({ summary: 'Record a MANUAL correction on an order payment ledger' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The order transaction was created', type: OrderTransaction })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	// A correction is money recorded: a client that retries after a lost answer - or after the re-derivation below
+	// failed - presents its key and is answered from the first attempt instead of recording the correction twice.
+	@Idempotent({ scope: 'order.transaction.manual', required: false, resourceType: 'order_transaction' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
