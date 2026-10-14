@@ -445,15 +445,39 @@ describe('an idempotency key on the real stores, under DB_ORM=mikro-orm as under
 						{ retentionMs }
 					);
 
+				// Moves a row's lease back in time, written in the format this store keeps the column in
+				const backdateLease = async (key: string, byMs: number) => {
+					const [{ lockedAt }] = await dataSource.query(
+						'SELECT "lockedAt" FROM "idempotency_key" WHERE "key" = ?',
+						[`${key}-${store}`]
+					);
+					const iso = typeof lockedAt === 'string' && !lockedAt.includes('T');
+					const at = new Date(iso ? `${lockedAt.replace(' ', 'T')}Z` : lockedAt).getTime() - byMs;
+					const value =
+						typeof lockedAt === 'number'
+							? at
+							: iso
+								? new Date(at).toISOString().replace('T', ' ').replace('Z', '')
+								: new Date(at).toISOString();
+					await dataSource.query('UPDATE "idempotency_key" SET "lockedAt" = ? WHERE "key" = ?', [
+						value,
+						`${key}-${store}`
+					]);
+				};
+
 				const settledExpired = await claim('settled-expired', -60_000);
 				await service.complete(settledExpired.record, { responseStatus: HttpStatus.CREATED, responseBody: { id: 'order-1' } });
+				// Past its window, and its holder went away ten minutes ago: abandoned
 				await claim('abandoned-expired', -60_000);
+				await backdateLease('abandoned-expired', 10 * 60_000);
+				// Past its window too, but its holder renewed the lease just now: still being worked on
+				await claim('leased-expired', -60_000);
 				const settledLive = await claim('settled-live', 60_000);
 				await service.complete(settledLive.record, { responseStatus: HttpStatus.CREATED, responseBody: { id: 'order-2' } });
 				await claim('in-progress-live', 60_000);
 
-				await new Promise((resolve) => setTimeout(resolve, 5));
-				const deleted = await serviceOn(store).purgeExpired(500, { staleLockMs: 0 });
+				// A real stale-lock window: only a lease older than a minute counts as abandoned
+				const deleted = await serviceOn(store).purgeExpired(500, { staleLockMs: 60_000 });
 
 				expect(deleted).toBe(2);
 				const kept = (await dataSource.query('SELECT "key", "status" FROM "idempotency_key" ORDER BY "key"')) as Array<{
@@ -462,6 +486,7 @@ describe('an idempotency key on the real stores, under DB_ORM=mikro-orm as under
 				}>;
 				expect(kept).toEqual([
 					{ key: `in-progress-live-${store}`, status: IdempotencyStatus.IN_PROGRESS },
+					{ key: `leased-expired-${store}`, status: IdempotencyStatus.IN_PROGRESS },
 					{ key: `settled-live-${store}`, status: IdempotencyStatus.COMPLETED }
 				]);
 			},
