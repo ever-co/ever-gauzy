@@ -35,10 +35,17 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 			throw new BadRequestException('A product cannot be related to itself.');
 		}
 
+		// The GraphQL input declares no organization and the base class stamps only the tenant, so a relation
+		// created without one belongs to the caller's organization — the scope every read of it is answered
+		// inside. It was written with a NULL organization and no read ever found it again (review R2-23). An
+		// organization the request stated is kept: REST validates it against the caller.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		return super.create({
 			type: ProductRelationType.RELATED,
 			position: 0,
-			...entity
+			...entity,
+			organizationId
 		});
 	}
 

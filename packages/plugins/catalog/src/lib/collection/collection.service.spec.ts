@@ -133,6 +133,7 @@ import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { CollectionType, PublicationStatus } from '../catalog.types';
 import { Collection } from './collection.entity';
+import { ProductRelationService } from '../product-relation/product-relation.service';
 import { CollectionService } from './collection.service';
 
 /**
@@ -399,6 +400,28 @@ describe('CollectionService — creation and the slug scope (doc 05 §4.3)', () 
 		expect(fixture.tables.collection).toHaveLength(1);
 	});
 
+	it('stamps the caller’s organization on a collection created without one, as the GraphQL field creates it (R2-23)', async () => {
+		// `CreateCollectionInput` declares no organization and `createCollection` hands its input to `create`
+		// unchanged; the base class stamps the tenant only. The row was written with `organizationId` NULL,
+		// so `collectionBySlug` — which reads inside the caller's organization — never found it.
+		const fixture = collectionFixture();
+
+		const created = await fixture.service.create({ name: 'Summer', slug: 'summer' } as never);
+
+		expect(created.organizationId).toBe(ORG);
+		// The real tenant-aware base stamps the tenant on create; this double does not, so it is stamped here.
+		fixture.store(created.id).tenantId ??= TENANT;
+		expect((await fixture.service.findBySlug('summer')).id).toBe(created.id);
+	});
+
+	it('keeps an organization the request stated (REST validates it against the caller)', async () => {
+		const fixture = collectionFixture();
+
+		const created = await fixture.service.create({ name: 'Summer', slug: 'summer', organizationId: OTHER_ORG } as never);
+
+		expect(created.organizationId).toBe(OTHER_ORG);
+	});
+
 	it('accepts the same slug in another organization', async () => {
 		// Control: the merchandising scope is the organization, not the installation, so `summer` is a
 		// fresh slug for the second organization and the first one's row is untouched.
@@ -640,5 +663,47 @@ describe('CollectionService — what a change is announced with (doc 12)', () =>
 			slug: 'summer',
 			organizationId: ORG
 		});
+	});
+});
+
+describe('ProductRelationService — the organization of a relation created without one (R2-23)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The relation service over a store that keeps what it is handed. */
+	const relationService = () => {
+		const rows: any[] = [];
+		const store = {
+			create: (partial: any) => ({ ...partial }),
+			save: async (row: any) => {
+				const saved = { id: `relation-${rows.length + 1}`, ...row };
+				rows.push(saved);
+				return saved;
+			}
+		};
+
+		return { rows, service: new ProductRelationService(store as never, undefined as never) };
+	};
+
+	it('stamps the caller’s organization, as `createProductRelation` hands it no organization', async () => {
+		const { rows, service } = relationService();
+
+		await service.create({ productId: 'product-a', relatedProductId: 'product-b' } as never);
+
+		// `findByRelated` and the controller's list read inside the caller's organization; a NULL
+		// organization made the relation invisible to both.
+		expect(rows[0].organizationId).toBe(ORG);
+	});
+
+	it('keeps an organization the request stated', async () => {
+		const { rows, service } = relationService();
+
+		await service.create({ productId: 'product-a', relatedProductId: 'product-b', organizationId: OTHER_ORG } as never);
+
+		expect(rows[0].organizationId).toBe(OTHER_ORG);
 	});
 });

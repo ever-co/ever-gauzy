@@ -31,6 +31,8 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 *
 	 * @param entity The collection to create.
 	 * @returns The persisted collection.
+	 * A collection created without an organization is stamped with the caller's (see the note below).
+	 *
 	 * @throws BadRequestException When the type and the owner disagree — a customer-owned list may not
 	 * carry rules — or when the slug is already taken in the scope it has to be unique in.
 	 */
@@ -45,12 +47,19 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			await this.assertSlugIsAvailable(entity.slug, entity.customerId ?? null);
 		}
 
+		// The GraphQL input declares no organization and the base class stamps only the tenant, so a collection
+		// created without one belongs to the caller's organization — the scope every read of it is answered
+		// inside. It was written with a NULL organization and no read ever found it again (review R2-23). An
+		// organization the request stated is kept: REST validates it against the caller.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const collection = await super.create({
 			type: CollectionType.MANUAL,
 			status: PublicationStatus.DRAFT,
 			sortOrder: 0,
 			isFeatured: false,
-			...entity
+			...entity,
+			organizationId
 		});
 
 		await this.eventBus.publish(CollectionChangedEvent.from(collection));
