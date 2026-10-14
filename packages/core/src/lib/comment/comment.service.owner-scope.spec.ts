@@ -26,6 +26,8 @@ import { CommentService } from './comment.service';
 describe('CommentService — withdrawing, restoring and removing a comment follow the rule editing it follows', () => {
 	const OWN = 'comment-own';
 	const THEIRS = 'comment-theirs';
+	/** The author's own comment, already withdrawn: only a read that includes withdrawn rows finds it. */
+	const WITHDRAWN = 'comment-own-withdrawn';
 	/** An author-less comment a caller with no employee record posted. */
 	const POSTED = 'comment-posted-without-employee';
 
@@ -47,9 +49,12 @@ describe('CommentService — withdrawing, restoring and removing a comment follo
 		service = Object.create(CommentService.prototype);
 		// The tenant-scoped lookup: a comment is found by its id, and — when the caller states an author — only
 		// when it is that author's.
-		findOne = jest.fn(async (id: string, options?: { where?: { employeeId?: string; createdByUserId?: string } }) => {
+		findOne = jest.fn(async (id: string, options?: { where?: { employeeId?: string; createdByUserId?: string }; withDeleted?: boolean }) => {
+			if (id === WITHDRAWN && !options?.withDeleted) {
+				throw new NotFoundException('The requested record was not found');
+			}
 			const row =
-				id === OWN
+				id === OWN || id === WITHDRAWN
 					? { id, employeeId: 'employee-me', createdByUserId: 'user-me' }
 					: id === POSTED
 					? { id, employeeId: null, createdByUserId: 'user-me' }
@@ -79,6 +84,15 @@ describe('CommentService — withdrawing, restoring and removing a comment follo
 		await expect(service.delete(OWN)).resolves.toEqual({ affected: 1, raw: [] });
 		// Restoring reads the withdrawn row, so the ownership read includes withdrawn rows.
 		expect(findOne).toHaveBeenCalledWith(OWN, { where: { employeeId: 'employee-me' }, withDeleted: true });
+	});
+
+	it('lets the author permanently remove their own comment after withdrawing it, as the delete always could', async () => {
+		// Greptile on #10568: the removal deletes the row whatever its `deletedAt`, so its ownership read must
+		// include withdrawn rows too — otherwise a withdrawn comment could never be removed by its author.
+		as('employee-me', false);
+
+		await expect(service.delete(WITHDRAWN)).resolves.toEqual({ affected: 1, raw: [] });
+		expect(findOne).toHaveBeenCalledWith(WITHDRAWN, { where: { employeeId: 'employee-me' }, withDeleted: true });
 	});
 
 	it('refuses another employee’s comment to an employee who may not act for others, and writes nothing', async () => {

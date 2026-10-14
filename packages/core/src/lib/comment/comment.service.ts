@@ -212,8 +212,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * @returns The delete result.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<Comment>, options?: LegacyFindOneOptions<Comment>): Promise<DeleteResult> {
+		// The removal deletes the row whatever its `deletedAt`, so a withdrawn comment is still its author's to
+		// remove: the ownership read includes withdrawn rows.
 		if (typeof criteria === 'string') {
-			await this.assertMayManage(criteria, false);
+			await this.assertMayManage(criteria, true);
 		}
 
 		return super.delete(criteria, options);
@@ -237,7 +239,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * rethrows whatever fails inside it as a 404.
 	 *
 	 * @param id - The comment acted on.
-	 * @param withDeleted - Whether the comment is read among withdrawn rows (a restoration).
+	 * @param withDeleted - Whether the comment is read among withdrawn rows (a restoration, or a removal).
 	 * @throws {ForbiddenException} When the caller has neither an employee identity nor a user identity.
 	 * @throws {NotFoundException} When the comment is not one the caller may act on.
 	 */
