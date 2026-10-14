@@ -346,6 +346,13 @@ export default {
 			[200]
 		);
 
+		// Row 6: the heartbeat (and the status read). The connection sends its first heartbeat a minute
+		// after it starts, and the switch-off above asks for one a second later — but the disconnect below
+		// stops the timer, so the heartbeat has to have gone out before it. Since the harness moved to SDK
+		// 1.0.0-rc.6 the steps above finish well inside that minute, and the runs that disconnected first
+		// recorded every row but 6 ("row 6 was required but never called").
+		await until('the heartbeat (row 6)', async () => (await recordedRows(session)).includes(6) || null, 120);
+
 		// Row 5 (removal): unlink.
 		const linkId = link?.integration_tenant_id ?? link?.integrationTenantId ?? link?.id;
 		if (!linkId) throw new Error(`the link answered no id: ${JSON.stringify(Object.keys(link ?? {}))}`);
