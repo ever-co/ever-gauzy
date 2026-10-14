@@ -24,6 +24,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { Broadcast } from './broadcast.entity';
 import { BroadcastService } from './broadcast.service';
 import { BroadcastCreateCommand, BroadcastUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateBroadcastInput` declares in the schema. */
 export interface ICreateBroadcastInput {
@@ -297,14 +298,13 @@ export class BroadcastResolver {
 	 *
 	 * The same service method the REST removal route calls. The delivered store answers its own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deleteBroadcast` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deleteBroadcast` may return; the field answers whether the removal reached a row —
+	 * `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
 	 */
 	@Mutation('deleteBroadcast')
 	@Permissions(PermissionsEnum.BROADCAST_DELETE)
 	async deleteBroadcast(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.broadcastService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.broadcastService.delete(id));
 	}
 
 	/**

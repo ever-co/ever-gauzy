@@ -25,6 +25,7 @@ import {
 	CandidateTechnologiesBulkDeleteCommand,
 	CandidateTechnologiesBulkUpdateCommand
 } from '../candidate-technologies/commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateCandidateTechnologyInput` declares in the schema. */
 export interface ICreateCandidateTechnologyInput {
@@ -208,9 +209,7 @@ export class CandidateInterviewVocabularyResolver {
 	@UseGuards(RoleGuard)
 	@Roles(...VOCABULARY_ROLES)
 	async deleteCandidateTechnology(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateTechnologiesService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateTechnologiesService.delete(id));
 	}
 
 	/** Withdraws a technology without removing it. */
@@ -361,9 +360,7 @@ export class CandidateInterviewVocabularyResolver {
 	@UseGuards(RoleGuard)
 	@Roles(...VOCABULARY_ROLES)
 	async deleteCandidatePersonalQuality(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidatePersonalQualitiesService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidatePersonalQualitiesService.delete(id));
 	}
 
 	/** Withdraws a personal quality without removing it. */

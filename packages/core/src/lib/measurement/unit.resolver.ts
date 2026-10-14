@@ -145,4 +145,29 @@ export class UnitResolver {
 			toUnitId
 		};
 	}
+
+	/**
+	 * Withdraws a unit without removing the row — the GraphQL counterpart of `DELETE /units/:id/soft`.
+	 *
+	 * The same service method the route reaches, under the same grant: the edit grant its `update` states, which
+	 * the controller now states on the route too (owner decision 5, 2026-10-13 — the soft-delete/recover pair
+	 * requires the controller's own edit grant). The route used to be inherited from `CrudController` with no
+	 * permission of its own and so stood on the class's `UNITS_VIEW`; a field mirroring it then would have
+	 * carried that read grant, which is why the pair is delivered together with the route's grant.
+	 */
+	@Mutation('softDeleteUnit')
+	@Permissions(MEASUREMENT_PERMISSIONS.UNITS_EDIT)
+	async softDeleteUnit(@Args('id', ParseUUIDPipe) id: string): Promise<Unit> {
+		return this.unitService.softRemove(id);
+	}
+
+	/**
+	 * Restores a withdrawn row — the GraphQL counterpart of `PUT /units/:id/recover`, under the withdrawal's
+	 * grant: restoring undoes a removal.
+	 */
+	@Mutation('recoverUnit')
+	@Permissions(MEASUREMENT_PERMISSIONS.UNITS_EDIT)
+	async recoverUnit(@Args('id', ParseUUIDPipe) id: string): Promise<Unit> {
+		return this.unitService.softRecover(id);
+	}
 }

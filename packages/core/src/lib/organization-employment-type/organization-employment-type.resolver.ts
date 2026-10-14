@@ -14,6 +14,7 @@ import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationEmploymentTypeInput` declares in the schema. */
 export interface ICreateOrganizationEmploymentTypeInput {
@@ -224,9 +225,7 @@ export class OrganizationEmploymentTypeResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationEmploymentType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationEmploymentTypeService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationEmploymentTypeService.delete(id));
 	}
 
 	/**

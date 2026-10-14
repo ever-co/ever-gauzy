@@ -8,6 +8,7 @@ import { FeatureFlagGuard, RoleGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateTenantInput` declares in the schema. */
 export interface ICreateTenantInput {
@@ -134,8 +135,6 @@ export class TenantResolver {
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	async deleteTenant(): Promise<boolean> {
-		await this.tenantService.delete(RequestContext.currentTenantId());
-
-		return true;
+		return deleteRemovedRows(await this.tenantService.delete(RequestContext.currentTenantId()));
 	}
 }

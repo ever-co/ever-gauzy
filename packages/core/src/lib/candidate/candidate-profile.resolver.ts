@@ -24,6 +24,7 @@ import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
 import { CandidateSkillService } from '../candidate-skill/candidate-skill.service';
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateSourceService } from '../candidate-source/candidate-source.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateCandidateDocumentInput` declares in the schema. */
 export interface ICreateCandidateDocumentInput {
@@ -336,9 +337,7 @@ export class CandidateProfileResolver {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@UseGuards(PermissionGuard)
 	async deleteCandidateDocument(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateDocumentsService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateDocumentsService.delete(id));
 	}
 
 	/** Withdraws a document without removing it. */
@@ -428,9 +427,7 @@ export class CandidateProfileResolver {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@UseGuards(PermissionGuard)
 	async deleteCandidateEducation(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateEducationService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateEducationService.delete(id));
 	}
 
 	/** Withdraws a course of study without removing it. */
@@ -527,9 +524,7 @@ export class CandidateProfileResolver {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@UseGuards(PermissionGuard)
 	async deleteCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateExperienceService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateExperienceService.delete(id));
 	}
 
 	/** Withdraws a prior engagement without removing it. */
@@ -615,9 +610,7 @@ export class CandidateProfileResolver {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@UseGuards(PermissionGuard)
 	async deleteCandidateSkill(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateSkillService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateSkillService.delete(id));
 	}
 
 	/** Withdraws a skill without removing it. */
@@ -708,9 +701,7 @@ export class CandidateProfileResolver {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@UseGuards(PermissionGuard)
 	async deleteCandidateSource(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateSourceService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateSourceService.delete(id));
 	}
 
 	/** Withdraws an origin without removing it. */

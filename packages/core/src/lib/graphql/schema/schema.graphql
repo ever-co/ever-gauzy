@@ -4966,6 +4966,17 @@ type Mutation {
   revokeAddressRole(addressId: ID!, role: AddressRoleEnum!): Boolean!
 
   """
+  Withdraws an address role without removing it — `DELETE /address-roles/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteAddressRole(id: ID!): AddressRole!
+
+  """
+  Restores a withdrawn address role — `PUT /address-roles/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverAddressRole(id: ID!): AddressRole!
+
+  """
   Records an address. A stated default is moved through the set-default operation rather than
   written, so the party's authoritative column, the address's mirror and the role row agree.
   """
@@ -5557,6 +5568,17 @@ type Mutation {
   """
   verifyChannelDomain(id: ID!): ChannelDomainVerification!
 
+  """
+  Withdraws a channel domain without removing it — `DELETE /channel-domains/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteChannelDomain(id: ID!): ChannelDomain!
+
+  """
+  Restores a withdrawn channel domain — `PUT /channel-domains/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverChannelDomain(id: ID!): ChannelDomain!
+
   """Opens a sales context. The channel is stored `DRAFT`."""
   createChannel(input: CreateChannelInput!): Channel!
 
@@ -5588,6 +5610,17 @@ type Mutation {
   as its default region cannot be left out.
   """
   replaceChannelRegions(input: ReplaceChannelRegionsInput!): [ChannelRegion!]!
+
+  """
+  Withdraws a channel without removing it — `DELETE /channels/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteChannel(id: ID!): Channel!
+
+  """
+  Restores a withdrawn channel — `PUT /channels/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverChannel(id: ID!): Channel!
 
   """
   Posts a comment against a row of another resource.
@@ -5789,11 +5822,14 @@ type Mutation {
 
   """
   Withdraws a placement without removing it: the row keeps its identifier and stops being answered by
-  the list, and the restoration below brings it back.
+  the list, and the restoration below brings it back. It requires the edit grant the change above requires,
+  as the `DELETE /:id/soft` route it mirrors does.
   """
   softDeleteDashboardWidget(id: ID!): DashboardWidget!
 
-  """Puts a withdrawn placement back."""
+  """
+  Puts a withdrawn placement back, under the same edit grant: restoring undoes a removal.
+  """
   recoverDashboardWidget(id: ID!): DashboardWidget!
 
   """
@@ -5824,11 +5860,16 @@ type Mutation {
 
   """
   Withdraws a dashboard without removing it: the row keeps its identifier and stops being answered by
-  the list, and the restoration below brings it back.
+  the list, and the restoration below brings it back. It requires the edit grant the change above requires,
+  as the `DELETE /:id/soft` route it mirrors does, and only the user who created the dashboard may withdraw
+  it — the same terms as the edit and the removal.
   """
   softDeleteDashboard(id: ID!): Dashboard!
 
-  """Puts a withdrawn dashboard back."""
+  """
+  Puts a withdrawn dashboard back, under the same edit grant and for its creator only: restoring undoes a
+  removal.
+  """
   recoverDashboard(id: ID!): Dashboard!
 
   """
@@ -7316,6 +7357,28 @@ type Mutation {
   convertQuantity(value: String!, fromUnitId: ID!, toUnitId: ID!): UnitConversion!
 
   """
+  Withdraws a unit without removing it — `DELETE /units/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteUnit(id: ID!): Unit!
+
+  """
+  Restores a withdrawn unit — `PUT /units/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverUnit(id: ID!): Unit!
+
+  """
+  Withdraws a unit category without removing it — `DELETE /unit-categories/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteUnitCategory(id: ID!): UnitCategory!
+
+  """
+  Restores a withdrawn unit category — `PUT /unit-categories/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverUnitCategory(id: ID!): UnitCategory!
+
+  """
   Files a mention, and raises the subscription and the notification the delivered filing raises
   beside it.
   
@@ -8092,6 +8155,17 @@ type Mutation {
   archivePaymentTerm(id: ID!): Boolean!
 
   """
+  Withdraws a payment term without removing it — `DELETE /payment-terms/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeletePaymentTerm(id: ID!): PaymentTerm!
+
+  """
+  Restores a withdrawn payment term — `PUT /payment-terms/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverPaymentTerm(id: ID!): PaymentTerm!
+
+  """
   Records a money movement.
   
   The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
@@ -8550,6 +8624,17 @@ type Mutation {
   ones left out are withdrawn in one transaction.
   """
   replaceRegionCountries(input: ReplaceRegionCountriesInput!): [RegionCountry!]!
+
+  """
+  Withdraws a region without removing it — `DELETE /regions/:id/soft`. It requires the edit grant the change
+  requires, as the route does: a role that may only read cannot withdraw one.
+  """
+  softDeleteRegion(id: ID!): Region!
+
+  """
+  Restores a withdrawn region — `PUT /regions/:id/recover` — under the same edit grant: restoring undoes a removal.
+  """
+  recoverRegion(id: ID!): Region!
 
   """
   Switches a report on or off in an organization's menu.
@@ -11275,13 +11360,12 @@ type Mutation {
   removeSubscriptionItem(id: ID!, variantId: ID!): SubscriptionPlanChangePayload!
 
   """
-  Deletes a subscription outright.
+  Retires a subscription: a soft delete, recoverable with recoverSubscription.
   
-  The row leaves the database rather than being retired, which is why every read that has to keep
-  answering for what was sold reaches the recoverable pair below instead. It is mirrored because
-  `DELETE /subscriptions/:id` serves it and §3.1 requires one mutation per REST write route including
-  the routes the CRUD base contributes; a caller that reaches it over REST must be able to reach it
-  over GraphQL, and the answer says which of the two removals happened.
+  A subscription is never hard-deleted through the API: erasing it would cascade into its billing
+  cycles, the record of money billed. This field and `DELETE /subscriptions/:id` retire the
+  subscription exactly as softDeleteSubscription does, and answer with its identifier, or with the
+  reason the retirement was refused.
   """
   deleteSubscription(id: ID!): DeleteSubscriptionPayload!
 
@@ -11660,9 +11744,17 @@ type Mutation {
   Restores a soft-deleted seller account.
   
   Mirrors `PUT /sellers/:id/recover`: restoring is the same destructive authority read backwards,
-  so it takes `SELLERS_DELETE` and not the edit grant.
+  so it takes `SELLERS_DELETE` and not the edit grant. Named `recover<Type>` like every other
+  field of this kind in the schema.
   """
-  restoreSeller(id: ID!): Seller!
+  recoverSeller(id: ID!): Seller!
+
+  """
+  Restores a soft-deleted seller account — the earlier name of `recoverSeller`, which it answers
+  exactly as: the same route, the same grant, the same restored seller. Kept working until the
+  release its deprecation names.
+  """
+  restoreSeller(id: ID!): Seller! @deprecated(reason: "Use recoverSeller; removal planned for 0.3.0")
 
   """
   Offers a variant. The offering is born `DRAFT`; publishing it is a separate act.
@@ -53890,9 +53982,13 @@ type CustomerSubscriptionPayload {
   userErrors: [UserError!]!
 }
 
-"""The outcome of deleting a subscription outright."""
+"""
+The outcome of retiring a subscription through deleteSubscription (a soft delete; a subscription is never hard-deleted).
+"""
 type DeleteSubscriptionPayload {
-  """The subscription that was removed; null when the removal was refused."""
+  """
+  The subscription that was retired; null when the retirement was refused.
+  """
   id: ID
   userErrors: [UserError!]!
 }
@@ -56024,11 +56120,15 @@ type SellerOffering {
 One band of a graduated commission schedule: `from <= x < to`, with `to` null meaning open ended. The bounds are in major units for an amount basis and in units for a quantity basis.
 """
 input CommissionTierInput {
-  """Inclusive lower bound."""
-  from: Float!
+  """
+  Inclusive lower bound. An exact decimal, never a float: on an amount basis a band boundary is money, and the band a sale falls into is decided by an exact comparison. A JSON number is still accepted.
+  """
+  from: Decimal!
 
-  """Exclusive upper bound; null is open ended."""
-  to: Float
+  """
+  Exclusive upper bound; null is open ended. An exact decimal, as `from` is.
+  """
+  to: Decimal
 
   """
   Rate applied to the whole amount or quantity when the value falls in this band. An exact decimal, never a float.

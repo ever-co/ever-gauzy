@@ -33,6 +33,7 @@ import {
 import { ProjectManagerOrPermissionGuard } from './guards/project-manager-or-permission.guard';
 import { OrganizationProject } from './organization-project.entity';
 import { OrganizationProjectService } from './organization-project.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationProjectInput` declares in the schema. */
 export interface ICreateOrganizationProjectInput {
@@ -511,9 +512,7 @@ export class OrganizationProjectResolver {
 	@Mutation('deleteOrganizationProject')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE)
 	async deleteOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationProjectService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationProjectService.delete(id));
 	}
 
 	/**

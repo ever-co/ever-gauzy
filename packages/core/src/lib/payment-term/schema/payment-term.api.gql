@@ -14,4 +14,13 @@ extend type Mutation {
 	updatePaymentTerm(input: UpdatePaymentTermInput!): PaymentTerm!
 	updatePaymentTermLines(input: UpdatePaymentTermLinesInput!): PaymentTerm!
 	archivePaymentTerm(id: ID!): Boolean!
+	"""
+	Withdraws a payment term without removing it — `DELETE /payment-terms/:id/soft`. It requires the edit grant the change
+	requires, as the route does: a role that may only read cannot withdraw one.
+	"""
+	softDeletePaymentTerm(id: ID!): PaymentTerm!
+	"""
+	Restores a withdrawn payment term — `PUT /payment-terms/:id/recover` — under the same edit grant: restoring undoes a removal.
+	"""
+	recoverPaymentTerm(id: ID!): PaymentTerm!
 }
