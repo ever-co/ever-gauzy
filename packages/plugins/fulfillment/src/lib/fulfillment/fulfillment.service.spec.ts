@@ -1372,6 +1372,51 @@ describe('FulfillmentService — cancelation (doc 09 §12.9)', () => {
 
 		await expect(fixture.service.cancel(UNKNOWN, 'CHANGED_MIND')).rejects.toBeInstanceOf(NotFoundException);
 	});
+
+	/**
+	 * Doc 10 invariant I-12's right half: `returnRequestedQuantity <= fulfilledQuantity`.
+	 *
+	 * A return is measured against what was fulfilled, and a pending shipment counts as fulfilled the moment
+	 * it is created — so units a return already asks back can rest on a shipment that is still cancelable.
+	 * Cancelling it gives its units back to the order line, and the line would then have more asked back
+	 * than it ever fulfilled. The order package refuses a request raised past what was fulfilled; this is the
+	 * same half from the side that lowers the bound, refused before anything moves.
+	 */
+	it('refuses to cancel a shipment whose units a return still asks back (doc 10 I-12), and moves nothing', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3, returnRequestedQuantity: 2 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await expect(fixture.service.cancel('pending', 'CHANGED_MIND')).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_UNITS_REQUESTED_FOR_RETURN' }
+		});
+
+		expect(fixture.row('pending')).toMatchObject({ status: FulfillmentStatusDetail.PENDING, version: 1 });
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(fixture.events).toEqual([]);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('cancels a shipment while what stays fulfilled still covers what is asked back', async () => {
+		// The control: five fulfilled across two shipments, two asked back. Cancelling the three-unit shipment
+		// leaves two fulfilled, which is exactly what the return asks back, so I-12 still holds.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5, returnRequestedQuantity: 2 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await expect(fixture.service.cancel('pending')).resolves.toMatchObject({
+			status: FulfillmentStatusDetail.CANCELED
+		});
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(2);
+	});
 });
 
 describe('FulfillmentService — what an order line still has to ship (doc 09 §12.6)', () => {
