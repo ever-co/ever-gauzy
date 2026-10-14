@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeepPartial, FindOptionsWhere, Not } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { EventBus, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { CollectionType, PublicationStatus } from '../catalog.types';
@@ -125,11 +125,17 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	}
 
 	/**
-	 * Reads a collection by its slug for the caller's organization.
+	 * Reads a merchandising collection by its slug for the caller's organization.
+	 *
+	 * Only a merchandising collection (`customerId` null) is addressed by slug: its slug is the one unique
+	 * within the organization (`UQ_collection_org_slug`). A buyer's saved list is unique only for its owner
+	 * (`UQ_collection_customer_slug`), so several saved lists — and a merchandising collection — may share a
+	 * slug, and a lookup that did not exclude them could answer with any one of them, including another
+	 * buyer's list (R5-06). A saved list is read by its id.
 	 *
 	 * @param slug The slug to look up.
 	 * @returns The collection.
-	 * @throws NotFoundException When no collection of the caller's organization carries the slug.
+	 * @throws NotFoundException When no merchandising collection of the caller's organization carries the slug.
 	 */
 	public async findBySlug(slug: string): Promise<Collection> {
 		const organizationId = RequestContext.currentOrganizationId();
@@ -139,7 +145,7 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			throw new BadRequestException('A collection cannot be read without an organization in context.');
 		}
 
-		const where: FindOptionsWhere<Collection> = { slug, organizationId };
+		const where: FindOptionsWhere<Collection> = { slug, organizationId, customerId: IsNull() };
 
 		if (tenantId) {
 			where.tenantId = tenantId;

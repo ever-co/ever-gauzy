@@ -19,6 +19,7 @@ import {
 	AddPriceComputationColumns1791000000135,
 	AddPriceListForeignKeys1791000000130,
 	AddPriceUnitForeignKey1791000000186,
+	AddProductPriceSellerColumn1791000000652,
 	CreatePricingTables1791000000120
 } from './database/migrations';
 
@@ -104,7 +105,8 @@ const PRICING_UNIT_REFERENCES: IUnitReference[] = [
 		CreatePricingTables1791000000120,
 		AddPriceListForeignKeys1791000000130,
 		AddPriceComputationColumns1791000000135,
-		AddPriceUnitForeignKey1791000000186
+		AddPriceUnitForeignKey1791000000186,
+		AddProductPriceSellerColumn1791000000652
 	],
 	/**
 	 * The pricing capabilities a role may be granted.
