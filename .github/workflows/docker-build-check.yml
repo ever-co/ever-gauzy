@@ -123,6 +123,17 @@ jobs:
         if: always()
         run: docker logs --tail 400 gauzy-check-api 2>&1 || true
 
+      # The API image plus its build cache fill the runner's Docker disk: building the worker image after it
+      # failed with ENOSPC. The worker needs only the API's database volume, so the API container, its image
+      # and all build cache go first (the volume stays).
+      - name: Free the Docker disk for the worker build
+        run: |
+          docker rm -f gauzy-check-api 2>/dev/null || true
+          docker image rm "gauzy-api-check:${{ github.sha }}" 2>/dev/null || true
+          docker buildx prune --all --force
+          docker builder prune --all --force 2>/dev/null || true
+          docker system df
+
       - name: Worker image (build, no push)
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
