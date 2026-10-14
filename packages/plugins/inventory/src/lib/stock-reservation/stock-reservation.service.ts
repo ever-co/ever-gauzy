@@ -5,6 +5,7 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
+import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { IStockMovementInput } from './../stock-level/stock-level.types';
 import { StockReservation } from './stock-reservation.entity';
@@ -160,6 +161,13 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 				details: { requested: input.quantity }
 			});
 		}
+
+		// The location and the variant are the caller's to hold before anything is read about them: a hold
+		// that named another tenant's pair used to read that tenant's level, pass the availability check
+		// against it and reserve its units (review R2-01). Both are answered as not existing.
+		const manager = this.typeOrmStockReservationRepository.manager;
+		await assertLocationInScope(manager, input.warehouseId);
+		await assertVariantInScope(manager, input.variantId);
 
 		const level = await this.findLevel(input.warehouseId, input.variantId);
 		this.assertAvailable(level, quantity, input.allowBackorder);
@@ -514,13 +522,17 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * refusal rather than a second credit — and it is stated once because both closing paths, the
 	 * release and the consumption, need exactly the same one.
 	 *
+	 * The hold is loaded inside the request's tenant and organization: a hold of another tenant is a hold
+	 * that does not exist for this caller, not one it may consume or release (review R2-01). The expiry
+	 * sweep the worker runs has no request and is not narrowed, so it still closes every tenant's holds.
+	 *
 	 * @param manager The transaction the close runs in.
 	 * @param id The hold.
 	 * @returns The hold, `ACTIVE`.
 	 * @throws ApiException with `RESERVATION_NOT_FOUND` or `RESERVATION_ALREADY_CLOSED`.
 	 */
 	private async requireActive(manager: EntityManager, id: ID): Promise<StockReservation> {
-		const reservation = await manager.findOne(StockReservation, { where: { id } });
+		const reservation = await manager.findOne(StockReservation, { where: { id, ...requestScope() } });
 
 		if (!reservation) {
 			throw inventoryError(InventoryErrorCode.RESERVATION_NOT_FOUND, 'The reservation does not exist.', {
@@ -567,14 +579,25 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		});
 	}
 
-	/** Resolves the level row of a location and variant pair, if the variant is stocked there. */
+	/**
+	 * Resolves the level row of a location and variant pair, if the variant is stocked there.
+	 *
+	 * Narrowed to the request's tenant like every other level read of this package, so the pre-flight
+	 * availability check can only ever be measured against the caller's own stock.
+	 */
 	private async findLevel(warehouseId: ID, variantId: ID): Promise<WarehouseProductVariant | null> {
-		return await this.typeOrmStockReservationRepository.manager
+		const query = this.typeOrmStockReservationRepository.manager
 			.createQueryBuilder(WarehouseProductVariant, 'level')
 			.innerJoin('level.warehouseProduct', 'aggregate')
 			.where('aggregate.warehouseId = :warehouseId', { warehouseId })
-			.andWhere('level.variantId = :variantId', { variantId })
-			.getOne();
+			.andWhere('level.variantId = :variantId', { variantId });
+		const tenantId = RequestContext.currentTenantId();
+
+		if (tenantId) {
+			query.andWhere('level.tenantId = :tenantId', { tenantId });
+		}
+
+		return await query.getOne();
 	}
 
 	/**

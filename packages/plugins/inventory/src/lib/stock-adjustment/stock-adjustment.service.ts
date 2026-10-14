@@ -4,6 +4,7 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import { StockAdjustmentStatus, StockAdjustmentType, StockMovementType, StockMovementReferenceType } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockAdjustment } from './stock-adjustment.entity';
@@ -39,6 +40,9 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 	 *
 	 * A manual correction must state why it happened; the reason code or the free-text reason satisfies
 	 * that, and an instruction that names neither is refused before it reaches the database.
+	 *
+	 * The location and the variant it corrects have to be the caller's: a draft naming another tenant's
+	 * pair is refused as naming a pair that does not exist (review R2-01).
 	 */
 	public async createAdjustment(input: Partial<StockAdjustment>): Promise<StockAdjustment> {
 		if (!input.reasonCode && !input.reason) {
@@ -50,6 +54,9 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 		}
 
 		return await this.typeOrmStockAdjustmentRepository.manager.transaction(async (manager) => {
+			await assertLocationInScope(manager, input.warehouseId);
+			await assertVariantInScope(manager, input.variantId);
+
 			const { formatted } = await this.sequenceService.allocate('STOCK_ADJUSTMENT');
 			const adjustment = manager.create(StockAdjustment, {
 				...input,
@@ -73,10 +80,14 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 	 * The level it moves is written under the version the request accepted, so a caller that read the
 	 * level and decided from it is refused when the level has moved since — and the version the write
 	 * left behind is reported back, which is what lets the caller condition its next instruction.
+	 *
+	 * The instruction is loaded inside the request's tenant and organization, so another tenant's draft is
+	 * one that does not exist for this caller (review R2-01); the level it moves is guarded again by the
+	 * ledger engine, which refuses a level of another tenant whatever the draft was edited to name.
 	 */
 	public async apply(id: ID): Promise<{ adjustment: StockAdjustment; quantityDelta: number; version?: number }> {
 		return await this.typeOrmStockAdjustmentRepository.manager.transaction(async (manager) => {
-			const adjustment = await manager.findOne(StockAdjustment, { where: { id } });
+			const adjustment = await manager.findOne(StockAdjustment, { where: { id, ...requestScope() } });
 			if (!adjustment) {
 				throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The adjustment does not exist.', {
 					notFound: true,
@@ -128,10 +139,10 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 		});
 	}
 
-	/** Cancels a drafted instruction without touching stock. */
+	/** Cancels a drafted instruction of the caller's own without touching stock. */
 	public async cancel(id: ID): Promise<StockAdjustment> {
 		return await this.typeOrmStockAdjustmentRepository.manager.transaction(async (manager) => {
-			const adjustment = await manager.findOne(StockAdjustment, { where: { id } });
+			const adjustment = await manager.findOne(StockAdjustment, { where: { id, ...requestScope() } });
 			if (!adjustment) {
 				throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The adjustment does not exist.', {
 					notFound: true,
@@ -173,14 +184,24 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 		}
 	}
 
-	/** Resolves the level row of the pair. */
+	/**
+	 * Resolves the level row of the pair, inside the request's tenant.
+	 *
+	 * A `SET` is computed from the quantity this read returns, so it can only ever be the caller's own.
+	 */
 	private async findLevel(manager: any, warehouseId: ID, variantId: ID) {
-		return await manager
+		const query = manager
 			.createQueryBuilder(WarehouseProductVariant, 'level')
 			.innerJoin('level.warehouseProduct', 'aggregate')
 			.where('aggregate.warehouseId = :warehouseId', { warehouseId })
-			.andWhere('level.variantId = :variantId', { variantId })
-			.getOne();
+			.andWhere('level.variantId = :variantId', { variantId });
+		const tenantId = RequestContext.currentTenantId();
+
+		if (tenantId) {
+			query.andWhere('level.tenantId = :tenantId', { tenantId });
+		}
+
+		return await query.getOne();
 	}
 
 	/**
