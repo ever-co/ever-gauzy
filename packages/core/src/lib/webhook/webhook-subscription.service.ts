@@ -467,7 +467,7 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 			return [];
 		}
 
-		const where: Record<string, unknown> = { ...scope };
+		let where: Record<string, unknown> = { ...scope };
 
 		for (const [column, value] of Object.entries(narrowing)) {
 			// A member that was not stated is left out rather than written as `undefined`: a repository
