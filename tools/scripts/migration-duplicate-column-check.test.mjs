@@ -113,3 +113,15 @@ test('every ADD clause of one ALTER TABLE is read, not only the first', () => {
 
 	assert.deepEqual(found(source), ['widget.note', 'widget.id']);
 });
+
+test("a statement written in a single- or double-quoted string is read past MySQL's backticks", () => {
+	const source = migration(
+		[
+			"		await queryRunner.query('CREATE TABLE \x60widget\x60 (\x60id\x60 int NOT NULL, \x60note\x60 text) ENGINE=InnoDB');",
+			"		await queryRunner.query('ALTER TABLE \x60widget\x60 ADD COLUMN \x60note\x60 text');",
+			'		await queryRunner.query("ALTER TABLE \x60widget\x60 ADD COLUMN \x60code\x60 int, ADD COLUMN \x60id\x60 int");'
+		].join('\n')
+	);
+
+	assert.deepEqual(found(source), ['widget.note', 'widget.id']);
+});

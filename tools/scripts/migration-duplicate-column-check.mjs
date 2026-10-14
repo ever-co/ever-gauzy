@@ -73,17 +73,28 @@ export function balancedBody(text, open) {
 }
 
 /**
- * The text of the statement that starts at `from`: up to the template literal's closing backtick, the end of a
- * single- or double-quoted string, or the end of the source. An escaped backtick (\`) is MySQL quoting inside the
- * template, not its end.
+ * The text of the statement that starts at `statement` and is read from `from`: up to the end of the JavaScript
+ * string it is written in, or the end of the source.
+ *
+ * The string's own delimiter decides where it ends, found by stepping back from the statement over whitespace to
+ * the quote that opens the string. In a template literal an escaped backtick (\`) is MySQL quoting, not the end; in
+ * a single- or double-quoted string MySQL's backticks are plain characters, and stopping at the first of them hid
+ * every column the statement named after it (Greptile, #10587).
  *
  * @param {string} text The source.
- * @param {number} from Where the statement starts.
- * @returns {string} The statement's text.
+ * @param {number} statement Where the statement (`ALTER TABLE …`) starts.
+ * @param {number} from Where to start reading.
+ * @returns {string} The statement's text from `from`.
  */
-export function statementFrom(text, from) {
+export function statementFrom(text, statement, from) {
+	let opening = statement - 1;
+	while (opening >= 0 && /\s/.test(text[opening])) {
+		opening -= 1;
+	}
+	const delimiter = ["'", '"', '\x60'].includes(text[opening]) ? text[opening] : '\x60';
+
 	for (let index = from; index < text.length; index++) {
-		if (text[index] === '\x60' && text[index - 1] !== '\\') {
+		if (text[index] === delimiter && text[index - 1] !== '\\') {
 			return text.slice(from, index);
 		}
 	}
@@ -212,7 +223,7 @@ export function findDuplicateColumnAdds(source) {
 			if (!declared || match.index < declared.at) {
 				continue;
 			}
-			for (const column of addedColumns(statementFrom(branch, match.index + match[0].length))) {
+			for (const column of addedColumns(statementFrom(branch, match.index, match.index + match[0].length))) {
 				if (declared.columns.has(column)) {
 					duplicates.push({ method, table, column });
 				} else if (declared.opaque) {
