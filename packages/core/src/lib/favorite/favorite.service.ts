@@ -253,8 +253,12 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 					: undefined;
 
 			// Get related favorite records using findAll method and passing query params
+			// Ask for every favorited record: a type whose `findAll` paginates (proposals do) would otherwise
+			// answer with its default first page and silently drop the rest from the sidebar.
 			const items = await this.favoriteDiscoveryService.callMethod(favoriteType, 'findAll', {
 				where: whereCondition,
+				take: Math.max(new Set(entityIds).size, 1),
+				skip: 0,
 				...(relations && { relations })
 			});
 
