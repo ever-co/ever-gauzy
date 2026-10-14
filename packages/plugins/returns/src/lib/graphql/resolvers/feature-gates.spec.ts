@@ -171,6 +171,7 @@ import { OrderExchangeResolver } from './order-exchange.resolver';
 import { OrderReturnLineResolver } from './order-return-line.resolver';
 import { OrderReturnReasonResolver } from './order-return-reason.resolver';
 import { OrderReturnResolver } from './order-return.resolver';
+import { OrderReturnSubscriptionResolver } from './order-return-subscription.resolver';
 import { resolvers } from './index';
 
 type Constructor = new (...args: any[]) => any;
@@ -183,7 +184,9 @@ const SURFACES: Array<[string, Constructor, Constructor]> = [
 	['OrderClaim', OrderClaimResolver, OrderClaimController],
 	['OrderClaimLine', OrderClaimLineResolver, OrderClaimLineController],
 	['OrderExchange', OrderExchangeResolver, OrderExchangeController],
-	['OrderExchangeLine', OrderExchangeLineResolver, OrderExchangeLineController]
+	['OrderExchangeLine', OrderExchangeLineResolver, OrderExchangeLineController],
+	// The return stream is gated as the return routes are: the same plugin capability, behind the GraphQL one.
+	['OrderReturnSubscription', OrderReturnSubscriptionResolver, OrderReturnController]
 ];
 
 /**

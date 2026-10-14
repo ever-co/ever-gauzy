@@ -15653,6 +15653,22 @@ type Subscription {
   stockLevelOutOfStock(warehouseId: ID): StockLevel!
   stockReservationChanged(referenceId: ID): StockReservation!
   stockTransferChanged(id: ID): StockTransfer!
+
+  """
+  Every lifecycle move of an order of the caller's tenant — placed, confirmed, canceled, completed,
+  archived — with the order in the state the move left it, as `order(id:)` reads it. Narrowed by
+  `orderId` and by `action` (the move: `placed`, `canceled`, …); both only narrow what the
+  credential may read. Follows the `order.*` facts the order service appends to the outbox, so a move is
+  delivered once its transaction committed. A subscription is a notification and never a system of record:
+  a move made while the client is disconnected is not replayed.
+  """
+  orderChanged(orderId: ID, action: String): Order!
+
+  """
+  A checkout completed: an order was placed. Rides `order.placed`. Narrowed by the cart the order was
+  checked out from and by its sales channel.
+  """
+  checkoutCompleted(cartId: ID, channelId: ID): Order!
   paymentAuthorized(organizationId: ID): PaymentSession!
   paymentCaptured(organizationId: ID): PaymentCapture!
   paymentFailed(organizationId: ID): PaymentSession!
@@ -15682,6 +15698,17 @@ type Subscription {
 
   """Stored value was spent with a card."""
   giftCardRedeemed(giftCardId: ID): GiftCardRedeemedPayload!
+
+  """
+  Every lifecycle move of a return of the caller's tenant — requested, approved, rejected, canceled,
+  received, refunded, closed — with the return in the state the move left it, as `orderReturn(id:)`
+  reads it. Narrowed by `orderReturnId`, by the order the return is against, and by `action` (the move:
+  `approved`, `received`, …); each only narrows what the credential may read. Follows the `return.*`
+  facts the return service appends to the outbox, so a move is delivered once its transaction committed.
+  A subscription is a notification and never a system of record: a move made while the client is
+  disconnected is not replayed.
+  """
+  orderReturnChanged(orderReturnId: ID, orderId: ID, action: String): OrderReturn!
 
   """Streams rights that were granted or changed."""
   entitlementChanged(entitlementId: ID): Entitlement!

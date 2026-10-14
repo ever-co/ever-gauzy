@@ -5,6 +5,7 @@ import { OrderExchangeResolver } from './order-exchange.resolver';
 import { OrderReturnLineResolver } from './order-return-line.resolver';
 import { OrderReturnReasonResolver } from './order-return-reason.resolver';
 import { OrderReturnResolver } from './order-return.resolver';
+import { OrderReturnSubscriptionResolver } from './order-return-subscription.resolver';
 
 /**
  * Every resolver this plugin contributes to the platform schema.
@@ -20,7 +21,8 @@ export const resolvers = [
 	OrderClaimResolver,
 	OrderClaimLineResolver,
 	OrderExchangeResolver,
-	OrderExchangeLineResolver
+	OrderExchangeLineResolver,
+	OrderReturnSubscriptionResolver
 ];
 
 export {
@@ -30,5 +32,6 @@ export {
 	OrderClaimResolver,
 	OrderClaimLineResolver,
 	OrderExchangeResolver,
-	OrderExchangeLineResolver
+	OrderExchangeLineResolver,
+	OrderReturnSubscriptionResolver
 };

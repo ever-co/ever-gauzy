@@ -3,7 +3,7 @@ import { gql } from 'graphql-tag';
 /**
  * The order domain's contribution to the one GraphQL schema.
  *
- * Only `extend type Query` and `extend type Mutation` blocks and the domain's own types are declared —
+ * Only `extend type Query`, `extend type Mutation` and `extend type Subscription` blocks and the domain's own types are declared —
  * the root types belong to the core schema, and a second `type Query` block would be a duplicate
  * definition that fails the boot.
  *
@@ -788,5 +788,22 @@ export const orderSchemaExtensions = gql`
 		id: ID!
 		"Whether a row of the caller's was there to retire; a delete of one that was not answers false."
 		deleted: Boolean!
+	}
+
+	extend type Subscription {
+		"""
+		Every lifecycle move of an order of the caller's tenant — placed, confirmed, canceled, completed,
+		archived — with the order in the state the move left it, as \`order(id:)\` reads it. Narrowed by
+		\`orderId\` and by \`action\` (the move: \`placed\`, \`canceled\`, …); both only narrow what the
+		credential may read. Follows the \`order.*\` facts the order service appends to the outbox, so a move is
+		delivered once its transaction committed. A subscription is a notification and never a system of record:
+		a move made while the client is disconnected is not replayed.
+		"""
+		orderChanged(orderId: ID, action: String): Order!
+		"""
+		A checkout completed: an order was placed. Rides \`order.placed\`. Narrowed by the cart the order was
+		checked out from and by its sales channel.
+		"""
+		checkoutCompleted(cartId: ID, channelId: ID): Order!
 	}
 `;
