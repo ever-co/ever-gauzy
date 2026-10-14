@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 
 /**
@@ -95,27 +95,45 @@ export function warehouseEditOf(
 }
 
 /**
- * Answers an edit's write, or refuses it when the document moved between the check and the write.
+ * Runs an edit's write, refusing it when the document moved between the check and the write.
  *
  * The write is predicated on the status the check read (`{ id, status }`), so an operation that moved the document
  * in between — `pack` sealing a slip, `close` freezing a manifest, `release` putting a wave on the floor — leaves
  * the statement matching nothing, and the edit is refused rather than landing on a document whose writable members
- * are no longer what were checked. A driver that does not report affected rows is taken at its word.
+ * are no longer what were checked. The CRUD base reads criteria-selected rows before it writes and answers
+ * `NotFoundException` when none matches; the row was read by id a moment ago, so that answer means the same thing
+ * here and is restated as the conflict. A write that matched no row is refused too (a move between the base's read
+ * and its write); a driver that does not report affected rows is taken at its word.
  *
- * @param result What the conditional write answered.
+ * @param write The conditional write.
  * @param code The conflict code.
  * @param document The document's name for the message.
  * @param id The document.
  * @returns The write's result.
  * @throws ConflictException with `code` when the write matched no row.
  */
-export function editLanded(result: unknown, code: string, document: string, id: unknown): UpdateResult {
-	if ((result as UpdateResult | undefined)?.affected === 0) {
-		throw new ConflictException({
+export async function landEdit(
+	write: () => Promise<unknown>,
+	code: string,
+	document: string,
+	id: unknown
+): Promise<UpdateResult> {
+	const moved = () =>
+		new ConflictException({
 			message: `${code}: ${document} '${id}' changed while it was being edited; read it again and repeat the edit.`,
 			code,
 			details: { id }
 		});
+	let result: unknown;
+
+	try {
+		result = await write();
+	} catch (error) {
+		throw error instanceof NotFoundException ? moved() : error;
+	}
+
+	if ((result as UpdateResult | undefined)?.affected === 0) {
+		throw moved();
 	}
 
 	return result as UpdateResult;

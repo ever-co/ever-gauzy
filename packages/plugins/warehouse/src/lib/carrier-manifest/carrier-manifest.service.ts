@@ -10,7 +10,7 @@ import {
 	MANIFEST_NUMBER_KEY,
 	WAREHOUSE_FULFILLMENT
 } from '../warehouse.types';
-import { editByIdOnly, editLanded, warehouseEditOf } from '../warehouse.writable';
+import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { sumQuantities } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { CarrierManifest } from './carrier-manifest.entity';
@@ -100,8 +100,8 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 		}
 
 		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
-		return editLanded(
-			await super.update({ id, status: stored.status } as FindOptionsWhere<CarrierManifest>, edit as QueryDeepPartialEntity<CarrierManifest>),
+		return await landEdit(
+			() => super.update({ id, status: stored.status } as FindOptionsWhere<CarrierManifest>, edit as QueryDeepPartialEntity<CarrierManifest>),
 			'CARRIER_MANIFEST_EDIT_CONFLICT',
 			'carrier manifest',
 			id

@@ -22,7 +22,7 @@ import {
 	WAREHOUSE_FULFILLMENT,
 	WAREHOUSE_STOCK_LEDGER
 } from '../warehouse.types';
-import { editByIdOnly, editLanded, warehouseEditOf } from '../warehouse.writable';
+import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { isPositiveQuantity, normalizeQuantity } from '../warehouse.quantity';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickList } from './pick-list.entity';
@@ -103,8 +103,8 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		}
 
 		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
-		return editLanded(
-			await super.update({ id, status: stored.status } as FindOptionsWhere<PickList>, edit as QueryDeepPartialEntity<PickList>),
+		return await landEdit(
+			() => super.update({ id, status: stored.status } as FindOptionsWhere<PickList>, edit as QueryDeepPartialEntity<PickList>),
 			'PICK_LIST_EDIT_CONFLICT',
 			'pick list',
 			id

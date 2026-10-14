@@ -8,7 +8,7 @@ import { TypeOrmPickListRepository } from '../pick-list/repository/type-orm-pick
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { TypeOrmPickListLineRepository } from '../pick-list-line/repository/type-orm-pick-list-line.repository';
 import { PICK_NUMBER_KEY, PickListStatus, PickWaveStatus, PickWaveStrategy } from '../warehouse.types';
-import { editByIdOnly, editLanded, warehouseEditOf } from '../warehouse.writable';
+import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickWave } from './pick-wave.entity';
 import { MikroOrmPickWaveRepository } from './repository/mikro-orm-pick-wave.repository';
@@ -85,8 +85,8 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 		}
 
 		// Predicated on the status the check read, so an operation that moved the document meanwhile is not overwritten.
-		return editLanded(
-			await super.update({ id, status: stored.status } as FindOptionsWhere<PickWave>, edit as QueryDeepPartialEntity<PickWave>),
+		return await landEdit(
+			() => super.update({ id, status: stored.status } as FindOptionsWhere<PickWave>, edit as QueryDeepPartialEntity<PickWave>),
 			'PICK_WAVE_EDIT_CONFLICT',
 			'pick wave',
 			id

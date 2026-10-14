@@ -60,6 +60,9 @@ jest.mock('@gauzy/core', () => {
 		async update(id: any, partial: any): Promise<any> {
 			if (typeof id === 'string') {
 				await this.findOneByIdString(id);
+			} else if (!('version' in id) && !(await this.typeOrmRepository.findOne({ where: this.scoped(id) }))) {
+				// The real base reads criteria-selected rows first (`findOneByWhereOptions`) and answers a miss with 404.
+				throw new NotFoundException('The requested record was not found');
 			}
 
 			return this.typeOrmRepository.update(this.scoped(typeof id === 'string' ? { id } : id), partial);
