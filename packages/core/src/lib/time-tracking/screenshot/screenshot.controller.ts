@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Controller,
 	Logger,
 	UseGuards,
@@ -101,6 +102,18 @@ export class ScreenshotController {
 		// Retrieve file content from the file storage provider
 		const fileContent = await provider.getFile(file.key);
 
+		// An empty upload (a display the desktop timer could not capture) has no image to record. Refuse it here,
+		// OUTSIDE the try/catch below: in there the thumbnail step failed on it, the error was swallowed and the
+		// client got a 201 with no screenshot while the 0-byte file stayed on disk.
+		if (!fileContent?.length) {
+			try {
+				await provider.deleteFile(file.key);
+			} catch {
+				this.logger.error('Error while deleting an empty screenshot from file storage provider');
+			}
+			throw new BadRequestException('The screenshot file is empty');
+		}
+
 		// Content-based validation: the multer fileFilter only inspects the client-controlled MIME type
 		// and filename, which can be spoofed. Re-check the actual stored bytes and reject markup that
 		// would execute as stored XSS when served from `/public/<key>` (GHSA-p334-cm7f-php5). This runs
@@ -176,7 +189,7 @@ export class ScreenshotController {
 			// Find screenshot by ID
 			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			this.logger.error(`Error while creating screenshot`);
+			this.logger.error(`Error while creating screenshot: ${error?.message ?? error}`, error?.stack);
 		}
 	}
 
