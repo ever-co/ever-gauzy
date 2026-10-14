@@ -1,6 +1,6 @@
 import type * as BetterSqlite3 from 'better-sqlite3';
 import { QueryRunner } from 'typeorm';
-import { CreateWarehouseLayoutTables1791000000180 } from './1791000000180-CreateWarehouseLayoutTables';
+import { CreateWarehouseLayoutTables1791000000180 } from './migrations/1791000000180-CreateWarehouseLayoutTables';
 
 // Required rather than imported (esModuleInterop is off), as core's measurement-audit.sqlite.spec does.
 // eslint-disable-next-line @typescript-eslint/no-var-requires

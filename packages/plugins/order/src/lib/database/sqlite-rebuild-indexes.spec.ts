@@ -1,6 +1,6 @@
 import type * as BetterSqlite3 from 'better-sqlite3';
 import { QueryRunner } from 'typeorm';
-import { AddCartShippingOptionForeignKey1791000000250 } from './1791000000250-AddCartShippingOptionForeignKey';
+import { AddPaymentOrderForeignKey1791000000230 } from './migrations/1791000000230-AddPaymentOrderForeignKey';
 
 // Required rather than imported (esModuleInterop is off), as core's measurement-audit.sqlite.spec does.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -9,7 +9,7 @@ const Database: typeof import('better-sqlite3') = require('better-sqlite3');
 /**
  * R5-04: a SQLite rename-aside rebuild (rename the table to a backup, create it again from its stored definition,
  * copy the rows, drop the backup) moves the table's indexes onto the backup, and dropping the backup drops them. The
- * rebuilds of AddCartShippingOptionForeignKey1791000000250 never replayed them, so `commerce_cart_shipping_method` and `order_shipping_method` lost every index — unique ones included — on every SQLite
+ * rebuilds of AddPaymentOrderForeignKey1791000000230 never replayed them, so `payment` and `commerce_cart` lost every index — unique ones included — on every SQLite
  * database this migration ran on (the demo, desktop installs).
  *
  * Runs the migration's own rebuild against a real SQLite database (better-sqlite3) and compares the indexes.
@@ -42,7 +42,7 @@ const indexesOf = (db: BetterSqlite3.Database, table: string) =>
 const definitionOf = (db: BetterSqlite3.Database, table: string) =>
 	(db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`).get(table) as { sql: string }).sql;
 
-describe('AddCartShippingOptionForeignKey1791000000250 keeps the indexes of the SQLite tables it rebuilds', () => {
+describe('AddPaymentOrderForeignKey1791000000230 keeps the indexes of the SQLite tables it rebuilds', () => {
 	let db: BetterSqlite3.Database;
 
 	beforeEach(() => {
@@ -57,18 +57,18 @@ describe('AddCartShippingOptionForeignKey1791000000250 keeps the indexes of the 
 
 	it.each([
 		[
-			'commerce_cart_shipping_method',
-			'"tenantId" varchar, "ref" varchar, "deletedAt" datetime, "shippingOptionId" varchar',
-			'rebuildSqliteTableWithOptionForeignKey',
-			'rebuildSqliteTableWithoutOptionForeignKey',
-			'FK_commerce_cart_shipping_method_option'
+			'payment',
+			'"tenantId" varchar, "ref" varchar, "deletedAt" datetime, "orderId" varchar',
+			'rebuildSqliteTableWithOrderForeignKey',
+			'rebuildSqliteTableWithoutOrderForeignKey',
+			'FK_payment_order'
 		],
 		[
-			'order_shipping_method',
-			'"tenantId" varchar, "ref" varchar, "deletedAt" datetime, "shippingOptionId" varchar',
-			'rebuildSqliteTableWithOptionForeignKey',
-			'rebuildSqliteTableWithoutOptionForeignKey',
-			'FK_order_shipping_method_option'
+			'commerce_cart',
+			'"tenantId" varchar, "ref" varchar, "deletedAt" datetime, "orderId" varchar',
+			'rebuildSqliteTableWithOrderForeignKey',
+			'rebuildSqliteTableWithoutOrderForeignKey',
+			'FK_commerce_cart_order'
 		]
 	])('%s', async (table, columns, rebuildWith, rebuildWithout, constraint) => {
 		db.exec(`CREATE TABLE "${table}" ("id" varchar PRIMARY KEY NOT NULL, ${columns})`);
@@ -80,7 +80,7 @@ describe('AddCartShippingOptionForeignKey1791000000250 keeps the indexes of the 
 			'ref-1'
 		);
 		const before = indexesOf(db, table);
-		const migration = new AddCartShippingOptionForeignKey1791000000250() as any;
+		const migration = new AddPaymentOrderForeignKey1791000000230() as any;
 
 		await migration[rebuildWith](sqliteRunner(db), table, 'test');
 
