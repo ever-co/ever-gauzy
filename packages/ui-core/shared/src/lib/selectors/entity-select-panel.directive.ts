@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, inject } from '@angular/core';
+import { DestroyRef, Directive, Injector, afterNextRender, inject } from '@angular/core';
 import { ConnectedPosition, FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { NgSelectComponent } from '@ng-select/ng-select';
 
@@ -15,8 +15,21 @@ export const ENTITY_SELECT_PANEL_POSITIONS: ConnectedPosition[] = [
 	{ originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' }
 ];
 
-/** The `dropdownPosition` values that ask for the panel above the trigger first. */
-const ABOVE_FIRST = new Set(['top']);
+/** Marks a position strategy this directive has already taught the end-aligned fallbacks. */
+const AUGMENTED = Symbol('gauzyEntitySelectPositions');
+
+/**
+ * Every start-aligned position followed by its end-aligned twin, in the order given — so ng-select's
+ * own preference (`auto`: below then above; `top`: above only) is kept, and each side gets a
+ * fallback that grows towards the middle of the screen.
+ */
+export function withEndAlignedFallbacks(positions: readonly ConnectedPosition[]): ConnectedPosition[] {
+	return positions.flatMap((position) =>
+		position.originX === 'start' && position.overlayX === 'start'
+			? [position, { ...position, originX: 'end', overlayX: 'end' } as ConnectedPosition]
+			: [position]
+	);
+}
 
 /**
  * Lets an entity selector's dropdown panel be WIDER than its trigger, without changing the
@@ -33,6 +46,11 @@ const ABOVE_FIRST = new Set(['top']);
  * be cut. This directive adds the end-aligned positions plus push to the overlay's position
  * strategy, so the panel flips or slides back into view instead.
  *
+ * ng-select re-applies its own (start-aligned) position list from an `effect` every time the panel
+ * opens — after `(open)` has fired — so setting the list once would be overwritten. The directive
+ * therefore wraps the strategy's `withPositions` once: whatever list ng-select sets from then on
+ * arrives with its end-aligned twins ({@link withEndAlignedFallbacks}).
+ *
  * `dropdownOverlayRef` is a protected member of `NgSelectComponent` (set just before the overlay
  * attaches); it is read through an index because ng-select has no public handle on its overlay.
  * If a future ng-select drops it, this directive does nothing and the CSS still widens the panel.
@@ -43,11 +61,14 @@ const ABOVE_FIRST = new Set(['top']);
 })
 export class EntitySelectPanelDirective {
 	private readonly select = inject(NgSelectComponent);
+	private readonly injector = inject(Injector);
 
 	constructor() {
-		// `openEvent` fires BEFORE ng-select attaches and sizes the overlay, so the adjustment
-		// runs once the current open has finished.
-		const subscription = this.select.openEvent.subscribe(() => queueMicrotask(() => this.adjust()));
+		// `openEvent` fires BEFORE ng-select attaches the overlay — the attach happens in an effect
+		// during the change detection the open schedules — so the adjustment waits for that render.
+		const subscription = this.select.openEvent.subscribe(() =>
+			afterNextRender({ write: () => this.adjust() }, { injector: this.injector })
+		);
 		inject(DestroyRef).onDestroy(() => subscription.unsubscribe());
 	}
 
@@ -59,11 +80,14 @@ export class EntitySelectPanelDirective {
 		}
 		const strategy = overlayRef.getConfig().positionStrategy;
 		if (strategy instanceof FlexibleConnectedPositionStrategy) {
-			const position = String((this.select as unknown as { dropdownPosition?: () => string }).dropdownPosition?.() ?? 'auto');
-			const positions = ABOVE_FIRST.has(position)
-				? [...ENTITY_SELECT_PANEL_POSITIONS.slice(2), ...ENTITY_SELECT_PANEL_POSITIONS.slice(0, 2)]
-				: ENTITY_SELECT_PANEL_POSITIONS;
-			strategy.withPositions(positions).withPush(true);
+			const augmentable = strategy as FlexibleConnectedPositionStrategy & { [AUGMENTED]?: true };
+			if (!augmentable[AUGMENTED]) {
+				const setPositions = strategy.withPositions.bind(strategy);
+				strategy.withPositions = (positions: ConnectedPosition[]) => setPositions(withEndAlignedFallbacks(positions));
+				augmentable[AUGMENTED] = true;
+			}
+			// Re-state the list ng-select set for this open, through the wrapper.
+			strategy.withPositions(strategy.positions.filter((p) => !(p.originX === 'end' && p.overlayX === 'end'))).withPush(true);
 		}
 		overlayRef.updatePosition();
 	}

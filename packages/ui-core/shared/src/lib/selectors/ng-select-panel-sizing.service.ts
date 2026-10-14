@@ -22,7 +22,9 @@ export const NG_SELECT_TRIGGER_WIDTH_VAR = '--gauzy-ng-select-trigger-width';
  * names in `aria-controls` — and writes that select's width to {@link NG_SELECT_TRIGGER_WIDTH_VAR}
  * on the pane. A custom property is used rather than `style.minWidth` because the CDK rewrites
  * `minWidth` from its own config on every `updateSize()` call, which ng-select makes on each open
- * and on every trigger resize; it never touches custom properties.
+ * and on every trigger resize; it never touches custom properties. While the panel is open the
+ * select is also watched for size changes (a full-width form field on a window resize), so the floor
+ * follows the control rather than keeping the width it had when the panel opened.
  *
  * Runs outside the Angular zone: it only writes a style, so it must not trigger change detection.
  */
@@ -32,6 +34,8 @@ export class NgSelectPanelSizingService implements OnDestroy {
 	private readonly zone = inject(NgZone);
 	private bodyObserver: MutationObserver | null = null;
 	private readonly containers = new Map<Element, MutationObserver>();
+	/** One size watch per open panel's select; dropped when the panel leaves the document. */
+	private readonly triggerWatches = new Map<Element, { select: Element; observer: ResizeObserver }>();
 
 	/** Starts watching (idempotent; a no-op where `MutationObserver` does not exist, e.g. SSR). */
 	start(): void {
@@ -61,6 +65,8 @@ export class NgSelectPanelSizingService implements OnDestroy {
 		this.bodyObserver = null;
 		this.containers.forEach((observer) => observer.disconnect());
 		this.containers.clear();
+		this.triggerWatches.forEach(({ observer }) => observer.disconnect());
+		this.triggerWatches.clear();
 	}
 
 	/**
@@ -81,7 +87,43 @@ export class NgSelectPanelSizingService implements OnDestroy {
 			return null;
 		}
 		(pane as HTMLElement).style.setProperty(NG_SELECT_TRIGGER_WIDTH_VAR, `${width}px`);
+		this.watchTrigger(panel, select as Element);
 		return width;
+	}
+
+	/**
+	 * Keeps the pane's floor equal to the select's width while `panel` is open, and stops as soon as
+	 * the panel has left the document (closed) — checked on every notification and on every attach.
+	 */
+	private watchTrigger(panel: Element, select: Element): void {
+		this.dropDetachedWatches();
+		if (typeof ResizeObserver === 'undefined' || this.triggerWatches.get(panel)?.select === select) {
+			return;
+		}
+		this.triggerWatches.get(panel)?.observer.disconnect();
+		const observer = new ResizeObserver(() => {
+			if (!panel.isConnected) {
+				observer.disconnect();
+				this.triggerWatches.delete(panel);
+				return;
+			}
+			const width = select.getBoundingClientRect().width;
+			if (width > 0) {
+				panel.parentElement?.style.setProperty(NG_SELECT_TRIGGER_WIDTH_VAR, `${width}px`);
+			}
+		});
+		observer.observe(select);
+		this.triggerWatches.set(panel, { select, observer });
+	}
+
+	/** Disconnects the watches of panels that were closed (removed from the document) since. */
+	private dropDetachedWatches(): void {
+		this.triggerWatches.forEach(({ observer }, panel) => {
+			if (!panel.isConnected) {
+				observer.disconnect();
+				this.triggerWatches.delete(panel);
+			}
+		});
 	}
 
 	private watch(container: Element): void {
@@ -89,6 +131,9 @@ export class NgSelectPanelSizingService implements OnDestroy {
 			return;
 		}
 		const observer = new MutationObserver((records) => {
+			if (records.some((record) => record.removedNodes.length > 0)) {
+				this.dropDetachedWatches();
+			}
 			// Option rows render and re-render while a panel is open (scrolling, filtering); only an
 			// attach — a panel, or something containing one, being added — needs a measurement.
 			const attached = records.some((record) =>

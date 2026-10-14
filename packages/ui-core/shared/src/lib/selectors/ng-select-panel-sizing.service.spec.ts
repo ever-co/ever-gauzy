@@ -82,6 +82,45 @@ describe('NgSelectPanelSizingService', () => {
 		expect(pane.style.getPropertyValue(NG_SELECT_TRIGGER_WIDTH_VAR)).toBe('180px');
 	});
 
+	it('follows the select while its panel is open, and lets go once the panel closes', () => {
+		// jsdom has no ResizeObserver: a controllable stand-in records what is observed.
+		const observers: { callback: () => void; targets: Element[]; disconnected: boolean }[] = [];
+		const original = (globalThis as any).ResizeObserver;
+		(globalThis as any).ResizeObserver = class {
+			private readonly entry = { callback: () => undefined, targets: [] as Element[], disconnected: false };
+			constructor(callback: () => void) {
+				this.entry.callback = callback;
+				observers.push(this.entry);
+			}
+			observe(target: Element) {
+				this.entry.targets.push(target);
+			}
+			disconnect() {
+				this.entry.disconnected = true;
+			}
+		};
+		try {
+			const select = addSelect('lb-form', 400);
+			const { container, pane, panel } = buildOverlay('lb-form');
+			document.body.appendChild(container);
+			service.sizePanel(panel);
+			expect(observers).toHaveLength(1);
+			expect(observers[0].targets).toEqual([select]);
+
+			// The window narrows; the full-width form field narrows with it.
+			select.getBoundingClientRect = () => ({ width: 260 }) as DOMRect;
+			observers[0].callback();
+			expect(pane.style.getPropertyValue(NG_SELECT_TRIGGER_WIDTH_VAR)).toBe('260px');
+
+			// Closed: the panel leaves the document, and the next notification ends the watch.
+			pane.removeChild(panel);
+			observers[0].callback();
+			expect(observers[0].disconnected).toBe(true);
+		} finally {
+			(globalThis as any).ResizeObserver = original;
+		}
+	});
+
 	it('does not re-measure on option re-renders inside an open panel', async () => {
 		service.start();
 		const select = addSelect('lb-team', 120);
