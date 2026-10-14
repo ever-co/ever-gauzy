@@ -193,9 +193,9 @@ export async function exited(desktop: DesktopApp, timeout = 60_000): Promise<voi
 
 /**
  * Quits the app (CDP `Browser.close`, which Electron handles like a user's quit), then makes sure nothing
- * of it survives: the started process tree (off Windows: its process group) and every process still running
- * from the build under test — a relaunched app (`app.relaunch()` starts it outside the first process's
- * tree and group), the forked desktop API. Processes of other installations are never touched.
+ * of this run survives: the started process tree (off Windows: its process group), then whatever of the run
+ * is left — a relaunched app (`app.relaunch()` starts it outside the first process's tree and group), the
+ * forked desktop API (see `killLeftovers`). Other programs are never touched.
  */
 export async function closeDesktopApp(desktop: DesktopApp | undefined): Promise<void> {
 	if (!desktop) return;
@@ -216,7 +216,7 @@ export async function closeDesktopApp(desktop: DesktopApp | undefined): Promise<
 	const deadline = Date.now() + 15_000;
 	while (Date.now() < deadline && (await targets(desktop)).length) await new Promise((r) => setTimeout(r, 500));
 	killTree(desktop.pid);
-	killProcessesOf(desktop.target.executablePath);
+	killLeftovers(desktop);
 	logStreams.get(desktop.log)?.end();
 }
 
@@ -229,41 +229,83 @@ function killTree(pid: number): void {
 	}
 }
 
-/** Stops every process running from the build under test, matched by its executable (Windows) or install directory. */
-function killProcessesOf(executablePath: string): void {
-	let killed: number[] = [];
+interface ProcessInfo {
+	pid: number;
+	ppid: number;
+	/** Windows only: the executable, and the start time (a parent id can be a reused one). */
+	exe?: string;
+	created?: number;
+	cmd: string;
+}
+
+function processes(): ProcessInfo[] {
+	if (process.platform === 'win32') {
+		const script =
+			'Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, ExecutablePath, CommandLine, ' +
+			'@{ n = "Created"; e = { $_.CreationDate.ToFileTimeUtc() } } | ConvertTo-Json -Compress';
+		const json = execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+		return (JSON.parse(json) as { ProcessId: number; ParentProcessId: number; ExecutablePath: string | null; CommandLine: string | null; Created: number }[]).map(
+			(p) => ({ pid: p.ProcessId, ppid: p.ParentProcessId, exe: p.ExecutablePath ?? '', created: p.Created, cmd: p.CommandLine ?? '' })
+		);
+	}
+	return execFileSync('ps', ['-axo', 'pid=,ppid=,args='], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
+		.split('\n')
+		.map((line) => /^\s*(\d+)\s+(\d+)\s+(.*)$/.exec(line))
+		.filter((m): m is RegExpExecArray => m !== null)
+		.map((m) => ({ pid: Number(m[1]), ppid: Number(m[2]), cmd: m[3] }));
+}
+
+/**
+ * Stops what is left of this run: every process started with this run's `--user-data-dir` (Chromium passes
+ * it on to the app's child processes, and a relaunched app gets the same command line), and — for a packaged
+ * app, whose executable belongs to the build under test alone — every process running from that build (its
+ * executable on Windows; its directory / `.app` bundle on Linux / macOS), with all their descendants (a forked
+ * API). A shared Electron binary (`DESKTOP_TIMER_APP_DIR` + `DESKTOP_TIMER_ELECTRON`) is never matched on:
+ * other apps run from it too.
+ */
+function killLeftovers(desktop: DesktopApp): void {
+	const win = process.platform === 'win32';
+	const norm = (s: string) => (win ? s.toLowerCase() : s).replace(/"/g, '');
+	let list: ProcessInfo[];
 	try {
-		if (process.platform === 'win32') {
-			const script =
-				`$p = $env:GAUZY_E2E_EXE; Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $p } | ` +
-				`ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }`;
-			killed = execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], {
-				env: { ...process.env, GAUZY_E2E_EXE: executablePath },
-				encoding: 'utf8'
-			})
-				.split(/\s+/)
-				.filter(Boolean)
-				.map(Number);
-		} else {
-			// Every process of an unpacked Linux app runs an executable in its directory; on macOS, in its .app bundle
-			// (the helpers live in Contents/Frameworks).
-			const root = /^(.*?\.app)\//.exec(executablePath)?.[1] ?? dirname(executablePath);
-			const prefix = root.endsWith(sep) ? root : root + sep;
-			for (const line of execFileSync('ps', ['-axo', 'pid=,args='], { encoding: 'utf8' }).split('\n')) {
-				const match = /^\s*(\d+)\s+(.*)$/.exec(line);
-				if (!match || !match[2].startsWith(prefix) || Number(match[1]) === process.pid) continue;
-				try {
-					process.kill(Number(match[1]), 'SIGKILL');
-					killed.push(Number(match[1]));
-				} catch {
-					// gone in the meantime
-				}
+		list = processes();
+	} catch {
+		return;
+	}
+	const userData = norm(`--user-data-dir=${desktop.userDataDir}`);
+	const startedWithUserData = (cmd: string) => {
+		const c = norm(cmd);
+		return c.endsWith(userData) || c.includes(`${userData} `);
+	};
+	const packaged = desktop.target.args.length === 0;
+	const exe = norm(desktop.target.executablePath);
+	const root = /^(.*?\.app)\//.exec(desktop.target.executablePath)?.[1] ?? dirname(desktop.target.executablePath);
+	const prefix = root.endsWith(sep) ? root : root + sep;
+	const fromBuild = (p: ProcessInfo) => packaged && (win ? norm(p.exe ?? '') === exe : p.cmd.startsWith(prefix));
+	let ours = new Map(list.filter((p) => startedWithUserData(p.cmd) || fromBuild(p)).map((p) => [p.pid, p]));
+	for (let grown = true; grown; ) {
+		grown = false;
+		for (const p of list) {
+			const parent = ours.get(p.ppid);
+			// On Windows a parent id may belong to a newer process that reused it: a child is never older than its parent.
+			if (parent && !ours.has(p.pid) && (!win || (p.created ?? 0) >= (parent.created ?? 0))) {
+				ours.set(p.pid, p);
+				grown = true;
 			}
 		}
-	} catch {
-		// nothing left
 	}
-	if (killed.length) console.log(`[desktop-e2e] stopped leftover processes of the build under test: ${killed.join(', ')}`);
+	ours.delete(process.pid);
+	let killed: number[] = [];
+	for (const pid of ours.keys()) {
+		try {
+			if (win) execFileSync('taskkill', ['/PID', String(pid), '/F'], { stdio: 'ignore' });
+			else process.kill(pid, 'SIGKILL');
+			killed.push(pid);
+		} catch {
+			// gone in the meantime
+		}
+	}
+	if (killed.length) console.log(`[desktop-e2e] stopped leftover processes of this run: ${killed.join(', ')}`);
 }
 
 /**

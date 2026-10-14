@@ -95,7 +95,9 @@ window never came up. Attaching later leaves those renderers alone, and lets the
   installed app's login item and protocol point at the test build until that app starts again (or fix them in
   `regedit`).
 - **Processes**: the app is quit at the end; then the process tree it was started as (off Windows: its process
-  group) and anything still running from the build under test — a relaunched app, a forked API — is stopped
-  (matched by its executable path on Windows, by the app's directory / `.app` bundle on Linux / macOS). The API is
+  group) and whatever of the run is left — a relaunched app, a forked API — is stopped: processes started with the
+  run's `--user-data-dir`, and for a packaged app the processes running from the build under test (its executable
+  on Windows, its directory / `.app` bundle on Linux / macOS), with their descendants. A shared Electron binary
+  (`DESKTOP_TIMER_APP_DIR` mode) is never matched on, so other apps running from it are left alone. The API is
   stopped by the global setup's teardown.
 - **The test database**: the organization's timer settings above.
