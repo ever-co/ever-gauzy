@@ -670,11 +670,13 @@ function expressionDefaults(entry, node, stack) {
 		const name = node.name.split('.').pop();
 		const target = resolveClass(entry, name);
 		if (!target) return { keys: new Map(), unknown: [`unresolved class ${node.name} in ${rel(entry.file)}`] };
-		if (target.external) return { keys: new Map(), unknown: [] }; // a class from outside the workspace
+		if (target.external) return { keys: new Map(), unknown: [`class ${node.name} from ${target.external}`] };
 		return instanceDefaults(target.entry, target.cls, stack);
 	}
 	if (node.kind === 'call') {
-		const callee = node.callee.split('.').pop();
+		// The name the factory was imported under, so `import { PartialType as PT }` is still read as `PartialType`.
+		const local = node.callee.split('.').pop();
+		const callee = entry.imports.get(local)?.imported ?? local;
 		if (STRIPPING.has(callee)) return { keys: new Map(), unknown: [] };
 		if (MAPPED.has(callee)) {
 			const [first, ...rest] = node.args;
@@ -783,6 +785,29 @@ function transformOf(text) {
 	});
 }
 
+/**
+ * The `@Body()` parameter of a handler: the arguments of the decorator (a pipe may be stated there) and the type the
+ * parameter is declared with. `@Body(...) name: Type` and `@Body(...) { a, b }: Type` are read; an inline object type
+ * or an interface is `Object` at runtime, which `plainToInstance` does not construct, so only a class name can carry a
+ * default. The decorator's parentheses are matched on the masked text rather than by a pattern, so a pipe stated
+ * inline (`@Body(new ValidationPipe({ ... }))`) is read whole.
+ *
+ * @returns `{ pipeArguments, type, isArray }`, or `null` when the handler takes no body.
+ */
+function bodyParameter(params) {
+	const masked = mask(params);
+	const at = masked.search(/@Body\s*\(/);
+	if (at === -1) return null;
+	const open = masked.indexOf('(', at);
+	const close = matching(masked, open);
+	if (close === -1) return null;
+	const declared = /^\s*(?:public\s+|readonly\s+)?(?:[A-Za-z_$][\w$]*|\{[^}]*\})\s*\??\s*:\s*([A-Za-z_$][\w$]*)(\s*\[\])?/.exec(
+		params.slice(close + 1)
+	);
+	if (!declared) return null;
+	return { pipeArguments: params.slice(open + 1, close), type: declared[1], isArray: Boolean(declared[2]) };
+}
+
 const UPDATE_NAME = /(^|[a-z])(Update|Patch)[A-Z]|^(Update|Patch)/;
 
 const bodies = []; // { file, controller, handler, verb, path, line, type, transform }
@@ -798,16 +823,12 @@ for (const file of allFiles) {
 		for (const handler of handlersOf(entry, cls)) {
 			const verb = /@(Put|Patch|Post|Delete)\s*\(\s*(?:['"]([^'"]*)['"])?/.exec(handler.decorators);
 			if (!verb) continue;
-			// `@Body(...) name: Type` or `@Body(...) { a, b }: Type`; an inline object type or an interface is `Object`
-			// at runtime, which `plainToInstance` does not construct, so only a class name can carry a default.
-			const body = /@Body\s*\(([^)]*(?:\([^)]*\)[^)]*)*)\)\s*(?:public\s+|readonly\s+)?(?:[A-Za-z_$][\w$]*|\{[^}]*\})\s*\??\s*:\s*([A-Za-z_$][\w$]*)(\s*\[\])?/.exec(
-				handler.params
-			);
-			if (!body || body[3]) continue;
-			const type = body[2];
+			const body = bodyParameter(handler.params);
+			if (!body || body.isArray) continue;
+			const type = body.type;
 			const isUpdateVerb = verb[1] === 'Put' || verb[1] === 'Patch';
 			if (!isUpdateVerb && !UPDATE_NAME.test(type)) continue;
-			const paramTransform = transformOf(body[1]);
+			const paramTransform = transformOf(body.pipeArguments);
 			const routeTransform = transformOf(handler.decorators);
 			const transform = paramTransform ?? routeTransform ?? classTransform ?? false;
 			bodies.push({
@@ -883,6 +904,8 @@ for (const body of bodies) {
 
 const rows = [...byClass.values()].sort((a, b) => a.file.localeCompare(b.file) || a.name.localeCompare(b.name));
 const offending = rows.filter((row) => row.keys.size > 0 && !EXEMPT.has(row.name));
+// A body the gate cannot follow is a body it cannot vouch for, so it fails rather than passing unread.
+const unchecked = rows.filter((row) => row.unknown.length > 0);
 const staleExemptions = [...EXEMPT.keys()].filter((name) => !rows.some((row) => row.name === name && row.keys.size > 0));
 
 if (JSON_OUT) {
@@ -921,14 +944,16 @@ if (REPORT) {
 	process.exit(0);
 }
 
-if (offending.length > 0 || staleExemptions.length > 0) {
-	console.error('FAILED — update request bodies that carry defaults the client did not send:');
+if (offending.length > 0 || staleExemptions.length > 0 || unchecked.length > 0 || unresolved.length > 0) {
+	console.error('FAILED — update request bodies that carry defaults the client did not send, or that could not be checked:');
 	for (const row of offending) {
 		console.error(`  ${row.name} (${row.file})`);
 		for (const [field, origin] of row.keys) console.error(`    ${field}  <- initializer in ${origin}`);
 		for (const route of row.routes) console.error(`    used by ${route.route} ${route.handler} (${route.controller})`);
 	}
 	for (const name of staleExemptions) console.error(`  exemption for ${name} no longer needed: remove it from EXEMPT`);
+	for (const row of unchecked) console.error(`  ${row.name} (${row.file}) could not be checked: ${row.unknown.join('; ')}`);
+	for (const line of unresolved) console.error(`  body type not resolved to a class or an interface: ${line}`);
 	console.error('');
 	console.error(
 		'Build an update body as `WithoutInitializers(PartialType(CreateXDTO))` (packages/common/src/lib/dto/' +
@@ -938,11 +963,9 @@ if (offending.length > 0 || staleExemptions.length > 0) {
 	process.exit(1);
 }
 
-const unknownCount = rows.filter((r) => r.unknown.length > 0).length;
 const exemptedCount = rows.filter((r) => r.keys.size > 0 && EXEMPT.has(r.name)).length;
 console.log(
 	`PASSED — ${rows.length} update request body class(es) across ${bodies.length} route(s); none carries a default` +
 		(exemptedCount ? ` (${exemptedCount} exempted action bodies, listed in the gate)` : '') +
-		'.' +
-		(unknownCount ? ` ${unknownCount} have heritage the gate could not follow (--report lists them).` : '')
+		'.'
 );
