@@ -36,6 +36,7 @@ import {
 	TruncatePipe
 } from '@gauzy/ui-core/shared';
 import { ProposalTemplateFormComponent } from '../proposal-template-form/proposal-template-form.component';
+import { buildProposalTemplateViewSections } from '../../proposal-template-record-view';
 
 export enum ProposalTemplateTabsEnum {
 	ACTIONS = 'ACTIONS',
@@ -238,31 +239,12 @@ export class ProposalTemplateListComponent
 			return;
 		}
 
-		this.viewSections = this.buildViewSections();
+		this.viewSections = buildProposalTemplateViewSections();
 		this.viewedTemplate = template;
 	}
 
 	closeView(): void {
 		this.viewedTemplate = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the grid columns, read vertically, plus
-	 * the full template body the grid truncates.
-	 */
-	private buildViewSections(): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'PROPOSAL_TEMPLATE.EMPLOYEE', key: 'employee', type: 'person' },
-					{ label: 'PROPOSAL_TEMPLATE.NAME', key: 'name' },
-					{ label: 'PROPOSAL_TEMPLATE.IS_DEFAULT', key: 'isDefault', type: 'boolean' }
-				]
-			},
-			{
-				fields: [{ label: 'PROPOSAL_TEMPLATE.DESCRIPTION', key: 'content', type: 'html', wide: true }]
-			}
-		];
 	}
 
 	private _loadSmartTableSettings(): void {

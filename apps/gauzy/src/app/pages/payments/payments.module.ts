@@ -13,13 +13,15 @@ import {
 	CardGridModule,
 	SharedModule,
 	TableFiltersModule,
-	FavoriteToggleModule
+	FavoriteToggleModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { PaymentsComponent } from './payments.component';
 import { PaymentsRoutingModule } from './payments-routing.module';
 
 @NgModule({
 	imports: [
+		RecordViewModule,
 		FavoriteToggleModule,
 		TranslatePipe,
 		NbCardModule,
