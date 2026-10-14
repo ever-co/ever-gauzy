@@ -45,16 +45,18 @@ export type IOrderSummaryConnection = GraphqlConnection<OrderSummary>;
 export type IOrderTransactionConnection = GraphqlConnection<OrderTransaction>;
 
 /**
- * What a destructive delete of one of this domain's rows answers.
+ * What a `delete*` field of one of this domain's rows answers.
  *
- * The row is gone, so the answer cannot be the row: it is the identifier the delete named and whether a
- * row was there to remove. One shape for the whole domain rather than one per resource, because the two
- * facts are the same two whatever was removed — and it is the shape `deleteOrderLineInvoice` already
- * answers with, which is the one delete field this domain carried before these.
+ * Every such field retires the row — `13` §11.4 keeps every order table "Soft delete only (`deletedAt`); no
+ * hard delete through the API" — through the same `softRemove` its `softDelete*` sibling reaches (see
+ * `retireForDeleteField`). The answer is the identifier the field named and whether a row of the caller's
+ * was there to retire. One shape for the whole domain rather than one per resource, because the two facts
+ * are the same two whatever was retired — and it is the shape `deleteOrderLineInvoice` already answers
+ * with, which is the one delete field this domain carried before these.
  */
 export interface IOrderDeleteResult {
 	/** The identifier the delete named. */
 	id: string;
-	/** Whether a row was there to remove; a delete of one that was not answers false. */
+	/** Whether a row of the caller's was there to retire; a delete of one that was not answers false. */
 	deleted: boolean;
 }
