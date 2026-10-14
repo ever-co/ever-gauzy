@@ -269,6 +269,14 @@ jobs:
         if: always()
         run: node tools/scripts/money-type-check.mjs
 
+      # The design promised root fields by name, and 81 of them appeared nowhere in the code (handover
+      # 2026-09-20 §7.68). Owner decision 12 (2026-10-13): triage each, build what is needed. Every name has a
+      # decision here (delivered / naming / retired / build / drop), each decision is checked against the
+      # composed schema, and the build backlog may only shrink.
+      - name: Every phantom design name is triaged, and the build backlog only shrinks
+        if: always()
+        run: node tools/scripts/design-name-triage-check.mjs
+
       # Owner decision (2026-09-21): a pull request into develop does not start a workflow - the Actions
       # minutes belonged to every commit of the branch being merged, and the run belongs to the merge. The
       # decision is a trigger, so a job-level guard cannot express it and only this check can keep it.
