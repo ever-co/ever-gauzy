@@ -24,6 +24,20 @@ interface ICreateGoodsReceiptArgs {
 	idempotencyKey?: string;
 }
 
+/** A correction to a receipt's own fields, as `UpdateGoodsReceiptInput` declares it. */
+interface IUpdateGoodsReceiptArgs {
+	purchaseOrderId?: ID;
+	warehouseId?: ID;
+	number?: string;
+	status?: GoodsReceiptStatus;
+	receivedAt?: Date;
+	receivedByUserId?: ID;
+	canceledAt?: Date;
+	version?: number;
+	note?: string;
+	metadata?: Record<string, unknown>;
+}
+
 /**
  * The purchasing domain's goods-receipt root fields.
  *
@@ -174,6 +188,34 @@ export class GoodsReceiptResolver {
 	async closeGoodsReceipt(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return toGoodsReceiptPayload(await this.goodsReceiptService.reverse(id, reason));
+		} catch (error) {
+			return toFailedGoodsReceiptPayload(error);
+		}
+	}
+
+	/**
+	 * Corrects a receipt's own fields — the mirror of `PUT /goods-receipts/:id`.
+	 *
+	 * The route was withheld from GraphQL while it reached the CRUD base's generic update, which let a caller
+	 * set a posted receipt's `status`/`canceledAt` without the compensating movements `reverse()` writes, or
+	 * re-point its order or location (handover 2026-09-20 §7.65 item 23 (b)): a faithful field would have
+	 * carried the hole and a narrower one would have made GraphQL narrower than REST. `GoodsReceiptService.update`
+	 * now refuses those changes below the route (`GOODS_RECEIPT_IMMUTABLE`, ae6ffe0419d), so the field can be
+	 * the route exactly: the same members, the same method with the same arguments, the same grant. The answer
+	 * is the receipt as the `goodsReceipt` query reads it, in the payload every mutation of this resource
+	 * answers, and a refusal travels in `userErrors`.
+	 *
+	 * @param id The receipt to correct.
+	 * @param input The members to change, as the route's body states them.
+	 * @returns The payload, with the corrected receipt or the reason it was refused.
+	 */
+	@Mutation('updateGoodsReceipt')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async updateGoodsReceipt(@Args('id') id: ID, @Args('input') input: IUpdateGoodsReceiptArgs) {
+		try {
+			await this.goodsReceiptService.update(id, input as any);
+
+			return toGoodsReceiptPayload(await this.goodsReceiptService.findOneDetailed(id));
 		} catch (error) {
 			return toFailedGoodsReceiptPayload(error);
 		}

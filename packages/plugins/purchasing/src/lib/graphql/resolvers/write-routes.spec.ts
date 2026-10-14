@@ -33,16 +33,17 @@
  *   what a `stock_movement` row was written from, and a receipt is what its lines belong to. They are
  *   delivered because §3.1 makes a delivered route a delivered capability on both protocols, and the
  *   account of what they remove is written into their docstrings rather than hidden behind a name.
- * - **Two are withheld**, and the reason is the direction §3.1 forbids rather than a specification:
- *   `PUT /goods-receipts/:id` and `PUT /goods-receipt-lines/:id` reach the CRUD base's generic `update`
- *   with a `PartialType` of the whole shape, so a caller can rewrite a **posted** receipt's `status`,
- *   `canceledAt`, `purchaseOrderId` or `warehouseId` — bypassing `reverse()` and therefore writing no
- *   compensating `WRITE_OFF` movements — and can repoint a receipt line's `variantId` while the movements
- *   already written for the old variant stand. Neither can be mirrored faithfully without propagating the
- *   defect, and neither can be mirrored narrowly without making GraphQL **narrower than REST**, which is
- *   the one direction the parity rule forbids: there is no domain method here for a field to reach, so
- *   what the route effectively does is what the generic base does. Both are **owner decisions whose fix
- *   is the REST DTO**, and they are reported rather than resolved.
+ * - **Two more are delivered, after being withheld**: `PUT /goods-receipts/:id` and
+ *   `PUT /goods-receipt-lines/:id`. They were withheld while they reached the CRUD base's generic `update`
+ *   with a `PartialType` of the whole shape — a caller could rewrite a **posted** receipt's `status`,
+ *   `canceledAt`, `purchaseOrderId` or `warehouseId` (bypassing `reverse()` and its compensating
+ *   `WRITE_OFF` movements) and re-point a receipt line's `variantId` while the movements written for the old
+ *   variant stood — so a faithful mirror would have propagated the defect and a narrow one would have made
+ *   GraphQL narrower than REST. ae6ffe0419d closed the holes **below** the routes: `GoodsReceiptService.update`
+ *   and `GoodsReceiptLineService.update` refuse a change to those members (`GOODS_RECEIPT_IMMUTABLE`,
+ *   `GOODS_RECEIPT_LINE_IMMUTABLE`) while the routes and their DTOs stay as they were. So the fields are the
+ *   routes exactly — `updateGoodsReceipt` and `updateGoodsReceiptLine`: the members each route writes, the
+ *   same method with the same arguments, the same grant (handover 2026-09-20 §7.65 item 23).
  *
  * Three properties are pinned for each delivered field: it is **declared** with the arguments the route
  * takes; it **states its own route's permission**, read from the route's metadata rather than restated
@@ -70,6 +71,7 @@ import { GoodsReceiptController } from '../../goods-receipt/goods-receipt.contro
 import { GoodsReceiptLineController } from '../../goods-receipt-line/goods-receipt-line.controller';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
 import { PurchaseOrderLineController } from '../../purchase-order-line/purchase-order-line.controller';
+import { immutableMembers } from '../../purchasing.immutable';
 import { schemaExtensions } from '../schema-extensions';
 import { GoodsReceiptResolver } from './goods-receipt.resolver';
 import { GoodsReceiptLineResolver } from './goods-receipt-line.resolver';
@@ -277,30 +279,56 @@ const CHILD_THROUGH_PARENT: {
 ];
 
 /**
- * The two routes withheld rather than mirrored.
+ * The two update routes, mirrored now that their services refuse what a receipt posted.
  *
- * Each exists, is declared, and reaches the CRUD base's generic `update` — so what it writes is the
- * whitelist of a `PartialType` rather than a domain method, which is why neither side of the pair can be
- * brought into parity without either propagating the defect or narrowing GraphQL below REST.
+ * Each reaches its service's own `update` — which, since ae6ffe0419d, refuses a change to the members a
+ * posted receipt's movements and counters were written from — so a field reaching the same method with the
+ * same members is the route, refusal included.
  */
-const WITHHELD = [
+const UPDATES = [
 	{
 		controller: GoodsReceiptController,
+		resolver: GoodsReceiptResolver,
 		resource: 'GoodsReceipt',
 		route: 'update',
-		names: ['updateGoodsReceipt'],
-		because:
-			'the generic update can set a posted receipt’s status and canceledAt without the compensating movements reverse() writes, and can repoint its order or location'
+		field: 'updateGoodsReceipt',
+		input: 'UpdateGoodsReceiptInput',
+		answers: 'GoodsReceiptPayload',
+		/** The members `UpdateGoodsReceiptDTO` (`PartialType(GoodsReceiptDTO)`) carries, the tenant pair aside. */
+		members: [
+			'purchaseOrderId',
+			'warehouseId',
+			'number',
+			'status',
+			'receivedAt',
+			'receivedByUserId',
+			'canceledAt',
+			'version',
+			'note',
+			'metadata'
+		],
+		grant: GRANT
 	},
 	{
 		controller: GoodsReceiptLineController,
+		resolver: GoodsReceiptLineResolver,
 		resource: 'GoodsReceiptLine',
 		route: 'update',
-		names: ['updateGoodsReceiptLine'],
-		because:
-			'the generic update can repoint a line’s variantId while the movements already written for the old variant stand'
+		field: 'updateGoodsReceiptLine',
+		input: 'UpdateGoodsReceiptLineInput',
+		answers: 'GoodsReceiptLine',
+		/**
+		 * The members the route writes: `UpdateGoodsReceiptLineDTO`'s, less the six its handler drops before it
+		 * writes (`quantity`, `damagedQuantity`, `unitCost`, `stockMovementId`, `receiptId`,
+		 * `purchaseOrderLineId`) and the tenant pair.
+		 */
+		members: ['variantId', 'batchNumber', 'expiresAt', 'warehouseBinId', 'note', 'metadata'],
+		grant: GRANT
 	}
 ];
+
+/** A correction of a receipt's own fields, as both surfaces state it. */
+const RECEIPT_CORRECTION = { note: 'Pallet 3 was checked twice.', receivedByUserId: ORDER, metadata: { dock: 'B' } };
 
 /** The receipt surfaces over one pair of stubs. */
 function receiptSurface(stubs: Row): { controller: Row; resolver: Row } {
@@ -339,7 +367,8 @@ function stubsFor(): Row {
 				receivedQuantity: '4.000000'
 			}),
 			recordSingleLine: jest.fn().mockResolvedValue(RECEIPT_LINE_ROW),
-			update: jest.fn().mockResolvedValue(RECEIPT_ROW)
+			update: jest.fn().mockResolvedValue(RECEIPT_ROW),
+			findOneDetailed: jest.fn().mockResolvedValue(RECEIPT_ROW)
 		},
 		line: {
 			delete: jest.fn().mockResolvedValue(DELETED),
@@ -706,38 +735,105 @@ describe('the three purchase-order-line routes — children reached through thei
 });
 
 /**
- * The two withheld routes.
+ * The two update routes, mirrored (handover 2026-09-20 §7.65 item 23 (b), (c)).
  *
- * Both exist and both write, and neither is mirrored — the reason is that the route's effective shape is
- * the CRUD base's generic update, so a faithful mirror propagates the defect and a narrow one makes
- * GraphQL quieter than REST, which §3.1 forbids. They are owner decisions whose fix is the REST DTO.
+ * Both used to be withheld because the route's effective shape was the CRUD base's generic update, so a
+ * faithful mirror propagated the defect and a narrow one made GraphQL quieter than REST. The services now
+ * refuse the changes that made them defects (ae6ffe0419d), so each field is declared with the members its
+ * route writes, reaches the route's method with the route's arguments, answers what the route answers, and
+ * carries a refusal to the caller as the route does.
  */
-describe('the two withheld routes — reported, not mirrored', () => {
-	it.each(WITHHELD)('$resource.$route is a real route with no field', ({ controller, route, names }) => {
-		expect(typeof handlersOf(controller)[route]).toBe('function');
+describe('the two update routes — mirrored, now that their services refuse what a receipt posted', () => {
+	it.each(UPDATES)('declares $field(id: ID!, input: $input!) answering $answers', ({ field, input, answers }) => {
+		const declared = mutationField(field);
+		const arguments_ = declared.arguments ?? [];
 
-		for (const name of names) {
-			expect(declares(name)).toBe(false);
+		expect(arguments_.map((argument) => argument.name.value)).toEqual(['id', 'input']);
+		expect(namedTypeName(arguments_[0].type)).toBe('ID');
+		expect(arguments_[0].type.kind).toBe('NonNullType');
+		expect(namedTypeName(arguments_[1].type)).toBe(input);
+		expect(arguments_[1].type.kind).toBe('NonNullType');
+		expect(namedTypeName(declared.type)).toBe(answers);
+		expect(declared.type.kind).toBe('NonNullType');
+	});
+
+	it.each(UPDATES)('$input declares exactly the members the $resource route writes, all optional', ({ input, members }) => {
+		const fields = inputType(input).fields ?? [];
+
+		expect(fields.map((member) => member.name.value).sort()).toEqual([...members].sort());
+		for (const member of fields) {
+			expect(member.type.kind).not.toBe('NonNullType');
 		}
 	});
 
-	it('reaches the CRUD base’s generic update on both withheld routes', async () => {
-		// The defect in one assertion: the route's own method is the base's `update`, which writes whatever
-		// the DTO's whitelist admits rather than what a domain method allows. A receipt is a POSTED
-		// document, and its `status` is what `reverse()` is the only writer of.
+	it('updateGoodsReceipt reaches the method PUT /goods-receipts/:id reaches, with the same arguments', async () => {
 		const stubs = stubsFor();
-		const { controller: receipts } = receiptSurface(stubs);
-		const { controller: lines } = lineSurface(stubs);
+		const { controller, resolver } = receiptSurface(stubs);
 
-		await receipts.update(RECEIPT, { status: 'CANCELED', warehouseId: WAREHOUSE });
-		await lines.update(LINE, { variantId: VARIANT });
+		await controller.update(RECEIPT, RECEIPT_CORRECTION);
+		const answer = await resolver.updateGoodsReceipt(RECEIPT, RECEIPT_CORRECTION);
 
-		expect(stubs.receipt.update).toHaveBeenCalledWith(RECEIPT, {
-			status: 'CANCELED',
-			warehouseId: WAREHOUSE
-		});
-		expect(stubs.line.update).toHaveBeenCalledWith(LINE, { variantId: VARIANT });
+		expect(stubs.receipt.update).toHaveBeenNthCalledWith(1, RECEIPT, RECEIPT_CORRECTION);
+		expect(stubs.receipt.update).toHaveBeenNthCalledWith(2, RECEIPT, RECEIPT_CORRECTION);
+		expect(stubs.receipt.update).toHaveBeenCalledTimes(2);
+		// The answer is the receipt as the `goodsReceipt` query reads it, in the resource's payload.
+		expect(stubs.receipt.findOneDetailed).toHaveBeenCalledWith(RECEIPT);
+		expect(answer).toEqual({ goodsReceipt: RECEIPT_ROW, movementIds: [], outstandingQuantity: null, userErrors: [] });
+		// A correction is not a reversal: no compensating movements are written by either surface.
 		expect(stubs.receipt.reverse).not.toHaveBeenCalled();
+	});
+
+	it('updateGoodsReceiptLine reaches the method PUT /goods-receipt-lines/:id reaches, with the members the route writes', async () => {
+		const stubs = stubsFor();
+		const { controller, resolver } = lineSurface(stubs);
+
+		// The route drops the quantities before it writes; the field's input cannot state them at all.
+		const overRest = await controller.update(LINE, { variantId: VARIANT, note: 'Re-labelled.', quantity: '9.000000' });
+		const overGraphql = await resolver.updateGoodsReceiptLine(LINE, { variantId: VARIANT, note: 'Re-labelled.' });
+
+		expect(stubs.line.update).toHaveBeenNthCalledWith(1, LINE, { variantId: VARIANT, note: 'Re-labelled.' });
+		expect(stubs.line.update).toHaveBeenNthCalledWith(2, LINE, { variantId: VARIANT, note: 'Re-labelled.' });
+		// Both answer the line, read back.
+		expect(overRest).toBe(RECEIPT_LINE_ROW);
+		expect(overGraphql).toBe(RECEIPT_LINE_ROW);
+	});
+
+	it('carries the service’s refusal to the caller on both surfaces', async () => {
+		const stubs = stubsFor();
+		const { controller: receipts, resolver: receiptFields } = receiptSurface(stubs);
+		const { controller: lines, resolver: lineFields } = lineSurface(stubs);
+		const receiptRefusal = immutableMembers('GOODS_RECEIPT_IMMUTABLE', 'a posted receipt is reversed, not edited', {
+			id: RECEIPT,
+			fields: ['status']
+		});
+		const lineRefusal = immutableMembers('GOODS_RECEIPT_LINE_IMMUTABLE', 'the line’s movement stands for its variant', {
+			id: LINE,
+			fields: ['variantId']
+		});
+		stubs.receipt.update.mockRejectedValue(receiptRefusal);
+		stubs.line.update.mockRejectedValue(lineRefusal);
+
+		await expect(receipts.update(RECEIPT, { status: 'CANCELED' })).rejects.toBe(receiptRefusal);
+		await expect(receiptFields.updateGoodsReceipt(RECEIPT, { status: 'CANCELED' })).resolves.toMatchObject({
+			goodsReceipt: null,
+			userErrors: [{ code: 'GOODS_RECEIPT_IMMUTABLE' }]
+		});
+
+		await expect(lines.update(LINE, { variantId: VARIANT })).rejects.toBe(lineRefusal);
+		await expect(lineFields.updateGoodsReceiptLine(LINE, { variantId: VARIANT })).rejects.toBe(lineRefusal);
+	});
+
+	it.each(UPDATES)('$field states exactly the grant its route states, under the same guards', (entry) => {
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(entry.resolver)[entry.field])).toEqual([entry.grant]);
+		expect(permissionOfField(entry.resolver, entry.field)).toEqual(permissionOfRoute(entry.controller, entry.route));
+		expect(guardsOf(entry.resolver, entry.field)).toEqual(
+			expect.arrayContaining(guardsOf(entry.controller, entry.route))
+		);
+		// Neither route declares a retry scope or a version expectation, so neither field does.
+		for (const key of [IDEMPOTENT_METADATA_KEY, VERSIONED_METADATA_KEY]) {
+			expect(Reflect.getMetadata(key, fieldsOf(entry.resolver)[entry.field])).toBeUndefined();
+			expect(Reflect.getMetadata(key, handlersOf(entry.controller)[entry.route])).toBeUndefined();
+		}
 	});
 });
 
@@ -792,32 +888,30 @@ describe('the two delivered fields — the permission and the guards are the rou
  * The reading, asserted rather than described.
  *
  * The arithmetic is a test: nine routes flagged, two collapsed, three served through their parent, two
- * delivered and two withheld — which is the whole flag list, with nothing left unaccounted for.
+ * delivered as deletes and two delivered as the updates that used to be withheld — which is the whole flag
+ * list, with nothing left unaccounted for.
  */
-describe('the nine flagged routes — two collapsed, three through a parent, two delivered, two withheld', () => {
+describe('the nine flagged routes — two collapsed, three through a parent, four delivered', () => {
 	it('flags nine routes and accounts for every one of them', () => {
 		expect(COLLAPSED).toHaveLength(2);
 		expect(CHILD_THROUGH_PARENT).toHaveLength(3);
 		expect(DELIVERED).toHaveLength(2);
-		expect(WITHHELD).toHaveLength(2);
+		expect(UPDATES).toHaveLength(2);
 
-		expect(COLLAPSED.length + CHILD_THROUGH_PARENT.length + DELIVERED.length + WITHHELD.length).toBe(9);
+		expect(COLLAPSED.length + CHILD_THROUGH_PARENT.length + DELIVERED.length + UPDATES.length).toBe(9);
 		expect(33).toBeGreaterThan(9);
 	});
 
-	it('names the three child routes and the two withheld ones the way the audit expected', () => {
-		// The convention the instrument applies names each of these exactly, which is why each is a gap,
-		// a served child or a withheld route rather than a naming variant — and none of the five names is
-		// a field.
-		for (const name of [
-			'createPurchaseOrderLine',
-			'updatePurchaseOrderLine',
-			'deletePurchaseOrderLine',
-			'updateGoodsReceipt',
-			'updateGoodsReceiptLine'
-		]) {
+	it('names the three child routes the way the audit expected, and answers the two updates by their own names', () => {
+		// The convention the instrument applies names each of these exactly, which is why each is a gap or a
+		// served child rather than a naming variant — and none of the three names is a field.
+		for (const name of ['createPurchaseOrderLine', 'updatePurchaseOrderLine', 'deletePurchaseOrderLine']) {
 			expect(declares(name)).toBe(false);
 		}
+
+		// The two updates are answered under exactly the names the audit expected.
+		expect(declares('updateGoodsReceipt')).toBe(true);
+		expect(declares('updateGoodsReceiptLine')).toBe(true);
 
 		// While the two collapsed routes' expectations are also absent, and their serving fields present.
 		expect(declares('cancelGoodsReceipt')).toBe(false);
