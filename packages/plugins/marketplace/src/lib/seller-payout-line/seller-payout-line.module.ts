@@ -1,4 +1,4 @@
-import { RolePermissionModule } from '@gauzy/core';
+import { FeatureModule, RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -28,6 +28,8 @@ import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 	imports: [
 		// The controllers below are guarded, and the guard resolves the caller's permissions.
 		RolePermissionModule,
+		// ...and the feature gate (R4-11) resolves the tenant's marketplace switches.
+		FeatureModule,
 		TypeOrmModule.forFeature([SellerPayoutLine, SellerPayout, Seller]),
 		MikroOrmModule.forFeature([SellerPayoutLine, SellerPayout, Seller])
 	],

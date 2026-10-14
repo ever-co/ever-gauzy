@@ -28,6 +28,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -35,6 +36,8 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { Seller } from './seller.entity';
 import { SellerService } from './seller.service';
 import { CreateSellerDTO, UpdateSellerDTO } from './dto';
@@ -49,7 +52,8 @@ import { ISellerScope } from '../seller-scope/seller-scope';
  * scope is what differs, and the seller access guard resolves it and attaches it to the request.
  */
 @ApiTags('Seller')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
 @Permissions(PermissionsEnum.SELLERS_VIEW)
 @Controller('/sellers')
 export class SellerController extends CrudController<Seller> {

@@ -98,6 +98,9 @@ jest.mock('@gauzy/core', () => {
 		// Every resolver class carries the platform's feature guard, so the double provides the class
 		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
 		FeatureFlagGuard: class {},
+		// The shared GraphQL gate, the declaring module's own value, so the feature-switch cases compare
+		// against it rather than against `undefined`.
+		FEATURE_GRAPHQL: jest.requireActual('@gauzy/core/src/lib/feature/graphql-feature.code').FEATURE_GRAPHQL,
 		UseValidationPipe: () => () => undefined,
 		UUIDValidationPipe: class {},
 		Merchant: class {},
@@ -197,9 +200,19 @@ import {
 	TaxCollectionMode,
 	TaxRegistrationScheme
 } from '@gauzy/contracts';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { featureFlagsOf, requiredFeatureFlags } from '@gauzy/common';
+import { Reflector } from '@nestjs/core';
+import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { getPluginExtensions } from '@gauzy/plugin';
-import { BulkExecutor, IDEMPOTENT_METADATA_KEY, PermissionGuard, TenantPermissionGuard, VERSIONED_METADATA_KEY } from '@gauzy/core';
+import {
+	BulkExecutor,
+	FeatureFlagGuard,
+	IDEMPOTENT_METADATA_KEY,
+	PermissionGuard,
+	TenantPermissionGuard,
+	VERSIONED_METADATA_KEY
+} from '@gauzy/core';
 // The cursor a client hands back, encoded by the kernel's own codec so a window is stated exactly as a client
 // that walked the connection would state it.
 import { encodeOffsetCursor } from '@gauzy/core/src/lib/api/graphql-connection';
@@ -2724,5 +2737,82 @@ describe('the marketplace GraphQL contribution', () => {
 
 			expect(calls).toEqual([{ field: 'listPayouts', scope: undefined }]);
 		});
+	});
+});
+
+/**
+ * The marketplace's own feature switches, on both surfaces (review R4-11).
+ *
+ * `FEATURE_MARKETPLACE` is off by default and its declaration says "off, nothing about the marketplace is
+ * reachable and no seller exists" — yet no controller carried `FeatureFlagGuard` and the resolver required
+ * only `FEATURE_GRAPHQL`, so on every tenant an administrator could create sellers and offerings and
+ * approve and "pay" payouts with the marketplace switched off. `FEATURE_MARKETPLACE_PAYOUTS` (building,
+ * approving and executing payouts, recording provider settlements) was read by nothing.
+ *
+ * The codes are read with `requiredFeatureFlags`, the function `FeatureFlagGuard` itself uses to decide
+ * which codes a request must have enabled, so these cases pin what the guard will check.
+ */
+describe('the marketplace feature switches (R4-11)', () => {
+	const MARKETPLACE = 'FEATURE_MARKETPLACE';
+	const PAYOUTS = 'FEATURE_MARKETPLACE_PAYOUTS';
+	const GRAPHQL = 'FEATURE_GRAPHQL';
+	const reflector = new Reflector();
+
+	/** The codes the guard requires of one handler, as it reads them. */
+	const required = (target: Function, handler: string) =>
+		requiredFeatureFlags(
+			reflector,
+			new ExecutionContextHost([], target as never, (target.prototype as any)[handler]) as never
+		).map(String);
+
+	const PAYOUT_FIELDS = [
+		'sellerPayouts', 'sellerPayout', 'sellerPayoutLines', 'sellerSettlements', 'createSellerPayout',
+		'updateSellerPayout', 'runSellerPayout', 'approveSellerPayout', 'markSellerPayoutPaid', 'cancelSellerPayout',
+		'retrySellerPayout', 'deleteSellerPayout', 'softDeleteSellerPayout', 'recoverSellerPayout',
+		'deleteSellerPayoutLine', 'softDeleteSellerPayoutLine', 'recoverSellerPayoutLine', 'createSellerSettlement',
+		'updateSellerSettlement', 'reconcileSellerSettlement', 'closeSellerSettlement', 'disputeSellerSettlement',
+		'deleteSellerSettlement', 'softDeleteSellerSettlement', 'recoverSellerSettlement'
+	];
+
+	it.each([
+		['SellerController', SellerController, [MARKETPLACE]],
+		['SellerOfferingController', SellerOfferingController, [MARKETPLACE]],
+		['SellerTransactionController', SellerTransactionController, [MARKETPLACE]],
+		['SellerPayoutController', SellerPayoutController, [MARKETPLACE, PAYOUTS]],
+		['SellerPayoutLineController', SellerPayoutLineController, [MARKETPLACE, PAYOUTS]],
+		['SellerSettlementController', SellerSettlementController, [MARKETPLACE, PAYOUTS]]
+	])('%s runs FeatureFlagGuard over its codes, on every route', (_name, controller: any, codes) => {
+		expect(Reflect.getMetadata(GUARDS_METADATA, controller) ?? []).toContain(FeatureFlagGuard);
+		expect(featureFlagsOf(Reflect.getMetadata(FEATURE_METADATA, controller)).map(String).sort()).toEqual(
+			[...codes].sort()
+		);
+
+		// A route that stated a code of its own would be checked against that code *instead of* these.
+		for (const handler of Object.getOwnPropertyNames(controller.prototype)) {
+			if (handler !== 'constructor') {
+				expect(Reflect.getMetadata(FEATURE_METADATA, controller.prototype[handler])).toBeUndefined();
+			}
+		}
+	});
+
+	it('requires the endpoint and the marketplace for every resolver field', () => {
+		expect(required(SellerEntityResolver, 'sellers').sort()).toEqual([GRAPHQL, MARKETPLACE].sort());
+		expect(required(SellerEntityResolver, 'createSeller').sort()).toEqual([GRAPHQL, MARKETPLACE].sort());
+		expect(required(SellerEntityResolver, 'settleSellerTransaction').sort()).toEqual([GRAPHQL, MARKETPLACE].sort());
+	});
+
+	it.each(PAYOUT_FIELDS)('requires payouts as well for %s, as its route does', (field) => {
+		expect(typeof (SellerEntityResolver.prototype as any)[field]).toBe('function');
+		expect(required(SellerEntityResolver, field).sort()).toEqual([GRAPHQL, MARKETPLACE, PAYOUTS].sort());
+	});
+
+	it('states a field-level code on the payout and settlement fields only', () => {
+		const stated = Object.getOwnPropertyNames(SellerEntityResolver.prototype).filter(
+			(handler) =>
+				handler !== 'constructor' &&
+				Reflect.getMetadata(FEATURE_METADATA, (SellerEntityResolver.prototype as any)[handler]) !== undefined
+		);
+
+		expect(stated.sort()).toEqual([...PAYOUT_FIELDS].sort());
 	});
 });

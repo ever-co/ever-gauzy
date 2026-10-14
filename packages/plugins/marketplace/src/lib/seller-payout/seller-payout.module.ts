@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventOutboxModule, SequenceModule, RolePermissionModule } from '@gauzy/core';
+import { EventOutboxModule, FeatureModule, RolePermissionModule, SequenceModule } from '@gauzy/core';
 import { SellerPayout } from './seller-payout.entity';
 import { SellerPayoutController } from './seller-payout.controller';
 import { SellerPayoutService } from './seller-payout.service';
@@ -27,6 +27,8 @@ import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 	imports: [
 		// The controllers below are guarded, and the guard resolves the caller's permissions.
 		RolePermissionModule,
+		// ...and the feature gate (R4-11) resolves the tenant's marketplace switches.
+		FeatureModule,
 		TypeOrmModule.forFeature([SellerPayout, SellerPayoutLine, SellerTransaction, Seller]),
 		MikroOrmModule.forFeature([SellerPayout, SellerPayoutLine, SellerTransaction, Seller]),
 		EventOutboxModule,

@@ -108,6 +108,8 @@ jest.mock('@gauzy/core', () => {
 		Permissions: jest.requireActual('@gauzy/core/src/lib/shared/decorators/permissions.decorator').Permissions,
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
+		// The controllers carry the platform feature gate (R4-11); the double provides the class they import.
+		FeatureFlagGuard: class {},
 		UseValidationPipe: () => () => undefined,
 		UUIDValidationPipe: class {},
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
