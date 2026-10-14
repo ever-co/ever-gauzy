@@ -813,39 +813,21 @@ describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () =>
 		expect(fixture.store.ledger()).toEqual([]);
 	});
 
-	it('opens the level from the variant’s own product when a hold is allowed to be a backorder', async () => {
-		// The one path on which a hold reaches a location that has never stocked the variant: the caller
-		// states that the demand may be backordered, so nothing is there to hold and nothing is there to
-		// take the product from either. The variant names its own product, and the level and the aggregate
-		// it hangs from are opened from that answer rather than refused for a product the caller — which
-		// states the variant and the location — had no way to know.
+	it('refuses a hold at a never-stocked location although the caller states allowBackorder: true (R2-02)', async () => {
+		// There is no level at this location, so there is no policy that could permit a backorder, and a
+		// caller cannot grant one itself: the GraphQL input used to carry `allowBackorder: true` here and
+		// open a level holding nothing with the hold already past it, which REST (whose DTO has no such
+		// member) refused. The level is opened by stock arriving, not by a demand for it.
 		const fixture = reservationFixture({ seedLevel: false });
 
-		const accepted = await fixture.service.reserve(hold({ quantity: 2, allowBackorder: true }) as never);
-
-		expect(accepted).toMatchObject({ quantity: 2, status: StockReservationStatus.ACTIVE });
-		expect(fixture.tables.warehouse_product).toEqual([
-			expect.objectContaining({ warehouseId: WAREHOUSE, productId: PRODUCT, reservedQuantity: 2 })
-		]);
-		expect(fixture.store.level()).toMatchObject({
-			variantId: VARIANT,
-			quantity: 0,
-			reservedQuantity: 2,
-			version: 2
+		await expect(
+			fixture.service.reserve(hold({ quantity: 2, allowBackorder: true }) as never)
+		).rejects.toMatchObject({
+			response: { code: 'STOCK_INSUFFICIENT_AVAILABLE', details: { requested: 2, available: 0 } }
 		});
-		// The hold and the ledger row that explains it are still one write, on a level this call created.
-		expect(fixture.store.ledger()).toHaveLength(1);
-		expect(fixture.store.ledger()[0]).toMatchObject({
-			type: StockMovementType.RESERVATION,
-			quantity: 0,
-			reservedBefore: 0,
-			reservedAfter: 2,
-			warehouseProductVariantId: fixture.store.level().id
-		});
-		// INV-03 on the level that was opened by the hold: the reserved quantity is the sum of the holds.
-		expect(fixture.store.level().reservedQuantity).toBe(
-			fixture.store.reservations().reduce((sum, row) => sum + Number(row.quantity), 0)
-		);
+		expect(fixture.tables.warehouse_product).toEqual([]);
+		expect(fixture.store.reservations()).toEqual([]);
+		expect(fixture.store.ledger()).toEqual([]);
 	});
 
 	// The hold row and the movement that explains it are one write: `reserve` creates the reservation
@@ -871,14 +853,30 @@ describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () =>
 		expect(fixture.store.level()).toMatchObject({ reservedQuantity: 0 });
 	});
 
-	// The same seam, seen from the caller's side: doc 09 §5.2 states `allowBackorder` as an override of
-	// the level policy *for this call*, and a hold beyond the on-hand quantity is exactly the call it
-	// exists for. Both guards read it — the service's availability check and the ledger engine's hold
-	// rule — so the override reaches the place where the hold is actually taken.
-	it('honours the caller’s backorder override for a hold past the on-hand quantity', async () => {
+	// The caller's `allowBackorder` may tighten the level's policy for this call, never widen it (review
+	// R2-02): a `true` against a no-backorder level was an oversell — a million units held against ten —
+	// reachable over GraphQL only. Both guards read the effective policy — the service's availability
+	// check and the ledger engine's hold rule — so neither can be talked past it.
+	it('does not let the caller widen a no-backorder level with allowBackorder: true (R2-02)', async () => {
 		const fixture = reservationFixture({ quantity: 10, allowBackorder: false });
 
-		const accepted = await fixture.service.reserve(hold({ quantity: 12, allowBackorder: true }) as never);
+		await expect(
+			fixture.service.reserve(hold({ quantity: 12, allowBackorder: true }) as never)
+		).rejects.toMatchObject({ response: { code: 'STOCK_INSUFFICIENT_AVAILABLE' } });
+
+		expect(fixture.store.reservations()).toEqual([]);
+		expect(fixture.store.level()).toMatchObject({ quantity: 10, reservedQuantity: 0 });
+	});
+
+	it('grants a hold past on-hand when the level’s own policy allows it, and lets the caller tighten that', async () => {
+		const fixture = reservationFixture({ quantity: 10, allowBackorder: true, backorderLimit: null });
+
+		await expect(
+			fixture.service.reserve(hold({ quantity: 12, allowBackorder: false }) as never)
+		).rejects.toMatchObject({ response: { code: 'STOCK_INSUFFICIENT_AVAILABLE' } });
+		expect(fixture.store.level()).toMatchObject({ quantity: 10, reservedQuantity: 0 });
+
+		const accepted = await fixture.service.reserve(hold({ quantity: 12 }) as never);
 
 		expect(accepted).toMatchObject({ quantity: 12, status: StockReservationStatus.ACTIVE });
 		expect(fixture.store.level()).toMatchObject({ quantity: 10, reservedQuantity: 12 });

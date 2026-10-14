@@ -1258,4 +1258,150 @@ describe('inventory domain verbs keep to the caller’s tenant (DB-backed, two t
 			expect(await h.countOf('stock_movement', TENANT_B)).toBe(1);
 		});
 	});
+
+	/*
+	|--------------------------------------------------------------------------
+	| Quantities a caller may not state (review R2-02, R2-03)
+	|--------------------------------------------------------------------------
+	|
+	| Not tenancy, but the same harness for the same reason: the engine, the level row and the ledger are
+	| the real ones, so "refused and nothing written" is read back from the database rather than from a
+	| double that cannot tell.
+	*/
+
+	describe('a caller cannot widen the level’s backorder policy (R2-02)', () => {
+		/**
+		 * The input the GraphQL mutation hands `reserve()` untouched. The REST DTO has no such member and
+		 * its whitelist strips it, so before the fix the same request was refused over REST and granted
+		 * over GraphQL.
+		 */
+		const hold = {
+			warehouseId: WAREHOUSE_A,
+			variantId: VARIANT_A,
+			productId: PRODUCT_A,
+			quantity: 1000000,
+			referenceType: StockReservationReferenceType.ORDER,
+			referenceId: '00000000-0000-4000-8000-0000000005a9'
+		};
+		const overselling = { ...hold, allowBackorder: true };
+
+		it('refuses a hold past availability on a no-backorder level although the input says allowBackorder: true', async () => {
+			actAs(TENANT_A, ORG_A);
+
+			await expect(h.reservations.reserve(overselling)).rejects.toMatchObject({
+				response: { code: 'STOCK_INSUFFICIENT_AVAILABLE' }
+			});
+
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 0 });
+			expect(await h.countOf('stock_reservation')).toBe(0);
+			expect(await h.countOf('stock_movement')).toBe(0);
+		});
+
+		it('refuses a hold at a location the variant was never stocked at, whatever the input says, and creates no level', async () => {
+			actAs(TENANT_A, ORG_A);
+
+			await expect(
+				h.reservations.reserve({ ...overselling, warehouseId: WAREHOUSE_A2, quantity: 5 })
+			).rejects.toMatchObject({ response: { code: 'STOCK_INSUFFICIENT_AVAILABLE' } });
+
+			expect(await h.countOf('warehouse_product_variant', TENANT_A)).toBe(1);
+			expect(await h.countOf('stock_reservation')).toBe(0);
+		});
+
+		it('control: the level’s own backorder policy still grants a hold up to its limit, and the caller may tighten it', async () => {
+			await h.dataSource.query(
+				`UPDATE "warehouse_product_variant" SET "allowBackorder" = 1, "backorderLimit" = 5 WHERE "id" = ?`,
+				[LEVEL_A]
+			);
+			actAs(TENANT_A, ORG_A);
+
+			// Tightening: the caller says this demand may not backorder, so a hold past on-hand is refused
+			// although the level would allow it.
+			await expect(
+				h.reservations.reserve({ ...overselling, quantity: 12, allowBackorder: false })
+			).rejects.toMatchObject({ response: { code: 'STOCK_INSUFFICIENT_AVAILABLE' } });
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 0 });
+
+			// The level's policy: 12 against 10 on hand is 2 past it, inside the limit of 5 — whether the
+			// caller restates the policy or says nothing.
+			await h.reservations.reserve({ ...hold, quantity: 12 });
+			await h.reservations.reserve({ ...overselling, quantity: 2, allowBackorder: true });
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 14 });
+
+			// The level's limit still binds a caller who states `true`: 4 past on hand + 2 more is 6 > 5.
+			await expect(h.reservations.reserve({ ...overselling, quantity: 2 })).rejects.toBeDefined();
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 10, reservedQuantity: 14 });
+		});
+	});
+
+	describe('a receipt cannot take units back (R2-03)', () => {
+		/** Ships all ten of A's units from its first location to its second. */
+		async function shippedTransferOfA(): Promise<{ transferId: string; lineId: string }> {
+			actAs(TENANT_A, ORG_A);
+			const transfer = await h.transfers.createTransfer({ fromWarehouseId: WAREHOUSE_A, toWarehouseId: WAREHOUSE_A2 });
+			const line = await h.transferLines.addLine({ transferId: transfer.id, variantId: VARIANT_A, requestedQuantity: 10 });
+			await h.transfers.request(transfer.id);
+			await h.transfers.approve(transfer.id);
+			await h.transfers.ship(transfer.id, [{ lineId: line.id, shippedQuantity: 10 }]);
+
+			return { transferId: transfer.id, lineId: line.id };
+		}
+
+		/** On hand at A's second location (the destination), 0 when no level exists there yet. */
+		async function destinationOnHand(): Promise<number> {
+			const [destination] = await h.dataSource.query(
+				`SELECT "level"."quantity" FROM "warehouse_product_variant" "level"
+				 INNER JOIN "warehouse_product" "aggregate" ON "aggregate"."id" = "level"."warehouseProductId"
+				 WHERE "aggregate"."warehouseId" = ?`,
+				[WAREHOUSE_A2]
+			);
+
+			return Number(destination?.quantity ?? 0);
+		}
+
+		async function lineOf(lineId: string): Promise<{ received: number; damaged: number }> {
+			const line = await h.row('stock_transfer_line', lineId);
+
+			return { received: Number(line?.receivedQuantity), damaged: Number(line?.damagedQuantity) };
+		}
+
+		it('refuses a negative received quantity, so ten shipped can never arrive as sixteen', async () => {
+			const { transferId, lineId } = await shippedTransferOfA();
+			await h.transfers.receive(transferId, [{ lineId, receivedQuantity: 6 }]);
+			expect(await destinationOnHand()).toBe(6);
+
+			await expect(h.transfers.receive(transferId, [{ lineId, receivedQuantity: -6 }])).rejects.toMatchObject({
+				status: 400
+			});
+
+			expect(await lineOf(lineId)).toEqual({ received: 6, damaged: 0 });
+			expect((await h.row('stock_transfer', transferId))?.status).toBe(StockTransferStatus.PARTIALLY_RECEIVED);
+
+			// What is left to arrive is still four, not ten.
+			await expect(h.transfers.receive(transferId, [{ lineId, receivedQuantity: 10 }])).rejects.toMatchObject({
+				response: { code: 'STOCK_TRANSFER_OVER_RECEIPT' }
+			});
+			await h.transfers.receive(transferId, [{ lineId, receivedQuantity: 4 }]);
+			expect(await destinationOnHand()).toBe(10);
+			expect(await levelState(h, LEVEL_A)).toEqual({ quantity: 0, reservedQuantity: 0 });
+		});
+
+		it('refuses a negative damaged quantity and a received quantity that is not a finite number', async () => {
+			const { transferId, lineId } = await shippedTransferOfA();
+			await h.transfers.receive(transferId, [{ lineId, receivedQuantity: 4, damagedQuantity: 2 }]);
+
+			await expect(
+				h.transfers.receive(transferId, [{ lineId, receivedQuantity: 0, damagedQuantity: -2 }])
+			).rejects.toMatchObject({ status: 400 });
+			await expect(
+				h.transfers.receive(transferId, [{ lineId, receivedQuantity: Number.NaN }])
+			).rejects.toMatchObject({ status: 400 });
+			await expect(
+				h.transfers.receive(transferId, [{ lineId, receivedQuantity: Number.NEGATIVE_INFINITY }])
+			).rejects.toMatchObject({ status: 400 });
+
+			expect(await lineOf(lineId)).toEqual({ received: 4, damaged: 2 });
+			expect(await destinationOnHand()).toBe(4);
+		});
+	});
 });

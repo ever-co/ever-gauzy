@@ -216,7 +216,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 					});
 				}
 				const shipped = Number(input.shippedQuantity);
-				if (shipped < 0 || shipped > Number(line.requestedQuantity)) {
+				if (!Number.isFinite(shipped) || shipped < 0 || shipped > Number(line.requestedQuantity)) {
 					throw inventoryError(
 						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
 						'A line cannot ship more than it requested.',
@@ -287,8 +287,29 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 					});
 				}
 
-				const received = Number(input.receivedQuantity) + Number(line.receivedQuantity ?? 0);
-				const damaged = Number(input.damagedQuantity ?? 0) + Number(line.damagedQuantity ?? 0);
+				// What arrives now is a count of units, never a correction (review R2-03): a negative value
+				// took the line counter back without a movement, so the same units could be received again
+				// and ten shipped arrived as sixteen. GraphQL reaches this method without the DTO, so the
+				// refusal lives here rather than only in the validation pipe.
+				const receivedNow = Number(input.receivedQuantity);
+				const damagedNow = Number(input.damagedQuantity ?? 0);
+				if (!Number.isFinite(receivedNow) || receivedNow < 0 || !Number.isFinite(damagedNow) || damagedNow < 0) {
+					throw inventoryError(
+						InventoryErrorCode.INVARIANT_VIOLATION,
+						'A receipt records units that arrived: received and damaged quantities must be zero or more.',
+						{
+							badRequest: true,
+							details: {
+								lineId: line.id,
+								received: input.receivedQuantity,
+								damaged: input.damagedQuantity ?? null
+							}
+						}
+					);
+				}
+
+				const received = receivedNow + Number(line.receivedQuantity ?? 0);
+				const damaged = damagedNow + Number(line.damagedQuantity ?? 0);
 				if (received + damaged > Number(line.shippedQuantity)) {
 					throw inventoryError(
 						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
@@ -301,7 +322,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 				line.damagedQuantity = damaged;
 				await manager.save(StockTransferLine, line);
 
-				if (Number(input.receivedQuantity) > 0) {
+				if (receivedNow > 0) {
 					// The inbound movement joins this receipt's transaction, exactly as the outbound one
 					// joins the dispatch's: a line refused later in the loop takes this arrival back with
 					// it, so the destination never shows stock the receipt says did not arrive.
@@ -310,7 +331,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 							warehouseId: transfer.toWarehouseId,
 							variantId: line.variantId,
 							type: StockMovementType.TRANSFER_IN,
-							quantityDelta: Number(input.receivedQuantity),
+							quantityDelta: receivedNow,
 							reservedDelta: 0,
 							referenceType: StockMovementReferenceType.TRANSFER,
 							referenceId: line.id,
@@ -319,7 +340,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 						manager
 					);
 				}
-				if (Number(input.damagedQuantity ?? 0) > 0) {
+				if (damagedNow > 0) {
 					await this.stockLevelService.applyMovement(
 						{
 							warehouseId: transfer.toWarehouseId,
