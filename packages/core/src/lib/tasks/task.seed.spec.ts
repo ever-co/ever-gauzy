@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
 import { of, throwError } from 'rxjs';
-import { Employee, Organization, OrganizationProject, OrganizationTeam, User } from '../core/entities/internal';
+import { Employee, Organization, OrganizationProject, User } from '../core/entities/internal';
 import { SEED_SAMPLE_ISSUES } from './task-seed-issues';
 import { createRandomTask, GITHUB_API_URL, loadSeedIssues } from './task.seed';
 
@@ -32,14 +32,9 @@ describe('createRandomTask when GitHub refuses the issues request', () => {
 		};
 		const dataSource = {
 			manager: {
+				// The users and the organization; no team (OrganizationTeam answers [] as every other entity does)
 				find: jest.fn(async (entity: unknown) =>
-					entity === User
-						? [{ id: 'user-1' }]
-						: entity === Organization
-							? [organization]
-							: entity === OrganizationTeam
-								? []
-								: []
+					entity === User ? [{ id: 'user-1' }] : entity === Organization ? [organization] : []
 				),
 				findBy: jest.fn(async (entity: unknown) =>
 					entity === OrganizationProject ? [project] : entity === Employee ? [{ id: 'employee-1' }] : []
