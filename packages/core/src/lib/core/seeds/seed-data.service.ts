@@ -514,8 +514,9 @@ export class SeedDataService {
 		await this.tryExecute('Default Email Templates', createDefaultEmailTemplates(this.dataSource));
 
 		/**
-		 * The defaults an organization needs before it can issue a document — its default channel, its
-		 * default region and the seven numbering series — are seeded here rather than only by the
+		 * The defaults an organization needs before it can issue a document — its default channel and
+		 * region, the seven numbering series, and the rest of `1791000000520`'s per-organization set (tax
+		 * category, price preference, measurement families, search definitions) — are seeded here rather than only by the
 		 * data-only kernel migration, because that migration runs **before** this seeding creates the
 		 * organization, and it seeds only the organizations it can see. Without this step a fresh
 		 * installation has no `ORDER` series and no `PO` series, so it can create parties, suppliers,
@@ -1070,6 +1071,13 @@ export class SeedDataService {
 			this.dataSource,
 			this.randomTenants,
 			randomSeedConfig.organizationsPerTenant || 1
+		);
+
+		// The same commerce defaults the default organizations get above (R5-05): a random organization is
+		// created after the migrations too, so nothing else would give it a channel, a region or a series.
+		await this.tryExecute(
+			'Random Commerce Defaults',
+			createDefaultCommerceDefaults(this.dataSource, [...this.randomTenantOrganizationsMap.values()].flat())
 		);
 
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(this.dataSource, this.randomTenants, 1);

@@ -93,7 +93,7 @@ export class AddWarehouseSellerColumn1791000000436 implements MigrationInterface
 		await this.addColumn(queryRunner, `ALTER TABLE "warehouse" ADD COLUMN "sellerId" varchar`);
 		await this.addIndex(
 			queryRunner,
-			`CREATE INDEX "${AddWarehouseSellerColumn1791000000436.INDEX}" ON "warehouse" ("sellerId", "isFulfillmentLocation") WHERE "sellerId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE INDEX IF NOT EXISTS "${AddWarehouseSellerColumn1791000000436.INDEX}" ON "warehouse" ("sellerId", "isFulfillmentLocation") WHERE "sellerId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -115,7 +115,7 @@ export class AddWarehouseSellerColumn1791000000436 implements MigrationInterface
 		await this.addColumn(queryRunner, `ALTER TABLE "warehouse" ADD COLUMN "sellerId" uuid`);
 		await this.addIndex(
 			queryRunner,
-			`CREATE INDEX "${AddWarehouseSellerColumn1791000000436.INDEX}" ON "warehouse" ("sellerId", "isFulfillmentLocation") WHERE "sellerId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE INDEX IF NOT EXISTS "${AddWarehouseSellerColumn1791000000436.INDEX}" ON "warehouse" ("sellerId", "isFulfillmentLocation") WHERE "sellerId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -184,6 +184,13 @@ export class AddWarehouseSellerColumn1791000000436 implements MigrationInterface
 	 * second attempt is a run that can never record itself. The observed failure mode is a boot that never
 	 * finishes, with no message saying why, which is why the duplicate is tolerated here the way the
 	 * marketplace's amendment migration tolerates it.
+	 *
+	 * **On PostgreSQL the statement itself must not fail**, so PostgreSQL and SQLite say `IF NOT EXISTS`: a failed
+	 * statement aborts a PostgreSQL transaction, and catching the error does not undo that — TypeORM's
+	 * `INSERT INTO "migrations"` then answers `current transaction is aborted` and the migration never records. A
+	 * database upgraded from develop has this index already (core's 1791000000095 creates it, because `warehouse`
+	 * exists there). The catch below remains for MySQL, which has no `IF NOT EXISTS` for an index and whose DDL
+	 * does not poison the transaction.
 	 *
 	 * @param queryRunner The runner the migration is executing on.
 	 * @param statement The dialect's own `CREATE INDEX`.
