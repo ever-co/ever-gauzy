@@ -4,6 +4,8 @@ import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http
 import { AddressInfo } from 'node:net';
 import { WebhookDeliveryStatus } from '@gauzy/contracts';
 import { WebhookDeliveryService } from './webhook-delivery.service';
+import { pinnedWebhookLookup, WebhookEndpointRefusedError } from './webhook-endpoint-policy';
+import { WebhookTransport } from './webhook-transport';
 
 /**
  * The attempt itself, on a real socket (R1-04 / R7-07 and R1-05 / R7-08 of the #10254 review).
@@ -128,7 +130,7 @@ describe('the address checked is the address connected to (R1-04, R7-07)', () =>
 		expect(publisher.deliveryFailed).toHaveBeenCalledTimes(1);
 	});
 
-	it('connects to a name whose every answer is public — control', async () => {
+	it('connects through the pinned lookup when the installation allows private endpoints — control', async () => {
 		state = await receiver((_request, response) => response.end('ok'));
 		// The installation allows private endpoints, so the loopback receiver stands in for a partner.
 		process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = 'true';
@@ -196,5 +198,110 @@ describe('the receiver’s response is read up to the limit, then the connection
 		expect(moved.result.responseStatus).toBe(302);
 		expect(moved.result.delivered).toBe(false);
 		expect(state.requests).toBe(2);
+	});
+});
+
+/** Answers every lookup with `answers`, in whichever shape Node asks for. */
+function resolverAnswering(answers: { address: string; family: number }[]): void {
+	jest.spyOn(dns, 'lookup').mockImplementation(((
+		_host: string,
+		options: unknown,
+		callback?: (...args: unknown[]) => void
+	) => {
+		const done = (typeof options === 'function' ? options : callback) as (...args: unknown[]) => void;
+		const all = typeof options === 'object' && options !== null && (options as { all?: boolean }).all;
+
+		return all ? done(null, answers) : done(null, answers[0].address, answers[0].family);
+	}) as never);
+}
+
+/** What `pinnedWebhookLookup` hands back, in the shape asked for. */
+function pinned(all: boolean): Promise<{ error: unknown; address: unknown; family: unknown }> {
+	return new Promise((resolve) =>
+		pinnedWebhookLookup('partner.example.com', { all } as never, (error, address, family) =>
+			resolve({ error, address, family })
+		)
+	);
+}
+
+describe('the pinned lookup, with the rule in force', () => {
+	it('answers public addresses in both shapes Node asks for', async () => {
+		resolverAnswering([
+			{ address: '93.184.215.14', family: 4 },
+			{ address: '2606:2800:21f:cb07:6820:80da:af6b:8b2c', family: 6 }
+		]);
+
+		expect(await pinned(false)).toEqual({ error: null, address: '93.184.215.14', family: 4 });
+		expect(await pinned(true)).toEqual({
+			error: null,
+			address: [
+				{ address: '93.184.215.14', family: 4 },
+				{ address: '2606:2800:21f:cb07:6820:80da:af6b:8b2c', family: 6 }
+			],
+			family: undefined
+		});
+	});
+
+	it('refuses a host whose answers include one refused address, whichever shape is asked for', async () => {
+		resolverAnswering([
+			{ address: '93.184.215.14', family: 4 },
+			{ address: '::ffff:a9fe:a9fe', family: 6 }
+		]);
+
+		for (const all of [false, true]) {
+			const { error, address } = await pinned(all);
+
+			expect(error).toBeInstanceOf(WebhookEndpointRefusedError);
+			expect(address).toBeUndefined();
+		}
+	});
+});
+
+describe('the attempt’s own timeout', () => {
+	const request = (timeoutMs: number) => ({ headers: {}, body: '{}', timeoutMs, bodyLimit: LIMIT });
+
+	it('fails as an AbortError and closes the connection when the receiver never answers', async () => {
+		process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = 'true';
+		state = await receiver(() => undefined);
+
+		const error = await new WebhookTransport()
+			.post(`http://127.0.0.1:${state.port}/hook`, request(300))
+			.catch((thrown) => thrown);
+
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).name).toBe('AbortError');
+		expect(await state.closedEarly).toBe(true);
+	});
+
+	it('fails as an AbortError when the body stalls below the limit', async () => {
+		process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = 'true';
+		state = await receiver((_request, response) => {
+			response.writeHead(200);
+			response.write('partial');
+		});
+
+		const error = await new WebhookTransport()
+			.post(`http://127.0.0.1:${state.port}/hook`, request(300))
+			.catch((thrown) => thrown);
+
+		expect((error as Error).name).toBe('AbortError');
+		expect(await state.closedEarly).toBe(true);
+	});
+
+	it('answers a body of exactly the limit at once, even when the receiver then stalls', async () => {
+		process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = 'true';
+		state = await receiver((_request, response) => {
+			response.writeHead(200);
+			response.write(Buffer.alloc(LIMIT, 'y'));
+		});
+
+		const startedAt = Date.now();
+		const answer = await new WebhookTransport().post(`http://127.0.0.1:${state.port}/hook`, request(5_000));
+
+		expect(answer.status).toBe(200);
+		expect(Buffer.byteLength(answer.body)).toBe(LIMIT);
+		expect(answer.truncated).toBe(true);
+		expect(Date.now() - startedAt).toBeLessThan(2_500);
+		expect(await state.closedEarly).toBe(true);
 	});
 });

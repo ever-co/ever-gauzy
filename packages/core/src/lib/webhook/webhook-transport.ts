@@ -26,7 +26,10 @@ export interface IWebhookTransportAnswer {
 	readonly ok: boolean;
 	/** At most `bodyLimit` bytes of the response body, decoded as UTF-8. */
 	readonly body: string;
-	/** True when the body was longer than the limit and the connection was closed early. */
+	/**
+	 * True when the read stopped at the limit and the connection was closed there — the body was at least
+	 * `bodyLimit` bytes long (exactly that long, or longer: the rest was never read).
+	 */
 	readonly truncated: boolean;
 }
 
@@ -108,9 +111,9 @@ export class WebhookTransport {
 
 					const room = request.bodyLimit - size;
 
-					if (chunk.length > room) {
-						// The limit is reached: keep what fits and hang up, rather than read the rest only
-						// to drop it.
+					if (chunk.length >= room) {
+						// The limit is reached: keep what fits and hang up, rather than read the rest only to
+						// drop it — or wait for an end a receiver that stalls right at the limit never sends.
 						chunks.push(chunk.subarray(0, room));
 						size += room;
 						settle(() => resolve(answer(true)));
