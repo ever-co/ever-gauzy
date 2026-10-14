@@ -1098,7 +1098,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		// A line an earlier action of the same change touches is left to the check made when the update is applied,
 		// on the state those actions leave: an `ITEM_RETURN` of -3 that withdraws a return request can be what makes a
 		// following `ITEM_UPDATE` valid (Greptile), and the stored counters would refuse it.
-		const touchedEarlier = new Set<ID>();
+		let touchedEarlier = new Set<ID>();
 
 		for (const action of actions) {
 			const details = (action.details ?? {}) as Record<string, unknown>;
