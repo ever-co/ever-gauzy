@@ -14,6 +14,7 @@ import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationPosition } from './organization-position.entity';
 import { OrganizationPositionService } from './organization-position.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationPositionInput` declares in the schema. */
 export interface ICreateOrganizationPositionInput {
@@ -220,9 +221,7 @@ export class OrganizationPositionResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationPositionService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationPositionService.delete(id));
 	}
 
 	/**

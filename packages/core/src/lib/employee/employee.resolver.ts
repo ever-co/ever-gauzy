@@ -32,6 +32,7 @@ import {
 	EmployeeUpdateCommand,
 	WorkingEmployeeGetCommand
 } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `EmployeeUserInput` declares in the schema. */
 export interface IEmployeeUserInput {
@@ -626,9 +627,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<boolean> {
-		await this.employeeService.delete(id, { where: { organizationId } });
-
-		return true;
+		return deleteRemovedRows(await this.employeeService.delete(id, { where: { organizationId } }));
 	}
 
 	/**

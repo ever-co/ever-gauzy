@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateAvailabilitySlotInput` declares in the schema. */
 export interface ICreateAvailabilitySlotInput {
@@ -253,9 +254,7 @@ export class AvailabilitySlotsResolver {
 	 */
 	@Mutation('deleteAvailabilitySlot')
 	async deleteAvailabilitySlot(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.availabilitySlotsService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.availabilitySlotsService.delete(id));
 	}
 
 	/**

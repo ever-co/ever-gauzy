@@ -23,6 +23,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../
 import { DashboardWidget } from './dashboard-widget.entity';
 import { DashboardWidgetService } from './dashboard-widget.service';
 import { DashboardWidgetCreateCommand, DashboardWidgetUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../../graphql/delete-answer';
 
 /** The members `CreateDashboardWidgetInput` declares in the schema. */
 export interface ICreateDashboardWidgetInput {
@@ -245,9 +246,7 @@ export class DashboardWidgetResolver {
 	@Mutation('deleteDashboardWidget')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteDashboardWidget(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.dashboardWidgetService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.dashboardWidgetService.delete(id));
 	}
 
 	/**

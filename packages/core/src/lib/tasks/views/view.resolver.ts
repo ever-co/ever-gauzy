@@ -18,6 +18,7 @@ import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
 import { Permissions } from '../../shared/decorators';
+import { deleteRemovedRows } from '../../graphql/delete-answer';
 
 /** The members `CreateTaskViewInput` declares in the schema. */
 export interface ICreateTaskViewInput {
@@ -182,9 +183,7 @@ export class TaskViewResolver {
 	 */
 	@Mutation('deleteTaskView')
 	async deleteTaskView(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskViewService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.taskViewService.delete(id));
 	}
 
 	/**

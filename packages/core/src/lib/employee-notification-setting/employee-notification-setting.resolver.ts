@@ -17,6 +17,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
 import { EmployeeNotificationSettingService } from './employee-notification-setting.service';
 import { EmployeeNotificationSettingCreateCommand, EmployeeNotificationSettingUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEmployeeNotificationSettingInput` declares in the schema. */
 export interface ICreateEmployeeNotificationSettingInput {
@@ -228,9 +229,7 @@ export class EmployeeNotificationSettingResolver {
 	 */
 	@Mutation('deleteEmployeeNotificationSetting')
 	async deleteEmployeeNotificationSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeNotificationSettingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeNotificationSettingService.delete(id));
 	}
 
 	/**

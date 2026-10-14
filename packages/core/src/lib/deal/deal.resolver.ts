@@ -16,6 +16,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Deal } from './deal.entity';
 import { DealService } from './deal.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateDealInput` declares in the schema. */
 export interface ICreateDealInput {
@@ -219,9 +220,7 @@ export class DealResolver {
 	@Mutation('deleteDeal')
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	async deleteDeal(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.dealService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.dealService.delete(id));
 	}
 
 	/**

@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalTemplate } from './goal-template.entity';
 import { GoalTemplateService } from './goal-template.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateGoalTemplateInput` declares in the schema. */
 export interface ICreateGoalTemplateInput {
@@ -202,9 +203,7 @@ export class GoalTemplateResolver {
 	 */
 	@Mutation('deleteGoalTemplate')
 	async deleteGoalTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalTemplateService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.goalTemplateService.delete(id));
 	}
 
 	/**

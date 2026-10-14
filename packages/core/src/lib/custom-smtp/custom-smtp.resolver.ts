@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateSmtpSettingInput` declares in the schema. */
 export interface ICreateSmtpSettingInput {
@@ -257,9 +258,7 @@ export class CustomSmtpResolver {
 	@Mutation('deleteSmtpSetting')
 	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
 	async deleteSmtpSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.customSmtpService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.customSmtpService.delete(id));
 	}
 
 	/**

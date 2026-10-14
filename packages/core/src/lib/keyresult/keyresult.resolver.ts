@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResult } from './keyresult.entity';
 import { KeyResultService } from './keyresult.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateKeyResultInput` declares in the schema. */
 export interface ICreateKeyResultInput {
@@ -261,9 +262,7 @@ export class KeyResultResolver {
 	 */
 	@Mutation('deleteKeyResult')
 	async deleteKeyResult(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.keyResultService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.keyResultService.delete(id));
 	}
 
 	/**

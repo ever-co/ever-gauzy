@@ -367,3 +367,11 @@ jobs:
       - name: Every literal entity column type is accepted on Postgres, MySQL and SQLite
         if: always()
         run: node tools/scripts/entity-column-dialect-check.mjs
+
+      # The kernel's hard delete checks no existence: an identifier that names no row of the caller deletes
+      # nothing and raises nothing (`affected: 0`). Ninety-odd GraphQL delete fields dropped that result and
+      # answered `true` — "removed" for a row that was never there — while the REST route reported the
+      # `affected: 0` it got (handover 2026-09-20 §7.65 item 21). Every delete field consults the result now.
+      - name: Every GraphQL delete field answers what its delete did
+        if: always()
+        run: node tools/scripts/graphql-delete-answer-check.mjs

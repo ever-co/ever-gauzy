@@ -16,6 +16,7 @@ import { Permissions, Roles } from './../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RoleService } from './role.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateRoleInput` declares in the schema. */
 export interface ICreateRoleInput {
@@ -388,9 +389,7 @@ export class RoleEntityResolver {
 	@Mutation('deleteRole')
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	async deleteRole(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.roleService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.roleService.delete(id));
 	}
 
 	/**
