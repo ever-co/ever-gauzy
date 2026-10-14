@@ -274,6 +274,10 @@ RUN rm -r node_modules/@angular
 
 FROM node:26.11.1-alpine3.24 AS development
 
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
+
 USER node:node
 
 WORKDIR /srv/gauzy
@@ -283,6 +287,10 @@ COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
 FROM node:26.11.1-alpine3.24 AS build
+
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
 
 WORKDIR /srv/gauzy
 

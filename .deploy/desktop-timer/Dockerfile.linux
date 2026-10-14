@@ -7,6 +7,9 @@ RUN mkdir -p /opt/src && chown -R node:node /opt/src && \
 
 WORKDIR /opt/src
 
+# The node:26 images ship without Yarn: install the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
+
 COPY --chown=node:node apps/desktop-timer/package.json ./apps/desktop-timer/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
@@ -31,4 +34,4 @@ FROM debian:buster-slim
 
 WORKDIR /opt/artifacts
 
-COPY --from=linux /opt/src/dist/apps/desktop-packages ./linux/
+COPY --from=linux /opt/src/dist/apps/desktop-timer-packages ./linux/
