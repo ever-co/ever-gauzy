@@ -901,17 +901,89 @@ describe('PaymentCollectionService — what may still change (doc 10 §8.2, §8.
 		expect(fixture.store('c1')).toMatchObject({ amount: '100', currency: 'USD' });
 	});
 
-	it('strips a status a body carries, because the amounts are the authority', async () => {
+	it('refuses a status a body states, because the amounts are the authority; a restatement is not written', async () => {
+		// The status used to be stripped silently. It is refused now, like every other server-owned member (R3-04):
+		// the REST body no longer declares it and the GraphQL input never admitted it.
 		const fixture = collectionFixture([collectionRow('c1')]);
 
+		await expect(
+			fixture.service.updateCollection('c1', {
+				status: PaymentCollectionStatus.COMPLETED,
+				metadata: { note: 'paid' }
+			} as never)
+		).rejects.toThrow(/PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: status/);
+		expect(fixture.store('c1')).toMatchObject({ status: PaymentCollectionStatus.NOT_PAID });
+		expect(fixture.store('c1').metadata).toBeUndefined();
+
 		await fixture.service.updateCollection('c1', {
-			status: PaymentCollectionStatus.COMPLETED,
+			status: PaymentCollectionStatus.NOT_PAID,
 			metadata: { note: 'paid' }
 		} as never);
-
 		expect(fixture.store('c1')).toMatchObject({
 			status: PaymentCollectionStatus.NOT_PAID,
 			metadata: { note: 'paid' }
+		});
+	});
+
+	/**
+	 * R3-04: `PUT /payment-collections/:id {metadata}` reached this method as `{ metadata, authorizedAmount: '0', ... }`
+	 * (the create DTO's defaults) and wrote the zeros - after which `assertCanAuthorize` accepted a second
+	 * authorisation of the whole amount. The totals are the only record of what the sessions moved; no update writes
+	 * them, whoever the caller.
+	 */
+	it.each([
+		['authorizedAmount', '0'],
+		['capturedAmount', '0'],
+		['refundedAmount', '0'],
+		['canceledAmount', '0']
+	])('refuses to write %s, which only the money movements write', async (member, value) => {
+		const fixture = collectionFixture([
+			collectionRow('c1', {
+				status: PaymentCollectionStatus.PARTIALLY_CAPTURED,
+				authorizedAmount: '100',
+				capturedAmount: '60',
+				refundedAmount: '10',
+				canceledAmount: '5'
+			})
+		]);
+		const before = { ...fixture.store('c1') };
+
+		await expect(
+			fixture.service.updateCollection('c1', { [member]: value, metadata: { note: 'x' } } as never)
+		).rejects.toThrow(new RegExp(`PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: ${member}`));
+		expect(fixture.store('c1')).toEqual(before);
+	});
+
+	it('refuses to move a collection to another order or cart, or to stamp its settlement time', async () => {
+		const fixture = collectionFixture([collectionRow('c1')]);
+
+		await expect(fixture.service.updateCollection('c1', { orderId: 'another-order' } as never)).rejects.toThrow(
+			/PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: orderId/
+		);
+		await expect(fixture.service.updateCollection('c1', { cartId: CART } as never)).rejects.toThrow(
+			/PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: cartId/
+		);
+		await expect(
+			fixture.service.updateCollection('c1', { completedAt: new Date('2026-10-14T00:00:00Z') } as never)
+		).rejects.toThrow(/PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: completedAt/);
+		expect(fixture.store('c1')).toMatchObject({ orderId: ORDER });
+	});
+
+	it('accepts a body that restates the stored totals at another scale, and writes only what changed', async () => {
+		// A client that echoes the record back is not refused for stating what is already there.
+		const fixture = collectionFixture([collectionRow('c1', { authorizedAmount: '100', capturedAmount: '60' })]);
+
+		await fixture.service.updateCollection('c1', {
+			authorizedAmount: '100.000000',
+			capturedAmount: '60.0',
+			orderId: ORDER,
+			metadata: { note: 'echo' }
+		} as never);
+
+		expect(fixture.store('c1')).toMatchObject({
+			authorizedAmount: '100',
+			capturedAmount: '60',
+			metadata: { note: 'echo' }
 		});
 	});
 
