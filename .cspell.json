@@ -1283,7 +1283,8 @@
 		"tcpdump",
 		"Setext",
 		"capitalised",
-		"rescan"
+		"rescan",
+		"describedby"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
