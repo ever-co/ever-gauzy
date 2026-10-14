@@ -73,6 +73,15 @@ extend type Mutation {
 	as its default region cannot be left out.
 	"""
 	replaceChannelRegions(input: ReplaceChannelRegionsInput!): [ChannelRegion!]!
+	"""
+	Withdraws a channel without removing it — `DELETE /channels/:id/soft`. It requires the edit grant the change
+	requires, as the route does: a role that may only read cannot withdraw one.
+	"""
+	softDeleteChannel(id: ID!): Channel!
+	"""
+	Restores a withdrawn channel — `PUT /channels/:id/recover` — under the same edit grant: restoring undoes a removal.
+	"""
+	recoverChannel(id: ID!): Channel!
 }
 
 extend type Subscription {

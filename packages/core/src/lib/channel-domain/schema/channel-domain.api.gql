@@ -51,4 +51,13 @@ extend type Mutation {
 	guard makes, which is the half of DNS/TLS readiness this platform can decide.
 	"""
 	verifyChannelDomain(id: ID!): ChannelDomainVerification!
+	"""
+	Withdraws a channel domain without removing it — `DELETE /channel-domains/:id/soft`. It requires the edit grant the change
+	requires, as the route does: a role that may only read cannot withdraw one.
+	"""
+	softDeleteChannelDomain(id: ID!): ChannelDomain!
+	"""
+	Restores a withdrawn channel domain — `PUT /channel-domains/:id/recover` — under the same edit grant: restoring undoes a removal.
+	"""
+	recoverChannelDomain(id: ID!): ChannelDomain!
 }

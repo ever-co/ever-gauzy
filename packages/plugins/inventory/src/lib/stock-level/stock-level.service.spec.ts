@@ -1569,7 +1569,10 @@ describe('StockLevelService — a window of no rows reads no rows', () => {
 			expect.arrayContaining([
 				['aggregate.warehouseId = :warehouseId', { warehouseId: WAREHOUSE }],
 				['level.variantId = :variantId', { variantId: VARIANT }],
-				['level.tenantId = :tenantId', { tenantId: TENANT }]
+				[
+					'(level.tenantId = :tenantId OR (level.tenantId IS NULL AND aggregate.tenantId = :tenantId))',
+					{ tenantId: TENANT }
+				]
 			])
 		);
 		// Nothing was selected, so no builder was ever asked to write a zero limit it might drop.

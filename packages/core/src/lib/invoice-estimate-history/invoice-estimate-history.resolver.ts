@@ -15,6 +15,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateInvoiceEstimateHistoryInput` declares in the schema. */
 export interface ICreateInvoiceEstimateHistoryInput {
@@ -204,9 +205,7 @@ export class InvoiceEstimateHistoryResolver {
 	 */
 	@Mutation('deleteInvoiceEstimateHistory')
 	async deleteInvoiceEstimateHistory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.invoiceEstimateHistoryService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.invoiceEstimateHistoryService.delete(id));
 	}
 
 	/**
