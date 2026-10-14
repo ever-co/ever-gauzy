@@ -18,6 +18,7 @@ import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
+import { deleteRemovedRows } from '../../graphql/delete-answer';
 
 /** The members `CreateDailyPlanInput` declares in the schema. */
 export interface ICreateDailyPlanInput {
@@ -304,9 +305,7 @@ export class DailyPlanResolver {
 	@Mutation('deleteDailyPlan')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_DELETE)
 	async deleteDailyPlan(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.dailyPlanService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.dailyPlanService.delete(id));
 	}
 
 	/**

@@ -32,6 +32,7 @@ import {
 	CandidateRejectedCommand,
 	CandidateUpdateCommand
 } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CandidateUserInput` declares in the schema. */
 export interface ICandidateUserInput {
@@ -350,9 +351,7 @@ export class CandidateResolver {
 	@Mutation('deleteCandidate')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async deleteCandidate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.candidateService.delete(id));
 	}
 
 	/**

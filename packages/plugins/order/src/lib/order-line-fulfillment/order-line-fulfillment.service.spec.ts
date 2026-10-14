@@ -296,7 +296,11 @@ function typeOrmRepository(db: ISqliteDatabase, table: string, statements: IStat
 		},
 		release: async () => {
 			runner.released += 1;
-		}
+		},
+		// A transaction on the store itself, so a rollback is the database's.
+		startTransaction: async () => db.exec('BEGIN'),
+		commitTransaction: async () => db.exec('COMMIT'),
+		rollbackTransaction: async () => db.exec('ROLLBACK')
 	};
 
 	return {
@@ -346,8 +350,8 @@ function mikroOrmRepository(db: ISqliteDatabase, table: string, statements: ISta
 		// MikroORM's `execute` inlines the values into its `?` placeholders before the driver sees the
 		// statement, and in `run` mode answers `{ affectedRows }` on every driver; binding them here is
 		// the same statement.
-		getEntityManager: () => ({
-			getConnection: () => ({
+		getEntityManager: () => {
+			const connection = {
 				execute: async (sql: string, parameters: unknown[] = [], method?: string) => {
 					statements.push({ orm: 'mikro-orm', sql, parameters, method });
 
@@ -355,8 +359,28 @@ function mikroOrmRepository(db: ISqliteDatabase, table: string, statements: ISta
 
 					return { affectedRows: result.changes, insertId: result.lastInsertRowid };
 				}
-			})
-		})
+			};
+
+			return {
+				getConnection: () => connection,
+				// `em.transactional`, over the store's own transaction.
+				transactional: async (work: (tx: unknown) => Promise<unknown>) => {
+					db.exec('BEGIN');
+
+					try {
+						const answer = await work({ getConnection: () => connection, getTransactionContext: () => 'tx' });
+
+						db.exec('COMMIT');
+
+						return answer;
+					} catch (error) {
+						db.exec('ROLLBACK');
+
+						throw error;
+					}
+				}
+			};
+		}
 	};
 }
 
@@ -594,7 +618,11 @@ describe('OrderLineFulfillmentService — the ceiling a post-purchase flow is me
  */
 describe('OrderLineFulfillmentService — moving the return counters', () => {
 	it('adds the delivery to what earlier deliveries recorded, exactly, in one statement', async () => {
-		const { service, orderLines, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+		// Corrected with the I-12 guard: the line is stated with what was fulfilled and asked back, because a
+		// receipt of five against a line nothing was requested for is the state that guard now refuses.
+		const { service, orderLines, statements, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 5, returnRequestedQuantity: 5, returnReceivedQuantity: 2 })
+		]);
 
 		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '3' }]);
 
@@ -606,9 +634,11 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		expect(statements[0].sql).toBe(
 			'UPDATE "order_line" SET "returnReceivedQuantity" = ROUND("returnReceivedQuantity" + CAST(? AS DECIMAL(20,6)), 6) ' +
 				'WHERE "id" = ? AND "orderId" = ? AND "tenantId" = ? AND "organizationId" = ? ' +
-				'AND "deletedAt" IS NULL AND ROUND("returnReceivedQuantity" + CAST(? AS DECIMAL(20,6)), 6) >= 0'
+				'AND "deletedAt" IS NULL AND ROUND("returnReceivedQuantity" + CAST(? AS DECIMAL(20,6)), 6) >= 0 ' +
+				'AND ROUND(ROUND("returnReceivedQuantity" + CAST(? AS DECIMAL(20,6)), 6) + "returnDismissedQuantity", 6) ' +
+				'<= ROUND("returnRequestedQuantity", 6)'
 		);
-		expect(statements[0].parameters).toEqual(['3.000000', 'line-1', ORDER, TENANT, ORG, '3.000000']);
+		expect(statements[0].parameters).toEqual(['3.000000', 'line-1', ORDER, TENANT, ORG, '3.000000', '3.000000']);
 		// The count is read from the runner's structured result, which is the only shape that carries it on
 		// every driver; the runner the service borrowed is given back.
 		expect(statements[0].structured).toBe(true);
@@ -621,7 +651,9 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		// The failure scenario of C7: returns R1 (one unit) and R2 (two units) of the same line are received
 		// at once. Both calls read before either writes — the doubles yield a turn at every read — so a
 		// read-then-write-back ended at 1 or 2. One relative statement per move ends at 3.
-		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 0 })]);
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 3, returnRequestedQuantity: 3, returnReceivedQuantity: 0 })
+		]);
 
 		await Promise.all([
 			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]),
@@ -641,10 +673,11 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 	});
 
 	it('moves several lines in one call, and only the lines it was given', async () => {
+		const asked = { fulfilledQuantity: 2, returnRequestedQuantity: 2 };
 		const { service, counters } = fixture([
-			line({ id: 'line-1', returnReceivedQuantity: 0.5, position: 1 }),
-			line({ id: 'line-2', returnReceivedQuantity: 1, position: 2 }),
-			line({ id: 'line-3', returnReceivedQuantity: 0, position: 3 })
+			line({ id: 'line-1', ...asked, returnReceivedQuantity: 0.5, position: 1 }),
+			line({ id: 'line-2', ...asked, returnReceivedQuantity: 1, position: 2 }),
+			line({ id: 'line-3', ...asked, returnReceivedQuantity: 0, position: 3 })
 		]);
 
 		await service.recordReturnReceipt(ORDER, [
@@ -684,8 +717,8 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		// reversed before the refusal is raised. The caller that sees the call fail has nothing of it to
 		// undo — which is what lets the receipt's compensation undo only the steps it knows landed.
 		const { service, counters } = fixture([
-			line({ id: 'line-1', returnReceivedQuantity: 1, position: 1 }),
-			line({ id: 'line-2', returnReceivedQuantity: 1, position: 2 })
+			line({ id: 'line-1', fulfilledQuantity: 3, returnRequestedQuantity: 3, returnReceivedQuantity: 1, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 3, returnRequestedQuantity: 3, returnReceivedQuantity: 1, position: 2 })
 		]);
 
 		await expect(
@@ -769,15 +802,20 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 	it('moves the requested counter by the same statement, and leaves the received one alone', async () => {
 		// I-12 bounds what came back by what was asked back, so the returns flow moves this counter when a
 		// return's lines are written and moves it back when the return is withdrawn.
-		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+		// Corrected with the I-12 guard: this case withdrew the request to 0 under a line that had received
+		// 1, which is the state I-12 forbids (received above requested). It now starts inside I-12 and stays
+		// there: one unit already asked back and received, two more asked for and then withdrawn.
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 3, returnRequestedQuantity: 1, returnReceivedQuantity: 1 })
+		]);
 
 		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '2' }]);
 
-		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 2, returnReceivedQuantity: 1 });
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 3, returnReceivedQuantity: 1 });
 
 		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }]);
 
-		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 0, returnReceivedQuantity: 1 });
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 1, returnReceivedQuantity: 1 });
 	});
 
 	it('refuses a request move below zero with a code of its own', async () => {
@@ -794,7 +832,9 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		// `returnReceivedQuantity`, coerces it to 0 and assigns the delta over the counter. SQLite accepts
 		// backticks too, so the store below runs the MySQL spelling as written.
 		mockDialect.type = 'mysql';
-		const { service, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+		const { service, statements, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 3, returnRequestedQuantity: 3, returnReceivedQuantity: 2 })
+		]);
 
 		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
 
@@ -807,14 +847,18 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 
 	it('binds the Postgres placeholders TypeORM hands to the driver untouched', async () => {
 		mockDialect.type = 'postgres';
-		const { service, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+		const { service, statements, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 3, returnRequestedQuantity: 3, returnReceivedQuantity: 2 })
+		]);
 
 		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
 
-		// Six occurrences, six placeholders: the delta is bound twice, once to move and once to floor.
+		// Seven occurrences, seven placeholders: the delta is bound three times — once to move, once to floor,
+		// and once for the half of doc 10 I-12 a receipt can break.
 		expect(statements[0].sql).toContain('CAST($1 AS DECIMAL(20,6))');
 		expect(statements[0].sql).toContain('CAST($6 AS DECIMAL(20,6)), 6) >= 0');
-		expect(statements[0].parameters).toHaveLength(6);
+		expect(statements[0].sql).toContain('CAST($7 AS DECIMAL(20,6)), 6) + "returnDismissedQuantity", 6)');
+		expect(statements[0].parameters).toHaveLength(7);
 		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3 });
 	});
 
@@ -838,7 +882,7 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 			['mikro-orm', 'run']
 		]);
 		expect(statements[0].sql).not.toMatch(/\$\d/);
-		expect(statements[0].parameters).toEqual(['1.000000', 'line-1', ORDER, TENANT, ORG, '1.000000']);
+		expect(statements[0].parameters).toEqual(['1.000000', 'line-1', ORDER, TENANT, ORG, '1.000000', '1.000000']);
 		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3, returnRequestedQuantity: 3 });
 		expect(orders.options).toEqual([]);
 		expect(orderLines.options).toEqual([]);
@@ -854,8 +898,8 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		mockOrm.type = 'mikro-orm';
 		mockDialect.type = 'mysql';
 		const { service, statements, counters, orderLines } = fixture([
-			line({ id: 'line-1', position: 1 }),
-			line({ id: 'line-2', position: 2 })
+			line({ id: 'line-1', fulfilledQuantity: 2, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 1, position: 2 })
 		]);
 
 		await service.recordReturnRequest(ORDER, [
@@ -868,7 +912,8 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		expect(statements[0].sql).toBe(
 			'UPDATE `order_line` SET `returnRequestedQuantity` = ROUND(`returnRequestedQuantity` + CAST(? AS DECIMAL(20,6)), 6) ' +
 				'WHERE `id` = ? AND `orderId` = ? AND `tenantId` = ? AND `organizationId` = ? ' +
-				'AND `deletedAt` IS NULL AND ROUND(`returnRequestedQuantity` + CAST(? AS DECIMAL(20,6)), 6) >= 0'
+				'AND `deletedAt` IS NULL AND ROUND(`returnRequestedQuantity` + CAST(? AS DECIMAL(20,6)), 6) >= 0 ' +
+				'AND ROUND(`returnRequestedQuantity` + CAST(? AS DECIMAL(20,6)), 6) <= ROUND(`fulfilledQuantity`, 6)'
 		);
 
 		await expect(
@@ -912,9 +957,11 @@ describe('OrderLineFulfillmentService — moving the dismissed and written-off c
 		expect(statements[0].sql).toBe(
 			'UPDATE "order_line" SET "returnDismissedQuantity" = ROUND("returnDismissedQuantity" + CAST(? AS DECIMAL(20,6)), 6) ' +
 				'WHERE "id" = ? AND "orderId" = ? AND "tenantId" = ? AND "organizationId" = ? ' +
-				'AND "deletedAt" IS NULL AND ROUND("returnDismissedQuantity" + CAST(? AS DECIMAL(20,6)), 6) >= 0'
+				'AND "deletedAt" IS NULL AND ROUND("returnDismissedQuantity" + CAST(? AS DECIMAL(20,6)), 6) >= 0 ' +
+				'AND ROUND("returnReceivedQuantity" + ROUND("returnDismissedQuantity" + CAST(? AS DECIMAL(20,6)), 6), 6) ' +
+				'<= ROUND("returnRequestedQuantity", 6)'
 		);
-		expect(statements[0].parameters).toEqual(['1.500000', 'line-1', ORDER, TENANT, ORG, '1.500000']);
+		expect(statements[0].parameters).toEqual(['1.500000', 'line-1', ORDER, TENANT, ORG, '1.500000', '1.500000']);
 		// The line is never read before it is written: there is no value to write back.
 		expect(orderLines.options).toEqual([]);
 	});
@@ -958,7 +1005,9 @@ describe('OrderLineFulfillmentService — moving the dismissed and written-off c
 
 	it('writes both counters in the MySQL spelling and binds the Postgres placeholders', async () => {
 		mockDialect.type = 'mysql';
-		const mysql = fixture([line({ id: 'line-1', returnDismissedQuantity: 1 })]);
+		const mysql = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 2, returnRequestedQuantity: 2, returnDismissedQuantity: 1 })
+		]);
 
 		await mysql.service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
 
@@ -984,7 +1033,7 @@ describe('OrderLineFulfillmentService — moving the dismissed and written-off c
 		mockOrm.type = 'mikro-orm';
 		mockDialect.type = 'postgres';
 		const { service, statements, counters, orders, orderLines } = fixture([
-			line({ id: 'line-1', position: 1, writtenOffQuantity: 1 }),
+			line({ id: 'line-1', position: 1, fulfilledQuantity: 1, returnRequestedQuantity: 1, writtenOffQuantity: 1 }),
 			line({ id: 'line-2', position: 2, writtenOffQuantity: 0 })
 		]);
 
@@ -1040,7 +1089,7 @@ describe('OrderLineFulfillmentService — the counter the derivation reads for a
 	it('answers RETURNED for a line of two that came back as one sound and one broken unit', async () => {
 		// The failure scenario of C6, on the order's side: the returns flow now states the delivery as two
 		// units that came back, and the derivation answers what the return itself says.
-		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 2 })]);
+		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 2, returnRequestedQuantity: 2 })]);
 
 		expect(derive(counters('line-1'), '2')).toBe(FulfillmentStatus.FULFILLED);
 
@@ -1050,7 +1099,7 @@ describe('OrderLineFulfillmentService — the counter the derivation reads for a
 	});
 
 	it('answered PARTIALLY_RETURNED when only the sound unit moved the counter, which was the defect', async () => {
-		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 2 })]);
+		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 2, returnRequestedQuantity: 2 })]);
 
 		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
 
@@ -1062,11 +1111,289 @@ describe('OrderLineFulfillmentService — the counter the derivation reads for a
 		// the order owes, so two broken units that physically came back would leave nothing owed and nothing
 		// returned. The same delivery on the received counter answers RETURNED.
 		const dismissed = fixture([line({ id: 'line-1', fulfilledQuantity: 2, returnDismissedQuantity: 2 })]);
-		const received = fixture([line({ id: 'line-2', fulfilledQuantity: 2 })]);
+		const received = fixture([line({ id: 'line-2', fulfilledQuantity: 2, returnRequestedQuantity: 2 })]);
 
 		await received.service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-2', quantityDelta: '2' }]);
 
 		expect(derive(dismissed.counters('line-1'), '2')).toBe(FulfillmentStatus.FULFILLED);
 		expect(derive(received.counters('line-2'), '2')).toBe(FulfillmentStatus.RETURNED);
+	});
+});
+
+/**
+ * Doc 10 invariant I-12, enforced by the statement that moves the counters.
+ *
+ * `returnReceivedQuantity + returnDismissedQuantity <= returnRequestedQuantity <= fulfilledQuantity`. The
+ * design states it as a rule the services and a property test enforce (doc 10 §I-12, P-6), and until this
+ * block neither existed: the counters were floored at zero and nothing else, so a receipt against a line
+ * whose requested counter never moved, or an `ITEM_RETURN` asking back more than shipped, was written as
+ * asked and the order described goods that do not exist.
+ *
+ * Each move is checked against the half of I-12 it can break, in the direction that can break it, inside
+ * the statement's own `WHERE` — so a move that would leave the line outside I-12 changes no row and is
+ * refused with a code of its own, and a move that repairs a line already outside it (a compensation, the
+ * withdrawal of a return recorded before the requested counter had a writer) is still accepted.
+ */
+describe('OrderLineFulfillmentService — doc 10 invariant I-12', () => {
+	it('refuses a receipt that would bring back more than was asked back, and writes nothing', async () => {
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 5, returnRequestedQuantity: 2, returnReceivedQuantity: 1 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1.5' }])
+		).rejects.toThrow(/ORDER_LINE_RETURNED_EXCEEDS_REQUESTED/);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1, returnRequestedQuantity: 2 });
+
+		// The control: exactly what is still asked back lands.
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 2 });
+	});
+
+	it('counts what was dismissed beside what came back, on both counters', async () => {
+		const { service, counters } = fixture([
+			line({
+				id: 'line-1',
+				fulfilledQuantity: 3,
+				returnRequestedQuantity: 3,
+				returnReceivedQuantity: 1,
+				returnDismissedQuantity: 1
+			})
+		]);
+
+		await expect(
+			service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1.000001' }])
+		).rejects.toThrow(/ORDER_LINE_RETURNED_EXCEEDS_REQUESTED/);
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1.000001' }])
+		).rejects.toThrow(/ORDER_LINE_RETURNED_EXCEEDS_REQUESTED/);
+
+		await service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '0.4' }]);
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '0.6' }]);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1.6, returnDismissedQuantity: 1.4 });
+	});
+
+	it('refuses a request for more than was fulfilled, and a withdrawal below what already came back', async () => {
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 2.675, returnRequestedQuantity: 1, returnReceivedQuantity: 0.675 })
+		]);
+
+		await expect(
+			service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1.675001' }])
+		).rejects.toThrow(/ORDER_LINE_RETURN_REQUEST_EXCEEDS_FULFILLED/);
+		await expect(
+			service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-0.325001' }])
+		).rejects.toThrow(/ORDER_LINE_RETURN_REQUEST_BELOW_RETURNED/);
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 1 });
+
+		// Both boundaries land exactly, on the dialect that holds a fraction as a binary float.
+		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1.675' }]);
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 2.675 });
+		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }]);
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 0.675 });
+	});
+
+	it('still accepts the moves that repair a line already outside I-12', async () => {
+		// A line written before the requested counter had a writer: two units came back against none asked.
+		// Taking the receipt back (a compensation) and raising the request are both repairs; the guard checks
+		// only the half each move can break, so neither is refused for the state it is correcting.
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 4, returnRequestedQuantity: 0, returnReceivedQuantity: 2 })
+		]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-1' }]);
+		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1, returnRequestedQuantity: 1 });
+	});
+
+	it('puts a repair back exactly when a later move of the same call is refused', async () => {
+		// Greptile on #10546: a call that lowers line A's received counter (a repair of a line already outside
+		// I-12: two received against none requested) and then fails on line B must put A back to two — but the
+		// reversal is a receipt *raised*, and a reversal carrying the I-12 guard would be refused, logged, and
+		// leave A at one while the caller is told the whole call failed. The reversal restores the exact state
+		// this call found, so it is floored and scoped like any move, and not refused for I-12.
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 4, returnRequestedQuantity: 0, returnReceivedQuantity: 2, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 4, returnRequestedQuantity: 1, returnReceivedQuantity: 1, position: 2 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '-1' },
+				{ orderLineId: 'line-2', quantityDelta: '-5' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 2 });
+		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 1 });
+	});
+
+	it.each([
+		['typeorm', 'better-sqlite3'],
+		['mikro-orm', 'postgres']
+	])('runs a call of several moves as one transaction and undoes a refused one by rolling back (%s)', async (orm, dialect) => {
+		// Greptile on #10546 (second P1): undoing the landed moves with statements of their own is a window. Run
+		// with the I-12 guard the undo refused to put back a repair; run without it, it could put back a value a
+		// concurrent move (another call dismissing units on the same line) had since made invalid. One
+		// transaction has no such window: the first move holds the line until the call ends, a concurrent move
+		// waits for it, and a refusal is the database's rollback — so no compensating statement is ever issued.
+		mockOrm.type = orm;
+		mockDialect.type = dialect;
+		const { service, counters, statements } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 1, returnRequestedQuantity: 1, returnReceivedQuantity: 1, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 1, returnRequestedQuantity: 1, returnReceivedQuantity: 0, position: 2 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '-1' },
+				{ orderLineId: 'line-2', quantityDelta: '-1' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		// Two statements — the two moves — and no third that undoes the first.
+		expect(statements.map((statement) => statement.parameters[0])).toEqual(['-1.000000', '-1.000000']);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1 });
+		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 0 });
+	});
+
+	it('leaves the written-off counter to its floor alone, because it is not part of I-12', async () => {
+		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 0 })]);
+
+		await service.recordWriteOff(ORDER, [{ orderLineId: 'line-1', quantityDelta: '3' }]);
+
+		expect(counters('line-1')).toMatchObject({ writtenOffQuantity: 3 });
+	});
+
+	it('undoes the moves of a call that landed before one of its moves broke I-12', async () => {
+		const { service, counters } = fixture([
+			line({ id: 'line-1', fulfilledQuantity: 2, position: 1 }),
+			line({ id: 'line-2', fulfilledQuantity: 1, position: 2 })
+		]);
+
+		await expect(
+			service.recordReturnRequest(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '2' },
+				{ orderLineId: 'line-2', quantityDelta: '2' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RETURN_REQUEST_EXCEEDS_FULFILLED/);
+
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 0 });
+		expect(counters('line-2')).toMatchObject({ returnRequestedQuantity: 0 });
+	});
+
+	/**
+	 * Doc 10 names a property test for I-12 (P-6); this is it.
+	 *
+	 * A seeded generator drives a few hundred moves of every counter, in both directions and by amounts a
+	 * binary float cannot hold, against the real statement on the in-memory store — and an exact model in
+	 * integer micro-units decides, before each move, whether the floor or the half of I-12 the move can break
+	 * refuses it. The properties are the three that make the guard trustworthy rather than merely strict:
+	 *
+	 * - **the statement agrees with the model on every move** — nothing I-12 allows is refused, and nothing it
+	 *   forbids lands, so the guard is exactly I-12 and not a stricter or a looser rule;
+	 * - **a refused move writes nothing**, so the store and the model never part;
+	 * - **I-12 holds after every move**, starting from an empty line.
+	 *
+	 * It runs on the three spellings the platform writes the statement in — SQLite through TypeORM, Postgres
+	 * placeholders through TypeORM, and MySQL quoting through MikroORM's connection — because each binds and
+	 * quotes the extra condition differently, and a guard that held on one of them would prove nothing about
+	 * the others.
+	 */
+	it.each([
+		['typeorm', 'better-sqlite3', 0x1201],
+		['typeorm', 'postgres', 0x1202],
+		['mikro-orm', 'mysql', 0x1203]
+	])('agrees with an exact model of I-12 over random moves (%s, %s)', async (orm, dialect, seed) => {
+		mockOrm.type = orm as string;
+		mockDialect.type = dialect as string;
+
+		const SCALE = BigInt(1_000_000);
+		const units = (text: string): bigint => {
+			const negative = text.startsWith('-');
+			const [whole, fraction = ''] = (negative ? text.slice(1) : text).split('.');
+			const value = BigInt(whole) * SCALE + BigInt((fraction + '000000').slice(0, 6));
+
+			return negative ? -value : value;
+		};
+		const stored = (value: unknown): bigint => BigInt(Math.round(Number(value ?? 0) * 1_000_000));
+		// mulberry32: small, seeded, and the same sequence on every machine.
+		let state = seed as number;
+		const random = (): number => {
+			state = (state + 0x6d2b79f5) | 0;
+			let t = Math.imul(state ^ (state >>> 15), 1 | state);
+			t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+		const pick = <T>(items: readonly T[]): T => items[Math.floor(random() * items.length)];
+
+		const fulfilled = '7.675';
+		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: Number(fulfilled) })]);
+		const model: Record<'received' | 'requested' | 'dismissed' | 'writtenOff', bigint> = {
+			received: BigInt(0),
+			requested: BigInt(0),
+			dismissed: BigInt(0),
+			writtenOff: BigInt(0)
+		};
+		const move = (delta: string) => [{ orderLineId: 'line-1', quantityDelta: delta }];
+		const writers = {
+			received: (delta: string) => service.recordReturnReceipt(ORDER, move(delta)),
+			requested: (delta: string) => service.recordReturnRequest(ORDER, move(delta)),
+			dismissed: (delta: string) => service.recordReturnDismissal(ORDER, move(delta)),
+			writtenOff: (delta: string) => service.recordWriteOff(ORDER, move(delta))
+		};
+		const amounts = ['0.1', '0.2', '0.3', '0.25', '0.333333', '0.675', '1', '1.5', '2', '2.675', '3'];
+		let accepted = 0;
+		let refused = 0;
+
+		for (let step = 0; step < 300; step++) {
+			const counter = pick(['received', 'requested', 'requested', 'dismissed', 'writtenOff'] as const);
+			const rising = random() < 0.6;
+			const delta = `${rising ? '' : '-'}${pick(amounts)}`;
+			const after = model[counter] + units(delta);
+
+			let expected: RegExp | null = null;
+
+			if (after < BigInt(0)) {
+				expected = /_BELOW_ZERO/;
+			} else if (rising && counter === 'received' && after + model.dismissed > model.requested) {
+				expected = /ORDER_LINE_RETURNED_EXCEEDS_REQUESTED/;
+			} else if (rising && counter === 'dismissed' && model.received + after > model.requested) {
+				expected = /ORDER_LINE_RETURNED_EXCEEDS_REQUESTED/;
+			} else if (rising && counter === 'requested' && after > units(fulfilled)) {
+				expected = /ORDER_LINE_RETURN_REQUEST_EXCEEDS_FULFILLED/;
+			} else if (!rising && counter === 'requested' && model.received + model.dismissed > after) {
+				expected = /ORDER_LINE_RETURN_REQUEST_BELOW_RETURNED/;
+			}
+
+			if (expected) {
+				await expect(writers[counter](delta)).rejects.toThrow(expected);
+				refused++;
+			} else {
+				await writers[counter](delta);
+				model[counter] = after;
+				accepted++;
+			}
+
+			const row = counters('line-1');
+			const now = {
+				received: stored(row['returnReceivedQuantity']),
+				requested: stored(row['returnRequestedQuantity']),
+				dismissed: stored(row['returnDismissedQuantity']),
+				writtenOff: stored(row['writtenOffQuantity'])
+			};
+
+			expect({ step, delta, counter, ...now }).toEqual({ step, delta, counter, ...model });
+			expect(now.received + now.dismissed <= now.requested).toBe(true);
+			expect(now.requested <= units(fulfilled)).toBe(true);
+		}
+
+		// The run exercised both answers, so a guard that refused everything — or nothing — would fail it.
+		expect(accepted).toBeGreaterThan(50);
+		expect(refused).toBeGreaterThan(50);
 	});
 });

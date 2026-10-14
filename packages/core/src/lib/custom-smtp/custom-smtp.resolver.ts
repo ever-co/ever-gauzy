@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateSmtpSettingInput` declares in the schema. */
 export interface ICreateSmtpSettingInput {
@@ -101,10 +102,12 @@ const SMTP_SETTING_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * own: every field below reaches the same `CustomSmtpService` method, or dispatches the same command,
  * that the `/api/smtp` routes reach, with the same payload.
  *
- * **The guard chain and the permission are the controller's.** The controller carries
- * `TenantPermissionGuard` and `PermissionGuard` beside `CUSTOM_SMTP_VIEW` on the class, and no handler
- * states a permission of its own — the creation, the edit and the validator included — so the class here
- * carries the two guards beside the gate and the same permission, and every field below runs under it.
+ * **The guard chain and the permissions are the controller's.** The controller carries
+ * `TenantPermissionGuard` and `PermissionGuard` beside `CUSTOM_SMTP_VIEW` on the class, which every read and
+ * the validator run under, and states `CUSTOM_SMTP_EDIT` on every write — the creation, the edit, the removal and
+ * the soft-delete/recover pair. The class here carries the two guards beside the gate and the read grant, and
+ * each write field states the write grant its route states (owner decision 5, 2026-10-13: the family had only
+ * the read grant, so its writes, the soft pair included, could not require an edit grant until it existed).
  *
  * **The credentials are written and never answered.** The delivered API answers a masked username and
  * password, and the row a resolver holds carries the stored values; the type this resolver answers
@@ -222,7 +225,7 @@ export class CustomSmtpResolver {
 	 * stamps the caller's own onto the row.
 	 */
 	@Mutation('createSmtpSetting')
-	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
+	@Permissions(PermissionsEnum.CUSTOM_SMTP_EDIT)
 	async createSmtpSetting(@Args('input') input: ICreateSmtpSettingInput): Promise<CustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpCreateCommand(input as unknown as ICustomSmtpCreateInput)
@@ -238,7 +241,7 @@ export class CustomSmtpResolver {
 	 * column's default rather than left as it is.
 	 */
 	@Mutation('updateSmtpSetting')
-	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
+	@Permissions(PermissionsEnum.CUSTOM_SMTP_EDIT)
 	async updateSmtpSetting(@Args('input') input: IUpdateSmtpSettingInput): Promise<CustomSmtp> {
 		const { id, ...values } = input;
 
@@ -255,11 +258,9 @@ export class CustomSmtpResolver {
 	 * that was not there is the service's own miss rather than a `false` answered from here.
 	 */
 	@Mutation('deleteSmtpSetting')
-	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
+	@Permissions(PermissionsEnum.CUSTOM_SMTP_EDIT)
 	async deleteSmtpSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.customSmtpService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.customSmtpService.delete(id));
 	}
 
 	/**
@@ -270,7 +271,7 @@ export class CustomSmtpResolver {
 	 * organization whose own configuration was withdrawn, which is what the read above answers.
 	 */
 	@Mutation('softDeleteSmtpSetting')
-	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
+	@Permissions(PermissionsEnum.CUSTOM_SMTP_EDIT)
 	async softDeleteSmtpSetting(@Args('id', { type: () => ID }) id: Id): Promise<CustomSmtp> {
 		return await this.customSmtpService.softRemove(id);
 	}
@@ -279,7 +280,7 @@ export class CustomSmtpResolver {
 	 * Puts a withdrawn configuration back.
 	 */
 	@Mutation('recoverSmtpSetting')
-	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
+	@Permissions(PermissionsEnum.CUSTOM_SMTP_EDIT)
 	async recoverSmtpSetting(@Args('id', { type: () => ID }) id: Id): Promise<CustomSmtp> {
 		return await this.customSmtpService.softRecover(id);
 	}

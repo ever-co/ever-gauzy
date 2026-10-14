@@ -55,6 +55,15 @@ extend type Mutation {
 	ones left out are withdrawn in one transaction.
 	"""
 	replaceRegionCountries(input: ReplaceRegionCountriesInput!): [RegionCountry!]!
+	"""
+	Withdraws a region without removing it — `DELETE /regions/:id/soft`. It requires the edit grant the change
+	requires, as the route does: a role that may only read cannot withdraw one.
+	"""
+	softDeleteRegion(id: ID!): Region!
+	"""
+	Restores a withdrawn region — `PUT /regions/:id/recover` — under the same edit grant: restoring undoes a removal.
+	"""
+	recoverRegion(id: ID!): Region!
 }
 
 extend type Subscription {

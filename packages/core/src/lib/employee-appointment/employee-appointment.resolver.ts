@@ -22,6 +22,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEmployeeAppointmentInput` declares in the schema. */
 export interface ICreateEmployeeAppointmentInput {
@@ -311,9 +312,7 @@ export class EmployeeAppointmentResolver {
 	 */
 	@Mutation('deleteEmployeeAppointment')
 	async deleteEmployeeAppointment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeAppointmentService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeAppointmentService.delete(id));
 	}
 
 	/**

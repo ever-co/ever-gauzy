@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationDocument } from './organization-document.entity';
 import { OrganizationDocumentService } from './organization-document.service';
 import { Permissions } from '../shared/decorators';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationDocumentInput` declares in the schema. */
 export interface ICreateOrganizationDocumentInput {
@@ -213,9 +214,7 @@ export class OrganizationDocumentResolver {
 	 */
 	@Mutation('deleteOrganizationDocument')
 	async deleteOrganizationDocument(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationDocumentService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationDocumentService.delete(id));
 	}
 
 	/**
