@@ -9,6 +9,36 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { MultiORM, MultiORMEnum, getORMType, wrapSerialize } from './../../../../core/utils';
 
+/**
+ * SQL condition: the time log under `alias` overlaps the [startedAt, stoppedAt) range.
+ *
+ * PostgreSQL uses `OVERLAPS`. The SQLite condition only checked that the new start fell inside an existing
+ * log, and the MySQL one that an existing log lay entirely inside the new range, so a log covering the new
+ * range, or overlapping one of its ends, was not reported as a conflict and the time was counted twice.
+ * Both now use the same half-open overlap test as `OVERLAPS`.
+ */
+export function overlapCondition(
+	dbType: DatabaseTypeEnum,
+	alias: string,
+	startedAt: string,
+	stoppedAt: string
+): string {
+	switch (dbType) {
+		case DatabaseTypeEnum.postgres:
+			return `("${alias}"."startedAt", "${alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
+			// Compared as dates: SQLite stores 'YYYY-MM-DD HH:MM:SS.SSS', and as text that sorts before the ISO
+			// bounds ('T' > ' ') of the same day, so a plain string comparison missed most overlapping logs
+			return `julianday("${alias}"."startedAt") < julianday('${stoppedAt}') AND julianday("${alias}"."stoppedAt") > julianday('${startedAt}')`;
+		case DatabaseTypeEnum.mysql:
+			// Quoted for the `dbType` given, not for the process-wide database `p()` reads
+			return `\`${alias}\`.\`startedAt\` < '${stoppedAt}' AND \`${alias}\`.\`stoppedAt\` > '${startedAt}'`;
+		default:
+			throw new Error(`cannot get conflict time log due to unsupported database type: ${dbType}`);
+	}
+}
+
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTimeLogCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -33,25 +63,12 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				const knex = this.mikroOrmTimeLogRepository.getKnex();
 				let subQuery = knex('time_log').withSchema(knex.userParams.schema).as('time_log').select('time_log.id');
 
-				let overlapQuery: string = '';
-				switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
-					case DatabaseTypeEnum.sqlite:
-					case DatabaseTypeEnum.betterSqlite3:
-						overlapQuery = `'${startedAt}' >= "time_log"."startedAt" and '${startedAt}' <= "time_log"."stoppedAt"`;
-						break;
-					case DatabaseTypeEnum.postgres:
-						overlapQuery = `("time_log"."startedAt", "time_log"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
-						break;
-					case DatabaseTypeEnum.mysql:
-						overlapQuery = p(
-							`"time_log"."startedAt" BETWEEN '${startedAt}' AND '${stoppedAt}' AND "time_log"."stoppedAt" BETWEEN '${startedAt}' AND '${stoppedAt}'`
-						);
-						break;
-					default:
-						throw Error(
-							`cannot get conflict time log due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-						);
-				}
+				const overlapQuery = overlapCondition(
+					this.configService.dbConnectionOptions.type as DatabaseTypeEnum,
+					'time_log',
+					startedAt,
+					stoppedAt
+				);
 
 				subQuery = subQuery
 					.where('time_log.employeeId', employeeId)
@@ -85,25 +102,12 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 			default: {
 				let conflictQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
-				let query: string = ``;
-				switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
-					case DatabaseTypeEnum.sqlite:
-					case DatabaseTypeEnum.betterSqlite3:
-						query = `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`;
-						break;
-					case DatabaseTypeEnum.postgres:
-						query = `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
-						break;
-					case DatabaseTypeEnum.mysql:
-						query = p(
-							`"${conflictQuery.alias}"."startedAt" BETWEEN '${startedAt}' AND '${stoppedAt}' AND "${conflictQuery.alias}"."stoppedAt" BETWEEN '${startedAt}' AND '${stoppedAt}'`
-						);
-						break;
-					default:
-						throw Error(
-							`cannot get conflict time log due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-						);
-				}
+				const query = overlapCondition(
+					this.configService.dbConnectionOptions.type as DatabaseTypeEnum,
+					conflictQuery.alias,
+					startedAt,
+					stoppedAt
+				);
 				conflictQuery = conflictQuery
 					.innerJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
 					.where(p(`"${conflictQuery.alias}"."employeeId" = :employeeId`), { employeeId })

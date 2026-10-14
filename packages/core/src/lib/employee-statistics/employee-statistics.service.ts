@@ -15,6 +15,24 @@ import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 
+/**
+ * The month containing `date`, as the range `findWorkingEmployees` filters on.
+ *
+ * Passing the bare Date counted every current employee: the working-period filter only applies when the
+ * range has both `startDate` and `endDate`, so a split expense was divided among today's employees
+ * instead of those working in its month.
+ */
+export const monthOf = (date: Date): IDateRangePicker => ({
+	startDate: moment(date).startOf('month').toDate(),
+	endDate: moment(date).endOf('month').toDate()
+});
+
+/**
+ * Each working employee's share of a split expense; 0 for a month in which nobody was working (dividing by
+ * zero would carry `Infinity` into the employee's expenses and profit).
+ */
+export const shareOf = (amount: number, splitAmong: number): number => (splitAmong > 0 ? amount / splitAmong : 0);
+
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -327,20 +345,20 @@ export class EmployeeStatisticsService {
 			if (monthlySplitExpenseMap.has(key)) {
 				// Update expense statistics values in map if key pre-exists
 				const stat = monthlySplitExpenseMap.get(key);
-				const splitAmount = amount / stat.splitAmong;
+				const splitAmount = shareOf(amount, stat.splitAmong);
 				stat.splitExpense = Number((splitAmount + stat.splitExpense).toFixed(2));
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
 				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 					employee.organization.id,
-					expense.valueDate
+					monthOf(expense.valueDate)
 				);
 
 				const newStat = {
 					month: expense.valueDate.getMonth(),
 					year: expense.valueDate.getFullYear(),
-					splitExpense: Number((amount / splitAmong).toFixed(2)),
+					splitExpense: Number(shareOf(amount, splitAmong).toFixed(2)),
 					splitAmong,
 					expense: [expense]
 				};
@@ -424,24 +442,25 @@ export class EmployeeStatisticsService {
 				if (monthlySplitExpenseMap.has(key)) {
 					// Update expense statistics values in map if key pre-exists
 					const stat = monthlySplitExpenseMap.get(key);
-					const splitExpense = amount / stat.splitAmong;
+					const splitExpense = shareOf(amount, stat.splitAmong);
 					stat.splitExpense = Number((splitExpense + stat.splitExpense).toFixed(2));
 					stat.recurringExpense.push(expense);
-					stat.valueDate = date;
+					// A copy: `date` is the loop variable, moved on by `setMonth` after this iteration
+					stat.valueDate = new Date(date);
 				} else {
 					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 						employee.organization.id,
-						date
+						monthOf(date)
 					);
 
 					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: IMonthAggregatedSplitExpense = {
 						month: date.getMonth(),
 						year: date.getFullYear(),
-						splitExpense: Number((amount / splitAmong).toFixed(2)),
+						splitExpense: Number(shareOf(amount, splitAmong).toFixed(2)),
 						splitAmong,
 						recurringExpense: [expense],
-						valueDate: date
+						valueDate: new Date(date)
 					};
 
 					monthlySplitExpenseMap.set(key, newStat);

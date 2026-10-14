@@ -1,5 +1,6 @@
 import '../core/entities/internal';
 
+import { BaseEntityEnum, EntitySubscriptionTypeEnum } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationSprintService } from './organization-sprint.service';
@@ -71,5 +72,63 @@ describe('OrganizationSprintService.update', () => {
 
 		expect(updateMembers).toHaveBeenCalledWith('sprint-1', fixture.organizationId, [], [], ['employee-1']);
 		expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: 'sprint-1', name: 'Sprint 1 (renamed)' }));
+	});
+});
+
+/**
+ * Same unsubscribe bug as the projects: `member.employee.id` on rows loaded without the relation.
+ */
+describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
+	const fixture = createTenantFixture();
+
+	let restore: () => void;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	it("unsubscribes a removed member from the sprint, by the member row's employeeId", async () => {
+		const entitySubscriptionService = { deleteForEmployee: jest.fn(), delete: jest.fn() };
+		const self = {
+			_roleService: { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager' }) },
+			typeOrmOrganizationSprintEmployeeRepository: {
+				find: jest.fn().mockResolvedValue([
+					{ id: 'row-a', employeeId: 'employee-a', roleId: null },
+					{ id: 'row-b', employeeId: 'employee-b', roleId: null }
+				]),
+				update: jest.fn(),
+				save: jest.fn()
+			},
+			deleteMemberByIds: jest.fn(),
+			_entitySubscriptionService: entitySubscriptionService,
+			_eventBus: { publish: jest.fn() }
+		};
+
+		await OrganizationSprintService.prototype.updateOrganizationSprintMembers.call(
+			self,
+			'sprint-1',
+			fixture.organizationId,
+			[],
+			[],
+			['employee-a']
+		);
+
+		expect(self.deleteMemberByIds).toHaveBeenCalledTimes(1);
+		expect(self.deleteMemberByIds).toHaveBeenCalledWith(['row-b']);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledTimes(1);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledWith({
+			entity: BaseEntityEnum.OrganizationSprint,
+			entityId: 'sprint-1',
+			employeeId: 'employee-b',
+			type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+			organizationId: fixture.organizationId,
+			tenantId: fixture.tenantId
+		});
+		expect(entitySubscriptionService.delete).not.toHaveBeenCalled();
 	});
 });

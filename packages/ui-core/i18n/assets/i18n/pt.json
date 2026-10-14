@@ -4270,7 +4270,40 @@
 		"UNTAGGED": "build sem tag",
 		"API_UNAVAILABLE": "Versão da API indisponível",
 		"LEARN_MORE": "Saiba mais",
-		"ABOUT": "Sobre"
+		"ABOUT": "Sobre",
+		"GITHUB": {
+			"TITLE": "No GitHub",
+			"DESCRIPTION": "O Ever Gauzy é desenvolvido de forma aberta: acompanhe as versões, relate um problema ou contribua.",
+			"RELEASES": "Versões",
+			"ISSUES": "Issues",
+			"PULL_REQUESTS": "Pull requests",
+			"CONTRIBUTORS": "Colaboradores",
+			"CONTRIBUTING": "Guia de contribuição",
+			"CODE_OF_CONDUCT": "Código de conduta",
+			"LICENSE_FILE": "Licença"
+		},
+		"CARD": {
+			"IN_SYNC": "Sincronizado",
+			"DIFFERENT": "Builds diferentes",
+			"RELEASE_NOTES": "Notas da versão",
+			"COMMIT": "Commit",
+			"REPOSITORY": "Repositório"
+		},
+		"ENV": {
+			"TITLE": "Ambiente",
+			"BUILD": "Build",
+			"PRODUCTION": "Produção",
+			"DEVELOPMENT": "Desenvolvimento",
+			"MODE": "Modo",
+			"DEMO": "Demo",
+			"STANDARD": "Padrão",
+			"RUNNING_IN": "Executando em",
+			"DESKTOP": "Aplicativo de desktop",
+			"BROWSER": "Navegador",
+			"API_ADDRESS": "Endereço da API",
+			"WEB_ADDRESS": "Endereço web",
+			"COPY": "Copiar {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "by",

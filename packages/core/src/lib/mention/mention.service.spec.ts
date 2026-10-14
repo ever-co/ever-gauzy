@@ -89,3 +89,52 @@ describe('MentionService.create', () => {
 		});
 	});
 });
+
+describe('MentionService.updateEntityMentions', () => {
+	const author = createTenantFixture({ user: { employeeId: 'author-employee' } as IUser });
+
+	let restore: () => void;
+	let eventBus: { publish: jest.Mock };
+	let service: MentionService;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(author));
+		// No existing mention on the entity
+		jest.spyOn(TenantAwareCrudService.prototype, 'find').mockResolvedValue([]);
+		eventBus = { publish: jest.fn() };
+		service = new MentionService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ metadata: { tableName: 'mention' } } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			eventBus as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ publishNotificationEvent: jest.fn() } as any
+		);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	it('publishes the mentions added by an edit with the organization of the entity', async () => {
+		await service.updateEntityMentions(
+			BaseEntityEnum.Comment,
+			'comment-1',
+			['mentioned-employee'],
+			'task-1',
+			BaseEntityEnum.Task,
+			author.organizationId
+		);
+
+		const [event] = eventBus.publish.mock.calls[0];
+		expect(event.input).toMatchObject({
+			entity: BaseEntityEnum.Comment,
+			entityId: 'comment-1',
+			mentionedEmployeeId: 'mentioned-employee',
+			organizationId: author.organizationId
+		});
+	});
+});

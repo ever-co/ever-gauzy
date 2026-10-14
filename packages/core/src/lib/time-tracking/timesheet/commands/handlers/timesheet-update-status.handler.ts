@@ -41,7 +41,9 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 		// Prepare update payload
 		const updatePayload: Partial<ITimesheet> = {
 			status,
-			approvedById: status === TimesheetStatus.APPROVED ? RequestContext.currentUserId() : undefined,
+			// `undefined` is left out of the update, so the previous approver used to remain on a
+			// timesheet that was denied or sent back after its approval
+			approvedById: status === TimesheetStatus.APPROVED ? RequestContext.currentUserId() : null,
 			approvedAt: status === TimesheetStatus.APPROVED ? new Date() : null,
 			// A denial without a reason clears the one left by an earlier denial.
 			...(status === TimesheetStatus.DENIED ? { reason: input.reason?.trim() || null } : {})
