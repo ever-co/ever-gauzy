@@ -16,7 +16,7 @@ jest.mock('@gauzy/config', () => jest.requireActual('@gauzy/config/src/lib/datab
 
 import { QueryRunner } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { CreatePricingTables1791000000120 } from './1791000000120-CreatePricingTables';
+import { CreatePricingTables1791000000120 } from './migrations/1791000000120-CreatePricingTables';
 
 /** The statements one direction of the migration issues on one dialect. */
 async function statementsOf(type: DatabaseTypeEnum, direction: 'up' | 'down' = 'up'): Promise<string[]> {

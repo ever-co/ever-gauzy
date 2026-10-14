@@ -108,10 +108,16 @@ export function declaredColumns(body) {
 }
 
 /**
- * Every column one migration's dialect branches add after their own CREATE TABLE already declared it.
+ * Every column one migration's dialect branches add after their own CREATE TABLE already declared it, and every
+ * column added after a CREATE TABLE whose members the gate cannot read.
+ *
+ * A CREATE TABLE that interpolates part of its member list (`(${inherited}, "code" …)` — the promotion set states
+ * its inherited base columns that way) declares columns this reader never sees, so an ADD of one of them would pass
+ * as if it were new. Such an ADD is reported as **unverifiable** rather than passed: state the column literally, or
+ * add it in a migration of its own (Greptile, #10587).
  *
  * @param {string} source A migration's source.
- * @returns {{ method: string, table: string, column: string }[]} The duplicates.
+ * @returns {{ method: string, table: string, column: string, unverifiable?: true }[]} The findings.
  */
 export function findDuplicateColumnAdds(source) {
 	let duplicates = [];
@@ -123,19 +129,24 @@ export function findDuplicateColumnAdds(source) {
 
 		for (const match of branch.matchAll(CREATE_TABLE)) {
 			const body = balancedBody(branch, match.index + match[0].length - 1);
-			created.set(match[1], { at: match.index, columns: new Set(body === null ? [] : declaredColumns(body)) });
+			created.set(match[1], {
+				at: match.index,
+				columns: new Set(body === null ? [] : declaredColumns(body)),
+				// A member list the reader cannot see all of: an interpolated fragment, or a statement that never closes.
+				opaque: body === null || body.includes('${')
+			});
 		}
 		for (const match of branch.matchAll(ADD_COLUMN)) {
 			const [, table, column] = match;
 			const declared = created.get(table);
 
-			if (
-				!NOT_A_COLUMN_ADD.test(column) &&
-				declared &&
-				match.index > declared.at &&
-				declared.columns.has(column)
-			) {
+			if (NOT_A_COLUMN_ADD.test(column) || !declared || match.index < declared.at) {
+				continue;
+			}
+			if (declared.columns.has(column)) {
 				duplicates.push({ method, table, column });
+			} else if (declared.opaque) {
+				duplicates.push({ method, table, column, unverifiable: true });
 			}
 		}
 	}
@@ -170,8 +181,12 @@ function main() {
 	let findings = [];
 
 	for (const file of files) {
-		for (const { method, table, column } of findDuplicateColumnAdds(readFileSync(file, 'utf8'))) {
-			findings.push(`${relative(ROOT, file).split(sep).join('/')} ${method}: ${table}.${column}`);
+		for (const { method, table, column, unverifiable } of findDuplicateColumnAdds(readFileSync(file, 'utf8'))) {
+			findings.push(
+				`${relative(ROOT, file).split(sep).join('/')} ${method}: ${table}.${column}${
+					unverifiable ? ' (unverifiable: the CREATE TABLE interpolates columns this gate cannot read)' : ''
+				}`
+			);
 		}
 	}
 

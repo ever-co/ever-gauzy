@@ -82,3 +82,21 @@ test('constraint and index members of a CREATE TABLE are not columns', () => {
 		['id']
 	);
 });
+
+test('an ADD after a CREATE TABLE that interpolates its members is reported as unverifiable, not passed', () => {
+	// The promotion set's shape: the inherited base columns arrive through a fragment the reader cannot see.
+	const source = migration(
+		[
+			'		const i = this.inheritedPostgres;',
+			'		await queryRunner.query(`CREATE TABLE "promotion" (${i}, "code" character varying(64), "title" character varying(255) NOT NULL)`);',
+			'		await queryRunner.query(`ALTER TABLE "promotion" ADD "id" uuid`);',
+			'		await queryRunner.query(`ALTER TABLE "promotion" ADD "title" character varying(255)`);'
+		].join('\n'),
+		'postgresUpQueryRunner'
+	);
+
+	assert.deepEqual(findDuplicateColumnAdds(source), [
+		{ method: 'postgresUpQueryRunner', table: 'promotion', column: 'id', unverifiable: true },
+		{ method: 'postgresUpQueryRunner', table: 'promotion', column: 'title' }
+	]);
+});
