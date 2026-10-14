@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { DeepPartial, EntityManager } from 'typeorm';
 import {
@@ -572,12 +572,22 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			// run touches the cycle, so it is read first and decides what the resume writes.
 			await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
 				const opening = await this.openingCycleOn(subscription, manager);
-				// An opening charge already attempted keeps its period and its retry schedule: the cycle
+				// An untouched opening cycle restarts with the period. A settled one (paid, or waived) is a
+				// period already answered: like any paid period, it runs out before the next run bills.
+				// Any other was charged and awaits a retry: it keeps its period and its retry schedule — it
 				// cannot move (it records an attempt), and starting another period would leave it behind
-				// and open a new cycle that skips its retries. Resuming then only lifts the pause.
+				// and open a new cycle that skips its retries — so resuming only lifts the pause.
 				const restart = !opening || this.isUntouched(opening);
+				const settled = !!opening && SETTLED_CYCLE_STATUSES.includes(opening.status);
+				const periodEnd = new Date(subscription.currentPeriodEnd as Date);
 
-				nextBillingAt = restart ? period.start : new Date(subscription.nextBillingAt as Date);
+				if (restart) {
+					nextBillingAt = period.start;
+				} else if (settled) {
+					nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
+				} else {
+					nextBillingAt = new Date(subscription.nextBillingAt as Date);
+				}
 
 				await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
 					where: { ...currentScope(), status: SubscriptionStatus.PAUSED },
@@ -591,7 +601,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 								currentPeriodEnd: period.end,
 								nextBillingAt: period.start
 						  }
-						: { status: SubscriptionStatus.ACTIVE, pausedUntil: null }
+						: { status: SubscriptionStatus.ACTIVE, pausedUntil: null, nextBillingAt }
 				});
 
 				if (restart) {
@@ -2252,7 +2262,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return;
 		}
 
-		await this.billingService.reschedulePending(opening.id, period, manager);
+		const moved = await this.billingService.reschedulePending(opening.id, period, manager);
+
+		// The move is predicated on the cycle still billing nothing. A cycle another writer charged after it
+		// was read stays where it is, and committing the subscription onto a period its cycle is not on
+		// would strand that charge: the whole write is refused (the caller's transaction rolls back).
+		if (new Date(moved.periodStart).getTime() !== period.start.getTime()) {
+			throw new ConflictException(
+				'SUBSCRIPTION_OPENING_CYCLE_CHANGED: the opening billing cycle was charged while this change was being made. Read the subscription again and retry.'
+			);
+		}
 	}
 
 	/**

@@ -180,7 +180,7 @@ jest.mock('@gauzy/plugin-entitlement/src/lib/entitlement/entitlement.service', (
 	EntitlementService: class EntitlementService {}
 }));
 
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import {
 	AdjustmentOwnerType,
@@ -2888,6 +2888,64 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		expect(fixture.billings(created.id)).toEqual([
 			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID })
 		]);
+	});
+
+	it('advances past an opening cycle settled before the first run when the subscription is resumed', async () => {
+		// Greptile on #10635: an opening cycle an operator recorded as paid is not a charge to retry —
+		// keeping the next billing instant at its start would replay the settled cycle on every run.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			activate: true,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const start = new Date(created.currentPeriodStart as Date);
+		const end = new Date(created.currentPeriodEnd as Date);
+		const [opening] = fixture.billings(created.id);
+
+		await (fixture.billingService.typeOrmSubscriptionBillingRepository as unknown as Row).update(
+			{ id: opening.id },
+			{ status: SubscriptionBillingStatus.PAID, orderId: 'order-recorded', paidAt: start }
+		);
+		await fixture.service.pause(created.id, { reason: 'customer asked' });
+		const resumed = await fixture.service.resume(created.id, new Date(start.getTime() + 60 * 60 * 1000));
+
+		// The paid period runs out first: the next run bills the period after it.
+		expect(resumed).toMatchObject({ status: SubscriptionStatus.ACTIVE, currentPeriodStart: start, nextBillingAt: end });
+	});
+
+	it('refuses the activation when the opening cycle was charged between its read and its move', async () => {
+		// CodeRabbit on #10635: the move is predicated on the cycle still billing nothing, and a cycle that
+		// lost that race stays put — committing the activation then would leave the subscription on a period
+		// its cycle is not on.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const createdAt = new Date(created.currentPeriodStart as Date);
+		const [opening] = fixture.billings(created.id);
+		const reschedule = fixture.billingService.reschedulePending.bind(fixture.billingService);
+
+		jest.spyOn(fixture.billingService, 'reschedulePending').mockImplementationOnce(async (id, period, manager) => {
+			// Another writer reaches the cycle after the activation read it.
+			Object.assign(fixture.billings(created.id)[0], { orderId: 'order-raced', attemptCount: 1 });
+
+			return await reschedule(id, period, manager);
+		});
+
+		await new Promise((resolve) => setTimeout(resolve, 5));
+		const refusal = await fixture.service.activate(created.id).catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(fixture.subscription(created.id)).toMatchObject({ status: SubscriptionStatus.PENDING, currentPeriodStart: createdAt });
+		expect(fixture.billings(created.id)).toEqual([expect.objectContaining({ id: opening.id, periodStart: createdAt })]);
 	});
 
 	it('moves the cycle written for the opening period, not a later pending one', async () => {
