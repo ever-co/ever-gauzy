@@ -92,3 +92,62 @@ describe('StatisticService.getProjects ranking', () => {
 		expect(sorted.map(({ duration }) => duration)).toEqual(['10000', '7200', '900']);
 	});
 });
+
+/**
+ * The overall tracked time (stats endpoint) summed each time log's duration once per time slot linked to it.
+ */
+describe('StatisticService.getOverallTrackedTime', () => {
+	const run = (self: object): Promise<number> =>
+		StatisticService.prototype.getOverallTrackedTime.call({
+			configService: { dbConnectionOptions: { type: DatabaseTypeEnum.postgres } },
+			logger: { debug: jest.fn(), log: jest.fn() },
+			...self
+		});
+
+	it('TypeORM: sums the time logs without joining their slots', async () => {
+		const query = {
+			innerJoin: jest.fn(),
+			select: jest.fn(),
+			getRawOne: jest.fn().mockResolvedValue({ overall_duration: 7200 })
+		};
+		const timeLogs = jest.fn(() => query);
+		const timeSlots = jest.fn();
+
+		const hours = await run({
+			ormType: MultiORMEnum.TypeORM,
+			typeOrmTimeLogRepository: { createQueryBuilder: timeLogs },
+			typeOrmTimeSlotRepository: { createQueryBuilder: timeSlots }
+		});
+
+		expect(timeLogs).toHaveBeenCalledWith('time_log');
+		expect(timeSlots).not.toHaveBeenCalled();
+		expect(query.innerJoin).not.toHaveBeenCalled();
+		expect(hours).toBe(2);
+	});
+
+	it('MikroORM: sums the non-deleted time logs without joining their slots', async () => {
+		let calls: string[] = [];
+		let knexBuilder: Record<string, jest.Mock> = {};
+		for (const method of ['select', 'whereNull', 'innerJoin']) {
+			knexBuilder[method] = jest.fn((...args: unknown[]) => {
+				calls.push(`${method}:${String(args[0])}`);
+				return knexBuilder;
+			});
+		}
+		knexBuilder.first = jest.fn().mockResolvedValue({ overall_duration: 3600 });
+		const knex = Object.assign(
+			jest.fn(() => knexBuilder),
+			{ raw: (sql: string) => sql }
+		);
+
+		const hours = await run({
+			ormType: MultiORMEnum.MikroORM,
+			mikroOrmTimeLogRepository: { getKnex: () => knex }
+		});
+
+		expect(knex).toHaveBeenCalledWith('time_log');
+		expect(calls.some((call) => call.startsWith('innerJoin'))).toBe(false);
+		expect(knexBuilder.whereNull).toHaveBeenCalledWith('time_log.deletedAt');
+		expect(hours).toBe(1);
+	});
+});

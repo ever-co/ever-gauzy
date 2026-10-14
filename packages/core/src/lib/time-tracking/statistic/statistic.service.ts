@@ -579,21 +579,20 @@ export class StatisticService {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for raw SQL aggregation
 				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
-				const result = await knex('time_slot')
-					.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
-					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
+				// The sum is over each time log's own start / stop: joining its time slots repeated every log
+				// once per slot (a 1h log with six 10-minute slots counted as 6h). Raw knex skips MikroORM's
+				// soft-delete filter, so deleted logs are excluded here.
+				const result = await knex('time_log')
 					.select(knex.raw(getTotalDurationQueryString(dbType, 'time_log') + ' as overall_duration'))
+					.whereNull('time_log.deletedAt')
 					.first();
 				overallDurationInSeconds = result?.overall_duration ?? 0;
 				break;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
-				// Create a query builder for the TimeSlot entity
-				const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
-
-				// Join with the time_log table
-				query.innerJoin('time_slot.timeLogs', 'time_log');
+				// Sum over the time logs alone (see the MikroORM branch); the query builder excludes deleted logs
+				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 
 				// Select the sum of the overall duration, dynamically based on the DB type
 				query.select(getTotalDurationQueryString(dbType, 'time_log'), 'overall_duration');

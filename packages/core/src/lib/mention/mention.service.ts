@@ -130,13 +130,16 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 * @param mentionEmployeeIds - Array of user IDs to be mentioned in this entity.
 	 * @param parentEntityId - (Optional) The ID of the parent entity, if applicable.
 	 * @param parentEntityType - (Optional) The type of the parent entity, if applicable.
+	 * @param organizationId - The organization of the entity: the new mentions, their notification and
+	 *   their subscription belong to it (they used to be created without one).
 	 */
 	async updateEntityMentions(
 		entity: BaseEntityEnum,
 		entityId: ID,
 		mentionEmployeeIds: ID[],
 		parentEntityId?: ID,
-		parentEntityType?: BaseEntityEnum
+		parentEntityType?: BaseEntityEnum,
+		organizationId?: ID
 	): Promise<void> {
 		try {
 			const user = RequestContext.currentUser();
@@ -169,7 +172,8 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 							parentEntityType,
 							mentionedEmployeeId,
 							actorType: ActorTypeEnum.User,
-							employeeId: user.employeeId
+							employeeId: user.employeeId,
+							organizationId
 						})
 					)
 				);

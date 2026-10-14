@@ -3968,7 +3968,40 @@
 		"UNTAGGED": "untagged build",
 		"API_UNAVAILABLE": "API version unavailable",
 		"LEARN_MORE": "Learn More",
-		"ABOUT": "crwdns2257:0crwdne2257:0"
+		"ABOUT": "crwdns2257:0crwdne2257:0",
+		"GITHUB": {
+			"TITLE": "On GitHub",
+			"DESCRIPTION": "Ever Gauzy is developed in the open: follow the releases, report an issue or contribute.",
+			"RELEASES": "Releases",
+			"ISSUES": "Issues",
+			"PULL_REQUESTS": "Pull requests",
+			"CONTRIBUTORS": "Contributors",
+			"CONTRIBUTING": "Contributing guide",
+			"CODE_OF_CONDUCT": "Code of conduct",
+			"LICENSE_FILE": "License"
+		},
+		"CARD": {
+			"IN_SYNC": "In sync",
+			"DIFFERENT": "Different builds",
+			"RELEASE_NOTES": "Release notes",
+			"COMMIT": "Commit",
+			"REPOSITORY": "Repository"
+		},
+		"ENV": {
+			"TITLE": "Environment",
+			"BUILD": "Build",
+			"PRODUCTION": "Production",
+			"DEVELOPMENT": "Development",
+			"MODE": "Mode",
+			"DEMO": "Demo",
+			"STANDARD": "Standard",
+			"RUNNING_IN": "Running in",
+			"DESKTOP": "Desktop app",
+			"BROWSER": "Browser",
+			"API_ADDRESS": "API address",
+			"WEB_ADDRESS": "Web address",
+			"COPY": "Copy {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "crwdns292:0crwdne292:0",

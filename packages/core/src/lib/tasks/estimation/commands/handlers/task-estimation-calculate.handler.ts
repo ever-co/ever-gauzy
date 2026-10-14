@@ -4,6 +4,19 @@ import { TaskEstimationCalculateCommand } from '../task-estimation-calculate.com
 import { TaskEstimationService } from '../../task-estimation.service';
 import { TaskService } from '../../../task.service';
 
+/**
+ * The task estimate: the average of the estimations, rounded up, or `null` once there is none left.
+ *
+ * Deleting the last estimation used to compute `0 / 0`, and the NaN was rejected by the database.
+ */
+export function averageEstimate(estimates: number[]): number | null {
+	if (!estimates.length) {
+		return null;
+	}
+	const total = estimates.reduce((sum, estimate) => sum + Number(estimate), 0);
+	return Math.ceil(total / estimates.length);
+}
+
 @CommandHandler(TaskEstimationCalculateCommand)
 export class TaskEstimationCalculateHandler implements ICommandHandler<TaskEstimationCalculateCommand> {
 	constructor(
@@ -15,15 +28,10 @@ export class TaskEstimationCalculateHandler implements ICommandHandler<TaskEstim
 		try {
 			const { id: taskId } = command;
 
-			const taskEstimations = await this._taskEstimationService.findAll({
-				where: {
-					taskId
-				}
-			});
-			const totalEstimation = taskEstimations.items.reduce((sum, current) => sum + current.estimate, 0);
-			const averageEstimation = Math.ceil(totalEstimation / taskEstimations.items.length);
+			// Everybody's estimations, not only the caller's (see `findAllForTask`)
+			const estimations = await this._taskEstimationService.findAllForTask(taskId);
 			await this._taskService.update(taskId, {
-				estimate: averageEstimation
+				estimate: averageEstimate(estimations.map(({ estimate }) => estimate))
 			});
 		} catch (error) {
 			console.log('Error while creating task estimation', error?.message);
