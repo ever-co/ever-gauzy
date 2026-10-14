@@ -23,6 +23,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateInvoiceItemInput` declares in the schema. */
 export interface ICreateInvoiceItemInput {
@@ -259,9 +260,7 @@ export class InvoiceItemResolver {
 	 */
 	@Mutation('deleteInvoiceItem')
 	async deleteInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.invoiceItemService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.invoiceItemService.delete(id));
 	}
 
 	/**

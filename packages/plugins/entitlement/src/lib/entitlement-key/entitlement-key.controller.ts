@@ -4,6 +4,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	GoneException,
 	HttpCode,
 	HttpStatus,
 	Param,
@@ -139,21 +140,40 @@ export class EntitlementKeyController extends CrudController<EntitlementKey> {
 	}
 
 	/**
-	 * Re-displays a key to its holder.
+	 * Refuses to re-display a key: a licence key is shown once, at issue.
 	 *
-	 * Only a key that was issued recoverable can be shown again; a write-only key is recovered by
-	 * re-issuing it, which revokes the old one and leaves an audit trail.
+	 * **Owner decision 9 (2026-10-13): "Shown once only".** The specifications disagreed — `11` §9.1,
+	 * `02` §4.8 E4, `05` §19.3 and `13` §R-30 say a key leaves the service exactly once, in the response to
+	 * the call that minted it, while `05` §19.3's `keyCiphertext` "so support can re-display it" and ADR-50's
+	 * "read back where the format allows" described this route. The first reading won, so this route no
+	 * longer decrypts anything: it answers `410 Gone` with `ENTITLEMENT_KEY_SHOWN_ONCE` for every key,
+	 * recoverable or not, before reading the row (so it also tells a caller nothing about whether the key
+	 * exists). A holder who lost a key is given a replacement through `POST /:id/reissue`, which revokes the
+	 * old credential and links the pair. GraphQL never served the re-display (`revealEntitlementKey` is
+	 * refused there for the same reason).
 	 *
-	 * @param id The key.
-	 * @returns The key in clear.
+	 * The route stays declared, at its path and under its issuing grant, rather than being removed: a caller
+	 * that used it is told why and where to go instead of meeting a 404, and the authorisation in front of it
+	 * is unchanged. `EntitlementKeyService.reveal` is no longer reached from the API.
+	 *
+	 * @param _id The key.
+	 * @throws GoneException `ENTITLEMENT_KEY_SHOWN_ONCE`, always.
 	 */
-	@ApiOperation({ summary: 'Re-display a recoverable licence key' })
-	@ApiResponse({ status: HttpStatus.OK, description: 'The key was re-displayed.' })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The key was issued write-only.' })
+	@ApiOperation({
+		summary: 'Re-display a licence key — refused: a key is shown once, at issue; re-issue it instead',
+		deprecated: true
+	})
+	@ApiResponse({
+		status: HttpStatus.GONE,
+		description: 'ENTITLEMENT_KEY_SHOWN_ONCE: a licence key is never returned after its issue; re-issue it.'
+	})
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_GRANT)
 	@Post(':id/reveal')
-	async reveal(@Param('id', UUIDValidationPipe) id: ID): Promise<{ key: string }> {
-		return { key: await this.entitlementKeyService.reveal(id) };
+	async reveal(@Param('id', UUIDValidationPipe) _id: ID): Promise<{ key: string }> {
+		throw new GoneException(
+			'ENTITLEMENT_KEY_SHOWN_ONCE: a licence key is shown once, at issue, and is never returned again; ' +
+				're-issue it (POST /entitlement-keys/:id/reissue) to give its holder a replacement.'
+		);
 	}
 
 	/**

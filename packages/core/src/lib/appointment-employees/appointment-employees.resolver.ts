@@ -13,6 +13,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import { AppointmentEmployeesService } from './appointment-employees.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateAppointmentEmployeeInput` declares in the schema. */
 export interface ICreateAppointmentEmployeeInput {
@@ -244,9 +245,7 @@ export class AppointmentEmployeesResolver {
 	 */
 	@Mutation('deleteAppointmentEmployee')
 	async deleteAppointmentEmployee(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.appointmentEmployeesService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.appointmentEmployeesService.delete(id));
 	}
 
 	/**

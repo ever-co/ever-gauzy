@@ -99,26 +99,32 @@ export class SubscriptionBillingController extends CrudController<SubscriptionBi
 	}
 
 	/**
-	 * Deletes a billing cycle.
+	 * Retires a billing cycle. A cycle is the record of money billed, and this route no longer erases one.
 	 *
-	 * The route belongs to `CrudController`, which declares `DELETE :id` with no permission metadata at
-	 * all: `PermissionGuard` (`shared/guards/permission.guard.ts`) reads the handler first, then the class,
-	 * and answers `true` from its `isEmpty` branch when the pair is empty, so only the read grant
-	 * `SUBSCRIPTIONS_VIEW` stood in front of it. This override exists only to state the permission such a
-	 * delete has to carry — a cycle is the record of money billed, and the plugin declares no
-	 * `SUBSCRIPTIONS_DELETE`, so the child row takes the subscription's destructive grant,
-	 * `SUBSCRIPTIONS_EDIT`.
+	 * The route belongs to `CrudController`, whose handler hard-deletes the row. `13` §11.4 names
+	 * `subscription_billing` in its "**Soft delete only (`deletedAt`); no hard delete through the API**" row.
+	 * `SubscriptionBillingService.delete` already refuses a cycle that records money billed
+	 * (`SUBSCRIPTION_BILLING_NOT_DELETABLE`), but it still erased a `PENDING` cycle nothing had billed — a hard
+	 * delete through the API all the same. The route now retires every cycle exactly as `DELETE ':id/soft'`
+	 * does — through the service's `softRemove`, which keeps the row with `deletedAt` set and lets
+	 * `PUT ':id/recover'` bring it back. A retired cycle no longer holds its period: `UQ_subscription_billing_period`
+	 * covers live rows only, so the billing run can write the period again, which is what removing a schedule
+	 * entry was for. The service's guarded `delete` stays for a caller below the API (a retention job). The
+	 * route's path, status and permission (`SUBSCRIPTIONS_EDIT`, the subscription's destructive grant; the
+	 * plugin declares no `SUBSCRIPTIONS_DELETE`) are unchanged.
 	 *
-	 * @param id The cycle to delete.
-	 * @returns The result of the delete.
+	 * @param id The cycle to retire.
+	 * @param options The inherited rest parameter.
+	 * @returns The retired cycle.
 	 */
-	@ApiOperation({ summary: 'Delete a billing cycle' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cycle was deleted.' })
+	@ApiOperation({ summary: 'Retire a billing cycle (soft delete; a cycle is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cycle was retired.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Cycle not found' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.subscriptionBillingService.softRemove(id);
 	}
 
 	/**

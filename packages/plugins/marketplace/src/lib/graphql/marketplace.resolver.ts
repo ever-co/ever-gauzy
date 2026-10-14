@@ -556,16 +556,34 @@ export class SellerEntityResolver {
 	 * read backwards: the route states `SELLERS_DELETE`, and the service reads the row `withDeleted`,
 	 * which is a visibility no ordinary read has.
 	 *
-	 * `restoreSeller` is the name the specification's own table gives this act — `PUT /<resource>/:id/recover`
-	 * is `restore<Type>(id: ID!)` in `17-graphql-api-specification.md` §10 — even though the rest of the
-	 * composed schema spells it `recover*` in a hundred and eleven fields. The divergence is recorded rather
-	 * than resolved here: renaming those hundred and eleven is a breaking schema change, and this field is
-	 * the one that already matches what the document says.
+	 * The name is the one every other field of this kind in the composed schema uses — `recover<Type>`, a
+	 * hundred and eleven of them. The design table (`17-graphql-api-specification.md` §10) named the act
+	 * `restore<Type>`, and `restoreSeller` below was the one field that followed it; the owner settled the
+	 * divergence on 2026-10-13 with "what is NOT deprecated should win", which is the live `recover*`
+	 * spelling, so the table is amended and this field is the seller's name for the act.
 	 */
-	@Mutation(() => SellerType, { name: 'restoreSeller' })
+	@Mutation(() => SellerType, { name: 'recoverSeller' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async recoverSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
+		return this.sellerService.softRecover(id);
+	}
+
+	/**
+	 * Restores a soft-deleted seller account — the earlier name of {@link recoverSeller}, kept working.
+	 *
+	 * Deprecated rather than removed: a client that already calls it keeps getting the same answer, from the
+	 * same service call, under the same grant, until the removal release its deprecation names (two minor
+	 * releases, the schema's deprecation window). New clients call `recoverSeller`.
+	 *
+	 * @deprecated Use `recoverSeller`.
+	 */
+	@Mutation(() => SellerType, {
+		name: 'restoreSeller',
+		deprecationReason: 'Use recoverSeller; removal planned for 0.3.0'
+	})
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async restoreSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
-		return this.sellerService.softRecover(id);
+		return this.recoverSeller(id);
 	}
 
 	/**

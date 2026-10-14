@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalKPI } from './goal-kpi.entity';
 import { GoalKpiService } from './goal-kpi.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateGoalKPIInput` declares in the schema. */
 export interface ICreateGoalKPIInput {
@@ -200,9 +201,7 @@ export class GoalKpiResolver {
 	 */
 	@Mutation('deleteGoalKpi')
 	async deleteGoalKpi(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalKpiService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.goalKpiService.delete(id));
 	}
 
 	/**

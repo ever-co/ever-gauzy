@@ -15,6 +15,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Merchant } from './merchant.entity';
 import { MerchantService } from './merchant.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateMerchantInput` declares in the schema. */
 export interface ICreateMerchantInput {
@@ -224,9 +225,7 @@ export class MerchantResolver {
 	@Mutation('deleteMerchant')
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	async deleteMerchant(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.merchantService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.merchantService.delete(id));
 	}
 
 	/**

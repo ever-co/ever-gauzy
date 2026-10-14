@@ -18,6 +18,7 @@ import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { TaskLinkedIssueCreateCommand, TaskLinkedIssueUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../../graphql/delete-answer';
 
 /** The members `CreateTaskLinkedIssueInput` declares in the schema. */
 export interface ICreateTaskLinkedIssueInput {
@@ -176,9 +177,7 @@ export class TaskLinkedIssueResolver {
 	@Mutation('deleteTaskLinkedIssue')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	async deleteTaskLinkedIssue(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskLinkedIssueService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.taskLinkedIssueService.delete(id));
 	}
 
 	/**

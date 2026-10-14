@@ -608,10 +608,10 @@ export const schemaExtensions = gql`
 
 	"One band of a graduated commission schedule: \`from <= x < to\`, with \`to\` null meaning open ended. The bounds are in major units for an amount basis and in units for a quantity basis."
 	input CommissionTierInput {
-		"Inclusive lower bound."
-		from: Float!
-		"Exclusive upper bound; null is open ended."
-		to: Float
+		"Inclusive lower bound. An exact decimal, never a float: on an amount basis a band boundary is money, and the band a sale falls into is decided by an exact comparison. A JSON number is still accepted."
+		from: Decimal!
+		"Exclusive upper bound; null is open ended. An exact decimal, as \`from\` is."
+		to: Decimal
 		"Rate applied to the whole amount or quantity when the value falls in this band. An exact decimal, never a float."
 		rate: Decimal!
 	}
@@ -1092,9 +1092,16 @@ export const schemaExtensions = gql`
 		Restores a soft-deleted seller account.
 
 		Mirrors \`PUT /sellers/:id/recover\`: restoring is the same destructive authority read backwards,
-		so it takes \`SELLERS_DELETE\` and not the edit grant.
+		so it takes \`SELLERS_DELETE\` and not the edit grant. Named \`recover<Type>\` like every other
+		field of this kind in the schema.
 		"""
-		restoreSeller(id: ID!): Seller!
+		recoverSeller(id: ID!): Seller!
+		"""
+		Restores a soft-deleted seller account — the earlier name of \`recoverSeller\`, which it answers
+		exactly as: the same route, the same grant, the same restored seller. Kept working until the
+		release its deprecation names.
+		"""
+		restoreSeller(id: ID!): Seller! @deprecated(reason: "Use recoverSeller; removal planned for 0.3.0")
 		"""
 		Offers a variant. The offering is born \`DRAFT\`; publishing it is a separate act.
 

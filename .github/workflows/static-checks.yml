@@ -376,9 +376,36 @@ jobs:
         if: always()
         run: node tools/scripts/entity-column-dialect-check.mjs
 
+      # The kernel's hard delete checks no existence: an identifier that names no row of the caller deletes
+      # nothing and raises nothing (`affected: 0`). Ninety-odd GraphQL delete fields dropped that result and
+      # answered `true` — "removed" for a row that was never there — while the REST route reported the
+      # `affected: 0` it got (handover 2026-09-20 §7.65 item 21). Every delete field consults the result now.
+      - name: Every GraphQL delete field answers what its delete did
+        if: always()
+        run: |
+          node --test tools/scripts/graphql-delete-answer-check.test.mjs
+          node tools/scripts/graphql-delete-answer-check.mjs
+
+      # Subscriptions were the one design dimension nothing measured: the design promised 86, the schema served
+      # about 31, and no gate noticed (handover 2026-09-20 §7.65 item 19). Owner decision 8 (2026-10-13): "Add a
+      # gate + build backlog". The gate records every promised stream, derives a typed field for every durable
+      # aggregate the plugins stream, refuses a served stream nothing publishes, and lets both backlogs only shrink.
+      - name: Every promised subscription is served or in a backlog that only shrinks
+        if: always()
+        run: node tools/scripts/subscription-parity-check.mjs
+
+      # The gate's readers, held to every shape they must read (a commented-out publish is not a producer; a
+      # catalogue in any quote style or `as const` is read; an unreadable declaration fails): a reader that skips a
+      # shape is a gate that stops measuring without going red.
+      - name: The subscription gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/subscription-parity-check.test.mjs
+
       # No CI job runs the migration chain on MySQL, so a MySQL-only statement is never executed before a MySQL
       # install boots: the pricing migration added `deletedKey` with ALTER TABLE after its own CREATE TABLE had
       # declared it, and every fresh MySQL install stopped at boot with 1060 Duplicate column name (review R2-25).
       - name: No migration adds a column its own CREATE TABLE already declared
         if: always()
-        run: node tools/scripts/migration-duplicate-column-check.mjs
+        run: |
+          node --test tools/scripts/migration-duplicate-column-check.test.mjs
+          node tools/scripts/migration-duplicate-column-check.mjs

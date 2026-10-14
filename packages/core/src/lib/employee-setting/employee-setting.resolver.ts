@@ -23,6 +23,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeSetting } from './employee-setting.entity';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSettingCreateCommand, EmployeeSettingUpdateCommand } from './commands';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateEmployeeSettingInput` declares in the schema. */
 export interface ICreateEmployeeSettingInput {
@@ -238,9 +239,7 @@ export class EmployeeSettingResolver {
 	 */
 	@Mutation('deleteEmployeeSetting')
 	async deleteEmployeeSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeSettingService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.employeeSettingService.delete(id));
 	}
 
 	/**
