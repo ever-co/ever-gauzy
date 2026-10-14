@@ -2791,6 +2791,12 @@
 				"SETTINGS_INTEGRATIONS": "Instellingen & integraties",
 				"DATA_LOGS": "Gegevens & logboeken",
 				"DOCUMENTS": "Documenten",
+				"COMMERCE_PLATFORM": "Commerce: platform",
+				"COMMERCE_CATALOG": "Commerce: catalogus & prijzen",
+				"COMMERCE_ORDERS": "Commerce: bestellingen & klanten",
+				"COMMERCE_FULFILLMENT": "Commerce: voorraad & fulfilment",
+				"COMMERCE_PAYMENTS": "Commerce: betalingen",
+				"COMMERCE_MARKETPLACE": "Commerce: marktplaats",
 				"OTHER": "Overig"
 			},
 			"ORG_PAYROLL_VIEW": "Salarisadministratie bekijken",
@@ -2869,6 +2875,180 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "Organisatiestrategische initiatief aanmaken",
 			"ORG_STRATEGIC_INITIATIVE_READ": "Bekijk organisatiestrategische initiatief",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Bewerk organisatiestrategische initiatief",
+			"CHANNELS_VIEW": "Kanalen bekijken",
+			"CHANNELS_CREATE": "Kanalen aanmaken",
+			"CHANNELS_EDIT": "Kanalen bewerken",
+			"CHANNELS_DELETE": "Kanalen verwijderen",
+			"REGIONS_VIEW": "Regio's bekijken",
+			"REGIONS_CREATE": "Regio's aanmaken",
+			"REGIONS_EDIT": "Regio's bewerken",
+			"REGIONS_DELETE": "Regio's verwijderen",
+			"RULES_VIEW": "Regels bekijken",
+			"RULES_EDIT": "Regels bewerken",
+			"SEQUENCES_VIEW": "Nummerreeksen bekijken",
+			"SEQUENCES_EDIT": "Nummerreeksen bewerken",
+			"UNITS_VIEW": "Maateenheden bekijken",
+			"UNITS_EDIT": "Maateenheden bewerken",
+			"PAYMENT_TERMS_VIEW": "Betalingsvoorwaarden bekijken",
+			"PAYMENT_TERMS_EDIT": "Betalingsvoorwaarden bewerken",
+			"PROVIDERS_VIEW": "Providers bekijken",
+			"OPERATIONS_VIEW": "Achtergrondbewerkingen bekijken",
+			"OPERATIONS_CANCEL": "Achtergrondbewerkingen annuleren",
+			"EVENT_OUTBOX_VIEW": "Uitgaande gebeurteniswachtrij bekijken",
+			"EVENT_OUTBOX_RETRY": "Berichten in de uitgaande gebeurteniswachtrij opnieuw proberen",
+			"IDEMPOTENCY_KEYS_VIEW": "Idempotentiesleutels bekijken",
+			"IDEMPOTENCY_KEYS_DELETE": "Idempotentiesleutels verwijderen",
+			"WEBHOOKS_VIEW": "Webhooks bekijken",
+			"WEBHOOKS_CREATE": "Webhooks aanmaken",
+			"WEBHOOKS_EDIT": "Webhooks bewerken",
+			"WEBHOOKS_DELETE": "Webhooks verwijderen",
+			"WEBHOOK_DELIVERIES_RETRY": "Webhookleveringen opnieuw proberen",
+			"SEARCH_VIEW": "Globaal zoeken gebruiken",
+			"SEARCH_REINDEX": "Zoekindex opnieuw opbouwen",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "Zoekindexdefinities bekijken",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "Zoekindexdefinities bewerken",
+			"PRODUCTS_VIEW": "Producten bekijken",
+			"PRODUCTS_EDIT": "Producten bewerken",
+			"PRODUCTS_DELETE": "Producten verwijderen",
+			"PRODUCTS_BULK_IMPORT": "Producten bulksgewijs importeren",
+			"COLLECTIONS_VIEW": "Collecties bekijken",
+			"COLLECTIONS_CREATE": "Collecties aanmaken",
+			"COLLECTIONS_EDIT": "Collecties bewerken",
+			"COLLECTIONS_DELETE": "Collecties verwijderen",
+			"PRICE_LISTS_VIEW": "Prijslijsten bekijken",
+			"PRICE_LISTS_CREATE": "Prijslijsten aanmaken",
+			"PRICE_LISTS_EDIT": "Prijslijsten bewerken",
+			"PRICE_LISTS_DELETE": "Prijslijsten verwijderen",
+			"PRICE_LISTS_SIMULATE": "Prijslijsten simuleren",
+			"PRODUCT_PRICES_VIEW": "Productprijzen bekijken",
+			"PRODUCT_PRICES_EDIT": "Productprijzen bewerken",
+			"PRODUCT_PRICES_BULK_EDIT": "Productprijzen bulksgewijs bewerken",
+			"EXCHANGE_RATES_VIEW": "Wisselkoersen bekijken",
+			"EXCHANGE_RATES_EDIT": "Wisselkoersen bewerken",
+			"TAX_CATEGORIES_VIEW": "Belastingcategorieën bekijken",
+			"TAX_CATEGORIES_EDIT": "Belastingcategorieën bewerken",
+			"TAX_RATES_VIEW": "Belastingtarieven bekijken",
+			"TAX_RATES_EDIT": "Belastingtarieven bewerken",
+			"TAX_REGIMES_VIEW": "Belastingregimes bekijken",
+			"TAX_REGIMES_EDIT": "Belastingregimes bewerken",
+			"PROMOTIONS_VIEW": "Promoties bekijken",
+			"PROMOTIONS_CREATE": "Promoties aanmaken",
+			"PROMOTIONS_EDIT": "Promoties bewerken",
+			"PROMOTIONS_DELETE": "Promoties verwijderen",
+			"PROMOTIONS_SIMULATE": "Promoties simuleren",
+			"COUPONS_VIEW": "Coupons bekijken",
+			"COUPONS_CREATE": "Coupons aanmaken",
+			"COUPONS_EDIT": "Coupons bewerken",
+			"COUPONS_DELETE": "Coupons verwijderen",
+			"GIFT_CARDS_VIEW": "Cadeaukaarten bekijken",
+			"GIFT_CARDS_ISSUE": "Cadeaukaarten uitgeven",
+			"GIFT_CARDS_EDIT": "Cadeaukaarten bewerken",
+			"CARTS_VIEW": "Winkelwagens bekijken",
+			"CARTS_EDIT": "Winkelwagens bewerken",
+			"CARTS_DELETE": "Winkelwagens verwijderen",
+			"CARTS_CHECKOUT": "Afrekenen voltooien",
+			"ORDERS_VIEW": "Bestellingen bekijken",
+			"ORDERS_CREATE": "Bestellingen aanmaken",
+			"ORDERS_EDIT": "Bestellingen bewerken",
+			"ORDERS_CANCEL": "Bestellingen annuleren",
+			"ORDERS_APPROVE": "Bestellingen goedkeuren",
+			"RETURNS_VIEW": "Retouren bekijken",
+			"RETURNS_CREATE": "Retouren aanmaken",
+			"RETURNS_APPROVE": "Retouren goedkeuren",
+			"RETURNS_REJECT": "Retouren afwijzen",
+			"RETURNS_RECEIVE": "Retouren ontvangen",
+			"CLAIMS_VIEW": "Claims bekijken",
+			"CLAIMS_CREATE": "Claims aanmaken",
+			"CLAIMS_RESOLVE": "Claims afhandelen",
+			"EXCHANGES_VIEW": "Omruilingen bekijken",
+			"EXCHANGES_CREATE": "Omruilingen aanmaken",
+			"EXCHANGES_RESOLVE": "Omruilingen afhandelen",
+			"SUBSCRIPTIONS_VIEW": "Abonnementen bekijken",
+			"SUBSCRIPTIONS_CREATE": "Abonnementen aanmaken",
+			"SUBSCRIPTIONS_EDIT": "Abonnementen bewerken",
+			"SUBSCRIPTIONS_BILL": "Abonnementen factureren",
+			"ENTITLEMENTS_VIEW": "Gebruiksrechten bekijken",
+			"ENTITLEMENTS_GRANT": "Gebruiksrechten toekennen",
+			"ENTITLEMENTS_EDIT": "Gebruiksrechten bewerken",
+			"CONTACT_GROUPS_VIEW": "Contactgroepen bekijken",
+			"CONTACT_GROUPS_CREATE": "Contactgroepen aanmaken",
+			"CONTACT_GROUPS_EDIT": "Contactgroepen bewerken",
+			"CONTACT_GROUPS_DELETE": "Contactgroepen verwijderen",
+			"CONTACT_CREDENTIALS_VIEW": "Inloggegevens van contacten bekijken",
+			"CONTACT_CREDENTIALS_MANAGE": "Inloggegevens van contacten beheren",
+			"CONTACT_CREDITS_EDIT": "Krediet van contacten bewerken",
+			"CONTACT_TAX_IDENTITY_EDIT": "Fiscale identiteiten van contacten bewerken",
+			"STOCK_VIEW": "Voorraad bekijken",
+			"STOCK_EDIT": "Voorraad bewerken",
+			"STOCK_RECONCILE": "Voorraad afstemmen",
+			"STOCK_TRANSFER_VIEW": "Voorraadoverdrachten bekijken",
+			"STOCK_TRANSFER_CREATE": "Voorraadoverdrachten aanmaken",
+			"STOCK_TRANSFER_APPROVE": "Voorraadoverdrachten goedkeuren",
+			"STOCK_TRANSFER_SHIP": "Voorraadoverdrachten verzenden",
+			"STOCK_TRANSFER_RECEIVE": "Voorraadoverdrachten ontvangen",
+			"STOCK_TRANSFER_CANCEL": "Voorraadoverdrachten annuleren",
+			"WAREHOUSE_ZONES_VIEW": "Magazijnzones bekijken",
+			"WAREHOUSE_ZONES_CREATE": "Magazijnzones aanmaken",
+			"WAREHOUSE_ZONES_EDIT": "Magazijnzones bewerken",
+			"WAREHOUSE_ZONES_DELETE": "Magazijnzones verwijderen",
+			"WAREHOUSE_BINS_VIEW": "Magazijnlocaties bekijken",
+			"WAREHOUSE_BINS_CREATE": "Magazijnlocaties aanmaken",
+			"WAREHOUSE_BINS_EDIT": "Magazijnlocaties bewerken",
+			"WAREHOUSE_BINS_DELETE": "Magazijnlocaties verwijderen",
+			"PICK_LISTS_VIEW": "Picklijsten bekijken",
+			"PICK_LISTS_EDIT": "Picklijsten bewerken",
+			"PICK_LISTS_PICK": "Artikelen van picklijsten picken",
+			"PICK_LISTS_CANCEL": "Picklijsten annuleren",
+			"FULFILLMENTS_VIEW": "Orderafhandelingen bekijken",
+			"FULFILLMENTS_CREATE": "Orderafhandelingen aanmaken",
+			"FULFILLMENTS_EDIT": "Orderafhandelingen bewerken",
+			"SHIPPING_OPTIONS_VIEW": "Verzendopties bekijken",
+			"SHIPPING_OPTIONS_CREATE": "Verzendopties aanmaken",
+			"SHIPPING_OPTIONS_EDIT": "Verzendopties bewerken",
+			"SHIPPING_OPTIONS_DELETE": "Verzendopties verwijderen",
+			"PURCHASE_ORDERS_VIEW": "Inkooporders bekijken",
+			"PURCHASE_ORDERS_CREATE": "Inkooporders aanmaken",
+			"PURCHASE_ORDERS_EDIT": "Inkooporders bewerken",
+			"PURCHASE_ORDERS_APPROVE": "Inkooporders goedkeuren",
+			"PURCHASE_ORDERS_SEND": "Inkooporders verzenden",
+			"GOODS_RECEIPTS_VIEW": "Goederenontvangsten bekijken",
+			"GOODS_RECEIPTS_CREATE": "Goederenontvangsten aanmaken",
+			"VENDOR_TERMS_VIEW": "Leveranciersvoorwaarden bekijken",
+			"VENDOR_TERMS_EDIT": "Leveranciersvoorwaarden bewerken",
+			"PAYMENT_PROVIDERS_VIEW": "Betaalproviders bekijken",
+			"PAYMENT_PROVIDERS_CREATE": "Betaalproviders aanmaken",
+			"PAYMENT_PROVIDERS_EDIT": "Betaalproviders bewerken",
+			"PAYMENT_PROVIDERS_DELETE": "Betaalproviders verwijderen",
+			"PAYMENT_SESSIONS_VIEW": "Betaalsessies bekijken",
+			"PAYMENT_SESSIONS_AUTHORIZE": "Betalingen autoriseren",
+			"PAYMENT_SESSIONS_CAPTURE": "Betalingen innen",
+			"PAYMENT_SESSIONS_CANCEL": "Betaalsessies annuleren",
+			"REFUNDS_VIEW": "Terugbetalingen bekijken",
+			"REFUNDS_CREATE": "Terugbetalingen aanmaken",
+			"REFUNDS_APPROVE": "Terugbetalingen goedkeuren",
+			"PAYMENT_CALLBACKS_VIEW": "Provider-callbacks bekijken",
+			"PAYMENT_CALLBACKS_REPROCESS": "Provider-callbacks opnieuw verwerken",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "Betaalrekeninghouders bekijken",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "Betaalrekeninghouders bewerken",
+			"PAYMENT_METHOD_TOKENS_VIEW": "Opgeslagen betaalmethoden bekijken",
+			"PAYMENT_METHOD_TOKENS_EDIT": "Opgeslagen betaalmethoden bewerken",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "Opgeslagen betaalmethoden belasten",
+			"SELLERS_VIEW": "Verkopers bekijken",
+			"SELLERS_CREATE": "Verkopers aanmaken",
+			"SELLERS_EDIT": "Verkopers bewerken",
+			"SELLERS_DELETE": "Verkopers verwijderen",
+			"SELLER_OFFERINGS_VIEW": "Aanbiedingen van verkopers bekijken",
+			"SELLER_OFFERINGS_EDIT": "Aanbiedingen van verkopers bewerken",
+			"SELLER_COMMISSIONS_VIEW": "Verkoperscommissies bekijken",
+			"SELLER_COMMISSIONS_EDIT": "Verkoperscommissies bewerken",
+			"SELLER_TRANSACTIONS_VIEW": "Verkoperstransacties bekijken",
+			"SELLER_TRANSACTIONS_SETTLE": "Verkoperstransacties afrekenen",
+			"SELLER_SETTLEMENTS_VIEW": "Verkopersafrekeningen bekijken",
+			"SELLER_SETTLEMENTS_EDIT": "Verkopersafrekeningen bewerken",
+			"SELLER_PAYOUTS_VIEW": "Uitbetalingen aan verkopers bekijken",
+			"SELLER_PAYOUTS_CREATE": "Uitbetalingen aan verkopers aanmaken",
+			"SELLER_PAYOUTS_APPROVE": "Uitbetalingen aan verkopers goedkeuren",
+			"SELLER_PAYOUTS_CANCEL": "Uitbetalingen aan verkopers annuleren",
 			"ORG_STRATEGIC_INITIATIVE_DELETE": "Verwijder organisatiestrategische initiatief"
 		},
 		"BILLING": "Facturatie",
@@ -4052,6 +4232,39 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"ESTIMATE": "Schatting",
 		"DASHBOARD": "Dashboard",
+		"ORDERS": "Bestellingen",
+		"CART": "Winkelwagen",
+		"CATALOG": "Catalogus",
+		"PRICING": "Prijzen",
+		"TAX": "Belasting",
+		"PROMOTIONS": "Promoties",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "Voorraadgrootboek en reserveringen",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "Magazijnbeheer",
+		"FULFILLMENT": "Orderafhandeling",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "Retouren, claims en omruilingen",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "Abonnementen en terugkerende facturering",
+		"PURCHASING": "Inkoop",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "Gebruiksrechten, activeringen en licentiesleutels",
+		"MARKETPLACE": "Marktplaats",
+		"GLOBAL_SEARCH": "Globaal zoeken",
+		"MULTI-CURRENCY_PRICING": "Prijzen in meerdere valuta's",
+		"MULTI-REGION_PRICING": "Prijzen in meerdere regio's",
+		"MULTI-LOCATION_ALLOCATION": "Toewijzing over meerdere locaties",
+		"B2B_CREDIT": "B2B-krediet",
+		"ORDER_APPROVALS": "Bestelgoedkeuringen",
+		"GIFT_CARDS": "Cadeaukaarten",
+		"WEBHOOKS": "Webhooks",
+		"EXTERNAL_SEARCH_ENGINE": "Externe zoekmachine",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "Leesverzoeken vanuit de zoekindex bedienen",
+		"BACKORDERS": "Nabestellingen",
+		"PRICE_TIERS": "Prijsstaffels",
+		"BULK_API": "Bulk-API",
+		"DATA_EXPORT": "Gegevensexport",
+		"TAX_PROVIDER": "Belastingprovider",
+		"SUBSCRIPTION_BILLING_RUN": "Factureringsrun voor abonnementen",
+		"MARKETPLACE_PAYOUTS": "Uitbetalingen van de marktplaats",
+		"SCHEDULED_SELLER_PAYOUTS": "Geplande uitbetalingen aan verkopers",
 		"DOCUMENTS": "Documenten"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4150,6 +4363,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ga naar het dashboard, Beheer personeelsstatistieken, Tijdregistratie-dashboard"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Bestellingen, bestelregels, bestelwijzigingen, de besteltijdlijn en de koppeling met facturen."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "Winkelwagens en de afrekensessie die een winkelwagen omzet in een bestelling."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Publicatie van producten en collecties, variantfacetten, relaties en het bulk-endpoint van de catalogus."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Prijslijsten, productprijzen, prijsvoorkeuren, wisselkoersen en de simulatie-endpoints."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Belastingcategorieën, belastingtarieven en de bepaling waarmee een document wordt belast."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Promoties, campagnes, coupons en de kortingsengine die ze evalueert."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Mutaties, reserveringen, overdrachten, waarschuwingen, correcties, tellingen en afstemming."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "Het GraphQL-endpoint en de bijbehorende resolvers, met dezelfde guards en rechten als REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Zones, locaties, pickgolven, picklijsten, verpakking en vervoerdersmanifesten."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Verzendprofielen en -opties, orderafhandelingen, labels en de verpak- en manifeststroom."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "De processen na aankoop: retouren, claims en omruilingen, met hun redenen en voorraadeffecten."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Plannen, abonnementen en de factuurgeschiedenis; terugkerende afschrijvingen vallen onder een aparte vlag."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Inkooporders, leveranciersvoorwaarden en goederenontvangsten."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Gebruiksrechten, hun activeringen en de sleutels die ervoor zijn uitgegeven."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Verkopers, aanbiedingen, commissies, uitbetalingen en afrekeningen."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "De zoek-, suggestie- en facet-endpoints en de indexdefinities die ze lezen."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "Meer dan één valuta per kanaal: gebruik van wisselkoersen, valuta-overschrijvingen en valutaomrekening."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "Meer dan één regio per kanaal, met regiospecifieke belasting en verzending."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Toewijzing verdeeld over voorraadlocaties, beschikbaarheid per locatie en overdrachten daartussen."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Kredietlimieten, betalingstermijnen, bestedingslimieten per periode en de kredietcontrole bij het plaatsen."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Een bestelling via de goedkeuringsmodule laten lopen voordat ze wordt geplaatst."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Uitgeven en inwisselen van cadeaukaarten, en het endpoint voor het opvragen van het saldo."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Uitgaande webhookabonnementen en hun leveringen."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Een externe zoekmachine gebruiken in plaats van de ingebouwde databaseprovider voor globaal zoeken."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Leesverzoeken naar de zoekprojectie leiden in plaats van naar de brontabellen."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Bestellingen toestaan voor meer dan op voorraad is, en het beschikbaarheidsantwoord voor nabestelbare artikelen."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Prijzen per hoeveelheidsstaffel en prijzen per contactgroep."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "De endpoints voor batchbewerking."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Streaming-exports van de catalogus en van de besteldocumenten."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Belastingberekening uitbesteden aan een externe engine via geconfigureerde integratiegegevens."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "De terugkerende factureringsrun en de automatische afschrijving."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Een uitbetaling opstellen, goedkeuren en uitvoeren via een betaalprovider."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Automatische uitbetalingsruns volgens een uitbetalingsschema voor verkopers."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centrale plek voor bedrijfsdocumenten: uploads, wikipagina's, beoordeling en AI-kennis"

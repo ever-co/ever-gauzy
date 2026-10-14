@@ -49,7 +49,15 @@ export interface IFeatureCatalogueEntry {
 	description: string;
 	/** `feature.image` is nullable and no commerce flag ships artwork, so it is left empty. */
 	image: string | null;
-	/** Where an administrator is taken when the feature is selected. `feature.link` is NOT NULL. */
+	/**
+	 * Reserved; nothing reads it for a commerce feature yet. `feature.link` is NOT NULL, so every row
+	 * carries a value, and the values below name the page each capability is meant to open
+	 * (`pages/sales/orders`, `pages/catalog/products`, …) — but none of those routes exists in
+	 * `apps/gauzy` today, and no UI code reads `feature.link` (Settings → Features renders the name,
+	 * description and toggle only). The values are kept so the intended destination stays recorded;
+	 * the first UI that honours `link` must ship the page with it, or point the entry at an existing
+	 * route, or every commerce card would navigate to NotFound.
+	 */
 	link: string;
 	/** Presentation only: `info` / `primary` / `success` / `warning`. */
 	status: string;

@@ -2791,6 +2791,12 @@
 				"SETTINGS_INTEGRATIONS": "Configurações e integrações",
 				"DATA_LOGS": "Dados e registros",
 				"DOCUMENTS": "Documentos",
+				"COMMERCE_PLATFORM": "Comércio: plataforma",
+				"COMMERCE_CATALOG": "Comércio: catálogo e preços",
+				"COMMERCE_ORDERS": "Comércio: pedidos e clientes",
+				"COMMERCE_FULFILLMENT": "Comércio: estoque e expedição",
+				"COMMERCE_PAYMENTS": "Comércio: pagamentos",
+				"COMMERCE_MARKETPLACE": "Comércio: marketplace",
 				"OTHER": "Outros"
 			},
 			"ORG_PAYROLL_VIEW": "Ver folha de pagamento",
@@ -2869,6 +2875,180 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "Criar Iniciativa Estratégica da Organização",
 			"ORG_STRATEGIC_INITIATIVE_READ": "Visualizar Iniciativa Estratégica da Organização",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Atualizar Iniciativa Estratégica da Organização",
+			"CHANNELS_VIEW": "Visualizar canais",
+			"CHANNELS_CREATE": "Criar canais",
+			"CHANNELS_EDIT": "Editar canais",
+			"CHANNELS_DELETE": "Excluir canais",
+			"REGIONS_VIEW": "Visualizar regiões",
+			"REGIONS_CREATE": "Criar regiões",
+			"REGIONS_EDIT": "Editar regiões",
+			"REGIONS_DELETE": "Excluir regiões",
+			"RULES_VIEW": "Visualizar regras",
+			"RULES_EDIT": "Editar regras",
+			"SEQUENCES_VIEW": "Visualizar sequências de numeração",
+			"SEQUENCES_EDIT": "Editar sequências de numeração",
+			"UNITS_VIEW": "Visualizar unidades de medida",
+			"UNITS_EDIT": "Editar unidades de medida",
+			"PAYMENT_TERMS_VIEW": "Visualizar condições de pagamento",
+			"PAYMENT_TERMS_EDIT": "Editar condições de pagamento",
+			"PROVIDERS_VIEW": "Visualizar provedores",
+			"OPERATIONS_VIEW": "Visualizar operações em segundo plano",
+			"OPERATIONS_CANCEL": "Cancelar operações em segundo plano",
+			"EVENT_OUTBOX_VIEW": "Visualizar caixa de saída de eventos",
+			"EVENT_OUTBOX_RETRY": "Reenviar mensagens da caixa de saída de eventos",
+			"IDEMPOTENCY_KEYS_VIEW": "Visualizar chaves de idempotência",
+			"IDEMPOTENCY_KEYS_DELETE": "Excluir chaves de idempotência",
+			"WEBHOOKS_VIEW": "Visualizar webhooks",
+			"WEBHOOKS_CREATE": "Criar webhooks",
+			"WEBHOOKS_EDIT": "Editar webhooks",
+			"WEBHOOKS_DELETE": "Excluir webhooks",
+			"WEBHOOK_DELIVERIES_RETRY": "Repetir entregas de webhooks",
+			"SEARCH_VIEW": "Usar a pesquisa global",
+			"SEARCH_REINDEX": "Reconstruir o índice de pesquisa",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "Visualizar definições de índices de pesquisa",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "Editar definições de índices de pesquisa",
+			"PRODUCTS_VIEW": "Visualizar produtos",
+			"PRODUCTS_EDIT": "Editar produtos",
+			"PRODUCTS_DELETE": "Excluir produtos",
+			"PRODUCTS_BULK_IMPORT": "Importar produtos em massa",
+			"COLLECTIONS_VIEW": "Visualizar coleções",
+			"COLLECTIONS_CREATE": "Criar coleções",
+			"COLLECTIONS_EDIT": "Editar coleções",
+			"COLLECTIONS_DELETE": "Excluir coleções",
+			"PRICE_LISTS_VIEW": "Visualizar listas de preços",
+			"PRICE_LISTS_CREATE": "Criar listas de preços",
+			"PRICE_LISTS_EDIT": "Editar listas de preços",
+			"PRICE_LISTS_DELETE": "Excluir listas de preços",
+			"PRICE_LISTS_SIMULATE": "Simular listas de preços",
+			"PRODUCT_PRICES_VIEW": "Visualizar preços de produtos",
+			"PRODUCT_PRICES_EDIT": "Editar preços de produtos",
+			"PRODUCT_PRICES_BULK_EDIT": "Editar preços de produtos em massa",
+			"EXCHANGE_RATES_VIEW": "Visualizar taxas de câmbio",
+			"EXCHANGE_RATES_EDIT": "Editar taxas de câmbio",
+			"TAX_CATEGORIES_VIEW": "Visualizar categorias fiscais",
+			"TAX_CATEGORIES_EDIT": "Editar categorias fiscais",
+			"TAX_RATES_VIEW": "Visualizar alíquotas de impostos",
+			"TAX_RATES_EDIT": "Editar alíquotas de impostos",
+			"TAX_REGIMES_VIEW": "Visualizar regimes fiscais",
+			"TAX_REGIMES_EDIT": "Editar regimes fiscais",
+			"PROMOTIONS_VIEW": "Visualizar promoções",
+			"PROMOTIONS_CREATE": "Criar promoções",
+			"PROMOTIONS_EDIT": "Editar promoções",
+			"PROMOTIONS_DELETE": "Excluir promoções",
+			"PROMOTIONS_SIMULATE": "Simular promoções",
+			"COUPONS_VIEW": "Visualizar cupons",
+			"COUPONS_CREATE": "Criar cupons",
+			"COUPONS_EDIT": "Editar cupons",
+			"COUPONS_DELETE": "Excluir cupons",
+			"GIFT_CARDS_VIEW": "Visualizar cartões-presente",
+			"GIFT_CARDS_ISSUE": "Emitir cartões-presente",
+			"GIFT_CARDS_EDIT": "Editar cartões-presente",
+			"CARTS_VIEW": "Visualizar carrinhos",
+			"CARTS_EDIT": "Editar carrinhos",
+			"CARTS_DELETE": "Excluir carrinhos",
+			"CARTS_CHECKOUT": "Concluir o checkout",
+			"ORDERS_VIEW": "Visualizar pedidos",
+			"ORDERS_CREATE": "Criar pedidos",
+			"ORDERS_EDIT": "Editar pedidos",
+			"ORDERS_CANCEL": "Cancelar pedidos",
+			"ORDERS_APPROVE": "Aprovar pedidos",
+			"RETURNS_VIEW": "Visualizar devoluções",
+			"RETURNS_CREATE": "Criar devoluções",
+			"RETURNS_APPROVE": "Aprovar devoluções",
+			"RETURNS_REJECT": "Rejeitar devoluções",
+			"RETURNS_RECEIVE": "Receber devoluções",
+			"CLAIMS_VIEW": "Visualizar reclamações",
+			"CLAIMS_CREATE": "Criar reclamações",
+			"CLAIMS_RESOLVE": "Resolver reclamações",
+			"EXCHANGES_VIEW": "Visualizar trocas",
+			"EXCHANGES_CREATE": "Criar trocas",
+			"EXCHANGES_RESOLVE": "Resolver trocas",
+			"SUBSCRIPTIONS_VIEW": "Visualizar assinaturas",
+			"SUBSCRIPTIONS_CREATE": "Criar assinaturas",
+			"SUBSCRIPTIONS_EDIT": "Editar assinaturas",
+			"SUBSCRIPTIONS_BILL": "Faturar assinaturas",
+			"ENTITLEMENTS_VIEW": "Visualizar direitos de uso",
+			"ENTITLEMENTS_GRANT": "Conceder direitos de uso",
+			"ENTITLEMENTS_EDIT": "Editar direitos de uso",
+			"CONTACT_GROUPS_VIEW": "Visualizar grupos de contatos",
+			"CONTACT_GROUPS_CREATE": "Criar grupos de contatos",
+			"CONTACT_GROUPS_EDIT": "Editar grupos de contatos",
+			"CONTACT_GROUPS_DELETE": "Excluir grupos de contatos",
+			"CONTACT_CREDENTIALS_VIEW": "Visualizar credenciais de contatos",
+			"CONTACT_CREDENTIALS_MANAGE": "Gerenciar credenciais de contatos",
+			"CONTACT_CREDITS_EDIT": "Editar crédito de contatos",
+			"CONTACT_TAX_IDENTITY_EDIT": "Editar identidades fiscais de contatos",
+			"STOCK_VIEW": "Visualizar estoque",
+			"STOCK_EDIT": "Editar estoque",
+			"STOCK_RECONCILE": "Conciliar estoque",
+			"STOCK_TRANSFER_VIEW": "Visualizar transferências de estoque",
+			"STOCK_TRANSFER_CREATE": "Criar transferências de estoque",
+			"STOCK_TRANSFER_APPROVE": "Aprovar transferências de estoque",
+			"STOCK_TRANSFER_SHIP": "Enviar transferências de estoque",
+			"STOCK_TRANSFER_RECEIVE": "Receber transferências de estoque",
+			"STOCK_TRANSFER_CANCEL": "Cancelar transferências de estoque",
+			"WAREHOUSE_ZONES_VIEW": "Visualizar zonas de armazém",
+			"WAREHOUSE_ZONES_CREATE": "Criar zonas de armazém",
+			"WAREHOUSE_ZONES_EDIT": "Editar zonas de armazém",
+			"WAREHOUSE_ZONES_DELETE": "Excluir zonas de armazém",
+			"WAREHOUSE_BINS_VIEW": "Visualizar posições de armazém",
+			"WAREHOUSE_BINS_CREATE": "Criar posições de armazém",
+			"WAREHOUSE_BINS_EDIT": "Editar posições de armazém",
+			"WAREHOUSE_BINS_DELETE": "Excluir posições de armazém",
+			"PICK_LISTS_VIEW": "Visualizar listas de separação",
+			"PICK_LISTS_EDIT": "Editar listas de separação",
+			"PICK_LISTS_PICK": "Separar itens das listas de separação",
+			"PICK_LISTS_CANCEL": "Cancelar listas de separação",
+			"FULFILLMENTS_VIEW": "Visualizar atendimentos de pedidos",
+			"FULFILLMENTS_CREATE": "Criar atendimentos de pedidos",
+			"FULFILLMENTS_EDIT": "Editar atendimentos de pedidos",
+			"SHIPPING_OPTIONS_VIEW": "Visualizar opções de envio",
+			"SHIPPING_OPTIONS_CREATE": "Criar opções de envio",
+			"SHIPPING_OPTIONS_EDIT": "Editar opções de envio",
+			"SHIPPING_OPTIONS_DELETE": "Excluir opções de envio",
+			"PURCHASE_ORDERS_VIEW": "Visualizar pedidos de compra",
+			"PURCHASE_ORDERS_CREATE": "Criar pedidos de compra",
+			"PURCHASE_ORDERS_EDIT": "Editar pedidos de compra",
+			"PURCHASE_ORDERS_APPROVE": "Aprovar pedidos de compra",
+			"PURCHASE_ORDERS_SEND": "Enviar pedidos de compra",
+			"GOODS_RECEIPTS_VIEW": "Visualizar recebimentos de mercadorias",
+			"GOODS_RECEIPTS_CREATE": "Criar recebimentos de mercadorias",
+			"VENDOR_TERMS_VIEW": "Visualizar condições de fornecedores",
+			"VENDOR_TERMS_EDIT": "Editar condições de fornecedores",
+			"PAYMENT_PROVIDERS_VIEW": "Visualizar provedores de pagamento",
+			"PAYMENT_PROVIDERS_CREATE": "Criar provedores de pagamento",
+			"PAYMENT_PROVIDERS_EDIT": "Editar provedores de pagamento",
+			"PAYMENT_PROVIDERS_DELETE": "Excluir provedores de pagamento",
+			"PAYMENT_SESSIONS_VIEW": "Visualizar sessões de pagamento",
+			"PAYMENT_SESSIONS_AUTHORIZE": "Autorizar pagamentos",
+			"PAYMENT_SESSIONS_CAPTURE": "Capturar pagamentos",
+			"PAYMENT_SESSIONS_CANCEL": "Cancelar sessões de pagamento",
+			"REFUNDS_VIEW": "Visualizar reembolsos",
+			"REFUNDS_CREATE": "Criar reembolsos",
+			"REFUNDS_APPROVE": "Aprovar reembolsos",
+			"PAYMENT_CALLBACKS_VIEW": "Visualizar callbacks de provedores",
+			"PAYMENT_CALLBACKS_REPROCESS": "Reprocessar callbacks de provedores",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "Visualizar titulares de contas de pagamento",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "Editar titulares de contas de pagamento",
+			"PAYMENT_METHOD_TOKENS_VIEW": "Visualizar métodos de pagamento salvos",
+			"PAYMENT_METHOD_TOKENS_EDIT": "Editar métodos de pagamento salvos",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "Cobrar métodos de pagamento salvos",
+			"SELLERS_VIEW": "Visualizar vendedores",
+			"SELLERS_CREATE": "Criar vendedores",
+			"SELLERS_EDIT": "Editar vendedores",
+			"SELLERS_DELETE": "Excluir vendedores",
+			"SELLER_OFFERINGS_VIEW": "Visualizar ofertas de vendedores",
+			"SELLER_OFFERINGS_EDIT": "Editar ofertas de vendedores",
+			"SELLER_COMMISSIONS_VIEW": "Visualizar comissões de vendedores",
+			"SELLER_COMMISSIONS_EDIT": "Editar comissões de vendedores",
+			"SELLER_TRANSACTIONS_VIEW": "Visualizar transações de vendedores",
+			"SELLER_TRANSACTIONS_SETTLE": "Liquidar transações de vendedores",
+			"SELLER_SETTLEMENTS_VIEW": "Visualizar liquidações de vendedores",
+			"SELLER_SETTLEMENTS_EDIT": "Editar liquidações de vendedores",
+			"SELLER_PAYOUTS_VIEW": "Visualizar repasses a vendedores",
+			"SELLER_PAYOUTS_CREATE": "Criar repasses a vendedores",
+			"SELLER_PAYOUTS_APPROVE": "Aprovar repasses a vendedores",
+			"SELLER_PAYOUTS_CANCEL": "Cancelar repasses a vendedores",
 			"ORG_STRATEGIC_INITIATIVE_DELETE": "Excluir Iniciativa Estratégica da Organização"
 		},
 		"BILLING": "Faturamento",
@@ -4052,6 +4232,39 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"ESTIMATE": "Estimativa",
 		"DASHBOARD": "Painel de Controle",
+		"ORDERS": "Pedidos",
+		"CART": "Carrinho",
+		"CATALOG": "Catálogo",
+		"PRICING": "Preços",
+		"TAX": "Impostos",
+		"PROMOTIONS": "Promoções",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "Livro de estoque e reservas",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "Gestão de armazém",
+		"FULFILLMENT": "Atendimento de pedidos",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "Devoluções, reclamações e trocas",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "Assinaturas e cobrança recorrente",
+		"PURCHASING": "Compras",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "Direitos de uso, ativações e chaves de licença",
+		"MARKETPLACE": "Marketplace",
+		"GLOBAL_SEARCH": "Pesquisa global",
+		"MULTI-CURRENCY_PRICING": "Preços em várias moedas",
+		"MULTI-REGION_PRICING": "Preços em várias regiões",
+		"MULTI-LOCATION_ALLOCATION": "Alocação em vários locais",
+		"B2B_CREDIT": "Crédito B2B",
+		"ORDER_APPROVALS": "Aprovações de pedidos",
+		"GIFT_CARDS": "Cartões-presente",
+		"WEBHOOKS": "Webhooks",
+		"EXTERNAL_SEARCH_ENGINE": "Mecanismo de pesquisa externo",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "Servir leituras a partir do índice de pesquisa",
+		"BACKORDERS": "Pedidos pendentes de estoque",
+		"PRICE_TIERS": "Faixas de preço",
+		"BULK_API": "API em massa",
+		"DATA_EXPORT": "Exportação de dados",
+		"TAX_PROVIDER": "Provedor de impostos",
+		"SUBSCRIPTION_BILLING_RUN": "Ciclo de cobrança de assinaturas",
+		"MARKETPLACE_PAYOUTS": "Repasses do marketplace",
+		"SCHEDULED_SELLER_PAYOUTS": "Repasses programados a vendedores",
 		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4150,6 +4363,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel de controle, Gerenciar Estatísticas dos Funcionários, Painel de Controle de Rastreamento de Tempo."
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Pedidos, itens do pedido, alterações de pedido, a linha do tempo do pedido e a ligação com as faturas."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "Os carrinhos e a sessão de checkout que transforma um carrinho em um pedido."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Publicação de produtos e coleções, facetas de variantes, relações e o endpoint em massa do catálogo."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Listas de preços, preços de produtos, preferências de preço, taxas de câmbio e os endpoints de simulação."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Categorias fiscais, alíquotas de impostos e a resolução pela qual um documento é tributado."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Promoções, campanhas, cupons e o mecanismo de descontos que os avalia."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Movimentações, reservas, transferências, alertas, ajustes, contagens e conciliação."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "O endpoint GraphQL e seus resolvers, com as mesmas proteções e permissões da REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Zonas, posições, ondas de separação, listas de separação, embalagem e manifestos de transportadora."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Perfis e opções de envio, atendimentos, etiquetas e o fluxo de embalagem e manifesto."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "Os fluxos pós-compra: devoluções, reclamações e trocas, com seus motivos e efeitos no estoque."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Planos, assinaturas e o histórico de cobrança; as cobranças recorrentes são uma flag separada."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Pedidos de compra, condições de fornecedores e recebimentos de mercadorias."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Direitos de uso, suas ativações e as chaves emitidas para eles."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Vendedores, ofertas, comissões, repasses e liquidações."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "Os endpoints de pesquisa, sugestão e facetas e as definições de índice que eles leem."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "Mais de uma moeda por canal: uso de taxas de câmbio, substituições de moeda e conversão cambial."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "Mais de uma região por canal, com impostos e envio específicos de cada região."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Alocação dividida entre locais de estoque, disponibilidade por local e transferências entre eles."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Limites de crédito, condições de liquidação, limites de gastos por período e a verificação de crédito na colocação do pedido."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Encaminhar um pedido pelo módulo de aprovação antes de ele ser feito."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Emissão e resgate de cartões-presente e o endpoint de consulta de saldo."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Assinaturas de webhooks de saída e suas entregas."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Usar um mecanismo externo em vez do provedor de banco de dados integrado para a pesquisa global."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Direcionar as leituras para a projeção de pesquisa em vez das tabelas de origem."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Permitir pedidos acima do estoque disponível e a resposta de disponibilidade para itens pendentes."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Preços por faixa de quantidade e preços por grupo de contatos."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "Os endpoints de criação em lote."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Exportações em streaming do catálogo e dos documentos de pedidos."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Delegar o cálculo de impostos a um mecanismo externo por meio das credenciais de integração configuradas."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "A execução da cobrança recorrente e a cobrança automática."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Montar, aprovar e executar um repasse por meio de um provedor de pagamento."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Execuções automáticas de repasses conforme o cronograma de repasses do vendedor."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"

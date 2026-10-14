@@ -2849,6 +2849,12 @@
 				"SETTINGS_INTEGRATIONS": "Настройки и интеграции",
 				"DATA_LOGS": "Данни и журнали",
 				"DOCUMENTS": "Документи",
+				"COMMERCE_PLATFORM": "Търговия: платформа",
+				"COMMERCE_CATALOG": "Търговия: каталог и цени",
+				"COMMERCE_ORDERS": "Търговия: поръчки и клиенти",
+				"COMMERCE_FULFILLMENT": "Търговия: наличности и доставка",
+				"COMMERCE_PAYMENTS": "Търговия: плащания",
+				"COMMERCE_MARKETPLACE": "Търговия: маркетплейс",
 				"OTHER": "Други"
 			},
 			"ORG_PAYROLL_VIEW": "Преглед на заплати",
@@ -2926,6 +2932,180 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "Създаване на организационна стратегическа инициатива",
 			"ORG_STRATEGIC_INITIATIVE_READ": "Преглед на организационната стратегическа инициатива",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Актуализиране на организационната стратегическа инициатива",
+			"CHANNELS_VIEW": "Преглед на канали",
+			"CHANNELS_CREATE": "Създаване на канали",
+			"CHANNELS_EDIT": "Редактиране на канали",
+			"CHANNELS_DELETE": "Изтриване на канали",
+			"REGIONS_VIEW": "Преглед на региони",
+			"REGIONS_CREATE": "Създаване на региони",
+			"REGIONS_EDIT": "Редактиране на региони",
+			"REGIONS_DELETE": "Изтриване на региони",
+			"RULES_VIEW": "Преглед на правила",
+			"RULES_EDIT": "Редактиране на правила",
+			"SEQUENCES_VIEW": "Преглед на номерационни последователности",
+			"SEQUENCES_EDIT": "Редактиране на номерационни последователности",
+			"UNITS_VIEW": "Преглед на мерни единици",
+			"UNITS_EDIT": "Редактиране на мерни единици",
+			"PAYMENT_TERMS_VIEW": "Преглед на условия за плащане",
+			"PAYMENT_TERMS_EDIT": "Редактиране на условия за плащане",
+			"PROVIDERS_VIEW": "Преглед на доставчици",
+			"OPERATIONS_VIEW": "Преглед на фонови операции",
+			"OPERATIONS_CANCEL": "Анулиране на фонови операции",
+			"EVENT_OUTBOX_VIEW": "Преглед на изходящата опашка на събития",
+			"EVENT_OUTBOX_RETRY": "Повторно изпращане на съобщения от изходящата опашка на събития",
+			"IDEMPOTENCY_KEYS_VIEW": "Преглед на ключове за идемпотентност",
+			"IDEMPOTENCY_KEYS_DELETE": "Изтриване на ключове за идемпотентност",
+			"WEBHOOKS_VIEW": "Преглед на уебхукове",
+			"WEBHOOKS_CREATE": "Създаване на уебхукове",
+			"WEBHOOKS_EDIT": "Редактиране на уебхукове",
+			"WEBHOOKS_DELETE": "Изтриване на уебхукове",
+			"WEBHOOK_DELIVERIES_RETRY": "Повторно доставяне на уебхукове",
+			"SEARCH_VIEW": "Използване на глобално търсене",
+			"SEARCH_REINDEX": "Повторно изграждане на индекса за търсене",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "Преглед на дефиниции на индекси за търсене",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "Редактиране на дефиниции на индекси за търсене",
+			"PRODUCTS_VIEW": "Преглед на продукти",
+			"PRODUCTS_EDIT": "Редактиране на продукти",
+			"PRODUCTS_DELETE": "Изтриване на продукти",
+			"PRODUCTS_BULK_IMPORT": "Масов импорт на продукти",
+			"COLLECTIONS_VIEW": "Преглед на колекции",
+			"COLLECTIONS_CREATE": "Създаване на колекции",
+			"COLLECTIONS_EDIT": "Редактиране на колекции",
+			"COLLECTIONS_DELETE": "Изтриване на колекции",
+			"PRICE_LISTS_VIEW": "Преглед на ценови листи",
+			"PRICE_LISTS_CREATE": "Създаване на ценови листи",
+			"PRICE_LISTS_EDIT": "Редактиране на ценови листи",
+			"PRICE_LISTS_DELETE": "Изтриване на ценови листи",
+			"PRICE_LISTS_SIMULATE": "Симулиране на ценови листи",
+			"PRODUCT_PRICES_VIEW": "Преглед на цени на продукти",
+			"PRODUCT_PRICES_EDIT": "Редактиране на цени на продукти",
+			"PRODUCT_PRICES_BULK_EDIT": "Масово редактиране на цени на продукти",
+			"EXCHANGE_RATES_VIEW": "Преглед на валутни курсове",
+			"EXCHANGE_RATES_EDIT": "Редактиране на валутни курсове",
+			"TAX_CATEGORIES_VIEW": "Преглед на данъчни категории",
+			"TAX_CATEGORIES_EDIT": "Редактиране на данъчни категории",
+			"TAX_RATES_VIEW": "Преглед на данъчни ставки",
+			"TAX_RATES_EDIT": "Редактиране на данъчни ставки",
+			"TAX_REGIMES_VIEW": "Преглед на данъчни режими",
+			"TAX_REGIMES_EDIT": "Редактиране на данъчни режими",
+			"PROMOTIONS_VIEW": "Преглед на промоции",
+			"PROMOTIONS_CREATE": "Създаване на промоции",
+			"PROMOTIONS_EDIT": "Редактиране на промоции",
+			"PROMOTIONS_DELETE": "Изтриване на промоции",
+			"PROMOTIONS_SIMULATE": "Симулиране на промоции",
+			"COUPONS_VIEW": "Преглед на купони",
+			"COUPONS_CREATE": "Създаване на купони",
+			"COUPONS_EDIT": "Редактиране на купони",
+			"COUPONS_DELETE": "Изтриване на купони",
+			"GIFT_CARDS_VIEW": "Преглед на карти за подарък",
+			"GIFT_CARDS_ISSUE": "Издаване на карти за подарък",
+			"GIFT_CARDS_EDIT": "Редактиране на карти за подарък",
+			"CARTS_VIEW": "Преглед на колички",
+			"CARTS_EDIT": "Редактиране на колички",
+			"CARTS_DELETE": "Изтриване на колички",
+			"CARTS_CHECKOUT": "Завършване на поръчката",
+			"ORDERS_VIEW": "Преглед на поръчки",
+			"ORDERS_CREATE": "Създаване на поръчки",
+			"ORDERS_EDIT": "Редактиране на поръчки",
+			"ORDERS_CANCEL": "Анулиране на поръчки",
+			"ORDERS_APPROVE": "Одобряване на поръчки",
+			"RETURNS_VIEW": "Преглед на връщания",
+			"RETURNS_CREATE": "Създаване на връщания",
+			"RETURNS_APPROVE": "Одобряване на връщания",
+			"RETURNS_REJECT": "Отхвърляне на връщания",
+			"RETURNS_RECEIVE": "Приемане на връщания",
+			"CLAIMS_VIEW": "Преглед на рекламации",
+			"CLAIMS_CREATE": "Създаване на рекламации",
+			"CLAIMS_RESOLVE": "Разрешаване на рекламации",
+			"EXCHANGES_VIEW": "Преглед на замени",
+			"EXCHANGES_CREATE": "Създаване на замени",
+			"EXCHANGES_RESOLVE": "Разрешаване на замени",
+			"SUBSCRIPTIONS_VIEW": "Преглед на абонаменти",
+			"SUBSCRIPTIONS_CREATE": "Създаване на абонаменти",
+			"SUBSCRIPTIONS_EDIT": "Редактиране на абонаменти",
+			"SUBSCRIPTIONS_BILL": "Таксуване на абонаменти",
+			"ENTITLEMENTS_VIEW": "Преглед на права за ползване",
+			"ENTITLEMENTS_GRANT": "Предоставяне на права за ползване",
+			"ENTITLEMENTS_EDIT": "Редактиране на права за ползване",
+			"CONTACT_GROUPS_VIEW": "Преглед на групи контакти",
+			"CONTACT_GROUPS_CREATE": "Създаване на групи контакти",
+			"CONTACT_GROUPS_EDIT": "Редактиране на групи контакти",
+			"CONTACT_GROUPS_DELETE": "Изтриване на групи контакти",
+			"CONTACT_CREDENTIALS_VIEW": "Преглед на идентификационни данни на контакти",
+			"CONTACT_CREDENTIALS_MANAGE": "Управление на идентификационни данни на контакти",
+			"CONTACT_CREDITS_EDIT": "Редактиране на кредит на контакти",
+			"CONTACT_TAX_IDENTITY_EDIT": "Редактиране на данъчни идентичности на контакти",
+			"STOCK_VIEW": "Преглед на наличности",
+			"STOCK_EDIT": "Редактиране на наличности",
+			"STOCK_RECONCILE": "Съгласуване на наличности",
+			"STOCK_TRANSFER_VIEW": "Преглед на трансфери на наличности",
+			"STOCK_TRANSFER_CREATE": "Създаване на трансфери на наличности",
+			"STOCK_TRANSFER_APPROVE": "Одобряване на трансфери на наличности",
+			"STOCK_TRANSFER_SHIP": "Изпращане на трансфери на наличности",
+			"STOCK_TRANSFER_RECEIVE": "Приемане на трансфери на наличности",
+			"STOCK_TRANSFER_CANCEL": "Анулиране на трансфери на наличности",
+			"WAREHOUSE_ZONES_VIEW": "Преглед на складови зони",
+			"WAREHOUSE_ZONES_CREATE": "Създаване на складови зони",
+			"WAREHOUSE_ZONES_EDIT": "Редактиране на складови зони",
+			"WAREHOUSE_ZONES_DELETE": "Изтриване на складови зони",
+			"WAREHOUSE_BINS_VIEW": "Преглед на складови клетки",
+			"WAREHOUSE_BINS_CREATE": "Създаване на складови клетки",
+			"WAREHOUSE_BINS_EDIT": "Редактиране на складови клетки",
+			"WAREHOUSE_BINS_DELETE": "Изтриване на складови клетки",
+			"PICK_LISTS_VIEW": "Преглед на списъци за комплектоване",
+			"PICK_LISTS_EDIT": "Редактиране на списъци за комплектоване",
+			"PICK_LISTS_PICK": "Комплектоване на артикули по списъци за комплектоване",
+			"PICK_LISTS_CANCEL": "Анулиране на списъци за комплектоване",
+			"FULFILLMENTS_VIEW": "Преглед на изпълнения на поръчки",
+			"FULFILLMENTS_CREATE": "Създаване на изпълнения на поръчки",
+			"FULFILLMENTS_EDIT": "Редактиране на изпълнения на поръчки",
+			"SHIPPING_OPTIONS_VIEW": "Преглед на опции за доставка",
+			"SHIPPING_OPTIONS_CREATE": "Създаване на опции за доставка",
+			"SHIPPING_OPTIONS_EDIT": "Редактиране на опции за доставка",
+			"SHIPPING_OPTIONS_DELETE": "Изтриване на опции за доставка",
+			"PURCHASE_ORDERS_VIEW": "Преглед на поръчки за покупка",
+			"PURCHASE_ORDERS_CREATE": "Създаване на поръчки за покупка",
+			"PURCHASE_ORDERS_EDIT": "Редактиране на поръчки за покупка",
+			"PURCHASE_ORDERS_APPROVE": "Одобряване на поръчки за покупка",
+			"PURCHASE_ORDERS_SEND": "Изпращане на поръчки за покупка",
+			"GOODS_RECEIPTS_VIEW": "Преглед на приемания на стоки",
+			"GOODS_RECEIPTS_CREATE": "Създаване на приемания на стоки",
+			"VENDOR_TERMS_VIEW": "Преглед на условия на доставчици",
+			"VENDOR_TERMS_EDIT": "Редактиране на условия на доставчици",
+			"PAYMENT_PROVIDERS_VIEW": "Преглед на доставчици на плащания",
+			"PAYMENT_PROVIDERS_CREATE": "Създаване на доставчици на плащания",
+			"PAYMENT_PROVIDERS_EDIT": "Редактиране на доставчици на плащания",
+			"PAYMENT_PROVIDERS_DELETE": "Изтриване на доставчици на плащания",
+			"PAYMENT_SESSIONS_VIEW": "Преглед на платежни сесии",
+			"PAYMENT_SESSIONS_AUTHORIZE": "Авторизиране на плащания",
+			"PAYMENT_SESSIONS_CAPTURE": "Събиране на плащания",
+			"PAYMENT_SESSIONS_CANCEL": "Анулиране на платежни сесии",
+			"REFUNDS_VIEW": "Преглед на възстановявания на суми",
+			"REFUNDS_CREATE": "Създаване на възстановявания на суми",
+			"REFUNDS_APPROVE": "Одобряване на възстановявания на суми",
+			"PAYMENT_CALLBACKS_VIEW": "Преглед на обратни извиквания от доставчици",
+			"PAYMENT_CALLBACKS_REPROCESS": "Повторна обработка на обратни извиквания от доставчици",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "Преглед на титуляри на платежни сметки",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "Редактиране на титуляри на платежни сметки",
+			"PAYMENT_METHOD_TOKENS_VIEW": "Преглед на запазени методи на плащане",
+			"PAYMENT_METHOD_TOKENS_EDIT": "Редактиране на запазени методи на плащане",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "Таксуване на запазени методи на плащане",
+			"SELLERS_VIEW": "Преглед на продавачи",
+			"SELLERS_CREATE": "Създаване на продавачи",
+			"SELLERS_EDIT": "Редактиране на продавачи",
+			"SELLERS_DELETE": "Изтриване на продавачи",
+			"SELLER_OFFERINGS_VIEW": "Преглед на оферти на продавачи",
+			"SELLER_OFFERINGS_EDIT": "Редактиране на оферти на продавачи",
+			"SELLER_COMMISSIONS_VIEW": "Преглед на комисиони на продавачи",
+			"SELLER_COMMISSIONS_EDIT": "Редактиране на комисиони на продавачи",
+			"SELLER_TRANSACTIONS_VIEW": "Преглед на транзакции на продавачи",
+			"SELLER_TRANSACTIONS_SETTLE": "Уреждане на транзакции на продавачи",
+			"SELLER_SETTLEMENTS_VIEW": "Преглед на разплащания с продавачи",
+			"SELLER_SETTLEMENTS_EDIT": "Редактиране на разплащания с продавачи",
+			"SELLER_PAYOUTS_VIEW": "Преглед на изплащания към продавачи",
+			"SELLER_PAYOUTS_CREATE": "Създаване на изплащания към продавачи",
+			"SELLER_PAYOUTS_APPROVE": "Одобряване на изплащания към продавачи",
+			"SELLER_PAYOUTS_CANCEL": "Анулиране на изплащания към продавачи",
 			"ORG_STRATEGIC_INITIATIVE_DELETE": "Изтриване на организационната стратегическа инициатива"
 		},
 		"BILLING": "Billing",
@@ -4102,6 +4282,39 @@
 		"TIME_TRACKING": "Проследяване на време",
 		"ESTIMATE": "Оценка",
 		"DASHBOARD": "Табло",
+		"ORDERS": "Поръчки",
+		"CART": "Количка",
+		"CATALOG": "Каталог",
+		"PRICING": "Ценообразуване",
+		"TAX": "Данъци",
+		"PROMOTIONS": "Промоции",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "Складов регистър и резервации",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "Управление на склад",
+		"FULFILLMENT": "Изпълнение на поръчки",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "Връщания, рекламации и замени",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "Абонаменти и периодично таксуване",
+		"PURCHASING": "Покупки",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "Права за ползване, активации и лицензни ключове",
+		"MARKETPLACE": "Маркетплейс",
+		"GLOBAL_SEARCH": "Глобално търсене",
+		"MULTI-CURRENCY_PRICING": "Ценообразуване в няколко валути",
+		"MULTI-REGION_PRICING": "Ценообразуване в няколко региона",
+		"MULTI-LOCATION_ALLOCATION": "Разпределение в няколко локации",
+		"B2B_CREDIT": "B2B кредит",
+		"ORDER_APPROVALS": "Одобряване на поръчки",
+		"GIFT_CARDS": "Карти за подарък",
+		"WEBHOOKS": "Уебхукове",
+		"EXTERNAL_SEARCH_ENGINE": "Външна търсачка",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "Четене от индекса за търсене",
+		"BACKORDERS": "Поръчки без наличност",
+		"PRICE_TIERS": "Ценови нива",
+		"BULK_API": "API за масови операции",
+		"DATA_EXPORT": "Експорт на данни",
+		"TAX_PROVIDER": "Доставчик на данъчни изчисления",
+		"SUBSCRIPTION_BILLING_RUN": "Цикъл на таксуване на абонаменти",
+		"MARKETPLACE_PAYOUTS": "Изплащания в маркетплейса",
+		"SCHEDULED_SELLER_PAYOUTS": "Планирани изплащания към продавачи",
 		"DOCUMENTS": "Документи"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4200,6 +4413,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Поръчки, редове на поръчки, промени в поръчки, хронологията на поръчката и връзката с фактурите."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "Колички и сесията за плащане, която превръща количката в поръчка."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Публикуване на продукти и колекции, фасети на варианти, връзки и крайната точка за масови операции с каталога."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Ценови листи, цени на продукти, ценови предпочитания, валутни курсове и крайните точки за симулация."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Данъчни категории, данъчни ставки и определянето на данъчното облагане на документ."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Промоции, кампании, купони и механизмът за отстъпки, който ги оценява."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Движения, резервации, трансфери, сигнали, корекции, преброявания и съгласуване."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "Крайната точка GraphQL и нейните резолвъри, със същите защити и права като REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Зони, клетки, вълни за комплектоване, списъци за комплектоване, опаковане и манифести на превозвачи."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Профили и опции за доставка, изпълнения, етикети и процесът на опаковане и манифести."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "Процесите след покупка: връщания, рекламации и замени, с техните причини и ефект върху наличностите."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Планове, абонаменти и историята на таксуването; периодичните плащания са отделен флаг."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Поръчки за покупка, условия на доставчици и приемания на стоки."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Права за ползване, техните активации и издадените за тях ключове."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Продавачи, оферти, комисиони, изплащания и разплащания."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "Крайните точки за търсене, предложения и фасети и дефинициите на индекси, които те четат."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "Повече от една валута в канал: използване на валутни курсове, заместване на валути и валутно преобразуване."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "Повече от един регион в канал, с данъци и доставка според региона."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Разпределение между складови локации, наличност по локация и трансфери между тях."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Кредитни лимити, условия за разплащане, лимити на разходите за период и кредитната проверка при поръчка."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Насочване на поръчка през модула за одобрения, преди да бъде направена."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Издаване и използване на карти за подарък и крайната точка за проверка на баланса."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Абонаменти за изходящи уебхукове и техните доставки."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Използване на външна търсачка вместо вградения доставчик на база данни за глобалното търсене."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Насочване на четенията към проекцията за търсене вместо към изходните таблици."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Разрешаване на поръчка за повече от наличното и отговорът за наличност при отложена доставка."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Цени според количеството и цени по групи контакти."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "Крайните точки за пакетно създаване."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Поточен експорт на каталога и на документите за поръчки."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Делегиране на изчисляването на данъци към външен механизъм чрез конфигурирани данни за интеграция."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "Периодичното таксуване и автоматичното събиране на плащания."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Изготвяне, одобряване и извършване на изплащане чрез доставчик на плащания."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Автоматични изплащания по график за изплащане на продавача."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Централно място за фирмените документи: качване, уики страници, преглед и знания за ИИ"
