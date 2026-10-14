@@ -117,7 +117,6 @@ function mask(source) {
 	const n = source.length;
 	let i = 0;
 	const templateDepth = [];
-	let lastSignificant = '';
 
 	const blank = (from, to) => {
 		for (let k = from; k < to; k++) if (out[k] !== '\n') out[k] = ' ';
@@ -149,7 +148,6 @@ function mask(source) {
 			while (k < n && source[k] !== c && source[k] !== '\n') k += source[k] === '\\' ? 2 : 1;
 			fill(i + 1, k);
 			i = k + 1;
-			lastSignificant = 'x';
 			continue;
 		}
 		if (c === '`' || (c === '}' && templateDepth.length > 0 && templateDepth[templateDepth.length - 1] === 0)) {
@@ -170,7 +168,6 @@ function mask(source) {
 			} else {
 				i = k + 1;
 			}
-			lastSignificant = 'x';
 			continue;
 		}
 		if (c === '/') {
@@ -193,7 +190,6 @@ function mask(source) {
 					fill(i + 1, k);
 					i = k + 1;
 					while (i < n && /[a-z]/i.test(source[i])) i++;
-					lastSignificant = 'x';
 					continue;
 				}
 			}
@@ -202,10 +198,8 @@ function mask(source) {
 			if (c === '{') templateDepth[templateDepth.length - 1]++;
 			else if (c === '}') templateDepth[templateDepth.length - 1]--;
 		}
-		if (!/\s/.test(c)) lastSignificant = c;
 		i++;
 	}
-	void lastSignificant;
 	return out.join('');
 }
 
@@ -302,11 +296,10 @@ function declarationOffset(masked) {
  * The instance fields a class body initializes, from its property declarations and from `this.x =` in its
  * constructor.
  *
- * @returns `{ initialized: Set<string>, declared: Set<string> }`.
+ * @returns The names of the fields an instance holds once the constructor has run.
  */
 function membersOf(source, masked, bodyStart, bodyEnd) {
 	const initialized = new Set();
-	const declared = new Set();
 	let segmentStart = bodyStart + 1;
 	let k = bodyStart + 1;
 
@@ -338,7 +331,6 @@ function membersOf(source, masked, bodyStart, bodyEnd) {
 		if (/^(get|set)\s/.test(head) || afterName.startsWith('(') || afterName.startsWith('<')) return; // method
 
 		const key = name[1].replace(/^['"]|['"]$/g, '');
-		declared.add(key);
 
 		// The first `=` outside brackets, that is not part of `=>`, `==`, `>=`, `<=` or `!=`.
 		let depth = 0;
@@ -384,10 +376,10 @@ function membersOf(source, masked, bodyStart, bodyEnd) {
 		k++;
 	}
 	consume(segmentStart, bodyEnd);
-	return { initialized, declared };
+	return initialized;
 }
 
-/** The classes a file declares: `{ name, heritage, heritageMasked, initialized, declared, start }`. */
+/** The classes a file declares: `{ name, heritage, initialized, start, bodyStart, bodyEnd }`. */
 function classesOf(source, masked) {
 	const found = [];
 	const classRe = /\bclass\s+([A-Za-z_$][\w$]*)/g;
@@ -402,7 +394,6 @@ function classesOf(source, masked) {
 			k = close + 1;
 		}
 		let heritage = null;
-		let heritageMasked = null;
 		let bodyStart = -1;
 		const rest = masked.slice(k);
 		const ext = /^\s*extends\s+/.exec(rest);
@@ -444,12 +435,11 @@ function classesOf(source, masked) {
 				return imp === -1 ? bodyStart : hStart + imp;
 			})();
 			heritage = source.slice(hStart, end).trim();
-			heritageMasked = masked.slice(hStart, end).trim();
 		}
 		const bodyEnd = matching(masked, bodyStart);
 		if (bodyEnd === -1) continue;
-		const { initialized, declared } = membersOf(source, masked, bodyStart, bodyEnd);
-		found.push({ name, heritage, heritageMasked, initialized, declared, start: match.index, bodyStart, bodyEnd });
+		const initialized = membersOf(source, masked, bodyStart, bodyEnd);
+		found.push({ name, heritage, initialized, start: match.index, bodyStart, bodyEnd });
 	}
 	return found;
 }
