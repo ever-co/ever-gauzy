@@ -41,3 +41,20 @@ export const IDEMPOTENCY_QUEUE_NAME = 'idempotency-maintenance';
  * same table and never asks the store for more than it can give back in one breath.
  */
 export const IDEMPOTENCY_CLEANUP_BATCH_SIZE = 500;
+
+/**
+ * How many batches one sweep may take (R1-09).
+ *
+ * One batch an hour removed at most 12,000 rows a day, below the rate a busy installation writes keyed
+ * requests, so the table grew without bound. A sweep takes batch after batch while the store keeps
+ * answering full ones; this caps one pass at 50 × 500 = 25,000 rows (600,000 a day).
+ */
+export const IDEMPOTENCY_CLEANUP_MAX_BATCHES = 50;
+
+/**
+ * How long one sweep may keep taking batches, in milliseconds.
+ *
+ * The batch cap bounds the rows, this bounds the time: a slow store stops the pass early rather than
+ * holding it for most of the hour, and the next hourly pass carries on where it stopped.
+ */
+export const IDEMPOTENCY_CLEANUP_TIME_BUDGET_MS = 60_000;

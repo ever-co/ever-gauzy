@@ -140,7 +140,7 @@ jest.mock(
 );
 
 import { FindOperator } from 'typeorm';
-import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, Warehouse, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import {
 	StockCountLineStatus,
 	StockCountMode,
@@ -195,6 +195,7 @@ function datastore(tables: Record<string, Row[]>) {
 	const entityToTable = new Map<unknown, string>([
 		[Product, 'product'],
 		[ProductVariant, 'product_variant'],
+		[Warehouse, 'warehouse'],
 		[WarehouseProduct, 'warehouse_product'],
 		[WarehouseProductVariant, 'warehouse_product_variant'],
 		[StockMovement, 'stock_movement'],
@@ -403,7 +404,7 @@ function datastore(tables: Record<string, Row[]>) {
 			return { affected: row ? 1 : 0 };
 		},
 		query: async (sql: string, params: any[] = []) => {
-			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
+			if (/SET LOCAL lock_timeout|set_config\('lock_timeout'|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
 				return [];
 			}
 			if (/FROM "product_variant"/.test(sql)) {
@@ -461,9 +462,12 @@ function countFixture(options: { quantities?: Record<string, number> } = {}) {
 	const quantities = options.quantities ?? { [VARIANT]: 10, [OTHER_VARIANT]: 6 };
 	const tables: Record<string, Row[]> = {
 		product: [{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }],
+		// The caller's own locations: a movement written for a request is refused at a location that is
+		// not the request tenant's (review R2-01).
+		warehouse: [{ id: WAREHOUSE, tenantId: TENANT, organizationId: ORG }],
 		product_variant: [
-			{ id: VARIANT, productId: PRODUCT },
-			{ id: OTHER_VARIANT, productId: PRODUCT }
+			{ id: VARIANT, productId: PRODUCT, tenantId: TENANT, organizationId: ORG },
+			{ id: OTHER_VARIANT, productId: PRODUCT, tenantId: TENANT, organizationId: ORG }
 		],
 		warehouse_product: [
 			{

@@ -102,12 +102,13 @@ extend type Mutation {
 
 	"""
 	Withdraws a placement without removing it: the row keeps its identifier and stops being answered by
-	the list, and the restoration below brings it back.
+	the list, and the restoration below brings it back. It requires the edit grant the change above requires,
+	as the `DELETE /:id/soft` route it mirrors does.
 	"""
 	softDeleteDashboardWidget(id: ID!): DashboardWidget!
 
 	"""
-	Puts a withdrawn placement back.
+	Puts a withdrawn placement back, under the same edit grant: restoring undoes a removal.
 	"""
 	recoverDashboardWidget(id: ID!): DashboardWidget!
 }

@@ -505,7 +505,7 @@ function datastore(tables: ITables) {
 		 * Anything else is a statement this double does not model, and it says so instead of answering.
 		 */
 		query: async (sql: string, params: any[] = []) => {
-			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
+			if (/SET LOCAL lock_timeout|set_config\('lock_timeout'|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
 				queries.push(sql.trim());
 
 				return [];

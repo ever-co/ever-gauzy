@@ -11,6 +11,7 @@ import {
 	IPaymentCollection,
 	IPaymentCollectionCreateInput,
 	IPaymentCollectionUpdateInput,
+	PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS,
 	PaymentCollectionStatus
 } from '../payment.types';
 
@@ -116,15 +117,41 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	 * collection were created for that figure, and rewriting it afterwards would make every capture
 	 * already taken look like an over-capture. What has already moved is what the collection is.
 	 *
+	 * The running totals, the status, the settlement time and the order or cart the collection was opened for are
+	 * the server's (`PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS`): an input that would change one is refused, and one
+	 * that restates the stored value is accepted and the member left out of the write. The REST body does not declare
+	 * them and the GraphQL input does not admit them, so this is the rule for every other caller - a second
+	 * authorisation was accepted against a collection whose `authorizedAmount` a partial update had zeroed (R3-04).
+	 *
 	 * @param id The collection to update.
 	 * @param input The fields to change.
 	 * @returns The stored collection.
 	 * @throws NotFoundException when the collection is not in the caller's organization.
 	 * @throws BadRequestException when the amount or the currency of a collection that has moved would
 	 * change.
+	 * @throws BadRequestException with `PAYMENT_COLLECTION_FIELD_NOT_WRITABLE` when the input would change a
+	 * server-owned member.
 	 */
 	async updateCollection(id: ID, input: IPaymentCollectionUpdateInput): Promise<IPaymentCollection> {
 		const collection = await this.findCollectionOrFail(id);
+
+		const stated = input as Record<string, unknown>;
+		const refused = PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS.filter(
+			(member) =>
+				stated[member] !== undefined &&
+				!restatesStoredValue((collection as unknown as Record<string, unknown>)[member], stated[member])
+		);
+
+		if (refused.length > 0) {
+			throw new BadRequestException({
+				message:
+					`PAYMENT_COLLECTION_FIELD_NOT_WRITABLE: ${refused.join(', ')} of collection '${id}' ` +
+					`${refused.length === 1 ? 'is' : 'are'} written by the server only; the totals move through ` +
+					`authorise, capture, refund and void, and the status follows them.`,
+				code: 'PAYMENT_COLLECTION_FIELD_NOT_WRITABLE',
+				details: { paymentCollectionId: id, fields: refused }
+			});
+		}
 
 		if (this.hasMoved(collection) && (input.amount !== undefined || input.currency !== undefined)) {
 			throw new BadRequestException(
@@ -132,12 +159,13 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 			);
 		}
 
-		// The status is derived from the amounts and the sessions and is never taken from a caller, so it
-		// is lifted off the input here rather than written. The input type excludes it — which is the
-		// point — so naming it takes the widening below, and the run-time strip is what keeps a body
-		// that carries one from reaching the update.
-		const { status, ...changes } = input as IPaymentCollectionUpdateInput & { status?: unknown };
-		void status;
+		// A server-owned member left here restates the stored value (anything else was refused above), so it is
+		// lifted off the input rather than written.
+		const changes = Object.fromEntries(
+			Object.entries(stated).filter(
+				([member]) => !(PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS as readonly string[]).includes(member)
+			)
+		) as IPaymentCollectionUpdateInput;
 
 		if (changes.amount !== undefined) {
 			changes.amount = this.toMoney(changes.amount, changes.currency ?? collection.currency).amount;
@@ -633,4 +661,35 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 
 		return currency.trim().toUpperCase();
 	}
+}
+
+/**
+ * Whether a value an update states is the value already stored, so restating it is not a change.
+ *
+ * A decimal is compared by value (`'0'` restates `'0.000000'`, the column's scale), a date by its instant, and a
+ * missing value restates only a missing one.
+ */
+function restatesStoredValue(stored: unknown, stated: unknown): boolean {
+	if (stated === null || stated === undefined || stored === null || stored === undefined) {
+		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
+	}
+	if (stored instanceof Date || stated instanceof Date) {
+		const held = new Date(stored as string | Date).getTime();
+		const wanted = new Date(stated as string | Date).getTime();
+
+		return Number.isFinite(held) && held === wanted;
+	}
+
+	const decimal = /^[+-]?\d+(\.\d+)?$/;
+	const canonical = (value: string) =>
+		value
+			.replace(/^\+/, '')
+			.replace(/(\.\d*?)0+$/, '$1')
+			.replace(/\.$/, '');
+
+	if (decimal.test(String(stored)) && decimal.test(String(stated))) {
+		return canonical(String(stored)) === canonical(String(stated));
+	}
+
+	return String(stated) === String(stored);
 }

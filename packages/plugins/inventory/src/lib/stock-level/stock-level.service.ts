@@ -31,6 +31,7 @@ import {
 import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockMovementReferenceType, StockMovementType, StockReasonCode } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
+import { assertLocationInScope, IInventoryScope, narrowLevelReadToTenant, requestTenantScope } from './../inventory.scope';
 import {
 	IAppliedMovement,
 	IStockAvailability,
@@ -465,7 +466,9 @@ export class StockLevelService {
 		const run = async (transactional: EntityManager): Promise<boolean> => {
 			const level = await this.findLevelRow(transactional, input.warehouseId, input.variantId);
 
-			if (!level) {
+			// A level of another tenant is answered as one that is not there, like any other write of this
+			// engine for a request (review R2-01).
+			if (!level || !(await this.isLevelInScope(transactional, level, requestTenantScope()))) {
 				return false;
 			}
 
@@ -625,12 +628,12 @@ export class StockLevelService {
 	 *
 	 * A caller with no tenant — a worker, a migration, a system context — is not narrowed: those reads
 	 * are the platform’s own and span every tenant by design.
+	 *
+	 * A level with no tenant of its own is its aggregate's, exactly as the write path counts it
+	 * (`scopeOfLevel`), so the reads and the writes of this engine agree about whose a level is.
 	 */
 	private scopeToTenant(query: any): void {
-		const tenantId = RequestContext.currentTenantId();
-		if (tenantId) {
-			query.andWhere('level.tenantId = :tenantId', { tenantId });
-		}
+		narrowLevelReadToTenant(query, RequestContext.currentTenantId());
 	}
 
 	/**
@@ -801,9 +804,19 @@ export class StockLevelService {
 		manager: EntityManager,
 		input: TStockMovementInput
 	): Promise<WarehouseProductVariant> {
+		// 🛑 **Whose stock this is, before anything else is read.** A movement written for a request moves
+		// the request's tenant's stock and nobody else's (review R2-01): every document of this package
+		// names a location, a variant and often a level by identifier, and an identifier is not an
+		// authorisation. The location is checked first because it is stamped on the ledger row whatever
+		// level the movement resolves; the level, the aggregate and the product are checked where each is
+		// resolved below. A caller with no request — the expiry sweep, a migration — has no tenant and
+		// spans every tenant, as the engine's scoped reads already treat it.
+		const scope = requestTenantScope();
+		await assertLocationInScope(manager, input.warehouseId, scope);
+
 		if (input.levelId) {
 			const byId = await manager.findOne(WarehouseProductVariant, { where: { id: input.levelId } });
-			if (!byId) {
+			if (!byId || !(await this.isLevelInScope(manager, byId, scope))) {
 				throw inventoryError(
 					InventoryErrorCode.LEVEL_NOT_FOUND,
 					'The stock level named by the movement does not exist.',
@@ -816,11 +829,26 @@ export class StockLevelService {
 
 		const existing = await this.findLevelRow(manager, input.warehouseId, input.variantId);
 		if (existing) {
+			if (!(await this.isLevelInScope(manager, existing, scope))) {
+				// The pair is answered as a level that does not exist, and the refusal states only what the
+				// caller stated: the identifier of another tenant's level is not something to hand back.
+				throw inventoryError(
+					InventoryErrorCode.LEVEL_NOT_FOUND,
+					'The stock level named by the movement does not exist.',
+					{ notFound: true, details: { warehouseId: input.warehouseId, variantId: input.variantId } }
+				);
+			}
 			await this.assertLevelHoldsProduct(manager, existing, input.productId);
 			return existing;
 		}
 
-		const aggregate = await this.resolveAggregate(manager, input.warehouseId, input.productId, input.variantId);
+		const aggregate = await this.resolveAggregate(
+			manager,
+			input.warehouseId,
+			input.productId,
+			input.variantId,
+			scope
+		);
 
 		// A level row is created with the documented defaults, never with a caller-supplied quantity:
 		// the opening quantity arrives as the movement that is being applied right now.
@@ -875,6 +903,33 @@ export class StockLevelService {
 			tenantId: level.tenantId ?? aggregate?.tenantId ?? undefined,
 			organizationId: level.organizationId ?? aggregate?.organizationId ?? undefined
 		};
+	}
+
+	/**
+	 * Whether a level row belongs to the tenant a write runs for.
+	 *
+	 * The level's tenant is read the way the movement is stamped — the level's own, or its aggregate's for
+	 * a row that predates the stamping — so the check and the stamp can never disagree about whose stock
+	 * a row is. A scope with no tenant is a system caller's, and every level is in it. A level with no
+	 * tenant at all is not in a tenant's scope: fail closed, because "nobody's" is not "the caller's".
+	 *
+	 * @param manager The transaction the write is running in.
+	 * @param level The level row the movement resolved.
+	 * @param scope The tenant the write runs for.
+	 * @returns True when the level is the scope's to move.
+	 */
+	private async isLevelInScope(
+		manager: EntityManager,
+		level: WarehouseProductVariant,
+		scope: IInventoryScope
+	): Promise<boolean> {
+		if (!scope.tenantId) {
+			return true;
+		}
+
+		const { tenantId } = await this.scopeOfLevel(manager, level);
+
+		return !!tenantId && String(tenantId) === String(scope.tenantId);
 	}
 
 	/**
@@ -950,19 +1005,38 @@ export class StockLevelService {
 	 * variant before. The caller stating something the variant contradicts is a real conflict between
 	 * two readings of the same stock item, and it is refused rather than resolved in favour of either.
 	 *
+	 * **Every row it resolves has to be the scope's.** The location was checked by the caller; the variant,
+	 * the product and an aggregate that already stands are checked here, each answered as one that does
+	 * not exist when it belongs to another tenant — a first-time receipt that named another tenant's
+	 * variant or product would otherwise create a level of that tenant's stock, stamped with that
+	 * tenant's scope, at a location of the caller's.
+	 *
 	 * @param manager The transaction the movement runs in.
 	 * @param warehouseId The location of the first-time stock.
 	 * @param productId The product the caller stated, when it stated one.
 	 * @param variantId The variant the movement is about, which owns the product when none is stated.
+	 * @param scope The tenant the write runs for; empty for a system caller.
 	 */
 	private async resolveAggregate(
 		manager: EntityManager,
 		warehouseId: ID,
 		productId?: ID,
-		variantId?: ID
+		variantId?: ID,
+		scope: IInventoryScope = {}
 	): Promise<WarehouseProduct> {
 		const statedProductId = productId;
-		const variantProductId = variantId ? await this.productOfVariant(manager, variantId) : undefined;
+		const variant = variantId ? await this.variantOf(manager, variantId) : undefined;
+
+		const variantInScope = !!variant && String(variant.tenantId ?? '') === String(scope.tenantId);
+		if (variantId && scope.tenantId && !variantInScope) {
+			throw inventoryError(
+				InventoryErrorCode.VARIANT_NOT_FOUND,
+				'The product variant named by the movement does not exist.',
+				{ notFound: true, details: { variantId } }
+			);
+		}
+
+		const variantProductId = variant?.productId ?? undefined;
 		const resolvedProductId = statedProductId ?? variantProductId;
 
 		if (!resolvedProductId) {
@@ -980,7 +1054,7 @@ export class StockLevelService {
 		// The product has to exist before anything is decided about it: a movement for a product that is
 		// not there is a missing product, which is a different answer from a disagreement with the variant.
 		const product = await manager.findOne(Product, { where: { id: resolvedProductId } });
-		if (!product) {
+		if (!product || (scope.tenantId && String(product.tenantId ?? '') !== String(scope.tenantId))) {
 			throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The product named by the movement does not exist.', {
 				notFound: true,
 				details: { productId: resolvedProductId }
@@ -999,6 +1073,14 @@ export class StockLevelService {
 		}
 
 		if (existing) {
+			if (scope.tenantId && String(existing.tenantId ?? '') !== String(scope.tenantId)) {
+				throw inventoryError(
+					InventoryErrorCode.LEVEL_NOT_FOUND,
+					'The stock level named by the movement does not exist.',
+					{ notFound: true, details: { warehouseId, productId: resolvedProductId } }
+				);
+			}
+
 			return existing;
 		}
 
@@ -1038,12 +1120,24 @@ export class StockLevelService {
 	 * @returns The product of the variant, or undefined when the variant names none.
 	 */
 	public async productOfVariant(manager: EntityManager, variantId: ID): Promise<ID | undefined> {
-		const variant = await manager.findOne(ProductVariant, {
-			where: { id: variantId },
-			select: { id: true, productId: true }
-		} as never);
+		return (await this.variantOf(manager, variantId))?.productId ?? undefined;
+	}
 
-		return (variant as { productId?: ID } | null)?.productId ?? undefined;
+	/**
+	 * Reads the members of a variant a movement is decided by: its product, and the tenant it belongs to.
+	 *
+	 * @param manager The transaction the read runs in.
+	 * @param variantId The variant to read.
+	 * @returns The variant's product and tenant, or null when no variant holds the id.
+	 */
+	private async variantOf(
+		manager: EntityManager,
+		variantId: ID
+	): Promise<{ productId?: ID; tenantId?: ID } | null> {
+		return (await manager.findOne(ProductVariant, {
+			where: { id: variantId },
+			select: { id: true, productId: true, tenantId: true }
+		} as never)) as { productId?: ID; tenantId?: ID } | null;
 	}
 
 	/**
@@ -1074,7 +1168,9 @@ export class StockLevelService {
 		const timeout = Number.isFinite(timeoutMs) ? Number(timeoutMs) : DEFAULT_LOCK_TIMEOUT_MS;
 
 		if (dialect === DatabaseTypeEnum.postgres) {
-			await manager.query('SET LOCAL lock_timeout = $1', [`${timeout}ms`]);
+			// `set_config(…, true)` is SET LOCAL in a form that takes a parameter: PostgreSQL's SET takes none, and
+			// `SET LOCAL lock_timeout = $1` was answered `syntax error at or near "$1"` on every movement.
+			await manager.query(`SELECT set_config('lock_timeout', $1, true)`, [`${timeout}ms`]);
 			await manager.query('SELECT "id" FROM "warehouse_product_variant" WHERE "id" = $1 FOR UPDATE', [levelId]);
 			return;
 		}

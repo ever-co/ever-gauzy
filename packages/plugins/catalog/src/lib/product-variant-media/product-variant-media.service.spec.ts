@@ -230,6 +230,14 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 	const writeManager: any = {
 		rows,
 		/**
+		 * The ownership check a set write runs on its subject (the variant, product or collection it names)
+		 * before reading anything else. This double models no tenancy, so every subject it is asked about is
+		 * the caller's own; the refusal of another tenant's subject is pinned against a real database in
+		 * `catalog-tenant-scope.db.spec.ts`.
+		 */
+		count: async (entity: unknown, options: any = {}) =>
+			entityToTable.has(entity) ? rows(entity).filter((row: any) => same(row.id, options.where?.id)).length : 1,
+		/**
 		 * The transaction the write path asks for: the callback sees the same datastore, and a throw
 		 * from anywhere inside it leaves the datastore exactly as it was — which is the property every
 		 * "nothing was written" assertion below depends on.
@@ -275,14 +283,36 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 
 			return partial;
 		},
-		update: async (entity: unknown, id: unknown, patch: any) => {
-			const row = rows(entity).find((candidate: any) => same(candidate.id, id));
+		/**
+		 * TypeORM's `update` takes an id or a where object; the service clears a variant's primary by
+		 * predicate (`{ variantId, isPrimary: true, deletedAt: IsNull(), id: Not(target) }`), so both are modelled.
+		 */
+		update: async (entity: unknown, criteria: unknown, patch: any) => {
+			const hit = (candidate: any) =>
+				criteria !== null && typeof criteria === 'object'
+					? Object.entries(criteria).every(([field, expected]) => {
+							if (expected instanceof FindOperator) {
+								if (expected.type === 'not') {
+									return !same(candidate[field], expected.value);
+								}
 
-			if (row) {
+								if (expected.type === 'isNull') {
+									return candidate[field] === null || candidate[field] === undefined;
+								}
+
+								throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
+							}
+
+							return same(candidate[field], expected);
+					  })
+					: same(candidate.id, criteria);
+			const hits = rows(entity).filter(hit);
+
+			for (const row of hits) {
 				Object.assign(row, patch);
 			}
 
-			return { affected: row ? 1 : 0 };
+			return { affected: hits.length };
 		},
 		delete: async (entity: unknown, criteria: unknown) => {
 			const ids = Array.isArray(criteria) ? criteria : [criteria];

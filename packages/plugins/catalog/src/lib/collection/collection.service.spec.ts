@@ -191,6 +191,10 @@ function repository(tables: ITables, tableName: keyof ITables) {
 					return String(row[field] ?? '') !== String(expected.value ?? '');
 				}
 
+				if (expected.type === 'isNull') {
+					return row[field] === null || row[field] === undefined;
+				}
+
 				throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 			}
 
@@ -447,6 +451,24 @@ describe('CollectionService — creation and the slug scope (doc 05 §4.3)', () 
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
 
 		expect((await fixture.service.findBySlug('summer')).id).toBe('theirs');
+	});
+
+	it('reads the merchandising collection by slug, never a buyer’s saved list of the same slug (R5-06)', async () => {
+		// Since `1791000000627` a saved list may share its slug with a merchandising collection, and with
+		// other buyers' lists. The saved list is listed first, so a lookup that did not exclude it would
+		// answer with a buyer's private list.
+		const fixture = collectionFixture([
+			collectionRow('list', { slug: 'summer', customerId: CUSTOMER }),
+			collectionRow('shelf', { slug: 'summer' })
+		]);
+
+		expect((await fixture.service.findBySlug('summer')).id).toBe('shelf');
+	});
+
+	it('does not address a saved list by slug', async () => {
+		const fixture = collectionFixture([collectionRow('list', { slug: 'wishlist', customerId: CUSTOMER })]);
+
+		await expect(fixture.service.findBySlug('wishlist')).rejects.toBeInstanceOf(NotFoundException);
 	});
 
 	it('refuses a slug read with no organization in context and reports an unknown slug as missing', async () => {
