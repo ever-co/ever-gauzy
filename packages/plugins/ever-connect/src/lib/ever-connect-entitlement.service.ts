@@ -618,13 +618,15 @@ export class EverConnectEntitlementService {
 		const claims = payload as { iat?: number; exp?: number; ever?: Record<string, unknown> };
 		const ever = (claims.ever ?? {}) as Record<string, unknown> & { plan?: { code?: unknown } };
 		const nowS = Math.floor(this.now() / 1000);
+		const ladder = entitlementLadder(claims as never, nowS, revoked);
+		const declared = { ...((ever['features'] as Record<string, boolean>) ?? {}) };
 		const licenceIds = Array.isArray(ever['licence_ids'])
 			? (ever['licence_ids'] as unknown[]).filter((id): id is string => typeof id === 'string')
 			: [];
 		return {
 			subject,
 			status: entitlementStatus(claims as never, nowS),
-			ladder: entitlementLadder(claims as never, nowS, revoked),
+			ladder,
 			licence_ids: licenceIds,
 			seq: typeof ever['seq'] === 'number' ? ever['seq'] : null,
 			issued_at: iso(claims.iat),
@@ -633,7 +635,11 @@ export class EverConnectEntitlementService {
 			handle: typeof ever['handle'] === 'string' ? ever['handle'] : null,
 			tier: typeof ever['tier'] === 'string' ? ever['tier'] : null,
 			plan: typeof ever.plan?.code === 'string' ? ever.plan.code : null,
-			features: { ...((ever['features'] as Record<string, boolean>) ?? {}) },
+			// What may be used now, as `features()` answers it: every feature off while paused. The document still
+			// lists them, and this summary used to repeat them as on beside a `paused` ladder - the refresh answer the
+			// egress audit's entitlement ladder checks ("a feature is still on while paused").
+			features:
+				ladder === 'paused' ? Object.fromEntries(Object.keys(declared).map((key) => [key, false])) : declared,
 			limits: { ...((ever['limits'] as Record<string, number>) ?? {}) },
 			meters: { ...((ever['meters'] as Record<string, { used: number; period: string | null }>) ?? {}) }
 		};
