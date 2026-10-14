@@ -6,7 +6,7 @@ import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteService } from './favorite.service';
 import { Store } from '../store/store.service';
 import { NavMenuSectionItem } from '../nav-builder/nav-builder-types';
-import { ENTITY_ICONS, ENTITY_LINKS, IFavoriteRecord } from './entities-mapping';
+import { ENTITY_LINKS, ENTITY_TITLES, favoriteIcon, IFavoriteRecord } from './entities-mapping';
 
 @UntilDestroy()
 @Injectable({
@@ -117,12 +117,12 @@ export class FavoriteStoreService {
 								return null;
 							}
 
-							const rawTitle = this._getFavoriteTitle(item) || 'Untitled';
+							const rawTitle = this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled';
 							const title = this._truncateTitle(rawTitle);
 							return {
 								id: `favorite-${entityType}-${item.id}`,
 								title,
-								icon: this._getFavoriteIcon(entityType as BaseEntityEnum),
+								icon: this._getFavoriteIcon(entityType as BaseEntityEnum, item),
 								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
 								data: {
 									translationKey: title
@@ -189,9 +189,15 @@ export class FavoriteStoreService {
 
 	/**
 	 * Resolves a display name for a favorite's entity. Employees and candidates have no name of their own,
-	 * it comes from the linked user and is shortened to "First L." (e.g. "Roster R.").
+	 * it comes from the linked user and is shortened to "First L." (e.g. "Roster R."). Records known by
+	 * other fields (an invoice's number and client, an expense's vendor and amount) are named by their
+	 * type's `ENTITY_TITLES` entry.
 	 */
-	private _getFavoriteTitle(item: unknown): string | undefined {
+	private _getFavoriteTitle(item: unknown, entityType?: BaseEntityEnum): string | undefined {
+		const byType = entityType && ENTITY_TITLES[entityType]?.(item as IFavoriteRecord);
+		if (byType) {
+			return byType;
+		}
 		const entity = item as {
 			name?: string;
 			title?: string;
@@ -217,8 +223,8 @@ export class FavoriteStoreService {
 		return title.length > maxLength ? `${title.slice(0, maxLength - 3)}...` : title;
 	}
 
-	private _getFavoriteIcon(entityType: BaseEntityEnum): string {
-		return ENTITY_ICONS[entityType] || 'far fa-star';
+	private _getFavoriteIcon(entityType: BaseEntityEnum, record?: unknown): string {
+		return favoriteIcon(entityType, record as IFavoriteRecord) || 'far fa-star';
 	}
 
 	/**

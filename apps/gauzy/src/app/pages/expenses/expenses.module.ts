@@ -22,7 +22,8 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	UserFormsModule
+	UserFormsModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { ExpensesRoutingModule } from './expenses-routing.module';
 import { ExpensesComponent } from './expenses.component';
@@ -52,6 +53,7 @@ const THIRD_PARTY_MODULES = [NgxPermissionsModule.forChild(), TranslatePipe];
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		...STANDALONE_MODULES,
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,

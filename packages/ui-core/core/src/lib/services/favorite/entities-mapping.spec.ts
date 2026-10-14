@@ -1,5 +1,5 @@
 import { BaseEntityEnum, DocumentKindEnum } from '@gauzy/contracts';
-import { ENTITY_ICONS, ENTITY_LINKS } from './entities-mapping';
+import { ENTITY_ICONS, ENTITY_LINKS, ENTITY_TITLES, favoriteIcon } from './entities-mapping';
 
 const ID = 'aaaaaaaa-1111-4111-8111-111111111111';
 
@@ -74,5 +74,66 @@ describe('favorite entity links', () => {
 			expect(ENTITY_LINKS[entity](ID)).toMatch(/^\/pages\//);
 			expect(ENTITY_ICONS[entity]).toEqual(expect.any(String));
 		}
+	});
+});
+
+/**
+ * The record types made favoritable for handover §4.P ("Estimates, Invoices (incl. received), Income/Expenses,
+ * Payments, Proposals, … Equipment, Inventory items"): each has a sidebar link, icon and a readable name.
+ */
+describe('favorites of the newly favoritable record types', () => {
+	it.each([
+		[BaseEntityEnum.Product, `/pages/organization/inventory/view/${ID}`],
+		[BaseEntityEnum.Proposal, `/pages/sales/proposals/details/${ID}`],
+		[BaseEntityEnum.Expense, `/pages/accounting/expenses/view/${ID}`],
+		[BaseEntityEnum.Income, `/pages/accounting/income/view/${ID}`],
+		[BaseEntityEnum.Payment, `/pages/accounting/payments/view/${ID}`],
+		[BaseEntityEnum.Equipment, `/pages/organization/equipment/view/${ID}`],
+		[BaseEntityEnum.OrganizationVendor, `/pages/organization/vendors/view/${ID}`],
+		[BaseEntityEnum.OrganizationTeam, `/pages/organization/teams/view/${ID}`]
+	])('%s opens its view page', (entity, link) => {
+		expect(ENTITY_LINKS[entity](ID)).toBe(link);
+	});
+
+	it('shows an estimate with an icon of its own, an invoice with the invoice icon', () => {
+		expect(favoriteIcon(BaseEntityEnum.Invoice, { id: ID, isEstimate: true })).not.toBe(
+			ENTITY_ICONS[BaseEntityEnum.Invoice]
+		);
+		expect(favoriteIcon(BaseEntityEnum.Invoice, { id: ID, isEstimate: false })).toBe(
+			ENTITY_ICONS[BaseEntityEnum.Invoice]
+		);
+		expect(favoriteIcon(BaseEntityEnum.Task)).toBe(ENTITY_ICONS[BaseEntityEnum.Task]);
+	});
+
+	it.each([
+		[BaseEntityEnum.Invoice, { invoiceNumber: 12, toContact: { name: 'Acme' } }, '#12 · Acme'],
+		[BaseEntityEnum.Invoice, { invoiceNumber: 12 }, '#12'],
+		[BaseEntityEnum.Expense, { vendor: { name: 'Amazon' }, amount: 120, currency: 'USD' }, 'Amazon · 120 USD'],
+		[BaseEntityEnum.Expense, { category: { name: 'Travel' }, amount: 5, currency: 'EUR' }, 'Travel · 5 EUR'],
+		[BaseEntityEnum.Income, { client: { name: 'Acme' }, amount: 900, currency: 'USD' }, 'Acme · 900 USD'],
+		[BaseEntityEnum.Payment, { amount: 300, currency: 'USD', invoice: { invoiceNumber: 7 } }, '300 USD · #7'],
+		[
+			BaseEntityEnum.Payment,
+			{ amount: 300, currency: 'USD', organizationContact: { name: 'Acme' } },
+			'300 USD · Acme'
+		],
+		[BaseEntityEnum.Proposal, { jobPostContent: '<p>Build an <b>Angular</b> app</p>' }, 'Build an Angular app'],
+		[BaseEntityEnum.Proposal, { jobPostUrl: 'https://jobs.example/1' }, 'https://jobs.example/1'],
+		[BaseEntityEnum.Product, { translations: [{ name: '' }, { name: 'Laptop' }] }, 'Laptop']
+	])('names a %s favorite after its own fields (%j)', (entity, record, title) => {
+		expect(ENTITY_TITLES[entity]({ id: ID, ...record })).toBe(title);
+	});
+
+	it('leaves the name to the generic rules when the fields are not there', () => {
+		expect(ENTITY_TITLES[BaseEntityEnum.Invoice]({ id: ID })).toBeUndefined();
+		expect(ENTITY_TITLES[BaseEntityEnum.Product]({ id: ID })).toBeUndefined();
+	});
+
+	it('never renders a proposal job post as markup: script content stays text', () => {
+		const title = ENTITY_TITLES[BaseEntityEnum.Proposal]({
+			id: ID,
+			jobPostContent: '<img src=x onerror="alert(1)"><script>alert(2)</script>Job'
+		});
+		expect(title).not.toContain('<');
 	});
 });

@@ -8,12 +8,21 @@ import {
 	OrganizationContactService,
 	PaymentService
 } from '@gauzy/ui-core/core';
-import { SmartDataViewLayoutModule, CardGridModule, SharedModule, TableFiltersModule } from '@gauzy/ui-core/shared';
+import {
+	SmartDataViewLayoutModule,
+	CardGridModule,
+	SharedModule,
+	TableFiltersModule,
+	FavoriteToggleModule,
+	RecordViewModule
+} from '@gauzy/ui-core/shared';
 import { PaymentsComponent } from './payments.component';
 import { PaymentsRoutingModule } from './payments-routing.module';
 
 @NgModule({
 	imports: [
+		RecordViewModule,
+		FavoriteToggleModule,
 		TranslatePipe,
 		NbCardModule,
 		PaymentsRoutingModule,

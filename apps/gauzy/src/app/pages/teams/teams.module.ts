@@ -23,7 +23,8 @@ import {
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
@@ -31,6 +32,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 
 @NgModule({
 	imports: [
+		RecordViewModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,

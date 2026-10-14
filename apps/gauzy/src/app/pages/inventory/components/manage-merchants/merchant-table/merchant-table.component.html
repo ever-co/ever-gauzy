@@ -125,6 +125,7 @@
      so the record renderer is built fresh for each merchant that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedMerchant"
+  [fullViewLink]="viewedMerchant ? '/pages/organization/inventory/merchants/view/' + viewedMerchant.id : null"
   heading="INVENTORY_PAGE.MERCHANTS"
   [subtitle]="$safeNavigationMigration(viewedMerchant?.name)"
   (closed)="closeView()"

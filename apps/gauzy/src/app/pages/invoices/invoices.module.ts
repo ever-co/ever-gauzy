@@ -59,7 +59,8 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule,
-	InvoiceViewInnerModule
+	InvoiceViewInnerModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
@@ -94,6 +95,7 @@ import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		InvoicesRoutingModule,

@@ -10,6 +10,8 @@ import { TableComponentsModule } from '../table-components/table-components.modu
 import { RecordViewComponent } from './record-view.component';
 import { RecordViewDrawerComponent } from './record-view-drawer.component';
 import { RecordViewPageComponent } from './record-view-page.component';
+import { RecordViewRoutePageComponent } from './record-view-route-page.component';
+import { FavoriteToggleModule } from '../favorite-toggle/favorite-toggle.module';
 
 /**
  * The shared read-only "View" surface: a descriptor-driven record renderer, the
@@ -33,9 +35,15 @@ import { RecordViewPageComponent } from './record-view-page.component';
 		StatusBadgeModule,
 		TableComponentsModule,
 		TranslatePipe,
+		FavoriteToggleModule,
 		NgxPermissionsModule.forChild()
 	],
-	declarations: [RecordViewComponent, RecordViewDrawerComponent, RecordViewPageComponent],
-	exports: [RecordViewComponent, RecordViewDrawerComponent, RecordViewPageComponent]
+	declarations: [
+		RecordViewComponent,
+		RecordViewDrawerComponent,
+		RecordViewPageComponent,
+		RecordViewRoutePageComponent
+	],
+	exports: [RecordViewComponent, RecordViewDrawerComponent, RecordViewPageComponent, RecordViewRoutePageComponent]
 })
 export class RecordViewModule {}

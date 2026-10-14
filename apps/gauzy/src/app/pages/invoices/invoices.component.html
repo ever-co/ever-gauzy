@@ -504,6 +504,17 @@
 
 <ng-template #actionButtons>
 	<div class="btn-group actions">
+		<!-- Favorite the selected invoice / estimate: its sidebar entry opens its view page. -->
+		@if (selectedInvoice?.id) {
+			<ngx-favorite-toggle
+				[entityType]="'Invoice'"
+				[entityId]="selectedInvoice.id"
+				[entityName]="'#' + selectedInvoice.invoiceNumber"
+				size="small"
+				status="basic"
+				spacing="list"
+			></ngx-favorite-toggle>
+		}
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
 			@if (isEstimate) {
 				<button

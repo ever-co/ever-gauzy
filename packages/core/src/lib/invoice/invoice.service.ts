@@ -3,7 +3,15 @@ import { Invoice } from './invoice.entity';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
-import { DecimalString, ID, IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	DecimalString,
+	ID,
+	IInvoice,
+	IOrganization,
+	InvoiceStats,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import { addDecimalStrings, normalizeDecimalString } from '../money/decimal';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { MultiORMEnum } from './../core/utils';
@@ -17,6 +25,7 @@ import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } fro
 import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { FavoriteService } from '../core/decorators';
 
 /**
  * What sending a document by e-mail did.
@@ -50,6 +59,7 @@ export interface IInvoiceStatistics {
 	byStatus: IInvoiceStatusTotal[];
 }
 
+@FavoriteService(BaseEntityEnum.Invoice)
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(

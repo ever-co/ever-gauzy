@@ -19,7 +19,8 @@ import {
 	FavoriteToggleModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
@@ -47,6 +48,7 @@ const THIRD_PARTY_MODULES = [TranslatePipe, NgxPermissionsModule.forChild()];
 
 @NgModule({
 	imports: [
+		RecordViewModule,
 		...STANDALONE_MODULES,
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
