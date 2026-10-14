@@ -217,9 +217,10 @@ export class CreateAddressRoleTable1791000000165 implements MigrationInterface {
 
 		await this.backfill(
 			queryRunner,
-			`SELECT UUID(), "address"."tenantId", "address"."organizationId", "address"."id", 'SHIPPING', 1`,
-			`SELECT UUID(), "address"."tenantId", "address"."organizationId", "address"."id", 'BILLING', 1`,
-			true
+			"SELECT UUID(), `address`.`tenantId`, `address`.`organizationId`, `address`.`id`, 'SHIPPING', 1",
+			"SELECT UUID(), `address`.`tenantId`, `address`.`organizationId`, `address`.`id`, 'BILLING', 1",
+			true,
+			'`'
 		);
 	}
 
@@ -246,12 +247,15 @@ export class CreateAddressRoleTable1791000000165 implements MigrationInterface {
 	 * @param shippingSelect The dialect's `SELECT` for the `SHIPPING` projection.
 	 * @param billingSelect The dialect's `SELECT` for the `BILLING` projection.
 	 * @param numericBoolean Whether the dialect states `true` as `1`; SQLite and MySQL do.
+	 * @param quote The dialect's identifier quote: MySQL reads a double-quoted name as a string literal, so its
+	 * backfill failed with a syntax error and stopped every MySQL installation at this migration.
 	 */
 	private async backfill(
 		queryRunner: QueryRunner,
 		shippingSelect: string,
 		billingSelect: string,
-		numericBoolean = false
+		numericBoolean = false,
+		quote: '"' | '`' = '"'
 	): Promise<void> {
 		if (!(await queryRunner.hasTable('address_role'))) {
 			return;
@@ -270,16 +274,17 @@ export class CreateAddressRoleTable1791000000165 implements MigrationInterface {
 		}
 
 		const truth = numericBoolean ? '1' : 'true';
+		const q = (name: string) => `${quote}${name}${quote}`;
 
 		for (const [flag, select, role] of [
 			['isDefaultShipping', shippingSelect, 'SHIPPING'],
 			['isDefaultBilling', billingSelect, 'BILLING']
 		] as const) {
 			await queryRunner.query(
-				`INSERT INTO "address_role" ("id", "tenantId", "organizationId", "addressId", "role", "isDefault") ` +
-					`${select} FROM "address" ` +
-					`WHERE "address"."${flag}" = ${truth} AND "address"."deletedAt" IS NULL ` +
-					`AND NOT EXISTS (SELECT 1 FROM "address_role" "ar" WHERE "ar"."addressId" = "address"."id" AND "ar"."role" = '${role}')`
+				`INSERT INTO ${q('address_role')} (${['id', 'tenantId', 'organizationId', 'addressId', 'role', 'isDefault'].map(q).join(', ')}) ` +
+					`${select} FROM ${q('address')} ` +
+					`WHERE ${q('address')}.${q(flag)} = ${truth} AND ${q('address')}.${q('deletedAt')} IS NULL ` +
+					`AND NOT EXISTS (SELECT 1 FROM ${q('address_role')} ${q('ar')} WHERE ${q('ar')}.${q('addressId')} = ${q('address')}.${q('id')} AND ${q('ar')}.${q('role')} = '${role}')`
 			);
 		}
 	}
