@@ -51,13 +51,19 @@ describe('UQ_price_tier once the marketplace extends it with the seller (R5-13, 
 	let sequence = 0;
 
 	/** Writes one price row; the columns not named take their defaults. */
-	const price = async (row: { sellerId?: string; priceListId?: string; deletedAt?: string; amount?: number }) => {
+	const price = async (row: {
+		sellerId?: string;
+		priceListId?: string;
+		deletedAt?: string;
+		amount?: number;
+		variantId?: string | null;
+	}) => {
 		sequence += 1;
 		await queryRunner.query(
 			`INSERT INTO "product_price" ("id", "variantId", "currency", "amount", "sellerId", "priceListId", "deletedAt") VALUES (?, ?, 'USD', ?, ?, ?, ?)`,
 			[
 				`00000000-0000-4000-9000-${String(sequence).padStart(12, '0')}`,
-				VARIANT,
+				row.variantId === undefined ? VARIANT : row.variantId,
 				row.amount ?? 10,
 				row.sellerId ?? null,
 				row.priceListId ?? null,
@@ -142,6 +148,26 @@ describe('UQ_price_tier once the marketplace extends it with the seller (R5-13, 
 
 		expect(Number((await queryRunner.query(`SELECT COUNT(*) AS "n" FROM "product_price"`))[0].n)).toBe(2);
 		expect(await tierIndex()).toContain('"sellerId", "priceListId", "minQuantity", "maxQuantity"');
+	});
+
+	it('does not count rows with no variant as one tier: the index never holds them to each other', async () => {
+		// `AddPriceComputationColumns1791000000135` lets a price name no variant, and the index keys `variantId` raw,
+		// so two such rows (one per organization, say) are both valid. The collision check must not group their NULLs
+		// together and stop the run over data the index itself accepts (Greptile, #10596).
+		const fold = CHAIN[CHAIN.length - 1];
+		const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		try {
+			await fold.down(queryRunner);
+			await price({ variantId: null });
+			await price({ variantId: null, amount: 12 });
+
+			await fold.up(queryRunner);
+		} finally {
+			log.mockRestore();
+		}
+
+		expect(await tierIndex()).toContain('COALESCE("sellerId"');
+		expect(Number((await queryRunner.query(`SELECT COUNT(*) AS "n" FROM "product_price"`))[0].n)).toBe(2);
 	});
 
 	it('reverting the marketplace puts back the tuple the pricing set declared, folds included', async () => {

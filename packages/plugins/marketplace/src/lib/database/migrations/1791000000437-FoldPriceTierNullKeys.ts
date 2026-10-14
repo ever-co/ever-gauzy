@@ -31,7 +31,10 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *
  * Before the index is replaced, the live rows are checked for tiers the folded index would refuse. A duplicate that
  * already exists is a decision about which price is the real one, and that is not a migration's to make: the run
- * stops and names how many tiers collide, so they can be resolved and the migration run again.
+ * stops and names how many tiers collide, so they can be resolved and the migration run again. Rows that name no
+ * variant are left out of that check: `variantId` stays raw in the index (a price may name no variant since
+ * `AddPriceComputationColumns1791000000135`), so the index never holds two of them to each other, and neither does
+ * the check.
  *
  * ## Down
  *
@@ -147,7 +150,7 @@ export class FoldPriceTierNullKeys1791000000437 implements MigrationInterface {
 
 		await this.assertNoCollidingTiers(
 			queryRunner,
-			`SELECT COUNT(*) AS \`n\` FROM (SELECT 1 FROM \`product_price\` WHERE \`deletedAt\` IS NULL GROUP BY \`variantId\`, \`currency\`, \`sellerKey\`, \`priceListKey\`, \`minQuantityKey\`, \`maxQuantityKey\` HAVING COUNT(*) > 1) \`colliding\``
+			`SELECT COUNT(*) AS \`n\` FROM (SELECT 1 FROM \`product_price\` WHERE \`deletedAt\` IS NULL AND \`variantId\` IS NOT NULL GROUP BY \`variantId\`, \`currency\`, \`sellerKey\`, \`priceListKey\`, \`minQuantityKey\`, \`maxQuantityKey\` HAVING COUNT(*) > 1) \`colliding\``
 		);
 
 		await this.dropTierIndex(queryRunner, 'DROP INDEX `UQ_price_tier` ON `product_price`');
@@ -191,7 +194,7 @@ export class FoldPriceTierNullKeys1791000000437 implements MigrationInterface {
 
 		await this.assertNoCollidingTiers(
 			queryRunner,
-			`SELECT COUNT(*) AS "n" FROM (SELECT 1 FROM "product_price" WHERE "deletedAt" IS NULL GROUP BY ${folded} HAVING COUNT(*) > 1) "colliding"`
+			`SELECT COUNT(*) AS "n" FROM (SELECT 1 FROM "product_price" WHERE "deletedAt" IS NULL AND "variantId" IS NOT NULL GROUP BY ${folded} HAVING COUNT(*) > 1) "colliding"`
 		);
 
 		await this.dropTierIndex(queryRunner, 'DROP INDEX IF EXISTS "UQ_price_tier"');
