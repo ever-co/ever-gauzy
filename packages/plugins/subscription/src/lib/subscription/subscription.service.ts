@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Inject, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { DeepPartial } from 'typeorm';
 import {
@@ -171,6 +171,8 @@ const UNUSABLE_INSTRUMENT_CODES: ReadonlyArray<string> = [
  */
 @Injectable()
 export class SubscriptionService extends TenantAwareCrudService<Subscription> {
+	private readonly logger = new Logger(SubscriptionService.name);
+
 	constructor(
 		readonly typeOrmSubscriptionRepository: TypeOrmSubscriptionRepository,
 		readonly mikroOrmSubscriptionRepository: MikroOrmSubscriptionRepository,
@@ -1392,11 +1394,25 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 
 			if (result.paid) {
-				await this.billingService.markPaid(billing.id, {
-					paidAt: result.paidAt ?? new Date(),
-					orderId: result.orderId,
-					attemptCount: billing.attemptCount ?? 0
-				});
+				try {
+					await this.billingService.markPaid(billing.id, {
+						paidAt: result.paidAt ?? new Date(),
+						orderId: result.orderId,
+						attemptCount: billing.attemptCount ?? 0
+					});
+				} catch (error) {
+					// The money was taken; an operator settled the cycle another way (waived or refunded it) while the
+					// charge was in flight. That is not a failed charge, and reporting it as one would schedule a retry -
+					// a second charge. The cycle keeps the operator's decision and the conflict is logged for follow-up.
+					if ((error as { response?: { code?: string } })?.response?.code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
+						throw error;
+					}
+
+					this.logger.warn(
+						`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
+							`(order ${result.orderId}) succeeded; the cycle keeps the operator's status.`
+					);
+				}
 			} else {
 				await this.billingService.markInvoiced(billing.id, result.orderId, net.toStorageString());
 			}

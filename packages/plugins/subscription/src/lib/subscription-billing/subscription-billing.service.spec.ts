@@ -740,7 +740,16 @@ describe('SubscriptionBillingService â€” a correction moves an uncharged cycleâ€
 		});
 	});
 
-	it.each([SubscriptionBillingStatus.REFUNDED, SubscriptionBillingStatus.WAIVED, SubscriptionBillingStatus.PAID])(
+	it('answers a cycle that is already paid as settled, without writing it again', async () => {
+		const paidAt = new Date('2026-03-02T00:00:00.000Z');
+		const fixture = billingFixture([billingRow('billing-1', { status: SubscriptionBillingStatus.PAID, paidAt, orderId: 'order-1' })]);
+
+		const paid = await fixture.service.markPaid('billing-1', { paidAt: new Date(), orderId: 'order-2' });
+
+		expect(paid).toMatchObject({ status: SubscriptionBillingStatus.PAID, paidAt, orderId: 'order-1' });
+	});
+
+	it.each([SubscriptionBillingStatus.REFUNDED, SubscriptionBillingStatus.WAIVED])(
 		'refuses to pay a %s cycle',
 		async (status) => {
 			const fixture = billingFixture([billingRow('billing-1', { status, paidAt: null })]);

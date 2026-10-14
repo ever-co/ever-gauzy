@@ -1789,6 +1789,33 @@ describe('SubscriptionService — a failure is a state, not an exception (doc 11
 		expect(fixture.events.map((event) => event.name)).toEqual(['subscription.payment-failed']);
 	});
 
+	it.each([SubscriptionBillingStatus.PAID, SubscriptionBillingStatus.WAIVED])(
+		'does not turn a charge that succeeded into a failed attempt when an operator settled the cycle (%s) meanwhile (Greptile)',
+		async (settledAs) => {
+			// The charge is in flight when an operator records the cycle another way; the run's own `markPaid` then
+			// meets a cycle that is no longer payable. Reporting that as a failed charge would schedule a retry - a
+			// second charge of money already taken.
+			let fixture: ReturnType<typeof subscriptionFixture>;
+			fixture = subscriptionFixture({
+				orders: () => {
+					Object.assign(fixture.cycle(APRIL)!, {
+						status: settledAs,
+						paidAt: settledAs === SubscriptionBillingStatus.PAID ? new Date(APRIL) : null
+					});
+
+					return { orderId: 'order-1', paid: true };
+				}
+			});
+
+			const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			expect(outcome.status).not.toBe(SubscriptionBillingStatus.FAILED);
+			expect(fixture.cycle(APRIL)).toMatchObject({ status: settledAs });
+			expect(fixture.cycle(APRIL)?.nextRetryAt ?? null).toBeNull();
+			expect(fixture.events.map((event) => event.name)).not.toContain('subscription.payment-failed');
+		}
+	);
+
 	it('does not attempt the next charge before the dunning schedule says so', async () => {
 		// The retry instant lives on the cycle's own row, and the subscription is still selected by the due
 		// scan — so the pass has to respect the row rather than the calendar. The lock the failed attempt

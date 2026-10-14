@@ -185,11 +185,24 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 
+		// A cycle that is already paid is settled: recording its payment again is a no-op, not a refusal. The billing
+		// run reaches here when an operator recorded the payment while the run's own charge was in flight, and a
+		// refusal there would be read as a failed charge and turned into a retry - a second charge (Greptile).
+		if (billing.status === SubscriptionBillingStatus.PAID) {
+			return billing;
+		}
+
 		if (!PAYABLE_FROM.includes(billing.status as SubscriptionBillingStatus)) {
 			throw invalidTransition(billing, 'paid', PAYABLE_FROM);
 		}
 
-		await this.writeIf(id, { status: In([...PAYABLE_FROM]) }, async () => invalidTransition(await this.findOneScoped(id), 'paid', PAYABLE_FROM), {
+		const refusal = async () => {
+			const current = await this.findOneScoped(id);
+
+			return current.status === SubscriptionBillingStatus.PAID ? null : invalidTransition(current, 'paid', PAYABLE_FROM);
+		};
+
+		await this.writeIf(id, { status: In([...PAYABLE_FROM]) }, refusal, {
 			status: SubscriptionBillingStatus.PAID,
 			paidAt: options.paidAt ?? new Date(),
 			orderId: options.orderId ?? billing.orderId,
@@ -431,14 +444,15 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 *
 	 * @param id The cycle.
 	 * @param condition The state the write was decided on.
-	 * @param refusal Builds the exception for a cycle that no longer matches.
+	 * @param refusal Builds the exception for a cycle that no longer matches, or answers null when the state the
+	 * cycle reached instead already is the outcome the caller wanted (a payment that landed first).
 	 * @param patch The columns to write.
 	 * @returns The update result.
 	 */
 	private async writeIf(
 		id: ID,
 		condition: FindOptionsWhere<SubscriptionBilling>,
-		refusal: () => Promise<Error>,
+		refusal: () => Promise<Error | null>,
 		patch: Record<string, unknown>
 	): Promise<{ affected?: number }> {
 		const result = await this.typeOrmSubscriptionBillingRepository.update(
@@ -447,7 +461,11 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 		);
 
 		if (!result?.affected) {
-			throw await refusal();
+			const refused = await refusal();
+
+			if (refused) {
+				throw refused;
+			}
 		}
 
 		return result;
