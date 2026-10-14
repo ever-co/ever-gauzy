@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { FindOptionsWhere, IsNull } from 'typeorm';
 import { ID, IWebhookAttemptResult, IWebhookDelivery, JsonData, WebhookDeliveryStatus, WebhookHeader } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
@@ -199,8 +200,9 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	 * @throws NotFoundException when the delivery or its subscription no longer exists.
 	 */
 	async deliver(deliveryId: ID): Promise<IWebhookDeliveryAttempt> {
-		const delivery = await this.getDelivery(deliveryId);
-		const subscription = await this.subscriptions.getSubscription(delivery.subscriptionId);
+		// The runtime's own readers: an attempt is made from a queue job, which has no caller to scope by.
+		const delivery = await this.getDeliveryForAttempt(deliveryId);
+		const subscription = await this.subscriptions.getSubscriptionForDelivery(delivery.subscriptionId);
 		const attempt = (delivery.attemptCount ?? 0) + 1;
 
 		// A disabled subscription is not called: the operator switched it off, and the delivery is
@@ -334,20 +336,77 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	}
 
 	/**
-	 * Reads a delivery.
+	 * Reads a delivery of the caller's own scope.
+	 *
+	 * 🛑 **The reader every request-facing operation uses** — the node read and the redelivery, over
+	 * REST and GraphQL alike. It used to read by id alone, so a tenant-A user holding `WEBHOOKS_VIEW`
+	 * read tenant B's event names, B's partner's response status and body, and B's subscription id; and
+	 * with `WEBHOOK_DELIVERIES_RETRY` re-fired B's stored payloads at B's partner. The scope is the
+	 * list's own ({@link scopeOfTheCaller}), and a row outside it answers what a missing row answers.
+	 *
+	 * The delivery runtime reads through {@link getDeliveryForAttempt} instead.
 	 *
 	 * @param id The delivery id.
 	 * @returns The delivery.
-	 * @throws NotFoundException when it does not exist.
+	 * @throws NotFoundException when no delivery of that id is in the caller's scope.
 	 */
 	async getDelivery(id: ID): Promise<WebhookDelivery> {
-		const delivery = await this.typeOrmWebhookDeliveryRepository.findOne({ where: { id } as any });
+		const scope = this.scopeOfTheCaller();
+		const delivery = scope
+			? await this.typeOrmWebhookDeliveryRepository.findOne({
+					where: { ...scope, id } as FindOptionsWhere<WebhookDelivery>
+			  })
+			: null;
 
 		if (!delivery) {
 			throw new NotFoundException('The webhook delivery does not exist.');
 		}
 
 		return delivery;
+	}
+
+	/**
+	 * Reads a delivery for the delivery runtime, whatever tenant it belongs to.
+	 *
+	 * 🛑 **Runtime only — never reachable from a request.** `deliver()` is called by the outbox dispatch
+	 * consumer and the retry worker, both queue jobs with no caller; the id they hold came from the
+	 * store, not from a request. A route or a resolver must use {@link getDelivery}.
+	 *
+	 * @param id The delivery id.
+	 * @returns The delivery.
+	 * @throws NotFoundException when it does not exist.
+	 */
+	private async getDeliveryForAttempt(id: ID): Promise<WebhookDelivery> {
+		const delivery = await this.typeOrmWebhookDeliveryRepository.findOne({
+			where: { id } as FindOptionsWhere<WebhookDelivery>
+		});
+
+		if (!delivery) {
+			throw new NotFoundException('The webhook delivery does not exist.');
+		}
+
+		return delivery;
+	}
+
+	/**
+	 * The criteria that put a delivery inside the caller's scope, or undefined when no credential
+	 * resolved a tenant.
+	 *
+	 * The same two columns the list narrows on: the request's tenant, and its organization as stated
+	 * or, when none is selected, the tenant-wide rows. A caller with no tenant is given nothing.
+	 *
+	 * @returns The criteria, or undefined.
+	 */
+	private scopeOfTheCaller(): FindOptionsWhere<WebhookDelivery> | undefined {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			return undefined;
+		}
+
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return { tenantId, organizationId: organizationId ?? IsNull() } as FindOptionsWhere<WebhookDelivery>;
 	}
 
 	/**
@@ -407,10 +466,13 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	 * @returns The deliveries, with the stored body withheld.
 	 */
 	async listDeliveries(narrowing: IWebhookDeliveryNarrowing = {}): Promise<IRedactedWebhookDelivery[]> {
-		const where: Record<string, unknown> = {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope) {
+			return [];
+		}
+
+		const where: Record<string, unknown> = { ...scope };
 
 		for (const [column, value] of Object.entries(narrowing)) {
 			// A member that was not stated is left out rather than written as `undefined`: a repository

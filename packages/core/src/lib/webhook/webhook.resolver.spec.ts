@@ -181,7 +181,7 @@ function surfaces() {
 		getRedactedSubscription: jest.fn().mockResolvedValue(SUBSCRIPTIONS[0]),
 		createSubscription: jest.fn().mockResolvedValue(CREDENTIAL),
 		updateSubscription: jest.fn().mockResolvedValue(SUBSCRIPTIONS[0]),
-		delete: jest.fn().mockResolvedValue({ affected: 1 }),
+		deleteSubscription: jest.fn().mockResolvedValue({ affected: 1 }),
 		redact: jest.fn((row: unknown) => row),
 		rotateSecret: jest.fn().mockResolvedValue({
 			...CREDENTIAL,
@@ -1046,7 +1046,7 @@ describe('WebhookResolver — one resource, two protocols, the same operations',
 		// The delivered store answers its delete result, which is not a row: the field answers the one
 		// fact the removal establishes.
 		expect(await resolver.deleteWebhookSubscription(SUBSCRIPTION)).toBe(true);
-		expect(webhookSubscriptionService.delete).toHaveBeenCalledWith(SUBSCRIPTION);
+		expect(webhookSubscriptionService.deleteSubscription).toHaveBeenCalledWith(SUBSCRIPTION);
 	});
 
 	it('rotates the signing secret through the same service method the REST route calls', async () => {
@@ -1159,7 +1159,7 @@ describe('WebhookResolver — the streamed facts are produced by the services bo
 	it('streams a refused attempt that the delivery service recorded', async () => {
 		const { pubSub, publisher } = streaming();
 		const subscriptions = {
-			getSubscription: jest.fn().mockResolvedValue({
+			getSubscriptionForDelivery: jest.fn().mockResolvedValue({
 				id: SUBSCRIPTION,
 				url: 'https://receiver.example.test/hooks/orders',
 				isActive: true,

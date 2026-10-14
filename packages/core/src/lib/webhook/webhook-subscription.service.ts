@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
-import { IsNull } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, IsNull } from 'typeorm';
 import { ID, IWebhookSubscription, JsonData } from '@gauzy/contracts';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { CrudService } from '../core/crud/crud.service';
@@ -305,7 +305,8 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * @throws NotFoundException when the subscription does not exist.
 	 */
 	async recordAttempt(id: ID, outcome: { delivered: boolean; status?: number }): Promise<WebhookSubscription> {
-		const subscription = await this.getSubscription(id);
+		// The delivery runtime's own reader: this runs in the queue worker, which has no caller.
+		const subscription = await this.getSubscriptionForDelivery(id);
 		const at = new Date();
 		let autoDisableReason: string | undefined;
 
@@ -338,20 +339,104 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	}
 
 	/**
-	 * Reads a subscription.
+	 * Reads a subscription of the caller's own scope.
+	 *
+	 * 🛑 **The reader every request-facing operation uses** — read, edit, removal, rotation and both
+	 * switches, over REST and GraphQL alike. It used to read by id alone, and this service extends the
+	 * plain `CrudService`, so nothing else narrowed the read: `TenantPermissionGuard` only compares the
+	 * `Tenant-Id` header with the caller's own tenant. A tenant-A admin holding `WEBHOOKS_EDIT` could
+	 * therefore re-point tenant B's endpoint at a URL of their choosing — and receive every later event
+	 * of B — rotate B's secret and read the new one, read B's custom headers, or remove B's subscription
+	 * and its delivery log, knowing nothing but B's UUID.
+	 *
+	 * The scope is the list's own ({@link scopeOfTheCaller}): a row a caller cannot list is a row a
+	 * caller cannot address. A row outside it answers exactly what a missing row answers, so a caller is
+	 * never told that another tenant holds the identifier.
+	 *
+	 * The delivery runtime, which runs in a queue worker with no caller, reads through
+	 * {@link getSubscriptionForDelivery} instead.
 	 *
 	 * @param id The subscription id.
 	 * @returns The subscription.
-	 * @throws NotFoundException when the subscription does not exist.
+	 * @throws NotFoundException when no subscription of that id is in the caller's scope.
 	 */
 	async getSubscription(id: ID): Promise<WebhookSubscription> {
-		const subscription = await this.typeOrmWebhookSubscriptionRepository.findOne({ where: { id } as any });
+		const scope = this.scopeOfTheCaller();
+		const subscription = scope
+			? await this.typeOrmWebhookSubscriptionRepository.findOne({
+					where: { ...scope, id } as FindOptionsWhere<WebhookSubscription>
+			  })
+			: null;
 
 		if (!subscription) {
 			throw new NotFoundException('The webhook subscription does not exist.');
 		}
 
 		return subscription;
+	}
+
+	/**
+	 * Reads a subscription for the delivery runtime, whatever tenant it belongs to.
+	 *
+	 * 🛑 **Runtime only — never reachable from a request.** The first attempt is made by the outbox
+	 * dispatch consumer and every later one by the retry worker; both run in a queue job, where there
+	 * is no caller and therefore no scope to narrow on, and the delivery row they hold already names the
+	 * subscription it belongs to. A route or a resolver must use {@link getSubscription}.
+	 *
+	 * @param id The subscription id, as a delivery row names it.
+	 * @returns The subscription.
+	 * @throws NotFoundException when the subscription does not exist.
+	 */
+	async getSubscriptionForDelivery(id: ID): Promise<WebhookSubscription> {
+		const subscription = await this.typeOrmWebhookSubscriptionRepository.findOne({
+			where: { id } as FindOptionsWhere<WebhookSubscription>
+		});
+
+		if (!subscription) {
+			throw new NotFoundException('The webhook subscription does not exist.');
+		}
+
+		return subscription;
+	}
+
+	/**
+	 * Removes a subscription of the caller's own scope and, by the table's own cascade, its delivery log.
+	 *
+	 * The row is read through the scoped reader first: the CRUD base's `delete(id)` narrows on the id
+	 * alone, which is how a caller could remove another tenant's subscription.
+	 *
+	 * @param id The subscription id.
+	 * @returns The store's delete result.
+	 * @throws NotFoundException when no subscription of that id is in the caller's scope.
+	 */
+	async deleteSubscription(id: ID): Promise<DeleteResult> {
+		const subscription = await this.getSubscription(id);
+
+		return this.delete(subscription.id);
+	}
+
+	/**
+	 * The criteria that put a subscription inside the caller's scope, or undefined when no credential
+	 * resolved a tenant.
+	 *
+	 * The tenant and the organization the request resolved, the organization as stated or, when none
+	 * is selected, the tenant-wide rows — the same two columns the list narrows on and `create` stamps,
+	 * so the rows a caller lists, the rows it creates and the rows it can address by id are one set. A
+	 * caller with no tenant is given nothing rather than everything: the guards in front of these
+	 * routes refuse such a request, so reaching here without one means the guards did not run.
+	 *
+	 * @returns The criteria, or undefined.
+	 */
+	private scopeOfTheCaller(): FindOptionsWhere<WebhookSubscription> | undefined {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			return undefined;
+		}
+
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return { tenantId, organizationId: organizationId ?? IsNull() } as FindOptionsWhere<WebhookSubscription>;
 	}
 
 	/**
@@ -376,10 +461,13 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * @returns The subscriptions, secrets replaced by fingerprints.
 	 */
 	async listSubscriptions(narrowing: IWebhookSubscriptionNarrowing = {}): Promise<IRedactedWebhookSubscription[]> {
-		const where: Record<string, unknown> = {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope) {
+			return [];
+		}
+
+		const where: Record<string, unknown> = { ...scope };
 
 		for (const [column, value] of Object.entries(narrowing)) {
 			// A member that was not stated is left out rather than written as `undefined`: a repository
@@ -519,7 +607,7 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * @throws NotFoundException when the subscription does not exist.
 	 */
 	async revealSecret(id: ID): Promise<string> {
-		const subscription = await this.getSubscription(id);
+		const subscription = await this.getSubscriptionForDelivery(id);
 
 		return this.encryptionService.decrypt(subscription.secret);
 	}

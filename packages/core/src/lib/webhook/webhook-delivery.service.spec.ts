@@ -194,7 +194,7 @@ function subscriptions(row: Row = {}) {
 	const attempts: { delivered: boolean; status?: number }[] = [];
 
 	const service = {
-		async getSubscription() {
+		async getSubscriptionForDelivery() {
 			return subscription;
 		},
 		async revealSecret() {
