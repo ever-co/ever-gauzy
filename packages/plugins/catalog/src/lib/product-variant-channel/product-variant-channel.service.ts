@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
 import { ProductVariantChannel } from './product-variant-channel.entity';
 import { MikroOrmProductVariantChannelRepository } from './repository/mikro-orm-product-variant-channel.repository';
@@ -30,7 +31,7 @@ export class ProductVariantChannelService extends TenantAwareCrudService<Product
 	 */
 	public async findByVariant(variantId: ID): Promise<ProductVariantChannel[]> {
 		return this.typeOrmProductVariantChannelRepository.find({
-			where: { variantId, organizationId: RequestContext.currentOrganizationId() },
+			where: { variantId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
 			order: { sortOrder: 'ASC' }
 		});
 	}
@@ -38,10 +39,17 @@ export class ProductVariantChannelService extends TenantAwareCrudService<Product
 	/**
 	 * Replaces the publication set of one variant.
 	 *
+	 * **The write is the caller's variant's, and only its rows** (review R2-19). The variant is read inside the
+	 * caller's tenant and organization first, and one that is not the caller's is answered as one that does not
+	 * exist; the rows the set is diffed against are read inside the same scope. Before this they were read by
+	 * `variantId` alone and the ones missing from the new set were deleted by id, so a caller naming another
+	 * tenant's variant deleted that tenant's publications.
+	 *
 	 * @param variantId The variant whose publications are being written.
 	 * @param items The complete set of channel publications.
 	 * @returns The publication rows after the write.
 	 * @throws BadRequestException When a channel is listed twice.
+	 * @throws NotFoundException When the variant is not the caller's.
 	 */
 	public async replacePublications(
 		variantId: ID,
@@ -55,7 +63,11 @@ export class ProductVariantChannelService extends TenantAwareCrudService<Product
 
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
-		const existing = await this.typeOrmProductVariantChannelRepository.find({ where: { variantId } });
+		await assertInCallerScope(this.typeOrmProductVariantChannelRepository.manager, ProductVariant, variantId, 'variant');
+
+		const existing = await this.typeOrmProductVariantChannelRepository.find({
+			where: { variantId, ...callerScope() }
+		});
 		const kept = new Set(channelIds);
 		const removed = existing.filter((row) => !kept.has(row.channelId));
 
@@ -101,7 +113,7 @@ export class ProductVariantChannelService extends TenantAwareCrudService<Product
 	 * product's publication, or when it has an `ACTIVE` row for the channel.
 	 */
 	public async isPurchasableOn(variantId: ID, channelId: ID): Promise<boolean> {
-		const rows = await this.typeOrmProductVariantChannelRepository.find({ where: { variantId } });
+		const rows = await this.typeOrmProductVariantChannelRepository.find({ where: { variantId, ...callerScope() } });
 
 		if (!rows.length) {
 			return true;

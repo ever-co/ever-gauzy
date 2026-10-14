@@ -503,7 +503,7 @@ export class CreateTaxRegimeTables1791000000146 implements MigrationInterface {
 					[table, name]
 			  )
 			: await queryRunner.query(
-					`SELECT COUNT(*) AS count FROM information_schema.table_constraints WHERE table_name = ? AND constraint_name = ? AND constraint_type = 'FOREIGN KEY'`,
+					`SELECT COUNT(*) AS count FROM information_schema.table_constraints WHERE table_name = $1 AND constraint_name = $2 AND constraint_type = 'FOREIGN KEY'`,
 					[table, name]
 			  );
 

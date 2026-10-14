@@ -304,7 +304,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 */
 	async update(id: ID, input: IOrganizationTeamUpdateInput): Promise<IOrganizationTeam> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-		const { managerIds, memberIds, organizationId } = input;
+		const { organizationId } = input;
+		// A list the body does not name is an empty list here, as the DTO's `= []` default used to make it: a body
+		// that names only the managers still replaces the set with those managers. The default itself is gone from
+		// the body (`UpdateOrganizationTeamDTO` is built through `WithoutInitializers`) because it also wrote
+		// `projects: []` back into the team on every update that did not name its projects (review R3-04).
+		const memberIds = input.memberIds ?? [];
+		const managerIds = input.managerIds ?? [];
 
 		let organizationTeam = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId }

@@ -312,10 +312,30 @@ export type IPaymentCollectionCreateInput = Partial<IPaymentCollection> &
 	Pick<IPaymentCollection, 'amount' | 'currency'>;
 
 /**
+ * The members of a collection only the server writes: the four running totals move through the operations that
+ * cause them (authorise, capture, refund, void), the status and the settlement time are derived from them, and the
+ * order or cart a collection was opened for is fixed when it is opened. An update that would change one is refused
+ * (`PAYMENT_COLLECTION_FIELD_NOT_WRITABLE`), and the REST update body does not declare them.
+ */
+export const PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS = [
+	'status',
+	'authorizedAmount',
+	'capturedAmount',
+	'refundedAmount',
+	'canceledAmount',
+	'completedAt',
+	'orderId',
+	'cartId'
+] as const;
+
+/**
  * The fields of a collection an update may change. The amounts move through the operations that cause
  * them, so they are not part of it.
  */
-export type IPaymentCollectionUpdateInput = Omit<Partial<IPaymentCollection>, 'status'>;
+export type IPaymentCollectionUpdateInput = Omit<
+	Partial<IPaymentCollection>,
+	(typeof PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS)[number]
+>;
 
 /**
  * The writable surface of a session.

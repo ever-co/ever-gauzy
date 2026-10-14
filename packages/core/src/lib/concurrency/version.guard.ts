@@ -133,8 +133,12 @@ export class VersionGuard implements CanActivate {
 
 		try {
 			const record = await this.idempotency()?.findByKey(idempotent.scope, key);
+			const settled = record?.status === IdempotencyStatus.COMPLETED || record?.status === IdempotencyStatus.FAILED;
 
-			return record?.status === IdempotencyStatus.COMPLETED || record?.status === IdempotencyStatus.FAILED;
+			// A settled record whose replay window has passed is not replayed: the interceptor's `claim()`
+			// clears it and the handler runs as a first attempt, so the write the precondition guards does
+			// happen. Yielding to it skipped the version check for a real write (R1-08 of the #10254 review).
+			return settled && !isPastReplayWindow(record?.expiresAt);
 		} catch (error) {
 			// A store that cannot be read is not a reason to refuse a write. The precondition still
 			// applies, and the conditional update is the half that cannot be skipped.
@@ -156,6 +160,17 @@ export class VersionGuard implements CanActivate {
 	 * @throws ApiException when the version is missing, unusable or stale.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		const request = executionRequest(context);
+
+		// 🛑 **One expectation per field.** A GraphQL document's mutations share one request object and run
+		// one after the other, each behind this guard; an expectation left by an earlier field would
+		// otherwise be read by a later field's write that stated none — a conditional write on a version
+		// the caller never stated for it, instead of `428 VERSION_REQUIRED`. Whatever this pass decides is
+		// decided from this field's own arguments alone.
+		if (request && VERSION_EXPECTATION_PROPERTY in request) {
+			delete request[VERSION_EXPECTATION_PROPERTY];
+		}
+
 		const options = this.reflector.getAllAndOverride<IVersionedOptions | undefined>(VERSIONED_METADATA_KEY, [
 			context.getHandler(),
 			context.getClass()
@@ -167,31 +182,43 @@ export class VersionGuard implements CanActivate {
 			return true;
 		}
 
-		const request = executionRequest(context);
 		const isGraphql = context.getType<'http' | 'graphql' | string>() === 'graphql';
-
-		// Retry safety is answered first — see the class comment. The handler does not run for a
-		// settled key, so there is no write left for the precondition to guard.
-		if (await this.isSettledRetry(context, request, isGraphql)) {
-			return true;
-		}
 
 		const method = String(request?.method ?? '').toUpperCase();
 		// A GraphQL operation travels over POST whichever root type it selects, so the method says
 		// nothing about whether it writes: the resolver's own declaration is the only honest source.
 		const write = options.write ?? (isGraphql ? true : !isReadOnlyMethod(method));
+		// One HTTP request carries one `If-Match`, so REST states the version in a header. A GraphQL
+		// request carries as many mutations as its document selects, and a header could not say which of
+		// them the version belongs to, so the version rides beside the input it qualifies.
+		const ifMatch = isGraphql
+			? versionFromResolverArgs(context.getArgByIndex?.(1))
+			: readRequestHeader(request, IF_MATCH_HEADER);
+
+		// Retry safety is answered first — see the class comment. The handler does not run for a
+		// settled key, so there is no write left for the precondition to guard.
+		if (await this.isSettledRetry(context, request, isGraphql)) {
+			// …unless the key's window closes between this check and the interceptor's claim, which then
+			// clears the row and runs the handler as a first attempt. For that case the write still
+			// carries the version the caller stated — the conditional update enforces it, and a handler
+			// that requires one finds it — so the yield can never become an unconditional write. Nothing
+			// is read and nothing is refused here: the comparison is the write's, and a replay is answered
+			// whatever the caller stated (R1-08 of the #10254 review, second half).
+			const stated = evaluateVersionPrecondition({ ifMatch, write, required: false });
+
+			if (stated.action === 'PROCEED') {
+				this.attachExpectation(request, stated, options);
+			}
+
+			return true;
+		}
 
 		const id = this.resolveResourceId(options, context, request);
 		const row = options.resource && id ? await this.readRow(options.resource, id) : undefined;
 
 		const decision = evaluateVersionPrecondition({
-			// One HTTP request carries one `If-Match`, so REST states the version in a header. A
-			// GraphQL request carries as many mutations as its document selects, and a header could
-			// not say which of them the version belongs to, so the version rides beside the input it
-			// qualifies. Both forms reach the same comparison, and both answer the same codes.
-			ifMatch: isGraphql
-				? versionFromResolverArgs(context.getArgByIndex?.(1))
-				: readRequestHeader(request, IF_MATCH_HEADER),
+			// Both forms of the stated version reach the same comparison, and both answer the same codes.
+			ifMatch,
 			write,
 			required: options.required,
 			...(row ? { exists: row.exists, currentVersion: row.version } : {})
@@ -247,15 +274,30 @@ export class VersionGuard implements CanActivate {
 				// accepted, because `If-Match: "3", "4"` says either will do and keeping only `3` refused a
 				// row sitting at `4` with `409`. `resolveExpectedVersion` picks from that list against the
 				// row at write time. A wildcard leaves an empty list whether or not the row was read.
-				if (request) {
-					request[VERSION_EXPECTATION_PROPERTY] = {
-						wildcard: decision.wildcard,
-						versions: decision.wildcard ? [] : [...decision.versions],
-						...(options.target ? { target: options.target } : {})
-					};
-				}
+				this.attachExpectation(request, decision, options);
 
 				return true;
+		}
+	}
+
+	/**
+	 * Leaves the accepted version on the request for the write.
+	 *
+	 * @param request The request.
+	 * @param decision The precondition's `PROCEED` decision.
+	 * @param options What the route declared.
+	 */
+	private attachExpectation(
+		request: any,
+		decision: { wildcard: boolean; versions: readonly number[] },
+		options: IVersionedOptions
+	): void {
+		if (request) {
+			request[VERSION_EXPECTATION_PROPERTY] = {
+				wildcard: decision.wildcard,
+				versions: decision.wildcard ? [] : [...decision.versions],
+				...(options.target ? { target: options.target } : {})
+			};
 		}
 	}
 
@@ -333,4 +375,24 @@ export class VersionGuard implements CanActivate {
 			return { exists: true, version: null };
 		}
 	}
+}
+
+/**
+ * Whether an idempotency record is past the window its response may be replayed in.
+ *
+ * The same reading as `IdempotencyService.isExpired`, stated here because the guard only holds the
+ * record: a record with no expiry is inside its window, and so is one whose expiry cannot be read.
+ *
+ * @param expiresAt The record's expiry.
+ * @param now The moment to compare against.
+ * @returns True when the record will not be replayed.
+ */
+function isPastReplayWindow(expiresAt: Date | string | null | undefined, now: number = Date.now()): boolean {
+	if (!expiresAt) {
+		return false;
+	}
+
+	const expiry = new Date(expiresAt).getTime();
+
+	return Number.isFinite(expiry) && expiry <= now;
 }

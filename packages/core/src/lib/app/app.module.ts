@@ -154,6 +154,7 @@ import { SearchModule } from '../search/search.module';
 import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { IdempotencyMaintenanceModule } from '../idempotency/idempotency-maintenance.module';
 import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
+import { GraphqlOrganizationMembershipInterceptor } from '../graphql/graphql-organization-membership.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maintenance.module';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
@@ -694,6 +695,14 @@ if (environment.THROTTLE_ENABLED) {
 		// does not declare `@Idempotent(...)`: a route that has not adopted the convention reads no
 		// header, hashes nothing and writes no row it did not write before. Registered after the
 		// serialization interceptor so the response it records is the one the handler produced.
+		// R7-03: GraphQL runs no class-validator, so the organization-membership rule REST's DTOs state with
+		// `@IsOrganizationBelongsToUser()` is applied here to every query, mutation and subscription that names an
+		// organization. Registered before the idempotency interceptor, so a refused request is never recorded or
+		// answered from a stored reply.
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: GraphqlOrganizationMembershipInterceptor
+		},
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: IdempotencyInterceptor
