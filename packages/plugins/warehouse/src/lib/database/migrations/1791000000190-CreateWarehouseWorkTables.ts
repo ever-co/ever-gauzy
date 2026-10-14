@@ -484,9 +484,10 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(
 			`ALTER TABLE \`pick_list_line\` ADD CONSTRAINT \`CHK_pick_list_line_quantities\` CHECK (\`quantityPicked\` + \`quantityShort\` <= \`quantityRequested\`)`
 		);
-		await queryRunner.query(
-			`ALTER TABLE \`pick_list_line\` ADD CONSTRAINT \`CHK_pick_list_line_substitute\` CHECK ((\`substituteVariantId\` IS NULL AND \`substituteQuantity\` IS NULL) OR (\`substituteVariantId\` IS NOT NULL AND \`substituteQuantity\` IS NOT NULL))`
-		);
+		// `CHK_pick_list_line_substitute` is not created on MySQL. It reads `substituteVariantId`, which
+		// `FK_pick_list_line_substitute` below sets to NULL when the variant is deleted, and MySQL ≥ 8.0.16 refuses a
+		// CHECK over a column a foreign-key action modifies (3823), so the migration — and the boot — stopped here
+		// (review R5-11). The pairing rests on the write path on MySQL, as `CHK_subscription_plan_target_xor` does.
 		await queryRunner.query(
 			`ALTER TABLE \`pick_list_line\` ADD CONSTRAINT \`FK_pick_list_line_list\` FOREIGN KEY (\`pickListId\`) REFERENCES \`pick_list\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);

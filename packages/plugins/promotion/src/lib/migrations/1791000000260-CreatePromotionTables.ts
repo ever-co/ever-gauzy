@@ -599,7 +599,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`promotion_usage\` (${i}, \`promotionId\` varchar(36) NOT NULL, \`couponId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`cartId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`code\` varchar(64) NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`usedAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`status\` varchar(16) NOT NULL DEFAULT 'RESERVED', ${base('promotion_usage')}, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`promotion_usage\` (${i}, \`promotionId\` varchar(36) NOT NULL, \`couponId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`cartId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`code\` varchar(64) NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`usedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`status\` varchar(16) NOT NULL DEFAULT 'RESERVED', ${base('promotion_usage')}, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX \`UQ_promotion_usage_order\` ON \`promotion_usage\` (\`promotionId\`, \`orderId\`, \`deletedKey\`)`
@@ -641,7 +641,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`gift_card_transaction\` (${i}, \`giftCardId\` varchar(36) NOT NULL, \`orderId\` varchar(36) NULL, \`amount\` decimal(20,6) NOT NULL, \`balanceAfter\` decimal(20,6) NOT NULL, \`type\` varchar(16) NOT NULL, \`note\` text NULL, \`occurredAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP(6), ${base('gift_card_transaction')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`gift_card_transaction\` (${i}, \`giftCardId\` varchar(36) NOT NULL, \`orderId\` varchar(36) NULL, \`amount\` decimal(20,6) NOT NULL, \`balanceAfter\` decimal(20,6) NOT NULL, \`type\` varchar(16) NOT NULL, \`note\` text NULL, \`occurredAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), ${base('gift_card_transaction')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_gift_card_transaction_card\` ON \`gift_card_transaction\` (\`giftCardId\`, \`occurredAt\`)`

@@ -152,9 +152,16 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		 * can hold makes the rule apply to those rows too. The other two dialects fold the same null in
 		 * the index expression — `COALESCE("organizationId", '00000000-…')` — so the three agree on what
 		 * "one per organization" means when there is no organization.
+		 *
+		 * **VIRTUAL, not STORED** (and so is every `organizationKey` and `channelKey` below). `organizationId`
+		 * carries the platform's `ON DELETE CASCADE ON UPDATE CASCADE` foreign key, and InnoDB refuses a
+		 * cascading or `SET NULL` action on a base column of a STORED generated column — so a STORED key stopped
+		 * every MySQL installation at this migration (review R5-10). A VIRTUAL column has no such restriction and
+		 * InnoDB indexes it like any other, so the unique index over it is unchanged. Nothing but MySQL reads
+		 * these definitions, and no MySQL installation ever got past them, so no stored column is left behind.
 		 */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) VIRTUAL"
 		}
 	},
 
@@ -188,7 +195,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) VIRTUAL"
 		}
 	},
 
@@ -245,7 +252,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) VIRTUAL"
 		},
 		isDefaultKey: {
 			mysql: "varchar(1) GENERATED ALWAYS AS (IF(`isDefault`, '1', NULL)) STORED"
@@ -449,7 +456,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) VIRTUAL"
 		}
 	},
 
@@ -483,7 +490,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 			mysql: "varchar(36) GENERATED ALWAYS AS (IF(`deletedAt` IS NULL, '0', `id`)) STORED"
 		},
 		channelKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`channelId`, '')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`channelId`, '')) VIRTUAL"
 		}
 	},
 
@@ -560,7 +567,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) VIRTUAL"
 		}
 	},
 
