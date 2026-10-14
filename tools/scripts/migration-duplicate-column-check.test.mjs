@@ -125,3 +125,15 @@ test("a statement written in a single- or double-quoted string is read past MySQ
 
 	assert.deepEqual(found(source), ['widget.note', 'widget.id']);
 });
+
+test('a guarded ADD COLUMN IF NOT EXISTS is not a duplicate: the database treats it as a no-op', () => {
+	const source = migration(
+		[
+			'		await queryRunner.query(`CREATE TABLE "widget" ("id" integer NOT NULL, "note" text)`);',
+			'		await queryRunner.query(`ALTER TABLE "widget" ADD COLUMN IF NOT EXISTS "note" text, ADD COLUMN "id" integer`);'
+		].join('\n'),
+		'postgresUpQueryRunner'
+	);
+
+	assert.deepEqual(found(source), ['widget.id']);
+});

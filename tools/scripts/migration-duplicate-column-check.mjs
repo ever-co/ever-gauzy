@@ -31,7 +31,7 @@ const IDENT = String.raw`\\?[\x60"]?(\w+)\\?[\x60"]?`;
 const CREATE_TABLE = new RegExp(String.raw`CREATE TABLE (?:IF NOT EXISTS )?${IDENT}\s*\(`, 'g');
 const ALTER_TABLE = new RegExp(String.raw`ALTER TABLE ${IDENT}\s+`, 'g');
 /** One `ADD [COLUMN] <name>` clause of an `ALTER TABLE`, at the start of a top-level member of the statement. */
-const ADD_CLAUSE = new RegExp(String.raw`^ADD\s+(?:COLUMN\s+)?(?:IF NOT EXISTS\s+)?\\?[\x60"]?(\w+)\\?[\x60"]?`, 'i');
+const ADD_CLAUSE = new RegExp(String.raw`^ADD\s+(?:COLUMN\s+)?(IF NOT EXISTS\s+)?\\?[\x60"]?(\w+)\\?[\x60"]?`, 'i');
 /** What a member of a CREATE TABLE starts with when it declares a constraint or an index rather than a column. */
 const NOT_A_COLUMN = /^(CONSTRAINT|PRIMARY|INDEX|KEY|UNIQUE|FOREIGN|CHECK|FULLTEXT|SPATIAL)\b/i;
 /** `ADD CONSTRAINT …`, `ADD INDEX …` and the like add no column. */
@@ -142,12 +142,19 @@ export function topLevelMembers(text) {
  * only the first clause let a repeated column in a later one through (Greptile, #10587).
  *
  * @param {string} actions The statement's text after `ALTER TABLE <table>`.
- * @returns {string[]} The added column names; `ADD CONSTRAINT`, `ADD INDEX` and the like are not columns.
+ * @returns {string[]} The added column names; `ADD CONSTRAINT`, `ADD INDEX` and the like are not columns, and a guarded
+ *   `ADD COLUMN IF NOT EXISTS` cannot collide.
  */
 export function addedColumns(actions) {
-	return topLevelMembers(actions)
-		.map((member) => ADD_CLAUSE.exec(member)?.[1])
-		.filter((column) => column && !NOT_A_COLUMN_ADD.test(column));
+	return (
+		topLevelMembers(actions)
+			.map((member) => ADD_CLAUSE.exec(member))
+			// `ADD COLUMN IF NOT EXISTS` is a no-op on a column that is already there (PostgreSQL), so it can never
+			// be a duplicate the database refuses (Greptile, #10587).
+			.filter((clause) => clause && !clause[1])
+			.map((clause) => clause[2])
+			.filter((column) => !NOT_A_COLUMN_ADD.test(column))
+	);
 }
 
 /**
