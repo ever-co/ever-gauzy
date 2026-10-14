@@ -2470,6 +2470,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Eliminar organización",
+			"WARNING": "{{ name }} se eliminará de forma permanente. Esta acción no se puede deshacer.",
+			"TYPE_TO_CONFIRM": "Escriba lo siguiente para confirmar:",
+			"CONFIRM": "Eliminar organización"
+		},
 		"ORGANIZATIONS": "Organizaciones",
 		"EMPLOYEES": "Empleados",
 		"POSITIONS": "Puestos",
@@ -3059,7 +3065,33 @@
 		"ORGANIZATION_ADD": "Añadir Organización",
 		"IMAGE": "Imagen",
 		"SPRINTS": "Sprints: Carreras de velocidad.",
-		"NO_IMAGE": "Imagen no disponible"
+		"NO_IMAGE": "Imagen no disponible",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Configure una nueva organización con su dirección, bonificación y configuración regional.",
+			"PROGRESS": "Progreso",
+			"STEP_DETAILS": "Detalles",
+			"STEP_LOCATION": "Ubicación",
+			"STEP_BONUS": "Bonificación",
+			"STEP_SETTINGS": "Configuración",
+			"STEP_EMPLOYEE": "Empleado",
+			"PROFILE": "Perfil",
+			"LOGO": "Logotipo de la organización",
+			"LOGO_HINT": "Opcional. Haga clic en el logotipo para subir una imagen cuadrada de al menos 256 × 256 px.",
+			"BUSINESS": "Datos de la empresa",
+			"ADDRESS_TITLE": "Dirección",
+			"ADDRESS_HINT": "Opcional. Busque una dirección, escríbala o haga clic en el mapa para ubicar la organización.",
+			"BONUS_TITLE": "Bonificación",
+			"BONUS_HINT": "Elija cómo se calculan las bonificaciones de los empleados. Puede cambiarlo más tarde en la configuración de la organización.",
+			"REGIONAL": "Regional",
+			"FISCAL_YEAR": "Año fiscal",
+			"INVITES": "Invitaciones",
+			"EMPLOYEE_TITLE": "Registrarse como empleado",
+			"EMPLOYEE_HINT": "Añádase a la nueva organización como empleado.",
+			"BACK": "Atrás",
+			"CONTINUE": "Continuar",
+			"SKIP": "Omitir",
+			"CREATE": "Crear organización"
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitantes",

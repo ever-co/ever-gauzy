@@ -17,7 +17,6 @@ import {
 	UsersOrganizationsService
 } from '@gauzy/ui-core/core';
 import {
-	DeleteConfirmationComponent,
 	IPaginationBase,
 	IRecordViewSection,
 	OrganizationWithTagsComponent,
@@ -29,6 +28,7 @@ import {
 	OrganizationTotalEmployeesCountComponent,
 	OrganizationsStatusComponent
 } from './table-components';
+import { OrganizationDeleteConfirmationComponent } from './organization-delete-confirmation/organization-delete-confirmation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -343,9 +343,9 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 			});
 		}
 		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent, {
+			this.dialogService.open(OrganizationDeleteConfirmationComponent, {
 				context: {
-					recordType: 'ORGANIZATIONS_PAGE.ORGANIZATION'
+					organization: this.selectedOrganization
 				}
 			}).onClose
 		);

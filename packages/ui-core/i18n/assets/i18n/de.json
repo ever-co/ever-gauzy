@@ -2468,6 +2468,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Organisation löschen",
+			"WARNING": "{{ name }} wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+			"TYPE_TO_CONFIRM": "Geben Sie zur Bestätigung Folgendes ein:",
+			"CONFIRM": "Organisation löschen"
+		},
 		"ORGANIZATIONS": "Organisationen",
 		"EMPLOYEES": "Mitarbeiter",
 		"POSITIONS": "Positionen",
@@ -3053,7 +3059,33 @@
 		"ORGANIZATION_ADD": "Organisation hinzufügen",
 		"IMAGE": "Bild",
 		"SPRINTS": "Laufphasen",
-		"NO_IMAGE": "Bild nicht verfügbar"
+		"NO_IMAGE": "Bild nicht verfügbar",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Richten Sie eine neue Organisation mit Adresse, Bonus und regionalen Einstellungen ein.",
+			"PROGRESS": "Fortschritt",
+			"STEP_DETAILS": "Details",
+			"STEP_LOCATION": "Standort",
+			"STEP_BONUS": "Bonus",
+			"STEP_SETTINGS": "Einstellungen",
+			"STEP_EMPLOYEE": "Mitarbeiter",
+			"PROFILE": "Profil",
+			"LOGO": "Organisationslogo",
+			"LOGO_HINT": "Optional. Klicken Sie auf das Logo, um ein quadratisches Bild mit mindestens 256 × 256 px hochzuladen.",
+			"BUSINESS": "Unternehmensdaten",
+			"ADDRESS_TITLE": "Adresse",
+			"ADDRESS_HINT": "Optional. Suchen Sie eine Adresse, geben Sie sie ein oder klicken Sie auf die Karte, um die Organisation zu platzieren.",
+			"BONUS_TITLE": "Bonus",
+			"BONUS_HINT": "Wählen Sie, wie Mitarbeiterboni berechnet werden. Sie können dies später in den Organisationseinstellungen ändern.",
+			"REGIONAL": "Regional",
+			"FISCAL_YEAR": "Geschäftsjahr",
+			"INVITES": "Einladungen",
+			"EMPLOYEE_TITLE": "Als Mitarbeiter registrieren",
+			"EMPLOYEE_HINT": "Fügen Sie sich der neuen Organisation als Mitarbeiter hinzu.",
+			"BACK": "Zurück",
+			"CONTINUE": "Weiter",
+			"SKIP": "Überspringen",
+			"CREATE": "Organisation erstellen"
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Besucher",

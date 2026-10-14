@@ -35,6 +35,7 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
+import { OrganizationDeleteConfirmationComponent } from './organization-delete-confirmation/organization-delete-confirmation.component';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,
@@ -77,6 +78,7 @@ import {
 	],
 	declarations: [
 		OrganizationsComponent,
+		OrganizationDeleteConfirmationComponent,
 		OrganizationsStatusComponent,
 		OrganizationTotalEmployeesCountComponent,
 		OrganizationsCurrencyComponent

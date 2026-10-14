@@ -2467,6 +2467,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń organizację",
+			"WARNING": "{{ name }} zostanie trwale usunięta. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
+			"CONFIRM": "Usuń organizację"
+		},
 		"ORGANIZATIONS": "Organizacje",
 		"EMPLOYEES": "Pracownicy",
 		"POSITIONS": "Stanowiska",
@@ -3056,7 +3062,33 @@
 		"ORGANIZATION_ADD": "Dodaj organizację",
 		"IMAGE": "Obraz",
 		"SPRINTS": "Sprinty",
-		"NO_IMAGE": "Obraz niedostępny"
+		"NO_IMAGE": "Obraz niedostępny",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Skonfiguruj nową organizację wraz z adresem, premią i ustawieniami regionalnymi.",
+			"PROGRESS": "Postęp",
+			"STEP_DETAILS": "Szczegóły",
+			"STEP_LOCATION": "Lokalizacja",
+			"STEP_BONUS": "Premia",
+			"STEP_SETTINGS": "Ustawienia",
+			"STEP_EMPLOYEE": "Pracownik",
+			"PROFILE": "Profil",
+			"LOGO": "Logo organizacji",
+			"LOGO_HINT": "Opcjonalnie. Kliknij logo, aby przesłać kwadratowy obraz o wymiarach co najmniej 256 × 256 px.",
+			"BUSINESS": "Dane firmy",
+			"ADDRESS_TITLE": "Adres",
+			"ADDRESS_HINT": "Opcjonalnie. Wyszukaj adres, wpisz go lub kliknij mapę, aby umieścić organizację.",
+			"BONUS_TITLE": "Premia",
+			"BONUS_HINT": "Wybierz sposób obliczania premii pracowników. Możesz to później zmienić w ustawieniach organizacji.",
+			"REGIONAL": "Regionalne",
+			"FISCAL_YEAR": "Rok obrachunkowy",
+			"INVITES": "Zaproszenia",
+			"EMPLOYEE_TITLE": "Zarejestruj się jako pracownik",
+			"EMPLOYEE_HINT": "Dodaj siebie do nowej organizacji jako pracownika.",
+			"BACK": "Wstecz",
+			"CONTINUE": "Dalej",
+			"SKIP": "Pomiń",
+			"CREATE": "Utwórz organizację"
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Odwiedzający",

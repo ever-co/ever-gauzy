@@ -2351,6 +2351,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Delete organization",
+			"WARNING": "{{ name }} will be permanently deleted. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete organization"
+		},
 		"ORGANIZATIONS": "crwdns238:0crwdne238:0",
 		"EMPLOYEES": "crwdns240:0crwdne240:0",
 		"POSITIONS": "crwdns7832:0crwdne7832:0",
@@ -2823,7 +2829,33 @@
 		"ORGANIZATION_ADD": "crwdns11154:0crwdne11154:0",
 		"IMAGE": "crwdns11211:0crwdne11211:0",
 		"SPRINTS": "crwdns11231:0crwdne11231:0",
-		"NO_IMAGE": "crwdns11237:0crwdne11237:0"
+		"NO_IMAGE": "crwdns11237:0crwdne11237:0",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Set up a new organization with its address, bonus and regional settings.",
+			"PROGRESS": "Progress",
+			"STEP_DETAILS": "Details",
+			"STEP_LOCATION": "Location",
+			"STEP_BONUS": "Bonus",
+			"STEP_SETTINGS": "Settings",
+			"STEP_EMPLOYEE": "Employee",
+			"PROFILE": "Profile",
+			"LOGO": "Organization logo",
+			"LOGO_HINT": "Optional. Click the logo to upload a square image of at least 256 × 256 px.",
+			"BUSINESS": "Business details",
+			"ADDRESS_TITLE": "Address",
+			"ADDRESS_HINT": "Optional. Search for an address, fill it in, or click the map to place the organization.",
+			"BONUS_TITLE": "Bonus",
+			"BONUS_HINT": "Choose how employee bonuses are calculated. You can change this later in the organization settings.",
+			"REGIONAL": "Regional",
+			"FISCAL_YEAR": "Fiscal year",
+			"INVITES": "Invites",
+			"EMPLOYEE_TITLE": "Register as employee",
+			"EMPLOYEE_HINT": "Add yourself to the new organization as an employee.",
+			"BACK": "Back",
+			"CONTINUE": "Continue",
+			"SKIP": "Skip",
+			"CREATE": "Create organization"
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "crwdns7864:0crwdne7864:0",

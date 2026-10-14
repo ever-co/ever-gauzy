@@ -2468,6 +2468,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Excluir organização",
+			"WARNING": "{{ name }} será excluída permanentemente. Esta ação não pode ser desfeita.",
+			"TYPE_TO_CONFIRM": "Digite o seguinte para confirmar:",
+			"CONFIRM": "Excluir organização"
+		},
 		"ORGANIZATIONS": "Organizações",
 		"EMPLOYEES": "Funcionários",
 		"POSITIONS": "Posições",
@@ -3057,7 +3063,33 @@
 		"ORGANIZATION_ADD": "Adicionar Organização",
 		"IMAGE": "Imagem",
 		"SPRINTS": "Sprints",
-		"NO_IMAGE": "Imagem não disponível"
+		"NO_IMAGE": "Imagem não disponível",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Configure uma nova organização com endereço, bônus e configurações regionais.",
+			"PROGRESS": "Progresso",
+			"STEP_DETAILS": "Detalhes",
+			"STEP_LOCATION": "Localização",
+			"STEP_BONUS": "Bônus",
+			"STEP_SETTINGS": "Configurações",
+			"STEP_EMPLOYEE": "Funcionário",
+			"PROFILE": "Perfil",
+			"LOGO": "Logotipo da organização",
+			"LOGO_HINT": "Opcional. Clique no logotipo para enviar uma imagem quadrada de pelo menos 256 × 256 px.",
+			"BUSINESS": "Dados da empresa",
+			"ADDRESS_TITLE": "Endereço",
+			"ADDRESS_HINT": "Opcional. Pesquise um endereço, preencha-o ou clique no mapa para posicionar a organização.",
+			"BONUS_TITLE": "Bônus",
+			"BONUS_HINT": "Escolha como os bônus dos funcionários são calculados. Você pode alterar isso depois nas configurações da organização.",
+			"REGIONAL": "Regional",
+			"FISCAL_YEAR": "Ano fiscal",
+			"INVITES": "Convites",
+			"EMPLOYEE_TITLE": "Registrar-se como funcionário",
+			"EMPLOYEE_HINT": "Adicione-se à nova organização como funcionário.",
+			"BACK": "Voltar",
+			"CONTINUE": "Continuar",
+			"SKIP": "Pular",
+			"CREATE": "Criar organização"
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitantes",
