@@ -132,7 +132,7 @@ describe('FavoriteService.getFavoriteDetails', () => {
 		[BaseEntityEnum.Proposal, PermissionsEnum.ORG_PROPOSALS_VIEW],
 		[BaseEntityEnum.Equipment, PermissionsEnum.ORG_EQUIPMENT_VIEW],
 		[BaseEntityEnum.Product, PermissionsEnum.ORG_INVENTORY_VIEW]
-	])('reads %s favorites only with %s', async (entity, permission) => {
+	])('reads %s favorites with %s, and none without a read permission', async (entity, permission) => {
 		const record = { id: INVOICE };
 		callMethod.mockResolvedValue({ items: [record], total: 1 });
 
@@ -141,6 +141,19 @@ describe('FavoriteService.getFavoriteDetails', () => {
 
 		granted = [permission];
 		await expect(read(entity)).resolves.toEqual({ items: [record], total: 1 });
+	});
+
+	/*
+	 * Review on #10590: the equipment page (and its record page) opens with `ALL_ORG_VIEW` as well as
+	 * `ORG_EQUIPMENT_VIEW`, and the equipment read needs no permission of its own, so a viewer holding only
+	 * `ALL_ORG_VIEW` could save an equipment favorite that the sidebar then dropped.
+	 */
+	it('lists an equipment favorite for every viewer the equipment page admits', async () => {
+		const record = { id: INVOICE };
+		callMethod.mockResolvedValue({ items: [record], total: 1 });
+
+		granted = [PermissionsEnum.ALL_ORG_VIEW];
+		await expect(read(BaseEntityEnum.Equipment)).resolves.toEqual({ items: [record], total: 1 });
 	});
 
 	it('leaves the types without business data of their own as they were (a task is returned as found)', async () => {

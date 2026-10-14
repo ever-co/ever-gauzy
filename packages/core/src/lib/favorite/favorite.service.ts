@@ -56,7 +56,10 @@ export const FAVORITE_DETAILS: Partial<Record<BaseEntityEnum, IFavoriteDetailOpt
 		access: () => [PermissionsEnum.ORG_PAYMENT_VIEW]
 	},
 	[BaseEntityEnum.Proposal]: { access: () => [PermissionsEnum.ORG_PROPOSALS_VIEW] },
-	[BaseEntityEnum.Equipment]: { access: () => [PermissionsEnum.ORG_EQUIPMENT_VIEW] },
+	// The equipment pages admit `ALL_ORG_VIEW` too, and the equipment read itself needs no permission.
+	[BaseEntityEnum.Equipment]: { access: () => [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EQUIPMENT_VIEW] },
+	// The inventory page admits `ALL_ORG_VIEW` too, but the item read (`GET /products/local/:langCode/:id`) needs
+	// `ORG_INVENTORY_VIEW`, so a favorite without it would open a page that cannot load the item.
 	[BaseEntityEnum.Product]: { relations: ['translations'], access: () => [PermissionsEnum.ORG_INVENTORY_VIEW] }
 };
 
