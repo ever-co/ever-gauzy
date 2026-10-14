@@ -5,6 +5,7 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
+import { assertLocationInScope, assertVariantInScope, narrowLevelReadToTenant, requestScope } from './../inventory.scope';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { IStockMovementInput } from './../stock-level/stock-level.types';
 import { StockReservation } from './stock-reservation.entity';
@@ -161,6 +162,13 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 			});
 		}
 
+		// The location and the variant are the caller's to hold before anything is read about them: a hold
+		// that named another tenant's pair used to read that tenant's level, pass the availability check
+		// against it and reserve its units (review R2-01). Both are answered as not existing.
+		const manager = this.typeOrmStockReservationRepository.manager;
+		await assertLocationInScope(manager, input.warehouseId);
+		await assertVariantInScope(manager, input.variantId);
+
 		const level = await this.findLevel(input.warehouseId, input.variantId);
 		this.assertAvailable(level, quantity, input.allowBackorder);
 
@@ -295,12 +303,17 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * that produced no progress will produce none on the next pass either, and the rows it could not
 	 * close are named in the log rather than silently retried.
 	 *
+	 * **The batch is read in the scope the close runs in.** A close loads its hold inside the request's tenant and
+	 * organization, so a batch read by the tenant alone could be made entirely of another organization's holds: an
+	 * operator's sweep then closed none of them, stopped on "no progress", and left its own organization's expired
+	 * holds reserved while answering success. The worker's sweep has no request and still reads every tenant.
+	 *
 	 * @param batchSize how many holds one pass claims; the default is the documented 500.
 	 * @param maxBatches how many passes one sweep walks at most.
 	 * @returns how many holds were expired, and how many batches were walked.
 	 */
 	public async releaseExpired(batchSize = 500, maxBatches = 200): Promise<{ released: number; batches: number }> {
-		const tenantId = RequestContext.currentTenantId();
+		const scope = requestScope();
 		let released = 0;
 		let batches = 0;
 
@@ -309,7 +322,7 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 				where: {
 					status: StockReservationStatus.ACTIVE,
 					expiresAt: LessThanOrEqual(new Date()),
-					...(tenantId ? { tenantId } : {})
+					...scope
 				} as any,
 				order: { expiresAt: 'ASC' } as any,
 				take: batchSize
@@ -361,10 +374,11 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	/**
 	 * Pushes the expiry of every active hold of a document.
 	 *
-	 * The read is narrowed to the tenant the request runs in, exactly as the expiry sweep's is: a
-	 * document id is not a secret, but a hold of another tenant is not a hold this caller may push. A
-	 * caller with no tenant — a worker, a migration, a system context — is not narrowed, which is how
-	 * every other read in this package treats one.
+	 * The read is narrowed to the tenant and organization the request runs in, exactly as the expiry sweep's
+	 * and every close's are: a document id is not a secret, but a hold of another tenant (or of another
+	 * organization of the caller's tenant) is not a hold this caller may push. A caller with no tenant — a
+	 * worker, a migration, a system context — is not narrowed, which is how every other read in this package
+	 * treats one.
 	 *
 	 * The kind of document is a narrowing rather than a requirement. A document id identifies the
 	 * document; stating the kind as well narrows the holds to the ones taken under it, and stating
@@ -381,13 +395,12 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		referenceId: ID,
 		expiresAt: Date
 	): Promise<number> {
-		const tenantId = RequestContext.currentTenantId();
 		const active = await this.typeOrmStockReservationRepository.find({
 			where: {
 				...(referenceType ? { referenceType } : {}),
 				referenceId,
 				status: StockReservationStatus.ACTIVE,
-				...(tenantId ? { tenantId } : {})
+				...requestScope()
 			} as any
 		});
 		for (const reservation of active) {
@@ -401,8 +414,8 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * Re-points holds from one owner to another without changing quantities, which is how a cart’s
 	 * holds become an order’s holds at placement.
 	 *
-	 * The read is narrowed to the tenant the request runs in, for the same reason `extend`'s is: a hold
-	 * of another tenant is not a hold this caller may re-point.
+	 * The read is narrowed to the tenant and organization the request runs in, for the same reason
+	 * `extend`'s is: a hold of another tenant or organization is not a hold this caller may re-point.
 	 *
 	 * @param from the document the holds belong to today.
 	 * @param to the document they will belong to.
@@ -414,13 +427,12 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		to: { referenceType: StockReservationReferenceType; referenceId: ID },
 		lineMap: Record<string, string> = {}
 	): Promise<number> {
-		const tenantId = RequestContext.currentTenantId();
 		const active = await this.typeOrmStockReservationRepository.find({
 			where: {
 				referenceType: from.referenceType,
 				referenceId: from.referenceId,
 				status: StockReservationStatus.ACTIVE,
-				...(tenantId ? { tenantId } : {})
+				...requestScope()
 			} as any
 		});
 		for (const reservation of active) {
@@ -514,13 +526,17 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * refusal rather than a second credit — and it is stated once because both closing paths, the
 	 * release and the consumption, need exactly the same one.
 	 *
+	 * The hold is loaded inside the request's tenant and organization: a hold of another tenant is a hold
+	 * that does not exist for this caller, not one it may consume or release (review R2-01). The expiry
+	 * sweep the worker runs has no request and is not narrowed, so it still closes every tenant's holds.
+	 *
 	 * @param manager The transaction the close runs in.
 	 * @param id The hold.
 	 * @returns The hold, `ACTIVE`.
 	 * @throws ApiException with `RESERVATION_NOT_FOUND` or `RESERVATION_ALREADY_CLOSED`.
 	 */
 	private async requireActive(manager: EntityManager, id: ID): Promise<StockReservation> {
-		const reservation = await manager.findOne(StockReservation, { where: { id } });
+		const reservation = await manager.findOne(StockReservation, { where: { id, ...requestScope() } });
 
 		if (!reservation) {
 			throw inventoryError(InventoryErrorCode.RESERVATION_NOT_FOUND, 'The reservation does not exist.', {
@@ -567,14 +583,21 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		});
 	}
 
-	/** Resolves the level row of a location and variant pair, if the variant is stocked there. */
+	/**
+	 * Resolves the level row of a location and variant pair, if the variant is stocked there.
+	 *
+	 * Narrowed to the request's tenant like every other level read of this package, so the pre-flight
+	 * availability check can only ever be measured against the caller's own stock.
+	 */
 	private async findLevel(warehouseId: ID, variantId: ID): Promise<WarehouseProductVariant | null> {
-		return await this.typeOrmStockReservationRepository.manager
+		const query = this.typeOrmStockReservationRepository.manager
 			.createQueryBuilder(WarehouseProductVariant, 'level')
 			.innerJoin('level.warehouseProduct', 'aggregate')
 			.where('aggregate.warehouseId = :warehouseId', { warehouseId })
-			.andWhere('level.variantId = :variantId', { variantId })
-			.getOne();
+			.andWhere('level.variantId = :variantId', { variantId });
+		narrowLevelReadToTenant(query, RequestContext.currentTenantId());
+
+		return await query.getOne();
 	}
 
 	/**
