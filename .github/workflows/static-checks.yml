@@ -374,4 +374,6 @@ jobs:
       # `affected: 0` it got (handover 2026-09-20 §7.65 item 21). Every delete field consults the result now.
       - name: Every GraphQL delete field answers what its delete did
         if: always()
-        run: node tools/scripts/graphql-delete-answer-check.mjs
+        run: |
+          node --test tools/scripts/graphql-delete-answer-check.test.mjs
+          node tools/scripts/graphql-delete-answer-check.mjs
