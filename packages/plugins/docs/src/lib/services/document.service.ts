@@ -538,8 +538,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			force: input.forceSnapshot === true
 		});
 
+		// 🛑 The loaded `updatedAt` must not travel with the save. It is the concurrency token, and the
+		// snapshot above may have just moved the row (its `version` update stamps `updatedAt`): spread
+		// back, the stale value reads as a change to TypeORM, which then WRITES it — the token stayed put
+		// on the first save of every snapshot window, and so did the one the response handed the editor.
+		// Left out, the ORM stamps a fresh one on every save and returns it.
+		const { updatedAt: _loadedToken, ...current } = document;
 		const updated = await this.save({
-			...document,
+			...current,
 			id: document.id,
 			contentJson,
 			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
