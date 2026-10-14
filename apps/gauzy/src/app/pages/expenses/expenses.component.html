@@ -151,6 +151,7 @@
      so the record renderer is built fresh for each expense that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedExpense"
+  [fullViewLink]="viewedExpense ? '/pages/accounting/expenses/view/' + viewedExpense.id : null"
   heading="EXPENSES_PAGE.EXPENSES"
   [subtitle]="$safeNavigationMigration(viewedExpense?.category?.name)"
   (closed)="closeView()"

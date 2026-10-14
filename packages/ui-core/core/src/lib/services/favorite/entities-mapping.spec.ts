@@ -84,7 +84,13 @@ describe('favorite entity links', () => {
 describe('favorites of the newly favoritable record types', () => {
 	it.each([
 		[BaseEntityEnum.Product, `/pages/organization/inventory/view/${ID}`],
-		[BaseEntityEnum.Proposal, `/pages/sales/proposals/details/${ID}`]
+		[BaseEntityEnum.Proposal, `/pages/sales/proposals/details/${ID}`],
+		[BaseEntityEnum.Expense, `/pages/accounting/expenses/view/${ID}`],
+		[BaseEntityEnum.Income, `/pages/accounting/income/view/${ID}`],
+		[BaseEntityEnum.Payment, `/pages/accounting/payments/view/${ID}`],
+		[BaseEntityEnum.Equipment, `/pages/organization/equipment/view/${ID}`],
+		[BaseEntityEnum.OrganizationVendor, `/pages/organization/vendors/view/${ID}`],
+		[BaseEntityEnum.OrganizationTeam, `/pages/organization/teams/view/${ID}`]
 	])('%s opens its view page', (entity, link) => {
 		expect(ENTITY_LINKS[entity](ID)).toBe(link);
 	});

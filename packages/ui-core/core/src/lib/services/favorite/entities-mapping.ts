@@ -102,8 +102,8 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.Candidate]: (id) => `/pages/employees/candidates/edit/${id}`,
 	// The address/contact-details row has no page; the contacts hub is where contacts are read.
 	[BaseEntityEnum.Contact]: () => `/pages/contacts`,
-	[BaseEntityEnum.OrganizationTeam]: () => `/pages/organization/teams`,
-	[BaseEntityEnum.OrganizationVendor]: () => `/pages/organization/vendors`,
+	[BaseEntityEnum.OrganizationTeam]: (id) => `/pages/organization/teams/view/${id}`,
+	[BaseEntityEnum.OrganizationVendor]: (id) => `/pages/organization/vendors/view/${id}`,
 	// Sprints are managed in their project's task settings; modules on their project's page.
 	[BaseEntityEnum.OrganizationSprint]: (_id, record) =>
 		record?.['projectId'] ? `/pages/tasks/settings/${record['projectId']}` : `/pages/tasks/dashboard`,
@@ -115,9 +115,9 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.OrganizationDepartment]: () => `/pages/organization/departments`,
 	[BaseEntityEnum.OrganizationDocument]: () => `/pages/organization/documents`,
 	[BaseEntityEnum.Document]: documentLink,
-	[BaseEntityEnum.Expense]: () => `/pages/accounting/expenses`,
+	[BaseEntityEnum.Expense]: (id) => `/pages/accounting/expenses/view/${id}`,
 	[BaseEntityEnum.Invoice]: invoiceLink,
-	[BaseEntityEnum.Income]: () => `/pages/accounting/income`,
+	[BaseEntityEnum.Income]: (id) => `/pages/accounting/income/view/${id}`,
 	[BaseEntityEnum.DailyPlan]: () => `/pages/tasks/me`,
 	[BaseEntityEnum.Dashboard]: () => `/pages/dashboard`,
 	[BaseEntityEnum.DashboardWidget]: () => `/pages/dashboard`,
@@ -133,8 +133,8 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.Organization]: (id) => `/pages/organizations/edit/${id}`,
 	[BaseEntityEnum.Broadcast]: () => `/pages/dashboard`,
 	[BaseEntityEnum.OrganizationStrategicInitiative]: () => `/pages/goals`,
-	[BaseEntityEnum.Equipment]: () => `/pages/organization/equipment`,
-	[BaseEntityEnum.Payment]: () => `/pages/accounting/payments`,
+	[BaseEntityEnum.Equipment]: (id) => `/pages/organization/equipment/view/${id}`,
+	[BaseEntityEnum.Payment]: (id) => `/pages/accounting/payments/view/${id}`,
 	[BaseEntityEnum.Product]: (id) => `/pages/organization/inventory/view/${id}`,
 	[BaseEntityEnum.Proposal]: (id) => `/pages/sales/proposals/details/${id}`
 };
