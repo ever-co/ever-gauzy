@@ -2816,6 +2816,12 @@
 				"SETTINGS_INTEGRATIONS": "הגדרות ואינטגרציות",
 				"DATA_LOGS": "נתונים ויומנים",
 				"DOCUMENTS": "מסמכים",
+				"COMMERCE_PLATFORM": "מסחר: פלטפורמה",
+				"COMMERCE_CATALOG": "מסחר: קטלוג ומחירים",
+				"COMMERCE_ORDERS": "מסחר: הזמנות ולקוחות",
+				"COMMERCE_FULFILLMENT": "מסחר: מלאי ומשלוחים",
+				"COMMERCE_PAYMENTS": "מסחר: תשלומים",
+				"COMMERCE_MARKETPLACE": "מסחר: מרקטפלייס",
 				"OTHER": "אחר"
 			},
 			"ORG_PAYROLL_VIEW": "צפייה בשכר",
@@ -2893,6 +2899,180 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "יצירת מבוארה סטרטגית עבור הארגון",
 			"ORG_STRATEGIC_INITIATIVE_READ": "צפה במבוארה סטרטגית עבור הארגון",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "עדכן מבוארה סטרטגית עבור הארגון",
+			"CHANNELS_VIEW": "צפייה בערוצים",
+			"CHANNELS_CREATE": "יצירת ערוצים",
+			"CHANNELS_EDIT": "עריכת ערוצים",
+			"CHANNELS_DELETE": "מחיקת ערוצים",
+			"REGIONS_VIEW": "צפייה באזורים",
+			"REGIONS_CREATE": "יצירת אזורים",
+			"REGIONS_EDIT": "עריכת אזורים",
+			"REGIONS_DELETE": "מחיקת אזורים",
+			"RULES_VIEW": "צפייה בכללים",
+			"RULES_EDIT": "עריכת כללים",
+			"SEQUENCES_VIEW": "צפייה ברצפי מספור",
+			"SEQUENCES_EDIT": "עריכת רצפי מספור",
+			"UNITS_VIEW": "צפייה ביחידות מידה",
+			"UNITS_EDIT": "עריכת יחידות מידה",
+			"PAYMENT_TERMS_VIEW": "צפייה בתנאי תשלום",
+			"PAYMENT_TERMS_EDIT": "עריכת תנאי תשלום",
+			"PROVIDERS_VIEW": "צפייה בספקים",
+			"OPERATIONS_VIEW": "צפייה בפעולות רקע",
+			"OPERATIONS_CANCEL": "ביטול פעולות רקע",
+			"EVENT_OUTBOX_VIEW": "צפייה בתיבת הדואר היוצא של אירועים",
+			"EVENT_OUTBOX_RETRY": "ניסיון חוזר של הודעות בתיבת הדואר היוצא של אירועים",
+			"IDEMPOTENCY_KEYS_VIEW": "צפייה במפתחות אידמפוטנטיות",
+			"IDEMPOTENCY_KEYS_DELETE": "מחיקת מפתחות אידמפוטנטיות",
+			"WEBHOOKS_VIEW": "צפייה בוובהוקים",
+			"WEBHOOKS_CREATE": "יצירת וובהוקים",
+			"WEBHOOKS_EDIT": "עריכת וובהוקים",
+			"WEBHOOKS_DELETE": "מחיקת וובהוקים",
+			"WEBHOOK_DELIVERIES_RETRY": "ניסיון חוזר של מסירות וובהוקים",
+			"SEARCH_VIEW": "שימוש בחיפוש הגלובלי",
+			"SEARCH_REINDEX": "בנייה מחדש של אינדקס החיפוש",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "צפייה בהגדרות אינדקס חיפוש",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "עריכת הגדרות אינדקס חיפוש",
+			"PRODUCTS_VIEW": "צפייה במוצרים",
+			"PRODUCTS_EDIT": "עריכת מוצרים",
+			"PRODUCTS_DELETE": "מחיקת מוצרים",
+			"PRODUCTS_BULK_IMPORT": "ייבוא מוצרים בכמות גדולה",
+			"COLLECTIONS_VIEW": "צפייה באוספים",
+			"COLLECTIONS_CREATE": "יצירת אוספים",
+			"COLLECTIONS_EDIT": "עריכת אוספים",
+			"COLLECTIONS_DELETE": "מחיקת אוספים",
+			"PRICE_LISTS_VIEW": "צפייה במחירונים",
+			"PRICE_LISTS_CREATE": "יצירת מחירונים",
+			"PRICE_LISTS_EDIT": "עריכת מחירונים",
+			"PRICE_LISTS_DELETE": "מחיקת מחירונים",
+			"PRICE_LISTS_SIMULATE": "הדמיית מחירונים",
+			"PRODUCT_PRICES_VIEW": "צפייה במחירי מוצרים",
+			"PRODUCT_PRICES_EDIT": "עריכת מחירי מוצרים",
+			"PRODUCT_PRICES_BULK_EDIT": "עריכה גורפת של מחירי מוצרים",
+			"EXCHANGE_RATES_VIEW": "צפייה בשערי חליפין",
+			"EXCHANGE_RATES_EDIT": "עריכת שערי חליפין",
+			"TAX_CATEGORIES_VIEW": "צפייה בקטגוריות מס",
+			"TAX_CATEGORIES_EDIT": "עריכת קטגוריות מס",
+			"TAX_RATES_VIEW": "צפייה בשיעורי מס",
+			"TAX_RATES_EDIT": "עריכת שיעורי מס",
+			"TAX_REGIMES_VIEW": "צפייה במשטרי מס",
+			"TAX_REGIMES_EDIT": "עריכת משטרי מס",
+			"PROMOTIONS_VIEW": "צפייה במבצעים",
+			"PROMOTIONS_CREATE": "יצירת מבצעים",
+			"PROMOTIONS_EDIT": "עריכת מבצעים",
+			"PROMOTIONS_DELETE": "מחיקת מבצעים",
+			"PROMOTIONS_SIMULATE": "הדמיית מבצעים",
+			"COUPONS_VIEW": "צפייה בקופונים",
+			"COUPONS_CREATE": "יצירת קופונים",
+			"COUPONS_EDIT": "עריכת קופונים",
+			"COUPONS_DELETE": "מחיקת קופונים",
+			"GIFT_CARDS_VIEW": "צפייה בכרטיסי מתנה",
+			"GIFT_CARDS_ISSUE": "הנפקת כרטיסי מתנה",
+			"GIFT_CARDS_EDIT": "עריכת כרטיסי מתנה",
+			"CARTS_VIEW": "צפייה בעגלות קניות",
+			"CARTS_EDIT": "עריכת עגלות קניות",
+			"CARTS_DELETE": "מחיקת עגלות קניות",
+			"CARTS_CHECKOUT": "השלמת התשלום",
+			"ORDERS_VIEW": "צפייה בהזמנות",
+			"ORDERS_CREATE": "יצירת הזמנות",
+			"ORDERS_EDIT": "עריכת הזמנות",
+			"ORDERS_CANCEL": "ביטול הזמנות",
+			"ORDERS_APPROVE": "אישור הזמנות",
+			"RETURNS_VIEW": "צפייה בהחזרות",
+			"RETURNS_CREATE": "יצירת החזרות",
+			"RETURNS_APPROVE": "אישור החזרות",
+			"RETURNS_REJECT": "דחיית החזרות",
+			"RETURNS_RECEIVE": "קבלת החזרות",
+			"CLAIMS_VIEW": "צפייה בתביעות",
+			"CLAIMS_CREATE": "יצירת תביעות",
+			"CLAIMS_RESOLVE": "יישוב תביעות",
+			"EXCHANGES_VIEW": "צפייה בהחלפות",
+			"EXCHANGES_CREATE": "יצירת החלפות",
+			"EXCHANGES_RESOLVE": "יישוב החלפות",
+			"SUBSCRIPTIONS_VIEW": "צפייה במינויים",
+			"SUBSCRIPTIONS_CREATE": "יצירת מינויים",
+			"SUBSCRIPTIONS_EDIT": "עריכת מינויים",
+			"SUBSCRIPTIONS_BILL": "חיוב מינויים",
+			"ENTITLEMENTS_VIEW": "צפייה בזכאויות",
+			"ENTITLEMENTS_GRANT": "הענקת זכאויות",
+			"ENTITLEMENTS_EDIT": "עריכת זכאויות",
+			"CONTACT_GROUPS_VIEW": "צפייה בקבוצות אנשי קשר",
+			"CONTACT_GROUPS_CREATE": "יצירת קבוצות אנשי קשר",
+			"CONTACT_GROUPS_EDIT": "עריכת קבוצות אנשי קשר",
+			"CONTACT_GROUPS_DELETE": "מחיקת קבוצות אנשי קשר",
+			"CONTACT_CREDENTIALS_VIEW": "צפייה באישורי גישה של אנשי קשר",
+			"CONTACT_CREDENTIALS_MANAGE": "ניהול אישורי גישה של אנשי קשר",
+			"CONTACT_CREDITS_EDIT": "עריכת אשראי של אנשי קשר",
+			"CONTACT_TAX_IDENTITY_EDIT": "עריכת זהויות מס של אנשי קשר",
+			"STOCK_VIEW": "צפייה במלאי",
+			"STOCK_EDIT": "עריכת מלאי",
+			"STOCK_RECONCILE": "התאמת מלאי",
+			"STOCK_TRANSFER_VIEW": "צפייה בהעברות מלאי",
+			"STOCK_TRANSFER_CREATE": "יצירת העברות מלאי",
+			"STOCK_TRANSFER_APPROVE": "אישור העברות מלאי",
+			"STOCK_TRANSFER_SHIP": "שילוח העברות מלאי",
+			"STOCK_TRANSFER_RECEIVE": "קבלת העברות מלאי",
+			"STOCK_TRANSFER_CANCEL": "ביטול העברות מלאי",
+			"WAREHOUSE_ZONES_VIEW": "צפייה באזורי מחסן",
+			"WAREHOUSE_ZONES_CREATE": "יצירת אזורי מחסן",
+			"WAREHOUSE_ZONES_EDIT": "עריכת אזורי מחסן",
+			"WAREHOUSE_ZONES_DELETE": "מחיקת אזורי מחסן",
+			"WAREHOUSE_BINS_VIEW": "צפייה בתאי מחסן",
+			"WAREHOUSE_BINS_CREATE": "יצירת תאי מחסן",
+			"WAREHOUSE_BINS_EDIT": "עריכת תאי מחסן",
+			"WAREHOUSE_BINS_DELETE": "מחיקת תאי מחסן",
+			"PICK_LISTS_VIEW": "צפייה ברשימות ליקוט",
+			"PICK_LISTS_EDIT": "עריכת רשימות ליקוט",
+			"PICK_LISTS_PICK": "ליקוט פריטים מרשימות ליקוט",
+			"PICK_LISTS_CANCEL": "ביטול רשימות ליקוט",
+			"FULFILLMENTS_VIEW": "צפייה במשלוחי הזמנות",
+			"FULFILLMENTS_CREATE": "יצירת משלוחי הזמנות",
+			"FULFILLMENTS_EDIT": "עריכת משלוחי הזמנות",
+			"SHIPPING_OPTIONS_VIEW": "צפייה באפשרויות משלוח",
+			"SHIPPING_OPTIONS_CREATE": "יצירת אפשרויות משלוח",
+			"SHIPPING_OPTIONS_EDIT": "עריכת אפשרויות משלוח",
+			"SHIPPING_OPTIONS_DELETE": "מחיקת אפשרויות משלוח",
+			"PURCHASE_ORDERS_VIEW": "צפייה בהזמנות רכש",
+			"PURCHASE_ORDERS_CREATE": "יצירת הזמנות רכש",
+			"PURCHASE_ORDERS_EDIT": "עריכת הזמנות רכש",
+			"PURCHASE_ORDERS_APPROVE": "אישור הזמנות רכש",
+			"PURCHASE_ORDERS_SEND": "שליחת הזמנות רכש",
+			"GOODS_RECEIPTS_VIEW": "צפייה בקבלות טובין",
+			"GOODS_RECEIPTS_CREATE": "יצירת קבלות טובין",
+			"VENDOR_TERMS_VIEW": "צפייה בתנאי ספקים",
+			"VENDOR_TERMS_EDIT": "עריכת תנאי ספקים",
+			"PAYMENT_PROVIDERS_VIEW": "צפייה בספקי תשלום",
+			"PAYMENT_PROVIDERS_CREATE": "יצירת ספקי תשלום",
+			"PAYMENT_PROVIDERS_EDIT": "עריכת ספקי תשלום",
+			"PAYMENT_PROVIDERS_DELETE": "מחיקת ספקי תשלום",
+			"PAYMENT_SESSIONS_VIEW": "צפייה בהפעלות תשלום",
+			"PAYMENT_SESSIONS_AUTHORIZE": "אישור מראש של תשלומים",
+			"PAYMENT_SESSIONS_CAPTURE": "גביית תשלומים",
+			"PAYMENT_SESSIONS_CANCEL": "ביטול הפעלות תשלום",
+			"REFUNDS_VIEW": "צפייה בהחזרים כספיים",
+			"REFUNDS_CREATE": "יצירת החזרים כספיים",
+			"REFUNDS_APPROVE": "אישור החזרים כספיים",
+			"PAYMENT_CALLBACKS_VIEW": "צפייה בקריאות חוזרות מספקים",
+			"PAYMENT_CALLBACKS_REPROCESS": "עיבוד מחדש של קריאות חוזרות מספקים",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "צפייה בבעלי חשבונות תשלום",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "עריכת בעלי חשבונות תשלום",
+			"PAYMENT_METHOD_TOKENS_VIEW": "צפייה באמצעי תשלום שמורים",
+			"PAYMENT_METHOD_TOKENS_EDIT": "עריכת אמצעי תשלום שמורים",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "חיוב אמצעי תשלום שמורים",
+			"SELLERS_VIEW": "צפייה במוכרים",
+			"SELLERS_CREATE": "יצירת מוכרים",
+			"SELLERS_EDIT": "עריכת מוכרים",
+			"SELLERS_DELETE": "מחיקת מוכרים",
+			"SELLER_OFFERINGS_VIEW": "צפייה בהצעות מוכרים",
+			"SELLER_OFFERINGS_EDIT": "עריכת הצעות מוכרים",
+			"SELLER_COMMISSIONS_VIEW": "צפייה בעמלות מוכרים",
+			"SELLER_COMMISSIONS_EDIT": "עריכת עמלות מוכרים",
+			"SELLER_TRANSACTIONS_VIEW": "צפייה בעסקאות מוכרים",
+			"SELLER_TRANSACTIONS_SETTLE": "סגירת עסקאות מוכרים",
+			"SELLER_SETTLEMENTS_VIEW": "צפייה בהתחשבנויות מוכרים",
+			"SELLER_SETTLEMENTS_EDIT": "עריכת התחשבנויות מוכרים",
+			"SELLER_PAYOUTS_VIEW": "צפייה בתשלומים למוכרים",
+			"SELLER_PAYOUTS_CREATE": "יצירת תשלומים למוכרים",
+			"SELLER_PAYOUTS_APPROVE": "אישור תשלומים למוכרים",
+			"SELLER_PAYOUTS_CANCEL": "ביטול תשלומים למוכרים",
 			"ORG_STRATEGIC_INITIATIVE_DELETE": "מחק מבוארה סטרטגית עבור הארגון"
 		},
 		"BILLING": "Billing",
@@ -4062,6 +4242,39 @@
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
 		"DASHBOARD": "לוח מחוונים",
+		"ORDERS": "הזמנות",
+		"CART": "עגלת קניות",
+		"CATALOG": "קטלוג",
+		"PRICING": "תמחור",
+		"TAX": "מס",
+		"PROMOTIONS": "מבצעים",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "יומן מלאי ושריונים",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "ניהול מחסן",
+		"FULFILLMENT": "הכנה ומשלוח",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "החזרות, תביעות והחלפות",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "מינויים וחיוב חוזר",
+		"PURCHASING": "רכש",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "זכאויות, הפעלות ומפתחות רישיון",
+		"MARKETPLACE": "מרקטפלייס",
+		"GLOBAL_SEARCH": "חיפוש גלובלי",
+		"MULTI-CURRENCY_PRICING": "תמחור בריבוי מטבעות",
+		"MULTI-REGION_PRICING": "תמחור בריבוי אזורים",
+		"MULTI-LOCATION_ALLOCATION": "הקצאה בריבוי מיקומים",
+		"B2B_CREDIT": "אשראי B2B",
+		"ORDER_APPROVALS": "אישורי הזמנות",
+		"GIFT_CARDS": "כרטיסי מתנה",
+		"WEBHOOKS": "וובהוקים",
+		"EXTERNAL_SEARCH_ENGINE": "מנוע חיפוש חיצוני",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "הגשת קריאות מאינדקס החיפוש",
+		"BACKORDERS": "הזמנות בהמתנה למלאי",
+		"PRICE_TIERS": "מדרגות מחיר",
+		"BULK_API": "API לעיבוד גורף",
+		"DATA_EXPORT": "ייצוא נתונים",
+		"TAX_PROVIDER": "ספק מיסוי",
+		"SUBSCRIPTION_BILLING_RUN": "הרצת חיוב מינויים",
+		"MARKETPLACE_PAYOUTS": "תשלומי מרקטפלייס",
+		"SCHEDULED_SELLER_PAYOUTS": "תשלומים מתוזמנים למוכרים",
 		"DOCUMENTS": "מסמכים"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4160,6 +4373,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "הזמנות, שורות הזמנה, שינויי הזמנה, ציר הזמן של ההזמנה והחיבור לחשבוניות."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "עגלות קניות ותהליך התשלום שהופך עגלה להזמנה."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "פרסום מוצרים ואוספים, מאפייני וריאנטים, קשרים ונקודת הקצה לעיבוד גורף של הקטלוג."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "מחירונים, מחירי מוצרים, העדפות מחיר, שערי חליפין ונקודות הקצה להדמיה."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "קטגוריות מס, שיעורי מס והאופן שבו נקבע המיסוי של מסמך."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "מבצעים, קמפיינים, קופונים ומנוע ההנחות שמעריך אותם."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "תנועות, שריונים, העברות, התראות, התאמות, ספירות ופיוס."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "נקודת הקצה של GraphQL והרזולברים שלה, עם אותן הגנות והרשאות כמו REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "אזורים, תאים, גלי ליקוט, רשימות ליקוט, אריזה ומניפסטים של מובילים."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "פרופילי משלוח ואפשרויות משלוח, משלוחי הזמנות, תוויות ותהליך האריזה והמניפסט."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "תהליכים שלאחר הרכישה: החזרות, תביעות והחלפות, עם הסיבות שלהן והשפעתן על המלאי."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "תוכניות, מינויים והיסטוריית החיובים; חיובים חוזרים מופעלים בדגל נפרד."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "הזמנות רכש, תנאי ספקים וקבלות טובין."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "זכאויות, ההפעלות שלהן והמפתחות שהונפקו עבורן."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "מוכרים, הצעות, עמלות, תשלומים והתחשבנויות."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "נקודות הקצה של חיפוש, הצעות ופילוח, והגדרות האינדקס שהן קוראות."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "יותר ממטבע אחד בערוץ: שימוש בשערי חליפין, עקיפת מטבע והמרת מטבע."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "יותר מאזור אחד בערוץ, עם מס ומשלוח ייעודיים לכל אזור."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "פיצול ההקצאה בין מיקומי מלאי, זמינות לפי מיקום והעברות ביניהם."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "מסגרות אשראי, תנאי תשלום, מגבלות הוצאה לתקופה ובדיקת האשראי בעת ביצוע ההזמנה."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "ניתוב הזמנה דרך מודול האישורים לפני שהיא מבוצעת."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "הנפקה ומימוש של כרטיסי מתנה, ונקודת הקצה לבדיקת יתרה."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "מינויי וובהוק יוצאים והמסירות שלהם."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "שימוש במנוע חיצוני במקום ספק מסד הנתונים המובנה לחיפוש הגלובלי."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "ניתוב קריאות להיטל החיפוש במקום לטבלאות המקור."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "מתן אפשרות להזמין יותר מהכמות במלאי, ותגובת הזמינות להזמנה בהמתנה."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "מחירים לפי טווחי כמות ומחירים לפי קבוצת אנשי קשר."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "נקודות הקצה ליצירה באצוות."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "ייצוא בהזרמה של הקטלוג ושל מסמכי ההזמנות."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "האצלת חישוב המס למנוע חיצוני באמצעות פרטי הגישה המוגדרים של האינטגרציה."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "הרצת החיוב החוזרת ומסלול החיוב האוטומטי."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "הכנה, אישור וביצוע של תשלום באמצעות ספק תשלומים."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "הרצות תשלום אוטומטיות לפי לוח התשלומים של המוכר."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "מרכז למסמכי החברה: העלאות, דפי ויקי, סקירה וידע לבינה מלאכותית"

@@ -2784,6 +2784,12 @@
 				"SETTINGS_INTEGRATIONS": "الإعدادات والتكاملات",
 				"DATA_LOGS": "البيانات والسجلات",
 				"DOCUMENTS": "المستندات",
+				"COMMERCE_PLATFORM": "التجارة: المنصة",
+				"COMMERCE_CATALOG": "التجارة: الكتالوج والأسعار",
+				"COMMERCE_ORDERS": "التجارة: الطلبات والعملاء",
+				"COMMERCE_FULFILLMENT": "التجارة: المخزون والشحن",
+				"COMMERCE_PAYMENTS": "التجارة: المدفوعات",
+				"COMMERCE_MARKETPLACE": "التجارة: السوق الإلكتروني",
 				"OTHER": "أخرى"
 			},
 			"ORG_PAYROLL_VIEW": "عرض كشوف الرواتب",
@@ -2853,6 +2859,180 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "إنشاء المبادرة الاستراتيجية للمؤسسة",
 			"ORG_STRATEGIC_INITIATIVE_READ": "عرض المبادرة الاستراتيجية للمؤسسة",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "تحديث المبادرة الاستراتيجية للمؤسسة",
+			"CHANNELS_VIEW": "عرض القنوات",
+			"CHANNELS_CREATE": "إنشاء القنوات",
+			"CHANNELS_EDIT": "تعديل القنوات",
+			"CHANNELS_DELETE": "حذف القنوات",
+			"REGIONS_VIEW": "عرض المناطق",
+			"REGIONS_CREATE": "إنشاء المناطق",
+			"REGIONS_EDIT": "تعديل المناطق",
+			"REGIONS_DELETE": "حذف المناطق",
+			"RULES_VIEW": "عرض القواعد",
+			"RULES_EDIT": "تعديل القواعد",
+			"SEQUENCES_VIEW": "عرض تسلسلات الترقيم",
+			"SEQUENCES_EDIT": "تعديل تسلسلات الترقيم",
+			"UNITS_VIEW": "عرض وحدات القياس",
+			"UNITS_EDIT": "تعديل وحدات القياس",
+			"PAYMENT_TERMS_VIEW": "عرض شروط الدفع",
+			"PAYMENT_TERMS_EDIT": "تعديل شروط الدفع",
+			"PROVIDERS_VIEW": "عرض المزوّدين",
+			"OPERATIONS_VIEW": "عرض عمليات الخلفية",
+			"OPERATIONS_CANCEL": "إلغاء عمليات الخلفية",
+			"EVENT_OUTBOX_VIEW": "عرض صندوق صادر الأحداث",
+			"EVENT_OUTBOX_RETRY": "إعادة محاولة رسائل صندوق صادر الأحداث",
+			"IDEMPOTENCY_KEYS_VIEW": "عرض مفاتيح عدم التكرار",
+			"IDEMPOTENCY_KEYS_DELETE": "حذف مفاتيح عدم التكرار",
+			"WEBHOOKS_VIEW": "عرض خطافات الويب",
+			"WEBHOOKS_CREATE": "إنشاء خطافات الويب",
+			"WEBHOOKS_EDIT": "تعديل خطافات الويب",
+			"WEBHOOKS_DELETE": "حذف خطافات الويب",
+			"WEBHOOK_DELIVERIES_RETRY": "إعادة محاولة تسليم خطافات الويب",
+			"SEARCH_VIEW": "استخدام البحث الشامل",
+			"SEARCH_REINDEX": "إعادة بناء فهرس البحث",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "عرض تعريفات فهارس البحث",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "تعديل تعريفات فهارس البحث",
+			"PRODUCTS_VIEW": "عرض المنتجات",
+			"PRODUCTS_EDIT": "تعديل المنتجات",
+			"PRODUCTS_DELETE": "حذف المنتجات",
+			"PRODUCTS_BULK_IMPORT": "استيراد المنتجات بالجملة",
+			"COLLECTIONS_VIEW": "عرض المجموعات",
+			"COLLECTIONS_CREATE": "إنشاء المجموعات",
+			"COLLECTIONS_EDIT": "تعديل المجموعات",
+			"COLLECTIONS_DELETE": "حذف المجموعات",
+			"PRICE_LISTS_VIEW": "عرض قوائم الأسعار",
+			"PRICE_LISTS_CREATE": "إنشاء قوائم الأسعار",
+			"PRICE_LISTS_EDIT": "تعديل قوائم الأسعار",
+			"PRICE_LISTS_DELETE": "حذف قوائم الأسعار",
+			"PRICE_LISTS_SIMULATE": "محاكاة قوائم الأسعار",
+			"PRODUCT_PRICES_VIEW": "عرض أسعار المنتجات",
+			"PRODUCT_PRICES_EDIT": "تعديل أسعار المنتجات",
+			"PRODUCT_PRICES_BULK_EDIT": "تعديل أسعار المنتجات بالجملة",
+			"EXCHANGE_RATES_VIEW": "عرض أسعار الصرف",
+			"EXCHANGE_RATES_EDIT": "تعديل أسعار الصرف",
+			"TAX_CATEGORIES_VIEW": "عرض الفئات الضريبية",
+			"TAX_CATEGORIES_EDIT": "تعديل الفئات الضريبية",
+			"TAX_RATES_VIEW": "عرض معدلات الضرائب",
+			"TAX_RATES_EDIT": "تعديل معدلات الضرائب",
+			"TAX_REGIMES_VIEW": "عرض الأنظمة الضريبية",
+			"TAX_REGIMES_EDIT": "تعديل الأنظمة الضريبية",
+			"PROMOTIONS_VIEW": "عرض العروض الترويجية",
+			"PROMOTIONS_CREATE": "إنشاء العروض الترويجية",
+			"PROMOTIONS_EDIT": "تعديل العروض الترويجية",
+			"PROMOTIONS_DELETE": "حذف العروض الترويجية",
+			"PROMOTIONS_SIMULATE": "محاكاة العروض الترويجية",
+			"COUPONS_VIEW": "عرض القسائم",
+			"COUPONS_CREATE": "إنشاء القسائم",
+			"COUPONS_EDIT": "تعديل القسائم",
+			"COUPONS_DELETE": "حذف القسائم",
+			"GIFT_CARDS_VIEW": "عرض بطاقات الهدايا",
+			"GIFT_CARDS_ISSUE": "إصدار بطاقات الهدايا",
+			"GIFT_CARDS_EDIT": "تعديل بطاقات الهدايا",
+			"CARTS_VIEW": "عرض سلال التسوق",
+			"CARTS_EDIT": "تعديل سلال التسوق",
+			"CARTS_DELETE": "حذف سلال التسوق",
+			"CARTS_CHECKOUT": "إتمام الشراء",
+			"ORDERS_VIEW": "عرض الطلبات",
+			"ORDERS_CREATE": "إنشاء الطلبات",
+			"ORDERS_EDIT": "تعديل الطلبات",
+			"ORDERS_CANCEL": "إلغاء الطلبات",
+			"ORDERS_APPROVE": "اعتماد الطلبات",
+			"RETURNS_VIEW": "عرض المرتجعات",
+			"RETURNS_CREATE": "إنشاء المرتجعات",
+			"RETURNS_APPROVE": "اعتماد المرتجعات",
+			"RETURNS_REJECT": "رفض المرتجعات",
+			"RETURNS_RECEIVE": "استلام المرتجعات",
+			"CLAIMS_VIEW": "عرض المطالبات",
+			"CLAIMS_CREATE": "إنشاء المطالبات",
+			"CLAIMS_RESOLVE": "تسوية المطالبات",
+			"EXCHANGES_VIEW": "عرض الاستبدالات",
+			"EXCHANGES_CREATE": "إنشاء الاستبدالات",
+			"EXCHANGES_RESOLVE": "تسوية الاستبدالات",
+			"SUBSCRIPTIONS_VIEW": "عرض الاشتراكات",
+			"SUBSCRIPTIONS_CREATE": "إنشاء الاشتراكات",
+			"SUBSCRIPTIONS_EDIT": "تعديل الاشتراكات",
+			"SUBSCRIPTIONS_BILL": "فوترة الاشتراكات",
+			"ENTITLEMENTS_VIEW": "عرض الاستحقاقات",
+			"ENTITLEMENTS_GRANT": "منح الاستحقاقات",
+			"ENTITLEMENTS_EDIT": "تعديل الاستحقاقات",
+			"CONTACT_GROUPS_VIEW": "عرض مجموعات جهات الاتصال",
+			"CONTACT_GROUPS_CREATE": "إنشاء مجموعات جهات الاتصال",
+			"CONTACT_GROUPS_EDIT": "تعديل مجموعات جهات الاتصال",
+			"CONTACT_GROUPS_DELETE": "حذف مجموعات جهات الاتصال",
+			"CONTACT_CREDENTIALS_VIEW": "عرض بيانات اعتماد جهات الاتصال",
+			"CONTACT_CREDENTIALS_MANAGE": "إدارة بيانات اعتماد جهات الاتصال",
+			"CONTACT_CREDITS_EDIT": "تعديل ائتمان جهات الاتصال",
+			"CONTACT_TAX_IDENTITY_EDIT": "تعديل الهويات الضريبية لجهات الاتصال",
+			"STOCK_VIEW": "عرض المخزون",
+			"STOCK_EDIT": "تعديل المخزون",
+			"STOCK_RECONCILE": "تسوية المخزون",
+			"STOCK_TRANSFER_VIEW": "عرض تحويلات المخزون",
+			"STOCK_TRANSFER_CREATE": "إنشاء تحويلات المخزون",
+			"STOCK_TRANSFER_APPROVE": "اعتماد تحويلات المخزون",
+			"STOCK_TRANSFER_SHIP": "شحن تحويلات المخزون",
+			"STOCK_TRANSFER_RECEIVE": "استلام تحويلات المخزون",
+			"STOCK_TRANSFER_CANCEL": "إلغاء تحويلات المخزون",
+			"WAREHOUSE_ZONES_VIEW": "عرض مناطق المستودع",
+			"WAREHOUSE_ZONES_CREATE": "إنشاء مناطق المستودع",
+			"WAREHOUSE_ZONES_EDIT": "تعديل مناطق المستودع",
+			"WAREHOUSE_ZONES_DELETE": "حذف مناطق المستودع",
+			"WAREHOUSE_BINS_VIEW": "عرض مواقع المستودع",
+			"WAREHOUSE_BINS_CREATE": "إنشاء مواقع المستودع",
+			"WAREHOUSE_BINS_EDIT": "تعديل مواقع المستودع",
+			"WAREHOUSE_BINS_DELETE": "حذف مواقع المستودع",
+			"PICK_LISTS_VIEW": "عرض قوائم الانتقاء",
+			"PICK_LISTS_EDIT": "تعديل قوائم الانتقاء",
+			"PICK_LISTS_PICK": "انتقاء العناصر من قوائم الانتقاء",
+			"PICK_LISTS_CANCEL": "إلغاء قوائم الانتقاء",
+			"FULFILLMENTS_VIEW": "عرض عمليات التنفيذ",
+			"FULFILLMENTS_CREATE": "إنشاء عمليات التنفيذ",
+			"FULFILLMENTS_EDIT": "تعديل عمليات التنفيذ",
+			"SHIPPING_OPTIONS_VIEW": "عرض خيارات الشحن",
+			"SHIPPING_OPTIONS_CREATE": "إنشاء خيارات الشحن",
+			"SHIPPING_OPTIONS_EDIT": "تعديل خيارات الشحن",
+			"SHIPPING_OPTIONS_DELETE": "حذف خيارات الشحن",
+			"PURCHASE_ORDERS_VIEW": "عرض أوامر الشراء",
+			"PURCHASE_ORDERS_CREATE": "إنشاء أوامر الشراء",
+			"PURCHASE_ORDERS_EDIT": "تعديل أوامر الشراء",
+			"PURCHASE_ORDERS_APPROVE": "اعتماد أوامر الشراء",
+			"PURCHASE_ORDERS_SEND": "إرسال أوامر الشراء",
+			"GOODS_RECEIPTS_VIEW": "عرض إيصالات استلام البضائع",
+			"GOODS_RECEIPTS_CREATE": "إنشاء إيصالات استلام البضائع",
+			"VENDOR_TERMS_VIEW": "عرض شروط الموردين",
+			"VENDOR_TERMS_EDIT": "تعديل شروط الموردين",
+			"PAYMENT_PROVIDERS_VIEW": "عرض مزوّدي الدفع",
+			"PAYMENT_PROVIDERS_CREATE": "إنشاء مزوّدي الدفع",
+			"PAYMENT_PROVIDERS_EDIT": "تعديل مزوّدي الدفع",
+			"PAYMENT_PROVIDERS_DELETE": "حذف مزوّدي الدفع",
+			"PAYMENT_SESSIONS_VIEW": "عرض جلسات الدفع",
+			"PAYMENT_SESSIONS_AUTHORIZE": "تفويض المدفوعات",
+			"PAYMENT_SESSIONS_CAPTURE": "تحصيل المدفوعات",
+			"PAYMENT_SESSIONS_CANCEL": "إلغاء جلسات الدفع",
+			"REFUNDS_VIEW": "عرض المبالغ المستردة",
+			"REFUNDS_CREATE": "إنشاء المبالغ المستردة",
+			"REFUNDS_APPROVE": "اعتماد المبالغ المستردة",
+			"PAYMENT_CALLBACKS_VIEW": "عرض استدعاءات المزوّدين",
+			"PAYMENT_CALLBACKS_REPROCESS": "إعادة معالجة استدعاءات المزوّدين",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "عرض أصحاب حسابات الدفع",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "تعديل أصحاب حسابات الدفع",
+			"PAYMENT_METHOD_TOKENS_VIEW": "عرض طرق الدفع المحفوظة",
+			"PAYMENT_METHOD_TOKENS_EDIT": "تعديل طرق الدفع المحفوظة",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "الخصم من طرق الدفع المحفوظة",
+			"SELLERS_VIEW": "عرض البائعين",
+			"SELLERS_CREATE": "إنشاء البائعين",
+			"SELLERS_EDIT": "تعديل البائعين",
+			"SELLERS_DELETE": "حذف البائعين",
+			"SELLER_OFFERINGS_VIEW": "عرض عروض البائعين",
+			"SELLER_OFFERINGS_EDIT": "تعديل عروض البائعين",
+			"SELLER_COMMISSIONS_VIEW": "عرض عمولات البائعين",
+			"SELLER_COMMISSIONS_EDIT": "تعديل عمولات البائعين",
+			"SELLER_TRANSACTIONS_VIEW": "عرض معاملات البائعين",
+			"SELLER_TRANSACTIONS_SETTLE": "تسوية معاملات البائعين",
+			"SELLER_SETTLEMENTS_VIEW": "عرض تسويات البائعين",
+			"SELLER_SETTLEMENTS_EDIT": "تعديل تسويات البائعين",
+			"SELLER_PAYOUTS_VIEW": "عرض مدفوعات البائعين",
+			"SELLER_PAYOUTS_CREATE": "إنشاء مدفوعات البائعين",
+			"SELLER_PAYOUTS_APPROVE": "اعتماد مدفوعات البائعين",
+			"SELLER_PAYOUTS_CANCEL": "إلغاء مدفوعات البائعين",
 			"ORG_STRATEGIC_INITIATIVE_DELETE": "حذف المبادرة الاستراتيجية للمؤسسة"
 		},
 		"BILLING": "الفوترة",
@@ -4030,6 +4210,39 @@
 		"TIME_TRACKING": "تتتبع الوقت",
 		"ESTIMATE": "تقدير",
 		"DASHBOARD": "لوحة القيادة",
+		"ORDERS": "الطلبات",
+		"CART": "سلة التسوق",
+		"CATALOG": "الكتالوج",
+		"PRICING": "التسعير",
+		"TAX": "الضرائب",
+		"PROMOTIONS": "العروض الترويجية",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "سجل المخزون والحجوزات",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "إدارة المستودعات",
+		"FULFILLMENT": "تنفيذ الطلبات",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "المرتجعات والمطالبات والاستبدالات",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "الاشتراكات والفوترة المتكررة",
+		"PURCHASING": "المشتريات",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "الاستحقاقات والتفعيلات ومفاتيح الترخيص",
+		"MARKETPLACE": "السوق الإلكتروني",
+		"GLOBAL_SEARCH": "البحث الشامل",
+		"MULTI-CURRENCY_PRICING": "التسعير متعدد العملات",
+		"MULTI-REGION_PRICING": "التسعير متعدد المناطق",
+		"MULTI-LOCATION_ALLOCATION": "التخصيص متعدد المواقع",
+		"B2B_CREDIT": "ائتمان B2B",
+		"ORDER_APPROVALS": "اعتمادات الطلبات",
+		"GIFT_CARDS": "بطاقات الهدايا",
+		"WEBHOOKS": "خطافات الويب",
+		"EXTERNAL_SEARCH_ENGINE": "محرك بحث خارجي",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "تقديم القراءات من فهرس البحث",
+		"BACKORDERS": "الطلبات المؤجلة",
+		"PRICE_TIERS": "شرائح الأسعار",
+		"BULK_API": "واجهة API المجمّعة",
+		"DATA_EXPORT": "تصدير البيانات",
+		"TAX_PROVIDER": "مزوّد الضرائب",
+		"SUBSCRIPTION_BILLING_RUN": "دورة فوترة الاشتراكات",
+		"MARKETPLACE_PAYOUTS": "مدفوعات السوق الإلكتروني",
+		"SCHEDULED_SELLER_PAYOUTS": "مدفوعات البائعين المجدولة",
 		"DOCUMENTS": "المستندات"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4128,6 +4341,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "اذهب إلى لوحة التحكم ، إدارة إحصاءات الموظفين ، لوحة تتبع الوقت"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "الطلبات وبنود الطلبات وتغييرات الطلبات والجدول الزمني للطلب والربط بالفواتير."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "سلال التسوق وجلسة الدفع التي تحوّل السلة إلى طلب."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "نشر المنتجات والمجموعات وخصائص المتغيرات والعلاقات ونقطة النهاية المجمّعة للكتالوج."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "قوائم الأسعار وأسعار المنتجات وتفضيلات الأسعار وأسعار الصرف ونقاط نهاية المحاكاة."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "الفئات الضريبية ومعدلات الضرائب وآلية تحديد الضريبة المطبقة على المستند."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "العروض الترويجية والحملات والقسائم ومحرك الخصومات الذي يقيّمها."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "الحركات والحجوزات والتحويلات والتنبيهات والتسويات والجرد والمطابقة."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "نقطة نهاية GraphQL ومحلّلاتها، بنفس الحمايات والأذونات المطبقة على REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "المناطق ومواقع التخزين وموجات الانتقاء وقوائم الانتقاء والتغليف وبيانات شحن الناقلين."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "ملفات الشحن وخياراته وعمليات التنفيذ والملصقات وسير عمل التغليف وبيانات الشحن."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "عمليات ما بعد الشراء: المرتجعات والمطالبات والاستبدالات، مع أسبابها وآثارها على المخزون."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "الخطط والاشتراكات وسجل الفوترة؛ أما الرسوم المتكررة فلها خيار تفعيل منفصل."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "أوامر الشراء وشروط الموردين وإيصالات استلام البضائع."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "الاستحقاقات وتفعيلاتها والمفاتيح الصادرة لها."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "البائعون والعروض والعمولات والمدفوعات والتسويات."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "نقاط نهاية البحث والاقتراحات والتصفية وتعريفات الفهارس التي تقرأ منها."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "أكثر من عملة واحدة في القناة: استخدام أسعار الصرف وتجاوزات العملة وتحويل العملات."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "أكثر من منطقة واحدة لكل قناة، مع ضرائب وشحن خاصة بكل منطقة."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "تقسيم التخصيص بين مواقع المخزون، والتوفر لكل موقع، والتحويلات بينها."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "حدود الائتمان وشروط التسوية وحدود الإنفاق الدورية والتحقق من الائتمان عند تقديم الطلب."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "تمرير الطلب عبر وحدة الاعتمادات قبل تقديمه."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "إصدار بطاقات الهدايا واستردادها، ونقطة نهاية الاستعلام عن الرصيد."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "اشتراكات خطافات الويب الصادرة وعمليات تسليمها."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "استخدام محرك خارجي بدلاً من مزوّد قاعدة البيانات المدمج في البحث الشامل."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "توجيه عمليات القراءة إلى إسقاط البحث بدلاً من الجداول المصدر."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "السماح بطلب كمية تزيد على المتوفر، واستجابة التوفر للطلبات المؤجلة."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "أسعار حسب شرائح الكمية وأسعار حسب مجموعة جهات الاتصال."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "نقاط نهاية الإنشاء على دفعات."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "تصدير متدفق للكتالوج ولمستندات الطلبات."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "تفويض حساب الضرائب إلى محرك خارجي عبر بيانات اعتماد التكامل المهيأة."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "دورة الفوترة المتكررة ومسار الخصم التلقائي."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "إعداد دفعة واعتمادها وتنفيذها عبر مزوّد دفع."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "عمليات دفع تلقائية وفق جدول مدفوعات البائع."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "مركز موحّد لمستندات الشركة: التحميلات وصفحات الويكي والمراجعة ومعرفة الذكاء الاصطناعي"
