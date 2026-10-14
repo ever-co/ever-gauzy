@@ -2775,6 +2775,67 @@ describe('SubscriptionService — the opening period is billed, from creation to
 		]);
 	});
 
+	it('reads the opening cycle on the activation’s own transaction, not on a second connection', async () => {
+		// Greptile on #10635: the activation holds a transaction connection while it moves the cycle; a read
+		// through the service's default repository needs a second one, which a pool of one never frees.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const cycles = fixture.billingService.typeOrmSubscriptionBillingRepository as unknown as Row;
+		const outside = [jest.spyOn(cycles, 'find'), jest.spyOn(cycles, 'findOne')];
+
+		await new Promise((resolve) => setTimeout(resolve, 5));
+		const activated = await fixture.service.activate(created.id);
+
+		expect(outside.flatMap((spy) => spy.mock.calls)).toEqual([]);
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ periodStart: activated.currentPeriodStart, periodEnd: activated.currentPeriodEnd })
+		]);
+	});
+
+	it('keeps the opening period owed when a subscription is paused and resumed before its first run', async () => {
+		// Greptile on #10635: resuming set the next billing instant to the end of the current period, as if it
+		// had been paid — the first run then billed the period after it and the opening cycle stayed pending.
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			activate: true,
+			items: [{ variantId: VARIANT, unitPrice: '120' }]
+		});
+		const start = new Date(created.currentPeriodStart as Date);
+		const [opening] = fixture.billings(created.id);
+
+		await fixture.service.pause(created.id, { reason: 'customer asked' });
+		// Resumed ten days in: the opening period was not paid for, so it starts at the resume, as an
+		// activation's would, and its cycle moves with it.
+		const resumedAt = new Date(start.getTime() + 10 * 24 * 60 * 60 * 1000);
+		const resumed = await fixture.service.resume(created.id, resumedAt);
+
+		expect(resumed).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			currentPeriodStart: resumedAt,
+			currentPeriodEnd: monthAfter(resumedAt),
+			nextBillingAt: resumedAt
+		});
+
+		const run = await fixture.service.runBilling({ asOf: resumedAt });
+
+		expect(run).toMatchObject({ examined: 1, billed: 1, failed: 0 });
+		expect(run.results[0]).toMatchObject({ billingId: opening.id, periodStart: resumedAt });
+		expect(fixture.orderCalls).toHaveLength(1);
+		expect(fixture.billings(created.id)).toEqual([
+			expect.objectContaining({ id: opening.id, status: SubscriptionBillingStatus.PAID, periodStart: resumedAt })
+		]);
+	});
+
 	it('does not move a cycle that records an attempt', async () => {
 		const fixture = subscriptionFixture({
 			billings: [

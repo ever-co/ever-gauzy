@@ -291,7 +291,9 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			);
 		}
 
-		const billing = await this.findOneScoped(id);
+		// Every statement on the caller's transaction when there is one: a read on a second connection waits
+		// for one the transaction may be holding (a pool of one never frees it).
+		const billing = await this.findOneScoped(id, manager);
 
 		if (billing.status !== SubscriptionBillingStatus.PENDING || billing.orderId || billing.attemptCount) {
 			return billing;
@@ -300,18 +302,15 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 		// Predicated on the cycle still billing nothing, so a charge that reached it after the read above
 		// is never moved off the period it was charged for. Losing that race leaves the cycle where the
 		// charge put it, which is the answer for a cycle that records money billed.
-		const cycles = manager?.getRepository(SubscriptionBilling);
-
 		await this.writeIf(
 			id,
 			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), attemptCount: 0 },
 			async () => null,
 			{ periodStart: period.start, periodEnd: period.end, dueAt: period.start },
-			cycles
+			this.cyclesOn(manager)
 		);
 
-		// Read back on the transaction that wrote it, which is the only one that sees the move yet.
-		return cycles ? ((await cycles.findOne({ where: { id, ...currentScope() } })) ?? billing) : await this.findOneScoped(id);
+		return await this.findOneScoped(id, manager);
 	}
 
 	/**
@@ -340,10 +339,11 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 
 	/**
 	 * @param subscriptionId The subscription to read the history of.
+	 * @param manager The caller's transaction, when the read is one of its statements.
 	 * @returns Its cycles, newest period first.
 	 */
-	public async findForSubscription(subscriptionId: ID): Promise<SubscriptionBilling[]> {
-		return await this.typeOrmSubscriptionBillingRepository.find({
+	public async findForSubscription(subscriptionId: ID, manager?: EntityManager): Promise<SubscriptionBilling[]> {
+		return await this.cyclesOn(manager).find({
 			where: {
 				subscriptionId,
 				...currentScope()
@@ -499,6 +499,14 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 * @param cycles Where the write runs: the caller's transaction, or this service's own repository.
 	 * @returns The update result.
 	 */
+	/**
+	 * @param manager The caller's transaction, when there is one.
+	 * @returns The cycles' repository on that transaction, or this service's own.
+	 */
+	private cyclesOn(manager?: EntityManager): Repository<SubscriptionBilling> {
+		return manager ? manager.getRepository(SubscriptionBilling) : this.typeOrmSubscriptionBillingRepository;
+	}
+
 	private async writeIf(
 		id: ID,
 		condition: FindOptionsWhere<SubscriptionBilling>,
@@ -526,11 +534,12 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 * Reads a cycle inside the caller's tenant and organization.
 	 *
 	 * @param id The cycle to read.
+	 * @param manager The caller's transaction, when the read is one of its statements.
 	 * @returns The cycle.
 	 * @throws NotFoundException when it is not the caller's.
 	 */
-	public async findOneScoped(id: ID): Promise<SubscriptionBilling> {
-		const billing = await this.typeOrmSubscriptionBillingRepository.findOne({
+	public async findOneScoped(id: ID, manager?: EntityManager): Promise<SubscriptionBilling> {
+		const billing = await this.cyclesOn(manager).findOne({
 			where: {
 				id,
 				...currentScope()

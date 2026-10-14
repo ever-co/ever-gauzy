@@ -540,7 +540,9 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * Resumes a paused subscription.
 	 *
 	 * The next billing instant is the later of now and the end of the period the customer already
-	 * paid for, so a pause never refunds time and never charges twice for it.
+	 * paid for, so a pause never refunds time and never charges twice for it. An opening period that
+	 * was never billed was not paid for: it starts again at the resume, as an activation's does, and its
+	 * cycle moves with it, so the first run bills it instead of the period after it.
 	 *
 	 * @param id The subscription to resume.
 	 * @param at The instant to resume at; defaults to now, and is used by the billing run when a
@@ -555,6 +557,36 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
 
 		const now = at ?? new Date();
+
+		if (this.owesOpeningPeriod(subscription)) {
+			const plan = await this.planService.findOneScoped(subscription.planId);
+			const opened = new Date(subscription.currentPeriodStart as Date);
+			const period = periodFrom(now.getTime() > opened.getTime() ? now : opened, this.planService.cadenceOf(plan));
+
+			// One transaction, the claim first, as in `activate`: no run sees the subscription `ACTIVE`
+			// before its opening cycle is on the period it now starts, and a refused claim moves nothing.
+			await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+				await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+					where: { ...currentScope(), status: SubscriptionStatus.PAUSED },
+					id,
+					expectation,
+					patch: {
+						status: SubscriptionStatus.ACTIVE,
+						pausedUntil: null,
+						currentPeriodStart: period.start,
+						currentPeriodEnd: period.end,
+						nextBillingAt: period.start
+					}
+				});
+
+				await this.moveOpeningCycle(subscription, period, manager);
+			});
+
+			await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt: period.start });
+
+			return await this.findOneScoped(id);
+		}
+
 		const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
 		const nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
 
@@ -576,6 +608,21 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		});
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Whether the subscription's current period is its opening one and nothing has billed it yet: it was
+	 * never billed, and the next run bills the current period (from its start) rather than the one after it.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @returns True when the opening period is still owed.
+	 */
+	private owesOpeningPeriod(subscription: Subscription): boolean {
+		if ((subscription.billingCycleCount ?? 0) > 0 || !subscription.nextBillingAt || !subscription.currentPeriodStart) {
+			return false;
+		}
+
+		return new Date(subscription.nextBillingAt).getTime() <= new Date(subscription.currentPeriodStart).getTime();
 	}
 
 	/**
@@ -2182,7 +2229,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return;
 		}
 
-		const opening = (await this.billingService.findForSubscription(subscription.id)).find(
+		// Read on the activation's transaction: a second connection may be one the transaction is holding.
+		const opening = (await this.billingService.findForSubscription(subscription.id, manager)).find(
 			(cycle) => cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount
 		);
 
