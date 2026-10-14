@@ -739,8 +739,9 @@ for (const file of [...filesUnder(CORE), ...filesUnder(PLUGINS)].sort()) {
 	dump?.push({ file: path, ...read });
 	if (isCore) coreCounts.controllers++;
 
-	const update = read.routes.update;
-	const updateWrites = update && !update.removed && update.grants.some((grant) => !READ_GRANT.test(grant));
+	// What `update` resolves to; a class that removed the route (or never had it) states none.
+	const updateGrants = read.routes.update && !read.routes.update.removed ? read.routes.update.grants : [];
+	const updateWrites = updateGrants.some((grant) => !READ_GRANT.test(grant));
 
 	for (const [handler, route] of Object.entries(read.routes)) {
 		if (route.removed || route.open) continue;
@@ -759,7 +760,7 @@ for (const file of [...filesUnder(CORE), ...filesUnder(PLUGINS)].sort()) {
 			if (route.grants.every((grant) => READ_GRANT.test(grant)) && updateWrites) {
 				coreFailures.push(
 					`${path} -> \`${handler}\` stands on ${route.grants.join(' | ')}, a read grant, while \`update\` requires ` +
-						`${update.grants.join(' | ')} — the pair must require the controller's own edit grant (owner decision 5)`
+						`${updateGrants.join(' | ')} — the pair must require the controller's own edit grant (owner decision 5)`
 				);
 			}
 			continue;
