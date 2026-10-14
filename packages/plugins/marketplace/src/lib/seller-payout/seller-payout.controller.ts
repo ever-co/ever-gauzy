@@ -20,6 +20,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -27,6 +28,8 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { SellerPayout } from './seller-payout.entity';
 import { SellerPayoutService } from './seller-payout.service';
 import { CreateSellerPayoutDTO, UpdateSellerPayoutDTO } from './dto';
@@ -40,7 +43,9 @@ import { ISellerScope } from '../seller-scope/seller-scope';
  * approving one moves money — a tenant that wants four-eyes control assigns the two to different roles.
  */
 @ApiTags('SellerPayout')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
+@FeatureFlag(MarketplaceFeatures.PAYOUTS)
 @Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 @Controller('/seller-payouts')
 export class SellerPayoutController extends CrudController<SellerPayout> {

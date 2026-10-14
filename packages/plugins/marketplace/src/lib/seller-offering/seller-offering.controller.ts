@@ -27,6 +27,7 @@ import {
 	CrudController,
 	IBulkItemContext,
 	Idempotent,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -35,6 +36,8 @@ import {
 	UseValidationPipe,
 	bulkOptionsOf
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import type { BulkItemRequest } from '@gauzy/core';
 import { SellerOffering } from './seller-offering.entity';
 import { SellerOfferingService } from './seller-offering.service';
@@ -54,7 +57,8 @@ import { ISellerScope } from '../seller-scope/seller-scope';
  * the scope is what the access guard resolves and every service method takes as its first argument.
  */
 @ApiTags('SellerOffering')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
 @Permissions(PermissionsEnum.SELLER_OFFERINGS_VIEW)
 @Controller('/seller-offerings')
 export class SellerOfferingController extends CrudController<SellerOffering> {

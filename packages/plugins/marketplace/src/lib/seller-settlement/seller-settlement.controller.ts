@@ -20,6 +20,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -27,6 +28,8 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { SellerSettlement } from './seller-settlement.entity';
 import { SellerSettlementService } from './seller-settlement.service';
 import { CreateSellerSettlementDTO, UpdateSellerSettlementDTO } from './dto';
@@ -40,7 +43,9 @@ import { ISellerScope } from '../seller-scope/seller-scope';
  * rather than a create one: the platform is transcribing a report, not authoring a document.
  */
 @ApiTags('SellerSettlement')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
+@FeatureFlag(MarketplaceFeatures.PAYOUTS)
 @Permissions(PermissionsEnum.SELLER_SETTLEMENTS_VIEW)
 @Controller('/seller-settlements')
 export class SellerSettlementController extends CrudController<SellerSettlement> {

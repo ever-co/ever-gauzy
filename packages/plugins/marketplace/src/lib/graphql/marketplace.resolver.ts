@@ -1,5 +1,5 @@
 import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { applyDecorators, UseGuards } from '@nestjs/common';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import type { ID as Id, ISellerPayoutRunResult } from '@gauzy/contracts';
 import {
@@ -41,6 +41,7 @@ import { SellerPayoutLineService } from '../seller-payout-line/seller-payout-lin
 import { SellerSettlement } from '../seller-settlement/seller-settlement.entity';
 import { SellerSettlementService } from '../seller-settlement/seller-settlement.service';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { ISellerScope } from '../seller-scope/seller-scope';
 import {
 	BulkSellerOfferingsPayloadType,
@@ -66,6 +67,20 @@ import {
 	SellerTransactionType,
 	SellerType
 } from './marketplace.types';
+
+/**
+ * The codes a payout, payout-line or settlement field requires: the endpoint, the marketplace and its
+ * payouts, which is what `SellerPayoutController`, `SellerPayoutLineController` and
+ * `SellerSettlementController` require of their routes — and `sellerStatement`, which carries the
+ * seller's payouts and settlements, as `GET /sellers/:id/statement` does. A field-level statement replaces the class's
+ * codes for that field, so all three are stated here.
+ */
+const MarketplacePayoutsGate = () =>
+	applyDecorators(
+		FeatureFlag(FEATURE_GRAPHQL),
+		FeatureFlag(MarketplaceFeatures.MARKETPLACE),
+		FeatureFlag(MarketplaceFeatures.PAYOUTS)
+	);
 
 /**
  * The marketplace in GraphQL, with the parity the REST surface has.
@@ -121,10 +136,17 @@ import {
  * the same `withDeleted` argument and hand it to the read, which forwards it into `paginate`. A field that
  * declared the argument and dropped it would answer the live rows however the caller asked, so a client
  * would be told it could ask and be given the same page either way.
+ *
+ * **The marketplace's own switches are the controllers'.** Every field requires `FEATURE_MARKETPLACE`
+ * beside the endpoint's `FEATURE_GRAPHQL`, and the payout, payout-line and settlement fields require
+ * `FEATURE_MARKETPLACE_PAYOUTS` as well, as their routes do (review R4-11: the marketplace answered on
+ * every tenant whatever its switch said). The guard reads a field's codes *instead of* its class's, so
+ * those fields restate all three through {@link MarketplacePayoutsGate}.
  */
 @Resolver(() => SellerType)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
 export class SellerEntityResolver {
 	constructor(
 		private readonly sellerService: SellerService,
@@ -239,6 +261,7 @@ export class SellerEntityResolver {
 	}
 
 	/** The seller's statement over a period. */
+	@MarketplacePayoutsGate()
 	@Query(() => SellerStatementType, { name: 'sellerStatement', nullable: true })
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
 	async sellerStatement(
@@ -314,6 +337,7 @@ export class SellerEntityResolver {
 	}
 
 	/** Lists payouts, one page at a time. */
+	@MarketplacePayoutsGate()
 	@Query(() => Object, { name: 'sellerPayouts' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 	async sellerPayouts(
@@ -332,6 +356,7 @@ export class SellerEntityResolver {
 	}
 
 	/** Reads one payout with its lines. */
+	@MarketplacePayoutsGate()
 	@Query(() => SellerPayoutType, { name: 'sellerPayout', nullable: true })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 	async sellerPayout(@Args('id', { type: () => ID }) id: string, @Context() context?: any): Promise<SellerPayout> {
@@ -339,6 +364,7 @@ export class SellerEntityResolver {
 	}
 
 	/** Lists the lines of a payout, one page at a time. */
+	@MarketplacePayoutsGate()
 	@Query(() => Object, { name: 'sellerPayoutLines' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 	async sellerPayoutLines(
@@ -359,6 +385,7 @@ export class SellerEntityResolver {
 	}
 
 	/** Lists settlements, one page at a time. */
+	@MarketplacePayoutsGate()
 	@Query(() => Object, { name: 'sellerSettlements' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_VIEW)
 	async sellerSettlements(
@@ -912,6 +939,7 @@ export class SellerEntityResolver {
 	 * key is optional.
 	 */
 	@Idempotent({ scope: 'seller.payout.create', required: false, resourceType: 'seller_payout' })
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'createSellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
 	async createSellerPayout(
@@ -946,6 +974,7 @@ export class SellerEntityResolver {
 	 * on. Nothing else is added: no scope is threaded, exactly as the route threads none, so a
 	 * seller-scoped caller reaches what REST already lets it reach and no more.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'updateSellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
 	async updateSellerPayout(
@@ -977,6 +1006,7 @@ export class SellerEntityResolver {
 	 * rather than repeating the pass.
 	 */
 	@Idempotent({ scope: 'seller.payout.run', required: false, resourceType: 'seller_payout' })
+	@MarketplacePayoutsGate()
 	@Mutation(() => [SellerPayoutRunResultType], { name: 'runSellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
 	async runSellerPayout(
@@ -993,6 +1023,7 @@ export class SellerEntityResolver {
 	}
 
 	/** Approves a payout. */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'approveSellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
 	async approveSellerPayout(
@@ -1012,6 +1043,7 @@ export class SellerEntityResolver {
 	 * `IDEMPOTENCY_KEY_REQUIRED`, which is the answer the route gives rather than a schema rejection.
 	 */
 	@Idempotent({ scope: 'seller.payout.pay', required: true, resourceType: 'seller_payout' })
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'markSellerPayoutPaid' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
 	async markSellerPayoutPaid(
@@ -1033,6 +1065,7 @@ export class SellerEntityResolver {
 	}
 
 	/** Cancels an unpaid payout. */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'cancelSellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CANCEL)
 	async cancelSellerPayout(
@@ -1058,6 +1091,7 @@ export class SellerEntityResolver {
 	 * reading, so a client that presents a key is answered from its first attempt instead.
 	 */
 	@Idempotent({ scope: 'seller.payout.retry', required: false, resourceType: 'seller_payout' })
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'retrySellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
 	async retrySellerPayout(
@@ -1077,6 +1111,7 @@ export class SellerEntityResolver {
 	 * beside it — a caller that may approve or cancel a payout is not thereby a caller that may remove one
 	 * from the table — and it is a different act from `softDeleteSellerPayout`, which keeps the row.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerPayout' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async deleteSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
@@ -1098,6 +1133,7 @@ export class SellerEntityResolver {
 	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
 	 * rather than an array the service would only discard.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'softDeleteSellerPayout' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async softDeleteSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
@@ -1112,6 +1148,7 @@ export class SellerEntityResolver {
 	 * backwards: the route states `SELLERS_DELETE`, and putting a payout back is putting it back in front of
 	 * every read that decides what a seller is still owed.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutType, { name: 'recoverSellerPayout' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async recoverSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
@@ -1127,6 +1164,7 @@ export class SellerEntityResolver {
 	 * the row is gone — the archive beside it, `softDeleteSellerPayoutLine`, is the one that keeps a row
 	 * to hand back.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerPayoutLine' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async deleteSellerPayoutLine(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
@@ -1149,6 +1187,7 @@ export class SellerEntityResolver {
 	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
 	 * rather than an array the service would only discard.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutLineType, { name: 'softDeleteSellerPayoutLine' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async softDeleteSellerPayoutLine(@Args('id', { type: () => ID }) id: string): Promise<SellerPayoutLine> {
@@ -1163,6 +1202,7 @@ export class SellerEntityResolver {
 	 * a join row is what makes a ledger row payable at most once again: the service reads the row
 	 * `withDeleted`, which is a visibility no ordinary read has.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutLineType, { name: 'recoverSellerPayoutLine' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async recoverSellerPayoutLine(@Args('id', { type: () => ID }) id: string): Promise<SellerPayoutLine> {
@@ -1178,6 +1218,7 @@ export class SellerEntityResolver {
 	 * route's own key is optional.
 	 */
 	@Idempotent({ scope: 'seller.settlement.record', required: false, resourceType: 'seller_settlement' })
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementType, { name: 'createSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
 	async createSellerSettlement(
@@ -1222,6 +1263,7 @@ export class SellerEntityResolver {
 	 * base read the write performs as its precondition, so the field answers the settlement a client asked
 	 * to amend rather than a write envelope.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementType, { name: 'updateSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
 	async updateSellerSettlement(
@@ -1249,6 +1291,7 @@ export class SellerEntityResolver {
 	 * date over the first, so a client that presents a key is answered from its first attempt instead.
 	 */
 	@Idempotent({ scope: 'seller.settlement.reconcile', required: false, resourceType: 'seller_settlement' })
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementReconciliationType, { name: 'reconcileSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
 	async reconcileSellerSettlement(
@@ -1266,6 +1309,7 @@ export class SellerEntityResolver {
 	 * note is nullable because the route's body states it as optional: a close with no note keeps the one
 	 * the settlement already carries, which is what the service does with an absent argument.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementType, { name: 'closeSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
 	async closeSellerSettlement(
@@ -1283,6 +1327,7 @@ export class SellerEntityResolver {
 	 * omitted would let a client reach a `BAD_REQUEST` the schema could have made unreachable — the same
 	 * choice `rejectSeller` makes for its own reason.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementType, { name: 'disputeSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
 	async disputeSellerSettlement(
@@ -1301,6 +1346,7 @@ export class SellerEntityResolver {
 	 * than another way to correct it. It answers the count because the row is gone; the archive beside it
 	 * is the field that keeps one.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async deleteSellerSettlement(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
@@ -1321,6 +1367,7 @@ export class SellerEntityResolver {
 	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
 	 * rather than an array the service would only discard.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementType, { name: 'softDeleteSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async softDeleteSellerSettlement(@Args('id', { type: () => ID }) id: string): Promise<SellerSettlement> {
@@ -1334,6 +1381,7 @@ export class SellerEntityResolver {
 	 * carries `SELLERS_DELETE` rather than the settlement edit grant because the route states
 	 * `SELLERS_DELETE`, and a restored report is one the discrepancy of a period is read against again.
 	 */
+	@MarketplacePayoutsGate()
 	@Mutation(() => SellerSettlementType, { name: 'recoverSellerSettlement' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async recoverSellerSettlement(@Args('id', { type: () => ID }) id: string): Promise<SellerSettlement> {

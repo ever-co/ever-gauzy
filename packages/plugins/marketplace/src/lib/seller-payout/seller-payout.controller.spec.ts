@@ -88,6 +88,8 @@ jest.mock('@gauzy/core', () => {
 		Permissions: () => () => undefined,
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
+		// The controllers carry the platform feature gate (R4-11); the double provides the class they import.
+		FeatureFlagGuard: class {},
 		UseValidationPipe: () => () => undefined,
 		UUIDValidationPipe: class {},
 		Merchant: class {},

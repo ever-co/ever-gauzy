@@ -20,6 +20,7 @@ import {
 	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -27,6 +28,8 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { SellerPayoutLine } from './seller-payout-line.entity';
 import { SellerPayoutLineService } from './seller-payout-line.service';
 import { CreateSellerPayoutLineDTO, UpdateSellerPayoutLineDTO } from './dto';
@@ -44,7 +47,9 @@ const A_LINE_IS_WRITTEN_BY_THE_PAYOUT_RUN =
  * cancellation, and both of those happen inside the payout's own transaction.
  */
 @ApiTags('SellerPayoutLine')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
+@FeatureFlag(MarketplaceFeatures.PAYOUTS)
 @Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 @Controller('/seller-payout-lines')
 export class SellerPayoutLineController extends CrudController<SellerPayoutLine> {

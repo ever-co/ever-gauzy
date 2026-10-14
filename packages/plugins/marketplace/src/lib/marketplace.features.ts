@@ -1,4 +1,31 @@
+import { FeatureEnum } from '@gauzy/contracts';
 import { PluginFeatureContribution } from '@gauzy/plugin';
+
+/**
+ * A marketplace feature code, in the type `@FeatureFlag` takes.
+ *
+ * The codes are not members of the compiled `FeatureEnum` — a package registers its codes as text and
+ * the guard compares text — so they are cast here, once, as the other commerce packages cast theirs.
+ */
+function feature(code: string): FeatureEnum {
+	return code as unknown as FeatureEnum;
+}
+
+/**
+ * The codes the marketplace's surfaces are gated on (review R4-11: until they were, the marketplace was
+ * reachable on every tenant whatever this switch said).
+ *
+ * - every REST controller and the GraphQL resolver state `MARKETPLACE`;
+ * - the payout, payout-line and settlement routes, and their GraphQL fields, state `PAYOUTS` too.
+ *
+ * `PAYOUT_SCHEDULER` gates an automatic payout run, which this package does not ship yet; it is declared
+ * so the switch exists when the run does.
+ */
+export const MarketplaceFeatures = {
+	MARKETPLACE: feature('FEATURE_MARKETPLACE'),
+	PAYOUTS: feature('FEATURE_MARKETPLACE_PAYOUTS'),
+	PAYOUT_SCHEDULER: feature('FEATURE_SELLER_PAYOUT_SCHEDULER')
+} as const;
 
 /**
  * The feature flags the marketplace contributes.

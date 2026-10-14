@@ -27,6 +27,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -34,6 +35,8 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { SellerTransaction } from './seller-transaction.entity';
 import { SellerTransactionService } from './seller-transaction.service';
 import { CreateSellerTransactionDTO, UpdateSellerTransactionDTO } from './dto';
@@ -58,7 +61,8 @@ const A_LEDGER_ROW_MOVES_THROUGH_ITS_OWN_ENDPOINTS =
  * instead of inheriting an unvalidated one from the CRUD base.
  */
 @ApiTags('SellerTransaction')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
 @Permissions(PermissionsEnum.SELLER_TRANSACTIONS_VIEW)
 @Controller('/seller-transactions')
 export class SellerTransactionController extends CrudController<SellerTransaction> {

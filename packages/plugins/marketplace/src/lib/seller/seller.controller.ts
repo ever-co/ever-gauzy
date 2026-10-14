@@ -28,6 +28,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
+	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
 	TenantOrganizationBaseDTO,
@@ -35,6 +36,8 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe
 } from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { MarketplaceFeatures } from '../marketplace.features';
 import { Seller } from './seller.entity';
 import { SellerService } from './seller.service';
 import { CreateSellerDTO, UpdateSellerDTO } from './dto';
@@ -49,7 +52,8 @@ import { ISellerScope } from '../seller-scope/seller-scope';
  * scope is what differs, and the seller access guard resolves it and attaches it to the request.
  */
 @ApiTags('Seller')
-@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
+@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
 @Permissions(PermissionsEnum.SELLERS_VIEW)
 @Controller('/sellers')
 export class SellerController extends CrudController<Seller> {
@@ -261,6 +265,11 @@ export class SellerController extends CrudController<Seller> {
 	 */
 	@ApiOperation({ summary: 'Read a seller statement' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Statement retrieved successfully' })
+	// The statement carries the seller's payouts and settlements, which the payout and settlement routes
+	// serve only with FEATURE_MARKETPLACE_PAYOUTS on, so the statement requires it too. A route's codes
+	// replace its class's, so the marketplace's own code is restated (review R4-11).
+	@FeatureFlag(MarketplaceFeatures.MARKETPLACE)
+	@FeatureFlag(MarketplaceFeatures.PAYOUTS)
 	@Get('/:id/statement')
 	async statement(
 		@Req() request: any,
