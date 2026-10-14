@@ -628,6 +628,7 @@ function memberName(segment) {
 		if (paren > 0 || !/[A-Za-z_$]/.test(character) || /[\w$]/.test(segment[index - 1] ?? ' ')) continue;
 		identifier.lastIndex = index;
 		const match = identifier.exec(segment);
+		if (match === null) continue;
 		const after = segment.slice(index + match[0].length).match(/^\s*(?:<[^>]*>)?\s*\(/);
 		const before = segment.slice(0, index).replace(/\s+$/, '').slice(-1);
 		if (after && before !== '@' && before !== '.' && !['async', 'public', 'protected', 'private', 'static', 'get', 'set'].includes(match[0])) {
