@@ -1,4 +1,4 @@
-@use 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 // Same scale as the shared `ga-delete-confirmation`: a 12px header row with the
 // close button, a 12px body and a quiet Cancel beside the red action. On top of
@@ -85,12 +85,12 @@ $divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18))
     font-size: 12px;
     font-weight: 400;
     color: var(--gauzy-text-color-2, nb-theme(text-hint-color));
+  }
 
-    ::ng-deep .confirm-name {
-      font-weight: 600;
-      color: var(--gauzy-text-color-1, nb-theme(text-basic-color));
-      word-break: break-word;
-    }
+  .confirm-name {
+    font-weight: 600;
+    color: var(--gauzy-text-color-1, nb-theme(text-basic-color));
+    word-break: break-word;
   }
 
   input {
