@@ -742,10 +742,22 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 						subtractDecimalStrings(counted(line.invoicedQuantity), counted(line.creditedQuantity)),
 						counted(line.returnRequestedQuantity)
 					].reduce((highest, candidate) => (compareDecimalStrings(candidate, highest) > 0 ? candidate : highest));
-					const quantity = String(changes['quantity']);
-					const isDecimal = /^[+-]?\d+(\.\d+)?$/.test(quantity.trim());
+					// Every figure this service reads - a number, decimal text, an exponent form such as `5e-1` - is
+					// laid out as exact decimal text the way `decimalOf` does; anything that is not a figure is refused
+					// here rather than read as the zero an absent quantity means.
+					const raw = changes['quantity'];
+					const text = typeof raw === 'number' ? String(raw) : `${raw ?? ''}`.trim();
+					const quantity = /^[+-]?(\d+(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/.test(text)
+						? this.decimalOf(text).replace(/^([+-]?)\./, '$10.')
+						: null;
 
-					if (!isDecimal || compareDecimalStrings(quantity.trim(), floor) < 0) {
+					if (quantity !== null && compareDecimalStrings(quantity, floor) >= 0) {
+						// Text is stored as the exact decimal it was compared as (`5e-1` and `.5` as `0.5`); a number is
+						// handed to the column as it was, as before.
+						if (typeof raw !== 'number') {
+							changes['quantity'] = quantity;
+						}
+					} else {
 						throw new BadRequestException({
 							message:
 								`ORDER_CHANGE_NOT_APPLICABLE: line '${line.id}' cannot be set to ${changes['quantity']}; ` +

@@ -817,6 +817,40 @@ describe('OrderChangeService — the money a change moves (doc 10 §6.3, §6.6)'
 		expect(Number(fixture.tables.order_line[0].quantity)).toBe(0.3);
 	});
 
+	it.each([
+		['an exponent form', '5e-1'],
+		['a leading point', '.5'],
+		['a number', 0.5]
+	])('reads %s as the decimal it is when comparing with the floor (Greptile)', async (_form, quantity) => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity } }]
+		} as never);
+
+		await fixture.service.confirm(change.id);
+
+		expect(Number(fixture.tables.order_line[0].quantity)).toBe(0.5);
+	});
+
+	it('refuses a quantity that is not a figure at all, rather than reading it as zero', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_UPDATE, referenceId: 'L1', details: { orderLineId: 'L1', quantity: 'many' } }]
+		} as never);
+
+		await expect(fixture.service.confirm(change.id)).rejects.toMatchObject({ response: { code: 'ORDER_CHANGE_NOT_APPLICABLE' } });
+	});
+
 	it('still lowers a quantity to what has moved against the line, and no further', async () => {
 		const fixture = orderFixture({ lines: [line('L1', { quantity: 5, unitPrice: 20, fulfilledQuantity: 3 })] });
 
