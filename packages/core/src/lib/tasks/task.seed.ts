@@ -16,19 +16,50 @@ import {
 	Employee
 } from './../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { ISeedIssue, SEED_SAMPLE_ISSUES } from './task-seed-issues';
 
 // GITHUB API URL
 export const GITHUB_API_URL = 'https://api.github.com';
 
-export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant, organization: IOrganization) => {
-	const httpService = new HttpService();
+/** How long the seed waits for GitHub before it falls back to the sample issues. */
+export const SEED_ISSUES_TIMEOUT_MS = 10_000;
 
-	console.log(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
-	const issues$ = httpService
-		.get(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`)
-		.pipe(map((response: AxiosResponse<any>) => response.data));
-	const issues: any[] = await lastValueFrom(issues$);
-	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
+/**
+ * The issues the task seeds turn into tasks: the open issues of `ever-co/ever-gauzy` when GitHub answers, the
+ * local sample issues ({@link SEED_SAMPLE_ISSUES}) when it does not.
+ *
+ * The request is unauthenticated (60 an hour per IP), and a 403 used to end the seed: no tags and no tasks, and
+ * with no project holding a task the time logs, activities and job proposals seeded after it failed as well.
+ *
+ * @param httpService The HTTP client (a fresh one by default).
+ * @returns The issues, never empty.
+ */
+export async function loadSeedIssues(httpService: HttpService = new HttpService()): Promise<ISeedIssue[]> {
+	const url = `${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`;
+
+	try {
+		const issues = await lastValueFrom(
+			httpService
+				.get(url, { timeout: SEED_ISSUES_TIMEOUT_MS })
+				.pipe(map((response: AxiosResponse<ISeedIssue[]>) => response.data))
+		);
+
+		if (Array.isArray(issues) && issues.length > 0) {
+			console.log(`Done ${url}`);
+			return issues;
+		}
+
+		console.warn(`${url} answered no issues: seeding the sample issues instead`);
+	} catch (error) {
+		const reason = error?.response?.status ? `status ${error.response.status}` : error?.message;
+		console.warn(`${url} failed (${reason}): seeding the sample issues instead`);
+	}
+
+	return SEED_SAMPLE_ISSUES;
+}
+
+export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant, organization: IOrganization) => {
+	const issues: any[] = await loadSeedIssues();
 
 	let labels = [];
 	issues.forEach((issue) => {
@@ -111,14 +142,7 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 };
 
 export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[]) => {
-	const httpService = new HttpService();
-
-	console.log(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
-	const issues$ = httpService
-		.get(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`)
-		.pipe(map((response: AxiosResponse<any>) => response.data));
-	const issues: any[] = await lastValueFrom(issues$);
-	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
+	const issues: any[] = await loadSeedIssues();
 
 	let labels = [];
 	issues.forEach((issue) => {
