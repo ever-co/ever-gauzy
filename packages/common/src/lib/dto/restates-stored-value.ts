@@ -24,7 +24,8 @@ export interface IRestatementOptions {
  * - an object or an array is compared by its content: an object's members in any order (a member holding
  *   `undefined` counts as absent), an array's items in order, a nested date by its instant and any other nested value
  *   strictly; a JSON string on either side is read as the JSON it holds, because a JSON column reads back as text
- *   on some drivers;
+ *   on some drivers — and so are two strings that both hold an object or an array, whatever their member order or
+ *   spacing (text that holds a scalar stays text);
  * - two decimals are compared by value (see {@link IRestatementOptions.decimal});
  * - anything else is compared as text, so an enumeration or an identifier restates its stored value.
  *
@@ -50,6 +51,15 @@ export function restatesStoredValue(stored: unknown, stated: unknown, options: I
 
 	if (typeof stored === 'object' || typeof stated === 'object') {
 		return sameContent(asJson(stored), asJson(stated));
+	}
+
+	if (typeof stored === 'string' && typeof stated === 'string' && stored !== stated) {
+		const held = asJson(stored);
+		const wanted = asJson(stated);
+
+		if (isStructured(held) && isStructured(wanted)) {
+			return sameContent(held, wanted);
+		}
 	}
 
 	const decimal = options.decimal ?? canonicalDecimal;
@@ -95,6 +105,11 @@ function canonicalDecimal(value: unknown): string | null {
 	}
 
 	return unsigned.slice(0, unsigned[end - 1] === '.' ? end - 1 : end);
+}
+
+/** An object or an array: what JSON text holds when it is a document rather than a scalar. */
+function isStructured(value: unknown): value is object {
+	return value !== null && typeof value === 'object';
 }
 
 function isMissing(value: unknown): value is null | undefined {

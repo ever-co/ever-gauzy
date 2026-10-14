@@ -166,6 +166,16 @@ describe('restatesStoredValue', () => {
 			expect(restatesStoredValue({ seats: 3 }, 'not json')).toBe(false);
 		});
 
+		it('reads JSON text on both sides as the JSON each holds', () => {
+			// Greptile on #10627: two JSON strings holding the same object in another member order, or with other
+			// spacing, were compared as text and read as a change.
+			expect(restatesStoredValue('{"a":1,"b":2}', '{"b":2,"a":1}')).toBe(true);
+			expect(restatesStoredValue('[{"id":"x"}]', '[ { "id": "x" } ]')).toBe(true);
+			expect(restatesStoredValue('{"a":1,"b":2}', '{"a":1,"b":3}')).toBe(false);
+			// Text that holds a scalar stays text: a quoted string does not restate the bare one.
+			expect(restatesStoredValue('"pro"', 'pro')).toBe(false);
+		});
+
 		it('walks a deeply nested body without exhausting the call stack', () => {
 			const nest = (depth: number) => {
 				let value: unknown = 'leaf';
