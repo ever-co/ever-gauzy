@@ -114,6 +114,7 @@ import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-s
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IScreenshotUploadContext, TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
+import { ICapturedImage, withoutEmptyImages } from './capture-images';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -131,11 +132,7 @@ interface IScreenshotRequest {
 	activeWindow?: { id: string; index?: number | null } | null;
 }
 
-interface IScreenshotResult {
-	img: Buffer;
-	name: string;
-	id: string;
-}
+type IScreenshotResult = ICapturedImage;
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -2434,6 +2431,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				HighResolutionScreenshots = arg.displays;
 			}
+
+			// A display that could not be captured comes back as an empty image: never upload it.
+			const skipEmpty = (screen: IScreenshotResult) =>
+				this._loggerService.info(`Skipping display "${screen?.name}": its capture is empty`);
+			HighResolutionScreenshots = withoutEmptyImages(HighResolutionScreenshots, skipEmpty);
+			lowResolutionScreenshots = withoutEmptyImages(lowResolutionScreenshots);
 
 			this._loggerService.info('Update timer last capture');
 			this.handleLastCapture(HighResolutionScreenshots);
