@@ -251,6 +251,31 @@ export class ChannelResolver {
 	}
 
 	/**
+	 * Withdraws a channel without removing the row — the GraphQL counterpart of `DELETE /channels/:id/soft`.
+	 *
+	 * The same service method the route reaches, under the same grant: the edit grant its `update` states, which
+	 * the controller now states on the route too (owner decision 5, 2026-10-13 — the soft-delete/recover pair
+	 * requires the controller's own edit grant). The route used to be inherited from `CrudController` with no
+	 * permission of its own and so stood on the class's `CHANNELS_VIEW`; a field mirroring it then would have
+	 * carried that read grant, which is why the pair is delivered together with the route's grant.
+	 */
+	@Mutation('softDeleteChannel')
+	@Permissions(PermissionsEnum.CHANNELS_EDIT)
+	async softDeleteChannel(@Args('id', { type: () => ID }) id: Id): Promise<IChannel> {
+		return this.channelService.softRemove(id);
+	}
+
+	/**
+	 * Restores a withdrawn row — the GraphQL counterpart of `PUT /channels/:id/recover`, under the withdrawal's
+	 * grant: restoring undoes a removal.
+	 */
+	@Mutation('recoverChannel')
+	@Permissions(PermissionsEnum.CHANNELS_EDIT)
+	async recoverChannel(@Args('id', { type: () => ID }) id: Id): Promise<IChannel> {
+		return this.channelService.softRecover(id);
+	}
+
+	/**
 	 * Streams every change to a channel of the caller's tenant.
 	 *
 	 * The topic is `<eventName>:<tenantId>`, so a subscription is structurally incapable of receiving

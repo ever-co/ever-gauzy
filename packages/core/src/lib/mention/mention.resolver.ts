@@ -14,6 +14,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Mention } from './mention.entity';
 import { MentionService } from './mention.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateMentionInput` declares in the schema. */
 export interface ICreateMentionInput {
@@ -246,9 +247,7 @@ export class MentionResolver {
 	 */
 	@Mutation('deleteMention')
 	async deleteMention(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.mentionService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.mentionService.delete(id));
 	}
 
 	/**

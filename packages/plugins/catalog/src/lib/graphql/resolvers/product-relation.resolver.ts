@@ -110,14 +110,19 @@ export class ProductRelationResolver {
 	/**
 	 * Deletes a relation.
 	 *
-	 * @returns True once the relation is gone.
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with. The service's `delete` is the kernel's, which checks no existence: an identifier that names no
+	 * relation of the caller matches nothing and raises nothing, and this field used to answer `true` for it
+	 * while `DELETE`'s own result said `affected: 0`.
+	 *
+	 * @returns True when the relation was removed, false when the identifier matched none.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
 	@Mutation('deleteProductRelation')
 	async deleteProductRelation(@Args('id') id: ID): Promise<boolean> {
-		await this.productRelationService.delete(id);
+		const result = await this.productRelationService.delete(id);
 
-		return true;
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**

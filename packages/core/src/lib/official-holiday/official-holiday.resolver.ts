@@ -15,6 +15,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OfficialHoliday } from './official-holiday.entity';
 import { OfficialHolidayService } from './official-holiday.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOfficialHolidayInput` declares in the schema. */
 export interface ICreateOfficialHolidayInput {
@@ -196,8 +197,6 @@ export class OfficialHolidayResolver {
 	@Mutation('deleteOfficialHoliday')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_DELETE)
 	async deleteOfficialHoliday(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.officialHolidayService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.officialHolidayService.delete(id));
 	}
 }

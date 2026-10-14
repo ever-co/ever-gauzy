@@ -7,6 +7,7 @@ import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookDeliveryService } from './webhook-delivery.service';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { verifyWebhookSignature } from './webhook-signature';
+import { WebhookTransport } from './webhook-transport';
 import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-delivery.repository';
 
 /**
@@ -19,8 +20,10 @@ import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-
  * which will not change is dead-lettered at once, and that the bytes on the wire are the bytes that
  * were signed, so a receiver reproducing the digest accepts them.
  *
- * Nothing leaves the process: the HTTP client is a stub, and the clock is pinned so every scheduled
- * instant is asserted rather than waited for.
+ * Nothing leaves the process: the HTTP client (`WebhookTransport`) is a stub honouring its own contract —
+ * at most `bodyLimit` bytes of the body — and the clock is pinned so every scheduled instant is asserted
+ * rather than waited for. What the client itself does on a real socket (the pinned lookup, the bounded
+ * read, no redirect followed) is `webhook-delivery.transport.spec.ts`.
  */
 
 type Row = Record<string, any>;
@@ -194,7 +197,7 @@ function subscriptions(row: Row = {}) {
 	const attempts: { delivered: boolean; status?: number }[] = [];
 
 	const service = {
-		async getSubscription() {
+		async getSubscriptionForDelivery() {
 			return subscription;
 		},
 		async revealSecret() {
@@ -217,11 +220,14 @@ function subscriptions(row: Row = {}) {
 function http(status: number, body = '', ok = status >= 200 && status < 300) {
 	const calls: { url: string; init: Row }[] = [];
 
-	globalThis.fetch = (async (url: string, init: Row) => {
-		calls.push({ url, init });
+	jest.spyOn(WebhookTransport.prototype, 'post').mockImplementation(async (url, init) => {
+		calls.push({ url: String(url), init: init as unknown as Row });
 
-		return { ok, status, text: async () => body };
-	}) as unknown as typeof fetch;
+		// The client's contract: never more than `bodyLimit` bytes of the answer.
+		const kept = Buffer.from(body).subarray(0, init.bodyLimit).toString('utf8');
+
+		return { ok, status, body: kept, truncated: kept.length < body.length };
+	});
 
 	return calls;
 }
@@ -261,16 +267,12 @@ const delivery = (table: DeliveryTable, overrides: Row = {}): Row =>
 /** The payload the body was sent for, as the receiver would read it. */
 const bodyOf = (calls: { init: Row }[]): string => String(calls[0].init.body);
 
-/** The process's own client, so a stubbed one never leaks out of this suite. */
-const originalFetch = globalThis.fetch;
-
 beforeEach(() => {
 	jest.useFakeTimers();
 	jest.setSystemTime(T0);
 });
 
 afterEach(() => {
-	globalThis.fetch = originalFetch;
 	jest.useRealTimers();
 	jest.restoreAllMocks();
 });
@@ -393,11 +395,11 @@ describe('one attempt', () => {
 	it('reports a transport failure as a retryable attempt rather than as a delivered one', async () => {
 		const calls: string[] = [];
 
-		globalThis.fetch = (async (url: string) => {
-			calls.push(url);
+		jest.spyOn(WebhookTransport.prototype, 'post').mockImplementation(async (url) => {
+			calls.push(String(url));
 
 			throw new Error('getaddrinfo ENOTFOUND receiver.example.test');
-		}) as unknown as typeof fetch;
+		});
 
 		const { service, table } = deliveries();
 		const row = delivery(table);
@@ -469,7 +471,10 @@ describe('what goes on the wire', () => {
 		expect(headers[WebhookHeader.API_VERSION]).toBe('1');
 		expect(headers[WebhookHeader.TENANT]).toBe('tenant-1');
 		expect(headers['User-Agent']).toBe(WebhookDeliveryService.USER_AGENT);
-		expect(calls[0].init.redirect).toBe('manual');
+		// The attempt is bounded in time and in bytes read; the client never follows a redirect (proven on a
+		// real socket in `webhook-delivery.transport.spec.ts`).
+		expect(calls[0].init.timeoutMs).toBe(WebhookDeliveryService.REQUEST_TIMEOUT_MS);
+		expect(calls[0].init.bodyLimit).toBe(WebhookDeliveryService.RESPONSE_BODY_LIMIT);
 	});
 
 	it('never lets a subscription’s own headers override a reserved one', async () => {

@@ -151,4 +151,29 @@ export class PaymentTermResolver {
 
 		return true;
 	}
+
+	/**
+	 * Withdraws a payment term without removing the row — the GraphQL counterpart of `DELETE /payment-terms/:id/soft`.
+	 *
+	 * The same service method the route reaches, under the same grant: the edit grant its `update` states, which
+	 * the controller now states on the route too (owner decision 5, 2026-10-13 — the soft-delete/recover pair
+	 * requires the controller's own edit grant). The route used to be inherited from `CrudController` with no
+	 * permission of its own and so stood on the class's `PAYMENT_TERMS_VIEW`; a field mirroring it then would have
+	 * carried that read grant, which is why the pair is delivered together with the route's grant.
+	 */
+	@Mutation('softDeletePaymentTerm')
+	@Permissions(PAYMENT_TERM_PERMISSIONS.PAYMENT_TERMS_EDIT)
+	async softDeletePaymentTerm(@Args('id', ParseUUIDPipe) id: string): Promise<PaymentTerm> {
+		return this.paymentTermService.softRemove(id);
+	}
+
+	/**
+	 * Restores a withdrawn row — the GraphQL counterpart of `PUT /payment-terms/:id/recover`, under the withdrawal's
+	 * grant: restoring undoes a removal.
+	 */
+	@Mutation('recoverPaymentTerm')
+	@Permissions(PAYMENT_TERM_PERMISSIONS.PAYMENT_TERMS_EDIT)
+	async recoverPaymentTerm(@Args('id', ParseUUIDPipe) id: string): Promise<PaymentTerm> {
+		return this.paymentTermService.softRecover(id);
+	}
 }

@@ -16,6 +16,7 @@ import { ApiCallLogFilterDTO } from './dto/api-call-log-filter.dto';
 import { DeleteApiCallLogDTO } from './dto/api-call-log-delete.dto';
 import { ApiCallLog } from './api-call-log.entity';
 import { ApiCallLogService } from './api-call-log.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /**
  * The fields a call log list may be filtered and sorted by, and the order it is returned in when the
@@ -178,12 +179,14 @@ export class ApiCallLogResolver {
 	): Promise<boolean> {
 		const filters = { forceDelete: forceDelete ?? false } as DeleteApiCallLogDTO;
 
-		// If the flag is set, the removal is hard; otherwise the row is withdrawn.
+		// If the flag is set, the removal is hard, and the answer is whether it reached a row (an identifier
+		// that names none of the caller's deletes nothing and raises nothing); otherwise the row is withdrawn,
+		// and the withdrawal reads the row first and raises when it is missing.
 		if (filters.forceDelete) {
-			await this.apiCallLogService.delete(id, { where: { ...filters } });
-		} else {
-			await this.apiCallLogService.softDelete(id, { where: { ...filters } });
+			return deleteRemovedRows(await this.apiCallLogService.delete(id, { where: { ...filters } }));
 		}
+
+		await this.apiCallLogService.softDelete(id, { where: { ...filters } });
 
 		return true;
 	}

@@ -23,6 +23,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationSprintCreateCommand, OrganizationSprintUpdateCommand } from './commands';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
+import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `CreateOrganizationSprintInput` declares in the schema. */
 export interface ICreateOrganizationSprintInput {
@@ -280,9 +281,7 @@ export class OrganizationSprintResolver {
 	@Mutation('deleteOrganizationSprint')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_DELETE)
 	async deleteOrganizationSprint(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationSprintService.delete(id);
-
-		return true;
+		return deleteRemovedRows(await this.organizationSprintService.delete(id));
 	}
 
 	/**

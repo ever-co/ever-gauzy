@@ -13,5 +13,5 @@ export class UpdateTimesheetStatusDTO
 {
 	@ApiProperty({ type: () => Array })
 	@ArrayNotEmpty()
-	ids: ID[] = [];
+	ids: ID[];
 }
