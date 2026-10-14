@@ -191,6 +191,7 @@ function searchFixture(
 		engineKey?: string | null;
 		version?: number;
 		mapPivot?: boolean;
+		declaration?: ISearchIndexRegistration;
 	} = {}
 ) {
 	let sequence = 0;
@@ -308,7 +309,7 @@ function searchFixture(
 	const provider = new DatabaseSearchProvider(documentRepository, indexRegistry);
 	const providerRegistry = new SearchProviderRegistry(provider);
 
-	indexRegistry.register(DECLARATION);
+	indexRegistry.register(seed.declaration ?? DECLARATION);
 
 	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, definitionRepository);
 
@@ -724,5 +725,42 @@ describe('SearchIndexerService — the provider a definition is written by (doc 
 			/is written for the engine "an-engine-that-is-not-installed"/
 		);
 		expect(fixture.allDocuments()).toEqual([]);
+	});
+});
+
+describe('SearchIndexerService — a declaration with a row rule (review R7-05)', () => {
+	/** Only the variant whose SKU the rule admits may be shown, standing in for an organization-wide document. */
+	const RULED = { ...DECLARATION, visibleWhen: { field: 'sku', values: ['SKU-v1'] } } as ISearchIndexRegistration;
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('does not write a row the rule does not admit, and removes the document an earlier run wrote for it', async () => {
+		const fixture = searchFixture({
+			declaration: RULED,
+			rows: [sourceRow('v1'), sourceRow('v2')],
+			channels: [],
+			// v2 was indexed before the rule existed (or before its row moved outside it).
+			documents: [
+				{ id: 'stale-v2', tenantId: TENANT, entity: 'product_variant', entityId: 'v2', engineKey: null, deletedAt: null }
+			]
+		});
+
+		const outcome = await fixture.indexer.index('product_variant', { tenantId: TENANT, organizationId: ORG });
+
+		expect(outcome).toMatchObject({ indexed: 1, removed: 1, skipped: 0 });
+		expect(fixture.documents().map((document) => document.entityId)).toEqual(['v1']);
+	});
+
+	it('CONTROL: without a rule both rows are written', async () => {
+		const fixture = searchFixture({ rows: [sourceRow('v1'), sourceRow('v2')], channels: [] });
+
+		const outcome = await fixture.indexer.index('product_variant', { tenantId: TENANT, organizationId: ORG });
+
+		expect(outcome).toMatchObject({ indexed: 2, removed: 0 });
 	});
 });

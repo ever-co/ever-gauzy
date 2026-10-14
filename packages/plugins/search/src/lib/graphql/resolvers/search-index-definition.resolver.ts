@@ -18,6 +18,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { SearchIndexDefinitionService } from '../../services/search-index-definition.service';
 import { SearchReindexService, ISearchReindexRun } from '../../services/search-reindex.service';
 import { SearchPermissions } from '../../search.permissions';
+import { SearchFeatures } from '../../search.features';
 import { ISearchReindexInput } from '../../search.types';
 import { toUserError } from '../wire';
 /** How an operator re-weights a definition, as the schema declares it. */
@@ -68,10 +69,17 @@ interface IDefinitionUpdateArgs {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **The search capability's own code is stated beside it**, as `SearchController` states it:
+ * `FEATURE_SEARCH` is off by default, and with only the endpoint's code on this class a tenant that never
+ * switched search on was refused `GET /api/search` and still answered `search`, the reindex mutations
+ * and the definition edits here (reviews R2-16 / R4-24). Both statements accumulate, so the guard
+ * requires both — the surface is never wider than the route it mirrors.
  */
 @Resolver('SearchIndexDefinition')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(SearchFeatures.SEARCH)
 export class SearchIndexDefinitionResolver {
 	constructor(
 		private readonly definitionService: SearchIndexDefinitionService,

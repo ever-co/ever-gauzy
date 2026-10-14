@@ -5,7 +5,7 @@ import { TypeOrmSearchIndexDefinitionRepository } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SearchProviderRegistry } from '../providers/search-provider.registry';
 import { IScopedSearchDelete, ISearchDeleteScope } from '../providers/database-search.provider';
-import { buildDocument, readPath, SearchSourceRow } from './search-document.builder';
+import { buildDocument, isRowVisible, readPath, SearchSourceRow } from './search-document.builder';
 import { ISearchSourceCriteria, ISearchSourceEntity, SearchSourceConnection } from './search-source.connection';
 
 /** How the source rows of one index run are selected. */
@@ -184,8 +184,21 @@ export class SearchIndexerService {
 		const version = normaliseVersion(options.definitionVersion ?? 1);
 		let skipped = 0;
 		const documents: ISearchDocument[] = [];
+		// Keyed by the tenant whose copy is removed: a sweep that names no tenant reads every tenant's
+		// rows, and a removal keyed on the id alone would take another tenant's document that happens
+		// to carry the same id (see `deleteDocuments`).
+		const hidden = new Map<string, ID[]>();
 
 		for (const row of rows) {
+			// A row the declaration's row rule does not admit is not the entity permission's to show
+			// (a PRIVATE document, review R7-05). It is not written, and a document an earlier run wrote
+			// for it — before the row moved outside the rule, or before the rule existed — is removed.
+			if (!isRowVisible(definition, row)) {
+				const tenantId = String(options.tenantId ?? row.tenantId ?? '');
+				hidden.set(tenantId, [...(hidden.get(tenantId) ?? []), row.id as ID]);
+				continue;
+			}
+
 			try {
 				documents.push({
 					...buildDocument(definition, row, {
@@ -205,8 +218,16 @@ export class SearchIndexerService {
 		}
 
 		const indexed = documents.length > 0 ? await provider.index(documents) : 0;
+		let removed = 0;
 
-		return { entity: definition.entity, indexed, removed: 0, skipped, providerKey: provider.key };
+		for (const [tenantId, ids] of hidden) {
+			removed += await this.deleteDocuments(provider, definition.entity, ids, {
+				tenantId: tenantId || undefined,
+				engineKey
+			});
+		}
+
+		return { entity: definition.entity, indexed, removed, skipped, providerKey: provider.key };
 	}
 
 	/**

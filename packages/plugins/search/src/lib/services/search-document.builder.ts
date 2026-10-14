@@ -411,6 +411,38 @@ export function buildKeywords(
 }
 
 /**
+ * Whether a source row may be shown by a search at all, under the declaration's row rule.
+ *
+ * The entity permission decides whether a caller may see hits of an entity type; this decides which
+ * rows of it are searchable. A declaration that states no rule admits every row. One that does admits a
+ * row only when its field holds one of the rule's values, and a row with no value is outside the rule.
+ * That is the closed direction: the rule exists because some rows of the entity are not the entity
+ * permission's to show (review R7-05: a `PRIVATE` document is readable by its creator, an administrator
+ * and the people it is shared with, never by every holder of `DOCS_READ`).
+ *
+ * @param definition The declaration.
+ * @param row The source row.
+ * @returns True when the row may be indexed and shown.
+ */
+export function isRowVisible(definition: ISearchIndexRegistration, row: SearchSourceRow): boolean {
+	const rule = definition?.visibleWhen;
+
+	if (!rule) {
+		return true;
+	}
+
+	const field = (definition.fields ?? []).find((candidate) => candidate.name === rule.field);
+
+	if (!field) {
+		return false;
+	}
+
+	const admitted = new Set((rule.values ?? []).map((value) => String(value).toLowerCase()));
+
+	return flatten(fieldValue(field, row)).some((value) => admitted.has(value.toLowerCase()));
+}
+
+/**
  * The attribute map of one document.
  *
  * Every declared field whose value the row carries is written, keyed by the field's name — the name a

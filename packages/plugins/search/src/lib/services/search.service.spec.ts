@@ -1022,6 +1022,23 @@ describe('SearchService — re-reading a hit from the entity that owns it (I-72,
 		expect(hits).toEqual([{ entity: 'product_variant', entityId: 'v1', title: 'from the index', score: 1 }]);
 	});
 
+	it('drops a hit whose re-read row its declaration’s row rule does not admit (R7-05)', async () => {
+		// The index may predate the rule, or the row may have moved outside it since it was indexed (a
+		// document made PRIVATE). The row it is rendered from is the authority, as for a deleted row.
+		const fixture = searchFixture();
+
+		await indexAll(fixture);
+		fixture.registry.clear();
+		fixture.registry.register({ ...VARIANT, visibleWhen: { field: 'sku', values: ['SKU-V1'] } } as never);
+
+		const hits = await fixture.service.materialise([
+			{ entity: 'product_variant', entityId: 'v1', title: 'admitted', score: 1 },
+			{ entity: 'product_variant', entityId: 'v2', title: 'not admitted', score: 1 }
+		] as never);
+
+		expect(hits.map((hit) => hit.entityId)).toEqual(['v1']);
+	});
+
 	it('drops a hit whose declaration is gone, because there is nothing to re-read it from', async () => {
 		const fixture = searchFixture();
 		const registry = fixture.registry;
