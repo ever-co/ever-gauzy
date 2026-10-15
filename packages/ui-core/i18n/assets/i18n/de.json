@@ -3779,17 +3779,20 @@
 		"USER": {
 			"MANAGE": "Verwalte Benutzereinladungen",
 			"HEADER": "Benutzer einladen",
-			"ACTION": "Benutzer einladen"
+			"ACTION": "Benutzer einladen",
+			"DESCRIPTION": "Laden Sie Personen ein, Ihrer Organisation als Benutzer beizutreten. Jeder Empfänger erhält eine E-Mail mit einem sicheren Link zur Annahme."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Verwaltung der Einladungen von Mitarbeitern",
 			"HEADER": "Einladen von Mitarbeitern",
-			"ACTION": "Lade Mitarbeiter ein"
+			"ACTION": "Lade Mitarbeiter ein",
+			"DESCRIPTION": "Laden Sie Personen ein, Ihrer Organisation als Mitarbeiter beizutreten. Jeder Empfänger erhält eine E-Mail mit einem sicheren Link zur Annahme."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Kandidateneinladungen verwalten",
 			"HEADER": "Einladen von Kandidaten",
-			"ACTION": "Lade Kandidaten ein."
+			"ACTION": "Lade Kandidaten ein.",
+			"DESCRIPTION": "Laden Sie Kandidaten in Ihren Einstellungsprozess ein. Jeder Empfänger erhält eine E-Mail mit einem sicheren Link zur Annahme."
 		},
 		"SENT": "{{total}} Einladungen versendet.",
 		"IGNORED": "{{total}} Einladungen wurden gesendet. {{ignored}} wurden bereits eingeladen und wurden ignoriert.",
@@ -3799,6 +3802,22 @@
 			"TWO_WEEK": "14 Tage",
 			"MONTH": "30 Tage",
 			"NEVER": "Niemals"
+		},
+		"FORM": {
+			"RECIPIENTS": "Empfänger",
+			"EMAILS_PLACEHOLDER": "name@firma.de",
+			"EMAILS_HINT": "Drücken Sie nach jeder Adresse die Eingabetaste, um mehrere Empfänger hinzuzufügen.",
+			"CLEAR_EMAILS": "Alle entfernen",
+			"ACCESS": "Zugriff",
+			"ACCESS_HINT": "Optional. Legen Sie fest, worauf neue Mitglieder direkt nach dem Beitritt zugreifen können.",
+			"DETAILS": "Einladungsdetails",
+			"PROJECTS": "Projekte",
+			"CONTACTS": "Kontakte",
+			"TEAMS": "Teams",
+			"DEPARTMENTS": "Abteilungen",
+			"START_DATE": "Startdatum",
+			"RECIPIENT_COUNT": "Empfänger: {{count}}",
+			"NO_RECIPIENTS": "Noch keine Empfänger hinzugefügt"
 		}
 	},
 	"INVOICES_PAGE": {

@@ -4314,17 +4314,20 @@
 		"USER": {
 			"MANAGE": "Manage User Invites",
 			"HEADER": "Invite Users",
-			"ACTION": "Invite Users"
+			"ACTION": "Invite Users",
+			"DESCRIPTION": "Invite people to join your organization as users. Each recipient receives an email with a secure link to accept."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Manage Employee Invites",
 			"HEADER": "Invite Employees",
-			"ACTION": "Invite Employees"
+			"ACTION": "Invite Employees",
+			"DESCRIPTION": "Invite people to join your organization as employees. Each recipient receives an email with a secure link to accept."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Manage Candidate Invites",
 			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"ACTION": "Invite Candidates",
+			"DESCRIPTION": "Invite candidates to your hiring pipeline. Each recipient receives an email with a secure link to accept."
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
@@ -4334,6 +4337,22 @@
 			"TWO_WEEK": "14 Days",
 			"MONTH": "30 Days",
 			"NEVER": "Never"
+		},
+		"FORM": {
+			"RECIPIENTS": "Recipients",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "Press Enter after each address to add multiple recipients.",
+			"CLEAR_EMAILS": "Clear all",
+			"ACCESS": "Access",
+			"ACCESS_HINT": "Optional. Choose what new members can access as soon as they join.",
+			"DETAILS": "Invitation details",
+			"PROJECTS": "Projects",
+			"CONTACTS": "Contacts",
+			"TEAMS": "Teams",
+			"DEPARTMENTS": "Departments",
+			"START_DATE": "Start date",
+			"RECIPIENT_COUNT": "Recipients: {{count}}",
+			"NO_RECIPIENTS": "No recipients added yet"
 		}
 	},
 	"INVOICES_PAGE": {

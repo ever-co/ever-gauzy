@@ -3783,17 +3783,20 @@
 		"USER": {
 			"MANAGE": "Gerenciar convites de usuários",
 			"HEADER": "Convidar usuários",
-			"ACTION": "Convidar Usuários"
+			"ACTION": "Convidar Usuários",
+			"DESCRIPTION": "Convide pessoas para participar da sua organização como usuários. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gerenciar convites de funcionários",
 			"HEADER": "Convidar funcionários",
-			"ACTION": "Convidar funcionários"
+			"ACTION": "Convidar funcionários",
+			"DESCRIPTION": "Convide pessoas para participar da sua organização como funcionários. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gerenciar Convites de Candidatos.",
 			"HEADER": "Convidar Candidatos",
-			"ACTION": "Convidar candidatos"
+			"ACTION": "Convidar candidatos",
+			"DESCRIPTION": "Convide candidatos para o seu processo seletivo. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"SENT": "{{total}} Convites enviados.",
 		"IGNORED": "{{total}} Convites Enviados. {{ignored}} já foram convidados e foram ignorados.",
@@ -3803,6 +3806,22 @@
 			"TWO_WEEK": "14 dias",
 			"MONTH": "30 Dias",
 			"NEVER": "Nunca"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinatários",
+			"EMAILS_PLACEHOLDER": "nome@empresa.com",
+			"EMAILS_HINT": "Pressione Enter após cada endereço para adicionar vários destinatários.",
+			"CLEAR_EMAILS": "Limpar tudo",
+			"ACCESS": "Acesso",
+			"ACCESS_HINT": "Opcional. Escolha o que os novos membros poderão acessar assim que entrarem.",
+			"DETAILS": "Detalhes do convite",
+			"PROJECTS": "Projetos",
+			"CONTACTS": "Contatos",
+			"TEAMS": "Equipes",
+			"DEPARTMENTS": "Departamentos",
+			"START_DATE": "Data de início",
+			"RECIPIENT_COUNT": "Destinatários: {{count}}",
+			"NO_RECIPIENTS": "Nenhum destinatário adicionado ainda"
 		}
 	},
 	"INVOICES_PAGE": {
