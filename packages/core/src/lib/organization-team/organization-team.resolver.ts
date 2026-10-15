@@ -1,6 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { requireOrganization } from '../graphql/organization-required';
 import { FeatureFlag } from '@gauzy/common';
 import {
 	ID as Id,
@@ -390,7 +391,8 @@ export class OrganizationTeamResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('options') options?: IOrganizationTeamDeleteInput
 	): Promise<boolean> {
-		await this.organizationTeamService.deleteTeam(id, options ?? {});
+		requireOrganization(options?.organizationId, 'deleteOrganizationTeam');
+		await this.organizationTeamService.deleteTeam(id, options);
 
 		return true;
 	}

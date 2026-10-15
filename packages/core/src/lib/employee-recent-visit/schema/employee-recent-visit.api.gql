@@ -46,6 +46,10 @@ extend type Query {
 	over exactly that set.
 	"""
 	employeeRecentVisits(
+		"""
+		The organization whose rows are read. Required, and the caller must belong to it — as on the REST route.
+		"""
+		organizationId: ID
 		filter: EmployeeRecentVisitFilter
 		sort: [EmployeeRecentVisitSort!]
 		page: PageInput

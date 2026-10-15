@@ -225,7 +225,10 @@ export class UserResolver {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	async userByEmail(@Args('email', { type: () => String }) email: string): Promise<IUser | null> {
-		return await this.userService.getUserByEmail(email);
+		// The caller's tenant only, as `GET /user/email/:email` reads it: the global `getUserByEmail` is for the
+		// pre-authentication flows, and here it answered another tenant's user profile — and whether an address
+		// has an account anywhere on the installation — to anyone holding ORG_USERS_VIEW (SEC-E-01).
+		return await this.userService.getUserByEmailInTenant(email, RequestContext.currentTenantId());
 	}
 
 	/**

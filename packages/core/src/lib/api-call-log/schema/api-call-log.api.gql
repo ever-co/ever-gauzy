@@ -27,9 +27,13 @@
 
 extend type Query {
 	"""
-	The API call logs of the caller's tenant, most recent request first.
+	The API call logs of one organization the caller belongs to, most recent request first.
 	"""
 	apiCallLogs(
+		"""
+		The organization whose rows are read. Required, and the caller must belong to it — as on the REST route.
+		"""
+		organizationId: ID
 		filter: ApiCallLogFilter
 		sort: [ApiCallLogSort!]
 		page: PageInput

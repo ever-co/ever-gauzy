@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Int, Query, Resolver } from '@nestjs/graphql';
-import { IPagination } from '@gauzy/contracts';
+import { ID, IPagination } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -12,6 +12,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { requireOrganization } from '../graphql/organization-required';
 import { EmployeeRecentVisit } from './employee-recent-visit.entity';
 import { EmployeeRecentVisitService } from './employee-recent-visit.service';
 import { GetEmployeeRecentVisitsDTO } from './dto/get-employee-recent-visits.dto';
@@ -114,9 +115,16 @@ export class EmployeeRecentVisitResolver {
 
 	/**
 	 * The recent visits of the caller's own employee record, most recent first.
+	 *
+	 * **The organization is required, as the route's is** (SEC-A-04, same class). `GetEmployeeRecentVisitsDTO`
+	 * extends `TenantOrganizationBaseDTO`, so the route only reads an organization the caller is a member of. This
+	 * field once took none, and for a caller with no employee record the read's employee criterion is empty — so it
+	 * answered every visit of the tenant. The argument is named `organizationId`, so the membership interceptor
+	 * checks it, and a read that names none is refused here.
 	 */
 	@Query('employeeRecentVisits')
 	async employeeRecentVisits(
+		@Args('organizationId') organizationId?: ID,
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
 		@Args('page') page?: ConnectionPageRequest,
@@ -128,11 +136,12 @@ export class EmployeeRecentVisitResolver {
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number
 	): Promise<GraphqlConnection<EmployeeRecentVisit>> {
 		// The reader takes the query DTO the list route binds its query string to. This surface has no
-		// query string to bind, and it does not restate the route's defaults as arguments either: an
-		// empty DTO *is* the route's own defaults — no organization, no entity, no relations, the first
-		// page of the read's own order — so the two protocols ask the service the same question.
+		// query string to bind, and it does not restate the route's defaults as arguments either: a DTO
+		// naming only the organization *is* the route's own defaults for it — no entity, no relations, the
+		// first page of the read's own order — so the two protocols ask the service the same question.
+		const options = { organizationId: requireOrganization(organizationId, 'employeeRecentVisits') } as GetEmployeeRecentVisitsDTO;
 		const { items }: IPagination<EmployeeRecentVisit> =
-			await this.employeeRecentVisitService.findEmployeeRecentVisits({} as GetEmployeeRecentVisitsDTO);
+			await this.employeeRecentVisitService.findEmployeeRecentVisits(options);
 
 		return buildConnection<EmployeeRecentVisit>({
 			rows: items ?? [],
