@@ -1332,4 +1332,45 @@ export const schemaExtensions = gql`
 		"""
 		recoverSellerSettlement(id: ID!): SellerSettlement!
 	}
+
+	extend type Subscription {
+		"""
+		Every move of a seller account of the caller's tenant — created, edited, submitted, verified, activated,
+		suspended, rejected, offboarding started — with the seller in the state the move left it, as \`seller\`
+		reads it. Narrowed by \`sellerId\` and by \`action\` (the move: \`activated\`, \`offboarding-started\`, …);
+		each only narrows what the credential may read, and a seller's own person hears its own seller only.
+		Follows the \`seller.*\` facts the seller service appends to the outbox in the transaction of each move. A
+		subscription is a notification and never a system of record: a move made while the client is disconnected
+		is not replayed.
+		"""
+		sellerChanged(sellerId: ID, action: String): Seller!
+		"""
+		Every streamed move of an offering of the caller's tenant — listed or withdrawn — with the offering in the
+		state the move left it. Narrowed by \`sellerOfferingId\`, by the seller and by \`action\`; a seller's own
+		person hears its own seller's offerings only. A price edit is not streamed (\`seller_offering.updated\` is
+		withheld from subscriptions for the reason \`price.updated\` is).
+		"""
+		sellerOfferingChanged(sellerOfferingId: ID, sellerId: ID, action: String): SellerOffering!
+		"""
+		Every move of a payout of the caller's tenant — created, paid, failed, canceled — with the payout and its
+		lines, as \`sellerPayout\` reads it. Narrowed by \`sellerPayoutId\`, by the seller and by \`action\`; a
+		seller's own person hears its own seller's payouts only. Requires the marketplace payouts feature, as the
+		payout queries do.
+		"""
+		sellerPayoutChanged(sellerPayoutId: ID, sellerId: ID, action: String): SellerPayout!
+		"""
+		Every move of a provider settlement of the caller's tenant — recorded, closed — with the settlement in the
+		state the move left it. Narrowed by \`sellerSettlementId\`, by the seller and by \`action\`; a seller's own
+		person hears its own seller's settlements only. Requires the marketplace payouts feature, as the
+		settlement queries do.
+		"""
+		sellerSettlementChanged(sellerSettlementId: ID, sellerId: ID, action: String): SellerSettlement!
+		"""
+		Every move of the seller ledger of the caller's tenant — an order's sale recorded, a row made settleable, a
+		reversal — with the rows the move wrote or changed: one fact can move several rows, one per seller-owned
+		line. Narrowed by the seller, by the order and by \`action\` (\`recorded\`, \`settleable\`, \`reversed\`);
+		a seller's own person is answered only its own seller's rows, and not told of a move that touched none.
+		"""
+		sellerTransactionChanged(sellerId: ID, orderId: ID, action: String): [SellerTransaction!]!
+	}
 `;
