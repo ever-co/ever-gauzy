@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 MD043 -->
+
 # Ever Gauzy documentation
 
 The Ever Gauzy documentation does not live in this repository. It is written in
