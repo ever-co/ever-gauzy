@@ -700,7 +700,10 @@ function readCursor(cursor: string, sort: readonly SortKey[]): { id: string; sor
  */
 export function buildConnection<T>(definition: ConnectionDefinition<T>): GraphqlConnection<T> {
 	const { rows, filterable, sortable, defaultSort } = definition;
-	const request = definition.request ?? {};
+	// GraphQL keeps an explicit `null` and a Relay client sends `after: null` on its first fetch, so a member
+	// stated as `null` states nothing here, as in the store-paged window (see statedPageMembers).
+	const stated = statedMembers(definition.request);
+	const request: ConnectionRequest = stated.page ? { ...stated, page: statedMembers(stated.page) } : stated;
 
 	assertSinglePaginationStyle(request);
 
@@ -902,6 +905,21 @@ export interface IConnectionPageSelection {
 	offset?: number | null;
 }
 
+/** An object's members once the `null` ones are dropped: optional, and never `null`. */
+type StatedMembers<T> = { [K in keyof T]?: Exclude<T[K], null> };
+
+/**
+ * The members of an object that state something, with every `null` member dropped.
+ *
+ * @param value The object as the resolver received it.
+ * @returns The members the caller actually stated.
+ */
+function statedMembers<T extends object>(value?: T | null): StatedMembers<T> {
+	return Object.fromEntries(
+		Object.entries(value ?? {}).filter(([, member]) => member !== null && member !== undefined)
+	) as StatedMembers<T>;
+}
+
 /**
  * The members of a page selection that state something, with every `null` member dropped.
  *
@@ -923,9 +941,7 @@ function statedPageMembers(selection?: IConnectionPageSelection | null): {
 	limit?: number;
 	offset?: number;
 } {
-	return Object.fromEntries(
-		Object.entries(selection ?? {}).filter(([, value]) => value !== null && value !== undefined)
-	);
+	return statedMembers(selection);
 }
 
 /**
