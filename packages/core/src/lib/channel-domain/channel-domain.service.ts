@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, SaveOptions } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ChannelRegionRefusalReason,
@@ -10,6 +10,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ChannelDomain } from './channel-domain.entity';
@@ -330,6 +331,55 @@ export class ChannelDomainService extends TenantAwareCrudService<ChannelDomain> 
 		await this.softDelete(id);
 
 		return domain;
+	}
+
+	/**
+	 * Withdraws a hostname without removing the row (`DELETE /channel-domains/:id/soft`, `softDeleteChannelDomain`).
+	 *
+	 * The CRUD base finds the row by tenant only, so the hostname is first resolved inside the caller's
+	 * organization, as the unbind above does. The check runs before the base method because the base turns any
+	 * error raised inside it into a generic 404.
+	 *
+	 * @param id The hostname row to withdraw.
+	 * @param options Find options, passed to the base method unchanged.
+	 * @param saveOptions Save options, passed to the base method unchanged.
+	 * @returns The withdrawn hostname row.
+	 * @throws NotFoundException when the hostname is not in the caller's scope.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<ChannelDomain>,
+		saveOptions?: SaveOptions
+	): Promise<ChannelDomain> {
+		await this.findDomainOrFail(id);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn hostname (`PUT /channel-domains/:id/recover`, `recoverChannelDomain`), on the
+	 * organization check the withdrawal runs. The check reads withdrawn rows too, since the row to restore is one.
+	 *
+	 * @param id The hostname row to restore.
+	 * @param options Find options, passed to the base method unchanged.
+	 * @param saveOptions Save options, passed to the base method unchanged.
+	 * @returns The restored hostname row.
+	 * @throws NotFoundException when the hostname is not in the caller's scope.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<ChannelDomain>,
+		saveOptions?: SaveOptions
+	): Promise<ChannelDomain> {
+		const domains: ChannelDomain[] = await this.find({ where: { id, ...this.scope }, withDeleted: true } as never);
+
+		if (!domains.length) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: ${ChannelRegionRefusalReason.CHANNEL_DOMAIN_NOT_FOUND}: hostname row '${String(id)}' could not be found.`
+			);
+		}
+
+		return super.softRecover(id, options, saveOptions);
 	}
 
 	/**

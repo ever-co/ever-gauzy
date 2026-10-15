@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository, SaveOptions } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ChannelRegionRefusalReason,
@@ -14,6 +14,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ChannelDomainService } from '../channel-domain/channel-domain.service';
@@ -548,6 +549,47 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 		await this.softDelete(id);
 
 		return this.findChannelOrFail(id);
+	}
+
+	/**
+	 * Withdraws a channel without removing the row (`DELETE /channels/:id/soft`, `softDeleteChannel`).
+	 *
+	 * The CRUD base finds the row by tenant only, so the channel is first resolved inside the caller's
+	 * organization, as every other operation of this service does. The check runs before the base method
+	 * because the base turns any error raised inside it into a generic 404.
+	 *
+	 * @param id The channel to withdraw.
+	 * @param options Find options, passed to the base method unchanged.
+	 * @param saveOptions Save options, passed to the base method unchanged.
+	 * @returns The withdrawn channel.
+	 * @throws NotFoundException when the channel is not in the caller's scope.
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Channel>, saveOptions?: SaveOptions): Promise<Channel> {
+		await this.findChannelOrFail(id);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn channel (`PUT /channels/:id/recover`, `recoverChannel`), on the organization check
+	 * the withdrawal runs. The check reads withdrawn rows too, since the row to restore is one.
+	 *
+	 * @param id The channel to restore.
+	 * @param options Find options, passed to the base method unchanged.
+	 * @param saveOptions Save options, passed to the base method unchanged.
+	 * @returns The restored channel.
+	 * @throws NotFoundException when the channel is not in the caller's scope.
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Channel>, saveOptions?: SaveOptions): Promise<Channel> {
+		const channels: Channel[] = await this.find({ where: { id, ...this.scope }, withDeleted: true } as never);
+
+		if (!channels.length) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: ${ChannelRegionRefusalReason.CHANNEL_NOT_FOUND}: channel '${String(id)}' could not be found.`
+			);
+		}
+
+		return super.softRecover(id, options, saveOptions);
 	}
 
 	/**
