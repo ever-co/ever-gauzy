@@ -166,6 +166,43 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 		return super.softRecover(id, this.scopedFindOptions(options), saveOptions);
 	}
 
+	/*
+	 * The list reads (SEC-D-01). None of this package's controllers declares its own `GET ''`, `GET /pagination` or
+	 * `GET /count`, so the inherited handlers reach these — and they were not narrowed: the 27 list routes of the
+	 * plugin answered every tenant's gift-card codes and balances, coupons and promotion usages, and
+	 * `/pagination?where[code]=…` and `/count` were cross-tenant oracles. Each is narrowed to the caller's tenant and
+	 * organization ({@link readScope}, spread last, so a stated `where` cannot widen it), as the reads by
+	 * identifier above and the GraphQL lists already are. The single-row reads by options are left as they are:
+	 * `update` and `delete` predicate their pre-read on the tenant alone, on purpose (see {@link writeScope}).
+	 */
+
+	/** `GET ''`: the caller's rows. */
+	public async findAll(options?: Parameters<CrudService<T>['findAll']>[0]): ReturnType<CrudService<T>['findAll']> {
+		return super.findAll(this.scopedFindOptions(options) as never);
+	}
+
+	/** The caller's rows, unpaginated. */
+	public async find(options?: Parameters<CrudService<T>['find']>[0]): ReturnType<CrudService<T>['find']> {
+		return super.find(this.scopedFindOptions(options) as never);
+	}
+
+	/** `GET /pagination`: a page of the caller's rows. */
+	public async paginate(options?: Parameters<CrudService<T>['paginate']>[0]): ReturnType<CrudService<T>['paginate']> {
+		return super.paginate(this.scopedFindOptions(options) as never);
+	}
+
+	/** How many of the caller's rows the options match. */
+	public async count(options?: Parameters<CrudService<T>['count']>[0]): ReturnType<CrudService<T>['count']> {
+		return super.count(this.scopedFindOptions(options) as never);
+	}
+
+	/** `GET /count`: how many of the caller's rows the conditions match. */
+	public async countBy(where?: Parameters<CrudService<T>['countBy']>[0]): ReturnType<CrudService<T>['countBy']> {
+		const stated = where && typeof where === 'object' && !Array.isArray(where) ? where : {};
+
+		return super.countBy({ ...stated, ...this.readScope } as never);
+	}
+
 	/**
 	 * Writes the fields a caller changed onto a row of the caller's own tenant.
 	 *
