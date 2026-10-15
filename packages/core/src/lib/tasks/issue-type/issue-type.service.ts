@@ -53,8 +53,14 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Scope to the caller's tenant, or a query that omits tenantId reads every tenant's rows
+					const tenantId = RequestContext.currentTenantId() ?? params.tenantId;
+					if (!tenantId) {
+						return await this.getDefaultEntities();
+					}
+
 					// Check at least one record exists with given params
-					const checkWhere = this.buildIssueTypeFilter(params);
+					const checkWhere = { ...this.buildIssueTypeFilter(params), tenantId };
 					const exists = await this.mikroOrmRepository.findOne(checkWhere as any);
 					if (!exists) {
 						return await this.getDefaultEntities();
