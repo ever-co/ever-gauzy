@@ -1,0 +1,23 @@
+<ngx-record-view-page
+	heading="DOCS.TITLE"
+	[subtitle]="document?.name"
+	[backLink]="backLink"
+	[state]="state"
+	(retry)="load()"
+>
+	@if (document) {
+		<ngx-favorite-toggle
+			recordPageActions
+			[entityType]="favoriteEntity"
+			[entityId]="document.id"
+			[entityName]="document.name"
+			size="small"
+			status="basic"
+			spacing="list"
+		></ngx-favorite-toggle>
+	}
+	@if (document) {
+		<!-- The same per-kind preview the hub opens in a dialog, given the whole content area. -->
+		<gz-docs-preview-modal class="document-file-preview" [document]="document" [inline]="true"></gz-docs-preview-modal>
+	}
+</ngx-record-view-page>

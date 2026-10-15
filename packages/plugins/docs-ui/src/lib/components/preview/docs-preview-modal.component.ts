@@ -1,4 +1,14 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	HostBinding,
+	HostListener,
+	Input,
+	OnDestroy,
+	OnInit,
+	Optional,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -29,6 +39,10 @@ export type DocsPreviewViewer = 'pdf' | 'image' | 'video' | 'audio' | 'text' | '
  * fallback card. Binary content is fetched through the authenticated HTTP
  * client and served from object URLs. `Esc` closes (Nebular), `←`/`→` page
  * through a pdf.
+ *
+ * With `inline` the same preview is embedded in a page instead of a dialog — the
+ * full-width document page `/pages/documents/file/:id` — so there is no dialog to
+ * close, and "Details" opens the Documents shell's detail column.
  */
 @Component({
 	selector: 'gz-docs-preview-modal',
@@ -40,6 +54,13 @@ export type DocsPreviewViewer = 'pdf' | 'image' | 'video' | 'audio' | 'text' | '
 export class DocsPreviewModalComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() document: IDocument;
 	@Input() locator: IDocsPreviewLocator | null = null;
+	/** Embedded in a page rather than opened in a dialog. */
+	@Input() inline = false;
+
+	@HostBinding('class.inline')
+	get isInline(): boolean {
+		return this.inline;
+	}
 
 	@ViewChild(PdfViewerComponent) pdfViewer: PdfViewerComponent | undefined;
 
@@ -71,7 +92,8 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly dialogRef: NbDialogRef<DocsPreviewModalComponent>,
+		// Absent when the preview is embedded in a page (`inline`).
+		@Optional() private readonly dialogRef: NbDialogRef<DocsPreviewModalComponent> | null,
 		private readonly documentsService: DocumentsService,
 		private readonly sanitizer: DomSanitizer,
 		private readonly actions: Actions
@@ -91,7 +113,7 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	// ─── Chrome actions ──────────────────────────────────────────
 
 	close(): void {
-		this.dialogRef.close();
+		this.dialogRef?.close();
 	}
 
 	/**
@@ -117,7 +139,7 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 
 	openDetails(): void {
 		this.actions.dispatch(DocumentsActions.detailOpened(this.document.id as ID));
-		this.dialogRef.close();
+		this.dialogRef?.close();
 	}
 
 	@HostListener('document:keydown.arrowRight')

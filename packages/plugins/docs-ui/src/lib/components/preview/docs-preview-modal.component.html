@@ -32,7 +32,7 @@
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.OPEN_DETAILS' | translate }}
 			</button>
-			<button nbButton ghost size="small" class="docs-preview-close" (click)="close()">
+			<button *ngIf="!inline" nbButton ghost size="small" class="docs-preview-close" (click)="close()">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
