@@ -375,6 +375,27 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Define the where condition of a read given as conditions only, scoped to the current user's tenant
+	 * and employee.
+	 *
+	 * A public route or a background job has no user in context, hence no tenant to read off it, so the
+	 * stated condition is used unchanged, as {@link findOneWithTenant} does.
+	 *
+	 * @param options - The caller's where condition.
+	 * @returns The where condition the read runs with.
+	 */
+	private findWhereWithTenant(options?: FindOptionsWhere<T>): FindOptionsWhere<T> {
+		const user = RequestContext.currentUser();
+		if (!user) {
+			return options;
+		}
+		return {
+			...options,
+			...this.findConditionsWithTenantByUser(user)
+		};
+	}
+
+	/**
 	 * Counts entities that match given options.
 	 * Useful for pagination.
 	 *
@@ -393,11 +414,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async countBy(options?: FindOptionsWhere<T>): Promise<number> {
-		const user = RequestContext.currentUser();
-		return await super.countBy({
-			...options,
-			...this.findConditionsWithTenantByUser(user)
-		});
+		return await super.countBy(this.findWhereWithTenant(options));
 	}
 
 	/**
@@ -471,11 +488,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async findOneOrFailByWhereOptions(options: FindOptionsWhere<T>): Promise<ITryRequest<T>> {
-		const user = RequestContext.currentUser();
-		return await super.findOneOrFailByWhereOptions({
-			...options,
-			...this.findConditionsWithTenantByUser(user)
-		});
+		return await super.findOneOrFailByWhereOptions(this.findWhereWithTenant(options));
 	}
 
 	/*
@@ -514,11 +527,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async findOneByWhereOptions(options: FindOptionsWhere<T>): Promise<T> {
-		const user = RequestContext.currentUser();
-		return await super.findOneByWhereOptions({
-			...options,
-			...this.findConditionsWithTenantByUser(user)
-		});
+		return await super.findOneByWhereOptions(this.findWhereWithTenant(options));
 	}
 
 	/**
