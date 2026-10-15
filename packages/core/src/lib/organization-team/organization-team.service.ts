@@ -6,7 +6,7 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions } from 'typeorm';
+import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions, SaveOptions } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -35,6 +35,7 @@ import {
 	parseFindOptionsSelect
 } from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
@@ -714,6 +715,73 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				throw new NotFoundException(`Organization team with ID ${teamId} not found.`);
 			}
 		} catch (error) {
+			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Soft deletes a team (`DELETE /organization-team/:id/soft`, `softDeleteOrganizationTeam`), only for a
+	 * caller who may edit it. See {@link assertMayManageTeam}.
+	 *
+	 * @param id - The team to soft delete.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The soft-deleted team.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<OrganizationTeam>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationTeam> {
+		await this.assertMayManageTeam(id, false);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a soft-deleted team (`PUT /organization-team/:id/recover`, `recoverOrganizationTeam`), only for
+	 * a caller who may edit it. See {@link assertMayManageTeam}.
+	 *
+	 * @param id - The team to restore.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored team.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<OrganizationTeam>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationTeam> {
+		await this.assertMayManageTeam(id, true);
+
+		return super.softRecover(id, options, saveOptions);
+	}
+
+	/**
+	 * Applies the rule `update` enforces: without CHANGE_SELECTED_EMPLOYEE, a caller with an employee record
+	 * must be a manager of the team, and a caller without one passes as it does in `update`. It runs before
+	 * the base method, which turns every failure into a 404.
+	 *
+	 * @param id - The team acted on.
+	 * @param withDeleted - Whether the team is read among soft-deleted rows (a restoration).
+	 * @throws {ForbiddenException} When the caller does not manage the team.
+	 */
+	private async assertMayManageTeam(id: ID, withDeleted: boolean): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return;
+		}
+
+		try {
+			await this.findOneByIdString(id, {
+				where: { members: { employeeId, role: { name: RolesEnum.MANAGER } } },
+				...(withDeleted ? { withDeleted: true } : {})
+			});
+		} catch {
 			throw new ForbiddenException();
 		}
 	}
