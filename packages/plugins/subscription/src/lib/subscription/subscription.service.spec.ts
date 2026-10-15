@@ -3488,11 +3488,15 @@ describe('SubscriptionService — previewing the next billing', () => {
 
 		await fixture.service.pause(created.id, { until: pausedUntil, reason: 'customer asked' });
 
-		// The charged cycle keeps its period and its retries, so the period the preview names is the one it is on.
+		// The charged cycle keeps its period and its retries, so the period the preview names is the one it is on,
+		// billed when its retry comes rather than when the pause ends.
+		const retryAt = new Date(fixture.billings(created.id)[0].nextRetryAt as Date);
+
+		expect(retryAt.getTime()).toBeGreaterThan(pausedUntil.getTime());
 		expect(await fixture.service.previewNextBilling(created.id, new Date(start.getTime() + 60 * 60 * 1000))).toMatchObject({
 			periodStart: start,
 			periodEnd: new Date(created.currentPeriodEnd as Date),
-			nextBillingAt: start
+			nextBillingAt: retryAt
 		});
 	});
 
@@ -3570,6 +3574,141 @@ describe('SubscriptionService — previewing the next billing', () => {
 
 		expect(outcome).toMatchObject({ replayed: true, billingId: 'cycle-settled' });
 		expect(fixture.orderCalls).toEqual([]);
+	});
+
+	it('previews the retry after a failed charge: its period, at the retry instant, for what the retry charges', async () => {
+		// Greptile on #10650: after a failed charge the subscription stays `ACTIVE` with its billing instant on the
+		// failed period's start, and the cycle row carries the dunning schedule's next attempt. No run charges the
+		// period before that attempt (`executeCycle`), so the preview's billing instant is the retry, not a date
+		// already past.
+		let attempt = 0;
+		const fixture = subscriptionFixture({
+			orders: () => {
+				attempt += 1;
+
+				if (attempt === 1) {
+					throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the card was declined');
+				}
+
+				return { orderId: `order-${attempt}`, paid: true };
+			}
+		});
+
+		expect(await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).toMatchObject({
+			status: SubscriptionBillingStatus.FAILED
+		});
+
+		const failed = { ...fixture.cycle(APRIL) } as Row;
+		const retryAt = new Date(failed.nextRetryAt as Date);
+
+		expect(retryAt.getTime()).toBeGreaterThan(APRIL.getTime());
+
+		// The retry re-prices: it charges the lines as they stand when it runs, not the amount the failed
+		// attempt recorded. A line repriced while the cycle waits is what tells the two apart.
+		fixture.tables.subscription_item[0].unitPrice = '150.000000';
+
+		const asked = new Date(APRIL.getTime() + 60 * 60 * 1000);
+		const before = everythingWritten(fixture);
+		const preview = await fixture.service.previewNextBilling(SUBSCRIPTION, asked);
+
+		expect(preview).toEqual({
+			subscriptionId: SUBSCRIPTION,
+			amount: '150.000000',
+			currency: 'USD',
+			periodStart: APRIL,
+			periodEnd: monthAfter(APRIL),
+			nextBillingAt: retryAt
+		});
+		expect(everythingWritten(fixture)).toBe(before);
+
+		// The control, before the retry instant: a run charges nothing.
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: asked });
+
+		expect(fixture.orderCalls).toHaveLength(1);
+
+		// At the retry instant (the failed attempt's claim aged out by then), the cycle charges what the preview said.
+		fixture.idempotencyService.advanceBy(retryAt.getTime() - APRIL.getTime());
+		const retried = await fixture.service.billCycle(SUBSCRIPTION, { asOf: retryAt });
+
+		expect(retried).toMatchObject({ status: SubscriptionBillingStatus.PAID, billingId: failed.id });
+		expect(fixture.orderCalls).toHaveLength(2);
+		expect(fixture.orderCalls[1].amount).toBe(preview?.amount);
+		expect(new Date(fixture.orderCalls[1].periodStart)).toEqual(preview?.periodStart);
+		expect(failed.amount).toBe('120.000000');
+	});
+
+	it('answers null when a cancellation at the period end takes effect before the retry', async () => {
+		// A daily plan's opening period ends before the dunning schedule's first retry, a day after the failure.
+		// Every run reads the cancellation before it reaches the retry, so the retry never charges.
+		const dayAfter = new Date(MARCH.getTime() + 24 * 60 * 60 * 1000);
+		let attempt = 0;
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN, { billingPeriod: SubscriptionBillingPeriod.DAILY }), planRow(BETTER_PLAN)],
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					currentPeriodStart: new Date(MARCH),
+					currentPeriodEnd: dayAfter,
+					nextBillingAt: new Date(MARCH)
+				})
+			],
+			orders: () => {
+				attempt += 1;
+
+				throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the card was declined');
+			}
+		});
+
+		expect(await fixture.service.billCycle(SUBSCRIPTION, { asOf: MARCH })).toMatchObject({
+			status: SubscriptionBillingStatus.FAILED
+		});
+
+		const retryAt = new Date(fixture.cycle(MARCH)?.nextRetryAt as Date);
+
+		expect(retryAt.getTime()).toBeGreaterThanOrEqual(dayAfter.getTime());
+
+		await fixture.service.cancel(SUBSCRIPTION, { reason: 'customer asked' });
+
+		const asked = new Date(MARCH.getTime() + 60 * 60 * 1000);
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			metadata: { cancelAtPeriodEnd: true }
+		});
+		expect(await fixture.service.previewNextBilling(SUBSCRIPTION, asked)).toBeNull();
+
+		// The control: the run at the retry instant cancels instead of charging.
+		fixture.idempotencyService.advanceBy(retryAt.getTime() - MARCH.getTime());
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: retryAt });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.CANCELED });
+		expect(attempt).toBe(1);
+	});
+
+	it('answers null once the retries are spent, because the run never takes a failed subscription', async () => {
+		const fixture = subscriptionFixture({
+			orders: () => {
+				throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the card was declined');
+			}
+		});
+		let asOf = APRIL;
+
+		// Every attempt the dunning schedule allows, each at its own retry instant.
+		for (let attempts = 0; fixture.subscription(SUBSCRIPTION)?.status !== SubscriptionStatus.FAILED; attempts++) {
+			expect(attempts).toBeLessThan(10);
+			fixture.idempotencyService.advanceBy(10 * 60 * 1000);
+			await fixture.service.billCycle(SUBSCRIPTION, { asOf });
+			asOf = new Date((fixture.cycle(APRIL)?.nextRetryAt as Date) ?? asOf);
+		}
+
+		expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.FAILED, nextRetryAt: null });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: null });
+		expect(await fixture.service.previewNextBilling(SUBSCRIPTION, monthAfter(APRIL))).toBeNull();
+
+		// The control: a run long after the last attempt examines nothing; only an operator bills it again.
+		const calls = fixture.orderCalls.length;
+
+		expect(await fixture.service.runBilling({ asOf: monthAfter(monthAfter(APRIL)) })).toMatchObject({ examined: 0 });
+		expect(fixture.orderCalls).toHaveLength(calls);
 	});
 
 	it('refuses to preview a subscription with no recurring lines, as the cycle refuses to bill it', async () => {

@@ -524,7 +524,7 @@ export const schemaExtensions = gql`
 		periodStart: DateTime!
 		"The end of the period the cycle covers, exclusive."
 		periodEnd: DateTime!
-		"The instant the cycle is due to bill — the start of the period it covers."
+		"The instant the cycle is due to bill: the start of the period it covers, or the next retry when a charge of that period failed."
 		nextBillingAt: DateTime!
 	}
 

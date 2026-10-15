@@ -1166,8 +1166,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * activated, and an indefinite pause answer null. The cycle's own gates are then read at the instant
 	 * the run would bill it rather than acted on: one whose plan's cycle ceiling is reached, one cancelled
 	 * at the end of a period that has ended by then, and one whose period is already settled bill nothing,
-	 * and the answer is null. A subscription with no recurring lines is refused exactly as `billCycle`
-	 * refuses it.
+	 * and the answer is null. A period whose charge failed is billed when the dunning schedule's next
+	 * attempt comes, not before (`executeCycle` waits for the cycle row's `nextRetryAt`), so that attempt is
+	 * the instant the gates are read at and the billing instant answered; once the schedule is spent the
+	 * subscription is `FAILED`, no run takes it, and the answer is null. A subscription with no recurring
+	 * lines is refused exactly as `billCycle` refuses it.
 	 *
 	 * @param id The subscription.
 	 * @param now The instant the question is asked.
@@ -1191,7 +1194,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const cadence = this.planService.cadenceOf(plan);
 		// The run bills it when its billing instant (or the end of its pause) comes, or at once when that has passed.
 		const due = new Date((paused ? subscription.pausedUntil : subscription.nextBillingAt) as Date);
-		const runsAt = due.getTime() > now.getTime() ? due : now;
+		let runsAt = due.getTime() > now.getTime() ? due : now;
 		let calendar: { nextBillingAt?: Date | null; currentPeriodEnd?: Date | null } = subscription;
 
 		if (paused) {
@@ -1216,6 +1219,18 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 		}
 
+		const period = nextCyclePeriod(calendar, cadence, runsAt);
+		const existing = await this.billingService.findByPeriod(subscription.id, period.start);
+		const settled = !!existing && SETTLED_CYCLE_STATUSES.includes(existing.status);
+		// A charge of this period that failed and awaits the dunning schedule's next attempt: no run charges the
+		// period before that attempt (`executeCycle`), so it is billed at the retry, and every gate below is read
+		// there. A spent schedule never reaches this: the last failure moved the subscription to `FAILED`.
+		const retryAt = !settled && existing?.nextRetryAt ? new Date(existing.nextRetryAt) : null;
+
+		if (retryAt && retryAt.getTime() > runsAt.getTime()) {
+			runsAt = retryAt;
+		}
+
 		if (subscription.metadata?.['cancelAtPeriodEnd'] === true) {
 			// `billCycle` cancels instead of billing when the period it was cancelled at has ended by the time it runs.
 			const periodEnd = calendar.currentPeriodEnd ? new Date(calendar.currentPeriodEnd) : runsAt;
@@ -1233,7 +1248,6 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return null;
 		}
 
-		const period = nextCyclePeriod(calendar, cadence, runsAt);
 		const items = await this.itemService.findForSubscription(subscription.id);
 
 		if (!items.length) {
@@ -1242,13 +1256,13 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			);
 		}
 
-		const existing = await this.billingService.findByPeriod(subscription.id, period.start);
-
-		if (existing && SETTLED_CYCLE_STATUSES.includes(existing.status)) {
+		if (settled) {
 			// The cycle answers a settled period with the row it already has, and bills nothing.
 			return null;
 		}
 
+		// A retry prices the lines as they stand when it runs, exactly as a first attempt does, rather than
+		// charging what the failed attempt recorded — so the preview prices them now, with the same function.
 		const { net } = priceCycle({ items, currency: subscription.currency, plan, metadata: subscription.metadata });
 
 		return {
@@ -1257,7 +1271,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			currency: subscription.currency,
 			periodStart: period.start,
 			periodEnd: period.end,
-			nextBillingAt: period.start
+			nextBillingAt: retryAt ?? period.start
 		};
 	}
 
