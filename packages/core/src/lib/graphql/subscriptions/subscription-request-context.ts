@@ -125,6 +125,24 @@ export function bindToCurrentContext<T>(stream: AsyncIterable<T>): AsyncIterable
 }
 
 /**
+ * Whether an event's organization lets it reach the subscriber a `@Subscription` filter runs for.
+ *
+ * The filter runs inside the stream bound to the subscriber's operation, so the organization read here
+ * is the subscriber's. The rule is the one `SubscriptionAuthorizer.mayDeliver` and the plugin streams
+ * apply: an event is withheld only when both it and the subscriber name an organization and the two
+ * differ, so a subscriber with no organization (a tenant API key, for one) and an event with none pass
+ * as before.
+ *
+ * @param organizationId The organization the event belongs to.
+ * @returns False when the event belongs to another organization than the subscriber's.
+ */
+export function matchesSubscriberOrganization(organizationId: unknown): boolean {
+	const subscriberOrganizationId = RequestContext.currentOrganizationId();
+
+	return !subscriberOrganizationId || !organizationId || String(organizationId) === String(subscriberOrganizationId);
+}
+
+/**
  * The request an operation was given by the context factory.
  *
  * @param args The execution arguments.
