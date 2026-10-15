@@ -93,8 +93,18 @@ const PROMISED = [
 	{ name: 'giftCardRedeemed', owner: 'promotion', source: 'served' },
 
 	// — Served by lane q12b (owner decision 8, 2026-10-13; built 2026-10-15): the design-named backlog and the typed
-	//   fields of the durable aggregates the plugins stream. Each follows outbox facts appended in the transaction of
-	//   the write they describe, on the subscriber's own tenant topic, re-read as the subscriber.
+	//   fields of the durable aggregates the plugins stream. Each follows outbox facts on the subscriber's own tenant
+	//   topic, re-read as the subscriber. Most facts are appended in the transaction of the write they describe; the
+	//   exceptions, so this table does not claim more than the code does:
+	//   - `fulfillment.created` is appended after the shipment's CRUD create, not inside it (the create has no
+	//     transaction-bound form — `FulfillmentService` documents it); the later `fulfillment.*` moves are appended
+	//     right after their conditional update, and in one transaction with it only for a cancellation on TypeORM;
+	//   - the subscription service's facts other than `subscription.created` are appended after the transaction of
+	//     their write, not inside it;
+	//   - `pick_list.created` is the last step of the list's create, in its own transaction, and a failed append
+	//     withdraws the list; the pick-list moves are atomic with their writes;
+	//   - `integration_tenant.synced` is atomic with the connection's `lastSyncedAt` stamp, and that recording is the
+	//     run's epilogue — appended after the import — and, for Hubstaff and Upwork, best-effort.
 	{
 		name: 'sellerChanged',
 		owner: 'marketplace',
