@@ -139,7 +139,13 @@ const PROMISED = [
 		aggregates: ['fulfillment'],
 		note: 'follows `fulfillment.*` (shipped, in transit, delivered, canceled — `fulfillmentCreated` is the first move only)'
 	},
-	{ name: 'sellerOfferingChanged', owner: 'marketplace', source: 'served', aggregates: ['seller_offering'], note: 'follows `seller_offering.*`' },
+	{
+		name: 'sellerOfferingChanged',
+		owner: 'marketplace',
+		source: 'served',
+		aggregates: ['seller_offering'],
+		note: 'follows `seller_offering.created` and `seller_offering.withdrawn`; `seller_offering.updated` — every edit, status move (submit, publish, pause) and bulk-reprice item — is withheld, as from `Subscription.events`'
+	},
 	{ name: 'sellerPayoutChanged', owner: 'marketplace', source: 'served', aggregates: ['seller_payout'], note: 'follows `seller_payout.*`' },
 	{ name: 'sellerSettlementChanged', owner: 'marketplace', source: 'served', aggregates: ['seller_settlement'], note: 'follows `seller_settlement.*`' },
 	{
