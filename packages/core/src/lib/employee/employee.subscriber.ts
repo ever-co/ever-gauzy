@@ -149,7 +149,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			}
 
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em);
+			this.updateEmployeeStatus(entity, em, !!entity.startedWorkOn, !!entity.endWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityCreate process:',
@@ -162,11 +162,23 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * Called before the entity is updated in the database.
 	 *
 	 * @param entity - The employee entity to be updated.
+	 * @param em - The entity manager, either TypeORM's or MikroORM's.
+	 * @param changedProperties - The properties this write changes, or undefined when the ORM does not report them.
 	 */
-	async beforeEntityUpdate(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
+	async beforeEntityUpdate(
+		entity: Employee,
+		em?: MultiOrmEntityManager,
+		changedProperties?: string[]
+	): Promise<void> {
 		try {
+			// A work date this write leaves as stored neither starts nor ends work: edit forms send the stored
+			// start date back, and under MikroORM the entity is the whole stored row.
+			const isChanged = (property: string) => !changedProperties || changedProperties.includes(property);
+			const hasStartedWork = !!entity.startedWorkOn && isChanged('startedWorkOn');
+			const hasEndedWork = !!entity.endWork && isChanged('endWork');
+
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em);
+			this.updateEmployeeStatus(entity, em, hasStartedWork, hasEndedWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
@@ -310,12 +322,15 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 *
 	 * @param {Employee} entity - The employee entity to be updated.
 	 * @param {MultiOrmEntityManager} em - The entity manager used to interact with the database.
+	 * @param {boolean} hasStartedWork - True when the write sets a start work date.
+	 * @param {boolean} hasEndedWork - True when the write sets an end work date.
 	 */
-	private updateEmployeeStatus(entity: Employee, em: MultiOrmEntityManager): void {
-		// Check if the employee has started or ended work
-		const hasStartedWork = !!entity.startedWorkOn;
-		const hasEndedWork = !!entity.endWork;
-
+	private updateEmployeeStatus(
+		entity: Employee,
+		em: MultiOrmEntityManager,
+		hasStartedWork: boolean,
+		hasEndedWork: boolean
+	): void {
 		// Update the employee's status based on the work dates
 		if (hasStartedWork || hasEndedWork) {
 			this.setEmployeeStatus(entity, hasStartedWork, hasEndedWork);
