@@ -350,6 +350,8 @@ interface IHarness {
 	movements: Row[];
 	/** The movements the ledger holds — what committed, as the table reads after the call. */
 	stockMovements: () => Promise<Row[]>;
+	/** Every statement the connection ran, in order — `BEGIN` and `COMMIT` included. */
+	queries: string[];
 	/**
 	 * The platform outbox, recorded: each fact it was asked to append, and whether the manager it was handed was
 	 * inside an open transaction. `failOn` names a fact it refuses, after the move that earned it was written.
@@ -360,12 +362,24 @@ interface IHarness {
 }
 
 async function harness(): Promise<IHarness> {
+	const queries: string[] = [];
 	const dataSource = new DataSource({
 		type: 'better-sqlite3',
 		database: ':memory:',
 		entities: schemas,
 		synchronize: true,
-		logging: false
+		logging: false,
+		// A logger object is handed every statement whatever `logging` says; it keeps them, and prints nothing.
+		logger: {
+			logQuery: (query: string) => {
+				queries.push(query);
+			},
+			logQueryError: () => undefined,
+			logQuerySlow: () => undefined,
+			logSchemaBuild: () => undefined,
+			logMigration: () => undefined,
+			log: () => undefined
+		}
 	});
 	await dataSource.initialize();
 
@@ -506,6 +520,7 @@ async function harness(): Promise<IHarness> {
 		movements,
 		stockMovements: async () =>
 			await dataSource.query('SELECT "referenceId", "variantId", "quantity" FROM "stock_movement" ORDER BY "id"'),
+		queries,
 		outbox,
 		row: async (table, id) => (await dataSource.query(`SELECT * FROM "${table}" WHERE "id" = ?`, [id]))[0],
 		set: async (table, id, values) => {
@@ -517,6 +532,19 @@ async function harness(): Promise<IHarness> {
 		}
 	};
 }
+
+/**
+ * A statement, reduced to its verb and the table it reads or writes: `SELECT pick_list`, `UPDATE pick_list_line`.
+ *
+ * @param sql The statement.
+ * @returns The verb and the table.
+ */
+const statementOf = (sql: string): string => {
+	const verb = sql.trim().split(/\s+/)[0].toUpperCase();
+	const table = (verb === 'SELECT' ? /\bFROM\s+"(\w+)"/i : /^\s*(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM)\s+"(\w+)"/i).exec(sql)?.[1];
+
+	return table ? `${verb} ${table}` : verb;
+};
 
 /** An instant as SQLite holds it: TypeORM writes a `datetime` as UTC text without a zone. */
 const instant = (stored: unknown): number => new Date(`${String(stored).replace(' ', 'T')}Z`).getTime();
@@ -855,6 +883,31 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 
 			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.SHORT);
 			expect((await h.stockMovements()).map((movement) => Number(movement.quantity))).toEqual([-2]);
+		});
+
+		it('an outcome takes its list’s row first in its transaction — before it writes the line or reads the counters', async () => {
+			// An IN_PROGRESS list: its counters are all an outcome moves on it, and two overlapping outcomes on different
+			// lines each re-counted without the other's line (READ COMMITTED does not show an uncommitted one), so one
+			// pick went missing from the count. The outcome now reads the list's row first, under a write lock where the
+			// database has row locks — PostgreSQL and MySQL — so the second outcome waits for the first to commit, and
+			// counts it. Lists before lines is the order a cancellation takes them in (`movePickList` writes the list,
+			// then its lines), so the two never wait on each other in a cycle. The waiting needs a server database;
+			// SQLite serializes its writers, and what is proven here is where the read sits.
+			await h.set('pick_list', LIST, { status: PickListStatus.IN_PROGRESS });
+			h.queries.length = 0;
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			const begin = h.queries.findIndex((sql) => /^\s*BEGIN/i.test(sql));
+			const commit = h.queries.findIndex((sql, index) => index > begin && /^\s*COMMIT/i.test(sql));
+			const inTransaction = h.queries.slice(begin + 1, commit).map(statementOf);
+
+			expect(begin).toBeGreaterThanOrEqual(0);
+			expect(inTransaction.slice(0, 2)).toEqual(['SELECT pick_list', 'UPDATE pick_list_line']);
+			expect(inTransaction.indexOf('SELECT pick_list_line')).toBeGreaterThan(1);
+			// SQLite has no row lock and TypeORM refuses the clause there: the statement asks for none.
+			expect(h.queries.some((sql) => /\bFOR\s+UPDATE\b/i.test(sql))).toBe(false);
+			expect((await h.row('pick_list', LIST))?.pickedCount).toBe(1);
 		});
 
 		it('the pick, the counters and the promotion are one transaction: the fact sees the outcome it announces', async () => {

@@ -389,6 +389,8 @@ function pickListFixture(
 	(listRepository as any).manager = {
 		transaction: async (work: (manager: unknown) => Promise<unknown>) =>
 			await work({
+				// The database the transaction runs on, as a TypeORM manager reports it: one with row locks.
+				dataSource: { options: { type: 'postgres' } },
 				getRepository: (entity: { name?: string }) => (entity?.name === 'PickListLine' ? lineRepository : listRepository)
 			})
 	};

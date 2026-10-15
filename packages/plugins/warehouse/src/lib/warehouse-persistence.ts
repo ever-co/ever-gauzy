@@ -1,8 +1,9 @@
-import { EntityManager as TypeOrmEntityManager, ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, EntityManager as TypeOrmEntityManager, ObjectLiteral, Repository } from 'typeorm';
 import {
 	Collection,
 	EntityManager as MikroOrmEntityManager,
 	EntityMetadata,
+	LockMode,
 	Reference,
 	ReferenceKind,
 	wrap
@@ -93,9 +94,37 @@ export interface IWarehouseTransaction {
 	 * @returns The repository, answering the same calls as {@link warehouseRowsOf}'s.
 	 */
 	rows<T extends ObjectLiteral>(entity: new () => T): TWarehouseRows<T>;
+	/**
+	 * Reads one row of this package's tables and holds it until the transaction ends: another transaction that takes
+	 * the same row waits until this one commits or rolls back, and then reads what it committed. A write that has to
+	 * see every other write on a row — a pick list's counters, re-counted from its lines — takes the row first.
+	 *
+	 * `SELECT … FOR UPDATE` on PostgreSQL and MySQL: TypeORM's `pessimistic_write`, MikroORM's
+	 * `LockMode.PESSIMISTIC_WRITE`. SQLite has no row lock and serializes writers on the whole database, so there the
+	 * transaction is the lock: TypeORM is asked for none (it refuses the clause on SQLite), and MikroORM's compiles to
+	 * nothing (knex's SQLite compiler drops it).
+	 *
+	 * @param entity The table's entity.
+	 * @param where The row, by equality criteria.
+	 * @returns The row, or null when none matches.
+	 */
+	lock<T extends ObjectLiteral>(entity: new () => T, where: Record<string, unknown>): Promise<T | null>;
 	/** The transaction's own manager — TypeORM's, or MikroORM's fork — which `EventOutboxService.append` accepts. */
 	readonly manager: TypeOrmEntityManager | MikroOrmEntityManager;
 }
+
+/**
+ * The TypeORM drivers whose pessimistic write lock is a row lock (`SELECT … FOR UPDATE`): the PostgreSQL and MySQL
+ * families. SQLite is not one — TypeORM refuses the clause there (`LockNotSupportedOnGivenDriverError`).
+ */
+const TYPEORM_ROW_LOCK_DRIVERS: ReadonlySet<string> = new Set([
+	'postgres',
+	'aurora-postgres',
+	'cockroachdb',
+	'mysql',
+	'mariadb',
+	'aurora-mysql'
+]);
 
 /**
  * Runs one write in a transaction on the ORM the installation runs.
@@ -123,9 +152,11 @@ export async function runWarehouseTransaction<R>(
 			.getEntityManager()
 			.transactional(
 				async (em) =>
-					await work({
+						await work({
 						rows: <T extends ObjectLiteral>(entity: new () => T) =>
 							new MikroOrmWarehouseRows<T>(em, entity) as unknown as TWarehouseRows<T>,
+						lock: <T extends ObjectLiteral>(entity: new () => T, where: Record<string, unknown>) =>
+							new MikroOrmWarehouseRows<T>(em, entity).lock(where),
 						manager: em
 					})
 			);
@@ -135,6 +166,13 @@ export async function runWarehouseTransaction<R>(
 		async (manager) =>
 			await work({
 				rows: <T extends ObjectLiteral>(entity: new () => T) => manager.getRepository(entity) as TWarehouseRows<T>,
+				lock: async <T extends ObjectLiteral>(entity: new () => T, where: Record<string, unknown>) =>
+					await manager.getRepository(entity).findOne({
+						where: where as FindOptionsWhere<T>,
+						...(TYPEORM_ROW_LOCK_DRIVERS.has(manager.dataSource.options.type)
+							? { lock: { mode: 'pessimistic_write' as const } }
+							: {})
+					}),
 				manager
 			})
 	);
@@ -191,6 +229,23 @@ export class MikroOrmWarehouseRows<T extends ObjectLiteral> {
 		);
 
 		return row ? (this.toRow(row, populated(options)) as T) : null;
+	}
+
+	/**
+	 * Reads one row under `LockMode.PESSIMISTIC_WRITE`, held until the transaction this manager runs in ends — `FOR
+	 * UPDATE` on PostgreSQL and MySQL, nothing on SQLite, which serializes writers. MikroORM refuses the lock outside a
+	 * transaction, and this is only reached through {@link runWarehouseTransaction}.
+	 *
+	 * @param where The row, in TypeORM's vocabulary.
+	 * @returns The row in TypeORM's shape, or null.
+	 */
+	async lock(where: Record<string, unknown> = {}): Promise<T | null> {
+		const row = await this.em.findOne(this.entity as any, this.criteria(where), {
+			...this.readOptions({}),
+			lockMode: LockMode.PESSIMISTIC_WRITE
+		} as any);
+
+		return row ? (this.toRow(row, []) as T) : null;
 	}
 
 	/**

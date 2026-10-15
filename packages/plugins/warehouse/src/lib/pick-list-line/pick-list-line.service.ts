@@ -526,6 +526,16 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * The line is written only while it is still open, so two calls recording an outcome on one line cannot both
 	 * write it: the second is refused with `PICK_LIST_LINE_EDIT_CONFLICT` — before any stock moves.
 	 *
+	 * **Outcomes on one list run one after the other.** The list's counters are re-counted from its lines inside the
+	 * outcome's transaction, and under READ COMMITTED two overlapping outcomes on different lines would each count
+	 * their own line and not the other's uncommitted one — two picks recorded, `pickedCount` 1. So the transaction
+	 * takes the list's row first (`IWarehouseTransaction.lock`: `FOR UPDATE` on PostgreSQL and MySQL; SQLite
+	 * serializes writers on its own), before it writes the line or reads anything: the second outcome waits until the
+	 * first commits, and then counts its line. A single `UPDATE … SET pickedCount = (SELECT COUNT(*) …)` would not do:
+	 * its sub-select reads the statement's snapshot, which still misses the other transaction's line. The list is
+	 * taken before its lines, the order a cancellation takes them in (`movePickList` writes the list, then withdraws
+	 * its lines), so an outcome and a cancellation of the same list never wait on each other in a cycle.
+	 *
 	 * **The stock movements the outcome implies** (a short pick's write-off, a substitution's pair) are written in
 	 * the same transaction, after the line: the inventory ledger takes a caller's TypeORM transaction and writes the
 	 * movement on it, so on TypeORM a pick whose promotion or fact fails rolls its movements back with it, and the
@@ -550,6 +560,15 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 
 		try {
 			await this.transaction(async (transaction) => {
+				// Never an id-less criterion: an `undefined` id would be dropped from the condition, not matched.
+				if (line.pickListId) {
+					await transaction.lock(PickList, {
+						id: line.pickListId,
+						...(line.tenantId ? { tenantId: line.tenantId } : {}),
+						...(line.organizationId ? { organizationId: line.organizationId } : {})
+					});
+				}
+
 				await this.writeOutcome(transaction, line, outcome);
 
 				const joinable = transaction.manager instanceof TypeOrmEntityManager ? transaction.manager : undefined;
