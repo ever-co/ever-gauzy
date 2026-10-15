@@ -47,7 +47,7 @@ extend type Query {
 	"""
 	employeeRecentVisits(
 		"""
-		The organization whose rows are read. Required, and the caller must belong to it — as on the REST route.
+		The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
 		"""
 		organizationId: ID
 		filter: EmployeeRecentVisitFilter

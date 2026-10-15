@@ -31,7 +31,7 @@ extend type Query {
 	"""
 	activityLogs(
 		"""
-		The organization whose log is read. Required, and the caller must belong to it — as on the REST route.
+		The organization whose log is read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
 		"""
 		organizationId: ID
 		filter: ActivityLogFilter
