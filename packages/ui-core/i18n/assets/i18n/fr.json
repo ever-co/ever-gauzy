@@ -3816,6 +3816,12 @@
 			"START_DATE": "Date de début",
 			"RECIPIENT_COUNT": "Destinataires : {{count}}",
 			"NO_RECIPIENTS": "Aucun destinataire ajouté pour le moment"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Supprimer l’invitation",
+			"WARNING": "L’invitation pour {{ email }} sera définitivement supprimée et son lien ne fonctionnera plus. Cette action est irréversible.",
+			"TYPE_TO_CONFIRM": "Saisissez ce qui suit pour confirmer :",
+			"CONFIRM": "Supprimer l’invitation"
 		}
 	},
 	"INVOICES_PAGE": {

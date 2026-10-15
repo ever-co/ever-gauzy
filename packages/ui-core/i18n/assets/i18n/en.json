@@ -4353,6 +4353,12 @@
 			"START_DATE": "Start date",
 			"RECIPIENT_COUNT": "Recipients: {{count}}",
 			"NO_RECIPIENTS": "No recipients added yet"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Delete invitation",
+			"WARNING": "The invitation for {{ email }} will be permanently deleted and its link will stop working. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete invitation"
 		}
 	},
 	"INVOICES_PAGE": {

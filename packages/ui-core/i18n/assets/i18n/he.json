@@ -3845,6 +3845,12 @@
 			"START_DATE": "תאריך התחלה",
 			"RECIPIENT_COUNT": "נמענים: {{count}}",
 			"NO_RECIPIENTS": "עדיין לא נוספו נמענים"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "מחיקת הזמנה",
+			"WARNING": "ההזמנה עבור {{ email }} תימחק לצמיתות והקישור שלה יפסיק לעבוד. לא ניתן לבטל פעולה זו.",
+			"TYPE_TO_CONFIRM": "הקלידו את הטקסט הבא לאישור:",
+			"CONFIRM": "מחק הזמנה"
 		}
 	},
 	"INVOICES_PAGE": {

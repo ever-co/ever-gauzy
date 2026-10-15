@@ -3818,6 +3818,12 @@
 			"START_DATE": "Startdatum",
 			"RECIPIENT_COUNT": "Empfänger: {{count}}",
 			"NO_RECIPIENTS": "Noch keine Empfänger hinzugefügt"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Einladung löschen",
+			"WARNING": "Die Einladung für {{ email }} wird endgültig gelöscht und ihr Link funktioniert nicht mehr. Diese Aktion kann nicht rückgängig gemacht werden.",
+			"TYPE_TO_CONFIRM": "Geben Sie zur Bestätigung Folgendes ein:",
+			"CONFIRM": "Einladung löschen"
 		}
 	},
 	"INVOICES_PAGE": {

@@ -3821,6 +3821,12 @@
 			"START_DATE": "Data rozpoczęcia",
 			"RECIPIENT_COUNT": "Odbiorcy: {{count}}",
 			"NO_RECIPIENTS": "Nie dodano jeszcze odbiorców"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń zaproszenie",
+			"WARNING": "Zaproszenie dla {{ email }} zostanie trwale usunięte, a jego link przestanie działać. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
+			"CONFIRM": "Usuń zaproszenie"
 		}
 	},
 	"INVOICES_PAGE": {
