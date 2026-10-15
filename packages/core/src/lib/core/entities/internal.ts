@@ -51,6 +51,7 @@ export * from '../../employee-recent-visit/employee-recent-visit.entity';
 export * from '../../employee-recurring-expense/employee-recurring-expense.entity';
 export * from '../../employee-setting/employee-setting.entity';
 export * from '../../employee/employee.entity';
+export * from '../../employee-agent-profile/employee-agent-profile.entity';
 export * from '../../equipment-sharing-policy/equipment-sharing-policy.entity';
 export * from '../../equipment-sharing/equipment-sharing.entity';
 export * from '../../equipment/equipment.entity';

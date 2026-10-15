@@ -152,6 +152,12 @@ export {
 } from './lib/organization-vendor';
 
 export * from './lib/employee';
+export {
+	EmployeeAgentProfile,
+	EmployeeAgentProfileModule,
+	EmployeeAgentProfileService,
+	pickAgentProfileInput
+} from './lib/employee-agent-profile';
 export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, TaskUpdateCommand } from './lib/tasks';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';

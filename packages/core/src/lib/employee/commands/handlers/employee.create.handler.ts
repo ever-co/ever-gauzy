@@ -1,6 +1,13 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ComponentLayoutStyleEnum, IEmployee, IUser, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	ComponentLayoutStyleEnum,
+	EmployeeKindEnum,
+	IEmployee,
+	IUser,
+	LanguagesEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../core/context';
@@ -87,6 +94,8 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 				// User already exists in this tenant - create only the employee
 				const employee = await this._employeeService.create({
 					...input,
+					// The employee routes file people; an agent is provisioned only by createAgentEmployee.
+					kind: EmployeeKindEnum.HUMAN,
 					user: existingUser,
 					organizationId,
 					organization: { id: organizationId },
@@ -131,6 +140,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			// 4. Create employee for specific user
 			const employee = await this._employeeService.create({
 				...input,
+				kind: EmployeeKindEnum.HUMAN,
 				user,
 				organizationId,
 				organization: { id: organizationId }
@@ -156,6 +166,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 				//1. Create employee for specific user
 				return await this._employeeService.create({
 					...input,
+					kind: EmployeeKindEnum.HUMAN,
 					user,
 					organizationId,
 					organization: { id: organizationId },
