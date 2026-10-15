@@ -82,6 +82,8 @@ export interface ICostModelOptions {
 	defaultPageSize?: number;
 	/** How many elements a list of objects that takes no page is priced for. */
 	listFanOut?: number;
+	/** Points for one `__schema` / `__type` selection: a listing of the schema, bounded by the schema itself. */
+	introspectionCost?: number;
 }
 
 /** What a measurement may know beyond the document node it is handed. */
@@ -104,7 +106,10 @@ export const DEFAULT_COST_MODEL: Required<ICostModelOptions> = {
 	pageSizeArguments: ['first', 'last', 'limit', 'take'],
 	connectionFieldSuffix: 'Connection',
 	defaultPageSize: API_QUERY_LIMITS.defaultPageSize,
-	listFanOut: 10
+	listFanOut: 10,
+	// The standard introspection query has one root, well inside the default ceiling; a document that lists the
+	// schema six times over is not.
+	introspectionCost: 1000
 };
 
 /** The argument that carries the connection protocol's page as an object (`page: { first, last }`). */
@@ -398,9 +403,23 @@ class CostWalk {
 		// and whether a deployment answers them at all is the introspection policy's decision, made by its own rule.
 		// Priced like data, the standard introspection query — whose TypeRef fragment nests `ofType` by design — is 15
 		// levels deep and costs over 11,000, and every GraphiQL and codegen client would be refused wherever the
-		// schema is published.
-		if (INTROSPECTION_ROOTS.has(selection.name?.value ?? '')) {
-			return { depth: 0, aliases: 0, fields: 0, scaled: 0, args: 0 };
+		// schema is published. So a root is not walked for depth or per-row cost; it has a price of its own, and the
+		// aliases under it count — repeated under aliases, it lists the schema once per alias (review on #10651).
+		const name = selection.name?.value ?? '';
+		if (INTROSPECTION_ROOTS.has(name)) {
+			const inside = this.selections(
+				selection.selectionSet?.selections,
+				depth + 1,
+				this.typeNamed(name === '__schema' ? '__Schema' : '__Type')
+			);
+
+			return {
+				depth: 0,
+				aliases: (selection.alias?.value ? 1 : 0) + inside.aliases,
+				fields: 0,
+				scaled: this.model.introspectionCost,
+				args: 0
+			};
 		}
 
 		const definition = this.definitionOf(parentType, selection.name?.value);

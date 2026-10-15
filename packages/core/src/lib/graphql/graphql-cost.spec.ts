@@ -165,6 +165,21 @@ describe('graphql-limits — the ceilings hold for what a fragment hides (SEC-C-
 		expect(refusals(introspection)).toEqual([]);
 	});
 
+	it('bounds repeated introspection: its aliases count, and each listing of the schema has a price', () => {
+		// Review on #10651: unpriced, 60 aliased `__schema { types { fields { name } } }` selections fit the token
+		// ceiling and listed the schema 60 times.
+		const sixty = Array.from({ length: 60 }, (_, index) => `s${index}: __schema { types { name } }`).join(' ');
+		expect(refusals(`{ ${sixty} }`)).toContain(ApiErrorCode.GRAPHQL_COMPLEXITY_LIMIT_EXCEEDED);
+
+		// Under the alias ceiling, six full listings still cost more than one operation may.
+		const six = Array.from({ length: 6 }, (_, index) => `s${index}: __schema { types { name } }`).join(' ');
+		expect(measure(`{ ${six} }`).complexity).toBeGreaterThan(5000);
+		expect(refusals(`{ ${six} }`)).toContain(ApiErrorCode.GRAPHQL_COMPLEXITY_LIMIT_EXCEEDED);
+
+		// Aliases inside an introspection subtree count too.
+		expect(measure(`{ __schema { a: types { name } b: types { name } } }`).aliases).toBe(2);
+	});
+
 	it('still refuses introspection where it is not published', () => {
 		const closed = createGraphqlLimitRules({ maxDepth: 12, maxComplexity: 5000, maxAliases: 50, introspection: false });
 		const codes = validate(schema, parse(getIntrospectionQuery()), [...specifiedRules, ...closed]).map(
