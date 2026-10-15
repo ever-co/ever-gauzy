@@ -9007,6 +9007,16 @@ type Mutation {
   """Files a task."""
   createTask(input: CreateTaskInput!): Task!
 
+  """
+  Files a batch of tasks — each item exactly as `createTask` files one, numbered by the same handler from
+  its project's highest number as the items before it left it — and answers one outcome per item. The
+  batch `POST /tasks/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTasks(input: BulkCreateTasksInput!): BulkCreateTasksPayload!
+
   """Edits a task that exists."""
   updateTask(input: UpdateTaskInput!): Task!
 
@@ -40010,6 +40020,50 @@ type TaskMetadata {
   taskVersions: TaskVersionConnection
   issueTypes: IssueTypeConnection
   relatedIssueTypes: TaskRelatedIssueTypeConnection
+}
+
+"""
+A batch of tasks to file, as `bulkCreateTasks` takes it: the body `POST /tasks/bulk` accepts plus the
+retry key.
+
+Each item is a `CreateTaskInput` and is filed exactly as `createTask` files one, so an item is refused for
+the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it is
+optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateTasksInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateTaskInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of tasks adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTasksPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """

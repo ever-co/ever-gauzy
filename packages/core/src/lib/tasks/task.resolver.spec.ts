@@ -109,7 +109,7 @@ function surfaces() {
 	return {
 		taskService,
 		commandBus,
-		resolver: new TaskResolver(taskService as never, commandBus as never)
+		resolver: new TaskResolver(taskService as never, commandBus as never, {} as never)
 	};
 }
 
@@ -211,6 +211,7 @@ const ROUTE_OF_FIELD: ReadonlyArray<readonly [string, string]> = [
 	['taskMaxNumber', 'getMaxTaskNumberByProject'],
 	['taskByNumber', 'findByNumber'],
 	['createTask', 'create'],
+	['bulkCreateTasks', 'bulk'],
 	['updateTask', 'update'],
 	['deleteTask', 'delete'],
 	// The pair the controller inherits from the CRUD base without overriding it.
@@ -521,7 +522,7 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 
 	it('serves the same read over REST, with the organization and project from the validated query', async () => {
 		const taskService = { findByNumber: jest.fn().mockResolvedValue(ROWS[0]) };
-		const controller = new TaskController(taskService as never, {} as never);
+		const controller = new TaskController(taskService as never, {} as never, {} as never);
 
 		expect(
 			await controller.findByNumber({ prefix: 'FUL', number: 12 }, {
