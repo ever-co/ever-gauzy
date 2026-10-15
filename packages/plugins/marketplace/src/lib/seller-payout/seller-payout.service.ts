@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
+import { EntityManager, FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	CurrencyCode,
@@ -431,8 +431,6 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			payout.failureCode = result.failureCode;
 			payout.failureReason = result.failureReason;
 
-			const saved = await this.typeOrmSellerPayoutRepository.save(payout);
-
 			// The money did not move, so the rows are payable again: nothing about them changed except
 			// that they are once more available, and the release is what makes another attempt possible.
 			for (const transaction of transactions) {
@@ -440,15 +438,27 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 				transaction.settledAt = null;
 			}
 
-			await this.transactionRepository.save(transactions);
+			// The failure, the release and `seller_payout.failed` commit together, as the paid path's do: they
+			// used to be three writes in a row with the event in a transaction of its own, so a failed append
+			// left a failed payout and released rows that nothing announced.
+			return await this.typeOrmSellerPayoutRepository.manager.transaction(async (manager) => {
+				const saved = await manager.save(SellerPayout, payout);
 
-			await this.emit(saved, 'seller_payout.failed', {
-				failureCode: result.failureCode,
-				failureReason: result.failureReason,
-				retryable: true
+				await manager.save(SellerTransaction, transactions);
+
+				await this.emit(
+					saved,
+					'seller_payout.failed',
+					{
+						failureCode: result.failureCode,
+						failureReason: result.failureReason,
+						retryable: true
+					},
+					manager
+				);
+
+				return saved;
 			});
-
-			return saved;
 		}
 
 		const currency = payout.currency as CurrencyCode;
@@ -1077,17 +1087,16 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 * @param payout The payout.
 	 * @param name The catalogued event name.
 	 * @param data The payload.
+	 * @param within The transaction the payout was written in; the fact commits or rolls back with it.
 	 */
-	private async emit(payout: SellerPayout, name: string, data: Record<string, any>): Promise<void> {
-		await this.typeOrmSellerPayoutRepository.manager.transaction(async (manager) => {
-			await this.outbox.append(manager, {
-				name,
-				aggregateType: 'SELLER_PAYOUT',
-				aggregateId: payout.id as ID,
-				data: { payoutId: payout.id, number: payout.number, sellerId: payout.sellerId, ...data },
-				tenantId: payout.tenantId,
-				organizationId: payout.organizationId
-			});
+	private async emit(payout: SellerPayout, name: string, data: Record<string, any>, within: EntityManager): Promise<void> {
+		await this.outbox.append(within, {
+			name,
+			aggregateType: 'SELLER_PAYOUT',
+			aggregateId: payout.id as ID,
+			data: { payoutId: payout.id, number: payout.number, sellerId: payout.sellerId, ...data },
+			tenantId: payout.tenantId,
+			organizationId: payout.organizationId
 		});
 	}
 }
