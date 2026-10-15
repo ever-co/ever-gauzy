@@ -139,6 +139,9 @@ const LINE = '00000000-0000-4000-8000-0000000006a1';
 const SLIP = '00000000-0000-4000-8000-0000000007a1';
 const MANIFEST = '00000000-0000-4000-8000-0000000008a1';
 const LINE_2 = '00000000-0000-4000-8000-0000000006a2';
+/** A second list of the wave, and its one line. */
+const LIST_2 = '00000000-0000-4000-8000-0000000005a2';
+const LINE_OF_LIST_2 = '00000000-0000-4000-8000-0000000006b1';
 /** The variant a substitution takes instead of `VARIANT`. */
 const SUBSTITUTE = '00000000-0000-4000-8000-0000000003a2';
 
@@ -953,6 +956,69 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 1]);
 			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
 			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('a wave cancellation that failed on its second list can be retried and finishes', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			await h.dataSource.query(
+				'INSERT INTO "pick_list" ("id", "warehouseId", "number", "status", "waveId", "lineCount", "tenantId", "organizationId") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+				[LIST_2, WAREHOUSE, 'PICK-2', PickListStatus.ASSIGNED, WAVE, 1, TENANT, ORG]
+			);
+			await h.dataSource.query(
+				'INSERT INTO "pick_list_line" ("id", "pickListId", "variantId", "binId", "quantityRequested", "status", "tenantId", "organizationId") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+				[LINE_OF_LIST_2, LIST_2, VARIANT, BIN, '5', PickListLineStatus.PENDING, TENANT, ORG]
+			);
+			// The first list's line is withdrawn; the second list's cannot be, once.
+			const withdraw = h.lines.cancelOpenLine.bind(h.lines);
+			let calls = 0;
+			const failsOnSecond = jest.spyOn(h.lines, 'cancelOpenLine').mockImplementation(async (id, transaction) => {
+				calls += 1;
+				if (calls === 2) {
+					throw new Error('the line could not be written');
+				}
+				return await withdraw(id, transaction);
+			});
+
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).rejects.toThrow(/the line could not be written/);
+			failsOnSecond.mockRestore();
+
+			// One list is cancelled, complete with its line; the other, and the wave, are not.
+			const statuses = async () => [
+				(await h.row('pick_wave', WAVE))?.status,
+				[(await h.row('pick_list', LIST))?.status, (await h.row('pick_list', LIST_2))?.status].sort(),
+				[(await h.row('pick_list_line', LINE))?.status, (await h.row('pick_list_line', LINE_OF_LIST_2))?.status].sort()
+			];
+			expect(await statuses()).toEqual([
+				PickWaveStatus.DRAFT,
+				[PickListStatus.ASSIGNED, PickListStatus.CANCELED],
+				[PickListLineStatus.CANCELED, PickListLineStatus.PENDING]
+			]);
+
+			// The withdrawn line is not a recorded pick: the retry finishes the cascade, and each list is announced once.
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).resolves.toMatchObject({ status: PickWaveStatus.CANCELED });
+
+			expect(await statuses()).toEqual([
+				PickWaveStatus.CANCELED,
+				[PickListStatus.CANCELED, PickListStatus.CANCELED],
+				[PickListLineStatus.CANCELED, PickListLineStatus.CANCELED]
+			]);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId]).sort()).toEqual(
+				[
+					['pick_list.canceled', LIST],
+					['pick_list.canceled', LIST_2]
+				].sort()
+			);
+		});
+
+		it('control: a wave with a picked line is still refused cancellation (PICK_LIST_HAS_PICKS)', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).rejects.toMatchObject({
+				status: 400,
+				message: expect.stringMatching(/^PICK_LIST_HAS_PICKS/)
+			});
+			expect((await h.row('pick_wave', WAVE))?.status).toBe(PickWaveStatus.DRAFT);
 		});
 
 		it('announces the version the move stored', async () => {

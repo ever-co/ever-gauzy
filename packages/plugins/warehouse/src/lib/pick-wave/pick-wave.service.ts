@@ -348,6 +348,12 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 	 * movement is written, because the reservations belong to the shipments and a cancellation is not a
 	 * stock event.
 	 *
+	 * A wave with a recorded outcome — a line PICKED, SHORT or SKIPPED — is refused: it is closed short instead. A
+	 * CANCELED line is not an outcome but a withdrawal, and the lists are cancelled one transaction each, so a
+	 * cancellation that failed on a later list left the earlier ones CANCELED with their lines withdrawn; counting
+	 * those lines as picks refused every retry, and the wave could then never be cancelled. They are not counted,
+	 * and the retry finishes the cascade (`cancelOpenLists` skips the lists already cancelled).
+	 *
 	 * @param id The wave.
 	 * @param reason Why it was cancelled.
 	 * @returns The cancelled wave.
@@ -362,7 +368,9 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 		}
 
 		const lines = await this.linesOfWave(id);
-		const recorded = lines.filter((line) => line.status !== 'PENDING');
+		const recorded = lines.filter(
+			(line) => ![PickListLineStatus.PENDING, PickListLineStatus.CANCELED].includes(line.status)
+		);
 
 		if (recorded.length) {
 			throw new BadRequestException(
@@ -505,7 +513,9 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 	 * before it gets here, and closing a wave short is how picked work is stopped — the picked lines are facts on
 	 * the floor, and only what was never picked is withdrawn. One transaction per list, as the cascade wrote one
 	 * statement per list before: a list that cannot be cancelled refuses the call, and the lists before it stay
-	 * cancelled, complete with their lines and their facts.
+	 * cancelled, complete with their lines and their facts. The call can then be repeated: a list already CANCELED
+	 * (or PICKED) is skipped, its withdrawn lines are not outcomes to `cancel`, and each remaining list is cancelled
+	 * and announced once.
 	 *
 	 * @param waveId The wave.
 	 * @param reason Why the lists were cancelled.
