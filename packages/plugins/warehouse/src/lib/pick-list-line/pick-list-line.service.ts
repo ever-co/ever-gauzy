@@ -254,7 +254,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			await this.correctShortfall(line, fromQuantityUnits(shortfall));
 		}
 
-		await super.update(id, {
+		await this.recordOutcome(line, {
 			binId: input.binId ?? line.binId,
 			quantityPicked: fromQuantityUnits(picked),
 			quantityShort: fromQuantityUnits(shortfall),
@@ -264,9 +264,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			lotNumber: input.lotNumber ?? line.lotNumber,
 			serialNumbers: input.serialNumbers ?? line.serialNumbers,
 			note: input.note ?? line.note
-		} as any);
-
-		await this.refreshListCounters(line.pickListId);
+		});
 
 		return await this.findOneScoped(id);
 	}
@@ -308,7 +306,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 
 		await this.writeSubstitutionMovements(line, input, binId);
 
-		await super.update(id, {
+		await this.recordOutcome(line, {
 			binId,
 			substituteVariantId: input.substituteVariantId,
 			substituteQuantity: normalizeQuantity(input.substituteQuantity),
@@ -317,9 +315,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			pickedAt: new Date(),
 			pickedByUserId: RequestContext.currentUserId(),
 			note: input.note ?? line.note
-		} as any);
-
-		await this.refreshListCounters(line.pickListId);
+		});
 
 		return await this.findOneScoped(id);
 	}
@@ -344,15 +340,13 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			);
 		}
 
-		await super.update(id, {
+		await this.recordOutcome(line, {
 			quantityShort: normalizeQuantity(line.quantityRequested),
 			status: PickListLineStatus.SKIPPED,
 			pickedAt: new Date(),
 			pickedByUserId: RequestContext.currentUserId(),
 			note: note ?? line.note
-		} as any);
-
-		await this.refreshListCounters(line.pickListId);
+		});
 
 		return await this.findOneScoped(id);
 	}
@@ -457,33 +451,54 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * line, which is what `startsWork` states.
 	 *
 	 * **The promotion is a move of the list, and is announced like one** (`movePickList`): the status, the counters,
-	 * the next version and `pick_list.started` in one transaction, predicated on the status and the version this
-	 * refresh read — so the first outcome announces the start exactly once. A concurrent first outcome on another
-	 * line that already moved the list is not this pick's failure: the line was recorded, so the promotion is skipped
-	 * quietly and the counters are re-derived as for any later outcome. A refresh that moves no status stays what it
-	 * was — counters only, no event, no version.
+	 * the next version and `pick_list.started`, predicated on the status and the version this refresh read — so the
+	 * first outcome announces the start exactly once. A concurrent first outcome on another line that already moved
+	 * the list is not this pick's failure: its line is recorded, so the promotion is skipped quietly and the counters
+	 * are re-derived as for any later outcome. A refresh that moves no status stays what it was — counters only, no
+	 * event, no version.
+	 *
+	 * Handed a transaction — an outcome's (`recordOutcome`) — every read and write runs on it: the lines are read
+	 * through it, so the counters and the fact see the outcome this transaction wrote, and the promotion joins it
+	 * rather than opening a transaction of its own, so nothing nests. Without one, a refresh that may promote opens
+	 * its own transaction, and a counters-only refresh writes as it always did.
 	 *
 	 * @param pickListId The list.
 	 * @param startsWork Whether the change is an outcome recorded on a line.
+	 * @param transaction The transaction of the outcome the refresh belongs to, when it runs in one.
 	 */
-	private async refreshListCounters(pickListId: ID, startsWork = true): Promise<void> {
-		const list = await this.rows(PickList, () => this.typeOrmPickListRepository).findOne({
-			where: {
-				id: pickListId,
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId()
-			}
-		});
+	private async refreshListCounters(
+		pickListId: ID,
+		startsWork = true,
+		transaction?: IWarehouseTransaction
+	): Promise<void> {
+		if (startsWork && !transaction) {
+			await this.transaction((own) => this.refreshListCounters(pickListId, startsWork, own));
+
+			return;
+		}
+
+		const lists = transaction
+			? transaction.rows(PickList)
+			: this.rows(PickList, () => this.typeOrmPickListRepository);
+		const scope = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+		const linesOfList = async () =>
+			transaction
+				? await transaction.rows(PickListLine).find({ where: { pickListId, ...scope } as never })
+				: await this.findForList(pickListId);
+		const list = await lists.findOne({ where: { id: pickListId, ...scope } as never });
 
 		if (!list) {
 			return;
 		}
 
 		if (startsWork && (list.status === PickListStatus.PENDING || list.status === PickListStatus.ASSIGNED)) {
-			const started = await movePickList(this.transaction, this.outbox, list, {
+			const started = await movePickList((work) => work(transaction as IWarehouseTransaction), this.outbox, list, {
 				name: PICK_LIST_EVENTS.STARTED,
 				patch: {
-					...this.countersOf(await this.findForList(pickListId)),
+					...this.countersOf(await linesOfList()),
 					status: PickListStatus.IN_PROGRESS,
 					startedAt: list.startedAt ?? new Date(),
 					version: (list.version ?? 1) + 1
@@ -496,10 +511,50 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			}
 		}
 
-		await this.rows(PickList, () => this.typeOrmPickListRepository).update(
-			pickListId,
-			this.countersOf(await this.findForList(pickListId)) as any
-		);
+		await lists.update(pickListId, this.countersOf(await linesOfList()) as any);
+	}
+
+	/**
+	 * Writes an outcome on an open line and what it implies for the list — its counters, and the start the first
+	 * outcome makes, with `pick_list.started` — in one transaction on the ORM the installation runs.
+	 *
+	 * The outcome is the picker's action, and it used to be written on its own before the list was refreshed, so a
+	 * refresh or a fact that failed afterwards answered the request with an error while the outcome stood: a retry
+	 * was then refused ("already has an outcome"), and the list stayed where it was with nothing announcing it. Now
+	 * the three commit together or not at all, and a failed pick can be retried as it was made.
+	 *
+	 * The line is written only while it is still open, so two calls recording an outcome on one line cannot both
+	 * write it: the second is refused with `PICK_LIST_LINE_EDIT_CONFLICT`. (A movement the ledger was asked for
+	 * before — a short pick's write-off, a substitution's pair — is the inventory capability's, written through its
+	 * port, which takes no transaction of this package.)
+	 *
+	 * @param line The line as the call read it.
+	 * @param outcome The columns the outcome writes.
+	 * @throws ConflictException with `PICK_LIST_LINE_EDIT_CONFLICT` when the line got an outcome since it was read.
+	 */
+	private async recordOutcome(line: PickListLine, outcome: Partial<PickListLine>): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		await this.transaction(async (transaction) => {
+			await landEdit(
+				() =>
+					transaction.rows(PickListLine).update(
+						{
+							id: line.id,
+							status: PickListLineStatus.PENDING,
+							...(tenantId ? { tenantId } : {}),
+							...(organizationId ? { organizationId } : {})
+						} as FindOptionsWhere<PickListLine>,
+						outcome as QueryDeepPartialEntity<PickListLine>
+					),
+				'PICK_LIST_LINE_EDIT_CONFLICT',
+				'pick line',
+				line.id
+			);
+
+			await this.refreshListCounters(line.pickListId, true, transaction);
+		});
 	}
 
 	/**

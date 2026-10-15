@@ -101,7 +101,7 @@ jest.mock('@gauzy/core', () => {
 const mockCaller: { tenantId: string | null; organizationId: string | null } = { tenantId: null, organizationId: null };
 
 import 'reflect-metadata';
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { CarrierManifest } from './carrier-manifest/carrier-manifest.entity';
 import { CarrierManifestService } from './carrier-manifest/carrier-manifest.service';
 import { PackSlip } from './pack-slip/pack-slip.entity';
@@ -759,16 +759,73 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 			]);
 		});
 
+		it.each([
+			{
+				kind: 'pick',
+				record: (harness: IHarness) => harness.lines.recordPick(LINE, { pickedQuantity: '5' } as any),
+				recorded: PickListLineStatus.PICKED
+			},
+			{
+				kind: 'skip',
+				record: (harness: IHarness) => harness.lines.recordSkip(LINE, 'blocked aisle'),
+				recorded: PickListLineStatus.SKIPPED
+			}
+		])(
+			'a $kind whose promotion cannot append its fact records nothing (line still PENDING, list not moved), so the same $kind can be retried',
+			async ({ record, recorded }) => {
+				h.outbox.failOn = 'pick_list.started';
+
+				await expect(record(h)).rejects.toThrow(/outbox is unavailable/);
+
+				const line = await h.row('pick_list_line', LINE);
+				const list = await h.row('pick_list', LIST);
+				expect([line?.status, line?.pickedAt]).toEqual([PickListLineStatus.PENDING, null]);
+				expect([list?.status, list?.version, list?.pickedCount, list?.shortCount]).toEqual([PickListStatus.ASSIGNED, 1, 0, 0]);
+				expect(h.outbox.appended).toEqual([]);
+
+				// The outbox is back: the same outcome is recorded, and the start announced once.
+				h.outbox.failOn = null;
+				await expect(record(h)).resolves.toMatchObject({ status: recorded });
+
+				expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.IN_PROGRESS);
+				expect(h.outbox.appended.map((event) => [event.name, event.inTransaction])).toEqual([['pick_list.started', true]]);
+			}
+		);
+
+		it('the pick, the counters and the promotion are one transaction: the fact sees the outcome it announces', async () => {
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			expect(h.outbox.appended.map((event) => [event.name, event.lineStatuses])).toEqual([
+				['pick_list.started', [PickListLineStatus.PICKED]]
+			]);
+		});
+
 		it('two concurrent first picks announce once and both picks are recorded', async () => {
 			await insertLine(LINE_2);
 			// The second pick read the list before the first pick's promotion committed: it holds ASSIGNED at version 1.
 			const staleRead = await h.dataSource.getRepository(PickList).findOne({ where: { id: LIST } });
 
 			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
-			jest.spyOn(h.dataSource.getRepository(PickList), 'findOne').mockResolvedValueOnce(staleRead as any);
+			// The second pick's read of the list — made through its own transaction's repository — answers that stale
+			// row once; every other read is the database's.
+			const original = Repository.prototype.findOne;
+			let served = false;
+			const staleOnce = jest.spyOn(Repository.prototype, 'findOne').mockImplementation(function (
+				this: Repository<any>,
+				options: any
+			) {
+				if (!served && this.metadata.target === PickList) {
+					served = true;
+					return Promise.resolve(staleRead) as any;
+				}
+				return original.call(this, options);
+			});
 			await expect(h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any)).resolves.toMatchObject({
 				status: PickListLineStatus.PICKED
 			});
+			staleOnce.mockRestore();
+			// The stale read was the one the promotion was decided on: the second pick did try to start the list.
+			expect(served).toBe(true);
 
 			const list = await h.row('pick_list', LIST);
 			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 2, 2]);
