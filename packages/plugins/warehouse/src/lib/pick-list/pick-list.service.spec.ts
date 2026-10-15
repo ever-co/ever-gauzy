@@ -387,7 +387,10 @@ function pickListFixture(
 	// real database in `warehouse-update-guards.db.spec.ts`.
 	const appended: any[] = [];
 	(listRepository as any).manager = {
-		transaction: async (work: (manager: unknown) => Promise<unknown>) => await work({ getRepository: () => listRepository })
+		transaction: async (work: (manager: unknown) => Promise<unknown>) =>
+			await work({
+				getRepository: (entity: { name?: string }) => (entity?.name === 'PickListLine' ? lineRepository : listRepository)
+			})
 	};
 	const outbox = {
 		append: async (_manager: unknown, event: any) => {

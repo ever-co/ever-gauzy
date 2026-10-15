@@ -26,7 +26,7 @@ import {
 } from '../warehouse.types';
 import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { isPositiveQuantity, normalizeQuantity } from '../warehouse.quantity';
-import { TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../warehouse-persistence';
+import { IWarehouseTransaction, TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../warehouse-persistence';
 import { PickList } from './pick-list.entity';
 import { MikroOrmPickListRepository } from './repository/mikro-orm-pick-list.repository';
 import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repository';
@@ -169,8 +169,10 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			await this.writeLines(list, derived);
 			await this.refreshCaches(list.id);
 			// The last step of the write phase, so a list whose fact could not be appended is withdrawn like a list
-			// whose lines could not be written: the list and `pick_list.created` exist together or not at all.
-			await this.announce(PICK_LIST_EVENTS.CREATED, list);
+			// whose lines could not be written: the list and `pick_list.created` exist together or not at all. The
+			// fact is built from the list as the write phase left it — `refreshCaches` moved its version — so it
+			// carries the version `create()` answers, not the one the first insert wrote.
+			await this.announce(PICK_LIST_EVENTS.CREATED, await this.findOneScoped(list.id));
 		} catch (error) {
 			await this.withdraw(list);
 
@@ -357,15 +359,23 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			);
 		}
 
-		await this.move(list, PICK_LIST_EVENTS.CANCELED, {
-			status: PickListStatus.CANCELED,
-			note: reason ?? list.note,
-			version: (list.version ?? 1) + 1
-		});
-
-		for (const line of lines) {
-			await this.pickListLineService.cancelOpenLine(line.id);
-		}
+		// The open lines are withdrawn in the transaction that cancels the list and appends `pick_list.canceled`, so
+		// the fact is never delivered for a list whose lines are still open, and a line that cannot be withdrawn
+		// takes the cancellation and its fact back with it.
+		await this.move(
+			list,
+			PICK_LIST_EVENTS.CANCELED,
+			{
+				status: PickListStatus.CANCELED,
+				note: reason ?? list.note,
+				version: (list.version ?? 1) + 1
+			},
+			async (transaction) => {
+				for (const line of lines) {
+					await this.pickListLineService.cancelOpenLine(line.id, transaction);
+				}
+			}
+		);
 
 		if (list.waveId) {
 			await this.pickWaveService.recomputeCaches(list.waveId);
@@ -425,29 +435,43 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	/**
 	 * Moves a list and appends the fact the move announces, in one transaction.
 	 *
-	 * The status write is predicated on the status the operation read, so a list another call moved meanwhile is
-	 * refused with `PICK_LIST_EDIT_CONFLICT` rather than moved twice — and announced twice. The fact is appended
-	 * through the same transaction, on either ORM (`runWarehouseTransaction`): a write the predicate refused throws
-	 * before the append is reached, and an append that fails rolls the move back with it, so a subscriber, a webhook
-	 * or a projection is told of every move that committed and of nothing else.
+	 * The status write is predicated on the status **and the version** the operation read — the version is the
+	 * list's optimistic-lock counter, which every transition takes and bumps — so a list another call moved, or
+	 * re-counted, since it was read is refused with `PICK_LIST_EDIT_CONFLICT` rather than moved twice and announced
+	 * twice, and the fact's version is the version the statement stored. Every caller reads the list immediately
+	 * before its move (`assign`, `start`, `complete` and `cancel` each start from `findOneScoped`, and the cache
+	 * refresh that bumps the version runs after a move, never between its read and its write), so a single caller
+	 * never conflicts with itself.
+	 *
+	 * The fact is appended through the same transaction, on either ORM (`runWarehouseTransaction`), after the writes
+	 * that belong to the move (`alongside` — a cancellation's open lines): a write the predicate refused throws before
+	 * the append is reached, and a write or an append that fails rolls the whole move back, so a subscriber, a webhook
+	 * or a projection is told of every move that committed — complete — and of nothing else.
 	 *
 	 * @param list The list as the operation read it.
 	 * @param name The fact the move announces.
 	 * @param patch The columns the move writes.
+	 * @param alongside Writes that belong to the move, run in its transaction before the fact is appended.
 	 * @throws ConflictException with `PICK_LIST_EDIT_CONFLICT` when the list moved since it was read.
 	 */
-	private async move(list: PickList, name: string, patch: Partial<PickList>): Promise<void> {
+	private async move(
+		list: PickList,
+		name: string,
+		patch: Partial<PickList>,
+		alongside?: (transaction: IWarehouseTransaction) => Promise<void>
+	): Promise<void> {
 		await runWarehouseTransaction(
 			this.ormType,
 			() => this.typeOrmPickListRepository.manager,
 			() => this.mikroOrmPickListRepository,
-			async ({ rows, manager }) => {
+			async (transaction) => {
 				await landEdit(
 					() =>
-						rows(PickList).update(
+						transaction.rows(PickList).update(
 							{
 								id: list.id,
 								status: list.status,
+								...(list.version !== undefined && list.version !== null ? { version: list.version } : {}),
 								...(list.tenantId ? { tenantId: list.tenantId } : {}),
 								...(list.organizationId ? { organizationId: list.organizationId } : {})
 							} as FindOptionsWhere<PickList>,
@@ -458,7 +482,11 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 					list.id
 				);
 
-				await this.outbox.append(manager as never, this.factOf(name, { ...list, ...patch } as PickList));
+				if (alongside) {
+					await alongside(transaction);
+				}
+
+				await this.outbox.append(transaction.manager as never, this.factOf(name, { ...list, ...patch } as PickList));
 			}
 		);
 	}

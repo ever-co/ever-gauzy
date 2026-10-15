@@ -22,7 +22,7 @@ import {
 	subtractQuantities,
 	toQuantityUnits
 } from '../warehouse.quantity';
-import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
+import { IWarehouseTransaction, TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickListLine } from './pick-list-line.entity';
 import { MikroOrmPickListLineRepository } from './repository/mikro-orm-pick-list-line.repository';
 import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-line.repository';
@@ -109,10 +109,40 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * Closes a line that never got an outcome, because its list was cancelled. The list's cancellation is the one
 	 * caller; it writes the status through the base class, which the guarded edit above refuses.
 	 *
+	 * Handed the cancellation's transaction, the line is withdrawn inside it — so the list's status, its lines and
+	 * the `pick_list.canceled` fact commit together — and only while it is still open: a line that got an outcome
+	 * since the cancellation read it is refused with `PICK_LIST_LINE_EDIT_CONFLICT`, which takes the cancellation
+	 * back (a list with recorded outcomes is closed short, never cancelled).
+	 *
 	 * @param id The line.
+	 * @param transaction The transaction of the list's cancellation, when it runs in one.
+	 * @throws ConflictException with `PICK_LIST_LINE_EDIT_CONFLICT` when, inside a transaction, the line is no longer open.
 	 */
-	public async cancelOpenLine(id: ID): Promise<void> {
-		await super.update(id, { status: PickListLineStatus.CANCELED } as QueryDeepPartialEntity<PickListLine>);
+	public async cancelOpenLine(id: ID, transaction?: IWarehouseTransaction): Promise<void> {
+		if (!transaction) {
+			await super.update(id, { status: PickListLineStatus.CANCELED } as QueryDeepPartialEntity<PickListLine>);
+
+			return;
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		await landEdit(
+			() =>
+				transaction.rows(PickListLine).update(
+					{
+						id,
+						status: PickListLineStatus.PENDING,
+						...(tenantId ? { tenantId } : {}),
+						...(organizationId ? { organizationId } : {})
+					} as FindOptionsWhere<PickListLine>,
+					{ status: PickListLineStatus.CANCELED } as QueryDeepPartialEntity<PickListLine>
+				),
+			'PICK_LIST_LINE_EDIT_CONFLICT',
+			'pick line',
+			id
+		);
 	}
 
 	/**

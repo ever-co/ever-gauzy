@@ -11,7 +11,10 @@ import { declareStreamedEvents, GraphqlSubscriptionConsumer, SubscriptionCatalog
  * again.
  *
  * The names are stated here as the appending code states them (`pick-list/pick-list.service.ts`,
- * `PICK_LIST_EVENTS`), and the suite beside this file fails if one of them stops being appended under that name.
+ * `PICK_LIST_EVENTS`), and the suite beside this file fails if the two sets differ or the service stops appending
+ * one of them. They stay string literals rather than `Object.values(PICK_LIST_EVENTS)` on purpose:
+ * `tools/scripts/subscription-parity-check.mjs` reads every `*_STREAMED_EVENTS` catalogue statically, and refuses a
+ * declaration it cannot resolve to literals — the subscription dimension is measured from these names.
  */
 export const WAREHOUSE_STREAMED_EVENTS: readonly string[] = [
 	'pick_list.created',

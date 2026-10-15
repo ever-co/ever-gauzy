@@ -429,7 +429,14 @@ async function harness(): Promise<IHarness> {
 				throw new Error('the outbox is unavailable');
 			}
 
-			outbox.appended.push({ ...event, inTransaction: Boolean(manager?.queryRunner?.isTransactionActive) });
+			outbox.appended.push({
+				...event,
+				inTransaction: Boolean(manager?.queryRunner?.isTransactionActive),
+				// What the list's lines look like from inside the transaction the fact is appended in.
+				lineStatuses: (
+					await manager.query('SELECT "status" FROM "pick_list_line" WHERE "pickListId" = ?', [event.aggregateId])
+				).map((row: Row) => row.status)
+			});
 
 			return event;
 		}
@@ -641,6 +648,90 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 
 			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
 			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.canceled']);
+		});
+
+		it('cancels the list’s open lines in the transaction that writes the cancellation and appends its fact', async () => {
+			await h.lists.cancel(LIST, 'changed plan');
+
+			// From inside the transaction the fact is appended in, the lines are already withdrawn: a consumer is never
+			// handed a CANCELED list whose lines are still open.
+			expect(h.outbox.appended.map((event) => [event.name, event.inTransaction, event.lineStatuses])).toEqual([
+				['pick_list.canceled', true, [PickListLineStatus.CANCELED]]
+			]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.CANCELED);
+		});
+
+		it('rolls the cancellation and its fact back when a line cannot be withdrawn', async () => {
+			jest.spyOn(h.lines, 'cancelOpenLine').mockRejectedValue(new Error('the line could not be written'));
+
+			await expect(h.lists.cancel(LIST, 'changed plan')).rejects.toThrow(/the line could not be written/);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 1]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('refuses a move from a read whose version moved on, though the status did not', async () => {
+			const read = await h.lists.findOneScoped(LIST);
+			// Another transition took the version the move read (the status it reached is the same one).
+			await h.set('pick_list', LIST, { version: 5 });
+
+			await expect(
+				(h.lists as any).move(read, 'pick_list.started', {
+					status: PickListStatus.IN_PROGRESS,
+					version: (read.version ?? 1) + 1
+				})
+			).rejects.toMatchObject({ status: 409, response: { code: 'PICK_LIST_EDIT_CONFLICT' } });
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 5]);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('two moves from one read: the second is refused, and one fact is appended', async () => {
+			const read = await h.lists.findOneScoped(LIST);
+			const startFrom = (from: unknown) =>
+				(h.lists as any).move(from, 'pick_list.started', {
+					status: PickListStatus.IN_PROGRESS,
+					version: (read.version ?? 1) + 1
+				});
+
+			await startFrom(read);
+			await expect(startFrom(read)).rejects.toMatchObject({ status: 409, response: { code: 'PICK_LIST_EDIT_CONFLICT' } });
+
+			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.started']);
+		});
+
+		it('announces a created list with the version create() answers, not the one it had before its caches were written', async () => {
+			const facts: Row[] = [];
+			const lists = new PickListService(
+				h.dataSource.getRepository(PickList) as any,
+				undefined as any,
+				h.lines,
+				h.waves,
+				undefined as any,
+				undefined as any,
+				{ allocate: async () => ({ formatted: 'PICK-9' }) } as any,
+				h.dataSource.getRepository(PickWave) as any,
+				{ append: async (_manager: unknown, event: Row) => facts.push(event) } as any,
+				undefined,
+				undefined
+			);
+
+			const created = await lists.create({ warehouseId: WAREHOUSE } as any);
+			const stored = await h.row('pick_list', created.id);
+
+			expect(facts.map((event) => [event.name, event.data.version])).toEqual([['pick_list.created', created.version]]);
+			expect(created.version).toBe(stored?.version);
+		});
+
+		it('announces the version the move stored', async () => {
+			await h.lists.start(LIST);
+
+			const stored = await h.row('pick_list', LIST);
+			expect(h.outbox.appended.map((event) => event.data.version)).toEqual([stored?.version]);
+			expect(stored?.version).toBe(2);
 		});
 	});
 
