@@ -1,5 +1,6 @@
 import {
 	Component,
+	ElementRef,
 	HostBinding,
 	HostListener,
 	Input,
@@ -21,6 +22,7 @@ import { renderMarkdownToSanitizedHtml } from '../../editor/read-only/markdown-r
 import { sanitizeMediaUrl } from '../../editor/read-only/safe-url.util';
 import { DocumentsService } from '../../services/documents.service';
 import { PdfViewerComponent } from './pdf-viewer.component';
+import { previewTakesArrowKey } from './preview-keys';
 
 /** Citation locator passed when the preview opens from an AI answer (spec 07). */
 export interface IDocsPreviewLocator {
@@ -96,7 +98,8 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 		@Optional() private readonly dialogRef: NbDialogRef<DocsPreviewModalComponent> | null,
 		private readonly documentsService: DocumentsService,
 		private readonly sanitizer: DomSanitizer,
-		private readonly actions: Actions
+		private readonly actions: Actions,
+		private readonly elementRef: ElementRef<HTMLElement>
 	) {
 		super(translateService);
 	}
@@ -142,13 +145,17 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 		this.dialogRef?.close();
 	}
 
-	@HostListener('document:keydown.arrowRight')
-	onArrowRight(): void {
+	// Document-wide, so the dialog pages with the focus anywhere in it; embedded (`inline`), only keys pressed inside
+	// the preview count — see `previewTakesArrowKey`.
+	@HostListener('document:keydown.arrowRight', ['$event'])
+	onArrowRight(event?: KeyboardEvent): void {
+		if (!previewTakesArrowKey(this.inline, this.elementRef.nativeElement, event?.target ?? null)) return;
 		void this.pdfViewer?.next();
 	}
 
-	@HostListener('document:keydown.arrowLeft')
-	onArrowLeft(): void {
+	@HostListener('document:keydown.arrowLeft', ['$event'])
+	onArrowLeft(event?: KeyboardEvent): void {
+		if (!previewTakesArrowKey(this.inline, this.elementRef.nativeElement, event?.target ?? null)) return;
 		void this.pdfViewer?.prev();
 	}
 

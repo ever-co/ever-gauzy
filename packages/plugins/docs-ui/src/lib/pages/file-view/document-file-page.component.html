@@ -17,7 +17,12 @@
 		></ngx-favorite-toggle>
 	}
 	@if (document) {
-		<!-- The same per-kind preview the hub opens in a dialog, given the whole content area. -->
-		<gz-docs-preview-modal class="document-file-preview" [document]="document" [inline]="true"></gz-docs-preview-modal>
+		<!--
+			The same per-kind preview the hub opens in a dialog, given the whole content area. It reads its content
+			once, so it is created anew (keyed on the revision) whenever the shown file changes.
+		-->
+		@for (revision of [previewRevision]; track revision) {
+			<gz-docs-preview-modal class="document-file-preview" [document]="document" [inline]="true"></gz-docs-preview-modal>
+		}
 	}
 </ngx-record-view-page>
