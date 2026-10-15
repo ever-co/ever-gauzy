@@ -135,7 +135,9 @@ describe('TenantBaseGuard', () => {
 				{ method: 'POST', body: { tenantId: OTHER_TENANT_ID } },
 				{ method: 'PUT', body: { tenant: { id: OTHER_TENANT_ID } } },
 				{ method: 'POST', body: [{ tenantId: TENANT_ID }, { tenantId: OTHER_TENANT_ID }] },
-				{ method: 'GET', query: { tenantId: OTHER_TENANT_ID } }
+				{ method: 'GET', query: { tenantId: OTHER_TENANT_ID } },
+				// The read shape the no-header path checks too (CodeRabbit on #10647).
+				{ method: 'GET', query: { data: JSON.stringify({ findInput: { tenantId: OTHER_TENANT_ID } }) } }
 			]) {
 				await expect(guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID } as any))).resolves.toBe(
 					false
@@ -149,7 +151,9 @@ describe('TenantBaseGuard', () => {
 				{ method: 'POST', body: { tenantId: TENANT_ID, name: 'x' } },
 				{ method: 'PUT', body: { name: 'x' } },
 				{ method: 'POST', body: [{ tenantId: TENANT_ID }, { name: 'y' }] },
-				{ method: 'GET', query: { tenantId: TENANT_ID } }
+				{ method: 'GET', query: { tenantId: TENANT_ID } },
+				{ method: 'GET', query: { data: JSON.stringify({ findInput: { tenantId: TENANT_ID } }) } },
+				{ method: 'GET', query: { data: JSON.stringify({ findInput: { name: 'x' } }) } }
 			]) {
 				await expect(guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID } as any))).resolves.toBe(
 					true

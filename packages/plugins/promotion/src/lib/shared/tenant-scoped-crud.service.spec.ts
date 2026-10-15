@@ -144,6 +144,16 @@ function storage(rows: Row[]) {
 		},
 		persistAndFlush: async (entity: Row) => {
 			writes.push({ orm: 'mikro-orm', op: 'persistAndFlush', id: entity.id });
+		},
+		// The same `UPDATE … SET <patch> WHERE <criteria>` as TypeORM's, answering the count MikroORM answers.
+		nativeUpdate: async (where: Row, patch: Row) => {
+			const matched = visible(false).filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'mikro-orm', op: 'nativeUpdate', id: stored.id });
+				Object.assign(stored, patch);
+			}
+
+			return matched.length;
 		}
 	};
 
@@ -392,7 +402,7 @@ describe.each<MultiORM>(['typeorm', 'mikro-orm'])('PromotionService on %s — a 
 	});
 });
 
-describe('TenantScopedCrudService on typeorm — an update never moves a row out of the caller’s scope (SEC-A-03)', () => {
+describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s — an update never moves a row out of the caller’s scope (SEC-A-03)', (orm) => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
@@ -403,7 +413,7 @@ describe('TenantScopedCrudService on typeorm — an update never moves a row out
 	it('writes the payload but keeps the row’s tenant and organization', async () => {
 		const rows = table();
 		const { typeOrm, mikroOrm } = storage(rows);
-		const service = new ScopedRowService(typeOrm, mikroOrm, 'typeorm');
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
 
 		// The failure scenario: a `PUT` with `{"tenantId": "<B>", "organizationId": "<B org>"}` moved the caller's own
 		// gift card, coupon or campaign into another tenant.

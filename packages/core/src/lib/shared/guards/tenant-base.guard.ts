@@ -117,6 +117,19 @@ export class TenantBaseGuard implements CanActivate {
 			named.push(queryTenantId);
 		}
 
+		// The read shape the no-header path checks: `?data={"findInput":{"tenantId":…}}`.
+		const data = request?.query?.['data'];
+		if (typeof data === 'string' && isJSON(data)) {
+			try {
+				const findInput = JSON.parse(data)?.['findInput'];
+				if (findInput && typeof findInput === 'object' && findInput['tenantId'] !== undefined && findInput['tenantId'] !== null) {
+					named.push(findInput['tenantId']);
+				}
+			} catch {
+				// Not parseable after all: it states no tenant.
+			}
+		}
+
 		const body = request?.body;
 		for (const item of Array.isArray(body) ? body : [body]) {
 			if (!item || typeof item !== 'object') continue;
