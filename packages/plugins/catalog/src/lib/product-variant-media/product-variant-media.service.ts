@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { assertInCallerScope, callerScope } from '../catalog.scope';
+import { ImageAsset, ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertAllInCallerScope, assertInCallerScope, callerScope } from '../catalog.scope';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { MikroOrmProductVariantMediaRepository } from './repository/mikro-orm-product-variant-media.repository';
 import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-product-variant-media.repository';
@@ -70,6 +70,10 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 		await assertInCallerScope(this.typeOrmProductVariantMediaRepository.manager, ProductVariant, variantId, 'variant');
+		// The images are the caller's too (SEC-D-04): another tenant's image went into the gallery by its id.
+		await assertAllInCallerScope(this.typeOrmProductVariantMediaRepository.manager, ImageAsset, imageAssetIds, 'images', {
+			tenantWide: true
+		});
 
 		const existing = await this.typeOrmProductVariantMediaRepository.find({
 			where: { variantId, ...callerScope() }

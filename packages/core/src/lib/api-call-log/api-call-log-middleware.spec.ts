@@ -110,4 +110,17 @@ describe('ApiCallLogMiddleware', () => {
 		});
 		expect(entity.requestHeaders.authorization).toBe('[REDACTED]');
 	});
+
+	it('redacts the cart guest-access token header, which is a handle on a cart and never stored', async () => {
+		// `GET /carts/by-token` reads the token from `X-Cart-Token`; Node hands header names over lower-cased.
+		const req = createRequest('POST', '/api/timesheet/time-log', {}, 'application/json');
+
+		(req.headers as Record<string, string>)['x-cart-token'] = 'n2cZ0Rk1pX8vQm4yLw6tJe3sHa9fBd7uGc5iKo1xYzA';
+
+		const entity = await logCall(req, 201, '{}');
+
+		expect(entity.requestHeaders['x-cart-token']).toBe('[REDACTED]');
+		// The control: a header that is not sensitive is kept as it came.
+		expect(entity.requestHeaders['user-agent']).toBe('jest');
+	});
 });

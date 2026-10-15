@@ -30,8 +30,8 @@ same kind, when a name that is not `delivered` becomes served, when one of the
 (`website/docs/platform-extensions/design-name-triage.md`), and `node
 tools/scripts/design-name-triage-check.mjs --markdown` prints it.
 
-**Totals:** 81 names — **22 delivered**, **49 served under another name**, **2
-retired**, **7 to build**, **1 dropped**.
+**Totals:** 81 names — **29 delivered**, **49 served under another name**, **2
+retired**, **0 to build**, **1 dropped**.
 
 **Design-doc amendments (pending: the design documents are not in this
 repository).** Every `naming` row: replace the design name with the served one
@@ -39,9 +39,7 @@ in `17` §3.2 (and in Appendix A’s derived counts). Every `retired` row: mark 
 `(n-a — retired)` beside its replacement. Every `drop` row: remove it, with the
 reason given.
 
-**To build (the backlog the gate counts, 7):** `bulkCreateExpenses`,
-`bulkCreateOrganizations`, `bulkCreateTags`, `bulkCreateTasks`,
-`bulkCreateTimeLogs`, `bulkCreateUsers`, `upcomingSubscriptionBilling`.
+**To build (the backlog the gate counts, 0):** none.
 
 **Dropped, for the owner to confirm (1):** `markEntitySubscriptionRead` — an
 entity subscription carries no read state (the read state is the notification’s,
@@ -72,61 +70,61 @@ see `markEmployeeNotificationRead`).
 | 21 | `softDeleteTask` | Mutation | delivered | `softDeleteTask` | nothing: the design row is right — the soft-delete pair |
 | 22 | `taskByNumber` | Query | delivered | `taskByNumber` | nothing: the design row is right — task by its project number |
 | 23 | `termsAcceptances` | Query | delivered | `termsAcceptances` | nothing: the design row is right — terms-acceptance surface |
-| 24 | `createDepartment` | Mutation | naming | `createOrganizationDepartment` | amend the design row to the served name — REST `/organization-department` |
-| 25 | `updateDepartment` | Mutation | naming | `updateOrganizationDepartment` | amend the design row to the served name — REST `/organization-department` |
-| 26 | `deleteDepartment` | Mutation | naming | `deleteOrganizationDepartment` | amend the design row to the served name — REST `/organization-department` |
-| 27 | `createProject` | Mutation | naming | `createOrganizationProject` | amend the design row to the served name — REST `/organization-projects` |
-| 28 | `updateProject` | Mutation | naming | `updateOrganizationProject` | amend the design row to the served name — REST `/organization-projects` |
-| 29 | `deleteProject` | Mutation | naming | `deleteOrganizationProject` | amend the design row to the served name — REST `/organization-projects` |
-| 30 | `softDeleteProject` | Mutation | naming | `softDeleteOrganizationProject` | amend the design row to the served name — the soft-delete pair |
-| 31 | `projectModules` | Query | naming | `organizationProjectModules` | amend the design row to the served name — REST `/organization-project-modules` |
-| 32 | `createProjectModule` | Mutation | naming | `createOrganizationProjectModule` | amend the design row to the served name — REST `/organization-project-modules` |
-| 33 | `updateProjectModule` | Mutation | naming | `updateOrganizationProjectModule` | amend the design row to the served name — REST `/organization-project-modules` |
-| 34 | `deleteProjectModule` | Mutation | naming | `deleteOrganizationProjectModule` | amend the design row to the served name — REST `/organization-project-modules` |
-| 35 | `createSprint` | Mutation | naming | `createOrganizationSprint` | amend the design row to the served name — REST `/organization-sprint` |
-| 36 | `updateSprint` | Mutation | naming | `updateOrganizationSprint` | amend the design row to the served name — REST `/organization-sprint` |
-| 37 | `deleteSprint` | Mutation | naming | `deleteOrganizationSprint` | amend the design row to the served name — REST `/organization-sprint` |
-| 38 | `createTeam` | Mutation | naming | `createOrganizationTeam` | amend the design row to the served name — REST `/organization-team` |
-| 39 | `updateTeam` | Mutation | naming | `updateOrganizationTeam` | amend the design row to the served name — REST `/organization-team` |
-| 40 | `updateTeamMember` | Mutation | naming | `updateOrganizationTeamEmployee` | amend the design row to the served name — a member is an organization-team employee row |
-| 41 | `removeTeamMember` | Mutation | naming | `deleteOrganizationTeamEmployee` | amend the design row to the served name — a member is an organization-team employee row |
-| 42 | `teamJoinRequests` | Query | naming | `organizationTeamJoinRequests` | amend the design row to the served name — REST `/organization-team-join` |
-| 43 | `createTeamJoinRequest` | Mutation | naming | `createOrganizationTeamJoinRequest` | amend the design row to the served name — REST `/organization-team-join` |
-| 44 | `acceptTeamJoinRequest` | Mutation | naming | `acceptOrganizationTeamJoinRequest` | amend the design row to the served name — REST `/organization-team-join` |
-| 45 | `createRecurringExpense` | Mutation | naming | `createOrganizationRecurringExpense`, `createEmployeeRecurringExpense` | amend the design row to the served name — two resources: the organization and the employee recurring expense |
-| 46 | `updateRecurringExpense` | Mutation | naming | `updateOrganizationRecurringExpense`, `updateEmployeeRecurringExpense` | amend the design row to the served name — two resources: the organization and the employee recurring expense |
-| 47 | `deleteRecurringExpense` | Mutation | naming | `deleteOrganizationRecurringExpense`, `deleteEmployeeRecurringExpense` | amend the design row to the served name — two resources: the organization and the employee recurring expense |
-| 48 | `authorizedUser` | Query | naming | `me` | amend the design row to the served name — the authenticated caller |
-| 49 | `confirmEmailReset` | Mutation | naming | `verifyEmailReset` | amend the design row to the served name — REST `POST /email-reset/verify-change-email` |
-| 50 | `createTenantApiKey` | Mutation | naming | `generateTenantApiKeyPair` | amend the design row to the served name — a key is generated as a pair, shown once |
-| 51 | `createTimeLog` | Mutation | naming | `addManualTime` | amend the design row to the served name — §7.68: a time log a person files is manual time |
-| 52 | `updateTimeLog` | Mutation | naming | `updateManualTime` | amend the design row to the served name — §7.68 |
-| 53 | `customSmtp` | Query | naming | `customSmtpSetting` | amend the design row to the served name — REST `/smtp` |
-| 54 | `updateCustomSmtp` | Mutation | naming | `updateSmtpSetting` | amend the design row to the served name — REST `/smtp` |
-| 55 | `importHistory` | Query | naming | `importHistories` | amend the design row to the served name — the import ledger is a list |
-| 56 | `invoiceHighest` | Query | naming | `highestInvoiceNumber` | amend the design row to the served name — REST `GET /invoices/highest` |
-| 57 | `convertInvoiceToEstimate` | Mutation | naming | `updateInvoiceEstimate` | amend the design row to the served name — REST `PUT /invoices/:id/estimate` flips `isEstimate` |
-| 58 | `sendEmailHistory` | Mutation | naming | `resendEmailHistory` | amend the design row to the served name — an email history row is re-sent |
-| 59 | `timesheetStatistics` | Query | naming | `timeTrackingCounts`, `timeTrackingMembers`, `timeTrackingProjects`, `timeTrackingTasks`, `timeTrackingManualTimes`, `timeTrackingTimeSlots`, `timeTrackingActivities` | amend the design row to the served name — REST `/timesheet/statistics/*` is a family, served one field per route |
-| 60 | `createIntegration` | Mutation | naming | `createIntegrationTenant` | amend the design row to the served name — an integration is configured per tenant; the `integration` catalogue is seeded, read-only |
-| 61 | `updateIntegration` | Mutation | naming | `updateIntegrationTenant` | amend the design row to the served name — as `createIntegration` |
-| 62 | `deleteIntegration` | Mutation | naming | `deleteIntegrationTenant` | amend the design row to the served name — as `createIntegration` |
-| 63 | `updateIntegrationEntitySetting` | Mutation | naming | `updateIntegrationEntitySettings` | amend the design row to the served name — the route writes the set |
-| 64 | `integrationEntitySettingTied` | Query | naming | `integrationEntitySettings` | amend the design row to the served name — tied rows are read as `IntegrationEntitySetting.tiedEntities`; REST has no read route of its own |
-| 65 | `authorizePayment` | Mutation | naming | `authorizePaymentSession` | amend the design row to the served name — payment reconnaissance (§7.68) |
-| 66 | `cancelPayment` | Mutation | naming | `voidPaymentSession` | amend the design row to the served name — §3.6: `POST /payments/:id/cancel` is `voidPaymentSession` |
-| 67 | `billSubscriptionNow` | Mutation | naming | `billSubscription` | amend the design row to the served name — REST `POST /subscriptions/:id/bill` |
-| 68 | `swapSubscriptionPlan` | Mutation | naming | `changeSubscriptionPlan` | amend the design row to the served name — REST `POST /subscriptions/:id/plan` |
-| 69 | `createStockAdjustment` | Mutation | naming | `adjustStock` | amend the design row to the served name — REST `POST /stock-adjustments` drafts; `applyStockAdjustment` applies |
-| 70 | `markEmployeeNotificationRead` | Mutation | naming | `updateEmployeeNotification`, `markAllEmployeeNotificationsAsRead` | amend the design row to the served name — one notification: `updateEmployeeNotification` with `isRead`/`readAt`; all of the caller’s: the mark-all route |
-| 71 | `deleteSellerOffering` | Mutation | naming | `withdrawSellerOffering`, `softDeleteSellerOffering` | amend the design row to the served name — an offering is withdrawn, never erased (§7.65 item 5, `8eaaa273c81`): `DELETE /seller-offerings/:id` withdraws |
-| 72 | `createShippingLabel` | Mutation | retired | `requestFulfillmentLabel` | mark the design row n-a (retired) — design-retired; a carrier label is requested for a shipment |
-| 73 | `setProductVariantPrice` | Mutation | retired | `updateProductVariantPrice`, `bulkUpsertProductPrices` | mark the design row n-a (retired) — design-retired |
-| 74 | `bulkCreateExpenses` | Mutation | build | — | build (REST + GraphQL), then `delivered` — no `POST /expense/bulk` either; build both surfaces on the bulk kernel (`BulkOperation`/`BulkExecutor`) |
-| 75 | `bulkCreateOrganizations` | Mutation | build | — | build (REST + GraphQL), then `delivered` — no REST bulk route either |
-| 76 | `bulkCreateTags` | Mutation | build | — | build (REST + GraphQL), then `delivered` — no REST bulk route either |
-| 77 | `bulkCreateTasks` | Mutation | build | — | build (REST + GraphQL), then `delivered` — no REST bulk route either |
-| 78 | `bulkCreateTimeLogs` | Mutation | build | — | build (REST + GraphQL), then `delivered` — no REST bulk route either; `addManualTime` one at a time |
-| 79 | `bulkCreateUsers` | Mutation | build | — | build (REST + GraphQL), then `delivered` — no REST bulk route either; `createEmployeesBulk` covers employees only |
-| 80 | `upcomingSubscriptionBilling` | Query | build | — | build (REST + GraphQL), then `delivered` — a preview of the next billing; no REST route either |
+| 24 | `upcomingSubscriptionBilling` | Query | delivered | `upcomingSubscriptionBilling` | nothing: the design row is right — a preview of the next billing, priced by the function the cycle bills with; REST `GET /subscriptions/:id/upcoming-billing` |
+| 25 | `bulkCreateTags` | Mutation | delivered | `bulkCreateTags` | nothing: the design row is right — delivered: `POST /tags/bulk` + `bulkCreateTags`, every item the single create (`POST /tags` / `createTag`) |
+| 26 | `bulkCreateTasks` | Mutation | delivered | `bulkCreateTasks` | nothing: the design row is right — delivered: `POST /tasks/bulk` + `bulkCreateTasks`, every item the single create (`POST /tasks` / `createTask`), numbered by its handler one item at a time |
+| 27 | `bulkCreateExpenses` | Mutation | delivered | `bulkCreateExpenses` | nothing: the design row is right — delivered: `POST /expense/bulk` + `bulkCreateExpenses`, every item the single create (`POST /expense` / `createExpense`) on the bulk kernel |
+| 28 | `bulkCreateTimeLogs` | Mutation | delivered | `bulkCreateTimeLogs` | nothing: the design row is right — delivered: `POST /timesheet/time-log/bulk` + `bulkCreateTimeLogs`, every item the manual-time create (`addManualTime`: policy guard, employee, date and overlap rules) |
+| 29 | `bulkCreateOrganizations` | Mutation | delivered | `bulkCreateOrganizations` | nothing: the design row is right — delivered: `POST /organization/bulk` + `bulkCreateOrganizations`, every item the single create (`OrganizationCreateCommand`) |
+| 30 | `bulkCreateUsers` | Mutation | delivered | `bulkCreateUsers` | nothing: the design row is right — delivered: `POST /user/bulk` + `bulkCreateUsers`, every item the single create (`UserCreateCommand`, its role checks), ids only in the answer |
+| 31 | `createDepartment` | Mutation | naming | `createOrganizationDepartment` | amend the design row to the served name — REST `/organization-department` |
+| 32 | `updateDepartment` | Mutation | naming | `updateOrganizationDepartment` | amend the design row to the served name — REST `/organization-department` |
+| 33 | `deleteDepartment` | Mutation | naming | `deleteOrganizationDepartment` | amend the design row to the served name — REST `/organization-department` |
+| 34 | `createProject` | Mutation | naming | `createOrganizationProject` | amend the design row to the served name — REST `/organization-projects` |
+| 35 | `updateProject` | Mutation | naming | `updateOrganizationProject` | amend the design row to the served name — REST `/organization-projects` |
+| 36 | `deleteProject` | Mutation | naming | `deleteOrganizationProject` | amend the design row to the served name — REST `/organization-projects` |
+| 37 | `softDeleteProject` | Mutation | naming | `softDeleteOrganizationProject` | amend the design row to the served name — the soft-delete pair |
+| 38 | `projectModules` | Query | naming | `organizationProjectModules` | amend the design row to the served name — REST `/organization-project-modules` |
+| 39 | `createProjectModule` | Mutation | naming | `createOrganizationProjectModule` | amend the design row to the served name — REST `/organization-project-modules` |
+| 40 | `updateProjectModule` | Mutation | naming | `updateOrganizationProjectModule` | amend the design row to the served name — REST `/organization-project-modules` |
+| 41 | `deleteProjectModule` | Mutation | naming | `deleteOrganizationProjectModule` | amend the design row to the served name — REST `/organization-project-modules` |
+| 42 | `createSprint` | Mutation | naming | `createOrganizationSprint` | amend the design row to the served name — REST `/organization-sprint` |
+| 43 | `updateSprint` | Mutation | naming | `updateOrganizationSprint` | amend the design row to the served name — REST `/organization-sprint` |
+| 44 | `deleteSprint` | Mutation | naming | `deleteOrganizationSprint` | amend the design row to the served name — REST `/organization-sprint` |
+| 45 | `createTeam` | Mutation | naming | `createOrganizationTeam` | amend the design row to the served name — REST `/organization-team` |
+| 46 | `updateTeam` | Mutation | naming | `updateOrganizationTeam` | amend the design row to the served name — REST `/organization-team` |
+| 47 | `updateTeamMember` | Mutation | naming | `updateOrganizationTeamEmployee` | amend the design row to the served name — a member is an organization-team employee row |
+| 48 | `removeTeamMember` | Mutation | naming | `deleteOrganizationTeamEmployee` | amend the design row to the served name — a member is an organization-team employee row |
+| 49 | `teamJoinRequests` | Query | naming | `organizationTeamJoinRequests` | amend the design row to the served name — REST `/organization-team-join` |
+| 50 | `createTeamJoinRequest` | Mutation | naming | `createOrganizationTeamJoinRequest` | amend the design row to the served name — REST `/organization-team-join` |
+| 51 | `acceptTeamJoinRequest` | Mutation | naming | `acceptOrganizationTeamJoinRequest` | amend the design row to the served name — REST `/organization-team-join` |
+| 52 | `createRecurringExpense` | Mutation | naming | `createOrganizationRecurringExpense`, `createEmployeeRecurringExpense` | amend the design row to the served name — two resources: the organization and the employee recurring expense |
+| 53 | `updateRecurringExpense` | Mutation | naming | `updateOrganizationRecurringExpense`, `updateEmployeeRecurringExpense` | amend the design row to the served name — two resources: the organization and the employee recurring expense |
+| 54 | `deleteRecurringExpense` | Mutation | naming | `deleteOrganizationRecurringExpense`, `deleteEmployeeRecurringExpense` | amend the design row to the served name — two resources: the organization and the employee recurring expense |
+| 55 | `authorizedUser` | Query | naming | `me` | amend the design row to the served name — the authenticated caller |
+| 56 | `confirmEmailReset` | Mutation | naming | `verifyEmailReset` | amend the design row to the served name — REST `POST /email-reset/verify-change-email` |
+| 57 | `createTenantApiKey` | Mutation | naming | `generateTenantApiKeyPair` | amend the design row to the served name — a key is generated as a pair, shown once |
+| 58 | `createTimeLog` | Mutation | naming | `addManualTime` | amend the design row to the served name — §7.68: a time log a person files is manual time |
+| 59 | `updateTimeLog` | Mutation | naming | `updateManualTime` | amend the design row to the served name — §7.68 |
+| 60 | `customSmtp` | Query | naming | `customSmtpSetting` | amend the design row to the served name — REST `/smtp` |
+| 61 | `updateCustomSmtp` | Mutation | naming | `updateSmtpSetting` | amend the design row to the served name — REST `/smtp` |
+| 62 | `importHistory` | Query | naming | `importHistories` | amend the design row to the served name — the import ledger is a list |
+| 63 | `invoiceHighest` | Query | naming | `highestInvoiceNumber` | amend the design row to the served name — REST `GET /invoices/highest` |
+| 64 | `convertInvoiceToEstimate` | Mutation | naming | `updateInvoiceEstimate` | amend the design row to the served name — REST `PUT /invoices/:id/estimate` flips `isEstimate` |
+| 65 | `sendEmailHistory` | Mutation | naming | `resendEmailHistory` | amend the design row to the served name — an email history row is re-sent |
+| 66 | `timesheetStatistics` | Query | naming | `timeTrackingCounts`, `timeTrackingMembers`, `timeTrackingProjects`, `timeTrackingTasks`, `timeTrackingManualTimes`, `timeTrackingTimeSlots`, `timeTrackingActivities` | amend the design row to the served name — REST `/timesheet/statistics/*` is a family, served one field per route |
+| 67 | `createIntegration` | Mutation | naming | `createIntegrationTenant` | amend the design row to the served name — an integration is configured per tenant; the `integration` catalogue is seeded, read-only |
+| 68 | `updateIntegration` | Mutation | naming | `updateIntegrationTenant` | amend the design row to the served name — as `createIntegration` |
+| 69 | `deleteIntegration` | Mutation | naming | `deleteIntegrationTenant` | amend the design row to the served name — as `createIntegration` |
+| 70 | `updateIntegrationEntitySetting` | Mutation | naming | `updateIntegrationEntitySettings` | amend the design row to the served name — the route writes the set |
+| 71 | `integrationEntitySettingTied` | Query | naming | `integrationEntitySettings` | amend the design row to the served name — tied rows are read as `IntegrationEntitySetting.tiedEntities`; REST has no read route of its own |
+| 72 | `authorizePayment` | Mutation | naming | `authorizePaymentSession` | amend the design row to the served name — payment reconnaissance (§7.68) |
+| 73 | `cancelPayment` | Mutation | naming | `voidPaymentSession` | amend the design row to the served name — §3.6: `POST /payments/:id/cancel` is `voidPaymentSession` |
+| 74 | `billSubscriptionNow` | Mutation | naming | `billSubscription` | amend the design row to the served name — REST `POST /subscriptions/:id/bill` |
+| 75 | `swapSubscriptionPlan` | Mutation | naming | `changeSubscriptionPlan` | amend the design row to the served name — REST `POST /subscriptions/:id/plan` |
+| 76 | `createStockAdjustment` | Mutation | naming | `adjustStock` | amend the design row to the served name — REST `POST /stock-adjustments` drafts; `applyStockAdjustment` applies |
+| 77 | `markEmployeeNotificationRead` | Mutation | naming | `updateEmployeeNotification`, `markAllEmployeeNotificationsAsRead` | amend the design row to the served name — one notification: `updateEmployeeNotification` with `isRead`/`readAt`; all of the caller’s: the mark-all route |
+| 78 | `deleteSellerOffering` | Mutation | naming | `withdrawSellerOffering`, `softDeleteSellerOffering` | amend the design row to the served name — an offering is withdrawn, never erased (§7.65 item 5, `8eaaa273c81`): `DELETE /seller-offerings/:id` withdraws |
+| 79 | `createShippingLabel` | Mutation | retired | `requestFulfillmentLabel` | mark the design row n-a (retired) — design-retired; a carrier label is requested for a shipment |
+| 80 | `setProductVariantPrice` | Mutation | retired | `updateProductVariantPrice`, `bulkUpsertProductPrices` | mark the design row n-a (retired) — design-retired |
 | 81 | `markEntitySubscriptionRead` | Mutation | drop | — | drop from the design (listed for the owner) — an entity subscription carries no read state (the read state is the notification’s, see `markEmployeeNotificationRead`) |

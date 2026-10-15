@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
+import { CurrencyCode, DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
 import { Money, Payment, RequestContext, compareDecimalStrings } from '@gauzy/core';
+import { PaymentPermission } from '../payment.permissions';
 import { IReturnRefundRequest, IReturnRefundResult } from '../payment.types';
 import { RefundService } from '../refund/refund.service';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
@@ -86,6 +87,10 @@ export class ReturnRefundService {
 	 * @throws NotFoundException when a reason the refund cites is not in the caller's organization.
 	 */
 	public async createRefund(request: IReturnRefundRequest): Promise<IReturnRefundResult> {
+		// Before anything is read or written: this entry point records AND settles the refund, so it is held to
+		// the grant that settles one (review R3-09).
+		this.assertMayRefund();
+
 		if (!request?.orderId) {
 			throw new BadRequestException(
 				'REFUND_ORDER_REQUIRED: a refund is recorded against the order it gives money back for.'
@@ -149,7 +154,7 @@ export class ReturnRefundService {
 			throw new BadRequestException(NOT_ATTRIBUTED);
 		}
 
-		const created = await this.refundService.createRefund({
+		const created = await this.refundService.createAttributedRefund({
 			orderId: request.orderId,
 			amount: request.amount,
 			currency: request.currency,
@@ -161,13 +166,35 @@ export class ReturnRefundService {
 			...(request.exchangeId ? { metadata: { [EXCHANGE_KEY]: request.exchangeId } } : {})
 		});
 
-		const settled = await this.refundService.approveRefund(created.id);
+		const settled = await this.refundService.approveAttributedRefund(created.id);
 
 		return {
 			refundId: settled.id,
 			amount: Money.of(settled.amount, settled.currency as CurrencyCode).toStorageString(),
 			currency: settled.currency as CurrencyCode
 		};
+	}
+
+	/**
+	 * Refuses a caller who may not settle a refund.
+	 *
+	 * A return or a claim does not only ask for a refund: this entry point records it and settles it in one
+	 * call, so the money has gone back when it answers. The payment domain keeps `REFUNDS_APPROVE` apart
+	 * from `REFUNDS_CREATE` because a refund is somebody else's decision; held only to the returns grant
+	 * (`RETURNS_RECEIVE`, `CLAIMS_RESOLVE`), a caller settled refunds of any amount (review R3-09). The
+	 * returns domain asks this BEFORE it moves goods for a receipt that also refunds, so a refusal leaves the
+	 * receipt unwritten rather than half done.
+	 *
+	 * @throws ForbiddenException with `REFUND_APPROVAL_REQUIRED` when the caller lacks `REFUNDS_APPROVE`.
+	 */
+	public assertMayRefund(): void {
+		if (!RequestContext.hasPermission(PaymentPermission.REFUNDS_APPROVE as unknown as PermissionsEnum)) {
+			throw new ForbiddenException({
+				message:
+					'REFUND_APPROVAL_REQUIRED: settling a refund needs the REFUNDS_APPROVE permission, which this user does not hold.',
+				code: 'REFUND_APPROVAL_REQUIRED'
+			});
+		}
 	}
 
 	/**

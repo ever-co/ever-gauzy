@@ -1,6 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { IBulkExecutionOptions } from './bulk-executor.service';
+import { BulkPermission, IBulkExecutionOptions } from './bulk-executor.service';
 
 /** The metadata key a bulk route's declaration is stored under. */
 export const BULK_OPERATION_METADATA = 'api:bulk-operation';
@@ -13,8 +12,21 @@ export interface IBulkOperationOptions {
 	readonly resource: string;
 	/** The largest batch this resource accepts; the platform cap applies when it declares none. */
 	readonly maxItems?: number;
-	/** The single permission the whole request is authorised against. */
-	readonly permission?: PermissionsEnum;
+	/**
+	 * What the whole request is authorised against: one permission, or a list any one of which suffices.
+	 *
+	 * A list reads the way `@Permissions(...)` reads one — `PermissionGuard` admits a caller holding any
+	 * of the listed grants — so a batch route whose single-item twin states two grants declares the same
+	 * two here, and the batch is neither wider nor narrower than the route it mirrors.
+	 */
+	readonly permission?: BulkPermission;
+	/**
+	 * Whether the route can apply a batch atomically. Omitted, it can, as every route could before this
+	 * member existed. `false` declares that it cannot — its items are applied through writes the batch
+	 * holds no transaction over — and the executor then refuses `atomic: true` before item 0 with
+	 * `BULK_ATOMIC_UNSUPPORTED`, on every surface the route's batch is run from.
+	 */
+	readonly atomic?: boolean;
 }
 
 /**
@@ -106,7 +118,7 @@ export function readBulkOperation(
 export function bulkOptionsOf(
 	controller: Function,
 	methodName: string,
-	extensions: Omit<Partial<IBulkExecutionOptions>, 'resource' | 'cap' | 'permission'> = {}
+	extensions: Omit<Partial<IBulkExecutionOptions>, 'resource' | 'cap' | 'permission' | 'atomic'> = {}
 ): IBulkExecutionOptions {
 	const prototype = (controller as { prototype?: object }).prototype ?? controller;
 	const declared = readBulkOperation(prototype, methodName);
@@ -121,6 +133,7 @@ export function bulkOptionsOf(
 		resource: declared.resource,
 		cap: declared.maxItems,
 		permission: declared.permission,
+		...(declared.atomic !== undefined ? { atomic: declared.atomic } : {}),
 		...extensions
 	};
 }

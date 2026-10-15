@@ -90,6 +90,9 @@ describe('the returns document — the retry key', () => {
 	it('declares it nullable on the input of every mutation that mirrors a decorated route', () => {
 		expect(typeOf(fieldNamed('RequestOrderReturnInput', 'idempotencyKey'))).toBe('String');
 		expect(typeOf(fieldNamed('ReceiveOrderReturnInput', 'idempotencyKey'))).toBe('String');
+		// The refund route requires a key since review R3-09; GraphQL reads it from the input, so the input must
+		// be able to carry it, or every GraphQL refund is refused with IDEMPOTENCY_KEY_REQUIRED.
+		expect(typeOf(fieldNamed('RefundOrderReturnInput', 'idempotencyKey'))).toBe('String');
 	});
 });
 

@@ -66,8 +66,9 @@ export type FavoriteLinkBuilder = (id: string, record?: IFavoriteRecord) => stri
 /**
  * A document favorite opens the document itself: a PAGE in the document page — inside the Documents
  * shell, which keeps only the narrow "All documents" tree beside it (owner, 2026-10-13) — and a FOLDER as
- * that folder. An uploaded FILE has no page of its own, so it (and a record whose kind is unknown) opens
- * in the hub with its preview, which handles every kind.
+ * that folder. Everything else — an uploaded FILE, and a record whose kind is unknown — opens on the
+ * document's own full-width page, `/pages/documents/file/<id>` (owner, 2026-10-15: a favorite "should display
+ * document full width, not display a list of documents"); that page forwards a page or folder to its view.
  */
 function documentLink(id: string, record?: IFavoriteRecord): string {
 	switch (record?.['kind']) {
@@ -78,7 +79,7 @@ function documentLink(id: string, record?: IFavoriteRecord): string {
 		case DocumentKindEnum.FOLDER:
 			return `/pages/documents?folder=${id}`;
 		default:
-			return `/pages/documents?id=${id}`;
+			return `/pages/documents/file/${id}`;
 	}
 }
 

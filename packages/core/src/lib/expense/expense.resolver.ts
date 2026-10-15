@@ -19,12 +19,17 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../api/bulk-create';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { bulkOptionsOf } from '../api/bulk.decorator';
 import { RequestContext } from '../core/context';
 import { EmployeeService } from '../employee/employee.service';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
+import { ExpenseController } from './expense.controller';
 import { Expense } from './expense.entity';
 import { ExpenseService, IExpenseStatistics } from './expense.service';
 import { FindSplitExpenseQuery } from './queries';
@@ -215,7 +220,8 @@ export class ExpenseResolver {
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
 		private readonly commandBus: CommandBus,
-		private readonly queryBus: QueryBus
+		private readonly queryBus: QueryBus,
+		private readonly bulkExecutor: BulkExecutor
 	) {}
 
 	/**
@@ -415,6 +421,31 @@ export class ExpenseResolver {
 		return await this.commandBus.execute(
 			new ExpenseCreateCommand(this.writePayload(input) as unknown as IExpenseCreateInput)
 		);
+	}
+
+	/**
+	 * Records a batch of expenses, one outcome per item.
+	 *
+	 * The batch `POST /expense/bulk` applies, run by the same executor from the same declaration — the options
+	 * are read off the controller's own `@BulkOperation`, so the resource, the cap and the permission cannot
+	 * differ between the two surfaces — and each item is recorded by `createExpense` itself: the same payload,
+	 * the same command, the same recomputation of its employee's average expense. `atomic: true` is refused
+	 * before item 0 with the same `BULK_ATOMIC_UNSUPPORTED` the route answers — the declaration (`atomic:
+	 * false`) is the controller's, read by the same executor.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here.
+	 */
+	@Mutation('bulkCreateExpenses')
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Idempotent({ scope: 'expense.bulk', required: false, resourceType: 'expense' })
+	async bulkCreateExpenses(@Args('input') input: IBulkCreateInput<ICreateExpenseInput>): Promise<IBulkCreatePayload> {
+		const result = await this.bulkExecutor.execute<ICreateExpenseInput>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createExpense(body)),
+			bulkOptionsOf(ExpenseController, 'bulk')
+		);
+
+		return toBulkCreatePayload(result);
 	}
 
 	/**

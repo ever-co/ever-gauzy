@@ -105,6 +105,14 @@ export async function createGraphqlModuleOptions(
 		// Depth, cost, aliases and introspection ride validation rules rather than the plugin array,
 		// so they hold even when `apolloServerPlugins` is empty.
 		validationRules,
+		// The token ceiling is the parser's, so it is paid before validation is (SEC-C-03): validation runs
+		// before authentication, and the specified `OverlappingFieldsCanBeMerged` rule is quadratic in the
+		// fields of a selection set — a 40 KB document of same-named fields held the event loop for seconds,
+		// and the rules above only report after that work is done. The parser stops at the ceiling instead.
+		parseOptions: { maxTokens: policy.maxTokens },
+		// Apollo's own bound on the selections a document expands to once its fragments are spread — the
+		// fragment-multiplication shape — checked at its default ceiling.
+		maxRecursiveSelections: true,
 		// Introspection is a policy, not a leftover. The refusal is a rule above, because the rule is what
 		// carries the catalogued code instead of a generic validation error. The flag is handed to the
 		// driver as well: Apollo Server keeps an `introspection` option of its own, and left unset it
@@ -201,7 +209,7 @@ export async function createGraphqlModuleOptions(
 		// the `context` factory above gave it. `RequestContextMiddleware` opens that context for an HTTP
 		// request and never sees a WebSocket message, so without this the guards and every tenant-scoped
 		// read found no caller on the socket.
-		...subscriptionTransportOptions({ validationRules })
+		...subscriptionTransportOptions({ validationRules, maxTokens: policy.maxTokens })
 	} as GqlModuleOptions;
 }
 

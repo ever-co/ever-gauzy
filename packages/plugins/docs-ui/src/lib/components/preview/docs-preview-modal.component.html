@@ -1,4 +1,5 @@
-<nb-card class="docs-preview">
+<!-- Inline, the card takes the focus on a click, which is what lets the arrow keys page a PDF there. -->
+<nb-card class="docs-preview" [attr.tabindex]="inline ? 0 : null">
 	<nb-card-header class="docs-preview-header">
 		<div class="docs-preview-title">
 			<nb-icon icon="eye-outline"></nb-icon>
@@ -32,7 +33,7 @@
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.OPEN_DETAILS' | translate }}
 			</button>
-			<button nbButton ghost size="small" class="docs-preview-close" (click)="close()">
+			<button *ngIf="!inline" nbButton ghost size="small" class="docs-preview-close" (click)="close()">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>

@@ -112,7 +112,9 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => '00000000-0000-4000-8000-000000000001',
 			currentOrganizationId: () => '00000000-0000-4000-8000-000000000002',
 			currentEmployeeId: () => null,
-			hasPermission: () => false
+			// What the caller holds, read per call from the set the case states (`grant` below): settling a refund
+			// needs REFUNDS_APPROVE, which every case holds unless it says otherwise.
+			hasPermission: (permission: string) => !!(globalThis as any).__grantedPermissions?.has(permission)
 		}
 	};
 });
@@ -132,7 +134,7 @@ jest.mock(
 	})
 );
 
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { Payment, RequestContext } from '@gauzy/core';
 import { PaymentCapture } from '../payment-capture/payment-capture.entity';
@@ -467,8 +469,15 @@ function fixture(
 		store.repository('payment') as never
 	);
 
-	return { service, tables, published };
+	return { service, refundService, tables, published };
 }
+
+/** The permissions the signed-in caller holds for the rest of the case. */
+const grant = (...permissions: string[]) => {
+	(globalThis as any).__grantedPermissions = new Set(permissions);
+};
+
+beforeEach(() => grant('REFUNDS_APPROVE'));
 
 describe('ReturnRefundService — the money a return or a claim pays back', () => {
 	afterEach(() => jest.restoreAllMocks());
@@ -761,5 +770,83 @@ describe('ReturnRefundService — the money a return or a claim pays back', () =
 			/REFUND_ORDER_REQUIRED/
 		);
 		expect(tables.refund).toEqual([]);
+	});
+});
+
+describe('Refunds attributed to a return or a claim cannot bypass the refund rules (review R3-08 / R3-09)', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('settles nothing, and writes nothing, for a caller without REFUNDS_APPROVE', async () => {
+		const { service, tables } = fixture({});
+		grant('RETURNS_RECEIVE');
+
+		await expect(
+			service.createRefund({ orderId: ORDER, returnId: RETURN, amount: '25', currency: 'USD' })
+		).rejects.toBeInstanceOf(ForbiddenException);
+
+		// The failure scenario: the refund was recorded and settled under the returns grant alone.
+		expect(tables.refund).toEqual([]);
+		expect(tables.payment[0].refundedAmount ?? '0').toBe('0');
+	});
+
+	it('answers whether the caller may settle a refund, so a receipt can ask before the goods move', () => {
+		const { service } = fixture({});
+
+		expect(() => service.assertMayRefund()).not.toThrow();
+		grant('RETURNS_RECEIVE', 'CLAIMS_RESOLVE');
+		expect(() => service.assertMayRefund()).toThrow(ForbiddenException);
+	});
+
+	it('refuses, through the refund API, a refund that names no payment — whatever return it cites', async () => {
+		const { refundService, tables } = fixture({});
+
+		// The failure scenario: `POST /refunds {orderId, returnId, amount: "100000"}` was measured against nothing.
+		await expect(
+			refundService.createRefund({ orderId: ORDER, returnId: RETURN, amount: '100000', currency: 'USD' } as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_PAYMENT_REQUIRED' }) });
+		expect(tables.refund).toEqual([]);
+	});
+
+	it('refuses a refund whose order is not the order the payment was taken for', async () => {
+		const { refundService, tables } = fixture({});
+
+		await expect(
+			refundService.createRefund({
+				orderId: '00000000-0000-4000-8000-0000000000ff',
+				paymentId: PAYMENT,
+				amount: '10',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_ORDER_MISMATCH' }) });
+		expect(tables.refund).toEqual([]);
+	});
+
+	it('refuses to approve, through the refund API, a pending refund that names no payment', async () => {
+		const pending = {
+			id: 'refund-legacy',
+			tenantId: TENANT,
+			organizationId: ORG,
+			orderId: ORDER,
+			returnId: RETURN,
+			amount: '100000',
+			currency: 'USD',
+			status: RefundStatus.PENDING
+		};
+		const { refundService, tables } = fixture({ refunds: [pending] });
+
+		await expect(refundService.approveRefund('refund-legacy')).rejects.toMatchObject({
+			response: expect.objectContaining({ code: 'REFUND_PAYMENT_REQUIRED' })
+		});
+		expect(tables.refund[0].status).toBe(RefundStatus.PENDING);
+	});
+
+	it('still records and settles, through the refund API, a refund paid back from a payment of the order', async () => {
+		const { refundService, tables } = fixture({});
+
+		const created = await refundService.createRefund({ orderId: ORDER, paymentId: PAYMENT, amount: '10', currency: 'USD' } as never);
+		const settled = await refundService.approveRefund(created.id);
+
+		expect(settled.status).toBe(RefundStatus.SUCCEEDED);
+		expect(tables.payment[0]).toMatchObject({ refundedAmount: '10' });
 	});
 });

@@ -688,6 +688,13 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	): Promise<IOrderReturnReceiptOutcome> {
 		const orderReturn = await this.findOneScoped(id);
 
+		// A receipt that also refunds is refused BEFORE the goods move when the caller may not settle a refund:
+		// the refund is the receipt's last step, and refused there it would leave goods received and stock
+		// posted under an error answer (review R3-09).
+		if (options.refund !== undefined && options.refund !== null && String(options.refund) !== '') {
+			await this.refundGateway?.assertMayRefund?.();
+		}
+
 		this.assertStatus(orderReturn, RECEIVABLE_STATUSES, 'receive');
 
 		// The status the receipt was decided from, taken before anything else runs, for the reason

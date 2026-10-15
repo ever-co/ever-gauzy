@@ -2,6 +2,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { FieldVisibility } from '../api/field-visibility.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { IntegrationMap } from '../core/entities/internal';
 import { TagController } from './tag.controller';
@@ -35,10 +37,14 @@ import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		TagResolver,
+		// Both surfaces apply a batch of tags with the platform's executor, which authorises it through the
+		// platform's field visibility.
+		BulkExecutor,
+		FieldVisibility,
 		TypeOrmTagRepository,
 		MikroOrmTagRepository,
 		...CommandHandlers
 	],
-	exports: [TagService, CqrsModule, TypeOrmTagRepository, MikroOrmTagRepository]
+	exports: [TagService, CqrsModule, TypeOrmTagRepository, MikroOrmTagRepository, BulkExecutor]
 })
 export class TagModule {}
