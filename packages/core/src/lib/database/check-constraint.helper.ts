@@ -69,9 +69,10 @@ export function supportsCheckConstraints(queryRunner: QueryRunner): boolean {
 /**
  * Whether a table already carries a constraint of a given name.
  *
- * Read through the table metadata rather than through `information_schema`, because that is the one
- * description of a table all three dialects answer through TypeORM, and a migration needs the same answer
- * on each.
+ * Read through the table metadata first. TypeORM's MySQL runner does not load `CHECK` constraints, so its
+ * description never lists one: on MySQL a name the metadata does not list is looked up in
+ * `information_schema.TABLE_CONSTRAINTS`, otherwise a down step never drops the rule and a re-run adds it a
+ * second time, which MySQL refuses (3822).
  *
  * @param queryRunner The runner the migration is executing on.
  * @param table The table to describe.
@@ -87,7 +88,21 @@ export async function hasCheckConstraint(
 	try {
 		const described = await queryRunner.getTable(table);
 
-		return Boolean(described?.checks?.some((check) => check.name === name));
+		if (described?.checks?.some((check) => check.name === name)) {
+			return true;
+		}
+
+		if ((queryRunner.connection.options.type as DatabaseTypeEnum) !== DatabaseTypeEnum.mysql) {
+			return false;
+		}
+
+		const rows: Array<{ name: string }> = await queryRunner.query(
+			`SELECT CONSTRAINT_NAME AS name FROM information_schema.TABLE_CONSTRAINTS ` +
+				`WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = 'CHECK'`,
+			[table, name]
+		);
+
+		return Array.isArray(rows) && rows.some((row) => row?.name === name);
 	} catch {
 		return true;
 	}
@@ -184,7 +199,18 @@ export async function dropCheckConstraint(
 			? `ALTER TABLE \`${definition.table}\` DROP CONSTRAINT \`${definition.name}\``
 			: `ALTER TABLE "${definition.table}" DROP CONSTRAINT "${definition.name}"`;
 
-	await queryRunner.query(statement);
+	try {
+		await queryRunner.query(statement);
+	} catch (error) {
+		const failure = error as { code?: string; driverError?: { code?: string } };
+
+		// MySQL 8.0.16 to 8.0.18 enforce a CHECK but only parse `DROP CHECK`; `DROP CONSTRAINT` came in 8.0.19.
+		if (type !== DatabaseTypeEnum.mysql || (failure?.code ?? failure?.driverError?.code) !== 'ER_PARSE_ERROR') {
+			throw error;
+		}
+
+		await queryRunner.query(`ALTER TABLE \`${definition.table}\` DROP CHECK \`${definition.name}\``);
+	}
 
 	return true;
 }
