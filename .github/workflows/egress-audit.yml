@@ -124,12 +124,14 @@ env:
   # The baseline of Ever links the UI rendered before the modules (tools/egress-audit/ui-baseline.json)
   # may only shrink. It was adopted (--first-version) by the change that added it; from then on every
   # pull request compares it with its base. 'true' only in a change that adds a new baseline file.
+  # A promotion into a branch that does not have the baseline yet (develop → stage, stage → master)
+  # adopts it the same way without this switch: see "The baseline of Ever links only shrinks".
   BASELINE_FIRST_VERSION: 'false'
   # 'true' only in a change that makes the browser walk open routes it did not open before (a newer
   # harness or route generator): the baseline may then gain entries for those routes, and only for
   # links it already excused on other routes (tools/egress-audit/check-baseline-rewalk.mjs). The next
   # change sets it back to 'false'.
-  BASELINE_REWALK: 'true'
+  BASELINE_REWALK: 'false'
 
 jobs:
   inputs:
@@ -192,6 +194,17 @@ jobs:
         run: |
           flag=""
           if [ "$BASELINE_FIRST_VERSION" = "true" ]; then flag="--first-version"; fi
+          # The base predates the baseline: a promotion pull request (develop → stage, stage → master)
+          # into a branch no cascade has carried it to yet. Every change to it was already checked on
+          # develop, push by push, so the promotion adopts it as its first version on that branch.
+          # Nothing to re-walk against either. A baseline renamed in the config is still new on a base
+          # that has this file, so it keeps failing the plain check below.
+          if ! git cat-file -e "$BASE:$AUDIT_DIR/ui-baseline.json" 2> /dev/null; then
+            echo "$BASE has no $AUDIT_DIR/ui-baseline.json yet: this change adopts it (--first-version)"
+            node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
+              --base "$BASE" --config "$AUDIT_CONFIG" --first-version
+            exit 0
+          fi
           if [ "$BASELINE_REWALK" = "true" ]; then
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "$BASE" --config "$AUDIT_CONFIG" $flag || echo "(the walk opens new routes: the entries they added are checked next)"
