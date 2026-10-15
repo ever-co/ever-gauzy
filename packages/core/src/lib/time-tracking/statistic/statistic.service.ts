@@ -45,6 +45,7 @@ import {
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog, TimeSlot } from './../../core/entities/internal';
+import { FileStorage } from './../../core/file-storage/file-storage';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
@@ -3022,14 +3023,17 @@ export class StatisticService {
 						.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 						.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
 						.leftJoin('employee as emp', 'time_slot.employeeId', 'emp.id')
-						.leftJoin('screenshot', 'time_slot.id', 'screenshot.timeSlotId')
+						// Filtered in the ON clause so a slot with only soft-removed screenshots still comes back
+						.leftJoin('screenshot', (join) =>
+							join.on('time_slot.id', '=', 'screenshot.timeSlotId').andOnNull('screenshot.deletedAt')
+						)
 						.select([
 							'time_slot.*',
 							'emp.id as emp_id',
 							'screenshot.id as screenshot_id',
 							'screenshot.file as screenshot_file',
 							'screenshot.thumb as screenshot_thumb',
-							'screenshot.thumbUrl as screenshot_thumbUrl'
+							'screenshot.storageProvider as screenshot_storageProvider'
 						])
 						.where('time_slot.employeeId', employee.id)
 						.andWhere('time_slot.tenantId', tenantId)
@@ -3050,19 +3054,28 @@ export class StatisticService {
 					// Group screenshots by time slot
 					const slotMap = new Map<string, any>();
 					for (const row of timeSlotRows) {
+						// The storage provider stays private, as Screenshot's @Exclude keeps it on TypeORM
+						const { screenshot_storageProvider: storageProvider, ...columns } = row;
 						if (!slotMap.has(row.id)) {
 							slotMap.set(row.id, {
-								...row,
+								...columns,
 								employee: row.emp_id ? { id: row.emp_id } : null,
 								screenshots: []
 							});
 						}
 						if (row.screenshot_id) {
+							// thumbUrl and fullUrl are not columns: resolve them the way ScreenshotSubscriber does
+							const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
+							const [fullUrl, thumbUrl] = await Promise.all([
+								store?.url(row.screenshot_file),
+								store?.url(row.screenshot_thumb)
+							]);
 							slotMap.get(row.id).screenshots.push({
 								id: row.screenshot_id,
 								file: row.screenshot_file,
 								thumb: row.screenshot_thumb,
-								thumbUrl: row.screenshot_thumbUrl
+								thumbUrl,
+								fullUrl
 							});
 						}
 					}
