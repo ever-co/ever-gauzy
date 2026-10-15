@@ -8,6 +8,22 @@ import { isSecretTenantSettingName } from './tenant-setting.utils';
 const MAX_DEPTH = 4;
 
 /**
+ * Whether a plain object is a SERIALIZED settings row: what the MikroORM CRUD path answers (`wrap(entity).toJSON()`),
+ * which is no `TenantSetting` instance. A row carries its id, its name, its value and its tenant together; a settings
+ * document — a map of setting names to values — does not (review on #10652).
+ *
+ * @param value A plain object from an answer.
+ */
+function isSerializedSettingRow(value: Record<string, unknown>): boolean {
+	return (
+		typeof value['id'] === 'string' &&
+		typeof value['name'] === 'string' &&
+		Object.prototype.hasOwnProperty.call(value, 'value') &&
+		Object.prototype.hasOwnProperty.call(value, 'tenantId')
+	);
+}
+
+/**
  * One settings row as a client may see it: a secret's `value` / `valueJson` masked, every other row as stored.
  *
  * The secret rule is the default-deny one the CSV export and the settings document already use
@@ -37,8 +53,8 @@ export function maskTenantSettingSecrets(row: TenantSetting): TenantSetting {
 /**
  * An answer with every settings row in it masked: a row, a list, a page or a connection.
  *
- * Only `TenantSetting` rows are touched, so the key/value documents the routes answer — masked by their own
- * handlers — pass through as they are.
+ * Only settings rows are touched — `TenantSetting` instances, and the serialized rows the MikroORM path answers — so
+ * the key/value documents the routes answer, masked by their own handlers, pass through as they are.
  *
  * @param answer What a route or a field answered.
  * @param depth How deep into the answer this is.
@@ -58,6 +74,10 @@ export function maskTenantSettingRows(answer: unknown, depth = 0): unknown {
 
 	if (Object.getPrototypeOf(answer) !== Object.prototype) {
 		return answer;
+	}
+
+	if (isSerializedSettingRow(answer as Record<string, unknown>)) {
+		return maskTenantSettingSecrets(answer as TenantSetting);
 	}
 
 	return Object.fromEntries(Object.entries(answer).map(([key, value]) => [key, maskTenantSettingRows(value, depth + 1)]));

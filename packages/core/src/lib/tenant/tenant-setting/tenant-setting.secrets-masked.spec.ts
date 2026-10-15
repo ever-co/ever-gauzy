@@ -101,6 +101,22 @@ describe('tenant settings rows never carry a secret in cleartext (SEC-A-06)', ()
 		expect((await answered(TenantSettingController, () => controller.softRecover('s1'))).value).not.toContain(SECRET.slice(0, 20));
 	});
 
+	it('masks the serialized rows MikroORM answers, and leaves the settings document as its handler masked it', async () => {
+		// Review on #10652: under MikroORM, `CrudService.serialize()` answers `wrap(entity).toJSON()` — plain objects
+		// that are not `TenantSetting` instances — and those passed the interceptor with the secret in cleartext.
+		const { resolver, service } = surfaces();
+		const plain = ROWS.map((one) => ({ ...one }));
+		service.findAll.mockResolvedValue({ items: plain, total: plain.length });
+
+		const connection = await answered(TenantSettingResolver, () => resolver.tenantSettings());
+		expect(JSON.stringify(connection)).not.toContain(SECRET.slice(0, 20));
+		expect(valuesOf(connection.nodes)['fileStorageProvider']).toBe('S3');
+
+		// A settings document is a key / value map, not a row: it is left as its handler answered it.
+		const document = { fileStorageProvider: 'S3', aws_default_region: 'eu-west-1' };
+		expect(await answered(TenantSettingController, async () => document)).toEqual(document);
+	});
+
 	it('leaves the stored row untouched', async () => {
 		const { resolver } = surfaces();
 
