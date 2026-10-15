@@ -20,12 +20,8 @@
 # **The name route is a filter rather than a root field of its own.** `GET /skills/getByName/:name`
 # reads one skill by its name and joins nothing the list read does not: its answer is the row a
 # `name` filter over the connection selects, so stating it twice would be two surfaces that could
-# disagree. One difference is worth writing down rather than hiding, and it is a difference the
-# delivery does not reproduce: the delivered name route builds its own query and names no tenant in
-# it, so it answers a skill of any tenant, while the connection's read is the tenant-scoped list read
-# and answers only the caller's own rows. Adding a root field that reached across tenants would be a
-# widening nobody asked for, so the filter is narrower than that one route and the narrowing is
-# stated here.
+# disagree. Both answer only the caller's own rows: the route scopes its query by the caller's
+# tenant, and the connection's read is the tenant-scoped list read.
 
 extend type Query {
 	"""
