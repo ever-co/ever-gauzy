@@ -625,5 +625,14 @@ export const schemaExtensions = gql`
 		entitlementActivated(entitlementId: ID): Entitlement!
 		"Streams rights that were withdrawn."
 		entitlementRevoked(entitlementId: ID): Entitlement!
+		"""
+		Every streamed move of a licence key of the caller's tenant — today, its withdrawal — with the key in the state
+		the move left it, as \`entitlementKeys\` reads it: the display prefix, never key material. Narrowed by
+		\`entitlementKeyId\` and by the right the key was issued against; each only narrows what the credential may
+		read. Follows the \`entitlement_key.*\` facts \`Subscription.events\` streams — \`entitlement_key.issued\` is
+		withheld there, because its payload carries the holder's e-mail, and so here too. A subscription is a
+		notification and never a system of record: a move made while the client is disconnected is not replayed.
+		"""
+		entitlementKeyChanged(entitlementKeyId: ID, entitlementId: ID): EntitlementKey!
 	}
 `;
