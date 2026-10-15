@@ -14,7 +14,6 @@
   .adjust-height {
     ::ng-deep .ng-select-container {
       height: auto;
-      align-items: flex-start;
     }
 
     // Keep the clear (×) and arrow (v) on the first row once the chips wrap,
