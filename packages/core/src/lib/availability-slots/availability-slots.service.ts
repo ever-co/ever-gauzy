@@ -142,7 +142,8 @@ export class AvailabilitySlotsService extends TenantAwareCrudService<Availabilit
 			endTime: input.endTime ?? existing.endTime,
 			allDay: input.allDay ?? existing.allDay,
 			type: input.type ?? existing.type,
-			organizationId: input.organizationId ?? existing.organizationId,
+			// `undefined` is "not stated"; an explicit null clears the organization (the column is nullable).
+			organizationId: input.organizationId !== undefined ? input.organizationId : existing.organizationId,
 			employee: employeeId ? { id: employeeId } : null,
 			employeeId
 		} as unknown as AvailabilitySlot);

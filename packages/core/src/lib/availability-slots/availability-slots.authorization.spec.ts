@@ -361,6 +361,15 @@ describe('Availability slots — whose hours a caller may write, on a real datab
 			});
 		});
 
+		it('clears a slot’s organization when the update says null, and keeps it when the update omits it', async () => {
+			await controller.update(COLLEAGUE_SLOT, { startTime: at('02', '10:00'), endTime: at('02', '12:00') } as any);
+			expect((await slots.findOneBy({ id: COLLEAGUE_SLOT })).organizationId).toBe(ORGANIZATION);
+
+			await controller.update(COLLEAGUE_SLOT, { organizationId: null } as any);
+			// The failure scenario: `?? existing.organizationId` read the explicit null as "not stated".
+			expect((await slots.findOneBy({ id: COLLEAGUE_SLOT })).organizationId).toBeNull();
+		});
+
 		it('keeps the employee’s existing hours when the merged slot cannot be saved', async () => {
 			await expect(
 				controller.create({
