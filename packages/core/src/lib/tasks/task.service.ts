@@ -56,6 +56,7 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { OrganizationProject } from '../core/entities/internal';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -149,27 +150,39 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				: [];
 			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
+			// A task that moves to another project is renumbered in the project it moves TO: `number` is unique
+			// per project, so the next number of the old project (what this computed before) could collide in
+			// the new one, or leave the task numbered as if it had never moved. The prefix follows the project
+			// too, by the rule the create path uses (the first three characters of the project's name).
+			let moved: Partial<Task> | null = null;
 			if (data.projectId && data.projectId !== task.projectId) {
-				const { organizationId, projectId } = task;
+				const { organizationId } = task;
+				const projectId = data.projectId;
 
-				// Get the maximum task number for the project
+				// Get the maximum task number for the project the task moves to
 				const maxNumber = await this.getMaxTaskNumberByProject({
 					tenantId,
 					organizationId,
 					projectId
 				});
 
+				moved = { projectId, number: maxNumber + 1 };
+
+				const prefix = await this.findProjectPrefix(projectId, tenantId);
+				if (prefix !== undefined) {
+					moved.prefix = prefix;
+				}
+
 				// Update the task with the new project and task number
-				await super.update(id, {
-					projectId,
-					number: maxNumber + 1
-				});
+				await super.update(id, moved);
 			}
 
-			// Update the task with the provided data
+			// Update the task with the provided data. When the task moved, the number (and prefix) computed above
+			// win over any the input carries: a client that sends the whole task back sends the old number.
 			const updatedTask = await super.create({
 				...data,
-				id
+				id,
+				...(moved ?? {})
 			});
 
 			// Register Task Sprint moving history
@@ -1101,6 +1114,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		// Call the base paginate method
 		return await super.paginate({ ...options, where: { ...advancedFilters, ...where } });
+	}
+
+	/**
+	 * The task-number prefix of a project, by the rule the create path uses: the first three characters of
+	 * the project's name, or `null` for a project without a name. `undefined` when the project is not one of
+	 * the tenant's, so the caller leaves the task's prefix as it is.
+	 *
+	 * @param projectId The project.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async findProjectPrefix(projectId: ID, tenantId: ID): Promise<string | null | undefined> {
+		if (!tenantId) {
+			return undefined;
+		}
+		try {
+			const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+				where: { id: projectId, tenantId },
+				select: { id: true, name: true }
+			});
+			if (!project) {
+				return undefined;
+			}
+			return project.name?.slice(0, 3) || null;
+		} catch (error) {
+			console.error(`Failed to read the prefix of project ${projectId}:`, error?.message);
+			return undefined;
+		}
 	}
 
 	/**
