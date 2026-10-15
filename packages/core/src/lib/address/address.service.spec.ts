@@ -924,6 +924,34 @@ describe('AddressService — a party outside the caller’s scope is never named
 		expect(contact(OTHER_CONTACT)?.defaultBillingAddressId).toBe(HOME);
 	});
 
+	it('refuses moving a default address to another customer, and leaves both parties as they were', async () => {
+		// CodeRabbit on #10649: the address moved to the new customer's book while the old customer's column still named it.
+		const { addressService, address, contact } = book({
+			addresses: [addressRow(HOME, { isDefaultShipping: true })],
+			roles: [roleRow(HOME, AddressRoleEnum.SHIPPING, { isDefault: true })],
+			contacts: [contactRow(CONTACT, { defaultShippingAddressId: HOME }), contactRow(OTHER_CONTACT)]
+		});
+
+		const refusal = await refusalOf(() =>
+			addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT })
+		);
+
+		expect(refusal).toMatch(/^ADDRESS_DEFAULT_MISMATCH/);
+		expect(address()?.customerId).toBe(CONTACT);
+		expect(contact()?.defaultShippingAddressId).toBe(HOME);
+	});
+
+	it('moves an address that is no one’s default to another customer of the caller', async () => {
+		const { addressService, address } = book({
+			addresses: [addressRow(HOME)],
+			contacts: [contactRow(CONTACT), contactRow(OTHER_CONTACT)]
+		});
+
+		await addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT });
+
+		expect(address()?.customerId).toBe(OTHER_CONTACT);
+	});
+
 	it('still records and defaults an address of the caller’s own customer', async () => {
 		const { addressService, contact } = book({ contacts: [contactRow(CONTACT)] });
 

@@ -278,6 +278,10 @@ export class AddressService extends TenantAwareCrudService<Address> {
 		this.assertOwnerConsistency(ownerType, ownerId, customerId);
 		if (input.customerId !== undefined) {
 			await this.assertCustomerInScope(customerId);
+
+			if (String(customerId ?? '') !== String(address.customerId ?? '')) {
+				await this.assertNotMovingADefault(address);
+			}
 		}
 
 		if (input.line1 !== undefined && !this.isStated(input.line1)) {
@@ -703,6 +707,40 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		if (!party) {
 			throw new NotFoundException(`${ApiErrorCode.RESOURCE_NOT_FOUND}: no such customer in this organization.`);
+		}
+	}
+
+	/**
+	 * Refuses moving an address that is a default of its customer to another customer, or to none.
+	 *
+	 * The customer's column is the authority for its default (rule 3 above): moving the row out of that customer's
+	 * book would leave the column naming an address the customer no longer has (CodeRabbit on #10649). The default
+	 * is cleared first — {@link clearDefaultAddress} is the door that clears the column and the mirror together.
+	 *
+	 * @param address The stored address.
+	 * @throws ApiException `ADDRESS_DEFAULT_MISMATCH` (409) when the address is a default of its customer.
+	 */
+	private async assertNotMovingADefault(
+		address: Pick<IAddressBook, 'id' | 'customerId' | 'ownerType' | 'isDefaultShipping' | 'isDefaultBilling'>
+	): Promise<void> {
+		let isDefault = !!(address.isDefaultShipping || address.isDefaultBilling);
+
+		if (!isDefault && address.ownerType === AddressOwnerType.CONTACT && address.customerId) {
+			const party = (await this.typeOrmAddressRepository.manager.findOne(OrganizationContact, {
+				where: { id: address.customerId, ...this.scope }
+			} as never)) as unknown as Record<string, unknown> | null;
+			const columns = [AddressRoleEnum.SHIPPING, AddressRoleEnum.BILLING].map((role) => this.partyDefaultColumn(role));
+
+			isDefault = !!party && columns.some((column) => !!column && !!party[column] && String(party[column]) === String(address.id));
+		}
+
+		if (isDefault) {
+			throw new ApiException(
+				409,
+				ApiErrorCode.ADDRESS_DEFAULT_MISMATCH,
+				`This address is a default address of customer ${String(address.customerId)}; clear the default before moving it to another customer.`,
+				{ customerId: address.customerId, requested: address.id }
+			);
 		}
 	}
 
