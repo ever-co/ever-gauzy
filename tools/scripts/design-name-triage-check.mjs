@@ -38,7 +38,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
  * The number of `build` rows: the missing capabilities not yet served. It may only shrink — a delivered capability
  * moves its row to `delivered` and lowers this number in the same change.
  */
-const BUILD_BASELINE = 2;
+const BUILD_BASELINE = 1;
 
 /** @type {{ name: string, kind: 'Query'|'Mutation', decision: 'delivered'|'naming'|'retired'|'build'|'drop', served: string[], note: string }[]} */
 const TRIAGE = [
@@ -91,6 +91,7 @@ const TRIAGE = [
 	{ name: 'bulkCreateTasks', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /tasks/bulk` + `bulkCreateTasks`, every item the single create (`POST /tasks` / `createTask`), numbered by its handler one item at a time' },
 	{ name: 'bulkCreateExpenses', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /expense/bulk` + `bulkCreateExpenses`, every item the single create (`POST /expense` / `createExpense`) on the bulk kernel' },
 	{ name: 'bulkCreateTimeLogs', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /timesheet/time-log/bulk` + `bulkCreateTimeLogs`, every item the manual-time create (`addManualTime`: policy guard, employee, date and overlap rules)' },
+	{ name: 'bulkCreateOrganizations', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /organization/bulk` + `bulkCreateOrganizations`, every item the single create (`OrganizationCreateCommand`)' },
 
 	// — Naming: the platform's resources carry the REST-aligned `Organization*` names (§7.68 class 4).
 	{ name: 'createDepartment', kind: 'Mutation', decision: 'naming', served: ['createOrganizationDepartment'], note: 'REST `/organization-department`' },
@@ -179,7 +180,6 @@ const TRIAGE = [
 	{ name: 'setProductVariantPrice', kind: 'Mutation', decision: 'retired', served: ['updateProductVariantPrice', 'bulkUpsertProductPrices'], note: 'design-retired' },
 
 	// — Missing capabilities: neither surface serves them.
-	{ name: 'bulkCreateOrganizations', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either' },
 	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `createEmployeesBulk` covers employees only' },
 
 	// — Not needed.
