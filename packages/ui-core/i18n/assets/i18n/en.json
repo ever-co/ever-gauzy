@@ -3172,7 +3172,52 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Details"
+					},
+					"PUBLIC": "Public",
+					"PRIVATE": "Private",
+					"PREFIX": "Task prefix",
+					"MEMBERS_COUNT": "{{ count }} members",
+					"LIVE": "{{ tracking }} tracking now · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} of {{ total }} members",
+					"CREATED": "Created",
+					"UPDATED": "Last updated",
+					"ACTIVE_MEMBERS": "Active members",
+					"ACTIVE_MEMBERS_META": "of {{ total }} tracked time",
+					"TIME_BY_MEMBER": "Time by member",
+					"TEAM_TASKS": "Team tasks",
+					"NO_TEAM_TASKS": "No tasks assigned to this team",
+					"NO_MEMBERS": "This team has no members yet",
+					"NO_PROJECTS": "No projects linked to this team",
+					"COLUMNS": {
+						"MEMBER": "Member",
+						"ROLE": "Role",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Current task",
+						"TODAY": "Today",
+						"ACTIVITY": "Activity"
+					},
+					"ROLE": {
+						"MANAGER": "Manager",
+						"MEMBER": "Member"
+					},
+					"GENERAL": "General",
+					"SETTINGS": "Settings",
+					"RECORD": "Record",
+					"TEAM_SIZE": "Team size",
+					"COLOR": "Color",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Profile link",
+					"VISIBILITY": "Visibility",
+					"SHARE_PROFILE_VIEW": "Members can see each other's profiles",
+					"REQUIRE_PLAN": "Require a plan to track time",
+					"NOT_FOUND": "This team could not be found",
+					"LOAD_FAILED": "The team could not be loaded",
+					"RETRY": "Try again"
+				}
 			}
 		},
 		"PERMISSIONS": {

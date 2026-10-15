@@ -2666,7 +2666,52 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
-				"MEMBERS": "Mitglieder"
+				"MEMBERS": "Mitglieder",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Details"
+					},
+					"PUBLIC": "Öffentlich",
+					"PRIVATE": "Privat",
+					"PREFIX": "Aufgabenpräfix",
+					"MEMBERS_COUNT": "{{ count }} Mitglieder",
+					"LIVE": "{{ tracking }} erfassen gerade · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} von {{ total }} Mitgliedern",
+					"CREATED": "Erstellt",
+					"UPDATED": "Zuletzt aktualisiert",
+					"ACTIVE_MEMBERS": "Aktive Mitglieder",
+					"ACTIVE_MEMBERS_META": "von {{ total }} haben Zeit erfasst",
+					"TIME_BY_MEMBER": "Zeit pro Mitglied",
+					"TEAM_TASKS": "Team-Aufgaben",
+					"NO_TEAM_TASKS": "Diesem Team sind keine Aufgaben zugewiesen",
+					"NO_MEMBERS": "Dieses Team hat noch keine Mitglieder",
+					"NO_PROJECTS": "Mit diesem Team sind keine Projekte verknüpft",
+					"COLUMNS": {
+						"MEMBER": "Mitglied",
+						"ROLE": "Rolle",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Aktuelle Aufgabe",
+						"TODAY": "Heute",
+						"ACTIVITY": "Aktivität"
+					},
+					"ROLE": {
+						"MANAGER": "Manager",
+						"MEMBER": "Mitglied"
+					},
+					"GENERAL": "Allgemein",
+					"SETTINGS": "Einstellungen",
+					"RECORD": "Datensatz",
+					"TEAM_SIZE": "Teamgröße",
+					"COLOR": "Farbe",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Profil-Link",
+					"VISIBILITY": "Sichtbarkeit",
+					"SHARE_PROFILE_VIEW": "Mitglieder sehen die Profile der anderen",
+					"REQUIRE_PLAN": "Plan zur Zeiterfassung erforderlich",
+					"NOT_FOUND": "Dieses Team wurde nicht gefunden",
+					"LOAD_FAILED": "Das Team konnte nicht geladen werden",
+					"RETRY": "Erneut versuchen"
+				}
 			}
 		},
 		"PERMISSIONS": {
