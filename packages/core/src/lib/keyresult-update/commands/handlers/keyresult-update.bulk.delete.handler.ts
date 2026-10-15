@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import { KeyResultUpdateBulkDeleteCommand } from '..';
 import { KeyResultUpdateService } from '../../keyresult-update.service';
 
@@ -6,10 +7,16 @@ import { KeyResultUpdateService } from '../../keyresult-update.service';
 export class KeyResultUpdateBulKDeleteHandler implements ICommandHandler<KeyResultUpdateBulkDeleteCommand> {
 	constructor(private readonly keyResultUpdateService: KeyResultUpdateService) {}
 
-	public async execute(command: KeyResultUpdateBulkDeleteCommand): Promise<any> {
+	/**
+	 * Removes every update of one key result.
+	 *
+	 * @returns The delete result, so a caller can tell updates that were removed from a key result that had
+	 * none (`affected: 0`) — the GraphQL field answers from it.
+	 */
+	public async execute(command: KeyResultUpdateBulkDeleteCommand): Promise<DeleteResult> {
 		const { id } = command;
 		const updates = await this.keyResultUpdateService.findByKeyResultId(id);
-		await this.keyResultUpdateService.deleteMany(updates.map((item) => item.id));
-		return;
+
+		return await this.keyResultUpdateService.deleteMany(updates.map((item) => item.id));
 	}
 }

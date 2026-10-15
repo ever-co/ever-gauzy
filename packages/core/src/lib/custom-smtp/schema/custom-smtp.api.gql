@@ -98,7 +98,8 @@ extend type Mutation {
 
 	"""
 	Removes an SMTP configuration outright. The delivered route answers with the store's deletion
-	result; this field answers the fact of the removal, which is the one member of it a caller reads.
+	result; this field answers whether its count says a row was removed, which is the one member of it a
+	caller reads — `false` for an identifier that names no configuration the caller can reach.
 	"""
 	deleteSmtpSetting(id: ID!): Boolean!
 

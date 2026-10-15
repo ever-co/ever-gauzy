@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../../api/graphql-connection';
-import { BaseQueryDTO } from '../../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../../core/crud';
 import { RequestContext } from '../../core/context';
 import { Permissions } from '../../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -304,9 +304,9 @@ export class DailyPlanResolver {
 	@Mutation('deleteDailyPlan')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_DELETE)
 	async deleteDailyPlan(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.dailyPlanService.delete(id);
+		const result = await this.dailyPlanService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

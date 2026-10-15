@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -265,9 +265,9 @@ export class PipelineResolver {
 	@Mutation('deletePipeline')
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	async deletePipeline(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.pipelineService.delete(id);
+		const result = await this.pipelineService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

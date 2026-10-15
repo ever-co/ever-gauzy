@@ -20,7 +20,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -511,9 +511,9 @@ export class OrganizationProjectResolver {
 	@Mutation('deleteOrganizationProject')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE)
 	async deleteOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationProjectService.delete(id);
+		const result = await this.organizationProjectService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

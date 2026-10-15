@@ -18,7 +18,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FindOptionsQueryDTO } from '../core/crud';
+import { FindOptionsQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
@@ -509,15 +509,15 @@ export class InvoiceResolver {
 	 *
 	 * The same command the REST route dispatches. The delivered command answers the store's own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field
-	 * named `deleteInvoice` may return; the field answers the one fact the command establishes, that
-	 * the removal ran.
+	 * named `deleteInvoice` may return; the field answers whether that count says a row was removed:
+	 * `false` for an identifier that names no document the caller can reach.
 	 */
 	@Mutation('deleteInvoice')
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	async deleteInvoice(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commandBus.execute(new InvoiceDeleteCommand(id));
+		const result = await this.commandBus.execute(new InvoiceDeleteCommand(id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

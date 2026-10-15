@@ -25,6 +25,7 @@ import {
 	CandidateTechnologiesBulkDeleteCommand,
 	CandidateTechnologiesBulkUpdateCommand
 } from '../candidate-technologies/commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateCandidateTechnologyInput` declares in the schema. */
 export interface ICreateCandidateTechnologyInput {
@@ -208,9 +209,9 @@ export class CandidateInterviewVocabularyResolver {
 	@UseGuards(RoleGuard)
 	@Roles(...VOCABULARY_ROLES)
 	async deleteCandidateTechnology(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateTechnologiesService.delete(id);
+		const result = await this.candidateTechnologiesService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a technology without removing it. */
@@ -284,14 +285,14 @@ export class CandidateInterviewVocabularyResolver {
 		@Args('interviewId', { type: () => ID }) interviewId: Id,
 		@Args('technologies', { type: () => [ID], nullable: true }) technologies?: Id[]
 	): Promise<boolean> {
-		await this.commandBus.execute(
+		const result = await this.commandBus.execute(
 			new CandidateTechnologiesBulkDeleteCommand(
 				interviewId,
 				technologies ? (technologies.map((id) => ({ id })) as unknown as CandidateTechnologies[]) : undefined
 			)
 		);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -361,9 +362,9 @@ export class CandidateInterviewVocabularyResolver {
 	@UseGuards(RoleGuard)
 	@Roles(...VOCABULARY_ROLES)
 	async deleteCandidatePersonalQuality(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidatePersonalQualitiesService.delete(id);
+		const result = await this.candidatePersonalQualitiesService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a personal quality without removing it. */
@@ -407,7 +408,7 @@ export class CandidateInterviewVocabularyResolver {
 		@Args('interviewId', { type: () => ID }) interviewId: Id,
 		@Args('personalQualities', { type: () => [ID], nullable: true }) personalQualities?: Id[]
 	): Promise<boolean> {
-		await this.commandBus.execute(
+		const result = await this.commandBus.execute(
 			new CandidatePersonalQualitiesBulkDeleteCommand(
 				interviewId,
 				personalQualities
@@ -416,7 +417,7 @@ export class CandidateInterviewVocabularyResolver {
 			)
 		);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	// ---------------------------------------------------------------------------------------------

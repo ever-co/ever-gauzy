@@ -23,6 +23,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationSprintCreateCommand, OrganizationSprintUpdateCommand } from './commands';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateOrganizationSprintInput` declares in the schema. */
 export interface ICreateOrganizationSprintInput {
@@ -274,15 +275,15 @@ export class OrganizationSprintResolver {
 	 * Removes a sprint outright.
 	 *
 	 * The delivered route hands the identifier to the service rather than dispatching a command, so this
-	 * field does the same; the answer is the fact of the removal, which is the one member of the deletion
-	 * result a caller reads.
+	 * field does the same; the answer is whether the deletion result's count says a row was removed,
+	 * which is the one member of that result a caller reads.
 	 */
 	@Mutation('deleteOrganizationSprint')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_DELETE)
 	async deleteOrganizationSprint(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationSprintService.delete(id);
+		const result = await this.organizationSprintService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

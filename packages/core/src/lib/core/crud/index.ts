@@ -2,6 +2,7 @@ export * from './crud.factory';
 export * from './crud.controller';
 export * from './crud.service';
 export * from './criteria.helper';
+export * from './delete-result.helper';
 export * from './mikro-orm-insert.helper';
 export * from './icrud.controller';
 export * from '../dto/base-query.dto';

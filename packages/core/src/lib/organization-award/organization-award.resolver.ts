@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationAward } from './organization-award.entity';
 import { OrganizationAwardService } from './organization-award.service';
 import { Permissions } from '../shared/decorators';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateOrganizationAwardInput` declares in the schema. */
 export interface ICreateOrganizationAwardInput {
@@ -210,9 +211,9 @@ export class OrganizationAwardResolver {
 	 */
 	@Mutation('deleteOrganizationAward')
 	async deleteOrganizationAward(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationAwardService.delete(id);
+		const result = await this.organizationAwardService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

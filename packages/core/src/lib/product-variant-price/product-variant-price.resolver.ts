@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { ProductVariantPriceService } from './product-variant-price.service';
 import { Permissions } from '../shared/decorators';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateProductVariantPriceInput` declares in the schema. */
 export interface ICreateProductVariantPriceInput {
@@ -207,14 +208,15 @@ export class ProductVariantPriceResolver {
 	/**
 	 * Removes a price outright.
 	 *
-	 * The delivered service refuses a row that is not there with the same `404` the REST route answers
-	 * with, so a caller that names one is told it is missing rather than that the removal succeeded.
+	 * The delivered service does not read the row first, so the answer is the count its delete result
+	 * reports: a caller that names a row that is not there is answered `false` rather than told that the
+	 * removal succeeded.
 	 */
 	@Mutation('deleteProductVariantPrice')
 	async deleteProductVariantPrice(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productVariantPriceService.delete(id);
+		const result = await this.productVariantPriceService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

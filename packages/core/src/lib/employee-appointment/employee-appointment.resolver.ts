@@ -22,6 +22,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateEmployeeAppointmentInput` declares in the schema. */
 export interface ICreateEmployeeAppointmentInput {
@@ -304,16 +305,17 @@ export class EmployeeAppointmentResolver {
 	/**
 	 * Removes an appointment outright.
 	 *
-	 * The same service the inherited `DELETE /:id` route calls, so the two surfaces remove the same row
-	 * and refuse the same miss: the service raises the miss as the `404` the route answers with. The
-	 * delivered route answers the store's delete result, which is not a row, so the field answers
-	 * whether the removal was performed — the fact a client branches on.
+	 * The same service the inherited `DELETE /:id` route calls, so the two surfaces remove the same row.
+	 * The delivered route answers the store's delete result, which is not a row, so the field answers
+	 * whether the removal was performed — read from the count that result reports, so an appointment
+	 * that is not there (the service does not read it first) is answered `false` rather than with a
+	 * success.
 	 */
 	@Mutation('deleteEmployeeAppointment')
 	async deleteEmployeeAppointment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeAppointmentService.delete(id);
+		const result = await this.employeeAppointmentService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

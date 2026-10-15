@@ -19,7 +19,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -312,9 +312,9 @@ export class OrganizationStrategicInitiativeResolver {
 	@Mutation('deleteOrganizationStrategicInitiative')
 	@Permissions(PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE)
 	async deleteOrganizationStrategicInitiative(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationStrategicInitiativeService.delete(id);
+		const result = await this.organizationStrategicInitiativeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

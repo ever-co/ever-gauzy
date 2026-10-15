@@ -734,6 +734,8 @@ describe('UserResolver — one concept, two protocols, the same operations', () 
 
 	it('removes an account through the command the REST route dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered command answers the store's delete result; the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 1, raw: [] });
 
 		expect(await resolver.deleteUser(FIRST)).toBe(true);
 

@@ -11,7 +11,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../../api/graphql-connection';
-import { BaseQueryDTO } from '../../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../../core/crud';
 import { Permissions } from '../../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
@@ -168,9 +168,9 @@ export class TaskEstimationResolver {
 	@Mutation('deleteTaskEstimation')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	async deleteTaskEstimation(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commandBus.execute(new TaskEstimationDeleteCommand(id));
+		const result = await this.commandBus.execute(new TaskEstimationDeleteCommand(id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

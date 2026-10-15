@@ -50,9 +50,9 @@
 # `deleteOrganizationRecurringExpense` answers a boolean rather than a row, and the reason is the
 # delivered handler's own answer: it returns a delete result when the whole arrangement goes, an update
 # result when only its tail does, and the row it opened when one month is taken out of the middle. Those
-# are three shapes, none of which is the shape of a field, so the field answers the one fact the route
-# establishes — that the removal ran — and a caller that needs the arrangement as it now stands reads it
-# back from the connection.
+# are three shapes, none of which is the shape of a field, so the field answers whether the removal
+# happened — read from the delete result's count for `all`, which does not read the row first — and a
+# caller that needs the arrangement as it now stands reads it back from the connection.
 
 extend type Query {
 	"""
@@ -147,9 +147,11 @@ extend type Mutation {
 	"""
 	Removes a standing cost, in one of the three ways the delivered input names.
 
-	The answer is the one fact the removal establishes, because the delivered handler's own answer is a
-	delete result, an update result or a newly opened row depending on the deletion type — three shapes,
-	none of them a row this field could state. A caller that needs the arrangement as it now stands reads
+	The answer is whether the removal happened, because the delivered handler's own answer is a delete
+	result, an update result or a newly opened row depending on the deletion type — three shapes, none of
+	them a row this field could state. `all` answers from the delete result's count, so an identifier that
+	names no arrangement the caller can reach is answered `false`; `future` and `current` read the
+	arrangement first and refuse a missing one. A caller that needs the arrangement as it now stands reads
 	it back from the connection.
 	"""
 	deleteOrganizationRecurringExpense(

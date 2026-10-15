@@ -9,7 +9,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { Equipment } from './equipment.entity';
@@ -254,14 +254,14 @@ export class EquipmentResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own
 	 * delete result — a statement about the write, `{ affected }` — which is not a row and not what a
-	 * field named `deleteEquipment` may return; the field answers the one fact the removal establishes,
-	 * that it ran.
+	 * field named `deleteEquipment` may return; the field answers whether that count says a row was
+	 * removed: `false` for an identifier that names no asset the caller can reach.
 	 */
 	@Mutation('deleteEquipment')
 	async deleteEquipment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.equipmentService.delete(id);
+		const result = await this.equipmentService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

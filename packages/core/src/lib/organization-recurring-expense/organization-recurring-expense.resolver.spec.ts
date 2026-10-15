@@ -951,6 +951,8 @@ describe('OrganizationRecurringExpenseResolver — one ledger, two protocols, th
 
 	it('removes a standing cost through the same command the REST removal route dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// `all` answers the store's delete result, which is what the field reads its answer from.
+		commandBus.execute.mockResolvedValueOnce({ affected: 1, raw: [] });
 
 		const removed = await resolver.deleteOrganizationRecurringExpense(ARRANGEMENT, {
 			deletionType: RecurringExpenseDeletionEnum.ALL,
@@ -961,8 +963,8 @@ describe('OrganizationRecurringExpenseResolver — one ledger, two protocols, th
 		const command = commandBus.execute.mock.calls[0][0] as OrganizationRecurringExpenseDeleteCommand;
 
 		// The deletion input is the member the delivered route reads out of its `data` parameter, handed
-		// over as it arrived. The field answers the one fact the removal establishes, because the delivered
-		// handler's own answer is a delete result, an update result or a newly opened row.
+		// over as it arrived. The field answers whether the removal happened — for `all`, from the count of
+		// the delete result the delivered handler answers.
 		expect(command).toBeInstanceOf(OrganizationRecurringExpenseDeleteCommand);
 		expect(command.id).toBe(ARRANGEMENT);
 		expect(command.deleteInput).toEqual({ deletionType: 'all', month: 6, year: 2026 });

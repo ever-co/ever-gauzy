@@ -34,9 +34,9 @@
 #
 # **The bulk removal is a field of its own, and it is not the list narrowed.** `DELETE
 # /key-result-updates/deleteBulkByKeyResultId` removes every update of one key result in one write and
-# answers nothing at all; the inherited `DELETE /:id` removes one row by its own identifier. The two
+# answers its delete result; the inherited `DELETE /:id` removes one row by its own identifier. The two
 # are different capabilities — one is scoped to a key result, the other to a row — so the bulk removal
-# is `deleteKeyResultUpdates`, whose answer is whether the write ran.
+# is `deleteKeyResultUpdates`, whose answer is whether at least one update was removed.
 #
 # **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
 # query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
@@ -112,8 +112,9 @@ extend type Mutation {
 	"""
 	Removes every update of one key result in a single write — the delivered bulk removal — with the
 	rows withdrawn and live alike taken, because the delivered handler deletes by identifier without
-	regard to the withdrawal column. It answers whether the write ran; a caller that needs the rows
-	themselves reads them back through the connection.
+	regard to the withdrawal column. It answers whether at least one update was removed — `false` for a
+	key result that had none; a caller that needs the rows themselves reads them back through the
+	connection.
 	"""
 	deleteKeyResultUpdates(keyResultId: ID!): Boolean!
 

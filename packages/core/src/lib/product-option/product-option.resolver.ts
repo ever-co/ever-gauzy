@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
 import { Permissions } from '../shared/decorators';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateProductOptionInput` declares in the schema. */
 export interface ICreateProductOptionInput {
@@ -201,14 +202,15 @@ export class ProductOptionResolver {
 	/**
 	 * Removes an option outright.
 	 *
-	 * The delivered service refuses a row that is not there with the same `404` the REST route answers
-	 * with, so a caller that names one is told it is missing rather than that the removal succeeded.
+	 * The delivered service does not read the row first, so the answer is the count its delete result
+	 * reports: a caller that names a row that is not there is answered `false` rather than told that the
+	 * removal succeeded.
 	 */
 	@Mutation('deleteProductOption')
 	async deleteProductOption(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productOptionService.delete(id);
+		const result = await this.productOptionService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

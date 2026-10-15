@@ -10,7 +10,8 @@ import {
 	IRecurringExpenseDeleteInput,
 	IRecurringExpenseEditInput,
 	IStartUpdateTypeInfo,
-	PermissionsEnum
+	PermissionsEnum,
+	RecurringExpenseDeletionEnum
 } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -19,7 +20,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
@@ -358,9 +359,14 @@ export class EmployeeRecurringExpenseResolver {
 	 * reads out of its `data` parameter. **The delivered handler answers three different shapes** — a
 	 * delete result when the whole arrangement goes, an update result when only its tail does, and the
 	 * row it opened when one month is taken out of the middle — and none of the three is a shape this
-	 * field could state as one answer. It therefore answers the one fact the route establishes, that the
-	 * removal ran; a caller that needs the arrangement as it now stands reads it back from the
-	 * connection, which is the same read the REST client would make.
+	 * field could state as one answer. It therefore answers whether the removal happened; a caller that
+	 * needs the arrangement as it now stands reads it back from the connection, which is the same read the
+	 * REST client would make.
+	 *
+	 * Only `all` removes by criteria without reading the row first, so only its answer is read from the
+	 * delete result's count — `false` for an identifier that names no arrangement the caller can reach.
+	 * `future` and `current` read the arrangement before they change it and refuse a missing one with a
+	 * `404`, so reaching their end means the arrangement was changed.
 	 */
 	@Mutation('deleteEmployeeRecurringExpense')
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
@@ -368,9 +374,9 @@ export class EmployeeRecurringExpenseResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('input') input: IRecurringExpenseDeleteInput
 	): Promise<boolean> {
-		await this.commandBus.execute(new EmployeeRecurringExpenseDeleteCommand(id, input));
+		const result = await this.commandBus.execute(new EmployeeRecurringExpenseDeleteCommand(id, input));
 
-		return true;
+		return input?.deletionType === RecurringExpenseDeletionEnum.ALL ? answersDeleted(result) : true;
 	}
 
 	/**

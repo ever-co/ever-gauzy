@@ -11,7 +11,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../../api/graphql-connection';
-import { BaseQueryDTO } from '../../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../../core/crud';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TaskView } from './view.entity';
@@ -182,9 +182,9 @@ export class TaskViewResolver {
 	 */
 	@Mutation('deleteTaskView')
 	async deleteTaskView(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskViewService.delete(id);
+		const result = await this.taskViewService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

@@ -20,6 +20,7 @@ import {
 	CandidateInterviewersEmployeeBulkDeleteCommand,
 	CandidateInterviewersInterviewBulkDeleteCommand
 } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateCandidateInterviewerInput` declares in the schema. */
 export interface ICreateCandidateInterviewerInput {
@@ -198,9 +199,9 @@ export class CandidateInterviewersResolver {
 	@Mutation('deleteCandidateInterviewer')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	async deleteCandidateInterviewer(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateInterviewersService.delete(id);
+		const result = await this.candidateInterviewersService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws one panel seat without removing it. */
@@ -239,19 +240,19 @@ export class CandidateInterviewersResolver {
 	/**
 	 * Clears one sitting's panel.
 	 *
-	 * The delivered handler deletes every seat of the sitting and answers nothing, so the field answers
-	 * the fact that the write was accepted — which is what the route's own `200` states, and all it
-	 * states. A sitting whose panel is already empty is not a refusal: the handler answers the same way,
-	 * which is what makes the call idempotent.
+	 * The delivered handler deletes every seat of the sitting and answers the delete result, so the field
+	 * answers whether at least one seat was removed. A sitting whose panel is already empty is not a
+	 * refusal — which is what makes the call idempotent — and is answered `false`, nothing having been
+	 * removed.
 	 */
 	@Mutation('deleteCandidateInterviewersByInterview')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	async deleteCandidateInterviewersByInterview(
 		@Args('interviewId', { type: () => ID }) interviewId: Id
 	): Promise<boolean> {
-		await this.commandBus.execute(new CandidateInterviewersInterviewBulkDeleteCommand(interviewId));
+		const result = await this.commandBus.execute(new CandidateInterviewersInterviewBulkDeleteCommand(interviewId));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**
@@ -259,17 +260,18 @@ export class CandidateInterviewersResolver {
 	 *
 	 * The delivered route states the engagements as rows of a `deleteInput` list in its query string and
 	 * its handler reads one member of each — the engagement's identifier — so the field states the
-	 * identifiers, which is the same thing the body states with a row.
+	 * identifiers, which is the same thing the body states with a row. The answer is whether at least one
+	 * seat was removed, read from the delete result the handler answers.
 	 */
 	@Mutation('deleteCandidateInterviewersByEmployee')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	async deleteCandidateInterviewersByEmployee(
 		@Args('employeeIds', { type: () => [ID] }) employeeIds: Id[]
 	): Promise<boolean> {
-		await this.commandBus.execute(
+		const result = await this.commandBus.execute(
 			new CandidateInterviewersEmployeeBulkDeleteCommand(employeeIds.map((employeeId) => ({ employeeId })))
 		);
 
-		return true;
+		return answersDeleted(result);
 	}
 }

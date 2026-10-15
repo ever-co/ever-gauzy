@@ -118,8 +118,8 @@ extend type Mutation {
 	updateTenantSettingRow(input: UpdateTenantSettingRowInput!): TenantSetting!
 
 	"""
-	Removes a settings row outright: nothing reads it back, and a row that is not there is the
-	service's own miss rather than a false answered from here.
+	Removes a settings row outright: nothing reads it back. The answer is whether a row was removed, read
+	from the delete result's count, so a row that is not there is answered `false`.
 	"""
 	deleteTenantSetting(id: ID!): Boolean!
 

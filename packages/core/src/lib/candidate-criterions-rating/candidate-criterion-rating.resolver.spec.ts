@@ -555,6 +555,8 @@ describe('CandidateCriterionsRatingResolver — one concept, two protocols, the 
 
 	it('removes a whole verdict’s criteria through the command the scoped removal dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered bulk handler answers its delete result, and the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 2, raw: [] });
 
 		expect(await resolver.deleteCandidateCriterionsRatingsByFeedback(FEEDBACK)).toBe(true);
 

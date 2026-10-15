@@ -14,6 +14,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { CandidateInterview } from './candidate-interview.entity';
 import { CandidateInterviewService } from './candidate-interview.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateCandidateInterviewInput` declares in the schema. */
 export interface ICreateCandidateInterviewInput {
@@ -213,9 +214,9 @@ export class CandidateInterviewResolver {
 	@Mutation('deleteCandidateInterview')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	async deleteCandidateInterview(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateInterviewService.delete(id);
+		const result = await this.candidateInterviewService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a sitting without removing it. */

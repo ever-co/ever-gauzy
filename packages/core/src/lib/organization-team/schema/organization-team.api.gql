@@ -131,10 +131,10 @@ extend type Mutation {
 	"""
 	Removes a team outright, with the membership rows that belong to it.
 
-	The delivered answer is the removal result — its signature admits the row beside it — and the one
-	member a caller reads from either is that the removal happened, which is what this field answers. A
-	team that is not there, or one the caller does not manage, is refused by the service before that
-	line rather than answered with a negative.
+	The delivered answer is the removal result, and the one member a caller reads from it is whether the
+	removal happened, which is what this field answers from that result's count. A team that is not
+	there, or one the caller does not manage, is refused by the service before the removal rather than
+	answered with a negative.
 	"""
 	deleteOrganizationTeam(id: ID!, options: OrganizationTeamDeleteInput): Boolean!
 

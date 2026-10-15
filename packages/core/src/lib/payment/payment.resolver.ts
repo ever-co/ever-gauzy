@@ -17,7 +17,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
@@ -327,14 +327,15 @@ export class PaymentResolver {
 	 *
 	 * The same service method the REST route calls. The delivered store answers its own delete result —
 	 * a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deletePayment` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deletePayment` may return; the field answers whether that count says a row was removed: `false`
+	 * for an identifier that names no movement the caller can reach.
 	 */
 	@Mutation('deletePayment')
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	async deletePayment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.paymentService.delete(id);
+		const result = await this.paymentService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

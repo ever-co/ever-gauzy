@@ -11,7 +11,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -519,9 +519,9 @@ export class TaskResolver {
 	@Mutation('deleteTask')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	async deleteTask(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskService.delete(id);
+		const result = await this.taskService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

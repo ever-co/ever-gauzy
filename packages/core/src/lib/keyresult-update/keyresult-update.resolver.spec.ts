@@ -431,6 +431,8 @@ describe('KeyResultUpdateResolver — one concept, two protocols, the same opera
 
 	it('removes a key result’s whole history through the command the bulk route dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered bulk handler answers its delete result, and the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 3, raw: [] });
 
 		expect(await resolver.deleteKeyResultUpdates(KEY_RESULT)).toBe(true);
 

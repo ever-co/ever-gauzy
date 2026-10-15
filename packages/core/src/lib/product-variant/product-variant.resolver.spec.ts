@@ -388,6 +388,8 @@ describe('ProductVariantResolver — one concept, two protocols, the same operat
 
 	it('removes a variant through the command the REST route dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered command answers the summed delete result; the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 3, raw: [1, 1, 1] });
 
 		expect(await resolver.deleteProductVariant(VARIANT)).toBe(true);
 		expect(commandBus.execute).toHaveBeenCalledTimes(1);

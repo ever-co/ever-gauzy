@@ -91,8 +91,9 @@ extend type Mutation {
 	Removes a meeting length outright.
 
 	This is the hard removal, and the delivered store rather than this field decides what still pointing at
-	the row means: the answer is the one fact the removal establishes, that it ran, and a constraint the
-	store raises reaches the caller as it is. A length the organization means to stop offering is withdrawn
+	the row means: the answer is whether a row was removed, read from the delete result's count (`false`
+	for an identifier that names no length the caller can reach), and a constraint the store raises
+	reaches the caller as it is. A length the organization means to stop offering is withdrawn
 	instead, which leaves every row that names it resolvable.
 	"""
 	deleteEventType(id: ID!): Boolean!

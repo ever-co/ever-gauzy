@@ -603,6 +603,8 @@ describe('CandidateInterviewVocabularyResolver — one concept, two protocols, t
 
 	it('clears a sitting’s technologies through the bulk removal command, naming the rows it was given', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered bulk handler answers its delete result, and the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 2, raw: [] });
 
 		expect(await resolver.deleteCandidateTechnologiesBulk(INTERVIEW, [FIRST, SECOND])).toBe(true);
 
@@ -616,6 +618,7 @@ describe('CandidateInterviewVocabularyResolver — one concept, two protocols, t
 
 	it('clears a sitting’s whole technology vocabulary when the caller names no row', async () => {
 		const { resolver, commandBus } = surfaces();
+		commandBus.execute.mockResolvedValueOnce({ affected: 3, raw: [] });
 
 		expect(await resolver.deleteCandidateTechnologiesBulk(INTERVIEW)).toBe(true);
 
@@ -626,13 +629,15 @@ describe('CandidateInterviewVocabularyResolver — one concept, two protocols, t
 
 	it('clears personal qualities through the bulk removal command, or the whole vocabulary', async () => {
 		const { resolver, commandBus } = surfaces();
+		commandBus.execute.mockResolvedValueOnce({ affected: 1, raw: [] }).mockResolvedValueOnce({ affected: 0, raw: [] });
 
 		expect(await resolver.deleteCandidatePersonalQualitiesBulk(INTERVIEW, [FIRST])).toBe(true);
 		const named = commandBus.execute.mock.calls[0][0];
 		expect(named).toBeInstanceOf(CandidatePersonalQualitiesBulkDeleteCommand);
 		expect(named.personalQualities).toEqual([{ id: FIRST }]);
 
-		expect(await resolver.deleteCandidatePersonalQualitiesBulk(INTERVIEW)).toBe(true);
+		// A sitting whose vocabulary is already empty is not refused; nothing was removed, so the answer is false.
+		expect(await resolver.deleteCandidatePersonalQualitiesBulk(INTERVIEW)).toBe(false);
 		const all = commandBus.execute.mock.calls[1][0];
 		expect(all).toBeInstanceOf(CandidatePersonalQualitiesBulkDeleteCommand);
 		expect(all.personalQualities).toBeUndefined();

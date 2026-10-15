@@ -29,6 +29,7 @@ import {
 	IWebhookSubscriptionDisabledEnvelope,
 	WEBHOOK_EVENT_NAMES
 } from './webhook-event.publisher';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateWebhookSubscriptionInput` declares in the schema. */
 export interface ICreateWebhookSubscriptionInput {
@@ -348,14 +349,14 @@ export class WebhookResolver {
 	 *
 	 * The delivered store answers its own delete result — a statement about the write, `{ affected }` —
 	 * which is not a row and not what a field named `deleteWebhookSubscription` may return; the field
-	 * answers the one fact the removal establishes, that it ran.
+	 * answers whether that count says a row was removed: `false` for an identifier that names no row.
 	 */
 	@Mutation('deleteWebhookSubscription')
 	@Permissions(PermissionsEnum.WEBHOOKS_DELETE)
 	async deleteWebhookSubscription(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.webhookSubscriptionService.delete(id);
+		const result = await this.webhookSubscriptionService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateTimeOffRequestInput` declares in the schema. */
 export interface ICreateTimeOffRequestInput {
@@ -300,14 +301,15 @@ export class TimeOffRequestResolver {
 	 * Removes a request outright.
 	 *
 	 * The delivered route answers the store's own delete result rather than a row, so this field answers
-	 * whether the removal ran — the one fact that call establishes.
+	 * whether its count says a row was removed: `false` for an identifier that names no request the caller
+	 * can reach.
 	 */
 	@Mutation('deleteTimeOffRequest')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT)
 	async deleteTimeOffRequest(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.timeOffRequestService.delete(id);
+		const result = await this.timeOffRequestService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

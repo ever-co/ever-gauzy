@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { GoalTimeFrameService } from './goal-time-frame.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateGoalTimeFrameInput` declares in the schema. */
 export interface ICreateGoalTimeFrameInput {
@@ -202,13 +203,14 @@ export class GoalTimeFrameResolver {
 	 * Removes a period outright.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteGoalTimeFrame')
 	async deleteGoalTimeFrame(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalTimeFrameService.delete(id);
+		const result = await this.goalTimeFrameService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

@@ -487,6 +487,8 @@ describe('CandidateFeedbacksResolver — one concept, two protocols, the same op
 
 	it('removes a verdict from a sitting through the command the scoped removal dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered command answers the verdict's delete result, and the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 1, raw: [] });
 
 		expect(await resolver.deleteCandidateFeedbackByInterview(INTERVIEW, FIRST)).toBe(true);
 

@@ -28,6 +28,7 @@ import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from
 import { Expense } from './expense.entity';
 import { ExpenseService, IExpenseStatistics } from './expense.service';
 import { FindSplitExpenseQuery } from './queries';
+import { answersDeleted } from '../core/crud';
 
 /**
  * The members `CreateExpenseInput` declares in the schema.
@@ -444,7 +445,8 @@ export class ExpenseResolver {
 	 *
 	 * The same command the REST route dispatches. The delivered handler answers its own delete result —
 	 * a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deleteExpense` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deleteExpense` may return; the field answers whether that count says a row was removed: `false`
+	 * for an identifier that names no expense the caller can reach.
 	 *
 	 * The employee the route reads out of its query string is the row whose recorded average the
 	 * delivered handler refreshes beside the removal. It is optional here as it is there, and a caller
@@ -456,9 +458,9 @@ export class ExpenseResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('employeeId', { type: () => ID, nullable: true }) employeeId?: Id
 	): Promise<boolean> {
-		await this.commandBus.execute(new ExpenseDeleteCommand(employeeId, id));
+		const result = await this.commandBus.execute(new ExpenseDeleteCommand(employeeId, id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

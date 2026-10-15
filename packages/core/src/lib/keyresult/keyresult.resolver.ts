@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResult } from './keyresult.entity';
 import { KeyResultService } from './keyresult.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateKeyResultInput` declares in the schema. */
 export interface ICreateKeyResultInput {
@@ -257,13 +258,14 @@ export class KeyResultResolver {
 	 * Removes a key result outright.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteKeyResult')
 	async deleteKeyResult(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.keyResultService.delete(id);
+		const result = await this.keyResultService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

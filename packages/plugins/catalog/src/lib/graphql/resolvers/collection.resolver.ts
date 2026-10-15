@@ -2,7 +2,7 @@ import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { filter } from 'rxjs';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard, answersDeleted } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { Collection } from '../../collection/collection.entity';
@@ -108,14 +108,15 @@ export class CollectionResolver {
 	/**
 	 * Deletes a collection.
 	 *
-	 * @returns True once the collection is gone.
+	 * @returns Whether a collection was removed — `false` for an identifier that names none the caller can
+	 * reach, which the service's delete reports as `affected: 0` rather than refusing.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
 	@Mutation('deleteCollection')
 	async deleteCollection(@Args('id') id: ID): Promise<boolean> {
-		await this.collectionService.delete(id);
+		const result = await this.collectionService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

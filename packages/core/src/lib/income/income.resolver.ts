@@ -18,6 +18,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { IncomeCreateCommand, IncomeDeleteCommand, IncomeUpdateCommand } from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
+import { answersDeleted } from '../core/crud';
 
 /**
  * The members `CreateIncomeInput` declares in the schema.
@@ -299,7 +300,8 @@ export class IncomeResolver {
 	 *
 	 * The same command the REST route dispatches. The delivered handler answers its own delete result — a
 	 * statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deleteIncome` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deleteIncome` may return; the field answers whether that count says a row was removed: `false` for
+	 * an identifier that names no income the caller can reach.
 	 *
 	 * The employee the route reads out of its query string is the row whose recorded averages the
 	 * delivered handler refreshes beside the removal. It is optional here as it is there, and a caller
@@ -311,9 +313,9 @@ export class IncomeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('employeeId', { type: () => ID, nullable: true }) employeeId?: Id
 	): Promise<boolean> {
-		await this.commandBus.execute(new IncomeDeleteCommand(employeeId, id));
+		const result = await this.commandBus.execute(new IncomeDeleteCommand(employeeId, id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

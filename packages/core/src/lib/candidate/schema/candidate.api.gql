@@ -481,17 +481,16 @@ extend type Mutation {
 	"""
 	Clears one sitting's panel.
 
-	The delivered route answers nothing at all, so the field answers the fact that the write was
-	accepted — which is what the route's own `200` states, and all it states.
+	The delivered handler answers the delete result, so the field answers whether at least one seat was
+	removed; a sitting whose panel is already empty is answered `false` rather than refused.
 	"""
 	deleteCandidateInterviewersByInterview(interviewId: ID!): Boolean!
 
 	"""
 	Removes every panel seat one set of engagements holds.
 
-	The delivered route reads the engagements out of its query string and answers nothing; the field
-	states them as the identifiers the delivered handler reads, and answers the fact that the write was
-	accepted.
+	The delivered route reads the engagements out of its query string; the field states them as the
+	identifiers the delivered handler reads, and answers whether at least one seat was removed.
 	"""
 	deleteCandidateInterviewersByEmployee(employeeIds: [ID!]!): Boolean!
 
@@ -617,7 +616,8 @@ extend type Mutation {
 	"""
 	Removes every criterion rating of one verdict.
 
-	The delivered handler answers nothing, so the field answers the fact that the write was accepted.
+	The delivered handler answers the delete result, so the field answers whether at least one rating was
+	removed; a verdict that has none is answered `false` rather than refused.
 	"""
 	deleteCandidateCriterionsRatingsByFeedback(feedbackId: ID!): Boolean!
 }

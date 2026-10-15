@@ -29,10 +29,10 @@
 # route performs and then read the row back through the same service method the route's read would
 # use — the same operation stated in the shape a client reads next anyway.
 #
-# **The third write is a removal, and its answer is the fact of it.** The delivered route answers with
-# the deletion result, whose one member a caller reads is that the row is gone. A boolean is that fact
-# in a scalar this schema carries, and a membership that is not there is the miss the delivered service
-# raises rather than a `false` answered from here.
+# **The third write is a removal, and its answer is whether it removed the row.** The delivered route
+# answers with the deletion result, whose one member a caller reads is the number of rows it reached; the
+# field answers whether that count is at least one, and a membership that is not there is the miss the
+# delivered service raises before the removal.
 #
 # **No write states the tenant.** The delivered services read the tenant from the credential and fall
 # back to a stated one only when the credential carries none — which a request on this endpoint never
@@ -72,9 +72,9 @@ extend type Mutation {
 	organization and the team the delivered route takes from its query string, so the identifier alone
 	does not name a row and a membership of another scope is not reached.
 
-	The answer is `true` once the write has completed. A membership that is not there is the miss the
-	delivered service raises rather than a `false` answered from here, so a caller never has to tell
-	"nothing was removed" from "the removal did not happen".
+	The answer is whether the row was removed, read from the count of the delivered deletion result. A
+	membership that is not there is the miss the delivered service raises before the removal, so `false`
+	is left for a row that went between that read and the removal.
 	"""
 	deleteOrganizationTeamEmployee(id: ID!, options: OrganizationTeamEmployeeDeleteInput!): Boolean!
 }

@@ -115,8 +115,8 @@ extend type Mutation {
 
 	"""
 	Removes a notification outright. The delivered route answers the store's delete result — a statement
-	about the write rather than a row — so this field answers `true` once the removal was performed, which
-	is the fact a client branches on.
+	about the write rather than a row — so this field answers whether its count says a row was removed:
+	`false` for an identifier that names no notification the caller can reach.
 	"""
 	deleteEmployeeNotification(id: ID!): Boolean!
 

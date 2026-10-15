@@ -37,6 +37,7 @@ import { TaskStatusService } from './statuses/status.service';
 import { TaskVersion } from './versions/version.entity';
 import { TaskVersionService } from './versions/version.service';
 import { TaskMetadataBootstrapService } from './task-metadata-bootstrap/task-metadata-bootstrap.service';
+import { answersDeleted } from '../core/crud';
 
 /** The scope one vocabulary row is read in, and the scope a default is marked in. */
 export interface ITaskMetadataScope {
@@ -332,9 +333,9 @@ export class TaskMetadataResolver {
 	/** Removes a status outright. A status the platform maintains is the store's to refuse. */
 	@Mutation('deleteTaskStatus')
 	async deleteTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskStatusService.delete(id);
+		const result = await this.taskStatusService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a status without removing it. */
@@ -444,9 +445,9 @@ export class TaskMetadataResolver {
 	/** Removes a size outright. */
 	@Mutation('deleteTaskSize')
 	async deleteTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskSizeService.delete(id);
+		const result = await this.taskSizeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a size without removing it. */
@@ -526,9 +527,9 @@ export class TaskMetadataResolver {
 	/** Removes a priority outright. */
 	@Mutation('deleteTaskPriority')
 	async deleteTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskPriorityService.delete(id);
+		const result = await this.taskPriorityService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a priority without removing it. */
@@ -608,9 +609,9 @@ export class TaskMetadataResolver {
 	/** Removes a version outright. */
 	@Mutation('deleteTaskVersion')
 	async deleteTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskVersionService.delete(id);
+		const result = await this.taskVersionService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a version without removing it. */
@@ -694,9 +695,9 @@ export class TaskMetadataResolver {
 	/** Removes a related-issue type outright. */
 	@Mutation('deleteTaskRelatedIssueType')
 	async deleteTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.taskRelatedIssueTypeService.delete(id);
+		const result = await this.taskRelatedIssueTypeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws a related-issue type without removing it. */
@@ -785,9 +786,9 @@ export class TaskMetadataResolver {
 	/** Removes an issue type outright. */
 	@Mutation('deleteIssueType')
 	async deleteIssueType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.issueTypeService.delete(id);
+		const result = await this.issueTypeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws an issue type without removing it. */

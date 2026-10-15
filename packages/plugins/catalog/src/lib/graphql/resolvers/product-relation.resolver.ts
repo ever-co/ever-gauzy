@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard, answersDeleted } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { ProductRelationType } from '../../catalog.types';
@@ -110,14 +110,15 @@ export class ProductRelationResolver {
 	/**
 	 * Deletes a relation.
 	 *
-	 * @returns True once the relation is gone.
+	 * @returns Whether a relation was removed — `false` for an identifier that names none the caller can
+	 * reach, which the service's delete reports as `affected: 0` rather than refusing.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
 	@Mutation('deleteProductRelation')
 	async deleteProductRelation(@Args('id') id: ID): Promise<boolean> {
-		await this.productRelationService.delete(id);
+		const result = await this.productRelationService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

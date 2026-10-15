@@ -10,7 +10,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -223,14 +223,14 @@ export class EmployeeNotificationSettingResolver {
 	/**
 	 * Removes a notification setting outright.
 	 *
-	 * The delivered route answers the store's deletion result; the field answers the fact of the
-	 * removal, which is the one member of that result a caller reads.
+	 * The delivered route answers the store's deletion result; the field answers whether its count says
+	 * a row was removed — `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteEmployeeNotificationSetting')
 	async deleteEmployeeNotificationSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeNotificationSettingService.delete(id);
+		const result = await this.employeeNotificationSettingService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

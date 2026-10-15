@@ -13,6 +13,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
+import { answersDeleted } from '../core/crud';
 
 /**
  * The members `UpdateOrganizationTeamEmployeeInput` declares in the schema.
@@ -143,11 +144,10 @@ export class OrganizationTeamEmployeeResolver {
 	 * name, which is the scope the delivered service builds its criteria from — the identifier alone
 	 * does not name a row, and a membership of another scope is not reached.
 	 *
-	 * The answer is the fact of the removal. The delivered route answers with the deletion result,
-	 * whose one member a caller reads is that the row is gone — the number of rows it reached — and a
-	 * boolean is that fact in a scalar this schema declares. A membership that is not there is the miss
-	 * the delivered service raises rather than a `false` answered from here, so a caller never has to
-	 * tell "nothing was removed" from "the removal did not happen".
+	 * The answer is whether the row was removed. The delivered route answers with the deletion result,
+	 * whose one member a caller reads is the number of rows it reached, and this field answers whether
+	 * that count is at least one. A membership that is not there is the miss the delivered service raises
+	 * before the removal, so `false` is left for a row that went between that read and the removal.
 	 */
 	@Mutation('deleteOrganizationTeamEmployee')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
@@ -155,11 +155,11 @@ export class OrganizationTeamEmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('options') options: IOrganizationTeamEmployeeDeleteInput
 	): Promise<boolean> {
-		await this.organizationTeamEmployeeService.deleteTeamMember(
+		const result = await this.organizationTeamEmployeeService.deleteTeamMember(
 			id,
 			options as unknown as IOrganizationTeamEmployeeFindInput
 		);
 
-		return true;
+		return answersDeleted(result);
 	}
 }

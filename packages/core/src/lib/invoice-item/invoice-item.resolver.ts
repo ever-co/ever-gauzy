@@ -23,6 +23,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateInvoiceItemInput` declares in the schema. */
 export interface ICreateInvoiceItemInput {
@@ -254,14 +255,14 @@ export class InvoiceItemResolver {
 	 *
 	 * The same service call the REST route makes. The delivered call answers the store's own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field
-	 * named `deleteInvoiceItem` may return; the field answers the one fact the call establishes, that
-	 * the removal ran.
+	 * named `deleteInvoiceItem` may return; the field answers whether that count says a row was removed:
+	 * `false` for an identifier that names no line the caller can reach.
 	 */
 	@Mutation('deleteInvoiceItem')
 	async deleteInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.invoiceItemService.delete(id);
+		const result = await this.invoiceItemService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

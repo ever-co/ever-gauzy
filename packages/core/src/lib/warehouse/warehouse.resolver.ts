@@ -16,7 +16,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -328,9 +328,9 @@ export class WarehouseResolver {
 	@Mutation('deleteWarehouse')
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	async deleteWarehouse(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.warehouseService.delete(id);
+		const result = await this.warehouseService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

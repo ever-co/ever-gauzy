@@ -1061,14 +1061,15 @@ describe('ExpenseResolver — one book, two protocols, the same operations', () 
 
 	it('removes a cost through the same command the REST removal route dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		commandBus.execute.mockResolvedValueOnce({ affected: 1, raw: [] });
 
 		expect(await resolver.deleteExpense(EXPENSE, EMPLOYEE)).toBe(true);
 
 		const command = commandBus.execute.mock.calls[0][0] as ExpenseDeleteCommand;
 
 		// The employee is the query member the delivered route reads and hands to the command beside the
-		// identifier; the field answers the one fact the removal establishes, because the delivered
-		// handler's delete result is not a row.
+		// identifier; the field answers from the count of the delivered handler's delete result, because
+		// that result is not a row.
 		expect(command).toBeInstanceOf(ExpenseDeleteCommand);
 		expect(command.employeeId).toBe(EMPLOYEE);
 		expect(command.expenseId).toBe(EXPENSE);

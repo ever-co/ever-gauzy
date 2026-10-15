@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Skill } from './skill.entity';
@@ -199,9 +199,9 @@ export class SkillResolver {
 	 */
 	@Mutation('deleteSkill')
 	async deleteSkill(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.skillService.delete(id);
+		const result = await this.skillService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

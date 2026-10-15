@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { KeyresultTemplateService } from './keyresult-template.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateKeyResultTemplateInput` declares in the schema. */
 export interface ICreateKeyResultTemplateInput {
@@ -219,13 +220,14 @@ export class KeyResultTemplateResolver {
 	 * Removes a catalogue entry outright.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteKeyResultTemplate')
 	async deleteKeyResultTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.keyResultTemplateService.delete(id);
+		const result = await this.keyResultTemplateService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

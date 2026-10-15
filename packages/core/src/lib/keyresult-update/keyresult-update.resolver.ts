@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateKeyResultUpdateInput` declares in the schema. */
 export interface ICreateKeyResultUpdateInput {
@@ -222,27 +223,29 @@ export class KeyResultUpdateResolver {
 	 * Removes one update outright, by its own identifier.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteKeyResultUpdate')
 	async deleteKeyResultUpdate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.keyResultUpdateService.delete(id);
+		const result = await this.keyResultUpdateService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**
 	 * Removes every update of one key result in a single write.
 	 *
 	 * The same command the delivered bulk removal dispatches; the handler reads the key result's
-	 * updates and deletes them by identifier, which is the whole of what the route does. The route
-	 * answers nothing at all, so this field answers whether the command ran.
+	 * updates and deletes them by identifier, which is the whole of what the route does. The handler
+	 * answers the delete result, so this field answers whether at least one update was removed — `false`
+	 * for a key result that had none.
 	 */
 	@Mutation('deleteKeyResultUpdates')
 	async deleteKeyResultUpdates(@Args('keyResultId', { type: () => ID }) keyResultId: Id): Promise<boolean> {
-		await this.commandBus.execute(new KeyResultUpdateBulkDeleteCommand(keyResultId));
+		const result = await this.commandBus.execute(new KeyResultUpdateBulkDeleteCommand(keyResultId));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

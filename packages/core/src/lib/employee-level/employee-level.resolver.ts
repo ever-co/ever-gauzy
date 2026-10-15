@@ -14,6 +14,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeLevel } from './employee-level.entity';
 import { EmployeeLevelService } from './employee-level.service';
 import { Permissions } from '../shared/decorators';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateEmployeeLevelInput` declares in the schema. */
 export interface ICreateEmployeeLevelInput {
@@ -216,16 +217,16 @@ export class EmployeeLevelResolver {
 	/**
 	 * Removes a level outright.
 	 *
-	 * The service is the one the REST route calls, and it refuses a caller naming a row of another
-	 * tenant rather than reporting a deletion that did not happen; the field answers whether the removal
-	 * happened rather than the removed row, because the delivered route answers the store's delete
-	 * result.
+	 * The service is the one the REST route calls, and its tenant scope keeps a row of another tenant out
+	 * of the statement; the field answers whether the removal happened rather than the removed row,
+	 * because the delivered route answers the store's delete result — read from that result's count, so a
+	 * row that is not there, or not the caller's, is answered `false`.
 	 */
 	@Mutation('deleteEmployeeLevel')
 	async deleteEmployeeLevel(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeLevelService.delete(id);
+		const result = await this.employeeLevelService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

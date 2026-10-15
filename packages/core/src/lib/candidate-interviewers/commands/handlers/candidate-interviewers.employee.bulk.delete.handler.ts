@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { In } from 'typeorm';
+import { DeleteResult, In } from 'typeorm';
 import { CandidateInterviewersEmployeeBulkDeleteCommand } from '../candidate-interviewers.employee.bulk.delete.command';
 import { CandidateInterviewersService } from '../../candidate-interviewers.service';
 
@@ -9,19 +9,23 @@ export class CandidateInterviewersEmployeeBulkDeleteHandler implements ICommandH
 
 	/**
 	 * Execute the command to delete interviewers by employee ID.
+	 *
+	 * @returns The delete result, so a caller can tell seats that were removed from a call that matched
+	 * none (`affected: 0`) — the GraphQL field answers from it.
 	 */
-	public async execute(command: CandidateInterviewersEmployeeBulkDeleteCommand): Promise<void> {
+	public async execute(command: CandidateInterviewersEmployeeBulkDeleteCommand): Promise<DeleteResult> {
 		const { input } = command;
+		const nothing: DeleteResult = { affected: 0, raw: [] };
 
 		if (!input?.length) {
-			return;
+			return nothing;
 		}
 
 		// Extract employee IDs from input
 		const employeeIds = input.map(({ employeeId }) => employeeId).filter((id) => !!id);
 
 		if (!employeeIds.length) {
-			return;
+			return nothing;
 		}
 
 		// Fetch all interviewers for the given employee IDs in a single query
@@ -35,9 +39,9 @@ export class CandidateInterviewersEmployeeBulkDeleteHandler implements ICommandH
 		const interviewerIds = interviewers.map((interviewer) => interviewer.id);
 
 		if (!interviewerIds.length) {
-			return;
+			return nothing;
 		}
 
-		await this.candidateInterviewersService.deleteMany(interviewerIds);
+		return await this.candidateInterviewersService.deleteMany(interviewerIds);
 	}
 }

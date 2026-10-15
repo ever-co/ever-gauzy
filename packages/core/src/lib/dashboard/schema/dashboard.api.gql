@@ -35,9 +35,9 @@
 # answers is — the delivered handler is typed `number | void` — and a non-null field answering nothing
 # would be a failure where the route answers a value.
 #
-# `deleteDashboard` answers a boolean rather than the store's delete result: what the delivered route
-# establishes is that the removal ran, and `{ affected }` is a statement about the write rather than a
-# row this surface could carry. The service's own refusals — a dashboard of another user is `403`, one
+# `deleteDashboard` answers a boolean rather than the store's delete result: `{ affected }` is a statement
+# about the write rather than a row this surface could carry, so the field answers whether its count says
+# a row was removed. The service's own refusals — a dashboard of another user is `403`, one
 # that is not there is `404` — travel as they do over REST.
 #
 # The widgets a dashboard is assembled from are their own resource with their own routes
@@ -106,7 +106,8 @@ extend type Mutation {
 	Removes a dashboard outright.
 
 	Only the user who created the dashboard may remove it, on the same terms as the edit above. The
-	answer is whether the removal ran, which is the whole of what the delivered route establishes.
+	answer is whether a row was removed, read from the count of the delete result the delivered route
+	answers.
 	"""
 	deleteDashboard(id: ID!): Boolean!
 

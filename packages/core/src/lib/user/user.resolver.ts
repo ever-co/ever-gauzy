@@ -29,6 +29,7 @@ import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand, UserDeleteCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateUserInput` declares in the schema. */
 export interface ICreateUserInput {
@@ -347,9 +348,9 @@ export class UserResolver {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ACCESS_DELETE_ACCOUNT)
 	async deleteUser(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commandBus.execute(new UserDeleteCommand(id));
+		const result = await this.commandBus.execute(new UserDeleteCommand(id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

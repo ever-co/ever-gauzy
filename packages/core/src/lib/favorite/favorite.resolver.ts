@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Favorite } from './favorite.entity';
@@ -275,9 +275,9 @@ export class FavoriteResolver {
 	 */
 	@Mutation('deleteFavorite')
 	async deleteFavorite(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.favoriteService.delete(id);
+		const result = await this.favoriteService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

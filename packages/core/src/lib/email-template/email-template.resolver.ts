@@ -19,7 +19,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -306,7 +306,8 @@ export class EmailTemplateResolver {
 	 *
 	 * The delivered route reads the row before it removes it, so a caller naming a part of another
 	 * tenant is refused by the same read rather than by a delete that matched nothing and reported
-	 * success.
+	 * success. The answer is then the count the removal reports, so a row that went between the read and
+	 * the removal is answered `false` rather than as a removal this call made.
 	 */
 	@Mutation('deleteEmailTemplate')
 	@Permissions(PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES)
@@ -314,9 +315,9 @@ export class EmailTemplateResolver {
 		const tenantId = RequestContext.currentTenantId();
 
 		await this.emailTemplateService.findOneByIdString(id, { where: { tenantId } });
-		await this.emailTemplateService.delete({ id, tenantId });
+		const result = await this.emailTemplateService.delete({ id, tenantId });
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

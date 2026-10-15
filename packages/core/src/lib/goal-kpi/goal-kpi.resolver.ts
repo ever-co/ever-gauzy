@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalKPI } from './goal-kpi.entity';
 import { GoalKpiService } from './goal-kpi.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateGoalKPIInput` declares in the schema. */
 export interface ICreateGoalKPIInput {
@@ -196,13 +197,14 @@ export class GoalKpiResolver {
 	 * Removes a measure outright.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteGoalKpi')
 	async deleteGoalKpi(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalKpiService.delete(id);
+		const result = await this.goalKpiService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

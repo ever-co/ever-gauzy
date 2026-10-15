@@ -43,6 +43,7 @@ import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 import { IGetConflictTimeLogCommand } from './commands';
+import { answersDeleted } from '../../core/crud';
 
 /**
  * The activity window `TimeLogActivityLevelInput` declares in the schema.
@@ -901,20 +902,21 @@ export class TimeLogResolver {
 	 * own transform and the delivered handler's own default rather than a choice made here.
 	 *
 	 * The delivered answer is the store's own result — a statement about the write, `{ affected }` —
-	 * which is not a row; the field answers the one fact the call establishes, that the removal ran,
+	 * which is not a row; the field answers whether that count says at least one log was removed or
+	 * withdrawn (a call naming none of the caller's logs is refused before it, with a `406`),
 	 * and a caller that needs the surviving rows reads them back through `timeLogs`.
 	 */
 	@Mutation('deleteTimeLogs')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	async deleteTimeLogs(@Args('input') input: IDeleteTimeLogsInput): Promise<boolean> {
-		await this.timeLogService.deleteTimeLogs({
+		const result = await this.timeLogService.deleteTimeLogs({
 			logIds: input.logIds,
 			organizationId: input.organizationId,
 			forceDelete: input.forceDelete ?? false
 		} as IDeleteTimeLog);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

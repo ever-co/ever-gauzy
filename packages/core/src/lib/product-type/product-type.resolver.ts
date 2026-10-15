@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -207,9 +207,9 @@ export class ProductTypeResolver {
 	@Mutation('deleteProductType')
 	@Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
 	async deleteProductType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productTypeService.delete(id);
+		const result = await this.productTypeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

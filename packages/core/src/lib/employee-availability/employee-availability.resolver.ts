@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateEmployeeAvailabilityInput` declares in the schema. */
 export interface ICreateEmployeeAvailabilityInput {
@@ -280,13 +281,14 @@ export class EmployeeAvailabilityResolver {
 	 *
 	 * The delivered route answers the store's own delete result — a statement about the write,
 	 * `{ affected }` — which is not a row and not what a field named `deleteEmployeeAvailability` may
-	 * return, so the field answers the one fact that call establishes, that the removal ran.
+	 * return, so the field answers whether that count says a row was removed: `false` for an identifier
+	 * that names no row the caller can reach.
 	 */
 	@Mutation('deleteEmployeeAvailability')
 	async deleteEmployeeAvailability(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.employeeAvailabilityService.delete(id);
+		const result = await this.employeeAvailabilityService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

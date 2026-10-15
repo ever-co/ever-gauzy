@@ -17,6 +17,7 @@ import { ProductVariantService } from './product-variant.service';
 import { ProductVariantCreateCommand, ProductVariantDeleteCommand } from './commands';
 import { ProductService } from '../product/product.service';
 import { Permissions } from '../shared/decorators';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateProductVariantsInput` declares in the schema. */
 export interface ICreateProductVariantsInput {
@@ -213,9 +214,9 @@ export class ProductVariantResolver {
 	 */
 	@Mutation('deleteProductVariant')
 	async deleteProductVariant(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commandBus.execute(new ProductVariantDeleteCommand(id));
+		const result = await this.commandBus.execute(new ProductVariantDeleteCommand(id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

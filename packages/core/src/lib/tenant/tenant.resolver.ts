@@ -8,6 +8,7 @@ import { FeatureFlagGuard, RoleGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateTenantInput` declares in the schema. */
 export interface ICreateTenantInput {
@@ -128,14 +129,14 @@ export class TenantResolver {
 	 *
 	 * The same service method the delivered removal calls, with the identifier read from the credential
 	 * as that route reads it. The delivered route answers with the store's deletion result; the field
-	 * answers the fact of the removal, which is the one member of that result a caller reads.
+	 * answers whether that result's count says the tenant's row was removed.
 	 */
 	@Mutation('deleteTenant')
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	async deleteTenant(): Promise<boolean> {
-		await this.tenantService.delete(RequestContext.currentTenantId());
+		const result = await this.tenantService.delete(RequestContext.currentTenantId());
 
-		return true;
+		return answersDeleted(result);
 	}
 }

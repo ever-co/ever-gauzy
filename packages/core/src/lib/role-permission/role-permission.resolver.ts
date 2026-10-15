@@ -15,6 +15,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateRolePermissionInput` declares in the schema. */
 export interface ICreateRolePermissionInput {
@@ -239,9 +240,9 @@ export class RolePermissionResolver {
 	@Mutation('deleteRolePermission')
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	async deleteRolePermission(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.rolePermissionService.deletePermission(id);
+		const result = await this.rolePermissionService.deletePermission(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

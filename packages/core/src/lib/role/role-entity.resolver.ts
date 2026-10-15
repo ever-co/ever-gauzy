@@ -16,6 +16,7 @@ import { Permissions, Roles } from './../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RoleService } from './role.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateRoleInput` declares in the schema. */
 export interface ICreateRoleInput {
@@ -351,15 +352,15 @@ export class RoleEntityResolver {
 	 * The delivered removal narrows its own criteria before it runs — `isSystem: false` and a name
 	 * outside the platform's own set — so a system role is not refused by the service, it is simply
 	 * not selected, and the store reports no affected row. This field does not pre-empt that rule: it
-	 * reports that the removal ran, which is the fact the REST route states with its own result, and a
-	 * caller that must know whether a row went reads it back through `tenantRoles`.
+	 * answers from the count the REST route states with its own result, so a system role — or an
+	 * identifier that names no role of the caller's tenant — is answered `false`.
 	 */
 	@Mutation('deleteRole')
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	async deleteRole(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.roleService.delete(id);
+		const result = await this.roleService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

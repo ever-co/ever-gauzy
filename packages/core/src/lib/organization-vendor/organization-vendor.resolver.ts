@@ -9,7 +9,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
@@ -261,8 +261,8 @@ export class OrganizationVendorResolver {
 	 * counts the rows that point at the supplier and refuses the removal with a bad request when any does.
 	 * That refusal is the point of the field: a supplier the expense book depends on is not removable, and
 	 * a resolver that reached for the store's own delete would remove a row the REST route protects. The
-	 * field answers the one fact the removal establishes, because the delivered store's delete result is
-	 * not a row.
+	 * delivered store's delete result is not a row, so the field answers whether its count says a row was
+	 * removed: `false` for an identifier that names no supplier the caller can reach.
 	 *
 	 * The route states `ALL_ORG_EDIT` under `PermissionGuard` and so does the field, which is what keeps a
 	 * capability the REST surface reserves out of reach of a caller it refuses.
@@ -271,9 +271,9 @@ export class OrganizationVendorResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationVendorService.deleteVendor(id);
+		const result = await this.organizationVendorService.deleteVendor(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

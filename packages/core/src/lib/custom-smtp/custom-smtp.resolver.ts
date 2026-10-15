@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateSmtpSettingInput` declares in the schema. */
 export interface ICreateSmtpSettingInput {
@@ -251,15 +252,15 @@ export class CustomSmtpResolver {
 	 * Removes a configuration outright.
 	 *
 	 * The delivered route is the CRUD base's removal and answers with the store's deletion result; the
-	 * field answers the fact of the removal, which is the one member of that result a caller reads. A row
-	 * that was not there is the service's own miss rather than a `false` answered from here.
+	 * field answers whether its count says a row was removed. The service does not read the row first, so a
+	 * row that is not there is answered `false` rather than told the removal succeeded.
 	 */
 	@Mutation('deleteSmtpSetting')
 	@Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
 	async deleteSmtpSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.customSmtpService.delete(id);
+		const result = await this.customSmtpService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

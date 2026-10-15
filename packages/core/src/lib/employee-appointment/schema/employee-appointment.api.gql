@@ -101,8 +101,8 @@ extend type Mutation {
 
 	"""
 	Removes an appointment outright. The delivered route answers the store's delete result, which is not
-	a row, so the field answers whether the removal was performed; a caller naming an appointment that is
-	not there is answered with the service's own `404`-shaped refusal rather than with a success.
+	a row, so the field answers whether the removal was performed, read from that result's count: a caller
+	naming an appointment that is not there, or not theirs to reach, is answered `false`.
 	"""
 	deleteEmployeeAppointment(id: ID!): Boolean!
 

@@ -35,6 +35,7 @@ import {
 	productBulkOptions
 } from './product.bulk';
 import { ProductCreateCommand, ProductDeleteCommand, ProductUpdateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** One translation as `ProductTranslationInput` declares it. */
 export interface IProductTranslationInput {
@@ -318,9 +319,9 @@ export class ProductResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	async deleteProduct(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commandBus.execute(new ProductDeleteCommand(id));
+		const result = await this.commandBus.execute(new ProductDeleteCommand(id));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

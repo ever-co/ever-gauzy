@@ -16,7 +16,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ResourceLink } from './resource-link.entity';
@@ -208,9 +208,9 @@ export class ResourceLinkResolver {
 	 */
 	@Mutation('deleteResourceLink')
 	async deleteResourceLink(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.resourceLinkService.delete(id);
+		const result = await this.resourceLinkService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

@@ -19,6 +19,7 @@ import {
 	Permissions,
 	TenantPermissionGuard,
 	Versioned,
+	answersDeleted,
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
@@ -121,10 +122,17 @@ export class StockAlertResolver {
 		return await this.service.update(id, input);
 	}
 
-	/** Deletes a rule. */
+	/**
+	 * Deletes a rule.
+	 *
+	 * The service's delete does not read the row first, so an identifier that names no rule the caller
+	 * can reach is not an error: the answer is the count the delete result reports, `false` for that one.
+	 */
 	@Mutation('deleteStockAlert')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	async deleteStockAlert(@Args('id') id: string): Promise<any> {
-		return await this.service.delete(id).then(() => true);
+	async deleteStockAlert(@Args('id') id: string): Promise<boolean> {
+		const result = await this.service.delete(id);
+
+		return answersDeleted(result);
 	}
 }

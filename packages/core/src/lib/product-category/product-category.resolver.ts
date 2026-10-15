@@ -16,7 +16,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -241,9 +241,9 @@ export class ProductCategoryResolver {
 	@Mutation('deleteProductCategory')
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 	async deleteProductCategory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productCategoryService.delete(id);
+		const result = await this.productCategoryService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

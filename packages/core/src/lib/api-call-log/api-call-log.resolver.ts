@@ -9,6 +9,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -168,7 +169,10 @@ export class ApiCallLogResolver {
 	 * The answer is whether the removal happened. The route answers the store's delete result on one
 	 * branch and the withdrawn row on the other, and the two are not one shape a schema field can carry;
 	 * the row a withdrawal produced is read back from the connection, which is where a caller that wants
-	 * it was going to look anyway.
+	 * it was going to look anyway. The hard removal does not read the row first, so its answer is the
+	 * count its delete result reports — `false` for an identifier that names no row the caller can reach;
+	 * the withdrawal reads the row first and refuses a missing one with a `404`, so reaching its end means
+	 * a row was withdrawn.
 	 */
 	@Mutation('deleteApiCallLog')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.API_CALL_LOG_READ)
@@ -180,10 +184,12 @@ export class ApiCallLogResolver {
 
 		// If the flag is set, the removal is hard; otherwise the row is withdrawn.
 		if (filters.forceDelete) {
-			await this.apiCallLogService.delete(id, { where: { ...filters } });
-		} else {
-			await this.apiCallLogService.softDelete(id, { where: { ...filters } });
+			const result = await this.apiCallLogService.delete(id, { where: { ...filters } });
+
+			return answersDeleted(result);
 		}
+
+		await this.apiCallLogService.softDelete(id, { where: { ...filters } });
 
 		return true;
 	}

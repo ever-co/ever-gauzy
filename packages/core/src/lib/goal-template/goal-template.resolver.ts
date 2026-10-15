@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalTemplate } from './goal-template.entity';
 import { GoalTemplateService } from './goal-template.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateGoalTemplateInput` declares in the schema. */
 export interface ICreateGoalTemplateInput {
@@ -198,13 +199,14 @@ export class GoalTemplateResolver {
 	 * Removes a catalogue entry outright.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteGoalTemplate')
 	async deleteGoalTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalTemplateService.delete(id);
+		const result = await this.goalTemplateService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

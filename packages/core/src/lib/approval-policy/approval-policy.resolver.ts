@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -229,17 +229,17 @@ export class ApprovalPolicyResolver {
 	/**
 	 * Removes a policy outright.
 	 *
-	 * The service is the one the REST route calls, and it refuses a caller naming a row of another
-	 * tenant rather than reporting a deletion that did not happen; the field answers whether the removal
-	 * happened rather than the removed row, because the delivered route answers the store's delete
-	 * result.
+	 * The service is the one the REST route calls, and its tenant scope keeps a row of another tenant out
+	 * of the statement; the field answers whether the removal happened rather than the removed row,
+	 * because the delivered route answers the store's delete result — read from that result's count, so a
+	 * row that is not there, or not the caller's, is answered `false`.
 	 */
 	@Mutation('deleteApprovalPolicy')
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	async deleteApprovalPolicy(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.approvalPolicyService.delete(id);
+		const result = await this.approvalPolicyService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

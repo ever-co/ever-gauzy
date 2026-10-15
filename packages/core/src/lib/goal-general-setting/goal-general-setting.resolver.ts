@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateGoalGeneralSettingInput` declares in the schema. */
 export interface ICreateGoalGeneralSettingInput {
@@ -198,14 +199,14 @@ export class GoalGeneralSettingResolver {
 	 * Removes a policy outright.
 	 *
 	 * The route is the CRUD base's own — the controller declares none — and it answers the store's
-	 * delete result, a statement about the write rather than a row, so this field answers whether the
-	 * removal ran.
+	 * delete result, a statement about the write rather than a row, so this field answers whether a row
+	 * was removed, read from the count that result reports.
 	 */
 	@Mutation('deleteGoalGeneralSetting')
 	async deleteGoalGeneralSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalGeneralSettingService.delete(id);
+		const result = await this.goalGeneralSettingService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

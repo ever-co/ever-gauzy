@@ -23,6 +23,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 import { IntegrationTenantDeleteCommand, IntegrationTenantUpdateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** One credential as `CreateIntegrationTenantInput` declares it. */
 export interface IIntegrationSettingInput {
@@ -111,8 +112,8 @@ const INTEGRATION_TENANT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * controller is not the CRUD base's removal: it refuses a call that states no organization, reads the
  * row with that scope to publish the platform event a provider's cleanup listens for, and then deletes
  * under the same scope. The field states the same requirement, so a caller cannot reach a removal REST
- * would refuse — and it answers the fact of the removal, which is the one member of the store's
- * deletion result a caller reads.
+ * would refuse — and it answers whether the store's deletion result says a row was removed, which is
+ * the one member of that result a caller reads.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
  * GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -264,7 +265,7 @@ export class IntegrationTenantResolver {
 	 * scope from the query string — the organization is required, as it is on the delivered route, and
 	 * the read the handler performs under it is what publishes the platform event a provider's own
 	 * cleanup listens for. The delivered route answers with the store's deletion result; the field
-	 * answers the fact of the removal.
+	 * answers whether its count says a row was removed.
 	 */
 	@Mutation('deleteIntegrationTenant')
 	@Permissions(PermissionsEnum.INTEGRATION_DELETE)
@@ -273,14 +274,14 @@ export class IntegrationTenantResolver {
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('tenantId', { type: () => ID, nullable: true }) tenantId?: Id
 	): Promise<boolean> {
-		await this.commandBus.execute(
+		const result = await this.commandBus.execute(
 			new IntegrationTenantDeleteCommand(id, {
 				organizationId,
 				tenantId
 			} as IIntegrationTenantFindInput)
 		);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

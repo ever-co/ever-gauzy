@@ -24,6 +24,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RequestApprovalStatusCommand } from './commands';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalService } from './request-approval.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateRequestApprovalInput` declares in the schema. */
 export interface ICreateRequestApprovalInput {
@@ -331,9 +332,9 @@ export class RequestApprovalResolver {
 	 */
 	@Mutation('deleteRequestApproval')
 	async deleteRequestApproval(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.requestApprovalService.delete(id);
+		const result = await this.requestApprovalService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

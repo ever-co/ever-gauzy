@@ -18,7 +18,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -430,14 +430,14 @@ export class EquipmentSharingResolver {
 	 * the base one for that reason: it removes the approval row recorded beside the sharing in the same
 	 * call, scoped to the caller's tenant and only once the sharing row was really the caller's. The
 	 * delivered store answers its own delete result, which is not a row and not what a field named
-	 * `deleteEquipmentSharing` may return; the field answers the one fact the removal establishes, that
-	 * it ran.
+	 * `deleteEquipmentSharing` may return; the field answers whether that count says a row was removed:
+	 * `false` for an identifier that names no period the caller can reach.
 	 */
 	@Mutation('deleteEquipmentSharing')
 	async deleteEquipmentSharing(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.equipmentSharingService.delete(id);
+		const result = await this.equipmentSharingService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

@@ -17,7 +17,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -297,14 +297,15 @@ export class BroadcastResolver {
 	 *
 	 * The same service method the REST removal route calls. The delivered store answers its own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deleteBroadcast` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deleteBroadcast` may return; the field answers whether that count says a row was removed, `false`
+	 * for an identifier that names no message the caller can reach.
 	 */
 	@Mutation('deleteBroadcast')
 	@Permissions(PermissionsEnum.BROADCAST_DELETE)
 	async deleteBroadcast(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.broadcastService.delete(id);
+		const result = await this.broadcastService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

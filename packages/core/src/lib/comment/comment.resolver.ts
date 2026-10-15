@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO, FindOptionsQueryDTO } from '../core/crud';
+import { BaseQueryDTO, FindOptionsQueryDTO, answersDeleted } from '../core/crud';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Comment } from './comment.entity';
@@ -265,16 +265,16 @@ export class CommentResolver {
 	/**
 	 * Removes a comment outright, together with the mention rows that point at it.
 	 *
-	 * The service is the one the REST route calls, and it refuses a caller naming a row of another
-	 * tenant rather than reporting a deletion that did not happen; the field answers whether the removal
-	 * happened rather than the removed row, because the delivered route answers the store's delete
-	 * result.
+	 * The service is the one the REST route calls, and its tenant scope keeps a row of another tenant out
+	 * of the statement; the field answers whether the removal happened rather than the removed row,
+	 * because the delivered route answers the store's delete result — read from that result's count, so a
+	 * row that is not there, or not the caller's, is answered `false`.
 	 */
 	@Mutation('deleteComment')
 	async deleteComment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commentService.delete(id);
+		const result = await this.commentService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

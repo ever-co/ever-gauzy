@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import { FeedbackDeleteCommand } from '../candidate-feedbacks.delete.command';
 import { CandidateFeedbacksService } from '../../candidate-feedbacks.service';
 import { CandidateInterviewService } from '../../../candidate-interview/candidate-interview.service';
@@ -10,7 +11,13 @@ export class FeedbackDeleteHandler implements ICommandHandler<FeedbackDeleteComm
 		private readonly candidateInterviewService: CandidateInterviewService
 	) {}
 
-	public async execute(command: FeedbackDeleteCommand): Promise<any> {
+	/**
+	 * Removes one verdict and recomputes the sitting's average from the verdicts that remain.
+	 *
+	 * @returns The verdict's delete result, so a caller can tell a removal from an identifier that named
+	 * no verdict (`affected: 0`) — the GraphQL field answers from it.
+	 */
+	public async execute(command: FeedbackDeleteCommand): Promise<DeleteResult> {
 		const { feedbackId, interviewId } = command;
 		const feedback = await this.delete(feedbackId);
 
@@ -30,11 +37,12 @@ export class FeedbackDeleteHandler implements ICommandHandler<FeedbackDeleteComm
 					rating: 0
 				});
 			}
-			return;
 		}
+
+		return feedback;
 	}
 
-	public async delete(id: string): Promise<any> {
+	public async delete(id: string): Promise<DeleteResult> {
 		return this.candidateFeedbackService.delete(id);
 	}
 }

@@ -18,7 +18,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -413,9 +413,9 @@ export class OrganizationProjectModuleResolver {
 	@Mutation('deleteOrganizationProjectModule')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.PROJECT_MODULE_DELETE)
 	async deleteOrganizationProjectModule(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.organizationProjectModuleService.delete(id);
+		const result = await this.organizationProjectModuleService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

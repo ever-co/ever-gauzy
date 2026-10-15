@@ -38,9 +38,9 @@
 # protocol does not speak, so the field states no narrowing of its own. It is nullable because the
 # count its route answers is — the delivered handler is typed `number | void`.
 #
-# `deleteDashboardWidget` answers a boolean rather than the store's delete result: what the delivered
-# route establishes is that the removal ran, and `{ affected }` is a statement about the write rather
-# than a row this surface could carry.
+# `deleteDashboardWidget` answers a boolean rather than the store's delete result: `{ affected }` is a
+# statement about the write rather than a row this surface could carry, so the field answers whether its
+# count says a row was removed — `false` for an identifier that names no placement the caller can reach.
 #
 # The write inputs state the members the delivered DTOs state. The DTO's own validation runs in the
 # REST route's validation pipe and is not re-run here — the fields hand the same body to the same
@@ -95,8 +95,9 @@ extend type Mutation {
 	updateDashboardWidget(input: UpdateDashboardWidgetInput!): DashboardWidget!
 
 	"""
-	Removes a placement outright. The answer is whether the removal ran, which is the whole of what the
-	delivered route establishes.
+	Removes a placement outright. The answer is whether a row was removed, read from the count of the
+	delete result the delivered route answers: `false` for an identifier that names no placement the
+	caller can reach.
 	"""
 	deleteDashboardWidget(id: ID!): Boolean!
 

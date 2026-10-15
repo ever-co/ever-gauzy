@@ -23,7 +23,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -451,9 +451,9 @@ export class InviteResolver {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	async deleteInvite(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.inviteService.delete(id);
+		const result = await this.inviteService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

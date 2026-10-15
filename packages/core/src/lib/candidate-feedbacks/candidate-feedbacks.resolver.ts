@@ -16,6 +16,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateCandidateFeedbackInput` declares in the schema. */
 export interface ICreateCandidateFeedbackInput {
@@ -210,20 +211,21 @@ export class CandidateFeedbacksResolver {
 	/**
 	 * Removes a verdict outright, through the plain removal the controller inherits.
 	 *
-	 * The delivered handler answers the store's deletion result, and the field answers the fact of the
-	 * removal, which is the one member of that result a caller reads.
+	 * The delivered handler answers the store's deletion result, and the field answers whether its count
+	 * says a row was removed — `false` for an identifier that names no verdict the caller can reach.
 	 */
 	@Mutation('deleteCandidateFeedback')
 	async deleteCandidateFeedback(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateFeedbacksService.delete(id);
+		const result = await this.candidateFeedbacksService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**
 	 * Removes one verdict from one sitting, and recomputes the sitting's average from the verdicts that
 	 * remain — which is the whole of what the delivered command does, down to answering zero when the
-	 * sitting has none left.
+	 * sitting has none left. The answer is whether the verdict's row was removed, read from the delete
+	 * result the command answers.
 	 */
 	@Mutation('deleteCandidateFeedbackByInterview')
 	@UseGuards(PermissionGuard)
@@ -232,9 +234,9 @@ export class CandidateFeedbacksResolver {
 		@Args('interviewId', { type: () => ID }) interviewId: Id,
 		@Args('feedbackId', { type: () => ID }) feedbackId: Id
 	): Promise<boolean> {
-		await this.commandBus.execute(new FeedbackDeleteCommand(feedbackId, interviewId));
+		const result = await this.commandBus.execute(new FeedbackDeleteCommand(feedbackId, interviewId));
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

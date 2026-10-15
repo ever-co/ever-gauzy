@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -232,15 +232,15 @@ export class DashboardResolver {
 	 *
 	 * The same service method the REST route calls. The delivered answer is the store's own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field
-	 * named `deleteDashboard` may return; the field answers the one fact the call establishes, that the
-	 * removal ran.
+	 * named `deleteDashboard` may return; the field answers whether that count says a row was removed.
+	 * The service reads the dashboard first and refuses a missing one, or one the caller did not create.
 	 */
 	@Mutation('deleteDashboard')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DASHBOARD_DELETE)
 	async deleteDashboard(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.dashboardService.delete(id);
+		const result = await this.dashboardService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

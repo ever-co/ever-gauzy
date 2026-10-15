@@ -21,7 +21,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -374,11 +374,11 @@ export class OrganizationTeamResolver {
 	/**
 	 * Removes a team outright.
 	 *
-	 * The delivered answer is the removal result — the signature admits the row beside it — and the one
-	 * member a caller reads from either is that the removal happened, which is what this field answers.
-	 * A team that is not there, or one the caller does not manage, is a refusal the service raises
-	 * before this line rather than a `false` answered from it, so the answer is never a statement that
-	 * nothing was done.
+	 * The delivered answer is the removal result — the signature admits the row beside it, but the service
+	 * only ever answers the delete result — and the one member a caller reads from it is whether the
+	 * removal happened, which is what this field answers, read from that result's count. A team that is
+	 * not there, or one the caller does not manage, is a refusal the service raises before the removal
+	 * rather than a `false` answered from it.
 	 *
 	 * The options are the route's own criterion: the organization the removal is scoped to. The tenant
 	 * is not among them, because the tenant a write runs under comes from the credential — the service
@@ -390,9 +390,9 @@ export class OrganizationTeamResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('options') options?: IOrganizationTeamDeleteInput
 	): Promise<boolean> {
-		await this.organizationTeamService.deleteTeam(id, options ?? {});
+		const result = await this.organizationTeamService.deleteTeam(id, options ?? {});
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

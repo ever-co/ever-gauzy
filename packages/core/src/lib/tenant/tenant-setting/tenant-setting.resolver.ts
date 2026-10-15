@@ -33,6 +33,7 @@ import {
 	TenantSettingSaveCommand
 } from './commands';
 import { normalizePreferredUi } from './tenant-ui-preferences.controller';
+import { answersDeleted } from '../../core/crud';
 
 /** The members `UpdateTenantSettingInput` declares in the schema. */
 export interface IUpdateTenantSettingInput {
@@ -371,16 +372,16 @@ export class TenantSettingResolver {
 	/**
 	 * Removes a settings row outright.
 	 *
-	 * The delivered route answers with the deletion result; the field answers with the fact of the
-	 * removal, which is the one member of that result a caller reads. A row that was not there is the
-	 * service's own miss rather than a `false` answered from here.
+	 * The delivered route answers with the deletion result; the field answers whether its count says a
+	 * row was removed. The service does not read the row first, so a row that is not there is answered
+	 * `false` rather than told the removal succeeded.
 	 */
 	@Mutation('deleteTenantSetting')
 	@Permissions(PermissionsEnum.TENANT_SETTING)
 	async deleteTenantSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.tenantSettingService.delete(id);
+		const result = await this.tenantSettingService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

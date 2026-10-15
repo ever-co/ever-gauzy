@@ -13,6 +13,7 @@ import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductVariantSettingService } from './product-setting.service';
 import { Permissions } from '../shared/decorators';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateProductVariantSettingInput` declares in the schema. */
 export interface ICreateProductVariantSettingInput {
@@ -222,15 +223,15 @@ export class ProductVariantSettingResolver {
 	/**
 	 * Removes a setting outright.
 	 *
-	 * The delivered route answers with the deletion result; the field answers with the fact of the
-	 * removal, which is the one member of that result a caller reads. A setting that was not there
-	 * is a miss the service raises before this line rather than a `false` answered from it.
+	 * The delivered route answers with the deletion result; the field answers whether its count says a
+	 * row was removed. The service does not read the row first, so a setting that is not there is
+	 * answered `false` rather than told the removal succeeded.
 	 */
 	@Mutation('deleteProductVariantSetting')
 	async deleteProductVariantSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.productVariantSettingService.delete(id);
+		const result = await this.productVariantSettingService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

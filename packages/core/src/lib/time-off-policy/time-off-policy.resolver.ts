@@ -20,6 +20,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TimeOffPolicyService } from './time-off-policy.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateTimeOffPolicyInput` declares in the schema. */
 export interface ICreateTimeOffPolicyInput {
@@ -278,16 +279,16 @@ export class TimeOffPolicyResolver {
 	 * Removes a policy outright.
 	 *
 	 * The delivered route answers the store's own delete result — a statement about the write,
-	 * `{ affected }` — which is not a row, so the field answers the one fact that call establishes, that
-	 * the removal ran. It is a different operation from the withdrawal below and is stated separately
+	 * `{ affected }` — which is not a row, so the field answers whether that count says a row was removed
+	 * (`false` for an identifier that names no policy the caller can reach). It is a different operation from the withdrawal below and is stated separately
 	 * for that reason: what a removal takes with it is the row the identifier names.
 	 */
 	@Mutation('deleteTimeOffPolicy')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_EDIT)
 	async deleteTimeOffPolicy(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.timeOffPolicyService.delete(id);
+		const result = await this.timeOffPolicyService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

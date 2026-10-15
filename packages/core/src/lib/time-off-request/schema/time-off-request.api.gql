@@ -132,7 +132,8 @@ extend type Mutation {
 	Removes a request outright.
 
 	The delivered route answers the store's own delete result rather than a row, so this field answers
-	whether the removal ran — the one fact that call establishes.
+	whether its count says a row was removed: `false` for an identifier that names no row the caller can
+	reach.
 	"""
 	deleteTimeOffRequest(id: ID!): Boolean!
 

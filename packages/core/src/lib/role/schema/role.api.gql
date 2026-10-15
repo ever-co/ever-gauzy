@@ -89,9 +89,9 @@ extend type Mutation {
 	Removes a role outright.
 
 	The delivered removal narrows its own criteria before it runs — a system role is not selected, and
-	neither is a name of the platform's own set — so this field does not pre-empt that rule: it reports
-	that the removal ran, which is the same fact the REST route states with its own result, and a
-	caller that must know whether a row went reads it back through `tenantRoles`.
+	neither is a name of the platform's own set — so this field does not pre-empt that rule: it answers
+	from the count the REST route states with its own result, so a system role, or an identifier that
+	names no role of the caller's tenant, is answered `false`.
 	"""
 	deleteRole(id: ID!): Boolean!
 

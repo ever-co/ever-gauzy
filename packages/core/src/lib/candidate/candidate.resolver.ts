@@ -18,7 +18,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -350,9 +350,9 @@ export class CandidateResolver {
 	@Mutation('deleteCandidate')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async deleteCandidate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateService.delete(id);
+		const result = await this.candidateService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

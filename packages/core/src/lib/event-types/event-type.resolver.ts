@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { EventType } from './event-type.entity';
@@ -262,13 +262,14 @@ export class EventTypeResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own delete
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field named
-	 * `deleteEventType` may return; the field answers the one fact the removal establishes, that it ran.
+	 * `deleteEventType` may return; the field answers whether that count says a row was removed: `false`
+	 * for an identifier that names no meeting length the caller can reach.
 	 */
 	@Mutation('deleteEventType')
 	async deleteEventType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.eventTypeService.delete(id);
+		const result = await this.eventTypeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

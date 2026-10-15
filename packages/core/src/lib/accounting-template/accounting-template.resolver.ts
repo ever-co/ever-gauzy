@@ -19,7 +19,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -284,9 +284,9 @@ export class AccountingTemplateResolver {
 	@Mutation('deleteAccountingTemplate')
 	@Permissions(PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES)
 	async deleteAccountingTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.accountingTemplateService.delete(id);
+		const result = await this.accountingTemplateService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

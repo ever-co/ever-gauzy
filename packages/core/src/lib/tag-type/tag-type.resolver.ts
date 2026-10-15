@@ -15,6 +15,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateTagTypeInput` declares in the schema. */
 export interface ICreateTagTypeInput {
@@ -203,9 +204,9 @@ export class TagTypeResolver {
 	 */
 	@Mutation('deleteTagType')
 	async deleteTagType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.tagTypeService.delete(id);
+		const result = await this.tagTypeService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

@@ -62,8 +62,8 @@
 # parameter having no counterpart here.
 #
 # `deleteTimeLogs` answers a boolean rather than the store's delete result: the delivered route
-# answers `{ affected }`, which is a statement about the write and not a row. A caller that needs the
-# surviving rows reads them back through `timeLogs`.
+# answers `{ affected }`, which is a statement about the write and not a row, so the field answers whether
+# that count is at least one. A caller that needs the surviving rows reads them back through `timeLogs`.
 
 extend type Query {
 	"""
@@ -407,7 +407,8 @@ extend type Mutation {
 	updateManualTime(input: UpdateManualTimeLogInput!): TimeLog!
 
 	"""
-	Removes time logs, outright or by withdrawal, and answers whether the removal ran.
+	Removes time logs, outright or by withdrawal, and answers whether at least one was removed or
+	withdrawn, read from the count of the delivered write's result.
 
 	The delivered write refuses a caller that names no row, and refuses one that may not change the
 	selected employee when the named rows belong to employees it does not manage; both refusals are the

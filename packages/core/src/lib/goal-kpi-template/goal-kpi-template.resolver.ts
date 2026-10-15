@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
 import { GoalKpiTemplateService } from './goal-kpi-template.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateGoalKPITemplateInput` declares in the schema. */
 export interface ICreateGoalKPITemplateInput {
@@ -199,13 +200,14 @@ export class GoalKpiTemplateResolver {
 	 * Removes a catalogue entry outright.
 	 *
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
-	 * row — so this field answers whether the removal ran.
+	 * row — so this field answers whether a row was removed, read from the count that result reports:
+	 * `false` for an identifier that names no row the caller can reach.
 	 */
 	@Mutation('deleteGoalKpiTemplate')
 	async deleteGoalKpiTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalKpiTemplateService.delete(id);
+		const result = await this.goalKpiTemplateService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

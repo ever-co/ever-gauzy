@@ -20,6 +20,7 @@ import {
 	CandidateCriterionsRatingBulkDeleteCommand,
 	CandidateCriterionsRatingBulkUpdateCommand
 } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateCandidateCriterionsRatingInput` declares in the schema. */
 export interface ICreateCandidateCriterionsRatingInput {
@@ -219,9 +220,9 @@ export class CandidateCriterionsRatingResolver {
 	@Mutation('deleteCandidateCriterionsRating')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	async deleteCandidateCriterionsRating(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.candidateCriterionsRatingService.delete(id);
+		const result = await this.candidateCriterionsRatingService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/** Withdraws one criterion rating without removing it. */
@@ -296,17 +297,17 @@ export class CandidateCriterionsRatingResolver {
 	/**
 	 * Removes every criterion rating of one verdict.
 	 *
-	 * The delivered handler deletes the rows it read for the verdict and answers nothing, so the field
-	 * answers the fact that the write was accepted — which is what the route's own `200` states. A
-	 * verdict that has no criteria is not a refusal, which is what makes the call idempotent.
+	 * The delivered handler deletes the rows it read for the verdict and answers the delete result, so the
+	 * field answers whether at least one rating was removed. A verdict that has no criteria is not a
+	 * refusal, which is what makes the call idempotent: it is answered `false`, nothing having been removed.
 	 */
 	@Mutation('deleteCandidateCriterionsRatingsByFeedback')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	async deleteCandidateCriterionsRatingsByFeedback(
 		@Args('feedbackId', { type: () => ID }) feedbackId: Id
 	): Promise<boolean> {
-		await this.commandBus.execute(new CandidateCriterionsRatingBulkDeleteCommand(feedbackId));
+		const result = await this.commandBus.execute(new CandidateCriterionsRatingBulkDeleteCommand(feedbackId));
 
-		return true;
+		return answersDeleted(result);
 	}
 }

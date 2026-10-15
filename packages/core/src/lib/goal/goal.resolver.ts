@@ -14,6 +14,7 @@ import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Goal } from './goal.entity';
 import { GoalService } from './goal.service';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateGoalInput` declares in the schema. */
 export interface ICreateGoalInput {
@@ -219,14 +220,15 @@ export class GoalResolver {
 	 * Removes an objective outright.
 	 *
 	 * The same service method the removal route calls. The route answers the store's delete result — a
-	 * statement about the write rather than a row — so this field answers whether the removal ran,
-	 * which is the most that answer carries.
+	 * statement about the write rather than a row — so this field answers whether a row was removed, read
+	 * from the count that answer carries: `false` for an identifier that names no objective the caller can
+	 * reach.
 	 */
 	@Mutation('deleteGoal')
 	async deleteGoal(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.goalService.delete(id);
+		const result = await this.goalService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

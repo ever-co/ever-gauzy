@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -220,16 +220,16 @@ export class ExpenseCategoriesResolver {
 	 *
 	 * The same service method the inherited removal route calls. The delivered store answers its own
 	 * delete result — a statement about the write, `{ affected }` — which is not a row and not what a
-	 * field named `deleteExpenseCategory` may return; the field answers the one fact the removal
-	 * establishes, that it ran. A category an expense still points at is the store's own constraint to
+	 * field named `deleteExpenseCategory` may return; the field answers whether that count says a row was
+	 * removed (`false` for an identifier that names no category the caller can reach). A category an expense still points at is the store's own constraint to
 	 * refuse, and this field does not pre-empt it.
 	 */
 	@Mutation('deleteExpenseCategory')
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	async deleteExpenseCategory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.expenseCategoriesService.delete(id);
+		const result = await this.expenseCategoriesService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

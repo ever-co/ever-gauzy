@@ -15,6 +15,7 @@ import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } from './commands';
+import { answersDeleted } from '../core/crud';
 
 /** The members `CreateAvailabilitySlotInput` declares in the schema. */
 export interface ICreateAvailabilitySlotInput {
@@ -249,13 +250,14 @@ export class AvailabilitySlotsResolver {
 	 *
 	 * The delivered route answers the store's own delete result — a statement about the write,
 	 * `{ affected }` — which is not a row and not what a field named `deleteAvailabilitySlot` may return,
-	 * so the field answers the one fact that call establishes, that the removal ran.
+	 * so the field answers whether that count says a row was removed: `false` for an identifier that names
+	 * no slot the caller can reach.
 	 */
 	@Mutation('deleteAvailabilitySlot')
 	async deleteAvailabilitySlot(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.availabilitySlotsService.delete(id);
+		const result = await this.availabilitySlotsService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

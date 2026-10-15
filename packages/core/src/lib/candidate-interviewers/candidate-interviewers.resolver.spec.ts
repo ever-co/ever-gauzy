@@ -491,6 +491,8 @@ describe('CandidateInterviewersResolver — one concept, two protocols, the same
 
 	it('clears one sitting’s panel through the command the scoped removal dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered bulk handler answers its delete result, and the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 2, raw: [] });
 
 		expect(await resolver.deleteCandidateInterviewersByInterview(INTERVIEW)).toBe(true);
 		expect(commandBus.execute.mock.calls[0][0]).toBeInstanceOf(CandidateInterviewersInterviewBulkDeleteCommand);
@@ -499,6 +501,7 @@ describe('CandidateInterviewersResolver — one concept, two protocols, the same
 
 	it('removes every seat one set of engagements holds, as the identifiers the handler reads', async () => {
 		const { resolver, commandBus } = surfaces();
+		commandBus.execute.mockResolvedValueOnce({ affected: 2, raw: [] });
 
 		expect(await resolver.deleteCandidateInterviewersByEmployee([EMPLOYEE, FIRST])).toBe(true);
 

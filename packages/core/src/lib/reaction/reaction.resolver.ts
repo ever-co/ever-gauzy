@@ -10,7 +10,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO, FindOptionsQueryDTO } from '../core/crud';
+import { BaseQueryDTO, FindOptionsQueryDTO, answersDeleted } from '../core/crud';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Reaction } from './reaction.entity';
@@ -239,9 +239,9 @@ export class ReactionResolver {
 	 */
 	@Mutation('deleteReaction')
 	async deleteReaction(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.reactionService.delete(id);
+		const result = await this.reactionService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

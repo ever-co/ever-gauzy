@@ -17,7 +17,7 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
+import { BaseQueryDTO, answersDeleted } from '../core/crud';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { SharedEntity } from './shared-entity.entity';
@@ -233,9 +233,9 @@ export class SharedEntityResolver {
 	 */
 	@Mutation('deleteSharedEntity')
 	async deleteSharedEntity(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.sharedEntityService.delete(id);
+		const result = await this.sharedEntityService.delete(id);
 
-		return true;
+		return answersDeleted(result);
 	}
 
 	/**

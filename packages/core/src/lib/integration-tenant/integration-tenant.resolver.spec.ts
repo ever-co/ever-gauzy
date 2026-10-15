@@ -423,6 +423,8 @@ describe('IntegrationTenantResolver — one concept, two protocols, the same ope
 
 	it('removes a connection through the command the removal route dispatches, scope included', async () => {
 		const { resolver, commandBus } = surfaces();
+		// The delivered command answers the store's delete result; the field answers from its count.
+		commandBus.execute.mockResolvedValueOnce({ affected: 1, raw: [] });
 
 		expect(await resolver.deleteIntegrationTenant(ROWS[0].id, ORGANIZATION, TENANT)).toBe(true);
 
