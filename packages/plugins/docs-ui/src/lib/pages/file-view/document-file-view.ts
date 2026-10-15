@@ -27,3 +27,17 @@ export function documentViewRedirect(document: Pick<IDocument, 'id' | 'kind'>): 
 			return null;
 	}
 }
+
+/**
+ * What the preview of a document is built from. Background processing and the upload queue re-send an unchanged row
+ * (`rowChanged`) on every poll, and a rename changes nothing the preview shows; rebuilding the preview — which
+ * downloads the file again — only when this changes keeps the page still while it is being looked at.
+ *
+ * @param document The document shown.
+ * @returns A value that differs whenever the preview would differ.
+ */
+export function previewSignature(document: Partial<IDocument> | null | undefined): string {
+	if (!document) return '';
+	const updatedAt = document.updatedAt ? new Date(document.updatedAt as Date | string).getTime() : '';
+	return [updatedAt, document.status, document.mimeType, document.fileSize, document.version].join('|');
+}

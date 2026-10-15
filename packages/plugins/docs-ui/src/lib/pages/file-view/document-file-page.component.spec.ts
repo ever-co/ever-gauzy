@@ -12,7 +12,13 @@ import { DocumentFilePageComponent } from './document-file-page.component';
 describe('DocumentFilePageComponent', () => {
 	const ORG_A = 'aaaaaaaa-0000-4000-8000-00000000000a';
 	const ORG_B = 'bbbbbbbb-0000-4000-8000-00000000000b';
-	const FILE: IDocument = { id: 'f1', name: 'Q3 report.csv', kind: DocumentKindEnum.FILE, organizationId: ORG_A } as IDocument;
+	const FILE: IDocument = {
+		id: 'f1',
+		name: 'Q3 report.csv',
+		kind: DocumentKindEnum.FILE,
+		organizationId: ORG_A,
+		updatedAt: new Date('2026-10-15T09:00:00.000Z')
+	} as IDocument;
 
 	let paramMap$: BehaviorSubject<ParamMap>;
 	let organization$: BehaviorSubject<{ id: string }>;
@@ -90,11 +96,32 @@ describe('DocumentFilePageComponent', () => {
 		await settle();
 		const revision = page.previewRevision;
 
-		actions$.next(DocumentsActions.rowChanged({ ...FILE, name: 'Q3 report (final).csv' } as IDocument));
+		actions$.next(
+			DocumentsActions.rowChanged({
+				...FILE,
+				name: 'Q3 report (final).csv',
+				updatedAt: new Date('2026-10-15T09:05:00.000Z')
+			} as IDocument)
+		);
 		actions$.next(DocumentsActions.rowChanged({ id: 'other', name: 'Other' } as IDocument));
 
 		expect(page.document.name).toBe('Q3 report (final).csv');
 		expect(page.previewRevision).toBe(revision + 1);
+	});
+
+	it('does not rebuild the preview for a row that did not change — background processing re-sends it on every poll', async () => {
+		answer(FILE);
+		await settle();
+		const revision = page.previewRevision;
+
+		for (let poll = 0; poll < 3; poll++) {
+			actions$.next(DocumentsActions.rowChanged({ ...FILE } as IDocument));
+		}
+		// A rename alone does not change what the preview shows either.
+		actions$.next(DocumentsActions.rowChanged({ ...FILE, name: 'Renamed.csv' } as IDocument));
+
+		expect(page.previewRevision).toBe(revision);
+		expect(page.document.name).toBe('Renamed.csv');
 	});
 
 	it('goes back to the documents list when the file is deleted', async () => {

@@ -91,6 +91,8 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	public downloading = false;
 
 	private objectUrl: string | null = null;
+	/** Set once the preview is gone: a download still running then must not create a URL nobody revokes. */
+	private destroyed = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -110,6 +112,7 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	}
 
 	ngOnDestroy(): void {
+		this.destroyed = true;
 		if (this.objectUrl) URL.revokeObjectURL(this.objectUrl);
 	}
 
@@ -218,7 +221,11 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 				case 'image':
 				case 'video':
 				case 'audio': {
-					this.blob = await firstValueFrom(this.documentsService.getRawBlob(this.document.id as ID));
+					const blob = await firstValueFrom(this.documentsService.getRawBlob(this.document.id as ID));
+					// Destroyed while downloading (the file page rebuilds the preview after an edit): an object URL
+					// made now would keep the bytes in memory for the life of the tab.
+					if (this.destroyed) return;
+					this.blob = blob;
 					this.objectUrl = URL.createObjectURL(this.blob);
 					this.mediaUrl = sanitizeMediaUrl(this.objectUrl);
 					break;

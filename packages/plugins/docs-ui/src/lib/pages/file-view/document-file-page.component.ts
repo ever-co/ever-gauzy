@@ -13,7 +13,7 @@ import { RecordViewPageState, recordViewPageStateOf } from '@gauzy/ui-core/share
 import { DocumentsActions } from '../../+state/documents.actions';
 import { DOCS_PAGE_LINK } from '../../docs.constants';
 import { DocumentsService } from '../../services/documents.service';
-import { documentViewRedirect } from './document-file-view';
+import { documentViewRedirect, previewSignature } from './document-file-view';
 
 /**
  * One document on its own, full width: `/pages/documents/file/:id` — how a sidebar favorite opens an
@@ -85,7 +85,8 @@ export class DocumentFilePageComponent extends TranslationBaseComponent implemen
 				void this.load();
 			});
 
-		// An edit made in the details column — the preview reads its content once, so it is rebuilt.
+		// An edit made in the details column — the preview reads its content once, so it is rebuilt; an unchanged row
+		// (re-sent on every processing poll) or a rename only updates the page.
 		this.actions
 			.pipe(
 				ofType(DocumentsActions.rowChanged),
@@ -93,8 +94,11 @@ export class DocumentFilePageComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe(({ document }) => {
+				const before = previewSignature(this.document);
 				this.document = { ...this.document, ...document };
-				this.previewRevision++;
+				if (previewSignature(this.document) !== before) {
+					this.previewRevision++;
+				}
 			});
 
 		// The file was deleted: nothing is left to show here.
