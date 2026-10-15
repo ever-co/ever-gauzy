@@ -599,6 +599,25 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Keeps the plans the caller may change, checking the owner against each plan's stored team as
+	 * getManagedDailyPlanOrThrow does for a single plan. Each team is checked once.
+	 *
+	 * @param plans - Plans of one employee in one organization
+	 * @param employeeId - The owner of the plans
+	 * @param organizationId - The organization of the plans
+	 * @returns The plans whose team lets the caller manage the owner
+	 */
+	private async keepManagedPlans(plans: DailyPlan[], employeeId: ID, organizationId: ID): Promise<DailyPlan[]> {
+		const teamIds = Array.from(new Set(plans.map((plan) => plan.organizationTeamId ?? undefined)));
+		const allowed = await Promise.all(
+			teamIds.map((teamId) => this._managedEmployeeService.canManageEmployee(employeeId, teamId, organizationId))
+		);
+		const managedTeamIds = new Set(teamIds.filter((_, index) => allowed[index]));
+
+		return plans.filter((plan) => managedTeamIds.has(plan.organizationTeamId ?? undefined));
+	}
+
+	/**
 	 * Deletes a daily plan the caller owns or manages.
 	 *
 	 * The inherited implementation narrows the criteria to the caller's own employeeId, so a manager
@@ -791,10 +810,14 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					const mikroWhere: any = {
 						tenantId,
 						organizationId,
-						organizationTeamId: organizationTeamId ?? null,
 						employeeId,
 						date: { $gte: new Date(currentDate) }
 					};
+
+					// Without a team, the plans of every team and of none: each stored team is checked below.
+					if (organizationTeamId) {
+						mikroWhere.organizationTeamId = organizationTeamId;
+					}
 
 					if (plansIds.length > 0) {
 						mikroWhere.id = { $in: plansIds };
@@ -821,13 +844,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Conditions
 					query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					// Without a team, the plans that have none: an equality with NULL never matches.
+					// Without a team, the plans of every team and of none: each stored team is checked below.
 					if (organizationTeamId) {
 						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
 							organizationTeamId
 						});
-					} else {
-						query.andWhere(p(`"${query.alias}"."organizationTeamId" IS NULL`));
 					}
 					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 
@@ -851,6 +872,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					dailyPlansToUpdate = await query.getMany();
 					break;
 				}
+			}
+
+			// Without a team, the check above lets in a manager of any one of the employee's teams, so each
+			// plan is kept only if its own team allows it, as for a single plan.
+			if (!organizationTeamId) {
+				dailyPlansToUpdate = await this.keepManagedPlans(dailyPlansToUpdate, employeeId, organizationId);
 			}
 
 			if (dailyPlansToUpdate.length < 1) {
