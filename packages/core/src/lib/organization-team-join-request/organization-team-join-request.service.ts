@@ -124,7 +124,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				token,
 				status: null
 			});
-			const organizationTeamJoinRequest = await this.save(createEntityLike);
+			// Public route, no caller tenant to stamp: the row keeps the tenant of the public team found above.
+			// Saved as a plain copy so MikroORM builds the relations from their ids instead of upserting the instance.
+			const organizationTeamJoinRequest = await this.saveWithoutEnrichment({ ...createEntityLike });
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink, companyLink, companyName } = entity;
