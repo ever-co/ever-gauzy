@@ -368,7 +368,11 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 	});
 
 	it('with a five-second day (tests), the first report goes out within seconds of boot', async () => {
-		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		// The identity is made by EverInstanceService, which stamps `createdAt` with the real clock
+		// (`Date.now()`), so "boot" is now and the fake clock has to start there too. Pinned to a fixed
+		// date, the test measured the gap between that date and the real time of the run: it passed while
+		// the date was still ahead and failed from 2026-10-15 10:00Z on.
+		const clock = new FakeClock(Date.now());
 		const { scheduler, instance } = setup(clock, [], [], { ...CONFIG, intervalS: 5 });
 		const identity = await instance.ensure();
 		expect(scheduler.firstSendAt(identity, null, clock.at) - clock.at).toBeLessThanOrEqual(10_000);
