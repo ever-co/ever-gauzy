@@ -685,10 +685,13 @@ describe('OrganizationTeamResolver — one concept, two protocols, the same oper
 		expect(await resolver.deleteOrganizationTeam(ACME_TEAM, { organizationId: ORGANIZATION })).toBe(true);
 		expect(organizationTeamService.deleteTeam).toHaveBeenCalledWith(ACME_TEAM, { organizationId: ORGANIZATION });
 
-		// The route's options are optional and the field states them as such: an unstated request
-		// removes under the credential's own scope.
-		expect(await resolver.deleteOrganizationTeam(ACME_TEAM)).toBe(true);
-		expect(organizationTeamService.deleteTeam).toHaveBeenLastCalledWith(ACME_TEAM, {});
+		// The route's `DeleteQueryDTO` requires the organization (`TenantOrganizationBaseDTO` validates it whenever
+		// no `organization` / `sentTo` is sent) and narrows the delete with it; an unstated one used to remove the
+		// team tenant-wide on GraphQL (SEC-A-02), so it is refused, as the route refuses it.
+		await expect(resolver.deleteOrganizationTeam(ACME_TEAM)).rejects.toMatchObject({
+			response: expect.objectContaining({ code: 'ORGANIZATION_REQUIRED' })
+		});
+		expect(organizationTeamService.deleteTeam).toHaveBeenCalledTimes(1);
 	});
 
 	it('removes a user from the teams they joined through the same service method the REST route calls', async () => {

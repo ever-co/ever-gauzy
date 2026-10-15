@@ -1,4 +1,15 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	ElementRef,
+	HostBinding,
+	HostListener,
+	Input,
+	OnDestroy,
+	OnInit,
+	Optional,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -11,6 +22,7 @@ import { renderMarkdownToSanitizedHtml } from '../../editor/read-only/markdown-r
 import { sanitizeMediaUrl } from '../../editor/read-only/safe-url.util';
 import { DocumentsService } from '../../services/documents.service';
 import { PdfViewerComponent } from './pdf-viewer.component';
+import { previewTakesArrowKey } from './preview-keys';
 
 /** Citation locator passed when the preview opens from an AI answer (spec 07). */
 export interface IDocsPreviewLocator {
@@ -29,6 +41,10 @@ export type DocsPreviewViewer = 'pdf' | 'image' | 'video' | 'audio' | 'text' | '
  * fallback card. Binary content is fetched through the authenticated HTTP
  * client and served from object URLs. `Esc` closes (Nebular), `←`/`→` page
  * through a pdf.
+ *
+ * With `inline` the same preview is embedded in a page instead of a dialog — the
+ * full-width document page `/pages/documents/file/:id` — so there is no dialog to
+ * close, and "Details" opens the Documents shell's detail column.
  */
 @Component({
 	selector: 'gz-docs-preview-modal',
@@ -40,6 +56,13 @@ export type DocsPreviewViewer = 'pdf' | 'image' | 'video' | 'audio' | 'text' | '
 export class DocsPreviewModalComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() document: IDocument;
 	@Input() locator: IDocsPreviewLocator | null = null;
+	/** Embedded in a page rather than opened in a dialog. */
+	@Input() inline = false;
+
+	@HostBinding('class.inline')
+	get isInline(): boolean {
+		return this.inline;
+	}
 
 	@ViewChild(PdfViewerComponent) pdfViewer: PdfViewerComponent | undefined;
 
@@ -68,13 +91,17 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	public downloading = false;
 
 	private objectUrl: string | null = null;
+	/** Set once the preview is gone: a download still running then must not create a URL nobody revokes. */
+	private destroyed = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly dialogRef: NbDialogRef<DocsPreviewModalComponent>,
+		// Absent when the preview is embedded in a page (`inline`).
+		@Optional() private readonly dialogRef: NbDialogRef<DocsPreviewModalComponent> | null,
 		private readonly documentsService: DocumentsService,
 		private readonly sanitizer: DomSanitizer,
-		private readonly actions: Actions
+		private readonly actions: Actions,
+		private readonly elementRef: ElementRef<HTMLElement>
 	) {
 		super(translateService);
 	}
@@ -85,13 +112,14 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	}
 
 	ngOnDestroy(): void {
+		this.destroyed = true;
 		if (this.objectUrl) URL.revokeObjectURL(this.objectUrl);
 	}
 
 	// ─── Chrome actions ──────────────────────────────────────────
 
 	close(): void {
-		this.dialogRef.close();
+		this.dialogRef?.close();
 	}
 
 	/**
@@ -117,16 +145,20 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 
 	openDetails(): void {
 		this.actions.dispatch(DocumentsActions.detailOpened(this.document.id as ID));
-		this.dialogRef.close();
+		this.dialogRef?.close();
 	}
 
-	@HostListener('document:keydown.arrowRight')
-	onArrowRight(): void {
+	// Document-wide, so the dialog pages with the focus anywhere in it; embedded (`inline`), only keys pressed inside
+	// the preview count — see `previewTakesArrowKey`.
+	@HostListener('document:keydown.arrowRight', ['$event'])
+	onArrowRight(event?: KeyboardEvent): void {
+		if (!previewTakesArrowKey(this.inline, this.elementRef.nativeElement, event?.target ?? null)) return;
 		void this.pdfViewer?.next();
 	}
 
-	@HostListener('document:keydown.arrowLeft')
-	onArrowLeft(): void {
+	@HostListener('document:keydown.arrowLeft', ['$event'])
+	onArrowLeft(event?: KeyboardEvent): void {
+		if (!previewTakesArrowKey(this.inline, this.elementRef.nativeElement, event?.target ?? null)) return;
 		void this.pdfViewer?.prev();
 	}
 
@@ -189,7 +221,11 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 				case 'image':
 				case 'video':
 				case 'audio': {
-					this.blob = await firstValueFrom(this.documentsService.getRawBlob(this.document.id as ID));
+					const blob = await firstValueFrom(this.documentsService.getRawBlob(this.document.id as ID));
+					// Destroyed while downloading (the file page rebuilds the preview after an edit): an object URL
+					// made now would keep the bytes in memory for the life of the tab.
+					if (this.destroyed) return;
+					this.blob = blob;
 					this.objectUrl = URL.createObjectURL(this.blob);
 					this.mediaUrl = sanitizeMediaUrl(this.objectUrl);
 					break;

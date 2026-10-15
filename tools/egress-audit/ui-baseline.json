@@ -10723,6 +10723,510 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the route generator lists lazily loaded children under every parent"
+		},
+		{
+			"route": "/pages/accounting/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expenses/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/expenses/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/income/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/income/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/income/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/income/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/income/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/income/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/payments/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/accounting/payments/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/approvals/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/approvals/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/approvals/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/approvals/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/approvals/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/approvals/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/recurring-expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/recurring-expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/recurring-expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/recurring-expenses/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/recurring-expenses/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/employees/recurring-expenses/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/kpi/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/kpi/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/kpi/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/kpi/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/kpi/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/kpi/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/time-frame/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/time-frame/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/time-frame/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/time-frame/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/time-frame/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/settings/time-frame/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/equipment/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/equipment/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/equipment/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/equipment/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/equipment/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/equipment/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/expense-recurring/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/teams/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/teams/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/teams/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/teams/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/teams/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/teams/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/vendors/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/vendors/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/vendors/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/vendors/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/vendors/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/organization/vendors/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/sales/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/sales/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/sales/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/sales/payments/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/sales/payments/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/sales/payments/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/tasks/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/tasks/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/tasks/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/tasks/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/tasks/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/tasks/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
 		}
 	]
 }
