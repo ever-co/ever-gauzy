@@ -5,6 +5,7 @@ import { decode, sign } from 'jsonwebtoken';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { AuthService } from './auth.service';
+import { ACCESS_TOKEN_TYPE } from '../access-token/type.token';
 import { ACCESS_TOKEN_PERMISSIONS_ENV } from './access-token-claims';
 
 /**
@@ -17,8 +18,8 @@ import { ACCESS_TOKEN_PERMISSIONS_ENV } from './access-token-claims';
  * permissions from the database on each request and `RequestContext.hasPermission(s)` reads those; the web app loads
  * them from `/user/me`; the desktop apps, the MCP server and Ever Teams decode `exp`, `employeeId` and `tenantId` only.
  *
- * The payload is built by the real `getJwtAccessToken()` and signed here with HS256, as the scoped token service signs
- * it (plus its `tokenType` and `jti` claims), so the size is the size a browser sends.
+ * The payload is built by the real `getJwtAccessToken()` and signed here with HS256 the way `CreateTokenHandler` signs
+ * it — the metadata plus `userId`, `tokenType` and `tokenId` — so the size is the size a browser sends.
  */
 
 const TENANT = '7a000000-0000-4000-8000-00000000000a';
@@ -48,11 +49,13 @@ const SUPER_ADMIN = {
 /** An AuthService wired only with what `getJwtAccessToken()` touches; `generate` records the payload. */
 function buildAuthService() {
 	const service: AuthService = Object.create(AuthService.prototype);
-	const generate = jest.fn(async (_userId: string, payload: Record<string, unknown>) =>
-		sign({ ...payload, tokenType: 'access', jti: randomUUID() }, 'a-test-secret-of-realistic-length-0123456789', {
-			algorithm: 'HS256',
-			expiresIn: 86400
-		})
+	// The claims `CreateTokenHandler` adds to the metadata before it signs (token/commands/handlers).
+	const generate = jest.fn(async (userId: string, metadata: Record<string, unknown>) =>
+		sign(
+			{ ...metadata, userId, tokenType: ACCESS_TOKEN_TYPE, tokenId: randomUUID() },
+			'a-test-secret-of-realistic-length-0123456789',
+			{ algorithm: 'HS256', expiresIn: 86400 }
+		)
 	);
 	Object.assign(service, {
 		ormType: 'typeorm',
