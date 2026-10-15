@@ -454,7 +454,7 @@ async function harness(): Promise<IHarness> {
 
 			outbox.appended.push({
 				...event,
-				inTransaction: Boolean(manager?.queryRunner?.isTransactionActive),
+				inTransaction: Boolean(manager.queryRunner?.isTransactionActive),
 				// What the list's lines look like from inside the transaction the fact is appended in.
 				lineStatuses: (
 					await manager.query('SELECT "status" FROM "pick_list_line" WHERE "pickListId" = ?', [event.aggregateId])
