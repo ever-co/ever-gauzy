@@ -306,8 +306,14 @@ export interface IWarehouseStockLedgerPort {
 	readExpectedBinBalances(query: { warehouseId: ID; binIds: ID[] }): Promise<IWarehouseBinBalance[]>;
 	/** Reads where a variant is normally kept at a location, and how much of it is there. */
 	resolveHomeBin(query: { warehouseId: ID; variantId: ID }): Promise<IWarehouseHomeBin | undefined>;
-	/** Writes a movement. */
-	recordMovement(request: IWarehouseStockMovementRequest): Promise<IWarehouseStockMovementResult>;
+	/**
+	 * Writes a movement.
+	 *
+	 * A caller that holds a TypeORM transaction hands it in (`manager`), and the movement is written on it — so a pick's
+	 * stock movement commits or rolls back with the pick. The inventory ledger supports exactly that
+	 * (`StockLedgerService.recordMovement(request, manager)`); an adapter that cannot join one writes in its own.
+	 */
+	recordMovement(request: IWarehouseStockMovementRequest, manager?: unknown): Promise<IWarehouseStockMovementResult>;
 	/** Relocates units between two bins of one location as a balanced pair. */
 	relocate(request: {
 		warehouseId: ID;

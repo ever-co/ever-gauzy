@@ -13,7 +13,9 @@
  *
  * The services are the package's own; the database is an in-memory better-sqlite3 connection; the repositories
  * are TypeORM's own, so a refused edit is read back from the table rather than from a double. The stock ledger is
- * a port to another package and is the one thing recorded rather than run. `@gauzy/core` is doubled at the module
+ * a port to another package and is the one thing doubled rather than run: it records each request, and writes a row
+ * the way the inventory ledger does — on the caller's TypeORM transaction when it is handed one, on its own
+ * otherwise — so a movement a rolled-back pick wrote is read back from the table too. `@gauzy/core` is doubled at the module
  * boundary for the reason the package's other suites give, its CRUD base reduced to the tenant-scoped reads and
  * writes the real one performs.
  */
@@ -101,7 +103,7 @@ jest.mock('@gauzy/core', () => {
 const mockCaller: { tenantId: string | null; organizationId: string | null } = { tenantId: null, organizationId: null };
 
 import 'reflect-metadata';
-import { DataSource, EntitySchema, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntitySchema, Repository } from 'typeorm';
 import { CarrierManifest } from './carrier-manifest/carrier-manifest.entity';
 import { CarrierManifestService } from './carrier-manifest/carrier-manifest.service';
 import { PackSlip } from './pack-slip/pack-slip.entity';
@@ -137,6 +139,8 @@ const LINE = '00000000-0000-4000-8000-0000000006a1';
 const SLIP = '00000000-0000-4000-8000-0000000007a1';
 const MANIFEST = '00000000-0000-4000-8000-0000000008a1';
 const LINE_2 = '00000000-0000-4000-8000-0000000006a2';
+/** The variant a substitution takes instead of `VARIANT`. */
+const SUBSTITUTE = '00000000-0000-4000-8000-0000000003a2';
 
 /*
 |--------------------------------------------------------------------------
@@ -341,6 +345,8 @@ interface IHarness {
 	manifests: CarrierManifestService;
 	/** Every movement the services asked the stock ledger for. */
 	movements: Row[];
+	/** The movements the ledger holds — what committed, as the table reads after the call. */
+	stockMovements: () => Promise<Row[]>;
 	/**
 	 * The platform outbox, recorded: each fact it was asked to append, and whether the manager it was handed was
 	 * inside an open transaction. `failOn` names a fact it refuses, after the move that earned it was written.
@@ -418,10 +424,19 @@ async function harness(): Promise<IHarness> {
 		...scope
 	});
 
+	// The ledger's table, reduced to what a movement is read back by.
+	await dataSource.query(
+		'CREATE TABLE "stock_movement" ("id" INTEGER PRIMARY KEY, "referenceId" varchar NOT NULL, "variantId" varchar NOT NULL, "quantity" varchar NOT NULL)'
+	);
 	const movements: Row[] = [];
 	const ledger = {
-		recordMovement: async (request: Row) => {
+		// `StockLedgerService.recordMovement(request, manager?)`: written on the caller's transaction when handed one.
+		recordMovement: async (request: Row, manager?: EntityManager) => {
 			movements.push(request);
+			await (manager ?? dataSource).query(
+				'INSERT INTO "stock_movement" ("referenceId", "variantId", "quantity") VALUES (?, ?, ?)',
+				[request.referenceId, request.variantId, String(request.quantity)]
+			);
 
 			return { id: `movement-${movements.length}` };
 		}
@@ -486,6 +501,8 @@ async function harness(): Promise<IHarness> {
 		slips: new PackSlipService(repository(PackSlip), undefined as any, lists, lines, undefined as any),
 		manifests: new CarrierManifestService(repository(CarrierManifest), undefined as any, undefined as any),
 		movements,
+		stockMovements: async () =>
+			await dataSource.query('SELECT "referenceId", "variantId", "quantity" FROM "stock_movement" ORDER BY "id"'),
 		outbox,
 		row: async (table, id) => (await dataSource.query(`SELECT * FROM "${table}" WHERE "id" = ?`, [id]))[0],
 		set: async (table, id, values) => {
@@ -794,6 +811,48 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 				expect(h.outbox.appended.map((event) => [event.name, event.inTransaction])).toEqual([['pick_list.started', true]]);
 			}
 		);
+
+		it.each([
+			{
+				kind: 'short pick',
+				record: (harness: IHarness) => harness.lines.recordPick(LINE, { pickedQuantity: '3' } as any),
+				// The two units the bin never held are written off.
+				written: [[LINE, VARIANT, -2]]
+			},
+			{
+				kind: 'substitution',
+				record: (harness: IHarness) =>
+					harness.lines.recordSubstitution(LINE, { substituteVariantId: SUBSTITUTE, substituteQuantity: '5' }),
+				// The requested variant goes back on the level; the substitute leaves instead.
+				written: [
+					[LINE, VARIANT, 5],
+					[LINE, SUBSTITUTE, -5]
+				]
+			}
+		])('a pick retried after its promotion failed writes its stock movements once ($kind)', async ({ record, written }) => {
+			const held = async () =>
+				(await h.stockMovements()).map((movement) => [movement.referenceId, movement.variantId, Number(movement.quantity)]);
+			h.outbox.failOn = 'pick_list.started';
+
+			await expect(record(h)).rejects.toThrow(/outbox is unavailable/);
+
+			// The outcome was not recorded, and neither is the stock it would have moved.
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
+			expect(await held()).toEqual([]);
+
+			// The outbox is back: the retry records the outcome and its movements, once.
+			h.outbox.failOn = null;
+			await expect(record(h)).resolves.toBeDefined();
+
+			expect(await held()).toEqual(written);
+		});
+
+		it('control: a pick whose promotion succeeds writes its movements with it', async () => {
+			await h.lines.recordPick(LINE, { pickedQuantity: '3' } as any);
+
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.SHORT);
+			expect((await h.stockMovements()).map((movement) => Number(movement.quantity))).toEqual([-2]);
+		});
 
 		it('the pick, the counters and the promotion are one transaction: the fact sees the outcome it announces', async () => {
 			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);

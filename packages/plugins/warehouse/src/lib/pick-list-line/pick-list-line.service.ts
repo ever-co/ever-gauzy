@@ -1,5 +1,5 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { EntityManager as TypeOrmEntityManager, FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
@@ -9,6 +9,7 @@ import {
 	IPickOutcomeInput,
 	ISubstitutionInput,
 	IWarehouseStockLedgerPort,
+	IWarehouseStockMovementRequest,
 	PICK_LIST_EVENTS,
 	PickListLineStatus,
 	PickListStatus,
@@ -37,7 +38,7 @@ import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-l
  * - a **pick** took what the list asked for, and picking writes nothing;
  * - a **short pick** took less, which means the ledger is wrong — it holds units the bin never had — so
  *   the missing quantity is written off through the inventory capability with the line (review R2-14:
- *   see `correctShortfall` for the sign, and for what it assumes about the sale side);
+ *   see `shortfallMovements` for the sign, and for what it assumes about the sale side);
  * - a **skip** is a decision on the floor rather than a stock count: the picker left the stock where it
  *   is, so nothing is corrected here and the shortfall is reported for a backorder or an adjustment
  *   request to be raised downstream.
@@ -55,6 +56,8 @@ const PICK_LIST_LINE_WRITABLE_MEMBERS = ['note', 'metadata'] as const;
 
 @Injectable()
 export class PickListLineService extends TenantAwareCrudService<PickListLine> {
+	private readonly logger = new Logger(PickListLineService.name);
+
 	constructor(
 		readonly typeOrmPickListLineRepository: TypeOrmPickListLineRepository,
 		readonly mikroOrmPickListLineRepository: MikroOrmPickListLineRepository,
@@ -249,10 +252,8 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 		const shortfall = requested - picked;
 
 		// The one place picking touches stock: a bin that held less than the list asked for is a stock
-		// error, and the ledger has to learn about it in the same transaction as the line.
-		if (shortfall > 0n) {
-			await this.correctShortfall(line, fromQuantityUnits(shortfall));
-		}
+		// error, and the ledger has to learn about it in the same transaction as the line (`recordOutcome`).
+		const movements = shortfall > 0n ? await this.shortfallMovements(line, fromQuantityUnits(shortfall)) : [];
 
 		await this.recordOutcome(line, {
 			binId: input.binId ?? line.binId,
@@ -264,7 +265,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			lotNumber: input.lotNumber ?? line.lotNumber,
 			serialNumbers: input.serialNumbers ?? line.serialNumbers,
 			note: input.note ?? line.note
-		});
+		}, movements);
 
 		return await this.findOneScoped(id);
 	}
@@ -303,8 +304,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 		}
 
 		const binId = input.binId ?? line.binId;
-
-		await this.writeSubstitutionMovements(line, input, binId);
+		const movements = await this.substitutionMovements(line, input, binId);
 
 		await this.recordOutcome(line, {
 			binId,
@@ -315,7 +315,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			pickedAt: new Date(),
 			pickedByUserId: RequestContext.currentUserId(),
 			note: input.note ?? line.note
-		});
+		}, movements);
 
 		return await this.findOneScoped(id);
 	}
@@ -524,37 +524,124 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * the three commit together or not at all, and a failed pick can be retried as it was made.
 	 *
 	 * The line is written only while it is still open, so two calls recording an outcome on one line cannot both
-	 * write it: the second is refused with `PICK_LIST_LINE_EDIT_CONFLICT`. (A movement the ledger was asked for
-	 * before — a short pick's write-off, a substitution's pair — is the inventory capability's, written through its
-	 * port, which takes no transaction of this package.)
+	 * write it: the second is refused with `PICK_LIST_LINE_EDIT_CONFLICT` — before any stock moves.
 	 *
+	 * **The stock movements the outcome implies** (a short pick's write-off, a substitution's pair) are written in
+	 * the same transaction, after the line: the inventory ledger takes a caller's TypeORM transaction and writes the
+	 * movement on it, so on TypeORM a pick whose promotion or fact fails rolls its movements back with it, and the
+	 * retry writes them once. The ledger has no reference it deduplicates on (`referenceType` + `referenceId` is an
+	 * index, not a key: a substitution writes two movements under one line), so joining the transaction is what makes
+	 * the retry safe. Under MikroORM the warehouse's transaction is not a TypeORM one and the ledger cannot join it;
+	 * a movement written there is then compensated — the ledger is append-only, so with a reversing movement under the
+	 * same reference — when the outcome's transaction fails, and the failure is answered as before.
+	 *
+	 * @param line The line as the call read it.
+	 * @param outcome The columns the outcome writes.
+	 * @param movements The stock movements the outcome implies.
+	 * @throws ConflictException with `PICK_LIST_LINE_EDIT_CONFLICT` when the line got an outcome since it was read.
+	 */
+	private async recordOutcome(
+		line: PickListLine,
+		outcome: Partial<PickListLine>,
+		movements: IWarehouseStockMovementRequest[] = []
+	): Promise<void> {
+		// Movements the ledger wrote outside the outcome's transaction, which a failure has to reverse.
+		const unjoined: IWarehouseStockMovementRequest[] = [];
+
+		try {
+			await this.transaction(async (transaction) => {
+				await this.writeOutcome(transaction, line, outcome);
+
+				const joinable = transaction.manager instanceof TypeOrmEntityManager ? transaction.manager : undefined;
+
+				for (const movement of movements) {
+					await this.ledger().recordMovement(movement, joinable);
+
+					if (!joinable) {
+						unjoined.push(movement);
+					}
+				}
+
+				await this.refreshListCounters(line.pickListId, true, transaction);
+			});
+		} catch (error) {
+			await this.reverseMovements(unjoined);
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Writes an outcome on a line that is still open, in the outcome's transaction.
+	 *
+	 * @param transaction The outcome's transaction.
 	 * @param line The line as the call read it.
 	 * @param outcome The columns the outcome writes.
 	 * @throws ConflictException with `PICK_LIST_LINE_EDIT_CONFLICT` when the line got an outcome since it was read.
 	 */
-	private async recordOutcome(line: PickListLine, outcome: Partial<PickListLine>): Promise<void> {
+	private async writeOutcome(
+		transaction: IWarehouseTransaction,
+		line: PickListLine,
+		outcome: Partial<PickListLine>
+	): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		await this.transaction(async (transaction) => {
-			await landEdit(
-				() =>
-					transaction.rows(PickListLine).update(
-						{
-							id: line.id,
-							status: PickListLineStatus.PENDING,
-							...(tenantId ? { tenantId } : {}),
-							...(organizationId ? { organizationId } : {})
-						} as FindOptionsWhere<PickListLine>,
-						outcome as QueryDeepPartialEntity<PickListLine>
-					),
-				'PICK_LIST_LINE_EDIT_CONFLICT',
-				'pick line',
-				line.id
-			);
+		await landEdit(
+			() =>
+				transaction.rows(PickListLine).update(
+					{
+						id: line.id,
+						status: PickListLineStatus.PENDING,
+						...(tenantId ? { tenantId } : {}),
+						...(organizationId ? { organizationId } : {})
+					} as FindOptionsWhere<PickListLine>,
+					outcome as QueryDeepPartialEntity<PickListLine>
+				),
+			'PICK_LIST_LINE_EDIT_CONFLICT',
+			'pick line',
+			line.id
+		);
+	}
 
-			await this.refreshListCounters(line.pickListId, true, transaction);
-		});
+	/**
+	 * @returns The inventory ledger. An outcome that moves stock is refused before its transaction when none is
+	 * registered (`shortfallMovements`, `substitutionMovements`), so an outcome with movements always reaches one.
+	 * @throws BadRequestException with `WAREHOUSE_STOCK_LEDGER_UNAVAILABLE` when none is registered.
+	 */
+	private ledger(): IWarehouseStockLedgerPort {
+		if (!this.stockLedger) {
+			throw new BadRequestException(
+				'WAREHOUSE_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so no stock movement can be written.'
+			);
+		}
+
+		return this.stockLedger;
+	}
+
+	/**
+	 * Reverses movements the ledger wrote outside an outcome's transaction that then failed.
+	 *
+	 * The ledger is append-only, so a movement is undone by its opposite, under the same reference and with a reason
+	 * that says why. A reversal that cannot be written is logged rather than thrown: the caller is told what failed the
+	 * outcome, and the stock that needs a hand correction is named.
+	 *
+	 * @param movements The movements to reverse.
+	 */
+	private async reverseMovements(movements: IWarehouseStockMovementRequest[]): Promise<void> {
+		for (const movement of [...movements].reverse()) {
+			try {
+				await this.ledger().recordMovement({
+					...movement,
+					quantity: subtractQuantities(0, movement.quantity),
+					reason: `REVERSAL: the pick outcome this movement belonged to was not recorded. ${movement.reason ?? ''}`.trim()
+				});
+			} catch (error) {
+				this.logger.error(
+					`A ${movement.quantity} movement of variant ${movement.variantId} for pick line ${movement.referenceId} could not be reversed: ${(error as Error)?.message}`
+				);
+			}
+		}
 	}
 
 	/**
@@ -576,13 +663,18 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	}
 
 	/**
-	 * Writes a shortfall back through the inventory capability.
+	 * The movement a shortfall is written back to stock with, through the inventory capability — written by
+	 * `recordOutcome`, in the outcome's transaction.
 	 *
 	 * @param line The line that came up short.
 	 * @param shortfall The quantity the bin did not hold.
+	 * @returns The movement.
 	 * @throws BadRequestException when there is something to correct and no ledger is registered.
 	 */
-	private async correctShortfall(line: PickListLine, shortfall: DecimalString): Promise<void> {
+	private async shortfallMovements(
+		line: PickListLine,
+		shortfall: DecimalString
+	): Promise<IWarehouseStockMovementRequest[]> {
 		if (!this.stockLedger) {
 			throw new BadRequestException(
 				'WAREHOUSE_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so the shortfall cannot be written back to stock.'
@@ -597,38 +689,41 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 
 		const list = await this.findListOrFail(line.pickListId);
 
-		await this.stockLedger.recordMovement({
-			warehouseId: list.warehouseId,
-			variantId: line.variantId,
-			binId: line.binId,
-			// A write-off, not a write-back (review R2-14). The bin was believed to hold what the list asked for and
-			// held less, so the book carries `shortfall` units nobody can pick: they come off, and on-hand meets the
-			// shelf. The correction used to be `+shortfall`, on the premise that the shipment had already consumed
-			// the requested units — but nothing consumes stock before or at picking (review R2-05: the reservation
-			// is never consumed), so every short pick raised on-hand by the units that were missing. When R2-05 wires
-			// the sale side, this and the substitution below are revisited together: a shipment that consumed the
-			// requested quantity has already taken these units off, and this write-off would then be a second one.
-			quantity: subtractQuantities(0, shortfall),
-			kind: WarehouseStockMovementKind.ADJUSTMENT,
-			referenceType: 'PICK_LIST_LINE',
-			referenceId: line.id,
-			reason: 'SHORT_PICK: the bin held less than the pick list asked for; the units it never had are written off.'
-		});
+		return [
+			{
+				warehouseId: list.warehouseId,
+				variantId: line.variantId,
+				binId: line.binId,
+				// A write-off, not a write-back (review R2-14). The bin was believed to hold what the list asked for and
+				// held less, so the book carries `shortfall` units nobody can pick: they come off, and on-hand meets the
+				// shelf. The correction used to be `+shortfall`, on the premise that the shipment had already consumed
+				// the requested units — but nothing consumes stock before or at picking (review R2-05: the reservation
+				// is never consumed), so every short pick raised on-hand by the units that were missing. When R2-05 wires
+				// the sale side, this and the substitution below are revisited together: a shipment that consumed the
+				// requested quantity has already taken these units off, and this write-off would then be a second one.
+				quantity: subtractQuantities(0, shortfall),
+				kind: WarehouseStockMovementKind.ADJUSTMENT,
+				referenceType: 'PICK_LIST_LINE',
+				referenceId: line.id,
+				reason: 'SHORT_PICK: the bin held less than the pick list asked for; the units it never had are written off.'
+			}
+		];
 	}
 
 	/**
-	 * Writes the two movements a substitution implies.
+	 * The two movements a substitution implies — written by `recordOutcome`, in the outcome's transaction.
 	 *
 	 * @param line The line that was substituted.
 	 * @param input The substitute.
 	 * @param binId The bin the substitute was taken from.
+	 * @returns The movements.
 	 * @throws BadRequestException when there is something to move and no ledger is registered.
 	 */
-	private async writeSubstitutionMovements(
+	private async substitutionMovements(
 		line: PickListLine,
 		input: ISubstitutionInput,
 		binId?: ID
-	): Promise<void> {
+	): Promise<IWarehouseStockMovementRequest[]> {
 		if (!this.stockLedger) {
 			throw new BadRequestException(
 				'WAREHOUSE_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so the swapped quantities cannot be written to the ledger.'
@@ -644,27 +739,28 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 		const list = await this.findListOrFail(line.pickListId);
 		const quantity = normalizeQuantity(input.substituteQuantity);
 
-		await this.stockLedger.recordMovement({
-			warehouseId: list.warehouseId,
-			variantId: line.variantId,
-			binId,
-			quantity,
-			kind: WarehouseStockMovementKind.ADJUSTMENT,
-			referenceType: 'PICK_LIST_LINE',
-			referenceId: line.id,
-			reason: 'SUBSTITUTION: the requested variant was not taken, so it goes back on the level.'
-		});
-
-		await this.stockLedger.recordMovement({
-			warehouseId: list.warehouseId,
-			variantId: input.substituteVariantId,
-			binId,
-			quantity: subtractQuantities(0, quantity),
-			kind: WarehouseStockMovementKind.SALE,
-			referenceType: 'PICK_LIST_LINE',
-			referenceId: line.id,
-			reason: 'SUBSTITUTION: the substitute variant left the building instead.'
-		});
+		return [
+			{
+				warehouseId: list.warehouseId,
+				variantId: line.variantId,
+				binId,
+				quantity,
+				kind: WarehouseStockMovementKind.ADJUSTMENT,
+				referenceType: 'PICK_LIST_LINE',
+				referenceId: line.id,
+				reason: 'SUBSTITUTION: the requested variant was not taken, so it goes back on the level.'
+			},
+			{
+				warehouseId: list.warehouseId,
+				variantId: input.substituteVariantId,
+				binId,
+				quantity: subtractQuantities(0, quantity),
+				kind: WarehouseStockMovementKind.SALE,
+				referenceType: 'PICK_LIST_LINE',
+				referenceId: line.id,
+				reason: 'SUBSTITUTION: the substitute variant left the building instead.'
+			}
+		];
 	}
 
 	/**
