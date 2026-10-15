@@ -37,6 +37,8 @@ import {
 } from './commands';
 import { TimeLogUpdateHandler } from './commands/handlers/time-log-update.handler';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
+import { TimeSlotBulkDeleteCommand } from '../time-slot/commands';
+import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-slot-bulk-delete.handler';
 import { generateTimeSlots } from '../time-slot/utils';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
@@ -636,9 +638,13 @@ describe('TimeLogService', () => {
 						organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true, allowManualTime: true }
 					})
 				);
-				// The stored log, with the slots it owns (the service reads them before a move).
+				// The stored log as the service reads it (its own instance), with the slots it is linked to.
 				jest.spyOn(manualService, 'findOneByIdString').mockImplementation(async () =>
-					Object.assign(row, { timeSlots: slots.filter((slot) => !slot.deletedAt) })
+					Object.assign(new TimeLog(), row, {
+						timeSlots: slots.filter(
+							(slot) => !slot.deletedAt && slot.timeLogs.some((log) => log.id === row.id)
+						)
+					})
 				);
 
 				const timeLogRepository = {
@@ -647,7 +653,17 @@ describe('TimeLogService', () => {
 						Object.assign(row, changes);
 						return { affected: 1 };
 					}),
-					save: jest.fn(async (log: TimeLog) => log)
+					// Saving a log with `timeSlots` makes them its slots (the join rows), as TypeORM persists the relation.
+					save: jest.fn(async (log: TimeLog) => {
+						if (Array.isArray(log.timeSlots)) {
+							const linked = new Set(log.timeSlots.map((slot) => slot.id));
+							for (const slot of slots.filter((stored) => !stored.deletedAt)) {
+								const others = slot.timeLogs.filter((timeLog) => timeLog.id !== log.id);
+								slot.timeLogs = linked.has(slot.id) ? [...others, { id: log.id }] : others;
+							}
+						}
+						return log;
+					})
 				};
 				const timeSlotRepository = {
 					createQueryBuilder: () => {
@@ -663,6 +679,7 @@ describe('TimeLogService', () => {
 								Object.assign(params, values),
 								builder
 							),
+							getParameters: () => params,
 							getMany: async () =>
 								slots.filter(
 									(slot) =>
@@ -670,41 +687,47 @@ describe('TimeLogService', () => {
 										slot.organizationId === params.organizationId &&
 										slot.tenantId === params.tenantId &&
 										slot.employeeId === params.employeeId &&
-										(params.startTimes as Date[]).some(
-											(time) => time.getTime() === slot.startedAt.getTime()
-										)
+										(!params.startTimes ||
+											(params.startTimes as Date[]).some(
+												(time) => time.getTime() === slot.startedAt.getTime()
+											)) &&
+										(!params.timeSlotsIds || (params.timeSlotsIds as string[]).includes(slot.id))
 								)
 						};
 						return builder;
 					},
-					softRemove: jest.fn(async (removed: Slot[]) => {
-						removed.forEach((slot) => (slot.deletedAt = new Date()));
+					softRemove: jest.fn(async (removed: Slot | Slot[]) => {
+						[removed].flat().forEach((slot) => (slot.deletedAt = new Date()));
 						return removed;
 					})
 				};
 				const timeSlotService = {
 					generateTimeSlots: (start: Date, end: Date) => generateTimeSlots(start, end),
-					// As TimeSlotBulkCreateHandler: a slot the employee already has at that start is not created again.
+					// As TimeSlotBulkCreateHandler: a slot the employee already has at that start is not created again
+					// (nor linked); a new one is linked to the slot's `timeLogId`; the employee's slots at those starts
+					// are returned (what its merge answers).
 					bulkCreate: jest.fn(async (created: any[], employeeId: string, organizationId: string) => {
+						const starts = created.map((slot) => new Date(slot.startedAt).getTime());
 						const missing = created.filter(
 							(slot) =>
 								!slotsOf(employeeId).some(
 									(existing) => existing.startedAt.getTime() === new Date(slot.startedAt).getTime()
 								)
 						);
-						const saved = missing.map((slot, index) => ({
-							...slot,
-							id: `slot-${employeeId}-${index}`,
-							employeeId,
-							organizationId,
-							startedAt: new Date(slot.startedAt),
-							timeLogs: [{ id: slot.timeLogId }],
-							screenshots: [],
-							activities: [],
-							timeSlotMinutes: []
-						}));
-						slots.push(...saved);
-						return saved;
+						slots.push(
+							...missing.map((slot, index) => ({
+								...slot,
+								id: `slot-${employeeId}-${index}`,
+								employeeId,
+								organizationId,
+								startedAt: new Date(slot.startedAt),
+								timeLogs: [{ id: slot.timeLogId }],
+								screenshots: [],
+								activities: [],
+								timeSlotMinutes: []
+							}))
+						);
+						return slotsOf(employeeId).filter((slot) => starts.includes(slot.startedAt.getTime()));
 					})
 				};
 				const handler = new TimeLogUpdateHandler(
@@ -715,9 +738,14 @@ describe('TimeLogService', () => {
 					timeSlotService as any
 				);
 				Object.defineProperty(handler, 'ormType', { value: MultiORMEnum.TypeORM });
+				// The slot cleanup the log-delete path uses, real, over the same scripted slots.
+				const bulkDelete = new TimeSlotBulkDeleteHandler(timeSlotRepository as any, {} as any);
+				Object.defineProperty(bulkDelete, 'ormType', { value: MultiORMEnum.TypeORM });
+				jest.spyOn(console, 'log').mockImplementation(() => undefined);
 
 				execute.mockImplementation(async (command: unknown) => {
 					if (command instanceof TimeLogUpdateCommand) return handler.execute(command);
+					if (command instanceof TimeSlotBulkDeleteCommand) return bulkDelete.execute(command);
 					if (command instanceof IGetConflictTimeLogCommand) return [];
 					if (command instanceof TimesheetFirstOrCreateCommand)
 						return { id: `timesheet-${command.employeeId}` };
@@ -730,14 +758,66 @@ describe('TimeLogService', () => {
 				});
 			});
 
-			const move = () =>
+			const move = (startedAt = STARTED_AT, stoppedAt = STOPPED_AT) =>
 				manualService.updateManualTime('log-1', {
 					...request,
 					employeeId: NEXT,
 					organizationId: EMPLOYEE_ORGANIZATION_ID,
-					startedAt: STARTED_AT,
-					stoppedAt: STOPPED_AT
+					startedAt,
+					stoppedAt
 				});
+
+			/** One stored slot of the scripted tenant. */
+			const slot = (id: string, employeeId: string, at: string, logs: string[]): Slot => ({
+				id,
+				employeeId,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				tenantId: TENANT_ID,
+				startedAt: new Date(at),
+				timeLogs: logs.map((log) => ({ id: log })),
+				screenshots: [],
+				activities: [],
+				timeSlotMinutes: []
+			});
+			const logsOf = (stored: Slot) => stored.timeLogs.map((log) => log.id).sort();
+
+			it("moving one of two logs that share a slot keeps the other log's time for the previous employee", async () => {
+				// 09:00–09:05 (this log) and 09:05–09:10 (log-2, the previous employee's too) share the 09:00 slot.
+				Object.assign(row, {
+					startedAt: new Date('2026-01-05T09:00:00.000Z'),
+					stoppedAt: new Date('2026-01-05T09:05:00.000Z')
+				});
+				slots = [slot('shared', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1', 'log-2'])];
+
+				await move(row.startedAt, row.stoppedAt);
+
+				// As deleting the log would: the slot log-2 still holds stays the previous employee's, without this log.
+				expect(slotsOf(PREVIOUS).map((stored) => [stored.id, logsOf(stored)])).toEqual([['shared', ['log-2']]]);
+				// ...and the log's time is the new employee's.
+				expect(slotsOf(NEXT).map((stored) => [stored.startedAt.toISOString(), logsOf(stored)])).toEqual([
+					['2026-01-05T09:00:00.000Z', ['log-1']]
+				]);
+			});
+
+			it("a moved log is linked to the new employee's existing slot at the same boundary", async () => {
+				// The new employee already has the 09:00 slot (their own 09:00–09:05 log-3); this log is 09:05–09:10.
+				Object.assign(row, {
+					startedAt: new Date('2026-01-05T09:05:00.000Z'),
+					stoppedAt: new Date('2026-01-05T09:10:00.000Z')
+				});
+				slots = [
+					slot('previous-0900', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1']),
+					slot('next-0900', NEXT, '2026-01-05T09:00:00.000Z', ['log-3'])
+				];
+
+				await move(row.startedAt, row.stoppedAt);
+
+				expect(slotsOf(PREVIOUS)).toEqual([]);
+				// The slot is not created twice; the moved log is linked to the one the new employee has.
+				expect(slotsOf(NEXT).map((stored) => [stored.id, logsOf(stored)])).toEqual([
+					['next-0900', ['log-1', 'log-3']]
+				]);
+			});
 
 			it("a same-organization employee move re-homes the log's timesheet and slots and recalculates both employees", async () => {
 				await move();
