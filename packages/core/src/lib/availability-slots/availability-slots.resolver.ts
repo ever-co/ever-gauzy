@@ -232,17 +232,17 @@ export class AvailabilitySlotsResolver {
 	}
 
 	/**
-	 * Writes a slot under an identifier the caller states.
+	 * Updates the slot the input identifies.
 	 *
-	 * The service is the one the `PUT /:id` route calls, and the call is the route's own: **an upsert**
-	 * through `create`, which the delivered service documents as writing a new row or updating the
-	 * existing one the stated identifier names. The delivered route merges the identifier from the path
-	 * into the body; this surface has no path, so the identifier travels inside the input and is read
-	 * from the same place the write reads it.
+	 * The service method is the one the `PUT /:id` route calls: it updates a slot the caller can read — its
+	 * own, or any when it may act for other employees — and answers 404 for any other identifier, rather than
+	 * the upsert on any identifier of the tenant both surfaces used to make. The route takes the identifier
+	 * from the path; this surface has no path, so the identifier travels inside the input.
 	 */
 	@Mutation('updateAvailabilitySlot')
 	async updateAvailabilitySlot(@Args('input') input: IUpdateAvailabilitySlotInput): Promise<AvailabilitySlot> {
-		return await this.availabilitySlotsService.create({ ...input } as unknown as AvailabilitySlot);
+		const { id, ...values } = input;
+		return await this.availabilitySlotsService.updateSlot(id, values as unknown as AvailabilitySlot);
 	}
 
 	/**
