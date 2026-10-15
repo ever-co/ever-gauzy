@@ -110,10 +110,10 @@ export class ChannelWarehouseResolver {
 		return await this.service.assign(input);
 	}
 
-	/** Disables a location for a context. */
+	/** Disables a location for a context; answers whether an assignment of the caller's tenant was removed. */
 	@Mutation('unassignChannelWarehouse')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	async unassignChannelWarehouse(@Args('channelId') channelId: string, @Args('warehouseId') warehouseId: string): Promise<any> {
-		return await this.service.unassign(channelId, warehouseId).then(() => true);
+	async unassignChannelWarehouse(@Args('channelId') channelId: string, @Args('warehouseId') warehouseId: string): Promise<boolean> {
+		return await this.service.unassign(channelId, warehouseId);
 	}
 }

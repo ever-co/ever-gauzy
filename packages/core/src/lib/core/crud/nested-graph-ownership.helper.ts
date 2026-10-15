@@ -253,13 +253,38 @@ function isGlobalRowWritable(ref: IGraphRef, row: IStoredRow): boolean {
 }
 
 /**
- * Groups every nested object / id of the given nodes by the relation that carries it.
+ * The foreign-key column an owner-side relation is stored through, when it is a column of its own
+ * (`cartId` beside `cart`).
+ *
+ * A payload names the related row either way, and `save()` / `update()` store either: the check used to
+ * read the relation member only, so `{ cartId: <another tenant's cart> }` passed where
+ * `{ cart: { id: … } }` was refused (SEC-D-03).
+ */
+function foreignKeyPropertyOf(relation: RelationMetadata): string | undefined {
+	if (!(relation.isManyToOne || relation.isOneToOneOwner) || relation.joinColumns?.length !== 1) {
+		return undefined;
+	}
+	const property = relation.joinColumns[0].propertyName;
+	return property && property !== relation.propertyName ? property : undefined;
+}
+
+/**
+ * Groups every nested object / id of the given nodes by the relation that carries it — through the
+ * relation member, or through the foreign-key column the relation is stored in.
  */
 function collectReferences(level: IGraphNode[]): Map<RelationMetadata, IGraphRef[]> {
 	const refsByRelation = new Map<RelationMetadata, IGraphRef[]>();
 
 	for (const node of level) {
 		for (const relation of node.metadata.relations) {
+			const foreignKey = foreignKeyPropertyOf(relation);
+			const foreignKeyValue = foreignKey ? node.entity[foreignKey] : undefined;
+			if (isPlainValue(foreignKeyValue)) {
+				const refs = refsByRelation.get(relation) ?? [];
+				refs.push({ relation, node, value: foreignKeyValue, index: -1, id: foreignKeyValue as ID });
+				refsByRelation.set(relation, refs);
+			}
+
 			const raw = node.entity[relation.propertyName];
 			// Nothing to check, or a MikroORM Collection of loaded entities rather than request data.
 			if (raw === undefined || raw === null || typeof raw.getItems === 'function') {
