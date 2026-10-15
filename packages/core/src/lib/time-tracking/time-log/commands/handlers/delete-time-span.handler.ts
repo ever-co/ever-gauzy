@@ -39,6 +39,13 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			where: { id },
 			relations: { timeSlots: true }
 		});
+
+		// Callers send one command per slot of a conflicting log. When the new range covers that log, the
+		// command for its first slot deletes the whole log, so the next ones find nothing left to trim.
+		if (!log) {
+			return false;
+		}
+
 		const { startedAt, stoppedAt, employeeId, organizationId } = log;
 
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
