@@ -68,24 +68,47 @@ for (const file of walk(join(ROOT, 'packages'), (path) => path.endsWith(`${sep}p
 	}
 }
 
-/** The `@gauzy` packages apps/api loads at runtime: value imports, `require` and `import()`, not `import type`. */
+/**
+ * The `@gauzy` packages apps/api loads at runtime: value imports and re-exports, side-effect imports, `require` and
+ * `import()` — not `import type` / `export type`, and not a declaration whose every named specifier is `type`, which
+ * TypeScript erases just the same (`import { type A, type B } from …`).
+ */
 const required = new Set();
 /** `@gauzy/<name>` → the first apps/api file that imports it, for the report. */
 const importedFrom = new Map();
+/** `import|export <clause> from '@gauzy/<name>'`, with the clause captured so a type-only one can be told apart. */
+const DECLARATION = /^\s*(?:import|export)\s+(?!type\s)([^;]*?)\s+from\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm;
 const RUNTIME = [
-	/^\s*import\s+(?!type\s)[^;]*?\sfrom\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm,
 	/^\s*import\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm,
-	/^\s*export\s+(?!type\s)[^;]*?\sfrom\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm,
 	/\brequire\(\s*['"](@gauzy\/[a-z0-9-]+)['"]\s*\)/g,
 	/\bimport\(\s*['"](@gauzy\/[a-z0-9-]+)['"]\s*\)/g
 ];
-for (const file of walk(join(ROOT, API_SOURCES), (path) => path.endsWith('.ts') && !path.endsWith('.spec.ts'))) {
+
+/** True when a declaration's clause is only `{ … }` and every specifier in it is `type …`. */
+function typeOnly(clause) {
+	const named = clause.trim().match(/^\{([\s\S]*)\}$/);
+	if (!named) return false; // a default or namespace binding, or `export *`, is a value
+	const specifiers = named[1]
+		.split(',')
+		.map((specifier) => specifier.trim())
+		.filter(Boolean);
+	return specifiers.length > 0 && specifiers.every((specifier) => /^type\s/.test(specifier));
+}
+
+// The API build compiles neither `.spec.ts` nor `.test.ts` (apps/api/tsconfig.app.json), so neither can require a package.
+const isRuntimeSource = (path) => path.endsWith('.ts') && !path.endsWith('.spec.ts') && !path.endsWith('.test.ts');
+for (const file of walk(join(ROOT, API_SOURCES), isRuntimeSource)) {
 	const source = readFileSync(file, 'utf8');
+	const names = [];
+	for (const match of source.matchAll(DECLARATION)) {
+		if (!typeOnly(match[1])) names.push(match[2]);
+	}
 	for (const pattern of RUNTIME) {
-		for (const match of source.matchAll(pattern)) {
-			required.add(match[1]);
-			if (!importedFrom.has(match[1])) importedFrom.set(match[1], toPosix(relative(ROOT, file)));
-		}
+		for (const match of source.matchAll(pattern)) names.push(match[1]);
+	}
+	for (const name of names) {
+		required.add(name);
+		if (!importedFrom.has(name)) importedFrom.set(name, toPosix(relative(ROOT, file)));
 	}
 }
 
@@ -114,7 +137,10 @@ const target = (name) => `file:../../../dist/packages/${workspace.get(name).dir}
  */
 function insert(text, block, names) {
 	const key = text.indexOf(`"${block}":`);
+	// Without the key, the first `{` would be the manifest's own top-level object — refuse rather than write there.
+	if (key === -1) throw new Error(`the manifest has no "${block}" block to insert into`);
 	const open = text.indexOf('{', key);
+	if (open === -1) throw new Error(`the manifest's "${block}" is not an object`);
 	// Manifest values are plain strings with no braces, so the first `}` at depth 0 closes the block.
 	let depth = 0;
 	let close = open;
