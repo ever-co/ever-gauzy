@@ -14,7 +14,8 @@
  *
  * The producer half — every move appended to the outbox through the write's own manager, and nothing for a move
  * that did not happen — is held by `fulfillment.service.spec.ts` ("announces every lifecycle move into the
- * outbox …", "announces nothing for a move that did not happen", "rolls the cancelation back …").
+ * outbox …", "announces nothing for a move that did not happen", and the rollback of a cancellation whose order cannot be
+ * re-derived).
  */
 jest.mock('@gauzy/core', () => {
 	const { SetMetadata } = require('@nestjs/common');

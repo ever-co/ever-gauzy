@@ -61,10 +61,10 @@ const ORG_A2 = 'organization-a2';
 
 /** The keys the doubled service holds, one per tenant and organization. */
 const KEYS = [
-	{ id: 'key-a', tenantId: TENANT_A, organizationId: ORG_A, entitlementId: 'right-a', status: 'REVOKED', keyPrefix: 'AAAA' },
-	{ id: 'key-a-2', tenantId: TENANT_A, organizationId: ORG_A, entitlementId: 'right-a-2', status: 'REVOKED', keyPrefix: 'AAAB' },
-	{ id: 'key-a2', tenantId: TENANT_A, organizationId: ORG_A2, entitlementId: 'right-a2', status: 'REVOKED', keyPrefix: 'AAAC' },
-	{ id: 'key-b', tenantId: TENANT_B, organizationId: 'organization-b', entitlementId: 'right-b', status: 'REVOKED', keyPrefix: 'BBBB' }
+	{ id: 'key-a', tenantId: TENANT_A, organizationId: ORG_A, entitlementId: 'right-a', status: 'REVOKED', keyPrefix: 'KEY1' },
+	{ id: 'key-a-2', tenantId: TENANT_A, organizationId: ORG_A, entitlementId: 'right-a-2', status: 'REVOKED', keyPrefix: 'KEY2' },
+	{ id: 'key-a2', tenantId: TENANT_A, organizationId: ORG_A2, entitlementId: 'right-a2', status: 'REVOKED', keyPrefix: 'KEY3' },
+	{ id: 'key-b', tenantId: TENANT_B, organizationId: 'organization-b', entitlementId: 'right-b', status: 'REVOKED', keyPrefix: 'KEY4' }
 ];
 
 /** Runs work as a signed-in user of one tenant and organization. */

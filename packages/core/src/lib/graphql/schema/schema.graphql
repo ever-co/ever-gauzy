@@ -25869,7 +25869,7 @@ The connection is re-read as the subscriber, so it is the row `integrationTenant
 synchronised record and no identifier of one travels with the fact.
 """
 type IntegrationSyncCompleted {
-  """The connection that finished synchronising."""
+  """The connection that finished synchronizing."""
   integrationTenant: IntegrationTenant!
 
   """The provider, as the connection names it (`GITHUB`, `HUBSTAFF`, …)."""

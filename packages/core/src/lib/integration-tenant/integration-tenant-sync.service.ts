@@ -13,9 +13,9 @@ import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-inte
 import { TypeOrmIntegrationTenantRepository } from './repository/type-orm-integration-tenant.repository';
 
 /**
- * The fact a connected integration appends when one of its synchronisations finishes.
+ * The fact a connected integration appends when one of its synchronizations finishes.
  *
- * One name for every provider, because the fact is the platform's — "this connection finished synchronising" — and
+ * One name for every provider, because the fact is the platform's — "this connection finished synchronizing" — and
  * the provider is in the payload (`name`), so a client follows every integration with one selection and narrows by
  * provider if it wants one.
  */
@@ -49,7 +49,7 @@ export interface IIntegrationSyncCompletion {
 }
 
 /**
- * Records that a connected integration finished synchronising: its `lastSyncedAt`, and the `integration_tenant.synced`
+ * Records that a connected integration finished synchronizing: its `lastSyncedAt`, and the `integration_tenant.synced`
  * fact `Subscription.integrationSyncCompleted` follows, in one transaction.
  *
  * Every integration used to stamp the moment on its own (`IntegrationTenantService.update(id, { lastSyncedAt })`), or
@@ -90,7 +90,7 @@ export class IntegrationTenantSyncService implements OnModuleInit {
 	/**
 	 * Stamps a connection as synchronised now and appends the fact, in one transaction.
 	 *
-	 * @param integrationTenantId The connection that finished synchronising.
+	 * @param integrationTenantId The connection that finished synchronizing.
 	 * @param completion The tenant it belongs to, and what the run handled.
 	 * @returns The connection as the stamp left it.
 	 * @throws BadRequestException when no tenant is known, so the write could not be scoped.

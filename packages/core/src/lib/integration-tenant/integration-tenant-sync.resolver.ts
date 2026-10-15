@@ -17,7 +17,7 @@ import { INTEGRATION_TENANT_SYNCED } from './integration-tenant-sync.service';
  * stated about itself.
  */
 export interface IIntegrationSyncCompleted {
-	/** The connection that finished synchronising, as `integrationTenant(id:)` reads it. */
+	/** The connection that finished synchronizing, as `integrationTenant(id:)` reads it. */
 	readonly integrationTenant: IntegrationTenant;
 	/** The provider, as the connection names it. */
 	readonly name: string;
@@ -33,7 +33,7 @@ export interface IIntegrationSyncCompleted {
 
 /**
  * The integration stream: a typed field over the `integration_tenant.synced` fact each integration appends when one
- * of its synchronisations finishes (`IntegrationTenantSyncService.recordSyncCompleted`).
+ * of its synchronizations finishes (`IntegrationTenantSyncService.recordSyncCompleted`).
  *
  * `Subscription.events(names: ["integration_tenant.synced"])` hands a client the untyped envelope;
  * `integrationSyncCompleted` hands it the connection as `integrationTenant(id:)` reads it, beside what the run stated —
