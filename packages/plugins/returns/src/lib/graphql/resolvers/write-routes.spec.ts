@@ -1073,7 +1073,11 @@ describe('the returns document — the eleven routes no field answered are decla
 		expect(inputMembers('UpdateOrderReturnInput').sort()).toEqual(
 			[...returnBody, VERSION_MEMBER].sort()
 		);
-		expect(inputMembers('RefundOrderReturnInput').sort()).toEqual([...refundBody, VERSION_MEMBER].sort());
+		// The refund also carries the retry key its route requires (review R3-09): REST reads it from the
+		// `Idempotency-Key` header, GraphQL from the input — the same reason the version is a member here.
+		expect(inputMembers('RefundOrderReturnInput').sort()).toEqual(
+			[...refundBody, VERSION_MEMBER, 'idempotencyKey'].sort()
+		);
 		expect(inputMembers('ShipOrderReturnInput').sort()).toEqual([...shipBody, VERSION_MEMBER].sort());
 
 		// The two resources with no version column state no version member either: `order_claim` and
@@ -1397,13 +1401,21 @@ describe('the eleven fields — the permission and the guards are the route’s'
 			);
 		}
 
-		// The divergence is a measurement, not a claim: §7.14 marks the refund and the shipping route "Yes
-		// (Idempotency-Key)" — required for the refund — and no `@Idempotent` stands on either route, so none
-		// stands on either field. A scope invented here would replay a GraphQL retry that REST lets through.
+		// The retry key is the route's on every field. §7.14 marks the refund "Yes (Idempotency-Key, required)":
+		// the refund route and its field both carry the `return.refund` scope (a retry after a lost answer must
+		// not give the money back twice — review R3-09); the shipping route still carries none, and neither does
+		// its field, so no field replays a retry its route lets through, or the other way round.
 		for (const { field, route, controller, resolver } of PARITY) {
-			expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, fieldsOf(resolver)[field])).toBeUndefined();
-			expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, handlersOf(controller)[route])).toBeUndefined();
+			expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, fieldsOf(resolver)[field])).toEqual(
+				Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, handlersOf(controller)[route])
+			);
 		}
+		const refund = PARITY.find(({ field }) => field === 'refundOrderReturn');
+		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, fieldsOf(refund.resolver)[refund.field])).toEqual({
+			scope: 'return.refund',
+			required: true,
+			resourceType: 'order_return'
+		});
 	});
 
 	it('runs the fields under the guard chain the routes run under', () => {
