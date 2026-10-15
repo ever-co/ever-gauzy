@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, Optional } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ID, IEmployee } from '@gauzy/contracts';
+import { TranslateService } from '@ngx-translate/core';
+import { EmployeeKindEnum, ID, IEmployee } from '@gauzy/contracts';
 
 @Component({
     selector: 'ngx-avatar',
@@ -54,7 +55,19 @@ export class AvatarComponent implements OnInit {
 		return this._name;
 	}
 
-	constructor(private readonly router: Router) {}
+	constructor(private readonly router: Router, @Optional() private readonly translate?: TranslateService) {}
+
+	/** Whether the employee is an agent employee (`kind = 'agent'`, e.g. an Ever Works agent). */
+	get isAgent(): boolean {
+		return this.employee?.kind === EmployeeKindEnum.AGENT;
+	}
+
+	/** The label of the agent badge, translated when a translation service is available. */
+	get agentLabel(): string {
+		const key = 'EMPLOYEES_PAGE.AGENT_BADGE';
+		const translated = this.translate?.instant(key);
+		return translated && translated !== key ? translated : 'Agent';
+	}
 
 	ngOnInit() {
 		if (this._employee) {

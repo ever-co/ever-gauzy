@@ -28,7 +28,8 @@ import {
 	ITag,
 	PermissionsEnum,
 	IFavorite,
-	BaseEntityEnum
+	BaseEntityEnum,
+	EmployeeKindEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
@@ -77,6 +78,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public bonusForSelectedMonth = 0;
 	public disableButton: boolean = true;
 	public includeDeleted: boolean = false;
+	/** The "Kind" filter: every employee (`''`), people only, or agent employees only. */
+	public kindFilter: '' | EmployeeKindEnum = '';
+	public readonly employeeKindEnum = EmployeeKindEnum;
 	public loading: boolean = false;
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
@@ -608,6 +612,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				where: {
 					organizationId,
 					tenantId,
+					...(this.kindFilter ? { kind: this.kindFilter } : {}), // People or agent employees only
 					...(this.filters.where ? this.filters.where : {}) // Include additional filter conditions
 				},
 				resultMap: (employee: IEmployee) => {
@@ -1023,6 +1028,17 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	changeIncludeDeleted(checked: boolean): void {
 		this.includeDeleted = checked;
+		this.refresh$.next(true);
+		this.employees$.next(true);
+	}
+
+	/**
+	 * Change the "Kind" filter (every employee, people only, or agent employees only) and refresh the list.
+	 *
+	 * @param kind The kind to list, or `''` for every employee.
+	 */
+	changeKindFilter(kind: '' | EmployeeKindEnum): void {
+		this.kindFilter = kind || '';
 		this.refresh$.next(true);
 		this.employees$.next(true);
 	}

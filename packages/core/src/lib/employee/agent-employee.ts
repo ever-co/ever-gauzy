@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { EmployeeKindEnum } from '@gauzy/contracts';
 
 /**
  * The domain an agent employee's login identity defaults to. Under the RFC 2606 `.invalid` top-level
@@ -26,4 +27,12 @@ export function isAgentEmail(email: string): boolean {
  */
 export function defaultAgentEmail(): string {
 	return `agent-${randomUUID()}@${DEFAULT_AGENT_EMAIL_DOMAIN}`;
+}
+
+/**
+ * Whether a value names an employee kind (`human` or `agent`). Used to accept a `kind` filter from a query
+ * string only when it is one of the two.
+ */
+export function isEmployeeKind(value: unknown): value is EmployeeKindEnum {
+	return value === EmployeeKindEnum.HUMAN || value === EmployeeKindEnum.AGENT;
 }

@@ -1949,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Tipo",
+		"KIND_ALL": "Tutti",
+		"KIND_HUMAN": "Persone",
+		"KIND_AGENT": "Agenti",
+		"AGENT_BADGE": "Agente",
+		"MANAGED_BY_EVER_WORKS": "Gestito da Ever Works: il nome e il profilo di questo agente si modificano in Ever Works e vengono sincronizzati con Gauzy.",
+		"MANAGED_EXTERNALLY": "Gestito esternamente: il nome e il profilo di questo agente si modificano nel sistema di origine e vengono sincronizzati con Gauzy.",
+		"OPEN_MANAGED_AGENT": "Apri la pagina dell'agente",
 		"HEADER": "Gestire dipendenti",
 		"ADD_EMPLOYEE": "Aggiungi dipendente",
 		"ACTIVE": "Attivo",

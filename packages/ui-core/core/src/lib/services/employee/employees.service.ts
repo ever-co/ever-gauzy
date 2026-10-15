@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, Observable } from 'rxjs';
+import { catchError, firstValueFrom, Observable, of } from 'rxjs';
 import {
 	IEmployee,
+	IEmployeeAgentProfile,
 	IEmployeeFindInput,
 	IEmployeeCreateInput,
 	IEmployeeUpdateInput,
@@ -87,6 +88,21 @@ export class EmployeesService {
 		return this.http.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 			params: toParams({ relations })
 		});
+	}
+
+	/**
+	 * The agent profile of an agent employee (`kind = 'agent'`), or `null` when the employee has none
+	 * (a person, or an agent provisioned without a profile: the route answers 404).
+	 *
+	 * @param id - The employee ID.
+	 * @returns A promise of the agent profile, or `null`.
+	 */
+	getAgentProfile(id: ID): Promise<IEmployeeAgentProfile | null> {
+		return firstValueFrom(
+			this.http
+				.get<IEmployeeAgentProfile>(`${API_PREFIX}/employee/${id}/agent-profile`)
+				.pipe(catchError(() => of(null)))
+		);
 	}
 
 	/**

@@ -1949,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "类型",
+		"KIND_ALL": "全部",
+		"KIND_HUMAN": "人员",
+		"KIND_AGENT": "智能体",
+		"AGENT_BADGE": "智能体",
+		"MANAGED_BY_EVER_WORKS": "由 Ever Works 管理：此智能体的名称和资料在 Ever Works 中修改，并同步到 Gauzy。",
+		"MANAGED_EXTERNALLY": "由外部系统管理：此智能体的名称和资料在其来源系统中修改，并同步到 Gauzy。",
+		"OPEN_MANAGED_AGENT": "打开智能体页面",
 		"HEADER": "管理员工",
 		"ADD_EMPLOYEE": "添加员工",
 		"ACTIVE": "活动",

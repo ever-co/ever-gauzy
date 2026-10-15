@@ -19,7 +19,9 @@
 			<a class="link-text" (click)="edit(id)" [title]="name">{{ name }}</a>
 			} @if (isOption) {
 			<div>{{ name }}</div>
-			} } @if (caption) {
+			} } @if (isAgent) {
+			<span class="agent-badge" [title]="agentLabel">{{ agentLabel }}</span>
+			} @if (caption) {
 			<div class="text-caption caption">
 				@if (appendCaption) {
 				{{ appendCaption }}

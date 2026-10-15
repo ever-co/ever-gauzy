@@ -1993,6 +1993,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "סוג",
+		"KIND_ALL": "הכול",
+		"KIND_HUMAN": "אנשים",
+		"KIND_AGENT": "סוכנים",
+		"AGENT_BADGE": "סוכן",
+		"MANAGED_BY_EVER_WORKS": "מנוהל על ידי Ever Works: השם והפרופיל של סוכן זה משתנים ב-Ever Works ומסונכרנים ל-Gauzy.",
+		"MANAGED_EXTERNALLY": "מנוהל חיצונית: השם והפרופיל של סוכן זה משתנים במערכת שממנה הוא מגיע ומסונכרנים ל-Gauzy.",
+		"OPEN_MANAGED_AGENT": "פתח את דף הסוכן",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"ACTIVE": "פעיל",

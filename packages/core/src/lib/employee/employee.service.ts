@@ -53,7 +53,7 @@ import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
 import { EmployeeAgentProfile, Organization, Role, User } from '../core/entities/internal';
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
-import { defaultAgentEmail, isAgentEmail } from './agent-employee';
+import { defaultAgentEmail, isAgentEmail, isEmployeeKind } from './agent-employee';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -722,6 +722,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							}
 						});
 
+						// People or agents (`kind`), when the caller names a valid kind
+						if (isEmployeeKind(mWhere.kind)) {
+							mFilter.kind = mWhere.kind;
+						}
+
 						// Apply tag filter
 						if (isNotEmpty(mWhere.tags)) {
 							mFilter.tags = { id: { $in: mWhere.tags } };
@@ -798,7 +803,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							isActive: true,
 							isArchived: true,
 							isAway: true,
-							isOnline: true
+							isOnline: true,
+							kind: true
 						},
 						...(options && options.relations
 							? { relations: parseFindOptionsRelations(options.relations) }
@@ -838,6 +844,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 											web.andWhere(p(`${qb.alias}.${key} = :${key}`), { [key]: where[key] });
 										}
 									});
+
+									// People or agents (`kind`), when the caller names a valid kind
+									if (isEmployeeKind(where.kind)) {
+										web.andWhere(p(`"${qb.alias}"."kind" = :kind`), { kind: where.kind });
+									}
 								})
 							);
 

@@ -1835,6 +1835,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Kind",
+		"KIND_ALL": "All",
+		"KIND_HUMAN": "People",
+		"KIND_AGENT": "Agents",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Managed by Ever Works: this agent's name and profile are changed in Ever Works and synced to Gauzy.",
+		"MANAGED_EXTERNALLY": "Managed externally: this agent's name and profile are changed in the system it comes from and synced to Gauzy.",
+		"OPEN_MANAGED_AGENT": "Open agent page",
 		"HEADER": "crwdns10268:0crwdne10268:0",
 		"ADD_EMPLOYEE": "crwdns220:0crwdne220:0",
 		"ACTIVE": "crwdns222:0crwdne222:0",
