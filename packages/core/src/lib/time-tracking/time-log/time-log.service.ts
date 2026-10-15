@@ -31,8 +31,10 @@ import {
 	IEmployee,
 	IOrganization,
 	IPaginationParam,
-	ID
+	ID,
+	RolesEnum
 } from '@gauzy/contracts';
+import { environment as env } from '@gauzy/config';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
@@ -1529,6 +1531,27 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Refuses manual time in an organization whose policy forbids it.
+	 *
+	 * The rule is `OrganizationPermissionGuard`'s for `ALLOW_MANUAL_TIME`, applied to the organization the log
+	 * is written under: the policy must be on — a missing or unset policy refuses, as the guard's query counts
+	 * only `allowManualTime = true` — and the guard's one exemption holds here too, a SUPER_ADMIN while the
+	 * installation lets that role bypass the organization policy (`allowSuperAdminRole`).
+	 *
+	 * @param organization The employee's organization, as the employee was read with it.
+	 * @throws ForbiddenException When the organization does not allow manual time.
+	 */
+	private assertManualTimeAllowedIn(organization: IOrganization | undefined): void {
+		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
+			return;
+		}
+
+		if (!organization?.allowManualTime) {
+			throw new ForbiddenException("Manual time is not allowed in the employee's organization");
+		}
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1554,6 +1577,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const organizationId = employee.organizationId ?? request.organizationId;
 
 			await this.assertCanWriteTimeFor(employeeId, organizationId);
+
+			// The manual-time policy of that same organization. `OrganizationPermissionGuard` judges the
+			// organization the request names and the caller's own, never the employee's — and a caller who may
+			// choose the employee (CHANGE_SELECTED_EMPLOYEE reaches every employee of the tenant) could name a
+			// permissive organization, or none, and record time in an organization whose policy forbids it.
+			this.assertManualTimeAllowedIn(employee.organization);
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;

@@ -5,9 +5,10 @@
  */
 import '../../core/entities/internal';
 
-import { ExecutionContext, RequestMethod } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
-import { PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { environment as env } from '@gauzy/config';
+import { PermissionsEnum, RolesEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { BulkExecutor } from '../../api/bulk-executor.service';
 import { readBulkOperation } from '../../api/bulk.decorator';
@@ -41,6 +42,10 @@ const NO_MANUAL_TIME_ORGANIZATION = '00000000-0000-4000-8000-000000000003';
 const EMPLOYEE = '00000000-0000-4000-8000-000000000020';
 const UNMANAGED_EMPLOYEE = '00000000-0000-4000-8000-000000000021';
 const OWN_EMPLOYEE = '00000000-0000-4000-8000-000000000022';
+/** An employee of the organization whose policy forbids manual time — reachable by a caller who may choose one. */
+const NO_MANUAL_TIME_EMPLOYEE = '00000000-0000-4000-8000-000000000023';
+/** What the manual-time create answers for an employee whose organization's policy forbids manual time. */
+const MANUAL_TIME_FORBIDDEN = "Manual time is not allowed in the employee's organization";
 
 /** The grants of the caller, as the platform's field visibility reads them. */
 function visibilityFor(granted: PermissionsEnum[]): FieldVisibility {
@@ -73,14 +78,16 @@ function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 	const trimmed: string[] = [];
 	const guarded: Array<{ handler: unknown; organizationId: unknown }> = [];
 
+	const allowsManualTime = { futureDateAllowed: false, allowManualTime: true };
 	const employees: Record<string, object> = {
-		[EMPLOYEE]: { id: EMPLOYEE, organizationId: ORGANIZATION, organization: { futureDateAllowed: false } },
-		[UNMANAGED_EMPLOYEE]: {
-			id: UNMANAGED_EMPLOYEE,
-			organizationId: ORGANIZATION,
-			organization: { futureDateAllowed: false }
-		},
-		[OWN_EMPLOYEE]: { id: OWN_EMPLOYEE, organizationId: ORGANIZATION, organization: { futureDateAllowed: false } }
+		[EMPLOYEE]: { id: EMPLOYEE, organizationId: ORGANIZATION, organization: allowsManualTime },
+		[UNMANAGED_EMPLOYEE]: { id: UNMANAGED_EMPLOYEE, organizationId: ORGANIZATION, organization: allowsManualTime },
+		[OWN_EMPLOYEE]: { id: OWN_EMPLOYEE, organizationId: ORGANIZATION, organization: allowsManualTime },
+		[NO_MANUAL_TIME_EMPLOYEE]: {
+			id: NO_MANUAL_TIME_EMPLOYEE,
+			organizationId: NO_MANUAL_TIME_ORGANIZATION,
+			organization: { futureDateAllowed: false, allowManualTime: false }
+		}
 	};
 	const employeeRepository = {
 		findOne: jest.fn(async ({ where }: { where: { id: string; tenantId: string } }) =>
@@ -253,6 +260,67 @@ describe('POST /timesheet/time-log/bulk — each item is POST /timesheet/time-lo
 		expect(logs).toHaveLength(1);
 	});
 
+	it('refuses an item whose employee belongs to an organization without manual time, whatever organization it names — as the single route does', async () => {
+		const { controller, guarded, logs } = surfaces();
+
+		// The policy guard judges the organization the body names and the caller's own, never the employee's, and a
+		// caller who may choose the employee reaches every employee of the tenant: this item names a permissive
+		// organization, the guard admits it, and the write would land in the employee's organization, whose policy
+		// forbids manual time. The service now asks that organization's policy itself.
+		const result = await controller.bulk({
+			items: [
+				interval('2026-10-01T09:00:00.000Z', '2026-10-01T10:00:00.000Z'),
+				interval('2026-10-02T09:00:00.000Z', '2026-10-02T10:00:00.000Z', {
+					employeeId: NO_MANUAL_TIME_EMPLOYEE
+				})
+			] as never
+		});
+		const single = await controller
+			.addManualTime(
+				interval('2026-10-03T09:00:00.000Z', '2026-10-03T10:00:00.000Z', {
+					employeeId: NO_MANUAL_TIME_EMPLOYEE
+				}) as never
+			)
+			.catch((thrown) => thrown);
+
+		expect(guarded.map((entry) => entry.organizationId)).toEqual([ORGANIZATION, ORGANIZATION]);
+		expect(result.failed).toEqual([
+			expect.objectContaining({ index: 1, code: ApiErrorCode.PERMISSION_DENIED, message: MANUAL_TIME_FORBIDDEN })
+		]);
+		expect(single).toBeInstanceOf(ForbiddenException);
+		expect((single as ForbiddenException).message).toBe(MANUAL_TIME_FORBIDDEN);
+		expect(logs.map((log) => log.employeeId)).toEqual([EMPLOYEE]);
+	});
+
+	it('CONTROL: records that item for a SUPER_ADMIN only while the installation lets the role bypass the policy, as the guard does', async () => {
+		jest.spyOn(RequestContext, 'hasRoles').mockImplementation((roles: RolesEnum[]) =>
+			roles.includes(RolesEnum.SUPER_ADMIN)
+		);
+		const previous = (env as any).allowSuperAdminRole;
+		const item = interval('2026-10-02T09:00:00.000Z', '2026-10-02T10:00:00.000Z', {
+			employeeId: NO_MANUAL_TIME_EMPLOYEE
+		});
+
+		try {
+			(env as any).allowSuperAdminRole = true;
+			const exempt = surfaces();
+			const applied = await exempt.controller.bulk({ items: [item] as never });
+
+			(env as any).allowSuperAdminRole = false;
+			const bound = surfaces();
+			const refused = await bound.controller
+				.bulk({ items: [item, { ...item }] as never })
+				.catch((thrown) => thrown);
+
+			expect(applied).toMatchObject({ succeededCount: 1, failedCount: 0 });
+			expect(exempt.logs.map((log) => log.employeeId)).toEqual([NO_MANUAL_TIME_EMPLOYEE]);
+			expect((refused as ApiException).code).toBe(ApiErrorCode.BULK_ALL_ITEMS_FAILED);
+			expect(bound.logs).toEqual([]);
+		} finally {
+			(env as any).allowSuperAdminRole = previous;
+		}
+	});
+
 	it('refuses, item by item, the employee the caller may not record for and the date the organization forbids', async () => {
 		const { controller, logs } = surfaces();
 
@@ -414,6 +482,37 @@ describe('bulkCreateTimeLogs — the same batch over GraphQL, each item `addManu
 			'2026-10-01T09:00:00.000Z',
 			'2026-10-03T09:00:00.000Z'
 		]);
+	});
+
+	it('refuses an item whose employee belongs to an organization without manual time, even when it names no organization', async () => {
+		const { resolver, logs } = surfaces();
+		const at = (day: string) => ({
+			startedAt: new Date(`2026-10-${day}T09:00:00.000Z`),
+			stoppedAt: new Date(`2026-10-${day}T10:00:00.000Z`)
+		});
+
+		// No organization in the item: the guard falls back to the caller's own and admits it; a permissive one: the
+		// guard admits it too. Either way the log would be the employee's organization's, whose policy is off.
+		const payload = await resolver.bulkCreateTimeLogs({
+			items: [
+				{ organizationId: ORGANIZATION, employeeId: EMPLOYEE, ...at('01') },
+				{ employeeId: NO_MANUAL_TIME_EMPLOYEE, ...at('02') },
+				{ organizationId: ORGANIZATION, employeeId: NO_MANUAL_TIME_EMPLOYEE, ...at('03') }
+			] as never
+		});
+		const single = await resolver
+			.addManualTime({ employeeId: NO_MANUAL_TIME_EMPLOYEE, ...at('04') } as never)
+			.catch((thrown) => thrown);
+
+		expect(
+			payload.results.map((result) => [result.index, result.ok, result.error?.code, result.error?.message])
+		).toEqual([
+			[0, true, undefined, undefined],
+			[1, false, ApiErrorCode.PERMISSION_DENIED, MANUAL_TIME_FORBIDDEN],
+			[2, false, ApiErrorCode.PERMISSION_DENIED, MANUAL_TIME_FORBIDDEN]
+		]);
+		expect(single).toBeInstanceOf(ForbiddenException);
+		expect(logs.map((log) => log.employeeId)).toEqual([EMPLOYEE]);
 	});
 });
 

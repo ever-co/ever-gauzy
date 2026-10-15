@@ -303,7 +303,11 @@ describe('TimeLogService', () => {
 							findOne: jest.fn().mockResolvedValue({
 								id: TARGET_EMPLOYEE_ID,
 								organizationId: EMPLOYEE_ORGANIZATION_ID,
-								organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true }
+								organization: {
+									id: EMPLOYEE_ORGANIZATION_ID,
+									futureDateAllowed: true,
+									allowManualTime: true
+								}
 							})
 						};
 					}
@@ -340,6 +344,22 @@ describe('TimeLogService', () => {
 			expect(commandsOfType(TimeLogCreateCommand)[0].input).toMatchObject({
 				organizationId: EMPLOYEE_ORGANIZATION_ID
 			});
+		});
+
+		it("addManualTime refuses when the employee's organization does not allow manual time, whatever the body names", async () => {
+			// The policy guard judged the body's organization (and the caller's own); the log is the employee's
+			// organization's, so that organization's policy is the one that has to allow it.
+			jest.spyOn(manualService as any, 'findEmployeeInTenant').mockResolvedValue({
+				id: TARGET_EMPLOYEE_ID,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true, allowManualTime: false }
+			});
+
+			await expect(manualService.addManualTime(request)).rejects.toThrow(
+				"Manual time is not allowed in the employee's organization"
+			);
+			// Refused before any conflict is read, trimmed or written.
+			expect(execute).not.toHaveBeenCalled();
 		});
 
 		describe("a team manager editing a member's log (no CHANGE_SELECTED_EMPLOYEE)", () => {
