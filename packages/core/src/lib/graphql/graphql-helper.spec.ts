@@ -103,7 +103,7 @@ describe('createGraphqlModuleOptions', () => {
 		});
 
 		it('holds the subscription socket to the same ceiling, before graphql-ws parses or validates', async () => {
-			// Greptile on #10651: the socket accepted a connection on the presence of a credential and then parsed and
+			// Review on #10651: the socket accepted a connection on the presence of a credential and then parsed and
 			// validated any document with no token ceiling — pre-authentication work, as on HTTP.
 			const options = await withEnv({ GRAPHQL_MAX_TOKENS: '' });
 			const socket = options.subscriptions?.['graphql-ws'] as {

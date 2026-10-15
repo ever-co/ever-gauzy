@@ -171,7 +171,7 @@ export function createSubscriptionServerOptions(options: SubscriptionTransportOp
 
 	return {
 		onConnect: (context: unknown) => acceptSubscriptionConnection(context),
-		// Refuses an oversized document before graphql-ws parses and validates it (Greptile on #10651): the socket
+		// Refuses an oversized document before graphql-ws parses and validates it (review on #10651): the socket
 		// accepts a connection on the presence of a credential, and the guards authenticate it only when an operation
 		// executes — so, as on HTTP, the parse and the quadratic validation are pre-authentication work.
 		onSubscribe: (_context: unknown, _id: string, payload: { query?: unknown }) =>

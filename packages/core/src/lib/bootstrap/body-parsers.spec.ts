@@ -46,7 +46,7 @@ describe('installBodyParsers', () => {
 	});
 
 	it('mounts the ceiling where the endpoint is configured, not at the default path', async () => {
-		// Greptile on #10651: Apollo serves `graphqlConfigOptions.path`; the ceiling was mounted at `/graphql` regardless.
+		// Review on #10651: Apollo serves `graphqlConfigOptions.path`; the ceiling was mounted at `/graphql` regardless.
 		const server = express();
 		installBodyParsers(server, { graphqlPath: graphqlEndpointPath('gql'), env: {} });
 		server.post('/gql', (req, res) => res.json({ ok: true }));

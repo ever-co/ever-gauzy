@@ -154,7 +154,7 @@ export function readPageSize(
 ): number {
 	// Every page the field states is read and the LARGEST is priced. A field may state its page in more than one
 	// place (`first` and `page: { first }`), and the resolver honours one of them by its own precedence; pricing the
-	// first one found let `first: 1, page: { first: 100 }` cost one row and fetch a hundred (Greptile on #10651).
+	// first one found let `first: 1, page: { first: 100 }` cost one row and fetch a hundred (review on #10651).
 	const sizes: number[] = [];
 	const collect = (argumentsOf: Array<{ name?: { value?: string }; value?: unknown }> | undefined): void => {
 		for (const argumentName of options.pageSizeArguments) {
