@@ -8995,6 +8995,15 @@ type Mutation {
   """Puts a withdrawn tag back."""
   recoverTag(id: ID!): Tag!
 
+  """
+  Files a batch of tags — each item exactly as `createTag` and `POST /tags` file one — and answers one
+  outcome per item. The batch `POST /tags/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTags(input: BulkCreateTagsInput!): BulkCreateTagsPayload!
+
   """Files a task."""
   createTask(input: CreateTaskInput!): Task!
 
@@ -24561,6 +24570,33 @@ type UserError {
   details: JSON
 }
 
+"""
+One item's outcome in a batch that creates rows: the row the item created, or the item's own failure.
+
+Shared by every create-only batch field (`bulkCreateTags`, `bulkCreateTasks`, …): each applies its items
+through the resource's single-item create, so an outcome has the same shape whatever the resource, and the
+index is part of it because a batch is answered in one piece — a caller that sent twenty items reads which
+of them applied without matching rows back to its request by hand.
+"""
+type BulkCreateItemResult {
+  """The item's position in the request."""
+  index: Int!
+
+  """Whether the item applied."""
+  ok: Boolean!
+
+  """The row the item created, when it applied."""
+  id: ID
+
+  """The resource that changed."""
+  resource: String
+
+  """
+  Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to.
+  """
+  error: UserError
+}
+
 """How far a durable multi-step operation has come."""
 enum OperationStatus {
   PENDING
@@ -38268,6 +38304,50 @@ input UpdateTagInput {
   tagTypeId: ID
   organizationTeamId: ID
   organizationId: ID
+}
+
+"""
+A batch of tags to file, as `bulkCreateTags` takes it: the body `POST /tags/bulk` accepts plus the retry
+key.
+
+Each item is a `CreateTagInput` and is filed exactly as `createTag` files one, so an item is refused for
+the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it is
+optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateTagsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateTagInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of tags adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTagsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """One unit of work."""
