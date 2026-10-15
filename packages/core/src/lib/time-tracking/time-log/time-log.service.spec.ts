@@ -593,6 +593,8 @@ describe('TimeLogService', () => {
 				screenshots: unknown[];
 				activities: unknown[];
 				timeSlotMinutes: unknown[];
+				keyboard?: number;
+				mouse?: number;
 				deletedAt?: Date;
 			};
 
@@ -799,6 +801,26 @@ describe('TimeLogService', () => {
 				]);
 			});
 
+			it("keeps the previous employee's slot at one of the log's start times when another log holds it and this one does not", async () => {
+				// 09:05–09:15 covers the 09:00 and 09:10 slots; the 09:10 slot is log-2's alone (this log was never
+				// linked to it). The previous employee's slots are read by start time, so only the link decides.
+				Object.assign(row, {
+					startedAt: new Date('2026-01-05T09:05:00.000Z'),
+					stoppedAt: new Date('2026-01-05T09:15:00.000Z')
+				});
+				slots = [
+					slot('mine-0900', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1']),
+					slot('neighbour-0910', PREVIOUS, '2026-01-05T09:10:00.000Z', ['log-2'])
+				];
+
+				await move(row.startedAt, row.stoppedAt);
+
+				expect(slotsOf(PREVIOUS).map((stored) => [stored.id, logsOf(stored)])).toEqual([
+					['neighbour-0910', ['log-2']]
+				]);
+				expect(slots.find((stored) => stored.id === 'mine-0900')?.deletedAt).toBeInstanceOf(Date);
+			});
+
 			it("a moved log is linked to the new employee's existing slot at the same boundary", async () => {
 				// The new employee already has the 09:00 slot (their own 09:00–09:05 log-3); this log is 09:05–09:10.
 				Object.assign(row, {
@@ -833,6 +855,20 @@ describe('TimeLogService', () => {
 				expect([...recalculated].sort()).toEqual([`timesheet-${NEXT}`, `timesheet-${PREVIOUS}`].sort());
 				expect([...workedHours].sort()).toEqual([NEXT, PREVIOUS].sort());
 			});
+
+			it.each(['keyboard', 'mouse'] as const)(
+				'refuses to move a log one of whose slots carries %s activity alone',
+				async (input) => {
+					slots[4][input] = 12;
+
+					const refusal = await move().catch((thrown) => thrown);
+
+					expect(refusal).toBeInstanceOf(ForbiddenException);
+					expect((refusal as ForbiddenException).message).toBe(TRACKED);
+					expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+					expect(slotsOf(PREVIOUS)).toHaveLength(6);
+				}
+			);
 
 			it('refuses to move a log whose slots carry tracked screenshots or activity, before writing anything', async () => {
 				slots[2].screenshots = [{ id: 'screenshot-1' }];
