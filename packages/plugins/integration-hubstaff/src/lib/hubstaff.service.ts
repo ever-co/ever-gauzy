@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus, Logger, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
@@ -114,6 +114,8 @@ export interface IHubstaffAccessTokenResponse {
 
 @Injectable()
 export class HubstaffService {
+	private readonly logger = new Logger(HubstaffService.name);
+
 	constructor(
 		private readonly _httpService: HttpService,
 		private readonly _commandBus: CommandBus,
@@ -1607,13 +1609,20 @@ export class HubstaffService {
 		);
 		console.log(`${IntegrationEnum.HUBSTAFF} integration end for ${integrationId}`);
 
-		// The run finished: stamp the connection and announce it (`integration_tenant.synced`) in one transaction,
-		// scoped to the caller's tenant and the organization the run synchronised into. A run that failed above
-		// threw before reaching this, so a failure is never announced as a completion.
-		await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
-			organizationId: gauzyId,
-			counts: hubstaffSyncCounts(integratedMaps as Array<Record<string, unknown>>)
-		});
+		// The run finished: stamp the connection and announce it (`integration_tenant.synced`) in one transaction. A run
+		// that failed above threw before reaching this, so a failure is never announced as a completion. The recording
+		// is the run's epilogue, not part of the import — Hubstaff stamped nothing before it existed — so a recording
+		// that cannot be made is logged and the run answers what it imported, as it always did.
+		try {
+			await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
+				organizationId: gauzyId,
+				counts: hubstaffSyncCounts(integratedMaps as Array<Record<string, unknown>>)
+			});
+		} catch (error) {
+			this.logger.warn(
+				`The finished ${IntegrationEnum.HUBSTAFF} sync of integration ${integrationId} could not be recorded: ${(error as Error)?.message}`
+			);
+		}
 
 		return integratedMaps;
 	}

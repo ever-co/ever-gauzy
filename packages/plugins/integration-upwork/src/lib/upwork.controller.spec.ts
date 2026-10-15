@@ -668,6 +668,29 @@ describe('UpworkController — GHSA-3rqg-gpm9-gx84 credential exposure', () => {
 			});
 		});
 
+		it('a failed recording does not fail an Upwork run: the recording is the run’s epilogue, not part of the import', async () => {
+			const contracts = buildController();
+			contracts.syncService.recordSyncCompleted.mockRejectedValueOnce(new Error('the outbox is unavailable'));
+			const related = buildController();
+			related.syncService.recordSyncCompleted.mockRejectedValueOnce(new Error('the outbox is unavailable'));
+
+			await expect(
+				contracts.controller.syncContracts({ integrationId: INTEGRATION_ID, organizationId: ORGANIZATION_ID, contracts: [] } as any)
+			).resolves.toEqual([]);
+			await expect(
+				related.controller.syncContractsRelatedData({
+					integrationId: INTEGRATION_ID,
+					organizationId: ORGANIZATION_ID,
+					contracts: [],
+					entitiesToSync: [],
+					employeeId: 'employee-1'
+				} as any)
+			).resolves.toEqual([]);
+
+			expect(contracts.syncService.recordSyncCompleted).toHaveBeenCalledTimes(1);
+			expect(related.syncService.recordSyncCompleted).toHaveBeenCalledTimes(1);
+		});
+
 		it('records nothing for a run that was refused', async () => {
 			const refusedScope = buildController({ integration: null });
 			const refusedBody = buildController();

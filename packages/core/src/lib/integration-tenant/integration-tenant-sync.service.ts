@@ -39,7 +39,12 @@ export interface IIntegrationSyncCompletion {
 	 * (a webhook-driven run, a job) states the tenant it was started for. With neither, nothing is written.
 	 */
 	readonly tenantId?: ID;
-	/** The organization the connection belongs to, when the run knows it. Narrows the read; it is never widened. */
+	/**
+	 * The organization the run synchronized into, when it knows it. It never narrows the lookup: an integration may
+	 * synchronize into any organization of the tenant (Hubstaff maps each of its organizations to one), which need not
+	 * be the connection's own. The fact carries the connection's own organization, and this one only when the
+	 * connection names none.
+	 */
 	readonly organizationId?: ID;
 	/**
 	 * How many records of each kind the run handled, keyed by the entity the integration synchronises (`issue`,
@@ -93,8 +98,16 @@ export class IntegrationTenantSyncService implements OnModuleInit {
 	 * @param integrationTenantId The connection that finished synchronizing.
 	 * @param completion The tenant it belongs to, and what the run handled.
 	 * @returns The connection as the stamp left it.
+	 * The connection is found by its id within the tenant — the primary key and the isolation boundary — and by nothing
+	 * the run states about itself: the organization a run synchronized into is the run's, not the connection's, and a
+	 * lookup narrowed by it refused a run that had already imported (a Hubstaff organization mapped to another
+	 * organization of the tenant). The tenant stays mandatory.
+	 *
+	 * A caller whose run must not fail on its recording — the recording is that run's epilogue rather than part of its
+	 * import — catches what this throws; the stamp and the fact stay atomic here either way.
+	 *
 	 * @throws BadRequestException when no tenant is known, so the write could not be scoped.
-	 * @throws NotFoundException when the connection is not the tenant's (or the organization's).
+	 * @throws NotFoundException when the connection is not the tenant's.
 	 */
 	async recordSyncCompleted(integrationTenantId: ID, completion: IIntegrationSyncCompletion = {}): Promise<IntegrationTenant> {
 		const tenantId = completion.tenantId ?? RequestContext.currentTenantId();
@@ -105,11 +118,7 @@ export class IntegrationTenantSyncService implements OnModuleInit {
 			);
 		}
 
-		const where = {
-			id: integrationTenantId,
-			tenantId,
-			...(completion.organizationId ? { organizationId: completion.organizationId } : {})
-		};
+		const where = { id: integrationTenantId, tenantId };
 		const syncedAt = new Date();
 		const counts = countsOf(completion.counts);
 

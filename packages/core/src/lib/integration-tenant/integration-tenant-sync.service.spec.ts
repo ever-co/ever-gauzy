@@ -198,18 +198,28 @@ describe('IntegrationTenantSyncService — a finished synchronisation, stamped a
 			expect(db.facts()).toEqual([]);
 		});
 
-		it("writes nothing for another tenant's connection — or another organization's — named by id", async () => {
+		it("writes nothing for another tenant's connection named by id", async () => {
 			const db = store();
 
 			await expect(as(TENANT_A, ORG_A, () => serviceOver(db).recordSyncCompleted(CONNECTION_B))).rejects.toBeInstanceOf(
 				NotFoundException
 			);
-			await expect(
-				as(TENANT_A, ORG_A, () => serviceOver(db).recordSyncCompleted(CONNECTION_A, { organizationId: ORG_A2 }))
-			).rejects.toBeInstanceOf(NotFoundException);
 
 			expect([db.row(CONNECTION_A)?.lastSyncedAt, db.row(CONNECTION_B)?.lastSyncedAt]).toEqual([null, null]);
 			expect(db.facts()).toEqual([]);
+		});
+
+		it('records a run into another organization of the tenant on the connection, announced in the connection’s own organization', async () => {
+			// Hubstaff maps each of its organizations to any organization of the tenant, so the organization a run
+			// synchronised into need not be the connection's. The connection is found by its id within the tenant.
+			const db = store();
+
+			await as(TENANT_A, ORG_A, () => serviceOver(db).recordSyncCompleted(CONNECTION_A, { organizationId: ORG_A2 }));
+
+			expect(db.row(CONNECTION_A)?.lastSyncedAt).toBeInstanceOf(Date);
+			expect(db.facts().map((fact) => [fact.aggregateId, fact.tenantId, fact.organizationId])).toEqual([
+				[CONNECTION_A, TENANT_A, ORG_A]
+			]);
 		});
 	});
 
