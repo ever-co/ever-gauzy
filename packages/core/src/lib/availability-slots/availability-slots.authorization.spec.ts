@@ -344,6 +344,23 @@ describe('Availability slots — whose hours a caller may write, on a real datab
 			});
 		});
 
+		it('updates a slot to the employee it names, not to a relation object smuggled beside it', async () => {
+			const updated: any = await controller.update(COLLEAGUE_SLOT, {
+				employeeId: EMPLOYEE_A,
+				employee: { id: EMPLOYEE_B },
+				startTime: at('02', '14:00'),
+				endTime: at('02', '15:00')
+			} as any);
+
+			// The failure scenario: the body's `employee` relation reached the ORM beside the resolved `employeeId`,
+			// and the relation decided the stored owner.
+			expect(updated.id).toBe(COLLEAGUE_SLOT);
+			expect(await stored()).toEqual({
+				[COLLEAGUE_SLOT]: `${EMPLOYEE_A} 02 14:00-15:00`,
+				[COLLEAGUE_SLOT_ON_FAILING_DAY]: colleagueSlots[COLLEAGUE_SLOT_ON_FAILING_DAY]
+			});
+		});
+
 		it('keeps the employee’s existing hours when the merged slot cannot be saved', async () => {
 			await expect(
 				controller.create({

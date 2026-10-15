@@ -125,6 +125,8 @@ export class AvailabilitySlotsService extends TenantAwareCrudService<Availabilit
 	 * `PUT /:id` used to hand the body to `create()` with the id merged in — an upsert on ANY id of the tenant —
 	 * so an employee could rewrite a colleague's slot and move it onto their own calendar. The slot is now read
 	 * through the employee scope first: a slot the caller cannot read answers 404, as it does on `GET /:id`.
+	 * The row is written from the members a slot has, as `replaceSlots()` writes it: an `employee` or `tenant`
+	 * relation in the body would otherwise reach the ORM beside the resolved owner and decide it.
 	 *
 	 * @param id The slot.
 	 * @param input The new values.
@@ -134,6 +136,15 @@ export class AvailabilitySlotsService extends TenantAwareCrudService<Availabilit
 		const existing = await this.findOneByIdString(id);
 		const employeeId = this.resolveWriteEmployeeId(input.employeeId ?? existing.employeeId);
 
-		return await this.create({ ...input, id: existing.id, employeeId } as AvailabilitySlot);
+		return await this.create({
+			id: existing.id,
+			startTime: input.startTime ?? existing.startTime,
+			endTime: input.endTime ?? existing.endTime,
+			allDay: input.allDay ?? existing.allDay,
+			type: input.type ?? existing.type,
+			organizationId: input.organizationId ?? existing.organizationId,
+			employee: employeeId ? { id: employeeId } : null,
+			employeeId
+		} as unknown as AvailabilitySlot);
 	}
 }
