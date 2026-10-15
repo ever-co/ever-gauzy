@@ -106,9 +106,12 @@ describe('createGraphqlModuleOptions', () => {
 			// Review on #10651: the socket accepted a connection on the presence of a credential and then parsed and
 			// validated any document with no token ceiling — pre-authentication work, as on HTTP.
 			const options = await withEnv({ GRAPHQL_MAX_TOKENS: '' });
-			const socket = options.subscriptions?.['graphql-ws'] as {
-				onSubscribe: (context: unknown, id: string, payload: { query?: unknown }) => ReadonlyArray<GraphQLError> | void;
-			};
+			const socket = options.subscriptions?.['graphql-ws'] as
+				| { onSubscribe: (context: unknown, id: string, payload: { query?: unknown }) => ReadonlyArray<GraphQLError> | void }
+				| undefined;
+			if (!socket) {
+				throw new Error('the GraphQL options carry no graphql-ws transport');
+			}
 
 			const refused = socket.onSubscribe({}, '1', { query: overlapping(300) });
 			expect(refused?.[0]?.message).toMatch(/contains more th[a-z]+ 2000 tokens/);
