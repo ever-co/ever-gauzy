@@ -16,6 +16,7 @@
 						name="emails"
 						nbTagInput
 						fullWidth
+						aria-describedby="emails-hint"
 						[placeholder]="emails.size > 0 ? '' : ('INVITE_PAGE.FORM.EMAILS_PLACEHOLDER' | translate)"
 						(tagAdd)="onEmailAdd($event)"
 						(focusout)="onFocusOut($event)"
@@ -35,8 +36,8 @@
 				</button>
 				}
 			</nb-form-field>
-			<p class="hint">
-				<nb-icon icon="info-outline" pack="eva"></nb-icon>
+			<p id="emails-hint" class="hint">
+				<nb-icon icon="info-outline" pack="eva" aria-hidden="true"></nb-icon>
 				{{ 'INVITE_PAGE.FORM.EMAILS_HINT' | translate }}
 			</p>
 		</div>
