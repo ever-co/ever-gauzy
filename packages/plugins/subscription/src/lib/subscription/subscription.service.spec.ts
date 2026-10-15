@@ -3247,3 +3247,84 @@ describe('SubscriptionService → EntitlementGrantConsumer — the cancellation 
 		]);
 	});
 });
+
+/**
+ * SEC-B-03: subscription `metadata` was a billing-control channel an editor could write on both protocols. The billing
+ * run reads `discountPercentage` (a per-subscription discount override, never range-checked), `pendingCredit` (a
+ * credit appended to the next cycle), `chargedSetupFeePlanIds` (which suppresses setup fees) and `trialEndsAt` (when
+ * billing starts) from it. Those keys are the service's own: a caller's metadata can neither set nor erase them, and a
+ * discount is a fraction between 0 and 1 wherever it comes from.
+ */
+describe('SubscriptionService — the metadata billing trusts is the service’s own (SEC-B-03)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const planted = {
+		discountPercentage: '1',
+		pendingCredit: { amount: '100000', currency: 'USD' },
+		chargedSetupFeePlanIds: [],
+		trialEndsAt: '2099-01-01T00:00:00.000Z',
+		note: 'kept'
+	};
+
+	it('an edit keeps the caller’s own keys, and neither sets nor erases the reserved ones', async () => {
+		// The failure scenario: `updateSubscription(id, { metadata: { discountPercentage: "1" } })` billed every later
+		// cycle at 0, and `pendingCredit` credited the next one.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { chargedSetupFeePlanIds: [PLAN] } })]
+		});
+
+		await fixture.service.applyChanges(SUBSCRIPTION, { metadata: planted } as never);
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ chargedSetupFeePlanIds: [PLAN], note: 'kept' });
+	});
+
+	it('a creation keeps the caller’s own keys and none of the reserved ones', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+
+		const created = await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }],
+			metadata: planted
+		} as never);
+
+		expect(created.metadata).toEqual({ note: 'kept' });
+	});
+
+	it('refuses a creation discount that is not a fraction between 0 and 1, and stores one that is', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const input = (discountPercentage: string) =>
+			({
+				planId: PLAN,
+				customerId: CUSTOMER,
+				paymentAccountHolderId: HOLDER,
+				paymentMethodTokenId: TOKEN,
+				items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }],
+				discountPercentage
+			}) as never;
+
+		await expect(fixture.service.createSubscription(input('2'))).rejects.toMatchObject({
+			message: expect.stringContaining('SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE')
+		});
+
+		const created = await fixture.service.createSubscription(input('0.25'));
+		expect(Number(created.metadata?.['discountPercentage'])).toBe(0.25);
+	});
+
+	it('bills a stored discount outside 0..1 — written before this fix — at the plan’s own terms, never a negative net', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { discountPercentage: '2' } })]
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: new Date(APRIL.getTime() + 60_000) });
+
+		expect(outcome).toMatchObject({ amount: '120.000000' });
+	});
+});

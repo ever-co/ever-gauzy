@@ -43,6 +43,7 @@ import {
 	isDunningExhausted,
 	nextRetryAt,
 	normalizeDecimal,
+	normalizeDiscountFraction,
 	periodFrom,
 	prorate,
 	recurringAmount
@@ -130,6 +131,57 @@ const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 
 /** The metadata key that carries a proration credit into the next cycle. */
 const PENDING_CREDIT = 'pendingCredit';
+
+/** The metadata key a per-subscription discount override is stored under. */
+const DISCOUNT_OVERRIDE = 'discountPercentage';
+
+/** The metadata key the end of a trial is stored under; billing starts there. */
+const TRIAL_ENDS_AT = 'trialEndsAt';
+
+/**
+ * The metadata keys the service writes and the billing run trusts (SEC-B-03): the discount override, the proration
+ * credit carried into the next cycle, the plans whose setup fee was charged, and the end of the trial. A caller's
+ * metadata can neither set nor erase them — `metadata: { discountPercentage: "1" }` billed every later cycle at 0,
+ * `{ pendingCredit: { amount: "100000" } }` credited the next one. They move through the service's own actions.
+ */
+export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
+	DISCOUNT_OVERRIDE,
+	PENDING_CREDIT,
+	CHARGED_SETUP_FEES,
+	TRIAL_ENDS_AT
+];
+
+/**
+ * A caller's metadata without the reserved keys.
+ *
+ * @param metadata What the caller stated.
+ * @returns The caller's own keys.
+ */
+export function callerMetadataOf(metadata: unknown): Record<string, unknown> {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+		return {};
+	}
+
+	return Object.fromEntries(
+		Object.entries(metadata as Record<string, unknown>).filter(([key]) => !RESERVED_SUBSCRIPTION_METADATA_KEYS.includes(key))
+	);
+}
+
+/**
+ * The reserved keys a stored subscription carries.
+ *
+ * @param metadata The stored metadata.
+ * @returns The service's own keys, as stored.
+ */
+function reservedMetadataOf(metadata: unknown): Record<string, unknown> {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+		return {};
+	}
+
+	return Object.fromEntries(
+		Object.entries(metadata as Record<string, unknown>).filter(([key]) => RESERVED_SUBSCRIPTION_METADATA_KEYS.includes(key))
+	);
+}
 
 /**
  * The codes that mean the instrument a subscription points at can no longer be charged.
@@ -239,6 +291,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			);
 		}
 
+		// The metadata an edit writes is the caller's own keys plus the reserved ones as stored (SEC-B-03): the edit
+		// replaces the column, so the stored credit, setup-fee record and trial end are carried over, and whatever the
+		// caller stated under a reserved key is dropped.
+		if (changes && (changes as Record<string, unknown>)['metadata'] !== undefined) {
+			changes = {
+				...changes,
+				metadata: { ...callerMetadataOf((changes as Record<string, unknown>)['metadata']), ...reservedMetadataOf(stored?.metadata) }
+			} as DeepPartial<Subscription>;
+		}
+
 		await commitVersionedUpdate<Subscription>(this, {
 			where: currentScope(),
 			id,
@@ -313,10 +375,18 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const period = trialDays > 0 ? { start: now, end: addDays(now, trialDays) } : periodFrom(now, cadence);
 		const status = input.activate && trialDays === 0 ? SubscriptionStatus.ACTIVE : SubscriptionStatus.PENDING;
 
+		// A stated discount is a fraction between 0 and 1, as a plan's is (SEC-B-03): `"2"` made the net negative.
+		let discountOverride: string | undefined;
+		try {
+			discountOverride = normalizeDiscountFraction(input.discountPercentage as DecimalString | number | undefined);
+		} catch (error) {
+			throw new BadRequestException((error as Error).message);
+		}
+
 		const metadata: Record<string, unknown> = {
-			...(input.metadata ?? {}),
-			...(trialDays > 0 ? { trialEndsAt: period.end.toISOString() } : {}),
-			...(input.discountPercentage !== undefined ? { discountPercentage: String(input.discountPercentage) } : {})
+			...callerMetadataOf(input.metadata),
+			...(trialDays > 0 ? { [TRIAL_ENDS_AT]: period.end.toISOString() } : {}),
+			...(discountOverride !== undefined ? { [DISCOUNT_OVERRIDE]: discountOverride } : {})
 		};
 
 		const created = await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
@@ -2213,9 +2283,20 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @returns The discount this subscription was sold with, when it is not simply the plan's.
 	 */
 	private discountOverrideOf(subscription: Subscription): string | undefined {
-		const override = subscription.metadata?.['discountPercentage'];
+		const override = subscription.metadata?.[DISCOUNT_OVERRIDE];
 
-		return override === undefined || override === null ? undefined : String(override);
+		if (override === undefined || override === null) {
+			return undefined;
+		}
+
+		// An override outside 0..1 — one a caller's metadata could write before SEC-B-03 — is not applied: the cycle is
+		// billed on the plan's own terms rather than at a negative net.
+		try {
+			return normalizeDiscountFraction(override as DecimalString | number);
+		} catch {
+			console.warn(`Subscription ${subscription.id}: ignored a discount override outside 0..1 (${String(override)}).`);
+			return undefined;
+		}
 	}
 
 	/**
