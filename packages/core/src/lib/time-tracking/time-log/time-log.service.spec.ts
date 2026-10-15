@@ -26,7 +26,13 @@ import {
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { RequestContext } from '../../core/context';
-import { TimeLogCreateCommand, IGetConflictTimeLogCommand, TimeLogUpdateCommand } from './commands';
+import { ForbiddenException } from '@nestjs/common';
+import {
+	DeleteTimeSpanCommand,
+	TimeLogCreateCommand,
+	IGetConflictTimeLogCommand,
+	TimeLogUpdateCommand
+} from './commands';
 import { TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
@@ -366,7 +372,7 @@ describe('TimeLogService', () => {
 			// Stand-in for the per-request store withoutEmployeeFilter() keeps its state in.
 			const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
 			const originalClsService = RequestContext['clsService'];
-			let memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID };
+			let memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID, organizationId: EMPLOYEE_ORGANIZATION_ID };
 			let readsWithFilter: number;
 
 			const inRequest = <R>(callback: () => Promise<R>) => requestStorage.run(new Map(), callback);
@@ -425,12 +431,133 @@ describe('TimeLogService', () => {
 		});
 
 		it("updateManualTime looks for conflicts in the employee's organization", async () => {
-			jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({ id: 'log-1' } as any);
+			jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({
+				id: 'log-1',
+				organizationId: EMPLOYEE_ORGANIZATION_ID
+			} as any);
 
 			await manualService.updateManualTime('log-1', { ...request });
 
 			expect(commandsOfType(IGetConflictTimeLogCommand)[0].input).toMatchObject({
 				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
+		});
+
+		/**
+		 * A log stays in its organization. `TimeLogUpdateHandler` keeps the stored row's organization, but
+		 * `employeeId` is not a scope field, and a caller with CHANGE_SELECTED_EMPLOYEE reaches every employee of the
+		 * tenant: naming an employee of ANOTHER organization re-pointed the log at them while it stayed in its own
+		 * organization, and ran the overlap cleanup in theirs — deleting that organization's time slots, whose
+		 * `allowModifyTime` nobody asked (the policy guard judges the log's organization).
+		 */
+		describe('updateManualTime keeps the log inside its own organization', () => {
+			const OTHER_ORGANIZATION_ID = 'c9f3e8d0-2b5a-4d6e-9f3c-4e6a8b0d2c3f';
+			const SAME_ORGANIZATION_EMPLOYEE_ID = '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e';
+			const OTHER_ORGANIZATION_EMPLOYEE_ID = '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f';
+			const CROSS_ORGANIZATION = 'A time log cannot be moved to an employee of another organization';
+
+			/** The stored intervals the overlap lookup reads, across both organizations of the tenant. */
+			let stored: Array<{ id: string; employeeId: string; organizationId: string; tenantId: string }>;
+			let deleted: string[];
+
+			const update = (employeeId: string, organizationId = EMPLOYEE_ORGANIZATION_ID) =>
+				manualService.updateManualTime('log-1', { ...request, employeeId, organizationId });
+
+			beforeEach(() => {
+				deleted = [];
+				// An interval overlapping the edit, per employee — the other organization's one included.
+				stored = [
+					{
+						id: 'same-org-log',
+						employeeId: SAME_ORGANIZATION_EMPLOYEE_ID,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						tenantId: TENANT_ID
+					},
+					{
+						id: 'other-org-log',
+						employeeId: OTHER_ORGANIZATION_EMPLOYEE_ID,
+						organizationId: OTHER_ORGANIZATION_ID,
+						tenantId: TENANT_ID
+					}
+				];
+
+				const employees: Record<string, string> = {
+					[TARGET_EMPLOYEE_ID]: EMPLOYEE_ORGANIZATION_ID,
+					[SAME_ORGANIZATION_EMPLOYEE_ID]: EMPLOYEE_ORGANIZATION_ID,
+					[OTHER_ORGANIZATION_EMPLOYEE_ID]: OTHER_ORGANIZATION_ID
+				};
+				jest.spyOn(manualService as any, 'findEmployeeInTenant').mockImplementation(
+					async (employeeId: any) => ({
+						id: employeeId,
+						organizationId: employees[employeeId],
+						organization: { id: employees[employeeId], futureDateAllowed: true, allowManualTime: true }
+					})
+				);
+				// The stored log: the target employee's, in the employee organization.
+				jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({
+					id: 'log-1',
+					employeeId: TARGET_EMPLOYEE_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					tenantId: TENANT_ID
+				} as any);
+				// The overlap lookup answers as GetConflictTimeLogHandler filters (tenant, organization, employee), and
+				// the trim records which interval's slot it deleted.
+				execute.mockImplementation(async (command: unknown) => {
+					if (command instanceof IGetConflictTimeLogCommand) {
+						const { tenantId, organizationId, employeeId } = command.input;
+						return stored
+							.filter(
+								(log) =>
+									log.tenantId === tenantId &&
+									log.organizationId === organizationId &&
+									log.employeeId === employeeId
+							)
+							.map((log) => ({ ...log, timeSlots: [{ id: `${log.id}-slot` }] }));
+					}
+					if (command instanceof DeleteTimeSpanCommand) {
+						deleted.push(command.timeLog.id);
+					}
+					return undefined;
+				});
+			});
+
+			it('an update naming an employee of another organization is refused and writes nothing', async () => {
+				const refusal = await update(OTHER_ORGANIZATION_EMPLOYEE_ID).catch((thrown) => thrown);
+
+				// 403, as the move refusal for a caller without CHANGE_SELECTED_EMPLOYEE answers.
+				expect(refusal).toBeInstanceOf(ForbiddenException);
+				expect((refusal as ForbiddenException).message).toBe(CROSS_ORGANIZATION);
+				expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+				expect(commandsOfType(IGetConflictTimeLogCommand)).toHaveLength(0);
+				expect(deleted).toEqual([]);
+			});
+
+			it("the conflict cleanup of an update never deletes another organization's slots", async () => {
+				// Naming the other organization in the body as well changes nothing: the log is not moved there.
+				const across = await update(OTHER_ORGANIZATION_EMPLOYEE_ID, OTHER_ORGANIZATION_ID).catch(
+					(thrown) => thrown
+				);
+				expect(across).toBeInstanceOf(ForbiddenException);
+				expect(deleted).toEqual([]);
+
+				// The cleanup that does run looks in the log's own organization, whatever the body names.
+				await update(SAME_ORGANIZATION_EMPLOYEE_ID, OTHER_ORGANIZATION_ID);
+
+				expect(commandsOfType(IGetConflictTimeLogCommand).map((command) => command.input)).toEqual([
+					expect.objectContaining({
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						employeeId: SAME_ORGANIZATION_EMPLOYEE_ID
+					})
+				]);
+				expect(deleted).toEqual(['same-org-log']);
+			});
+
+			it('CONTROL: an update moving the log to another employee of the same organization still works for a CHANGE_SELECTED_EMPLOYEE caller', async () => {
+				await update(SAME_ORGANIZATION_EMPLOYEE_ID);
+
+				expect(commandsOfType(TimeLogUpdateCommand).map((command) => command.input.employeeId)).toEqual([
+					SAME_ORGANIZATION_EMPLOYEE_ID
+				]);
 			});
 		});
 	});

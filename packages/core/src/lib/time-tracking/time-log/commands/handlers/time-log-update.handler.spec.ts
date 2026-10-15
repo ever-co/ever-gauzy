@@ -73,6 +73,35 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 		expect(timeLogRepository.update).not.toHaveBeenCalled();
 	});
 
+	it("runs its own slot cleanup in the stored log's organization and for its employee, whatever the input names", async () => {
+		const { handler } = createHandler();
+		const timeSlotService = (handler as any).timeSlotService;
+		const kept = new Date('2026-01-05T09:00:00.000Z');
+		const dropped = new Date('2026-01-05T08:00:00.000Z');
+		// The edited range keeps 09:00 and drops 08:00, so the 08:00 slot is the one the cleanup removes.
+		timeSlotService.generateTimeSlots
+			.mockReturnValueOnce([{ startedAt: kept }])
+			.mockReturnValueOnce([{ startedAt: dropped }, { startedAt: kept }]);
+		(handler as any).commandBus.execute.mockResolvedValue({ id: 'timesheet-1' });
+		const removed = jest.spyOn(handler as any, 'removeConflictingTimeSlots').mockResolvedValue(undefined);
+		jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockResolvedValue(undefined);
+		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
+
+		await handler.execute(
+			new TimeLogUpdateCommand(
+				{
+					startedAt: kept,
+					stoppedAt: new Date('2026-01-05T10:00:00.000Z'),
+					employeeId: 'employee-b',
+					organizationId: 'org-b'
+				} as any,
+				'log-own'
+			)
+		);
+
+		expect(removed).toHaveBeenCalledWith(TENANT_A, 'org-a', 'employee-a', [dropped], false);
+	});
+
 	it('keeps the fields internal callers rely on (the timer stop sends isRunning / stoppedAt)', () => {
 		expect(omitScopeFields({ isRunning: false, stoppedAt: 'x', id: 'y', tenant: {}, organization: {}, employee: {} })).toEqual({
 			isRunning: false,

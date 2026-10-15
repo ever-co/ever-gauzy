@@ -1655,8 +1655,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Retrieve employee information
 			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
 
-			// The employee's organization, never the body's — see `addManualTime`. Here it also decides
-			// which rows count as conflicting, i.e. which time slots this call is allowed to delete.
+			// The employee's organization, never the body's — see `addManualTime`. It must also be the log's own
+			// (checked below, once the log is read), and the overlap cleanup runs in the log's organization.
 			const organizationId = employee.organizationId ?? request.organizationId;
 
 			await this.assertCanWriteTimeFor(employeeId, organizationId);
@@ -1686,13 +1686,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new ForbiddenException('A time log cannot be moved to another employee');
 			}
 
-			// Check for conflicts with existing time logs
+			// A log stays in its organization, for every caller. The update keeps the stored row's organization
+			// (`TimeLogUpdateHandler` never takes it from the input), but `employeeId` is not a scope field, and
+			// CHANGE_SELECTED_EMPLOYEE reaches every employee of the tenant: an employee of another organization
+			// would re-point the log at them across organizations and run the overlap cleanup below in theirs,
+			// deleting that organization's time slots under a policy (`allowModifyTime`) judged on the log's.
+			if (String(employee.organizationId ?? '') !== String(timeLog.organizationId ?? '')) {
+				throw new ForbiddenException('A time log cannot be moved to an employee of another organization');
+			}
+
+			// Check for conflicts with existing time logs — in the log's own organization, which is the employee's.
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
 					startDate: startedAt,
 					endDate: stoppedAt,
 					employeeId,
-					organizationId,
+					organizationId: timeLog.organizationId,
 					tenantId,
 					...(id && { ignoreId: id }) // Simplified check for id
 				})
