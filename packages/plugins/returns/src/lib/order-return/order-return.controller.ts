@@ -223,6 +223,8 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 	@ApiOperation({ summary: 'Refund a received return' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The refund was issued.' })
 	@Permissions(ReturnsPermissions.RETURNS_RECEIVE)
+	// A retry after a lost answer must not give the money back twice (§7.14: Idempotency-Key, required).
+	@Idempotent({ scope: 'return.refund', required: true, resourceType: 'order_return' })
 	@Versioned({ resource: OrderReturnService })
 	@Post(':id/refund')
 	@UseValidationPipe({ transform: true, whitelist: true })

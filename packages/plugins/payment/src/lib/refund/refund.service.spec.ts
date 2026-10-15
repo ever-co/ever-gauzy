@@ -601,19 +601,25 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 	});
 
 	it('refuses a refund that names no payment, no return and no claim', async () => {
-		// An unattributed refund is a movement nobody can explain later.
+		// An unattributed refund is a movement nobody can explain later — on the attributed path too.
 		const fixture = refundFixture();
 
 		await expect(
-			fixture.service.createRefund({ orderId: ORDER, amount: '40', currency: 'USD' } as never)
+			fixture.service.createAttributedRefund({ orderId: ORDER, amount: '40', currency: 'USD' } as never)
 		).rejects.toThrow(/REFUND_NOT_ALLOWED/);
+		// The refund API refuses it earlier still: it names no payment (review R3-08).
+		await expect(
+			fixture.service.createRefund({ orderId: ORDER, amount: '40', currency: 'USD' } as never)
+		).rejects.toThrow(/REFUND_PAYMENT_REQUIRED/);
 		expect(fixture.tables.refund).toEqual([]);
 	});
 
-	it('accepts a refund attributed to a return or a claim with no payment at all', async () => {
+	it('accepts a refund attributed to a return or a claim with no payment at all — on the path those flows use', async () => {
+		// `createAttributedRefund` is what `ReturnRefundService` records through, after measuring the amount
+		// and requiring REFUNDS_APPROVE; the refund API itself refuses a refund that names no payment (R3-08).
 		const fixture = refundFixture();
 
-		const refund = await fixture.service.createRefund({
+		const refund = await fixture.service.createAttributedRefund({
 			orderId: ORDER,
 			returnId: 'return-1',
 			amount: '40',
@@ -634,7 +640,7 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 			/REFUND_AMOUNT_INVALID/
 		);
 		await expect(
-			fixture.service.createRefund({ orderId: ORDER, returnId: 'return-1', amount: '40' } as never)
+			fixture.service.createAttributedRefund({ orderId: ORDER, returnId: 'return-1', amount: '40' } as never)
 		).rejects.toThrow(/PAYMENT_CURRENCY_INVALID/);
 		expect(fixture.tables.refund).toEqual([]);
 	});
@@ -701,7 +707,12 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 		const fixture = refundFixture();
 
 		await expect(
-			fixture.service.createRefund({ orderId: ORDER, returnId: 'return-1', amount: 'forty', currency: 'USD' } as never)
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				returnId: 'return-1',
+				amount: 'forty',
+				currency: 'USD'
+			} as never)
 		).rejects.toThrow(/PAYMENT_AMOUNT_INVALID/);
 	});
 });

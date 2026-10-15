@@ -107,6 +107,41 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * payment captured, or when a line it carries is not writable.
 	 */
 	async createRefund(input: IRefundCreateInput): Promise<IRefund> {
+		// The refund API (REST `POST /refunds`, GraphQL `createRefund`) records money going back from a payment,
+		// and is measured against what that payment captured. A refund that names no payment is measured against
+		// nothing here — its ceiling is the return or claim that pays it back — so it is recorded only by that
+		// flow (`ReturnRefundService`, through `createAttributedRefund`). Through this door it was how a refund
+		// naming any return id could give back any amount (review R3-08).
+		if (!input?.paymentId) {
+			throw new BadRequestException({
+				message:
+					'REFUND_PAYMENT_REQUIRED: the refund API gives money back from a payment; a refund attributed only to a return or a claim is recorded by that return or claim.',
+				code: 'REFUND_PAYMENT_REQUIRED'
+			});
+		}
+
+		return this.recordRefund(input);
+	}
+
+	/**
+	 * Records a refund that a return or a claim pays back — the one path on which a refund may name no
+	 * payment. Its caller (`ReturnRefundService`) has already measured the amount against what the order's
+	 * payments can still give back, and requires `REFUNDS_APPROVE` before it settles anything.
+	 *
+	 * @param input The refund to record.
+	 * @returns The stored refund, pending.
+	 */
+	async createAttributedRefund(input: IRefundCreateInput): Promise<IRefund> {
+		return this.recordRefund(input);
+	}
+
+	/**
+	 * The write both entry points share.
+	 *
+	 * @param input The refund to record.
+	 * @returns The stored refund, pending.
+	 */
+	private async recordRefund(input: IRefundCreateInput): Promise<IRefund> {
 		if (!input.paymentId && !input.returnId && !input.claimId) {
 			// Without a payment, the reason the money goes back has to be a return or a claim: an
 			// unattributed refund is a movement nobody can explain later.
@@ -118,6 +153,15 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		if (input.paymentId) {
 			const payment = await this.paymentCaptureService.findPaymentOrFail(input.paymentId);
 			currency = payment.currency ?? currency;
+
+			// The refund is recorded against an order and paid back from a payment: they must be the same
+			// order's, or the order's ledger would show money returned that its own payments never took.
+			if (input.orderId && payment.orderId && String(input.orderId) !== String(payment.orderId)) {
+				throw new BadRequestException({
+					message: `REFUND_ORDER_MISMATCH: payment '${payment.id}' was not taken for order '${input.orderId}'.`,
+					code: 'REFUND_ORDER_MISMATCH'
+				});
+			}
 
 			if (input.currency && currency && input.currency.trim().toUpperCase() !== currency.toUpperCase()) {
 				throw new BadRequestException(
@@ -233,6 +277,40 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 */
 	async approveRefund(id: ID, note?: string): Promise<IRefund> {
 		const refund = await this.findRefundOrFail(id);
+
+		// Approved here, a refund that names no payment would be settled against no ceiling at all; it is
+		// settled by the return or claim that recorded it (`approveAttributedRefund`), under `REFUNDS_APPROVE`.
+		if (!refund.paymentId) {
+			throw new BadRequestException({
+				message:
+					'REFUND_PAYMENT_REQUIRED: a refund that names no payment is settled by the return or claim that recorded it.',
+				code: 'REFUND_PAYMENT_REQUIRED'
+			});
+		}
+
+		return this.settleRefund(refund, note);
+	}
+
+	/**
+	 * Settles a refund a return or a claim recorded (`createAttributedRefund`), which may name no payment.
+	 *
+	 * @param id The refund to settle.
+	 * @param note An optional operator note.
+	 * @returns The stored refund.
+	 */
+	async approveAttributedRefund(id: ID, note?: string): Promise<IRefund> {
+		return this.settleRefund(await this.findRefundOrFail(id), note);
+	}
+
+	/**
+	 * The settlement both entry points share.
+	 *
+	 * @param refund The refund to settle, as read.
+	 * @param note An optional operator note.
+	 * @returns The stored refund.
+	 */
+	private async settleRefund(refund: IRefund, note?: string): Promise<IRefund> {
+		const id = refund.id;
 
 		if (refund.status !== RefundStatus.PENDING) {
 			throw new BadRequestException('REFUND_ALREADY_SETTLED');

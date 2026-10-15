@@ -230,6 +230,12 @@ export interface IRefundResult {
  */
 export interface IRefundGatewayPort {
 	createRefund(request: IRefundRequest): Promise<IRefundResult>;
+	/**
+	 * Refuses a caller who may not settle a refund, before anything is written. A receipt that also refunds
+	 * asks it before the goods move, so a refusal leaves the receipt unwritten rather than half done. Optional:
+	 * a gateway that settles nothing need not answer it.
+	 */
+	assertMayRefund?(): void | Promise<void>;
 }
 
 /** What one order line reports about how much of it actually left the building. */

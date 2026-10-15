@@ -712,12 +712,12 @@ export const schemaExtensions = gql`
 		field mirrors what its route *does*. Stating the documented grant here would let a caller holding
 		it move money over GraphQL while the same caller is refused the same act over REST — the one
 		direction §3.1 forbids. The divergence is recorded rather than resolved, because settling it
-		changes the route as well as the field.
+		changes the route as well as the field. Settling the refund additionally needs
+		\`REFUNDS_APPROVE\`, refused with \`REFUND_APPROVAL_REQUIRED\` before anything is written.
 
-		No retry key is declared, because the route declares none. §7.14 writes "Yes (Idempotency-Key,
-		required)" for it and the controller's own \`@Idempotent\` decorators sit on the request and the
-		receipt only; inventing a scope here would dedupe a GraphQL retry that the REST route lets
-		through, which is a difference in behaviour rather than a difference in transport.
+		The retry key is required, as §7.14 states and as the REST route declares: the same
+		\`return.refund\` scope on both, so a client retrying after a lost answer does not give the
+		money back twice.
 		"""
 		refundOrderReturn(id: ID!, input: RefundOrderReturnInput!): RefundOrderReturnPayload!
 		"""
