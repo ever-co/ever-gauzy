@@ -637,4 +637,17 @@ export const schemaExtensions = gql`
 		"Restores a soft-deleted billing cycle."
 		recoverSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
 	}
+
+	extend type Subscription {
+		"""
+		Every lifecycle move of a customer's subscription of the caller's tenant — created, activated, paused, resumed,
+		canceled, expired, renewed, or a cycle's payment failed — with the subscription in the state the move left it,
+		as \`subscription(id:)\` reads it. Narrowed by \`subscriptionId\`, by the customer, and by \`action\` (the move:
+		\`activated\`, \`payment-failed\`, …); each only narrows what the credential may read. Follows the
+		\`subscription.*\` facts the subscription service appends to the outbox. The field is not \`subscriptionChanged\`
+		because the type is \`CustomerSubscription\`: \`Subscription\` is the root operation type. A subscription is a
+		notification and never a system of record: a move made while the client is disconnected is not replayed.
+		"""
+		customerSubscriptionChanged(subscriptionId: ID, customerId: ID, action: String): CustomerSubscription!
+	}
 `;
