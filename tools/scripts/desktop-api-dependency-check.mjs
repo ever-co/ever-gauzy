@@ -70,6 +70,8 @@ for (const file of walk(join(ROOT, 'packages'), (path) => path.endsWith(`${sep}p
 
 /** The `@gauzy` packages apps/api loads at runtime: value imports, `require` and `import()`, not `import type`. */
 const required = new Set();
+/** `@gauzy/<name>` → the first apps/api file that imports it, for the report. */
+const importedFrom = new Map();
 const RUNTIME = [
 	/^\s*import\s+(?!type\s)[^;]*?\sfrom\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm,
 	/^\s*import\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm,
@@ -80,7 +82,10 @@ const RUNTIME = [
 for (const file of walk(join(ROOT, API_SOURCES), (path) => path.endsWith('.ts') && !path.endsWith('.spec.ts'))) {
 	const source = readFileSync(file, 'utf8');
 	for (const pattern of RUNTIME) {
-		for (const match of source.matchAll(pattern)) required.add(match[1]);
+		for (const match of source.matchAll(pattern)) {
+			required.add(match[1]);
+			if (!importedFrom.has(match[1])) importedFrom.set(match[1], toPosix(relative(ROOT, file)));
+		}
 	}
 }
 
@@ -102,27 +107,39 @@ while (pending.length) {
 const target = (name) => `file:../../../dist/packages/${workspace.get(name).dir}`;
 
 /**
- * Inserts `"name": "target"` lines into one top-level object of a manifest, keeping the file's own formatting:
- * before `"@gauzy/scheduler"` when the block has it (where the existing @gauzy entries end), else after the
- * block's last `@gauzy` entry.
+ * Inserts `"name": "target"` entries into one top-level object of a manifest, keeping every existing line as it
+ * is (only the comma of the entry that stops being last can change): before `"@gauzy/scheduler"` when the block
+ * has it (where the existing @gauzy entries end), else after the block's last `@gauzy` entry, else at its start.
+ * Works for an empty block (`{}`) and for one with no `@gauzy` entry yet.
  */
 function insert(text, block, names) {
-	const open = text.indexOf(`"${block}": {`);
-	const close = text.indexOf('\n\t}', open);
-	const body = text.slice(open, close);
-	const lines = names
-		.sort()
-		.map((name) => `\t\t"${name}": "${target(name)}",`)
-		.join('\n');
-	const scheduler = body.indexOf('\n\t\t"@gauzy/scheduler"');
-	if (scheduler !== -1) {
-		const at = open + scheduler + 1;
-		return `${text.slice(0, at)}${lines}\n${text.slice(at)}`;
+	const key = text.indexOf(`"${block}":`);
+	const open = text.indexOf('{', key);
+	// Manifest values are plain strings with no braces, so the first `}` at depth 0 closes the block.
+	let depth = 0;
+	let close = open;
+	for (; close < text.length; close++) {
+		if (text[close] === '{') depth++;
+		else if (text[close] === '}' && --depth === 0) break;
 	}
-	const last = body.lastIndexOf('\n\t\t"@gauzy/');
-	const end = text.indexOf('\n', open + last + 1);
-	const needsComma = !text.slice(open + last + 1, end).trimEnd().endsWith(',');
-	return `${text.slice(0, end)}${needsComma ? ',' : ''}\n${lines.replace(/,$/, '')}${text.slice(end)}`;
+	const indent = '\t\t';
+	const entries = text
+		.slice(open + 1, close)
+		.split('\n')
+		.map((line) => line.replace(/,\s*$/, ''))
+		.filter((line) => line.trim() !== '');
+	const added = names.sort().map((name) => `${indent}"${name}": "${target(name)}"`);
+
+	let at = entries.findIndex((line) => line.trim().startsWith('"@gauzy/scheduler"'));
+	if (at === -1) {
+		const last = entries.map((line) => line.trim().startsWith('"@gauzy/')).lastIndexOf(true);
+		at = last === -1 ? 0 : last + 1;
+	}
+	entries.splice(at, 0, ...added);
+
+	const closingIndent = text.slice(text.lastIndexOf('\n', close) + 1, close).match(/^\s*/)[0] || '\t';
+	const body = `\n${entries.join(',\n')}\n${closingIndent}`;
+	return `${text.slice(0, open + 1)}${body}${text.slice(close)}`;
 }
 
 const failures = [];
@@ -169,14 +186,18 @@ for (const manifest of MANIFESTS) {
 	}
 }
 
-const unknown = [...required].filter((name) => !workspace.has(name));
+// An import of a @gauzy name no workspace package publishes cannot be shipped from dist at all, and it would
+// pass every rule above unnoticed — so it is a failure of its own, reported with the file that imports it.
+const unknown = [...required].filter((name) => !workspace.has(name)).sort();
+for (const name of unknown) {
+	failures.push(`${importedFrom.get(name)} imports ${name}, which no workspace package under packages/ publishes`);
+}
 
 console.log('desktop API dependency check');
 console.log('============================');
 console.log(`@gauzy packages apps/api loads at runtime : ${required.size}`);
 console.log(`with their @gauzy dependencies            : ${closure.size}`);
 console.log(`manifests checked                         : ${MANIFESTS.length}`);
-if (unknown.length) console.log(`not a workspace package (ignored)         : ${unknown.join(', ')}`);
 if (FIX) console.log(`entries inserted                          : ${fixed}`);
 
 if (failures.length) {
