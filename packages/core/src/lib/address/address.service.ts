@@ -175,6 +175,7 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		this.assertOwnerType(ownerType);
 		this.assertOwnerConsistency(ownerType, input.ownerId, input.customerId);
+		await this.assertCustomerInScope(input.customerId);
 
 		const manager = this.typeOrmAddressRepository.manager;
 		const countryId = await this.resolveCountryId(manager, countryCode, input.countryId);
@@ -275,6 +276,9 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		this.assertOwnerType(ownerType);
 		this.assertOwnerConsistency(ownerType, ownerId, customerId);
+		if (input.customerId !== undefined) {
+			await this.assertCustomerInScope(customerId);
+		}
 
 		if (input.line1 !== undefined && !this.isStated(input.line1)) {
 			throw new BadRequestException(
@@ -408,12 +412,12 @@ export class AddressService extends TenantAwareCrudService<Address> {
 				// must never take the party's real default with it, and the column is the authority for
 				// exactly one row.
 				const party: OrganizationContact | null = await manager.findOne(OrganizationContact, {
-					where: { id: address.customerId }
+					where: { id: address.customerId, ...this.scope }
 				} as never);
 				const authoritative = party ? (party as unknown as Record<string, unknown>)[column] : null;
 
 				if (authoritative && String(authoritative) === String(address.id)) {
-					await manager.update(OrganizationContact, { id: address.customerId } as never, {
+					await manager.update(OrganizationContact, { id: address.customerId, ...this.scope } as never, {
 						[column]: null
 					} as never);
 				}
@@ -631,7 +635,7 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		const party: OrganizationContact | null = await this.typeOrmAddressRepository.manager.findOne(
 			OrganizationContact,
-			{ where: { id: address.customerId } } as never
+			{ where: { id: address.customerId, ...this.scope } } as never
 		);
 		const authoritative = party ? (party as unknown as Record<string, unknown>)[column] : null;
 
@@ -674,6 +678,31 @@ export class AddressService extends TenantAwareCrudService<Address> {
 			throw new BadRequestException(
 				`${ApiErrorCode.VALIDATION_INVALID_ENUM}: '${String(ownerType)}' is not a kind of thing an address belongs to.`
 			);
+		}
+	}
+
+	/**
+	 * Refuses a buyer reference that is not a contact of the caller (SEC-D-11).
+	 *
+	 * `customerId` is the party whose two default-address columns this service writes, so an address may only name a
+	 * contact in the caller's tenant and organization. `assertOwnerConsistency` compares two values the caller states
+	 * and could not see that both named another tenant's contact. Not stated is not refused: the guest cart address
+	 * carries none.
+	 *
+	 * @param customerId The stated buyer reference.
+	 * @throws NotFoundException `RESOURCE_NOT_FOUND` when no contact with that id is in the caller's scope.
+	 */
+	private async assertCustomerInScope(customerId?: ID | null): Promise<void> {
+		if (!this.isStated(customerId)) {
+			return;
+		}
+
+		const party = await this.typeOrmAddressRepository.manager.findOne(OrganizationContact, {
+			where: { id: customerId, ...this.scope }
+		} as never);
+
+		if (!party) {
+			throw new NotFoundException(`${ApiErrorCode.RESOURCE_NOT_FOUND}: no such customer in this organization.`);
 		}
 	}
 
@@ -907,7 +936,9 @@ export class AddressService extends TenantAwareCrudService<Address> {
 			return;
 		}
 
-		await manager.update(OrganizationContact, { id: address.customerId } as never, {
+		// The party is read and written in the caller's scope only (SEC-D-11): by its id alone, an address of the
+		// caller pointed another tenant's contact's default at itself.
+		await manager.update(OrganizationContact, { id: address.customerId, ...this.scope } as never, {
 			[column]: addressId
 		} as never);
 	}
@@ -929,7 +960,7 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		const party: OrganizationContact | null = await this.typeOrmAddressRepository.manager.findOne(
 			OrganizationContact,
-			{ where: { id: address.customerId } } as never
+			{ where: { id: address.customerId, ...this.scope } } as never
 		);
 
 		if (!party) {
