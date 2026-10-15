@@ -38,7 +38,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
  * The number of `build` rows: the missing capabilities not yet served. It may only shrink — a delivered capability
  * moves its row to `delivered` and lowers this number in the same change.
  */
-const BUILD_BASELINE = 1;
+const BUILD_BASELINE = 0;
 
 /** @type {{ name: string, kind: 'Query'|'Mutation', decision: 'delivered'|'naming'|'retired'|'build'|'drop', served: string[], note: string }[]} */
 const TRIAGE = [
@@ -92,6 +92,7 @@ const TRIAGE = [
 	{ name: 'bulkCreateExpenses', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /expense/bulk` + `bulkCreateExpenses`, every item the single create (`POST /expense` / `createExpense`) on the bulk kernel' },
 	{ name: 'bulkCreateTimeLogs', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /timesheet/time-log/bulk` + `bulkCreateTimeLogs`, every item the manual-time create (`addManualTime`: policy guard, employee, date and overlap rules)' },
 	{ name: 'bulkCreateOrganizations', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /organization/bulk` + `bulkCreateOrganizations`, every item the single create (`OrganizationCreateCommand`)' },
+	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /user/bulk` + `bulkCreateUsers`, every item the single create (`UserCreateCommand`, its role checks), ids only in the answer' },
 
 	// — Naming: the platform's resources carry the REST-aligned `Organization*` names (§7.68 class 4).
 	{ name: 'createDepartment', kind: 'Mutation', decision: 'naming', served: ['createOrganizationDepartment'], note: 'REST `/organization-department`' },
@@ -179,8 +180,7 @@ const TRIAGE = [
 	{ name: 'createShippingLabel', kind: 'Mutation', decision: 'retired', served: ['requestFulfillmentLabel'], note: 'design-retired; a carrier label is requested for a shipment' },
 	{ name: 'setProductVariantPrice', kind: 'Mutation', decision: 'retired', served: ['updateProductVariantPrice', 'bulkUpsertProductPrices'], note: 'design-retired' },
 
-	// — Missing capabilities: neither surface serves them.
-	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `createEmployeesBulk` covers employees only' },
+	// — Missing capabilities: none left — every name triaged `build` is `delivered` above.
 
 	// — Not needed.
 	{
