@@ -7,6 +7,11 @@ Ever Gauzy has two optional modules that talk to Ever Platform: the **anonymous 
 ([`@gauzy/plugin-ever-connect`](../../packages/plugins/ever-connect/README.md)). This page lists every
 call either of them can make. Nothing else in Gauzy calls Ever Platform.
 
+This page is published at [docs.gauzy.co](https://docs.gauzy.co/ever-platform/outbound-calls/) from
+[`ever-co/ever-gauzy-docs`](https://github.com/ever-co/ever-gauzy-docs). The copy in
+`ever-co/ever-gauzy` (`tools/ever-platform/outbound-calls.md`) is the one CI checks against the
+pinned contract; a change to it is copied to the published page.
+
 ## When nothing is sent
 
 | Setting                                                                   | Effect                                                                                                   |
@@ -101,9 +106,15 @@ by the web app.
 
 Run the API with both modules off and capture its traffic (for example `tcpdump -i any host api.ever.co`,
 or a Compose network with `internal: true`): there is none to Ever Platform. Or run the egress audit
-locally:
+locally, with Docker, at the root of a checkout of [`ever-co/ever-gauzy`](https://github.com/ever-co/ever-gauzy)
+(the audit and its config live there; [its README](../../tools/egress-audit/README.md#running-it) has the
+other modes and the route-list check):
 
 ```sh
-npm ci --prefix tools/egress-audit
-npx --prefix tools/egress-audit ever-egress-audit --config tools/egress-audit/egress-audit.config.json --mode off
+npm ci --prefix tools/egress-audit --ignore-scripts
+: > /tmp/api-empty.env
+GAUZY_AUDIT_SECRET=$(openssl rand -hex 32) GAUZY_AUDIT_DOTENV=/tmp/api-empty.env \
+  GAUZY_API_IMAGE=ghcr.io/ever-co/gauzy-api-demo:latest GAUZY_WEBAPP_IMAGE=ghcr.io/ever-co/gauzy-webapp-demo:latest \
+  node tools/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs \
+  --config tools/egress-audit/egress-audit.config.json --mode off
 ```
