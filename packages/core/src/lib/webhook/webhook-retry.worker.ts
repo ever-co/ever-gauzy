@@ -77,7 +77,7 @@ export class WebhookRetryWorker extends QueueWorkerHost {
 
 		for (const delivery of due) {
 			try {
-				await this.webhookDeliveryService.deliver(delivery.id as ID);
+				await this.webhookDeliveryService.deliver(delivery.id as ID, { claim: true });
 				attempted += 1;
 			} catch (error) {
 				// `deliver` records a refusal rather than raising, so this is a failure to *write* the
