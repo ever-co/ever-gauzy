@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
@@ -7,6 +7,7 @@ import { Permissions } from '../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
+import { MaskTenantSettingSecretsInterceptor } from './mask-tenant-setting-secrets.interceptor';
 import { TenantSettingService } from './tenant-setting.service';
 import {
 	TenantSettingGetCommand,
@@ -18,6 +19,8 @@ import { CreateTenantSettingDTO, DynamicSettingDTO, WasabiS3ProviderConfigDTO } 
 
 @ApiTags('TenantSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+// Every row a route answers — inherited routes included — has its secrets masked (SEC-A-06).
+@UseInterceptors(MaskTenantSettingSecretsInterceptor)
 @Permissions(PermissionsEnum.TENANT_SETTING)
 @Controller('/tenant-setting')
 export class TenantSettingController extends CrudController<TenantSetting> {
