@@ -354,6 +354,7 @@ const shippable = (overrides: Record<string, unknown> = {}) => ({
  * @param options.series The numbering series the organization has configured.
  * @param options.withFulfillment Whether the shipment capability is registered at all.
  * @param options.walk The pickable positions of the location, in walking order.
+ * @param options.failAppend A fact the outbox refuses to append, to model an append that fails.
  */
 function pickListFixture(
 	options: {
@@ -365,6 +366,7 @@ function pickListFixture(
 		series?: string[];
 		withFulfillment?: boolean;
 		walk?: any[];
+		failAppend?: string;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -380,6 +382,24 @@ function pickListFixture(
 	const listRepository = repository(tables, 'pickList');
 	const lineRepository = repository(tables, 'pickListLine');
 	const waveRepository = repository(tables, 'pickWave');
+	// A list's moves run in a transaction of the list repository's manager and append their fact through it; the
+	// in-memory transaction hands the body the same repository. Whether the two commit together is proven against a
+	// real database in `warehouse-update-guards.db.spec.ts`.
+	const appended: any[] = [];
+	(listRepository as any).manager = {
+		transaction: async (work: (manager: unknown) => Promise<unknown>) => await work({ getRepository: () => listRepository })
+	};
+	const outbox = {
+		append: async (_manager: unknown, event: any) => {
+			if (event.name === options.failAppend) {
+				throw new Error('the outbox is unavailable');
+			}
+
+			appended.push(event);
+
+			return event;
+		}
+	};
 	const stockLedger: IWarehouseStockLedgerPort = {
 		readBinBalance: async () => undefined,
 		readBinBalances: async () => [],
@@ -445,6 +465,7 @@ function pickListFixture(
 		zoneService as never,
 		series.service as never,
 		waveRepository as never,
+		outbox as never,
 		(options.withFulfillment ?? true) ? fulfillment : undefined,
 		stockLedger
 	);
@@ -454,6 +475,8 @@ function pickListFixture(
 		tables,
 		series,
 		movements,
+		appended,
+		events: () => appended.map((event) => event.name),
 		lineService,
 		waveService,
 		store: (id: string) => tables.pickList.find((row) => row.id === id),
@@ -933,6 +956,72 @@ describe('PickListService — the list state machine (doc 09 §14.5, §14.11)', 
 		await expect(fixture.service.findOneScoped('theirs')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findOneDetailed('theirs')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findOneScoped('nope')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+describe('PickListService — the facts a list announces (pickListChanged)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(PICKER);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('announces each move once, under the list, with the state the move left it in', async () => {
+		const fixture = pickListFixture({
+			lists: [listRow('list-1'), listRow('list-2')],
+			lines: [lineRow('line-1', { status: PickListLineStatus.PICKED })]
+		});
+
+		await fixture.service.assign('list-1', PICKER);
+		await fixture.service.start('list-1');
+		await fixture.service.complete('list-1');
+		await fixture.service.cancel('list-2', 'no longer needed');
+
+		expect(fixture.events()).toEqual(['pick_list.assigned', 'pick_list.started', 'pick_list.picked', 'pick_list.canceled']);
+		expect(fixture.appended[0]).toMatchObject({
+			aggregateType: 'PICK_LIST',
+			aggregateId: 'list-1',
+			tenantId: TENANT,
+			organizationId: ORG,
+			data: { pickListId: 'list-1', status: PickListStatus.ASSIGNED, assignedToUserId: PICKER, version: 2 }
+		});
+		expect(fixture.appended[3].data).toMatchObject({ pickListId: 'list-2', status: PickListStatus.CANCELED });
+	});
+
+	it('announces nothing for a move the state machine refuses', async () => {
+		const fixture = pickListFixture({ lists: [listRow('list-1', { status: PickListStatus.PICKED })] });
+
+		await expect(fixture.service.assign('list-1', PICKER)).rejects.toThrow(/cannot be assigned/);
+		await expect(fixture.service.start('list-1')).rejects.toThrow(/cannot be started/);
+		await expect(fixture.service.cancel('list-1')).rejects.toThrow(/already closed/);
+
+		expect(fixture.appended).toEqual([]);
+	});
+
+	it('announces a derived list once its lines and counters are written', async () => {
+		const fixture = pickListFixture({ shippable: [shippable()] });
+
+		const list = await fixture.service.create({ warehouseId: WAREHOUSE, fulfillmentIds: [SHIPMENT] } as never);
+
+		expect(fixture.events()).toEqual(['pick_list.created']);
+		expect(fixture.appended[0]).toMatchObject({
+			aggregateId: list.id,
+			data: { pickListId: list.id, warehouseId: WAREHOUSE, status: PickListStatus.PENDING }
+		});
+	});
+
+	it('withdraws a derived list whose fact could not be appended, so neither exists', async () => {
+		const fixture = pickListFixture({ shippable: [shippable()], failAppend: 'pick_list.created' });
+
+		await expect(
+			fixture.service.create({ warehouseId: WAREHOUSE, fulfillmentIds: [SHIPMENT] } as never)
+		).rejects.toThrow(/outbox is unavailable/);
+
+		expect(fixture.tables.pickList).toEqual([]);
+		expect(fixture.tables.pickListLine).toEqual([]);
+		expect(fixture.appended).toEqual([]);
 	});
 });
 

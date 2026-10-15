@@ -1,8 +1,8 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { ID } from '@gauzy/contracts';
-import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { ID, IOutboxWriteInput } from '@gauzy/contracts';
+import { EventOutboxService, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickListLineService } from '../pick-list-line/pick-list-line.service';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { PickWaveService } from '../pick-wave/pick-wave.service';
@@ -15,6 +15,8 @@ import {
 	IWarehouseFulfillmentPort,
 	IWarehouseShippableLine,
 	IWarehouseStockLedgerPort,
+	PICK_LIST_AGGREGATE_TYPE,
+	PICK_LIST_EVENTS,
 	PICK_NUMBER_KEY,
 	PickListStatus,
 	PickWaveStrategy,
@@ -24,7 +26,7 @@ import {
 } from '../warehouse.types';
 import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { isPositiveQuantity, normalizeQuantity } from '../warehouse.quantity';
-import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
+import { TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../warehouse-persistence';
 import { PickList } from './pick-list.entity';
 import { MikroOrmPickListRepository } from './repository/mikro-orm-pick-list.repository';
 import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repository';
@@ -59,6 +61,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		private readonly warehouseZoneService: WarehouseZoneService,
 		private readonly sequenceService: SequenceService,
 		private readonly typeOrmPickWaveRepository: TypeOrmPickWaveRepository,
+		private readonly outbox: EventOutboxService,
 		@Optional()
 		@Inject(WAREHOUSE_FULFILLMENT)
 		private readonly fulfillment?: IWarehouseFulfillmentPort,
@@ -165,6 +168,9 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		try {
 			await this.writeLines(list, derived);
 			await this.refreshCaches(list.id);
+			// The last step of the write phase, so a list whose fact could not be appended is withdrawn like a list
+			// whose lines could not be written: the list and `pick_list.created` exist together or not at all.
+			await this.announce(PICK_LIST_EVENTS.CREATED, list);
 		} catch (error) {
 			await this.withdraw(list);
 
@@ -241,11 +247,11 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			throw new BadRequestException('Assigning a list requires the picker it is assigned to.');
 		}
 
-		await super.update(id, {
+		await this.move(list, PICK_LIST_EVENTS.ASSIGNED, {
 			assignedToUserId,
 			status: PickListStatus.ASSIGNED,
 			version: (list.version ?? 1) + 1
-		} as any);
+		});
 
 		return await this.findOneDetailed(id);
 	}
@@ -263,11 +269,11 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			throw new BadRequestException(`A list in status "${list.status}" cannot be started.`);
 		}
 
-		await super.update(id, {
+		await this.move(list, PICK_LIST_EVENTS.STARTED, {
 			status: PickListStatus.IN_PROGRESS,
 			startedAt: list.startedAt ?? new Date(),
 			version: (list.version ?? 1) + 1
-		} as any);
+		});
 
 		await this.markWaveStarted(list);
 
@@ -308,11 +314,11 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			);
 		}
 
-		await super.update(id, {
+		await this.move(list, PICK_LIST_EVENTS.PICKED, {
 			status: PickListStatus.PICKED,
 			completedAt: new Date(),
 			version: (list.version ?? 1) + 1
-		} as any);
+		});
 
 		await this.refreshCaches(id);
 
@@ -351,11 +357,11 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			);
 		}
 
-		await super.update(id, {
+		await this.move(list, PICK_LIST_EVENTS.CANCELED, {
 			status: PickListStatus.CANCELED,
 			note: reason ?? list.note,
 			version: (list.version ?? 1) + 1
-		} as any);
+		});
 
 		for (const line of lines) {
 			await this.pickListLineService.cancelOpenLine(line.id);
@@ -414,6 +420,100 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		}
 
 		return list;
+	}
+
+	/**
+	 * Moves a list and appends the fact the move announces, in one transaction.
+	 *
+	 * The status write is predicated on the status the operation read, so a list another call moved meanwhile is
+	 * refused with `PICK_LIST_EDIT_CONFLICT` rather than moved twice — and announced twice. The fact is appended
+	 * through the same transaction, on either ORM (`runWarehouseTransaction`): a write the predicate refused throws
+	 * before the append is reached, and an append that fails rolls the move back with it, so a subscriber, a webhook
+	 * or a projection is told of every move that committed and of nothing else.
+	 *
+	 * @param list The list as the operation read it.
+	 * @param name The fact the move announces.
+	 * @param patch The columns the move writes.
+	 * @throws ConflictException with `PICK_LIST_EDIT_CONFLICT` when the list moved since it was read.
+	 */
+	private async move(list: PickList, name: string, patch: Partial<PickList>): Promise<void> {
+		await runWarehouseTransaction(
+			this.ormType,
+			() => this.typeOrmPickListRepository.manager,
+			() => this.mikroOrmPickListRepository,
+			async ({ rows, manager }) => {
+				await landEdit(
+					() =>
+						rows(PickList).update(
+							{
+								id: list.id,
+								status: list.status,
+								...(list.tenantId ? { tenantId: list.tenantId } : {}),
+								...(list.organizationId ? { organizationId: list.organizationId } : {})
+							} as FindOptionsWhere<PickList>,
+							patch as QueryDeepPartialEntity<PickList>
+						),
+					'PICK_LIST_EDIT_CONFLICT',
+					'pick list',
+					list.id
+				);
+
+				await this.outbox.append(manager as never, this.factOf(name, { ...list, ...patch } as PickList));
+			}
+		);
+	}
+
+	/**
+	 * Appends a fact about a list that is already written, in a transaction of its own.
+	 *
+	 * The creation's rows are written through the platform's CRUD create — the list by this class and its lines by
+	 * the line service — whose tenancy checks have no transaction-bound form (the reason `FulfillmentService`
+	 * states for its own create), so the creation is not one transaction. Its write phase is all-or-nothing by
+	 * withdrawal instead, and this append is that phase's last step: if it fails, the list is withdrawn.
+	 *
+	 * @param name The fact.
+	 * @param list The list.
+	 */
+	private async announce(name: string, list: PickList): Promise<void> {
+		await runWarehouseTransaction(
+			this.ormType,
+			() => this.typeOrmPickListRepository.manager,
+			() => this.mikroOrmPickListRepository,
+			async ({ manager }) => {
+				await this.outbox.append(manager as never, this.factOf(name, list));
+			}
+		);
+	}
+
+	/**
+	 * The outbox row a fact about a list is written as.
+	 *
+	 * The payload carries what a consumer routes on — the list, where the work is, the wave it belongs to, its
+	 * status and who owns it — and no line and no quantity: the list itself is one `pickList(id:)` away.
+	 *
+	 * @param name The fact.
+	 * @param list The list in the state the move left it.
+	 * @returns The outbox write.
+	 */
+	private factOf(name: string, list: PickList): IOutboxWriteInput {
+		return {
+			name,
+			aggregateType: PICK_LIST_AGGREGATE_TYPE,
+			aggregateId: list.id,
+			data: {
+				pickListId: list.id,
+				number: list.number ?? null,
+				warehouseId: list.warehouseId ?? null,
+				waveId: list.waveId ?? null,
+				zoneId: list.zoneId ?? null,
+				status: list.status,
+				assignedToUserId: list.assignedToUserId ?? null,
+				priority: list.priority ?? null,
+				version: list.version ?? null
+			},
+			tenantId: list.tenantId,
+			organizationId: list.organizationId
+		};
 	}
 
 	/**

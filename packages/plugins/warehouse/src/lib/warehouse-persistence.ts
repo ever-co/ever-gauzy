@@ -1,4 +1,4 @@
-import { ObjectLiteral, Repository } from 'typeorm';
+import { EntityManager as TypeOrmEntityManager, ObjectLiteral, Repository } from 'typeorm';
 import {
 	Collection,
 	EntityManager as MikroOrmEntityManager,
@@ -78,6 +78,66 @@ export function warehouseRowsOf<T extends ObjectLiteral>(
 		update: (criteria: string | Record<string, unknown>, patch: Record<string, unknown>) =>
 			rows().update(criteria, patch)
 	} as unknown as TWarehouseRows<T>;
+}
+
+/**
+ * What a write that runs in a transaction is handed: the repository a table is read and written through inside the
+ * transaction, and the manager the platform outbox appends through, so a fact commits or rolls back with the write it
+ * describes.
+ */
+export interface IWarehouseTransaction {
+	/**
+	 * The repository one of this package's tables is read and written through, inside the transaction.
+	 *
+	 * @param entity The table's entity.
+	 * @returns The repository, answering the same calls as {@link warehouseRowsOf}'s.
+	 */
+	rows<T extends ObjectLiteral>(entity: new () => T): TWarehouseRows<T>;
+	/** The transaction's own manager — TypeORM's, or MikroORM's fork — which `EventOutboxService.append` accepts. */
+	readonly manager: TypeOrmEntityManager | MikroOrmEntityManager;
+}
+
+/**
+ * Runs one write in a transaction on the ORM the installation runs.
+ *
+ * Under TypeORM it is `manager.transaction(work)` on the repository's own manager, and the body writes through that
+ * transaction's repositories. Under MikroORM it is `transactional()` on the repository's entity manager, and the body
+ * writes through {@link MikroOrmWarehouseRows} on the fork that transaction runs on. Either way the body is handed the
+ * transaction's manager for the outbox, and a throw from the body rolls back every statement it issued, the outbox
+ * row included. Each ORM's manager is reached only on its own arm.
+ *
+ * @param ormType The ORM the installation runs.
+ * @param typeOrm The TypeORM manager the transaction is opened on, reached only under TypeORM.
+ * @param mikroOrm A MikroORM repository of this package, reached only under MikroORM.
+ * @param work The transaction body.
+ * @returns What the body answers.
+ */
+export async function runWarehouseTransaction<R>(
+	ormType: string,
+	typeOrm: () => TypeOrmEntityManager,
+	mikroOrm: () => IMikroOrmEntityManagerSource,
+	work: (transaction: IWarehouseTransaction) => Promise<R>
+): Promise<R> {
+	if (ormType === MultiORMEnum.MikroORM) {
+		return await mikroOrm()
+			.getEntityManager()
+			.transactional(
+				async (em) =>
+					await work({
+						rows: <T extends ObjectLiteral>(entity: new () => T) =>
+							new MikroOrmWarehouseRows<T>(em, entity) as unknown as TWarehouseRows<T>,
+						manager: em
+					})
+			);
+	}
+
+	return await typeOrm().transaction(
+		async (manager) =>
+			await work({
+				rows: <T extends ObjectLiteral>(entity: new () => T) => manager.getRepository(entity) as TWarehouseRows<T>,
+				manager
+			})
+	);
 }
 
 /**

@@ -336,6 +336,11 @@ interface IHarness {
 	manifests: CarrierManifestService;
 	/** Every movement the services asked the stock ledger for. */
 	movements: Row[];
+	/**
+	 * The platform outbox, recorded: each fact it was asked to append, and whether the manager it was handed was
+	 * inside an open transaction. `failOn` names a fact it refuses, after the move that earned it was written.
+	 */
+	outbox: { appended: Row[]; failOn: string | null };
 	row: (table: string, id: string) => Promise<Row | undefined>;
 	set: (table: string, id: string, values: Row) => Promise<void>;
 }
@@ -417,6 +422,19 @@ async function harness(): Promise<IHarness> {
 		}
 	} as unknown as IWarehouseStockLedgerPort;
 
+	const outbox: IHarness['outbox'] = { appended: [], failOn: null };
+	const outboxService = {
+		append: async (manager: any, event: Row) => {
+			if (event.name === outbox.failOn) {
+				throw new Error('the outbox is unavailable');
+			}
+
+			outbox.appended.push({ ...event, inTransaction: Boolean(manager?.queryRunner?.isTransactionActive) });
+
+			return event;
+		}
+	};
+
 	const repository = (entity: unknown) => dataSource.getRepository(entity as any) as any;
 	const lines = new PickListLineService(repository(PickListLine), undefined as any, repository(PickList), ledger);
 	const waves = new PickWaveService(
@@ -435,6 +453,7 @@ async function harness(): Promise<IHarness> {
 		undefined as any,
 		undefined as any,
 		repository(PickWave),
+		outboxService as any,
 		undefined,
 		ledger
 	);
@@ -447,6 +466,7 @@ async function harness(): Promise<IHarness> {
 		slips: new PackSlipService(repository(PackSlip), undefined as any, lists, lines, undefined as any),
 		manifests: new CarrierManifestService(repository(CarrierManifest), undefined as any, undefined as any),
 		movements,
+		outbox,
 		row: async (table, id) => (await dataSource.query(`SELECT * FROM "${table}" WHERE "id" = ?`, [id]))[0],
 		set: async (table, id, values) => {
 			const columns = Object.keys(values);
@@ -578,6 +598,49 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 			await h.lists.cancel(LIST, 'changed plan');
 			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
 			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.CANCELED);
+		});
+	});
+
+	describe('a pick list move and the fact it announces commit together (pickListChanged)', () => {
+		it('appends the fact through the transaction that writes the move', async () => {
+			await h.lists.start(LIST);
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.IN_PROGRESS);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId, event.inTransaction])).toEqual([
+				['pick_list.started', LIST, true]
+			]);
+			expect(h.outbox.appended[0]).toMatchObject({ tenantId: TENANT, organizationId: ORG, aggregateType: 'PICK_LIST' });
+		});
+
+		it('rolls the move back when its fact cannot be appended', async () => {
+			h.outbox.failOn = 'pick_list.started';
+
+			await expect(h.lists.start(LIST)).rejects.toThrow(/outbox is unavailable/);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.startedAt, list?.version]).toEqual([PickListStatus.ASSIGNED, null, 1]);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('announces nothing for a move that did not happen: a list another call moved meanwhile is refused', async () => {
+			// The list was read ASSIGNED and is CANCELED by the time the move's statement runs: the statement is
+			// predicated on the status the operation read, so it changes no row, and the fact is never appended.
+			const read = await h.lists.findOneScoped(LIST);
+			await h.set('pick_list', LIST, { status: PickListStatus.CANCELED });
+
+			await expect(
+				(h.lists as any).move(read, 'pick_list.started', { status: PickListStatus.IN_PROGRESS })
+			).rejects.toMatchObject({ status: 409, response: { code: 'PICK_LIST_EDIT_CONFLICT' } });
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('control: a cancellation is written and announced once', async () => {
+			await h.lists.cancel(LIST, 'changed plan');
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
+			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.canceled']);
 		});
 	});
 
