@@ -290,7 +290,8 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			value: result.value,
 			currency: result.currency,
 			startDay: result.startDay || 1,
-			startMonth: result.startMonth || startDate.getMonth(),
+			// January is month 0, which || would replace with the month on screen
+			startMonth: result.startMonth ?? startDate.getMonth(),
 			startYear: result.startYear || startDate.getFullYear(),
 			startDate: result.startDate || new Date(startDate.getFullYear(), startDate.getMonth(), 1)
 		};
