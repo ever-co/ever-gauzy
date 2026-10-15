@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import * as chalk from 'chalk';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
@@ -140,65 +139,38 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	 * @param timeSlots - The time slots to conditionally delete.
 	 * @param timeLog - The specific time log to check for deletion.
 	 * @param forceDelete - A boolean flag to indicate whether to hard delete or soft delete.
-	 * @returns A promise that resolves to true after deletion.
+	 * @returns A promise that resolves to the deleted time slots.
 	 */
 	private async conditionalDeleteTimeSlots(
 		timeSlots: ITimeSlot[],
 		timeLog: ITimeLog,
 		forceDelete: boolean
-	): Promise<ITimeSlot> {
+	): Promise<ITimeSlot[]> {
 		console.log(`conditional ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+
+		const matchingTimeSlots: ITimeSlot[] = [];
 
 		// Loop through each time slot
 		for await (const timeSlot of timeSlots) {
 			const { timeLogs = [] } = timeSlot;
 			const [firstTimeLog] = timeLogs;
 
-			console.log('Matching TimeLog ID:', firstTimeLog.id === timeLog.id);
+			console.log('Matching TimeLog ID:', firstTimeLog?.id === timeLog.id);
 			console.log('TimeSlots Ids Will Be Deleted:', timeSlot.id);
 
 			if (timeLogs.length === 1) {
 				const [firstTimeLog] = timeLogs;
 				if (firstTimeLog.id === timeLog.id) {
 					// If the time slot has only one time log and it matches the provided time log, delete the time slot
-					switch (this.ormType) {
-						case MultiORMEnum.MikroORM: {
-							const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-							if (forceDelete) {
-								console.log(
-									chalk.red('--------------------hard removing time slot--------------------'),
-									timeSlot.id
-								);
-								await em.removeAndFlush(timeSlot);
-								return timeSlot;
-							} else {
-								console.log(
-									chalk.yellow('--------------------soft removing time slot--------------------'),
-									timeSlot.id
-								);
-								(timeSlot as any).deletedAt = new Date();
-								await em.persistAndFlush(timeSlot);
-								return timeSlot;
-							}
-						}
-						case MultiORMEnum.TypeORM:
-						default:
-							if (forceDelete) {
-								console.log(
-									chalk.red('--------------------hard removing time slot--------------------'),
-									timeSlot.id
-								);
-								return await this.typeOrmTimeSlotRepository.remove(timeSlot);
-							} else {
-								console.log(
-									chalk.yellow('--------------------soft removing time slot--------------------'),
-									timeSlot.id
-								);
-								return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
-							}
-					}
+					matchingTimeSlots.push(timeSlot);
 				}
 			}
 		}
+
+		if (isEmpty(matchingTimeSlots)) {
+			return [];
+		}
+
+		return await this.bulkDeleteTimeSlots(matchingTimeSlots, forceDelete);
 	}
 }
