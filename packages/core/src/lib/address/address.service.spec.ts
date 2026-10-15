@@ -941,6 +941,25 @@ describe('AddressService — a party outside the caller’s scope is never named
 		expect(contact()?.defaultShippingAddressId).toBe(HOME);
 	});
 
+	it('decides a move under the address’s row lock, and writes it in the same step', async () => {
+		// CodeRabbit on #10649: checked before the write, a default set concurrently could slip in between. The check
+		// now reads the address under the lock `setDefaultAddress` takes, then reads the party, then writes.
+		const { addressService, statements } = book({
+			addresses: [addressRow(HOME)],
+			contacts: [contactRow(CONTACT), contactRow(OTHER_CONTACT)]
+		});
+
+		await addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT });
+
+		const locked = statements.findIndex((one) => one.lockedRead === 'address');
+		const partyRead = statements.findIndex((one, index) => index > locked && one.readOne === 'organization_contact' && one.id === CONTACT);
+		const written = statements.findIndex((one, index) => index > partyRead && one.update === 'address');
+
+		expect(locked).toBeGreaterThanOrEqual(0);
+		expect(partyRead).toBeGreaterThan(locked);
+		expect(written).toBeGreaterThan(partyRead);
+	});
+
 	it('moves an address that is no one’s default to another customer of the caller', async () => {
 		const { addressService, address } = book({
 			addresses: [addressRow(HOME)],

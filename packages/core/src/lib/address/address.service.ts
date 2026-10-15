@@ -278,11 +278,9 @@ export class AddressService extends TenantAwareCrudService<Address> {
 		this.assertOwnerConsistency(ownerType, ownerId, customerId);
 		if (input.customerId !== undefined) {
 			await this.assertCustomerInScope(customerId);
-
-			if (String(customerId ?? '') !== String(address.customerId ?? '')) {
-				await this.assertNotMovingADefault(address);
-			}
 		}
+		// A move to another customer (or to none) is decided and written under the address's row lock, below.
+		const movesCustomer = input.customerId !== undefined && String(customerId ?? '') !== String(address.customerId ?? '');
 
 		if (input.line1 !== undefined && !this.isStated(input.line1)) {
 			throw new BadRequestException(
@@ -312,7 +310,20 @@ export class AddressService extends TenantAwareCrudService<Address> {
 			customerId: customerId ?? null
 		};
 
-		if (Object.keys(descriptive).length) {
+		if (movesCustomer) {
+			// The default check and the move are one step under the lock `setDefaultAddress` takes, so a default set
+			// concurrently cannot slip in between the check and the write (CodeRabbit on #10649).
+			await this.typeOrmAddressRepository.manager.transaction(async (manager: EntityManager) => {
+				const locked = await this.lockAddress(manager, id);
+
+				if (!locked) {
+					throw new NotFoundException(`${ApiErrorCode.RESOURCE_NOT_FOUND}: no such address in this organization.`);
+				}
+
+				await this.assertNotMovingADefault(locked, manager);
+				await manager.update(Address, { id: locked.id, ...this.scope } as never, descriptive as never);
+			});
+		} else if (Object.keys(descriptive).length) {
 			await this.update(id, descriptive as never);
 		}
 
@@ -717,16 +728,18 @@ export class AddressService extends TenantAwareCrudService<Address> {
 	 * book would leave the column naming an address the customer no longer has (CodeRabbit on #10649). The default
 	 * is cleared first — {@link clearDefaultAddress} is the door that clears the column and the mirror together.
 	 *
-	 * @param address The stored address.
+	 * @param address The stored address, read under its row lock.
+	 * @param manager The transaction the move is written in.
 	 * @throws ApiException `ADDRESS_DEFAULT_MISMATCH` (409) when the address is a default of its customer.
 	 */
 	private async assertNotMovingADefault(
-		address: Pick<IAddressBook, 'id' | 'customerId' | 'ownerType' | 'isDefaultShipping' | 'isDefaultBilling'>
+		address: Pick<IAddressBook, 'id' | 'customerId' | 'ownerType' | 'isDefaultShipping' | 'isDefaultBilling'>,
+		manager: EntityManager = this.typeOrmAddressRepository.manager
 	): Promise<void> {
 		let isDefault = !!(address.isDefaultShipping || address.isDefaultBilling);
 
 		if (!isDefault && address.ownerType === AddressOwnerType.CONTACT && address.customerId) {
-			const party = (await this.typeOrmAddressRepository.manager.findOne(OrganizationContact, {
+			const party = (await manager.findOne(OrganizationContact, {
 				where: { id: address.customerId, ...this.scope }
 			} as never)) as unknown as Record<string, unknown> | null;
 			const columns = [AddressRoleEnum.SHIPPING, AddressRoleEnum.BILLING].map((role) => this.partyDefaultColumn(role));
