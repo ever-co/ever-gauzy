@@ -145,12 +145,11 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			const user = RequestContext.currentUser();
 
 			// Retrieve existing mentions for the entity, whoever wrote them. Scoped to the caller's employee,
-			// the mentions written by someone else were published again on each edit and never removed
+			// the mentions written by someone else were published again on each edit and never removed.
+			// No `select`: on MikroORM `mentionedEmployeeId` is a `persist: false` relation mirror that a
+			// partial load leaves unset, so every id read back as undefined. A full load fills it on both ORMs
 			const existingMentions = await this.withoutEmployeeFilter(() =>
-				super.find({
-					where: { entity, entityId },
-					select: { mentionedEmployeeId: true }
-				})
+				super.find({ where: { entity, entityId } })
 			);
 
 			// Extract the IDs of currently mentioned users
