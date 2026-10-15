@@ -2,14 +2,23 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
+import { TWarehouseTransactionRunner, movePickList } from '../pick-list/pick-list-moves';
 import { TypeOrmPickListRepository } from '../pick-list/repository/type-orm-pick-list.repository';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { TypeOrmPickListLineRepository } from '../pick-list-line/repository/type-orm-pick-list-line.repository';
-import { PICK_NUMBER_KEY, PickListStatus, PickWaveStatus, PickWaveStrategy } from '../warehouse.types';
+import { PickListLineService } from '../pick-list-line/pick-list-line.service';
+import {
+	PICK_LIST_EVENTS,
+	PICK_NUMBER_KEY,
+	PickListLineStatus,
+	PickListStatus,
+	PickWaveStatus,
+	PickWaveStrategy
+} from '../warehouse.types';
 import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
-import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
+import { TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../warehouse-persistence';
 import { PickWave } from './pick-wave.entity';
 import { MikroOrmPickWaveRepository } from './repository/mikro-orm-pick-wave.repository';
 import { TypeOrmPickWaveRepository } from './repository/type-orm-pick-wave.repository';
@@ -42,10 +51,26 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 		readonly mikroOrmPickWaveRepository: MikroOrmPickWaveRepository,
 		private readonly typeOrmPickListRepository: TypeOrmPickListRepository,
 		private readonly typeOrmPickListLineRepository: TypeOrmPickListLineRepository,
-		private readonly sequenceService: SequenceService
+		private readonly sequenceService: SequenceService,
+		private readonly pickListLineService: PickListLineService,
+		private readonly outbox: EventOutboxService
 	) {
 		super(typeOrmPickWaveRepository, mikroOrmPickWaveRepository);
 	}
+
+	/**
+	 * Runs one write in a transaction on the ORM the installation runs, on this service's repositories.
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	private readonly transaction: TWarehouseTransactionRunner = (work) =>
+		runWarehouseTransaction(
+			this.ormType,
+			() => this.typeOrmPickListRepository.manager,
+			() => this.mikroOrmPickWaveRepository,
+			work
+		);
 
 	/**
 	 * Edits a wave, refusing what only its operations move (review R2-13).
@@ -472,8 +497,20 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 	 * which would make the two services depend on each other. The lists themselves are the rows a picker
 	 * reads, so the cancellation is recorded on them rather than left implied by the wave's status.
 	 *
+	 * **Each list is cancelled the way the list's own cancellation does it** (`movePickList`): its open lines
+	 * withdrawn (`PickListLineService.cancelOpenLine`, their one writer), its status and next version written,
+	 * and `pick_list.canceled` appended, in one transaction per list, predicated on the status and the version this
+	 * cascade read. So a wave's cancellation never leaves a CANCELED list with an open line, and every list it
+	 * cancels is announced. A line that already has an outcome keeps it: `cancel` refuses a wave with any outcome
+	 * before it gets here, and closing a wave short is how picked work is stopped — the picked lines are facts on
+	 * the floor, and only what was never picked is withdrawn. One transaction per list, as the cascade wrote one
+	 * statement per list before: a list that cannot be cancelled refuses the call, and the lists before it stay
+	 * cancelled, complete with their lines and their facts.
+	 *
 	 * @param waveId The wave.
 	 * @param reason Why the lists were cancelled.
+	 * @throws ConflictException with `PICK_LIST_EDIT_CONFLICT` or `PICK_LIST_LINE_EDIT_CONFLICT` when a list or one of
+	 * its open lines moved since the cascade read it.
 	 */
 	private async cancelOpenLists(waveId: ID, reason: string): Promise<void> {
 		const lists = await this.listsOfWave(waveId);
@@ -483,11 +520,23 @@ export class PickWaveService extends TenantAwareCrudService<PickWave> {
 				continue;
 			}
 
-			await this.rows(PickList, () => this.typeOrmPickListRepository).update(list.id, {
-				status: PickListStatus.CANCELED,
-				note: reason,
-				version: (list.version ?? 1) + 1
-			} as any);
+			const open = (await this.pickListLineService.findForList(list.id)).filter(
+				(line) => line.status === PickListLineStatus.PENDING
+			);
+
+			await movePickList(this.transaction, this.outbox, list, {
+				name: PICK_LIST_EVENTS.CANCELED,
+				patch: {
+					status: PickListStatus.CANCELED,
+					note: reason,
+					version: (list.version ?? 1) + 1
+				},
+				alongside: async (transaction) => {
+					for (const line of open) {
+						await this.pickListLineService.cancelOpenLine(line.id, transaction);
+					}
+				}
+			});
 		}
 	}
 

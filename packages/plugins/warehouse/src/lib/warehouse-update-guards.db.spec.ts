@@ -136,6 +136,7 @@ const LIST = '00000000-0000-4000-8000-0000000005a1';
 const LINE = '00000000-0000-4000-8000-0000000006a1';
 const SLIP = '00000000-0000-4000-8000-0000000007a1';
 const MANIFEST = '00000000-0000-4000-8000-0000000008a1';
+const LINE_2 = '00000000-0000-4000-8000-0000000006a2';
 
 /*
 |--------------------------------------------------------------------------
@@ -192,6 +193,10 @@ const schemas = [
 			lineCount: count,
 			version: { type: 'int', default: 1 },
 			metadata: json
+		},
+		// The wave's own read (`findOneDetailed`) answers it with its lists.
+		relations: {
+			pickLists: { type: 'one-to-many', target: 'PickList', inverseSide: 'wave' }
 		}
 	}),
 	new EntitySchema<any>({
@@ -219,7 +224,7 @@ const schemas = [
 			metadata: json
 		},
 		relations: {
-			wave: { type: 'many-to-one', target: 'PickWave', joinColumn: { name: 'waveId' } },
+			wave: { type: 'many-to-one', target: 'PickWave', joinColumn: { name: 'waveId' }, inverseSide: 'pickLists' },
 			zone: { type: 'many-to-one', target: 'WarehouseZone', joinColumn: { name: 'zoneId' } }
 		}
 	}),
@@ -443,13 +448,21 @@ async function harness(): Promise<IHarness> {
 	};
 
 	const repository = (entity: unknown) => dataSource.getRepository(entity as any) as any;
-	const lines = new PickListLineService(repository(PickListLine), undefined as any, repository(PickList), ledger);
+	const lines = new PickListLineService(
+		repository(PickListLine),
+		undefined as any,
+		repository(PickList),
+		outboxService as any,
+		ledger
+	);
 	const waves = new PickWaveService(
 		repository(PickWave),
 		undefined as any,
 		repository(PickList),
 		repository(PickListLine),
-		undefined as any
+		undefined as any,
+		lines,
+		outboxService as any
 	);
 	const lists = new PickListService(
 		repository(PickList),
@@ -609,6 +622,13 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 	});
 
 	describe('a pick list move and the fact it announces commit together (pickListChanged)', () => {
+		/** A second open line on the list, asking for five units from the same bin. */
+		const insertLine = async (id: string) =>
+			await h.dataSource.query(
+				'INSERT INTO "pick_list_line" ("id", "pickListId", "variantId", "binId", "quantityRequested", "status", "tenantId", "organizationId") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+				[id, LIST, VARIANT, BIN, '5', PickListLineStatus.PENDING, TENANT, ORG]
+			);
+
 		it('appends the fact through the transaction that writes the move', async () => {
 			await h.lists.start(LIST);
 
@@ -724,6 +744,92 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 
 			expect(facts.map((event) => [event.name, event.data.version])).toEqual([['pick_list.created', created.version]]);
 			expect(created.version).toBe(stored?.version);
+		});
+
+		it('the first pick announces pick_list.started once, with the version it stored', async () => {
+			await insertLine(LINE_2);
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+			await h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 2, 2]);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId, event.inTransaction, event.data.version])).toEqual([
+				['pick_list.started', LIST, true, 2]
+			]);
+		});
+
+		it('two concurrent first picks announce once and both picks are recorded', async () => {
+			await insertLine(LINE_2);
+			// The second pick read the list before the first pick's promotion committed: it holds ASSIGNED at version 1.
+			const staleRead = await h.dataSource.getRepository(PickList).findOne({ where: { id: LIST } });
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+			jest.spyOn(h.dataSource.getRepository(PickList), 'findOne').mockResolvedValueOnce(staleRead as any);
+			await expect(h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any)).resolves.toMatchObject({
+				status: PickListLineStatus.PICKED
+			});
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 2, 2]);
+			expect([(await h.row('pick_list_line', LINE))?.status, (await h.row('pick_list_line', LINE_2))?.status]).toEqual([
+				PickListLineStatus.PICKED,
+				PickListLineStatus.PICKED
+			]);
+			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.started']);
+		});
+
+		it('a counter refresh that moves no status announces nothing and keeps the version', async () => {
+			await h.set('pick_list', LIST, { status: PickListStatus.IN_PROGRESS });
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 1, 1]);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('cancelling a wave cancels its open lists’ lines and announces each list', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+
+			await h.waves.cancel(WAVE, 'no longer needed');
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.CANCELED, 2]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.CANCELED);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId, event.inTransaction, event.lineStatuses])).toEqual([
+				['pick_list.canceled', LIST, true, [PickListLineStatus.CANCELED]]
+			]);
+		});
+
+		it('closing a wave short withdraws only what was never picked, so no CANCELED list keeps an open line', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			await insertLine(LINE_2);
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			await h.waves.closeShort(WAVE, 'the shift ended');
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
+			expect([(await h.row('pick_list_line', LINE))?.status, (await h.row('pick_list_line', LINE_2))?.status]).toEqual([
+				PickListLineStatus.PICKED,
+				PickListLineStatus.CANCELED
+			]);
+			expect(h.outbox.appended.map((event) => [event.name, event.lineStatuses])).toEqual([
+				['pick_list.started', [PickListLineStatus.PICKED, PickListLineStatus.PENDING]],
+				['pick_list.canceled', [PickListLineStatus.PICKED, PickListLineStatus.CANCELED]]
+			]);
+		});
+
+		it('a wave’s list whose open line cannot be withdrawn keeps its status, its lines and announces nothing', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			jest.spyOn(h.lines, 'cancelOpenLine').mockRejectedValue(new Error('the line could not be written'));
+
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).rejects.toThrow(/the line could not be written/);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 1]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
+			expect(h.outbox.appended).toEqual([]);
 		});
 
 		it('announces the version the move stored', async () => {

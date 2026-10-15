@@ -330,10 +330,29 @@ function lineFixture(options: { lines?: any[]; lists?: any[]; withLedger?: boole
 		list: [...(options.lists ?? [listRow('list-1')])]
 	};
 	const capability = ledger();
+	const lineRepository = repository(tables, 'line');
+	const listRepository = repository(tables, 'list');
+	// The first outcome on a line moves its list in a transaction of the list repository's manager and appends
+	// `pick_list.started` through it; the in-memory transaction hands the body the repositories themselves.
+	const appended: any[] = [];
+	(listRepository as any).manager = {
+		transaction: async (work: (manager: unknown) => Promise<unknown>) =>
+			await work({
+				getRepository: (entity: { name?: string }) => (entity?.name === 'PickListLine' ? lineRepository : listRepository)
+			})
+	};
+	const outbox = {
+		append: async (_manager: unknown, event: any) => {
+			appended.push(event);
+
+			return event;
+		}
+	};
 	const service = new PickListLineService(
-		repository(tables, 'line') as never,
+		lineRepository as never,
 		{} as never,
-		repository(tables, 'list') as never,
+		listRepository as never,
+		outbox as never,
 		(options.withLedger ?? true) ? (capability.port as never) : undefined
 	);
 
@@ -341,6 +360,7 @@ function lineFixture(options: { lines?: any[]; lists?: any[]; withLedger?: boole
 		service,
 		tables,
 		capability,
+		appended,
 		store: (id: string) => tables.line.find((row) => row.id === id),
 		list: (id: string) => tables.list.find((row) => row.id === id)
 	};

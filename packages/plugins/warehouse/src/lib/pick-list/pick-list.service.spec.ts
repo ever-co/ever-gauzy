@@ -432,6 +432,7 @@ function pickListFixture(
 		lineRepository as never,
 		{} as never,
 		listRepository as never,
+		outbox as never,
 		stockLedger
 	);
 	const waveService = new PickWaveService(
@@ -439,7 +440,9 @@ function pickListFixture(
 		{} as never,
 		listRepository as never,
 		lineRepository as never,
-		series.service as never
+		series.service as never,
+		lineService,
+		outbox as never
 	);
 	const zoneService = {
 		findPickPath: async (warehouseId: string) =>

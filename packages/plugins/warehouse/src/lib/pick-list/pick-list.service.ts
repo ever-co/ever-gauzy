@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { ID, IOutboxWriteInput } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { EventOutboxService, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickListLineService } from '../pick-list-line/pick-list-line.service';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
@@ -15,7 +15,6 @@ import {
 	IWarehouseFulfillmentPort,
 	IWarehouseShippableLine,
 	IWarehouseStockLedgerPort,
-	PICK_LIST_AGGREGATE_TYPE,
 	PICK_LIST_EVENTS,
 	PICK_NUMBER_KEY,
 	PickListStatus,
@@ -28,6 +27,7 @@ import { editByIdOnly, landEdit, warehouseEditOf } from '../warehouse.writable';
 import { isPositiveQuantity, normalizeQuantity } from '../warehouse.quantity';
 import { IWarehouseTransaction, TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../warehouse-persistence';
 import { PickList } from './pick-list.entity';
+import { TWarehouseTransactionRunner, movePickList, pickListFactOf } from './pick-list-moves';
 import { MikroOrmPickListRepository } from './repository/mikro-orm-pick-list.repository';
 import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repository';
 
@@ -433,20 +433,12 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	}
 
 	/**
-	 * Moves a list and appends the fact the move announces, in one transaction.
-	 *
-	 * The status write is predicated on the status **and the version** the operation read — the version is the
-	 * list's optimistic-lock counter, which every transition takes and bumps — so a list another call moved, or
-	 * re-counted, since it was read is refused with `PICK_LIST_EDIT_CONFLICT` rather than moved twice and announced
-	 * twice, and the fact's version is the version the statement stored. Every caller reads the list immediately
-	 * before its move (`assign`, `start`, `complete` and `cancel` each start from `findOneScoped`, and the cache
-	 * refresh that bumps the version runs after a move, never between its read and its write), so a single caller
-	 * never conflicts with itself.
-	 *
-	 * The fact is appended through the same transaction, on either ORM (`runWarehouseTransaction`), after the writes
-	 * that belong to the move (`alongside` — a cancellation's open lines): a write the predicate refused throws before
-	 * the append is reached, and a write or an append that fails rolls the whole move back, so a subscriber, a webhook
-	 * or a projection is told of every move that committed — complete — and of nothing else.
+	 * Moves a list and appends the fact the move announces, in one transaction (`movePickList`): predicated on the
+	 * status and the version this operation read, the writes that belong to the move (`alongside` — a cancellation's
+	 * open lines) in the same transaction, the fact appended last. Every caller reads the list immediately before its
+	 * move (`assign`, `start`, `complete` and `cancel` each start from `findOneScoped`, and the cache refresh that
+	 * bumps the version runs after a move, never between its read and its write), so a single caller never conflicts
+	 * with itself.
 	 *
 	 * @param list The list as the operation read it.
 	 * @param name The fact the move announces.
@@ -460,36 +452,22 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		patch: Partial<PickList>,
 		alongside?: (transaction: IWarehouseTransaction) => Promise<void>
 	): Promise<void> {
-		await runWarehouseTransaction(
+		await movePickList(this.transaction, this.outbox, list, { name, patch, alongside });
+	}
+
+	/**
+	 * Runs one write in a transaction on the ORM the installation runs, on this service's repositories.
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	private readonly transaction: TWarehouseTransactionRunner = (work) =>
+		runWarehouseTransaction(
 			this.ormType,
 			() => this.typeOrmPickListRepository.manager,
 			() => this.mikroOrmPickListRepository,
-			async (transaction) => {
-				await landEdit(
-					() =>
-						transaction.rows(PickList).update(
-							{
-								id: list.id,
-								status: list.status,
-								...(list.version !== undefined && list.version !== null ? { version: list.version } : {}),
-								...(list.tenantId ? { tenantId: list.tenantId } : {}),
-								...(list.organizationId ? { organizationId: list.organizationId } : {})
-							} as FindOptionsWhere<PickList>,
-							patch as QueryDeepPartialEntity<PickList>
-						),
-					'PICK_LIST_EDIT_CONFLICT',
-					'pick list',
-					list.id
-				);
-
-				if (alongside) {
-					await alongside(transaction);
-				}
-
-				await this.outbox.append(transaction.manager as never, this.factOf(name, { ...list, ...patch } as PickList));
-			}
+			work
 		);
-	}
 
 	/**
 	 * Appends a fact about a list that is already written, in a transaction of its own.
@@ -503,45 +481,9 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	 * @param list The list.
 	 */
 	private async announce(name: string, list: PickList): Promise<void> {
-		await runWarehouseTransaction(
-			this.ormType,
-			() => this.typeOrmPickListRepository.manager,
-			() => this.mikroOrmPickListRepository,
-			async ({ manager }) => {
-				await this.outbox.append(manager as never, this.factOf(name, list));
-			}
-		);
-	}
-
-	/**
-	 * The outbox row a fact about a list is written as.
-	 *
-	 * The payload carries what a consumer routes on — the list, where the work is, the wave it belongs to, its
-	 * status and who owns it — and no line and no quantity: the list itself is one `pickList(id:)` away.
-	 *
-	 * @param name The fact.
-	 * @param list The list in the state the move left it.
-	 * @returns The outbox write.
-	 */
-	private factOf(name: string, list: PickList): IOutboxWriteInput {
-		return {
-			name,
-			aggregateType: PICK_LIST_AGGREGATE_TYPE,
-			aggregateId: list.id,
-			data: {
-				pickListId: list.id,
-				number: list.number ?? null,
-				warehouseId: list.warehouseId ?? null,
-				waveId: list.waveId ?? null,
-				zoneId: list.zoneId ?? null,
-				status: list.status,
-				assignedToUserId: list.assignedToUserId ?? null,
-				priority: list.priority ?? null,
-				version: list.version ?? null
-			},
-			tenantId: list.tenantId,
-			organizationId: list.organizationId
-		};
+		await this.transaction(async ({ manager }) => {
+			await this.outbox.append(manager as never, pickListFactOf(name, list));
+		});
 	}
 
 	/**

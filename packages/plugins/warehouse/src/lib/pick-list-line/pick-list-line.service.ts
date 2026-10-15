@@ -2,13 +2,14 @@ import { BadRequestException, Inject, Injectable, NotFoundException, Optional } 
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
 import { TypeOrmPickListRepository } from '../pick-list/repository/type-orm-pick-list.repository';
 import {
 	IPickOutcomeInput,
 	ISubstitutionInput,
 	IWarehouseStockLedgerPort,
+	PICK_LIST_EVENTS,
 	PickListLineStatus,
 	PickListStatus,
 	WAREHOUSE_STOCK_LEDGER,
@@ -22,7 +23,8 @@ import {
 	subtractQuantities,
 	toQuantityUnits
 } from '../warehouse.quantity';
-import { IWarehouseTransaction, TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
+import { IWarehouseTransaction, TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../warehouse-persistence';
+import { TWarehouseTransactionRunner, movePickList } from '../pick-list/pick-list-moves';
 import { PickListLine } from './pick-list-line.entity';
 import { MikroOrmPickListLineRepository } from './repository/mikro-orm-pick-list-line.repository';
 import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-line.repository';
@@ -57,12 +59,27 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 		readonly typeOrmPickListLineRepository: TypeOrmPickListLineRepository,
 		readonly mikroOrmPickListLineRepository: MikroOrmPickListLineRepository,
 		private readonly typeOrmPickListRepository: TypeOrmPickListRepository,
+		private readonly outbox: EventOutboxService,
 		@Optional()
 		@Inject(WAREHOUSE_STOCK_LEDGER)
 		private readonly stockLedger?: IWarehouseStockLedgerPort
 	) {
 		super(typeOrmPickListLineRepository, mikroOrmPickListLineRepository);
 	}
+
+	/**
+	 * Runs one write in a transaction on the ORM the installation runs, on this service's repositories.
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	private readonly transaction: TWarehouseTransactionRunner = (work) =>
+		runWarehouseTransaction(
+			this.ormType,
+			() => this.typeOrmPickListRepository.manager,
+			() => this.mikroOrmPickListLineRepository,
+			work
+		);
 
 	/**
 	 * Edits a pick line, refusing its outcome and its route (review R2-13).
@@ -439,6 +456,13 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * can no longer be assigned to one. The promotion belongs to the first outcome recorded against a
 	 * line, which is what `startsWork` states.
 	 *
+	 * **The promotion is a move of the list, and is announced like one** (`movePickList`): the status, the counters,
+	 * the next version and `pick_list.started` in one transaction, predicated on the status and the version this
+	 * refresh read — so the first outcome announces the start exactly once. A concurrent first outcome on another
+	 * line that already moved the list is not this pick's failure: the line was recorded, so the promotion is skipped
+	 * quietly and the counters are re-derived as for any later outcome. A refresh that moves no status stays what it
+	 * was — counters only, no event, no version.
+	 *
 	 * @param pickListId The list.
 	 * @param startsWork Whether the change is an outcome recorded on a line.
 	 */
@@ -455,20 +479,45 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			return;
 		}
 
-		const lines = await this.findForList(pickListId);
+		if (startsWork && (list.status === PickListStatus.PENDING || list.status === PickListStatus.ASSIGNED)) {
+			const started = await movePickList(this.transaction, this.outbox, list, {
+				name: PICK_LIST_EVENTS.STARTED,
+				patch: {
+					...this.countersOf(await this.findForList(pickListId)),
+					status: PickListStatus.IN_PROGRESS,
+					startedAt: list.startedAt ?? new Date(),
+					version: (list.version ?? 1) + 1
+				},
+				whenMoved: 'skip'
+			});
 
-		await this.rows(PickList, () => this.typeOrmPickListRepository).update(pickListId, {
+			if (started) {
+				return;
+			}
+		}
+
+		await this.rows(PickList, () => this.typeOrmPickListRepository).update(
+			pickListId,
+			this.countersOf(await this.findForList(pickListId)) as any
+		);
+	}
+
+	/**
+	 * The counters a list caches, re-derived from its lines.
+	 *
+	 * @param lines The list's lines.
+	 * @returns The counters.
+	 */
+	private countersOf(lines: PickListLine[]): Pick<PickList, 'lineCount' | 'pickedCount' | 'shortCount'> {
+		return {
 			lineCount: lines.length,
 			pickedCount: lines.filter((line) =>
 				[PickListLineStatus.PICKED, PickListLineStatus.SHORT].includes(line.status)
 			).length,
 			shortCount: lines.filter((line) =>
 				[PickListLineStatus.SHORT, PickListLineStatus.SKIPPED].includes(line.status)
-			).length,
-			...(startsWork && (list.status === PickListStatus.PENDING || list.status === PickListStatus.ASSIGNED)
-				? { status: PickListStatus.IN_PROGRESS, startedAt: list.startedAt ?? new Date() }
-				: {})
-		} as any);
+			).length
+		};
 	}
 
 	/**
