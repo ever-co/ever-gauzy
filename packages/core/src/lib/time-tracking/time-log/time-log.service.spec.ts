@@ -27,12 +27,18 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { RequestContext } from '../../core/context';
 import { ForbiddenException } from '@nestjs/common';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import {
 	DeleteTimeSpanCommand,
 	TimeLogCreateCommand,
 	IGetConflictTimeLogCommand,
-	TimeLogUpdateCommand
+	TimeLogUpdateCommand,
+	UpdateEmployeeTotalWorkedHoursCommand
 } from './commands';
+import { TimeLogUpdateHandler } from './commands/handlers/time-log-update.handler';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
+import { generateTimeSlots } from '../time-slot/utils';
+import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
@@ -558,6 +564,224 @@ describe('TimeLogService', () => {
 				expect(commandsOfType(TimeLogUpdateCommand).map((command) => command.input.employeeId)).toEqual([
 					SAME_ORGANIZATION_EMPLOYEE_ID
 				]);
+			});
+		});
+
+		/**
+		 * A move to another employee of the same organization stays allowed, and the log takes everything that is
+		 * its own with it. `TimeLogUpdateHandler` wrote the new employee onto the row but kept the PREVIOUS employee
+		 * for the timesheet, the time slots and the worked hours — so the log pointed at one employee while its
+		 * timesheet, its slots and its hours stayed with the other. These run the real handler behind the real
+		 * service, with the repositories and the other commands scripted as the handler specs script them.
+		 */
+		describe('a same-organization employee move (real TimeLogUpdateHandler)', () => {
+			const PREVIOUS = TARGET_EMPLOYEE_ID;
+			const NEXT = '4d5e6f7a-8b9c-4dae-9f0a-3b4c5d6e7f80';
+			const STARTED_AT = new Date('2026-01-05T09:00:00.000Z');
+			const STOPPED_AT = new Date('2026-01-05T10:00:00.000Z');
+			const TRACKED = 'A time log with tracked activity or screenshots cannot be moved to another employee';
+
+			type Slot = {
+				id: string;
+				employeeId: string;
+				organizationId: string;
+				tenantId: string;
+				startedAt: Date;
+				timeLogs: Array<{ id: string }>;
+				screenshots: unknown[];
+				activities: unknown[];
+				timeSlotMinutes: unknown[];
+				deletedAt?: Date;
+			};
+
+			let row: TimeLog;
+			let slots: Slot[];
+			let recalculated: string[];
+			let workedHours: string[];
+
+			const slotsOf = (employeeId: string) =>
+				slots.filter((slot) => !slot.deletedAt && slot.employeeId === employeeId);
+
+			beforeEach(() => {
+				recalculated = [];
+				workedHours = [];
+				// The log and the previous employee's six ten-minute slots of it, as the create left them.
+				row = Object.assign(new TimeLog(), {
+					id: 'log-1',
+					tenantId: TENANT_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					employeeId: PREVIOUS,
+					timesheetId: `timesheet-${PREVIOUS}`,
+					startedAt: STARTED_AT,
+					stoppedAt: STOPPED_AT,
+					logType: TimeLogType.MANUAL,
+					source: TimeLogSourceEnum.WEB_TIMER
+				});
+				slots = generateTimeSlots(STARTED_AT, STOPPED_AT).map((slot, index) => ({
+					id: `slot-${index}`,
+					employeeId: PREVIOUS,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					tenantId: TENANT_ID,
+					startedAt: new Date(slot.startedAt),
+					timeLogs: [{ id: 'log-1' }],
+					screenshots: [],
+					activities: [],
+					timeSlotMinutes: []
+				}));
+
+				jest.spyOn(manualService as any, 'findEmployeeInTenant').mockImplementation(
+					async (employeeId: any) => ({
+						id: employeeId,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true, allowManualTime: true }
+					})
+				);
+				// The stored log, with the slots it owns (the service reads them before a move).
+				jest.spyOn(manualService, 'findOneByIdString').mockImplementation(async () =>
+					Object.assign(row, { timeSlots: slots.filter((slot) => !slot.deletedAt) })
+				);
+
+				const timeLogRepository = {
+					findOneBy: jest.fn(async (where: { id: string }) => (where.id === row.id ? row : null)),
+					update: jest.fn(async (_where: unknown, changes: Partial<TimeLog>) => {
+						Object.assign(row, changes);
+						return { affected: 1 };
+					}),
+					save: jest.fn(async (log: TimeLog) => log)
+				};
+				const timeSlotRepository = {
+					createQueryBuilder: () => {
+						const params: Record<string, any> = {};
+						const builder = {
+							alias: 'time_slot',
+							leftJoinAndSelect: () => builder,
+							where: (_sql: string, values: Record<string, unknown>) => (
+								Object.assign(params, values),
+								builder
+							),
+							andWhere: (_sql: string, values: Record<string, unknown>) => (
+								Object.assign(params, values),
+								builder
+							),
+							getMany: async () =>
+								slots.filter(
+									(slot) =>
+										!slot.deletedAt &&
+										slot.organizationId === params.organizationId &&
+										slot.tenantId === params.tenantId &&
+										slot.employeeId === params.employeeId &&
+										(params.startTimes as Date[]).some(
+											(time) => time.getTime() === slot.startedAt.getTime()
+										)
+								)
+						};
+						return builder;
+					},
+					softRemove: jest.fn(async (removed: Slot[]) => {
+						removed.forEach((slot) => (slot.deletedAt = new Date()));
+						return removed;
+					})
+				};
+				const timeSlotService = {
+					generateTimeSlots: (start: Date, end: Date) => generateTimeSlots(start, end),
+					// As TimeSlotBulkCreateHandler: a slot the employee already has at that start is not created again.
+					bulkCreate: jest.fn(async (created: any[], employeeId: string, organizationId: string) => {
+						const missing = created.filter(
+							(slot) =>
+								!slotsOf(employeeId).some(
+									(existing) => existing.startedAt.getTime() === new Date(slot.startedAt).getTime()
+								)
+						);
+						const saved = missing.map((slot, index) => ({
+							...slot,
+							id: `slot-${employeeId}-${index}`,
+							employeeId,
+							organizationId,
+							startedAt: new Date(slot.startedAt),
+							timeLogs: [{ id: slot.timeLogId }],
+							screenshots: [],
+							activities: [],
+							timeSlotMinutes: []
+						}));
+						slots.push(...saved);
+						return saved;
+					})
+				};
+				const handler = new TimeLogUpdateHandler(
+					{ execute } as any,
+					timeLogRepository as any,
+					timeSlotRepository as any,
+					{} as any,
+					timeSlotService as any
+				);
+				Object.defineProperty(handler, 'ormType', { value: MultiORMEnum.TypeORM });
+
+				execute.mockImplementation(async (command: unknown) => {
+					if (command instanceof TimeLogUpdateCommand) return handler.execute(command);
+					if (command instanceof IGetConflictTimeLogCommand) return [];
+					if (command instanceof TimesheetFirstOrCreateCommand)
+						return { id: `timesheet-${command.employeeId}` };
+					if (command instanceof TimesheetRecalculateCommand)
+						return void recalculated.push(String(command.id));
+					if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) {
+						return void workedHours.push(String(command.employeeId));
+					}
+					return undefined;
+				});
+			});
+
+			const move = () =>
+				manualService.updateManualTime('log-1', {
+					...request,
+					employeeId: NEXT,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					startedAt: STARTED_AT,
+					stoppedAt: STOPPED_AT
+				});
+
+			it("a same-organization employee move re-homes the log's timesheet and slots and recalculates both employees", async () => {
+				await move();
+
+				// The row, its timesheet and its slots are the new employee's.
+				expect(row).toMatchObject({ employeeId: NEXT, timesheetId: `timesheet-${NEXT}` });
+				expect(slotsOf(PREVIOUS)).toEqual([]);
+				expect(slotsOf(NEXT).map((slot) => slot.startedAt.toISOString())).toEqual(
+					generateTimeSlots(STARTED_AT, STOPPED_AT).map((slot) => new Date(slot.startedAt).toISOString())
+				);
+				expect(slotsOf(NEXT).every((slot) => slot.timeLogs.some((log) => log.id === 'log-1'))).toBe(true);
+				// Both timesheets and both employees' worked hours are recalculated.
+				expect([...recalculated].sort()).toEqual([`timesheet-${NEXT}`, `timesheet-${PREVIOUS}`].sort());
+				expect([...workedHours].sort()).toEqual([NEXT, PREVIOUS].sort());
+			});
+
+			it('refuses to move a log whose slots carry tracked screenshots or activity, before writing anything', async () => {
+				slots[2].screenshots = [{ id: 'screenshot-1' }];
+
+				const refusal = await move().catch((thrown) => thrown);
+
+				// The capture is the previous employee's; moving it would attribute it to someone else.
+				expect(refusal).toBeInstanceOf(ForbiddenException);
+				expect((refusal as ForbiddenException).message).toBe(TRACKED);
+				expect(commandsOfType(IGetConflictTimeLogCommand)).toHaveLength(0);
+				expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
+				expect(slotsOf(PREVIOUS)).toHaveLength(6);
+			});
+
+			it('CONTROL: an edit that keeps the employee leaves the timesheet, the slots and the hours where they are', async () => {
+				await manualService.updateManualTime('log-1', {
+					...request,
+					employeeId: PREVIOUS,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					startedAt: STARTED_AT,
+					stoppedAt: STOPPED_AT
+				});
+
+				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
+				expect(slotsOf(NEXT)).toEqual([]);
+				expect(slotsOf(PREVIOUS)).toHaveLength(6);
+				expect(recalculated).toEqual([`timesheet-${PREVIOUS}`]);
+				expect(workedHours).toEqual([PREVIOUS]);
 			});
 		});
 	});

@@ -1531,6 +1531,40 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Refuses to move a log whose time slots carry what was captured while its employee was tracked.
+	 *
+	 * Screenshots name the user whose screen they show, activities the employee whose applications and
+	 * pages they list, and the per-minute records are that employee's keyboard and mouse: moving them with
+	 * the log would attribute one person's tracked evidence to another. A log without any (manual time, a
+	 * browser timer) moves whole — its slots are blank and are recreated for the new employee.
+	 *
+	 * @param id The time log to move.
+	 * @throws ForbiddenException When one of its slots carries screenshots, activities or minute activity.
+	 */
+	private async assertMovableToAnotherEmployee(id: ID): Promise<void> {
+		const timeLog = await this.withoutEmployeeFilter(() =>
+			this.findOneByIdString(id, {
+				relations: { timeSlots: { screenshots: true, activities: true, timeSlotMinutes: true } }
+			})
+		);
+
+		const tracked = (timeLog?.timeSlots ?? []).some(
+			(slot) =>
+				isNotEmpty(slot.screenshots) ||
+				isNotEmpty(slot.activities) ||
+				isNotEmpty(slot.timeSlotMinutes) ||
+				Boolean(slot.keyboard) ||
+				Boolean(slot.mouse)
+		);
+
+		if (tracked) {
+			throw new ForbiddenException(
+				'A time log with tracked activity or screenshots cannot be moved to another employee'
+			);
+		}
+	}
+
+	/**
 	 * Refuses manual time in an organization whose policy forbids it.
 	 *
 	 * The rule is `OrganizationPermissionGuard`'s for `ALLOW_MANUAL_TIME`, applied to the organization the log
@@ -1693,6 +1727,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// deleting that organization's time slots under a policy (`allowModifyTime`) judged on the log's.
 			if (String(employee.organizationId ?? '') !== String(timeLog.organizationId ?? '')) {
 				throw new ForbiddenException('A time log cannot be moved to an employee of another organization');
+			}
+
+			// A move within the organization takes the log's timesheet, time slots and hours with it
+			// (`TimeLogUpdateHandler`), but never what was captured while the previous employee was tracked.
+			if (String(timeLog.employeeId) !== String(employeeId)) {
+				await this.assertMovableToAnotherEmployee(id);
 			}
 
 			// Check for conflicts with existing time logs — in the log's own organization, which is the employee's.

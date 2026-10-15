@@ -66,24 +66,33 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		// Tenant and organization always come from the stored row, never from the input: the input is
 		// (partly) a request body, and spreading its tenantId/organizationId into the update re-pointed
 		// the log at another tenant (GHSA-6qvm-3wg4-26w4).
-		const { employeeId, organizationId, tenantId } = timeLog;
+		const { employeeId: previousEmployeeId, organizationId, tenantId, timesheetId: previousTimesheetId } = timeLog;
 		debugInDevelopment(this.logger, () => `Tenant ID: ${tenantId}`);
 		const changes = omitScopeFields(input);
+
+		// The employee the log belongs to once updated. `employeeId` is not a scope field: the manual-time update
+		// moves a log to another employee of the SAME organization (`TimeLogService.updateManualTime` refuses any
+		// other, and any log with tracked screenshots or activity), and what the log owns moves with it — its
+		// timesheet, its time slots and the worked hours of both employees.
+		const employeeId: ID = changes.employeeId ?? previousEmployeeId;
+		const moved = String(employeeId) !== String(previousEmployeeId);
 
 		let timesheet: ITimesheet;
 		let updateTimeSlots: ITimeSlot[] = [];
 
 		// Check if time slots need to be updated
-		let needToUpdateTimeSlots = Boolean(input.startedAt || input.stoppedAt);
+		let needToUpdateTimeSlots = Boolean(input.startedAt || input.stoppedAt) || moved;
 		debugInDevelopment(this.logger, () => `Need to update time slots: ${needToUpdateTimeSlots}`);
 
 		if (needToUpdateTimeSlots) {
-			timesheet = await this.commandBus.execute(
-				new TimesheetFirstOrCreateCommand(input.startedAt, employeeId, organizationId)
-			);
-
 			// Generate time slots based on the updated time log details
 			const { startedAt, stoppedAt } = { ...timeLog, ...changes };
+
+			// The timesheet of the employee the log now belongs to, for the log's period.
+			timesheet = await this.commandBus.execute(
+				new TimesheetFirstOrCreateCommand(moved ? startedAt : input.startedAt, employeeId, organizationId)
+			);
+
 			updateTimeSlots = this.timeSlotService.generateTimeSlots(startedAt, stoppedAt);
 		}
 
@@ -104,15 +113,24 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Check if time slots need to be updated
 		if (needToUpdateTimeSlots) {
-			// Identify conflicting start times
-			const startTimes = this.getConflictingStartTimes(timeSlots, updateTimeSlots);
+			// Identify conflicting start times. A moved log leaves none of its time with the previous employee:
+			// every slot of its current range goes, not only the ones the edited range drops.
+			const startTimes = moved
+				? timeSlots.map((slot) => new Date(slot.startedAt))
+				: this.getConflictingStartTimes(timeSlots, updateTimeSlots);
 
-			// Remove conflicting time slots
+			// Remove conflicting time slots (the previous employee's — the log's, until now)
 			if (startTimes.length > 0) {
-				await this.removeConflictingTimeSlots(tenantId, organizationId, employeeId, startTimes, forceDelete);
+				await this.removeConflictingTimeSlots(
+					tenantId,
+					organizationId,
+					previousEmployeeId,
+					startTimes,
+					forceDelete
+				);
 			}
-			// Create new time slots if needed for Web Timer
-			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+			// Create new time slots if needed for Web Timer, and for a moved log under its new employee
+			if (moved || (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER)) {
 				await this.bulkCreateTimeSlots(updateTimeSlots, timeLog, employeeId, organizationId, tenantId);
 			}
 
@@ -125,6 +143,16 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				this.logger,
 				() => `Recalculated timesheets and employee hours: ${timeLog.timesheetId}, ${employeeId}`
 			);
+
+			// The previous employee's timesheet and worked hours lose the moved log.
+			if (moved) {
+				await this.recalculateTimesheetAndEmployeeHours(
+					String(previousTimesheetId ?? '') !== String(timeLog.timesheetId ?? '')
+						? previousTimesheetId
+						: undefined,
+					previousEmployeeId
+				);
+			}
 		}
 
 		// Return the updated time log
@@ -319,14 +347,16 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * `TimesheetRecalculateCommand`. Then, if an `employeeId` is provided, it updates the total
 	 * worked hours for that employee by executing the `UpdateEmployeeTotalWorkedHoursCommand`.
 	 *
-	 * @param timesheetId - The ID of the timesheet for which the activity needs to be recalculated.
+	 * @param timesheetId - The ID of the timesheet for which the activity needs to be recalculated; none is recalculated without one.
 	 * @param employeeId - The ID of the employee whose total worked hours should be updated. If `null` or `undefined`, no update will be performed for the employee.
 	 * @returns A promise that resolves when both recalculation operations are complete.
 	 */
 
-	private async recalculateTimesheetAndEmployeeHours(timesheetId: ID, employeeId: ID): Promise<void> {
-		// Recalculate timesheets
-		await this.commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
+	private async recalculateTimesheetAndEmployeeHours(timesheetId: ID | undefined, employeeId: ID): Promise<void> {
+		// Recalculate timesheets (none to recalculate without one: a moved log's previous employee may keep the same)
+		if (timesheetId) {
+			await this.commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
+		}
 
 		// Update employee total worked hours
 		if (employeeId) {

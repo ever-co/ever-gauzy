@@ -73,7 +73,8 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 		expect(timeLogRepository.update).not.toHaveBeenCalled();
 	});
 
-	it("runs its own slot cleanup in the stored log's organization and for its employee, whatever the input names", async () => {
+	// A changed `employeeId` is a move (re-homed by the handler, see time-log.service.spec.ts); this pins the organization.
+	it("runs its own slot cleanup in the stored log's organization, whatever organization the input names", async () => {
 		const { handler } = createHandler();
 		const timeSlotService = (handler as any).timeSlotService;
 		const kept = new Date('2026-01-05T09:00:00.000Z');
@@ -92,7 +93,6 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 				{
 					startedAt: kept,
 					stoppedAt: new Date('2026-01-05T10:00:00.000Z'),
-					employeeId: 'employee-b',
 					organizationId: 'org-b'
 				} as any,
 				'log-own'
