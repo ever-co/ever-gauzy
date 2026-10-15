@@ -76,12 +76,15 @@ for (const file of walk(join(ROOT, 'packages'), (path) => path.endsWith(`${sep}p
 const required = new Set();
 /** `@gauzy/<name>` → the first apps/api file that imports it, for the report. */
 const importedFrom = new Map();
-/** `import|export <clause> from '@gauzy/<name>'`, with the clause captured so a type-only one can be told apart. */
-const DECLARATION = /^\s*(?:import|export)\s+(?!type\s)([^;]*?)\s+from\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm;
+/**
+ * `import|export <clause> from '@gauzy/<name>[/<subpath>]'`, with the clause captured so a type-only one can be told apart.
+ * Every pattern captures the package name alone: a subpath import loads that package all the same.
+ */
+const DECLARATION = /^\s*(?:import|export)\s+(?!type\s)([^;]*?)\s+from\s+['"](@gauzy\/[a-z0-9-]+)(?:\/[^'"]*)?['"]/gm;
 const RUNTIME = [
-	/^\s*import\s+['"](@gauzy\/[a-z0-9-]+)['"]/gm,
-	/\brequire\(\s*['"](@gauzy\/[a-z0-9-]+)['"]\s*\)/g,
-	/\bimport\(\s*['"](@gauzy\/[a-z0-9-]+)['"]\s*\)/g
+	/^\s*import\s+['"](@gauzy\/[a-z0-9-]+)(?:\/[^'"]*)?['"]/gm,
+	/\brequire\(\s*['"](@gauzy\/[a-z0-9-]+)(?:\/[^'"]*)?['"]\s*\)/g,
+	/\bimport\(\s*['"](@gauzy\/[a-z0-9-]+)(?:\/[^'"]*)?['"]\s*\)/g
 ];
 
 /** True when a declaration's clause is only `{ … }` and every specifier in it is `type …`. */
