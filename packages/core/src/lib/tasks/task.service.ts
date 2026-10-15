@@ -149,27 +149,24 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				: [];
 			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
+			// A task moved to another project takes the next number of that project, written in the same save
+			// as the new projectId so that a refused save leaves the task as it was.
+			let movedNumber: number | undefined;
 			if (data.projectId && data.projectId !== task.projectId) {
-				const { organizationId, projectId } = task;
-
-				// Get the maximum task number for the project
+				// Get the maximum task number for the target project
 				const maxNumber = await this.getMaxTaskNumberByProject({
 					tenantId,
-					organizationId,
-					projectId
+					organizationId: data.organizationId ?? task.organizationId,
+					projectId: data.projectId
 				});
-
-				// Update the task with the new project and task number
-				await super.update(id, {
-					projectId,
-					number: maxNumber + 1
-				});
+				movedNumber = maxNumber + 1;
 			}
 
 			// Update the task with the provided data
 			const updatedTask = await super.create({
 				...data,
-				id
+				id,
+				...(movedNumber !== undefined ? { number: movedNumber } : {})
 			});
 
 			// Register Task Sprint moving history
