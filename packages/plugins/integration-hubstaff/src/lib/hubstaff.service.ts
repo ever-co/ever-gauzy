@@ -55,6 +55,7 @@ import {
 	RoleService,
 	OrganizationService,
 	IntegrationTenantService,
+	IntegrationTenantSyncService,
 	IntegrationTenantUpdateOrCreateCommand,
 	OrganizationContactCreateCommand,
 	RequestContext,
@@ -63,6 +64,42 @@ import {
 	mergeOverlappingDateRanges
 } from '@gauzy/core';
 import { HUBSTAFF_AUTHORIZATION_URL } from './hubstaff.config';
+
+/**
+ * The names a Hubstaff run's result members are counted under in the `integration_tenant.synced` fact.
+ */
+const HUBSTAFF_SYNC_COUNTED: Readonly<Record<string, string>> = {
+	projectsMap: 'project',
+	tasks: 'task',
+	activities: 'activity',
+	screenshots: 'screenshot',
+	clients: 'client'
+};
+
+/**
+ * How many records of each kind one automatic run handled, read off what `autoSync` answers.
+ *
+ * Each entity setting answers an object of arrays — the projects, tasks, time logs, screenshots or clients it
+ * synchronised, some of them nested per project — so each member is counted flat, and only counts leave the run.
+ *
+ * @param results What the run's entity settings answered.
+ * @returns The counts, keyed by entity.
+ */
+export function hubstaffSyncCounts(results: ReadonlyArray<Record<string, unknown> | undefined>): Record<string, number> {
+	const counts: Record<string, number> = {};
+
+	for (const result of results ?? []) {
+		for (const [member, entity] of Object.entries(HUBSTAFF_SYNC_COUNTED)) {
+			const value = result?.[member];
+
+			if (Array.isArray(value)) {
+				counts[entity] = (counts[entity] ?? 0) + value.flat(Infinity).filter((item) => item !== undefined && item !== null).length;
+			}
+		}
+	}
+
+	return counts;
+}
 
 /**
  * What the refresh endpoint returns to the client: the short-lived access token only. The refresh
@@ -86,7 +123,8 @@ export class HubstaffService {
 		private readonly _roleService: RoleService,
 		private readonly _organizationService: OrganizationService,
 		private readonly _userService: UserService,
-		private readonly _integrationService: IntegrationService
+		private readonly _integrationService: IntegrationService,
+		private readonly _integrationTenantSyncService: IntegrationTenantSyncService
 	) {}
 
 	/**
@@ -1568,6 +1606,15 @@ export class HubstaffService {
 			})
 		);
 		console.log(`${IntegrationEnum.HUBSTAFF} integration end for ${integrationId}`);
+
+		// The run finished: stamp the connection and announce it (`integration_tenant.synced`) in one transaction,
+		// scoped to the caller's tenant and the organization the run synchronised into. A run that failed above
+		// threw before reaching this, so a failure is never announced as a completion.
+		await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
+			organizationId: gauzyId,
+			counts: hubstaffSyncCounts(integratedMaps as Array<Record<string, unknown>>)
+		});
+
 		return integratedMaps;
 	}
 

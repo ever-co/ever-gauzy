@@ -1,5 +1,5 @@
 import { IntegrationMapSyncTimeSlotCommand } from '@gauzy/core';
-import { HubstaffService } from './hubstaff.service';
+import { HubstaffService, hubstaffSyncCounts } from './hubstaff.service';
 
 /**
  * `syncTimeSlots` used `timeSlots.filter(async (slot) => …)`: the callback returns a promise, which is always
@@ -28,6 +28,7 @@ describe('HubstaffService.syncTimeSlots', () => {
 		const service = new HubstaffService(
 			{} as never,
 			{ execute } as never,
+			{} as never,
 			{} as never,
 			{} as never,
 			{} as never,
@@ -92,5 +93,60 @@ describe('HubstaffService.syncTimeSlots', () => {
 		expect(error.mock.calls[0][0]).toContain('2');
 		expect(unhandled).toEqual([]);
 		error.mockRestore();
+	});
+});
+
+/**
+ * `autoSync` is Hubstaff's one synchronisation entry point, and it ended without recording anything: the connection's
+ * `lastSyncedAt` was never stamped and no `integration_tenant.synced` fact was appended, so
+ * `Subscription.integrationSyncCompleted` had nothing to follow. A finished run now ends through
+ * `IntegrationTenantSyncService.recordSyncCompleted`, with the counts of what it handled; a run that fails does not.
+ */
+describe('HubstaffService.autoSync — the end of a run is recorded (integrationSyncCompleted)', () => {
+	const setup = (entitySettings: Array<Record<string, unknown>>) => {
+		const recordSyncCompleted = jest.fn(async () => undefined);
+		const service = new HubstaffService(
+			{} as never,
+			{} as never,
+			{ findOneByIdString: jest.fn(async () => ({ entitySettings })) } as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{ recordSyncCompleted } as never
+		);
+		return { service, recordSyncCompleted };
+	};
+	const run = { integrationId: 'integration-1', gauzyId: 'org-1', sourceId: 'hs-org', token: 'token', dateRange: {} as never };
+
+	it('records a finished run once, for the organization it synchronised into, with what it handled', async () => {
+		const { service, recordSyncCompleted } = setup([{ entity: 'Client', tiedEntities: [] }]);
+		jest.spyOn(service as any, '_handleClients').mockResolvedValue([{ id: 'map-1' }, { id: 'map-2' }]);
+
+		await service.autoSync(run);
+
+		expect(recordSyncCompleted).toHaveBeenCalledTimes(1);
+		expect(recordSyncCompleted).toHaveBeenCalledWith('integration-1', { organizationId: 'org-1', counts: { client: 2 } });
+	});
+
+	it('records nothing for a run that failed', async () => {
+		const { service, recordSyncCompleted } = setup([{ entity: 'Client', tiedEntities: [] }]);
+		jest.spyOn(service as any, '_handleClients').mockRejectedValue(new Error('Hubstaff is unavailable'));
+
+		await expect(service.autoSync(run)).rejects.toThrow(/Hubstaff is unavailable/);
+
+		expect(recordSyncCompleted).not.toHaveBeenCalled();
+	});
+
+	it('counts each kind flat, nested per project or not, and only counts', () => {
+		expect(
+			hubstaffSyncCounts([
+				{ projectsMap: [{ id: 'p1' }, { id: 'p2' }], tasks: [[{ id: 't1' }], [{ id: 't2' }, { id: 't3' }]], activities: undefined },
+				{ clients: [{ id: 'c1' }] },
+				undefined
+			])
+		).toEqual({ project: 2, task: 3, client: 1 });
 	});
 });

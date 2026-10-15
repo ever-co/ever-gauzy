@@ -55,6 +55,7 @@ import {
 	ExpenseService,
 	IncomeService,
 	IntegrationMapService,
+	IntegrationTenantSyncService,
 	OrganizationService,
 	RoleService,
 	TimeSlotService,
@@ -88,6 +89,37 @@ import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';
 
 /**
+ * How many records of each kind one Upwork run handled: the contracts, and each part of the related data it was
+ * asked for (a work diary, a report, the proposals), counted flat. Only counts leave the run.
+ *
+ * @param contracts The integration maps of the contracts the run synchronised.
+ * @param entities The parts of the related data the run was asked for.
+ * @param results What each part answered, in the same order.
+ * @returns The counts, keyed by entity.
+ */
+export function upworkSyncCounts(
+	contracts: ReadonlyArray<unknown>,
+	entities: ReadonlyArray<{ key?: string }> = [],
+	results: ReadonlyArray<unknown> = []
+): Record<string, number> {
+	const counts: Record<string, number> = { contract: contracts?.length ?? 0 };
+
+	entities.forEach((entity, index) => {
+		const result = results[index];
+
+		if (!entity?.key || result === undefined || result === null) {
+			return;
+		}
+
+		counts[entity.key] =
+			(counts[entity.key] ?? 0) +
+			(Array.isArray(result) ? result.flat(Infinity).filter((item) => item !== undefined && item !== null).length : 1);
+	});
+
+	return counts;
+}
+
+/**
  * The scope an Upwork integration is resolved within.
  *
  * Both halves are mandatory: a lookup missing either one would widen to "any integration in the
@@ -114,7 +146,8 @@ export class UpworkService {
 		private readonly _upworkReportService: UpworkReportService,
 		private readonly _upworkJobService: UpworkJobService,
 		private readonly _upworkOfferService: UpworkOffersService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _integrationTenantSyncService: IntegrationTenantSyncService
 	) {}
 
 	/**
@@ -634,7 +667,16 @@ export class UpworkService {
 			throw new BadRequestException('Upwork contracts must be an array');
 		}
 
-		return await this._syncContracts({ integrationId, organizationId, contracts });
+		const maps = await this._syncContracts({ integrationId, organizationId, contracts });
+
+		// The run finished: stamp the connection and announce it (`integration_tenant.synced`) in one transaction,
+		// in the scope the run was authorized in. A run that failed above threw before reaching this.
+		await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
+			...scope,
+			counts: { contract: maps.length }
+		});
+
+		return maps;
 	}
 
 	/**
@@ -966,7 +1008,8 @@ export class UpworkService {
 		providerReferenceId,
 		providerId
 	}: IUpworkSyncContractsRelatedDataDto) {
-		const config = await this.resolveApiConfig(integrationId, await this._resolveScope(organizationId));
+		const scope = await this._resolveScope(organizationId);
+		const config = await this.resolveApiConfig(integrationId, scope);
 
 		const syncedContracts = await this._syncContracts({
 			contracts: Array.isArray(contracts) ? contracts : [],
@@ -984,7 +1027,7 @@ export class UpworkService {
 			employeeId = employee.gauzyId;
 		}
 
-		return await Promise.all(
+		const results = await Promise.all(
 			entitiesToSync.map(async (entity) => {
 				switch (entity.key) {
 					case 'workDiary':
@@ -1013,6 +1056,15 @@ export class UpworkService {
 				}
 			})
 		);
+
+		// The run finished: stamp the connection and announce it (`integration_tenant.synced`) in one transaction,
+		// in the scope the run was authorized in, with how much each part of it handled.
+		await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
+			...scope,
+			counts: upworkSyncCounts(syncedContracts, entitiesToSync, results)
+		});
+
+		return results;
 	}
 
 	/*

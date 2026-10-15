@@ -134,6 +134,7 @@ jest.mock('@gauzy/core', () => {
 		unixTimestampToDate: jest.fn((value: any) => value),
 		// Services injected into `UpworkService` — DI tokens only, never called by these specs.
 		ExpenseService: class {},
+		IntegrationTenantSyncService: class {},
 		IncomeService: class {},
 		IntegrationMapService: class {},
 		OrganizationService: class {},
@@ -244,10 +245,11 @@ const buildController = (
 	const transactionService: any = { handleTransactions: jest.fn(async () => 'handled') };
 
 	const noop: any = {};
-	const service = new UpworkService(noop, noop, noop, userService, noop, noop, noop, noop, noop, noop, commandBus);
+	const syncService: any = { recordSyncCompleted: jest.fn(async () => undefined) };
+	const service = new UpworkService(noop, noop, noop, userService, noop, noop, noop, noop, noop, noop, commandBus, syncService);
 	const controller = new UpworkController(transactionService, service);
 
-	return { controller, service, commandBus, userService, transactionService };
+	return { controller, service, commandBus, userService, transactionService, syncService };
 };
 
 /**
@@ -645,6 +647,48 @@ describe('UpworkController — GHSA-3rqg-gpm9-gx84 credential exposure', () => {
 					contracts: { length: 1 }
 				} as any)
 			).rejects.toBeInstanceOf(BadRequestException);
+		});
+
+		it('ends a finished run by recording it, in the scope the run was authorized in (integrationSyncCompleted)', async () => {
+			const { controller, syncService } = buildController();
+
+			await controller.syncContracts({
+				integrationId: INTEGRATION_ID,
+				organizationId: ORGANIZATION_ID,
+				tenantId: FOREIGN_TENANT_ID,
+				contracts: []
+			} as any);
+
+			expect(syncService.recordSyncCompleted).toHaveBeenCalledTimes(1);
+			// The tenant is the request's, never the body's.
+			expect(syncService.recordSyncCompleted).toHaveBeenCalledWith(INTEGRATION_ID, {
+				organizationId: ORGANIZATION_ID,
+				tenantId: CURRENT_TENANT_ID,
+				counts: { contract: 0 }
+			});
+		});
+
+		it('records nothing for a run that was refused', async () => {
+			const refusedScope = buildController({ integration: null });
+			const refusedBody = buildController();
+
+			await expect(
+				refusedScope.controller.syncContracts({
+					integrationId: INTEGRATION_ID,
+					organizationId: ORGANIZATION_ID,
+					contracts: []
+				} as any)
+			).rejects.toBeInstanceOf(NotFoundException);
+			await expect(
+				refusedBody.controller.syncContracts({
+					integrationId: INTEGRATION_ID,
+					organizationId: ORGANIZATION_ID,
+					contracts: { length: 1 }
+				} as any)
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			expect(refusedScope.syncService.recordSyncCompleted).not.toHaveBeenCalled();
+			expect(refusedBody.syncService.recordSyncCompleted).not.toHaveBeenCalled();
 		});
 	});
 
