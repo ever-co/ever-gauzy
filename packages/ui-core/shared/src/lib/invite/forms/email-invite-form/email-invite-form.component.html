@@ -8,7 +8,7 @@
 			<nb-form-field>
 				<nb-tag-list class="custom-tag-list" (tagRemove)="onEmailRemove($event)">
 					@for (email of emails; track email) {
-					<nb-tag [text]="email" size="small" removable></nb-tag>
+					<nb-tag [text]="email" [size]="'tiny'" removable></nb-tag>
 					}
 					<input
 						id="emails"
