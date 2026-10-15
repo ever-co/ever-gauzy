@@ -406,9 +406,7 @@ if (failures.length > 0) {
  * yet, which is a design decision, and a gate that listed them silently would let a new one appear
  * unnoticed.
  */
-const UNBOUND = new Map([
-	['Query.cartByToken', 'the cart service has no token lookup yet: commerce_cart has no token column and no route reads one']
-]);
+const UNBOUND = new Map([]);
 
 const declaredRoots = ['Query', 'Mutation', 'Subscription'].flatMap((type) =>
 	[...rootFields(type)].map((field) => `${type}.${field}`)

@@ -592,6 +592,41 @@ describe.each([
 		expect((await harness.stored(SIBLING)).name).toBe('sibling');
 	});
 
+	it('keeps the row in the caller’s tenant when the payload names another tenant (SEC-A-03)', async () => {
+		// The failure scenario: the criteria were scoped, the payload was written as given — a `PUT` with
+		// `{"tenantId": "<B>"}` moved the caller's own row (a tenant setting, a bin, a notification) into tenant B.
+		await service.update(OWN, { name: 'renamed', tenantId: TENANT_B } as any);
+
+		const stored = await harness.stored(OWN);
+		expect(stored.tenantId).toBe(TENANT_A);
+		// The rest of the payload is still written: only the scope column is the caller's to keep.
+		expect(stored.name).toBe('renamed');
+	});
+
+	it('keeps the row in the caller’s tenant on a criteria update too (SEC-A-03)', async () => {
+		await service.update({ id: OWN, version: 1 } as any, { tenantId: TENANT_B } as any);
+
+		expect((await harness.stored(OWN)).tenantId).toBe(TENANT_A);
+	});
+
+	it('keeps a caller who may not act for other employees on their own employee’s rows (SEC-A-03)', async () => {
+		caller.employeeId = EMPLOYEE_1;
+		caller.mayChangeEmployee = false;
+
+		await service.update(OWN, { name: 'renamed', employeeId: EMPLOYEE_2 } as any);
+
+		const stored = await harness.stored(OWN);
+		expect(stored.employeeId).toBe(EMPLOYEE_1);
+		expect(stored.name).toBe('renamed');
+	});
+
+	it('still lets a caller who may act for other employees reassign a row', async () => {
+		// Control: CHANGE_SELECTED_EMPLOYEE is what makes the employee column the caller's to write.
+		await service.update(OWN, { employeeId: EMPLOYEE_2 } as any);
+
+		expect((await harness.stored(OWN)).employeeId).toBe(EMPLOYEE_2);
+	});
+
 	/*
 	|--------------------------------------------------------------------------
 	| Deletes

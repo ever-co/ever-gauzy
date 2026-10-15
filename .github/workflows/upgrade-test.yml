@@ -73,7 +73,7 @@ jobs:
     name: develop -> this branch, on SQLite and PostgreSQL
     # GitHub-hosted on purpose: a manual, occasional run that needs only Docker, kept off the self-hosted ARC pool the
     # PR builds and the demo image build queue on. Consequence: the image installs from the public npm registry (the
-    # internal Verdaccio VIP is unreachable from here, and the token route through packages.ever.co truncates large
+    # internal Verdaccio VIP is unreachable from here, and its public token route truncates large
     # tarballs), so no Verdaccio argument or secret is passed — every package in yarn.lock is public.
     runs-on: ubuntu-latest
     timeout-minutes: 330
