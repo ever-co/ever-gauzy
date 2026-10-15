@@ -14,6 +14,7 @@ import * as moment from 'moment';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { EmployeeStatisticsService, monthOf } from './../../employee-statistics.service';
+import { recurringExpenseMonths, recurringExpenseStart } from '../../recurring-expense-start';
 
 /** The employees working in each month, by `month-year` key, read once per query. */
 type WorkingEmployeesByMonth = Map<string, Promise<Set<string>>>;
@@ -254,16 +255,9 @@ export class AggregateOrganizationQueryHandler
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate =
-				expense.startDate > inputStartDate
-					? expense.startDate
-					: inputStartDate;
+			const requiredStartDate = recurringExpenseStart(expense.startDate, inputStartDate);
 
-			for (
-				const date = new Date(requiredStartDate);
-				date <= new Date(endDate);
-				date.setMonth(date.getMonth() + 1)
-			) {
+			for (const date of recurringExpenseMonths(requiredStartDate, endDate)) {
 				// Stop loading expense if the recurring expense has ended before input date
 				if (expense.endDate && date > expense.endDate) break;
 
