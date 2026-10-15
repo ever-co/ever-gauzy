@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { createHash, timingSafeEqual } from 'crypto';
 import { EntityManager, FindOptionsWhere, IsNull, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { restatesStoredValue } from '@gauzy/common';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { EventBus, Money, normalizeDecimalString, readAffectedRows, RequestContext } from '@gauzy/core';
@@ -397,7 +398,9 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 		if (named.length > 0) {
 			const stored =
 				typeof id === 'string' ? ((await this.findCardOrFail(id)) as unknown as Record<string, unknown>) : null;
-			const moved = named.filter((member) => !stored || !restatesStoredValue(stored[member], patch[member]));
+			const moved = named.filter(
+				(member) => !stored || !restatesStoredValue(stored[member], patch[member], { decimal: giftCardDecimal })
+			);
 
 			if (moved.length > 0) {
 				throw new BadRequestException({
@@ -678,28 +681,15 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 }
 
 /**
- * Whether a value a write states is the value already stored, so restating it is not a change. A decimal is compared
- * by value (`'100'` restates `'100.000000'`, the column's scale); anything else as text.
+ * A gift card amount read as a decimal with the platform's own normaliser, which reads what `IsDecimalAmount` accepts
+ * (leading zeros, a sign, the column's trailing zeros, surrounding blanks), or `null` when the value is not one. It is
+ * the decimal reader `restatesStoredValue` (`@gauzy/common`) compares the ledger members with, so `'100'` restates
+ * `'100.000000'`.
  */
-function restatesStoredValue(stored: unknown, stated: unknown): boolean {
-	if (stated === null || stored === null || stored === undefined) {
-		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
+function giftCardDecimal(value: unknown): string | null {
+	try {
+		return normalizeDecimalString(String(value).trim());
+	} catch {
+		return null;
 	}
-
-	// A decimal is compared by value with the platform's own normaliser, which reads what `IsDecimalAmount` accepts
-	// (leading zeros, a sign, the column's trailing zeros, surrounding blanks); anything else is compared as text.
-	const asDecimal = (value: unknown): string | null => {
-		try {
-			return normalizeDecimalString(String(value).trim());
-		} catch {
-			return null;
-		}
-	};
-	const [held, wanted] = [asDecimal(stored), asDecimal(stated)];
-
-	if (held !== null && wanted !== null) {
-		return held === wanted;
-	}
-
-	return String(stated) === String(stored);
 }

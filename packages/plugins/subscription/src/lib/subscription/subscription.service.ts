@@ -1,18 +1,20 @@
-import { BadRequestException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, EntityManager } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
 	CurrencyCode,
 	DecimalString,
 	ID,
-	IdempotencyOutcome
+	IdempotencyOutcome,
+	IdempotencyStatus
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
 	EventOutboxService,
 	IVersionExpectation,
+	IVersionedWriter,
 	IdempotencyService,
 	Money,
 	RequestContext,
@@ -330,7 +332,13 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 					quantity: normalizeDecimal(input.quantity, '1'),
 					currentPeriodStart: period.start,
 					currentPeriodEnd: period.end,
-					nextBillingAt: period.end,
+					// The next period a billing run bills is the one starting at `nextBillingAt`
+					// (`billCycle`). Without a trial that is the opening period itself, whose cycle row is
+					// written below: it was `period.end`, so the first run billed the second period and the
+					// opening cycle stayed `PENDING` for good — the first period of every subscription was
+					// free, and its setup fee landed on the second. A trial is different: its own period is
+					// waived, and the first paid period is the one starting when the trial ends.
+					nextBillingAt: trialDays > 0 ? period.end : period.start,
 					billingCycleCount: 0,
 					currency,
 					// The row starts its optimistic lock at one, which is the value the column's own
@@ -425,6 +433,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * trial has not run out yet — rather than from creation, so a subscription that sat pending for a
 	 * week does not inherit a week of period it was never billed for.
 	 *
+	 * That period is the first one billed: `nextBillingAt` is its **start**, so the next billing run
+	 * bills it (or, when it starts at a trial's end, bills it once the trial is over). It was the
+	 * period's end, which made the first run bill the second period and left the first one free. The
+	 * cycle row written at creation for the period the subscription would have started with moves to
+	 * the activation's period, so it is the row that run settles rather than a `PENDING` cycle nothing
+	 * ever bills. Activating does not charge anybody itself: billing stays with the billing run and the
+	 * permission that drives it.
+	 *
 	 * @param id The subscription to activate.
 	 * @param expectation The version the caller read the subscription at.
 	 * @returns The activated subscription.
@@ -446,16 +462,30 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const start = trialEndsAt && trialEndsAt.getTime() > now.getTime() ? trialEndsAt : now;
 		const period = periodFrom(start, cadence);
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id,
-			expectation,
-			patch: {
-				status: SubscriptionStatus.ACTIVE,
-				currentPeriodStart: period.start,
-				currentPeriodEnd: period.end,
-				nextBillingAt: period.end
-			}
+		// One transaction, the claim first. The claim is the subscription's versioned write, predicated on
+		// the row still being `PENDING`: its UPDATE takes the row lock, so a second activation that read
+		// `PENDING` too waits on it and, once this one commits, matches nothing and is refused — before it
+		// has moved anything. The opening cycle moves inside the same transaction, so no billing run sees
+		// the subscription `ACTIVE` before its cycle is on the period the activation starts (a run that
+		// reached it first would open its own row for that period, and the cycle could not follow), and a
+		// refused claim leaves the cycle where the winner put it.
+		await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			// Read before the claim, which rewrites the period the opening cycle is found by.
+			const opening = await this.openingCycleOn(subscription, manager);
+
+			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+				where: { ...currentScope(), status: SubscriptionStatus.PENDING },
+				id,
+				expectation,
+				patch: {
+					status: SubscriptionStatus.ACTIVE,
+					currentPeriodStart: period.start,
+					currentPeriodEnd: period.end,
+					nextBillingAt: period.start
+				}
+			});
+
+			await this.moveOpeningCycle(subscription, opening, period, manager);
 		});
 
 		await this.emit('subscription.activated', id, {
@@ -514,7 +544,9 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * Resumes a paused subscription.
 	 *
 	 * The next billing instant is the later of now and the end of the period the customer already
-	 * paid for, so a pause never refunds time and never charges twice for it.
+	 * paid for, so a pause never refunds time and never charges twice for it. An opening period that
+	 * was never billed was not paid for: it starts again at the resume, as an activation's does, and its
+	 * cycle moves with it, so the first run bills it instead of the period after it.
 	 *
 	 * @param id The subscription to resume.
 	 * @param at The instant to resume at; defaults to now, and is used by the billing run when a
@@ -529,6 +561,67 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
 
 		const now = at ?? new Date();
+
+		if (this.owesOpeningPeriod(subscription)) {
+			const plan = await this.planService.findOneScoped(subscription.planId);
+			const opened = new Date(subscription.currentPeriodStart as Date);
+			const period = periodFrom(now.getTime() > opened.getTime() ? now : opened, this.planService.cadenceOf(plan));
+			let nextBillingAt = period.start;
+			// A charge still running has not recorded its order or attempt yet, so its cycle reads untouched;
+			// the billing claim it holds on the period is what shows it. Read before the transaction (whose
+			// connection a second read would otherwise wait on): no pass starts on a paused subscription, so
+			// a pass that holds the claim now began before the pause.
+			const charging = await this.chargeInFlight(subscription);
+
+			// One transaction, as in `activate`: no run sees the subscription `ACTIVE` before its opening
+			// cycle is on the period it now starts, and a refused claim moves nothing. While it is paused no
+			// run touches the cycle, so it is read first and decides what the resume writes.
+			await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+				const opening = await this.openingCycleOn(subscription, manager);
+				// An untouched opening cycle restarts with the period. A settled one (paid, or waived) is a
+				// period already answered: like any paid period, it runs out before the next run bills.
+				// Any other was charged and awaits a retry: it keeps its period and its retry schedule — it
+				// cannot move (it records an attempt), and starting another period would leave it behind
+				// and open a new cycle that skips its retries — so resuming only lifts the pause.
+				// Moving the cycle of a running charge would let the returning charge settle a cycle on another
+				// period, so the period stays, as for a retry.
+				const restart = (!opening || this.isUntouched(opening)) && !charging;
+				const settled = !!opening && SETTLED_CYCLE_STATUSES.includes(opening.status);
+				const periodEnd = new Date(subscription.currentPeriodEnd as Date);
+
+				if (restart) {
+					nextBillingAt = period.start;
+				} else if (settled) {
+					nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
+				} else {
+					nextBillingAt = new Date(subscription.nextBillingAt as Date);
+				}
+
+				await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+					where: { ...currentScope(), status: SubscriptionStatus.PAUSED },
+					id,
+					expectation,
+					patch: restart
+						? {
+								status: SubscriptionStatus.ACTIVE,
+								pausedUntil: null,
+								currentPeriodStart: period.start,
+								currentPeriodEnd: period.end,
+								nextBillingAt: period.start
+						  }
+						: { status: SubscriptionStatus.ACTIVE, pausedUntil: null, nextBillingAt }
+				});
+
+				if (restart) {
+					await this.moveOpeningCycle(subscription, opening, period, manager);
+				}
+			});
+
+			await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt });
+
+			return await this.findOneScoped(id);
+		}
+
 		const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
 		const nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
 
@@ -550,6 +643,21 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		});
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Whether the subscription's current period is its opening one and nothing has billed it yet: it was
+	 * never billed, and the next run bills the current period (from its start) rather than the one after it.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @returns True when the opening period is still owed.
+	 */
+	private owesOpeningPeriod(subscription: Subscription): boolean {
+		if ((subscription.billingCycleCount ?? 0) > 0 || !subscription.nextBillingAt || !subscription.currentPeriodStart) {
+			return false;
+		}
+
+		return new Date(subscription.nextBillingAt).getTime() <= new Date(subscription.currentPeriodStart).getTime();
 	}
 
 	/**
@@ -2134,6 +2242,119 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const trialEndsAt = subscription.metadata?.['trialEndsAt'];
 
 		return typeof trialEndsAt === 'string' ? new Date(trialEndsAt) : null;
+	}
+
+	/**
+	 * Moves the cycle written at creation onto the period an activation starts.
+	 *
+	 * Only a subscription that was never billed has one, and only a cycle that records no money billed
+	 * moves (`SubscriptionBillingService.reschedulePending`): a trial's waived cycle stays where it is,
+	 * as the record of the trial.
+	 *
+	 * @param subscription The subscription, as read before it is activated (or resumed).
+	 * @param opening Its opening cycle, as read on the transaction before the claim (`openingCycleOn`).
+	 * @param period The period the activation starts.
+	 * @param manager The activation's transaction.
+	 */
+	private async moveOpeningCycle(
+		subscription: Subscription,
+		opening: SubscriptionBilling | null,
+		period: ISubscriptionPeriod,
+		manager: EntityManager
+	): Promise<void> {
+		if ((subscription.billingCycleCount ?? 0) > 0) {
+			return;
+		}
+
+		if (!opening || !this.isUntouched(opening) || new Date(opening.periodStart).getTime() === period.start.getTime()) {
+			return;
+		}
+
+		const moved = await this.billingService.reschedulePending(opening.id, period, manager);
+
+		// The move is predicated on the cycle still billing nothing. A cycle another writer charged after it
+		// was read stays where it is, and committing the subscription onto a period its cycle is not on
+		// would strand that charge: the whole write is refused (the caller's transaction rolls back).
+		if (new Date(moved.periodStart).getTime() !== period.start.getTime()) {
+			throw new ConflictException(
+				'SUBSCRIPTION_OPENING_CYCLE_CHANGED: the opening billing cycle was charged while this change was being made. Read the subscription again and retry.'
+			);
+		}
+	}
+
+	/**
+	 * The cycle written for the subscription's current period — at creation, the opening one — read on the
+	 * caller's transaction (a second connection may be one the transaction is holding). It is found by its
+	 * period, not as "the newest pending cycle": a later cycle written through the billing-cycle route is
+	 * not the opening one.
+	 *
+	 * @param subscription The subscription, as read before the write.
+	 * @param manager The caller's transaction.
+	 * @returns The cycle, or null when the period has none.
+	 */
+	private async openingCycleOn(subscription: Subscription, manager: EntityManager): Promise<SubscriptionBilling | null> {
+		return subscription.currentPeriodStart
+			? await this.billingService.findByPeriod(subscription.id, new Date(subscription.currentPeriodStart), manager)
+			: null;
+	}
+
+	/**
+	 * Whether a billing pass holds the claim on the subscription's current period and has not completed it — a charge
+	 * of that period may be running. A claim past the stale-lock window counts too: a pass does not refresh its claim
+	 * or stop when the window passes, so its age cannot show that the pass stopped, and a slow charge that returns
+	 * after the cycle moved would settle it on another period. Keeping the period costs at most the paused days of an
+	 * opening period; moving it under a running charge would put the order, the cycle and the subscription on
+	 * different dates.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @returns True when the period's billing claim is in progress.
+	 */
+	private async chargeInFlight(subscription: Subscription): Promise<boolean> {
+		if (!subscription.currentPeriodStart) {
+			return false;
+		}
+
+		const claim = await this.idempotencyService.findByKey(
+			BILLING_SCOPE,
+			`${subscription.id}:${new Date(subscription.currentPeriodStart).toISOString()}`
+		);
+
+		return claim?.status === IdempotencyStatus.IN_PROGRESS;
+	}
+
+	/**
+	 * @param cycle A cycle.
+	 * @returns Whether it records no money billed and no attempt: `PENDING`, with no order and no attempt.
+	 */
+	private isUntouched(cycle: SubscriptionBilling): boolean {
+		return cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount;
+	}
+
+	/**
+	 * The subscription's versioned writer inside a caller's TypeORM transaction.
+	 *
+	 * The two members `commitVersionedUpdate` uses, run on the transaction's manager: an update by the
+	 * criteria the kernel builds, and a read by id inside the caller's scope that answers
+	 * `NotFoundException` for a subscription that is not there.
+	 *
+	 * @param manager The transaction.
+	 * @returns The writer.
+	 */
+	private transactionWriter(manager: EntityManager): IVersionedWriter<Subscription> {
+		const subscriptions = manager.getRepository(Subscription);
+
+		return {
+			update: (criteria, partial) => subscriptions.update(criteria as never, partial as never),
+			findOneByIdString: async (id) => {
+				const subscription = await subscriptions.findOne({ where: { id, ...currentScope() } } as never);
+
+				if (!subscription) {
+					throw new NotFoundException('The subscription was not found.');
+				}
+
+				return subscription;
+			}
+		} as IVersionedWriter<Subscription>;
 	}
 
 	/**

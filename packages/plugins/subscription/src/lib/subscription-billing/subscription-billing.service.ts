@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, In, IsNull, LessThanOrEqual } from 'typeorm';
+import { DeleteResult, EntityManager, FindOptionsWhere, In, IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
@@ -266,6 +266,54 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	}
 
 	/**
+	 * Moves a cycle nothing has billed yet onto another period.
+	 *
+	 * A subscription created pending carries the cycle of the period it would have started with, and
+	 * its first period starts when it is activated (`SubscriptionService.activate`). The cycle moves with
+	 * that period, rather than staying behind as a `PENDING` row nothing bills — which a revenue or a
+	 * dunning report reads as an unpaid cycle for good. Only a cycle that records no money billed moves:
+	 * `PENDING`, with no order and no attempt. Any other is answered unchanged.
+	 *
+	 * @param id The cycle.
+	 * @param period The period it now covers.
+	 * @param manager The caller's transaction, when the move is one of its writes (the activation's).
+	 * @returns The cycle, moved or as it was.
+	 * @throws BadRequestException when the period is empty.
+	 */
+	public async reschedulePending(
+		id: ID,
+		period: { start: Date; end: Date },
+		manager?: EntityManager
+	): Promise<SubscriptionBilling> {
+		if (period.end.getTime() <= period.start.getTime()) {
+			throw new BadRequestException(
+				'SUBSCRIPTION_BILLING_PERIOD_INVALID: a billing period must end after it starts.'
+			);
+		}
+
+		// Every statement on the caller's transaction when there is one: a read on a second connection waits
+		// for one the transaction may be holding (a pool of one never frees it).
+		const billing = await this.findOneScoped(id, manager);
+
+		if (billing.status !== SubscriptionBillingStatus.PENDING || billing.orderId || billing.attemptCount) {
+			return billing;
+		}
+
+		// Predicated on the cycle still billing nothing, so a charge that reached it after the read above
+		// is never moved off the period it was charged for. Losing that race leaves the cycle where the
+		// charge put it, which is the answer for a cycle that records money billed.
+		await this.writeIf(
+			id,
+			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), attemptCount: 0 },
+			async () => null,
+			{ periodStart: period.start, periodEnd: period.end, dueAt: period.start },
+			this.cyclesOn(manager)
+		);
+
+		return await this.findOneScoped(id, manager);
+	}
+
+	/**
 	 * Records that a paid cycle was refunded.
 	 *
 	 * @param id The cycle.
@@ -291,10 +339,11 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 
 	/**
 	 * @param subscriptionId The subscription to read the history of.
+	 * @param manager The caller's transaction, when the read is one of its statements.
 	 * @returns Its cycles, newest period first.
 	 */
-	public async findForSubscription(subscriptionId: ID): Promise<SubscriptionBilling[]> {
-		return await this.typeOrmSubscriptionBillingRepository.find({
+	public async findForSubscription(subscriptionId: ID, manager?: EntityManager): Promise<SubscriptionBilling[]> {
+		return await this.cyclesOn(manager).find({
 			where: {
 				subscriptionId,
 				...currentScope()
@@ -306,10 +355,15 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	/**
 	 * @param subscriptionId The subscription.
 	 * @param periodStart The period start that identifies the cycle.
+	 * @param manager The caller's transaction, when the read is one of its statements.
 	 * @returns The cycle, or null when the period has never been billed.
 	 */
-	public async findByPeriod(subscriptionId: ID, periodStart: Date): Promise<SubscriptionBilling | null> {
-		return await this.typeOrmSubscriptionBillingRepository.findOne({
+	public async findByPeriod(
+		subscriptionId: ID,
+		periodStart: Date,
+		manager?: EntityManager
+	): Promise<SubscriptionBilling | null> {
+		return await this.cyclesOn(manager).findOne({
 			where: {
 				subscriptionId,
 				periodStart,
@@ -447,15 +501,25 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 * @param refusal Builds the exception for a cycle that no longer matches, or answers null when the state the
 	 * cycle reached instead already is the outcome the caller wanted (a payment that landed first).
 	 * @param patch The columns to write.
+	 * @param cycles Where the write runs: the caller's transaction, or this service's own repository.
 	 * @returns The update result.
 	 */
+	/**
+	 * @param manager The caller's transaction, when there is one.
+	 * @returns The cycles' repository on that transaction, or this service's own.
+	 */
+	private cyclesOn(manager?: EntityManager): Repository<SubscriptionBilling> {
+		return manager ? manager.getRepository(SubscriptionBilling) : this.typeOrmSubscriptionBillingRepository;
+	}
+
 	private async writeIf(
 		id: ID,
 		condition: FindOptionsWhere<SubscriptionBilling>,
 		refusal: () => Promise<Error | null>,
-		patch: Record<string, unknown>
+		patch: Record<string, unknown>,
+		cycles: Pick<Repository<SubscriptionBilling>, 'update'> = this.typeOrmSubscriptionBillingRepository
 	): Promise<{ affected?: number }> {
-		const result = await this.typeOrmSubscriptionBillingRepository.update(
+		const result = await cycles.update(
 			{ id, ...currentScope(), ...condition } as FindOptionsWhere<SubscriptionBilling>,
 			patch as any
 		);
@@ -475,11 +539,12 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 * Reads a cycle inside the caller's tenant and organization.
 	 *
 	 * @param id The cycle to read.
+	 * @param manager The caller's transaction, when the read is one of its statements.
 	 * @returns The cycle.
 	 * @throws NotFoundException when it is not the caller's.
 	 */
-	public async findOneScoped(id: ID): Promise<SubscriptionBilling> {
-		const billing = await this.typeOrmSubscriptionBillingRepository.findOne({
+	public async findOneScoped(id: ID, manager?: EntityManager): Promise<SubscriptionBilling> {
+		const billing = await this.cyclesOn(manager).findOne({
 			where: {
 				id,
 				...currentScope()

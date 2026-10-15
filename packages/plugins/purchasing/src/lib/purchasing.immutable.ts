@@ -1,13 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
+import { restatesStoredValue } from '@gauzy/common';
 
 /**
  * The members of a patch that would change what a row already holds.
  *
  * A member the patch does not state is not a change. A member it states with the value the row already holds is
  * not a change either, so a client that sends a whole row back with one descriptive member edited is not refused
- * for the members it did not touch. A date is compared as an instant, because a column reads back as a `Date`
- * while a body states an ISO string; everything else this is used for — identifiers and enumerations — is compared
- * as text.
+ * for the members it did not touch. What counts as the value already held is `restatesStoredValue`'s rule
+ * (`@gauzy/common`): a date is compared as an instant, because a column reads back as a `Date` while a body states an
+ * ISO string; everything else this is used for — identifiers and enumerations — is compared as exact text, and a
+ * body value that only stringifies to the stored one (an array holding it) is a change. None of these members is an
+ * amount or a document, so no text is read as a decimal or as JSON: a batch number `"10"` and `"10.0"` are two
+ * batches, and so are `"[1,2]"` and `"[1, 2]"`.
  *
  * @param stored The row as it is stored.
  * @param patch The members a caller asked to write.
@@ -19,23 +23,28 @@ export function movedMembers(
 	patch: Record<string, unknown>,
 	members: readonly string[]
 ): string[] {
-	return members.filter((member) => patch[member] !== undefined && !restates(stored[member], patch[member]));
+	return members.filter(
+		(member) => patch[member] !== undefined && !restatesExactly(stored[member], patch[member])
+	);
 }
 
-/** Whether a stated value is the value already stored. */
-function restates(stored: unknown, stated: unknown): boolean {
-	if (stated === null || stored === null || stored === undefined) {
-		return (stated === null || stated === undefined) && (stored === null || stored === undefined);
-	}
-	if (stored instanceof Date || stated instanceof Date) {
-		const held = new Date(stored as string | Date).getTime();
-		const wanted = new Date(stated as string | Date).getTime();
+/** Reads no value as a decimal, so two decimal-looking identifiers are compared as the text they are. */
+const AS_TEXT = { decimal: () => null };
 
-		return Number.isFinite(held) && held === wanted;
+/**
+ * `restatesStoredValue` with text kept as text: two strings restate each other only when they are the same text —
+ * neither a decimal (`"10"`, `"10.0"`) nor JSON (`"[1,2]"`, `"[1, 2]"`) is read out of an identifier. A date is
+ * still compared by its instant, a missing value only restates a missing one, and an object or an array stated for a
+ * text member is still a change.
+ */
+function restatesExactly(stored: unknown, stated: unknown): boolean {
+	if (typeof stored === 'string' && typeof stated === 'string') {
+		return stored === stated;
 	}
 
-	return String(stated) === String(stored);
+	return restatesStoredValue(stored, stated, AS_TEXT);
 }
+
 
 /**
  * The refusal for a correction that would move a member a posted document's movements were decided on.
