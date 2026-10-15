@@ -164,7 +164,7 @@ function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 		guarded,
 		service,
 		controller: new TimeLogController(service, executor, guard as never),
-		resolver: new TimeLogResolver(service, commandBus as never, executor)
+		resolver: new TimeLogResolver(service, commandBus as never, executor, guard as never)
 	};
 }
 
@@ -380,6 +380,40 @@ describe('bulkCreateTimeLogs — the same batch over GraphQL, each item `addManu
 		expect((refusal as ApiException).getStatus()).toBe(400);
 		expect((refusal as ApiException).code).toBe(ApiErrorCode.BULK_ATOMIC_UNSUPPORTED);
 		expect(logs).toEqual([]);
+	});
+
+	it('asks the organization-policy guard about every item, as the route does: an item naming an organization without manual time is refused alone', async () => {
+		const { resolver, guarded, logs } = surfaces();
+		const item = (organizationId: string, day: string) => ({
+			organizationId,
+			employeeId: EMPLOYEE,
+			startedAt: new Date(`2026-10-${day}T09:00:00.000Z`),
+			stoppedAt: new Date(`2026-10-${day}T10:00:00.000Z`)
+		});
+
+		// The field's own guard reads no organization out of `input.items`: the batch's body names none. Each item
+		// has to be put to the guard as the single route's body, or the policy of the organization it names is
+		// never asked — and a caller allowed manual time in one organization records it in another.
+		const payload = await resolver.bulkCreateTimeLogs({
+			items: [item(ORGANIZATION, '01'), item(NO_MANUAL_TIME_ORGANIZATION, '02'), item(ORGANIZATION, '03')]
+		});
+
+		expect(guarded).toEqual([
+			{ handler: TimeLogController.prototype.addManualTime, organizationId: ORGANIZATION },
+			{ handler: TimeLogController.prototype.addManualTime, organizationId: NO_MANUAL_TIME_ORGANIZATION },
+			{ handler: TimeLogController.prototype.addManualTime, organizationId: ORGANIZATION }
+		]);
+		expect(payload).toMatchObject({ total: 3, succeeded: 2, failed: 1 });
+		expect(payload.results.map((result) => [result.index, result.ok, result.error?.code])).toEqual([
+			[0, true, undefined],
+			[1, false, ApiErrorCode.PERMISSION_DENIED],
+			[2, true, undefined]
+		]);
+		expect(payload.results[1].error).toMatchObject({ message: 'Forbidden resource', path: ['items', '1'] });
+		expect(logs.map((log) => log.startedAt.toISOString())).toEqual([
+			'2026-10-01T09:00:00.000Z',
+			'2026-10-03T09:00:00.000Z'
+		]);
 	});
 });
 

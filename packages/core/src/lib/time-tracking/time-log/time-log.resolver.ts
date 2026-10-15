@@ -26,7 +26,13 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../../api/graphql-connection';
-import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../../api/bulk-create';
+import {
+	IBulkCreateInput,
+	IBulkCreatePayload,
+	applyAsSingleCreate,
+	assertSingleRouteGuard,
+	toBulkCreatePayload
+} from '../../api/bulk-create';
 import { BulkExecutor } from '../../api/bulk-executor.service';
 import { bulkOptionsOf } from '../../api/bulk.decorator';
 import { RequestContext } from '../../core/context';
@@ -352,7 +358,8 @@ export class TimeLogResolver {
 	constructor(
 		private readonly timeLogService: TimeLogService,
 		private readonly commandBus: CommandBus,
-		private readonly bulkExecutor: BulkExecutor
+		private readonly bulkExecutor: BulkExecutor,
+		private readonly organizationPermissionGuard: OrganizationPermissionGuard
 	) {}
 
 	/**
@@ -890,9 +897,13 @@ export class TimeLogResolver {
 	 * the caller's own employee unless the caller may choose one, the log type and source stated for the
 	 * caller, then the service's employee, permission, future-date and overlap rules. The items are applied
 	 * one after another, so an item's overlap is resolved against the intervals the items before it recorded.
-	 * The field carries the guard and the permission `addManualTime` carries. `atomic: true` is refused before
-	 * item 0 with the same `BULK_ATOMIC_UNSUPPORTED` the route answers — the declaration (`atomic: false`) is
-	 * the controller's, read by the same executor.
+	 * The field carries the guard and the permission `addManualTime` carries, and the organization-policy guard is
+	 * asked again about every item, as the route asks it: that guard decides from the organization a body names,
+	 * and neither the batch's input nor a direct call of `addManualTime` puts an item in front of it — without the
+	 * per-item question, an item naming an organization whose manual-time policy is off would be judged by the
+	 * caller's organization instead of its own. `atomic: true` is refused before item 0 with the same
+	 * `BULK_ATOMIC_UNSUPPORTED` the route answers — the declaration (`atomic: false`) is the controller's, read by
+	 * the same executor.
 	 *
 	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here.
 	 */
@@ -905,11 +916,24 @@ export class TimeLogResolver {
 	): Promise<IBulkCreatePayload> {
 		const result = await this.bulkExecutor.execute<ICreateManualTimeLogInput>(
 			{ items: input.items, atomic: input.atomic },
-			(item, context) => applyAsSingleCreate(item, context, (body) => this.addManualTime(body)),
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.addManualTimeAsSingleField(body)),
 			bulkOptionsOf(TimeLogController, 'bulk')
 		);
 
 		return toBulkCreatePayload(result);
+	}
+
+	/**
+	 * One item of `bulkCreateTimeLogs`: the organization-policy decision `POST /timesheet/time-log` makes about
+	 * its body, made about the item — the module's guard instance, asked through the same
+	 * `assertSingleRouteGuard` the route's batch asks it through, so the two surfaces cannot decide an item
+	 * differently — and then `addManualTime` itself. A refused item fails alone, with the route's
+	 * `403 PERMISSION_DENIED`.
+	 */
+	private async addManualTimeAsSingleField(input: ICreateManualTimeLogInput): Promise<ITimeLog> {
+		await assertSingleRouteGuard(this.organizationPermissionGuard, TimeLogController, 'addManualTime', input);
+
+		return await this.addManualTime(input);
 	}
 
 	/**

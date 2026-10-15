@@ -237,7 +237,7 @@ function surfaces() {
 	return {
 		timeLogService,
 		commandBus,
-		resolver: new TimeLogResolver(timeLogService as never, commandBus as never, {} as never)
+		resolver: new TimeLogResolver(timeLogService as never, commandBus as never, {} as never, {} as never)
 	};
 }
 
