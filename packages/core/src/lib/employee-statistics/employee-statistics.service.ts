@@ -351,9 +351,12 @@ export class EmployeeStatisticsService {
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
+				// A split expense is shared among the people working that month, never with agent employees.
 				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 					employee.organization.id,
-					monthOf(expense.valueDate)
+					monthOf(expense.valueDate),
+					false,
+					true
 				);
 
 				const newStat = {
@@ -445,9 +448,12 @@ export class EmployeeStatisticsService {
 					// A copy: `date` is the loop variable, moved on by `setMonth` after this iteration
 					stat.valueDate = new Date(date);
 				} else {
+					// A split expense is shared among the people working that month, never with agent employees.
 					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 						employee.organization.id,
-						monthOf(date)
+						monthOf(date),
+						false,
+						true
 					);
 
 					// Add a new map entry if the key(month-year) does not already exist

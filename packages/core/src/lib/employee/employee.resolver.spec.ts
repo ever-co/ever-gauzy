@@ -11,7 +11,7 @@ import { ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { buildSchema, printSchema } from 'graphql';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { EmployeeKindEnum, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
@@ -862,7 +862,8 @@ describe('EmployeeResolver — one concept, two protocols, the same operations',
 		const { resolver, employeeService } = surfaces();
 
 		expect(await resolver.employeeCount()).toBe(2);
-		expect(employeeService.countBy).toHaveBeenCalledWith();
+		// The headcount is people: agent employees are not counted.
+		expect(employeeService.countBy).toHaveBeenCalledWith({ kind: EmployeeKindEnum.HUMAN });
 	});
 
 	it('counts the working roster through the same service method its route calls', async () => {

@@ -1,4 +1,4 @@
-import { IPagination, ISplitExpenseOutput } from '@gauzy/contracts';
+import { EmployeeKindEnum, IPagination, ISplitExpenseOutput } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../../employee/employee.service';
 import { ExpenseService } from '../../expense.service';
@@ -53,10 +53,11 @@ export class FindSplitExpenseHandler
 			filterDate
 		);
 
-		//2. Find all employees of the organization
+		//2. Find all employees of the organization: people only, an agent employee takes no share of an expense
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organizationId: employee.organization.id
+				organizationId: employee.organization.id,
+				kind: EmployeeKindEnum.HUMAN
 			}
 		});
 

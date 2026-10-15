@@ -467,12 +467,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param organizationId
 	 * @param forRange
 	 * @param withUser
+	 * @param humansOnly - Leave agent employees (`kind = 'agent'`) out. The statistics and split-expense reads
+	 * pass `true`: an agent earns no income, books no expense and takes no share of a split expense. The
+	 * pickers and selectors that read this list keep the default.
 	 * @returns
 	 */
 	async findWorkingEmployees(
 		organizationId: ID,
 		forRange: IDateRangePicker | any,
-		withUser: boolean = false
+		withUser: boolean = false,
+		humansOnly: boolean = false
 	): Promise<IPagination<IEmployee>> {
 		try {
 			switch (this.ormType) {
@@ -485,6 +489,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						isArchived: false,
 						user: { isActive: true, isArchived: false }
 					};
+
+					if (humansOnly) {
+						mWhere.kind = EmployeeKindEnum.HUMAN;
+					}
 
 					// Date range filters
 					if (isNotEmpty(forRange) && forRange.startDate && forRange.endDate) {
@@ -546,7 +554,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					});
 					// Set up the where clause using the provided filter function
 					query.where((qb: SelectQueryBuilder<Employee>) => {
-						this.getFilterQuery(qb, organizationId, forRange);
+						this.getFilterQuery(qb, organizationId, forRange, humansOnly);
 					});
 					const [items, total] = await query.getManyAndCount();
 					return { items, total };
@@ -630,8 +638,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param qb - The TypeORM SelectQueryBuilder for the Employee entity.
 	 * @param organizationId - The organization ID to filter by.
 	 * @param forRange - An object representing a date range (IDateRangePicker) or any other type.
+	 * @param humansOnly - Leave agent employees (`kind = 'agent'`) out.
 	 */
-	getFilterQuery(qb: SelectQueryBuilder<Employee>, organizationId: string, forRange: IDateRangePicker | any) {
+	getFilterQuery(
+		qb: SelectQueryBuilder<Employee>,
+		organizationId: string,
+		forRange: IDateRangePicker | any,
+		humansOnly: boolean = false
+	) {
 		// Retrieve the current tenant ID from the RequestContext
 		const tenantId = RequestContext.currentTenantId();
 
@@ -647,6 +661,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				// Additional conditions for user isActive and isArchived
 				web.andWhere(p(`"user"."isActive" = :isActive`), { isActive: true });
 				web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
+
+				if (humansOnly) {
+					web.andWhere(p(`"${qb.alias}"."kind" = :humanKind`), { humanKind: EmployeeKindEnum.HUMAN });
+				}
 			})
 		);
 
