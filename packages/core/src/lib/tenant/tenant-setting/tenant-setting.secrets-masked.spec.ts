@@ -16,7 +16,7 @@ import { TenantSettingResolver } from './tenant-setting.resolver';
  * Each real route and field is run through the interceptors its class declares, so the wiring is what is tested.
  */
 
-const SECRET = 'wJalrXUtnFEMI-K7MDENG-bPxRfiCYEXAMPLEKEY';
+const SECRET = 'secret-access-key-value-0123456789-0123456789';
 const row = (id: string, name: string, value: string, valueJson?: unknown) =>
 	Object.assign(new TenantSetting(), { id, name, value, valueJson, tenantId: 't-1' });
 
