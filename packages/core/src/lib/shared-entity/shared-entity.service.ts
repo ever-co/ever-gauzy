@@ -16,13 +16,15 @@ import {
     generateSharedEntityToken
 } from "./shared-entity.helper";
 import { assertCallerMayShare, isWithinShareRules } from "./shared-entity.access";
+import { ManagedEmployeeService } from "../employee/managed-employee.service";
 
 @Injectable()
 export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     constructor(
         @InjectDataSource() private readonly dataSource: DataSource,
         typeOrmSharedEntityRepository: TypeOrmSharedEntityRepository,
-        mikroOrmSharedEntityRepository: MikroOrmSharedEntityRepository
+        mikroOrmSharedEntityRepository: MikroOrmSharedEntityRepository,
+        private readonly managedEmployeeService: ManagedEmployeeService
     ) {
         super(typeOrmSharedEntityRepository, mikroOrmSharedEntityRepository);
     }
@@ -55,7 +57,13 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 throw new ForbiddenException('Cannot share an entity that does not belong to your tenant');
             }
             // The link is read without signing in, so the caller must be allowed to read what it shares.
-            assertCallerMayShare(targetRepository.metadata, owned, shareRules);
+            await assertCallerMayShare(
+                targetRepository.metadata,
+                owned,
+                shareRules,
+                this.dataSource,
+                this.managedEmployeeService
+            );
 
             // Generate a unique token for the shared entity
             const token = generateSharedEntityToken();
@@ -251,7 +259,13 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                         existing.organizationId
                     )
                 });
-                assertCallerMayShare(targetRepository.metadata, target, shareRules);
+                await assertCallerMayShare(
+                    targetRepository.metadata,
+                    target,
+                    shareRules,
+                    this.dataSource,
+                    this.managedEmployeeService
+                );
             }
         }
         return await super.update(id as any, safeInput);

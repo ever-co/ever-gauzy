@@ -1,8 +1,9 @@
 import { ForbiddenException } from '@nestjs/common';
-import { EntityMetadata } from 'typeorm';
-import { IShareRule, PermissionsEnum } from '@gauzy/contracts';
+import { DataSource, EntityMetadata } from 'typeorm';
+import { ID, IShareRule, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { assertSensitiveRelationsAllowed } from '../core/util/sensitive-relations.helper';
+import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { buildSharedEntityRelations } from './shared-entity.helper';
 
 /**
@@ -20,6 +21,29 @@ const SHARED_RECORD_READ_PERMISSIONS: Readonly<Record<string, PermissionsEnum[]>
 	Product: [PermissionsEnum.ORG_INVENTORY_VIEW],
 	Candidate: [PermissionsEnum.ORG_CANDIDATES_VIEW]
 };
+
+/**
+ * The permissions (any one) the read routes of these types require, checked on the shared record only:
+ * its relations keep the checks below, so a caller who may read a task can still share it with its members.
+ */
+const SHARED_ROOT_READ_PERMISSIONS: Readonly<Record<string, PermissionsEnum[]>> = {
+	Task: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
+	OrganizationTeam: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW],
+	OrganizationProject: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW]
+};
+
+/**
+ * Types that hold one employee's tracked data. GraphQL takes any entity name, so they can be a share's
+ * record. A screenshot or a minute belongs to the employee of its time slot.
+ */
+const TRACKED_DATA_TYPES: ReadonlySet<string> = new Set([
+	'TimeLog',
+	'TimeSlot',
+	'TimeSlotMinute',
+	'TimeSlotSession',
+	'Screenshot',
+	'Activity'
+]);
 
 /**
  * Whether the caller may read the shared record, as the read routes of its type decide.
@@ -58,6 +82,53 @@ function mayReadSharedRecord(name: string, record: Record<string, unknown> | nul
 }
 
 /**
+ * Whether the caller may read a task, team, project or tracked-data record, as its read routes decide.
+ * Unlike {@link mayReadSharedRecord}, a yes says nothing about the record's relations.
+ *
+ * @param dataSource - Where the time slot of a screenshot or a minute is looked up.
+ * @param managedEmployeeService - Which employees the caller manages.
+ * @param name - The entity name, from the metadata.
+ * @param record - The shared record.
+ * @returns `undefined` for a type without a rule here.
+ */
+async function mayReadSharedRoot(
+	dataSource: DataSource,
+	managedEmployeeService: ManagedEmployeeService,
+	name: string,
+	record: Record<string, unknown> | null
+): Promise<boolean | undefined> {
+	const permissions = SHARED_ROOT_READ_PERMISSIONS[name];
+	if (permissions) {
+		if (RequestContext.hasAnyPermission(permissions)) {
+			return true;
+		}
+		// GET /organization-projects/:id also serves the project's managers (ProjectManagerOrPermissionGuard).
+		const employeeId = RequestContext.currentEmployeeId();
+		if (name !== 'OrganizationProject' || !employeeId || !record?.['id']) {
+			return false;
+		}
+		return await managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, [], [record['id'] as ID]);
+	}
+	if (!TRACKED_DATA_TYPES.has(name)) {
+		return undefined;
+	}
+	let employeeId = record?.['employeeId'] as ID | undefined;
+	let organizationId = record?.['organizationId'] as ID | undefined;
+	// An undefined key would be dropped from the lookup, so it needs the slot's tenant too.
+	if (!employeeId && record?.['timeSlotId'] && record['tenantId']) {
+		const timeSlot = await dataSource.getRepository('TimeSlot').findOne({
+			where: { id: record['timeSlotId'] as ID, tenantId: record['tenantId'] as ID },
+			select: { id: true, employeeId: true, organizationId: true }
+		});
+		employeeId = timeSlot?.['employeeId'];
+		organizationId = timeSlot?.['organizationId'] ?? organizationId;
+	}
+	// The read routes serve the caller's own rows, every row with CHANGE_SELECTED_EMPLOYEE, and a team
+	// manager's members' rows through the time log list.
+	return await managedEmployeeService.canManageEmployee(employeeId, undefined, organizationId);
+}
+
+/**
  * Refuses a relation into a type of {@link SHARED_RECORD_READ_PERMISSIONS} the caller may not read, unless
  * it comes with a record they may read: the read route of that record returns its own relations and those
  * of its one-to-many children with it (an invoice's payments, the expense on one of its items).
@@ -93,19 +164,26 @@ function assertSharedRelationsReadable(metadata: EntityMetadata, rules: IShareRu
  * @param metadata - Metadata of the shared record's entity.
  * @param record - The shared record.
  * @param rules - The share rules, already validated by `assertShareRulesAreSafe`.
+ * @param dataSource - The data source the shared record was read from.
+ * @param managedEmployeeService - Which employees the caller manages.
  * @throws ForbiddenException when the caller lacks a permission the share needs.
  */
-export function assertCallerMayShare(
+export async function assertCallerMayShare(
 	metadata: EntityMetadata,
 	record: Record<string, unknown> | null,
-	rules: IShareRule
-): void {
+	rules: IShareRule,
+	dataSource: DataSource,
+	managedEmployeeService: ManagedEmployeeService
+): Promise<void> {
 	// Without a request there is no caller to check, as for the sensitive relations below.
 	if (!RequestContext.currentRequestContext()) {
 		return;
 	}
 	const readable = mayReadSharedRecord(metadata.name, record);
-	if (readable === false) {
+	if (
+		readable === false ||
+		(await mayReadSharedRoot(dataSource, managedEmployeeService, metadata.name, record)) === false
+	) {
 		throw new ForbiddenException(`Cannot share this ${metadata.name}: you are not allowed to read it`);
 	}
 	// The same gate a read of the record through its own routes applies to these relations.

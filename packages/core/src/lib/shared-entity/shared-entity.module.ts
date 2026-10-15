@@ -8,6 +8,7 @@ import { SharedEntityService } from "./shared-entity.service";
 import { SharedEntityController } from "./shared-entity.controller";
 import { SharedEntityResolver } from "./shared-entity.resolver";
 import { RolePermissionModule } from "../role-permission/role-permission.module";
+import { EmployeeModule } from "../employee/employee.module";
 import { TypeOrmSharedEntityRepository } from "./repository/type-orm-shared-entity.repository";
 import { MikroOrmSharedEntityRepository } from './repository/mikro-orm-shared-entity.repository';
 
@@ -24,7 +25,9 @@ import { MikroOrmSharedEntityRepository } from './repository/mikro-orm-shared-en
         TypeOrmModule.forFeature([SharedEntity]),
         MikroOrmModule.forFeature([SharedEntity]),
         CqrsModule,
-        RolePermissionModule
+        RolePermissionModule,
+        // ManagedEmployeeService, which the share checks use for managers.
+        EmployeeModule
     ],
     controllers: [SharedEntityController],
     providers: [
