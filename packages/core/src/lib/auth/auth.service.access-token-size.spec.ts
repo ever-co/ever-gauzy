@@ -28,6 +28,7 @@ const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e2';
 
 /** A desktop browser's user agent, which the token also carries. */
 const USER_AGENT =
+	// cspell:disable-next-line
 	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0';
 
 /** Every permission there is, enabled — the super admin's role. */
