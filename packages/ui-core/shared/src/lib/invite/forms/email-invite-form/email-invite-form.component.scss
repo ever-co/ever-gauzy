@@ -193,55 +193,6 @@
         color: nb-theme(text-hint-color);
       }
     }
-
-    // Compact, theme-tinted chips instead of Nebular's filled basic tag
-    // (a bright pill that dominated the field in dark mode).
-    // Keyed on appearance + status, NOT size: `nb-tag-list` pushes its own size
-    // (medium) onto every tag, so a `.size-*` selector never matches. Two classes
-    // still out-rank Nebular's theme rules for padding/font-size and the remove
-    // icon's negative margin.
-    nb-tag.appearance-filled.status-basic {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      height: 1.5rem;
-      margin: 0.125rem;
-      padding: 0 0.25rem 0 0.625rem;
-      border: 1px solid nb-theme(color-primary-transparent-focus);
-      border-radius: 0.75rem;
-      background-color: nb-theme(color-primary-transparent-default);
-      color: nb-theme(text-basic-color);
-      font-size: 0.75rem;
-      font-weight: 500;
-      line-height: 1;
-      text-transform: none;
-
-      nb-icon.nb-tag-remove {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex: none;
-        width: 1rem;
-        height: 1rem;
-        margin: 0;
-        padding: 0.125rem;
-        border-radius: 50%;
-        font-size: 0.75rem;
-
-        svg {
-          width: 100%;
-          height: 100%;
-        }
-        color: nb-theme(text-hint-color);
-        cursor: pointer;
-        transition: color 0.15s ease, background-color 0.15s ease;
-
-        &:hover {
-          color: nb-theme(text-basic-color);
-          background-color: nb-theme(color-primary-transparent-hover);
-        }
-      }
-    }
   }
 
   // Remove drop down arrow from email select
