@@ -74,7 +74,9 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 			'authorization',
 			'Authorization',
 			'token',
-			'cookie'
+			'cookie',
+			// A cart's guest-access token (`GET /carts/by-token`); Node hands header names over lower-cased.
+			'x-cart-token'
 		]);
 		const requestBody = this.redactSensitiveData(req.body ?? {}, ['password', 'hash', 'token']);
 

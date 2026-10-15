@@ -1548,7 +1548,20 @@
 		"requestfailed",
 		"subkeys",
 		"favorited",
-		"bookmarkable"
+		"bookmarkable",
+		"desynchronised",
+		"greptile",
+		"jridgewell",
+		"offboard",
+		"offboarded",
+		"offboarding",
+		"onboards",
+		"polynomially",
+		"redeclared",
+		"redeclares",
+		"requeues",
+		"uncaptured",
+		"waivable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

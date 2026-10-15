@@ -84,6 +84,7 @@ function surfaces() {
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		create: jest.fn().mockResolvedValue(ROWS[0]),
+		updateSlot: jest.fn().mockResolvedValue(ROWS[0]),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
 		softRecover: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: null })
@@ -604,7 +605,7 @@ describe('AvailabilitySlotsResolver — one concept, two protocols, the same ope
 		expect(command.input).toEqual(input);
 	});
 
-	it('upserts a slot through the same service call the REST update route makes', async () => {
+	it('updates a slot through the same service call the REST update route makes', async () => {
 		const { resolver, availabilitySlotsService } = surfaces();
 
 		await resolver.updateAvailabilitySlot({
@@ -615,11 +616,14 @@ describe('AvailabilitySlotsResolver — one concept, two protocols, the same ope
 			endTime: new Date('2026-03-02T18:00:00.000Z')
 		});
 
-		// The delivered route merges the identifier from the path into the body and calls `create`; this
-		// surface carries the identifier in the input and calls the same method with the same body.
-		expect(availabilitySlotsService.create).toHaveBeenCalledWith(
-			expect.objectContaining({ id: FIRST, type: 'Recurring', endTime: new Date('2026-03-02T18:00:00.000Z') })
+		// The route takes the identifier from the path and the values from the body; this surface carries the
+		// identifier in the input and hands the service the same two arguments. The ownership rule lives in
+		// the service (availability-slots.authorization.spec.ts proves it on a real database).
+		expect(availabilitySlotsService.updateSlot).toHaveBeenCalledWith(
+			FIRST,
+			expect.objectContaining({ type: 'Recurring', endTime: new Date('2026-03-02T18:00:00.000Z') })
 		);
+		expect(availabilitySlotsService.create).not.toHaveBeenCalled();
 	});
 
 	it('removes a slot through the same service method the inherited delete route calls', async () => {

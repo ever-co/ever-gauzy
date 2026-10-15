@@ -38,7 +38,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
  * The number of `build` rows: the missing capabilities not yet served. It may only shrink — a delivered capability
  * moves its row to `delivered` and lowers this number in the same change.
  */
-const BUILD_BASELINE = 7;
+const BUILD_BASELINE = 6;
 
 /** @type {{ name: string, kind: 'Query'|'Mutation', decision: 'delivered'|'naming'|'retired'|'build'|'drop', served: string[], note: string }[]} */
 const TRIAGE = [
@@ -80,6 +80,13 @@ const TRIAGE = [
 	{ name: 'softDeleteTask', kind: 'Mutation', decision: 'delivered', served: [], note: 'the soft-delete pair' },
 	{ name: 'taskByNumber', kind: 'Query', decision: 'delivered', served: [], note: 'task by its project number' },
 	{ name: 'termsAcceptances', kind: 'Query', decision: 'delivered', served: [], note: 'terms-acceptance surface' },
+	{
+		name: 'upcomingSubscriptionBilling',
+		kind: 'Query',
+		decision: 'delivered',
+		served: [],
+		note: 'a preview of the next billing, priced by the function the cycle bills with; REST `GET /subscriptions/:id/upcoming-billing`'
+	},
 
 	// — Naming: the platform's resources carry the REST-aligned `Organization*` names (§7.68 class 4).
 	{ name: 'createDepartment', kind: 'Mutation', decision: 'naming', served: ['createOrganizationDepartment'], note: 'REST `/organization-department`' },
@@ -174,7 +181,6 @@ const TRIAGE = [
 	{ name: 'bulkCreateTasks', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either' },
 	{ name: 'bulkCreateTimeLogs', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `addManualTime` one at a time' },
 	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `createEmployeesBulk` covers employees only' },
-	{ name: 'upcomingSubscriptionBilling', kind: 'Query', decision: 'build', served: [], note: 'a preview of the next billing; no REST route either' },
 
 	// — Not needed.
 	{
