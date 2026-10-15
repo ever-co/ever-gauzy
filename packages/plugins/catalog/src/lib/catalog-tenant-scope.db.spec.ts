@@ -131,6 +131,14 @@ const TAG_GLOBAL = '00000000-0000-4000-8000-0000000006c1';
 const ORG_A2 = '00000000-0000-4000-8000-0000000000a2';
 const TENANT_C = '00000000-0000-4000-8000-00000000000c';
 
+/** Tenant A's rows outside organization A: organization A2's, and the tenant's organization-less ones. */
+const PRODUCT_A2 = '00000000-0000-4000-8000-0000000001a2';
+const VARIANT_A2 = '00000000-0000-4000-8000-0000000002a2';
+const TAG_A2 = '00000000-0000-4000-8000-0000000006a2';
+const IMAGE_A2_ORG = '00000000-0000-4000-8000-0000000005a3';
+const TAG_A_TENANT = '00000000-0000-4000-8000-0000000006a0';
+const IMAGE_A_TENANT = '00000000-0000-4000-8000-0000000005a0';
+
 /*
 |--------------------------------------------------------------------------
 | Fixture schemas: the columns the services read and write
@@ -345,6 +353,29 @@ async function harness(): Promise<IHarness> {
 	}
 	// A facet value the installation ships to every tenant.
 	await dataSource.query(`INSERT INTO "tag" ("id", "tenantId", "organizationId") VALUES (?, NULL, NULL)`, [TAG_GLOBAL]);
+
+	// Tenant A's rows outside organization A: organization A2's, and the tenant's organization-less ones.
+	await dataSource.query(`INSERT INTO "product" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [
+		PRODUCT_A2,
+		TENANT_A,
+		ORG_A2
+	]);
+	await dataSource.query(
+		`INSERT INTO "product_variant" ("id", "productId", "tenantId", "organizationId") VALUES (?, ?, ?, ?)`,
+		[VARIANT_A2, PRODUCT_A2, TENANT_A, ORG_A2]
+	);
+	for (const [table, id, organizationId] of [
+		['tag', TAG_A2, ORG_A2],
+		['tag', TAG_A_TENANT, null],
+		['image_asset', IMAGE_A2_ORG, ORG_A2],
+		['image_asset', IMAGE_A_TENANT, null]
+	]) {
+		await dataSource.query(`INSERT INTO "${table}" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [
+			id,
+			TENANT_A,
+			organizationId
+		]);
+	}
 
 	const repository = (entity: unknown) => dataSource.getRepository(entity as any) as any;
 	const eventBus = { publish: async () => undefined } as unknown as EventBus;
@@ -634,6 +665,40 @@ describe('catalogue set writes keep to the caller’s tenant (DB-backed, two ten
 		it('refuses another tenant’s image in a gallery', async () => {
 			await expect(h.media.replaceMedia(VARIANT_A, [IMAGE_A1, IMAGE_B1], IMAGE_A1)).rejects.toBeInstanceOf(NotFoundException);
 			expect(await h.rowsOf('product_variant_media', TENANT_A)).toEqual([]);
+		});
+
+		it('refuses a member of another organization of the same tenant, in every set write', async () => {
+			// Review on #10755: the refusals above change the tenant AND the organization, so they would still pass if
+			// the member check stopped filtering by organization. Here only the organization differs.
+			await expect(h.collectionProducts.replaceProducts(COLLECTION_A, [PRODUCT_A2])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(h.collectionVariants.replaceVariants(COLLECTION_A, [VARIANT_A2])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(h.collectionVariants.addVariants(COLLECTION_A, [VARIANT_A2])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(h.tags.replaceTags(VARIANT_A, [TAG_A2])).rejects.toBeInstanceOf(NotFoundException);
+			await expect(h.media.replaceMedia(VARIANT_A, [IMAGE_A2_ORG], IMAGE_A2_ORG)).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+
+			for (const table of ['collection_product', 'collection_variant', 'tag_product_variant', 'product_variant_media']) {
+				expect({ table, rows: await h.rowsOf(table, TENANT_A) }).toEqual({ table, rows: [] });
+			}
+		});
+
+		it('control: accepts the tenant’s organization-less facet values and images', async () => {
+			await h.tags.replaceTags(VARIANT_A, [TAG_A, TAG_A_TENANT]);
+			await h.media.replaceMedia(VARIANT_A, [IMAGE_A1, IMAGE_A_TENANT], IMAGE_A1);
+
+			expect((await h.rowsOf('tag_product_variant', TENANT_A)).map((row) => row.tagId).sort()).toEqual(
+				[TAG_A, TAG_A_TENANT].sort()
+			);
+			expect((await h.rowsOf('product_variant_media', TENANT_A)).map((row) => row.imageAssetId).sort()).toEqual(
+				[IMAGE_A1, IMAGE_A_TENANT].sort()
+			);
 		});
 
 		it('control: the owner fills its collection with its own products and variants', async () => {
