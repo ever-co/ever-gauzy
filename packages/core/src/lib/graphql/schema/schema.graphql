@@ -53375,6 +53375,12 @@ input RefundOrderReturnInput {
   reasonId: ID
   note: String
   version: Int
+
+  """
+  The client's own key for this request, which this operation requires. A refund is refused
+  without one, because a retry after a lost answer would give the money back twice.
+  """
+  idempotencyKey: String
 }
 
 """The return leg: the shipment that brings the goods back."""

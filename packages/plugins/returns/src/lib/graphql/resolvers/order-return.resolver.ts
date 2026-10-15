@@ -88,6 +88,8 @@ interface IRefundOrderReturnArgs {
 	note?: string;
 	/** The version the caller read. */
 	version?: number;
+	/** The client's retry key, which this operation requires (read by the idempotency kernel). */
+	idempotencyKey?: string;
 }
 
 /** The return leg a return is shipped back on, as the schema declares it. */

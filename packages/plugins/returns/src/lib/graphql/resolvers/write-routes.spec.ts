@@ -1073,7 +1073,11 @@ describe('the returns document — the eleven routes no field answered are decla
 		expect(inputMembers('UpdateOrderReturnInput').sort()).toEqual(
 			[...returnBody, VERSION_MEMBER].sort()
 		);
-		expect(inputMembers('RefundOrderReturnInput').sort()).toEqual([...refundBody, VERSION_MEMBER].sort());
+		// The refund also carries the retry key its route requires (review R3-09): REST reads it from the
+		// `Idempotency-Key` header, GraphQL from the input — the same reason the version is a member here.
+		expect(inputMembers('RefundOrderReturnInput').sort()).toEqual(
+			[...refundBody, VERSION_MEMBER, 'idempotencyKey'].sort()
+		);
 		expect(inputMembers('ShipOrderReturnInput').sort()).toEqual([...shipBody, VERSION_MEMBER].sort());
 
 		// The two resources with no version column state no version member either: `order_claim` and
