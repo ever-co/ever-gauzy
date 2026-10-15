@@ -840,7 +840,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					const tenantId = RequestContext.currentTenantId();
 
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
-					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
+					if (isNotEmpty(projectId) && isEmpty(teams)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
 					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
@@ -884,6 +884,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						if (advancedTeams) {
 							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
 						}
+					}
+
+					// With a project and teams, the project's tasks are listed alongside the team's, as in the TypeORM
+					// branch. Every other condition stays at the top level, so it applies to both.
+					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+						mikroWhere.$or = [{ teams: mikroWhere.teams }, { projectId }];
+						delete mikroWhere.teams;
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
