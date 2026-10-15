@@ -185,7 +185,21 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 			await this.findOneByWhereOptions(scoped);
 		}
 
-		return super.update(scoped, partialEntity);
+		// The criteria keep the statement on the caller's rows; the payload must not move them out. A row of this
+		// package is the caller's tenant's AND organization's (every read is narrowed by both), so neither is ever
+		// written from a payload: a `PUT` carrying another tenant's ids re-homed the caller's own row (SEC-A-03).
+		const { tenantId, tenant, organizationId, organization, ...patch } = (partialEntity ?? {}) as Record<string, unknown>;
+		void tenantId;
+		void tenant;
+		void organizationId;
+		void organization;
+
+		if (Object.keys(patch).length === 0) {
+			// Nothing left to write; an empty `SET` is not a statement either ORM accepts.
+			return { generatedMaps: [], raw: [], affected: 0 } as UpdateResult;
+		}
+
+		return super.update(scoped, patch as QueryDeepPartialEntity<T>);
 	}
 
 	/**
