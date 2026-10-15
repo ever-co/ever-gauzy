@@ -98,13 +98,15 @@ export class IntegrationTenantSyncResolver {
 
 		if (!id) return null;
 
-		const connection = await this.integrationTenantService.findOneByWhereOptions({
+		// The fail-soft read: a connection the subscriber cannot read is an ordinary answer here — the fact is not
+		// delivered — rather than an error.
+		const { success, record: connection } = await this.integrationTenantService.findOneOrFailByWhereOptions({
 			id,
 			tenantId: scope.tenantId,
 			...(scope.organizationId ? { organizationId: scope.organizationId } : {})
 		} as never);
 
-		if (!connection) return null;
+		if (!success || !connection) return null;
 		// The provider is the connection's own column, compared on the row that was re-read.
 		if (name && String(connection.name ?? '') !== String(name)) return null;
 

@@ -98,7 +98,7 @@ describe('the integration sync subscription, scoped to the subscriber', () => {
 		pubSub = new GraphqlPubSub();
 		reads = [];
 		const integrationTenantService = {
-			findOneByWhereOptions: jest.fn(async (where: Record<string, string>) => {
+			findOneOrFailByWhereOptions: jest.fn(async (where: Record<string, string>) => {
 				const tenantId = RequestContext.currentTenantId();
 				reads.push(`${where.id}@${tenantId}/${where.organizationId}`);
 				const row = CONNECTIONS.find(
@@ -108,8 +108,8 @@ describe('the integration sync subscription, scoped to the subscriber', () => {
 						candidate.tenantId === where.tenantId &&
 						(!where.organizationId || candidate.organizationId === where.organizationId)
 				);
-				if (!row) throw new NotFoundException('The requested record was not found');
-				return { ...row };
+				if (!row) return { success: false, error: new NotFoundException('The requested record was not found') };
+				return { success: true, record: { ...row } };
 			})
 		};
 		resolver = new IntegrationTenantSyncResolver(integrationTenantService as never, pubSub);

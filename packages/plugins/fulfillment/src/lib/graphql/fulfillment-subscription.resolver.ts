@@ -130,7 +130,9 @@ export class FulfillmentSubscriptionResolver {
 
 		if (!id) return null;
 
-		return await this.fulfillmentService.findOneByOptions({
+		// The fail-soft read: a shipment the subscriber cannot read is an ordinary answer here — the fact is not
+		// delivered — rather than an error.
+		const { success, record } = await this.fulfillmentService.findOneOrFailByOptions({
 			where: {
 				id,
 				tenantId: scope.tenantId,
@@ -138,5 +140,7 @@ export class FulfillmentSubscriptionResolver {
 			},
 			relations: ['lines']
 		} as never);
+
+		return success ? record : null;
 	}
 }

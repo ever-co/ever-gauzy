@@ -122,10 +122,10 @@ describe('the shipment subscriptions, scoped to the subscriber', () => {
 	beforeEach(() => {
 		pubSub = new GraphqlPubSub();
 		reads = [];
-		// The tenant-aware `findOneByOptions` adds the caller's tenant from `RequestContext` to the criteria it is
-		// handed, so the double applies both: the read runs as the subscriber, never as the publisher.
+		// The tenant-aware `findOneOrFailByOptions` adds the caller's tenant from `RequestContext` to the criteria it
+		// is handed, so the double applies both: the read runs as the subscriber, never as the publisher.
 		const fulfillmentService = {
-			findOneByOptions: jest.fn(async ({ where, relations }: { where: Record<string, string>; relations: string[] }) => {
+			findOneOrFailByOptions: jest.fn(async ({ where, relations }: { where: Record<string, string>; relations: string[] }) => {
 				const tenantId = RequestContext.currentTenantId();
 				reads.push(`${where.id}@${tenantId}/${where.organizationId}`);
 				const row = SHIPMENTS.find(
@@ -135,8 +135,11 @@ describe('the shipment subscriptions, scoped to the subscriber', () => {
 						candidate.tenantId === where.tenantId &&
 						(!where.organizationId || candidate.organizationId === where.organizationId)
 				);
-				if (!row) throw new Error('The fulfilment was not found.');
-				return { ...row, ...(relations?.includes('lines') ? { lines: [{ id: `${row.id}-line` }] } : {}) };
+				if (!row) return { success: false, error: new Error('The fulfilment was not found.') };
+				return {
+					success: true,
+					record: { ...row, ...(relations?.includes('lines') ? { lines: [{ id: `${row.id}-line` }] } : {}) }
+				};
 			})
 		};
 		resolver = new FulfillmentSubscriptionResolver(fulfillmentService as never, pubSub);
