@@ -237,7 +237,7 @@ function surfaces() {
 	return {
 		timeLogService,
 		commandBus,
-		resolver: new TimeLogResolver(timeLogService as never, commandBus as never)
+		resolver: new TimeLogResolver(timeLogService as never, commandBus as never, {} as never)
 	};
 }
 
@@ -316,7 +316,8 @@ function rootFields(operation: 'Query' | 'Mutation'): string[] {
  * theirs. Anchoring is what makes “and no more” a statement about this domain instead of about the
  * whole schema.
  */
-const OWNED_ROOT_FIELD = /^(timeLog|projectBudgetLimit|clientBudgetLimit|addManualTime|updateManualTime|deleteTimeLogs)/;
+const OWNED_ROOT_FIELD =
+	/^(timeLog|projectBudgetLimit|clientBudgetLimit|addManualTime|updateManualTime|deleteTimeLogs|bulkCreateTimeLogs)/;
 
 /**
  * The root fields this domain contributes, read off the concept’s own names.
@@ -466,7 +467,12 @@ describe('TimeLogResolver — the SDL declares the capabilities the REST routes 
 			'timeLogWeeklyReport',
 			'timeLogs'
 		]);
-		expect(ownedRootFields('Mutation')).toEqual(['addManualTime', 'deleteTimeLogs', 'updateManualTime']);
+		expect(ownedRootFields('Mutation')).toEqual([
+			'addManualTime',
+			'bulkCreateTimeLogs',
+			'deleteTimeLogs',
+			'updateManualTime'
+		]);
 
 		// The controller serves one list, so the surface states it once: neither a paginated spelling
 		// of it nor a second name for the same rows is declared, because a second surface for one
@@ -1491,6 +1497,7 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'projectBudgetLimit', route: 'getProjectBudgetLimit' },
 	{ field: 'clientBudgetLimit', route: 'clientBudgetLimit' },
 	{ field: 'addManualTime', route: 'addManualTime' },
+	{ field: 'bulkCreateTimeLogs', route: 'bulk' },
 	{ field: 'updateManualTime', route: 'updateManualTime' },
 	{ field: 'deleteTimeLogs', route: 'deleteTimeLog' }
 ];
@@ -1538,6 +1545,7 @@ describe('TimeLogResolver — the guard stack and the permission are the route�
 		// each adds `OrganizationPermissionGuard` and replaces the class grant with one `ALLOW_*`.
 		for (const [field, route, permission] of [
 			['addManualTime', 'addManualTime', PermissionsEnum.ALLOW_MANUAL_TIME],
+			['bulkCreateTimeLogs', 'bulk', PermissionsEnum.ALLOW_MANUAL_TIME],
 			['updateManualTime', 'updateManualTime', PermissionsEnum.ALLOW_MODIFY_TIME],
 			['deleteTimeLogs', 'deleteTimeLog', PermissionsEnum.ALLOW_DELETE_TIME]
 		] as ReadonlyArray<[string, string, PermissionsEnum]>) {

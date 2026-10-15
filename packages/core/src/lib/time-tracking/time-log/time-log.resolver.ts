@@ -26,7 +26,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../../api/graphql-connection';
+import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../../api/bulk-create';
+import { BulkExecutor } from '../../api/bulk-executor.service';
+import { bulkOptionsOf } from '../../api/bulk.decorator';
 import { RequestContext } from '../../core/context';
+import { Idempotent } from '../../idempotency/idempotent.decorator';
 import { Permissions } from '../../shared/decorators';
 import {
 	FeatureFlagGuard,
@@ -41,6 +45,7 @@ import {
 import { EmployeeTrackedDataGuard } from '../../shared/guards/employee-tracked-data.guard';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TimeLog } from './time-log.entity';
+import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
 import { IGetConflictTimeLogCommand } from './commands';
 
@@ -344,7 +349,11 @@ const TIME_LOG_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 export class TimeLogResolver {
-	constructor(private readonly timeLogService: TimeLogService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly timeLogService: TimeLogService,
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
+	) {}
 
 	/**
 	 * The time logs of one organization, oldest first.
@@ -870,6 +879,37 @@ export class TimeLogResolver {
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	async addManualTime(@Args('input') input: ICreateManualTimeLogInput): Promise<ITimeLog> {
 		return await this.timeLogService.addManualTime(this.createBodyOfTheCaller(input));
+	}
+
+	/**
+	 * Records a batch of hand-entered intervals, one outcome per item.
+	 *
+	 * The batch `POST /timesheet/time-log/bulk` applies, run by the same executor from the same declaration —
+	 * the options are read off the controller's own `@BulkOperation`, so the resource, the cap and the
+	 * permission cannot differ between the two surfaces — and each item is recorded by `addManualTime` itself:
+	 * the caller's own employee unless the caller may choose one, the log type and source stated for the
+	 * caller, then the service's employee, permission, future-date and overlap rules. The items are applied
+	 * one after another, so an item's overlap is resolved against the intervals the items before it recorded.
+	 * The field carries the guard and the permission `addManualTime` carries. `atomic: true` is refused before
+	 * item 0 with the same `BULK_ATOMIC_UNSUPPORTED` the route answers — the declaration (`atomic: false`) is
+	 * the controller's, read by the same executor.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here.
+	 */
+	@Mutation('bulkCreateTimeLogs')
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
+	@Idempotent({ scope: 'time_log.bulk', required: false, resourceType: 'time_log' })
+	async bulkCreateTimeLogs(
+		@Args('input') input: IBulkCreateInput<ICreateManualTimeLogInput>
+	): Promise<IBulkCreatePayload> {
+		const result = await this.bulkExecutor.execute<ICreateManualTimeLogInput>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.addManualTime(body)),
+			bulkOptionsOf(TimeLogController, 'bulk')
+		);
+
+		return toBulkCreatePayload(result);
 	}
 
 	/**

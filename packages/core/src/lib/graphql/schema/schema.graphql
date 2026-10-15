@@ -9550,6 +9550,16 @@ type Mutation {
   addManualTime(input: CreateManualTimeLogInput!): TimeLog!
 
   """
+  Records a batch of intervals by hand — each item exactly as `addManualTime` records one, its conflicts
+  resolved against the intervals the items before it recorded — and answers one outcome per item. The
+  batch `POST /timesheet/time-log/bulk` applies, under the same guard, permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the manual-time create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTimeLogs(input: BulkCreateTimeLogsInput!): BulkCreateTimeLogsPayload!
+
+  """
   Edits a hand-recorded interval, and answers the row as it stands after the write.
   
   The delivered write resolves the interval's conflicts again, stamps the instant it was edited and
@@ -43148,6 +43158,50 @@ input DeleteTimeLogsInput {
 
   """Whether to delete the rows outright rather than withdraw them."""
   forceDelete: Boolean
+}
+
+"""
+A batch of intervals to record by hand, as `bulkCreateTimeLogs` takes it: the body
+`POST /timesheet/time-log/bulk` accepts plus the retry key.
+
+Each item is a `CreateManualTimeLogInput` and is recorded exactly as `addManualTime` records one, so an
+item is refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the
+batch, and it is optional: a GraphQL document can carry many mutations and a header cannot say which of
+them a key belongs to, so the key travels here.
+"""
+input BulkCreateTimeLogsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateManualTimeLogInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the manual-time create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of hand-recorded intervals adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTimeLogsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """One ten-minute window of one employee's tracked time."""
