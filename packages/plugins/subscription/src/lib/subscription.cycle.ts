@@ -168,6 +168,113 @@ export function applyRecurringDiscount(
 }
 
 /**
+ * The period the next cycle of a subscription covers.
+ *
+ * A cycle is identified by the period it covers, and the period is derived from the subscription's own
+ * calendar — the next billing instant while it bills, the end of the last settled period when it is in
+ * dunning, and the instant asked about when it has neither — never from when a job happens to run.
+ * `billCycle` keys its claim and its row by this period and the upcoming-billing preview reports it, so
+ * the two cannot name different periods for one subscription.
+ *
+ * @param subscription The subscription's calendar.
+ * @param cadence The plan's period and interval.
+ * @param now The instant the question is asked.
+ * @returns The period, `[start, one cadence later)`.
+ */
+export function nextCyclePeriod(
+	subscription: { nextBillingAt?: Date | string | null; currentPeriodEnd?: Date | string | null },
+	cadence: ISubscriptionCadence,
+	now: Date
+): ISubscriptionPeriod {
+	return periodFrom(new Date(subscription.nextBillingAt ?? subscription.currentPeriodEnd ?? now), cadence);
+}
+
+/**
+ * The instant a paused subscription bills next once it resumes.
+ *
+ * A resume never charges twice for time already paid for and never refunds it: the next billing is the
+ * end of the period the customer already paid for, or the resume itself when that period is over.
+ *
+ * @param currentPeriodEnd The end of the period already paid for, when there is one.
+ * @param at The instant the subscription resumes.
+ * @returns The next billing instant.
+ */
+export function resumedNextBillingAt(currentPeriodEnd: Date | string | null | undefined, at: Date): Date {
+	const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : at;
+
+	return periodEnd.getTime() > at.getTime() ? periodEnd : at;
+}
+
+/**
+ * The discount a subscription's cycles are billed with: the one it was sold with, else its plan's.
+ *
+ * @param plan The plan the subscription is on.
+ * @param override A discount stated for this subscription alone.
+ * @returns The discount fraction to apply, or undefined when neither grants one.
+ */
+export function cycleDiscountOf(
+	plan: { discountPercentage?: DecimalString | number | null },
+	override?: DecimalString | number | null
+): string | undefined {
+	if (override !== undefined && override !== null && String(override) !== '') {
+		return String(override);
+	}
+
+	return plan?.discountPercentage !== undefined && plan?.discountPercentage !== null
+		? String(plan.discountPercentage)
+		: undefined;
+}
+
+/**
+ * The discount a subscription was sold with, when it is not simply its plan's.
+ *
+ * @param metadata The subscription's metadata, where the sale recorded it.
+ * @returns The fraction, or undefined when the subscription carries none of its own.
+ */
+export function subscriptionDiscountOverrideOf(metadata?: Record<string, unknown> | null): string | undefined {
+	const override = metadata?.['discountPercentage'];
+
+	return override === undefined || override === null ? undefined : String(override);
+}
+
+/** What one cycle bills, and the two figures it is computed from. */
+export interface ISubscriptionCyclePrice {
+	/** The recurring lines, summed at the full working scale. */
+	gross: Money;
+	/** The recurring discount granted, as a positive magnitude, rounded at the currency's scale. */
+	discount: Money;
+	/** What the cycle bills: the amount its billing row records and its order is raised for. */
+	net: Money;
+}
+
+/**
+ * Prices one billing cycle.
+ *
+ * This is the one place a cycle's amount is computed. `billCycle` bills what it answers and the
+ * upcoming-billing preview reports what it answers, so a preview cannot drift from the bill it
+ * previews: the same lines, the same currency and the same discount rule — the subscription's own
+ * discount where it was sold with one, the plan's otherwise — give the same three figures. It reads
+ * nothing and writes nothing; the caller hands it the state.
+ *
+ * @param input The recurring lines, the currency, the plan and the subscription's metadata.
+ * @returns The gross, the discount and the net the cycle bills.
+ */
+export function priceCycle(input: {
+	items: ReadonlyArray<Pick<ISubscriptionItem, 'quantity' | 'unitPrice'>>;
+	currency: CurrencyCode;
+	plan: { discountPercentage?: DecimalString | number | null };
+	metadata?: Record<string, unknown> | null;
+}): ISubscriptionCyclePrice {
+	const gross = recurringAmount(input.items, input.currency);
+	const { discount, net } = applyRecurringDiscount(
+		gross,
+		cycleDiscountOf(input.plan, subscriptionDiscountOverrideOf(input.metadata))
+	);
+
+	return { gross, discount, net };
+}
+
+/**
  * Splits the remaining time of a period between the plan being left and the plan being taken up.
  *
  * Both halves are computed against the **old** period's length so the two numbers describe the same
