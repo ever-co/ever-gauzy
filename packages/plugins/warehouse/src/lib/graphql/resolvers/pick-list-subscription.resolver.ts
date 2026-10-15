@@ -57,7 +57,7 @@ export class PickListSubscriptionResolver {
 	 * @param waveId Narrows it to the lists of one wave, read from the list itself.
 	 * @param assignedToUserId Narrows it to the lists one picker owns, read from the list itself.
 	 * @param action Narrows it to one move — the event name's last segment (`assigned`, `picked`, …).
-	 * @returns The list in the state the move left it, as `pickList(id:)` reads it.
+	 * @returns The list as `pickList(id:)` reads it when the move is delivered — a later move may already show.
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_VIEW)
 	@Subscription('pickListChanged', { resolve: deliverPayloadAsIs })

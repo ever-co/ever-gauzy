@@ -96,7 +96,7 @@ export class MarketplaceSubscriptionResolver {
 	 * @param sellerId Narrows the stream to one seller — and is the seller the access guard resolves membership of.
 	 * @param action Narrows it to one move — the event name's last segment (`activated`, `offboarding-started`, …).
 	 * @param context The operation's context, which carries the seller scope the guard resolved.
-	 * @returns The seller in the state the move left it, as `seller(idOrCode:)` reads it.
+	 * @returns The seller as `seller(idOrCode:)` reads it when the move is delivered — a later move may already show.
 	 */
 	@Subscription('sellerChanged', { resolve: deliverPayloadAsIs })
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
@@ -126,7 +126,7 @@ export class MarketplaceSubscriptionResolver {
 	 * @param sellerId Narrows it to one seller's offerings, read from the offering itself.
 	 * @param action Narrows it to one move (`created`, `withdrawn`).
 	 * @param context The operation's context, which carries the seller scope the guard resolved.
-	 * @returns The offering in the state the move left it.
+	 * @returns The offering as it reads when the move is delivered — a later change may already show.
 	 */
 	@Subscription('sellerOfferingChanged', { resolve: deliverPayloadAsIs })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_VIEW)
@@ -193,7 +193,7 @@ export class MarketplaceSubscriptionResolver {
 	 * @param sellerId Narrows it to one seller's settlements, read from the settlement itself.
 	 * @param action Narrows it to one move (`recorded`, `closed`).
 	 * @param context The operation's context, which carries the seller scope the guard resolved.
-	 * @returns The settlement in the state the move left it.
+	 * @returns The settlement as it reads when the move is delivered — a later move may already show.
 	 */
 	@MarketplacePayoutsGate()
 	@Subscription('sellerSettlementChanged', { resolve: deliverPayloadAsIs })

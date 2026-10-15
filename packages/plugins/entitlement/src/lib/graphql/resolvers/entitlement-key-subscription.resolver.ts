@@ -66,7 +66,7 @@ export class EntitlementKeySubscriptionResolver {
 	 *
 	 * @param entitlementKeyId Narrows the stream to one key.
 	 * @param entitlementId Narrows it to the keys of one right, read from the key itself.
-	 * @returns The key in the state the move left it.
+	 * @returns The key as it reads when the move is delivered — a later change may already show.
 	 */
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_VIEW)
 	@Subscription('entitlementKeyChanged', { resolve: deliverPayloadAsIs })

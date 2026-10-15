@@ -1120,7 +1120,8 @@ export const schemaExtensions = gql`
 	extend type Subscription {
 		"""
 		Every move of a pick list of the caller's tenant — created, assigned, started, picked, canceled — with the list,
-		its lines and its wave, as \`pickList(id:)\` reads it. Narrowed by \`pickListId\`, by the location, the wave
+		its lines and its wave, as \`pickList(id:)\` reads it when the move is delivered, not a snapshot of the move: a
+		move made since may already show in it. Narrowed by \`pickListId\`, by the location, the wave
 		and the picker the list is assigned to, and by \`action\` (the move: \`assigned\`, \`picked\`, …); each only
 		narrows what the credential may read. Follows the \`pick_list.*\` facts the pick-list service appends to the
 		outbox in the transaction of each move. A subscription is a notification and never a system of record: a move

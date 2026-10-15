@@ -131,8 +131,8 @@ extend type Mutation {
 extend type Subscription {
 	"""
 	Every finished synchronisation of an integration connection of the caller's tenant — a GitHub issue sync, a
-	Hubstaff automatic sync — with the connection as `integrationTenant(id:)` reads it, the provider, the moment and
-	the counts the run stated. Narrowed by `integrationTenantId` and by the provider `name`; each only narrows what
+	Hubstaff automatic sync — with the connection as `integrationTenant(id:)` reads it when the event is delivered (a
+	later run may already have moved its `lastSyncedAt`), the provider, and this run's moment and counts. Narrowed by `integrationTenantId` and by the provider `name`; each only narrows what
 	the credential may read. Follows the `integration_tenant.synced` fact the run appends in the transaction that
 	stamps the connection's `lastSyncedAt`.
 

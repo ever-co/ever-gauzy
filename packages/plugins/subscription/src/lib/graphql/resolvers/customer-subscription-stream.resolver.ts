@@ -59,7 +59,7 @@ export class CustomerSubscriptionStreamResolver {
 	 * @param subscriptionId Narrows the stream to one subscription.
 	 * @param customerId Narrows it to the subscriptions of one customer, read from the subscription itself.
 	 * @param action Narrows it to one move — the event name's last segment (`activated`, `payment-failed`, …).
-	 * @returns The subscription in the state the move left it, as `subscription(id:)` reads it.
+	 * @returns The subscription as `subscription(id:)` reads it when the move is delivered — a later move may already show.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 	@Subscription('customerSubscriptionChanged', { resolve: deliverPayloadAsIs })

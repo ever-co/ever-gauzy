@@ -362,15 +362,17 @@ export const fulfillmentSchemaExtensions = gql`
 	extend type Subscription {
 		"""
 		A shipment of the caller's tenant was created — outbound for an order, or the leg a return travels back on —
-		with its lines, as \`fulfillment(id:)\` reads it. Narrowed by the order and by the location; each only narrows
-		what the credential may read. Follows the \`fulfillment.created\` fact the fulfilment service appends to the
+		with its lines, as \`fulfillment(id:)\` reads it when the event is delivered: a move made since the creation may
+		already show in it. Narrowed by the order and by the location; each only narrows what the credential may
+		read. Follows the \`fulfillment.created\` fact the fulfilment service appends to the
 		outbox. A subscription is a notification and never a system of record: a shipment created while the client is
 		disconnected is not replayed.
 		"""
 		fulfillmentCreated(orderId: ID, warehouseId: ID): Fulfillment!
 		"""
 		Every lifecycle move of a shipment of the caller's tenant — created, shipped, in transit, delivered, canceled —
-		with the shipment in the state the move left it, as \`fulfillment(id:)\` reads it. Narrowed by
+		with the shipment as \`fulfillment(id:)\` reads it when the move is delivered, not a snapshot of the move: a move
+		made since may already show in it. Narrowed by
 		\`fulfillmentId\`, by the order the shipment is of, and by \`action\` (the move: \`shipped\`, \`in_transit\`,
 		\`delivered\`, …); each only narrows what the credential may read. Follows the \`fulfillment.*\` facts the
 		fulfilment service appends to the outbox. A subscription is a notification and never a system of record: a move

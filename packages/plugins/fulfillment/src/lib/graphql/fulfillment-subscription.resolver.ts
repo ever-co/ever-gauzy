@@ -82,7 +82,7 @@ export class FulfillmentSubscriptionResolver {
 	 * @param fulfillmentId Narrows the stream to one shipment.
 	 * @param orderId Narrows it to the shipments of one order, read from the shipment itself.
 	 * @param action Narrows it to one move — the event name's last segment (`shipped`, `delivered`, …).
-	 * @returns The shipment in the state the move left it, as `fulfillment(id:)` reads it.
+	 * @returns The shipment as `fulfillment(id:)` reads it when the move is delivered — a later move may already show.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_VIEW)
 	@Subscription('fulfillmentChanged', { resolve: deliverPayloadAsIs })

@@ -165,9 +165,10 @@ input UpdateIntegrationTenantInput {
 """
 A synchronisation of a connected integration that finished: what `Subscription.integrationSyncCompleted` delivers.
 
-The connection is re-read as the subscriber, so it is the row `integrationTenant(id:)` would answer — its
-`lastSyncedAt` is the moment below. The counts are what the run stated about itself and are counts only: no
-synchronised record and no identifier of one travels with the fact.
+The connection is re-read as the subscriber when the event is delivered, so it is the row `integrationTenant(id:)`
+would answer then — a later run may already have moved its `lastSyncedAt`; `syncedAt` is this run's own moment. The
+counts are what the run stated about itself and are counts only: no synchronised record and no identifier of one
+travels with the fact.
 """
 type IntegrationSyncCompleted {
 	"The connection that finished synchronizing."
