@@ -1,5 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { json, urlencoded } from 'express';
+import { DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
 
 /** The environment variable that raises or lowers the GraphQL body ceiling, in bytes. */
 export const GRAPHQL_MAX_BODY_BYTES_ENV = 'GRAPHQL_MAX_BODY_BYTES';
@@ -9,6 +10,19 @@ export const GRAPHQL_MAX_BODY_BYTES_DEFAULT = 1024 * 1024;
 
 /** What any other JSON or form body may weigh (imports, uploads of structured data). */
 export const DEFAULT_MAX_BODY = '50mb';
+
+/**
+ * The path the GraphQL endpoint is served on, as the driver is configured with it (`graphqlConfigOptions.path`,
+ * which `CoreModule` hands to Apollo), so what is mounted for the endpoint lands where the endpoint is.
+ *
+ * @param configuredPath The configured path, with or without its leading slash.
+ * @returns The path with one leading slash.
+ */
+export function graphqlEndpointPath(configuredPath?: string | null): string {
+	const path = String(configuredPath || DEFAULT_GRAPHQL_API_PATH).replace(/^\/+/, '');
+
+	return `/${path || DEFAULT_GRAPHQL_API_PATH}`;
+}
 
 /** Something JSON and form parsers can be mounted on: the Nest application, or a bare Express app. */
 export interface IBodyParserHost {
@@ -66,8 +80,13 @@ export function installBodyParsers(
 ): string[] {
 	const warnings: string[] = [];
 	const verify = options.verify as any;
+	const graphqlLimit = resolveGraphqlBodyLimit(options.env, warnings);
 
-	app.use(options.graphqlPath, json({ limit: resolveGraphqlBodyLimit(options.env, warnings), verify }));
+	// Both parsers the application mounts below, so the endpoint's ceiling holds whatever the content type: a parser
+	// only reads the type it is for, and a form body sent to the endpoint used to reach the 50 MB form parser
+	// (CodeRabbit on #10651).
+	app.use(options.graphqlPath, json({ limit: graphqlLimit, verify }));
+	app.use(options.graphqlPath, urlencoded({ extended: true, limit: graphqlLimit, verify }));
 	app.use(json({ limit: DEFAULT_MAX_BODY, verify }));
 	app.use(urlencoded({ extended: true, limit: DEFAULT_MAX_BODY, verify }));
 

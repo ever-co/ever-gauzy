@@ -209,7 +209,7 @@ export async function createGraphqlModuleOptions(
 		// the `context` factory above gave it. `RequestContextMiddleware` opens that context for an HTTP
 		// request and never sees a WebSocket message, so without this the guards and every tenant-scoped
 		// read found no caller on the socket.
-		...subscriptionTransportOptions({ validationRules })
+		...subscriptionTransportOptions({ validationRules, maxTokens: policy.maxTokens })
 	} as GqlModuleOptions;
 }
 

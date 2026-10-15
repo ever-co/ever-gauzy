@@ -152,36 +152,32 @@ export function readPageSize(
 	node: ISdlNode,
 	options: Required<ICostModelOptions> = DEFAULT_COST_MODEL
 ): number {
-	const stated = (argumentsOf: Array<{ name?: { value?: string }; value?: unknown }> | undefined): number | undefined => {
+	// Every page the field states is read and the LARGEST is priced. A field may state its page in more than one
+	// place (`first` and `page: { first }`), and the resolver honours one of them by its own precedence; pricing the
+	// first one found let `first: 1, page: { first: 100 }` cost one row and fetch a hundred (Greptile on #10651).
+	const sizes: number[] = [];
+	const collect = (argumentsOf: Array<{ name?: { value?: string }; value?: unknown }> | undefined): void => {
 		for (const argumentName of options.pageSizeArguments) {
 			const argument = argumentsOf?.find((candidate) => candidate?.name?.value === argumentName);
 			const size = sizeOf(argument?.value, options);
 
 			if (size !== undefined) {
-				return size;
+				sizes.push(size);
 			}
 		}
-
-		return undefined;
 	};
 
-	const direct = stated(node?.arguments);
-	if (direct !== undefined) {
-		return direct;
-	}
+	collect(node?.arguments);
 
 	const page = node?.arguments?.find((candidate) => candidate?.name?.value === PAGE_OBJECT_ARGUMENT)?.value as
 		| { kind?: string; fields?: Array<{ name?: { value?: string }; value?: unknown }> }
 		| undefined;
 	if (page?.kind === 'Variable') {
-		return options.pageSizeCap;
+		sizes.push(options.pageSizeCap);
 	}
-	const nested = stated(page?.fields);
-	if (nested !== undefined) {
-		return nested;
-	}
+	collect(page?.fields);
 
-	return Math.min(options.pageSizeCap, options.defaultPageSize);
+	return sizes.length ? Math.max(...sizes) : Math.min(options.pageSizeCap, options.defaultPageSize);
 }
 
 /**

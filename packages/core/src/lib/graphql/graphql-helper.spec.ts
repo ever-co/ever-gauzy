@@ -102,6 +102,19 @@ describe('createGraphqlModuleOptions', () => {
 			expect((await withEnv({ GRAPHQL_MAX_TOKENS: '500' }, { maxTokens: 300 })).parseOptions).toEqual({ maxTokens: 500 });
 		});
 
+		it('holds the subscription socket to the same ceiling, before graphql-ws parses or validates', async () => {
+			// Greptile on #10651: the socket accepted a connection on the presence of a credential and then parsed and
+			// validated any document with no token ceiling — pre-authentication work, as on HTTP.
+			const options = await withEnv({ GRAPHQL_MAX_TOKENS: '' });
+			const socket = options.subscriptions?.['graphql-ws'] as {
+				onSubscribe: (context: unknown, id: string, payload: { query?: unknown }) => ReadonlyArray<GraphQLError> | void;
+			};
+
+			const refused = socket.onSubscribe({}, '1', { query: overlapping(300) });
+			expect(refused?.[0]?.message).toMatch(/contains more th[a-z]+ 2000 tokens/);
+			expect(socket.onSubscribe({}, '2', { query: 'subscription { hello }' })).toBeUndefined();
+		});
+
 		it('turns on Apollo’s bound on fragment-expanded selections', async () => {
 			expect((await build()).maxRecursiveSelections).toBe(true);
 		});

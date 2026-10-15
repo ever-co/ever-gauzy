@@ -102,6 +102,12 @@ describe('graphql-cost — a connection is recognised by what it returns (SEC-C-
 		expect(measure(`{ employees(page: { first: 100 }) { nodes { id name } } }`).complexity).toBe(1701);
 	});
 
+	it('prices the largest page a field states, wherever it states it', () => {
+		// The resolver honours `page.first` over `first`; priced the other way round, this cost one row and fetched 100.
+		expect(measure(`{ employees(first: 1, page: { first: 100 }) { nodes { id } } }`).complexity).toBe(10 * 100 + 5 * 100 + 1 * 100 + 2);
+		expect(measure(`{ employees(first: 100, page: { first: 1 }) { nodes { id } } }`).complexity).toBe(10 * 100 + 5 * 100 + 1 * 100 + 2);
+	});
+
 	it('prices a page stated through a variable at the cap', () => {
 		expect(measure(`query ($n: Int) { employees(first: $n) { nodes { id name } } }`).complexity).toBe(1701);
 		expect(measure(`query ($p: PageInput) { employees(page: $p) { nodes { id name } } }`).complexity).toBe(1701);
