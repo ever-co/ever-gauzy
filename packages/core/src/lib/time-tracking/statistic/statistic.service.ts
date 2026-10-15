@@ -3003,7 +3003,7 @@ export class StatisticService {
 				const employeeUserIds = employees.map((e) => e.user_id).filter(Boolean);
 				const userMap = await this._userService.findUsersByIds(employeeUserIds);
 
-				// Loaded here, not at the top: the storage providers read the environment as soon as they load
+				// Imported lazily because the storage providers read the environment as soon as they load
 				const { FileStorage } = await import('./../../core/file-storage/file-storage');
 
 				// Reshape user data and fetch time slots for each employee
