@@ -517,6 +517,9 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 	});
 
 	afterEach(async () => {
+		// Every spy a case installs is undone here as well as in the case itself, so one that rejected before its own
+		// restore cannot leak a doubled method — above all a prototype's — into the cases after it.
+		jest.restoreAllMocks();
 		mockCaller.tenantId = null;
 		mockCaller.organizationId = null;
 		await h.dataSource.destroy();
@@ -820,10 +823,14 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 				}
 				return original.call(this, options);
 			});
-			await expect(h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any)).resolves.toMatchObject({
-				status: PickListLineStatus.PICKED
-			});
-			staleOnce.mockRestore();
+			try {
+				await expect(h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any)).resolves.toMatchObject({
+					status: PickListLineStatus.PICKED
+				});
+			} finally {
+				// Restored whatever the pick answered: the prototype is shared by every repository of every later case.
+				staleOnce.mockRestore();
+			}
 			// The stale read was the one the promotion was decided on: the second pick did try to start the list.
 			expect(served).toBe(true);
 
