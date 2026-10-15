@@ -43,6 +43,7 @@ import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 import { IGetConflictTimeLogCommand } from './commands';
+import { TimeLogConflictAccessGuard } from './guards/time-log-conflict-access.guard';
 
 /**
  * The activity window `TimeLogActivityLevelInput` declares in the schema.
@@ -442,14 +443,19 @@ export class TimeLogResolver {
 	 * an interval overlap: it compares the two instants it is given against the two ends of every log
 	 * of that employee, and the connection protocol has no operator that expresses an overlap — a
 	 * `startedAt` range and a `stoppedAt` range are two conditions, and the logs this route answers are
-	 * the ones either end of which falls inside the window. The command is the one the route dispatches,
-	 * with the same input, and the answer is the rows it answered with: the route takes no page and
-	 * performs no second narrowing, so neither does the field.
+	 * the ones either end of which falls inside the window. The command is the one the route's service
+	 * method dispatches, with the same input, and the answer is the rows it answered with: the route
+	 * takes no page and performs no second narrowing, so neither does the field.
+	 *
+	 * The employee is authorized as the route authorizes it. `TimeLogConflictAccessGuard`, which the
+	 * route carries too, lets a caller read their own logs, those of an employee they manage, or any
+	 * employee's with CHANGE_SELECTED_EMPLOYEE, and refuses every other employee before the command runs.
 	 *
 	 * The tenant is not an argument. The delivered handler reads it from the credential and falls back
 	 * to the input only when there is none, so a caller stating one could never change the read.
 	 */
 	@Query('timeLogConflicts')
+	@UseGuards(TimeLogConflictAccessGuard)
 	async timeLogConflicts(
 		@Args('startDate', { type: () => Date }) startDate: Date,
 		@Args('endDate', { type: () => Date }) endDate: Date,
