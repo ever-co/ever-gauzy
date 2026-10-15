@@ -1141,3 +1141,44 @@ describe('VendorProductTermService — pricing one order line (doc 05 §16.5 ste
 		expect(await fixture.service.overReceiptTolerancePercentOf('long-gone')).toBeUndefined();
 	});
 });
+
+/**
+ * SEC-D-09 (the half #10647 does not cover): `variantId` on a term is a plain column, not a relation, so the core
+ * foreign-row check never sees it, and the update re-ran none of the checks the creation runs. A term could be
+ * re-pointed at another tenant's variant — whose deletion the database's RESTRICT key then blocked — or at a supplier
+ * that is archived, inactive or not this organization's.
+ */
+describe('VendorProductTermService — an edit names only what a creation may name (SEC-D-09)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to re-point a term at a variant outside the organization, and leaves it as it was', async () => {
+		const fixture = termFixture({ terms: [termRow('term-1')] });
+
+		await expect(fixture.service.update('term-1', { variantId: 'variant-of-another-tenant' })).rejects.toThrow(
+			/VENDOR_TERM_VARIANT_NOT_FOUND/
+		);
+		expect(fixture.live()[0]).toMatchObject({ variantId: VARIANT });
+	});
+
+	it('refuses to re-point a term at a supplier that is not usable', async () => {
+		const fixture = termFixture({ terms: [termRow('term-1')] });
+
+		await expect(fixture.service.update('term-1', { vendorId: 'vendor-of-another-tenant' })).rejects.toThrow(
+			/VENDOR_TERM_VENDOR_NOT_FOUND/
+		);
+		expect(fixture.live()[0]).toMatchObject({ vendorId: VENDOR });
+	});
+
+	it('re-points a term at another variant and supplier of the organization', async () => {
+		const fixture = termFixture({ terms: [termRow('term-1')] });
+
+		await fixture.service.update('term-1', { variantId: OTHER_VARIANT, vendorId: OTHER_VENDOR });
+
+		expect(fixture.live()[0]).toMatchObject({ variantId: OTHER_VARIANT, vendorId: OTHER_VENDOR });
+	});
+});
