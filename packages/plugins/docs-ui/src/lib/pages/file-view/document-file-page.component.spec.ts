@@ -124,6 +124,29 @@ describe('DocumentFilePageComponent', () => {
 		expect(page.document.name).toBe('Renamed.csv');
 	});
 
+	it('rebuilds the preview when saved text corrections change the extracted text, even with the same updatedAt', async () => {
+		answer({ ...FILE, extractedText: 'a,b;1,2' } as IDocument);
+		await settle();
+		const revision = page.previewRevision;
+
+		// `updateExtractedText()` answers the loaded row with the text merged in and its old `updatedAt`.
+		actions$.next(DocumentsActions.rowChanged({ ...FILE, extractedText: 'a,b;1,3' } as IDocument));
+
+		expect(page.previewRevision).toBe(revision + 1);
+	});
+
+	it('rebuilds the preview when a rename changes the extension that picks the viewer, and not otherwise', async () => {
+		answer(FILE);
+		await settle();
+		const revision = page.previewRevision;
+
+		actions$.next(DocumentsActions.rowChanged({ ...FILE, name: 'Q3 report (final).csv' } as IDocument));
+		expect(page.previewRevision).toBe(revision);
+
+		actions$.next(DocumentsActions.rowChanged({ ...FILE, name: 'Q3 report.pdf' } as IDocument));
+		expect(page.previewRevision).toBe(revision + 1);
+	});
+
 	it('goes back to the documents list when the file is deleted', async () => {
 		answer(FILE);
 		await settle();

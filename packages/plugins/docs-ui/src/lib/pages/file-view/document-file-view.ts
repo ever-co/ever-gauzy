@@ -39,5 +39,29 @@ export function documentViewRedirect(document: Pick<IDocument, 'id' | 'kind'>): 
 export function previewSignature(document: Partial<IDocument> | null | undefined): string {
 	if (!document) return '';
 	const updatedAt = document.updatedAt ? new Date(document.updatedAt as Date | string).getTime() : '';
-	return [updatedAt, document.status, document.mimeType, document.fileSize, document.version].join('|');
+	// The viewer is picked by the mime type and, failing that, by the extension of the file name — so a rename that
+	// changes the extension changes the preview, and one that keeps it does not.
+	const extension = String(document.originalFilename ?? document.name ?? '').split('.').pop()?.toLowerCase() ?? '';
+	// Saved text corrections answer the row with the text merged in and its old `updatedAt`; the text is the content
+	// of the text and Office previews, so a change of it is a change of the preview. Hashed, to keep the value small.
+	const extractedText = document.extractedText;
+	return [
+		updatedAt,
+		document.status,
+		document.mimeType,
+		document.fileSize,
+		document.version,
+		extension,
+		typeof extractedText === 'string' ? textHash(extractedText) : ''
+	].join('|');
+}
+
+/** A short, stable hash of a text (FNV-1a, 32 bit) — enough to tell two versions of one document's text apart. */
+function textHash(text: string): string {
+	let hash = 0x811c9dc5;
+	for (let index = 0; index < text.length; index++) {
+		hash ^= text.charCodeAt(index);
+		hash = Math.imul(hash, 0x01000193);
+	}
+	return `${text.length}:${(hash >>> 0).toString(16)}`;
 }
