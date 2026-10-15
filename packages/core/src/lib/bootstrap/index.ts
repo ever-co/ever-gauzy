@@ -37,7 +37,7 @@ import helmet from 'helmet';
 import * as chalk from 'chalk';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { urlencoded, json } from 'express';
+import { installBodyParsers } from './body-parsers';
 import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
@@ -154,8 +154,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			request.rawBody = buffer;
 		}
 	};
-	app.use(json({ limit: '50mb', verify: captureRawBody }));
-	app.use(urlencoded({ extended: true, limit: '50mb', verify: captureRawBody }));
+	// 50 MB for every route, and a ceiling of its own for the GraphQL endpoint, whose body is parsed and validated
+	// before authentication (SEC-C-03).
+	for (const warning of installBodyParsers(app, {
+		graphqlPath: `/${DEFAULT_GRAPHQL_API_PATH}`,
+		env: process.env,
+		verify: captureRawBody
+	})) {
+		console.warn(`[GraphQL] ${warning}`);
+	}
 
 	// Enable CORS with specific settings
 	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.
