@@ -127,3 +127,17 @@ extend type Mutation {
 	"""
 	recoverIntegrationTenant(id: ID!): IntegrationTenant!
 }
+
+extend type Subscription {
+	"""
+	Every finished synchronisation of an integration connection of the caller's tenant — a GitHub issue sync, a
+	Hubstaff automatic sync — with the connection as `integrationTenant(id:)` reads it, the provider, the moment and
+	the counts the run stated. Narrowed by `integrationTenantId` and by the provider `name`; each only narrows what
+	the credential may read. Follows the `integration_tenant.synced` fact the run appends in the transaction that
+	stamps the connection's `lastSyncedAt`.
+
+	A subscription is a notification and never a system of record: a run that finishes while the client is
+	disconnected is not replayed, and `lastSyncedAt` on the connection is the record.
+	"""
+	integrationSyncCompleted(integrationTenantId: ID, name: String): IntegrationSyncCompleted!
+}
