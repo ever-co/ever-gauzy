@@ -22,7 +22,7 @@
  * - `drop`      — clearly not needed; listed for the owner in the PR that recorded it rather than dropped silently.
  *
  * The design documents are not in this repository (`PLATFORM-EXTENSIONS.md`, "Where the design lives"); the amendments
- * the `naming`, `retired` and `drop` rows imply are recorded in `docs/platform-extensions/design-name-triage.md`, which
+ * the `naming`, `retired` and `drop` rows imply are recorded in `tools/scripts/design-name-triage.md`, which
  * `--write` regenerates from the table below (`--markdown` prints it).
  *
  * Run from the repository root: `node tools/scripts/design-name-triage-check.mjs [--write | --markdown]`
@@ -192,8 +192,15 @@ const TRIAGE = [
  */
 const AUDITED_NAMES = 81;
 
-/** Where the human-readable copy of this table lives; the gate refuses a copy that has drifted from the table. */
-const MARKDOWN = join(ROOT, 'docs', 'platform-extensions', 'design-name-triage.md');
+/**
+ * Where the human-readable copy of this table lives; the gate refuses a copy that has drifted from the table. The
+ * same page is published from `ever-co/ever-gauzy-docs` (`PUBLISHED`): refresh that copy from `--markdown` when the
+ * table changes.
+ */
+const MARKDOWN = join(ROOT, 'tools', 'scripts', 'design-name-triage.md');
+
+/** The published copy, in `ever-co/ever-gauzy-docs` (the hostname is left to the docs: no Ever host in code here). */
+const PUBLISHED = 'website/docs/platform-extensions/design-name-triage.md';
 
 const schema = readFileSync(SDL, 'utf8').replace(/"""[\s\S]*?"""/g, '');
 
@@ -220,7 +227,7 @@ const code = (name) => `\`${name}\``;
 /**
  * The human-readable copy of the table: prose wrapped at 80 columns, then one table row per name.
  *
- * @returns The whole of `docs/platform-extensions/design-name-triage.md`.
+ * @returns The whole of `tools/scripts/design-name-triage.md`.
  */
 function renderMarkdown() {
 	const backlog = TRIAGE.filter((row) => row.decision === 'build').map((row) => code(row.name));
@@ -270,6 +277,11 @@ function renderMarkdown() {
 				'`static-checks.yml` — fails when the page and the table differ, when a `delivered` name stops being ' +
 				'served, when an equivalent is not served as the same kind, when a name that is not `delivered` ' +
 				`becomes served, when one of the ${AUDITED_NAMES} rows disappears, and when the build backlog grows.`
+		),
+		wrap(
+			'**Where it lives.** The gate checks `tools/scripts/design-name-triage.md` in `ever-co/ever-gauzy`; ' +
+				`the documentation site publishes the same page from \`ever-co/ever-gauzy-docs\` (\`${PUBLISHED}\`), ` +
+				'and `node tools/scripts/design-name-triage-check.mjs --markdown` prints it.'
 		),
 		wrap(
 			`**Totals:** ${TRIAGE.length} names — **${count('delivered')} delivered**, ` +

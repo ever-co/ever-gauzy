@@ -7,6 +7,11 @@ Ever Gauzy has two optional modules that talk to Ever Platform: the **anonymous 
 ([`@gauzy/plugin-ever-connect`](../../packages/plugins/ever-connect/README.md)). This page lists every
 call either of them can make. Nothing else in Gauzy calls Ever Platform.
 
+This page is published at [docs.gauzy.co](https://docs.gauzy.co/ever-platform/outbound-calls/) from
+[`ever-co/ever-gauzy-docs`](https://github.com/ever-co/ever-gauzy-docs). The copy in
+`ever-co/ever-gauzy` (`tools/ever-platform/outbound-calls.md`) is the one CI checks against the
+pinned contract; a change to it is copied to the published page.
+
 ## When nothing is sent
 
 | Setting                                                                   | Effect                                                                                                   |
