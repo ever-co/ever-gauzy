@@ -765,7 +765,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async removeTaskFromManyPlans(taskId: ID, input: IDailyPlansTasksUpdateInput): Promise<IDailyPlan[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
+			const { employeeId, organizationId, organizationTeamId } = input;
+			// No list means every plan holding the task. The GraphQL mutation forwards the list as `planIds`.
+			const plansIds =
+				input.plansIds ?? (input as IDailyPlansTasksUpdateInput & { planIds?: ID[] }).planIds ?? [];
 			const currentDate = new Date().toISOString().split('T')[0];
 
 			// The employee comes from the request body, so the caller must be allowed to act on them.
@@ -788,7 +791,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					const mikroWhere: any = {
 						tenantId,
 						organizationId,
-						organizationTeamId,
+						organizationTeamId: organizationTeamId ?? null,
 						employeeId,
 						date: { $gte: new Date(currentDate) }
 					};
@@ -818,9 +821,14 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Conditions
 					query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
-						organizationTeamId
-					});
+					// Without a team, the plans that have none: an equality with NULL never matches.
+					if (organizationTeamId) {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
+					} else {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" IS NULL`));
+					}
 					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 
 					// Find condition must include only today and future plans
