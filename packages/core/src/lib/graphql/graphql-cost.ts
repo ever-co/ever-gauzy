@@ -110,6 +110,9 @@ export const DEFAULT_COST_MODEL: Required<ICostModelOptions> = {
 /** The argument that carries the connection protocol's page as an object (`page: { first, last }`). */
 const PAGE_OBJECT_ARGUMENT = 'page';
 
+/** The fields that describe the schema rather than the data; the introspection policy governs them. */
+const INTROSPECTION_ROOTS = new Set(['__schema', '__type']);
+
 /**
  * Classifies a field by its shape.
  *
@@ -395,6 +398,15 @@ class CostWalk {
 
 	/** Prices one field and everything selected under it. */
 	private field(selection: ISdlNode, depth: number, parentType: GraphQLNamedType | undefined): IWalkCost {
+		// The schema's description of itself is not data: what `__schema` / `__type` answer is bounded by the schema,
+		// and whether a deployment answers them at all is the introspection policy's decision, made by its own rule.
+		// Priced like data, the standard introspection query — whose TypeRef fragment nests `ofType` by design — is 15
+		// levels deep and costs over 11,000, and every GraphiQL and codegen client would be refused wherever the
+		// schema is published.
+		if (INTROSPECTION_ROOTS.has(selection.name?.value ?? '')) {
+			return { depth: 0, aliases: 0, fields: 0, scaled: 0, args: 0 };
+		}
+
 		const definition = this.definitionOf(parentType, selection.name?.value);
 		const hasChildren = !!selection.selectionSet?.selections?.length;
 		const returned = definition ? getNamedType(definition.type) : undefined;

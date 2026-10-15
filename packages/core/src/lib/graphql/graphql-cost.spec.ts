@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildSchema, getNamedType, isObjectType, parse, specifiedRules, validate } from 'graphql';
+import { buildSchema, getIntrospectionQuery, getNamedType, isObjectType, parse, specifiedRules, validate } from 'graphql';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { measureOperation } from './graphql-cost';
 import { createGraphqlLimitRules } from './graphql-limits';
@@ -149,6 +149,23 @@ describe('graphql-limits — the ceilings hold for what a fragment hides (SEC-C-
 
 		expect(measureOperation(parse(`{ ${five} }`).definitions[0] as any, {}, { schema }).complexity).toBe(5 * 1701);
 		expect(refusals(`{ ${five} }`)).toContain(ApiErrorCode.GRAPHQL_COMPLEXITY_LIMIT_EXCEEDED);
+	});
+
+	it('serves the standard introspection query where introspection is published', () => {
+		// The boot gate's contract dump: with fragments expanded, the introspection query's TypeRef fragment priced
+		// at depth 15 and cost 11074, and GraphiQL / codegen were refused. Introspection has its own policy rule.
+		const introspection = getIntrospectionQuery({ descriptions: true, specifiedByUrl: true, directiveIsRepeatable: true });
+
+		expect(refusals(introspection)).toEqual([]);
+	});
+
+	it('still refuses introspection where it is not published', () => {
+		const closed = createGraphqlLimitRules({ maxDepth: 12, maxComplexity: 5000, maxAliases: 50, introspection: false });
+		const codes = validate(schema, parse(getIntrospectionQuery()), [...specifiedRules, ...closed]).map(
+			(error) => (error.extensions as any)?.code
+		);
+
+		expect(codes).toContain(ApiErrorCode.GRAPHQL_INTROSPECTION_DISABLED);
 	});
 
 	it('refuses nested full pages, and serves an ordinary page', () => {
