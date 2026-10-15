@@ -272,6 +272,16 @@ export enum DEFAULT_TYPE {
 	NO_EMPLOYEE = 'NO_EMPLOYEE'
 }
 
+/**
+ * What an employee row represents. Every existing and new employee is a `HUMAN` unless created through the
+ * agent-provisioning path (`AGENT`): an agent has no login, receives no welcome email, and is excluded from
+ * payroll, statistics and seat counts.
+ */
+export enum EmployeeKindEnum {
+	HUMAN = 'human',
+	AGENT = 'agent'
+}
+
 export enum PayPeriodEnum {
 	NONE = 'NONE',
 	BI_WEEKLY = 'BI_WEEKLY',
