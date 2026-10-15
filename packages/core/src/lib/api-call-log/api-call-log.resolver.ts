@@ -12,6 +12,7 @@ import {
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { requireOrganization } from '../graphql/organization-required';
 import { ApiCallLogFilterDTO } from './dto/api-call-log-filter.dto';
 import { DeleteApiCallLogDTO } from './dto/api-call-log-delete.dto';
 import { ApiCallLog } from './api-call-log.entity';
@@ -122,10 +123,15 @@ export class ApiCallLogResolver {
 	constructor(private readonly apiCallLogService: ApiCallLogService) {}
 
 	/**
-	 * The API call logs of the caller's tenant, most recent request first.
+	 * The API call logs of one organization the caller belongs to, most recent request first.
+	 *
+	 * **The organization is required, as the route's is** (SEC-A-04, same class). `ApiCallLogFilterDTO` extends
+	 * `TenantOrganizationBaseDTO`, so the route only reads an organization the caller is a member of; this field
+	 * once took none and read every call of the tenant, request and response bodies included. The argument is
+	 * named `organizationId`, so the membership interceptor checks it, and a read that names none is refused here.
 	 *
 	 * The reader is the one the list route calls, handed the request the route builds when its query
-	 * string carries nothing: the service's own defaults then select the rows unfiltered and answer the
+	 * string names only the organization: the service's own defaults then select that organization's rows and answer the
 	 * first hundred of them. This surface has no query string to bind, so the read runs with exactly
 	 * those defaults and the connection protocol's `filter` and `sort` are applied to the rows that read
 	 * returned — which is the whole of what the read answers. `totalCount` is therefore the count of the
@@ -135,6 +141,7 @@ export class ApiCallLogResolver {
 	@Query('apiCallLogs')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.API_CALL_LOG_READ)
 	async apiCallLogs(
+		@Args('organizationId') organizationId?: Id,
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
 		@Args('page') page?: ConnectionPageRequest,
@@ -145,7 +152,7 @@ export class ApiCallLogResolver {
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number
 	): Promise<GraphqlConnection<ApiCallLog>> {
-		const options = {} as ApiCallLogFilterDTO;
+		const options = { organizationId: requireOrganization(organizationId, 'apiCallLogs') } as ApiCallLogFilterDTO;
 		const { items }: IPagination<ApiCallLog> = await this.apiCallLogService.findAllLogs(options);
 
 		return buildConnection<ApiCallLog>({

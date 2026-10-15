@@ -27,8 +27,8 @@ import { IntegrationSettingResolver } from './integration-setting.resolver';
  *
  * - the one capability is a root field of the one composed schema, and it is a mutation: the resource
  *   serves no read, so the surface states no query;
- * - the field performs the route's own two steps against the route's own service, in the route's own
- *   order — the upsert, then the row read back;
+ * - the field makes the route's own call against the route's own service — `updateEditableSetting`, the
+ *   allowlisted value-only write — and answers the row it reads back;
  * - **the permission is the handler's**, which overrides the controller's class-level pair; asserting
  *   the resolved value rather than the class list is what keeps the field from running under a wider
  *   scope than the route;
@@ -60,7 +60,8 @@ const ROW = {
 function surfaces() {
 	const integrationSettingService = {
 		create: jest.fn().mockResolvedValue(ROW),
-		findOneByIdString: jest.fn().mockResolvedValue(ROW)
+		findOneByIdString: jest.fn().mockResolvedValue(ROW),
+		updateEditableSetting: jest.fn().mockResolvedValue(ROW)
 	};
 
 	return {
@@ -218,19 +219,19 @@ describe('IntegrationSettingResolver — the SDL declares the capability the RES
 });
 
 describe('IntegrationSettingResolver — one concept, two protocols, the same operation', () => {
-	it('performs the route’s own two steps, in the route’s own order', async () => {
+	it('performs the route’s own call, and answers the row it reads back', async () => {
 		const { resolver, integrationSettingService } = surfaces();
 		const id = ROW.id;
 
 		expect(await resolver.updateIntegrationSetting({ id, settingsValue: 'rotated-token' })).toBe(ROW);
 
-		// The delivered route calls `create` with the path identifier inside the body — an upsert under
-		// that identifier rather than an edit of a row it read first — and then answers the row read back.
-		expect(integrationSettingService.create).toHaveBeenCalledWith({ settingsValue: 'rotated-token', id });
-		expect(integrationSettingService.findOneByIdString).toHaveBeenCalledWith(id);
+		// The delivered route calls `updateEditableSetting` with the path identifier and the body: a tenant-scoped
+		// read, the allowlist, and a value-only write (SEC-E-03 — this field used to upsert the body through `create`).
+		expect(integrationSettingService.updateEditableSetting).toHaveBeenCalledWith(id, { settingsValue: 'rotated-token' });
+		expect(integrationSettingService.create).not.toHaveBeenCalled();
 	});
 
-	it('carries the organization the caller states into the write', async () => {
+	it('hands the organization the caller states to the same call the route makes', async () => {
 		const { resolver, integrationSettingService } = surfaces();
 
 		await resolver.updateIntegrationSetting({
@@ -239,10 +240,9 @@ describe('IntegrationSettingResolver — one concept, two protocols, the same op
 			settingsValue: 'rotated-token'
 		});
 
-		expect(integrationSettingService.create).toHaveBeenCalledWith({
+		expect(integrationSettingService.updateEditableSetting).toHaveBeenCalledWith(ROW.id, {
 			organizationId: ROW.organizationId,
-			settingsValue: 'rotated-token',
-			id: ROW.id
+			settingsValue: 'rotated-token'
 		});
 	});
 
@@ -250,7 +250,7 @@ describe('IntegrationSettingResolver — one concept, two protocols, the same op
 		const { resolver, integrationSettingService } = surfaces();
 		const refusal = new Error('INTEGRATION_SETTING_REFUSED: the row belongs to another tenant.');
 
-		integrationSettingService.create.mockRejectedValueOnce(refusal);
+		integrationSettingService.updateEditableSetting.mockRejectedValueOnce(refusal);
 
 		await expect(
 			resolver.updateIntegrationSetting({ id: ROW.id, settingsValue: 'rotated-token' })
