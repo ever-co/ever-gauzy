@@ -265,7 +265,11 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 			metadata?: JsonData;
 		}
 	): Promise<SearchIndexDefinition> {
-		const row = await this.findOneScoped(id);
+		// A shipped (platform) row is every tenant's: a change to it lands on a copy scoped to the caller's tenant and
+		// organization, which `findFor` prefers for that organization (SEC-B-04). The platform row is never saved from
+		// a request — switched off or re-weighted in place, it changed every other tenant's index.
+		const found = await this.findOneScoped(id);
+		const row = found.tenantId ? found : await this.organizationCopyOf(found);
 		const shapeBefore = this.serialiseShape(this.shapeOfRow(row));
 
 		if (changes.label !== undefined) {
@@ -312,7 +316,58 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 			row.version = Math.max(1, Number(row.version) || 1) + 1;
 		}
 
+		if (!row.tenantId) {
+			throw new BadRequestException('A shipped search index definition is never changed in place; it is changed for one organization.');
+		}
+
 		return await this.typeOrmSearchIndexDefinitionRepository.save(row);
+	}
+
+	/**
+	 * The caller's organization's own copy of a platform definition: the one it already has, or a new one carrying
+	 * the platform row's shape and version, which the change is then applied to.
+	 *
+	 * @param platform The platform row.
+	 * @returns The organization's row, saved or not yet saved.
+	 * @throws BadRequestException when the request names no tenant or organization to scope the copy to.
+	 */
+	private async organizationCopyOf(platform: SearchIndexDefinition): Promise<SearchIndexDefinition> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException(
+				`The "${platform.entity}" index definition is shipped for every organization; select an organization to change it for.`
+			);
+		}
+
+		const existing = await this.typeOrmSearchIndexDefinitionRepository.findOne({
+			where: { entity: platform.entity, tenantId, organizationId } as any
+		});
+
+		if (existing) {
+			return existing;
+		}
+
+		return Object.assign(this.typeOrmSearchIndexDefinitionRepository.create(), {
+			entity: platform.entity,
+			label: platform.label,
+			engineKey: platform.engineKey,
+			fields: JSON.parse(JSON.stringify(platform.fields ?? [])),
+			defaultWeight: platform.defaultWeight,
+			titleTemplate: platform.titleTemplate,
+			bodyTemplate: platform.bodyTemplate,
+			keywordFields: platform.keywordFields ? [...platform.keywordFields] : platform.keywordFields,
+			sourceUpdatedAtField: platform.sourceUpdatedAtField,
+			metadata: platform.metadata,
+			isActive: platform.isActive,
+			// The copy is the organization's own: deleting it falls back to the shipped definition.
+			isSystem: false,
+			// Documents built at the platform version are current for the copy until its shape changes.
+			version: platform.version,
+			tenantId,
+			organizationId
+		}) as SearchIndexDefinition;
 	}
 
 	/**

@@ -470,3 +470,52 @@ describe('SearchIndexDefinitionService — what an operator may change (doc 05 �
 		await expect(fixture.service.deactivate('nope')).rejects.toBeInstanceOf(NotFoundException);
 	});
 });
+
+/**
+ * SEC-B-04: a tenant administrator edited the installation-wide (tenant-less) definitions every tenant uses. The
+ * update mutated and saved the shared platform row in place — `updateSearchIndexDefinition(id: <shipped def>,
+ * input: { isActive: false })` made every other tenant's next reindex of that entity drop its documents, and a
+ * re-weighting bumped the shared version, rebuilding every tenant's documents. A change to a platform row now lands on
+ * a copy scoped to the caller's tenant and organization, which `findFor` already prefers for that organization.
+ */
+describe('SearchIndexDefinitionService — a shipped definition is changed for one organization, never for all (SEC-B-04)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('lands the change on a copy for the caller’s organization, and leaves the platform row to every other one', async () => {
+		const fixture = definitionFixture({ definitions: [definitionRow('d1')] });
+
+		const changed = await fixture.service.updateDefinition('d1', { isActive: false });
+
+		expect(changed).toMatchObject({ tenantId: TENANT, organizationId: ORG, isActive: false, isSystem: false });
+		expect(changed.id).not.toBe('d1');
+		// The failure scenario: the shared row itself was switched off for every tenant.
+		expect(fixture.store('d1')).toMatchObject({ isActive: true, tenantId: null, version: 1 });
+
+		expect((await fixture.service.findFor('product_variant', ORG))?.id).toBe(changed.id);
+		expect((await fixture.service.findFor('product_variant', OTHER_ORG))?.id).toBe('d1');
+	});
+
+	it('edits the organization’s existing copy on the next change, rather than making another', async () => {
+		const fixture = definitionFixture({ definitions: [definitionRow('d1')] });
+
+		const first = await fixture.service.updateDefinition('d1', { label: 'Variants' });
+		const second = await fixture.service.updateDefinition('d1', { defaultWeight: 2 });
+
+		expect(second.id).toBe(first.id);
+		expect(fixture.tables.search_index_definition.filter((row) => row.tenantId === TENANT)).toHaveLength(1);
+		expect(fixture.store('d1')).toMatchObject({ label: 'Product variants', defaultWeight: '1.000000' });
+	});
+
+	it('refuses to change a shipped definition when no organization is selected', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as never);
+		const fixture = definitionFixture({ definitions: [definitionRow('d1')] });
+
+		await expect(fixture.service.updateDefinition('d1', { isActive: false })).rejects.toThrow(/organization/);
+		expect(fixture.store('d1')?.isActive).toBe(true);
+	});
+});
