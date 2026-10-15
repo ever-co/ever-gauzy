@@ -4615,7 +4615,9 @@ type Query {
   """Read one cart with its lines, delivery choices and promotions."""
   cart(id: ID!): Cart
 
-  """Read the cart a buyer token names."""
+  """
+  Read the cart a guest-access token names, within the caller's tenant; null when none carries it. The token is the one createCart answered with.
+  """
   cartByToken(token: String!): Cart
 
   """List checkout sessions."""
@@ -4807,6 +4809,11 @@ type Query {
 
   """One subscription, with its lines and its billing history."""
   subscription(id: ID!): CustomerSubscription
+
+  """
+  The next billing of a subscription, previewed without writing anything; null when it will not bill again as it stands.
+  """
+  upcomingSubscriptionBilling(id: ID!): UpcomingSubscriptionBilling
 
   """The recurring lines of a subscription."""
   subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
@@ -48666,6 +48673,11 @@ type Cart {
   abandonedAt: DateTime
   externalId: String
   metadata: JSON
+
+  """
+  The guest-access token, in plaintext. Answered by createCart alone (a retry under its idempotency key replays that answer); null on every read, because the cart stores only its digest.
+  """
+  token: String
   lines: [CartLine!]
   shippingMethods: [CartShippingMethod!]
   promotions: [CartPromotion!]
@@ -54220,6 +54232,28 @@ type SubscriptionBillingOutcomePayload {
   errorCode: String
   message: String
   userErrors: [UserError!]!
+}
+
+"""
+The next billing a subscription is due, previewed: computed exactly as the bill will be, and written nowhere.
+"""
+type UpcomingSubscriptionBilling {
+  subscriptionId: ID!
+
+  """
+  What the cycle will bill: the amount billSubscription records on the cycle and raises its order for.
+  """
+  amount: Decimal!
+  currency: String!
+  periodStart: DateTime!
+
+  """The end of the period the cycle covers, exclusive."""
+  periodEnd: DateTime!
+
+  """
+  The instant the cycle is due to bill: the start of the period it covers, or the next retry when a charge of that period failed.
+  """
+  nextBillingAt: DateTime!
 }
 
 """What one billing pass did."""

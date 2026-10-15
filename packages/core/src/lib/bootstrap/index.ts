@@ -208,6 +208,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'If-Match',
 			// A conditional read states the version it already has.
 			'If-None-Match',
+			// A guest cart is read by its token in a header, never in the URL (`GET /carts/by-token`).
+			'X-Cart-Token',
 			// TASK 9 (improvement roadmap) — Unified Observability and Correlation IDs: lets a
 			// cross-origin browser client send its own correlation id (`RequestContextMiddleware`
 			// already trusted it server-side; this only affects whether the BROWSER is allowed to

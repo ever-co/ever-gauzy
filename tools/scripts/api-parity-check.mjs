@@ -94,6 +94,8 @@ const GRAPHQL_ONLY = {
 	validateCoupon: 'Whether a coupon applies, a question about coupons rather than a coupon.',
 	giftCardBalance: 'The remaining balance of a gift card, a computation over its transactions.',
 	orderByNumber: 'An order addressed by its number rather than its id; REST filters the order route by number.',
+	cartByToken:
+		'A cart addressed by its guest-access token rather than its id; REST serves the same lookup at `GET /carts/by-token`, the token in the `X-Cart-Token` header (never the URL).',
 	orderTotals: 'The totals of an order, which the order resource already carries over REST.',
 	orderLineInvoicingPosition: 'How far a line has been invoiced, a computation over its invoice links.',
 	fulfillmentOutstanding: 'How much of a line is still to ship, a computation over its fulfilments.',
@@ -101,6 +103,8 @@ const GRAPHQL_ONLY = {
 	shippingOptionsForContext: 'The options eligible in a context, which the option resource cannot answer without the context.',
 	shippingRate: 'The price an option quotes for a context, a computation over the option’s price shapes.',
 	subscriptionPlanByCode: 'A plan addressed by its code rather than its id; REST filters the plan route by code.',
+	upcomingSubscriptionBilling:
+		'The next billing of a subscription, a computation over its lines and plan that writes nothing; REST serves it at `/subscriptions/:id/upcoming-billing` on the subscription resource.',
 	warehouseBinSubtree: 'Everything under a bin, a walk of the bin hierarchy.',
 	warehouseBinContents: 'What a bin holds, derived from the stock ledger.',
 	warehouseBinCapacity: 'How much of a bin’s capacity a request would use, a conversion and a comparison.',
