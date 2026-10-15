@@ -38,7 +38,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
  * The number of `build` rows: the missing capabilities not yet served. It may only shrink — a delivered capability
  * moves its row to `delivered` and lowers this number in the same change.
  */
-const BUILD_BASELINE = 4;
+const BUILD_BASELINE = 3;
 
 /** @type {{ name: string, kind: 'Query'|'Mutation', decision: 'delivered'|'naming'|'retired'|'build'|'drop', served: string[], note: string }[]} */
 const TRIAGE = [
@@ -89,6 +89,7 @@ const TRIAGE = [
 	},
 	{ name: 'bulkCreateTags', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /tags/bulk` + `bulkCreateTags`, every item the single create (`POST /tags` / `createTag`)' },
 	{ name: 'bulkCreateTasks', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /tasks/bulk` + `bulkCreateTasks`, every item the single create (`POST /tasks` / `createTask`), numbered by its handler one item at a time' },
+	{ name: 'bulkCreateExpenses', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /expense/bulk` + `bulkCreateExpenses`, every item the single create (`POST /expense` / `createExpense`) on the bulk kernel' },
 
 	// — Naming: the platform's resources carry the REST-aligned `Organization*` names (§7.68 class 4).
 	{ name: 'createDepartment', kind: 'Mutation', decision: 'naming', served: ['createOrganizationDepartment'], note: 'REST `/organization-department`' },
@@ -177,7 +178,6 @@ const TRIAGE = [
 	{ name: 'setProductVariantPrice', kind: 'Mutation', decision: 'retired', served: ['updateProductVariantPrice', 'bulkUpsertProductPrices'], note: 'design-retired' },
 
 	// — Missing capabilities: neither surface serves them.
-	{ name: 'bulkCreateExpenses', kind: 'Mutation', decision: 'build', served: [], note: 'no `POST /expense/bulk` either; build both surfaces on the bulk kernel (`BulkOperation`/`BulkExecutor`)' },
 	{ name: 'bulkCreateOrganizations', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either' },
 	{ name: 'bulkCreateTimeLogs', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `addManualTime` one at a time' },
 	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `createEmployeesBulk` covers employees only' },
