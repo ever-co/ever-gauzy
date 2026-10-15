@@ -196,9 +196,11 @@
 
     // Compact, theme-tinted chips instead of Nebular's filled basic tag
     // (a bright pill that dominated the field in dark mode).
-    // `.size-small` matches Nebular's own tag rules so these win instead of
-    // its padding/font-size and the remove icon's negative margin.
-    nb-tag.appearance-filled.size-small {
+    // Keyed on appearance + status, NOT size: `nb-tag-list` pushes its own size
+    // (medium) onto every tag, so a `.size-*` selector never matches. Two classes
+    // still out-rank Nebular's theme rules for padding/font-size and the remove
+    // icon's negative margin.
+    nb-tag.appearance-filled.status-basic {
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
@@ -214,7 +216,7 @@
       line-height: 1;
       text-transform: none;
 
-      .nb-tag-remove.size-small {
+      nb-icon.nb-tag-remove {
         display: inline-flex;
         align-items: center;
         justify-content: center;
