@@ -3838,11 +3838,6 @@
 			"ACCESS": "גישה",
 			"ACCESS_HINT": "אופציונלי. בחרו למה חברים חדשים יוכלו לגשת מיד עם הצטרפותם.",
 			"DETAILS": "פרטי ההזמנה",
-			"PROJECTS": "פרויקטים",
-			"CONTACTS": "אנשי קשר",
-			"TEAMS": "צוותים",
-			"DEPARTMENTS": "מחלקות",
-			"START_DATE": "תאריך התחלה",
 			"RECIPIENT_COUNT": "נמענים: {{count}}",
 			"NO_RECIPIENTS": "עדיין לא נוספו נמענים"
 		},

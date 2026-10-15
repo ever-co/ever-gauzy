@@ -3809,11 +3809,6 @@
 			"ACCESS": "Accès",
 			"ACCESS_HINT": "Facultatif. Choisissez ce à quoi les nouveaux membres auront accès dès leur arrivée.",
 			"DETAILS": "Détails de l’invitation",
-			"PROJECTS": "Projets",
-			"CONTACTS": "Contacts",
-			"TEAMS": "Équipes",
-			"DEPARTMENTS": "Départements",
-			"START_DATE": "Date de début",
 			"RECIPIENT_COUNT": "Destinataires : {{count}}",
 			"NO_RECIPIENTS": "Aucun destinataire ajouté pour le moment"
 		},

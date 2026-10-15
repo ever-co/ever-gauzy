@@ -3814,11 +3814,6 @@
 			"ACCESS": "Dostęp",
 			"ACCESS_HINT": "Opcjonalnie. Wybierz, do czego nowi członkowie będą mieli dostęp od razu po dołączeniu.",
 			"DETAILS": "Szczegóły zaproszenia",
-			"PROJECTS": "Projekty",
-			"CONTACTS": "Kontakty",
-			"TEAMS": "Zespoły",
-			"DEPARTMENTS": "Działy",
-			"START_DATE": "Data rozpoczęcia",
 			"RECIPIENT_COUNT": "Odbiorcy: {{count}}",
 			"NO_RECIPIENTS": "Nie dodano jeszcze odbiorców"
 		},

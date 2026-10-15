@@ -3811,11 +3811,6 @@
 			"ACCESS": "Zugriff",
 			"ACCESS_HINT": "Optional. Legen Sie fest, worauf neue Mitglieder direkt nach dem Beitritt zugreifen können.",
 			"DETAILS": "Einladungsdetails",
-			"PROJECTS": "Projekte",
-			"CONTACTS": "Kontakte",
-			"TEAMS": "Teams",
-			"DEPARTMENTS": "Abteilungen",
-			"START_DATE": "Startdatum",
 			"RECIPIENT_COUNT": "Empfänger: {{count}}",
 			"NO_RECIPIENTS": "Noch keine Empfänger hinzugefügt"
 		},

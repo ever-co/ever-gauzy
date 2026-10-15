@@ -3815,11 +3815,6 @@
 			"ACCESS": "访问权限",
 			"ACCESS_HINT": "可选。选择新成员加入后即可访问的内容。",
 			"DETAILS": "邀请详情",
-			"PROJECTS": "项目",
-			"CONTACTS": "联系人",
-			"TEAMS": "团队",
-			"DEPARTMENTS": "部门",
-			"START_DATE": "开始日期",
 			"RECIPIENT_COUNT": "收件人：{{count}}",
 			"NO_RECIPIENTS": "尚未添加收件人"
 		},

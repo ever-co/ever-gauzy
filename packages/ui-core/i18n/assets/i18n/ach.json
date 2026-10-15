@@ -3525,11 +3525,6 @@
 			"ACCESS": "Access",
 			"ACCESS_HINT": "Optional. Choose what new members can access as soon as they join.",
 			"DETAILS": "Invitation details",
-			"PROJECTS": "Projects",
-			"CONTACTS": "Contacts",
-			"TEAMS": "Teams",
-			"DEPARTMENTS": "Departments",
-			"START_DATE": "Start date",
 			"RECIPIENT_COUNT": "Recipients: {{count}}",
 			"NO_RECIPIENTS": "No recipients added yet"
 		},

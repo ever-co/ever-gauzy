@@ -3815,11 +3815,6 @@
 			"ACCESS": "Accesso",
 			"ACCESS_HINT": "Facoltativo. Scegli a cosa potranno accedere i nuovi membri appena entrano.",
 			"DETAILS": "Dettagli dell’invito",
-			"PROJECTS": "Progetti",
-			"CONTACTS": "Contatti",
-			"TEAMS": "Team",
-			"DEPARTMENTS": "Reparti",
-			"START_DATE": "Data di inizio",
 			"RECIPIENT_COUNT": "Destinatari: {{count}}",
 			"NO_RECIPIENTS": "Nessun destinatario aggiunto"
 		},

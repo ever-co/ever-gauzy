@@ -3815,11 +3815,6 @@
 			"ACCESS": "Toegang",
 			"ACCESS_HINT": "Optioneel. Kies waartoe nieuwe leden direct toegang krijgen zodra ze lid worden.",
 			"DETAILS": "Uitnodigingsdetails",
-			"PROJECTS": "Projecten",
-			"CONTACTS": "Contacten",
-			"TEAMS": "Teams",
-			"DEPARTMENTS": "Afdelingen",
-			"START_DATE": "Startdatum",
 			"RECIPIENT_COUNT": "Ontvangers: {{count}}",
 			"NO_RECIPIENTS": "Nog geen ontvangers toegevoegd"
 		},
