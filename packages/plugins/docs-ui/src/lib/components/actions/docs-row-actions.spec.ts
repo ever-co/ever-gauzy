@@ -197,6 +197,14 @@ describe('DocsRowActionsService — favorites', () => {
 		expect(service.isFavorite(OTHER_ID)).toBe(true);
 	});
 
+	it('recognises a favorite whose sidebar link opens an uploaded file on its own page', () => {
+		const { service } = createService({
+			favoriteStore: { favoriteItems$: of([{ link: `/pages/documents/file/${DOCUMENT_ID}` }]) }
+		});
+
+		expect(service.isFavorite(DOCUMENT_ID)).toBe(true);
+	});
+
 	it('does not mistake another type for a document, nor a page link without its id', () => {
 		const { service } = createService({
 			favoriteStore: {

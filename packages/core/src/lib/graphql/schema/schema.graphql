@@ -66,8 +66,24 @@ type Query {
     organization: JSON
   ): AccountingTemplatePreview!
 
-  """The activity log of the caller's tenant, newest first."""
-  activityLogs(filter: ActivityLogFilter, sort: [ActivityLogSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ActivityLogConnection!
+  """
+  The activity log of one organization the caller belongs to, newest first.
+  """
+  activityLogs(
+    """
+    The organization whose log is read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: ActivityLogFilter
+    sort: [ActivityLogSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ActivityLogConnection!
   addressRoles(addressId: ID!): [AddressRole!]!
   addressRoleDefault(role: AddressRoleEnum!, ownerAddressIds: [ID!]!): ID
 
@@ -77,8 +93,24 @@ type Query {
   """One address of the caller's organization, or null when there is none."""
   address(id: ID!): Address
 
-  """The API call logs of the caller's tenant, most recent request first."""
-  apiCallLogs(filter: ApiCallLogFilter, sort: [ApiCallLogSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ApiCallLogConnection!
+  """
+  The API call logs of one organization the caller belongs to, most recent request first.
+  """
+  apiCallLogs(
+    """
+    The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: ApiCallLogFilter
+    sort: [ApiCallLogSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ApiCallLogConnection!
 
   """
   The invitations of the caller's tenant, newest first. An appointment's invitees are this connection
@@ -661,7 +693,21 @@ type Query {
   store holds: the read answers a bounded set, and the connection's filter, order and page are applied
   over exactly that set.
   """
-  employeeRecentVisits(filter: EmployeeRecentVisitFilter, sort: [EmployeeRecentVisitSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeRecentVisitConnection!
+  employeeRecentVisits(
+    """
+    The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: EmployeeRecentVisitFilter
+    sort: [EmployeeRecentVisitSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): EmployeeRecentVisitConnection!
 
   """
   The standing costs of the caller's organization, newest arrangement first.
@@ -4615,7 +4661,9 @@ type Query {
   """Read one cart with its lines, delivery choices and promotions."""
   cart(id: ID!): Cart
 
-  """Read the cart a buyer token names."""
+  """
+  Read the cart a guest-access token names, within the caller's tenant; null when none carries it. The token is the one createCart answered with.
+  """
   cartByToken(token: String!): Cart
 
   """List checkout sessions."""
@@ -4807,6 +4855,11 @@ type Query {
 
   """One subscription, with its lines and its billing history."""
   subscription(id: ID!): CustomerSubscription
+
+  """
+  The next billing of a subscription, previewed without writing anything; null when it will not bill again as it stands.
+  """
+  upcomingSubscriptionBilling(id: ID!): UpcomingSubscriptionBilling
 
   """The recurring lines of a subscription."""
   subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
@@ -11105,12 +11158,12 @@ type Mutation {
   field mirrors what its route *does*. Stating the documented grant here would let a caller holding
   it move money over GraphQL while the same caller is refused the same act over REST — the one
   direction §3.1 forbids. The divergence is recorded rather than resolved, because settling it
-  changes the route as well as the field.
+  changes the route as well as the field. Settling the refund additionally needs
+  `REFUNDS_APPROVE`, refused with `REFUND_APPROVAL_REQUIRED` before anything is written.
   
-  No retry key is declared, because the route declares none. §7.14 writes "Yes (Idempotency-Key,
-  required)" for it and the controller's own `@Idempotent` decorators sit on the request and the
-  receipt only; inventing a scope here would dedupe a GraphQL retry that the REST route lets
-  through, which is a difference in behaviour rather than a difference in transport.
+  The retry key is required, as §7.14 states and as the REST route declares: the same
+  `return.refund` scope on both, so a client retrying after a lost answer does not give the
+  money back twice.
   """
   refundOrderReturn(id: ID!, input: RefundOrderReturnInput!): RefundOrderReturnPayload!
 
@@ -48538,6 +48591,11 @@ type Cart {
   abandonedAt: DateTime
   externalId: String
   metadata: JSON
+
+  """
+  The guest-access token, in plaintext. Answered by createCart alone (a retry under its idempotency key replays that answer); null on every read, because the cart stores only its digest.
+  """
+  token: String
   lines: [CartLine!]
   shippingMethods: [CartShippingMethod!]
   promotions: [CartPromotion!]
@@ -53375,6 +53433,12 @@ input RefundOrderReturnInput {
   reasonId: ID
   note: String
   version: Int
+
+  """
+  The client's own key for this request, which this operation requires. A refund is refused
+  without one, because a retry after a lost answer would give the money back twice.
+  """
+  idempotencyKey: String
 }
 
 """The return leg: the shipment that brings the goods back."""
@@ -54092,6 +54156,28 @@ type SubscriptionBillingOutcomePayload {
   errorCode: String
   message: String
   userErrors: [UserError!]!
+}
+
+"""
+The next billing a subscription is due, previewed: computed exactly as the bill will be, and written nowhere.
+"""
+type UpcomingSubscriptionBilling {
+  subscriptionId: ID!
+
+  """
+  What the cycle will bill: the amount billSubscription records on the cycle and raises its order for.
+  """
+  amount: Decimal!
+  currency: String!
+  periodStart: DateTime!
+
+  """The end of the period the cycle covers, exclusive."""
+  periodEnd: DateTime!
+
+  """
+  The instant the cycle is due to bill: the start of the period it covers, or the next retry when a charge of that period failed.
+  """
+  nextBillingAt: DateTime!
 }
 
 """What one billing pass did."""

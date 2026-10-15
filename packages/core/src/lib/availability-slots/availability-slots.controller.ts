@@ -88,7 +88,8 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	}
 
 	/**
-	 * UPDATE availability slot by id
+	 * UPDATE availability slot by id — one the caller can read (its own, or any when it may act for other
+	 * employees); any other id answers 404.
 	 *
 	 * @param id
 	 * @param entity
@@ -110,6 +111,6 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: IAvailabilitySlot
 	): Promise<IAvailabilitySlot> {
-		return this.availabilitySlotsService.create({ ...entity, id });
+		return this.availabilitySlotsService.updateSlot(id, entity);
 	}
 }

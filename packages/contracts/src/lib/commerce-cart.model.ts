@@ -117,6 +117,15 @@ export interface ICommerceCart extends IBasePerTenantAndOrganizationEntityModel 
 	refundedTotal: number;
 	metadata?: Record<string, unknown>;
 	externalId?: string;
+	/**
+	 * The guest-access token, in plaintext — present only on the answer to the create that issued it.
+	 *
+	 * A buyer who is not signed in reaches their cart again by this token (`cartByToken`, or
+	 * `GET /carts/by-token` with the token in the `X-Cart-Token` header — never in a URL, which every access
+	 * log would keep). The cart stores only its SHA-256 digest, so no read answers it a
+	 * second time and a caller that needs it keeps it from the create.
+	 */
+	token?: string;
 }
 
 /**

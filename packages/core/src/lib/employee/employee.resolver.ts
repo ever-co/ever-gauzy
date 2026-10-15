@@ -33,6 +33,7 @@ import {
 	WorkingEmployeeGetCommand
 } from './commands';
 import { deleteRemovedRows } from '../graphql/delete-answer';
+import { requireOrganization } from '../graphql/organization-required';
 
 /** The members `EmployeeUserInput` declares in the schema. */
 export interface IEmployeeUserInput {
@@ -627,6 +628,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<boolean> {
+		requireOrganization(organizationId, 'deleteEmployee');
 		return deleteRemovedRows(await this.employeeService.delete(id, { where: { organizationId } }));
 	}
 
@@ -643,6 +645,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<Employee> {
+		requireOrganization(organizationId, 'softDeleteEmployee');
 		return await this.employeeService.softRemovedById(id, { organizationId });
 	}
 
@@ -659,6 +662,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<Employee> {
+		requireOrganization(organizationId, 'recoverEmployee');
 		return await this.employeeService.softRecoverById(id, { organizationId });
 	}
 
