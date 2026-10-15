@@ -45,7 +45,6 @@ import {
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog, TimeSlot } from './../../core/entities/internal';
-import { FileStorage } from './../../core/file-storage/file-storage';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
@@ -3003,6 +3002,9 @@ export class StatisticService {
 				// Batch-load User entities with image relation so subscribers resolve fresh URLs
 				const employeeUserIds = employees.map((e) => e.user_id).filter(Boolean);
 				const userMap = await this._userService.findUsersByIds(employeeUserIds);
+
+				// Loaded here, not at the top: the storage providers read the environment as soon as they load
+				const { FileStorage } = await import('./../../core/file-storage/file-storage');
 
 				// Reshape user data and fetch time slots for each employee
 				for (const employee of employees) {
