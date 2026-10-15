@@ -95,7 +95,7 @@ const GRAPHQL_ONLY = {
 	giftCardBalance: 'The remaining balance of a gift card, a computation over its transactions.',
 	orderByNumber: 'An order addressed by its number rather than its id; REST filters the order route by number.',
 	cartByToken:
-		'A cart addressed by its guest-access token rather than its id; REST serves the same lookup at `/carts/by-token/:token` on the cart resource.',
+		'A cart addressed by its guest-access token rather than its id; REST serves the same lookup at `GET /carts/by-token`, the token in the `X-Cart-Token` header (never the URL).',
 	orderTotals: 'The totals of an order, which the order resource already carries over REST.',
 	orderLineInvoicingPosition: 'How far a line has been invoiced, a computation over its invoice links.',
 	fulfillmentOutstanding: 'How much of a line is still to ship, a computation over its fulfilments.',

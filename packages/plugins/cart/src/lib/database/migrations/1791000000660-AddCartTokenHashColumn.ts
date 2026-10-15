@@ -6,9 +6,9 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * Gives a cart a guest-access token, stored as its digest.
  *
  * A buyer who is not signed in has no other handle on the cart they built, so the create answers with a
- * random token and `cartByToken` / `GET /carts/by-token/:token` find the cart by it. The table keeps the
- * token's SHA-256 digest (64 hex characters), never the token, so a read of the table, a backup of it or an
- * export never yields a token that opens a cart.
+ * random token and `cartByToken` / `GET /carts/by-token` (the `X-Cart-Token` header) find the cart by it.
+ * The table keeps the token's SHA-256 digest (64 hex characters), never the token, so a read of the table,
+ * a backup of it or an export never yields a token that opens a cart.
  *
  * The column is nullable because every cart created before this migration has no token and cannot be
  * given one after the fact — a token nobody was ever answered with reaches nobody. The unique index is

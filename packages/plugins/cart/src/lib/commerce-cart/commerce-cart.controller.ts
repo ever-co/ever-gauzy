@@ -1,8 +1,10 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
 	Get,
+	Headers,
 	HttpCode,
 	HttpStatus,
 	NotFoundException,
@@ -13,7 +15,7 @@ import {
 	UseGuards,
 	UsePipes
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { CommerceCartValidationMode, ICommerceCart } from '@gauzy/contracts';
 import {
@@ -102,18 +104,38 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	 * tenant — a storefront holding the token on behalf of a buyer who has not signed in — exactly as for
 	 * `GET /carts/:id`; what the token adds is a handle the buyer can hold that no other buyer can guess.
 	 *
-	 * Declared before `:id` for the reader rather than for the router: the path has two segments, so the
-	 * one-segment `:id` route could not match it in either order.
+	 * **The token rides in the `X-Cart-Token` header, never in the URL.** A URL is written down all the way
+	 * along: the ingress and CDN access logs, every proxy's, the request-lifecycle lines
+	 * `RequestContextMiddleware` logs with the full URL, and the URL an error report carries — a token in the
+	 * path would land in every one of them (CWE-598). A header is in none of those, the error reports filter
+	 * a header named like a token, and the API-call log redacts it by name.
 	 *
-	 * @param token The plaintext token.
+	 * Declared before `:id` **for the router**: `by-token` is one segment, as an id is, and Nest registers a
+	 * controller's routes in the order its methods are declared, so this route is matched first. A cart could
+	 * not be addressed as `by-token` either way — its id is a UUID, and the id read's pipe refuses anything else.
+	 *
+	 * @param token The plaintext token, from the `X-Cart-Token` header.
 	 * @returns The cart, with its lines, delivery choices and promotions.
+	 * @throws BadRequestException when the header is missing or blank.
 	 * @throws NotFoundException when no cart of the caller's tenant carries that token.
 	 */
 	@ApiOperation({ summary: 'Find a cart by its guest-access token' })
+	@ApiHeader({
+		name: 'X-Cart-Token',
+		required: true,
+		description: 'The guest-access token the cart create answered with.'
+	})
 	@ApiResponse({ status: HttpStatus.OK, description: 'Cart found' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'CART_TOKEN_REQUIRED: no X-Cart-Token header' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No cart carries that token' })
-	@Get('by-token/:token')
-	async findByToken(@Param('token') token: string): Promise<ICommerceCart> {
+	@Get('by-token')
+	async findByToken(@Headers('x-cart-token') token?: string): Promise<ICommerceCart> {
+		if (typeof token !== 'string' || token.trim() === '') {
+			throw new BadRequestException(
+				'CART_TOKEN_REQUIRED: state the guest-access token the cart create answered with in the X-Cart-Token header.'
+			);
+		}
+
 		const cart = await this.commerceCartService.findByToken(token);
 
 		if (!cart) {

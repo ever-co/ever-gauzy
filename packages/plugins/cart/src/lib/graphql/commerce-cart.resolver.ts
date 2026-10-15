@@ -129,9 +129,10 @@ export class CommerceCartResolver {
 	/**
 	 * Reads the cart a guest-access token names.
 	 *
-	 * The route it mirrors is `GET /carts/by-token/:token`: the same service lookup — the token hashed and
-	 * its digest looked up inside the caller's tenant, nothing at all without one — under the same grant,
-	 * the class-level `CARTS_VIEW` the route also runs under. A miss is the row's absence, so the field
+	 * The route it mirrors is `GET /carts/by-token`, which reads the token from the `X-Cart-Token` header
+	 * rather than its URL, as the field carries it in the operation's body: the same service lookup — the
+	 * token hashed and its digest looked up inside the caller's tenant, nothing at all without one — under the
+	 * same grant, the class-level `CARTS_VIEW` the route also runs under. A miss is the row's absence, so the field
 	 * answers null where the route answers 404, which is how the `cart` field beside it is declared too.
 	 *
 	 * @param token The plaintext token `createCart` answered with.

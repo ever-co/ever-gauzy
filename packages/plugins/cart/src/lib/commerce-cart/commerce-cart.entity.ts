@@ -324,9 +324,9 @@ export class CommerceCart extends TenantOrganizationBaseEntity implements IComme
 	 * The SHA-256 digest of the cart's guest-access token — never the token itself.
 	 *
 	 * The token is issued when the cart is created and answered once, by that create; `cartByToken` and
-	 * `GET /carts/by-token/:token` hash what they are given and look this column up within the caller's
-	 * tenant. Storing the digest is what keeps a read of this table, a backup of it or an export from yielding
-	 * a token that opens a cart. The one other place the plaintext rests is the create's own idempotency
+	 * `GET /carts/by-token` (the token in the `X-Cart-Token` header) hash what they are given and look this
+	 * column up within the caller's tenant. Storing the digest is what keeps a read of this table, a backup of
+	 * it or an export from yielding a token that opens a cart. The one other place the plaintext rests is the create's own idempotency
 	 * record, when the caller sent a key: the platform keeps the first answer, token included, so that a retry
 	 * is answered with it, for the key's retention window (at most seven days), and no read surface answers
 	 * that stored body. Null on a cart created before tokens existed, which therefore has none.

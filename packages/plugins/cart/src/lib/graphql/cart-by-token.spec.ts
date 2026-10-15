@@ -1,5 +1,5 @@
 /**
- * `cartByToken` and its REST twin, `GET /carts/by-token/:token`.
+ * `cartByToken` and its REST twin, `GET /carts/by-token` with the token in the `X-Cart-Token` header.
  *
  * The field was declared in the document with no resolver behind it — a name a client could select and
  * that answered nothing — because the cart had no token to look up. It has one now: the create issues a
@@ -12,7 +12,10 @@
  * - the field and the route reach the same service lookup with the same token, the field answering null
  *   where the route answers 404;
  * - both run under the same grant — neither states one of its own, so both resolve to their class's
- *   `CARTS_VIEW`, the grant the cart's read route runs under — and under the same guard chain.
+ *   `CARTS_VIEW`, the grant the cart's read route runs under — and under the same guard chain;
+ * - over HTTP, the token rides in a header and never in the path: a URL is written to every access log,
+ *   proxy log and error report on the way (CWE-598), a header is not, and the route is matched before the
+ *   id-addressed read it now shares a segment count with.
  *
  * `@gauzy/core` is doubled at the module boundary for the reason this package's other suites state. The
  * permission decorator is the kernel's own, because "the same grant" is a statement about the metadata it
@@ -36,7 +39,9 @@ jest.mock('@gauzy/core', () => {
 		CrudController: class CrudController {
 			constructor(protected readonly service: any) {}
 		},
-		UUIDValidationPipe: class {},
+		// The kernel's own pipe: the id-addressed read refuses a segment that is not a UUID, which is half of why
+		// `by-token` can never name a cart.
+		UUIDValidationPipe: jest.requireActual('@gauzy/core/src/lib/shared/pipes/uuid-validation.pipe').UUIDValidationPipe,
 		ColumnIndex: decorator,
 		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
@@ -84,7 +89,9 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { NotFoundException } from '@nestjs/common';
+import { INestApplication, NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import * as request from 'supertest';
 import {
 	FieldDefinitionNode,
 	InputObjectTypeDefinitionNode,
@@ -96,6 +103,7 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard, VERSIONED_METADATA_KEY } from '@gauzy/core';
 import { CART_PERMISSIONS } from '../cart.permissions';
 import { CommerceCartController } from '../commerce-cart/commerce-cart.controller';
+import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CommerceCartResolver } from './commerce-cart.resolver';
 import { cartSchemaExtensions } from './schema-extensions';
 
@@ -201,7 +209,7 @@ describe('the cart document — the token is read through one field, and written
 	});
 });
 
-describe('cartByToken and GET /carts/by-token/:token — one lookup, two protocols', () => {
+describe('cartByToken and GET /carts/by-token — one lookup, two protocols', () => {
 	it('reach the same service lookup with the same token, and answer the same cart', async () => {
 		const { service, controller, resolver } = surfaces(CART);
 
@@ -244,5 +252,102 @@ describe('cartByToken and GET /carts/by-token/:token — one lookup, two protoco
 		expect(Reflect.getMetadata(VERSIONED_METADATA_KEY, CommerceCartResolver.prototype.cartByToken)).toMatchObject({
 			write: false
 		});
+	});
+});
+
+/**
+ * The route over HTTP, through Nest's own router: the real controller, the real parameter decorators and the
+ * kernel's UUID pipe, with only the service doubled and the two guards let through (what they decide is the
+ * same for every cart route, and `run under the grant …` above pins that this one carries them).
+ */
+describe('GET /carts/by-token — the token rides in a header, never in the path', () => {
+	let app: INestApplication | undefined;
+
+	/** Boots the controller over a stubbed service that answers `cart` for TOKEN and nothing for anything else. */
+	async function start() {
+		const service = {
+			findByToken: jest.fn(async (token: string) => (token === TOKEN ? CART : null)),
+			findOneWithContent: jest.fn(async (id: string) => ({ ...CART, id }))
+		};
+		const moduleRef = await Test.createTestingModule({
+			controllers: [CommerceCartController],
+			providers: [{ provide: CommerceCartService, useValue: service }]
+		})
+			.overrideGuard(TenantPermissionGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(PermissionGuard)
+			.useValue({ canActivate: () => true })
+			.compile();
+
+		app = moduleRef.createNestApplication({ logger: false });
+		await app.init();
+
+		return { service, http: () => request(app?.getHttpServer()) };
+	}
+
+	afterEach(async () => {
+		await app?.close();
+		app = undefined;
+	});
+
+	it('reads the token from the X-Cart-Token header, and reaches the token lookup rather than the id read', async () => {
+		const { service, http } = await start();
+
+		const response = await http().get('/carts/by-token').set('X-Cart-Token', TOKEN);
+
+		expect(response.status).toBe(200);
+		expect(response.body).toMatchObject({ id: CART.id });
+		expect(service.findByToken).toHaveBeenCalledWith(TOKEN);
+		// `by-token` is one segment now, as an id is: the route is matched first, and the id read never runs.
+		expect(service.findOneWithContent).not.toHaveBeenCalled();
+	});
+
+	it('refuses a request without the header, or with a blank one, with 400 before any lookup', async () => {
+		const { service, http } = await start();
+
+		for (const response of [
+			await http().get('/carts/by-token'),
+			await http().get('/carts/by-token').set('X-Cart-Token', '   ')
+		]) {
+			expect(response.status).toBe(400);
+			expect(JSON.stringify(response.body)).toContain('CART_TOKEN_REQUIRED');
+		}
+
+		expect(service.findByToken).not.toHaveBeenCalled();
+		expect(service.findOneWithContent).not.toHaveBeenCalled();
+	});
+
+	it('answers 404 for a token no cart carries', async () => {
+		const { service, http } = await start();
+
+		const response = await http().get('/carts/by-token').set('X-Cart-Token', 'not-a-token');
+
+		expect(response.status).toBe(404);
+		expect(service.findByToken).toHaveBeenCalledWith('not-a-token');
+	});
+
+	it('the path no longer carries a token: the old two-segment shape reaches no handler', async () => {
+		const { service, http } = await start();
+
+		const response = await http().get(`/carts/by-token/${TOKEN}`);
+
+		expect(response.status).toBe(404);
+		expect(service.findByToken).not.toHaveBeenCalled();
+		expect(service.findOneWithContent).not.toHaveBeenCalled();
+	});
+
+	it('still serves the id read beside it, and could never take `by-token` for an id', async () => {
+		const { service, http } = await start();
+
+		// The control: a cart id reaches the id read.
+		const byId = await http().get(`/carts/${CART.id}`);
+
+		expect(byId.status).toBe(200);
+		expect(service.findOneWithContent).toHaveBeenCalledWith(CART.id);
+		// A cart id is a UUID, which `by-token` is not: the id read's own pipe refuses the segment.
+		const uuidPipe = new (jest.requireActual('@gauzy/core/src/lib/shared/pipes/uuid-validation.pipe').UUIDValidationPipe)();
+
+		expect(() => uuidPipe.transform('by-token', { type: 'param' })).toThrow('valid uuid is expected');
+		expect(uuidPipe.transform(CART.id, { type: 'param' })).toBe(CART.id);
 	});
 });
