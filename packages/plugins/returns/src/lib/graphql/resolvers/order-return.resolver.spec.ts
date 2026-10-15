@@ -408,6 +408,29 @@ describe('OrderReturnResolver — refundOrderReturn carries its retry key in the
 
 		expect(surface.service.refund).toHaveBeenCalledTimes(1);
 	});
+
+	it('replays the first refund when the key and the input are repeated, refunding once', async () => {
+		// A retried refund is what the key is for: the second request — a timeout retry, a double click — must answer
+		// the first refund rather than pay out twice.
+		const surface = resource();
+		const first = { amount: '5', version: 3, idempotencyKey: 'refund-key-0002' };
+		const second = { amount: '5', version: 3, idempotencyKey: 'refund-key-0002' };
+
+		const sent = await send(surface, 'refundOrderReturn', 'mutation', { id: RETURN, input: first }, (context) => [
+			RETURN,
+			first,
+			context
+		]);
+		const replayed = await send(surface, 'refundOrderReturn', 'mutation', { id: RETURN, input: second }, (context) => [
+			RETURN,
+			second,
+			context
+		]);
+
+		expect(replayed.result).toEqual(sent.result);
+		expect(surface.service.refund).toHaveBeenCalledTimes(1);
+		expect(surface.store.complete).toHaveBeenCalledTimes(1);
+	});
 });
 
 describe('OrderReturnResolver — a retried receipt', () => {
