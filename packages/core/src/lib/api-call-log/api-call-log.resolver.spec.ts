@@ -14,6 +14,7 @@ import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { statedOrganizations } from '../graphql/graphql-organization-membership.interceptor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ApiCallLogController } from './api-call-log.controller';
 import { ApiCallLogResolver } from './api-call-log.resolver';
@@ -232,14 +233,48 @@ describe('ApiCallLogResolver — the SDL declares the capabilities the REST rout
 	});
 });
 
+/**
+ * SEC-A-04 (same class): the field took no organization and read every API call of the tenant, request and response bodies included. The route it
+ * mirrors takes a required `organizationId` the caller must belong to (`ApiCallLogFilterDTO` extends
+ * `TenantOrganizationBaseDTO`), so the field takes the same argument, the membership interceptor checks it, and the
+ * read is held to it.
+ */
+describe('ApiCallLogResolver — the read is one organization the caller belongs to, as the route’s is', () => {
+	it('refuses a read that names no organization, before anything is read', async () => {
+		const { resolver, apiCallLogService } = surfaces();
+
+		const error = await resolver.apiCallLogs(undefined).catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('ORGANIZATION_REQUIRED');
+		expect(apiCallLogService.findAllLogs).not.toHaveBeenCalled();
+	});
+
+	it('reads the organization the caller names, and only that one', async () => {
+		const { resolver, apiCallLogService } = surfaces();
+
+		await resolver.apiCallLogs(ORGANIZATION);
+
+		expect(apiCallLogService.findAllLogs).toHaveBeenCalledTimes(1);
+		expect(apiCallLogService.findAllLogs).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
+	});
+
+	it('declares the organization as the argument the membership interceptor checks', () => {
+		const field = schema.getQueryType()?.getFields()['apiCallLogs'];
+		const { ids } = statedOrganizations({ organizationId: ORGANIZATION }, field?.args ?? []);
+
+		expect([...ids]).toEqual([ORGANIZATION]);
+	});
+});
+
 describe('ApiCallLogResolver — the connection contract', () => {
 	it('answers the list with nodes, edges, a total and the boundary cursors', async () => {
 		const { resolver, apiCallLogService } = surfaces();
 
-		const connection = await resolver.apiCallLogs(undefined, undefined, undefined, 20);
+		const connection = await resolver.apiCallLogs(ORGANIZATION, undefined, undefined, undefined, 20);
 
 		// The read is the one the REST list route performs with an empty query string.
-		expect(apiCallLogService.findAllLogs).toHaveBeenCalledWith({});
+		expect(apiCallLogService.findAllLogs).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
@@ -252,7 +287,7 @@ describe('ApiCallLogResolver — the connection contract', () => {
 	it('orders most recent request first when the caller states none', async () => {
 		const { resolver } = surfaces();
 
-		const connection = await resolver.apiCallLogs();
+		const connection = await resolver.apiCallLogs(ORGANIZATION);
 
 		expect(connection.nodes.map((node) => node.id)).toEqual([RECENT, OLDER]);
 	});
@@ -261,39 +296,39 @@ describe('ApiCallLogResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		// The whole point of the table: one operation's rows, across every service it touched.
-		const byOperation = await resolver.apiCallLogs({ correlationId: { eq: CORRELATION } });
+		const byOperation = await resolver.apiCallLogs(ORGANIZATION, { correlationId: { eq: CORRELATION } });
 		expect(byOperation.totalCount).toBe(2);
 
-		const byStatus = await resolver.apiCallLogs({ statusCode: { gte: 500 } });
+		const byStatus = await resolver.apiCallLogs(ORGANIZATION, { statusCode: { gte: 500 } });
 		expect(byStatus.nodes.map((node) => node.id)).toEqual([OLDER]);
 
-		const byMethod = await resolver.apiCallLogs({ method: { eq: 'POST' } });
+		const byMethod = await resolver.apiCallLogs(ORGANIZATION, { method: { eq: 'POST' } });
 		expect(byMethod.nodes.map((node) => node.id)).toEqual([RECENT]);
 
-		const byWindow = await resolver.apiCallLogs({
+		const byWindow = await resolver.apiCallLogs(ORGANIZATION, {
 			requestTime: { between: ['2026-02-15T00:00:00.000Z', '2026-03-15T00:00:00.000Z'] }
 		});
 		expect(byWindow.nodes.map((node) => node.id)).toEqual([RECENT]);
 
 		// A document column narrows through the kernel's own `JSON` operators.
-		const byBody = await resolver.apiCallLogs({ responseBody: { contains: ['Internal server error'] } });
+		const byBody = await resolver.apiCallLogs(ORGANIZATION, { responseBody: { contains: ['Internal server error'] } });
 		expect(byBody.nodes.map((node) => node.id)).toEqual([OLDER]);
 	});
 
 	it('orders by the keys the sort enum offers', async () => {
 		const { resolver } = surfaces();
 
-		const byStatus = await resolver.apiCallLogs(undefined, [{ field: 'statusCode', direction: 'ASC' }]);
+		const byStatus = await resolver.apiCallLogs(ORGANIZATION, undefined, [{ field: 'statusCode', direction: 'ASC' }]);
 		expect(byStatus.nodes.map((node) => node.id)).toEqual([RECENT, OLDER]);
 	});
 
 	it('resumes a walk from an opaque cursor', async () => {
 		const { resolver } = surfaces();
-		const first = await resolver.apiCallLogs(undefined, undefined, undefined, 1);
+		const first = await resolver.apiCallLogs(ORGANIZATION, undefined, undefined, undefined, 1);
 
 		expect(first.nodes.map((node) => node.id)).toEqual([RECENT]);
 
-		const second = await resolver.apiCallLogs(undefined, undefined, {
+		const second = await resolver.apiCallLogs(ORGANIZATION, undefined, undefined, {
 			first: 1,
 			after: first.pageInfo.endCursor ?? undefined
 		});
@@ -306,7 +341,7 @@ describe('ApiCallLogResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		const error = await resolver
-			.apiCallLogs(undefined, [{ field: 'requestBody', direction: 'ASC' }] as never)
+			.apiCallLogs(ORGANIZATION, undefined, [{ field: 'requestBody', direction: 'ASC' }] as never)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
@@ -316,7 +351,7 @@ describe('ApiCallLogResolver — the connection contract', () => {
 	it('refuses a filter field the resource does not declare', async () => {
 		const { resolver } = surfaces();
 
-		const error = await resolver.apiCallLogs({ relations: { eq: 'user' } }).catch((thrown) => thrown);
+		const error = await resolver.apiCallLogs(ORGANIZATION, { relations: { eq: 'user' } }).catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
 		expect((error as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
@@ -326,7 +361,7 @@ describe('ApiCallLogResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		const error = await resolver
-			.apiCallLogs(undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
+			.apiCallLogs(ORGANIZATION, undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);

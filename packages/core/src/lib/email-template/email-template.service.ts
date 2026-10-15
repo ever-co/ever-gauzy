@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, SaveOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
-import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { EmailTemplateEnum, ID, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, BaseQueryDTO } from './../core/crud';
-import { IFindManyOptions } from './../core/crud/icrud.service';
+import { IFindManyOptions, IFindOneOptions } from './../core/crud/icrud.service';
 import { scopeEmailTemplateWhere } from './email-template.scope';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
@@ -21,6 +21,61 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository
 	) {
 		super(typeOrmEmailTemplateRepository, mikroOrmEmailTemplateRepository);
+	}
+
+	/**
+	 * Withdraws a template of the caller's own tenant, recoverably.
+	 *
+	 * This service is a plain `CrudService`, whose `softRemove` resolves the row by id alone. The REST route passes
+	 * the caller's tenant (GHSA-44pv-34gx-q9p4); the GraphQL field did not, and any tenant admin withdrew another
+	 * tenant's templates — or the platform's GLOBAL defaults, after which every tenant without its own copy sent its
+	 * password-reset, invite and verification e-mails empty (SEC-A-01, SEC-E-02). The scope is applied here, so every
+	 * caller is held to it: a global or foreign row is the platform's 404.
+	 *
+	 * @param id The template id.
+	 * @param options Find options the caller stated, if any.
+	 * @param saveOptions The save options, on the TypeORM branch.
+	 * @returns The withdrawn template.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<EmailTemplate>,
+		saveOptions?: SaveOptions
+	): Promise<EmailTemplate> {
+		return super.softRemove(id, this.withCallerTenant(options), saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn template of the caller's own tenant. See {@link softRemove}.
+	 *
+	 * @param id The template id.
+	 * @param options Find options the caller stated, if any.
+	 * @param saveOptions The save options, on the TypeORM branch.
+	 * @returns The restored template.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<EmailTemplate>,
+		saveOptions?: SaveOptions
+	): Promise<EmailTemplate> {
+		return super.softRecover(id, this.withCallerTenant(options), saveOptions);
+	}
+
+	/**
+	 * The caller's find options with the caller's tenant merged in last, so a stated `where` cannot widen it.
+	 * Without a tenant in context (a seeder, a job) the options are the caller's own.
+	 */
+	private withCallerTenant(options?: IFindOneOptions<EmailTemplate>): IFindOneOptions<EmailTemplate> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return options;
+		}
+		const stated = (options && typeof options === 'object' && !Array.isArray(options) ? options : {}) as Record<
+			string,
+			any
+		>;
+
+		return { ...stated, where: { ...(stated['where'] ?? {}), tenantId } } as IFindOneOptions<EmailTemplate>;
 	}
 
 	/**

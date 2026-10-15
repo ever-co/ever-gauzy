@@ -66,8 +66,24 @@ type Query {
     organization: JSON
   ): AccountingTemplatePreview!
 
-  """The activity log of the caller's tenant, newest first."""
-  activityLogs(filter: ActivityLogFilter, sort: [ActivityLogSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ActivityLogConnection!
+  """
+  The activity log of one organization the caller belongs to, newest first.
+  """
+  activityLogs(
+    """
+    The organization whose log is read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: ActivityLogFilter
+    sort: [ActivityLogSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ActivityLogConnection!
   addressRoles(addressId: ID!): [AddressRole!]!
   addressRoleDefault(role: AddressRoleEnum!, ownerAddressIds: [ID!]!): ID
 
@@ -77,8 +93,24 @@ type Query {
   """One address of the caller's organization, or null when there is none."""
   address(id: ID!): Address
 
-  """The API call logs of the caller's tenant, most recent request first."""
-  apiCallLogs(filter: ApiCallLogFilter, sort: [ApiCallLogSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ApiCallLogConnection!
+  """
+  The API call logs of one organization the caller belongs to, most recent request first.
+  """
+  apiCallLogs(
+    """
+    The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: ApiCallLogFilter
+    sort: [ApiCallLogSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ApiCallLogConnection!
 
   """
   The invitations of the caller's tenant, newest first. An appointment's invitees are this connection
@@ -661,7 +693,21 @@ type Query {
   store holds: the read answers a bounded set, and the connection's filter, order and page are applied
   over exactly that set.
   """
-  employeeRecentVisits(filter: EmployeeRecentVisitFilter, sort: [EmployeeRecentVisitSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeRecentVisitConnection!
+  employeeRecentVisits(
+    """
+    The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: EmployeeRecentVisitFilter
+    sort: [EmployeeRecentVisitSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): EmployeeRecentVisitConnection!
 
   """
   The standing costs of the caller's organization, newest arrangement first.

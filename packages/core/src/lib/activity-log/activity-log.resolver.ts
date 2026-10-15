@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Int, Query, Resolver } from '@nestjs/graphql';
-import { IPagination } from '@gauzy/contracts';
+import { ID, IPagination } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
 import {
 	ConnectionFilter,
@@ -12,6 +12,7 @@ import {
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { requireOrganization } from '../graphql/organization-required';
 import { GetActivityLogsDTO } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
 import { ActivityLogService } from './activity-log.service';
@@ -115,10 +116,16 @@ export class ActivityLogResolver {
 	constructor(private readonly activityLogService: ActivityLogService) {}
 
 	/**
-	 * The activity logs of the caller's tenant, newest first.
+	 * The activity logs of one organization the caller belongs to, newest first.
+	 *
+	 * **The organization is required, as the route's is** (SEC-A-04). `GetActivityLogsDTO` extends
+	 * `TenantOrganizationBaseDTO`, so the route only reads an organization the caller is a member of; this field
+	 * once took none and read the newest rows of the whole tenant — every organization's change history,
+	 * `previousValues` / `updatedValues` included. The argument is named `organizationId`, so the membership
+	 * interceptor checks it exactly as the route's validator does, and a read that names none is refused here.
 	 *
 	 * The reader is the one the list route calls, handed the request the route builds when its query
-	 * string carries nothing: the service's own defaults then select the live, unarchived rows, order
+	 * string names only the organization: the service's own defaults then select the live, unarchived rows, order
 	 * them `createdAt DESC` and answer the newest hundred of them. This surface has no query string to
 	 * bind, so the read runs with exactly those defaults and the connection protocol's `filter` and
 	 * `sort` are applied to the rows that read returned — which is not a compromise but the whole of
@@ -128,6 +135,7 @@ export class ActivityLogResolver {
 	@Query('activityLogs')
 	@Permissions()
 	async activityLogs(
+		@Args('organizationId') organizationId?: ID,
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
 		@Args('page') page?: ConnectionPageRequest,
@@ -138,7 +146,7 @@ export class ActivityLogResolver {
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number
 	): Promise<GraphqlConnection<ActivityLog>> {
-		const options = {} as GetActivityLogsDTO;
+		const options = { organizationId: requireOrganization(organizationId, 'activityLogs') } as GetActivityLogsDTO;
 		const { items }: IPagination<ActivityLog> = await this.activityLogService.findActivityLogs(options);
 
 		return buildConnection<ActivityLog>({

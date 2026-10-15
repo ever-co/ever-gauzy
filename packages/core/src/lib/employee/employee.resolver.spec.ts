@@ -989,7 +989,7 @@ describe('EmployeeResolver — one concept, two protocols, the same operations',
 
 		employeeService.delete.mockRejectedValueOnce(refusal);
 
-		await expect(resolver.deleteEmployee(FIRST)).rejects.toBe(refusal);
+		await expect(resolver.deleteEmployee(FIRST, ORGANIZATION)).rejects.toBe(refusal);
 	});
 });
 

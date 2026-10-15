@@ -13,6 +13,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { statedOrganizations } from '../graphql/graphql-organization-membership.interceptor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ActivityLogController } from './activity-log.controller';
 import { ActivityLogResolver } from './activity-log.resolver';
@@ -215,10 +216,10 @@ describe('ActivityLogResolver — the connection contract', () => {
 	it('answers the list with nodes, edges, a total and the boundary cursors', async () => {
 		const { resolver, activityLogService } = surfaces();
 
-		const connection = await resolver.activityLogs(undefined, undefined, undefined, 20);
+		const connection = await resolver.activityLogs(ORGANIZATION, undefined, undefined, undefined, 20);
 
 		// The read is the one the REST list route performs with an empty query string.
-		expect(activityLogService.findActivityLogs).toHaveBeenCalledWith({});
+		expect(activityLogService.findActivityLogs).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
@@ -231,7 +232,7 @@ describe('ActivityLogResolver — the connection contract', () => {
 	it('orders newest first when the caller states none, which is the reader’s own default', async () => {
 		const { resolver } = surfaces();
 
-		const connection = await resolver.activityLogs();
+		const connection = await resolver.activityLogs(ORGANIZATION);
 
 		expect(connection.nodes.map((node) => node.id)).toEqual([RECORD, OLDER]);
 	});
@@ -239,37 +240,37 @@ describe('ActivityLogResolver — the connection contract', () => {
 	it('narrows by the fields the filter declares, including the polymorphic pair', async () => {
 		const { resolver } = surfaces();
 
-		const byAction = await resolver.activityLogs({ action: { eq: 'Created' } });
+		const byAction = await resolver.activityLogs(ORGANIZATION, { action: { eq: 'Created' } });
 		expect(byAction.nodes.map((node) => node.id)).toEqual([OLDER]);
 
-		const byEntity = await resolver.activityLogs({ entity: { eq: 'Task' } });
+		const byEntity = await resolver.activityLogs(ORGANIZATION, { entity: { eq: 'Task' } });
 		expect(byEntity.nodes.map((node) => node.id)).toEqual([OLDER]);
 
-		const byActor = await resolver.activityLogs({ actorType: { in: ['User'] } });
+		const byActor = await resolver.activityLogs(ORGANIZATION, { actorType: { in: ['User'] } });
 		expect(byActor.nodes.map((node) => node.id)).toEqual([RECORD]);
 
 		// The document members are narrowable through the kernel's own `JSON` operators.
-		const byUpdatedField = await resolver.activityLogs({ updatedFields: { contains: ['name'] } });
+		const byUpdatedField = await resolver.activityLogs(ORGANIZATION, { updatedFields: { contains: ['name'] } });
 		expect(byUpdatedField.nodes.map((node) => node.id)).toEqual([RECORD]);
 	});
 
 	it('orders by the keys the sort enum offers', async () => {
 		const { resolver } = surfaces();
 
-		const ascending = await resolver.activityLogs(undefined, [{ field: 'createdAt', direction: 'ASC' }]);
+		const ascending = await resolver.activityLogs(ORGANIZATION, undefined, [{ field: 'createdAt', direction: 'ASC' }]);
 		expect(ascending.nodes.map((node) => node.id)).toEqual([OLDER, RECORD]);
 
-		const byAction = await resolver.activityLogs(undefined, [{ field: 'action', direction: 'ASC' }]);
+		const byAction = await resolver.activityLogs(ORGANIZATION, undefined, [{ field: 'action', direction: 'ASC' }]);
 		expect(byAction.nodes.map((node) => node.id)).toEqual([OLDER, RECORD]);
 	});
 
 	it('resumes a walk from an opaque cursor', async () => {
 		const { resolver } = surfaces();
-		const first = await resolver.activityLogs(undefined, undefined, undefined, 1);
+		const first = await resolver.activityLogs(ORGANIZATION, undefined, undefined, undefined, 1);
 
 		expect(first.nodes.map((node) => node.id)).toEqual([RECORD]);
 
-		const second = await resolver.activityLogs(undefined, undefined, {
+		const second = await resolver.activityLogs(ORGANIZATION, undefined, undefined, {
 			first: 1,
 			after: first.pageInfo.endCursor ?? undefined
 		});
@@ -282,7 +283,7 @@ describe('ActivityLogResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		const error = await resolver
-			.activityLogs(undefined, [{ field: 'actorType', direction: 'ASC' }] as never)
+			.activityLogs(ORGANIZATION, undefined, [{ field: 'actorType', direction: 'ASC' }] as never)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
@@ -292,7 +293,7 @@ describe('ActivityLogResolver — the connection contract', () => {
 	it('refuses a filter field the resource does not declare', async () => {
 		const { resolver } = surfaces();
 
-		const error = await resolver.activityLogs({ relations: { eq: 'employee' } }).catch((thrown) => thrown);
+		const error = await resolver.activityLogs(ORGANIZATION, { relations: { eq: 'employee' } }).catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
 		expect((error as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
@@ -302,11 +303,47 @@ describe('ActivityLogResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		const error = await resolver
-			.activityLogs(undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
+			.activityLogs(ORGANIZATION, undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
 		expect((error as Error).message).toContain('QUERY_NESTING_LIMIT_EXCEEDED');
+	});
+});
+
+/**
+ * SEC-A-04: the field read the newest hundred rows of the WHOLE tenant — the change history of every organization in
+ * it, `previousValues` / `updatedValues` included — with no organization and no membership check. The route it mirrors
+ * takes a required `organizationId` the caller must belong to (`GetActivityLogsDTO` extends `TenantOrganizationBaseDTO`),
+ * so the field now takes the same argument, the membership interceptor checks it, and the read is held to it.
+ */
+describe('ActivityLogResolver — the read is one organization the caller belongs to, as the route’s is', () => {
+	it('refuses a read that names no organization, before anything is read', async () => {
+		// The failure scenario: `{ activityLogs { nodes { organizationId updatedValues } } }` answered every organization.
+		const { resolver, activityLogService } = surfaces();
+
+		const error = await resolver.activityLogs(undefined).catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('ORGANIZATION_REQUIRED');
+		expect(activityLogService.findActivityLogs).not.toHaveBeenCalled();
+	});
+
+	it('reads the organization the caller names, and only that one', async () => {
+		const { resolver, activityLogService } = surfaces();
+
+		await resolver.activityLogs(ORGANIZATION);
+
+		expect(activityLogService.findActivityLogs).toHaveBeenCalledTimes(1);
+		expect(activityLogService.findActivityLogs).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
+	});
+
+	it('declares the organization as the argument the membership interceptor checks', () => {
+		// The interceptor walks the field's declared arguments; an organization it cannot see is one it never checks.
+		const field = schema.getQueryType()?.getFields()['activityLogs'];
+		const { ids } = statedOrganizations({ organizationId: ORGANIZATION }, field?.args ?? []);
+
+		expect([...ids]).toEqual([ORGANIZATION]);
 	});
 });
 
