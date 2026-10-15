@@ -374,9 +374,11 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 	async countCustomerRedemptions(couponId: ID, customerId: ID): Promise<number> {
 		const live = [PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED];
 
+		// Only the caller's tenant's ledger counts (SEC-D-14): counted across tenants, usage rows another tenant posted
+		// against this coupon and customer exhausted the customer's limit here.
 		return this.typeOrmCouponRepository.manager
 			.getRepository('promotion_usage')
-			.count({ where: { couponId, customerId, status: live as never } });
+			.count({ where: { couponId, customerId, status: live as never, tenantId: this.scope.tenantId } });
 	}
 
 	/**

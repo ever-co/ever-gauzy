@@ -48,6 +48,7 @@ interface ICouponRow {
 
 interface IUsageRow {
 	id: string;
+	tenantId?: string;
 	couponId: string;
 	customerId?: string;
 	status: PromotionUsageStatus;
@@ -221,8 +222,8 @@ describe('CouponService.validate — whether a code may be used, and why not (do
 		// cancelled is not blocked by their own history.
 		const rows = [coupon({ id: 'c-1', code: 'WELCOME', perCustomerLimit: 1 })];
 		const usages: IUsageRow[] = [
-			{ id: 'u-1', couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
-			{ id: 'u-2', couponId: 'c-1', customerId: CUSTOMER_B, status: PromotionUsageStatus.REVERTED }
+			{ id: 'u-1', tenantId: TENANT, couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
+			{ id: 'u-2', tenantId: TENANT, couponId: 'c-1', customerId: CUSTOMER_B, status: PromotionUsageStatus.REVERTED }
 		];
 		const { service } = serviceUnderTest(rows, usages);
 
@@ -232,6 +233,20 @@ describe('CouponService.validate — whether a code may be used, and why not (do
 			'COUPON_CUSTOMER_LIMIT_EXCEEDED'
 		);
 		expect((await service.validate('WELCOME', { customerId: CUSTOMER_B, at: AT })).valid).toBe(true);
+	});
+
+	it('counts only the caller’s tenant’s redemptions, so another tenant cannot exhaust a customer’s limit (SEC-D-14)', async () => {
+		// The failure scenario: tenant A posted promotion usages naming B's coupon and B's customer, and B's own
+		// validation then answered COUPON_CUSTOMER_LIMIT_EXCEEDED for a customer who never redeemed it.
+		const rows = [coupon({ id: 'c-1', code: 'WELCOME', perCustomerLimit: 1 })];
+		const usages: IUsageRow[] = [
+			{ id: 'planted-1', tenantId: 'another-tenant', couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
+			{ id: 'planted-2', tenantId: 'another-tenant', couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.RESERVED }
+		];
+		const { service } = serviceUnderTest(rows, usages);
+
+		expect(await service.countCustomerRedemptions('c-1', CUSTOMER_A)).toBe(0);
+		expect((await service.validate('WELCOME', { customerId: CUSTOMER_A, at: AT })).valid).toBe(true);
 	});
 });
 
