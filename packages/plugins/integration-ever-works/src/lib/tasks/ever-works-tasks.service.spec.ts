@@ -609,6 +609,17 @@ describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
 		);
 	});
 
+	it('a task whose edge could not be followed is finished by the retried event', async () => {
+		const t = setup();
+		const other = t.mock.addTask(t.org.id, { title: 'Other' });
+		const task = t.mock.addTask(t.org.id, { title: 'Blocked', blockedBy: [other['id']] });
+		t.mock.fail({ method: 'GET', path: `/tasks/${other['id'] as string}`, status: 503 });
+		await expect(t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } })).rejects.toThrow();
+		expect(await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } })).toEqual({ status: 'applied' });
+		expect(t.tasks.size).toBe(2);
+		expect(t.linkedIssues).toEqual(expect.arrayContaining([expect.objectContaining({ taskToId: 'g-task-1', action: LINKED_ISSUE.IS_BLOCKED_BY })]));
+	});
+
 	it('pushes Gauzy watcher and blocker changes as Ever Works sets', async () => {
 		const t = setup();
 		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');

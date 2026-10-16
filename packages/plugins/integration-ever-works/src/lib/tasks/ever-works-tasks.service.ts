@@ -293,12 +293,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!fresh) throw new Error(`The Gauzy task created for Ever Works task ${task.id} cannot be read back.`);
 		// The link is recorded before the edges are followed: an edge back to this task (two new tasks that
 		// relate to each other) then finds it instead of importing it a second time. Its watchers and edges are
-		// not on the Gauzy side yet, so they count as Ever Works' change below.
+		// not on the Gauzy side yet, so they count as Ever Works' change below — and it has no version yet, so
+		// if following an edge fails, the retried event is not skipped as applied and finishes them.
 		await this.record(
 			context,
 			taskId,
 			task,
-			version ?? task.version ?? null,
+			null,
 			{ g: await this.gauzySide(context, fresh), e: { ...e, watchers: [], blockedBy: [], relations: [] } },
 			'inbound',
 			{ unmappedTeams: teams.unmapped, unmappedAssignees: members.unmapped }
