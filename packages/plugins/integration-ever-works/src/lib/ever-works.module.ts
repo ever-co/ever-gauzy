@@ -81,6 +81,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.pusher.register(this.tasks);
 		this.loop.registerSweeper(this.tasks);
 		this.pusher.register(this.taskComments);
+		this.loop.registerSweeper(this.taskComments);
 	}
 }
 
