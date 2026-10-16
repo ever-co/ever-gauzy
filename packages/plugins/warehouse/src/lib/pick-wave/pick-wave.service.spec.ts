@@ -103,6 +103,7 @@ jest.mock('@gauzy/core', () => {
 import { NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
 import { PICK_NUMBER_KEY, PickListStatus, PickWaveStatus, PickWaveStrategy } from '../warehouse.types';
+import { PickListLineService } from '../pick-list-line/pick-list-line.service';
 import { PickWaveService } from './pick-wave.service';
 
 /**
@@ -304,18 +305,40 @@ function waveFixture(
 		pickListLine: [...(options.lines ?? [])]
 	};
 	const series = numbering(options.series);
+	const listRepository = repository(tables, 'pickList');
+	const lineRepository = repository(tables, 'pickListLine');
+	// A wave's cancellation moves each open list — its open lines, its status and `pick_list.canceled` — in a
+	// transaction of the list repository's manager; the in-memory transaction hands the body the repositories.
+	const appended: any[] = [];
+	(listRepository as any).manager = {
+		transaction: async (work: (manager: unknown) => Promise<unknown>) =>
+			await work({
+				getRepository: (entity: { name?: string }) => (entity?.name === 'PickListLine' ? lineRepository : listRepository)
+			})
+	};
+	const outbox = {
+		append: async (_manager: unknown, event: any) => {
+			appended.push(event);
+
+			return event;
+		}
+	};
+	const lineService = new PickListLineService(lineRepository as never, {} as never, listRepository as never, outbox as never);
 	const service = new PickWaveService(
 		repository(tables, 'wave') as never,
 		{} as never,
-		repository(tables, 'pickList') as never,
-		repository(tables, 'pickListLine') as never,
-		series.service as never
+		listRepository as never,
+		lineRepository as never,
+		series.service as never,
+		lineService,
+		outbox as never
 	);
 
 	return {
 		service,
 		tables,
 		series,
+		appended,
 		store: (id: string) => tables.wave.find((row) => row.id === id),
 		list: (id: string) => tables.pickList.find((row) => row.id === id),
 		line: (id: string) => tables.pickListLine.find((row) => row.id === id)
