@@ -126,7 +126,7 @@ export class TenantBaseGuard implements CanActivate {
 					named.push(findInput['tenantId']);
 				}
 			} catch {
-				// Not parseable after all: it states no tenant.
+				// Not parsable after all: it states no tenant.
 			}
 		}
 
