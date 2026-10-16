@@ -27,10 +27,21 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
-import { OrganizationTeamsService, Store, TimesheetService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
+import {
+	OrganizationTeamsService,
+	Store,
+	TasksService,
+	TimesheetService,
+	TimesheetStatisticsService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { TimeZoneService } from '@gauzy/ui-core/shared';
+import { HashNumberPipe, IRecordViewSection, IRecordViewStatus, TimeZoneService } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from '../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
+import {
+	buildTaskViewSections,
+	taskStatusOf,
+	TASK_VIEW_RELATIONS
+} from '../../tasks/components/task-view/task-view-sections';
 
 /** The date windows the overview can be read over — the same as an employee's page. */
 export enum TeamViewPeriod {
@@ -82,6 +93,8 @@ interface IMemberFigures {
 
 /** A team task as the Team tasks panel lists it. */
 interface ITeamTaskRow {
+	/** The task as the list loaded it — what the quick look opens with before its full read lands. */
+	task: ITask;
 	id: string;
 	key: string;
 	title: string;
@@ -94,6 +107,10 @@ interface ITeamTaskRow {
 	dueTime: number;
 	doneTime: number;
 	overdue: boolean;
+	priority?: string;
+	priorityLevel?: 'urgent' | 'high' | 'medium' | 'low';
+	/** Assignees as avatars; the first few are drawn, the rest counted. */
+	people: { name: string; initials: string; avatarUrl?: string }[];
 }
 
 export type TaskFilter = 'open' | 'progress' | 'overdue' | 'done';
@@ -123,6 +140,7 @@ const Loadable = {
 type PanelKey = 'counts' | 'previousCounts' | 'hours' | 'memberStats' | 'projectStats' | 'topTasks' | 'apps' | 'tasks';
 
 const CLOSED_STATUSES = new Set<string>([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]);
+const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 const IN_PROGRESS_STATUSES = new Set<string>([
 	TaskStatusEnum.IN_PROGRESS,
 	TaskStatusEnum.READY_FOR_REVIEW,
@@ -204,6 +222,16 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 
 	public readonly taskFilters: TaskFilter[] = ['open', 'progress', 'overdue', 'done'];
 	public taskFilter: TaskFilter = 'open';
+	/** The Team tasks panel lists every task of the selected view, not just the first few. */
+	public showAllTasks = false;
+	public readonly taskLimit = TASK_LIMIT;
+
+	/** The task open in the quick-look drawer, its sections and status lozenge. */
+	public viewedTask: ITask | null = null;
+	public viewSections: IRecordViewSection[] = [];
+	public viewStatus: IRecordViewStatus | null = null;
+	private _viewSequence = 0;
+	private readonly _hashPipe = new HashNumberPipe();
 
 	private _organization: IOrganization | null = null;
 	private _teamId: string | null = null;
@@ -220,7 +248,8 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		private readonly _timeZoneService: TimeZoneService,
 		private readonly _teamsService: OrganizationTeamsService,
 		private readonly _statisticsService: TimesheetStatisticsService,
-		private readonly _timesheetService: TimesheetService
+		private readonly _timesheetService: TimesheetService,
+		private readonly _tasksService: TasksService
 	) {
 		super(translateService);
 	}
@@ -509,6 +538,44 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 
 	/* ── Tasks ───────────────────────────────────────────────────────────── */
 
+	/**
+	 * Opens a task in the quick-look drawer — the same sections and header the
+	 * task lists show — without leaving the team page. It opens at once with the
+	 * row's data, then fills in from the task's full read (status, priority,
+	 * size, sprint, description…); a failed read keeps what the row had.
+	 */
+	async openTask(row: ITeamTaskRow): Promise<void> {
+		const sequence = ++this._viewSequence;
+		this.showTask(row.task);
+		try {
+			const task = await this._tasksService.getById(row.id, TASK_VIEW_RELATIONS);
+			if (sequence === this._viewSequence && this.viewedTask?.id === row.id && task) {
+				this.showTask(task);
+			}
+		} catch {
+			// The row's own data stays on screen.
+		}
+	}
+
+	closeTask(): void {
+		this._viewSequence++;
+		this.viewedTask = null;
+	}
+
+	/** The task's own full-width page. */
+	taskLink(id: string): string[] {
+		return ['/pages/tasks/view', id];
+	}
+
+	private showTask(task: ITask): void {
+		this.viewStatus = taskStatusOf(task);
+		this.viewSections = buildTaskViewSections(task, {
+			translate: (key) => this.getTranslation(key),
+			hash: (value) => this._hashPipe.transform(value)
+		});
+		this.viewedTask = task;
+	}
+
 	get taskSummary(): TaskSummary {
 		const rows = this.tasks.value || [];
 		if (this._taskSummary?.from !== rows) {
@@ -547,7 +614,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	get visibleTasks(): ITeamTaskRow[] {
-		return this.filteredTasks.slice(0, TASK_LIMIT);
+		return this.showAllTasks ? this.filteredTasks : this.filteredTasks.slice(0, TASK_LIMIT);
 	}
 
 	/* ── Loading ─────────────────────────────────────────────────────────── */
@@ -698,11 +765,23 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		const statusGroup = ViewTeamComponent.statusGroupOf(task.status);
 		const isDone = statusGroup === 'done';
 		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
-		const assignees = (task.members || [])
-			.map((member) => ViewTeamComponent.nameOf(member))
-			.filter(Boolean)
-			.join(', ');
+		const people = (task.members || [])
+			.map((member) => {
+				const name = ViewTeamComponent.nameOf(member);
+				return {
+					name,
+					initials: ViewTeamComponent.initialsOf(name),
+					avatarUrl: member.user?.image?.fullUrl || member.user?.imageUrl || undefined
+				};
+			})
+			.filter((person) => !!person.name);
+		const assignees = people.map((person) => person.name).join(', ');
+		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
 		return {
+			task,
+			people,
+			priority: task.taskPriority?.name || ViewTeamComponent.humanize(task.priority) || undefined,
+			priorityLevel: PRIORITY_LEVELS.has(priority) ? (priority as ITeamTaskRow['priorityLevel']) : undefined,
 			id: task.id,
 			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 			title: task.title,
