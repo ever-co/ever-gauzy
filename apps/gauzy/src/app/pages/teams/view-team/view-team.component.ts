@@ -84,6 +84,19 @@ interface IRankedRow {
 	width: number;
 }
 
+/** One project on the Overview: the team's project and its time in the period. */
+interface IProjectOverviewRow {
+	id: string;
+	name: string;
+	imageUrl?: string;
+	initials: string;
+	duration: number;
+	share: number;
+	width: number;
+	/** False for a project the members worked on that is not linked to the team. */
+	linked: boolean;
+}
+
 /** A member's period figures, keyed by employee id. */
 interface IMemberFigures {
 	duration: number;
@@ -242,6 +255,11 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	private _loadSequence = 0;
 	private _pending: Partial<Record<PanelKey, object>> = {};
 	private _taskSummary: { from: ITeamTaskRow[]; value: TaskSummary } | null = null;
+	private _projectOverview: {
+		from: IRankedRow[];
+		team: IOrganizationTeam | null;
+		value: IProjectOverviewRow[];
+	} | null = null;
 	private _memberRanking: { from: Record<string, IMemberFigures>; value: IRankedRow[] } | null = null;
 
 	constructor(
@@ -396,6 +414,48 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				imageUrl: project.imageUrl || (project as any).image?.fullUrl,
 				initials: ViewTeamComponent.initialsOf(project.name)
 			}));
+	}
+
+	/**
+	 * The Overview's Projects panel: every project linked to the team, with the
+	 * time its members worked on it in the period, plus any project they worked
+	 * on that is not linked to the team (flagged as such). Most worked first;
+	 * projects with no time keep their place at the end so the list stays whole.
+	 */
+	get projectOverview(): IProjectOverviewRow[] {
+		const stats = this.projectStats.value || [];
+		const team = this.team;
+		if (this._projectOverview?.from !== stats || this._projectOverview?.team !== team) {
+			const time = new Map(stats.map((row) => [row.id, row.duration]));
+			const linked = this.projects.map((project) => ({
+				...project,
+				duration: time.get(project.id) || 0,
+				linked: true
+			}));
+			const linkedIds = new Set(linked.map((project) => project.id));
+			const others = stats
+				.filter((row) => !linkedIds.has(row.id))
+				.map((row) => ({
+					id: row.id,
+					name: row.name,
+					imageUrl: undefined,
+					initials: ViewTeamComponent.initialsOf(row.name),
+					duration: row.duration,
+					linked: false
+				}));
+			const all = [...linked, ...others];
+			const total = all.reduce((sum, row) => sum + row.duration, 0);
+			const max = Math.max(0, ...all.map((row) => row.duration));
+			const value = all
+				.map((row) => ({
+					...row,
+					share: total ? (row.duration / total) * 100 : 0,
+					width: max ? Math.max(row.duration ? 2 : 0, (row.duration / max) * 100) : 0
+				}))
+				.sort((a, b) => b.duration - a.duration || a.name.localeCompare(b.name));
+			this._projectOverview = { from: stats, team, value };
+		}
+		return this._projectOverview.value;
 	}
 
 	/* ── Members ─────────────────────────────────────────────────────────── */
@@ -646,11 +706,16 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			void this.track('memberStats', async () =>
 				this.toMemberFigures(await this._statisticsService.getMembers(request))
 			);
+			// Kept whole (no top-N cut): the Projects panel lists every project of the team.
 			void this.track('projectStats', async () =>
-				this.rank(await this._statisticsService.getProjects(request), (project: IProjectsStatistics) => ({
-					id: project.id,
-					name: project.name
-				}))
+				this.rank(
+					await this._statisticsService.getProjects(request),
+					(project: IProjectsStatistics) => ({
+						id: project.id,
+						name: project.name
+					}),
+					Infinity
+				)
 			);
 			void this.track('topTasks', async () =>
 				this.rank(await this._statisticsService.getTasksStatistics(request), (task: ITasksStatistics) => ({
@@ -740,7 +805,8 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 
 	private rank<T extends { duration?: number }>(
 		items: T[],
-		describe: (item: T) => Pick<IRankedRow, 'id' | 'name' | 'meta'>
+		describe: (item: T) => Pick<IRankedRow, 'id' | 'name' | 'meta'>,
+		limit = LIST_LIMIT
 	): IRankedRow[] {
 		const all = (items || [])
 			.map((item) => ({ ...describe(item), duration: Number(item.duration) || 0 }))
@@ -748,7 +814,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			.sort((a, b) => b.duration - a.duration);
 		const total = all.reduce((sum, row) => sum + row.duration, 0) || 1;
 		const max = all[0]?.duration || 1;
-		return all.slice(0, LIST_LIMIT).map((row) => ({
+		return all.slice(0, limit).map((row) => ({
 			...row,
 			share: (row.duration / total) * 100,
 			width: Math.max(2, (row.duration / max) * 100)
