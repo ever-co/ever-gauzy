@@ -10,7 +10,7 @@ import {
 	buildConnection
 } from '../../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
-import { Permissions } from '../../shared/decorators';
+import { OrganizationPolicyTarget, Permissions } from '../../shared/decorators';
 import {
 	FeatureFlagGuard,
 	OrganizationPermissionGuard,
@@ -326,6 +326,9 @@ export class TimeSlotResolver {
 	@Mutation('updateTimeSlot')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	// The organization whose policy decides is the one of the record(s) the input edits, read from the arguments — as the
+	// route reads its params / query (SEC-A-05).
+	@OrganizationPolicyTarget(TimeSlot, 'input.id', 'args')
 	async updateTimeSlot(@Args('input') input: IUpdateTimeSlotInput): Promise<TimeSlot | null> {
 		const { id, ...body } = input;
 
@@ -354,6 +357,9 @@ export class TimeSlotResolver {
 	@Mutation('deleteTimeSlots')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
+	// The organization whose policy decides is the one of the record(s) the field deletes, read from the arguments — as the
+	// route reads its params / query (SEC-A-05).
+	@OrganizationPolicyTarget(TimeSlot, 'ids', 'args')
 	async deleteTimeSlots(
 		@Args('ids', { type: () => [ID] }) ids: Id[],
 		@Args('forceDelete', { type: () => Boolean, nullable: true }) forceDelete?: boolean,

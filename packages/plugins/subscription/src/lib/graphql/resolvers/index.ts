@@ -1,3 +1,4 @@
+import { CustomerSubscriptionStreamResolver } from './customer-subscription-stream.resolver';
 import { SubscriptionBillingResolver } from './subscription-billing.resolver';
 import { SubscriptionItemResolver } from './subscription-item.resolver';
 import { SubscriptionPlanResolver } from './subscription-plan.resolver';
@@ -14,7 +15,14 @@ export const resolvers = [
 	SubscriptionPlanResolver,
 	SubscriptionResolver,
 	SubscriptionItemResolver,
-	SubscriptionBillingResolver
+	SubscriptionBillingResolver,
+	CustomerSubscriptionStreamResolver
 ];
 
-export { SubscriptionPlanResolver, SubscriptionResolver, SubscriptionItemResolver, SubscriptionBillingResolver };
+export {
+	SubscriptionPlanResolver,
+	SubscriptionResolver,
+	SubscriptionItemResolver,
+	SubscriptionBillingResolver,
+	CustomerSubscriptionStreamResolver
+};

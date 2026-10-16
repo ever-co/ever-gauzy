@@ -1,4 +1,4 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { NotFoundException, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
@@ -24,6 +24,7 @@ import { RequestContext } from '../../core/context';
 import { Permissions } from '../../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
+import { MaskTenantSettingSecretsInterceptor } from './mask-tenant-setting-secrets.interceptor';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import {
@@ -184,6 +185,8 @@ const TENANT_SETTING_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  */
 @Resolver('TenantSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+// Every row a field answers has its secrets masked, as the settings document already was (SEC-A-06).
+@UseInterceptors(MaskTenantSettingSecretsInterceptor)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class TenantSettingResolver {
 	constructor(
