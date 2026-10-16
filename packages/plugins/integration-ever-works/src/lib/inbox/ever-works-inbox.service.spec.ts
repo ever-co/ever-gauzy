@@ -196,6 +196,19 @@ describe('EverWorksInboxService', () => {
 		expect(service.handler.source).toBe(InboxItemSourceEnum.EVER_WORKS);
 	});
 
+	it('leaves inbox events for another process where the Inbox is on but not loaded here', async () => {
+		const saved = process.env['GAUZY_INBOX_ENABLED'];
+		process.env['GAUZY_INBOX_ENABLED'] = 'true';
+		try {
+			const { mock, ewOrg, envelope, apply } = setup({ inbox: false });
+			const item = mock.addInboxItem(ewOrg.id);
+			await expect(apply(envelope('inbox.item.created', item))).resolves.toMatchObject({ status: 'deferred' });
+		} finally {
+			if (saved === undefined) delete process.env['GAUZY_INBOX_ENABLED'];
+			else process.env['GAUZY_INBOX_ENABLED'] = saved;
+		}
+	});
+
 	it('skips inbox events where the Gauzy Inbox is off', async () => {
 		const { mock, ewOrg, envelope, apply, registered } = setup({ inbox: false });
 		const item = mock.addInboxItem(ewOrg.id);
@@ -281,6 +294,18 @@ describe('EverWorksInboxService', () => {
 		const archived = mock.addInboxItem(ewOrg.id, { recipientUserId: adaEw, status: 'archived' });
 		await expect(service.reply(gauzyItem(archived), { optionId: 'pro' }, { id: ADA_USER })).rejects.toBeInstanceOf(
 			ConflictException
+		);
+
+		// The re-read fails: retryable, never "archived".
+		const unknown = mock.addInboxItem(ewOrg.id, {
+			recipientUserId: adaEw,
+			status: 'answered',
+			answeredAt: '2026-10-16T09:05:00.000Z'
+		});
+		// A non-retryable failure (the client retries 5xx on its own).
+		mock.fail({ method: 'GET', path: `/inbox/items/${unknown['id']}`, status: 404 });
+		await expect(service.reply(gauzyItem(unknown), { optionId: 'pro' }, { id: ADA_USER })).rejects.toBeInstanceOf(
+			ServiceUnavailableException
 		);
 	});
 

@@ -25,6 +25,7 @@ import {
 	IInboxItemWriter,
 	IInboxRecipientStateInput,
 	IInboxReplyInput,
+	IInboxSourceReplyResult,
 	INBOX_DECISION_KINDS,
 	InboxItemBodyFormatEnum,
 	InboxItemKindEnum,
@@ -243,6 +244,8 @@ export class InboxService implements IInboxItemWriter {
 		}
 
 		let routed = 'local';
+		/** The answer the source holds, when another answer won there (recorded after the claim is settled). */
+		let sourceAnswer: IInboxSourceReplyResult['response'] = null;
 		try {
 			const handler = this.registry.get(item.source);
 			if (handler) {
@@ -260,13 +263,7 @@ export class InboxService implements IInboxItemWriter {
 					}
 				);
 				routed = result?.routed || 'delivered';
-				// Another answer won at the source: record that one (the item shows what was decided there).
-				if (result?.response) {
-					response.text = result.response.text ?? null;
-					response.optionId = result.response.optionId ?? null;
-					if (result.response.answeredAt)
-						response.answeredAt = new Date(result.response.answeredAt).toISOString();
-				}
+				sourceAnswer = result?.response ?? null;
 			} else if (!LOCAL_SOURCES.includes(item.source)) {
 				throw new ServiceUnavailableException(
 					'The source of this item is not connected, so the reply cannot be delivered. Try again later.'
@@ -291,15 +288,33 @@ export class InboxService implements IInboxItemWriter {
 			throw new BadGatewayException('The source of this item did not take the reply. Try again later.');
 		}
 
-		// The source took the reply: the claim stays whatever happens next. Recording where it was routed is
-		// bookkeeping — a failure here must not re-open the item, or a second reply would be delivered again.
+		// The source took the reply: the claim stays whatever happens next (nothing below may re-open the item,
+		// or a second reply would be delivered again).
 		response.routed = routed;
-		try {
-			await this.dataSource.getRepository(InboxItem).update({ id, tenantId }, { response: toJson(response) });
-		} catch (error) {
-			this.logger.warn(
-				`The reply to inbox item ${id} was delivered (${routed}), but recording it failed: ${(error as Error)?.message}`
-			);
+		if (sourceAnswer) {
+			// Another answer won at the source: record that one, so the item shows what was decided there. A
+			// malformed date from the source keeps the claim's time.
+			response.text = sourceAnswer.text ?? null;
+			response.optionId = sourceAnswer.optionId ?? null;
+			const answeredAt = sourceAnswer.answeredAt ? new Date(sourceAnswer.answeredAt) : null;
+			if (answeredAt && !Number.isNaN(answeredAt.getTime())) response.answeredAt = answeredAt.toISOString();
+		}
+		// Where it was routed is bookkeeping; the source's own answer is not, so its write is tried twice and a
+		// failure is an error in the log. Either way the source re-delivers its state (an answered event, a
+		// reconcile through `upsertExternal`), which corrects the item.
+		for (let attempt = 1; ; attempt++) {
+			try {
+				await this.dataSource.getRepository(InboxItem).update({ id, tenantId }, { response: toJson(response) });
+				break;
+			} catch (error) {
+				if (sourceAnswer && attempt < 2) continue;
+				const message = `The reply to inbox item ${id} was delivered (${routed}), but recording ${
+					sourceAnswer ? "the source's answer" : 'it'
+				} failed: ${(error as Error)?.message}`;
+				if (sourceAnswer) this.logger.error(message);
+				else this.logger.warn(message);
+				break;
+			}
 		}
 
 		if (!recipient.isRead) {

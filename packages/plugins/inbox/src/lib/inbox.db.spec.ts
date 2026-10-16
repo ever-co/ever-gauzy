@@ -518,6 +518,28 @@ describe('Inbox on SQLite', () => {
 			});
 		});
 
+		it("a malformed date in the source's answer keeps the claim, and the claim's time", async () => {
+			const onReply = jest.fn(async () => ({
+				routed: 'already-decided',
+				response: { text: 'Decided there', optionId: 'no', answeredAt: 'not-a-date' }
+			}));
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });
+			const { item } = await question({ source: InboxItemSourceEnum.EVER_WORKS });
+
+			const answered = await service.reply(item.id as string, { optionId: 'yes' });
+
+			expect(answered.status).toBe(InboxItemStatusEnum.ANSWERED);
+			expect(answered.response).toMatchObject({
+				optionId: 'no',
+				text: 'Decided there',
+				routed: 'already-decided'
+			});
+			expect(Number.isNaN(Date.parse(String(answered.response?.answeredAt)))).toBe(false);
+			await expect(service.reply(item.id as string, { optionId: 'yes' })).rejects.toBeInstanceOf(
+				ConflictException
+			);
+		});
+
 		it('a reply the source took stays answered even when recording where it went fails', async () => {
 			const onReply = jest.fn(async () => ({ routed: 'resumed the agent run' }));
 			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });

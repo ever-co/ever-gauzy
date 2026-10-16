@@ -331,7 +331,7 @@ export class MockEverWorksServer {
 		organizationId: string | null
 	): EverWorksHttpResponse {
 		const ok = (data: unknown, status = 200): EverWorksHttpResponse => ({ status, headers: { 'content-type': 'application/json' }, data });
-		const [, , id, action] = path.split('/'); // ['', 'inbox', 'items', id?, action?]
+		const [, , , id, action] = path.split('/'); // ['', 'inbox', 'items', id?, action?]
 		if (method === 'GET' && !id) {
 			const denied = scoped('inbox:read');
 			if (denied) return denied;

@@ -2,6 +2,7 @@ import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { InboxPlugin, isInboxEnabled } from '@gauzy/plugin-inbox';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
 import { OrderPlugin } from '@gauzy/plugin-order';
@@ -39,6 +40,9 @@ import { TaxPlugin } from '@gauzy/plugin-tax';
  * deep inside the boot. `worker-composition.spec.ts` checks the other half, which `dependsOn` cannot:
  * that every entity a hosted module registers a repository for is one this list hands to the ORM.
  */
+/** Read once: each switch warns once about a value that is neither `true` nor `false`. */
+const everWorksEnabled = isEverWorksEnabled(process.env, (message) => console.warn(message));
+
 export const plugins = resolvePluginLoadOrder([
 	/**
 	 * Documents hub — drains the `docs-processing` queue: extract → classify → chunk → embed →
@@ -110,5 +114,14 @@ export const plugins = resolvePluginLoadOrder([
 	 * worker of an installation that has not switched the integration on is unchanged: the plugin is not
 	 * loaded, its module graph is never built and nothing is scheduled.
 	 */
-	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : [])
+	...(everWorksEnabled ? [IntegrationEverWorksPlugin] : []),
+	/**
+	 * The Inbox — hosted only with the Ever Works integration, and only when both are switched on. This
+	 * process runs the integration's sync as often as the API does (whoever holds the connection's lease),
+	 * and the sync writes Ever Works inbox items into the Inbox through its writer; without the Inbox here
+	 * those items would wait for the API. It owns no queue or schedule of its own.
+	 *
+	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
+	 */
+	...(everWorksEnabled && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : [])
 ]);

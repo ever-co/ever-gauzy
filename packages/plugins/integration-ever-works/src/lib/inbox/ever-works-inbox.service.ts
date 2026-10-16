@@ -112,7 +112,13 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 
 	/** Inbound handler: `inbox.item.created` / `answered` / `state_changed` / `deleted`. */
 	async apply(envelope: EverWorksEventEnvelope, applyContext: EverWorksApplyContext): Promise<EverWorksApplyOutcome> {
-		if (!this.inbox) return { status: 'skipped', message: 'the Gauzy Inbox is off (GAUZY_INBOX_ENABLED)' };
+		if (!this.inbox) {
+			// Switched on but not loaded in this process (a worker that does not host the Inbox): leave the event
+			// for a process that does, rather than finish it unapplied.
+			return process.env['GAUZY_INBOX_ENABLED'] === 'true'
+				? { status: 'deferred', message: 'the Gauzy Inbox is not loaded in this process' }
+				: { status: 'skipped', message: 'the Gauzy Inbox is off (GAUZY_INBOX_ENABLED)' };
+		}
 		const context = envelope.organizationId
 			? await this.contexts.forEverWorksOrganization(applyContext.connection, envelope.organizationId)
 			: null;
@@ -246,7 +252,13 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 					// Answered or archived in Ever Works before this reply.
 					const current = await client
 						.request<EverWorksInboxItem>('GET', `/inbox/items/${encodeURIComponent(ewItemId)}`)
-						.catch(() => null);
+						.catch(() => undefined);
+					if (current === undefined) {
+						// The re-read failed: the item may well be answered there; say so, and let the user retry.
+						throw new ServiceUnavailableException(
+							'Ever Works refused the reply, and what it holds for the item could not be read. Try again later.'
+						);
+					}
 					if (current?.answeredAt) return { routed: 'already-decided', response: answerOf(current) };
 					throw new ConflictException(
 						'Already decided in Ever Works: the item was archived there and takes no reply.'

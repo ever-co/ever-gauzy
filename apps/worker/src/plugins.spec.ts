@@ -16,6 +16,11 @@ jest.mock('@gauzy/plugin-integration-ever-works', () => ({
 	isEverWorksEnabled: jest.requireActual('../../../packages/plugins/integration-ever-works/src/lib/ever-works-enabled')
 		.isEverWorksEnabled
 }));
+// The Inbox, likewise: its real switch, a stub class.
+jest.mock('@gauzy/plugin-inbox', () => ({
+	InboxPlugin: class InboxPlugin {},
+	isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled
+}));
 jest.mock('@gauzy/plugin-catalog', () => ({ CatalogPlugin: class CatalogPlugin {} }));
 jest.mock('@gauzy/plugin-pricing', () => ({ PricingPlugin: class PricingPlugin {} }));
 jest.mock('@gauzy/plugin-tax', () => ({ TaxPlugin: class TaxPlugin {} }));
@@ -161,6 +166,41 @@ describe('worker plugins', () => {
 			const list = listWith('true');
 			expect(hasEverWorks(list)).toBe(true);
 			expect(list.length).toBe(listWith(undefined).length + 1);
+		});
+	});
+	describe('the Inbox, hosted only with the Ever Works integration', () => {
+		/** The list with both switches as stated (the module is evaluated afresh). */
+		function listWith(everWorks: string | undefined, inbox: string | undefined): unknown[] {
+			const saved = { EVER_WORKS_ENABLED: process.env['EVER_WORKS_ENABLED'], GAUZY_INBOX_ENABLED: process.env['GAUZY_INBOX_ENABLED'] };
+			const set = (key: keyof typeof saved, value: string | undefined) =>
+				value === undefined ? delete process.env[key] : (process.env[key] = value);
+			set('EVER_WORKS_ENABLED', everWorks);
+			set('GAUZY_INBOX_ENABLED', inbox);
+			const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+			try {
+				let list: unknown[] = [];
+				jest.isolateModules(() => {
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					list = require('./plugins').plugins;
+				});
+				return list;
+			} finally {
+				warn.mockRestore();
+				set('EVER_WORKS_ENABLED', saved.EVER_WORKS_ENABLED);
+				set('GAUZY_INBOX_ENABLED', saved.GAUZY_INBOX_ENABLED);
+			}
+		}
+
+		const hasInbox = (list: unknown[]) => list.some((plugin) => (plugin as { name?: string })?.name === 'InboxPlugin');
+
+		it.each([
+			['both off (the default)', undefined, undefined, false],
+			['the Inbox only', undefined, 'true', false],
+			['Ever Works only', 'true', undefined, false],
+			['both on', 'true', 'true', true],
+			['Ever Works on, the Inbox TRUE', 'true', 'TRUE', false]
+		])('%s: hosted %s', (_name, everWorks, inbox, hosted) => {
+			expect(hasInbox(listWith(everWorks, inbox))).toBe(hosted);
 		});
 	});
 });
