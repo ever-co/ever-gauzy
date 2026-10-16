@@ -239,6 +239,13 @@
 				} @else if (!projects.loading && !projectOverview.length) {
 				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_PROJECTS', icon: 'briefcase-outline' }"></ng-container>
 				} @else {
+				@if (projects.value.partial) {
+				<!-- Some project times could not be read: a card without a time may not mean no time. -->
+				<p class="panel-note">
+					<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+					{{ 'EMPLOYEES_PAGE.VIEW.PROJECT_TIMES_PARTIAL' | translate }}
+				</p>
+				}
 				@if (projects.value.assigned === null) {
 				<!-- The membership list could not be read: say so, rather than mark every card as outside their projects. -->
 				<p class="panel-note">
@@ -272,7 +279,7 @@
 								<span class="project-time">{{ project.duration ? formatDuration(project.duration) : '—' }}</span>
 								@if (project.duration) {
 								<span class="project-share">{{ formatPercent(project.share) }}</span>
-								} @else {
+								} @else if (!projects.value.partial) {
 								<span class="project-share">{{ 'EMPLOYEES_PAGE.VIEW.NO_TIME' | translate }}</span>
 								}
 							</span>
