@@ -62,6 +62,7 @@
 			"@gauzy/plugin-integration-ever-async": ["./packages/plugins/integration-ever-async/src/index.ts"],
 			"@gauzy/plugin-integration-ever-works": ["./packages/plugins/integration-ever-works/src/index.ts"],
 			"@gauzy/plugin-inbox": ["./packages/plugins/inbox/src/index.ts"],
+			"@gauzy/plugin-email-provider-resend": ["./packages/plugins/email-provider-resend/src/index.ts"],
 			"@gauzy/plugin-auth-keycloak": ["./packages/plugins/auth-keycloak/src/index.ts"],
 			"@gauzy/plugin-auth-zitadel": ["./packages/plugins/auth-zitadel/src/index.ts"],
 			"@gauzy/plugin-auth-zitadel-ui": ["./packages/plugins/auth-zitadel-ui/src/index.ts"],

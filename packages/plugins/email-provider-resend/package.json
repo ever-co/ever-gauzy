@@ -1,0 +1,58 @@
+{
+	"name": "@gauzy/plugin-email-provider-resend",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform plugin: Resend as an Inbox email provider (inbound email.received + Receiving API, Svix-signed webhooks, outbound API transport); off unless EMAIL_PROVIDER_RESEND_ENABLED=true",
+	"author": {
+		"name": "Ever Co. LTD",
+		"url": "https://github.com/ever-co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/email-provider-resend"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://github.com/ever-co/ever-gauzy/tree/develop/packages/plugins/email-provider-resend",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-email-provider-resend",
+		"lib:build:prod": "yarn nx build plugin-email-provider-resend",
+		"lib:watch": "yarn nx build plugin-email-provider-resend --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-inbox": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"tslib": "^2.8.1"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
+	},
+	"keywords": [
+		"gauzy",
+		"inbox",
+		"email",
+		"resend",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=26",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}
