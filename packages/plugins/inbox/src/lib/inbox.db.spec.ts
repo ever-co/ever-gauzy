@@ -63,6 +63,8 @@ jest.setTimeout(60_000);
 const TENANT = randomUUID();
 const OTHER_TENANT = randomUUID();
 const ORG = randomUUID();
+const OTHER_ORG = randomUUID(); // another organization of the same tenant
+const FOREIGN_ORG = randomUUID(); // an organization of the other tenant
 const ADA = randomUUID();
 const BOB = randomUUID();
 const EVE = randomUUID(); // a user of the other tenant
@@ -135,8 +137,23 @@ async function createCoreFixture(dataSource: DataSource): Promise<void> {
 	await dataSource.query(
 		`CREATE TABLE "role_permission" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "roleId" varchar, "permission" varchar, "enabled" boolean, "createdByUserId" varchar, "updatedByUserId" varchar, "deletedAt" datetime)`
 	);
+	await dataSource.query(
+		`CREATE TABLE "user_organization" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "userId" varchar, "isActive" boolean DEFAULT (1), "deletedAt" datetime)`
+	);
 	await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?), (?)`, [TENANT, OTHER_TENANT]);
-	await dataSource.query(`INSERT INTO "organization" ("id", "tenantId") VALUES (?, ?)`, [ORG, TENANT]);
+	await dataSource.query(`INSERT INTO "organization" ("id", "tenantId") VALUES (?, ?), (?, ?), (?, ?)`, [
+		ORG,
+		TENANT,
+		OTHER_ORG,
+		TENANT,
+		FOREIGN_ORG,
+		OTHER_TENANT
+	]);
+	// Bob is a member of ORG only.
+	await dataSource.query(
+		`INSERT INTO "user_organization" ("id", "tenantId", "organizationId", "userId", "isActive") VALUES (?, ?, ?, ?, 1)`,
+		[randomUUID(), TENANT, ORG, BOB]
+	);
 	await dataSource.query(`INSERT INTO "user" ("id", "tenantId") VALUES (?, ?), (?, ?), (?, ?)`, [
 		ADA,
 		TENANT,
@@ -324,16 +341,48 @@ describe('Inbox on SQLite', () => {
 			await expect(service.get(second.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
 		});
 
-		it('lets a reader of every mailbox read (not act on) any item of the tenant', async () => {
-			const { item } = await question();
+		it('lets a reader of every mailbox read (not act on) the mailbox items of their organizations only', async () => {
+			const mailbox = randomUUID();
+			const shared = await service.create({
+				tenantId: TENANT,
+				organizationId: ORG,
+				kind: InboxItemKindEnum.EMAIL,
+				source: InboxItemSourceEnum.EMAIL,
+				title: 'Invoice 42',
+				mailboxId: mailbox,
+				recipients: [{ userId: ADA }]
+			});
+			const otherOrganization = await service.create({
+				tenantId: TENANT,
+				organizationId: OTHER_ORG,
+				kind: InboxItemKindEnum.EMAIL,
+				source: InboxItemSourceEnum.EMAIL,
+				title: 'Invoice 43',
+				mailboxId: mailbox,
+				recipients: [{ userId: ADA }]
+			});
+			const personal = await question();
+			// A question a source linked to the mailbox is still Ada's own.
+			const linkedQuestion = await question({ mailboxId: mailbox });
+
 			as(BOB, TENANT, [PermissionsEnum.INBOX_VIEW, PermissionsEnum.INBOX_MAILBOX_READ_ALL]);
-			await expect(service.get(item.id as string)).resolves.toMatchObject({
-				id: item.id as string,
+			await expect(service.get(shared.item.id as string)).resolves.toMatchObject({
+				id: shared.item.id as string,
+				mailboxId: mailbox,
 				recipient: null
 			});
-			await expect(service.reply(item.id as string, { optionId: 'yes' })).rejects.toBeInstanceOf(
+			await expect(service.reply(shared.item.id as string, { text: 'Paid' })).rejects.toBeInstanceOf(
 				NotFoundException
 			);
+			// Not a member of that organization.
+			await expect(service.get(otherOrganization.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			// A question addressed to Ada personally stays hers, also when it names a mailbox.
+			await expect(service.get(personal.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.get(linkedQuestion.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
+
+			// Without the permission, not even the mailbox item.
+			as(BOB);
+			await expect(service.get(shared.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
 		});
 
 		it('filters by tab, kind, link, unread and text, and pages with a cursor', async () => {
@@ -349,6 +398,8 @@ describe('Inbox on SQLite', () => {
 			});
 			const archived = await question({ title: 'Old question' });
 			await service.setState(archived.item.id as string, { isArchived: true });
+			const snoozed = await question({ title: 'Later' });
+			await service.setState(snoozed.item.id as string, { snoozedUntil: new Date(Date.now() + 3_600_000) });
 
 			const titles = async (input: Parameters<InboxService['list']>[0]) =>
 				(await service.list(input)).items.map((item) => item.title).sort();
@@ -356,6 +407,8 @@ describe('Inbox on SQLite', () => {
 			expect(await titles({})).toEqual(['Budget at 80%', 'Deploy the billing fix?']);
 			expect(await titles({ tab: InboxTabEnum.DECISIONS })).toEqual(['Deploy the billing fix?']);
 			expect(await titles({ tab: InboxTabEnum.ARCHIVED })).toEqual(['Old question']);
+			// Hidden from the other tabs until its time; listed under Snoozed meanwhile.
+			expect(await titles({ tab: InboxTabEnum.SNOOZED })).toEqual(['Later']);
 			expect(await titles({ kind: InboxItemKindEnum.NOTICE })).toEqual(['Budget at 80%']);
 			expect(await titles({ projectId: project })).toEqual(['Deploy the billing fix?']);
 			expect(await titles({ unread: true })).toEqual(['Deploy the billing fix?']);
@@ -444,6 +497,27 @@ describe('Inbox on SQLite', () => {
 				{ id: ADA, tenantId: TENANT }
 			);
 			expect(answered.response?.routed).toBe('resumed the agent run');
+		});
+
+		it('a reply the source took stays answered even when recording where it went fails', async () => {
+			const onReply = jest.fn(async () => ({ routed: 'resumed the agent run' }));
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });
+			const { item } = await question({ source: InboxItemSourceEnum.EVER_WORKS });
+			const items = dataSource.getRepository(InboxItem);
+			const update = jest.spyOn(items, 'update').mockRejectedValueOnce(new Error('connection reset'));
+
+			try {
+				const answered = await service.reply(item.id as string, { optionId: 'yes' });
+				expect(answered.status).toBe(InboxItemStatusEnum.ANSWERED);
+				expect(answered.response).toMatchObject({ optionId: 'yes', routed: null });
+			} finally {
+				update.mockRestore();
+			}
+			// Not re-opened: a second reply is refused and the source heard of the first one only.
+			await expect(service.reply(item.id as string, { optionId: 'no' })).rejects.toBeInstanceOf(
+				ConflictException
+			);
+			expect(onReply).toHaveBeenCalledTimes(1);
 		});
 
 		it('when the source refuses, the reply is released and the item is open again', async () => {
@@ -605,6 +679,62 @@ describe('Inbox on SQLite', () => {
 			expect((await service.get(first.item.id as string)).recipient?.isRead).toBe(true);
 		});
 
+		it('a re-delivery changes only what it states: an answered item keeps its answer and its links', async () => {
+			const project = randomUUID();
+			const input = {
+				tenantId: TENANT,
+				organizationId: ORG,
+				kind: InboxItemKindEnum.QUESTION,
+				source: InboxItemSourceEnum.GAUZY,
+				externalSource: 'ever_works',
+				externalId: 'ew-9',
+				title: 'Which plan?',
+				body: 'Pick one',
+				projectId: project,
+				options: [{ id: 'a', label: 'A' }],
+				recipients: [{ userId: ADA }]
+			};
+			const { item } = await service.upsertExternal(input);
+			await service.reply(item.id as string, { optionId: 'a' });
+
+			// The source's "created" payload delivered again, without status, response or links.
+			const again = await service.upsertExternal({
+				tenantId: TENANT,
+				kind: InboxItemKindEnum.QUESTION,
+				source: InboxItemSourceEnum.GAUZY,
+				externalSource: 'ever_works',
+				externalId: 'ew-9',
+				title: 'Which plan? (renamed)',
+				recipients: [{ userId: ADA }]
+			});
+			expect(again.item).toMatchObject({
+				title: 'Which plan? (renamed)',
+				status: InboxItemStatusEnum.ANSWERED,
+				response: expect.objectContaining({ optionId: 'a' }),
+				body: 'Pick one',
+				projectId: project,
+				organizationId: ORG,
+				options: [{ id: 'a', label: 'A' }]
+			});
+
+			// A stated status and a stated null do change it.
+			const reopened = await service.upsertExternal({
+				...input,
+				status: InboxItemStatusEnum.OPEN,
+				response: null,
+				projectId: null
+			});
+			expect(reopened.item).toMatchObject({ status: InboxItemStatusEnum.OPEN, response: null, projectId: null });
+		});
+
+		it('refuses an organization that is not one of the item’s tenant', async () => {
+			for (const organizationId of [FOREIGN_ORG, randomUUID(), 'not-a-uuid', '']) {
+				await expect(question({ organizationId })).rejects.toBeInstanceOf(BadRequestException);
+			}
+			await expect(question({ organizationId: OTHER_ORG })).resolves.toMatchObject({ created: true });
+			expect(await dataSource.query(`SELECT COUNT(*) AS "n" FROM "inbox_item"`)).toEqual([{ n: 1 }]);
+		});
+
 		it('two overlapping deliveries of one source item create it once', async () => {
 			const input = {
 				tenantId: TENANT,
@@ -621,9 +751,11 @@ describe('Inbox on SQLite', () => {
 		});
 
 		it('leaves out recipients that are not users of the item’s tenant, and refuses an incomplete item', async () => {
-			const result = await question({ recipients: [{ userId: ADA }, { userId: EVE }, { userId: randomUUID() }] });
+			const result = await question({
+				recipients: [{ userId: ADA }, { userId: EVE }, { userId: randomUUID() }, { userId: 'not-a-uuid' }]
+			});
 			expect(result.recipientUserIds).toEqual([ADA]);
-			expect(result.skippedUserIds).toHaveLength(2);
+			expect(result.skippedUserIds).toHaveLength(3);
 
 			await expect(service.upsertExternal({ tenantId: TENANT, recipients: [] } as never)).rejects.toBeInstanceOf(
 				BadRequestException
