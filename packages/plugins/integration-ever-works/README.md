@@ -136,7 +136,7 @@ below use the `INTEGRATION_` prefix; paths share the
 | GET | `/mappings/:integrationTenantId/sync/runs` | `VIEW` |
 | GET | `/mappings/:integrationTenantId/sync/log` | `VIEW` |
 | GET | `/mappings/:integrationTenantId/conflicts` | `VIEW` |
-| POST | `/mappings/:integrationTenantId/conflicts/:conflictId/resolve` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/conflicts/:id/resolve` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
