@@ -161,7 +161,8 @@ Module._load = originalLoad;
 // ── Schema ───────────────────────────────────────────────────────────────────────────────────────
 
 const base = {
-	id: { type: String, primary: true },
+	// Generated when the plugin saves a new row without one (the platform's entities do the same).
+	id: { type: String, primary: true, generated: 'uuid' },
 	tenantId: { type: String, nullable: true },
 	organizationId: { type: String, nullable: true },
 	isActive: { type: Boolean, nullable: true, default: true },
@@ -424,9 +425,12 @@ describe('migrations', () => {
 		await admin.initialize();
 		await admin.query(`CREATE SCHEMA "${schema}"`);
 		await admin.destroy();
-		// Every statement of the migrations runs in the test schema (search_path), the platform tables included.
-		const pg = new DataSource({ type: 'postgres', url: url.toString(), schema, entities: coreSchemas, synchronize: true, extra: { options: `-c search_path=${schema}` } });
+		// Every statement of the migrations runs in the test schema (search_path). The plugin's foreign keys
+		// point at the platform's tenant and organization, whose keys are uuid there: those two tables only.
+		const pg = new DataSource({ type: 'postgres', url: url.toString(), schema, extra: { options: `-c search_path=${schema}` } });
 		await pg.initialize();
+		await pg.query(`CREATE TABLE "${schema}"."tenant" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid())`);
+		await pg.query(`CREATE TABLE "${schema}"."organization" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid(), "tenantId" uuid)`);
 		const runner = pg.createQueryRunner();
 		try {
 			await runner.startTransaction();
@@ -475,14 +479,21 @@ describe('boundary', () => {
 
 	test('signature verification: a valid signature is stored once; a wrong secret, a stale time or none is refused', async () => {
 		const event = a.envelope();
-		const raw = JSON.stringify(event);
 		assert.deepEqual(await a.deliver(event), { accepted: true, duplicate: false });
-		await assert.rejects(a.deliver(a.envelope(), a.sign(raw, 'another-secret-of-at-least-32-characters')), /signature/i);
-		await assert.rejects(a.deliver(a.envelope(), a.sign(raw, a.secret, Math.floor(Date.now() / 1000) - 3600)), /signature/i);
-		await assert.rejects(a.webhook.receive(a.connection.id, { rawBody: Buffer.from(raw) }, undefined), /signature/i);
+		/** A delivery signed over its own body: only the secret or the time under test is wrong. */
+		const refused = (sign) => {
+			const other = a.envelope();
+			return a.deliver(other, sign(JSON.stringify(other)));
+		};
+		await assert.rejects(refused((body) => a.sign(body, 'another-secret-of-at-least-32-characters')), /signature/i);
+		await assert.rejects(refused((body) => a.sign(body, a.secret, Math.floor(Date.now() / 1000) - 3600)), /signature/i);
 		// B's secret never opens A's connection.
-		await assert.rejects(a.deliver(a.envelope(), a.sign(raw, b.secret)), /signature/i);
-		assert.equal(await db.getRepository(sync.EverWorksInboundEvent).count({ where: { connectionId: a.connection.id } }), 1);
+		await assert.rejects(refused((body) => a.sign(body, b.secret)), /signature/i);
+		const unsigned = a.envelope();
+		await assert.rejects(a.webhook.receive(a.connection.id, { rawBody: Buffer.from(JSON.stringify(unsigned)) }, undefined, unsigned.id), /signature/i);
+		// Control: the same helper with the right secret and time is accepted.
+		assert.deepEqual(await refused((body) => a.sign(body)), { accepted: true, duplicate: false });
+		assert.equal(await db.getRepository(sync.EverWorksInboundEvent).count({ where: { connectionId: a.connection.id } }), 2);
 	});
 
 	test('dedupe: the same event by webhook and by the change feed is stored once', async () => {
