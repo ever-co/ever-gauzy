@@ -68,36 +68,47 @@
 		(favoriteToggled)="onTeamFavoriteToggled($event)"
 	></ngx-favorite-toggle>
 	}
-	<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
-		<div class="btn-group actions">
-			<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ALL_ORG_EDIT']">
-				<button
-					nbButton
-					status="basic"
-					class="action primary"
-					[disabled]="disableButton"
-					(click)="openDialog(addEditTemplate, true)"
-					size="small"
-				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-			</ng-template>
-			<ng-template [ngxPermissionsOnly]="['ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
-				<button
-					nbButton
-					status="basic"
-					class="action"
-					[disabled]="disableButton"
-					(click)="removeTeam($safeNavigationMigration(selectedItem?.id), $safeNavigationMigration(selectedItem?.name))"
-					size="small"
-					[nbTooltip]="'BUTTONS.DELETE' | translate"
-				>
-					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-				</button>
-			</ng-template>
-		</div>
-	</ng-template>
+	<div class="btn-group actions">
+		<ng-template [ngxPermissionsOnly]="['ORG_TEAM_VIEW', 'ALL_ORG_VIEW']">
+			<button
+				nbButton
+				status="basic"
+				class="action secondary"
+				[disabled]="disableButton"
+				(click)="view(selectedItem)"
+				size="small"
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+		</ng-template>
+		<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ALL_ORG_EDIT']">
+			<button
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="disableButton"
+				(click)="openDialog(addEditTemplate, true)"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+		<ng-template [ngxPermissionsOnly]="['ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="disableButton"
+				(click)="removeTeam($safeNavigationMigration(selectedItem?.id), $safeNavigationMigration(selectedItem?.name))"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
+	</div>
 </ng-template>
 <ng-template #addEditTemplate let-ref="dialogRef">
 	<ga-teams-mutation

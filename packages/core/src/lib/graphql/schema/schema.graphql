@@ -20806,6 +20806,11 @@ type Employee {
   linkedInId: String
 
   """
+  What the row represents: `human` for a person, `agent` for an agent employee provisioned by an integration. Never written through this surface.
+  """
+  kind: String
+
+  """
   The account this engagement belongs to. The account row is read from this surface's own `user(id)` by this identifier.
   """
   userId: ID
@@ -20929,6 +20934,7 @@ input EmployeeFilter {
   trackAllDisplays: BooleanFilter
   upworkId: StringFilter
   linkedInId: StringFilter
+  kind: StringFilter
   userId: IDFilter
   contactId: IDFilter
   organizationPositionId: IDFilter
@@ -31779,6 +31785,12 @@ type OrganizationStrategicInitiative {
   """
   stewardId: ID
 
+  """
+  The teams the initiative is linked to directly, by identifier. With `visibilityScope` `team`, their
+  members may read it, as may the members of the teams of its aligned projects.
+  """
+  teamIds: [ID!]
+
   """The organization the initiative is filed under, by identifier."""
   organizationId: ID
 
@@ -31918,6 +31930,11 @@ input CreateOrganizationStrategicInitiativeInput {
   The steward who owns the clarity of the intent. Omit it and the caller's own employee is recorded.
   """
   stewardId: ID
+
+  """
+  The teams to link the initiative to directly. Each must be a team of the initiative's organization.
+  """
+  teamIds: [ID!]
 }
 
 """
@@ -31936,6 +31953,11 @@ input UpdateOrganizationStrategicInitiativeInput {
   visibilityScope: String
   signals: JSON
   stewardId: ID
+
+  """
+  Replaces the directly linked teams when stated (an empty list unlinks them all); omitted, they stay.
+  """
+  teamIds: [ID!]
 }
 
 """

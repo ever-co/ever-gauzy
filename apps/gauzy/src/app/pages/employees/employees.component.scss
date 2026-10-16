@@ -24,6 +24,12 @@ nb-card {
   // the toggle inside it below the buttons' centre, and the 28px/12px margins
   // stacked onto the row's own gap to give 36px on one side of the toggle and
   // 20px on the other.
+  .kind-filter {
+    display: flex;
+    align-items: center;
+    height: 1.75rem;
+  }
+
   .custom-toggle {
     // A flex box, not a block: `nb-toggle` is inline, so inside a block it sat
     // on the text baseline with the line's descender space under it, which put

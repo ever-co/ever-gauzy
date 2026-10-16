@@ -1951,6 +1951,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Tipo",
+		"KIND_ALL": "Todos",
+		"KIND_HUMAN": "Personas",
+		"KIND_AGENT": "Agentes",
+		"AGENT_BADGE": "Agente",
+		"MANAGED_BY_EVER_WORKS": "Gestionado por Ever Works: el nombre y el perfil de este agente se cambian en Ever Works y se sincronizan con Gauzy.",
+		"MANAGED_EXTERNALLY": "Gestionado externamente: el nombre y el perfil de este agente se cambian en su sistema de origen y se sincronizan con Gauzy.",
+		"OPEN_MANAGED_AGENT": "Abrir página del agente",
 		"HEADER": "Administrar empleados",
 		"ADD_EMPLOYEE": "Añadir empleado",
 		"ACTIVE": "Activo",
@@ -2672,7 +2680,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Gerentes.",
-				"MEMBERS": "Miembros"
+				"MEMBERS": "Miembros",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Detalles"
+					},
+					"PUBLIC": "Pública",
+					"PRIVATE": "Privada",
+					"PREFIX": "Prefijo de tareas",
+					"MEMBERS_COUNT": "{{ count }} miembros",
+					"LIVE": "{{ tracking }} registrando ahora · {{ online }} en línea",
+					"OF_MEMBERS": "{{ count }} de {{ total }} miembros",
+					"CREATED": "Creado",
+					"UPDATED": "Última actualización",
+					"ACTIVE_MEMBERS": "Miembros activos",
+					"ACTIVE_MEMBERS_META": "de {{ total }} miembros registraron tiempo",
+					"TIME_BY_MEMBER": "Tiempo por miembro",
+					"TEAM_TASKS": "Tareas del equipo",
+					"NO_TEAM_TASKS": "No hay tareas asignadas a este equipo",
+					"NO_MEMBERS": "Este equipo aún no tiene miembros",
+					"NO_PROJECTS": "No hay proyectos vinculados a este equipo",
+					"COLUMNS": {
+						"MEMBER": "Miembro",
+						"ROLE": "Rol",
+						"STATUS": "Estado",
+						"CURRENT_TASK": "Tarea actual",
+						"TODAY": "Hoy",
+						"ACTIVITY": "Actividad"
+					},
+					"ROLE": {
+						"MANAGER": "Gerente",
+						"MEMBER": "Miembro"
+					},
+					"GENERAL": "General",
+					"SETTINGS": "Configuración",
+					"RECORD": "Registro",
+					"TEAM_SIZE": "Tamaño del equipo",
+					"COLOR": "Color",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Enlace del perfil",
+					"VISIBILITY": "Visibilidad",
+					"SHARE_PROFILE_VIEW": "Los miembros pueden ver los perfiles de los demás",
+					"REQUIRE_PLAN": "Exigir un plan para registrar tiempo",
+					"NOT_FOUND": "No se encontró este equipo",
+					"LOAD_FAILED": "No se pudo cargar el equipo",
+					"RETRY": "Reintentar",
+					"OPEN_TASK_DETAILS": "Ver detalles de {{ title }}",
+					"OPEN_TASK_PAGE": "Abrir la página de {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Abrir página de la tarea",
+					"UNASSIGNED": "Sin asignar",
+					"SHOW_ALL": "Mostrar todo",
+					"SHOW_LESS": "Mostrar menos",
+					"PROJECTS_CAPTION": "Los proyectos del equipo y el tiempo trabajado en cada uno en este periodo",
+					"NOT_LINKED": "No vinculado",
+					"NOT_LINKED_HINT": "Los miembros registraron tiempo en este proyecto, pero no está vinculado al equipo"
+				}
 			}
 		},
 		"PERMISSIONS": {

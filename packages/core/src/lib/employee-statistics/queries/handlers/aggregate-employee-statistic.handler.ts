@@ -36,6 +36,7 @@ export class AggregateOrganizationQueryHandler
 	): Promise<IAggregatedEmployeeStatistic> {
 		const { input } = command;
 		const { organizationId, startDate, endDate } = input;
+		// Agent employees (`kind = 'agent'`) earn no income and take no share of an expense: people only.
 		const { items: employees } =
 			await this.employeeService.findWorkingEmployees(
 				organizationId,
@@ -43,6 +44,7 @@ export class AggregateOrganizationQueryHandler
 					startDate,
 					endDate
 				},
+				true,
 				true
 			);
 		const employeeMap: Map<string, IEmployeeStatisticSum> = new Map();
@@ -325,7 +327,7 @@ export class AggregateOrganizationQueryHandler
 				workingByMonth.set(
 					key,
 					this.employeeService
-						.findWorkingEmployees(organizationId, monthOf(new Date(month.year, month.month, 1)))
+						.findWorkingEmployees(organizationId, monthOf(new Date(month.year, month.month, 1)), false, true)
 						.then((result) => {
 							// `findWorkingEmployees` answers undefined when its query fails: that is not "nobody
 							// worked", and reading it so would drop the month's split expenses from a successful answer
