@@ -26,6 +26,7 @@ import { describeEmailSendError, EmailSendService, IOutboundEmailMessage, Reques
 import { InboxItemRecipient } from '../../entities/inbox-item-recipient.entity';
 import { InboxEmail } from '../entities/inbox-email.entity';
 import { InboxEmailAttachment } from '../entities/inbox-email-attachment.entity';
+import { InboxEmailThread } from '../entities/inbox-email-thread.entity';
 import { InboxMailbox } from '../entities/inbox-mailbox.entity';
 import { InboxEmailStorage } from '../inbound/inbox-email-storage';
 import { InboxEmailProcessor } from '../inbound/inbox-email.processor';
@@ -347,6 +348,7 @@ export class InboxEmailService {
 				emailId: row.id
 			});
 		}
+		await this.touchThread(row.threadId ?? null);
 		const sentRow = (await repository.findOne({ where: { id: row.id as ID } })) as InboxEmail;
 		return {
 			...this.toEmail(sentRow),
@@ -354,6 +356,15 @@ export class InboxEmailService {
 				this.toAttachment(entry)
 			)
 		};
+	}
+
+	/** A thread's count and last activity after a reply or forward joined it (recounted, never incremented). */
+	private async touchThread(threadId: ID | null): Promise<void> {
+		if (!threadId) return;
+		const messageCount = await this.dataSource.getRepository(InboxEmail).count({ where: { threadId } });
+		await this.dataSource
+			.getRepository(InboxEmailThread)
+			.update({ id: threadId }, { messageCount, lastMessageAt: new Date() });
 	}
 
 	/** The message and its mailbox, when the caller may read it (404 otherwise, so ids are not probed). */
