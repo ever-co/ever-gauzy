@@ -401,7 +401,15 @@
 								</span>
 								<span class="task-people">
 									@for (person of task.people.slice(0, 3); track $index) {
-									<span class="task-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
+									<span
+										class="task-person"
+										[nbPopover]="personCard"
+										[nbPopoverContext]="person"
+										nbPopoverTrigger="hover"
+										nbPopoverPlacement="top"
+										nbPopoverClass="person-popover"
+										[attr.aria-label]="person.name"
+									>
 										@if (person.avatarUrl) {
 										<img [src]="person.avatarUrl" [alt]="person.name" />
 										} @else {
@@ -648,6 +656,45 @@
 	</ngx-record-view>
 	}
 </ngx-record-view-drawer>
+
+<!-- Hover card on an assignee's avatar: a profile card — banner, photo with presence, name, about. -->
+<ng-template #personCard let-person>
+	<div class="person-card">
+		<div class="person-card-banner" aria-hidden="true"></div>
+		<div class="person-card-photo" [class]="'presence-' + person.presence">
+			@if (person.avatarUrl) {
+			<img [src]="person.avatarUrl" [alt]="person.name" />
+			} @else {
+			<span class="person-card-initials" aria-hidden="true">{{ person.initials }}</span>
+			}
+			<span class="person-card-dot" [title]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate"></span>
+		</div>
+		<div class="person-card-body">
+			<span class="person-card-name">{{ person.name }}</span>
+			@if (person.email) {
+			<a class="person-card-handle" [href]="'mailto:' + person.email">{{ person.email }}</a>
+			}
+			<span class="person-card-meta">
+				<span class="person-card-status" [class]="'presence-' + person.presence">
+					<span class="person-card-status-dot" aria-hidden="true"></span>
+					{{ 'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate }}
+				</span>
+				@if (person.since) {
+				<span>{{ 'EMPLOYEES_PAGE.VIEW.MEMBER_SINCE' | translate }} {{ person.since }}</span>
+				}
+			</span>
+			@if (person.bio) {
+			<p class="person-card-bio">{{ person.bio }}</p>
+			}
+			@if (person.id) {
+			<a class="person-card-action" [routerLink]="['/pages/employees/view', person.id]">
+				{{ 'EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate }}
+				<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+			</a>
+			}
+		</div>
+	</div>
+</ng-template>
 
 <!-- Change against the previous period: arrow + percentage, then what it is measured against. -->
 <ng-template #deltaTpl let-delta>
