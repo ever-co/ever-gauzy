@@ -22,7 +22,7 @@ type Row = Record<string, any>;
  * `pessimistic_write` lock (what `findOneForUpdate` asks for on Postgres and MySQL) holds the row until the
  * transaction ends, like `SELECT … FOR UPDATE`.
  */
-function fakeDatabase(type: string = 'postgres') {
+function fakeDatabase(type = 'postgres') {
 	const tables = new Map<unknown, Row[]>([
 		[
 			Organization,
