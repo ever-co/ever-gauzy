@@ -12,6 +12,7 @@ import {
 import { RequestContext } from '../core/context/request-context';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
+import { matchesSubscriberOrganization } from '../graphql/subscriptions/subscription-request-context';
 import { Permissions } from '../shared/decorators';
 import { Idempotent } from '../idempotency/idempotent.decorator';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -309,6 +310,7 @@ export class EventOutboxResolver {
 		filter: (payload: IEventDeliveryChangedEnvelope, variables: { deliveryId?: Id; action?: string }) =>
 			Boolean(payload) &&
 			payload.tenantId === RequestContext.currentTenantId() &&
+			matchesSubscriberOrganization(payload.organizationId) &&
 			(!variables?.deliveryId || String(payload.delivery?.id) === String(variables.deliveryId)) &&
 			(!variables?.action || payload.action === variables.action),
 		resolve: (payload: IEventDeliveryChangedEnvelope) => payload.delivery
