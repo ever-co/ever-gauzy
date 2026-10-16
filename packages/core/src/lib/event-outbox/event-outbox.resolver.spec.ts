@@ -986,7 +986,7 @@ describe('EventOutboxResolver — what eventDeliveryChanged delivers to one subs
 		expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(false);
 	});
 
-	it('delivers a record of the subscriber organization, and lets the tenant decide when either side has none', () => {
+	it('delivers a record of the subscriber organization, and a tenant-wide record to every subscriber', () => {
 		as(ORGANIZATION);
 
 		expect(filter(fact())).toBe(true);
@@ -994,7 +994,14 @@ describe('EventOutboxResolver — what eventDeliveryChanged delivers to one subs
 
 		as(null);
 
-		expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(true);
+		expect(filter(fact({ organizationId: undefined }))).toBe(true);
+	});
+
+	it('withholds an organization’s record from a subscriber with no organization, as the list read does', () => {
+		as(null);
+
+		expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(false);
+		expect(filter(fact())).toBe(false);
 	});
 
 	it('still withholds another tenant and still applies the delivery and action arguments', () => {

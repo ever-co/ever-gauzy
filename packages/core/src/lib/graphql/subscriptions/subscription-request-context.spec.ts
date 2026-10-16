@@ -410,7 +410,7 @@ describe('the request context of a socket operation', () => {
 			expect(matchesSubscriberOrganization('organization-a')).toBe(true);
 		});
 
-		it('lets an event with no organization through, and every event to a subscriber with none', () => {
+		it('lets an event with no organization through to every subscriber of the tenant', () => {
 			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('organization-a');
 
 			expect(matchesSubscriberOrganization(undefined)).toBe(true);
@@ -418,7 +418,16 @@ describe('the request context of a socket operation', () => {
 
 			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
 
-			expect(matchesSubscriberOrganization('organization-a2')).toBe(true);
+			expect(matchesSubscriberOrganization(undefined)).toBe(true);
+		});
+
+		it('withholds an organization’s event from a subscriber with no organization', () => {
+			// The reads these streams mirror give such a caller only the rows stored without an
+			// organization, so a missing organization is not a tenant-wide wildcard.
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+			expect(matchesSubscriberOrganization('organization-a2')).toBe(false);
+			expect(matchesSubscriberOrganization('organization-a')).toBe(false);
 		});
 	});
 

@@ -1341,7 +1341,7 @@ describe('WebhookResolver — what the two streams deliver to one subscriber', (
 				expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(false);
 			});
 
-			it('delivers a row of the subscriber organization, and lets the tenant decide when either side has none', () => {
+			it('delivers a row of the subscriber organization, and a tenant-wide row to every subscriber', () => {
 				as(ORGANIZATION);
 
 				expect(filter(fact())).toBe(true);
@@ -1349,7 +1349,14 @@ describe('WebhookResolver — what the two streams deliver to one subscriber', (
 
 				as(null);
 
-				expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(true);
+				expect(filter(fact({ organizationId: undefined }))).toBe(true);
+			});
+
+			it('withholds an organization’s row from a subscriber with no organization, as the list read does', () => {
+				as(null);
+
+				expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(false);
+				expect(filter(fact())).toBe(false);
 			});
 
 			it('still withholds another tenant and still applies the subscription argument', () => {
