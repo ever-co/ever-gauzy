@@ -3036,6 +3036,9 @@ export class StatisticService {
 				const employeeUserIds = employees.map((e) => e.user_id).filter(Boolean);
 				const userMap = await this._userService.findUsersByIds(employeeUserIds);
 
+				// Imported lazily because the storage providers read the environment as soon as they load
+				const { FileStorage } = await import('./../../core/file-storage/file-storage');
+
 				// Reshape user data and fetch time slots for each employee
 				for (const employee of employees) {
 					const user = userMap.get(employee.user_id);
@@ -3058,6 +3061,7 @@ export class StatisticService {
 						.leftJoin('employee as emp', function () {
 							this.on('time_slot.employeeId', 'emp.id').andOnNull('emp.deletedAt');
 						})
+						// Filtered in the ON clause so a slot with only soft-removed screenshots still comes back
 						.leftJoin('screenshot', function () {
 							this.on('time_slot.id', 'screenshot.timeSlotId').andOnNull('screenshot.deletedAt');
 						})
@@ -3067,7 +3071,7 @@ export class StatisticService {
 							'screenshot.id as screenshot_id',
 							'screenshot.file as screenshot_file',
 							'screenshot.thumb as screenshot_thumb',
-							'screenshot.thumbUrl as screenshot_thumbUrl'
+							'screenshot.storageProvider as screenshot_storageProvider'
 						])
 						.where('time_slot.employeeId', employee.id)
 						.andWhere('time_slot.tenantId', tenantId)
@@ -3088,19 +3092,38 @@ export class StatisticService {
 					// Group screenshots by time slot
 					const slotMap = new Map<string, any>();
 					for (const row of timeSlotRows) {
+						// The storage provider stays private, as Screenshot's @Exclude keeps it on TypeORM
+						const { screenshot_storageProvider: storageProvider, ...columns } = row;
 						if (!slotMap.has(row.id)) {
 							slotMap.set(row.id, {
-								...row,
+								...columns,
 								employee: row.emp_id ? { id: row.emp_id } : null,
 								screenshots: []
 							});
 						}
 						if (row.screenshot_id) {
+							// thumbUrl and fullUrl are not columns: resolve them the way ScreenshotSubscriber does
+							let fullUrl: string | null | undefined;
+							let thumbUrl: string | null | undefined;
+							try {
+								const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
+								[fullUrl, thumbUrl] = await Promise.all([
+									store?.url(row.screenshot_file),
+									store?.url(row.screenshot_thumb)
+								]);
+							} catch (error) {
+								// As in ScreenshotSubscriber.afterEntityLoad: one unresolvable screenshot keeps empty
+								// URLs instead of failing the whole statistics response
+								this.logger.warn(
+									`Could not resolve the URLs of screenshot id=${row.screenshot_id}: ${error?.message}`
+								);
+							}
 							slotMap.get(row.id).screenshots.push({
 								id: row.screenshot_id,
 								file: row.screenshot_file,
 								thumb: row.screenshot_thumb,
-								thumbUrl: row.screenshot_thumbUrl
+								thumbUrl,
+								fullUrl
 							});
 						}
 					}
