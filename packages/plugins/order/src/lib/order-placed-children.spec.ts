@@ -313,6 +313,23 @@ describe('the GraphQL fields that retire and restore a placed order child', () =
 		await resolver.updateOrderCreditLine('draft-row', { amount: '1.00' });
 		expect(credit.update).toHaveBeenCalledWith('draft-row', { amount: '1.00' });
 	});
+
+	it('updateOrderCreditLine does not move a credit line to another order, as PUT /order-credit-lines/:id does not (SEC-B-02)', async () => {
+		// The failure scenario: a credit line of a draft order, re-parented onto a placed order — the customer then owed
+		// 500 less with no order change, approval or history.
+		const credit = childService();
+		const none = {} as never;
+		const resolver = new OrderResolver(none, none, none, none, none, credit as never, none, none, none, guard()) as any;
+
+		await expect(resolver.updateOrderCreditLine('draft-row', { orderId: PLACED, amount: '500.00' })).rejects.toMatchObject({
+			response: { code: 'ORDER_IMMUTABLE', details: { orderId: DRAFT, statedOrderId: PLACED } }
+		});
+		expect(credit.update).not.toHaveBeenCalled();
+
+		// Stating the order the line already belongs to is not a move.
+		await resolver.updateOrderCreditLine('draft-row', { orderId: DRAFT, amount: '5.00' });
+		expect(credit.update).toHaveBeenCalledTimes(1);
+	});
 });
 
 describe('the order ledgers are append-only, and the one direct write is a MANUAL correction', () => {

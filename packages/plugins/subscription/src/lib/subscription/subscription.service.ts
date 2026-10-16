@@ -12,6 +12,8 @@ import {
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
+	ApiErrorCode,
+	ApiException,
 	EventOutboxService,
 	IVersionExpectation,
 	IVersionedWriter,
@@ -19,7 +21,9 @@ import {
 	Money,
 	RequestContext,
 	TenantAwareCrudService,
-	commitVersionedUpdate
+	commitVersionedUpdate,
+	matchesExpectation,
+	parseEntityVersion
 } from '@gauzy/core';
 import {
 	IChangeSubscriptionPlanInput,
@@ -47,6 +51,7 @@ import {
 	nextCyclePeriod,
 	nextRetryAt,
 	normalizeDecimal,
+	normalizeDiscountFraction,
 	periodFrom,
 	priceCycle,
 	prorate,
@@ -137,6 +142,83 @@ const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 /** The metadata key that carries a proration credit into the next cycle. */
 const PENDING_CREDIT = 'pendingCredit';
 
+/** The metadata key a per-subscription discount override is stored under. */
+const DISCOUNT_OVERRIDE = 'discountPercentage';
+
+/** The metadata key the end of a trial is stored under; billing starts there. */
+const TRIAL_ENDS_AT = 'trialEndsAt';
+
+/** The metadata key a per-subscription proration threshold is stored under; a smaller difference is waived. */
+const MINIMUM_PRORATION_CHARGE = 'minimumProrationCharge';
+
+/** The metadata key a cancellation at the end of the paid period is recorded under; the billing run acts on it. */
+const CANCEL_AT_PERIOD_END = 'cancelAtPeriodEnd';
+
+/**
+ * The metadata keys the service writes and the billing run trusts (SEC-B-03): the discount override, the proration
+ * credit carried into the next cycle, the plans whose setup fee was charged, the end of the trial, the proration
+ * threshold below which a plan change's charge is waived, and the cancellation at the end of the period. A caller's
+ * metadata can neither set nor erase them — `metadata: { discountPercentage: "1" }` billed every later cycle at 0,
+ * `{ pendingCredit: { amount: "100000" } }` credited the next one, `{ minimumProrationCharge: "1000000" }` waived every
+ * upgrade's charge, and `{ cancelAtPeriodEnd: true }` cancelled the subscription with no cancellation (CodeRabbit).
+ * They move through the service's own actions.
+ */
+export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
+	DISCOUNT_OVERRIDE,
+	PENDING_CREDIT,
+	CHARGED_SETUP_FEES,
+	TRIAL_ENDS_AT,
+	MINIMUM_PRORATION_CHARGE,
+	CANCEL_AT_PERIOD_END
+];
+
+/**
+ * How many times an edit that writes metadata re-reads the subscription after a billing pass moved it between the
+ * read its metadata was built from and the write. A pass moves a row a handful of times at most, so this is a bound
+ * on a pathological interleaving rather than a retry policy.
+ */
+const METADATA_EDIT_ATTEMPTS = 3;
+
+/**
+ * A caller's metadata without the reserved keys.
+ *
+ * @param metadata What the caller stated.
+ * @returns The caller's own keys.
+ */
+export function callerMetadataOf(metadata: unknown): Record<string, unknown> {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+		return {};
+	}
+
+	return Object.fromEntries(
+		Object.entries(metadata as Record<string, unknown>).filter(([key]) => !RESERVED_SUBSCRIPTION_METADATA_KEYS.includes(key))
+	);
+}
+
+/**
+ * The reserved keys a stored subscription carries.
+ *
+ * @param metadata The stored metadata.
+ * @returns The service's own keys, as stored.
+ */
+function reservedMetadataOf(metadata: unknown): Record<string, unknown> {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+		return {};
+	}
+
+	return Object.fromEntries(
+		Object.entries(metadata as Record<string, unknown>).filter(([key]) => RESERVED_SUBSCRIPTION_METADATA_KEYS.includes(key))
+	);
+}
+
+/**
+ * @param error What a versioned write raised.
+ * @returns True when it is the conflict of a row that moved on, rather than any other failure.
+ */
+function isVersionConflict(error: unknown): boolean {
+	return (error as { code?: unknown } | null)?.code === ApiErrorCode.ENTITY_VERSION_CONFLICT;
+}
+
 /**
  * The codes that mean the instrument a subscription points at can no longer be charged.
  *
@@ -219,45 +301,110 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		changes: DeepPartial<Subscription>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Subscription> {
-		// The edit moves the payer, the quantity and the metadata only (review R4-07): the lifecycle moves through
-		// pause, resume, cancel and expire, the plan through the plan change, and the billing schedule through the
-		// billing run. `PUT /subscriptions/:id {status:"ACTIVE", nextBillingAt:…}` reactivated a cancelled
-		// subscription for the next run to charge; the GraphQL input never admitted those members.
-		// A subscription that is not the caller's is left to the conditional write below, which answers it as before.
-		const stored = await this.findOneDetailed(id).catch((error) => {
-			if (error instanceof NotFoundException) return null;
-			throw error;
-		});
-		const moved = stored
-			? movedReadOnlyMembers(
-					stored as unknown as Record<string, unknown>,
-					(changes ?? {}) as Record<string, unknown>,
-					SUBSCRIPTION_WRITABLE_MEMBERS
-				)
-			: [];
+		const writesMetadata = !!changes && (changes as Record<string, unknown>)['metadata'] !== undefined;
 
-		if (moved.length > 0) {
-			throw notWritable(
-				'SUBSCRIPTION_FIELD_NOT_WRITABLE',
-				`${moved.join(', ')} of subscription '${id}' ${moved.length === 1 ? 'is' : 'are'} moved by its lifecycle ` +
-					`(pause, resume, cancel, expire, the plan change and the billing run), not by an edit.`,
-				{ subscriptionId: id, fields: moved, writable: SUBSCRIPTION_WRITABLE_MEMBERS }
+		for (let attempt = 1; ; attempt += 1) {
+			// The edit moves the payer, the quantity and the metadata only (review R4-07): the lifecycle moves through
+			// pause, resume, cancel and expire, the plan through the plan change, and the billing schedule through the
+			// billing run. `PUT /subscriptions/:id {status:"ACTIVE", nextBillingAt:…}` reactivated a cancelled
+			// subscription for the next run to charge; the GraphQL input never admitted those members.
+			// A subscription that is not the caller's is left to the conditional write below, which answers it as before.
+			const stored = await this.findOneDetailed(id).catch((error) => {
+				if (error instanceof NotFoundException) return null;
+				throw error;
+			});
+			const moved = stored
+				? movedReadOnlyMembers(
+						stored as unknown as Record<string, unknown>,
+						(changes ?? {}) as Record<string, unknown>,
+						SUBSCRIPTION_WRITABLE_MEMBERS
+					)
+				: [];
+
+			if (moved.length > 0) {
+				throw notWritable(
+					'SUBSCRIPTION_FIELD_NOT_WRITABLE',
+					`${moved.join(', ')} of subscription '${id}' ${moved.length === 1 ? 'is' : 'are'} moved by its lifecycle ` +
+						`(pause, resume, cancel, expire, the plan change and the billing run), not by an edit.`,
+					{ subscriptionId: id, fields: moved, writable: SUBSCRIPTION_WRITABLE_MEMBERS }
+				);
+			}
+
+			let patch = changes as Record<string, unknown>;
+			let predicate = expectation;
+
+			if (writesMetadata) {
+				// The metadata an edit writes is the caller's own keys plus the reserved ones as stored (SEC-B-03): the
+				// edit replaces the column, so the stored credit, setup-fee record and trial end are carried over, and
+				// whatever the caller stated under a reserved key is dropped.
+				patch = {
+					...patch,
+					metadata: { ...callerMetadataOf(patch['metadata']), ...reservedMetadataOf(stored?.metadata) }
+				};
+				// Those reserved keys are the read's, so the write is predicated on the version the read saw. Predicated
+				// on whatever version the row holds when the statement runs (`If-Match: *`, or no caller), it wrote a
+				// billing pass's consumed `pendingCredit` back after the pass cleared it, and the next cycle applied the
+				// credit again (Greptile, CodeRabbit).
+				predicate = stored ? this.readVersionPredicate(stored, expectation) : expectation;
+			}
+
+			try {
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: predicate,
+					// The version is written by the conditional update and never by the caller's payload, so a body
+					// that named one cannot move the row past the version the write was predicated on.
+					// Only the writable members are written: a restated lifecycle member was checked above and is not
+					// echoed back over a cancellation that lands between the check and this statement.
+					patch: writableOnly(patch, SUBSCRIPTION_WRITABLE_MEMBERS) as Record<string, unknown> &
+						Partial<Subscription>
+				});
+			} catch (error) {
+				// The row moved on between the read and the write. The next read rebuilds the merge from the row as it
+				// now stands, and answers the conflict itself when the caller's expectation no longer accepts it.
+				if (predicate !== expectation && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+
+			return await this.findOneDetailed(id);
+		}
+	}
+
+	/**
+	 * The version an edit built from a read of the subscription is predicated on: the one that read saw, provided the
+	 * caller accepts it.
+	 *
+	 * The caller's own precondition is kept: a stated version the read does not hold is refused with the conflict the
+	 * write would have answered — including one ahead of the read, which a write predicated on the caller's version
+	 * would otherwise land with the read's stale metadata. A wildcard, and a list naming the version the read holds,
+	 * narrow to that version.
+	 *
+	 * @param stored The subscription as read.
+	 * @param expectation What the caller accepted.
+	 * @returns The expectation the write is predicated on.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the caller does not accept the version read.
+	 */
+	private readVersionPredicate(stored: Subscription, expectation: IVersionExpectation): IVersionExpectation {
+		const read = parseEntityVersion((stored as unknown as Record<string, unknown>)['version']);
+
+		if (read === null) {
+			return expectation;
+		}
+
+		if (!matchesExpectation(expectation, read)) {
+			throw new ApiException(
+				409,
+				ApiErrorCode.ENTITY_VERSION_CONFLICT,
+				'The record changed since you read it. Read it again and reapply your change.',
+				{ expectedVersion: expectation.versions?.[0], actualVersion: read }
 			);
 		}
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id,
-			expectation,
-			// The version is written by the conditional update and never by the caller's payload, so a body
-			// that named one cannot move the row past the version the write was predicated on.
-			// Only the writable members are written: a restated lifecycle member was checked above and is not echoed
-			// back over a cancellation that lands between the check and this statement.
-			patch: writableOnly(changes as Record<string, unknown>, SUBSCRIPTION_WRITABLE_MEMBERS) as Record<string, unknown> &
-				Partial<Subscription>
-		});
-
-		return await this.findOneDetailed(id);
+		return { ...expectation, wildcard: false, versions: [read] };
 	}
 
 	/*
@@ -319,10 +466,18 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const period = trialDays > 0 ? { start: now, end: addDays(now, trialDays) } : periodFrom(now, cadence);
 		const status = input.activate && trialDays === 0 ? SubscriptionStatus.ACTIVE : SubscriptionStatus.PENDING;
 
+		// A stated discount is a fraction between 0 and 1, as a plan's is (SEC-B-03): `"2"` made the net negative.
+		let discountOverride: string | undefined;
+		try {
+			discountOverride = normalizeDiscountFraction(input.discountPercentage as DecimalString | number | undefined);
+		} catch (error) {
+			throw new BadRequestException((error as Error).message);
+		}
+
 		const metadata: Record<string, unknown> = {
-			...(input.metadata ?? {}),
-			...(trialDays > 0 ? { trialEndsAt: period.end.toISOString() } : {}),
-			...(input.discountPercentage !== undefined ? { discountPercentage: String(input.discountPercentage) } : {})
+			...callerMetadataOf(input.metadata),
+			...(trialDays > 0 ? { [TRIAL_ENDS_AT]: period.end.toISOString() } : {}),
+			...(discountOverride !== undefined ? { [DISCOUNT_OVERRIDE]: discountOverride } : {})
 		};
 
 		const created = await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
@@ -374,7 +529,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 
 			const gross = recurringAmount(prepared, currency);
-			const { discount, net } = applyRecurringDiscount(gross, this.discountOf(plan, input.discountPercentage));
+			const { discount, net } = applyRecurringDiscount(gross, this.discountOf(plan, discountOverride));
 			// A trial owes nothing, so its cycle row is written waived **and for zero** (doc 11 §10.4
 			// step 4: "the first billing amount is zero, the billing row is written with
 			// `status = 'WAIVED'` and `amount = 0`"). What the period would have cost is kept in the
@@ -731,7 +886,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				pausedUntil: deferred ? subscription.pausedUntil : null,
 				metadata: {
 					...(subscription.metadata ?? {}),
-					...(deferred ? { cancelAtPeriodEnd: true } : {})
+					...(deferred ? { [CANCEL_AT_PERIOD_END]: true } : {})
 				}
 			}
 		});
@@ -1064,7 +1219,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			subscription = await this.findOneScoped(id);
 		}
 
-		if (subscription.metadata?.['cancelAtPeriodEnd'] === true) {
+		if (subscription.metadata?.[CANCEL_AT_PERIOD_END] === true) {
 			const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
 
 			if (periodEnd.getTime() <= now.getTime()) {
@@ -1231,7 +1386,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			runsAt = retryAt;
 		}
 
-		if (subscription.metadata?.['cancelAtPeriodEnd'] === true) {
+		if (subscription.metadata?.[CANCEL_AT_PERIOD_END] === true) {
 			// `billCycle` cancels instead of billing when the period it was cancelled at has ended by the time it runs.
 			const periodEnd = calendar.currentPeriodEnd ? new Date(calendar.currentPeriodEnd) : runsAt;
 
@@ -1948,7 +2103,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			end: new Date(subscription.currentPeriodEnd)
 		};
 		const { credit, charge, net } = prorate({ oldRecurring, newRecurring, period, at: new Date() });
-		const minimum = Money.of(String(metadata['minimumProrationCharge'] ?? DEFAULT_MINIMUM_PRORATION_CHARGE), currency);
+		const minimum = Money.of(
+			String(metadata[MINIMUM_PRORATION_CHARGE] ?? DEFAULT_MINIMUM_PRORATION_CHARGE),
+			currency
+		);
 
 		let settlement: ISubscriptionPlanChangeOutcome['settlement'] = 'DEFERRED';
 
@@ -2385,7 +2543,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @returns The end of its trial, when it is inside one.
 	 */
 	private trialEndOf(subscription: Subscription): Date | null {
-		const trialEndsAt = subscription.metadata?.['trialEndsAt'];
+		const trialEndsAt = subscription.metadata?.[TRIAL_ENDS_AT];
 
 		return typeof trialEndsAt === 'string' ? new Date(trialEndsAt) : null;
 	}

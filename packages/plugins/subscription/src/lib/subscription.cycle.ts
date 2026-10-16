@@ -1,5 +1,5 @@
 import { CurrencyCode, DecimalString } from '@gauzy/contracts';
-import { Money, divideDecimalUnits, formatDecimalUnits } from '@gauzy/core';
+import { Money, compareDecimalStrings, divideDecimalUnits, formatDecimalUnits } from '@gauzy/core';
 import { SubscriptionBillingPeriod, ISubscriptionItem } from './subscription.types';
 
 /**
@@ -234,7 +234,18 @@ export function cycleDiscountOf(
 export function subscriptionDiscountOverrideOf(metadata?: Record<string, unknown> | null): string | undefined {
 	const override = metadata?.['discountPercentage'];
 
-	return override === undefined || override === null ? undefined : String(override);
+	if (override === undefined || override === null) {
+		return undefined;
+	}
+
+	// An override outside 0..1 — one a caller's metadata could write before SEC-B-03 — is not applied: the cycle is
+	// billed (and previewed) on the plan's own terms rather than at a negative net.
+	try {
+		return normalizeDiscountFraction(override as DecimalString | number);
+	} catch {
+		console.warn(`Subscription metadata: ignored a discount override outside 0..1 (${String(override)}).`);
+		return undefined;
+	}
 }
 
 /** What one cycle bills, and the two figures it is computed from. */
@@ -390,9 +401,10 @@ export function normalizeDiscountFraction(value: DecimalString | number | null |
 	}
 
 	const text = normalizeDecimal(value, '0');
-	const fraction = Number(text);
 
-	if (!Number.isFinite(fraction) || fraction < 0 || fraction > 1) {
+	// The bounds are compared on the digits (CodeRabbit): as a double, `1.00000000000000001` is `1` and passed, and the
+	// text that was stored is the one a cycle multiplies by.
+	if (compareDecimalStrings(text, '0') < 0 || compareDecimalStrings(text, '1') > 0) {
 		throw new Error(
 			`SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE: ${text} is not a fraction between 0 and 1; state a discount as a fraction, not as a percentage.`
 		);
