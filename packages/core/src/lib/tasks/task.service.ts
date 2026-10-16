@@ -1,5 +1,13 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, ForbiddenException, HttpStatus, HttpException, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpStatus,
+	HttpException,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
 import {
 	DeleteResult,
 	IsNull,
@@ -11,7 +19,8 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
-	Raw
+	Raw,
+	SaveOptions
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -57,6 +66,10 @@ import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-re
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { OrganizationProject } from '../core/entities/internal';
+import { EventBus as DomainEventBus } from '../event-bus/event-bus';
+import { TaskEvent } from '../event-bus/events/task.event';
+import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -79,7 +92,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
 		private readonly _employeeRecentVisitService: EmployeeRecentVisitService,
-		private readonly _managedEmployeeService: ManagedEmployeeService
+		private readonly _managedEmployeeService: ManagedEmployeeService,
+		/**
+		 * The in-process domain event bus `TaskEvent` travels on (the one the create and update handlers
+		 * publish to). Optional so that a service built by hand in a test needs no stand-in for it.
+		 */
+		@Optional() private readonly _domainEventBus?: DomainEventBus
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -456,7 +474,79 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 
-		return await this.delete(id);
+		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first. A task that
+		// does not exist is a delete that removes nothing, as before; a read that FAILS stops the delete, so a task
+		// is never removed without its DELETED event.
+		let task: Task | null = null;
+		try {
+			task = await this.findOneByIdString(id);
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
+
+		const result = await this.delete(id);
+
+		if (task && result?.affected) {
+			this.publishTaskDeleted(task);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Soft-deletes a task (`DELETE /tasks/:id/soft`, GraphQL `softDeleteTask`) and publishes
+	 * `TaskEvent` `DELETED` for it, as a hard delete does.
+	 *
+	 * @param id - The task to soft-delete
+	 * @param options - Find options for the lookup
+	 * @param saveOptions - Save options for the write
+	 * @returns The soft-deleted task
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		const task = await super.softRemove(id, options, saveOptions);
+
+		if (task) {
+			this.publishTaskDeleted(task);
+		}
+
+		return task;
+	}
+
+	/**
+	 * Publishes `TaskEvent` `DELETED` for a task that was removed (hard or soft), so that integrations
+	 * that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows) learn about the removal the way they
+	 * learn about a create or an update.
+	 *
+	 * The event's `input` carries the task's scope (`tenantId`, `organizationId`, `projectId`): existing
+	 * `TaskEvent` subscribers read it before they switch on the event type. Publishing never fails the
+	 * delete: the row is already gone when this runs.
+	 *
+	 * @param task - The removed task
+	 */
+	private publishTaskDeleted(task: Task): void {
+		if (!this._domainEventBus) {
+			return;
+		}
+		const logFailure = (error: unknown) =>
+			console.error(`Failed to publish the deleted event of task ${task?.id}:`, (error as Error)?.message);
+		try {
+			const ctx = RequestContext.currentRequestContext();
+			const { tenantId, organizationId, projectId } = task;
+			// `publish` is async: a rejection is caught here as well, never left unhandled after the delete.
+			Promise.resolve(
+				this._domainEventBus.publish(
+					new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
+						tenantId,
+						organizationId,
+						projectId
+					} as ITaskUpdateInput)
+				)
+			).catch(logFailure);
+		} catch (error) {
+			logFailure(error);
+		}
 	}
 
 	/**
