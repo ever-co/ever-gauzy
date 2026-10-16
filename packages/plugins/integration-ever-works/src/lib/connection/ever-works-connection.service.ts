@@ -152,6 +152,8 @@ export class EverWorksConnectionService {
 				`This Ever Works speaks integration API v${validation.apiVersion}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}.`
 			);
 		}
+		// A subscription the disconnect could not delete (Ever Works was unreachable then): deleted once this commits.
+		const orphan: { subscriptionId: string | null; apiKeyEncrypted: string | null } = { subscriptionId: null, apiKeyEncrypted: null };
 		const saved = await this.transaction(scope.tenantId, async (manager) => {
 			const active = await manager.findOne(EverWorksConnection, {
 				where: { tenantId: scope.tenantId, isActive: true }
@@ -169,6 +171,9 @@ export class EverWorksConnectionService {
 			});
 			const connection = previous ?? manager.create(EverWorksConnection, { id: randomUUID(), tenantId: scope.tenantId });
 			const id = connection.id as ID;
+			if (previous?.webhookSubscriptionId) {
+				Object.assign(orphan, { subscriptionId: previous.webhookSubscriptionId, apiKeyEncrypted: previous.apiKeyEncrypted ?? null });
+			}
 			Object.assign(connection, {
 				organizationId: scope.organizationId,
 				authMode: EverWorksAuthMode.API_KEY,
@@ -195,13 +200,24 @@ export class EverWorksConnectionService {
 				isArchived: false,
 				archivedAt: null
 			});
-			// The webhook of an earlier connection was deleted at disconnect (or is gone with its key).
+			// The webhook of an earlier connection was deleted at disconnect, is gone with its key, or is
+			// deleted below; its signing secret is gone either way, so it is not this connection's webhook.
 			if (previous) {
 				Object.assign(connection, { webhookSubscriptionId: null, webhookSecretEncrypted: null, webhookUrl: null });
 			}
 			return manager.save(EverWorksConnection, connection);
 		});
 		this.logger.log(`Tenant ${scope.tenantId} connected to Ever Works tenant ${whoami.tenant.id} (connection ${saved.id}).`);
+		if (orphan.subscriptionId) {
+			// It still delivers to this connection's URL (the id is reused) and every delivery would be refused.
+			// A subscription belongs to the key that made it: the new key first, then the earlier one.
+			const earlier = orphan.apiKeyEncrypted;
+			await this.deleteUnusedWebhook(
+				orphan.subscriptionId,
+				[() => this.client(saved), ...(earlier ? [() => this.client({ ...saved, apiKeyEncrypted: earlier } as EverWorksConnection)] : [])],
+				'Reconnect'
+			);
+		}
 		return this.view(saved);
 	}
 
@@ -232,8 +248,16 @@ export class EverWorksConnectionService {
 		if (!validation.compatible) {
 			throw new BadRequestException(`The Ever Works API version changed to v${validation.apiVersion}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}.`);
 		}
+		// A webhook subscription belongs to the key that made it: under another key it can no longer be
+		// managed, and it stops when the old key is revoked. It moves to the new key below.
+		const moved: { subscriptionId: string | null; apiKeyEncrypted: string | null } = { subscriptionId: null, apiKeyEncrypted: null };
 		const saved = await this.mutate(existing.id as ID, scope.tenantId, (connection) => {
 			const wasPausedByAdmin = connection.status === EverWorksConnectionStatus.PAUSED;
+			const sameKey = !!whoami.keyId && whoami.keyId === connection.keyId;
+			if (!sameKey && connection.webhookSubscriptionId) {
+				Object.assign(moved, { subscriptionId: connection.webhookSubscriptionId, apiKeyEncrypted: connection.apiKeyEncrypted ?? null });
+				Object.assign(connection, { webhookSubscriptionId: null, webhookSecretEncrypted: null, webhookUrl: null });
+			}
 			Object.assign(connection, {
 				apiKeyEncrypted: this.secretBox.seal(dto.apiKey, 'api_key', connection.id as ID),
 				keyId: whoami.keyId ?? null,
@@ -249,7 +273,24 @@ export class EverWorksConnectionService {
 				lastCheckedAt: new Date()
 			});
 		});
-		return this.view(saved);
+		if (!moved.subscriptionId) return this.view(saved);
+		const earlier = moved.apiKeyEncrypted;
+		await this.deleteUnusedWebhook(
+			moved.subscriptionId,
+			[...(earlier ? [() => this.client({ ...saved, apiKeyEncrypted: earlier } as EverWorksConnection)] : []), () => this.client(saved)],
+			'Key rotation'
+		);
+		if (saved.status !== EverWorksConnectionStatus.ACTIVE) {
+			this.logger.warn(`Key rotation: connection ${saved.id} is ${saved.status}; register its webhook again after resuming it.`);
+			return this.view(saved);
+		}
+		try {
+			return await this.registerWebhook(saved.id as ID, organizationId);
+		} catch (error) {
+			// The change feed keeps the sync going; the admin can register the webhook again from the connection.
+			this.logger.warn(`Key rotation: the webhook could not be registered with the new key (${this.reason(error)}).`);
+			return this.view(await this.reload(saved.id as ID));
+		}
 	}
 
 	/** `POST /connections/:id/pause`: nothing is pulled or pushed until resumed. */
@@ -619,6 +660,23 @@ export class EverWorksConnectionService {
 		});
 		if (!connection) throw new NotFoundException('Ever Works connection not found.');
 		return connection;
+	}
+
+	/**
+	 * Deletes a webhook subscription Gauzy no longer uses, best effort. A subscription belongs to the key
+	 * that made it, so each key is tried in turn; a 404 means "not this key's" (or gone). Never throws.
+	 */
+	private async deleteUnusedWebhook(subscriptionId: string, clients: Array<() => EverWorksClient>, context: string): Promise<boolean> {
+		for (const client of clients) {
+			try {
+				await client().deleteWebhook(subscriptionId);
+				return true;
+			} catch (error) {
+				if (error instanceof EverWorksApiError && error.status === 404) continue;
+				this.logger.warn(`${context}: the unused webhook subscription could not be deleted (${this.reason(error)}).`);
+			}
+		}
+		return false;
 	}
 
 	private reload(id: ID): Promise<EverWorksConnection> {

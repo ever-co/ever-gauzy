@@ -511,6 +511,62 @@ describe('Ever Works connection on SQLite', () => {
 			expect((await raw().findOneByOrFail({ id: view.id })).webhookSubscriptionId).toBe(other);
 		});
 
+		it('a reconnect deletes the subscription a disconnect could not delete (same key, or the earlier one)', async () => {
+			for (const reconnectWithAnotherKey of [false, true]) {
+				await raw().clear();
+				mock = new MockEverWorksServer();
+				service = build();
+				const key = mock.addKey();
+				const view = await service.connect(connectDto(key));
+				await service.registerWebhook(view.id);
+				const [orphan] = [...mock.webhooks.keys()];
+				mock.fail({ method: 'DELETE', path: `/webhooks/${orphan}`, status: 503, times: 3 });
+				expect(await service.disconnect(view.id)).toEqual({ success: true, webhookDeleted: false });
+				expect((await raw().findOneByOrFail({ id: view.id })).webhookSubscriptionId).toBe(orphan);
+				const again = await service.connect(connectDto(reconnectWithAnotherKey ? mock.addKey() : key));
+				expect(again.id).toBe(view.id);
+				expect(mock.webhooks.has(orphan)).toBe(false);
+				expect(again.webhook).toMatchObject({ registered: false, subscriptionId: null });
+			}
+		});
+
+		it('a key rotation moves the webhook to the new key: the old subscription is deleted, a new one registered', async () => {
+			const oldKey = mock.addKey();
+			const view = await service.connect(connectDto(oldKey));
+			await service.registerWebhook(view.id);
+			const [old] = [...mock.webhooks.values()];
+			const newKey = mock.addKey();
+			const rotated = await service.rotateKey(view.id, { apiKey: newKey });
+			expect(mock.webhooks.has(old.id)).toBe(false);
+			const [current] = [...mock.webhooks.values()];
+			expect(current.keyId).toBe(mock.keys.get(newKey)?.keyId);
+			expect(rotated.webhook).toMatchObject({ registered: true, subscriptionId: current.id });
+			expect(service.webhookSecret(await raw().findOneByOrFail({ id: view.id }))).toBe(current.secret);
+		});
+
+		it('a rotation after the old key was revoked still registers the webhook under the new key', async () => {
+			const oldKey = mock.addKey();
+			const view = await service.connect(connectDto(oldKey));
+			await service.registerWebhook(view.id);
+			const [old] = [...mock.webhooks.values()];
+			mock.revokeKey(oldKey); // Ever Works disables the old key's subscription
+			const newKey = mock.addKey();
+			const rotated = await service.rotateKey(view.id, { apiKey: newKey });
+			const current = [...mock.webhooks.values()].find((webhook) => webhook.id !== old.id);
+			expect(current).toMatchObject({ status: 'active', keyId: mock.keys.get(newKey)?.keyId });
+			expect(rotated.webhook).toMatchObject({ registered: true, subscriptionId: current?.id });
+			expect(mock.webhooks.get(old.id)?.status).toBe('disabled');
+		});
+
+		it('a new key with the same key id keeps the webhook as it is', async () => {
+			const view = await service.connect(connectDto(mock.addKey({ keyId: 'kid-1' })));
+			await service.registerWebhook(view.id);
+			const [subscription] = [...mock.webhooks.values()];
+			const rotated = await service.rotateKey(view.id, { apiKey: mock.addKey({ keyId: 'kid-1' }) });
+			expect(rotated.webhook).toMatchObject({ registered: true, subscriptionId: subscription.id });
+			expect(mock.webhooks.size).toBe(1);
+		});
+
 		it('secrets stored under the JWT_SECRET fallback are re-encrypted under ENCRYPTION_KEY at the next health check', async () => {
 			const jwt = { JWT_SECRET: 'a-strong-unique-jwt-secret-of-this-installation', ENCRYPTION_KEY: undefined };
 			const before = buildWith({ env: jwt });
