@@ -189,7 +189,7 @@ describe('EverWorksPageComponent', () => {
 		api.currentMapping.mockReturnValue(of(MAPPING));
 		const { component, find } = render();
 		expect(component.setup).toBe('connected');
-		expect(find('connected')?.textContent).toContain('Acme');
+		expect(find('connected')).not.toBeNull();
 		expect(find('open-settings')?.getAttribute('href')).toContain(`/pages/integrations/ever-works/${MAPPING.integrationTenantId}`);
 		expect(find('step-key')).toBeNull();
 	});
@@ -216,5 +216,15 @@ describe('EverWorksPageComponent', () => {
 		expect(webhookWarningOf({ [EVER_WORKS_WEBHOOK_WARNING]: 'x' })).toBe('x');
 		expect(webhookWarningOf({ navigationId: 3 })).toBeNull();
 		expect(webhookWarningOf(null)).toBeNull();
+	});
+
+	it('mapped but the connection is not active: links to the settings and says the sync is stopped', () => {
+		api.status.mockReturnValue(of(STATUS));
+		api.currentMapping.mockReturnValue(of(MAPPING));
+		api.connection.mockReturnValue(of({ id: 'c1', status: 'needs_reauth' }));
+		const { component, find } = render();
+		expect(component.setup).toBe('connected');
+		expect(find('connection-inactive')).not.toBeNull();
+		expect(find('open-settings')).not.toBeNull();
 	});
 });

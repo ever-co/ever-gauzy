@@ -12,7 +12,8 @@
 	"CHECKING": "Checking the connection of this organization…",
 	"CONNECTED": {
 		"TITLE": "This organization syncs with the Ever Works organization {{ name }}.",
-		"OPEN_SETTINGS": "Open the sync settings"
+		"OPEN_SETTINGS": "Open the sync settings",
+		"INACTIVE": "The connection is {{ status }}: nothing syncs until it is resumed or gets a new key. Open the sync settings to fix it."
 	},
 	"COMMON": {
 		"NEXT": "Next",

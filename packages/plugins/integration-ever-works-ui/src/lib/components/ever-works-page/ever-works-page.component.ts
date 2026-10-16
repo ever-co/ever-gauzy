@@ -78,6 +78,11 @@ type Loaded =
 										'EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED' | translate: { reason: webhookWarning }
 									}}</nb-alert>
 								}
+								@if (connection && connection.status !== 'active') {
+									<nb-alert status="warning" data-test="connection-inactive">{{
+										'EVER_WORKS.CONNECTED.INACTIVE' | translate: { status: connection.status }
+									}}</nb-alert>
+								}
 								<nb-alert status="success" data-test="connected">{{
 									'EVER_WORKS.CONNECTED.TITLE' | translate: { name: mapping?.everWorksOrganization?.displayName || mapping?.everWorksOrganization?.slug }
 								}}</nb-alert>

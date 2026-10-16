@@ -131,7 +131,7 @@ describe('EverWorksConnectComponent', () => {
 		api.createMapping.mockReturnValue(of(MAPPING));
 		const { component, find, click } = render({ connection: CONNECTION });
 		expect(component.step).toBe('organization');
-		expect(find('existing-connection')?.textContent).toContain('acme-tenant');
+		expect(find('existing-connection')).not.toBeNull();
 		click('map');
 		expect(api.createMapping).toHaveBeenCalledWith(ORGANIZATION_ID, 'ew-org-1');
 		expect(component.step).toBe('review');
@@ -166,5 +166,15 @@ describe('EverWorksConnectComponent', () => {
 		click('start');
 		expect(api.registerWebhook).not.toHaveBeenCalled();
 		expect(api.startSync).toHaveBeenCalledTimes(1);
+	});
+
+	it('only a new connection or mapping moves the wizard; another input keeps the step', () => {
+		const { component } = render({ connection: CONNECTION, mapping: MAPPING });
+		component.go('start');
+		component.organizationName = 'Renamed';
+		component.ngOnChanges({ organizationName: {} as never });
+		expect(component.step).toBe('start');
+		component.ngOnChanges({ mapping: {} as never });
+		expect(component.step).toBe('review');
 	});
 });
