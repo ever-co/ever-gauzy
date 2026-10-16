@@ -559,6 +559,21 @@ $control-height: 2.25rem;
       font-weight: 400;
     }
 
+    // Hour rows: name, share of the hour's time, time — the same columns as the
+    // By app / site table, so the bars line up with it.
+    &--hour {
+      grid-template-columns: minmax(0, 1.4fr) minmax(8rem, 1fr) 5.5rem;
+      column-gap: 1.5rem;
+
+      @media screen and (max-width: 40rem) {
+        grid-template-columns: minmax(0, 1fr) 4.5rem;
+
+        .au-share-cell {
+          display: none;
+        }
+      }
+    }
+
     // Member card rows: icon, name, share of the member's time, time.
     &--bar {
       grid-template-columns: auto minmax(0, 1fr) minmax(6rem, 0.9fr) 4.5rem;
