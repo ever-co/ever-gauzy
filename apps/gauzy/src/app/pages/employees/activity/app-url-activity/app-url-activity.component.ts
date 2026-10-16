@@ -62,7 +62,9 @@ interface IHourGroup {
 
 /** One page of a visited site, for the expanded URL row. */
 interface IPageRow {
-	/** The address when one was recorded, else the page's title. */
+	/** The site's name, as the old page listed it above each link. */
+	title: string;
+	/** The address when one was recorded, else the page's description. */
 	label: string;
 	/** Set only for a real http(s) address, so the row can link to it. */
 	href?: string;
@@ -328,6 +330,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			const url = (AppUrlActivityComponent.metaOf(activity).url || '').trim();
 			const label = url || activity.description || activity.title;
 			const row = byUrl.get(label) || {
+				title: activity.title,
 				label,
 				href: /^https?:\/\//i.test(url) ? url : undefined,
 				duration: 0,
