@@ -22,7 +22,7 @@ import {
 	Store,
 	TimesheetFilterService
 } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isEmpty, isObject, toLocal } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, isObject, progressStatus, toLocal } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 /** How the page lays the period's activity out. */
@@ -34,10 +34,8 @@ export interface IActivityItemRow {
 	/** First letter of the name, for its icon tile. */
 	letter: string;
 	duration: number;
-	/** Share of the period's total, 0–100. */
+	/** Share of the period's total, 0–100 — also the bar's length, as on the screenshot cards. */
 	share: number;
-	/** Bar length, 0–100, against the most-used row. */
-	width: number;
 }
 
 /** One member, with the apps or sites they used. */
@@ -66,6 +64,8 @@ interface IPageRow {
 	/** Set only for a real http(s) address, so the row can link to it. */
 	href?: string;
 	duration: number;
+	/** Share of the site's time, 0–100. */
+	share: number;
 }
 
 type Loadable<T> = { loading: boolean; failed: boolean; value: T };
@@ -327,12 +327,17 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			const row = byUrl.get(label) || {
 				label,
 				href: /^https?:\/\//i.test(url) ? url : undefined,
-				duration: 0
+				duration: 0,
+				share: 0
 			};
 			row.duration += Number(activity.duration) || 0;
 			byUrl.set(label, row);
 		}
-		return [...byUrl.values()].sort((a, b) => b.duration - a.duration);
+		const rows = [...byUrl.values()];
+		const total = rows.reduce((sum, row) => sum + row.duration, 0);
+		return rows
+			.map((row) => ({ ...row, share: total ? (row.duration / total) * 100 : 0 }))
+			.sort((a, b) => b.duration - a.duration);
 	}
 
 	/* ── Derived views ───────────────────────────────────────────────────── */
@@ -413,13 +418,11 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			const title = row.title || '—';
 			byTitle.set(title, (byTitle.get(title) || 0) + row.duration);
 		}
-		const max = Math.max(0, ...byTitle.values());
 		const list = [...byTitle.entries()].map(([title, duration]) => ({
 			title,
 			letter: AppUrlActivityComponent.letterOf(title),
 			duration,
-			share: total ? (duration / total) * 100 : 0,
-			width: max ? Math.max(duration ? 2 : 0, (duration / max) * 100) : 0
+			share: total ? (duration / total) * 100 : 0
 		}));
 		return this.sortBy === 'name'
 			? list.sort((a, b) => a.title.localeCompare(b.title))
@@ -484,6 +487,14 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		const m = Math.floor((total % 3600) / 60);
 		if (!h && !m && total) return `${total}s`;
 		return `${h}h ${m.toString().padStart(2, '0')}m`;
+	}
+
+	/**
+	 * A bar's colour from its percentage — the same scale as the screenshot
+	 * cards' activity bars (danger, warning, info, success).
+	 */
+	barStatus(value: number): string {
+		return progressStatus(Math.round(Number(value) || 0));
 	}
 
 	formatPercent(value: number): string {
