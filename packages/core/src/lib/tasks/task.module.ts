@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EventBusModule } from '../event-bus/event-bus.module';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { FieldVisibility } from '../api/field-visibility.service';
 import { IntegrationMap, TaskStatus } from '../core/entities/internal';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -56,10 +58,14 @@ import { TaskResolver } from './task.resolver';
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		TaskResolver,
+		// Both surfaces apply a batch of tasks with the platform's executor, which authorises it through the
+		// platform's field visibility.
+		BulkExecutor,
+		FieldVisibility,
 		TypeOrmTaskRepository,
 		MikroOrmTaskRepository,
 		...CommandHandlers
 	],
-	exports: [TaskService, CqrsModule, TypeOrmTaskRepository, MikroOrmTaskRepository]
+	exports: [TaskService, CqrsModule, TypeOrmTaskRepository, MikroOrmTaskRepository, BulkExecutor]
 })
 export class TaskModule {}

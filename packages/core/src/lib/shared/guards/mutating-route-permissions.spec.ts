@@ -250,9 +250,12 @@ describe('OrganizationPermissionGuard placement', () => {
 		);
 	}
 
-	it('gates exactly the three manual time-log routes on the organization policy', () => {
+	it('gates exactly the manual time-log routes on the organization policy', () => {
+		// `bulk` is `POST /timesheet/time-log/bulk`: many `addManualTime` bodies in one request. It carries
+		// the single route's guard and grant, and asks the same guard about every item again.
 		expect(organizationGuardedRoutes(TimeLogController)).toEqual({
 			addManualTime: [PermissionsEnum.ALLOW_MANUAL_TIME],
+			bulk: [PermissionsEnum.ALLOW_MANUAL_TIME],
 			updateManualTime: [PermissionsEnum.ALLOW_MODIFY_TIME],
 			deleteTimeLog: [PermissionsEnum.ALLOW_DELETE_TIME]
 		});

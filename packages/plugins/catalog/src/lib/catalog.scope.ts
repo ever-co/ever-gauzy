@@ -8,7 +8,7 @@
  * membership services were fixed for exactly this; this module is the same fix, stated once, for the others.
  */
 import { NotFoundException } from '@nestjs/common';
-import { EntityManager, EntityTarget, ObjectLiteral } from 'typeorm';
+import { EntityManager, EntityTarget, In, IsNull, ObjectLiteral } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 
@@ -49,5 +49,59 @@ export async function assertInCallerScope(
 
 	if (!found) {
 		throw new NotFoundException(`The ${what} was not found.`);
+	}
+}
+
+/**
+ * Refuses a list of ids unless every one of them is a row the caller may use — the list form of
+ * {@link assertInCallerScope} (SEC-D-04).
+ *
+ * The set writes (`replaceProducts`, `replaceVariants`, `replaceTags`, `replaceMedia`) insert their member rows
+ * through `manager.insert`, which no core foreign-row check sees, and they checked only the SUBJECT (the collection,
+ * the variant): another tenant's product, variant, tag or image went in by its id, and was read back through the
+ * membership's relations.
+ *
+ * @param manager The entity manager to read through.
+ * @param entity The member entity.
+ * @param ids The member ids.
+ * @param what What the members are, for the refusal.
+ * @param options Which rows outside the caller's organization are still usable: the tenant's organization-less rows
+ * (`tenantWide`), and the installation's tenant-less rows (`global`), as tags have.
+ * @throws NotFoundException when any id is not a usable row, or no tenant is in context.
+ */
+export async function assertAllInCallerScope(
+	manager: EntityManager,
+	entity: EntityTarget<ObjectLiteral>,
+	ids: readonly ID[] | null | undefined,
+	what: string,
+	options: { tenantWide?: boolean; global?: boolean } = {}
+): Promise<void> {
+	const list = ids ?? [];
+
+	if (list.length === 0) {
+		return;
+	}
+
+	const scope = callerScope();
+
+	if (!scope.tenantId || list.some((id) => typeof id !== 'string' || id.length === 0)) {
+		throw new NotFoundException(`One or more of the ${what} were not found.`);
+	}
+
+	const unique = [...new Set(list)];
+	const where: object[] = [{ id: In(unique), ...scope }];
+
+	if (options.tenantWide && scope.organizationId) {
+		where.push({ id: In(unique), tenantId: scope.tenantId, organizationId: IsNull() });
+	}
+
+	if (options.global) {
+		where.push({ id: In(unique), tenantId: IsNull() });
+	}
+
+	const found = await manager.count(entity, { where: where as never });
+
+	if (found < unique.length) {
+		throw new NotFoundException(`One or more of the ${what} were not found.`);
 	}
 }

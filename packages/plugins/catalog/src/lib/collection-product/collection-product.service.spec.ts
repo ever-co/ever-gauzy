@@ -125,7 +125,7 @@ jest.mock('@gauzy/core', () => {
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
-import { RequestContext } from '@gauzy/core';
+import { Product, RequestContext } from '@gauzy/core';
 import { Collection } from '../collection/collection.entity';
 import { CollectionProduct } from './collection-product.entity';
 import { CollectionProductService } from './collection-product.service';
@@ -168,6 +168,7 @@ const FOREIGN_COLLECTION = '00000000-0000-4000-8000-000000000019';
 interface ITables {
 	collection_product: any[];
 	collection: any[];
+	product: any[];
 }
 
 /** One `collection_product` row. */
@@ -264,6 +265,23 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 			}
 
 			return { affected: row ? 1 : 0 };
+		},
+		count: async (entity: unknown, options: any = {}) => {
+			// The scoped existence check a set write runs on its member ids: a list of alternative conditions, each
+			// with the `In` / `IsNull` operators it states.
+			const conditions = Array.isArray(options.where) ? options.where : [options.where ?? {}];
+			const holds = (value: unknown, expected: any): boolean => {
+				if (expected && typeof expected === 'object' && ('_type' in expected || 'type' in expected)) {
+					const type = expected._type ?? expected.type;
+					const operand = expected._value ?? expected.value;
+					if (type === 'in') return (operand as unknown[]).some((one) => String(one ?? '') === String(value ?? ''));
+					if (type === 'isNull') return value === null || value === undefined;
+				}
+				return String(value ?? '') === String(expected ?? '');
+			};
+			return rows(entity).filter((row: any) =>
+				conditions.some((condition: any) => Object.entries(condition).every(([field, expected]) => holds(row[field], expected)))
+			).length;
 		},
 		delete: async (entity: unknown, criteria: unknown) => {
 			const ids = Array.isArray(criteria) ? criteria : [criteria];
@@ -408,11 +426,14 @@ function membershipFixture(rows: any[] = []) {
 			{ id: COLLECTION, tenantId: TENANT, organizationId: ORG },
 			{ id: OTHER_COLLECTION, tenantId: TENANT, organizationId: ORG },
 			{ id: FOREIGN_COLLECTION, tenantId: OTHER_TENANT, organizationId: 'org-of-another-tenant' }
-		]
+		],
+		// The caller's products, which a set write now checks its members against.
+		product: [P1, P2, P3].map((id) => ({ id, tenantId: TENANT, organizationId: ORG }))
 	};
 	const entityToTable = new Map<unknown, keyof ITables>([
 		[CollectionProduct, 'collection_product'],
-		[Collection, 'collection']
+		[Collection, 'collection'],
+		[Product, 'product']
 	]);
 	const writeManager = manager(tables, entityToTable);
 	const service = new CollectionProductService(

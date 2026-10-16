@@ -81,6 +81,72 @@ describe('createGraphqlModuleOptions', () => {
 		});
 	});
 
+	describe('the parser’s token ceiling (SEC-C-03)', () => {
+		const withEnv = async (env: Record<string, string>, config: Record<string, unknown> = {}) => {
+			const saved = { ...process.env };
+			Object.assign(process.env, env);
+			try {
+				return await build(config);
+			} finally {
+				process.env = saved;
+			}
+		};
+
+		/** A document of `fields` same-named fields with different arguments: the quadratic-validation shape. */
+		const overlapping = (fields: number) =>
+			`{ ${Array.from({ length: fields }, (_, index) => `a: hello(id: "${index}")`).join(' ')} }`;
+
+		it('hands the parser the policy’s ceiling, from the default, the configuration or the environment', async () => {
+			expect((await withEnv({ GRAPHQL_MAX_TOKENS: '' })).parseOptions).toEqual({ maxTokens: 2000 });
+			expect((await withEnv({ GRAPHQL_MAX_TOKENS: '' }, { maxTokens: 300 })).parseOptions).toEqual({ maxTokens: 300 });
+			expect((await withEnv({ GRAPHQL_MAX_TOKENS: '500' }, { maxTokens: 300 })).parseOptions).toEqual({ maxTokens: 500 });
+		});
+
+		it('holds the subscription socket to the same ceiling, before graphql-ws parses or validates', async () => {
+			// Review on #10651: the socket accepted a connection on the presence of a credential and then parsed and
+			// validated any document with no token ceiling — pre-authentication work, as on HTTP.
+			const options = await withEnv({ GRAPHQL_MAX_TOKENS: '' });
+			const socket = options.subscriptions?.['graphql-ws'] as
+				| { onSubscribe: (context: unknown, id: string, payload: { query?: unknown }) => ReadonlyArray<GraphQLError> | void }
+				| undefined;
+			if (!socket) {
+				throw new Error('the GraphQL options carry no graphql-ws transport');
+			}
+
+			const refused = socket.onSubscribe({}, '1', { query: overlapping(300) });
+			expect(refused?.[0]?.message).toMatch(/contains more th[a-z]+ 2000 tokens/);
+			expect(socket.onSubscribe({}, '2', { query: 'subscription { hello }' })).toBeUndefined();
+		});
+
+		it('turns on Apollo’s bound on fragment-expanded selections', async () => {
+			expect((await build()).maxRecursiveSelections).toBe(true);
+		});
+
+		it('makes the server refuse an oversized document at parse time, before any validation runs', async () => {
+			const { ApolloServer } = await import('@apollo/server');
+			const options = await withEnv({ GRAPHQL_MAX_TOKENS: '' });
+			const server = new ApolloServer({
+				typeDefs: 'type Query { hello(id: ID): String }',
+				resolvers: { Query: { hello: () => 'hi' } },
+				parseOptions: options.parseOptions
+			});
+			await server.start();
+
+			try {
+				// 300 fields of 8 tokens: ~2,400 tokens, refused by the parser. The failure scenario was ~17,600 tokens validating for ~14 s.
+				const refused: any = await server.executeOperation({ query: overlapping(300) });
+				expect(refused.body.singleResult.errors?.[0]?.message).toMatch(/contains more th[a-z]+ 2000 tokens/);
+				expect(refused.body.singleResult.errors?.[0]?.extensions?.code).toBe('GRAPHQL_PARSE_FAILED');
+
+				// An ordinary document is served.
+				const served: any = await server.executeOperation({ query: '{ hello(id: "1") }' });
+				expect(served.body.singleResult.data).toEqual({ hello: 'hi' });
+			} finally {
+				await server.stop();
+			}
+		});
+	});
+
 	describe('the subscription socket', () => {
 		const socketOptions = async (apiOptions: Partial<GraphQLApiConfigurationOptions> = {}) => {
 			const options = await build({}, apiOptions);

@@ -6668,6 +6668,16 @@ type Mutation {
   createExpense(input: CreateExpenseInput!): Expense!
 
   """
+  Records a batch of costs — each item exactly as `createExpense` records one, its employee's average
+  expense recomputed as a single expense's is — and answers one outcome per item. The batch
+  `POST /expense/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateExpenses(input: BulkCreateExpensesInput!): BulkCreateExpensesPayload!
+
+  """
   Changes a cost that exists.
   
   The delivered edit reaches the same write the create does, carrying the identifier in the path and
@@ -8182,6 +8192,16 @@ type Mutation {
   createOrganization(input: CreateOrganizationInput!): Organization!
 
   """
+  Files a batch of organizations — each item exactly as `createOrganization` files one, with everything
+  that command creates beside it — and answers one outcome per item. The batch `POST /organization/bulk`
+  applies, under the same permission and cap (20: each organization is created with its defaults).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateOrganizations(input: BulkCreateOrganizationsInput!): BulkCreateOrganizationsPayload!
+
+  """
   Replaces the stated facts of an organization. The visibility flags of the public profile are
   written from the body as stated, so a member of that family the caller leaves out is turned off
   rather than left as it is — see `UpdateOrganizationInput`.
@@ -9041,8 +9061,27 @@ type Mutation {
   """Puts a withdrawn tag back."""
   recoverTag(id: ID!): Tag!
 
+  """
+  Files a batch of tags — each item exactly as `createTag` and `POST /tags` file one — and answers one
+  outcome per item. The batch `POST /tags/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTags(input: BulkCreateTagsInput!): BulkCreateTagsPayload!
+
   """Files a task."""
   createTask(input: CreateTaskInput!): Task!
+
+  """
+  Files a batch of tasks — each item exactly as `createTask` files one, numbered by the same handler from
+  its project's highest number as the items before it left it — and answers one outcome per item. The
+  batch `POST /tasks/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTasks(input: BulkCreateTasksInput!): BulkCreateTasksPayload!
 
   """Edits a task that exists."""
   updateTask(input: UpdateTaskInput!): Task!
@@ -9567,6 +9606,16 @@ type Mutation {
   addManualTime(input: CreateManualTimeLogInput!): TimeLog!
 
   """
+  Records a batch of intervals by hand — each item exactly as `addManualTime` records one, its conflicts
+  resolved against the intervals the items before it recorded — and answers one outcome per item. The
+  batch `POST /timesheet/time-log/bulk` applies, under the same guard, permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the manual-time create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTimeLogs(input: BulkCreateTimeLogsInput!): BulkCreateTimeLogsPayload!
+
+  """
   Edits a hand-recorded interval, and answers the row as it stands after the write.
   
   The delivered write resolves the interval's conflicts again, stamps the instant it was edited and
@@ -9727,6 +9776,17 @@ type Mutation {
   may not grant is refused by the delivered handler rather than here.
   """
   createUser(input: CreateUserInput!): User!
+
+  """
+  Files a batch of accounts — each item exactly as `createUser` files one, its role resolved in the
+  caller's tenant and refused when the caller may not grant it — and answers one outcome per item. The
+  batch `POST /user/bulk` applies, under the same permission and cap (50). An outcome names the account by
+  its id and nothing else.
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateUsers(input: BulkCreateUsersInput!): BulkCreateUsersPayload!
 
   """
   Edits an account that exists.
@@ -23213,6 +23273,50 @@ type ExpenseStatistics {
 }
 
 """
+A batch of costs to record, as `bulkCreateExpenses` takes it: the body `POST /expense/bulk` accepts plus
+the retry key.
+
+Each item is a `CreateExpenseInput` and is recorded exactly as `createExpense` records one, so an item is
+refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it
+is optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateExpensesInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateExpenseInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of costs adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateExpensesPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
+"""
 One ledger entry for one import: the archive that was taken in, and what became of it.
 """
 type ImportHistory {
@@ -24717,6 +24821,33 @@ type UserError {
 
   """Structured detail: which values were refused and why."""
   details: JSON
+}
+
+"""
+One item's outcome in a batch that creates rows: the row the item created, or the item's own failure.
+
+Shared by every create-only batch field (`bulkCreateTags`, `bulkCreateTasks`, …): each applies its items
+through the resource's single-item create, so an outcome has the same shape whatever the resource, and the
+index is part of it because a batch is answered in one piece — a caller that sent twenty items reads which
+of them applied without matching rows back to its request by hand.
+"""
+type BulkCreateItemResult {
+  """The item's position in the request."""
+  index: Int!
+
+  """Whether the item applied."""
+  ok: Boolean!
+
+  """The row the item created, when it applied."""
+  id: ID
+
+  """The resource that changed."""
+  resource: String
+
+  """
+  Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to.
+  """
+  error: UserError
 }
 
 """How far a durable multi-step operation has come."""
@@ -33736,6 +33867,50 @@ input UpdateOrganizationInput {
   show_employees_count: Boolean
 }
 
+"""
+A batch of organizations to file, as `bulkCreateOrganizations` takes it: the body
+`POST /organization/bulk` accepts plus the retry key.
+
+Each item is a `CreateOrganizationInput` and is filed exactly as `createOrganization` files one, so an
+item is refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the
+batch, and it is optional: a GraphQL document can carry many mutations and a header cannot say which of
+them a key belongs to, so the key travels here.
+"""
+input BulkCreateOrganizationsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateOrganizationInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of organizations adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateOrganizationsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
 type PaymentTerm {
   id: ID!
   organizationId: ID
@@ -38452,6 +38627,50 @@ input UpdateTagInput {
   organizationId: ID
 }
 
+"""
+A batch of tags to file, as `bulkCreateTags` takes it: the body `POST /tags/bulk` accepts plus the retry
+key.
+
+Each item is a `CreateTagInput` and is filed exactly as `createTag` files one, so an item is refused for
+the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it is
+optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateTagsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateTagInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of tags adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTagsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
 """One unit of work."""
 type Task {
   id: ID!
@@ -40112,6 +40331,50 @@ type TaskMetadata {
   taskVersions: TaskVersionConnection
   issueTypes: IssueTypeConnection
   relatedIssueTypes: TaskRelatedIssueTypeConnection
+}
+
+"""
+A batch of tasks to file, as `bulkCreateTasks` takes it: the body `POST /tasks/bulk` accepts plus the
+retry key.
+
+Each item is a `CreateTaskInput` and is filed exactly as `createTask` files one, so an item is refused for
+the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it is
+optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateTasksInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateTaskInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of tasks adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTasksPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """
@@ -43144,6 +43407,50 @@ input DeleteTimeLogsInput {
   forceDelete: Boolean
 }
 
+"""
+A batch of intervals to record by hand, as `bulkCreateTimeLogs` takes it: the body
+`POST /timesheet/time-log/bulk` accepts plus the retry key.
+
+Each item is a `CreateManualTimeLogInput` and is recorded exactly as `addManualTime` records one, so an
+item is refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the
+batch, and it is optional: a GraphQL document can carry many mutations and a header cannot say which of
+them a key belongs to, so the key travels here.
+"""
+input BulkCreateTimeLogsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateManualTimeLogInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the manual-time create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of hand-recorded intervals adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTimeLogsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
 """One ten-minute window of one employee's tracked time."""
 type TimeSlot {
   id: ID!
@@ -44458,6 +44765,51 @@ input UpdateUserInput {
   lastTeamId: ID
   imageId: ID
   isActive: Boolean
+}
+
+"""
+A batch of accounts to file, as `bulkCreateUsers` takes it: the body `POST /user/bulk` accepts plus the
+retry key.
+
+Each item is a `CreateUserInput` and is filed exactly as `createUser` files one, so an item asking for a
+role the caller may not grant is refused for that reason while the others apply. `idempotencyKey` is the
+retry key of the batch, and it is optional: a GraphQL document can carry many mutations and a header
+cannot say which of them a key belongs to, so the key travels here.
+"""
+input BulkCreateUsersInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateUserInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of accounts adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer. An entry names an account by its id and carries
+nothing else of it.
+"""
+type BulkCreateUsersPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """One stock location and its role in the network."""

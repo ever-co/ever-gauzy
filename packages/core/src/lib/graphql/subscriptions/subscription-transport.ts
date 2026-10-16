@@ -5,6 +5,7 @@ import {
 	GraphQLError,
 	GraphQLSchema,
 	ValidationRule,
+	parse,
 	specifiedRules,
 	validate
 } from 'graphql';
@@ -61,6 +62,11 @@ export interface SubscriptionTransportOptions {
 	 * introspection policy and the depth, cost and alias ceilings.
 	 */
 	readonly validationRules?: readonly ValidationRule[];
+	/**
+	 * The token ceiling the HTTP transport's parser applies (`GRAPHQL_MAX_TOKENS`). A socket operation is parsed
+	 * and validated before any guard runs, exactly like an HTTP request, so it is held to the same ceiling.
+	 */
+	readonly maxTokens?: number;
 }
 
 /**
@@ -156,6 +162,7 @@ export function subscriptionTransportOptions(
  */
 export function createSubscriptionServerOptions(options: SubscriptionTransportOptions = {}): {
 	onConnect: (context: unknown) => boolean;
+	onSubscribe: (context: unknown, id: string, payload: { query?: unknown }) => readonly GraphQLError[] | void;
 	validate: (schema: GraphQLSchema, document: DocumentNode) => ReadonlyArray<GraphQLError>;
 	execute: (args: ExecutionArgs) => ReturnType<typeof executeInRequestContext>;
 	subscribe: (args: ExecutionArgs) => ReturnType<typeof subscribeInRequestContext>;
@@ -164,12 +171,40 @@ export function createSubscriptionServerOptions(options: SubscriptionTransportOp
 
 	return {
 		onConnect: (context: unknown) => acceptSubscriptionConnection(context),
+		// Refuses an oversized document before graphql-ws parses and validates it (review on #10651): the socket
+		// accepts a connection on the presence of a credential, and the guards authenticate it only when an operation
+		// executes — so, as on HTTP, the parse and the quadratic validation are pre-authentication work.
+		onSubscribe: (_context: unknown, _id: string, payload: { query?: unknown }) =>
+			refuseOversizedDocument(payload?.query, options.maxTokens),
 		validate: (schema: GraphQLSchema, document: DocumentNode) => validate(schema, document, rules),
 		// Each operation runs inside a request context of its own, built from the request the context
 		// factory gave it — the one the guards authenticate.
 		execute: (args: ExecutionArgs) => executeInRequestContext(args),
 		subscribe: (args: ExecutionArgs) => subscribeInRequestContext(args)
 	};
+}
+
+/**
+ * Refuses a document over the token ceiling, or answers nothing so graphql-ws goes on as it would.
+ *
+ * The document is parsed with the ceiling, which stops at it; a document under it is parsed again by graphql-ws,
+ * which is bounded by the same ceiling.
+ *
+ * @param query The operation's document, as the client sent it.
+ * @param maxTokens The ceiling; none means no refusal here.
+ * @returns The refusal, or undefined.
+ */
+export function refuseOversizedDocument(query: unknown, maxTokens?: number): readonly GraphQLError[] | void {
+	if (!maxTokens || typeof query !== 'string') {
+		return undefined;
+	}
+
+	try {
+		parse(query, { maxTokens });
+		return undefined;
+	} catch (error) {
+		return error instanceof GraphQLError ? [error] : undefined;
+	}
 }
 
 /**

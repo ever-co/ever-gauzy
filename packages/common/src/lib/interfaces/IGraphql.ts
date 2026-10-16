@@ -17,6 +17,8 @@ export interface GraphQLQueryLimitOptions {
 	maxAliases?: number;
 	/** Maximum number of operations in one HTTP request. */
 	maxBatchSize?: number;
+	/** Maximum number of lexical tokens in one document; the parser refuses a larger one before validation. */
+	maxTokens?: number;
 }
 
 /**
