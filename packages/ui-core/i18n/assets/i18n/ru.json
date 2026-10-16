@@ -2000,6 +2000,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Тип",
+		"KIND_ALL": "Все",
+		"KIND_HUMAN": "Люди",
+		"KIND_AGENT": "Агенты",
+		"AGENT_BADGE": "Агент",
+		"MANAGED_BY_EVER_WORKS": "Управляется Ever Works: имя и профиль этого агента меняются в Ever Works и синхронизируются с Gauzy.",
+		"MANAGED_EXTERNALLY": "Управляется извне: имя и профиль этого агента меняются в исходной системе и синхронизируются с Gauzy.",
+		"OPEN_MANAGED_AGENT": "Открыть страницу агента",
 		"HEADER": "Управление сотрудниками",
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"ACTIVE": "Активный",

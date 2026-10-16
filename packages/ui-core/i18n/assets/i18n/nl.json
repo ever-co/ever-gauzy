@@ -1949,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Soort",
+		"KIND_ALL": "Alle",
+		"KIND_HUMAN": "Personen",
+		"KIND_AGENT": "Agenten",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Beheerd door Ever Works: de naam en het profiel van deze agent worden in Ever Works gewijzigd en met Gauzy gesynchroniseerd.",
+		"MANAGED_EXTERNALLY": "Extern beheerd: de naam en het profiel van deze agent worden in het bronsysteem gewijzigd en met Gauzy gesynchroniseerd.",
+		"OPEN_MANAGED_AGENT": "Agentpagina openen",
 		"HEADER": "Beheer medewerkers",
 		"ADD_EMPLOYEE": "Voeg medewerker toe",
 		"ACTIVE": "Actief",

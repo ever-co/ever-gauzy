@@ -1948,6 +1948,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "النوع",
+		"KIND_ALL": "الكل",
+		"KIND_HUMAN": "الأشخاص",
+		"KIND_AGENT": "الوكلاء",
+		"AGENT_BADGE": "وكيل",
+		"MANAGED_BY_EVER_WORKS": "يُدار بواسطة Ever Works: يتم تغيير اسم هذا الوكيل وملفه الشخصي في Ever Works ومزامنتهما مع Gauzy.",
+		"MANAGED_EXTERNALLY": "يُدار خارجيًا: يتم تغيير اسم هذا الوكيل وملفه الشخصي في النظام الذي جاء منه ومزامنتهما مع Gauzy.",
+		"OPEN_MANAGED_AGENT": "فتح صفحة الوكيل",
 		"HEADER": "إدارة الموظفين",
 		"ADD_EMPLOYEE": "إضافة موظف",
 		"ACTIVE": "نشط",
