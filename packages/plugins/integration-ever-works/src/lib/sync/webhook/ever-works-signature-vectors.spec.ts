@@ -8,11 +8,15 @@
  */
 // The function itself, from its source: `@gauzy/core`'s barrel boots the whole application.
 import { verifyWebhookSignature } from '../../../../../../core/src/lib/webhook/webhook-signature';
-import vectors from '../../testing/contract/webhook-signature-vectors.test.json';
-import eventsPage from '../../testing/contract/events-page.test.json';
-import taskUpdated from '../../testing/contract/task.updated.test.json';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { MockEverWorksServer } from '../../testing/mock-ever-works.server';
 import { compareSeq, EverWorksEnvelopeError, parseEverWorksEnvelope } from '../inbound/ever-works-envelope';
+
+const fixture = (name: string) => JSON.parse(readFileSync(join(__dirname, '../../testing/contract', name), 'utf8'));
+const vectors = fixture('webhook-signature-vectors.test.json') as { contractVersion: string; header: string; vectors: unknown[] };
+const eventsPage = fixture('events-page.test.json') as { events: unknown[] };
+const taskUpdated = fixture('task.updated.test.json') as Record<string, unknown>;
 
 type Vector = { name: string; secret: string; body: string; header: string; now: number; expected: boolean; toleranceSeconds: number };
 

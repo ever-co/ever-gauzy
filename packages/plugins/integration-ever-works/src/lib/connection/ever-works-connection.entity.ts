@@ -35,20 +35,20 @@ export enum EverWorksConnectionStatus {
 export class EverWorksConnection extends TenantOrganizationBaseEntity {
 	/** `api_key` now; `ever_id` once one-click connect through Ever ID exists. */
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EverWorksAuthMode.API_KEY })
-	authMode: EverWorksAuthMode;
+	authMode!: EverWorksAuthMode;
 
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 20, default: EverWorksConnectionStatus.ACTIVE })
-	status: EverWorksConnectionStatus;
+	status!: EverWorksConnectionStatus;
 
 	/** The Ever Works API base URL (`https://…/api`); `/integrations/v1` is appended per call. */
 	@MultiORMColumn({ type: 'varchar', length: 2048 })
-	apiBaseUrl: string;
+	apiBaseUrl!: string;
 
 	/** The Ever Works tenant the key belongs to (from `whoami`); a rotated key must name the same one. */
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 64 })
-	ewTenantId: string;
+	ewTenantId!: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	ewTenantSlug?: string | null;
@@ -65,7 +65,7 @@ export class EverWorksConnection extends TenantOrganizationBaseEntity {
 
 	/** The integration key, encrypted. */
 	@MultiORMColumn({ type: 'text' })
-	apiKeyEncrypted: string;
+	apiKeyEncrypted!: string;
 
 	/** The key's scopes (JSON `string[]`). */
 	@MultiORMColumn({ type: 'text', nullable: true })

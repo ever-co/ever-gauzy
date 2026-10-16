@@ -5,7 +5,8 @@ export type EverWorksDialect = 'postgres' | 'sqlite' | 'mysql';
 
 /** The dialect of a query runner; anything else is refused (Gauzy supports these three). */
 export function dialectOf(queryRunner: QueryRunner): EverWorksDialect {
-	const type = queryRunner.connection.options.type;
+	// A string: TypeORM 1 names no 'sqlite' driver, but Gauzy's DB_TYPE=sqlite runs on better-sqlite3.
+	const type = String(queryRunner.connection.options.type);
 	if (type === 'postgres') return 'postgres';
 	if (type === 'sqlite' || type === 'better-sqlite3' || type === 'sqljs') return 'sqlite';
 	if (type === 'mysql' || type === 'mariadb') return 'mysql';

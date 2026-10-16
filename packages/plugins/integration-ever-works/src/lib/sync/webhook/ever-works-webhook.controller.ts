@@ -75,7 +75,7 @@ export class EverWorksWebhookController {
 		if (raw.length > EVER_WORKS_WEBHOOK_MAX_BYTES) throw new BadRequestException('The webhook body is too large.');
 		const secret = this.connections.webhookSecret(connection);
 		const body = raw.toString('utf8');
-		if (!secret || !signature || !verifyWebhookSignature(secret, body, signature)) {
+		if (!secret || !signature || !this.verified(secret, body, signature)) {
 			throw new UnauthorizedException('Invalid or missing Ever Works webhook signature.');
 		}
 		let envelope;
@@ -96,5 +96,14 @@ export class EverWorksWebhookController {
 			.update({ id: connection.id }, { lastWebhookAt: new Date() } as never)
 			.catch(() => undefined);
 		return { accepted: true, duplicate };
+	}
+
+	/** A header the verifier cannot read is a mismatch (401), never a 500 that Ever Works would retry. */
+	private verified(secret: string, body: string, signature: string): boolean {
+		try {
+			return verifyWebhookSignature(secret, body, signature);
+		} catch {
+			return false;
+		}
 	}
 }

@@ -63,16 +63,16 @@ export enum EverWorksOutboundStatus {
 export class EverWorksEntityLink extends TenantOrganizationBaseEntity {
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 36 })
-	integrationTenantId: ID;
+	integrationTenantId!: ID;
 
 	@MultiORMColumn({ type: 'varchar', length: 32 })
-	entityType: EverWorksLinkType;
+	entityType!: EverWorksLinkType;
 
 	@MultiORMColumn({ type: 'varchar', length: 36 })
-	gauzyId: ID;
+	gauzyId!: ID;
 
 	@MultiORMColumn({ type: 'varchar', length: 64 })
-	ewId: string;
+	ewId!: string;
 
 	@MultiORMColumn({ type: 'integer', nullable: true })
 	ewVersion?: number | null;
@@ -99,7 +99,7 @@ export class EverWorksEntityLink extends TenantOrganizationBaseEntity {
 
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EverWorksLinkState.OK })
-	state: EverWorksLinkState;
+	state!: EverWorksLinkState;
 
 	@MultiORMColumn({ type: 'text', nullable: true })
 	lastError?: string | null;
@@ -113,23 +113,23 @@ export class EverWorksEntityLink extends TenantOrganizationBaseEntity {
 export class EverWorksInboundEvent extends TenantOrganizationBaseEntity {
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 36 })
-	connectionId: ID;
+	connectionId!: ID;
 
 	@MultiORMColumn({ type: 'varchar', length: 64 })
-	eventId: string;
+	eventId!: string;
 
 	/** The global feed position (compared as an integer). */
 	@MultiORMColumn({ type: 'bigint' })
-	seq: string;
+	seq!: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 64 })
-	type: string;
+	type!: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 32 })
-	aggregateType: string;
+	aggregateType!: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 64 })
-	aggregateId: string;
+	aggregateId!: string;
 
 	@MultiORMColumn({ type: 'integer', nullable: true })
 	aggregateVersion?: number | null;
@@ -139,17 +139,17 @@ export class EverWorksInboundEvent extends TenantOrganizationBaseEntity {
 
 	/** The envelope as received (JSON). */
 	@MultiORMColumn({ type: 'text' })
-	payload: string;
+	payload!: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 16 })
-	receivedVia: 'webhook' | 'feed' | 'initial';
+	receivedVia!: 'webhook' | 'feed' | 'initial';
 
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EverWorksInboundStatus.PENDING })
-	status: EverWorksInboundStatus;
+	status!: EverWorksInboundStatus;
 
 	@MultiORMColumn({ type: 'integer', default: 0 })
-	attempts: number;
+	attempts!: number;
 
 	@MultiORMColumn({ nullable: true })
 	availableAt?: Date;
@@ -169,16 +169,16 @@ export class EverWorksInboundEvent extends TenantOrganizationBaseEntity {
 export class EverWorksOutboundChange extends TenantOrganizationBaseEntity {
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 36 })
-	integrationTenantId: ID;
+	integrationTenantId!: ID;
 
 	@MultiORMColumn({ type: 'varchar', length: 32 })
-	entityType: EverWorksLinkType;
+	entityType!: EverWorksLinkType;
 
 	@MultiORMColumn({ type: 'varchar', length: 36 })
-	gauzyId: ID;
+	gauzyId!: ID;
 
 	@MultiORMColumn({ type: 'varchar', length: 8, default: 'upsert' })
-	op: 'upsert' | 'delete';
+	op!: 'upsert' | 'delete';
 
 	/** JSON `string[]`: fields the trigger said changed (a hint only). */
 	@MultiORMColumn({ type: 'text', nullable: true })
@@ -189,10 +189,10 @@ export class EverWorksOutboundChange extends TenantOrganizationBaseEntity {
 
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EverWorksOutboundStatus.PENDING })
-	status: EverWorksOutboundStatus;
+	status!: EverWorksOutboundStatus;
 
 	@MultiORMColumn({ type: 'integer', default: 0 })
-	attempts: number;
+	attempts!: number;
 
 	@MultiORMColumn({ nullable: true })
 	availableAt?: Date;
@@ -212,7 +212,7 @@ export class EverWorksSyncLog extends TenantOrganizationBaseEntity {
 	connectionId?: ID | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 16 })
-	direction: 'inbound' | 'outbound' | 'system';
+	direction!: 'inbound' | 'outbound' | 'system';
 
 	@MultiORMColumn({ type: 'varchar', length: 32, nullable: true })
 	entityType?: string | null;
@@ -224,11 +224,11 @@ export class EverWorksSyncLog extends TenantOrganizationBaseEntity {
 	ewId?: string | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 64 })
-	action: string;
+	action!: string;
 
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 16 })
-	status: 'ok' | 'skipped' | 'conflict' | 'error';
+	status!: 'ok' | 'skipped' | 'conflict' | 'error';
 
 	@MultiORMColumn({ type: 'text', nullable: true })
 	message?: string | null;
