@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { PUBLICATION_REFERENCES } from '../catalog.references';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
 import { Collection } from '../collection/collection.entity';
@@ -23,6 +26,49 @@ export class CollectionChannelService extends TenantAwareCrudService<CollectionC
 		readonly mikroOrmCollectionChannelRepository: MikroOrmCollectionChannelRepository
 	) {
 		super(typeOrmCollectionChannelRepository, mikroOrmCollectionChannelRepository);
+	}
+
+	/**
+	 * Refuses publication rows, or a change to one, naming a channel of another tenant (`catalog.references.ts`).
+	 *
+	 * @param payloads The row or rows, or the change set, about to be written.
+	 * @throws ForbiddenException when a channel belongs to another tenant.
+	 */
+	private async assertChannelNotForeign(payloads: unknown): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmCollectionChannelRepository.manager,
+			payloads,
+			PUBLICATION_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
+	 * Creates a collection publication row, refusing a channel of another tenant.
+	 *
+	 * @param entity The row to create.
+	 * @returns The created row.
+	 */
+	public async create(entity: DeepPartial<CollectionChannel>): Promise<CollectionChannel> {
+		await this.assertChannelNotForeign(entity);
+
+		return super.create(entity);
+	}
+
+	/**
+	 * Changes a collection publication row, refusing a change that points it at a channel of another tenant.
+	 *
+	 * @param id The row, or the conditions that select the rows to change.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<CollectionChannel>,
+		partialEntity: QueryDeepPartialEntity<CollectionChannel>
+	): Promise<CollectionChannel | UpdateResult> {
+		await this.assertChannelNotForeign(partialEntity);
+
+		return super.update(id, partialEntity);
 	}
 
 	/**
@@ -69,6 +115,7 @@ export class CollectionChannelService extends TenantAwareCrudService<CollectionC
 		const tenantId = RequestContext.currentTenantId();
 
 		await assertInCallerScope(this.typeOrmCollectionChannelRepository.manager, Collection, collectionId, 'collection');
+		await this.assertChannelNotForeign(items);
 
 		const existing = await this.typeOrmCollectionChannelRepository.find({
 			where: { collectionId, ...callerScope() }
