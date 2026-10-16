@@ -859,6 +859,152 @@ describe.each([
 				harness.registry.unregister('orm-parity.probe');
 			}
 		});
+
+		/** One pass of the dispatcher, as the queue runs it. */
+		const dispatch = () =>
+			harness.worker.handleDispatch({ data: { requestedAt: new Date().toISOString() } } as Job<never>);
+
+		/** A consumer of `order.placed` that records each run, and refuses while `refusing()` says so. */
+		const probe = (key: string, ran: string[], refusing: () => boolean = () => false) => ({
+			key,
+			events: ['order.placed'],
+			handle: async () => {
+				ran.push(key);
+
+				if (refusing()) {
+					throw new Error(`${key} is unavailable`);
+				}
+			}
+		});
+
+		/** The record of one consumer, as the database holds it. */
+		const recordOf = async (key: string): Promise<Row> =>
+			(
+				await harness.query(`SELECT "id", "status" FROM "event_delivery" WHERE "consumerKey" = ?`, [
+					`subscriber:${key}`
+				])
+			)[0];
+
+		/** Replays one record as an operator of the event's own tenant and organization. */
+		const replayAsOperator = async (id: ID): Promise<void> => {
+			const tenant = jest.spyOn(harness.requestContext, 'currentTenantId').mockReturnValue(TENANT);
+			const organization = jest.spyOn(harness.requestContext, 'currentOrganizationId').mockReturnValue(ORG);
+
+			try {
+				await harness.service.replayDelivery(id);
+			} finally {
+				tenant.mockRestore();
+				organization.mockRestore();
+			}
+		};
+
+		it('hands a replayed record to its consumer again once the row was published, and runs no other consumer', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+			harness.registry.register(probe('orm-parity.sibling', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				expect(ran).toEqual(['orm-parity.replayed', 'orm-parity.sibling']);
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PUBLISHED }
+				]);
+
+				await replayAsOperator((await recordOf('orm-parity.replayed')).id);
+
+				// The row is back in the queue, due now and with its budget restored.
+				expect(
+					await harness.query(`SELECT "status", "attemptCount", "publishedAt" FROM "event_outbox"`)
+				).toEqual([{ status: EventOutboxStatus.PENDING, attemptCount: 0, publishedAt: null }]);
+
+				await dispatch();
+				await dispatch();
+
+				expect(ran).toEqual(['orm-parity.replayed', 'orm-parity.sibling', 'orm-parity.replayed']);
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PUBLISHED }
+				]);
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PUBLISHED);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+				harness.registry.unregister('orm-parity.sibling');
+			}
+		});
+
+		it('hands a replayed record to its consumer again once the row was dead-lettered, and skips the settled and the stopped ones', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+			let relayDown = true;
+
+			harness.registry.register(probe('orm-parity.replayed', ran, () => relayDown));
+			harness.registry.register(probe('orm-parity.sibling', ran));
+			harness.registry.register(probe('orm-parity.stopped', ran, () => true));
+
+			try {
+				const [event] = await appendCommitted(placed());
+
+				await dispatch();
+
+				expect(ran).toEqual(['orm-parity.replayed', 'orm-parity.sibling', 'orm-parity.stopped']);
+
+				// The operator stops both refusing consumers, and the row's own budget runs out.
+				await harness.service.markDeliveryDead((await recordOf('orm-parity.replayed')).id, 'the relay is down');
+				await harness.service.markDeliveryDead((await recordOf('orm-parity.stopped')).id, 'retired');
+				await harness.service.markDead(event.id as ID, 'budget spent');
+
+				relayDown = false;
+				await replayAsOperator((await recordOf('orm-parity.replayed')).id);
+				await dispatch();
+
+				// Only the replayed consumer runs: the sibling acknowledged the event and the other one stays stopped.
+				expect(ran).toEqual([
+					'orm-parity.replayed',
+					'orm-parity.sibling',
+					'orm-parity.stopped',
+					'orm-parity.replayed'
+				]);
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PUBLISHED);
+				expect((await recordOf('orm-parity.stopped')).status).toBe(EventOutboxStatus.DEAD);
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PUBLISHED }
+				]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+				harness.registry.unregister('orm-parity.sibling');
+				harness.registry.unregister('orm-parity.stopped');
+			}
+		});
+
+		it('leaves a row that is still waiting as it is when one of its records is replayed', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran, () => true));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const [before] = await harness.query(
+					`SELECT "status", "attemptCount", "availableAt" FROM "event_outbox"`
+				);
+
+				expect(before.status).toBe(EventOutboxStatus.FAILED);
+
+				await replayAsOperator((await recordOf('orm-parity.replayed')).id);
+
+				// Its next claim reaches the record; the backoff it is waiting out is not cut short.
+				expect(
+					await harness.query(`SELECT "status", "attemptCount", "availableAt" FROM "event_outbox"`)
+				).toEqual([before]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
 	});
 });
 
