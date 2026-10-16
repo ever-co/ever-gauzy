@@ -15,6 +15,7 @@ import { EverWorksCatalogService } from './ever-works-catalog.service';
 import { readEverWorksConfig } from './ever-works-config';
 import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
+import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
 import { EverWorksMappingController } from './mapping/ever-works-mapping.controller';
@@ -61,7 +62,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly loop: EverWorksSyncLoop,
 		private readonly agents: EverWorksAgentsService,
 		private readonly teams: EverWorksTeamsService,
-		private readonly projects: EverWorksProjectsService
+		private readonly projects: EverWorksProjectsService,
+		private readonly inbox: EverWorksInboxService
 	) {}
 
 	onModuleInit(): void {
@@ -71,6 +73,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.loop.registerSweeper(this.teams);
 		this.applier.register(this.projects);
 		this.loop.registerSweeper(this.projects);
+		// EW inbox items → the Gauzy Inbox (skipped while the Gauzy Inbox is off).
+		this.applier.register(this.inbox);
 	}
 }
 
@@ -122,6 +126,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksAgentsService,
 		EverWorksTeamsService,
 		EverWorksProjectsService,
+		EverWorksInboxService,
 		EverWorksTeamCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,

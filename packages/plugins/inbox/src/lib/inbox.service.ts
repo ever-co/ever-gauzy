@@ -260,6 +260,13 @@ export class InboxService implements IInboxItemWriter {
 					}
 				);
 				routed = result?.routed || 'delivered';
+				// Another answer won at the source: record that one (the item shows what was decided there).
+				if (result?.response) {
+					response.text = result.response.text ?? null;
+					response.optionId = result.response.optionId ?? null;
+					if (result.response.answeredAt)
+						response.answeredAt = new Date(result.response.answeredAt).toISOString();
+				}
 			} else if (!LOCAL_SOURCES.includes(item.source)) {
 				throw new ServiceUnavailableException(
 					'The source of this item is not connected, so the reply cannot be delivered. Try again later.'

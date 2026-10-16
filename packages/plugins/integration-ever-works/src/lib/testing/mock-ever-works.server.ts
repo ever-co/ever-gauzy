@@ -92,6 +92,8 @@ export class MockEverWorksServer {
 	/** Organization members and agents (contract DTOs) the org-scoped routes answer from. */
 	readonly members: Array<Record<string, unknown>> = [];
 	readonly agents = new Map<string, Record<string, unknown>>();
+	/** Inbox items (contract `inbox-item.schema.json`, CR-4) the inbox routes answer from. */
+	readonly inboxItems = new Map<string, Record<string, unknown>>();
 	readonly requests: MockEverWorksRecordedRequest[] = [];
 	readonly deliveries: MockEverWorksDelivery[] = [];
 	readonly failures: MockEverWorksFailure[] = [];
@@ -283,7 +285,131 @@ export class MockEverWorksServer {
 			const agent = this.agents.get(path.slice('/agents/'.length));
 			return agent && agent['organizationId'] === org?.id ? ok(agent) : MockEverWorksServer.error(404, 'not_found', 'No such agent.');
 		}
+		if (path === '/inbox/items' || path.startsWith('/inbox/items/')) {
+			return this.inboxRoute(method, path, query, body, headers, scoped, org?.id ?? null);
+		}
 		return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
+	}
+
+	/**
+	 * The inbox routes (P3, CR-4): reads with `inbox:read`; reply and state with `inbox:write`, acting as the
+	 * item's recipient (`X-Act-As-User`, else `403 act_as_forbidden`). An answered or archived item refuses a
+	 * reply with `409 conflict`. Writes record `inbox.item.answered` / `inbox.item.state_changed`.
+	 */
+	private inboxRoute(
+		method: string,
+		path: string,
+		query: Record<string, string>,
+		body: unknown,
+		headers: Record<string, string>,
+		scoped: (scope: string) => EverWorksHttpResponse | null,
+		organizationId: string | null
+	): EverWorksHttpResponse {
+		const ok = (data: unknown, status = 200): EverWorksHttpResponse => ({ status, headers: { 'content-type': 'application/json' }, data });
+		const [, , id, action] = path.split('/'); // ['', 'inbox', 'items', id?, action?]
+		if (method === 'GET' && !id) {
+			const denied = scoped('inbox:read');
+			if (denied) return denied;
+			const rows = [...this.inboxItems.values()].filter(
+				(row) =>
+					row['organizationId'] === organizationId &&
+					(!query['recipientUserId'] || row['recipientUserId'] === query['recipientUserId']) &&
+					(query['includeArchived'] === 'true' || row['status'] !== 'archived') &&
+					(!query['updatedSince'] || String(row['updatedAt']) >= query['updatedSince'])
+			);
+			return ok(MockEverWorksServer.page(rows, query));
+		}
+		const item = id ? this.inboxItems.get(decodeURIComponent(id)) : undefined;
+		if (!item || item['organizationId'] !== organizationId) {
+			return scoped(method === 'GET' ? 'inbox:read' : 'inbox:write') ?? MockEverWorksServer.error(404, 'not_found', 'No such inbox item.');
+		}
+		if (method === 'GET' && !action) return scoped('inbox:read') ?? ok(item);
+		const denied = scoped('inbox:write');
+		if (denied) return denied;
+		if (headers['x-act-as-user'] !== item['recipientUserId']) {
+			return MockEverWorksServer.error(403, 'act_as_forbidden', 'Only the recipient answers.', { reason: 'not_the_recipient' });
+		}
+		const input = (body ?? {}) as { text?: string | null; optionId?: string | null; unread?: boolean; archived?: boolean };
+		const now = new Date().toISOString();
+		if (method === 'POST' && action === 'reply') {
+			if (item['status'] !== 'open') return MockEverWorksServer.error(409, 'conflict', 'The item was already answered or archived.');
+			const options = (item['options'] as Array<{ id: string }> | null) ?? [];
+			if (input.optionId && options.length && !options.some((option) => option.id === input.optionId)) {
+				return MockEverWorksServer.error(400, 'validation_failed', 'optionId is not one of the options.');
+			}
+			Object.assign(item, {
+				status: 'answered',
+				unread: false,
+				answeredAt: now,
+				answerText: input.text ?? null,
+				answerOptionId: input.optionId ?? null,
+				version: Number(item['version']) + 1,
+				updatedAt: now
+			});
+			void this.emitInbox('inbox.item.answered', item);
+			const routed = item['kind'] === 'approval' ? (input.optionId === 'reject' ? 'rejected' : 'approved') : 'resumed';
+			return ok({ item, routed, restart: item['kind'] === 'question' ? 'resumed' : 'none' });
+		}
+		if (method === 'PATCH' && action === 'state') {
+			if (input.unread === undefined && input.archived === undefined) {
+				return MockEverWorksServer.error(400, 'validation_failed', 'State a change: unread or archived.');
+			}
+			if (input.unread !== undefined) item['unread'] = input.unread;
+			if (input.archived !== undefined) item['status'] = input.archived ? 'archived' : item['answeredAt'] ? 'answered' : 'open';
+			Object.assign(item, { version: Number(item['version']) + 1, updatedAt: now });
+			void this.emitInbox('inbox.item.state_changed', item);
+			return ok(item);
+		}
+		return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
+	}
+
+	/** Adds (or replaces) an inbox item (contract DTO) and returns it; `emitInbox` records its event. */
+	addInboxItem(organizationId: string, item: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+		const id = (item['id'] as string) ?? randomUUID();
+		const now = new Date().toISOString();
+		const row = {
+			id,
+			organizationId,
+			version: 1,
+			createdAt: now,
+			updatedAt: now,
+			recipientUserId: randomUUID(),
+			kind: 'question',
+			title: 'Which pricing tier should the landing page lead with?',
+			body: 'The brief lists three tiers but does not say which one to feature.',
+			options: [
+				{ id: 'pro', label: 'Pro', recommended: true },
+				{ id: 'team', label: 'Team' }
+			],
+			sourceType: 'agent-run',
+			status: 'open',
+			unread: true,
+			answeredAt: null,
+			answerText: null,
+			answerOptionId: null,
+			agentId: null,
+			agentRunId: randomUUID(),
+			taskId: null,
+			workId: null,
+			escalationId: null,
+			proposalId: null,
+			webUrl: `https://app.example.test/inbox?id=${id}`,
+			...item
+		};
+		this.inboxItems.set(id, row);
+		return row;
+	}
+
+	/** Records an `inbox.item.*` event of an item (its `data` is the item DTO). */
+	emitInbox(type: string, item: Record<string, unknown>, origin: EverWorksEventEnvelope['origin'] = null): Promise<EverWorksEventEnvelope> {
+		return this.emit({
+			type,
+			organizationId: item['organizationId'] as string,
+			aggregate: { type: 'inbox_item', id: item['id'] as string, version: Number(item['version']) },
+			actor: { type: 'user', id: item['recipientUserId'] as string },
+			origin,
+			data: { ...item }
+		});
 	}
 
 	/** A list page (B.1): `?cursor=<offset>&limit=` → `{data, nextCursor, hasMore}`. */

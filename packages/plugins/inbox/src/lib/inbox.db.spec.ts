@@ -499,6 +499,25 @@ describe('Inbox on SQLite', () => {
 			expect(answered.response?.routed).toBe('resumed the agent run');
 		});
 
+		it('when another answer won at the source, that answer is recorded', async () => {
+			const onReply = jest.fn(async () => ({
+				routed: 'already-decided',
+				response: { text: 'Decided in the app', optionId: 'no', answeredAt: '2026-10-16T09:05:00.000Z' }
+			}));
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });
+			const { item } = await question({ source: InboxItemSourceEnum.EVER_WORKS });
+
+			const answered = await service.reply(item.id as string, { optionId: 'yes' });
+
+			expect(answered.status).toBe(InboxItemStatusEnum.ANSWERED);
+			expect(answered.response).toMatchObject({
+				optionId: 'no',
+				text: 'Decided in the app',
+				answeredAt: '2026-10-16T09:05:00.000Z',
+				routed: 'already-decided'
+			});
+		});
+
 		it('a reply the source took stays answered even when recording where it went fails', async () => {
 			const onReply = jest.fn(async () => ({ routed: 'resumed the agent run' }));
 			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });

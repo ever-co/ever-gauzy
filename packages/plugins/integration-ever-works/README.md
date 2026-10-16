@@ -186,6 +186,16 @@ and answered `202`.
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
   enabled and works not switched off.
+- **Inbox (where the Gauzy Inbox is loaded).** Ever Works inbox items
+  (questions, approvals, escalations, notices; `inbox.item.*`, served to a key
+  with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
+  Gauzy user paired with the recipient, with the linked task, project and
+  agent. An item whose recipient is not paired yet waits (deferred, retried
+  hourly) until the People tab pairs them. A reply in Gauzy goes to Ever Works
+  at once, acting as the recipient (`inbox:write`); an item already decided
+  there shows the answer Ever Works holds. Read / unread and archive follow
+  to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
+  events are skipped.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
