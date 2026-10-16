@@ -2710,7 +2710,13 @@
 					"REQUIRE_PLAN": "Plan zur Zeiterfassung erforderlich",
 					"NOT_FOUND": "Dieses Team wurde nicht gefunden",
 					"LOAD_FAILED": "Das Team konnte nicht geladen werden",
-					"RETRY": "Erneut versuchen"
+					"RETRY": "Erneut versuchen",
+					"OPEN_TASK_DETAILS": "Details zu {{ title }} anzeigen",
+					"OPEN_TASK_PAGE": "Seite von {{ title }} öffnen",
+					"OPEN_TASK_PAGE_SHORT": "Aufgabenseite öffnen",
+					"UNASSIGNED": "Nicht zugewiesen",
+					"SHOW_ALL": "Alle anzeigen",
+					"SHOW_LESS": "Weniger anzeigen"
 				}
 			}
 		},

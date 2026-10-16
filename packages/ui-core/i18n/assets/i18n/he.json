@@ -2742,7 +2742,13 @@
 					"REQUIRE_PLAN": "דרוש תכנון למעקב אחר זמן",
 					"NOT_FOUND": "צוות זה לא נמצא",
 					"LOAD_FAILED": "לא ניתן לטעון את הצוות",
-					"RETRY": "נסה שוב"
+					"RETRY": "נסה שוב",
+					"OPEN_TASK_DETAILS": "הצג פרטים של {{ title }}",
+					"OPEN_TASK_PAGE": "פתח את הדף של {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "פתח את דף המשימה",
+					"UNASSIGNED": "לא הוקצתה",
+					"SHOW_ALL": "הצג הכל",
+					"SHOW_LESS": "הצג פחות"
 				}
 			}
 		},

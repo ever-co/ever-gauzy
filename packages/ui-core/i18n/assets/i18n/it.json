@@ -2714,7 +2714,13 @@
 					"REQUIRE_PLAN": "Richiedi un piano per tracciare il tempo",
 					"NOT_FOUND": "Impossibile trovare questo team",
 					"LOAD_FAILED": "Impossibile caricare il team",
-					"RETRY": "Riprova"
+					"RETRY": "Riprova",
+					"OPEN_TASK_DETAILS": "Mostra i dettagli di {{ title }}",
+					"OPEN_TASK_PAGE": "Apri la pagina di {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Apri la pagina dell'attività",
+					"UNASSIGNED": "Non assegnata",
+					"SHOW_ALL": "Mostra tutto",
+					"SHOW_LESS": "Mostra meno"
 				}
 			}
 		},

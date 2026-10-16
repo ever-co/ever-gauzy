@@ -2716,7 +2716,13 @@
 					"REQUIRE_PLAN": "Exigir un plan para registrar tiempo",
 					"NOT_FOUND": "No se encontró este equipo",
 					"LOAD_FAILED": "No se pudo cargar el equipo",
-					"RETRY": "Reintentar"
+					"RETRY": "Reintentar",
+					"OPEN_TASK_DETAILS": "Ver detalles de {{ title }}",
+					"OPEN_TASK_PAGE": "Abrir la página de {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Abrir página de la tarea",
+					"UNASSIGNED": "Sin asignar",
+					"SHOW_ALL": "Mostrar todo",
+					"SHOW_LESS": "Mostrar menos"
 				}
 			}
 		},

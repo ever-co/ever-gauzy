@@ -2714,7 +2714,13 @@
 					"REQUIRE_PLAN": "Plan vereist om tijd te registreren",
 					"NOT_FOUND": "Dit team is niet gevonden",
 					"LOAD_FAILED": "Het team kon niet worden geladen",
-					"RETRY": "Opnieuw proberen"
+					"RETRY": "Opnieuw proberen",
+					"OPEN_TASK_DETAILS": "Details van {{ title }} tonen",
+					"OPEN_TASK_PAGE": "Pagina van {{ title }} openen",
+					"OPEN_TASK_PAGE_SHORT": "Taakpagina openen",
+					"UNASSIGNED": "Niet toegewezen",
+					"SHOW_ALL": "Alles tonen",
+					"SHOW_LESS": "Minder tonen"
 				}
 			}
 		},

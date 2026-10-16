@@ -2713,7 +2713,13 @@
 					"REQUIRE_PLAN": "Wymagaj planu do śledzenia czasu",
 					"NOT_FOUND": "Nie znaleziono tego zespołu",
 					"LOAD_FAILED": "Nie udało się wczytać zespołu",
-					"RETRY": "Spróbuj ponownie"
+					"RETRY": "Spróbuj ponownie",
+					"OPEN_TASK_DETAILS": "Pokaż szczegóły: {{ title }}",
+					"OPEN_TASK_PAGE": "Otwórz stronę: {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Otwórz stronę zadania",
+					"UNASSIGNED": "Nieprzypisane",
+					"SHOW_ALL": "Pokaż wszystkie",
+					"SHOW_LESS": "Pokaż mniej"
 				}
 			}
 		},

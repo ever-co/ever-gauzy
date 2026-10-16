@@ -2714,7 +2714,13 @@
 					"REQUIRE_PLAN": "计时前需要制定计划",
 					"NOT_FOUND": "找不到此团队",
 					"LOAD_FAILED": "无法加载团队",
-					"RETRY": "重试"
+					"RETRY": "重试",
+					"OPEN_TASK_DETAILS": "查看 {{ title }} 的详情",
+					"OPEN_TASK_PAGE": "打开 {{ title }} 的页面",
+					"OPEN_TASK_PAGE_SHORT": "打开任务页面",
+					"UNASSIGNED": "未分配",
+					"SHOW_ALL": "显示全部",
+					"SHOW_LESS": "收起"
 				}
 			}
 		},

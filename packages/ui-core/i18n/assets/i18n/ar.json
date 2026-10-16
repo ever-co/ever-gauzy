@@ -2712,7 +2712,13 @@
 					"REQUIRE_PLAN": "يتطلب خطة لتتبع الوقت",
 					"NOT_FOUND": "تعذر العثور على هذا الفريق",
 					"LOAD_FAILED": "تعذر تحميل الفريق",
-					"RETRY": "إعادة المحاولة"
+					"RETRY": "إعادة المحاولة",
+					"OPEN_TASK_DETAILS": "عرض تفاصيل {{ title }}",
+					"OPEN_TASK_PAGE": "فتح صفحة {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "فتح صفحة المهمة",
+					"UNASSIGNED": "غير مسندة",
+					"SHOW_ALL": "عرض الكل",
+					"SHOW_LESS": "عرض أقل"
 				}
 			}
 		},
