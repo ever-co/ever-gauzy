@@ -653,6 +653,73 @@ describe.each([
 		});
 	});
 
+	describe('a dead-lettered delivery record', () => {
+		const claimOf = (event: EventOutbox) => ({
+			eventId: event.eventId as ID,
+			consumerKey: CONSUMER,
+			partitionKey: PARTITION,
+			sequence: 1,
+			tenantId: TENANT,
+			organizationId: ORG
+		});
+
+		it('is not handed back to its consumer, stopped by hand, until a replay writes it back', async () => {
+			const [event] = await appendCommitted(placed());
+			const first = await harness.service.claimDelivery(claimOf(event));
+
+			await harness.service.markDeliveryDead(first.delivery.id as ID, 'stopped by hand');
+
+			const again = await harness.service.claimDelivery(claimOf(event));
+
+			expect(again.claimed).toBe(false);
+			expect(again.delivery.status).toBe(EventOutboxStatus.DEAD);
+			expect(
+				await harness.query(
+					`SELECT "status", "attemptCount", "lastError" FROM "event_delivery" WHERE "id" = ?`,
+					[first.delivery.id]
+				)
+			).toEqual([{ status: EventOutboxStatus.DEAD, attemptCount: 0, lastError: 'stopped by hand' }]);
+
+			jest.spyOn(harness.requestContext, 'currentTenantId').mockReturnValue(TENANT);
+			jest.spyOn(harness.requestContext, 'currentOrganizationId').mockReturnValue(ORG);
+			await harness.service.replayDelivery(first.delivery.id as ID);
+
+			// Control: the replay is what hands it over again.
+			expect((await harness.service.claimDelivery(claimOf(event))).claimed).toBe(true);
+		});
+
+		it('is reported dead-lettered by the runner once its budget is spent, and its consumer is not invoked again', async () => {
+			const [event] = await appendCommitted(placed());
+			const envelope = harness.service.toEnvelope(event);
+			const attempts: number[] = [];
+			const consumer = {
+				key: 'orm-parity.dead',
+				events: ['order.placed'],
+				maxAttempts: 1,
+				handle: async () => {
+					attempts.push(attempts.length + 1);
+					throw new Error('the projection store rejected the write');
+				}
+			};
+
+			await harness.registry.runOnce(consumer, envelope);
+			await harness.registry.runOnce(consumer, envelope);
+
+			const [record] = await harness.query(`SELECT "id", "status", "attemptCount" FROM "event_delivery"`);
+
+			expect(record).toMatchObject({ status: EventOutboxStatus.DEAD, attemptCount: 1 });
+
+			// The row is still retried for another consumer, so the pass reaches this one again.
+			const settled = await harness.registry.runOnce(consumer, envelope);
+
+			expect(settled.outcome).toBe('DEAD_LETTERED');
+			expect(attempts).toEqual([1, 2]);
+			expect(await harness.query(`SELECT "status", "attemptCount" FROM "event_delivery"`)).toEqual([
+				{ status: EventOutboxStatus.DEAD, attemptCount: 1 }
+			]);
+		});
+	});
+
 	describe('the scoped reads and the operator moves', () => {
 		beforeEach(() => {
 			jest.spyOn(harness.requestContext, 'currentTenantId').mockReturnValue(TENANT);
