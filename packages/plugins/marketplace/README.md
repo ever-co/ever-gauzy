@@ -136,19 +136,23 @@ surface refuses for a missing permission is refused here with the same
 permission, so a client cannot reach through GraphQL what REST would deny.
 
 The state changes themselves are emitted on the platform's transactional outbox
-— `seller.created`, `seller.verified`, `seller.activated`, `seller.suspended`,
-`seller.rejected`, `seller_offering.created`/`.updated`/`.withdrawn`,
+— `seller.created`, `seller.updated`, `seller.submitted`, `seller.verified`,
+`seller.activated`, `seller.suspended`, `seller.rejected`,
+`seller.offboarding-started`, `seller_offering.created`/`.updated`/`.withdrawn`,
 `seller.transaction.recorded`/`.settleable`/`.reversed`,
 `seller_payout.created`/`.paid`/`.failed`/`.canceled` and
 `seller_settlement.recorded`/`.closed` — in the same transaction as the row that
 changed, which is what lets a subscriber, a projection or a scheduled job
-observe the marketplace without polling it. Three state changes have no event
-because the catalogue names none for them, and inventing a name would put this
-package's vocabulary into a catalogue the whole platform reads: a seller profile
-edit, a ledger hold and the `OFFBOARDING` state a seller enters before the
-operation's later steps run (`seller.offboarded` is emitted when the
-`SELLER_OFFBOARD` operation completes, which is the operation runtime's step,
-not this package's).
+observe the marketplace without polling it. `seller.updated` names the members a
+profile edit wrote, never their values. A ledger hold has no event of its own;
+`seller.offboarded` is the `SELLER_OFFBOARD` operation's to emit when its later
+steps complete, which is the operation runtime's step, not this package's.
+
+GraphQL streams them as typed fields — `sellerChanged`, `sellerOfferingChanged`,
+`sellerPayoutChanged`, `sellerSettlementChanged` and `sellerTransactionChanged` —
+each delivered on the subscriber's own tenant topic, re-read as the subscriber,
+and narrowed to its own seller when the subscriber is one of a seller's people,
+exactly as the queries narrow it.
 
 ## Permissions and features
 

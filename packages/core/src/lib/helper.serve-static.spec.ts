@@ -19,6 +19,9 @@ describe('serving /public/ (import archives)', () => {
 	let baseUrl: string;
 	let server: import('node:http').Server;
 	const archiveName = generateImportArchiveFileName();
+	// Loading the helper and starting a server is quick alone, but the shared CI runner can take longer than
+	// jest's default 5 s for a hook when it runs many suites at once.
+	const HOOK_TIMEOUT_MS = 30_000;
 
 	beforeAll(async () => {
 		root = await fsp.mkdtemp(path.join(os.tmpdir(), 'gauzy-public-'));
@@ -35,12 +38,16 @@ describe('serving /public/ (import archives)', () => {
 			server = app.listen(0, '127.0.0.1', () => resolve());
 		});
 		baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-	});
+	}, HOOK_TIMEOUT_MS);
 
 	afterAll(async () => {
-		await new Promise<void>((resolve) => server.close(() => resolve()));
-		await fsp.rm(root, { recursive: true, force: true });
-	});
+		if (server) {
+			await new Promise<void>((resolve) => server.close(() => resolve()));
+		}
+		if (root) {
+			await fsp.rm(root, { recursive: true, force: true });
+		}
+	}, HOOK_TIMEOUT_MS);
 
 	it('does not serve an uploaded import archive, even to a caller who knows its name', async () => {
 		const response = await fetch(`${baseUrl}/public/import/${archiveName}`);

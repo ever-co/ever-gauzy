@@ -445,6 +445,26 @@ describe('ChannelWarehouseService — assigning locations to a sales context (do
 		expect(fixture.rows()).toHaveLength(1);
 	});
 
+	it('never removes another tenant’s assignment (SEC-B-01 = SEC-D-10)', async () => {
+		// The failure scenario: tenant A unassigns B's channel/location pair by its two ids. The delete named no tenant,
+		// so B's row went — and because a context with no rows is unrestricted, B's channel could then draw stock from
+		// every one of B's locations.
+		const fixture = assignmentFixture([assignmentRow('theirs', WAREHOUSE, { tenantId: OTHER_TENANT })]);
+
+		await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(false);
+
+		expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'theirs', tenantId: OTHER_TENANT })]);
+	});
+
+	it('answers whether it removed an assignment', async () => {
+		const fixture = assignmentFixture([assignmentRow('ours', WAREHOUSE)]);
+
+		await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(true);
+		// What is not there any more is the state the caller asked for; the answer says nothing was removed.
+		await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(false);
+		expect(fixture.rows()).toHaveLength(0);
+	});
+
 	it('lists the assignments it holds', async () => {
 		const fixture = assignmentFixture([assignmentRow('one', WAREHOUSE), assignmentRow('two', OTHER_WAREHOUSE)]);
 

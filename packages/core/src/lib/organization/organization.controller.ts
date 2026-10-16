@@ -14,7 +14,18 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
-import { ID, IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IOrganization, IOrganizationCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BulkExecutor,
+	BulkOperation,
+	BulkResult,
+	IBulkCreateRequest,
+	applyAsSingleCreate,
+	bulkCreateRequest,
+	bulkOptionsOf,
+	singleRouteBody
+} from './../api';
+import { Idempotent } from './../idempotency/idempotent.decorator';
 import { BaseQueryDTO, CrudController } from './../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
@@ -35,7 +46,11 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS)
 @Controller('/organization')
 export class OrganizationController extends CrudController<Organization> {
-	constructor(private readonly organizationService: OrganizationService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly organizationService: OrganizationService,
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
+	) {
 		super(organizationService);
 	}
 
@@ -159,6 +174,72 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseValidationPipe({ transform: true })
 	async create(@Body() entity: CreateOrganizationDTO): Promise<IOrganization> {
 		return await this.commandBus.execute(new OrganizationCreateCommand(entity));
+	}
+
+	/**
+	 * CREATE organizations in bulk
+	 *
+	 * One request creates many organizations of the caller's tenant and answers one outcome per item. The
+	 * batch is the platform's — `@BulkOperation` declares what this route accepts, the executor is configured
+	 * from that declaration, authorises the whole request once and refuses a batch it cannot read before
+	 * writing anything.
+	 *
+	 * **Each item is `POST /organization`**: its body runs through that route's own validation pipe and then
+	 * through that route's handler, which dispatches `OrganizationCreateCommand` — so every organization is
+	 * created with everything a single one is created with: the tenant's super admins (and its admins, when
+	 * an admin creates it) as members, its contact row, its commerce defaults and its task defaults. The
+	 * route runs under the controller's permission, as the create route does, and the declaration states that
+	 * same grant.
+	 *
+	 * A batch creates what it can and reports the rest; **`atomic: true` is refused before item 0**
+	 * (`BULK_ATOMIC_UNSUPPORTED`, declared `atomic: false`): each item runs the single create, which writes
+	 * through its own repositories, so the batch cannot be rolled back as one. The route declares no dry run
+	 * and no write mode either (see `bulkCreateRequest`).
+	 *
+	 * @param request The batch: the items, each the body `POST /organization` takes.
+	 * @returns What applied, what did not, and the counts derived from both.
+	 */
+	@ApiOperation({ summary: 'Create organizations in bulk' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The batch was applied, with one outcome per item' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The request or an item could not be read, or it asked for "atomic" (BULK_ATOMIC_UNSUPPORTED)'
+	})
+	@ApiResponse({ status: HttpStatus.PAYLOAD_TOO_LARGE, description: 'BULK_LIMIT_EXCEEDED' })
+	@ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'BULK_ALL_ITEMS_FAILED' })
+	@Idempotent({ scope: 'organization.bulk', required: false, resourceType: 'organization' })
+	@BulkOperation({
+		resource: 'organization',
+		// Far below the platform's 200: each create seeds the organization's defaults — the administrators'
+		// memberships, its contact row, its commerce defaults and six sets of task defaults — so one item is
+		// tens of writes, and a request must stay a request.
+		maxItems: 20,
+		permission: PermissionsEnum.ALL_ORG_EDIT,
+		// Each item is the single create, which writes through its own repositories: no batch transaction.
+		atomic: false
+	})
+	@Post('/bulk')
+	async bulk(
+		@Body() request: IBulkCreateRequest<IOrganizationCreateInput>
+	): Promise<BulkResult<IOrganizationCreateInput>> {
+		const batch = bulkCreateRequest(request);
+
+		return await this.bulkExecutor.execute<IOrganizationCreateInput>(
+			batch,
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createAsSingleRoute(body)),
+			bulkOptionsOf(OrganizationController, 'bulk')
+		);
+	}
+
+	/**
+	 * Creates one item of a batch exactly as `POST /organization` creates its body: through the route's own
+	 * pipes, then through the route's handler.
+	 *
+	 * @param body The item, as the single route's body.
+	 * @returns The organization created.
+	 */
+	private async createAsSingleRoute(body: IOrganizationCreateInput): Promise<IOrganization> {
+		return await this.create(await singleRouteBody<CreateOrganizationDTO>(OrganizationController, 'create')(body));
 	}
 
 	/**

@@ -472,7 +472,9 @@ describe('TimesheetResolver — one concept, two protocols, the same operations'
 
 		commandBus.execute.mockRejectedValueOnce(refusal);
 
-		await expect(resolver.submitTimesheet({ ids: [NEWER], status: 'submit' })).rejects.toBe(refusal);
+		await expect(
+			resolver.submitTimesheet({ ids: [NEWER], status: 'submit', organizationId: ORGANIZATION } as any)
+		).rejects.toBe(refusal);
 	});
 });
 

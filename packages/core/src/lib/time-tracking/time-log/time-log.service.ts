@@ -31,8 +31,10 @@ import {
 	IEmployee,
 	IOrganization,
 	IPaginationParam,
-	ID
+	ID,
+	RolesEnum
 } from '@gauzy/contracts';
+import { environment as env } from '@gauzy/config';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
@@ -1542,6 +1544,61 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Refuses to move a log whose time slots carry what was captured while its employee was tracked.
+	 *
+	 * Screenshots name the user whose screen they show, activities the employee whose applications and
+	 * pages they list, and the per-minute records are that employee's keyboard and mouse: moving them with
+	 * the log would attribute one person's tracked evidence to another. A log without any (manual time, a
+	 * browser timer) moves whole — its slots are blank and are recreated for the new employee.
+	 *
+	 * @param id The time log to move.
+	 * @throws ForbiddenException When one of its slots carries screenshots, activities or minute activity.
+	 */
+	private async assertMovableToAnotherEmployee(id: ID): Promise<void> {
+		const timeLog = await this.withoutEmployeeFilter(() =>
+			this.findOneByIdString(id, {
+				relations: { timeSlots: { screenshots: true, activities: true, timeSlotMinutes: true } }
+			})
+		);
+
+		const tracked = (timeLog?.timeSlots ?? []).some(
+			(slot) =>
+				isNotEmpty(slot.screenshots) ||
+				isNotEmpty(slot.activities) ||
+				isNotEmpty(slot.timeSlotMinutes) ||
+				Boolean(slot.keyboard) ||
+				Boolean(slot.mouse)
+		);
+
+		if (tracked) {
+			throw new ForbiddenException(
+				'A time log with tracked activity or screenshots cannot be moved to another employee'
+			);
+		}
+	}
+
+	/**
+	 * Refuses manual time in an organization whose policy forbids it.
+	 *
+	 * The rule is `OrganizationPermissionGuard`'s for `ALLOW_MANUAL_TIME`, applied to the organization the log
+	 * is written under: the policy must be on — a missing or unset policy refuses, as the guard's query counts
+	 * only `allowManualTime = true` — and the guard's one exemption holds here too, a SUPER_ADMIN while the
+	 * installation lets that role bypass the organization policy (`allowSuperAdminRole`).
+	 *
+	 * @param organization The employee's organization, as the employee was read with it.
+	 * @throws ForbiddenException When the organization does not allow manual time.
+	 */
+	private assertManualTimeAllowedIn(organization: IOrganization | undefined): void {
+		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
+			return;
+		}
+
+		if (!organization?.allowManualTime) {
+			throw new ForbiddenException("Manual time is not allowed in the employee's organization");
+		}
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1567,6 +1624,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const organizationId = employee.organizationId ?? request.organizationId;
 
 			await this.assertCanWriteTimeFor(employeeId, organizationId);
+
+			// The manual-time policy of that same organization. `OrganizationPermissionGuard` judges the
+			// organization the request names and the caller's own, never the employee's — and a caller who may
+			// choose the employee (CHANGE_SELECTED_EMPLOYEE reaches every employee of the tenant) could name a
+			// permissive organization, or none, and record time in an organization whose policy forbids it.
+			this.assertManualTimeAllowedIn(employee.organization);
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
@@ -1639,8 +1702,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Retrieve employee information
 			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
 
-			// The employee's organization, never the body's — see `addManualTime`. Here it also decides
-			// which rows count as conflicting, i.e. which time slots this call is allowed to delete.
+			// The employee's organization, never the body's — see `addManualTime`. It must also be the log's own
+			// (checked below, once the log is read), and the overlap cleanup runs in the log's organization.
 			const organizationId = employee.organizationId ?? request.organizationId;
 
 			await this.assertCanWriteTimeFor(employeeId, organizationId);
@@ -1670,13 +1733,28 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new ForbiddenException('A time log cannot be moved to another employee');
 			}
 
-			// Check for conflicts with existing time logs
+			// A log stays in its organization, for every caller. The update keeps the stored row's organization
+			// (`TimeLogUpdateHandler` never takes it from the input), but `employeeId` is not a scope field, and
+			// CHANGE_SELECTED_EMPLOYEE reaches every employee of the tenant: an employee of another organization
+			// would re-point the log at them across organizations and run the overlap cleanup below in theirs,
+			// deleting that organization's time slots under a policy (`allowModifyTime`) judged on the log's.
+			if (String(employee.organizationId ?? '') !== String(timeLog.organizationId ?? '')) {
+				throw new ForbiddenException('A time log cannot be moved to an employee of another organization');
+			}
+
+			// A move within the organization takes the log's timesheet, time slots and hours with it
+			// (`TimeLogUpdateHandler`), but never what was captured while the previous employee was tracked.
+			if (String(timeLog.employeeId) !== String(employeeId)) {
+				await this.assertMovableToAnotherEmployee(id);
+			}
+
+			// Check for conflicts with existing time logs — in the log's own organization, which is the employee's.
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
 					startDate: startedAt,
 					endDate: stoppedAt,
 					employeeId,
-					organizationId,
+					organizationId: timeLog.organizationId,
 					tenantId,
 					...(id && { ignoreId: id }) // Simplified check for id
 				})

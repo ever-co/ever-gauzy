@@ -32,14 +32,14 @@ describe('favorite entity links', () => {
 			);
 		});
 
-		it('opens an uploaded file in the hub with its preview — a file has no page of its own', () => {
+		it('opens an uploaded file on its own full-width page, not the documents list (owner, 2026-10-15)', () => {
 			expect(ENTITY_LINKS[BaseEntityEnum.Document](ID, { id: ID, kind: DocumentKindEnum.FILE })).toBe(
-				`/pages/documents?id=${ID}`
+				`/pages/documents/file/${ID}`
 			);
 		});
 
-		it('falls back to the hub, which handles every kind, when the kind is not known', () => {
-			expect(ENTITY_LINKS[BaseEntityEnum.Document](ID)).toBe(`/pages/documents?id=${ID}`);
+		it('opens a document of unknown kind on the same page, which forwards a page or folder to its own view', () => {
+			expect(ENTITY_LINKS[BaseEntityEnum.Document](ID)).toBe(`/pages/documents/file/${ID}`);
 		});
 	});
 

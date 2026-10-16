@@ -190,12 +190,17 @@
     },
     {
       "path": "/pages/accounting/expense-recurring",
-      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:7",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:9",
+      "source": "router"
+    },
+    {
+      "path": "/pages/accounting/expense-recurring/view/:id",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:23",
       "source": "router"
     },
     {
       "path": "/pages/accounting/expenses",
-      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:13",
+      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:15",
       "guards": [
         "PermissionsGuard"
       ],
@@ -203,12 +208,28 @@
     },
     {
       "path": "/pages/accounting/expenses/categories",
-      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:24",
+      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:26",
+      "source": "router"
+    },
+    {
+      "path": "/pages/accounting/expenses/view/:id",
+      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:37",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
       "path": "/pages/accounting/income",
-      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:12",
+      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:14",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/accounting/income/view/:id",
+      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:25",
       "guards": [
         "PermissionsGuard"
       ],
@@ -294,7 +315,15 @@
     },
     {
       "path": "/pages/accounting/payments",
-      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:9",
+      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:11",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/accounting/payments/view/:id",
+      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:29",
       "guards": [
         "PermissionsGuard"
       ],
@@ -451,8 +480,7 @@
     },
     {
       "path": "/pages/contacts/view/:id",
-      "file": "apps/gauzy/src/app/pages/contacts/contact-view/contact-view-routing.module.ts:10",
-      "redirect_to": "tenant",
+      "file": "apps/gauzy/src/app/pages/contacts/contact-view/contact-view-routing.module.ts:13",
       "source": "router"
     },
     {
@@ -594,7 +622,15 @@
     },
     {
       "path": "/pages/employees/approvals",
-      "file": "apps/gauzy/src/app/pages/approvals/approvals-routing.module.ts:8",
+      "file": "apps/gauzy/src/app/pages/approvals/approvals-routing.module.ts:10",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/employees/approvals/view/:id",
+      "file": "apps/gauzy/src/app/pages/approvals/approvals-routing.module.ts:21",
       "guards": [
         "PermissionsGuard"
       ],
@@ -804,7 +840,12 @@
     },
     {
       "path": "/pages/employees/recurring-expenses",
-      "file": "apps/gauzy/src/app/pages/recurring-expense-employee/recurring-expense-employee-routing.module.ts:7",
+      "file": "apps/gauzy/src/app/pages/recurring-expense-employee/recurring-expense-employee-routing.module.ts:9",
+      "source": "router"
+    },
+    {
+      "path": "/pages/employees/recurring-expenses/view/:id",
+      "file": "apps/gauzy/src/app/pages/recurring-expense-employee/recurring-expense-employee-routing.module.ts:22",
       "source": "router"
     },
     {
@@ -896,7 +937,17 @@
     },
     {
       "path": "/pages/goals/settings",
-      "file": "apps/gauzy/src/app/pages/goal-settings/goal-settings-routing.module.ts:5",
+      "file": "apps/gauzy/src/app/pages/goal-settings/goal-settings-routing.module.ts:8",
+      "source": "router"
+    },
+    {
+      "path": "/pages/goals/settings/kpi/:id",
+      "file": "apps/gauzy/src/app/pages/goal-settings/goal-settings-routing.module.ts:10",
+      "source": "router"
+    },
+    {
+      "path": "/pages/goals/settings/time-frame/:id",
+      "file": "apps/gauzy/src/app/pages/goal-settings/goal-settings-routing.module.ts:15",
       "source": "router"
     },
     {
@@ -1077,7 +1128,7 @@
     },
     {
       "path": "/pages/organization/equipment",
-      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:8",
+      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:10",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1100,8 +1151,21 @@
       "source": "router"
     },
     {
+      "path": "/pages/organization/equipment/view/:id",
+      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:21",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
       "path": "/pages/organization/expense-recurring",
-      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:7",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:9",
+      "source": "router"
+    },
+    {
+      "path": "/pages/organization/expense-recurring/view/:id",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:23",
       "source": "router"
     },
     {
@@ -1188,7 +1252,15 @@
     },
     {
       "path": "/pages/organization/teams",
-      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:8",
+      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:10",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/organization/teams/view/:id",
+      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:21",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1196,7 +1268,15 @@
     },
     {
       "path": "/pages/organization/vendors",
-      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:8",
+      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:10",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/organization/vendors/view/:id",
+      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:21",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1404,7 +1484,15 @@
     },
     {
       "path": "/pages/sales/payments",
-      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:9",
+      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:11",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/payments/view/:id",
+      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:29",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1591,7 +1679,7 @@
     },
     {
       "path": "/pages/settings/monitoring",
-      "file": "apps/gauzy/src/app/pages/settings/monitoring/monitoring.module.ts:18",
+      "file": "apps/gauzy/src/app/pages/settings/monitoring/monitoring.module.ts:19",
       "source": "router"
     },
     {
@@ -1626,23 +1714,23 @@
     },
     {
       "path": "/pages/tasks",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:12",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:13",
       "redirect_to": "dashboard",
       "source": "router"
     },
     {
       "path": "/pages/tasks/dashboard",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:17",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:18",
       "source": "router"
     },
     {
       "path": "/pages/tasks/me",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:25",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:26",
       "source": "router"
     },
     {
       "path": "/pages/tasks/settings/:id",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:29",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:44",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1650,7 +1738,15 @@
     },
     {
       "path": "/pages/tasks/team",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:21",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:22",
+      "source": "router"
+    },
+    {
+      "path": "/pages/tasks/view/:id",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:30",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {

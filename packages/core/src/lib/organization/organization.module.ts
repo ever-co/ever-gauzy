@@ -2,6 +2,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { FieldVisibility } from '../api/field-visibility.service';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ContactModule } from '../contact/contact.module';
@@ -39,10 +41,20 @@ import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organizat
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		OrganizationResolver,
+		// Both surfaces apply a batch of organizations with the platform's executor, which authorises it
+		// through the platform's field visibility.
+		BulkExecutor,
+		FieldVisibility,
 		TypeOrmOrganizationRepository,
 		MikroOrmOrganizationRepository,
 		...CommandHandlers
 	],
-	exports: [OrganizationService, CqrsModule, TypeOrmOrganizationRepository, MikroOrmOrganizationRepository]
+	exports: [
+		OrganizationService,
+		CqrsModule,
+		TypeOrmOrganizationRepository,
+		MikroOrmOrganizationRepository,
+		BulkExecutor
+	]
 })
 export class OrganizationModule {}

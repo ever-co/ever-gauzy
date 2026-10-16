@@ -1,6 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { requireOrganization } from '../../graphql/organization-required';
 import {
 	ID as Id,
 	IGetTimesheetInput,
@@ -286,6 +287,7 @@ export class TimesheetResolver {
 	@Mutation('updateTimesheetStatus')
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	async updateTimesheetStatus(@Args('input') input: IUpdateTimesheetStatus): Promise<Timesheet[]> {
+		requireOrganization(input.organizationId, 'updateTimesheetStatus');
 		return await this.commandBus.execute(
 			new TimesheetUpdateStatusCommand({
 				ids: input.ids,
@@ -306,6 +308,7 @@ export class TimesheetResolver {
 	@Mutation('submitTimesheet')
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	async submitTimesheet(@Args('input') input: ISubmitTimesheet): Promise<Timesheet[]> {
+		requireOrganization(input.organizationId, 'submitTimesheet');
 		return await this.commandBus.execute(
 			new TimesheetSubmitCommand({
 				ids: input.ids,

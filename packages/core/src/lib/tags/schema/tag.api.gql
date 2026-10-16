@@ -125,4 +125,13 @@ extend type Mutation {
 	Puts a withdrawn tag back.
 	"""
 	recoverTag(id: ID!): Tag!
+
+	"""
+	Files a batch of tags — each item exactly as `createTag` and `POST /tags` file one — and answers one
+	outcome per item. The batch `POST /tags/bulk` applies, under the same permission and cap (200).
+	A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+	`BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+	so the batch cannot be rolled back as one.
+	"""
+	bulkCreateTags(input: BulkCreateTagsInput!): BulkCreateTagsPayload!
 }

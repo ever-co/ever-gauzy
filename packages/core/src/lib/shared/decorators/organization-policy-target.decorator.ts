@@ -18,7 +18,11 @@ export interface IOrganizationPolicyTarget {
 	 * query parameter that may carry SEVERAL ids, and then every addressed record's organization has
 	 * to allow the action.
 	 */
-	source?: 'params' | 'query';
+	/**
+	 * Where the record id is read: the route params, the query string, or — for a GraphQL field — the operation's
+	 * arguments, where `param` is a dotted path (`input.id`, `input.logIds`, `ids`) to one id or a list of ids.
+	 */
+	source?: 'params' | 'query' | 'args';
 }
 
 /**
@@ -42,5 +46,5 @@ export interface IOrganizationPolicyTarget {
  * @param source Where to read the id(s) from: `params` (default) or `query`.
  * @returns A method decorator that stores the target on the route handler.
  */
-export const OrganizationPolicyTarget = (entity: Type<unknown>, param = 'id', source: 'params' | 'query' = 'params') =>
+export const OrganizationPolicyTarget = (entity: Type<unknown>, param = 'id', source: 'params' | 'query' | 'args' = 'params') =>
 	SetMetadata<string, IOrganizationPolicyTarget>(ORGANIZATION_POLICY_TARGET_METADATA, { entity, param, source });
