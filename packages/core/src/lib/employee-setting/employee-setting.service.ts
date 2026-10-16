@@ -20,6 +20,13 @@ import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employ
 
 @Injectable()
 export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetting> {
+	/**
+	 * This process's data patches on the embedded dialect, chained one after the other. TypeORM and MikroORM drive
+	 * SQLite through a single connection, where a transaction cannot start while another is open ("cannot start a
+	 * transaction within a transaction"), so two concurrent patches would otherwise fail.
+	 */
+	private static embeddedPatches: Promise<unknown> = Promise.resolve();
+
 	constructor(
 		typeOrmEmployeeSettingRepository: TypeOrmEmployeeSettingRepository,
 		mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository
@@ -131,30 +138,48 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 			return setting;
 		};
 
-		if (this.ormType === MultiORMEnum.MikroORM) {
-			await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
-				apply(
-					await em.findOne(
-						EmployeeSetting,
-						where as never,
-						rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {}
-					)
-				);
-				await em.flush();
-			});
-		} else {
-			await this.typeOrmRepository.manager.transaction(async (manager) => {
-				const query = manager.createQueryBuilder(EmployeeSetting, 'setting').where(where);
-				// `pessimistic_write` maps to FOR UPDATE on both dialects.
-				const setting = apply(
-					rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne()
-				);
-				// `save` runs the entity subscriber, which serializes `data` on the embedded dialect.
-				await manager.save(EmployeeSetting, setting);
-			});
-		}
+		await this.runPatch(async () => {
+			if (this.ormType === MultiORMEnum.MikroORM) {
+				await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
+					apply(
+						await em.findOne(
+							EmployeeSetting,
+							where as never,
+							rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {}
+						)
+					);
+					await em.flush();
+				});
+			} else {
+				await this.typeOrmRepository.manager.transaction(async (manager) => {
+					const query = manager.createQueryBuilder(EmployeeSetting, 'setting').where(where);
+					// `pessimistic_write` maps to FOR UPDATE on both dialects.
+					const setting = apply(
+						rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne()
+					);
+					// `save` runs the entity subscriber, which serializes `data` on the embedded dialect.
+					await manager.save(EmployeeSetting, setting);
+				});
+			}
+		});
 
 		return await this.findOneByIdString(id);
+	}
+
+	/**
+	 * Runs one patch transaction: right away on Postgres and MySQL (a pooled connection each, with the row lock),
+	 * after this process's earlier patches on the embedded dialect (see `embeddedPatches`).
+	 *
+	 * @param work The patch transaction.
+	 * @returns What the transaction answers.
+	 */
+	private runPatch<T>(work: () => Promise<T>): Promise<T> {
+		if (isPostgres() || isMySQL()) {
+			return work();
+		}
+		const run = EmployeeSettingService.embeddedPatches.catch(() => undefined).then(work);
+		EmployeeSettingService.embeddedPatches = run.catch(() => undefined);
+		return run;
 	}
 
 	/**
