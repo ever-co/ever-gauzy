@@ -120,6 +120,10 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId` | `EDIT` |
 | POST | `/mappings/:integrationTenantId/projects/default` | `EDIT` |
 | POST | `/mappings/:integrationTenantId/projects/ideas` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/people` | `VIEW` |
+| PUT | `/mappings/:integrationTenantId/people` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/agents` | `VIEW` |
+| POST | `/mappings/:integrationTenantId/agents/import` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
@@ -150,6 +154,16 @@ and answered `202`.
 - **Merge.** Per field, against the snapshot: one side changed wins; both
   changed → last writer wins for scalars and rich text (the loser is kept), a
   3-way set merge for sets; Ever Works' gates decide status.
+- **People.** Ever Works members are paired with Gauzy people on the People
+  tab: a verified, case-insensitive email match is only a suggestion the admin
+  confirms (one by one or all at once); nothing is linked silently and
+  unlinking removes only the pairing. Ever ID matching waits for Gauzy to
+  store Ever ID subjects.
+- **Agents.** Each Ever Works agent of a mapped organization becomes a Gauzy
+  employee of kind `agent` (created through the platform's agent path: no
+  password, no invite, an `@agents.invalid` address) with a profile managed by
+  Ever Works. The sync is one way: an archived or deleted agent is archived,
+  a private one is unlinked, and Gauzy edits to it are not pushed.
 - **Runtime.** Every process that loads the plugin ticks; a database lease on
   the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.
