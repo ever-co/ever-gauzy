@@ -247,12 +247,18 @@ and answered `202`.
 yarn nx build plugin-integration-ever-works
 yarn nx build plugin-integration-ever-works-ui --configuration=production
 yarn nx test plugin-integration-ever-works
+yarn nx run plugin-integration-ever-works:test-integration
 yarn nx test plugin-integration-ever-works-ui
 ```
 
 The suites run the plugin's migrations on SQLite and its services against the
 mock Ever Works server (`src/lib/testing/mock-ever-works.server.ts`, test code
-that is not part of the package build).
+that is not part of the package build). `test-integration` is the boundary
+suite (`.scripts/ever-works-integration.test.cjs`, `node:test`): migrations
+up/up/down/up on SQLite, and on Postgres when `EVER_WORKS_TEST_DATABASE_URL`
+names a loopback `_test` database; tenant and organization isolation; webhook
+signatures; dedupe; loop suppression; the 412 merge; an initial sync resumed by
+another process; and record scope. The Build workflow runs all three.
 
 Both packages participate in the workspace and Docker builds. The backend is
 listed, behind `EVER_WORKS_ENABLED`, in the API and worker plugin lists and
