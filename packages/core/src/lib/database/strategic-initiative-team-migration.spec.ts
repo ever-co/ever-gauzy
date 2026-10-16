@@ -101,16 +101,19 @@ describe('CreateOrganizationStrategicInitiativeTeamTable1791000000731 on SQLite'
  * keys (a failure can no longer leave a key-less table that a re-run would skip), inside a named lock.
  */
 describe('CreateOrganizationStrategicInitiativeTeamTable1791000000731 on MySQL', () => {
+	let lockNames: string[] = [];
 	const run = async (tableExists: boolean) => {
 		const statements: string[] = [];
+		lockNames = [];
 		const queryRunner = {
 			connection: { options: { type: 'mysql' } },
 			hasTable: jest.fn(async () => {
 				statements.push('hasTable');
 				return tableExists;
 			}),
-			query: jest.fn(async (sql: string) => {
+			query: jest.fn(async (sql: string, parameters?: unknown[]) => {
 				statements.push(sql);
+				if (sql.startsWith('SELECT GET_LOCK')) lockNames.push(String(parameters?.[0]));
 				return sql.startsWith('SELECT GET_LOCK') ? [{ acquired: 1 }] : [];
 			})
 		};
@@ -131,6 +134,12 @@ describe('CreateOrganizationStrategicInitiativeTeamTable1791000000731 on MySQL',
 		expect(creates[0]).toContain('CONSTRAINT `FK_ffecd6e749d0dc1ce89b02e9a51` FOREIGN KEY');
 		expect(creates[0]).toContain('CONSTRAINT `FK_04e60eebe8d6ba3a336ec707707` FOREIGN KEY');
 		expect(statements[statements.length - 1]).toMatch(/^SELECT RELEASE_LOCK\(/);
+	});
+
+	it('names its lock within the 64 characters MySQL accepts', async () => {
+		await run(true);
+		expect(lockNames).toHaveLength(1);
+		expect(lockNames[0].length).toBeLessThanOrEqual(64);
 	});
 
 	it('adds nothing when the pivot exists, and still releases the lock', async () => {
