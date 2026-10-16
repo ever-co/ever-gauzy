@@ -148,9 +148,16 @@ export class ResendProvider implements IEmailProviderPlugin, IInboundEmailProvid
 		if (!valid) {
 			throw new UnauthorizedException('The Resend webhook is not signed with this account’s secret.');
 		}
+		// Single use of this exact delivery (id + timestamp): Resend re-signs a retry with a new timestamp, so a retry
+		// after a failure is never refused, while a captured request replayed as it was is.
+		const timestamp = header(request, SVIX_TIMESTAMP_HEADER);
 		if (
 			this.replay &&
-			!(await this.replay.consume(`resend:${account.id}`, String(id), (2 * SVIX_TOLERANCE_SECONDS + 60) * 1000))
+			!(await this.replay.consume(
+				`resend:${account.id}`,
+				`${id}.${timestamp}`,
+				(2 * SVIX_TOLERANCE_SECONDS + 60) * 1000
+			))
 		) {
 			throw new UnauthorizedException('The Resend webhook was already received.');
 		}

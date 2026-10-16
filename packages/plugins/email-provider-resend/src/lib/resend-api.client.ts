@@ -121,10 +121,22 @@ export class ResendApiClient {
 		const declared = Number(response.headers.get('content-length') ?? '0');
 		if (declared > maxBytes)
 			throw new ResendApiError(413, 'too_large', 'A Resend download is larger than allowed.');
-		const bytes = Buffer.from(await response.arrayBuffer());
-		if (bytes.length > maxBytes)
-			throw new ResendApiError(413, 'too_large', 'A Resend download is larger than allowed.');
-		return bytes;
+		// Read in chunks and stop at the cap: a response without a length must not grow without bound.
+		if (!response.body) return Buffer.alloc(0);
+		const reader = response.body.getReader();
+		const chunks: Buffer[] = [];
+		let total = 0;
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			total += value.byteLength;
+			if (total > maxBytes) {
+				await reader.cancel().catch(() => undefined);
+				throw new ResendApiError(413, 'too_large', 'A Resend download is larger than allowed.');
+			}
+			chunks.push(Buffer.from(value));
+		}
+		return Buffer.concat(chunks, total);
 	}
 
 	private async json<T>(method: 'GET' | 'POST', path: string, body?: unknown, idempotencyKey?: string): Promise<T> {

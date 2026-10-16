@@ -104,6 +104,8 @@ export async function buildRequest(mail: NodemailerMail, fromAddress?: string): 
 			if (typeof value === 'string') headers[key] = value;
 		}
 	}
+	// The Message-ID the sender stored (an Inbox reply keeps it in its thread), so the delivered email carries it.
+	headers['Message-ID'] = mail.message.messageId();
 	if (mail.data.inReplyTo) headers['In-Reply-To'] = mail.data.inReplyTo;
 	const references = Array.isArray(mail.data.references) ? mail.data.references.join(' ') : mail.data.references;
 	if (references) headers['References'] = references;

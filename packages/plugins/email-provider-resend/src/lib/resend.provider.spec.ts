@@ -120,6 +120,15 @@ describe('Resend email provider', () => {
 			).rejects.toBeInstanceOf(UnauthorizedException);
 		});
 
+		it('accepts a retry Resend re-signed with a new timestamp (same svix-id)', async () => {
+			const resend = provider();
+			const now = Math.floor(Date.now() / 1000);
+			await resend.verify(webhook(EMAIL_RECEIVED_EVENT, SECRET, 'msg_retry', String(now - 10)), account);
+			await expect(
+				resend.verify(webhook(EMAIL_RECEIVED_EVENT, SECRET, 'msg_retry', String(now)), account)
+			).resolves.toBeUndefined();
+		});
+
 		it('refuses everything when the account has no webhook secret (no unsigned mode)', async () => {
 			await expect(
 				provider().verify(webhook(EMAIL_RECEIVED_EVENT), { ...account, config: { apiKey: API_KEY } })
@@ -257,7 +266,11 @@ describe('Resend email provider', () => {
 				cc: ['bob@acme.test'],
 				subject: 'Re: Invoice 42',
 				text: 'Thanks!',
-				headers: { 'In-Reply-To': '<m-2@acme.test>', References: '<m-1@acme.test> <m-2@acme.test>' },
+				headers: {
+					'Message-ID': '<out-1@inbox.example.test>',
+					'In-Reply-To': '<m-2@acme.test>',
+					References: '<m-1@acme.test> <m-2@acme.test>'
+				},
 				attachments: [
 					{ filename: 'a.txt', content: Buffer.from('x').toString('base64'), content_type: 'text/plain' }
 				]
