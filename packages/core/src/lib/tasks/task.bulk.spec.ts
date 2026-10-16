@@ -106,6 +106,7 @@ function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 		rows,
 		events,
 		activityLog,
+		taskService,
 		mostInFlight: () => mostInFlight,
 		controller: new TaskController(taskService as never, commandBus as never, executor),
 		resolver: new TaskResolver(taskService as never, commandBus as never, executor)
@@ -164,6 +165,20 @@ describe('POST /tasks/bulk — each item is POST /tasks, numbered by its handler
 			BaseEntityEventTypeEnum.CREATED
 		]);
 		expect(batch.activityLog.logActivity).toHaveBeenCalledTimes(3);
+	});
+
+	it('numbers each item above the soft-deleted tasks too: they keep their number in the unique index', async () => {
+		const batch = surfaces();
+
+		await batch.controller.bulk({ items: [body('One'), body('Two')] });
+
+		expect(batch.taskService.getMaxTaskNumberByProject).toHaveBeenCalledTimes(2);
+		for (const call of batch.taskService.getMaxTaskNumberByProject.mock.calls as unknown[][]) {
+			expect(call).toEqual([
+				expect.objectContaining({ tenantId: TENANT, organizationId: ORGANIZATION, projectId: PROJECT }),
+				{ withDeleted: true }
+			]);
+		}
 	});
 
 	it('reports an item naming an organization the caller is not a member of, and numbers the rest contiguously', async () => {
