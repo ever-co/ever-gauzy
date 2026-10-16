@@ -41,24 +41,36 @@ function fakeDatabase(type: string = 'postgres') {
 	let sequence = 0;
 	const matches = (row: Row, where: Row) => Object.entries(where).every(([key, value]) => row[key] === value);
 	const lockRequests: string[] = [];
+	/** Locked reads that would join eager relations: Postgres refuses FOR UPDATE on those outer joins. */
+	const eagerLocks: string[] = [];
 
 	const managerFor = (held: Array<() => void>) => ({
 		connection: { options: { type } },
-		findOne: jest.fn(async (entity: unknown, { where, lock }: { where: Row; lock?: { mode: string } }) => {
-			if (lock?.mode === 'pessimistic_write') {
-				const key = `${(entity as { name?: string }).name}:${where.id}`;
-				lockRequests.push(key);
-				while (locks.has(key)) await locks.get(key);
-				let release: () => void;
-				locks.set(key, new Promise<void>((resolve) => (release = resolve)));
-				held.push(() => {
-					locks.delete(key);
-					release();
-				});
+		findOne: jest.fn(
+			async (
+				entity: unknown,
+				{
+					where,
+					lock,
+					loadEagerRelations
+				}: { where: Row; lock?: { mode: string }; loadEagerRelations?: boolean }
+			) => {
+				if (lock?.mode === 'pessimistic_write') {
+					const key = `${(entity as { name?: string }).name}:${where.id}`;
+					lockRequests.push(key);
+					if (loadEagerRelations !== false) eagerLocks.push(key);
+					while (locks.has(key)) await locks.get(key);
+					let release: () => void;
+					locks.set(key, new Promise<void>((resolve) => (release = resolve)));
+					held.push(() => {
+						locks.delete(key);
+						release();
+					});
+				}
+				await tick();
+				return (tables.get(entity) ?? []).find((row) => matches(row, where)) ?? null;
 			}
-			await tick();
-			return (tables.get(entity) ?? []).find((row) => matches(row, where)) ?? null;
-		}),
+		),
 		find: jest.fn(async (entity: unknown, { where }: { where: Row }) => {
 			await tick();
 			return (tables.get(entity) ?? []).filter((row) => matches(row, where));
@@ -91,7 +103,7 @@ function fakeDatabase(type: string = 'postgres') {
 			})
 		}
 	};
-	return { tables, repository, lockRequests };
+	return { tables, repository, lockRequests, eagerLocks };
 }
 
 describe('EmployeeService.createAgentEmployee', () => {
@@ -267,15 +279,13 @@ describe('EmployeeService.createAgentEmployee', () => {
 		db.tables
 			.get(User)
 			.push({ id: 'u-9', tenantId: TENANT, email: 'agent-9@agents.invalid', hash: null, roleId: null });
-		db.tables
-			.get(Employee)
-			.push({
-				id: 'e-9',
-				tenantId: TENANT,
-				organizationId: OTHER_ORGANIZATION,
-				userId: 'u-9',
-				kind: EmployeeKindEnum.AGENT
-			});
+		db.tables.get(Employee).push({
+			id: 'e-9',
+			tenantId: TENANT,
+			organizationId: OTHER_ORGANIZATION,
+			userId: 'u-9',
+			kind: EmployeeKindEnum.AGENT
+		});
 
 		const result = await service.createAgentEmployee({
 			tenantId: TENANT,
@@ -298,15 +308,13 @@ describe('EmployeeService.createAgentEmployee', () => {
 		db.tables
 			.get(User)
 			.push({ id: 'u-3', tenantId: TENANT, email: 'invited@team.invalid', hash: null, roleId: ROLE });
-		db.tables
-			.get(Employee)
-			.push({
-				id: 'e-3',
-				tenantId: TENANT,
-				organizationId: OTHER_ORGANIZATION,
-				userId: 'u-3',
-				kind: EmployeeKindEnum.HUMAN
-			});
+		db.tables.get(Employee).push({
+			id: 'e-3',
+			tenantId: TENANT,
+			organizationId: OTHER_ORGANIZATION,
+			userId: 'u-3',
+			kind: EmployeeKindEnum.HUMAN
+		});
 
 		await expect(
 			service.createAgentEmployee({
@@ -317,6 +325,41 @@ describe('EmployeeService.createAgentEmployee', () => {
 			})
 		).rejects.toBeInstanceOf(ConflictException);
 		expect(db.tables.get(Employee)).toHaveLength(1);
+	});
+
+	it('refuses a deleted agent rather than handing it back as provisioned', async () => {
+		db.tables
+			.get(User)
+			.push({ id: 'u-5', tenantId: TENANT, email: 'agent-5@agents.invalid', hash: null, roleId: ROLE });
+		db.tables.get(Employee).push({
+			id: 'e-5',
+			tenantId: TENANT,
+			organizationId: ORGANIZATION,
+			userId: 'u-5',
+			kind: EmployeeKindEnum.AGENT,
+			deletedAt: new Date('2026-10-01T00:00:00Z')
+		});
+
+		await expect(
+			service.createAgentEmployee({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				name: 'Bot',
+				email: 'agent-5@agents.invalid'
+			})
+		).rejects.toBeInstanceOf(ConflictException);
+	});
+
+	it('takes the organization lock without eager joins (Postgres refuses FOR UPDATE on an outer join)', async () => {
+		await service.createAgentEmployee({
+			tenantId: TENANT,
+			organizationId: ORGANIZATION,
+			name: 'Bot',
+			profile: { source: 'ever_works' }
+		});
+		// The organization row and, for the profile write, the employee row: both locked, neither with eager joins.
+		expect(db.lockRequests).toHaveLength(2);
+		expect(db.eagerLocks).toEqual([]);
 	});
 
 	it('never reuses an account that stands behind no agent', async () => {

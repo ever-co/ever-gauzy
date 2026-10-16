@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { ID, IEmployeeAgentProfileInput } from '@gauzy/contracts';
+import { EmployeeKindEnum, ID, IEmployeeAgentProfileInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Employee } from '../core/entities/internal';
 import { findOneForUpdate } from '../employee/agent-employee';
@@ -65,8 +65,20 @@ export async function writeAgentProfile(
 	employee: Pick<Employee, 'id' | 'tenantId' | 'organizationId'>,
 	input: Partial<IEmployeeAgentProfileInput>
 ): Promise<EmployeeAgentProfile> {
-	const { id: employeeId, tenantId, organizationId } = employee;
 	const values = pickAgentProfileInput(input);
+
+	// The employee row is locked for the transaction (Postgres, MySQL), so two first writes for one employee
+	// run one after the other: the second finds the profile the first created and updates it, instead of
+	// failing on the one-profile-per-employee constraint. The locked row is also the source of truth: the
+	// profile belongs to an agent employee of the stated tenant, in that employee's own organization.
+	const row = await findOneForUpdate(em, Employee, { id: employee.id, tenantId: employee.tenantId });
+	if (!row) {
+		throw new NotFoundException('The employee does not exist in this tenant.');
+	}
+	if (row.kind !== EmployeeKindEnum.AGENT) {
+		throw new BadRequestException('Only an agent employee has an agent profile.');
+	}
+	const { id: employeeId, tenantId, organizationId } = row;
 
 	if (values.reportsToEmployeeId) {
 		if (values.reportsToEmployeeId === employeeId) {
@@ -79,11 +91,6 @@ export async function writeAgentProfile(
 			throw new BadRequestException('reportsToEmployeeId must name an employee of the same organization.');
 		}
 	}
-
-	// The employee row is locked for the transaction (Postgres, MySQL), so two first writes for one employee
-	// run one after the other: the second finds the profile the first created and updates it, instead of
-	// failing on the one-profile-per-employee constraint.
-	await findOneForUpdate(em, Employee, { id: employeeId, tenantId });
 
 	const existing = await em.findOne(EmployeeAgentProfile, { where: { employeeId, tenantId } });
 	if (existing) {

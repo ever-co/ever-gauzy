@@ -121,7 +121,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * - its user gets the tenant's `EMPLOYEE` role, and no organization membership (it never signs in).
 	 *
 	 * Idempotent on the email: when an agent employee with this email already exists in the organization it
-	 * is returned as is (`created: false`), and two overlapping calls for the same agent create it once (the
+	 * is returned as is (`created: false`; a deleted one is refused with 409 so the caller decides to recover it), and two overlapping calls for the same agent create it once (the
 	 * organization row is locked for the transaction on Postgres and MySQL; SQLite allows one writer at a
 	 * time). An existing account is reused only when it already stands behind an agent of another
 	 * organization of the tenant; an address that belongs to a person, to a user with a password, or to any
@@ -167,6 +167,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				if (existing) {
 					if (existing.kind !== EmployeeKindEnum.AGENT) {
 						throw new ConflictException('This email belongs to a person, not an agent.');
+					}
+					// A deleted agent is not silently handed back as provisioned: the caller decides whether to
+					// recover it (`softRecoverById`), which keeps an administrator's deletion visible.
+					if (existing.deletedAt) {
+						throw new ConflictException('This agent employee was deleted; recover it to use it again.');
 					}
 					const profile = await manager.findOne(EmployeeAgentProfile, {
 						where: { employeeId: existing.id, tenantId }
