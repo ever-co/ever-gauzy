@@ -79,6 +79,17 @@ describe('Markdown ↔ HTML', () => {
 		expect(markdownToHtml(null)).toBe('');
 	});
 
+	it('stays linear on crafted input (unmatched emphasis, backticks and brackets; ReDoS)', () => {
+		for (const unit of ['*a ', '_a ', '`a ', '[a ', '**a ', '~~a ']) {
+			const started = Date.now();
+			markdownToHtml(unit.repeat(6500));
+			markdownToHtml(`${unit.repeat(300)}\n`.repeat(60));
+			expect(Date.now() - started).toBeLessThan(2000);
+		}
+		// A line longer than the inline limit is written as plain text.
+		expect(markdownToHtml(`**${'x'.repeat(25_000)}**`)).toBe(`<p>**${'x'.repeat(25_000)}**</p>`);
+	});
+
 	it('writes Gauzy editor HTML as Markdown, escaping what would read as markup', () => {
 		const html =
 			'<p>Hello <strong>world</strong>, <em>it</em> <a href="https://a.example" target="_blank">site</a></p><ul><li><p>one</p></li><li><p>two</p><ul><li><p>three</p></li></ul></li></ul><p># not a heading</p><p>2 * 3</p>';
@@ -630,6 +641,22 @@ describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
 		// Removing the blocker in Ever Works removes both rows of the pair.
 		await t.deliver({ type: 'task.updated', data: { ...task, blockedBy: [] }, aggregate: { id: task['id'] as string, version: 2 } });
 		expect(t.linkedIssues.some((row) => row.action === LINKED_ISSUE.IS_BLOCKED_BY || row.action === LINKED_ISSUE.BLOCKS)).toBe(false);
+	});
+
+	it('two new Ever Works tasks that relate to each other are imported once each', async () => {
+		const t = setup();
+		const a = t.mock.addTask(t.org.id, { title: 'A' });
+		const b = t.mock.addTask(t.org.id, { title: 'B', relations: [{ taskId: a['id'], kind: 'related' }] });
+		a['relations'] = [{ taskId: b['id'], kind: 'related' }];
+		await t.deliver({ type: 'task.created', data: a, aggregate: { id: a['id'] as string, version: 1 } });
+		expect(t.tasks.size).toBe(2);
+		expect(t.links.filter((l) => l.entityType === EverWorksLinkType.TASK)).toHaveLength(2);
+		expect(t.linkedIssues).toEqual(
+			expect.arrayContaining([
+				{ taskToId: 'g-task-1', taskFromId: 'g-task-2', action: LINKED_ISSUE.RELATES_TO },
+				{ taskToId: 'g-task-2', taskFromId: 'g-task-1', action: LINKED_ISSUE.RELATES_TO }
+			])
+		);
 	});
 
 	it('pushes Gauzy watcher and blocker changes as Ever Works sets', async () => {
