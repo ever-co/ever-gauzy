@@ -47,10 +47,13 @@ routes below.
 
 Optional settings, read once at start:
 
-| Variable | Meaning |
-| --- | --- |
-| `EVER_WORKS_API_URL` | The Ever Works API base URL the connect form offers, for example `https://api.ever.works/api` for Ever Works Cloud. A public HTTPS URL without a query or fragment; anything else is ignored with a warning. Unset, the admin types the URL. |
-| `EVER_WORKS_APP_URL` | The Ever Works web app, for example `https://app.ever.works`, used only to link the admin to the page that creates an integration key. |
+- `EVER_WORKS_API_URL`: the Ever Works API base URL the connect form offers,
+  for example `https://api.ever.works/api` for Ever Works Cloud. A public HTTPS
+  URL without a query or fragment; anything else is ignored with a warning.
+  Unset, the admin types the URL.
+- `EVER_WORKS_APP_URL`: the Ever Works web app, for example
+  `https://app.ever.works`, used only to link the admin to the page that
+  creates an integration key.
 
 ## Configure the integration
 

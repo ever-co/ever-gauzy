@@ -1,3 +1,7 @@
+<!-- markdownlint-configure-file
+{"MD043":{"headings":["# @gauzy/plugin-integration-ever-works-ui"]}}
+-->
+
 # @gauzy/plugin-integration-ever-works-ui
 
 **Integrations > Ever Works** (`/pages/integrations/ever-works`, and
