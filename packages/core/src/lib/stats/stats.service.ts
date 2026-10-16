@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EmployeeKindEnum } from '@gauzy/contracts';
 import { GlobalStats } from './stats.types';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationService } from '../organization/organization.service';
@@ -47,7 +48,7 @@ export class StatsService {
 				userStats,
 				totalTrackedTime
 			] = await Promise.all([
-				this._employeeService.count(), // Count the number of employees
+				this._employeeService.count({ where: { kind: EmployeeKindEnum.HUMAN } }), // Count the employees (people, not agent employees)
 				this._taskService.count(), // Count the number of tasks
 				this._organizationService.count(), // Count the number of organizations
 				this._organizationTeamService.count(), // Count the number of teams

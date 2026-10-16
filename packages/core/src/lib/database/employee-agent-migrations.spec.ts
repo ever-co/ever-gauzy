@@ -155,3 +155,53 @@ describe('agent employee migrations on SQLite', () => {
 		expect(await indexNames('employee')).toContain('IDX_bd5498b600e43bf3308fe5adc8');
 	});
 });
+
+/**
+ * On MySQL each migration takes a named lock (GET_LOCK accepts at most 64 characters), and the profile table
+ * is created by ONE statement that carries its foreign keys: MySQL commits each DDL statement on its own.
+ */
+describe('agent employee migrations on MySQL', () => {
+	const runOnMySql = async (migration: { up: (queryRunner: never) => Promise<void> }, existing: boolean) => {
+		const statements: string[] = [];
+		const lockNames: string[] = [];
+		const queryRunner = {
+			connection: { options: { type: 'mysql' } },
+			hasTable: jest.fn(async () => existing),
+			hasColumn: jest.fn(async () => existing),
+			getTable: jest.fn(async () => ({ indices: [] })),
+			query: jest.fn(async (sql: string, parameters?: unknown[]) => {
+				statements.push(sql);
+				if (sql.startsWith('SELECT GET_LOCK')) {
+					lockNames.push(String(parameters?.[0]));
+					return [{ acquired: 1 }];
+				}
+				return [];
+			})
+		};
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		await migration.up(queryRunner as never);
+		return { statements, lockNames };
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('names its locks within the 64 characters MySQL accepts', async () => {
+		for (const migration of [
+			new AddEmployeeKind1791000000721(),
+			new CreateEmployeeAgentProfileTable1791000000722()
+		]) {
+			const { lockNames } = await runOnMySql(migration, true);
+			expect(lockNames).toHaveLength(1);
+			expect(lockNames[0].length).toBeLessThanOrEqual(64);
+		}
+	});
+
+	it('creates employee_agent_profile with all its foreign keys in one statement', async () => {
+		const { statements } = await runOnMySql(new CreateEmployeeAgentProfileTable1791000000722(), false);
+
+		const ddl = statements.filter((sql) => /^(CREATE|ALTER)/.test(sql));
+		expect(ddl).toHaveLength(1);
+		expect(ddl[0].match(/CONSTRAINT `FK_[0-9a-f]+` FOREIGN KEY/g)).toHaveLength(7);
+		expect(statements[statements.length - 1]).toMatch(/^SELECT RELEASE_LOCK/);
+	});
+});

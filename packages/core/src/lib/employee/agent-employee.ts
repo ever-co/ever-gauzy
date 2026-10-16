@@ -47,5 +47,11 @@ export async function findOneForUpdate<T extends ObjectLiteral>(
 ): Promise<T | null> {
 	const type = manager.connection?.options?.type;
 	const locks = type === 'postgres' || type === 'mysql' || type === 'mariadb';
-	return await manager.findOne(entity, { where, ...(locks ? { lock: { mode: 'pessimistic_write' as const } } : {}) });
+	// Eager relations stay out of this read: Postgres refuses `FOR UPDATE` on the nullable side of the outer
+	// joins they add (e.g. an organization's optional image).
+	return await manager.findOne(entity, {
+		where,
+		loadEagerRelations: false,
+		...(locks ? { lock: { mode: 'pessimistic_write' as const } } : {})
+	});
 }

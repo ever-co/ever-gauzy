@@ -421,6 +421,18 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		this.selectedTeam = this.selected.team;
 	}
 
+	/**
+	 * Navigates to the read-only View of the selected team.
+	 *
+	 * @param selectedItem The team to open
+	 */
+	view(selectedItem?: IOrganizationTeam): void {
+		const team = selectedItem ?? this.selectedTeam;
+		if (team) {
+			this.router.navigate(['/pages/organization/teams/view', team.id]);
+		}
+	}
+
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {

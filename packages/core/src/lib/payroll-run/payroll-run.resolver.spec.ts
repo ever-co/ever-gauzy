@@ -672,7 +672,7 @@ describe('PayrollRunService — a line changes only in a draft, and the totals f
 	/** The service over scripted repositories, with the totals recomputation observed. */
 	function service(
 		run: { status: string } & Record<string, unknown>,
-		options: { item?: unknown; employees?: number } = {}
+		options: { item?: unknown; employees?: number; employeeKind?: string } = {}
 	) {
 		const instance = Object.create(PayrollRunService.prototype) as PayrollRunService;
 		const items = {
@@ -680,7 +680,14 @@ describe('PayrollRunService — a line changes only in a draft, and the totals f
 			save: jest.fn().mockImplementation(async (row) => row),
 			findAndCount: jest.fn().mockResolvedValue([[ITEM_ROW], 1])
 		};
-		const manager = { count: jest.fn().mockResolvedValue(options.employees ?? 1) };
+		const employees = options.employees ?? 1;
+		const manager = {
+			count: jest.fn().mockResolvedValue(employees),
+			// The payable-employee guard reads the employee (and its kind) rather than counting it.
+			findOne: jest
+				.fn()
+				.mockResolvedValue(employees ? { id: EMPLOYEE, kind: options.employeeKind ?? 'human' } : null)
+		};
 		const recalculateTotals = jest.fn().mockResolvedValue(run);
 		Object.assign(instance, {
 			typeOrmPayrollItemRepository: items,
@@ -731,6 +738,16 @@ describe('PayrollRunService — a line changes only in a draft, and the totals f
 			stranger.instance.updateItem(FEBRUARY, ITEM, ORGANIZATION, { employeeId: JANUARY })
 		).rejects.toBeInstanceOf(NotFoundException);
 		expect(stranger.items.save).not.toHaveBeenCalled();
+	});
+
+	it('refuses to pay a line to an agent employee', async () => {
+		const draft = { ...RUNS[1], status: PayrollRunStatusEnum.DRAFT };
+		const agent = service(draft, { employeeKind: 'agent' });
+
+		await expect(
+			agent.instance.updateItem(FEBRUARY, ITEM, ORGANIZATION, { employeeId: JANUARY })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(agent.items.save).not.toHaveBeenCalled();
 	});
 
 	it('refuses a member outside the vocabulary or a negative amount, which no DTO checks over GraphQL', async () => {

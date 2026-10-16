@@ -2670,7 +2670,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",
-				"MEMBERS": "成员"
+				"MEMBERS": "成员",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "详情"
+					},
+					"PUBLIC": "公开",
+					"PRIVATE": "私有",
+					"PREFIX": "任务前缀",
+					"MEMBERS_COUNT": "{{ count }} 名成员",
+					"LIVE": "{{ tracking }} 人正在计时 · {{ online }} 人在线",
+					"OF_MEMBERS": "{{ total }} 名成员中的 {{ count }} 名",
+					"CREATED": "创建时间",
+					"UPDATED": "最后更新",
+					"ACTIVE_MEMBERS": "活跃成员",
+					"ACTIVE_MEMBERS_META": "（共 {{ total }} 名成员）记录了时间",
+					"TIME_BY_MEMBER": "按成员统计时间",
+					"TEAM_TASKS": "团队任务",
+					"NO_TEAM_TASKS": "此团队没有分配任务",
+					"NO_MEMBERS": "此团队还没有成员",
+					"NO_PROJECTS": "此团队没有关联项目",
+					"COLUMNS": {
+						"MEMBER": "成员",
+						"ROLE": "角色",
+						"STATUS": "状态",
+						"CURRENT_TASK": "当前任务",
+						"TODAY": "今天",
+						"ACTIVITY": "活跃度"
+					},
+					"ROLE": {
+						"MANAGER": "经理",
+						"MEMBER": "成员"
+					},
+					"GENERAL": "常规",
+					"SETTINGS": "设置",
+					"RECORD": "记录",
+					"TEAM_SIZE": "团队规模",
+					"COLOR": "颜色",
+					"EMOJI": "表情",
+					"PROFILE_LINK": "个人资料链接",
+					"VISIBILITY": "可见性",
+					"SHARE_PROFILE_VIEW": "成员可以查看彼此的资料",
+					"REQUIRE_PLAN": "计时前需要制定计划",
+					"NOT_FOUND": "找不到此团队",
+					"LOAD_FAILED": "无法加载团队",
+					"RETRY": "重试",
+					"OPEN_TASK_DETAILS": "查看 {{ title }} 的详情",
+					"OPEN_TASK_PAGE": "打开 {{ title }} 的页面",
+					"OPEN_TASK_PAGE_SHORT": "打开任务页面",
+					"UNASSIGNED": "未分配",
+					"SHOW_ALL": "显示全部",
+					"SHOW_LESS": "收起",
+					"PROJECTS_CAPTION": "团队的项目及本期间在每个项目上的工作时间",
+					"NOT_LINKED": "未关联",
+					"NOT_LINKED_HINT": "成员在此项目上记录了时间，但该项目未关联到团队"
+				}
 			}
 		},
 		"PERMISSIONS": {
