@@ -33,7 +33,7 @@ import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
-import { InboxPlugin, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -108,6 +108,13 @@ export const plugins = [
 	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
 	// logged once.
 	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+
+	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
+	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when
+	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
+	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
+		? [InboxEmailPlugin]
+		: []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({
