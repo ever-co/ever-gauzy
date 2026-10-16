@@ -1794,6 +1794,73 @@ nb-card-body.ev-body {
 	}
 }
 
+// The "+N" list: the assignees the chip stands for, one per row.
+.people-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	max-width: 16rem;
+	max-height: 16rem;
+	margin: 0;
+	padding: 0.375rem;
+	overflow-y: auto;
+	list-style: none;
+	background-color: var(--gauzy-card-1);
+}
+
+.people-list-row {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.375rem 0.5rem;
+	border-radius: 0.375rem;
+	color: inherit;
+	text-decoration: none;
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		text-decoration: none;
+
+		.people-list-name {
+			color: nb-theme(color-primary-500);
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+	}
+}
+
+.people-list-avatar {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-active-tint);
+	font-size: 0.625rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-1);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+}
+
+.people-list-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	color: var(--gauzy-text-color-1);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.person-card-action {
 		transition: none;
