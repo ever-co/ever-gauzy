@@ -27,12 +27,15 @@ interface InboundHttpRequest {
 	query?: Record<string, unknown>;
 	originalUrl?: string;
 	url?: string;
+	/** The client address Express resolves (it honours the platform's `trust proxy` setting). */
+	ip?: string;
 	socket?: { remoteAddress?: string };
 }
 
 /**
  * A per-client-address bucket on the provider webhook (`GAUZY_INBOX_INBOUND_REQUESTS_PER_MINUTE`, default 600).
- * Keyed on the socket's address (forwarding headers are not trusted); excess requests get 429 with `Retry-After`.
+ * Keyed on the client address Express resolves (forwarding headers only through the proxies the platform trusts, so
+ * a proxy in front of the API is not one shared bucket); excess requests get 429 with `Retry-After`.
  */
 @Injectable()
 export class InboxInboundRateLimitGuard implements CanActivate {
@@ -42,7 +45,8 @@ export class InboxInboundRateLimitGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest<InboundHttpRequest>();
 		const response = context.switchToHttp().getResponse<{ setHeader?: (name: string, value: string) => void }>();
 		const limit = getInboxEmailConfig().inboundRequestsPerMinute;
-		const key = request?.socket?.remoteAddress ?? 'unknown';
+		// The client address Express resolves through the trusted proxies (the platform configures them), else the peer.
+		const key = request?.ip || request?.socket?.remoteAddress || 'unknown';
 		const now = Date.now();
 		if (this.buckets.size > 50_000) {
 			for (const [address, bucket] of this.buckets) if (bucket.resetAt <= now) this.buckets.delete(address);

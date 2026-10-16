@@ -318,10 +318,13 @@ describe('Inbound email pipeline on SQLite', () => {
 		mockCaller.permissions = permissions;
 	};
 
-	const signedRequest = (body: unknown, secret = PLATFORM_SECRET) => {
+	// Every delivery signed at its own second (a relay's retry is signed anew); `at` pins one.
+	let clock = 0;
+	const signedRequest = (body: unknown, secret = PLATFORM_SECRET, at?: number) => {
 		const raw = JSON.stringify(body);
+		const timestamp = at ?? Math.floor(Date.now() / 1000) - (clock++ % 200);
 		return {
-			headers: { [GENERIC_SIGNATURE_HEADER]: signWebhookPayload(secret, raw).header },
+			headers: { [GENERIC_SIGNATURE_HEADER]: signWebhookPayload(secret, raw, { timestamp }).header },
 			body,
 			rawBody: Buffer.from(raw),
 			query: {},
@@ -406,7 +409,7 @@ describe('Inbound email pipeline on SQLite', () => {
 		settings = config();
 		registry = new EmailProviderRegistry();
 		const replay = new InboundReplayGuard(null);
-		new GenericWebhookProvider(registry, replay).onModuleInit();
+		new GenericWebhookProvider(registry).onModuleInit();
 		accounts = new InboxProviderAccountService(
 			dataSource,
 			registry,
@@ -418,7 +421,7 @@ describe('Inbound email pipeline on SQLite', () => {
 		const inbox = new InboxService(dataSource, new InboxSourceHandlerRegistry());
 		processor = new QueuedProcessor(dataSource, access, storage, inbox);
 		jest.spyOn(processor as never, 'config').mockImplementation(() => settings as never);
-		inbound = new InboxInboundService(dataSource, registry, accounts, access, storage, processor);
+		inbound = new InboxInboundService(dataSource, registry, accounts, access, storage, processor, replay);
 		jest.spyOn(inbound as never, 'config').mockImplementation(() => settings as never);
 		sent = [];
 		const sender = {
@@ -469,6 +472,39 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect(rows.find((row) => row.mailboxId === adaBox.id)?.headers).toContain(
 				'"x-gauzy-inbox-tag":"invoices"'
 			);
+		});
+
+		it('refuses an exact replay, and lets a retry through after a failed store', async () => {
+			const body = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
+			const at = Math.floor(Date.now() / 1000);
+			const put = jest.spyOn(storage, 'put').mockRejectedValueOnce(new Error('storage down'));
+			await expect(
+				inbound.receive('generic', 'platform', signedRequest(body, PLATFORM_SECRET, at))
+			).rejects.toThrow('storage down');
+			put.mockRestore();
+			// The same signed request again: not a replay of a stored delivery, so it gets through.
+			expect(await inbound.receive('generic', 'platform', signedRequest(body, PLATFORM_SECRET, at))).toEqual({
+				accepted: 1,
+				duplicates: 0,
+				dropped: 0
+			});
+			await expect(
+				inbound.receive('generic', 'platform', signedRequest(body, PLATFORM_SECRET, at))
+			).rejects.toThrow(/already received/);
+		});
+
+		it('admits an allowlisted sender only with a DMARC pass', async () => {
+			await dataSource.getRepository(InboxMailbox).update(
+				{ id: supportBox.id as string },
+				{
+					senderAllowlist: JSON.stringify(['@acme.test'])
+				}
+			);
+			const raw = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
+			expect((await deliver({ ...raw, authenticationResults: 'mx; dmarc=none' })).accepted).toBe(0);
+			expect(
+				(await deliver({ ...raw, authenticationResults: 'mx; spf=pass; dkim=pass; dmarc=pass' })).accepted
+			).toBe(1);
 		});
 
 		it('drops unknown recipients, and mailboxes another account receives for', async () => {

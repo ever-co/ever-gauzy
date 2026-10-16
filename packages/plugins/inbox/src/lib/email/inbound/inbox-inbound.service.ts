@@ -25,7 +25,13 @@ import { isSenderAllowed, normalizeAddresses } from '../mailboxes/address';
 import { InboxMailboxAccessService } from '../mailboxes/inbox-mailbox-access.service';
 import { InboxProviderAccountService } from '../provider-accounts/inbox-provider-account.service';
 import { EmailProviderRegistry } from '../providers/email-provider.registry';
-import { IInboundWebhookRequest, IProviderAccountContext, ParsedInboundEmail } from '../providers/email-provider.types';
+import {
+	IInboundDeliveryIdentity,
+	IInboundWebhookRequest,
+	IProviderAccountContext,
+	ParsedInboundEmail
+} from '../providers/email-provider.types';
+import { InboundReplayGuard } from './replay-guard.service';
 import { getInboxEmailConfig, InboxEmailConfig } from './inbox-email.config';
 import { InboxEmailStorage } from './inbox-email-storage';
 import { INBOX_EMAIL_PROCESSOR, IInboxEmailProcessor } from './inbox-email-processor.types';
@@ -69,7 +75,8 @@ export class InboxInboundService {
 		private readonly accounts: InboxProviderAccountService,
 		private readonly mailboxes: InboxMailboxAccessService,
 		private readonly storage: InboxEmailStorage,
-		@Inject(INBOX_EMAIL_PROCESSOR) private readonly processor: IInboxEmailProcessor
+		@Inject(INBOX_EMAIL_PROCESSOR) private readonly processor: IInboxEmailProcessor,
+		private readonly replay: InboundReplayGuard
 	) {}
 
 	/** Reads the settings per call, so a test (or a restart-free change) sees the current environment. */
@@ -92,8 +99,9 @@ export class InboxInboundService {
 			throw new PayloadTooLargeException('The delivery is larger than this server accepts.');
 		}
 
+		let identity: IInboundDeliveryIdentity | void;
 		try {
-			await provider.inbound.verify(request, account);
+			identity = await provider.inbound.verify(request, account);
 		} catch (error) {
 			this.logger.warn(`Refused an unverified ${providerId} delivery for account ${accountId}.`);
 			throw error instanceof UnauthorizedException
@@ -101,11 +109,24 @@ export class InboxInboundService {
 				: new UnauthorizedException('The delivery is not verified.');
 		}
 
-		const messages = await provider.inbound.parse(request, account);
+		// Single use: marked before anything is stored, released when storing fails (the provider's retry of the same
+		// signed request must get through); storage is idempotent on the Message-ID anyway.
+		const replayScope = `${providerId}:${account.id ?? PLATFORM_ACCOUNT_ID}`;
+		if (identity && !(await this.replay.consume(replayScope, identity.fingerprint, identity.ttlMs))) {
+			throw new UnauthorizedException('The delivery was already received.');
+		}
 		const result: IInboxInboundResult = { accepted: 0, duplicates: 0, dropped: 0 };
 		const created: ID[] = [];
-		for (const message of messages) {
-			await this.store(message, account, config, result, created);
+		try {
+			const messages = await provider.inbound.parse(request, account);
+			for (const message of messages) {
+				await this.store(message, account, config, result, created);
+			}
+		} catch (error) {
+			if (identity) await this.replay.release(replayScope, identity.fingerprint);
+			// What was stored stays (and is processed): a retry counts it as a duplicate.
+			for (const id of created) this.processor.enqueue(id);
+			throw error;
 		}
 		for (const id of created) {
 			this.processor.enqueue(id);
@@ -250,6 +271,9 @@ export class InboxInboundService {
 		const rows = await this.mailboxes.findActiveByAddresses(recipients.map((entry) => entry.address));
 		const byAddress = new Map(rows.map((row) => [row.address, row]));
 		const sender = message.from?.address ?? message.envelopeFrom;
+		// The From header alone is forgeable: an allowlist admits a sender only when the provider says its domain is
+		// authenticated (DMARC pass). A mailbox with an allowlist therefore needs a relay that reports verdicts.
+		const authenticated = message.dmarc === 'pass';
 		const out: MatchedMailbox[] = [];
 		for (const recipient of recipients) {
 			const mailbox = byAddress.get(recipient.address);
@@ -260,7 +284,8 @@ export class InboxInboundService {
 			) {
 				continue;
 			}
-			if (!isSenderAllowed(this.allowlist(mailbox), sender)) continue;
+			const allowlist = this.allowlist(mailbox);
+			if (allowlist.length > 0 && (!authenticated || !isSenderAllowed(allowlist, sender))) continue;
 			out.push(recipient.tag ? { mailbox, tag: recipient.tag } : { mailbox });
 		}
 		return out;

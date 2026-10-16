@@ -33,7 +33,7 @@ export class InboundReplayGuard {
 	 * @param ttlMs How long it must be remembered (at least its own freshness window).
 	 */
 	async consume(scope: string, fingerprint: string, ttlMs: number): Promise<boolean> {
-		const key = `gauzy:inbox:replay:${createHash('sha256').update(`${scope}\n${fingerprint}`).digest('hex')}`;
+		const key = this.keyOf(scope, fingerprint);
 		if (this.redis && typeof this.redis.set === 'function') {
 			try {
 				return (await this.redis.set(key, '1', { NX: true, PX: Math.max(1000, Math.ceil(ttlMs)) })) === 'OK';
@@ -42,6 +42,24 @@ export class InboundReplayGuard {
 			}
 		}
 		return this.consumeLocally(key, ttlMs);
+	}
+
+	/** Forgets a delivery again (its storage failed: the provider's retry must get through). Best effort. */
+	async release(scope: string, fingerprint: string): Promise<void> {
+		const key = this.keyOf(scope, fingerprint);
+		this.local.delete(key);
+		const redis = this.redis as (ReplayRedis & { del?: (key: string) => Promise<unknown> }) | null | undefined;
+		if (redis && typeof redis.del === 'function') {
+			try {
+				await redis.del(key);
+			} catch (error) {
+				this.logger.warn(`Redis replay release failed: ${(error as Error)?.name}`);
+			}
+		}
+	}
+
+	private keyOf(scope: string, fingerprint: string): string {
+		return `gauzy:inbox:replay:${createHash('sha256').update(`${scope}\n${fingerprint}`).digest('hex')}`;
 	}
 
 	private consumeLocally(key: string, ttlMs: number): boolean {
