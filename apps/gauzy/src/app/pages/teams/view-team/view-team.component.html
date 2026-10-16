@@ -358,7 +358,7 @@
 						-->
 						<ul class="task-list">
 							@for (task of visibleTasks; track task.id) {
-							<li class="task-row team-task-row" [class.is-viewed]="viewedTask?.id === task.id">
+							<li class="task-row task-row--interactive" [class.is-viewed]="viewedTask?.id === task.id">
 								<button
 									type="button"
 									class="task-open"
