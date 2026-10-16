@@ -345,7 +345,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this.members = [];
 
 		try {
-			const team = await this.fetchTeam(id, organization);
+			const { team } = await this.fetchTeam(id, organization);
 			if (sequence !== this._loadSequence) return;
 			if (
 				!team ||
@@ -384,15 +384,21 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this.showAllTasks = false;
 	}
 
-	/** The team with every relation the page reads; the base relations alone if the API refuses one. */
-	private async fetchTeam(id: string, organization: IOrganization): Promise<IOrganizationTeam | null> {
+	/**
+	 * The team with every relation the page reads; the base relations alone if the API refuses one.
+	 * `full` says which it was: only a full read carries the members' current tasks.
+	 */
+	private async fetchTeam(
+		id: string,
+		organization: IOrganization
+	): Promise<{ team: IOrganizationTeam | null; full: boolean }> {
 		const where = { id, organizationId: organization.id, tenantId: organization.tenantId } as any;
 		const pick = (result: IPagination<IOrganizationTeam>) => result?.items?.find((item) => item.id === id) ?? null;
 		try {
-			return pick(await this._teamsService.getAll(FULL_RELATIONS, where));
+			return { team: pick(await this._teamsService.getAll(FULL_RELATIONS, where)), full: true };
 		} catch (error) {
 			if (error?.status === 403 || error?.status === 404) throw error;
-			return pick(await this._teamsService.getAll(BASE_RELATIONS, where));
+			return { team: pick(await this._teamsService.getAll(BASE_RELATIONS, where)), full: false };
 		}
 	}
 
@@ -407,13 +413,20 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		const sequence = this._loadSequence;
 		if (!team || !organization) return;
 		try {
-			const fresh = await this.fetchTeam(team.id, organization);
+			const { team: fresh, full } = await this.fetchTeam(team.id, organization);
 			// Another team (or organization) was loaded meanwhile: this read is not for it.
 			if (sequence !== this._loadSequence || !fresh) return;
 			const latest = new Map(this.buildMembers(fresh.members || []).map((member) => [member.id, member]));
 			this.members = this.members.map((member) => {
 				const update = latest.get(member.id);
-				return update ? { ...member, presence: update.presence, activeTask: update.activeTask } : member;
+				if (!update) return member;
+				// A base-relation read has no current tasks: keep the ones on screen rather
+				// than clearing them; only a full read may say a member has none.
+				return {
+					...member,
+					presence: update.presence,
+					activeTask: full ? update.activeTask : member.activeTask
+				};
 			});
 		} catch {
 			// Keep the last known presence.
