@@ -9,18 +9,25 @@ import { IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
  */
 describe('IntegrationEntity vocabulary', () => {
 	const sdl = readFileSync(join(__dirname, 'schema', 'integration.type.gql'), 'utf8');
+	/** The committed schema snapshot: what the endpoint serves, and what clients are generated from. */
+	const snapshot = readFileSync(join(__dirname, '..', 'graphql', 'schema', 'schema.graphql'), 'utf8');
 
-	function declaredValues(): string[] {
-		const match = /enum IntegrationEntity \{([^}]*)\}/.exec(sdl);
+	function enumValues(source: string): string[] {
+		const match = /enum IntegrationEntity \{([^}]*)\}/.exec(source);
 		expect(match).not.toBeNull();
 		return match[1]
 			.split('\n')
 			.map((line) => line.trim())
 			.filter((line) => line.length > 0 && !line.startsWith('#'));
 	}
+	const declaredValues = () => enumValues(sdl);
 
 	it('declares every contract value, and nothing else', () => {
 		expect([...declaredValues()].sort()).toEqual([...Object.values(IntegrationEntity)].sort());
+	});
+
+	it('the committed schema snapshot serves the same values', () => {
+		expect([...enumValues(snapshot)].sort()).toEqual([...Object.values(IntegrationEntity)].sort());
 	});
 
 	it('includes the Ever Works entities', () => {
