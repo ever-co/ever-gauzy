@@ -1023,21 +1023,23 @@ export class TimeLogResolver {
 	/**
 	 * The body with the employee the delivered pipe leaves on it.
 	 *
-	 * `TimeLogBodyTransformPipe` replaces the stated employee with the caller's own whenever the caller
-	 * does not hold `CHANGE_SELECTED_EMPLOYEE`, and both the create and the update route run it. It is
-	 * restated rather than approximated: a caller that may record only its own time must not be able to
-	 * record somebody else's by asking over this protocol, and a resolver that passed the stated
-	 * identifier through would be exactly that door.
+	 * `TimeLogBodyTransformPipe`, which both the create and the update route run, fills only a MISSING
+	 * employee with the caller's own when the caller does not hold `CHANGE_SELECTED_EMPLOYEE`, and keeps a
+	 * named one. The service then decides whether the caller may write for that employee
+	 * (`assertCanWriteTimeFor`: the employee themself, `CHANGE_SELECTED_EMPLOYEE`, or a manager of a team
+	 * the employee is in) and refuses anything else with a 403. Replacing a named employee here instead
+	 * would record a team manager's entry for a member against the manager and make the manager's edit of
+	 * a member's log fail, so this restates the pipe exactly.
 	 *
 	 * @param input The body the caller stated.
-	 * @returns The body with the employee the write will actually belong to.
+	 * @returns The body with the employee the write is asked for.
 	 */
-	private bodyOfTheCaller<T extends { employeeId: Id }>(input: T): T {
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+	private bodyOfTheCaller<T extends { employeeId?: Id }>(input: T): T {
+		if (input.employeeId || RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			return input;
 		}
 
-		return { ...input, employeeId: RequestContext.currentEmployeeId() as Id };
+		return { ...input, employeeId: RequestContext.currentUser()?.employeeId as Id };
 	}
 
 	/**
