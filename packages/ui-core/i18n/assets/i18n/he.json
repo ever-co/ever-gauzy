@@ -2712,7 +2712,7 @@
 					"CREATED": "נוצר",
 					"UPDATED": "עודכן לאחרונה",
 					"ACTIVE_MEMBERS": "חברים פעילים",
-					"ACTIVE_MEMBERS_META": "מתוך {{ total }} רשמו זמן",
+					"ACTIVE_MEMBERS_META": "מתוך {{ total }} חברים רשמו זמן",
 					"TIME_BY_MEMBER": "זמן לפי חבר",
 					"TEAM_TASKS": "משימות הצוות",
 					"NO_TEAM_TASKS": "אין משימות שהוקצו לצוות זה",

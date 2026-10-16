@@ -2519,7 +2519,7 @@
 					"CREATED": "Created",
 					"UPDATED": "Last updated",
 					"ACTIVE_MEMBERS": "Active members",
-					"ACTIVE_MEMBERS_META": "of {{ total }} tracked time",
+					"ACTIVE_MEMBERS_META": "of {{ total }} members tracked time",
 					"TIME_BY_MEMBER": "Time by member",
 					"TEAM_TASKS": "Team tasks",
 					"NO_TEAM_TASKS": "No tasks assigned to this team",

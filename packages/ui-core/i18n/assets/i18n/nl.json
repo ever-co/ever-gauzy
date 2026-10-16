@@ -2684,7 +2684,7 @@
 					"CREATED": "Aangemaakt",
 					"UPDATED": "Laatst bijgewerkt",
 					"ACTIVE_MEMBERS": "Actieve leden",
-					"ACTIVE_MEMBERS_META": "van {{ total }} registreerden tijd",
+					"ACTIVE_MEMBERS_META": "van {{ total }} leden registreerden tijd",
 					"TIME_BY_MEMBER": "Tijd per lid",
 					"TEAM_TASKS": "Teamtaken",
 					"NO_TEAM_TASKS": "Geen taken toegewezen aan dit team",

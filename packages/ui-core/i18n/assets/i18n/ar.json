@@ -2682,7 +2682,7 @@
 					"CREATED": "تاريخ الإنشاء",
 					"UPDATED": "آخر تحديث",
 					"ACTIVE_MEMBERS": "الأعضاء النشطون",
-					"ACTIVE_MEMBERS_META": "من {{ total }} سجلوا وقتًا",
+					"ACTIVE_MEMBERS_META": "من أصل {{ total }} أعضاء سجلوا وقتًا",
 					"TIME_BY_MEMBER": "الوقت حسب العضو",
 					"TEAM_TASKS": "مهام الفريق",
 					"NO_TEAM_TASKS": "لا توجد مهام مسندة لهذا الفريق",

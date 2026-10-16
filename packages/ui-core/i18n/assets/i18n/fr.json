@@ -2685,7 +2685,7 @@
 					"CREATED": "Créée le",
 					"UPDATED": "Dernière mise à jour",
 					"ACTIVE_MEMBERS": "Membres actifs",
-					"ACTIVE_MEMBERS_META": "sur {{ total }} ont suivi du temps",
+					"ACTIVE_MEMBERS_META": "sur {{ total }} membres ont suivi du temps",
 					"TIME_BY_MEMBER": "Temps par membre",
 					"TEAM_TASKS": "Tâches de l'équipe",
 					"NO_TEAM_TASKS": "Aucune tâche assignée à cette équipe",

@@ -2719,7 +2719,7 @@
 					"CREATED": "Создана",
 					"UPDATED": "Обновлена",
 					"ACTIVE_MEMBERS": "Активные участники",
-					"ACTIVE_MEMBERS_META": "из {{ total }} учитывали время",
+					"ACTIVE_MEMBERS_META": "из {{ total }} участников учитывали время",
 					"TIME_BY_MEMBER": "Время по участникам",
 					"TEAM_TASKS": "Задачи команды",
 					"NO_TEAM_TASKS": "Нет задач, назначенных этой команде",

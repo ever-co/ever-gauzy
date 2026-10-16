@@ -2744,7 +2744,7 @@
 					"CREATED": "Създаден",
 					"UPDATED": "Последна актуализация",
 					"ACTIVE_MEMBERS": "Активни членове",
-					"ACTIVE_MEMBERS_META": "от {{ total }} отчетоха време",
+					"ACTIVE_MEMBERS_META": "от {{ total }} членове отчетоха време",
 					"TIME_BY_MEMBER": "Време по членове",
 					"TEAM_TASKS": "Задачи на екипа",
 					"NO_TEAM_TASKS": "Няма задачи, възложени на този екип",

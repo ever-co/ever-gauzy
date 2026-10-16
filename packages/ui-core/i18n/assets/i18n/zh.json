@@ -2684,7 +2684,7 @@
 					"CREATED": "创建时间",
 					"UPDATED": "最后更新",
 					"ACTIVE_MEMBERS": "活跃成员",
-					"ACTIVE_MEMBERS_META": "（共 {{ total }} 人）记录了时间",
+					"ACTIVE_MEMBERS_META": "（共 {{ total }} 名成员）记录了时间",
 					"TIME_BY_MEMBER": "按成员统计时间",
 					"TEAM_TASKS": "团队任务",
 					"NO_TEAM_TASKS": "此团队没有分配任务",
