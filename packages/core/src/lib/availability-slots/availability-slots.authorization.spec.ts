@@ -186,9 +186,9 @@ describe('Availability slots — whose hours a caller may write, on a real datab
 	/** Every stored slot, read past the CRUD service, as `employee start-end` on the test week. */
 	const stored = async (): Promise<Record<string, string>> => {
 		const rows = await slots.find({ withDeleted: true, order: { startTime: 'ASC' } });
-		const hhmm = (value: Date | string) => new Date(value).toISOString().slice(8, 16).replace('T', ' ');
+		const clock = (value: Date | string) => new Date(value).toISOString().slice(8, 16).replace('T', ' ');
 		return Object.fromEntries(
-			rows.map((row) => [row.id, `${row.employeeId ?? 'none'} ${hhmm(row.startTime)}-${hhmm(row.endTime).slice(3)}${row.deletedAt ? ' (deleted)' : ''}`])
+			rows.map((row) => [row.id, `${row.employeeId ?? 'none'} ${clock(row.startTime)}-${clock(row.endTime).slice(3)}${row.deletedAt ? ' (deleted)' : ''}`])
 		);
 	};
 
