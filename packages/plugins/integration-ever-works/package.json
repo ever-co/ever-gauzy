@@ -1,0 +1,66 @@
+{
+	"name": "@gauzy/plugin-integration-ever-works",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform plugin for the two-way integration with Ever Works (tasks, teams, goals, missions, ideas, agents, inbox and docs); off unless EVER_WORKS_ENABLED=true",
+	"author": {
+		"name": "Ever Co. LTD",
+		"url": "https://github.com/ever-co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-ever-works"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://github.com/ever-co/ever-gauzy/tree/develop/packages/plugins/integration-ever-works",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integration-ever-works",
+		"lib:build:prod": "yarn nx build plugin-integration-ever-works",
+		"lib:watch": "yarn nx build plugin-integration-ever-works --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@mikro-orm/nestjs": "^6.1.2",
+		"@nestjs/cqrs": "^12.1.0",
+		"@nestjs/swagger": "^12.0.2",
+		"@nestjs/typeorm": "^12.0.2",
+		"axios": "^1.20.0",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.15.1",
+		"tslib": "^2.8.1",
+		"typeorm": "^1.1.2"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
+	},
+	"keywords": [
+		"gauzy",
+		"ever-works",
+		"integration",
+		"sync",
+		"agents",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=26",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}
