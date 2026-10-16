@@ -8,7 +8,6 @@ jest.mock('@gauzy/core', () => ({
 
 import { UnauthorizedException } from '@nestjs/common';
 import { signWebhookPayload } from '../../../../../../../core/src/lib/webhook/webhook-signature';
-import { InboundReplayGuard } from '../../inbound/replay-guard.service';
 import { SAMPLE_MIME } from '../../testing/sample-mime';
 import { EmailProviderRegistry } from '../email-provider.registry';
 import { IInboundWebhookRequest, IProviderAccountContext } from '../email-provider.types';
@@ -44,16 +43,24 @@ describe('GenericWebhookProvider', () => {
 	let provider: GenericWebhookProvider;
 
 	beforeEach(() => {
-		provider = new GenericWebhookProvider(new EmailProviderRegistry(), new InboundReplayGuard(null));
+		provider = new GenericWebhookProvider(new EmailProviderRegistry());
 	});
 
 	describe('verify', () => {
 		const body = { raw: Buffer.from(SAMPLE_MIME).toString('base64'), envelope: { to: ['a@b.test'] } };
 
-		it('accepts a fresh delivery signed with the account secret, once', async () => {
+		it('accepts a fresh delivery and names it by its timestamp and the signature that verified', async () => {
 			const delivery = signed(body);
-			await expect(provider.verify(delivery, account)).resolves.toBeUndefined();
-			await expect(provider.verify(delivery, account)).rejects.toThrow(/already received/);
+			const identity = await provider.verify(delivery, account);
+			const header = String(delivery.headers[GENERIC_SIGNATURE_HEADER]);
+			const [t, v1] = header.split(',').map((part) => part.slice(3 - (part.startsWith('t=') ? 1 : 0)));
+			expect(identity.fingerprint).toBe(`${t}.${v1}`);
+			// A captured request with the header reordered and an extra v1 is the same delivery.
+			const reordered = {
+				...delivery,
+				headers: { [GENERIC_SIGNATURE_HEADER]: `v1=${'0'.repeat(64)},v1=${v1},t=${t}` }
+			};
+			expect((await provider.verify(reordered, account)).fingerprint).toBe(identity.fingerprint);
 		});
 
 		it('refuses an unsigned delivery, another secret, a stale timestamp and a changed body', async () => {
@@ -148,7 +155,7 @@ describe('GenericWebhookProvider', () => {
 
 	it('registers itself, receiving only', () => {
 		const registry = new EmailProviderRegistry();
-		const own = new GenericWebhookProvider(registry, new InboundReplayGuard(null));
+		const own = new GenericWebhookProvider(registry);
 		own.onModuleInit();
 		expect(registry.get('generic')).toBe(own);
 		expect(registry.describe()[0]?.capabilities).toEqual({ inbound: true, outbound: false, customDomains: true });

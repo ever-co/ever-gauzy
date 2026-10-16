@@ -1,7 +1,7 @@
 // cspell:ignore dmarc
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { createHmac } from 'node:crypto';
 import { verifyWebhookSignature, WEBHOOK_SIGNATURE_TOLERANCE_SECONDS } from '@gauzy/core';
-import { InboundReplayGuard } from '../../inbound/replay-guard.service';
 import {
 	derivedMessageId,
 	messageIdOf,
@@ -15,6 +15,7 @@ import { GENERIC_PROVIDER_ID } from '../../inbox-email.constants';
 import { EmailProviderRegistry } from '../email-provider.registry';
 import {
 	IEmailProviderPlugin,
+	IInboundDeliveryIdentity,
 	IInboundEmailAddress,
 	IInboundEmailProvider,
 	IInboundWebhookRequest,
@@ -72,8 +73,9 @@ function strings(value: unknown): string[] {
  *
  * **Verification.** `X-Gauzy-Inbox-Signature: t=<unix seconds>,v1=<hex>` — HMAC-SHA256 over `<t>.<raw body>`
  * keyed with the account's signing secret (the platform route: `GAUZY_INBOX_PLATFORM_SECRET`), 5-minute window,
- * constant-time compare, single use (Redis `SET NX` when available). No raw body, no secret, a stale or reused
- * signature: refused. There is no unsigned mode.
+ * constant-time compare; the delivery (timestamp + the signature that verified) is made single use by the pipeline
+ * (Redis `SET NX` when available). No raw body, no secret, a stale or forged signature: refused. There is no unsigned
+ * mode.
  *
  * **Body** (JSON): `{ "messages": [ … ] }` or one message. A message is either raw MIME —
  * `{ "raw": "<base64 RFC 5322>", "envelope": { "from": "…", "to": ["…"] }, "authenticationResults": "…",
@@ -105,10 +107,7 @@ export class GenericWebhookProvider
 	};
 	readonly inbound: IInboundEmailProvider = this;
 
-	constructor(
-		private readonly registry: EmailProviderRegistry,
-		@Inject(InboundReplayGuard) private readonly replay: InboundReplayGuard
-	) {}
+	constructor(private readonly registry: EmailProviderRegistry) {}
 
 	onModuleInit(): void {
 		this.registry.register(this);
@@ -118,7 +117,7 @@ export class GenericWebhookProvider
 		this.registry.unregister(this.id);
 	}
 
-	async verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<void> {
+	async verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<IInboundDeliveryIdentity> {
 		const secret =
 			typeof account.config['signingSecret'] === 'string' ? (account.config['signingSecret'] as string) : '';
 		const raw = request.headers[GENERIC_SIGNATURE_HEADER];
@@ -135,14 +134,16 @@ export class GenericWebhookProvider
 		if (!valid) {
 			throw new UnauthorizedException('The delivery signature does not verify.');
 		}
-		const fresh = await this.replay.consume(
-			`${this.id}:${account.id ?? 'platform'}`,
-			header.replace(/\s+/g, ''),
-			(2 * WEBHOOK_SIGNATURE_TOLERANCE_SECONDS + 60) * 1000
-		);
-		if (!fresh) {
-			throw new UnauthorizedException('The delivery was already received.');
-		}
+		// The delivery is the timestamp and the one signature that verified (recomputed), never the raw header: a
+		// captured request with a reordered header or an extra `v1=` is the same delivery.
+		const timestamp = (header.split(',').find((part) => part.trim().startsWith('t=')) ?? '').trim().slice(2);
+		const signature = createHmac('sha256', secret)
+			.update(`${timestamp}.${request.rawBody.toString('utf8')}`, 'utf8')
+			.digest('hex');
+		return {
+			fingerprint: `${timestamp}.${signature}`,
+			ttlMs: (2 * WEBHOOK_SIGNATURE_TOLERANCE_SECONDS + 60) * 1000
+		};
 	}
 
 	async parse(request: IInboundWebhookRequest): Promise<ParsedInboundEmail[]> {

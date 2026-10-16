@@ -10,6 +10,27 @@ export interface IInboxStoredFile {
 	provider: string;
 }
 
+/** A stored file's content as the providers answer it — a Buffer, bytes, text or a stream (S3 and co.) — as a Buffer. */
+export async function toBuffer(content: unknown): Promise<Buffer> {
+	if (content === undefined || content === null) throw new Error('The stored file could not be read.');
+	if (Buffer.isBuffer(content)) return content;
+	if (content instanceof Uint8Array) return Buffer.from(content);
+	if (typeof content === 'string') return Buffer.from(content);
+	const body = content as {
+		transformToByteArray?: () => Promise<Uint8Array>;
+		[Symbol.asyncIterator]?: () => AsyncIterator<unknown>;
+	};
+	if (typeof body.transformToByteArray === 'function') return Buffer.from(await body.transformToByteArray());
+	if (typeof body[Symbol.asyncIterator] === 'function') {
+		const chunks: Buffer[] = [];
+		for await (const chunk of content as AsyncIterable<unknown>) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
+		}
+		return Buffer.concat(chunks);
+	}
+	throw new Error('The stored file has a form this storage cannot read.');
+}
+
 /** The provider name recorded for files kept in the Inbox's own private local directory. */
 export const INBOX_LOCAL_PROVIDER = 'INBOX_LOCAL';
 
@@ -41,7 +62,9 @@ export class InboxEmailStorage {
 			return { key, provider: INBOX_LOCAL_PROVIDER };
 		}
 		const stored = await provider.putFile(content, key);
-		return { key: stored?.key ?? key, provider: String(provider.name).toUpperCase() };
+		// The remote providers answer nothing (rather than throwing) when an upload fails: that is a failure here.
+		if (!stored?.key) throw new Error('The file could not be stored.');
+		return { key: stored.key, provider: String(provider.name).toUpperCase() };
 	}
 
 	async get(file: IInboxStoredFile): Promise<Buffer> {
@@ -49,9 +72,7 @@ export class InboxEmailStorage {
 			return readFile(this.localPath(file.key));
 		}
 		const provider = new FileStorage().getProvider(file.provider as FileStorageProviderEnum);
-		const content = await provider.getFile(file.key);
-		if (!content) throw new Error('The stored file could not be read.');
-		return Buffer.isBuffer(content) ? content : Buffer.from(content);
+		return toBuffer(await provider.getFile(file.key));
 	}
 
 	/** The file's path in the private root; a key that would leave it is refused. */

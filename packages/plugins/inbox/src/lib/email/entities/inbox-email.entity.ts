@@ -76,8 +76,9 @@ export class InboxEmail extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 16, nullable: true })
 	dmarc?: string | null;
 
-	@MultiORMColumn({ nullable: true })
-	spamScore?: number;
+	/** A fraction (`float`: the migration's double precision / double / real). */
+	@MultiORMColumn({ type: 'float', nullable: true })
+	spamScore?: number | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 16, nullable: true })
 	spamVerdict?: InboxEmailSpamVerdictEnum | null;
