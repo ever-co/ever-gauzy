@@ -1,4 +1,5 @@
 import { Logger, Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule } from '@gauzy/core';
@@ -16,6 +17,8 @@ import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
+import { EverWorksMappingController } from './mapping/ever-works-mapping.controller';
+import { EverWorksMappingService } from './mapping/ever-works-mapping.service';
 
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection];
@@ -32,9 +35,11 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection];
 		TypeOrmModule.forFeature(EVER_WORKS_ENTITIES),
 		MikroOrmModule.forFeature(EVER_WORKS_ENTITIES),
 		// Gauzy's tenant and permission guards of the management routes need the role permissions.
-		RolePermissionModule
+		RolePermissionModule,
+		// The platform's command bus (projects are created through OrganizationProjectCreateCommand).
+		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController],
+	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -43,6 +48,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection];
 		EverWorksNotifier,
 		EverWorksConnectionService,
 		EverWorksHealthScheduler,
+		EverWorksMappingService,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,
 		{
@@ -53,6 +59,6 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection];
 			}
 		}
 	],
-	exports: [EverWorksCatalogService, EverWorksConnectionService, EverWorksClientFactory, EverWorksScopeService, EVER_WORKS_CONFIG]
+	exports: [EverWorksCatalogService, EverWorksConnectionService, EverWorksClientFactory, EverWorksScopeService, EverWorksMappingService, EVER_WORKS_CONFIG]
 })
 export class EverWorksModule {}
