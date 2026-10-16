@@ -4,6 +4,7 @@ import { ID, IShareRule, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { assertSensitiveRelationsAllowed } from '../core/util/sensitive-relations.helper';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
+import { canViewTrackedData } from '../shared/guards/employee-tracked-data.guard';
 import { buildSharedEntityRelations } from './shared-entity.helper';
 
 /**
@@ -46,6 +47,13 @@ const TRACKED_DATA_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The recordings of the media plugins (videos, camshots, soundshots), registered when those plugins are on.
+ * They name the employee who uploaded them (`uploadedById`), not an `employeeId`, and their read routes
+ * serve a recording to that employee or to a CHANGE_SELECTED_EMPLOYEE holder only (`assertCallerOwnsUpload`).
+ */
+const UPLOADED_TRACKED_DATA_TYPES: ReadonlySet<string> = new Set(['Video', 'Camshot', 'Soundshot']);
+
+/**
  * Whether the caller may read the shared record, as the read routes of its type decide.
  *
  * @param name - The entity name, from the metadata (never the client's string).
@@ -85,7 +93,8 @@ function mayReadSharedRecord(name: string, record: Record<string, unknown> | nul
  * Whether the caller may read a task, team, project or tracked-data record, as its read routes decide.
  * Unlike {@link mayReadSharedRecord}, a yes says nothing about the record's relations.
  *
- * @param dataSource - Where the time slot of a screenshot or a minute is looked up.
+ * @param dataSource - Where the time slot of a screenshot or a minute, and the organization's tracked-data
+ * setting, are looked up.
  * @param managedEmployeeService - Which employees the caller manages.
  * @param name - The entity name, from the metadata.
  * @param record - The shared record.
@@ -109,6 +118,14 @@ async function mayReadSharedRoot(
 		}
 		return await managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, [], [record['id'] as ID]);
 	}
+	if (UPLOADED_TRACKED_DATA_TYPES.has(name)) {
+		const currentEmployeeId = RequestContext.currentEmployeeId();
+		const ownsUpload =
+			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+			(!!currentEmployeeId && record?.['uploadedById'] === currentEmployeeId);
+		// Their read routes also state EmployeeTrackedDataGuard.
+		return ownsUpload && (await canViewTrackedData(dataSource, [record?.['organizationId']]));
+	}
 	if (!TRACKED_DATA_TYPES.has(name)) {
 		return undefined;
 	}
@@ -124,8 +141,12 @@ async function mayReadSharedRoot(
 		organizationId = timeSlot?.['organizationId'] ?? organizationId;
 	}
 	// The read routes serve the caller's own rows, every row with CHANGE_SELECTED_EMPLOYEE, and a team
-	// manager's members' rows through the time log list.
-	return await managedEmployeeService.canManageEmployee(employeeId, undefined, organizationId);
+	// manager's members' rows through the time log list — and only while the organization's
+	// `allowEmployeeToSeeTrackedData` lets the caller see tracked data (EmployeeTrackedDataGuard).
+	return (
+		(await managedEmployeeService.canManageEmployee(employeeId, undefined, organizationId)) &&
+		(await canViewTrackedData(dataSource, [organizationId]))
+	);
 }
 
 /**
