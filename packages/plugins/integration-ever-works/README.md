@@ -47,13 +47,22 @@ On, the API runs the plugin's migration (`ever_works_connection`), lists
 **Ever Works** on the Integrations page (a catalog row written at start, on
 every database; never by the seed) and answers the routes below.
 
-| Variable | Meaning |
-| --- | --- |
-| `EVER_WORKS_API_URL` | The Ever Works API base URL the connect form offers, for example `https://api.ever.works/api` for Ever Works Cloud. Public HTTPS without a query or fragment; anything else is ignored with a warning. |
-| `EVER_WORKS_APP_URL` | The Ever Works web app, for example `https://app.ever.works`, used only to link the admin to the page that creates an integration key. |
-| `ENCRYPTION_KEY` | A base64-encoded 32-byte key. The integration key and the webhook secret are stored encrypted with it (AES-256-GCM, bound to their purpose and connection); a malformed or published value is refused. Without it, a strong `JWT_SECRET` that is not a published default is used; with neither, nothing can be connected. |
-| `API_BASE_URL` | The public HTTPS address of this API, where Ever Works delivers webhooks. Without one, no webhook is registered (the change feed still works). |
-| `EVER_WORKS_HEALTH_CHECK=off` | Keeps this process out of the daily key check. |
+- `EVER_WORKS_API_URL`: the Ever Works API base URL the connect form offers,
+  for example `https://api.ever.works/api` for Ever Works Cloud. A public HTTPS
+  URL without a query or fragment; anything else is ignored with a warning.
+  Unset, the admin types the URL.
+- `EVER_WORKS_APP_URL`: the Ever Works web app, for example
+  `https://app.ever.works`, used only to link the admin to the page that
+  creates an integration key.
+- `ENCRYPTION_KEY`: a base64-encoded 32-byte key. The integration key and the
+  webhook secret are stored encrypted with it (AES-256-GCM, bound to their
+  purpose and connection); a malformed or published value is refused. Without
+  it, a strong `JWT_SECRET` that is not a published default is used; with
+  neither, nothing can be connected.
+- `API_BASE_URL`: the public HTTPS address of this API, where Ever Works
+  delivers webhooks. Without one, no webhook is registered (the change feed
+  still works).
+- `EVER_WORKS_HEALTH_CHECK=off`: keeps this process out of the daily key check.
 
 ## Configure the integration
 
