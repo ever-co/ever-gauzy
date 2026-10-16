@@ -1,6 +1,7 @@
 import { MultiORM, environment as env } from '@gauzy/config';
 import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Brackets, EntityTarget, In, WhereExpressionBuilder } from 'typeorm';
@@ -35,6 +36,19 @@ export const ORGANIZATION_POLICY_COLUMNS: Readonly<Record<string, keyof IOrganiz
 	[PermissionsEnum.ALLOW_MODIFY_TIME]: 'allowModifyTime' as keyof IOrganization,
 	[PermissionsEnum.ALLOW_DELETE_TIME]: 'allowDeleteTime' as keyof IOrganization
 });
+
+/**
+ * Reads a dotted path (`input.logIds`) out of an operation's arguments.
+ *
+ * @param args The arguments.
+ * @param path The path.
+ * @returns What is there, or undefined.
+ */
+export function readArgumentPath(args: Record<string, unknown> | null, path: string): unknown {
+	return path
+		.split('.')
+		.reduce<unknown>((value, key) => (value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined), args ?? undefined);
+}
 
 @Injectable()
 export class OrganizationPermissionGuard implements CanActivate {
@@ -192,6 +206,15 @@ export class OrganizationPermissionGuard implements CanActivate {
 			return true;
 		}
 
+		if (target.source === 'args') {
+			const organizationIds = await this.findTargetOrganizationIds(context, tenantId, target);
+			if (!organizationIds || organizationIds.length === 0) {
+				console.log('OrganizationPermissionGuard: the target record is not in the caller tenant, access denied');
+				return false;
+			}
+			return true;
+		}
+
 		if (!(await this.findTargetOrganizationId(context, tenantId, target))) {
 			console.log('OrganizationPermissionGuard: the target record is not in the caller tenant, access denied');
 			return false;
@@ -302,13 +325,16 @@ export class OrganizationPermissionGuard implements CanActivate {
 	 */
 	private extractRequestOrganizationIds(context: ExecutionContext): ID[] | null {
 		try {
-			const request = context.switchToHttp().getRequest();
+			// A GraphQL operation names its organization in its arguments — at the top level or in its `input` — and
+			// `switchToHttp()` on it is the root value, which names none: the guard used to fall back to the caller's
+			// own employee or pinned organization and evaluate the policy of an organization the write never touched
+			// (SEC-A-05).
+			const args = this.graphqlArgs(context);
+			const request = args ? undefined : context.switchToHttp().getRequest();
 
-			const candidates = [
-				request?.body?.organizationId,
-				request?.query?.organizationId,
-				request?.params?.organizationId
-			];
+			const candidates = args
+				? [args['organizationId'], (args['input'] as Record<string, unknown> | undefined)?.['organizationId']]
+				: [request?.body?.organizationId, request?.query?.organizationId, request?.params?.organizationId];
 
 			const organizationIds: ID[] = [];
 
@@ -343,7 +369,17 @@ export class OrganizationPermissionGuard implements CanActivate {
 		tenantId: ID,
 		target: IOrganizationPolicyTarget
 	): Promise<ID[] | null> {
-		if (target.source === 'query') {
+		if (target.source === 'args') {
+			// One id names one record, as a route param does: a record outside the caller's tenant is refused. A list
+			// is read as the query-string form is.
+			const raw = readArgumentPath(this.graphqlArgs(context), target.param);
+			if (!Array.isArray(raw)) {
+				const organizationId = await this.findRecordOrganizationId(tenantId, target, raw);
+				return organizationId ? [organizationId] : null;
+			}
+		}
+
+		if (target.source === 'query' || target.source === 'args') {
 			return await this.findQueryTargetOrganizationIds(context, tenantId, target);
 		}
 
@@ -371,7 +407,10 @@ export class OrganizationPermissionGuard implements CanActivate {
 		target: IOrganizationPolicyTarget
 	): Promise<ID[] | null> {
 		try {
-			const raw = context.switchToHttp().getRequest()?.query?.[target.param];
+			const raw =
+				target.source === 'args'
+					? readArgumentPath(this.graphqlArgs(context), target.param)
+					: context.switchToHttp().getRequest()?.query?.[target.param];
 			const values: unknown[] = Array.isArray(raw) ? raw : [raw];
 			const ids = values.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
@@ -433,9 +472,19 @@ export class OrganizationPermissionGuard implements CanActivate {
 		tenantId: ID,
 		target: IOrganizationPolicyTarget
 	): Promise<ID | undefined> {
-		try {
-			const id = context.switchToHttp().getRequest()?.params?.[target.param];
+		return await this.findRecordOrganizationId(tenantId, target, context.switchToHttp().getRequest()?.params?.[target.param]);
+	}
 
+	/**
+	 * The organization of one record of the caller's tenant, by its id.
+	 *
+	 * @param tenantId The caller's tenant.
+	 * @param target The record's entity.
+	 * @param id The id the request names.
+	 * @returns The organization, or undefined when there is no such record in the tenant.
+	 */
+	private async findRecordOrganizationId(tenantId: ID, target: IOrganizationPolicyTarget, id: unknown): Promise<ID | undefined> {
+		try {
 			if (typeof id !== 'string' || id.trim().length === 0) {
 				return undefined;
 			}
@@ -475,6 +524,19 @@ export class OrganizationPermissionGuard implements CanActivate {
 	 * @param employeeId The employee to resolve.
 	 * @returns The employee's organization id, or undefined when the employee is not in this tenant.
 	 */
+	/**
+	 * The operation's arguments, when the guard runs on a GraphQL field; null on any other transport.
+	 *
+	 * @param context The execution context.
+	 */
+	private graphqlArgs(context: ExecutionContext): Record<string, unknown> | null {
+		if (typeof context.getType !== 'function' || context.getType<GqlContextType>() !== 'graphql') {
+			return null;
+		}
+
+		return (GqlExecutionContext.create(context).getArgs() as Record<string, unknown>) ?? {};
+	}
+
 	private async findEmployeeOrganizationId(tenantId: ID, employeeId: ID): Promise<ID | undefined> {
 		try {
 			switch (ormType) {

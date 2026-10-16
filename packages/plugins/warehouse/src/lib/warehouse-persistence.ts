@@ -1,8 +1,9 @@
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, EntityManager as TypeOrmEntityManager, ObjectLiteral, Repository } from 'typeorm';
 import {
 	Collection,
 	EntityManager as MikroOrmEntityManager,
 	EntityMetadata,
+	LockMode,
 	Reference,
 	ReferenceKind,
 	wrap
@@ -81,6 +82,103 @@ export function warehouseRowsOf<T extends ObjectLiteral>(
 }
 
 /**
+ * What a write that runs in a transaction is handed: the repository a table is read and written through inside the
+ * transaction, and the manager the platform outbox appends through, so a fact commits or rolls back with the write it
+ * describes.
+ */
+export interface IWarehouseTransaction {
+	/**
+	 * The repository one of this package's tables is read and written through, inside the transaction.
+	 *
+	 * @param entity The table's entity.
+	 * @returns The repository, answering the same calls as {@link warehouseRowsOf}'s.
+	 */
+	rows<T extends ObjectLiteral>(entity: new () => T): TWarehouseRows<T>;
+	/**
+	 * Reads one row of this package's tables and holds it until the transaction ends: another transaction that takes
+	 * the same row waits until this one commits or rolls back, and then reads what it committed. A write that has to
+	 * see every other write on a row — a pick list's counters, re-counted from its lines — takes the row first.
+	 *
+	 * `SELECT … FOR UPDATE` on PostgreSQL and MySQL: TypeORM's `pessimistic_write`, MikroORM's
+	 * `LockMode.PESSIMISTIC_WRITE`. SQLite has no row lock and serializes writers on the whole database, so there the
+	 * transaction is the lock: TypeORM is asked for none (it refuses the clause on SQLite), and MikroORM's compiles to
+	 * nothing (knex's SQLite compiler drops it).
+	 *
+	 * @param entity The table's entity.
+	 * @param where The row, by equality criteria.
+	 * @returns The row, or null when none matches.
+	 */
+	lock<T extends ObjectLiteral>(entity: new () => T, where: Record<string, unknown>): Promise<T | null>;
+	/** The transaction's own manager — TypeORM's, or MikroORM's fork — which `EventOutboxService.append` accepts. */
+	readonly manager: TypeOrmEntityManager | MikroOrmEntityManager;
+}
+
+/**
+ * The TypeORM drivers whose pessimistic write lock is a row lock (`SELECT … FOR UPDATE`): the PostgreSQL and MySQL
+ * families. SQLite is not one — TypeORM refuses the clause there (`LockNotSupportedOnGivenDriverError`).
+ */
+const TYPEORM_ROW_LOCK_DRIVERS: ReadonlySet<string> = new Set([
+	'postgres',
+	'aurora-postgres',
+	'cockroachdb',
+	'mysql',
+	'mariadb',
+	'aurora-mysql'
+]);
+
+/**
+ * Runs one write in a transaction on the ORM the installation runs.
+ *
+ * Under TypeORM it is `manager.transaction(work)` on the repository's own manager, and the body writes through that
+ * transaction's repositories. Under MikroORM it is `transactional()` on the repository's entity manager, and the body
+ * writes through {@link MikroOrmWarehouseRows} on the fork that transaction runs on. Either way the body is handed the
+ * transaction's manager for the outbox, and a throw from the body rolls back every statement it issued, the outbox
+ * row included. Each ORM's manager is reached only on its own arm.
+ *
+ * @param ormType The ORM the installation runs.
+ * @param typeOrm The TypeORM manager the transaction is opened on, reached only under TypeORM.
+ * @param mikroOrm A MikroORM repository of this package, reached only under MikroORM.
+ * @param work The transaction body.
+ * @returns What the body answers.
+ */
+export async function runWarehouseTransaction<R>(
+	ormType: string,
+	typeOrm: () => TypeOrmEntityManager,
+	mikroOrm: () => IMikroOrmEntityManagerSource,
+	work: (transaction: IWarehouseTransaction) => Promise<R>
+): Promise<R> {
+	if (ormType === MultiORMEnum.MikroORM) {
+		return await mikroOrm()
+			.getEntityManager()
+			.transactional(
+				async (em) =>
+						await work({
+						rows: <T extends ObjectLiteral>(entity: new () => T) =>
+							new MikroOrmWarehouseRows<T>(em, entity) as unknown as TWarehouseRows<T>,
+						lock: <T extends ObjectLiteral>(entity: new () => T, where: Record<string, unknown>) =>
+							new MikroOrmWarehouseRows<T>(em, entity).lock(where),
+						manager: em
+					})
+			);
+	}
+
+	return await typeOrm().transaction(
+		async (manager) =>
+			await work({
+				rows: <T extends ObjectLiteral>(entity: new () => T) => manager.getRepository(entity) as TWarehouseRows<T>,
+				lock: async <T extends ObjectLiteral>(entity: new () => T, where: Record<string, unknown>) =>
+					await manager.getRepository(entity).findOne({
+						where: where as FindOptionsWhere<T>,
+						...(TYPEORM_ROW_LOCK_DRIVERS.has(manager.dataSource.options.type)
+							? { lock: { mode: 'pessimistic_write' as const } }
+							: {})
+					}),
+				manager
+			})
+	);
+}
+
+/**
  * One table's `find`, `findOne`, `count` and `update`, answered through MikroORM as TypeORM answers them.
  *
  * - **a read is a read of the table, never of an identity map**, and runs on a fork of its own, so a
@@ -131,6 +229,23 @@ export class MikroOrmWarehouseRows<T extends ObjectLiteral> {
 		);
 
 		return row ? (this.toRow(row, populated(options)) as T) : null;
+	}
+
+	/**
+	 * Reads one row under `LockMode.PESSIMISTIC_WRITE`, held until the transaction this manager runs in ends — `FOR
+	 * UPDATE` on PostgreSQL and MySQL, nothing on SQLite, which serializes writers. MikroORM refuses the lock outside a
+	 * transaction, and this is only reached through {@link runWarehouseTransaction}.
+	 *
+	 * @param where The row, in TypeORM's vocabulary.
+	 * @returns The row in TypeORM's shape, or null.
+	 */
+	async lock(where: Record<string, unknown> = {}): Promise<T | null> {
+		const row = await this.em.findOne(this.entity as any, this.criteria(where), {
+			...this.readOptions({}),
+			lockMode: LockMode.PESSIMISTIC_WRITE
+		} as any);
+
+		return row ? (this.toRow(row, []) as T) : null;
 	}
 
 	/**

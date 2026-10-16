@@ -37,7 +37,7 @@ import { BulkExecutor } from '../../api/bulk-executor.service';
 import { bulkOptionsOf } from '../../api/bulk.decorator';
 import { RequestContext } from '../../core/context';
 import { Idempotent } from '../../idempotency/idempotent.decorator';
-import { Permissions } from '../../shared/decorators';
+import { OrganizationPolicyTarget, Permissions } from '../../shared/decorators';
 import {
 	FeatureFlagGuard,
 	OrganizationPermissionGuard,
@@ -948,6 +948,9 @@ export class TimeLogResolver {
 	@Mutation('updateManualTime')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	// The organization whose policy decides is the one of the record(s) the input edits, read from the arguments — as the
+	// route reads its params / query (SEC-A-05).
+	@OrganizationPolicyTarget(TimeLog, 'input.id', 'args')
 	async updateManualTime(@Args('input') input: IUpdateManualTimeLogInput): Promise<ITimeLog> {
 		// The identifier is the criterion and is not repeated in the body, which is the shape the
 		// delivered route has: `:id` names the row and the body carries only what changes.
@@ -971,6 +974,9 @@ export class TimeLogResolver {
 	@Mutation('deleteTimeLogs')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
+	// The organization whose policy decides is the one of the record(s) the input deletes, read from the arguments — as the
+	// route reads its params / query (SEC-A-05).
+	@OrganizationPolicyTarget(TimeLog, 'input.logIds', 'args')
 	async deleteTimeLogs(@Args('input') input: IDeleteTimeLogsInput): Promise<boolean> {
 		await this.timeLogService.deleteTimeLogs({
 			logIds: input.logIds,
