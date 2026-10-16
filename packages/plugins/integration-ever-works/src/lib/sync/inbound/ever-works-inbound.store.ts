@@ -24,12 +24,13 @@ export class EverWorksInboundStore {
 		const exists = await repository.count({ where: { connectionId: connection.id as ID, eventId: envelope.id } });
 		if (exists) return { duplicate: true };
 		const organizationId = envelope.organizationId ? await this.organizationFor(connection, envelope.organizationId) : null;
+		const id = randomUUID();
 		await repository
 			.createQueryBuilder()
 			.insert()
 			.into(EverWorksInboundEvent)
 			.values({
-				id: randomUUID(),
+				id,
 				tenantId: connection.tenantId,
 				organizationId: organizationId ?? undefined,
 				connectionId: connection.id as ID,
@@ -48,7 +49,11 @@ export class EverWorksInboundStore {
 			} as never)
 			.orIgnore()
 			.execute();
-		return { duplicate: false };
+		// A webhook delivery and the feed can race past the check above; the unique (connection, event)
+		// index keeps one row, and the row that is there tells which insert won (drivers report an ignored
+		// insert differently, the stored id does not).
+		const stored = await repository.findOne({ where: { connectionId: connection.id as ID, eventId: envelope.id }, select: { id: true } });
+		return { duplicate: stored?.id !== id };
 	}
 
 	/** The Gauzy organization mapped to an Ever Works organization through this connection, or `null`. */

@@ -86,7 +86,7 @@ const base = {
 	createdAt: { type: Date, createDate: true },
 	updatedAt: { type: Date, updateDate: true }
 } as const;
-const s = (name: string, target: Function, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
+const s = (name: string, target: new (...args: never[]) => object, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
 	new EntitySchema({ name, target, tableName, columns: { ...base, ...columns } as never, relations: relations as never });
 const str = (nullable = true) => ({ type: String, nullable });
 const txt = (nullable = true) => ({ type: 'text', nullable });
@@ -540,6 +540,90 @@ describe('Ever Works sync engine on SQLite', () => {
 			expect(rows).toHaveLength(1);
 			expect(rows[0].op).toBe('delete');
 			expect(JSON.parse(rows[0].changedFieldsHint as string).sort()).toEqual(['status', 'title']);
+		});
+
+		it('one malformed feed event is passed and logged; the events after it are stored', async () => {
+			const poller = new EverWorksFeedPoller(dataSource, connections, store);
+			await mock.emit(envelope({ seq: undefined, id: undefined, aggregate: { type: 'task', id: 'a', version: 1 } }) as never);
+			await mock.emit(envelope({ seq: undefined, id: 'x'.repeat(65) }) as never); // an id longer than the contract allows
+			await mock.emit(envelope({ seq: undefined, id: undefined, aggregate: { type: 'task', id: 'b', version: 1 } }) as never);
+			await reload();
+			expect(await poller.poll(connection)).toMatchObject({ polled: true, stored: 2, invalid: 1, cursor: mock.head });
+			await reload();
+			expect(connection.feedCursor).toBe(mock.head);
+			expect((await poller.poll(connection)).stored).toBe(0);
+		});
+
+		it("a feed poll whose lease moved to another process does not move that owner's cursor", async () => {
+			const poller = new EverWorksFeedPoller(dataSource, connections, store);
+			await mock.emit(envelope({ seq: undefined, id: undefined }) as never);
+			await dataSource.getRepository(EverWorksConnection).update({ id: connection.id as string }, { leaseOwner: 'other-process' } as never);
+			await reload();
+			const before = connection.feedCursor;
+			expect(await poller.poll(connection, 'this-process')).toMatchObject({ stored: 1, leaseLost: true });
+			await reload();
+			expect(connection.feedCursor).toBe(before);
+		});
+
+		it('an insert that loses the race with another delivery of the same event reports a duplicate', async () => {
+			const event = envelope({ seq: '7' });
+			expect(await store.record(connection, event as never, 'webhook')).toEqual({ duplicate: false });
+			// The other delivery passed the existence check before this one stored the event.
+			const count = jest.spyOn(events(), 'count').mockResolvedValueOnce(0);
+			expect(await store.record(connection, event as never, 'feed')).toEqual({ duplicate: true });
+			count.mockRestore();
+			expect(await events().count({ where: { eventId: event.id } as never })).toBe(1);
+		});
+
+		it('aggregates that must wait never fill the batch: the due events of the others are applied', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log);
+			const seen: string[] = [];
+			applier.register({
+				aggregateTypes: ['task'],
+				apply: async (env) => {
+					seen.push(`${env.aggregate.id}:${env.seq}`);
+					if (env.aggregate.id === 'task-1' && env.seq === '1') throw new Error('not yet');
+					return { status: 'applied' };
+				}
+			});
+			await record({ seq: '1' });
+			await applier.drain(connection, 3); // seq 1 fails and waits for its retry
+			for (const seq of ['2', '3', '4', '5']) await record({ seq });
+			await record({ seq: '6', aggregate: { type: 'task', id: 'task-2', version: 1 } });
+			// The first page (2, 3, 4) all waits behind seq 1; the next page holds task-2.
+			expect(await applier.drain(connection, 3)).toBe(1);
+			expect(seen).toEqual(['task-1:1', 'task-2:6']);
+		});
+
+		it('with a lease owner, the applier writes nothing once another process holds the connection', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log);
+			applier.register({ aggregateTypes: ['task'], apply: async () => ({ status: 'applied' }) });
+			await record({ seq: '1' });
+			const lease = (leaseOwner: string) => dataSource.getRepository(EverWorksConnection).update({ id: connection.id as string }, { leaseOwner } as never);
+			await lease('other-process');
+			expect(await applier.drain(connection, 200, new Date(), undefined, 'this-process')).toBe(0);
+			expect((await events().findOneByOrFail({ seq: '1' } as never)).status).toBe(EverWorksInboundStatus.PENDING);
+			await lease('this-process');
+			expect(await applier.drain(connection, 200, new Date(), undefined, 'this-process')).toBe(1);
+			expect((await events().findOneByOrFail({ seq: '1' } as never)).status).toBe(EverWorksInboundStatus.APPLIED);
+		});
+
+		it('a push whose claim lapsed and was taken over does not overwrite the newer push', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log);
+			const changes = dataSource.getRepository(EverWorksOutboundChange);
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async (change) => {
+					// Meanwhile another process took the lapsed claim over (its own, later hold).
+					await changes.update({ id: change.id }, { availableAt: new Date(Date.now() + 3_600_000) } as never);
+					return { status: 'pushed' };
+				}
+			});
+			await queue.enqueue(trigger('t5'));
+			expect(await pusher.drain(connection, 100, new Date(Date.now() + 10_000))).toBe(0);
+			const [row] = await changes.find({ where: { gauzyId: 't5' } });
+			expect(row.status).toBe(EverWorksOutboundStatus.PUSHING);
 		});
 	});
 });

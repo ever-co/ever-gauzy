@@ -24,9 +24,11 @@ Works.
 
 The design lives in the integration plan (homelab repository,
 `docs/superpowers/specs/2026-10-15-gauzy-ever-works-integration/`). The plugin
-codes against the Ever Works integration contract v1 (`/api/integrations/v1`,
-machine-readable in ever-works
-`docs/specs/features/integrations-api-v1/contract/`).
+codes against the Ever Works integration contract v1 (`/api/integrations/v1`);
+its machine-readable form is in the ever-works repository, under
+`docs/specs/features/integrations-api-v1/contract/`. This version adds the
+connection, the organization mapping and the sync engine; the handlers of the
+synced records (people and agents, teams, projects, tasks) follow.
 
 ## Switch it on
 

@@ -1,3 +1,4 @@
+// cspell:ignore unmapping
 /**
  * Organization mapping and settings (G-P1-4) on a real database (better-sqlite3) with the mock Ever
  * Works: one `integration_tenant` per mapped organization with the plan's settings, the per-entity sync
@@ -85,6 +86,7 @@ import { EverWorksConnectionService } from '../connection/ever-works-connection.
 import { EverWorksNotifier } from '../connection/ever-works-notifier.service';
 import { DEFAULT_EVER_WORKS_DIRECTIONS, EVER_WORKS_IDEAS_PROJECT_NAME, EVER_WORKS_SYNCED_ENTITIES } from './ever-works-mapping.defaults';
 import { EverWorksMappingService } from './ever-works-mapping.service';
+import { EverWorksSettingName } from '../ever-works-setting.enum';
 
 jest.setTimeout(60_000);
 
@@ -98,7 +100,7 @@ const base = {
 	createdAt: { type: Date, createDate: true },
 	updatedAt: { type: Date, updateDate: true }
 } as const;
-const schema = (name: string, target: Function, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
+const schema = (name: string, target: new (...args: never[]) => object, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
 	new EntitySchema({ name, target, tableName, columns: { ...base, ...columns } as never, relations: relations as never });
 
 const coreSchemas = [
@@ -336,6 +338,11 @@ describe('Ever Works organization mapping on SQLite', () => {
 		await expect(mappings.update(view.integrationTenantId, { directions: { agents: 'gauzy_to_ew' } })).rejects.toThrow(/agents syncs/);
 		const foreign = await dataSource.getRepository(OrganizationProject).save({ id: randomUUID(), tenantId: B.tenantId, organizationId: B.organizationId, name: 'X' });
 		await expect(mappings.update(view.integrationTenantId, { ideasProjectId: (foreign as { id: string }).id })).rejects.toBeInstanceOf(BadRequestException);
+		// A toggle for an entity Ever Works does not sync is refused, and nothing of that update is written.
+		await expect(
+			mappings.update(view.integrationTenantId, { includeHiddenTasks: true, entitySettings: [{ entity: IntegrationEntity.INCOME, sync: false }] })
+		).rejects.toThrow(/Not a synced Ever Works entity: Income/);
+		expect((await mappings.current())?.includeHiddenTasks).toBe(false);
 	});
 
 	it('creates the Ideas project once, through the platform command, and reuses it', async () => {
@@ -382,6 +389,22 @@ describe('Ever Works organization mapping on SQLite', () => {
 	});
 
 	describe('review hardening (#10774)', () => {
+		it("the view reads the mapping's connection within its tenant only", async () => {
+			const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			expect(view.everWorksOrganization.displayName).toBe(ewOrgs[0].displayName);
+			as(B);
+			const other = await connections.connect({ apiBaseUrl: 'https://ew.example.test/api', apiKey: mock.addKey({ organizations: ewOrgs }) });
+			as(A);
+			// A setting that names another tenant's connection (it pins the same organization) shows nothing of it.
+			await dataSource.query('UPDATE "integration_setting" SET "settingsValue" = ? WHERE "integrationId" = ? AND "settingsName" = ?', [
+				other.id,
+				view.integrationTenantId,
+				EverWorksSettingName.CONNECTION_ID
+			]);
+			expect((await mappings.current())?.connectionId).toBe(other.id);
+			expect((await mappings.current())?.everWorksOrganization.displayName).toBeNull();
+		});
+
 		it('a disconnect that lands after the connection was read but before the mapping is written leaves no mapping', async () => {
 			const connection = await connections.current();
 			// The catalog step runs between the read and the transaction: disconnect there.
