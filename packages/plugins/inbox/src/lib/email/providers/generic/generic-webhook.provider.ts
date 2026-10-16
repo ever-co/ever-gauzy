@@ -221,9 +221,8 @@ export class GenericWebhookProvider
 		return {
 			messageId:
 				messageIdOf(entry['messageId']) ??
-				derivedMessageId(
-					JSON.stringify([from?.address, subject, textBody, html, envelopeRecipients, entry['receivedAt']])
-				),
+				// The whole stated message (attachments included): a retry gets the same id, a different message never.
+				derivedMessageId(JSON.stringify(entry)),
 			...(from ? { from } : {}),
 			to: addresses(entry['to']),
 			cc: addresses(entry['cc']),

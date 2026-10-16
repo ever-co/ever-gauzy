@@ -191,6 +191,11 @@ export class InboxProviderAccountService {
 
 		let generated: Record<string, string> = {};
 		await this.inTransaction(async (manager) => {
+			// The scope lock first, the row lock second, in every writer: two edits of different accounts of one scope
+			// can then never hold one lock each and wait for the other's.
+			if (input?.isDefaultOutbound === true) {
+				await this.lockScope(manager, row);
+			}
 			if (input?.config !== undefined) {
 				const latest = (await this.lockedRow(manager, row.id as ID)) ?? row;
 				const split = this.split(provider, input.config, this.halves(latest));

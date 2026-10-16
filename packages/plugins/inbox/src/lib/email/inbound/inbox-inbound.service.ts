@@ -29,7 +29,7 @@ import { IInboundWebhookRequest, IProviderAccountContext, ParsedInboundEmail } f
 import { getInboxEmailConfig, InboxEmailConfig } from './inbox-email.config';
 import { InboxEmailStorage } from './inbox-email-storage';
 import { INBOX_EMAIL_PROCESSOR, IInboxEmailProcessor } from './inbox-email-processor.types';
-import { serializeParsedMessage } from './mime';
+import { ALLOWLISTED_HEADERS, serializeParsedMessage } from './mime';
 
 /** The JSON array text of a value (`null` for nothing). */
 const json = (value: unknown): string | null =>
@@ -211,7 +211,7 @@ export class InboxInboundService {
 							ccAddresses: json(message.cc),
 							replyToAddresses: json(message.replyTo),
 							subject: message.subject?.slice(0, 500) ?? null,
-							headers: json(tag ? { ...message.headers, 'x-gauzy-inbox-tag': tag } : message.headers),
+							headers: json(this.headersOf(message, tag)),
 							spf: message.spf ?? null,
 							dkim: message.dkim ?? null,
 							dmarc: message.dmarc ?? null,
@@ -278,6 +278,20 @@ export class InboxInboundService {
 			account.scope !== InboxProviderAccountScopeEnum.ORGANIZATION ||
 			mailbox.organizationId === account.organizationId
 		);
+	}
+
+	/**
+	 * The headers a stored message keeps: the allowlist, whatever form the provider delivered (MIME or JSON), plus the
+	 * recipient's `+tag`.
+	 */
+	private headersOf(message: ParsedInboundEmail, tag?: string): Record<string, string> {
+		const headers: Record<string, string> = {};
+		for (const [name, value] of Object.entries(message.headers ?? {})) {
+			const key = name.toLowerCase();
+			if (ALLOWLISTED_HEADERS.has(key) && typeof value === 'string') headers[key] = value.slice(0, 1000);
+		}
+		if (tag) headers['x-gauzy-inbox-tag'] = tag.slice(0, 64);
+		return headers;
 	}
 
 	private allowlist(mailbox: InboxMailbox): string[] {

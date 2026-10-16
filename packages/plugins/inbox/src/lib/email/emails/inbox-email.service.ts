@@ -26,6 +26,7 @@ import { describeEmailSendError, EmailSendService, IOutboundEmailMessage, Reques
 import { InboxItemRecipient } from '../../entities/inbox-item-recipient.entity';
 import { InboxEmail } from '../entities/inbox-email.entity';
 import { InboxEmailAttachment } from '../entities/inbox-email-attachment.entity';
+import { InboxEmailThread } from '../entities/inbox-email-thread.entity';
 import { InboxMailbox } from '../entities/inbox-mailbox.entity';
 import { InboxEmailStorage } from '../inbound/inbox-email-storage';
 import { InboxEmailProcessor } from '../inbound/inbox-email.processor';
@@ -85,20 +86,45 @@ export class InboxEmailService {
 
 	/** The messages of the message's thread the caller may read, oldest first. */
 	async thread(id: ID): Promise<IInboxEmail[]> {
-		const { email } = await this.readable(id);
+		const { email, mailbox } = await this.readable(id);
 		if (!email.threadId) return [this.toEmail(email)];
-		const rows = await this.dataSource.getRepository(InboxEmail).find({
+		const found = await this.dataSource.getRepository(InboxEmail).find({
 			where: {
 				tenantId: email.tenantId as ID,
 				mailboxId: email.mailboxId,
 				threadId: email.threadId,
-				status: In([InboxEmailStatusEnum.PROCESSED, InboxEmailStatusEnum.SENT, InboxEmailStatusEnum.QUEUED]),
+				status: In([
+					InboxEmailStatusEnum.PROCESSED,
+					InboxEmailStatusEnum.SENT,
+					InboxEmailStatusEnum.QUEUED,
+					InboxEmailStatusEnum.FAILED
+				]),
 				deletedAt: IsNull()
 			},
 			// In the order they were stored: received, then sent (a sent message has no receivedAt).
 			order: { createdAt: 'ASC' },
 			take: 200
 		});
+		// A failed message is shown only when it is an unsent reply or forward (failed inbound work is not mail).
+		let rows = found.filter(
+			(row) => row.status !== InboxEmailStatusEnum.FAILED || row.direction === InboxEmailDirectionEnum.OUT
+		);
+		// Without current access to the mailbox (a former member reading an old message): only the messages that were
+		// addressed to the caller.
+		const userId = RequestContext.currentUserId() as ID;
+		if (!(await this.access.canRead(mailbox, userId))) {
+			const itemIds = rows.map((row) => row.inboxItemId).filter((value): value is ID => !!value);
+			const mine = new Set(
+				itemIds.length === 0
+					? []
+					: (
+							await this.dataSource
+								.getRepository(InboxItemRecipient)
+								.find({ where: { inboxItemId: In(itemIds), userId, tenantId: email.tenantId as ID } })
+						).map((recipient) => recipient.inboxItemId)
+			);
+			rows = rows.filter((row) => row.id === email.id || (!!row.inboxItemId && mine.has(row.inboxItemId)));
+		}
 		const at = (row: InboxEmail) => new Date(row.receivedAt ?? row.sentAt ?? row.createdAt ?? 0).getTime();
 		return [...rows].sort((a, b) => at(a) - at(b)).map((row) => this.toEmail(row));
 	}
@@ -146,13 +172,24 @@ export class InboxEmailService {
 
 	/** Releases a quarantined message: it becomes an inbox item of the mailbox's recipients. */
 	async release(id: ID): Promise<IInboxEmail> {
-		const { email, mailbox } = await this.readable(id, true);
+		// The managers' business: authorized by the management check alone (a manager need not be a recipient).
+		const tenantId = RequestContext.currentTenantId();
+		const email =
+			tenantId && isUUID(id)
+				? await this.dataSource.getRepository(InboxEmail).findOne({ where: { id, tenantId } })
+				: null;
+		if (!email || email.deletedAt) throw new NotFoundException('The message does not exist.');
+		const mailbox = await this.mailbox(email.mailboxId);
 		await this.assertManage(mailbox);
 		if (email.status !== InboxEmailStatusEnum.QUARANTINED) {
 			throw new BadRequestException('Only a quarantined message can be released.');
 		}
 		await this.processor.release(email);
-		return this.get(id);
+		const released = (await this.dataSource.getRepository(InboxEmail).findOne({ where: { id } })) as InboxEmail;
+		const attachments = await this.dataSource
+			.getRepository(InboxEmailAttachment)
+			.find({ where: { emailId: id }, order: { createdAt: 'ASC' } });
+		return { ...this.toEmail(released), attachments: attachments.map((row) => this.toAttachment(row)) };
 	}
 
 	/** Replies from the mailbox's address, in the message's thread (`In-Reply-To` / `References`). */
@@ -189,43 +226,48 @@ export class InboxEmailService {
 		if (to.length === 0) throw new BadRequestException('A forward needs at least one recipient.');
 		const original = this.toEmail(email);
 		const note = this.text(input?.text, false);
-		const attachments =
+		const stored =
 			input?.includeAttachments === false
 				? []
-				: await Promise.all(
-						(
-							await this.dataSource
-								.getRepository(InboxEmailAttachment)
-								.find({ where: { emailId: email.id as ID }, take: 50 })
-						).map(async (row) => ({
-							filename: row.filename,
-							content: await this.storage.get({
-								key: row.storageKey,
-								provider: row.storageProvider ?? ''
-							}),
-							...(row.contentType ? { contentType: row.contentType } : {}),
-							...(row.contentId && row.isInline ? { cid: row.contentId } : {})
-						}))
-					);
-		return this.send(mailbox, email, {
-			to,
-			cc: [],
-			subject: this.prefixed('Fwd', original.subject),
-			text: `${note ? `${note}\n\n` : ''}---------- Forwarded message ----------\n${this.quote(original, false)}`,
-			attachments
-		});
+				: await this.dataSource
+						.getRepository(InboxEmailAttachment)
+						.find({ where: { emailId: email.id as ID }, take: 50 });
+		const attachments = await Promise.all(
+			stored.map(async (row) => ({
+				filename: row.filename,
+				content: await this.storage.get({ key: row.storageKey, provider: row.storageProvider ?? '' }),
+				...(row.contentType ? { contentType: row.contentType } : {}),
+				...(row.contentId && row.isInline ? { cid: row.contentId } : {})
+			}))
+		);
+		return this.send(
+			mailbox,
+			email,
+			{
+				to,
+				cc: [],
+				subject: this.prefixed('Fwd', original.subject),
+				text: `${note ? `${note}\n\n` : ''}---------- Forwarded message ----------\n${this.quote(original, false)}`,
+				attachments
+			},
+			stored
+		);
 	}
 
 	// ---------------------------------------------------------------- helpers
 
 	/**
 	 * Sends through the core transport seam (the mailbox's provider account first, then the organization's and the
-	 * tenant's outbound accounts, then Custom SMTP / `MAIL_*`) and keeps the message as `OUT` in the thread.
+	 * tenant's outbound accounts, then Custom SMTP / `MAIL_*`) and keeps the message as `OUT` in the thread, with the
+	 * attachments it carried (their stored files are shared, never copied). Recipients the server refused are kept in
+	 * the message's `error`; a message no recipient took is `FAILED`. A failed send answers 502 with the kept message's
+	 * id, so the unsent text can be found in the thread.
 	 */
 	private async send(
 		mailbox: InboxMailbox,
 		original: InboxEmail,
-		message: Omit<IOutboundEmailMessage, 'from' | 'to' | 'cc'> & { to: string[]; cc: string[] }
+		message: Omit<IOutboundEmailMessage, 'from' | 'to' | 'cc'> & { to: string[]; cc: string[] },
+		storedAttachments: InboxEmailAttachment[] = []
 	): Promise<IInboxEmail> {
 		const repository = this.dataSource.getRepository(InboxEmail);
 		const domain = mailbox.address.slice(mailbox.address.lastIndexOf('@') + 1);
@@ -252,6 +294,24 @@ export class InboxEmailService {
 				attemptCount: 1
 			} as InboxEmail)
 		);
+		const attachmentRepository = this.dataSource.getRepository(InboxEmailAttachment);
+		for (const stored of storedAttachments) {
+			await attachmentRepository.save(
+				attachmentRepository.create({
+					tenantId: stored.tenantId,
+					organizationId: stored.organizationId ?? null,
+					emailId: row.id as ID,
+					filename: stored.filename,
+					contentType: stored.contentType ?? null,
+					size: stored.size,
+					sha256: stored.sha256 ?? null,
+					storageKey: stored.storageKey,
+					storageProvider: stored.storageProvider ?? null,
+					...(stored.contentId ? { contentId: stored.contentId } : {}),
+					isInline: !!stored.isInline
+				} as InboxEmailAttachment)
+			);
+		}
 		try {
 			const sent = await this.sender.sendMessage(
 				{ ...message, from, to: message.to, ...(message.cc.length ? { cc: message.cc } : {}), messageId },
@@ -261,11 +321,15 @@ export class InboxEmailService {
 					providerAccountId: mailbox.providerAccountId ?? null
 				}
 			);
+			const refused =
+				sent.rejected.length > 0 ? `Not accepted for: ${sent.rejected.join(', ')}`.slice(0, 1000) : null;
+			const nobody = sent.accepted.length === 0 && sent.rejected.length > 0;
 			await repository.update(
 				{ id: row.id as ID },
 				{
-					status: InboxEmailStatusEnum.SENT,
+					status: nobody ? InboxEmailStatusEnum.FAILED : InboxEmailStatusEnum.SENT,
 					sentAt: new Date(),
+					error: refused,
 					transport: sent.transport.slice(0, 120),
 					...(sent.messageId && sent.messageId !== messageId
 						? { providerMessageId: sent.messageId.slice(0, 255) }
@@ -279,13 +343,32 @@ export class InboxEmailService {
 				{ status: InboxEmailStatusEnum.FAILED, error: reason.slice(0, 1000) }
 			);
 			this.logger.warn(`Inbox email ${row.id} was not sent: ${reason}`);
-			throw new BadGatewayException('The message could not be sent. It is kept in the thread as not sent.');
+			throw new BadGatewayException({
+				message: 'The message could not be sent. It is kept in the thread as not sent.',
+				emailId: row.id
+			});
 		}
-		return this.toEmail((await repository.findOne({ where: { id: row.id as ID } })) as InboxEmail);
+		await this.touchThread(row.threadId ?? null);
+		const sentRow = (await repository.findOne({ where: { id: row.id as ID } })) as InboxEmail;
+		return {
+			...this.toEmail(sentRow),
+			attachments: (await attachmentRepository.find({ where: { emailId: row.id as ID } })).map((entry) =>
+				this.toAttachment(entry)
+			)
+		};
+	}
+
+	/** A thread's count and last activity after a reply or forward joined it (recounted, never incremented). */
+	private async touchThread(threadId: ID | null): Promise<void> {
+		if (!threadId) return;
+		const messageCount = await this.dataSource.getRepository(InboxEmail).count({ where: { threadId } });
+		await this.dataSource
+			.getRepository(InboxEmailThread)
+			.update({ id: threadId }, { messageCount, lastMessageAt: new Date() });
 	}
 
 	/** The message and its mailbox, when the caller may read it (404 otherwise, so ids are not probed). */
-	private async readable(id: ID, quarantined = false): Promise<{ email: InboxEmail; mailbox: InboxMailbox }> {
+	private async readable(id: ID): Promise<{ email: InboxEmail; mailbox: InboxMailbox }> {
 		const tenantId = RequestContext.currentTenantId();
 		const userId = RequestContext.currentUserId();
 		if (!tenantId || !userId) throw new ForbiddenException('The inbox needs a signed-in user of a tenant.');
@@ -297,7 +380,7 @@ export class InboxEmailService {
 			: null;
 		if (!email || !mailbox || email.deletedAt) throw new NotFoundException('The message does not exist.');
 		// A quarantined message is the managers' business until it is released.
-		if (email.status === InboxEmailStatusEnum.QUARANTINED && !quarantined) {
+		if (email.status === InboxEmailStatusEnum.QUARANTINED) {
 			if (!(await this.access.canManage(mailbox, userId)))
 				throw new NotFoundException('The message does not exist.');
 			return { email, mailbox };

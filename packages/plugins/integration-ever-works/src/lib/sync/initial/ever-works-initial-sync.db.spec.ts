@@ -175,6 +175,9 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 	let lists: Map<string, Array<Record<string, unknown>>>;
 	/** The list page size the transport serves (tests read several pages with a small one). */
 	let pageSize: number;
+	/** A list route answers 404 after this many requests (a route Ever Works stops serving part-way). */
+	let failListAfter: Record<string, number>;
+	let listCalls: Record<string, number>;
 	let connections: EverWorksConnectionService;
 	let store: EverWorksInboundStore;
 	let log: EverWorksSyncLogService;
@@ -255,6 +258,8 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		mock = new MockEverWorksServer();
 		lists = new Map();
 		pageSize = 500;
+		failListAfter = {};
+		listCalls = {};
 		// The mock answers whoami, the feed and webhooks; list routes the engine items have not added to it yet are served here.
 		const transport = {
 			send: async (request: EverWorksHttpRequest) => {
@@ -263,6 +268,10 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 				const path = url.pathname.slice(url.pathname.indexOf(marker) + marker.length);
 				const rows = request.method === 'GET' ? lists.get(path) : undefined;
 				if (rows) {
+					listCalls[path] = (listCalls[path] ?? 0) + 1;
+					if (failListAfter[path] !== undefined && listCalls[path] > failListAfter[path]) {
+						return { status: 404, headers: {}, data: { error: { code: 'not_found', message: 'No such route.' } } };
+					}
 					const query = Object.fromEntries(url.searchParams.entries());
 					return { status: 200, headers: {}, data: MockEverWorksServer.page(rows, { ...query, limit: String(Math.min(Number(query['limit'] || 200), pageSize)) }) };
 				}
@@ -433,6 +442,19 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(applied.filter((entry) => entry.startsWith('agent:'))).toEqual(['agent:agent-manager', 'agent:agent-report']);
 		// Nothing stays held back once the run is over.
 		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { status: EverWorksInboundStatus.PENDING } as never })).toBe(0);
+	});
+
+	it('a list Ever Works stops serving part-way skips its phase and releases what it held back', async () => {
+		pageSize = 1;
+		// The depth pass reads the 3 agent pages, the import reads page 1, then the route answers 404.
+		failListAfter['/agents'] = 4;
+		await initial.start(integrationTenantId, 'initial');
+		await reload();
+		await initial.sweep(connection);
+		const run = await runs().findOneOrFail({ where: { integrationTenantId } as never });
+		expect(phase(run, 'agents')?.status).toBe('skipped');
+		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', aggregateType: 'agent' } as never })).toBe(1);
+		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', availableAt: MoreThan(new Date('9000-01-01')) } as never })).toBe(0);
 	});
 
 	it('a run that ends early releases what its phase held back', async () => {

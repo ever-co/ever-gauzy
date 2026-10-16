@@ -397,6 +397,10 @@ describe('Inbound email pipeline on SQLite', () => {
 			`INSERT INTO "user_organization" ("id", "tenantId", "organizationId", "userId") VALUES (?, ?, ?, ?), (?, ?, ?, ?)`,
 			[randomUUID(), TENANT, ORG, ADA, randomUUID(), TENANT, ORG, BOB]
 		);
+		await dataSource.query(
+			`INSERT INTO "user_organization" ("id", "tenantId", "organizationId", "userId") VALUES (?, ?, ?, ?)`,
+			[randomUUID(), TENANT, ORG, EVE]
+		);
 		await dataSource.runMigrations({ transaction: 'each' });
 
 		settings = config();
@@ -618,6 +622,66 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect(released.inboxItemId).toBeTruthy();
 		});
 
+		it('puts a reply processed before its parent into one thread with it', async () => {
+			const first = SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-1@acme.test>')
+				.replace('In-Reply-To: <m-1@acme.test>\r\n', '')
+				.replace('References: <m-0@acme.test> <m-1@acme.test>\r\n', '')
+				.replace('Subject: Re: Invoice 42', 'Subject: Something else');
+			await deliver(mime(first, ['support.ever@inbox.example.test']));
+			await deliver(mime(SAMPLE_MIME, ['support.ever@inbox.example.test']));
+			// The reply first.
+			processor.queued.reverse();
+			await processor.drain();
+			const rows = await dataSource.getRepository(InboxEmail).find();
+			expect(rows.map((row) => row.status)).toEqual([
+				InboxEmailStatusEnum.PROCESSED,
+				InboxEmailStatusEnum.PROCESSED
+			]);
+			expect(new Set(rows.map((row) => row.threadId)).size).toBe(1);
+			const thread = await dataSource
+				.getRepository(InboxEmailThread)
+				.findOneByOrFail({ id: rows[0]?.threadId as string });
+			expect(thread.messageCount).toBe(2);
+		});
+
+		it('does not count a message twice when it is processed again', async () => {
+			await deliver(mime(SAMPLE_MIME, ['support.ever@inbox.example.test']));
+			await processor.drain();
+			const email = await dataSource
+				.getRepository(InboxEmail)
+				.findOneByOrFail({ mailboxId: supportBox.id as string });
+			await dataSource
+				.getRepository(InboxEmail)
+				.update({ id: email.id as string }, { status: InboxEmailStatusEnum.RECEIVED });
+			expect(await processor.process(email.id as string)).toBe(InboxEmailStatusEnum.PROCESSED);
+			const thread = await dataSource
+				.getRepository(InboxEmailThread)
+				.findOneByOrFail({ id: email.threadId as string });
+			expect(thread.messageCount).toBe(1);
+			expect(
+				await dataSource.getRepository(InboxEmailAttachment).count({ where: { emailId: email.id as string } })
+			).toBe(2);
+			expect(storage.files.size).toBe(3);
+		});
+
+		it('leaves a message a later attempt took over alone', async () => {
+			await deliver(mime(SAMPLE_MIME, ['support.ever@inbox.example.test']));
+			const id = processor.queued[0] as string;
+			const original = storage.get.bind(storage);
+			// While this worker reads the raw message, another replica takes the message over (a newer attempt).
+			jest.spyOn(storage, 'get').mockImplementationOnce(async (file) => {
+				await dataSource.getRepository(InboxEmail).update({ id }, { attemptCount: 7 });
+				return original(file);
+			});
+			expect(await processor.process(id)).toBeNull();
+			const email = await dataSource.getRepository(InboxEmail).findOneByOrFail({ id });
+			expect([email.status, email.attemptCount, email.inboxItemId ?? null]).toEqual([
+				InboxEmailStatusEnum.PROCESSING,
+				7,
+				null
+			]);
+		});
+
 		it('retries a failure, then leaves the message FAILED with its error', async () => {
 			await deliver(mime(SAMPLE_MIME, ['support.ever@inbox.example.test']));
 			storage.files.clear();
@@ -676,6 +740,47 @@ describe('Inbound email pipeline on SQLite', () => {
 			await expect(emails.raw(email.id as string)).rejects.toThrow(/Managing this mailbox/);
 		});
 
+		it('lets an organization manager who is no member release a quarantined message', async () => {
+			await dataSource
+				.getRepository(InboxEmail)
+				.update(
+					{ mailboxId: supportBox.id as string },
+					{ status: InboxEmailStatusEnum.QUARANTINED, inboxItemId: null as never }
+				);
+			const email = await stored();
+			as(EVE, [PermissionsEnum.INBOX_VIEW, PermissionsEnum.INBOX_MAILBOX_MANAGE]);
+			expect((await emails.quarantine(supportBox.id as string)).map((row) => row.id)).toEqual([email.id]);
+			const released = await emails.release(email.id as string);
+			expect(released.status).toBe(InboxEmailStatusEnum.PROCESSED);
+			expect(released.attachments).toHaveLength(2);
+		});
+
+		it('shows a former member only the messages that were addressed to them', async () => {
+			const email = await stored();
+			await dataSource.getRepository(InboxMailboxMember).delete({ userId: BOB });
+			// After the removal, the mailbox's mail goes to the organization's managers (none here).
+			const later = SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-9@acme.test>');
+			await deliver(mime(later, ['support.ever@inbox.example.test']));
+			await processor.drain();
+			as(BOB);
+			// Bob still reads the message he received, but not what arrived after he left.
+			expect((await emails.thread(email.id as string)).map((row) => row.messageId)).toEqual(['<m-2@acme.test>']);
+		});
+
+		it('keeps the refused recipients of a partly accepted reply', async () => {
+			const email = await stored();
+			as(BOB);
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockResolvedValueOnce({
+				messageId: null,
+				accepted: ['ada@acme.test'],
+				rejected: ['bob@acme.test'],
+				transport: 'smtp'
+			});
+			const reply = await emails.reply(email.id as string, { text: 'Thanks!', replyAll: true });
+			expect(reply.status).toBe(InboxEmailStatusEnum.SENT);
+			expect(reply.error).toBe('Not accepted for: bob@acme.test');
+		});
+
 		it('replies from the mailbox address in the thread, through the transport seam', async () => {
 			const email = await stored();
 			as(BOB);
@@ -706,6 +811,13 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect(message['subject']).toBe('Fwd: Re: Invoice 42');
 			expect((message['attachments'] as unknown[]).length).toBe(2);
 			expect(String(message['text'])).toContain('---------- Forwarded message ----------');
+			// The sent copy keeps its attachments (the stored files are shared).
+			const copy = await dataSource
+				.getRepository(InboxEmail)
+				.findOneByOrFail({ direction: InboxEmailDirectionEnum.OUT });
+			expect(
+				await dataSource.getRepository(InboxEmailAttachment).count({ where: { emailId: copy.id as string } })
+			).toBe(2);
 		});
 	});
 });

@@ -133,6 +133,16 @@ describe('GenericWebhookProvider', () => {
 				request({ from: 'bob@acme.test', to: 'support.ever@inbox.example.test', subject: 'Second' })
 			);
 			expect(again?.messageId).toBe(messages[1]?.messageId);
+			// Same sender, subject and text, other attachments: another message.
+			const [withFile] = await provider.parse(
+				request({
+					from: 'bob@acme.test',
+					to: 'support.ever@inbox.example.test',
+					subject: 'Second',
+					attachments: [{ filename: 'x.txt', content: Buffer.from('y').toString('base64') }]
+				})
+			);
+			expect(withFile?.messageId).not.toBe(messages[1]?.messageId);
 		});
 	});
 
