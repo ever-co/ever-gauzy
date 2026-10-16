@@ -42,6 +42,8 @@
 		"axios": "^1.20.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.15.1",
+		"express": "^5.3.0",
+		"rxjs": "^7.8.2",
 		"tslib": "^2.8.1",
 		"typeorm": "^1.1.2"
 	},
