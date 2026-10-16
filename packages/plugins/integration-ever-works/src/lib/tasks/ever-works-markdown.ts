@@ -66,24 +66,32 @@ function cellsOf(row: string): string[] {
 	return trimmed.split(/(?<!\\)\|/).map((cell) => cell.trim());
 }
 
+/**
+ * Inline text longer than this is written as plain (escaped) text. Together with the bounded spans below it
+ * keeps every inline pattern linear in practice: a crafted description cannot make the regexes rescan it
+ * quadratically and stall the sync (ReDoS).
+ */
+export const INLINE_FORMAT_LIMIT = 20_000;
+
 /** Inline Markdown → HTML: code spans, escapes, images, links, bare links, then emphasis on the escaped rest. */
 function renderInline(source: string): string {
+	if (source.length > INLINE_FORMAT_LIMIT) return escapeHtml(source);
 	const slots: string[] = [];
 	const hold = (html: string) => `\u0000${slots.push(html) - 1}\u0000`;
 	let text = source;
 	// Code spans first: nothing inside them is markup.
-	text = text.replace(/(`+)(?!`)([\s\S]*?[^`])\1(?!`)/g, (_match, _ticks: string, code: string) =>
+	text = text.replace(/(`{1,16})(?!`)([\s\S]{0,4000}?[^`])\1(?!`)/g, (_match, _ticks: string, code: string) =>
 		hold(`<code>${escapeHtml(/^ [\s\S]* $/.test(code) && code.trim() ? code.slice(1, -1) : code)}</code>`)
 	);
 	// A backslash keeps the next punctuation character literal.
 	text = text.replace(/\\([\\`*_{}[\]()#+\-.!~|<>])/g, (_match, char: string) => hold(escapeHtml(char)));
-	text = text.replace(/!\[([^\]\n]*)\]\( *<?([^\s)>]+)>?(?: +"[^"\n]*")? *\)/g, (match, alt: string, src: string) =>
+	text = text.replace(/!\[([^\]\n]{0,500})\]\( *<?([^\s)>]{1,2048})>?(?: +"[^"\n]{0,500}")? *\)/g, (match, alt: string, src: string) =>
 		isSafeUrl(src, false) ? hold(`<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`) : match
 	);
-	text = text.replace(/\[([^\]\n]+)\]\( *<?([^\s)>]+)>?(?: +"[^"\n]*")? *\)/g, (match, label: string, href: string) =>
+	text = text.replace(/\[([^\]\n]{1,500})\]\( *<?([^\s)>]{1,2048})>?(?: +"[^"\n]{0,500}")? *\)/g, (match, label: string, href: string) =>
 		isSafeUrl(href) ? hold(`<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${renderEmphasis(escapeHtml(label))}</a>`) : match
 	);
-	text = text.replace(/<((?:https?:\/\/|mailto:)[^\s<>]+)>/gi, (match, href: string) =>
+	text = text.replace(/<((?:https?:\/\/|mailto:)[^\s<>]{1,2048})>/gi, (match, href: string) =>
 		isSafeUrl(href) ? hold(`<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(href)}</a>`) : match
 	);
 	let html = renderEmphasis(escapeHtml(text));
@@ -94,14 +102,17 @@ function renderInline(source: string): string {
 	return html.replace(/\u0000/g, '');
 }
 
-/** Emphasis on already-escaped text. `_` only at word boundaries, so `snake_case_name` stays as it is. */
+/**
+ * Emphasis on already-escaped text. `_` only at word boundaries, so `snake_case_name` stays as it is. A span
+ * stays on one line and is at most 1000 characters (bounded: an unmatched opener cannot rescan the text).
+ */
 function renderEmphasis(html: string): string {
 	return html
-		.replace(/~~(?=\S)([\s\S]*?\S)~~/g, '<s>$1</s>')
-		.replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, '<strong>$1</strong>')
-		.replace(/(?<![\p{L}\p{N}_])__(?=\S)([\s\S]*?\S)__(?![\p{L}\p{N}_])/gu, '<strong>$1</strong>')
-		.replace(/\*(?=[^\s*])([\s\S]*?[^\s*])\*/g, '<em>$1</em>')
-		.replace(/(?<![\p{L}\p{N}_])_(?=[^\s_])([\s\S]*?[^\s_])_(?![\p{L}\p{N}_])/gu, '<em>$1</em>');
+		.replace(/~~(?=\S)([^\n]{0,1000}?\S)~~/g, '<s>$1</s>')
+		.replace(/\*\*(?=\S)([^\n]{0,1000}?\S)\*\*/g, '<strong>$1</strong>')
+		.replace(/(?<![\p{L}\p{N}_])__(?=\S)([^\n]{0,1000}?\S)__(?![\p{L}\p{N}_])/gu, '<strong>$1</strong>')
+		.replace(/\*(?=[^\s*])([^\n]{0,1000}?[^\s*])\*/g, '<em>$1</em>')
+		.replace(/(?<![\p{L}\p{N}_])_(?=[^\s_])([^\n]{0,1000}?[^\s_])_(?![\p{L}\p{N}_])/gu, '<em>$1</em>');
 }
 
 /** A list starting at `start`: its HTML and the index of the first line after it. */
@@ -195,7 +206,7 @@ function renderBlocks(source: ReadonlyArray<string>, depth: number): string[] {
 		if (QUOTE.test(line)) {
 			const quoted: string[] = [];
 			while (index < lines.length && QUOTE.test(lines[index])) quoted.push(lines[index++].replace(QUOTE, ''));
-			const inner = depth < 8 ? renderBlocks(quoted, depth + 1).join('') : `<p>${renderInline(quoted.join('\n')).replace(/\n/g, '<br>')}</p>`;
+			const inner = depth < 8 ? renderBlocks(quoted, depth + 1).join('') : `<p>${quoted.map(renderInline).join('<br>')}</p>`;
 			out.push(`<blockquote>${inner}</blockquote>`);
 			continue;
 		}
@@ -218,7 +229,8 @@ function renderBlocks(source: ReadonlyArray<string>, depth: number): string[] {
 		}
 		const paragraph: string[] = [];
 		while (index < lines.length && lines[index].trim() && (!paragraph.length || !startsBlock(lines, index))) paragraph.push(lines[index++].trim());
-		out.push(`<p>${renderInline(paragraph.join('\n')).replace(/\n/g, '<br>')}</p>`);
+		// Line by line (a line break is a <br>): the inline limit and the bounded spans apply per line.
+		out.push(`<p>${paragraph.map(renderInline).join('<br>')}</p>`);
 	}
 	return out;
 }

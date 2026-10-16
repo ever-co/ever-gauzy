@@ -143,7 +143,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const sharedAgain = link.lastError === NO_LONGER_SHARED && typeof data['visibility'] === 'string' && isSyncedVisibility(data['visibility']);
 			if (!sharedAgain) return { status: 'skipped', message: 'the task is no longer synced' };
 			if (envelope.type === 'task.visibility_changed') {
-				return this.refetch(context, link, envelope);
+				try {
+					return await this.refetch(context, link, envelope);
+				} catch (error) {
+					// No request context here (the worker): retried, like every other task write.
+					if (error instanceof EverWorksRequestContextUnavailableError) return { status: 'deferred', message: error.message, retryInMs: TASK_NO_CONTEXT_RETRY_MS };
+					throw error;
+				}
 			}
 		}
 		const version = envelope.aggregate.version ?? null;
