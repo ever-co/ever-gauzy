@@ -277,6 +277,8 @@ export class EverWorksConnectComponent implements OnChanges {
 	everWorksOrganizationId = '';
 	busy = false;
 	error: string | null = null;
+	/** Set once the first sync has started: the wizard stays locked until the page moves on. */
+	private startedOnce = false;
 
 	get stepIndex(): number {
 		return CONNECT_STEPS.indexOf(this.step);
@@ -340,7 +342,7 @@ export class EverWorksConnectComponent implements OnChanges {
 	start(): void {
 		const mapping = this.mapping;
 		const connection = this.connection;
-		if (!mapping || !connection) return;
+		if (!mapping || !connection || this.startedOnce || this.busy) return;
 		const webhook$ = connection.webhook?.registered
 			? of(null)
 			: this.api.registerWebhook(this.organizationId, connection.id).pipe(
@@ -349,7 +351,12 @@ export class EverWorksConnectComponent implements OnChanges {
 				);
 		this.request(
 			webhook$.pipe(switchMap((webhookError) => this.api.startSync(this.organizationId, mapping.integrationTenantId).pipe(map((run) => ({ run, webhookError }))))),
-			({ run, webhookError }) => this.started.emit({ mapping, run, webhookError })
+			({ run, webhookError }) => {
+				// Locked: a second click before the page navigates must not ask for another sync.
+				this.startedOnce = true;
+				this.busy = true;
+				this.started.emit({ mapping, run, webhookError });
+			}
 		);
 	}
 

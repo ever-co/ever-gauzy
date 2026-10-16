@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { EverWorksUiService } from '../../services/ever-works.service';
 import { CREATE, EverWorksMatchReviewComponent, preselect } from './ever-works-match-review.component';
 
@@ -162,5 +162,16 @@ describe('EverWorksMatchReviewComponent', () => {
 				new Set(['d'])
 			)
 		).toEqual({ a: 'x', b: '', c: '', d: '', e: '' });
+	});
+
+	it('a late answer for a previous mapping is dropped', () => {
+		const late = new Subject<typeof PEOPLE>();
+		api.people.mockReturnValueOnce(late);
+		const { component } = render();
+		component.integrationTenantId = 'm2';
+		component.ngOnChanges();
+		late.next({ ...PEOPLE, members: [] });
+		expect(api.people).toHaveBeenLastCalledWith('org-1', 'm2');
+		expect(component.people?.members).toHaveLength(3);
 	});
 });

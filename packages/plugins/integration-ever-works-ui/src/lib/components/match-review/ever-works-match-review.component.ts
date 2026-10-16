@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, O
 import { FormsModule } from '@angular/forms';
 import { NbAlertModule, NbButtonModule, NbCheckboxModule, NbTabsetModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import {
 	EverWorksAgentRow,
 	EverWorksPeopleView,
@@ -263,11 +264,14 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	workChoice: Record<string, string> = {};
 	createInEverWorks: Record<string, boolean> = {};
 	busy: Record<Section, boolean> = { people: false, agents: false, teams: false, projects: false };
+	/** Emits when the inputs change: requests for the previous mapping are cancelled and their answers dropped. */
+	private readonly scope$ = new Subject<void>();
 	/** Pairings the admin removed here: their suggestion is not preselected again (it would undo the removal). */
 	private readonly removed: Record<'people' | 'teams' | 'projects', Set<string>> = { people: new Set(), teams: new Set(), projects: new Set() };
 	errors: Record<Section, string | null> = { people: null, agents: null, teams: null, projects: null };
 
 	ngOnChanges(): void {
+		this.scope$.next();
 		if (!this.integrationTenantId) return;
 		const id = this.integrationTenantId;
 		this.run('people', this.api.people(this.organizationId, id), (view) => this.setPeople(view));
@@ -405,7 +409,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		this.busy[section] = true;
 		this.errors[section] = null;
 		this.cdr.markForCheck();
-		request.subscribe({
+		request.pipe(takeUntil(this.scope$)).subscribe({
 			next: (value) => {
 				this.busy[section] = false;
 				apply(value);
