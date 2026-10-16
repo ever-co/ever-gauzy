@@ -149,7 +149,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			}
 
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em, !!entity.startedWorkOn, !!entity.endWork);
+			await this.updateEmployeeStatus(entity, em, !!entity.startedWorkOn, !!entity.endWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityCreate process:',
@@ -180,7 +180,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			const hasResumedWork = entity.endWork === null && !!changedProperties?.includes('endWork');
 
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
+			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
@@ -326,17 +326,19 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * @param {MultiOrmEntityManager} em - The entity manager used to interact with the database.
 	 * @param {boolean} hasStartedWork - True when the write sets a start work date.
 	 * @param {boolean} hasEndedWork - True when the write sets an end work date.
+	 * @returns {Promise<void>} Resolves once the membership update has run, so it runs inside the write's
+	 *   transaction rather than after the entity manager has committed or released it.
 	 */
-	private updateEmployeeStatus(
+	private async updateEmployeeStatus(
 		entity: Employee,
 		em: MultiOrmEntityManager,
 		hasStartedWork: boolean,
 		hasEndedWork: boolean
-	): void {
+	): Promise<void> {
 		// Update the employee's status based on the work dates
 		if (hasStartedWork || hasEndedWork) {
 			this.setEmployeeStatus(entity, hasStartedWork, hasEndedWork);
-			this.setUserOrganizationStatus(em, entity, hasStartedWork, hasEndedWork);
+			await this.setUserOrganizationStatus(em, entity, hasStartedWork, hasEndedWork);
 
 			if (hasStartedWork) {
 				entity.endWork = null; // Clear the end work date if the employee has started work
