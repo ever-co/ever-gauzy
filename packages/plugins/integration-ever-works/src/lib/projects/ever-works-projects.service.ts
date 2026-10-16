@@ -3,7 +3,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { createHash } from 'node:crypto';
 import { DataSource, In } from 'typeorm';
 import { ID, ProjectStatusEnum } from '@gauzy/contracts';
-import { IntegrationTenant, OrganizationProject, OrganizationProjectCreateCommand, OrganizationProjectEmployee } from '@gauzy/core';
+import { Employee, IntegrationTenant, OrganizationProject, OrganizationProjectCreateCommand, OrganizationProjectEmployee, RequestContext } from '@gauzy/core';
+import { EverWorksApiError, EverWorksClient, EverWorksNetworkError } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
 import type { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
@@ -14,7 +15,8 @@ import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import type { EverWorksSyncSweeper } from '../sync/ever-works-sync.loop';
 import type { EverWorksApplyContext, EverWorksApplyOutcome, EverWorksInboundHandler } from '../sync/inbound/ever-works-inbound.applier';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
-import { gauzyTeamsFor, isSyncedVisibility } from '../teams/ever-works-team-scope';
+import { gauzyTeamsFor, isSyncedVisibility, teamScopeFor } from '../teams/ever-works-team-scope';
+import { isProjectWorksDisabled, projectWorkCreateBody, projectWorkIdempotencyKey } from './ever-works-project-work.mapper';
 
 /** A member of an Ever Works work (contract v1 `WorkMemberRef`). */
 export interface EverWorksWorkMember {
@@ -82,6 +84,8 @@ export interface EverWorksProjectsView {
 	works: EverWorksWorkRow[];
 	/** Gauzy projects of the organization linked to no work. */
 	unmatchedProjects: Array<{ projectId: ID; name: string }>;
+	/** Projects Ever Works did not create a work for in this request (G-P2-5), with the reason; the others were created. */
+	failures?: Array<{ projectId: ID; message: string }>;
 }
 
 /** The admin's decisions on the Projects tab. */
@@ -91,6 +95,11 @@ export interface EverWorksProjectsDecision {
 	acceptSuggestions?: boolean;
 	/** Works to create a Gauzy project from. */
 	createInGauzy?: string[];
+	/**
+	 * Gauzy projects to create in Ever Works (G-P2-5), each as a repo-less work of kind `project`
+	 * (EW-P2-4). Opt-in per project: Gauzy never creates a work on its own (D3).
+	 */
+	createInEverWorks?: ID[];
 }
 
 /** A URL compared loosely: case, a trailing slash and a `.git` suffix do not matter. */
@@ -132,6 +141,11 @@ export const PROJECT_SWEEP_MS = 10 * 60_000;
  *   `project.teams` (its team scope, D11). Only what changed in Ever Works since the last sync is
  *   written, so a Gauzy edit is not overwritten by an unrelated change. Nothing is pushed to Ever Works.
  * - `kind`, the slug, all repository URLs and members or teams Gauzy cannot map stay on the link.
+ * - **Create in Ever Works (G-P2-5).** Opt-in per project on the same tab: the project becomes a
+ *   repo-less work of kind `project` (EW-P2-4, behind Ever Works' `EVER_WORKS_PROJECT_WORKS_ENABLED`),
+ *   with the project's teams as its scope (D11; a team not paired yet refuses the create, so the
+ *   work never goes out organization-wide by mistake), owned by the requesting admin's Ever Works
+ *   user when they are paired. From then on the pair syncs like any other (link only).
  */
 @Injectable()
 export class EverWorksProjectsService implements EverWorksInboundHandler, EverWorksSyncSweeper {
@@ -166,6 +180,11 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			if (!context.isEnabled) throw new BadRequestException('The mapping is disabled; enable it before creating projects from works.');
 			if (context.directions.works !== 'link_only') throw new BadRequestException('Works are not synced for this mapping, so projects cannot be created from works.');
 		}
+		const createInEverWorks = [...new Set(decision.createInEverWorks ?? [])];
+		if (createInEverWorks.length) {
+			if (!context.isEnabled) throw new BadRequestException('The mapping is disabled; enable it before creating works from projects.');
+			if (context.directions.works !== 'link_only') throw new BadRequestException('Works are not synced for this mapping, so works cannot be created from projects.');
+		}
 		const works = await this.works(context);
 		const byEw = new Map(works.map((work) => [work.id, work]));
 		const pairs = [...(decision.links ?? [])];
@@ -185,7 +204,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				pairs.push(suggestion);
 			}
 		}
-		const projects = new Map((await this.gauzyProjects(context, pairs.map((pair) => pair.projectId))).map((p) => [p.id as ID, p]));
+		const projects = new Map((await this.gauzyProjects(context, [...pairs.map((pair) => pair.projectId), ...createInEverWorks])).map((p) => [p.id as ID, p]));
 		const seenEw = new Set<string>();
 		const seenGauzy = new Set<string>();
 		for (const pair of pairs) {
@@ -199,6 +218,19 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		for (const ewWorkId of decision.createInGauzy ?? []) {
 			if (!byEw.has(ewWorkId)) throw new BadRequestException(`${ewWorkId} is not a work of the mapped Ever Works organization.`);
 			if (!isSyncedVisibility(byEw.get(ewWorkId)?.visibility)) throw new BadRequestException(`${ewWorkId} is private in Ever Works; private works never sync.`);
+		}
+		for (const projectId of createInEverWorks) {
+			if (!projects.has(projectId)) throw new BadRequestException(`${projectId} is not an active project of this organization.`);
+			if (seenGauzy.has(projectId)) throw new BadRequestException(`${projectId} is paired in this request; it cannot also be created in Ever Works.`);
+			const paired = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, projectId);
+			if (paired && paired.state !== EverWorksLinkState.UNLINKED && !(decision.unlinks ?? []).includes(paired.ewId)) {
+				throw new BadRequestException(`${projectId} is already paired with an Ever Works work.`);
+			}
+			// Teams first (D11 rule 4): a project on a team that is not paired yet would go out organization-wide.
+			const scope = await this.teamScopeOfProject(context, projectId);
+			if (scope.waitingFor) {
+				throw new BadRequestException(`${projectId} is on the Gauzy team ${scope.waitingFor}, which is not paired with an Ever Works team yet; pair the team first.`);
+			}
 		}
 		for (const ewWorkId of decision.unlinks ?? []) {
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId);
@@ -223,7 +255,21 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				});
 			}
 		});
-		return this.view(context, await this.works(context));
+		const failures: Array<{ projectId: ID; message: string }> = [];
+		if (createInEverWorks.length) {
+			const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
+			for (const projectId of createInEverWorks) {
+				// Claimed, then checked again: two overlapping requests never create two works for one project.
+				const failure = await this.withWorkClaim(context, `gauzy-project:${projectId}`, async () => {
+					const paired = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, projectId);
+					if (paired && paired.state !== EverWorksLinkState.UNLINKED) return null;
+					return this.createInEverWorks(context, client, projects.get(projectId) as OrganizationProject);
+				});
+				if (failure) failures.push({ projectId, message: failure });
+			}
+		}
+		const view = await this.view(context, await this.works(context));
+		return failures.length ? { ...view, failures } : view;
 	}
 
 	// ── EW → G ─────────────────────────────────────────────────────────────────────────────────────
@@ -395,6 +441,86 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		return projectId;
 	}
 
+	// ── G → EW: create in Ever Works (G-P2-5) ─────────────────────────────────────────────────────────
+
+	/**
+	 * Creates the Ever Works work of a Gauzy project (a repo-less `project` work, EW-P2-4) and links the
+	 * pair. Returns `null` when it is linked, or why Ever Works did not create it. Nothing in Gauzy
+	 * changes: the work starts from the project's fields, and from now on Ever Works' changes apply to the
+	 * project like for any pair. The deterministic `Idempotency-Key` plus `externalRef` make a retry
+	 * (or a lost answer) return the same work instead of a second one.
+	 */
+	private async createInEverWorks(context: EverWorksMappingContext, client: EverWorksClient, project: OrganizationProject): Promise<string | null> {
+		const projectId = project.id as ID;
+		const connectionId = context.connection.id as ID;
+		const team = await this.teamScopeOfProject(context, projectId);
+		if (!team.scope) return `the Gauzy team ${team.waitingFor} is not paired with an Ever Works team yet; pair the team first`;
+		const body = projectWorkCreateBody({ id: projectId, name: project.name, description: project.description, projectUrl: project.projectUrl }, team.scope, connectionId);
+		if (!body['name']) return 'the project has no name';
+		const actAsUserId = await this.actAsUserOf(context);
+		let work: EverWorksWork | null = null;
+		try {
+			work = await this.postWork(client, body, connectionId, projectId, actAsUserId);
+		} catch (error) {
+			if (error instanceof EverWorksApiError && !error.retryable) {
+				if (isProjectWorksDisabled(error)) return 'Project works are switched off in Ever Works (EVER_WORKS_PROJECT_WORKS_ENABLED); ask the Ever Works operator to enable them';
+				return `Ever Works refused the work (${error.status} ${error.code}: ${error.message})`;
+			}
+			if (error instanceof EverWorksApiError || error instanceof EverWorksNetworkError) {
+				this.logger.warn(`Project ${projectId}: the Ever Works work could not be created (${error.message.slice(0, 200)}).`);
+				return 'Ever Works could not be reached; try again (the retry returns the same work)';
+			}
+			throw error;
+		}
+		if (!work?.id) return 'Ever Works answered without a work';
+		// A repeat of the same externalRef answers the existing work: never re-pair one another project holds.
+		const holder = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, work.id);
+		if (holder && holder.state !== EverWorksLinkState.UNLINKED && holder.gauzyId !== projectId) {
+			return `Ever Works already has a work for this project (${work.id}), paired with another Gauzy project`;
+		}
+		// Recorded as Ever Works answered it, so the next Ever Works change is diffed against what it holds.
+		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound');
+		this.logger.log(`Gauzy project ${projectId} created in Ever Works as work ${work.id} (organization ${context.organizationId}).`);
+		return null;
+	}
+
+	/** `POST /works`, as the admin's Ever Works user when they may act here, else as the integration (plan 03 §C.3). */
+	private async postWork(client: EverWorksClient, body: Record<string, unknown>, connectionId: ID, projectId: ID, actAsUserId: string | null): Promise<EverWorksWork> {
+		try {
+			return await client.request<EverWorksWork>('POST', '/works', { body, idempotencyKey: projectWorkIdempotencyKey(connectionId, projectId, body), actAsUserId });
+		} catch (error) {
+			if (!(actAsUserId && error instanceof EverWorksApiError && error.status === 403 && error.code === 'act_as_forbidden')) throw error;
+			return client.request<EverWorksWork>('POST', '/works', { body, idempotencyKey: projectWorkIdempotencyKey(connectionId, projectId, body, 'integration') });
+		}
+	}
+
+	/** The scope a project goes out with (D11): its mapped teams, or `waitingFor` the first team not paired yet. */
+	private async teamScopeOfProject(context: EverWorksMappingContext, projectId: ID): Promise<ReturnType<typeof teamScopeFor>> {
+		const teams = (await this.dataSource.createQueryBuilder().relation(OrganizationProject, 'teams').of(projectId).loadMany()) as Array<{ id: ID }>;
+		const teamLinks = (await this.links.list(context.integrationTenantId, EverWorksLinkType.TEAM)).filter((link) => link.state !== EverWorksLinkState.UNLINKED);
+		return teamScopeFor(
+			teams.map((team) => team.id),
+			new Map(teamLinks.map((link) => [link.gauzyId as ID, link.ewId]))
+		);
+	}
+
+	/** The Ever Works user the signed-in admin is paired with in this organization (`X-Act-As-User`), or `null`. */
+	private async actAsUserOf(context: EverWorksMappingContext): Promise<string | null> {
+		let userId: ID | null = null;
+		try {
+			userId = (RequestContext.currentUserId() as ID) ?? null;
+		} catch {
+			userId = null;
+		}
+		if (!userId) return null;
+		const employee = await this.dataSource
+			.getRepository(Employee)
+			.findOne({ where: { userId, tenantId: context.tenantId, organizationId: context.organizationId } as never });
+		if (!employee?.id) return null;
+		const person = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, employee.id as ID);
+		return person && person.state !== EverWorksLinkState.UNLINKED ? person.ewId : null;
+	}
+
 	/**
 	 * Runs `fn` with the work claimed, so two overlapping "create from work" requests cannot both create a
 	 * project: one at a time per work in this process, and across processes a session lock on Postgres
@@ -505,7 +631,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		version: number | null,
 		snapshot?: WorkSnapshot,
 		link?: EverWorksEntityLink | null,
-		unmapped?: { members: string[]; teams: string[] }
+		unmapped?: { members: string[]; teams: string[] },
+		direction: 'inbound' | 'outbound' = 'inbound'
 	): Promise<void> {
 		const previous = this.ewOnlyOf(link);
 		const ewOnly: WorkEverWorksOnly = {
@@ -529,7 +656,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			ewUpdatedAt: work.updatedAt,
 			snapshot: (snapshot ?? this.snapshotOf(work, {})) as unknown as Record<string, unknown>,
 			ewOnly: ewOnly as unknown as Record<string, unknown>,
-			direction: 'inbound'
+			direction
 		});
 	}
 
