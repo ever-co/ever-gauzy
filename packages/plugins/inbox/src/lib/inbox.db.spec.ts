@@ -691,6 +691,27 @@ describe('Inbox on SQLite', () => {
 		});
 	});
 
+	describe('mark-all-read and the sources', () => {
+		it('tells the source of each item read in bulk (in the background), as for one item', async () => {
+			const onStateChange = jest.fn(async () => undefined);
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply: jest.fn(), onStateChange });
+			const sourced = await question({ source: InboxItemSourceEnum.EVER_WORKS, title: 'From Ever Works' });
+			await question({ title: 'Local' });
+
+			await expect(service.markAllRead()).resolves.toEqual({ updated: 2 });
+			for (let wait = 0; wait < 50 && onStateChange.mock.calls.length < 1; wait++) {
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+
+			expect(onStateChange).toHaveBeenCalledTimes(1);
+			expect(onStateChange).toHaveBeenCalledWith(
+				expect.objectContaining({ id: sourced.item.id }),
+				expect.objectContaining({ userId: ADA, isRead: true }),
+				{ isRead: true }
+			);
+		});
+	});
+
 	describe('writes by a source', () => {
 		it('upsertExternal is idempotent on the external identity, and keeps the source state', async () => {
 			const input = {

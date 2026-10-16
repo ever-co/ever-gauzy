@@ -275,9 +275,16 @@ describe('EverWorksInboxService', () => {
 		expect(mock.inboxItems.get(item['id'] as string)).toMatchObject({ status: 'answered', answerOptionId: 'pro' });
 		expect(mock.events.map((e) => e.type)).toContain('inbox.item.answered');
 
+		// What Ever Works answered with is applied (our own answered event is skipped as an echo).
+		expect(writes).toHaveLength(1);
+		expect(writes[0]).toMatchObject({
+			status: InboxItemStatusEnum.ANSWERED,
+			recipients: [{ userId: ADA_USER, isRead: true }]
+		});
+
 		// An older event still queued (version 1, open) does not undo the reply: the link holds version 2.
 		await expect(apply(envelope('inbox.item.state_changed', before))).resolves.toMatchObject({ status: 'skipped' });
-		expect(writes).toHaveLength(0);
+		expect(writes).toHaveLength(1);
 	});
 
 	it('already decided in Ever Works: the answer there comes back to be recorded', async () => {
@@ -327,13 +334,26 @@ describe('EverWorksInboxService', () => {
 	});
 
 	it('mirrors read and archive as the recipient (snoozing stays in Gauzy)', async () => {
-		const { mock, ewOrg, adaEw, service, link, gauzyItem } = setup();
+		const { mock, ewOrg, adaEw, service, link, gauzyItem, writes } = setup();
 		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);
-		const item = mock.addInboxItem(ewOrg.id, { recipientUserId: adaEw });
+		// Answered in Ever Works (version 2), which Gauzy has not applied yet.
+		const item = mock.addInboxItem(ewOrg.id, {
+			recipientUserId: adaEw,
+			version: 2,
+			status: 'answered',
+			answeredAt: '2026-10-16T09:05:00.000Z',
+			answerOptionId: 'team'
+		});
 		const recipient = { userId: ADA_USER } as never;
 
 		await service.mirrorState(gauzyItem(item), recipient, { isRead: true, isArchived: true });
 		expect(mock.inboxItems.get(item['id'] as string)).toMatchObject({ unread: false, status: 'archived' });
+		// The answer behind the newer version reaches Gauzy with the state change.
+		expect(writes[writes.length - 1]).toMatchObject({
+			status: InboxItemStatusEnum.ANSWERED,
+			response: expect.objectContaining({ optionId: 'team' }),
+			recipients: [{ userId: ADA_USER, isRead: true, isArchived: true }]
+		});
 
 		const before = mock.requests.length;
 		await service.mirrorState(gauzyItem(item), recipient, { snoozedUntil: new Date().toISOString() });

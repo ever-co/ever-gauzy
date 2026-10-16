@@ -379,18 +379,54 @@ export class InboxService implements IInboxItemWriter {
 	/** Marks every unread item of the caller (of a tab) read. */
 	async markAllRead(tab?: InboxTabEnum): Promise<{ updated: number }> {
 		const { tenantId, userId } = this.caller();
-		const ids = (
-			await this.recipientItems(tenantId, userId, { tab: tab ?? InboxTabEnum.ALL, unread: true })
-				.select('recipient.id', 'recipientId')
-				.getRawMany<{ recipientId: ID }>()
-		).map((row) => row.recipientId);
+		const rows = await this.recipientItems(tenantId, userId, { tab: tab ?? InboxTabEnum.ALL, unread: true })
+			.select('recipient.id', 'recipientId')
+			.addSelect('item.id', 'itemId')
+			.addSelect('item.source', 'source')
+			.getRawMany<{ recipientId: ID; itemId: ID; source: string }>();
+		const ids = rows.map((row) => row.recipientId);
 
 		const repository = this.dataSource.getRepository(InboxItemRecipient);
 		const now = new Date();
 		for (let start = 0; start < ids.length; start += 500) {
 			await repository.update({ id: In(ids.slice(start, start + 500)) }, { isRead: true, readAt: now });
 		}
+		// The sources mirror the state, as for one item; in the background (a source may be slow, and it is best
+		// effort either way), one item after the other.
+		const mirrored = rows.filter((row) => !!this.registry.get(row.source)?.onStateChange);
+		if (mirrored.length) {
+			void this.mirrorReads(tenantId, userId, mirrored, now);
+		}
 		return { updated: ids.length };
+	}
+
+	/** Tells each item's source that the caller read it (`markAllRead`); a failure is logged, the state stays. */
+	private async mirrorReads(
+		tenantId: ID,
+		userId: ID,
+		rows: Array<{ recipientId: ID; itemId: ID; source: string }>,
+		readAt: Date
+	): Promise<void> {
+		for (const row of rows) {
+			try {
+				const item = await this.findItem(tenantId, row.itemId);
+				const handler = item ? this.registry.get(item.source) : undefined;
+				if (!item || !handler?.onStateChange) continue;
+				const recipient = {
+					id: row.recipientId,
+					tenantId,
+					inboxItemId: row.itemId,
+					userId,
+					isRead: true,
+					readAt
+				};
+				await handler.onStateChange(toInboxItem(item), recipient as never, { isRead: true });
+			} catch (error) {
+				this.logger.warn(
+					`The ${row.source} handler did not take the read state of inbox item ${row.itemId}: ${(error as Error)?.message}`
+				);
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------- writes by sources

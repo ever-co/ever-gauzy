@@ -134,6 +134,24 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 			return { status: 'skipped', message: 'already applied (version)' };
 		}
 
+		return this.applySnapshot(context, item, version, {
+			deleted: envelope.type === 'inbox.item.deleted',
+			direction: 'inbound'
+		});
+	}
+
+	/**
+	 * Writes one EW item snapshot into the Gauzy Inbox and records its version on the link: the inbound events,
+	 * and the item Ever Works answers a reply or a state change with (which may carry a newer answer or state
+	 * than Gauzy has applied yet).
+	 */
+	private async applySnapshot(
+		context: EverWorksMappingContext,
+		item: EverWorksInboxItem,
+		version: number | null,
+		options: { deleted?: boolean; direction: 'inbound' | 'outbound' }
+	): Promise<EverWorksApplyOutcome> {
+		if (!this.inbox) return { status: 'skipped', message: 'the Gauzy Inbox is not loaded in this process' };
 		const recipientUserId = await this.gauzyUserOf(context, item.recipientUserId);
 		if (!recipientUserId) {
 			return {
@@ -146,7 +164,7 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 				item,
 				{ tenantId: context.tenantId, organizationId: context.organizationId, recipientUserId },
 				await this.linksOf(context, item),
-				{ deleted: envelope.type === 'inbox.item.deleted' }
+				{ deleted: options.deleted }
 			)
 		);
 		if (!result.recipientUserIds.includes(recipientUserId)) {
@@ -161,7 +179,7 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 			ewId: item.id,
 			ewVersion: version,
 			ewUpdatedAt: item.updatedAt ?? null,
-			direction: 'inbound'
+			direction: options.direction
 		});
 		return { status: 'applied' };
 	}
@@ -247,9 +265,11 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 	}
 
 	/**
-	 * Records the version Ever Works answered with on the item's link, so a queued event of an older version
-	 * is skipped instead of undoing a reply or a state change made from Gauzy. Best effort: a failure here
-	 * only means an older event may be applied (and the next one corrects it).
+	 * Applies the item Ever Works answered a reply or a state change with, and records its version, so that a
+	 * queued event of an older version is skipped instead of undoing what was done from Gauzy, and an answer or
+	 * state Ever Works had that Gauzy had not applied yet is not lost behind the newer version. Our own events
+	 * of that change are skipped as echoes, so this is where Gauzy learns the result. Best effort: a failure
+	 * only means the next event or resync brings it.
 	 */
 	private async rememberVersion(
 		context: EverWorksMappingContext,
@@ -260,20 +280,10 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		try {
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.INBOX_ITEM, ewItem.id);
 			if (link?.ewVersion != null && link.ewVersion >= ewItem.version) return;
-			await this.links.record({
-				tenantId: context.tenantId,
-				organizationId: context.organizationId,
-				integrationTenantId: context.integrationTenantId,
-				entityType: EverWorksLinkType.INBOX_ITEM,
-				gauzyId: item.id as ID,
-				ewId: ewItem.id,
-				ewVersion: ewItem.version,
-				ewUpdatedAt: ewItem.updatedAt ?? null,
-				direction: 'outbound'
-			});
+			await this.applySnapshot(context, ewItem, ewItem.version, { direction: 'outbound' });
 		} catch (error) {
 			this.logger.warn(
-				`Inbox item ${item.id}: the Ever Works version could not be recorded (${error instanceof Error ? error.message : 'error'}).`
+				`Inbox item ${item.id}: what Ever Works answered could not be applied (${error instanceof Error ? error.message : 'error'}).`
 			);
 		}
 	}
