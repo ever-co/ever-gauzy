@@ -575,6 +575,57 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(phase(after, 'teams')?.status).toBe('pending');
 	});
 
+	it('a 410 during a run that started earlier stays pending, and a resync follows that run', async () => {
+		const first = await initial.start(integrationTenantId, 'initial');
+		await dataSource.getRepository(EverWorksConnection).update({ id: connection.id as string }, { resyncRequestedAt: new Date(Date.now() + 1000) } as never);
+		await reload();
+		await initial.sweep(connection);
+		await reload();
+		expect(connection.resyncRequestedAt ?? null).not.toBeNull(); // kept: the running run may have missed the gap
+		await initial.cancel(integrationTenantId);
+		expect((await runs().findOneByOrFail({ id: first.id })).status).toBe('cancelled');
+		await reload();
+		await initial.sweep(connection);
+		const followUp = await runs().findOneOrFail({ where: { integrationTenantId, status: 'running' } as never });
+		expect(followUp).toMatchObject({ mode: 'resync', reason: 'cursor_expired' });
+		await reload();
+		expect(connection.resyncRequestedAt ?? null).toBeNull();
+	});
+
+	it('the replay goes through every skipped event after the head, in batches, each once', async () => {
+		const run = await initial.start(integrationTenantId, 'initial');
+		const rows = dataSource.getRepository(EverWorksInboundEvent);
+		const head = BigInt(run.feedHead as string);
+		for (let i = 1; i <= 1205; i++) {
+			const envelope = {
+				id: `evt-r-${i}`,
+				seq: String(head + BigInt(i)),
+				type: 'team.member.added',
+				version: 1,
+				occurredAt: new Date().toISOString(),
+				tenantId: mock.tenant.id,
+				organizationId: ewOrgId,
+				aggregate: { type: 'team', id: `ew-team-r-${i % 7}`, version: 1 },
+				actor: { type: 'user', id: 'u' },
+				data: {}
+			};
+			await store.record(connection, envelope as never, 'feed');
+		}
+		await rows.update({ receivedVia: 'feed' } as never, { status: EverWorksInboundStatus.SKIPPED, error: 'not linked yet: pair it on the Teams tab' } as never);
+		for (let i = 0; i < 40; i++) {
+			await reload();
+			await initial.sweep(connection);
+			if (!(await runs().count({ where: { integrationTenantId, status: 'running' } as never }))) break;
+			for (const pending of await rows.find({ where: { receivedVia: 'initial', status: EverWorksInboundStatus.PENDING } as never })) {
+				await rows.update({ id: pending.id }, { status: EverWorksInboundStatus.APPLIED } as never);
+			}
+		}
+		expect((await runs().findOneByOrFail({ id: run.id })).status).toBe('done');
+		expect(await rows.count({ where: { receivedVia: 'feed', status: EverWorksInboundStatus.PENDING } as never })).toBe(1205);
+		const finished = await dataSource.getRepository(EverWorksSyncLog).findOneOrFail({ where: { action: 'initial_sync_done' } as never });
+		expect(JSON.parse(finished.details as string)).toMatchObject({ replayed: 1205 });
+	});
+
 	it('a disabled mapping cancels its running run; cancel stops one by hand', async () => {
 		const first = await initial.start(integrationTenantId, 'initial');
 		await expect(initial.cancel(integrationTenantId)).resolves.toMatchObject({ id: first.id, status: 'cancelled' });
