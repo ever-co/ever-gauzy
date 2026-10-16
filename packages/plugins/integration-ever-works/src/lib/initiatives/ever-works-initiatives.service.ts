@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, IsNull } from 'typeorm';
 import {
 	ID,
 	IOrganizationStrategicSignals,
@@ -93,6 +93,17 @@ export interface EverWorksInitiativesDecision {
 	/** Gauzy initiatives to create in Ever Works (as paused missions). */
 	createInEverWorks?: ID[];
 }
+
+/** The Gauzy-side fields a push may be carrying (kept over the older Ever Works values on a 412). */
+type MissionGauzyField = 'title' | 'description' | 'teams' | 'works' | 'goals' | 'status';
+const MISSION_PATCH_FIELD: Readonly<Record<string, MissionGauzyField>> = {
+	title: 'title',
+	description: 'description',
+	teamIds: 'teams',
+	visibility: 'teams',
+	status: 'status',
+	outcome: 'status'
+};
 
 const fromEverWorks = (direction: EverWorksDirection | undefined) =>
 	direction === 'both' || direction === 'ew_to_gauzy';
@@ -407,7 +418,8 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		context: EverWorksMappingContext,
 		link: EverWorksEntityLink,
 		mission: EverWorksMission,
-		version: number | null
+		version: number | null,
+		keepGauzy: ReadonlySet<MissionGauzyField> = new Set()
 	): Promise<EverWorksApplyOutcome> {
 		const initiativeId = link.gauzyId as ID;
 		const row = await this.initiative(context, initiativeId, true);
@@ -419,23 +431,26 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		const before = this.links.snapshot<MissionShared>(link);
 		const ew = this.ewOnlyOf(link);
 		const next = everWorksMissionShared(mission, before);
+		// `keepGauzy`: fields Gauzy changed after the last sync and is pushing now (a 412 retry): its edit is
+		// the later one, so the older Ever Works value is not written over it; the snapshot still moves to the
+		// Ever Works value, so the retry pushes the Gauzy one.
 		const changes: Record<string, unknown> = {};
-		if (next.title && next.title !== before.title) changes['title'] = next.title;
-		if (next.description !== (before.description ?? '')) changes['intent'] = next.description;
-		if (next.status !== (before.status ?? null))
+		if (next.title && next.title !== before.title && !keepGauzy.has('title')) changes['title'] = next.title;
+		if (next.description !== (before.description ?? '') && !keepGauzy.has('description'))
+			changes['intent'] = next.description;
+		if (next.status !== (before.status ?? null) && !keepGauzy.has('status'))
 			Object.assign(changes, this.statusChanges(row, next.status, mission.outcome ?? ew.outcome ?? null));
 		if (mission.owner !== undefined && mission.owner?.id !== ew.owner?.id) {
 			const steward = await this.stewardOf(context, mission.owner ?? null);
 			if (steward) changes['stewardId'] = steward;
 		}
-		const teams = await this.applyTeams(
-			context,
-			initiativeId,
-			before.teamIds ?? [],
-			next.teamIds,
-			ew.unmappedTeams ?? []
-		);
-		if (JSON.stringify(next.teamIds) !== JSON.stringify([...(before.teamIds ?? [])].sort())) {
+		const teams = keepGauzy.has('teams')
+			? this.unmappedOf(next.teamIds, await this.pairs(context, EverWorksLinkType.TEAM))
+			: await this.applyTeams(context, initiativeId, before.teamIds ?? [], next.teamIds, ew.unmappedTeams ?? []);
+		if (
+			JSON.stringify(next.teamIds) !== JSON.stringify([...(before.teamIds ?? [])].sort()) &&
+			!keepGauzy.has('teams')
+		) {
 			// D11: a mission on a team is team-scoped in Gauzy too; on no team, organization-scoped.
 			changes['visibilityScope'] = next.teamIds.length
 				? OrganizationStrategicVisibilityScopeEnum.TEAM
@@ -445,20 +460,25 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			await this.dataSource
 				.getRepository(OrganizationStrategicInitiative)
 				.update({ id: initiativeId } as never, changes as never);
-		const works = await this.applyWorks(
-			context,
-			initiativeId,
-			before.works ?? [],
-			next.works,
-			ew.unmappedWorks ?? []
-		);
-		const goals = await this.applyGoals(
-			context,
-			initiativeId,
-			before.goals ?? [],
-			next.goals,
-			ew.unmappedGoals ?? []
-		);
+		const works = keepGauzy.has('works')
+			? this.unmappedOf(
+					next.works.map((w) => w.workId),
+					await this.pairs(context, EverWorksLinkType.PROJECT_WORK)
+				)
+			: await this.applyWorks(context, initiativeId, before.works ?? [], next.works, ew.unmappedWorks ?? []);
+		const goals = keepGauzy.has('goals')
+			? this.unmappedOf(
+					next.goals.map((g) => g.goalId),
+					await this.pairs(context, EverWorksLinkType.GOAL)
+				)
+			: await this.applyGoals(
+					context,
+					initiativeId,
+					link.ewId,
+					before.goals ?? [],
+					next.goals,
+					ew.unmappedGoals ?? []
+				);
 		await this.record(
 			context,
 			initiativeId,
@@ -497,7 +517,7 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		} as never);
 		const teams = await this.applyTeams(context, id, [], next.teamIds, []);
 		const works = await this.applyWorks(context, id, [], next.works, []);
-		const goals = await this.applyGoals(context, id, [], next.goals, []);
+		const goals = await this.applyGoals(context, id, mission.id, [], next.goals, []);
 		await this.record(
 			context,
 			id,
@@ -579,36 +599,48 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 	}
 
 	/**
-	 * The mission's goals moved: a goal it holds as **primary** gets the initiative (a Gauzy goal has one,
-	 * plan 01 §6); one it no longer holds leaves it. Returns the goals Gauzy cannot map.
+	 * The mission's goals moved. A Gauzy goal has one initiative and an Ever Works goal can sit in several
+	 * missions (plan 01 §6: the primary mission wins): a goal of this mission gets the initiative when this
+	 * is its primary mission (`primaryMissionId` on its goal link), or when it has none and no initiative
+	 * yet; a goal that left the mission leaves the initiative it had here. Returns the goals Gauzy cannot map.
 	 */
 	private async applyGoals(
 		context: EverWorksMappingContext,
 		initiativeId: ID,
+		missionId: string,
 		previous: EverWorksMissionGoal[],
 		next: EverWorksMissionGoal[],
 		retry: string[]
 	): Promise<string[]> {
 		const goalOf = await this.pairs(context, EverWorksLinkType.GOAL);
 		const repository = this.dataSource.getRepository(Goal);
-		const primaryBefore = new Set(previous.filter((g) => g.isPrimary).map((g) => g.goalId));
-		const primaryNow = new Set(next.filter((g) => g.isPrimary).map((g) => g.goalId));
+		const before = new Set(previous.map((g) => g.goalId));
+		const now = new Set(next.map((g) => g.goalId));
 		const again = new Set(retry);
 		const unmapped: string[] = [];
-		for (const goalId of primaryNow) {
+		for (const goalId of now) {
 			const gauzyId = goalOf.get(goalId);
 			if (!gauzyId) {
 				unmapped.push(goalId);
 				continue;
 			}
-			if (primaryBefore.has(goalId) && !again.has(goalId)) continue;
-			await repository.update(
-				{ id: gauzyId, tenantId: context.tenantId } as never,
-				{ organizationStrategicInitiativeId: initiativeId } as never
-			);
+			if (before.has(goalId) && !again.has(goalId)) continue;
+			const primaryMissionId = await this.primaryMissionOf(context, goalId);
+			if (primaryMissionId === missionId) {
+				await repository.update(
+					{ id: gauzyId, tenantId: context.tenantId } as never,
+					{ organizationStrategicInitiativeId: initiativeId } as never
+				);
+			} else if (!primaryMissionId) {
+				// No primary mission: this one, unless the goal is on another initiative already.
+				await repository.update(
+					{ id: gauzyId, tenantId: context.tenantId, organizationStrategicInitiativeId: IsNull() } as never,
+					{ organizationStrategicInitiativeId: initiativeId } as never
+				);
+			}
 		}
-		for (const goalId of primaryBefore) {
-			if (primaryNow.has(goalId)) continue;
+		for (const goalId of before) {
+			if (now.has(goalId)) continue;
 			const gauzyId = goalOf.get(goalId);
 			if (gauzyId)
 				await repository.update(
@@ -621,6 +653,22 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 				);
 		}
 		return unmapped;
+	}
+
+	/** The primary mission an Ever Works goal names (kept on its goal link by the goal sync), or `null`. */
+	private async primaryMissionOf(context: EverWorksMappingContext, ewGoalId: string): Promise<string | null> {
+		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.GOAL, ewGoalId);
+		if (!link?.ewOnly) return null;
+		try {
+			return (JSON.parse(link.ewOnly) as { primaryMissionId?: string | null }).primaryMissionId ?? null;
+		} catch {
+			return null;
+		}
+	}
+
+	/** The Ever Works ids among `ids` that have no Gauzy pair. */
+	private unmappedOf(ids: ReadonlyArray<string>, pairs: Map<string, ID>): string[] {
+		return ids.filter((id) => !pairs.has(id));
 	}
 
 	/** Adds and removes on one M:N relation of the initiative; returns the Ever Works ids of `next` Gauzy cannot map. */
@@ -822,10 +870,16 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 					'GET',
 					`/missions/${encodeURIComponent(pair.ewId)}`
 				);
+				// What Gauzy changed since the last sync is the later edit: the Ever Works value is not written over it.
+				const keep = new Set<MissionGauzyField>();
+				for (const field of Object.keys(plan.patch ?? {})) keep.add(MISSION_PATCH_FIELD[field] ?? 'status');
+				if (plan.works) keep.add('works');
+				if (plan.goals) keep.add('goals');
 				if (fromEverWorks(context.directions.missions)) {
 					await EverWorksSyncContext.run(
 						{ connectionId: context.connection.id as ID, eventId: `mission-412:${pair.ewId}` },
-						() => this.applyMission(context, pair, { ...remote, id: pair.ewId }, remote.version ?? null)
+						() =>
+							this.applyMission(context, pair, { ...remote, id: pair.ewId }, remote.version ?? null, keep)
 					);
 				}
 				const fresh = await this.links.byGauzy(
@@ -899,22 +953,34 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		const goalOf = new Map(
 			[...(await this.pairs(context, EverWorksLinkType.GOAL)).entries()].map(([ewId, gauzyId]) => [gauzyId, ewId])
 		);
-		const goals = (await this.dataSource
-			.getRepository(Goal)
-			.find({
-				where: { organizationStrategicInitiativeId: row.id, tenantId: context.tenantId } as never
-			})) as Goal[];
+		const goals = (await this.dataSource.getRepository(Goal).find({
+			where: { organizationStrategicInitiativeId: row.id, tenantId: context.tenantId } as never
+		})) as Goal[];
 		const goalIds = goals.flatMap((goal) =>
 			goalOf.has(goal.id as ID) ? [goalOf.get(goal.id as ID) as string] : []
 		);
+		// What the mission has that Gauzy cannot show stays with it: teams, works and goals without a Gauzy
+		// pair, and goals whose Gauzy goal sits on another initiative (a Gauzy goal has one; the mission
+		// shares it with another mission).
+		const before = this.links.snapshot<MissionShared>(link);
+		const ew = this.ewOnlyOf(link);
+		const keepGoals: string[] = [];
+		const gauzyGoalOf = await this.pairs(context, EverWorksLinkType.GOAL);
+		const here = new Set(goals.map((g) => g.id as ID));
+		for (const goal of before.goals ?? []) {
+			const gauzyId = gauzyGoalOf.get(goal.goalId);
+			if (gauzyId && here.has(gauzyId)) continue;
+			// A goal Gauzy moved off this initiative (it was here as its primary mission) leaves the mission; any
+			// other the mission keeps.
+			if (!gauzyId || (await this.primaryMissionOf(context, goal.goalId)) !== link?.ewId)
+				keepGoals.push(goal.goalId);
+		}
 		return {
-			now: gauzyInitiativeShared(
-				row,
-				scope.scope.teamIds,
-				workIds,
-				goalIds,
-				this.links.snapshot<MissionShared>(link)
-			)
+			now: gauzyInitiativeShared(row, scope.scope.teamIds, workIds, goalIds, before, {
+				teamIds: ew.unmappedTeams ?? [],
+				workIds: ew.unmappedWorks ?? [],
+				goalIds: keepGoals
+			})
 		};
 	}
 
@@ -965,12 +1031,10 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		id: ID,
 		withDeleted = false
 	): Promise<OrganizationStrategicInitiative | null> {
-		return this.dataSource
-			.getRepository(OrganizationStrategicInitiative)
-			.findOne({
-				where: { id, tenantId: context.tenantId, organizationId: context.organizationId } as never,
-				withDeleted
-			});
+		return this.dataSource.getRepository(OrganizationStrategicInitiative).findOne({
+			where: { id, tenantId: context.tenantId, organizationId: context.organizationId } as never,
+			withDeleted
+		});
 	}
 
 	private async gauzyInitiatives(

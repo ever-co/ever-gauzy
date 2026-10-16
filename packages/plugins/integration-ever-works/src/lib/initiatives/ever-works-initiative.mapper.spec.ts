@@ -64,8 +64,35 @@ describe('the Ever Works side of an initiative', () => {
 			{ workId: 'w1', relation: 'operates' },
 			{ workId: 'w2', relation: 'improves' }
 		]);
-		expect(shared.goals).toEqual([{ goalId: 'g1', isPrimary: true }]);
+		// Gauzy never picks the mission's primary goal: there is none in the last sync, so none here.
+		expect(shared.goals).toEqual([{ goalId: 'g1', isPrimary: false }]);
 		expect(shared.status).toBe('paused');
+	});
+
+	it('keeps what Ever Works has that Gauzy cannot show, and Ever Works’ primary goal', () => {
+		const before = {
+			goals: [{ goalId: 'g-primary', isPrimary: true }],
+			works: [{ workId: 'w-unpaired', relation: 'created' }]
+		};
+		const shared = gauzyInitiativeShared(
+			{ title: 'Win SMB', intent: 'Grow' },
+			[],
+			[],
+			['g-primary', 'g2'],
+			before,
+			{
+				teamIds: ['ew-team-unpaired'],
+				workIds: ['w-unpaired'],
+				goalIds: ['g-other-initiative']
+			}
+		);
+		expect(shared.teamIds).toEqual(['ew-team-unpaired']);
+		expect(shared.works).toEqual([{ workId: 'w-unpaired', relation: 'created' }]);
+		expect(shared.goals).toEqual([
+			{ goalId: 'g-other-initiative', isPrimary: false },
+			{ goalId: 'g-primary', isPrimary: true },
+			{ goalId: 'g2', isPrimary: false }
+		]);
 	});
 
 	it('the push plan sends only what differs, and finishes a mission once', () => {

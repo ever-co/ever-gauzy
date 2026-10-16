@@ -148,15 +148,16 @@ export function everWorksMissionShared(mission: EverWorksMission, before: Partia
 /**
  * G → EW: the Ever Works side of a Gauzy initiative — title (cut to 200), intent as the description (Ever
  * Works requires one: the title when it is empty), its mapped teams, the works of its linked projects
- * (keeping the relation Ever Works has for each, else `improves`) and its linked goals (each primary: a
- * Gauzy goal has one initiative).
+ * (keeping the relation Ever Works has for each, else `improves`) and its goals (the primary one stays
+ * Ever Works' choice), plus what Ever Works has that Gauzy cannot show (`keep`).
  */
 export function gauzyInitiativeShared(
 	initiative: { title?: string | null; intent?: string | null },
 	teamIds: ReadonlyArray<string>,
 	workIds: ReadonlyArray<string>,
 	goalIds: ReadonlyArray<string>,
-	before: Partial<MissionShared> = {}
+	before: Partial<MissionShared> = {},
+	keep: { teamIds?: ReadonlyArray<string>; workIds?: ReadonlyArray<string>; goalIds?: ReadonlyArray<string> } = {}
 ): MissionShared {
 	const title = String(initiative.title ?? '')
 		.trim()
@@ -164,14 +165,19 @@ export function gauzyInitiativeShared(
 	const relationOf = new Map(
 		(before.works ?? []).map((w) => [w.workId, w.relation ?? DEFAULT_MISSION_WORK_RELATION])
 	);
+	// The mission's primary goal stays the one Ever Works has (at most one per mission); Gauzy never picks one.
+	const primary = (before.goals ?? []).find((g) => g.isPrimary)?.goalId ?? null;
 	return {
 		title,
 		description: String(initiative.intent ?? '').trim() || title,
-		teamIds: [...new Set(teamIds)].sort(),
-		works: [...new Set(workIds)]
+		// What Ever Works has that Gauzy cannot show (`keep`) stays: Gauzy never had it, so it never removes it.
+		teamIds: [...new Set([...teamIds, ...(keep.teamIds ?? [])])].sort(),
+		works: [...new Set([...workIds, ...(keep.workIds ?? [])])]
 			.map((workId) => ({ workId, relation: relationOf.get(workId) ?? DEFAULT_MISSION_WORK_RELATION }))
 			.sort(byWork),
-		goals: [...new Set(goalIds)].map((goalId) => ({ goalId, isPrimary: true })).sort(byGoal),
+		goals: [...new Set([...goalIds, ...(keep.goalIds ?? [])])]
+			.map((goalId) => ({ goalId, isPrimary: goalId === primary }))
+			.sort(byGoal),
 		status: before.status ?? null
 	};
 }
