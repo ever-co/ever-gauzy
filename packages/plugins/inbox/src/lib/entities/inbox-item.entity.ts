@@ -17,6 +17,11 @@ import { MikroOrmInboxItemRepository } from './inbox.repositories';
  * `options`, `response` and `metadata` are JSON documents stored as text (the same on the three databases);
  * `InboxService` parses them. An item a source created carries its identity there (`externalSource` +
  * `externalId`), unique per tenant, so a re-delivered source item updates instead of duplicating.
+ *
+ * A column without an explicit `type` takes it from the property's design type. This package builds with
+ * `strictNullChecks`, where `Date | null` and `ID | null` are emitted as `Object`, which TypeORM refuses
+ * ("Data type Object is not supported") and the API would not boot. So those columns are typed `?: Date` /
+ * `?: ID` (they are still nullable in the table); only columns with an explicit `type` say `| null`.
  */
 @MultiORMEntity('inbox_item', { mikroOrmRepository: () => MikroOrmInboxItemRepository })
 export class InboxItem extends TenantOrganizationBaseEntity {
@@ -53,30 +58,30 @@ export class InboxItem extends TenantOrganizationBaseEntity {
 	priority!: InboxItemPriorityEnum;
 
 	@MultiORMColumn({ nullable: true })
-	dueAt?: Date | null;
+	dueAt?: Date;
 
 	/** The primary link (`BaseEntityEnum`) and its id. */
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	entity?: string | null;
 
 	@MultiORMColumn({ nullable: true })
-	entityId?: ID | null;
+	entityId?: ID;
 
 	@MultiORMColumn({ nullable: true })
-	taskId?: ID | null;
+	taskId?: ID;
 
 	@MultiORMColumn({ nullable: true })
-	projectId?: ID | null;
+	projectId?: ID;
 
 	@MultiORMColumn({ nullable: true })
-	agentEmployeeId?: ID | null;
+	agentEmployeeId?: ID;
 
 	/** EMAIL items (P4). */
 	@MultiORMColumn({ nullable: true })
-	mailboxId?: ID | null;
+	mailboxId?: ID;
 
 	@MultiORMColumn({ nullable: true })
-	emailId?: ID | null;
+	emailId?: ID;
 
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	externalSource?: string | null;
