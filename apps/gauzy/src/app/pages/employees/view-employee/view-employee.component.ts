@@ -32,6 +32,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { HashNumberPipe, IRecordViewSection, IRecordViewStatus, TimeZoneService } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from './employee-hours-chart/employee-hours-chart.component';
+import { AssigneePopoverKeyboard } from './assignee-popover-keyboard';
 import {
 	buildTaskViewSections,
 	taskStatusOf,
@@ -112,8 +113,18 @@ interface IProjectOverviewRow {
 	duration: number;
 	share: number;
 	width: number;
-	/** False for a project they tracked time on without being a member of it. */
-	member: boolean;
+	/**
+	 * Whether they are a member of it; null when the membership list could not
+	 * be read, so no card is wrongly marked as outside their projects.
+	 */
+	member: boolean | null;
+}
+
+/** The Projects panel's data: every project's total, and the projects they belong to. */
+interface IProjectsPanel {
+	stats: IRankedRow[];
+	/** Null when the membership request failed — membership is then unknown. */
+	assigned: IOrganizationProject[] | null;
 }
 
 /** The views of the Assigned tasks table, each with its count on the tab. */
@@ -157,16 +168,7 @@ const Loadable = {
 	}
 };
 
-type PanelKey =
-	| 'counts'
-	| 'previousCounts'
-	| 'hours'
-	| 'projects'
-	| 'assignedProjects'
-	| 'topTasks'
-	| 'apps'
-	| 'tasks'
-	| 'screenshots';
+type PanelKey = 'counts' | 'previousCounts' | 'hours' | 'projects' | 'topTasks' | 'apps' | 'tasks' | 'screenshots';
 
 const CLOSED_STATUSES = new Set<string>([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]);
 const IN_PROGRESS_STATUSES = new Set<string>([
@@ -183,6 +185,8 @@ type HoursSummary = { total: number; average: number };
 const LIST_LIMIT = 6;
 /** How many rows the Assigned tasks table shows per view. */
 const TASK_LIMIT = 8;
+/** The project statistics endpoint keeps its five most-worked projects: ask for at most that many at once. */
+const PROJECT_STATS_GROUP = 5;
 
 /**
  * Employee page, modelled on the member page of time-tracking tools such as
@@ -223,9 +227,8 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	public counts: Loadable<ICountsStatistics | null> = Loadable.empty(null);
 	public previousCounts: Loadable<ICountsStatistics | null> = Loadable.empty(null);
 	public hours: Loadable<IEmployeeHoursDay[]> = Loadable.empty([]);
-	public projects: Loadable<IRankedRow[]> = Loadable.empty([]);
-	/** The projects the employee is a member of — whether or not they worked on them this period. */
-	public assignedProjects: Loadable<IOrganizationProject[]> = Loadable.empty([]);
+	/** Every project's time in the period, with the projects the employee is a member of. */
+	public projects: Loadable<IProjectsPanel> = Loadable.empty({ stats: [], assigned: [] });
 	public topTasks: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public apps: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public tasks: Loadable<IAssignedTaskRow[]> = Loadable.empty([]);
@@ -241,13 +244,11 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	public viewedTask: ITask | null = null;
 	public viewSections: IRecordViewSection[] = [];
 	public viewStatus: IRecordViewStatus | null = null;
+	/** Keyboard access to the assignee cards and the "+N" list. */
+	public readonly assigneeKeyboard = new AssigneePopoverKeyboard();
 	private _viewSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
-	private _projectOverview: {
-		from: IRankedRow[];
-		assigned: IOrganizationProject[];
-		value: IProjectOverviewRow[];
-	} | null = null;
+	private _projectOverview: { from: IProjectsPanel; value: IProjectOverviewRow[] } | null = null;
 
 	/*
 	 * The task counts and the hours caption are DERIVED from the panel values
@@ -320,6 +321,12 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			filter((data: Data) => !!data && !!data.employee),
 			map(({ employee }: Data) => employee as IEmployee),
 			tap((employee: IEmployee) => {
+				// The route reuses this page for another employee's profile (the assignee
+				// links lead here): close the previous employee's task and drop its read.
+				// Period changes reload too, but keep the same employee — and the task.
+				if (this.employee && this.employee.id !== employee.id) {
+					this.closeTask();
+				}
 				this.employee = employee;
 				this.updateLocalTime();
 				this.profile = this.buildProfile(employee);
@@ -612,9 +619,12 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	 * Most worked first; projects with no time keep their place at the end.
 	 */
 	get projectOverview(): IProjectOverviewRow[] {
-		const stats = this.projects.value || [];
-		const assigned = this.assignedProjects.value || [];
-		if (this._projectOverview?.from !== stats || this._projectOverview?.assigned !== assigned) {
+		const panel = this.projects.value || { stats: [], assigned: [] };
+		const stats = panel.stats || [];
+		const assigned = panel.assigned || [];
+		// Membership is only known when the membership list was read.
+		const known = panel.assigned !== null;
+		if (this._projectOverview?.from !== panel) {
 			const time = new Map(stats.map((row) => [row.id, row.duration]));
 			const members = assigned
 				.filter((project) => !!project?.name)
@@ -635,7 +645,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 					imageUrl: undefined,
 					initials: ViewEmployeeComponent.initialsOf(row.name),
 					duration: row.duration,
-					member: false
+					member: known ? false : null
 				}));
 			const all = [...members, ...others];
 			const total = all.reduce((sum, row) => sum + row.duration, 0);
@@ -647,7 +657,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 					width: max ? Math.max(row.duration ? 2 : 0, (row.duration / max) * 100) : 0
 				}))
 				.sort((a, b) => b.duration - a.duration || a.name.localeCompare(b.name));
-			this._projectOverview = { from: stats, assigned, value };
+			this._projectOverview = { from: panel, value };
 		}
 		return this._projectOverview.value;
 	}
@@ -674,27 +684,15 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		void this.track('hours', async () =>
 			this.toHoursDays(await this._timesheetService.getDailyReportChart(request))
 		);
-		// Kept whole (no top-N cut): the Projects panel lists every project of the employee.
-		void this.track('projects', async () =>
-			this.rank(
-				await this._statisticsService.getProjects(request),
-				(project: IProjectsStatistics) => ({
-					id: project.id,
-					name: project.name
-				}),
-				Infinity
-			)
-		);
-		void this.track('assignedProjects', async () => {
-			const { organizationId, tenantId } = this.employee;
-			return (await this._projectsService.getAllByEmployee(employeeId, { organizationId, tenantId })) || [];
-		});
+		// Read once, for the most worked tasks and to find the projects those tasks belong to.
+		const taskStatistics = this._statisticsService.getTasksStatistics(request);
+		void this.track('projects', () => this.fetchProjectsPanel(request, employeeId, taskStatistics));
 		// Fetched in full and ranked here, like Projects and Apps. The endpoint
 		// orders by last update, not by time, and applies `take` first, so a
 		// server-side limit could drop the most-worked tasks and would leave each
 		// share computed over the kept rows only.
 		void this.track('topTasks', async () =>
-			this.rank(await this._statisticsService.getTasksStatistics(request), (task: ITasksStatistics) => ({
+			this.rank(await taskStatistics, (task: ITasksStatistics) => ({
 				id: task.id,
 				name: task.title,
 				meta: task.project?.name
@@ -715,6 +713,50 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			} as any);
 			return this.toAssignedTasks(tasks || [], employeeId);
 		});
+	}
+
+	/**
+	 * The Projects panel: the projects the employee belongs to, and the time on
+	 * every project they worked on.
+	 *
+	 * The statistics endpoint returns only its five most-worked projects, so the
+	 * totals are read for a known list of projects instead — every project they
+	 * belong to, the overall top five, and the projects of the tasks they worked
+	 * on — in groups of five, each of which the endpoint returns whole. A failed
+	 * membership read leaves membership unknown rather than empty.
+	 */
+	private async fetchProjectsPanel(
+		request: ITimeLogFilters & ITimeLogTodayFilters,
+		employeeId: string,
+		taskStatistics: Promise<ITasksStatistics[]>
+	): Promise<IProjectsPanel> {
+		const { organizationId, tenantId } = this.employee;
+		const [top, assigned, tasks] = await Promise.all([
+			this._statisticsService.getProjects(request),
+			this._projectsService.getAllByEmployee(employeeId, { organizationId, tenantId }).catch(() => null),
+			taskStatistics.catch(() => [] as ITasksStatistics[])
+		]);
+
+		const ids = new Set<string>();
+		for (const project of assigned || []) if (project?.id) ids.add(project.id);
+		for (const project of top || []) if (project?.id) ids.add(project.id);
+		for (const task of tasks || []) if (task?.projectId) ids.add(task.projectId);
+
+		const groups: string[][] = [];
+		const all = [...ids];
+		for (let i = 0; i < all.length; i += PROJECT_STATS_GROUP) groups.push(all.slice(i, i + PROJECT_STATS_GROUP));
+		const totals = (
+			await Promise.all(
+				groups.map((projectIds) => this._statisticsService.getProjects({ ...request, projectIds }))
+			)
+		).flat();
+
+		const stats = this.rank(
+			totals,
+			(project: IProjectsStatistics) => ({ id: project.id, name: project.name }),
+			Infinity
+		);
+		return { stats, assigned: assigned || null };
 	}
 
 	/** The period's latest time slots for this employee, newest first, with their screenshots. */
