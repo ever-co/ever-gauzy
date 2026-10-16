@@ -30,9 +30,10 @@ export interface IEntityEventSubscriber<Entity> {
 	 *
 	 * @param entity The entity that is about to be updated.
 	 * @param em An optional entity manager which can be either from TypeORM or MikroORM, used for further database operations if needed.
+	 * @param changedProperties The names of the properties this write changes, or undefined when the ORM does not report them.
 	 * @returns {Promise<void>}
 	 */
-	beforeEntityUpdate(entity: Entity, em?: MultiOrmEntityManager): Promise<void>;
+	beforeEntityUpdate(entity: Entity, em?: MultiOrmEntityManager, changedProperties?: string[]): Promise<void>;
 
 	/**
 	 * Optional method that is called after an entity is updated.
