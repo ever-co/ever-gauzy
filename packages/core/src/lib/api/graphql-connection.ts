@@ -702,8 +702,11 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 	const { rows, filterable, sortable, defaultSort } = definition;
 	// GraphQL keeps an explicit `null` and a Relay client sends `after: null` on its first fetch, so a member
 	// stated as `null` states nothing here, as in the store-paged window (see statedPageMembers).
-	const stated = statedMembers(definition.request);
-	const request: ConnectionRequest = stated.page ? { ...stated, page: statedMembers(stated.page) } : stated;
+	// A page object whose members are all null states nothing either, so it is dropped rather than read as
+	// cursor pagination beside a stated offset.
+	const { page: statedPage, ...stated } = statedMembers(definition.request);
+	const pageMembers = statedMembers(statedPage);
+	const request: ConnectionRequest = Object.keys(pageMembers).length > 0 ? { ...stated, page: pageMembers } : stated;
 
 	assertSinglePaginationStyle(request);
 
