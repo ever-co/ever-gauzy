@@ -124,6 +124,8 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId/people` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/agents` | `VIEW` |
 | POST | `/mappings/:integrationTenantId/agents/import` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/teams` | `VIEW` |
+| PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
@@ -164,6 +166,17 @@ and answered `202`.
   password, no invite, an `@agents.invalid` address) with a profile managed by
   Ever Works. The sync is one way: an archived or deleted agent is archived,
   a private one is unlinked, and Gauzy edits to it are not pushed.
+- **Teams.** Existing teams are paired on the Teams tab (same-name
+  suggestions the admin confirms, or "create on the other side"); teams
+  created after the mapping sync without a review. Names and emoji sync both
+  ways; members sync as a set (adds and removes against the snapshot, lead ↔
+  manager) and members either side cannot map are kept. Ever Works nesting
+  stays on the link (Gauzy teams are flat). A team deleted in Ever Works is
+  archived in Gauzy; a Gauzy team delete is not pushed.
+- **Scope.** A record on a team is team-scoped on both sides, on no team
+  organization-scoped: team resources set the team of the linked project or
+  task, a record whose Gauzy team is not linked yet waits, and private Ever
+  Works records never sync.
 - **Runtime.** Every process that loads the plugin ticks; a database lease on
   the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.

@@ -2,7 +2,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { CreateEverWorksConnection1791000001100 } from './database/migrations/1791000001100-CreateEverWorksConnection';
 import { CreateEverWorksSyncTables1791000001300 } from './database/migrations/1791000001300-CreateEverWorksSyncTables';
-import { EVER_WORKS_ENTITIES, EverWorksModule } from './ever-works.module';
+import { EVER_WORKS_ENTITIES, EVER_WORKS_SUBSCRIBERS, EverWorksModule } from './ever-works.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
 export const EVER_WORKS_MIGRATIONS = [CreateEverWorksConnection1791000001100, CreateEverWorksSyncTables1791000001300];
@@ -21,6 +21,7 @@ export const EVER_WORKS_MIGRATIONS = [CreateEverWorksConnection1791000001100, Cr
 	// entity the ORMs never receive fails the boot (MikroORM: "Metadata for entity … not found").
 	entities: [...EVER_WORKS_ENTITIES],
 	migrations: [...EVER_WORKS_MIGRATIONS],
+	subscribers: [...EVER_WORKS_SUBSCRIBERS],
 	configuration: (config: ApplicationPluginConfig) => config
 })
 export class IntegrationEverWorksPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
