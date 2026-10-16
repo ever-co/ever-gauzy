@@ -347,57 +347,124 @@
 					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TASKS', icon: 'checkmark-square-outline' }"></ng-container>
 					} @else if (visibleTasks.length) {
 					<!--
-						One row per task: a status dot, the title on its own line with the
-						key, project and status under it, and the due date on the right with
-						how far away it is beneath — the title gets the width, nothing else
-						competes with it for a column.
+						One row per task, as on the team page: the row is one button that
+						opens the task's quick look in the side drawer, and the icon on its
+						right is a real link to the task's own page (so it can also be
+						opened in a new tab or copied).
 					-->
 					<ul class="task-list">
 						@for (task of visibleTasks; track task.id) {
-						<li class="task-row">
-							<span class="task-dot" [class]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
-							<span class="task-main">
-								<span class="task-title" [title]="task.title">{{ task.title }}</span>
-								<span class="task-meta">
-									@if (task.key) {
-									<span class="task-key">{{ task.key }}</span>
+						<li class="task-row task-row--interactive" [class.is-viewed]="viewedTask?.id === task.id">
+							<button
+								type="button"
+								class="task-open"
+								(click)="openTask(task)"
+								[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
+							>
+								<span
+									class="task-dot"
+									[class]="'group-' + task.statusGroup"
+									[nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.STATUS' | translate) + ': ' + task.status"
+									nbTooltipPlacement="top"
+									aria-hidden="true"
+								></span>
+								<span class="task-main">
+									<span class="task-title" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
+									<span class="task-meta">
+										@if (task.key) {
+										<span class="task-key">{{ task.key }}</span>
+										}
+										@if (task.project) {
+										<span
+											class="task-meta-item"
+											[nbTooltip]="('EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT' | translate) + ': ' + task.project"
+											nbTooltipPlacement="top"
+											>{{ task.project }}</span
+										>
+										}
+										<span class="task-meta-item">{{ task.status }}</span>
+										@if (task.priority) {
+										<span
+											class="task-meta-item task-priority"
+											[class]="'priority-' + (task.priorityLevel || 'none')"
+											[nbTooltip]="('EMPLOYEES_PAGE.VIEW.COLUMNS.PRIORITY' | translate) + ': ' + task.priority"
+											nbTooltipPlacement="top"
+										>
+											<nb-icon
+												[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
+												aria-hidden="true"
+											></nb-icon>
+											{{ task.priority }}
+										</span>
+										}
+									</span>
+								</span>
+								<span class="task-people">
+									@for (person of task.people.slice(0, 3); track $index) {
+									<span class="task-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
+										@if (person.avatarUrl) {
+										<img [src]="person.avatarUrl" [alt]="person.name" />
+										} @else {
+										<span aria-hidden="true">{{ person.initials }}</span>
+										}
+									</span>
 									}
-									@if (task.project) {
-									<span class="task-meta-item">{{ task.project }}</span>
+									@if (task.people.length > 3) {
+									<span class="task-person task-person--more" [nbTooltip]="task.moreNames" nbTooltipPlacement="top"
+										>+{{ task.people.length - 3 }}</span
+									>
 									}
-									<span class="task-meta-item">{{ task.status }}</span>
-									@if (task.priority) {
-									<span class="task-meta-item task-priority" [class]="'priority-' + (task.priorityLevel || 'none')">
-										<nb-icon
-											[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
-											aria-hidden="true"
-										></nb-icon>
-										{{ task.priority }}
+									@if (!task.people.length) {
+									<span
+										class="task-person task-person--none"
+										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.UNASSIGNED' | translate"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="person-outline"></nb-icon>
 									</span>
 									}
 								</span>
-							</span>
-							<span
-								class="task-due"
-								[class.is-overdue]="task.overdue"
-								[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
-							>
-								<span class="task-due-date">{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span>
-								@if (task.dueDate) {
-								<span class="task-due-relative">
-									@if (task.overdue) {
-									<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+								<span
+									class="task-due"
+									[class.is-overdue]="task.overdue"
+									[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
+								>
+									<span
+										class="task-due-date"
+										[nbTooltip]="task.dueDate ? ('EMPLOYEES_PAGE.VIEW.COLUMNS.DUE' | translate) + ': ' + task.dueDateLong : ''"
+										[nbTooltipDisabled]="!task.dueDate"
+										nbTooltipPlacement="top"
+										>{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span
+									>
+									@if (task.dueDate) {
+									<span class="task-due-relative">
+										@if (task.overdue) {
+										<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+										}
+										{{ task.due.key | translate : { count: task.due.count } }}
+									</span>
 									}
-									{{ task.due.key | translate : { count: task.due.count } }}
 								</span>
-								}
-							</span>
+							</button>
+							<a
+								class="task-link"
+								[routerLink]="taskLink(task.id)"
+								[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE' | translate : { title: task.title }"
+								[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE_SHORT' | translate"
+								nbTooltipPlacement="left"
+							>
+								<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+							</a>
 						</li>
 						}
 					</ul>
-					@if (filteredTasks.length > visibleTasks.length) {
-					<p class="table-footer">
-						{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}
+					@if (filteredTasks.length > taskLimit) {
+					<p class="table-footer table-footer--action">
+						<span>{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}</span>
+						<button type="button" class="panel-link" (click)="showAllTasks = !showAllTasks">
+							{{ (showAllTasks ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_LESS' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_ALL') | translate }}
+							<nb-icon [icon]="showAllTasks ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></nb-icon>
+						</button>
 					</p>
 					}
 					} @else if (!tasks.loading) {
@@ -566,6 +633,21 @@
 		}
 	</nb-card-body>
 </nb-card>
+
+<!-- Quick look: the same task drawer the task lists and the team page use, with an expand icon to the task's own page. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask"
+	[heading]="'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS'"
+	[wide]="true"
+	[fullViewLink]="viewedTask ? '/pages/tasks/view/' + viewedTask.id : null"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
 
 <!-- Change against the previous period: arrow + percentage, then what it is measured against. -->
 <ng-template #deltaTpl let-delta>
