@@ -1,48 +1,213 @@
 <div class="custom-card">
-  <div class="filters mb-2 mt-0">
-    <ngx-gauzy-filters
-      [isTimeFormat]="true"
-      [saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-      (filtersChange)="filtersChange($event)"
-    ></ngx-gauzy-filters>
-  </div>
-  <div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary" class="custom-card-body">
-    <div class="screenshot-container pb-3">
-      <div class="mini-card head align-items-center">
-        <div class="row">
-          <div class="col-sm-2 py-2">
-            {{ (type == 'apps' ? 'ACTIVITY.APPS' : 'ACTIVITY.VISITED_SITES') | translate }}
-          </div>
-          <div class="col-sm-3 py-2">
-            {{ 'ACTIVITY.VISITED_DATES' | translate }}
-          </div>
-          <div class="col-sm-5 py-2">
-            {{ 'ACTIVITY.PERCENT_USED' | translate }}
-          </div>
-          <div class="col-sm-2 text-right py-2">
-            {{ 'ACTIVITY.TIME_SPENT' | translate }}
-          </div>
-        </div>
-      </div>
-      @for (values of apps; track values) {
-        <div class="mini-card">
-          @for (app of values.activities; track app) {
-            <div>
-              <ngx-activity-item
-                (loadChild)="loadChild($event)"
-                [allowChild]="type === 'urls'"
-                [item]="app"
-                [visitedDate]="values.hour | dateTimeFormat"
-              ></ngx-activity-item>
-            </div>
-          }
-        </div>
-      }
-      @if (!loading && !apps?.length) {
-        <div class="no-data">
-          <ngx-no-data-message [loading]="loading" [message]="'ACTIVITY.NO_ACTIVITIES' | translate"></ngx-no-data-message>
-        </div>
-      }
-    </div>
-  </div>
+	<div class="filters mb-2 mt-0">
+		<ngx-gauzy-filters
+			[isTimeFormat]="true"
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+			(filtersChange)="filtersChange($event)"
+		></ngx-gauzy-filters>
+	</div>
+
+	<div class="au-body custom-card-body" [nbSpinner]="loading" nbSpinnerSize="large" nbSpinnerStatus="primary">
+		<!-- ── Summary: the period at a glance ─────────────────────────────── -->
+		<section class="au-summary">
+			<div class="au-summary-cell">
+				<span class="au-summary-label">{{ 'ACTIVITY.APPS_URLS.TOTAL_TIME' | translate }}</span>
+				<span class="au-summary-value">{{ formatDuration(totalDuration) }}</span>
+			</div>
+			<div class="au-summary-cell">
+				<span class="au-summary-label">
+					{{ (isUrls ? 'ACTIVITY.APPS_URLS.SITES_VISITED' : 'ACTIVITY.APPS_URLS.APPS_USED') | translate }}
+				</span>
+				<span class="au-summary-value">{{ items.length }}</span>
+			</div>
+			<div class="au-summary-cell">
+				<span class="au-summary-label">
+					{{ (isUrls ? 'ACTIVITY.APPS_URLS.TOP_SITE' : 'ACTIVITY.APPS_URLS.TOP_APP') | translate }}
+				</span>
+				@if (topItem) {
+				<span class="au-summary-value au-summary-value--name">
+					<span class="au-ellipsis" [nbTooltip]="topItem.title" nbTooltipPlacement="top">{{ topItem.title }}</span>
+					<span class="au-summary-aside">{{ formatDuration(topItem.duration) }}</span>
+				</span>
+				} @else {
+				<span class="au-summary-value">—</span>
+				}
+			</div>
+		</section>
+
+		<!-- ── Toolbar: view, search, sort ─────────────────────────────────── -->
+		<div class="au-toolbar">
+			<div class="au-segmented" role="group" [attr.aria-label]="'ACTIVITY.APPS_URLS.VIEW' | translate">
+				@for (option of views; track option) {
+				<button
+					type="button"
+					class="au-segment"
+					[class.is-active]="view === option"
+					[attr.aria-pressed]="view === option"
+					(click)="setView(option)"
+				>
+					{{ (option === 'items' ? (isUrls ? 'ACTIVITY.APPS_URLS.BY_SITE' : 'ACTIVITY.APPS_URLS.BY_APP') : 'ACTIVITY.APPS_URLS.BY_' + option.toUpperCase()) | translate }}
+				</button>
+				}
+			</div>
+
+			<div class="au-toolbar-end">
+				<div class="au-search">
+					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+					<input
+						type="text"
+						class="au-search-input"
+						[(ngModel)]="search"
+						[placeholder]="(isUrls ? 'ACTIVITY.APPS_URLS.SEARCH_SITES' : 'ACTIVITY.APPS_URLS.SEARCH_APPS') | translate"
+						[attr.aria-label]="(isUrls ? 'ACTIVITY.APPS_URLS.SEARCH_SITES' : 'ACTIVITY.APPS_URLS.SEARCH_APPS') | translate"
+					/>
+				</div>
+				<button
+					type="button"
+					class="au-sort"
+					(click)="toggleSort()"
+					[nbTooltip]="'ACTIVITY.APPS_URLS.SORT' | translate"
+					nbTooltipPlacement="top"
+				>
+					<nb-icon icon="swap-outline" aria-hidden="true"></nb-icon>
+					{{ (sortBy === 'time' ? 'ACTIVITY.APPS_URLS.SORT_TIME' : 'ACTIVITY.APPS_URLS.SORT_NAME') | translate }}
+				</button>
+			</div>
+		</div>
+
+		<!-- ── Content ──────────────────────────────────────────────────────── -->
+		@if (failed) {
+		<div class="au-state">
+			<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+			<p>{{ 'ACTIVITY.APPS_URLS.LOAD_FAILED' | translate }}</p>
+		</div>
+		} @else if (!loading && !activities.length) {
+		<div class="au-state">
+			<nb-icon [icon]="isUrls ? 'globe-2-outline' : 'grid-outline'" aria-hidden="true"></nb-icon>
+			<p>{{ 'ACTIVITY.NO_ACTIVITIES' | translate }}</p>
+		</div>
+		} @else if (!loading && !items.length) {
+		<div class="au-state">
+			<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+			<p>{{ 'ACTIVITY.APPS_URLS.NO_MATCH' | translate : { search: search } }}</p>
+		</div>
+		} @else if (view === 'items') {
+		<!-- By app / site: one row per name over the period -->
+		<section class="au-panel">
+			<div class="au-row au-row--head">
+				<span>{{ (isUrls ? 'ACTIVITY.APPS_URLS.SITE' : 'ACTIVITY.APPS_URLS.APP') | translate }}</span>
+				<span>{{ 'ACTIVITY.PERCENT_USED' | translate }}</span>
+				<span class="au-num">{{ 'ACTIVITY.APPS_URLS.TIME' | translate }}</span>
+			</div>
+			@for (row of items; track row.title) {
+			<div class="au-row-group" [class.is-open]="pages.has(row.title)">
+				<div class="au-row">
+					<span class="au-name-cell">
+						@if (isUrls) {
+						<button
+							type="button"
+							class="au-expand"
+							(click)="togglePages(row)"
+							[attr.aria-expanded]="pages.has(row.title)"
+							[attr.aria-label]="'ACTIVITY.APPS_URLS.SHOW_PAGES' | translate : { site: row.title }"
+						>
+							<nb-icon [icon]="pages.has(row.title) ? 'chevron-down-outline' : 'chevron-right-outline'" aria-hidden="true"></nb-icon>
+						</button>
+						}
+						<span class="au-icon" aria-hidden="true">{{ row.letter }}</span>
+						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+					</span>
+					<span class="au-share-cell">
+						<span class="au-bar-track" aria-hidden="true"><span class="au-bar" [style.width.%]="row.width"></span></span>
+						<span class="au-share">{{ formatPercent(row.share) }}</span>
+					</span>
+					<span class="au-num au-strong">{{ formatDuration(row.duration) }}</span>
+				</div>
+
+				@if (isUrls && pages.get(row.title); as sitePages) {
+				<div class="au-pages">
+					@if (sitePages.loading) {
+					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.LOADING_PAGES' | translate }}</p>
+					} @else if (sitePages.failed) {
+					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.PAGES_FAILED' | translate }}</p>
+					} @else if (!sitePages.value.length) {
+					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.NO_PAGES' | translate }}</p>
+					} @else {
+					<ul class="au-page-list">
+						@for (page of sitePages.value; track page.label) {
+						<li class="au-page">
+							@if (page.href) {
+							<a class="au-page-link au-ellipsis" [href]="page.href" target="_blank" rel="noopener noreferrer" [nbTooltip]="page.href" nbTooltipPlacement="top">{{ page.label }}</a>
+							} @else {
+							<span class="au-page-text au-ellipsis" [nbTooltip]="page.label" nbTooltipPlacement="top">{{ page.label }}</span>
+							}
+							<span class="au-num au-muted">{{ formatDuration(page.duration) }}</span>
+						</li>
+						}
+					</ul>
+					}
+				</div>
+				}
+			</div>
+			}
+		</section>
+		} @else if (view === 'members') {
+		<!-- By member: each member's apps / sites -->
+		<div class="au-cards">
+			@for (group of memberGroups; track group.id) {
+			<section class="au-panel">
+				<header class="au-panel-header">
+					<span class="au-avatar">
+						@if (group.avatarUrl) {
+						<img [src]="group.avatarUrl" [alt]="group.name" />
+						} @else {
+						<span aria-hidden="true">{{ group.initials }}</span>
+						}
+					</span>
+					<span class="au-panel-title au-ellipsis">{{ group.name }}</span>
+					<span class="au-panel-total">{{ formatDuration(group.duration) }}</span>
+				</header>
+				<ul class="au-mini-list">
+					@for (row of visibleMemberItems(group); track row.title) {
+					<li class="au-mini-row">
+						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+						<span class="au-num au-muted">{{ formatDuration(row.duration) }}</span>
+					</li>
+					}
+				</ul>
+				@if (group.items.length > memberItemLimit) {
+				<button type="button" class="au-more" (click)="toggleMember(group.id)">
+					{{ (expandedMembers.has(group.id) ? 'ACTIVITY.APPS_URLS.SHOW_LESS' : 'ACTIVITY.APPS_URLS.SHOW_ALL') | translate : { count: group.items.length } }}
+				</button>
+				}
+			</section>
+			}
+		</div>
+		} @else {
+		<!-- By hour: the hour-by-hour log -->
+		<div class="au-timeline">
+			@for (group of hourGroups; track group.key) {
+			<section class="au-panel">
+				<header class="au-panel-header">
+					<span class="au-panel-title au-ellipsis">
+						{{ group.label }}
+						@if (group.sublabel) {
+						<span class="au-panel-caption">· {{ group.sublabel }}</span>
+						}
+					</span>
+					<span class="au-panel-total">{{ formatDuration(group.duration) }}</span>
+				</header>
+				<ul class="au-mini-list">
+					@for (row of group.items; track row.title) {
+					<li class="au-mini-row">
+						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+						<span class="au-num au-muted">{{ formatDuration(row.duration) }}</span>
+					</li>
+					}
+				</ul>
+			</section>
+			}
+		</div>
+		}
+	</div>
 </div>
