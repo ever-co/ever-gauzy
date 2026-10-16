@@ -2102,7 +2102,8 @@
 			"NOT_A_MEMBER": "Nie jest członkiem",
 			"NOT_A_MEMBER_HINT": "Zarejestrowano czas w tym projekcie, ale ta osoba nie jest jego członkiem",
 			"VIEW_PROFILE": "Zobacz profil",
-			"MEMBERSHIP_UNKNOWN": "Nie udało się wczytać członkostwa w projektach, więc członkowie i nie-członkowie nie są rozróżniani."
+			"MEMBERSHIP_UNKNOWN": "Nie udało się wczytać członkostwa w projektach, więc członkowie i nie-członkowie nie są rozróżniani.",
+			"PROJECT_TIMES_PARTIAL": "Nie udało się wczytać części czasów projektów, więc projekt bez czasu może go jednak mieć."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

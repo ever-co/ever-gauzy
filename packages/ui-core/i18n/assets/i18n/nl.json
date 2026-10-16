@@ -2103,7 +2103,8 @@
 			"NOT_A_MEMBER": "Geen lid",
 			"NOT_A_MEMBER_HINT": "Er is tijd op dit project geregistreerd, maar zij zijn er geen lid van",
 			"VIEW_PROFILE": "Profiel bekijken",
-			"MEMBERSHIP_UNKNOWN": "Het projectlidmaatschap kon niet worden geladen, dus leden en niet-leden worden niet onderscheiden."
+			"MEMBERSHIP_UNKNOWN": "Het projectlidmaatschap kon niet worden geladen, dus leden en niet-leden worden niet onderscheiden.",
+			"PROJECT_TIMES_PARTIAL": "Sommige projecttijden konden niet worden geladen, dus een project zonder tijd kan toch tijd hebben."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

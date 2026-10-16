@@ -2103,7 +2103,8 @@
 			"NOT_A_MEMBER": "Não é membro",
 			"NOT_A_MEMBER_HINT": "Foi registrado tempo neste projeto, mas a pessoa não é membro dele",
 			"VIEW_PROFILE": "Ver perfil",
-			"MEMBERSHIP_UNKNOWN": "Não foi possível carregar a participação nos projetos, por isso membros e não membros não são distinguidos."
+			"MEMBERSHIP_UNKNOWN": "Não foi possível carregar a participação nos projetos, por isso membros e não membros não são distinguidos.",
+			"PROJECT_TIMES_PARTIAL": "Não foi possível carregar alguns tempos de projeto, por isso um projeto sem tempo pode ainda assim ter."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {
