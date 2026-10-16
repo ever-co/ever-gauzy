@@ -4,6 +4,7 @@ export * from './invite-mutation/invite-mutation.component';
 export * from './invite-mutation/invite-mutation.module';
 export * from './invites/client-names/client-names.component';
 export * from './invites/department-names/department-names.component';
+export * from './invites/invite-delete-confirmation/invite-delete-confirmation.component';
 export * from './invites/project-names/project-names.component';
 export * from './invites/resend-confirmation/resend-confirmation.component';
 export * from './invites/invites.component';
