@@ -59,6 +59,21 @@ interface IRankedRow {
 	width: number;
 }
 
+/** An assignee, as their avatar and its hover card show them. */
+interface ITaskPerson {
+	id: string;
+	name: string;
+	initials: string;
+	avatarUrl?: string;
+	email?: string;
+	/** Live presence, as the dot on the card's photo and the line under the name. */
+	presence: 'tracking' | 'online' | 'away' | 'offline';
+	/** Their short description, from the profile. */
+	bio?: string;
+	/** "Oct 12, 2025": when they started working, if set. */
+	since?: string;
+}
+
 /** A task as the Assigned tasks table lists it. */
 interface IAssignedTaskRow {
 	/** The task as the list loaded it — what the quick look opens with before its full read lands. */
@@ -81,7 +96,7 @@ interface IAssignedTaskRow {
 	doneTime: number;
 	overdue: boolean;
 	/** Assignees as avatars; the first few are drawn, the rest counted. */
-	people: { name: string; initials: string; avatarUrl?: string }[];
+	people: ITaskPerson[];
 	/** Names behind the "+N" avatar. */
 	moreNames?: string;
 	/** The due date written out in full (weekday included), for its tooltip. */
@@ -814,10 +829,15 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 					user?.email ||
 					'';
 				return {
+					id: member?.id,
 					name,
 					initials: ViewEmployeeComponent.initialsOf(name),
-					avatarUrl: user?.image?.fullUrl || user?.imageUrl || undefined
-				};
+					avatarUrl: user?.image?.fullUrl || user?.imageUrl || undefined,
+					email: user?.email,
+					presence: ViewEmployeeComponent.presenceOfPerson(member),
+					bio: member?.short_description?.trim() || undefined,
+					since: member?.startedWorkOn ? moment(member.startedWorkOn).format('ll') : undefined
+				} as ITaskPerson;
 			})
 			.filter((person) => !!person.name);
 
@@ -844,6 +864,14 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			doneTime: moment(task.resolvedAt || task.updatedAt || 0).valueOf(),
 			overdue: !isDone && daysLeft !== null && daysLeft < 0
 		};
+	}
+
+	/** Live presence from the employee's own flags, as the employee page reads it. */
+	private static presenceOfPerson(employee: any): ITaskPerson['presence'] {
+		if (employee?.isTrackingTime) return 'tracking';
+		if (employee?.isOnline && employee?.isAway) return 'away';
+		if (employee?.isOnline) return 'online';
+		return 'offline';
 	}
 
 	private static initialsOf(name: string): string {
