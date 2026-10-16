@@ -613,3 +613,33 @@ describe('SearchIndexDefinitionService — an organization’s copy follows the 
 		expect(fixture.store('copy')?.version).toBe(4);
 	});
 });
+
+/**
+ * CodeRabbit on #10655: a sweep reads every organization's source rows in its tenant, so the reindex has to know which
+ * organizations switched their own copy of an entity off, to leave their documents dropped.
+ */
+describe('SearchIndexDefinitionService — the organizations that switched an entity off', () => {
+	it('names the switched-off organization copies of the tenant, and no platform row or live copy', async () => {
+		const fixture = definitionFixture({
+			definitions: [
+				definitionRow('d1', { isActive: false }),
+				definitionRow('off', { tenantId: TENANT, organizationId: ORG, isSystem: false, isActive: false }),
+				definitionRow('on', { tenantId: TENANT, organizationId: OTHER_ORG, isSystem: false }),
+				definitionRow('elsewhere', {
+					tenantId: 'another-tenant',
+					organizationId: 'another-org',
+					isActive: false
+				})
+			]
+		});
+
+		const copies = await fixture.service.inactiveOrganizationCopies('product_variant', TENANT);
+
+		expect(copies.map((row) => row.id)).toEqual(['off']);
+		// A system sweep names no tenant and reads every tenant's.
+		expect((await fixture.service.inactiveOrganizationCopies('product_variant')).map((row) => row.id)).toEqual([
+			'off',
+			'elsewhere'
+		]);
+	});
+});

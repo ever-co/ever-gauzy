@@ -342,7 +342,25 @@ function reindexFixture(
 	const providerRegistry = new SearchProviderRegistry(provider);
 	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
 	const definitionService = {
-		findFor: async (entity: string) => (seed.definitions ?? []).find((row) => row.entity === entity) ?? null
+		// The caller's organization's own row wins and the platform row is the fallback, as `findFor` resolves them.
+		findFor: async (entity: string) => {
+			const rows = (seed.definitions ?? []).filter((row) => row.entity === entity);
+			const organization = RequestContext.currentOrganizationId();
+
+			return (
+				rows.find((row) => !!organization && row.organizationId === organization) ??
+				rows.find((row) => !row.organizationId) ??
+				null
+			);
+		},
+		inactiveOrganizationCopies: async (entity: string, tenantId?: string | null) =>
+			(seed.definitions ?? []).filter(
+				(row) =>
+					row.entity === entity &&
+					!!row.organizationId &&
+					row.isActive === false &&
+					(!tenantId || row.tenantId === tenantId)
+			)
 	};
 
 	const service = new SearchReindexService(indexer, indexRegistry, definitionService as never, documentRepository);
@@ -829,5 +847,43 @@ describe('SearchReindexService — an organization’s own definition switched o
 
 		expect(runs[0]).toMatchObject({ indexed: 0, removed: 2 });
 		expect(fixture.documents().filter((document) => document.entity === 'product_variant')).toEqual([]);
+	});
+
+	it('does not leave a switched-off organization’s documents rebuilt by a sweep on the shipped definition (CodeRabbit)', async () => {
+		// ORG switched its own copy off; OTHER_ORG, still on the active shipped definition, sweeps the tenant, and the
+		// sweep reads ORG's rows too — writing back the documents ORG's switch had dropped.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
+
+		const shipped: Row = {
+			entity: 'product_variant',
+			version: 1,
+			isActive: true,
+			tenantId: null,
+			organizationId: null
+		};
+		const own: Row = {
+			entity: 'product_variant',
+			version: 2,
+			isActive: false,
+			tenantId: TENANT,
+			organizationId: ORG
+		};
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped, own]
+		});
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ removed: 1 });
+		expect(
+			fixture
+				.documents()
+				.filter((document) => document.entity === 'product_variant')
+				.map((document) => [document.entityId, document.organizationId])
+		).toEqual([['v2', OTHER_ORG]]);
 	});
 });

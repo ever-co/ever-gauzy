@@ -227,6 +227,24 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	}
 
 	/**
+	 * The organizations' own definitions of one entity that are switched off.
+	 *
+	 * A sweep reads the source rows of every organization in its tenant, so it is the one place an organization that
+	 * switched its own copy off (SEC-B-04) has to be named: its documents are not another organization's to rebuild.
+	 *
+	 * @param entity The entity key.
+	 * @param tenantId The tenant whose copies are read; every tenant's when none is named (a system sweep).
+	 * @returns The switched-off copies, each naming its tenant and organization.
+	 */
+	async inactiveOrganizationCopies(entity: string, tenantId?: ID | null): Promise<SearchIndexDefinition[]> {
+		const rows = await this.typeOrmSearchIndexDefinitionRepository.find({
+			where: { entity, isActive: false, ...(tenantId ? { tenantId } : {}) } as any
+		});
+
+		return rows.filter((row) => !!row.organizationId);
+	}
+
+	/**
 	 * The definitions a caller may see: its organization's rows and the platform's.
 	 *
 	 * @param entity Narrows the list to one entity.
