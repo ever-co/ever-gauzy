@@ -33,6 +33,11 @@ import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubsc
 import { EverWorksTeamsController } from './teams/ever-works-teams.controller';
 import { EverWorksTeamsService } from './teams/ever-works-teams.service';
 import { EverWorksLinkService } from './sync/links/ever-works-link.service';
+import { EverWorksSyncController } from './sync/admin/ever-works-sync.controller';
+import { EverWorksSyncStatusService } from './sync/admin/ever-works-sync-status.service';
+import { EverWorksConflictsService } from './sync/conflicts/ever-works-conflicts.service';
+import { EverWorksInitialSyncService } from './sync/initial/ever-works-initial-sync.service';
+import { EverWorksSyncRun, MikroOrmEverWorksSyncRunRepository } from './sync/initial/ever-works-sync-run.entity';
 import {
 	EverWorksEntityLink,
 	EverWorksInboundEvent,
@@ -66,6 +71,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly agents: EverWorksAgentsService,
 		private readonly teams: EverWorksTeamsService,
 		private readonly projects: EverWorksProjectsService,
+		private readonly initialSync: EverWorksInitialSyncService,
 		private readonly tasks: EverWorksTasksService,
 		private readonly taskComments: EverWorksTaskCommentsService
 	) {}
@@ -77,6 +83,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.loop.registerSweeper(this.teams);
 		this.applier.register(this.projects);
 		this.loop.registerSweeper(this.projects);
+		// Initial sync and resync runs advance under the same lease (G-P1-10).
+		this.loop.registerSweeper(this.initialSync);
 		this.applier.register(this.tasks);
 		this.pusher.register(this.tasks);
 		this.loop.registerSweeper(this.tasks);
@@ -89,7 +97,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber, EverWorksTaskWatcherSubscriber, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskCommentSubscriber];
 
 /** Every table the plugin owns (its migrations create them). */
-export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog];
+export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog, EverWorksSyncRun];
 
 /**
  * The Ever Works integration module (`@gauzy/plugin-integration-ever-works`). Loaded only when
@@ -108,7 +116,16 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksProjectsController, EverWorksWebhookController],
+	controllers: [
+		EverWorksController,
+		EverWorksConnectionController,
+		EverWorksMappingController,
+		EverWorksPeopleController,
+		EverWorksTeamsController,
+		EverWorksProjectsController,
+		EverWorksWebhookController,
+		EverWorksSyncController
+	],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -138,6 +155,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksTaskCommentsService,
 		EverWorksTaskEdgeCapture,
 		EverWorksTeamCapture,
+		EverWorksConflictsService,
+		EverWorksInitialSyncService,
+		EverWorksSyncStatusService,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,
@@ -145,6 +165,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		MikroOrmEverWorksInboundEventRepository,
 		MikroOrmEverWorksOutboundChangeRepository,
 		MikroOrmEverWorksSyncLogRepository,
+		MikroOrmEverWorksSyncRunRepository,
 		{
 			provide: EVER_WORKS_CONFIG,
 			useFactory: () => {
@@ -163,6 +184,8 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksOutboundPusher,
 		EverWorksOutboundQueue,
 		EverWorksSyncLogService,
+		EverWorksConflictsService,
+		EverWorksInitialSyncService,
 		EVER_WORKS_CONFIG
 	]
 })

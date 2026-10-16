@@ -175,6 +175,7 @@ interface LinkRow {
 	ewOnly: string | null;
 	state: string;
 	lastError?: string | null;
+	ewUpdatedAt?: string | Date | null;
 }
 
 type GauzyTask = Record<string, any>;
@@ -210,6 +211,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 				...(input['ewVersion'] !== undefined ? { ewVersion: input['ewVersion'] ?? null } : {}),
 				...(input['snapshot'] !== undefined ? { snapshot: JSON.stringify(input['snapshot']) } : {}),
 				...(input['ewOnly'] !== undefined ? { ewOnly: JSON.stringify(input['ewOnly']) } : {}),
+				...(input['ewUpdatedAt'] !== undefined ? { ewUpdatedAt: input['ewUpdatedAt'] } : {}),
 				state: EverWorksLinkState.OK
 			};
 			if (existing) Object.assign(existing, values);
@@ -283,14 +285,17 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			const at = resourceLinks.findIndex((row) => row.id === id);
 			if (at >= 0) resourceLinks.splice(at, 1);
 		},
-		upsertResourceLink: async (_s: unknown, taskId: string, title: string, url: string, knownId: string | null) => {
-			const known = knownId ? resourceLinks.find((row) => row.id === knownId) : undefined;
-			if (known) return Object.assign(known, { title, url }).id;
-			const same = resourceLinks.find((row) => row.taskId === taskId && row.url === url);
-			if (same) return same.id;
+		upsertResourceLink: async (_s: unknown, taskId: string, title: string, url: string, known: { id: string; owned: boolean } | null) => {
+			const row = known ? resourceLinks.find((link) => link.id === known.id) : undefined;
+			if (row && known) {
+				if (known.owned) Object.assign(row, { title, url });
+				if (known.owned || row.url === url) return known;
+			}
+			const same = resourceLinks.find((link) => link.taskId === taskId && link.url === url);
+			if (same) return { id: same.id, owned: false };
 			const id = `g-link-${resourceLinks.length + 1}`;
 			resourceLinks.push({ id, taskId, title, url });
-			return id;
+			return { id, owned: true };
 		},
 		userOfEmployee: async (employeeId: string) => ({ userId: `user-of-${employeeId}`, name: 'Someone' }),
 		employeeOfUser: async (_t: string, _o: string, userId: string) => (userId === 'u-alice' ? 'e-alice' : null),
@@ -665,6 +670,17 @@ describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
 				{ taskToId: 'g-task-2', taskFromId: 'g-task-1', action: LINKED_ISSUE.RELATES_TO }
 			])
 		);
+	});
+
+	it('a task whose edge could not be followed is finished by the retried event', async () => {
+		const t = setup();
+		const other = t.mock.addTask(t.org.id, { title: 'Other' });
+		const task = t.mock.addTask(t.org.id, { title: 'Blocked', blockedBy: [other['id']] });
+		t.mock.fail({ method: 'GET', path: `/tasks/${other['id'] as string}`, status: 503 });
+		await expect(t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } })).rejects.toThrow();
+		expect(await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } })).toEqual({ status: 'applied' });
+		expect(t.tasks.size).toBe(2);
+		expect(t.linkedIssues).toEqual(expect.arrayContaining([expect.objectContaining({ taskToId: 'g-task-1', action: LINKED_ISSUE.IS_BLOCKED_BY })]));
 	});
 
 	it('pushes Gauzy watcher and blocker changes as Ever Works sets', async () => {
@@ -1067,5 +1083,34 @@ describe('task dates review fixes (#10814)', () => {
 		expect(new Date((t.tasks.get('g-task-1') as GauzyTask)['dueDate']).toISOString()).toBe('2026-11-01T00:00:00.000Z');
 		expect(await t.push('g-task-1')).toEqual({ status: 'pushed' });
 		expect(task['dueAt']).toBe('2026-11-01T00:00:00.000Z');
+	});
+});
+
+describe('task comments and links review round 2 (#10813)', () => {
+	it('a link a person added with the PR URL is reused and stays when Ever Works drops the PR', async () => {
+		const t = setup();
+		const prUrl = 'https://github.com/acme/site/pull/5';
+		const task = t.mock.addTask(t.org.id, { title: 'Mine' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		t.resourceLinks.push({ id: 'user-link', taskId: 'g-task-1', title: 'My PR', url: prUrl });
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { prUrl, prState: 'open', ciState: null, latestRunStatus: null } }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T10:00:00Z' });
+		expect(t.resourceLinks.filter((row) => row.url === prUrl)).toEqual([{ id: 'user-link', taskId: 'g-task-1', title: 'My PR', url: prUrl }]);
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { prUrl: null, prState: null, ciState: null, latestRunStatus: null } }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T11:00:00Z' });
+		expect(t.resourceLinks.some((row) => row.id === 'user-link')).toBe(true);
+	});
+
+	it('an older run state or comment state (a late delivery) does not overwrite a newer one', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.AGENT, 'e-agent', 'ew-agent');
+		const task = t.mock.addTask(t.org.id, { title: 'Late' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const runtime = (prUrl: string) => ({ prUrl, prState: 'open', ciState: null, latestRunStatus: null });
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: runtime('https://github.com/acme/site/pull/2') }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T12:00:00Z' });
+		expect((await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: runtime('https://github.com/acme/site/pull/1') }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T11:00:00Z' })).status).toBe('skipped');
+		expect(t.resourceLinks.filter((row) => row.title === 'Pull request').map((row) => row.url)).toEqual(['https://github.com/acme/site/pull/2']);
+		const base = { id: 'ew-c1', taskId: task['id'], authorType: 'agent', authorId: 'ew-agent', externalAuthor: null, mentions: [], editedAt: null, createdAt: '2026-10-16T10:00:00Z', externalLinks: [] };
+		await t.deliver({ type: 'task.comment.created', data: { ...base, body: 'v2', updatedAt: '2026-10-16T12:00:00Z' }, aggregate: { id: task['id'] as string, version: 1 } });
+		expect((await t.deliver({ type: 'task.comment.updated', data: { ...base, body: 'v1', updatedAt: '2026-10-16T11:00:00Z' }, aggregate: { id: task['id'] as string, version: 1 } })).status).toBe('skipped');
+		expect(t.comments[0]?.html).toBe('<p>v2</p>');
 	});
 });

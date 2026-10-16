@@ -120,6 +120,10 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 			await this.links.unlink(link, 'deleted in Ever Works; the Gauzy comment is deleted (soft)');
 			return { status: 'applied' };
 		}
+		// Comments have no version of their own: an older event (a late delivery) never overwrites a newer one.
+		if (link?.ewUpdatedAt && comment.updatedAt && new Date(comment.updatedAt).getTime() < new Date(link.ewUpdatedAt).getTime()) {
+			return { status: 'skipped', message: 'an older state of the comment than the one applied' };
+		}
 		const body = normaliseMarkdown(comment.body);
 		if (!link) {
 			// Our own comment whose link was not recorded (a lost answer): linked back, not copied — only when it

@@ -89,10 +89,17 @@ the seed) and answers the routes below.
    when they are first needed.
 
 A revoked or expired key turns the connection `needs_reauth`: the sync pauses
-and the admin who connected gets a notification. Entering a new key of the same
+and the admin who connected gets a notice. Entering a new key of the same
 Ever Works tenant resumes it. Disconnecting archives the connection and its
 mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
+
+Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
+Inbox items (`NOTICE`, `source = SYSTEM`), one per connection, admin and kind
+of notice: `needs_reauth`, and `dead_letter` for a change that stopped for good
+(it names the latest record). A repeat updates the notice and marks it unread
+again. Without the Inbox, `needs_reauth` falls back to an employee notification
+for the admin's employee, and dead letters show only in the sync activity.
 
 ## API boundary
 
@@ -128,6 +135,15 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/projects` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/projects` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/sync/status` | `VIEW` |
+| GET | `/mappings/:integrationTenantId/sync/preview` | `VIEW` |
+| POST | `/mappings/:integrationTenantId/sync/start` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/sync/resync` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/sync/cancel` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/sync/runs` | `VIEW` |
+| GET | `/mappings/:integrationTenantId/sync/log` | `VIEW` |
+| GET | `/mappings/:integrationTenantId/conflicts` | `VIEW` |
+| POST | `/mappings/:integrationTenantId/conflicts/:id/resolve` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
@@ -186,6 +202,15 @@ and answered `202`.
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
   enabled and works not switched off.
+- **Create in Ever Works (G-P2-5).** On the same tab (`createInEverWorks` on
+  `PUT …/projects`), an admin opts a Gauzy project in: it becomes a repo-less
+  Ever Works work of kind `project`, with the project's name, description and
+  website, its teams as its scope (a team not paired yet refuses the create),
+  owned by the admin's paired Ever Works user, and linked like any pair. Ever
+  Works must have project works switched on
+  (`EVER_WORKS_PROJECT_WORKS_ENABLED=true` there); otherwise, or when Ever
+  Works refuses, the reason is returned in `failures` and nothing is linked.
+  A retry never creates a second work. Gauzy never creates a work on its own.
 - **Tasks.** Both ways, through Gauzy's own task commands (numbering,
   sanitizing, subscriptions and other integrations behave as for any task
   write), attributed to the mapped person or agent, else to the admin who
@@ -219,6 +244,35 @@ and answered `202`.
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
   Works records never sync.
+- **Initial sync and resync.** `GET …/sync/preview` is the dry run: per phase,
+  the records on each side, the pairs still to make on their tab and what a
+  run would create; it writes nothing. `POST …/sync/start` records the change
+  feed's head and starts a run (`ever_works_sync_run`, one running run per
+  mapping) that the sync loop advances under the connection's lease, phase by
+  phase: members (mapping only), agents, teams, works, missions, goals, ideas,
+  tasks (parents first), task edges (in the task records), comments (the last
+  200 per synced task), inbox, docs. A phase reads its list route page by
+  page and stores every record as an initial event that the record type's
+  handler applies like a live one, then queues the Gauzy records in scope for
+  Ever Works where its direction writes there; the next phase starts once
+  those records are applied. Each sweep works within a time budget and saves
+  the phase's checkpoint after every page, so a run resumes where it stopped,
+  in whichever process holds the connection; a cancelled run stops at its next
+  checkpoint; a phase whose handler is
+  not part of this version is skipped and picked up by a later resync. At the
+  end, feed events after the head that were skipped meanwhile are applied
+  again (anything a link's version covers is skipped). `POST …/sync/resync` is
+  the same run as a reconcile pass; an expired feed cursor (`410`) starts one
+  on its own.
+- **Observability.** `GET …/sync/status` returns the lag (Ever Works' feed
+  head against what Gauzy read and applied), the inbound and outbound counts
+  (pending, deferred, failed, dead), the open conflicts, the last error, the
+  link totals per type and the latest runs. `GET …/sync/log` pages the sync
+  log (filters: status, direction, record type). Conflicts are log entries
+  with both values and the winner, kept until resolved: `keep`, or
+  `use_other`, which writes the other side's value into the Gauzy record
+  through the platform (a task through its update command) as the signed-in
+  admin, so the change is pushed to Ever Works like any Gauzy edit.
 - **Runtime.** Every process that loads the plugin ticks; a database lease on
   the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.
@@ -229,12 +283,18 @@ and answered `202`.
 yarn nx build plugin-integration-ever-works
 yarn nx build plugin-integration-ever-works-ui --configuration=production
 yarn nx test plugin-integration-ever-works
+yarn nx run plugin-integration-ever-works:test-integration
 yarn nx test plugin-integration-ever-works-ui
 ```
 
 The suites run the plugin's migrations on SQLite and its services against the
 mock Ever Works server (`src/lib/testing/mock-ever-works.server.ts`, test code
-that is not part of the package build).
+that is not part of the package build). `test-integration` is the boundary
+suite (`.scripts/ever-works-integration.test.cjs`, `node:test`): migrations
+up/up/down/up on SQLite, and on Postgres when `EVER_WORKS_TEST_DATABASE_URL`
+names a loopback `_test` database; tenant and organization isolation; webhook
+signatures; dedupe; loop suppression; the 412 merge; an initial sync resumed by
+another process; and record scope. The Build workflow runs all three.
 
 Both packages participate in the workspace and Docker builds. The backend is
 listed, behind `EVER_WORKS_ENABLED`, in the API and worker plugin lists and

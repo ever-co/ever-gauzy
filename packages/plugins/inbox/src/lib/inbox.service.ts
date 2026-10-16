@@ -55,6 +55,31 @@ const LOCAL_SOURCES: readonly string[] = [InboxItemSourceEnum.GAUZY, InboxItemSo
 export const INBOX_PAGE_SIZE = 20;
 export const INBOX_MAX_PAGE_SIZE = 100;
 const MAX_TEXT = 10_000;
+/** A canonical UUID (Postgres refuses anything else in a uuid column, with an error rather than no match). */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The item fields a source's re-delivery may change, each only when the source states it. */
+const UPDATABLE_FIELDS = [
+	'organizationId',
+	'kind',
+	'title',
+	'body',
+	'bodyFormat',
+	'options',
+	'requireReason',
+	'status',
+	'response',
+	'priority',
+	'dueAt',
+	'entity',
+	'entityId',
+	'taskId',
+	'projectId',
+	'agentEmployeeId',
+	'mailboxId',
+	'emailId',
+	'metadata'
+] as const satisfies ReadonlyArray<keyof IInboxItemUpsertInput & keyof InboxItem>;
 
 /** Parses a JSON column; a malformed document reads as `null` rather than failing the whole page. */
 function parseJson<T>(value: string | null | undefined): T | null {
@@ -150,12 +175,16 @@ export class InboxService implements IInboxItemWriter {
 		return { unread, decisionsOpen, byMailbox: [] };
 	}
 
-	/** One item with the caller's state; a reader of every mailbox may read any item of the tenant. */
+	/**
+	 * One item with the caller's state. A reader of every mailbox (`INBOX_MAILBOX_READ_ALL`) may also read the
+	 * mailbox items of the organizations they belong to — never an item addressed to another user personally (a
+	 * question, an approval or a notice of theirs), which only its recipients read.
+	 */
 	async get(id: ID): Promise<IInboxItemWithState> {
 		const { tenantId, userId } = this.caller();
 		const item = await this.findItem(tenantId, id);
-		const recipient = await this.findRecipient(tenantId, id, userId);
-		if (!item || (!recipient && !RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_READ_ALL))) {
+		const recipient = item ? await this.findRecipient(tenantId, id, userId) : null;
+		if (!item || (!recipient && !(await this.readsAsMailboxReader(item, tenantId, userId)))) {
 			throw new NotFoundException('The inbox item does not exist, or it is not addressed to you.');
 		}
 		return { ...toInboxItem(item), recipient: recipient ? this.stateOf(recipient) : null };
@@ -213,9 +242,9 @@ export class InboxService implements IInboxItemWriter {
 			throw new ConflictException('This item was already answered.');
 		}
 
+		let routed = 'local';
 		try {
 			const handler = this.registry.get(item.source);
-			let routed = 'local';
 			if (handler) {
 				const answered = toInboxItem({
 					...item,
@@ -236,8 +265,6 @@ export class InboxService implements IInboxItemWriter {
 					'The source of this item is not connected, so the reply cannot be delivered. Try again later.'
 				);
 			}
-			response.routed = routed;
-			await this.dataSource.getRepository(InboxItem).update({ id, tenantId }, { response: toJson(response) });
 		} catch (error) {
 			// The source did not take it: release the claim so the item can be answered again.
 			await this.dataSource
@@ -255,6 +282,17 @@ export class InboxService implements IInboxItemWriter {
 				`The ${item.source} handler refused the reply to inbox item ${id}: ${(error as Error)?.message}`
 			);
 			throw new BadGatewayException('The source of this item did not take the reply. Try again later.');
+		}
+
+		// The source took the reply: the claim stays whatever happens next. Recording where it was routed is
+		// bookkeeping — a failure here must not re-open the item, or a second reply would be delivered again.
+		response.routed = routed;
+		try {
+			await this.dataSource.getRepository(InboxItem).update({ id, tenantId }, { response: toJson(response) });
+		} catch (error) {
+			this.logger.warn(
+				`The reply to inbox item ${id} was delivered (${routed}), but recording it failed: ${(error as Error)?.message}`
+			);
 		}
 
 		if (!recipient.isRead) {
@@ -283,7 +321,8 @@ export class InboxService implements IInboxItemWriter {
 			change.archivedAt = input.isArchived ? now : null;
 			stated.isArchived = input.isArchived;
 		}
-		if (input && 'snoozedUntil' in input) {
+		// `!== undefined`, not `in`: a validated DTO may carry the key with no value.
+		if (input && input.snoozedUntil !== undefined) {
 			if (input.snoozedUntil === null) {
 				change.snoozedUntil = null;
 			} else {
@@ -357,6 +396,7 @@ export class InboxService implements IInboxItemWriter {
 	private async write(input: IInboxItemUpsertInput): Promise<IInboxItemUpsertResult> {
 		const values = this.itemValues(input);
 		const tenantId = values.tenantId as ID;
+		await this.assertOrganizationOfTenant(tenantId, values.organizationId);
 		const repository = this.dataSource.getRepository(InboxItem);
 
 		let created = false;
@@ -366,7 +406,7 @@ export class InboxService implements IInboxItemWriter {
 				})
 			: null;
 		if (item) {
-			await repository.update({ id: item.id }, this.updatableValues(values) as ItemUpdate);
+			await repository.update({ id: item.id }, this.updatableValues(values, input) as ItemUpdate);
 		} else {
 			try {
 				item = await repository.save(repository.create(values as InboxItem));
@@ -383,7 +423,7 @@ export class InboxService implements IInboxItemWriter {
 						})
 					: null;
 				if (!item) throw error;
-				await repository.update({ id: item.id }, this.updatableValues(values) as ItemUpdate);
+				await repository.update({ id: item.id }, this.updatableValues(values, input) as ItemUpdate);
 			}
 		}
 
@@ -427,20 +467,65 @@ export class InboxService implements IInboxItemWriter {
 			taskId: input.taskId ?? null,
 			projectId: input.projectId ?? null,
 			agentEmployeeId: input.agentEmployeeId ?? null,
+			mailboxId: input.mailboxId ?? null,
+			emailId: input.emailId ?? null,
 			externalSource: input.externalSource ?? null,
 			externalId: input.externalId ?? null,
 			metadata: toJson(input.metadata ?? null)
 		} as Partial<InboxItem>;
 	}
 
-	/** What a re-delivery may change (never the tenant, the source or the identity). */
-	private updatableValues(values: Partial<InboxItem>): Partial<InboxItem> {
-		const rest: Partial<InboxItem> = { ...values };
-		delete rest.tenantId;
-		delete rest.source;
-		delete rest.externalSource;
-		delete rest.externalId;
-		return rest;
+	/**
+	 * What a re-delivery changes: the fields the source states, never the tenant, the source or the identity. A
+	 * field the source leaves out keeps its value, so a re-delivered "created" payload (no status, no response)
+	 * cannot re-open an answered item, wipe its answer or clear its links.
+	 */
+	private updatableValues(values: Partial<InboxItem>, input: IInboxItemUpsertInput): Partial<InboxItem> {
+		const update: Record<string, unknown> = {};
+		for (const key of UPDATABLE_FIELDS) {
+			if (input[key] !== undefined) update[key] = values[key];
+		}
+		return update as Partial<InboxItem>;
+	}
+
+	/** An item's organization must be one of its tenant's (a source names both). */
+	private async assertOrganizationOfTenant(tenantId: ID, organizationId?: ID | null): Promise<void> {
+		// Only an omitted organization is skipped: an empty or malformed one is refused like an unknown one.
+		if (organizationId === null || organizationId === undefined) return;
+		const found =
+			typeof organizationId === 'string' &&
+			UUID.test(organizationId) &&
+			(await this.dataSource
+				.createQueryBuilder()
+				.select('o.id', 'id')
+				.from('organization', 'o')
+				.where('o.id = :organizationId', { organizationId })
+				.andWhere('o.tenantId = :tenantId', { tenantId })
+				.getRawOne<{ id: ID }>());
+		if (!found) {
+			throw new BadRequestException('The organization of an inbox item must be one of its tenant’s.');
+		}
+	}
+
+	/**
+	 * Whether a reader of every mailbox may read this item without being its recipient: only an EMAIL item of a
+	 * mailbox (P4), of an organization the reader is an active member of. Any other kind is personal, even when a
+	 * source linked it to a mailbox.
+	 */
+	private async readsAsMailboxReader(item: InboxItem, tenantId: ID, userId: ID): Promise<boolean> {
+		if (item.kind !== InboxItemKindEnum.EMAIL || !item.mailboxId || !item.organizationId) return false;
+		if (!RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_READ_ALL)) return false;
+		const membership = await this.dataSource
+			.createQueryBuilder()
+			.select('membership.id', 'id')
+			.from('user_organization', 'membership')
+			.where('membership.tenantId = :tenantId', { tenantId })
+			.andWhere('membership.userId = :userId', { userId })
+			.andWhere('membership.organizationId = :organizationId', { organizationId: item.organizationId })
+			.andWhere('membership.isActive = :active', { active: true })
+			.andWhere('membership.deletedAt IS NULL')
+			.getRawOne<{ id: ID }>();
+		return !!membership;
 	}
 
 	private async writeRecipients(
@@ -452,8 +537,10 @@ export class InboxService implements IInboxItemWriter {
 			if (recipient?.userId) stated.set(recipient.userId, recipient);
 		}
 		const userIds = [...stated.keys()];
+		// Not a UUID: no user of any tenant (and Postgres would refuse the whole lookup), so it is skipped.
+		const candidates = userIds.filter((id) => typeof id === 'string' && UUID.test(id));
 		const known = new Set<ID>(
-			userIds.length === 0
+			candidates.length === 0
 				? []
 				: (
 						await this.dataSource
@@ -461,7 +548,7 @@ export class InboxService implements IInboxItemWriter {
 							.select('u.id', 'id')
 							.from('user', 'u')
 							.where('u.tenantId = :tenantId', { tenantId: item.tenantId })
-							.andWhere('u.id IN (:...userIds)', { userIds })
+							.andWhere('u.id IN (:...userIds)', { userIds: candidates })
 							.getRawMany<{ id: ID }>()
 					).map((row) => row.id)
 		);
@@ -542,6 +629,15 @@ export class InboxService implements IInboxItemWriter {
 		const tab = input.tab ?? InboxTabEnum.ALL;
 		if (tab === InboxTabEnum.ARCHIVED) {
 			query.andWhere('recipient.isArchived = :archived', { archived: true });
+		} else if (tab === InboxTabEnum.SNOOZED) {
+			// Snoozed and not archived: where a snoozed item can be found (and woken) before its time.
+			query.andWhere(
+				new Brackets((where) => {
+					where.where('recipient.isArchived = :notArchived', { notArchived: false });
+					where.orWhere('recipient.isArchived IS NULL');
+				})
+			);
+			query.andWhere('recipient.snoozedUntil > :now', { now: new Date() });
 		} else {
 			query.andWhere(
 				new Brackets((where) => {

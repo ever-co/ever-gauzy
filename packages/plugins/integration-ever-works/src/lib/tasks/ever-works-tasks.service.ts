@@ -187,7 +187,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			// Comments are children applied by their own id (CR-1), and run state does not bump the task's
 			// version: neither is skipped by the task link's version.
 			if (envelope.type.startsWith('task.comment.')) return await this.comments.apply(context, envelope);
-			if (envelope.type === 'task.runtime_updated') return await this.applyRuntime(context, link, data as unknown as EverWorksTask);
+			if (envelope.type === 'task.runtime_updated') return await this.applyRuntime(context, link, data as unknown as EverWorksTask, envelope.occurredAt);
 		} catch (error) {
 			if (error instanceof EverWorksRequestContextUnavailableError) return { status: 'deferred', message: error.message, retryInMs: TASK_NO_CONTEXT_RETRY_MS };
 			throw error;
@@ -313,12 +313,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!fresh) throw new Error(`The Gauzy task created for Ever Works task ${task.id} cannot be read back.`);
 		// The link is recorded before the edges are followed: an edge back to this task (two new tasks that
 		// relate to each other) then finds it instead of importing it a second time. Its watchers and edges are
-		// not on the Gauzy side yet, so they count as Ever Works' change below.
+		// not on the Gauzy side yet, so they count as Ever Works' change below — and it has no version yet, so
+		// if following an edge fails, the retried event is not skipped as applied and finishes them.
 		await this.record(
 			context,
 			taskId,
 			task,
-			version ?? task.version ?? null,
+			null,
 			{ g: await this.gauzySide(context, fresh), e: { ...e, watchers: [], blockedBy: [], relations: [] } },
 			'inbound',
 			{ unmappedTeams: teams.unmapped, unmappedAssignees: members.unmapped }
@@ -676,9 +677,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	 * `task.runtime_updated` (machine-owned PR / CI / run state; it bumps neither the version nor `updatedAt`):
 	 * the "Pull request" link and the run state kept on the link follow it. Display only (plan 01 §7).
 	 */
-	private async applyRuntime(context: EverWorksMappingContext, link: EverWorksEntityLink | null, task: EverWorksTask): Promise<EverWorksApplyOutcome> {
+	private async applyRuntime(context: EverWorksMappingContext, link: EverWorksEntityLink | null, task: EverWorksTask, occurredAt: string | null | undefined): Promise<EverWorksApplyOutcome> {
 		if (!link) return { status: 'skipped', message: 'the task is not linked' };
 		const ewOnly = this.everWorksOnly(link);
+		// No version on run state: an older event (a late delivery) never overwrites a newer one.
+		if (occurredAt && ewOnly.runtimeAt && new Date(occurredAt).getTime() < new Date(ewOnly.runtimeAt).getTime()) {
+			return { status: 'skipped', message: 'older run state than the one applied' };
+		}
 		const runtime = task.runtime ?? null;
 		const links = await this.syncResourceLinks(context, link.gauzyId as ID, { ...task, id: link.ewId, webUrl: task.webUrl ?? ewOnly.webUrl ?? null, runtime }, ewOnly, false);
 		await this.links.record({
@@ -688,7 +693,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			entityType: EverWorksLinkType.TASK,
 			gauzyId: link.gauzyId as ID,
 			ewId: link.ewId,
-			ewOnly: { ...ewOnly, runtime, resourceLinks: links } as unknown as Record<string, unknown>,
+			ewOnly: { ...ewOnly, runtime, resourceLinks: links, runtimeAt: occurredAt ?? ewOnly.runtimeAt ?? null } as unknown as Record<string, unknown>,
 			direction: 'inbound'
 		});
 		return { status: 'applied' };
@@ -705,23 +710,28 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		task: Pick<EverWorksTask, 'id' | 'slug' | 'webUrl' | 'runtime'>,
 		ewOnly: TaskEverWorksOnly,
 		record = true
-	): Promise<{ task?: ID; pr?: ID }> {
+	): Promise<NonNullable<TaskEverWorksOnly['resourceLinks']>> {
 		const known = ewOnly.resourceLinks ?? {};
-		const result: { task?: ID; pr?: ID } = { ...known };
+		const result: NonNullable<TaskEverWorksOnly['resourceLinks']> = { ...known };
 		const scope = { tenantId: context.tenantId, organizationId: context.organizationId };
+		// Links recorded before ownership was tracked were all made by the sync.
+		const knownOf = (id: string | undefined, owned: boolean | undefined) => (id ? { id: id as ID, owned: owned !== false } : null);
 		const webUrl = task.webUrl ?? null;
 		if (webUrl && isSafeUrl(webUrl, false)) {
-			result.task = await this.store.upsertResourceLink(scope, taskId, `Ever Works task${task.slug ? ` ${task.slug}` : ''}`, webUrl, (known.task as ID) ?? null);
+			const row = await this.store.upsertResourceLink(scope, taskId, `Ever Works task${task.slug ? ` ${task.slug}` : ''}`, webUrl, knownOf(known.task, known.taskOwned));
+			Object.assign(result, { task: row.id, taskOwned: row.owned });
 		}
 		const prUrl = task.runtime?.prUrl ?? null;
 		if (prUrl && isSafeUrl(prUrl, false)) {
-			result.pr = await this.store.upsertResourceLink(scope, taskId, 'Pull request', prUrl, (known.pr as ID) ?? null);
+			const row = await this.store.upsertResourceLink(scope, taskId, 'Pull request', prUrl, knownOf(known.pr, known.prOwned));
+			Object.assign(result, { pr: row.id, prOwned: row.owned });
 		} else if (task.runtime && task.runtime.prUrl === null && known.pr) {
-			// Ever Works dropped the task's PR: the link the sync made for it goes too (soft-deleted).
-			await this.store.removeResourceLink(context.tenantId, known.pr as ID);
+			// Ever Works dropped the task's PR: a link the sync made for it goes too (soft-deleted); a person's stays.
+			if (known.prOwned !== false) await this.store.removeResourceLink(context.tenantId, known.pr as ID);
 			delete result.pr;
+			delete result.prOwned;
 		}
-		if (record && (result.task !== known.task || result.pr !== known.pr)) {
+		if (record && (result.task !== known.task || result.pr !== known.pr || result.taskOwned !== known.taskOwned || result.prOwned !== known.prOwned)) {
 			const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, taskId);
 			if (link) {
 				await this.links.record({

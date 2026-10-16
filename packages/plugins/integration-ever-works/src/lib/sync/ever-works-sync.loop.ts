@@ -30,7 +30,8 @@ export function describeSyncError(error: unknown): string {
  */
 export interface EverWorksSyncSweeper {
 	readonly sweepIntervalMs: number;
-	sweep(connection: EverWorksConnection): Promise<void>;
+	/** `stillOwner` renews the lease (and says whether this process still holds it) for a long sweep. */
+	sweep(connection: EverWorksConnection, stillOwner?: () => Promise<boolean>): Promise<void>;
 }
 
 /** How often a process looks for work. */
@@ -155,7 +156,7 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 			if (Date.now() - (this.lastSweep.get(key) ?? 0) < sweeper.sweepIntervalMs) continue;
 			if (!(await stillOwner())) return;
 			this.lastSweep.set(key, Date.now());
-			await sweeper.sweep(fresh).catch((error) => this.logger.warn(`Connection ${connection.id}: a sweep failed (${describeSyncError(error)}).`));
+			await sweeper.sweep(fresh, stillOwner).catch((error) => this.logger.warn(`Connection ${connection.id}: a sweep failed (${describeSyncError(error)}).`));
 		}
 	}
 
