@@ -56,6 +56,9 @@ import {
 	applySetChange,
 	descriptionForEverWorks,
 	edgesFromRows,
+	estimateMinutesFor,
+	estimateSecondsFor,
+	isoOrNull,
 	LINKED_ISSUE,
 	LinkedIssueRow,
 	gauzyWins,
@@ -844,5 +847,54 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		// A new PR URL updates the same link.
 		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { ...runtime, prUrl: 'https://github.com/acme/site/pull/13' } }, aggregate: { id: task['id'] as string, version: 1 } });
 		expect(t.resourceLinks.filter((row) => row.title === 'Pull request').map((row) => row.url)).toEqual(['https://github.com/acme/site/pull/13']);
+	});
+});
+
+describe('task dates and estimate (G-P2-6)', () => {
+	it('Ever Works minutes are Gauzy seconds, and back (rounded to whole minutes)', () => {
+		expect(estimateMinutesFor(90)).toBe(2);
+		expect(estimateMinutesFor(null)).toBeNull();
+		expect(estimateMinutesFor(10 ** 9)).toBe(525600);
+		expect(estimateSecondsFor(45)).toBe(2700);
+		expect(estimateSecondsFor(null)).toBeNull();
+		expect(isoOrNull('2026-10-20T09:00:00+02:00')).toBe('2026-10-20T07:00:00.000Z');
+		expect(isoOrNull('not a date')).toBeNull();
+	});
+
+	it('EW → G: due and start dates and the estimate', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Planned', dueAt: '2026-10-20T17:00:00.000Z', startAt: '2026-10-18T08:00:00.000Z', estimateMinutes: 90 });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const created = t.tasks.get('g-task-1') as GauzyTask;
+		expect(new Date(created['dueDate']).toISOString()).toBe('2026-10-20T17:00:00.000Z');
+		expect(new Date(created['startDate']).toISOString()).toBe('2026-10-18T08:00:00.000Z');
+		expect(created['estimate']).toBe(5400);
+		// Cleared in Ever Works → cleared in Gauzy.
+		await t.deliver({ type: 'task.updated', data: { ...task, dueAt: null }, aggregate: { id: task['id'] as string, version: 2 } });
+		expect((t.tasks.get('g-task-1') as GauzyTask)['dueDate']).toBeNull();
+	});
+
+	it('G → EW: sent on create and when changed; a lossy estimate does not flap', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Planned', dueDate: new Date('2026-10-20T17:00:00.000Z'), estimate: 90 });
+		await t.push('g1');
+		const [ew] = [...t.mock.tasks.values()];
+		expect(ew).toMatchObject({ dueAt: '2026-10-20T17:00:00.000Z', estimateMinutes: 2 });
+		// Ever Works echoes 2 minutes = 120 s; nothing goes back while Gauzy still says 90 s.
+		const before = t.mock.requests.length;
+		expect(await t.push('g1')).toEqual({ status: 'skipped', message: 'nothing changed' });
+		expect(t.mock.requests.length).toBe(before);
+		(t.tasks.get('g1') as GauzyTask)['dueDate'] = new Date('2026-10-22T17:00:00.000Z');
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect(t.mock.requests.filter((r) => r.method === 'PATCH').pop()?.body).toEqual({ dueAt: '2026-10-22T17:00:00.000Z' });
+	});
+
+	it('a start after the due date is not sent (Ever Works refuses it) and is logged', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Odd dates', dueDate: new Date('2026-10-20T00:00:00.000Z'), startDate: new Date('2026-10-25T00:00:00.000Z') });
+		await t.push('g1');
+		const [ew] = [...t.mock.tasks.values()];
+		expect(ew).toMatchObject({ dueAt: '2026-10-20T00:00:00.000Z', startAt: null });
+		expect(t.logged).toEqual([expect.objectContaining({ action: 'start_after_due' })]);
 	});
 });
