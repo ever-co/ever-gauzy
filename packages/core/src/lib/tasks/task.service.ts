@@ -191,12 +191,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					);
 				}
 
-				// Get the maximum task number for the project the task moves to
-				const maxNumber = await this.getMaxTaskNumberByProject({
-					tenantId,
-					organizationId,
-					projectId
-				});
+				// Get the maximum task number for the project the task moves to. Its soft-deleted tasks count too: they
+				// keep their number in the unique index, so `max + 1` of the live ones alone could be taken.
+				const maxNumber = await this.getMaxTaskNumberByProject(
+					{
+						tenantId,
+						organizationId,
+						projectId
+					},
+					{ withDeleted: true }
+				);
 
 				moved = {
 					projectId,
