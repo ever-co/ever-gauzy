@@ -254,6 +254,30 @@ describe('EverWorksInboxService', () => {
 		await expect(apply(envelope('inbox.item.created', item))).resolves.toMatchObject({ status: 'skipped' });
 	});
 
+	it('overlapping snapshots of one item: an older one never replaces a newer one', async () => {
+		const { mock, ewOrg, adaEw, envelope, apply, writes, link } = setup();
+		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);
+		const item = mock.addInboxItem(ewOrg.id, { recipientUserId: adaEw });
+		const v2 = { ...item, version: 2 };
+		const v3 = {
+			...item,
+			version: 3,
+			status: 'answered',
+			answeredAt: '2026-10-16T09:05:00.000Z',
+			answerOptionId: 'pro'
+		};
+
+		// The newer one starts first; without one-at-a-time and the re-check, both would pass the version check.
+		const [newer, older] = await Promise.all([
+			apply(envelope('inbox.item.answered', v3)),
+			apply(envelope('inbox.item.state_changed', v2))
+		]);
+		expect(newer).toEqual({ status: 'applied' });
+		expect(older).toMatchObject({ status: 'skipped' });
+		expect(writes).toHaveLength(1);
+		expect(writes[0]).toMatchObject({ status: InboxItemStatusEnum.ANSWERED });
+	});
+
 	it('a reply acts as the recipient; Ever Works routes it, and its answered event would update Gauzy', async () => {
 		const { mock, ewOrg, adaEw, service, link, gauzyItem, envelope, apply, writes } = setup();
 		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);

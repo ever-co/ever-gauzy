@@ -151,37 +151,64 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		version: number | null,
 		options: { deleted?: boolean; direction: 'inbound' | 'outbound' }
 	): Promise<EverWorksApplyOutcome> {
-		if (!this.inbox) return { status: 'skipped', message: 'the Gauzy Inbox is not loaded in this process' };
-		const recipientUserId = await this.gauzyUserOf(context, item.recipientUserId);
-		if (!recipientUserId) {
-			return {
-				status: 'deferred',
-				message: `the recipient (Ever Works user ${item.recipientUserId}) is not matched to a Gauzy member yet: match them on the People tab`
-			};
-		}
-		const result = await this.inbox.upsertExternal(
-			inboxUpsertOf(
-				item,
-				{ tenantId: context.tenantId, organizationId: context.organizationId, recipientUserId },
-				await this.linksOf(context, item),
-				{ deleted: options.deleted }
-			)
-		);
-		if (!result.recipientUserIds.includes(recipientUserId)) {
-			return { status: 'deferred', message: 'the matched Gauzy user is not a user of this tenant' };
-		}
-		await this.links.record({
-			tenantId: context.tenantId,
-			organizationId: context.organizationId,
-			integrationTenantId: context.integrationTenantId,
-			entityType: EverWorksLinkType.INBOX_ITEM,
-			gauzyId: result.item.id as ID,
-			ewId: item.id,
-			ewVersion: version,
-			ewUpdatedAt: item.updatedAt ?? null,
-			direction: options.direction
+		// One snapshot of an item at a time (an inbound event and the answer to a reply can overlap), with the
+		// version checked again inside: an older snapshot never replaces a newer one, nor lowers the link.
+		return this.serialized(`${context.integrationTenantId}:${item.id}`, async () => {
+			if (version != null) {
+				const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.INBOX_ITEM, item.id);
+				if (link?.ewVersion != null && version <= link.ewVersion) {
+					return { status: 'skipped', message: 'already applied (version)' };
+				}
+			}
+			if (!this.inbox) return { status: 'skipped', message: 'the Gauzy Inbox is not loaded in this process' };
+			const recipientUserId = await this.gauzyUserOf(context, item.recipientUserId);
+			if (!recipientUserId) {
+				return {
+					status: 'deferred',
+					message: `the recipient (Ever Works user ${item.recipientUserId}) is not matched to a Gauzy member yet: match them on the People tab`
+				};
+			}
+			const result = await this.inbox.upsertExternal(
+				inboxUpsertOf(
+					item,
+					{ tenantId: context.tenantId, organizationId: context.organizationId, recipientUserId },
+					await this.linksOf(context, item),
+					{ deleted: options.deleted }
+				)
+			);
+			if (!result.recipientUserIds.includes(recipientUserId)) {
+				return { status: 'deferred', message: 'the matched Gauzy user is not a user of this tenant' };
+			}
+			await this.links.record({
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				integrationTenantId: context.integrationTenantId,
+				entityType: EverWorksLinkType.INBOX_ITEM,
+				gauzyId: result.item.id as ID,
+				ewId: item.id,
+				ewVersion: version,
+				ewUpdatedAt: item.updatedAt ?? null,
+				direction: options.direction
+			});
+			return { status: 'applied' };
 		});
-		return { status: 'applied' };
+	}
+
+	private readonly itemLocks = new Map<string, Promise<void>>();
+
+	/** Runs `work` after every earlier `work` of the same key in this process (an in-process mutex). */
+	private async serialized<T>(key: string, work: () => Promise<T>): Promise<T> {
+		const previous = this.itemLocks.get(key) ?? Promise.resolve();
+		let release: () => void = () => undefined;
+		const turn = previous.then(() => new Promise<void>((resolve) => (release = resolve)));
+		this.itemLocks.set(key, turn);
+		await previous;
+		try {
+			return await work();
+		} finally {
+			release();
+			if (this.itemLocks.get(key) === turn) this.itemLocks.delete(key);
+		}
 	}
 
 	// ── G → EW (the EVER_WORKS source handler) ─────────────────────────────────────────────────────

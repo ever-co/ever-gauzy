@@ -395,7 +395,7 @@ export class InboxService implements IInboxItemWriter {
 		// effort either way), one item after the other.
 		const mirrored = rows.filter((row) => !!this.registry.get(row.source)?.onStateChange);
 		if (mirrored.length) {
-			void this.mirrorReads(tenantId, userId, mirrored, now);
+			void this.mirrorReads(tenantId, userId, mirrored);
 		}
 		return { updated: ids.length };
 	}
@@ -404,23 +404,18 @@ export class InboxService implements IInboxItemWriter {
 	private async mirrorReads(
 		tenantId: ID,
 		userId: ID,
-		rows: Array<{ recipientId: ID; itemId: ID; source: string }>,
-		readAt: Date
+		rows: Array<{ recipientId: ID; itemId: ID; source: string }>
 	): Promise<void> {
 		for (const row of rows) {
 			try {
 				const item = await this.findItem(tenantId, row.itemId);
 				const handler = item ? this.registry.get(item.source) : undefined;
 				if (!item || !handler?.onStateChange) continue;
-				const recipient = {
-					id: row.recipientId,
-					tenantId,
-					inboxItemId: row.itemId,
-					userId,
-					isRead: true,
-					readAt
-				};
-				await handler.onStateChange(toInboxItem(item), recipient as never, { isRead: true });
+				// Read again just before telling the source: a later choice of the user (marked unread meanwhile,
+				// already told to the source by that request) is never overwritten by this older bulk read.
+				const recipient = await this.findRecipient(tenantId, row.itemId, userId);
+				if (!recipient?.isRead) continue;
+				await handler.onStateChange(toInboxItem(item), recipient, { isRead: true });
 			} catch (error) {
 				this.logger.warn(
 					`The ${row.source} handler did not take the read state of inbox item ${row.itemId}: ${(error as Error)?.message}`
