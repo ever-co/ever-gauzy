@@ -2678,7 +2678,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Leden"
+				"MEMBERS": "Leden",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Details"
+					},
+					"PUBLIC": "Openbaar",
+					"PRIVATE": "Privé",
+					"PREFIX": "Taakprefix",
+					"MEMBERS_COUNT": "{{ count }} leden",
+					"LIVE": "{{ tracking }} registreren nu · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} van {{ total }} leden",
+					"CREATED": "Aangemaakt",
+					"UPDATED": "Laatst bijgewerkt",
+					"ACTIVE_MEMBERS": "Actieve leden",
+					"ACTIVE_MEMBERS_META": "van {{ total }} leden registreerden tijd",
+					"TIME_BY_MEMBER": "Tijd per lid",
+					"TEAM_TASKS": "Teamtaken",
+					"NO_TEAM_TASKS": "Geen taken toegewezen aan dit team",
+					"NO_MEMBERS": "Dit team heeft nog geen leden",
+					"NO_PROJECTS": "Geen projecten gekoppeld aan dit team",
+					"COLUMNS": {
+						"MEMBER": "Lid",
+						"ROLE": "Rol",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Huidige taak",
+						"TODAY": "Vandaag",
+						"ACTIVITY": "Activiteit"
+					},
+					"ROLE": {
+						"MANAGER": "Manager",
+						"MEMBER": "Lid"
+					},
+					"GENERAL": "Algemeen",
+					"SETTINGS": "Instellingen",
+					"RECORD": "Record",
+					"TEAM_SIZE": "Teamgrootte",
+					"COLOR": "Kleur",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Profiellink",
+					"VISIBILITY": "Zichtbaarheid",
+					"SHARE_PROFILE_VIEW": "Leden kunnen elkaars profielen zien",
+					"REQUIRE_PLAN": "Plan vereist om tijd te registreren",
+					"NOT_FOUND": "Dit team is niet gevonden",
+					"LOAD_FAILED": "Het team kon niet worden geladen",
+					"RETRY": "Opnieuw proberen",
+					"OPEN_TASK_DETAILS": "Details van {{ title }} tonen",
+					"OPEN_TASK_PAGE": "Pagina van {{ title }} openen",
+					"OPEN_TASK_PAGE_SHORT": "Taakpagina openen",
+					"UNASSIGNED": "Niet toegewezen",
+					"SHOW_ALL": "Alles tonen",
+					"SHOW_LESS": "Minder tonen",
+					"PROJECTS_CAPTION": "De projecten van het team en de tijd die er deze periode aan is besteed",
+					"NOT_LINKED": "Niet gekoppeld",
+					"NOT_LINKED_HINT": "Leden hebben tijd op dit project geregistreerd, maar het is niet aan het team gekoppeld"
+				}
 			}
 		},
 		"PERMISSIONS": {
