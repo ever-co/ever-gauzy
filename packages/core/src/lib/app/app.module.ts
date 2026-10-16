@@ -68,6 +68,7 @@ import { EmployeeRecurringExpenseModule } from '../employee-recurring-expense/em
 import { EmployeeSettingModule } from '../employee-setting/employee-setting.module';
 import { EmployeeStatisticsModule } from '../employee-statistics/employee-statistics.module';
 import { EmployeeModule } from '../employee/employee.module';
+import { EmployeeAgentProfileModule } from '../employee-agent-profile/employee-agent-profile.module';
 import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { EquipmentSharingPolicyModule } from '../equipment-sharing-policy/equipment-sharing-policy.module';
 import { EquipmentSharingModule } from '../equipment-sharing/equipment-sharing.module';
@@ -430,6 +431,7 @@ if (environment.THROTTLE_ENABLED) {
 		UserModule,
 		SocialAccountModule,
 		EmployeeModule,
+		EmployeeAgentProfileModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,
 		CandidateModule,

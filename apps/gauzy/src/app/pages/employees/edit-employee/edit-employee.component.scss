@@ -226,3 +226,21 @@ img.employee-image,
     min-height: 0;
   }
 }
+
+// Read-only notice for an agent employee managed by an external system (e.g. Ever Works): its name and
+// profile change there and are synced in.
+.managed-externally-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  color: var(--color-info-default, #0095ff);
+  background-color: var(--color-info-transparent-100, rgba(0, 149, 255, 0.08));
+
+  a {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}

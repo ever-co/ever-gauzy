@@ -4,6 +4,7 @@ import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'ty
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
 import {
+	EmployeeKindEnum,
 	PermissionsEnum,
 	IGetActivitiesStatistics,
 	IGetTimeSlotStatistics,
@@ -3166,7 +3167,8 @@ export class StatisticService {
 	}
 
 	/**
-	 * Get the count of employees who worked this week.
+	 * Get the count of employees who worked this week: people only, an agent employee (`kind = 'agent'`) is
+	 * not a member in this head count.
 	 *
 	 * @param request The counts request, with its employee ids already scoped by {@link getCounts}.
 	 * @returns The count of unique employees
@@ -3193,7 +3195,8 @@ export class StatisticService {
 					.where('time_log.tenantId', tenantId)
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_log.startedAt', [start, end])
-					.whereBetween('time_slot.startedAt', [start, end]);
+					.whereBetween('time_slot.startedAt', [start, end])
+					.andWhere('employee.kind', EmployeeKindEnum.HUMAN);
 
 				if (isNotEmpty(activityLevel)) {
 					qb = qb.whereBetween('time_slot.overall', [activityLevel.start * 6, activityLevel.end * 6]);
@@ -3218,7 +3221,8 @@ export class StatisticService {
 						new Brackets((where: WhereExpressionBuilder) => {
 							this.getFilterQuery(query, where, request);
 						})
-					);
+					)
+					.andWhere(p(`"employee"."kind" = :humanKind`), { humanKind: EmployeeKindEnum.HUMAN });
 				const result = await query.getRawOne();
 				const count = parseInt(result.count, 10);
 				return count;
