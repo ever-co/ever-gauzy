@@ -449,12 +449,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 
-		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first.
-		const { success, record: task } = await this.findOneOrFailByIdString(id);
+		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first. A task that
+		// does not exist is a delete that removes nothing, as before; a read that FAILS stops the delete, so a task
+		// is never removed without its DELETED event.
+		let task: Task | null = null;
+		try {
+			task = await this.findOneByIdString(id);
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
 
 		const result = await this.delete(id);
 
-		if (success && task && result?.affected) {
+		if (task && result?.affected) {
 			this.publishTaskDeleted(task);
 		}
 

@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
@@ -49,10 +49,6 @@ describe('TaskService — TaskEvent DELETED', () => {
 			_managedEmployeeService: { isManagerOfTeamsOrProjects: jest.fn().mockResolvedValue(false) }
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
-		jest.spyOn(TenantAwareCrudService.prototype, 'findOneOrFailByIdString').mockResolvedValue({
-			success: true,
-			record: stored
-		} as never);
 	});
 
 	afterEach(() => {
@@ -79,6 +75,30 @@ describe('TaskService — TaskEvent DELETED', () => {
 			organizationId: fixture.organizationId,
 			projectId: 'project-1'
 		});
+	});
+
+	it('stops the delete when the task cannot be read, so no task disappears without its event', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockRejectedValue(
+			new Error('connection reset')
+		);
+		const remove = jest.spyOn(TenantAwareCrudService.prototype, 'delete');
+
+		await expect(service.deleteTask('task-1')).rejects.toThrow('connection reset');
+
+		expect(remove).not.toHaveBeenCalled();
+		expect(published()).toEqual([]);
+	});
+
+	it('deletes as before when the task does not exist, and publishes nothing', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockRejectedValue(
+			new NotFoundException('The requested record was not found')
+		);
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 0, raw: [] });
+
+		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 0, raw: [] });
+		expect(published()).toEqual([]);
 	});
 
 	it('publishes nothing when the delete removed nothing', async () => {
