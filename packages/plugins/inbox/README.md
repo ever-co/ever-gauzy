@@ -32,6 +32,10 @@ integration plan (`ever-co/homelab`, `docs/superpowers/specs/`).
 at all: no route, no table (its migrations are not registered) and no role
 grant. Any other value also keeps it off, and is logged once.
 
+Mailboxes, inbound email and the email provider plugins are a second
+plugin of this package, `InboxEmailPlugin`, off unless
+`GAUZY_INBOX_EMAIL_ENABLED=true` as well: see [EMAIL.md](./EMAIL.md).
+
 ## Tables (migrations for PostgreSQL, MySQL and SQLite)
 
 - **`inbox_item`:** `kind` (QUESTION, APPROVAL, ESCALATION, NOTICE, EMAIL),
