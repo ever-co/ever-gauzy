@@ -841,6 +841,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"INITIATIVES": "יוזמות",
 		"BREADCRUMB": "נתיב ניווט",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
@@ -1993,6 +1994,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "סוג",
+		"KIND_ALL": "הכול",
+		"KIND_HUMAN": "אנשים",
+		"KIND_AGENT": "סוכנים",
+		"AGENT_BADGE": "סוכן",
+		"MANAGED_BY_EVER_WORKS": "מנוהל על ידי Ever Works: השם והפרופיל של סוכן זה משתנים ב-Ever Works ומסונכרנים ל-Gauzy.",
+		"MANAGED_EXTERNALLY": "מנוהל חיצונית: השם והפרופיל של סוכן זה משתנים במערכת שממנה הוא מגיע ומסונכרנים ל-Gauzy.",
+		"OPEN_MANAGED_AGENT": "פתח את דף הסוכן",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"ACTIVE": "פעיל",
@@ -2131,6 +2140,60 @@
 			},
 			"SHOWING": "מוצגות {{ shown }} מתוך {{ total }} משימות",
 			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "יוזמות אסטרטגיות",
+		"SUBTITLE": "הכיוונים שהארגון שלך החליט להתקדם בהם, והיעדים, הפרויקטים והצוותים המיושרים אליהם.",
+		"ADD": "הוספת יוזמה",
+		"EDIT": "עריכת יוזמה",
+		"EMPTY": "אין עדיין יוזמות אסטרטגיות.",
+		"TITLE": "כותרת",
+		"STATE": "מצב",
+		"VISIBILITY": "נראות",
+		"TEAMS": "צוותים",
+		"TEAMS_HINT": "בנראות \"צוות\", חברי הצוותים האלה (וצוותי הפרויקטים המיושרים) יכולים לראות את היוזמה.",
+		"PROJECTS": "פרויקטים",
+		"GOALS": "יעדים",
+		"CONFIDENCE": "ביטחון",
+		"MOMENTUM": "תנופה",
+		"INTENT": "כוונה",
+		"INTENT_HINT": "מה אנחנו רוצים לקדם במכוון, ולמה?",
+		"STEWARD": "אחראי",
+		"SIGNALS": "אותות",
+		"KNOWN_RISKS": "סיכונים ידועים",
+		"KNOWN_RISKS_HINT": "סיכון אחד בכל שורה",
+		"NOTES": "הערות",
+		"LAST_ASSESSED": "הערכה אחרונה",
+		"NO_TEAMS": "אין צוותים מקושרים.",
+		"NO_GOALS": "אין יעדים מיושרים.",
+		"NO_PROJECTS": "אין פרויקטים מיושרים.",
+		"NOT_FOUND": "היוזמה לא נמצאה או שאין לך הרשאה לראות אותה.",
+		"DELETE_TITLE": "מחיקת יוזמה",
+		"DELETE_CONFIRMATION": "למחוק את היוזמה \"{{ name }}\"?",
+		"DELETED": "היוזמה \"{{ name }}\" נמחקה.",
+		"CREATED": "היוזמה \"{{ name }}\" נוצרה.",
+		"UPDATED": "היוזמה \"{{ name }}\" עודכנה.",
+		"STATES": {
+			"DRAFT": "טיוטה",
+			"ACTIVE": "פעילה",
+			"RESOLVED": "הושגה",
+			"RETIRED": "הופסקה"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "הנהלה",
+			"ORGANIZATION": "ארגון",
+			"TEAM": "צוות"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "נמוך",
+			"MEDIUM": "בינוני",
+			"HIGH": "גבוה"
+		},
+		"MOMENTUMS": {
+			"STALLED": "תקועה",
+			"PROGRESSING": "מתקדמת",
+			"ACCELERATING": "מאיצה"
 		}
 	},
 	"GOALS_PAGE": {

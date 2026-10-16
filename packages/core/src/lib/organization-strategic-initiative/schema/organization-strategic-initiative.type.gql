@@ -30,6 +30,9 @@
 # - `goals` is a collection the delivered reads do not join, and no goal object type is declared here
 #   either. A goal names its initiative, so the alignment is read from the goal.
 #
+# The teams the initiative is linked to directly (`organization_strategic_initiative_team`) are carried as
+# `teamIds`: the reads load them for the `team` visibility rule, and the writes take the identifiers.
+#
 # The base row's identifiers, timestamps and lifecycle columns are carried in full: withdrawing and
 # restoring are delivered routes whose whole effect is the `deletedAt` column.
 
@@ -66,6 +69,11 @@ type OrganizationStrategicInitiative {
 	than a member that would answer null.
 	"""
 	stewardId: ID
+	"""
+	The teams the initiative is linked to directly, by identifier. With `visibilityScope` `team`, their
+	members may read it, as may the members of the teams of its aligned projects.
+	"""
+	teamIds: [ID!]
 	"The organization the initiative is filed under, by identifier."
 	organizationId: ID
 	"The tenant the initiative belongs to, by identifier."
@@ -179,6 +187,8 @@ input CreateOrganizationStrategicInitiativeInput {
 	signals: JSON
 	"The steward who owns the clarity of the intent. Omit it and the caller's own employee is recorded."
 	stewardId: ID
+	"The teams to link the initiative to directly. Each must be a team of the initiative's organization."
+	teamIds: [ID!]
 }
 
 """
@@ -197,6 +207,8 @@ input UpdateOrganizationStrategicInitiativeInput {
 	visibilityScope: String
 	signals: JSON
 	stewardId: ID
+	"Replaces the directly linked teams when stated (an empty list unlinks them all); omitted, they stay."
+	teamIds: [ID!]
 }
 
 """
