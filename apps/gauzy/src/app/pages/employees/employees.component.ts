@@ -80,6 +80,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public includeDeleted: boolean = false;
 	/** The "Kind" filter: every employee (`''`), people only, or agent employees only. */
 	public kindFilter: '' | EmployeeKindEnum = '';
+	/** The latest card-grid page request: a page that was loading when the list changed is not appended. */
+	private cardsRequest = 0;
 	public readonly employeeKindEnum = EmployeeKindEnum;
 	public loading: boolean = false;
 	public organization: IOrganization;
@@ -662,8 +664,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 			// Fetch elements based on layout style
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				await this.smartTableSource.getElements();
-				this.employees.push(...this.smartTableSource.getData());
+				const request = ++this.cardsRequest;
+				const source = this.smartTableSource;
+				await source.getElements();
+				// The Kind filter (or a newer request) changed the list while this page was loading: its rows
+				// belong to the previous list, which the grid no longer shows.
+				if (request !== this.cardsRequest) {
+					return;
+				}
+				this.employees.push(...source.getData());
 			}
 		} catch (error) {
 			console.log('Error while fetching employees', error);
@@ -1039,6 +1048,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	changeKindFilter(kind: '' | EmployeeKindEnum): void {
 		this.kindFilter = kind || '';
+		// A card-grid page of the previous list that is still loading is dropped when it arrives.
+		this.cardsRequest++;
 		// Back to the first page in both layouts: a later page of the previous list can be past the end of the
 		// filtered one. The pagination and list signals are debounced into one request.
 		this.refreshPagination();
