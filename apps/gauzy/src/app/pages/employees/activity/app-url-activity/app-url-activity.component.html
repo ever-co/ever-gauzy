@@ -118,7 +118,9 @@
 						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
 					</span>
 					<span class="au-share-cell">
-						<span class="au-bar-track" aria-hidden="true"><span class="au-bar" [style.width.%]="row.width"></span></span>
+						<span class="au-bar-track" aria-hidden="true"
+							><span [class]="'au-bar au-bar--' + barStatus(row.share)" [style.width.%]="row.share"></span
+						></span>
 						<span class="au-share">{{ formatPercent(row.share) }}</span>
 					</span>
 					<span class="au-num au-strong">{{ formatDuration(row.duration) }}</span>
@@ -141,6 +143,12 @@
 							} @else {
 							<span class="au-page-text au-ellipsis" [nbTooltip]="page.label" nbTooltipPlacement="top">{{ page.label }}</span>
 							}
+							<span class="au-share-cell">
+								<span class="au-bar-track au-bar-track--sm" aria-hidden="true"
+									><span [class]="'au-bar au-bar--' + barStatus(page.share)" [style.width.%]="page.share"></span
+								></span>
+								<span class="au-share">{{ formatPercent(page.share) }}</span>
+							</span>
 							<span class="au-num au-muted">{{ formatDuration(page.duration) }}</span>
 						</li>
 						}
