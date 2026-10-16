@@ -195,6 +195,15 @@ and answered `202`.
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
   enabled and works not switched off.
+- **Create in Ever Works (G-P2-5).** On the same tab (`createInEverWorks` on
+  `PUT …/projects`), an admin opts a Gauzy project in: it becomes a repo-less
+  Ever Works work of kind `project`, with the project's name, description and
+  website, its teams as its scope (a team not paired yet refuses the create),
+  owned by the admin's paired Ever Works user, and linked like any pair. Ever
+  Works must have project works switched on
+  (`EVER_WORKS_PROJECT_WORKS_ENABLED=true` there); otherwise, or when Ever
+  Works refuses, the reason is returned in `failures` and nothing is linked.
+  A retry never creates a second work. Gauzy never creates a work on its own.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
