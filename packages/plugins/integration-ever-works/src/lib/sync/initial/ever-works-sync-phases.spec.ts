@@ -19,7 +19,8 @@ jest.mock('@gauzy/core', () => {
 
 import 'reflect-metadata';
 import { behind } from '../admin/ever-works-sync-status.service';
-import { clampLimit, conflictFromMerge, otherValue, parseDetails, parseOffset } from '../conflicts/ever-works-conflicts.service';
+import { clampLimit, conflictFromMerge, otherValue, parseDetails } from '../conflicts/ever-works-conflicts.service';
+import { logCursorOf, parseLogCursor } from '../ever-works-sync-log.service';
 import { mergeField } from '../merge/three-way-merge';
 import {
 	depthsOf,
@@ -58,9 +59,9 @@ describe('initial sync phases', () => {
 	});
 
 	it('an initial event names the record and its version, so the same snapshot is stored once', () => {
-		const input = { aggregateType: 'task', seq: initialSeq(1, 2, 3_000_000), tenantId: 't', organizationId: 'o' };
+		const input = { aggregateType: 'task', seq: initialSeq(1, 2), tenantId: 't', organizationId: 'o' };
 		const first = initialEnvelope({ ...input, record: { id: 'task-1', version: 7, updatedAt: '2026-10-16T10:00:00.000Z' } });
-		expect(first).toMatchObject({ id: 'initial:task:task-1:v7', type: 'task.updated', seq: '3001002', aggregate: { type: 'task', id: 'task-1', version: 7 }, origin: null });
+		expect(first).toMatchObject({ id: 'initial:task:task-1:v7', type: 'task.updated', seq: '1000000002', aggregate: { type: 'task', id: 'task-1', version: 7 }, origin: null });
 		expect(initialEnvelope({ ...input, record: { id: 'task-1', version: 7 } }).id).toBe(first.id);
 		expect(initialEnvelope({ ...input, record: { id: 'task-1', version: 8 } }).id).not.toBe(first.id);
 		expect(initialEnvelope({ ...input, aggregateType: 'inbox_item', record: { id: 'i1', updatedAt: '2026-10-16T10:00:00.000Z' } }).type).toBe('inbox.item.created');
@@ -70,10 +71,11 @@ describe('initial sync phases', () => {
 		expect(comment.id.startsWith('initial:comment:c1:t')).toBe(true);
 	});
 
-	it('page and depth bands keep pages in read order and parents first inside a page', () => {
-		expect(Number(initialSeq(0, 499, 0))).toBeLessThan(Number(initialSeq(1, 0, 0)));
-		expect(Number(initialSeq(999, 999, 0))).toBeLessThan(Number(initialSeq(0, 0, 1_000_000)));
-		expect(initialSeq(5000, 5000, 0)).toBe('999999');
+	it('depth bands put every parent before its children, whatever page they were read on', () => {
+		expect(Number(initialSeq(0, 999_999_999))).toBeLessThan(Number(initialSeq(1, 0)));
+		expect(Number(initialSeq(1, 5))).toBeLessThan(Number(initialSeq(1, 6)));
+		expect(initialSeq(5000, 5)).toBe(String(999 * 1_000_000_000 + 5));
+		expect(Number.isSafeInteger(Number(initialSeq(999, 999_999_999)))).toBe(true);
 	});
 
 	it('resolves the "last 30 days" list pass', () => {
@@ -110,9 +112,12 @@ describe('status and conflicts helpers', () => {
 		expect(clampLimit('500', 50, 200)).toBe(200);
 		expect(clampLimit('0', 50, 200)).toBe(50);
 		expect(clampLimit(undefined, 50, 200)).toBe(50);
-		expect(parseOffset('150')).toBe(150);
-		expect(parseOffset('-1')).toBe(0);
-		expect(parseOffset('ten')).toBe(0);
-		expect(parseOffset(undefined)).toBe(0);
+		const id = '0f9d2c3e-1111-4222-8333-444455556666';
+		const cursor = logCursorOf({ createdAt: new Date('2026-10-16T22:00:00.123Z'), id });
+		expect(cursor).toBe(`${Date.parse('2026-10-16T22:00:00.123Z')}_${id}`);
+		expect(parseLogCursor(cursor)).toEqual({ at: new Date('2026-10-16T22:00:00.123Z'), id });
+		expect(parseLogCursor('ten')).toBeNull();
+		expect(parseLogCursor(undefined)).toBeNull();
+		expect(logCursorOf({ createdAt: null, id })).toBeNull();
 	});
 });

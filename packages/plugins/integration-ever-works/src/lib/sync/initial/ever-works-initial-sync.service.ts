@@ -25,12 +25,14 @@ import {
 	EVER_WORKS_SYNC_PHASE_SPECS,
 	EverWorksSyncPhaseName,
 	EverWorksSyncPhaseSpec,
+	depthsOf,
 	fromEverWorks,
+	HELD_AFTER,
+	HOLD_UNTIL,
 	initialCommentEnvelope,
 	initialEnvelope,
 	initialSeq,
 	orderForImport,
-	PAGE_SEQ_STRIDE,
 	PHASE_MAX_PAGES,
 	PREVIEW_MAX_PAGES,
 	resolvePass,
@@ -152,6 +154,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	/** Every tick: a running run advances as soon as the lease holder looks at its connection. */
 	readonly sweepIntervalMs = 0;
 	private readonly logger = new Logger('EverWorksInitialSync');
+	/**
+	 * Per run and phase, the depth of every record under its parents of the same list (read once, before the
+	 * phase stores anything; read again after a restart): the order the phase's records are released in.
+	 */
+	private readonly depthCache = new Map<string, Map<string, number>>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -380,9 +387,10 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	// ── Import (EW → G) ────────────────────────────────────────────────────────────────────────────
 
 	/**
-	 * Reads a list route page by page from the checkpoint and stores every record as an initial event
-	 * (parents before their children within a page; each page has its own band of `seq`s, so pages apply
-	 * in the order read), within the sweep's budget. `done` once every pass is read to its end.
+	 * Reads a list route page by page from the checkpoint and stores every record as an initial event,
+	 * within the sweep's budget. The records are stored **held** (not due) and released together once every
+	 * pass is read to its end, with `seq`s banded by depth: the applier then applies a phase's parents
+	 * before their children across every page (an agent's manager before the agent, a parent task first).
 	 */
 	private async importList(
 		context: EverWorksMappingContext,
@@ -397,6 +405,19 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		const passes = spec.list?.passes ?? [{}];
 		// The "last 30 days" of a pass count from the phase's start, so a resumed import asks for the same.
 		const since = state.startedAt ? new Date(state.startedAt) : new Date();
+		const depthKey = `${run.id}:${spec.name}`;
+		let depths = this.depthCache.get(depthKey) ?? null;
+		if (spec.parentField && !depths) {
+			const listed = new Map<string, Record<string, unknown>>();
+			for (const pass of passes) {
+				const page = await this.listAll(client, spec, resolvePass(pass, since), PHASE_MAX_PAGES, stillOwner);
+				if ('skip' in page) return page;
+				if (page.truncated) throw new Error(`${spec.name}: more than ${PHASE_MAX_PAGES} pages; the import stopped`);
+				for (const record of page.records) if (typeof record['id'] === 'string') listed.set(record['id'] as string, { id: record['id'], [spec.parentField]: record[spec.parentField] });
+			}
+			depths = depthsOf([...listed.values()], spec.parentField);
+			this.depthCache.set(depthKey, depths);
+		}
 		while ((state.pass ?? 0) < passes.length) {
 			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return { done: false };
 			if ((state.pages ?? 0) >= PHASE_MAX_PAGES) {
@@ -412,19 +433,16 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				if (skip) return { skip };
 				throw error;
 			}
-			const band = (state.pages ?? 0) * PAGE_SEQ_STRIDE;
-			const indexByDepth = new Map<number, number>();
-			for (const { record, depth } of orderForImport(page.data ?? [], spec.parentField)) {
-				const index = indexByDepth.get(depth) ?? 0;
-				indexByDepth.set(depth, index + 1);
+			for (const { record } of orderForImport(page.data ?? [], undefined)) {
+				const depth = depths?.get(String(record['id'])) ?? 0;
 				const envelope = initialEnvelope({
 					aggregateType: spec.aggregateType as string,
 					record,
-					seq: initialSeq(depth, index, band),
+					seq: initialSeq(depth, state.queued + state.duplicates),
 					tenantId: context.connection.ewTenantId,
 					organizationId: context.everWorksOrganizationId
 				});
-				const { duplicate } = await this.inbound.record(context.connection, envelope, 'initial');
+				const { duplicate } = await this.inbound.record(context.connection, envelope, 'initial', { availableAt: HOLD_UNTIL });
 				if (duplicate) state.duplicates++;
 				else state.queued++;
 			}
@@ -437,8 +455,30 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			}
 			if (!(await checkpoint())) return { done: false };
 		}
-		this.logger.log(`Mapping ${context.integrationTenantId} (run ${run.id}): ${spec.name}: ${state.queued} queued, ${state.duplicates} already stored.`);
+		const released = await this.release(context, spec.aggregateType);
+		this.depthCache.delete(depthKey);
+		this.logger.log(`Mapping ${context.integrationTenantId} (run ${run.id}): ${spec.name}: ${state.queued} queued (${released} released), ${state.duplicates} already stored.`);
 		return { done: true };
+	}
+
+	/**
+	 * Makes held initial events due (of one aggregate type, or all of them): at the end of a phase's import,
+	 * and when a run ends early, so a held record never stays held (it would hold back its aggregate's live
+	 * events behind it).
+	 */
+	private async release(context: EverWorksMappingContext, aggregateType?: string | null): Promise<number> {
+		const result = await this.dataSource.getRepository(EverWorksInboundEvent).update(
+			{
+				connectionId: context.connection.id as ID,
+				organizationId: context.organizationId,
+				receivedVia: 'initial',
+				status: EverWorksInboundStatus.PENDING,
+				availableAt: MoreThan(HELD_AFTER),
+				...(aggregateType ? { aggregateType } : {})
+			} as never,
+			{ availableAt: new Date() } as never
+		);
+		return result.affected ?? 0;
 	}
 
 	/** Why a list Ever Works refuses or does not serve skips its phase, or `null` for any other failure. */
@@ -739,6 +779,8 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		);
 		if (!result.affected) return;
 		Object.assign(run, { status, finishedAt, lastError: error, currentPhase, ...(phases ? { phases: JSON.stringify(phases) } : {}) });
+		// A run that stopped before its phases were read leaves no record held back.
+		if (status !== EverWorksSyncRunStatus.DONE) await this.release(context).catch(() => 0);
 		const label = run.mode === 'initial' ? 'Initial sync' : 'Resync';
 		await this.log.write({
 			tenantId: context.tenantId,
