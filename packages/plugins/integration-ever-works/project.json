@@ -33,6 +33,13 @@
 		"lint": {
 			"executor": "@nx/eslint:lint"
 		},
+		"test-integration": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node --test .scripts/ever-works-integration.test.cjs"
+			},
+			"cache": false
+		},
 		"test": {
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
