@@ -8,7 +8,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { HttpException } from '@nestjs/common';
 import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
-import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { PermissionsEnum, RolesEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { singleRouteBody } from '../../api/bulk-create';
 import { BulkExecutor } from '../../api/bulk-executor.service';
 import { FieldVisibility } from '../../api/field-visibility.service';
@@ -126,6 +126,11 @@ const OrganizationTeamEmployeeSchema = new EntitySchema<any>({
 	}
 });
 
+/**
+ * The time log, with the two scope relations `TenantAwareCrudService` names beside their columns
+ * (`tenant: { id }` with `tenantId`, `employee: { id }` with `employeeId`) when it reads a log back, and
+ * the slots the service loads before it moves a log to another employee.
+ */
 const TimeLogSchema = new EntitySchema<any>({
 	name: 'TimeLog',
 	tableName: 'time_log',
@@ -144,9 +149,52 @@ const TimeLogSchema = new EntitySchema<any>({
 		deletedAt: { type: 'datetime', nullable: true, deleteDate: true }
 	},
 	relations: {
-		employee: { type: 'many-to-one', target: 'Employee', joinColumn: { name: 'employeeId' } }
+		tenant: { type: 'many-to-one', target: 'Tenant', joinColumn: { name: 'tenantId' } },
+		employee: { type: 'many-to-one', target: 'Employee', joinColumn: { name: 'employeeId' } },
+		timeSlots: {
+			type: 'many-to-many',
+			target: 'TimeSlot',
+			inverseSide: 'timeLogs',
+			joinTable: {
+				name: 'time_slot_time_logs',
+				joinColumn: { name: 'timeLogId' },
+				inverseJoinColumn: { name: 'timeSlotId' }
+			}
+		}
 	}
 });
+
+/**
+ * A slot, with what `assertMovableToAnotherEmployee` reads to tell tracked work from a blank manual slot:
+ * its keyboard and mouse counts, and the screenshots, activities and per-minute records it holds.
+ */
+const TimeSlotSchema = new EntitySchema<any>({
+	name: 'TimeSlot',
+	tableName: 'time_slot',
+	columns: {
+		id: { primary: true, type: 'varchar', generated: 'uuid' },
+		keyboard: { type: 'integer', default: 0 },
+		mouse: { type: 'integer', default: 0 }
+	},
+	relations: {
+		timeLogs: { type: 'many-to-many', target: 'TimeLog', inverseSide: 'timeSlots' },
+		screenshots: { type: 'one-to-many', target: 'Screenshot', inverseSide: 'timeSlot' },
+		activities: { type: 'one-to-many', target: 'Activity', inverseSide: 'timeSlot' },
+		timeSlotMinutes: { type: 'one-to-many', target: 'TimeSlotMinute', inverseSide: 'timeSlot' }
+	}
+});
+
+/** Something captured in a slot while its employee was tracked, by the slot it belongs to. */
+const capturedInSlot = (name: string, tableName: string) =>
+	new EntitySchema<any>({
+		name,
+		tableName,
+		columns: {
+			id: { primary: true, type: 'varchar', generated: 'uuid' },
+			timeSlotId: { type: 'varchar', nullable: true }
+		},
+		relations: { timeSlot: { type: 'many-to-one', target: 'TimeSlot', joinColumn: { name: 'timeSlotId' } } }
+	});
 
 /** A signed-in caller: an employee of the organization, with the role's permissions. */
 interface ICaller {
@@ -203,7 +251,11 @@ async function world(): Promise<IWorld> {
 			EmployeeSchema,
 			OrganizationTeamSchema,
 			OrganizationTeamEmployeeSchema,
-			TimeLogSchema
+			TimeLogSchema,
+			TimeSlotSchema,
+			capturedInSlot('Screenshot', 'screenshot'),
+			capturedInSlot('Activity', 'activity'),
+			capturedInSlot('TimeSlotMinute', 'time_slot_minute')
 		],
 		synchronize: true,
 		logging: false,
@@ -350,18 +402,27 @@ interface ISurface {
 	): Promise<Array<{ index: number; ok: boolean; code?: string; message?: string }>>;
 }
 
+/**
+ * A body as the web client sends it to the routes (`EditTimeLogModalComponent`): the GraphQL body plus the log
+ * type and the source. `CreateManualTimeLogDTO` requires both — its transforms restate a value that was sent and
+ * never supply a missing one — so a create without them is a 400 before the service is reached.
+ */
+const restBody = (input: Body) => ({ ...input, logType: TimeLogType.MANUAL, source: TimeLogSourceEnum.WEB_TIMER });
+
 /** The routes, each with the body pipes the route declares (`TimeLogBodyTransformPipe`, then validation). */
 const REST: ISurface = {
 	name: 'REST',
 	add: async (target, input) =>
-		target.controller.addManualTime(await singleRouteBody<any>(TimeLogController, 'addManualTime')({ ...input })),
+		target.controller.addManualTime(
+			await singleRouteBody<any>(TimeLogController, 'addManualTime')(restBody(input))
+		),
 	update: async (target, id, input) =>
 		target.controller.updateManualTime(
 			id,
-			await singleRouteBody<any>(TimeLogController, 'updateManualTime')({ ...input })
+			await singleRouteBody<any>(TimeLogController, 'updateManualTime')(restBody(input))
 		),
 	bulk: async (target, items) => {
-		const result = await target.controller.bulk({ items: items.map((item) => ({ ...item })) as never });
+		const result = await target.controller.bulk({ items: items.map(restBody) as never });
 
 		return [
 			...result.succeeded.map((entry) => ({ index: entry.index, ok: true })),
@@ -584,6 +645,10 @@ describe('Manual time — whose time a write records, over REST and GraphQL, on 
 		});
 	});
 
+	/*
+	 * Over the wire GraphQL never delivers an unnamed body — `employeeId` is `ID!` on both inputs — so for that
+	 * surface these cases (and the unnamed batch item) pin the resolver's own fallback, which restates the pipe.
+	 */
 	describe.each([GRAPHQL, REST])('no employee named, over $name', (surface) => {
 		it.each([
 			['the team manager', TEAM_MANAGER, 'MANAGER'],
@@ -600,18 +665,24 @@ describe('Manual time — whose time a write records, over REST and GraphQL, on 
 	});
 
 	describe.each([GRAPHQL, REST])('CONTROL: a caller with CHANGE_SELECTED_EMPLOYEE, over $name', (surface) => {
-		it('records and edits time for the employee it names', async () => {
+		it('records time for the employee it names, and moves a log to another employee of the organization', async () => {
 			const target = await fresh();
 
 			const added = await as(ADMIN, () =>
 				outcomeOf(() => surface.add(target, body(OUTSIDER, '07', '09:00', '10:00')))
 			);
-			const edited = await as(ADMIN, () =>
-				outcomeOf(() => surface.update(target, MEMBER_LOG, body(MEMBER, '01', '09:00', '10:15')))
+			// MEMBER_LOG is the member's: naming OUTSIDER re-points it (its slots carry nothing tracked).
+			const moved = await as(ADMIN, () =>
+				outcomeOf(() => surface.update(target, MEMBER_LOG, body(OUTSIDER, '01', '09:00', '10:15')))
 			);
 
 			expect(added).toEqual({ employeeId: OUTSIDER });
-			expect(edited).toEqual({ employeeId: MEMBER });
+			expect(moved).toEqual({ employeeId: OUTSIDER });
+			expect(await storedLogs(target)).toEqual([
+				'MEMBER_LOG OUTSIDER 01 09:00-10:15',
+				'PLAIN_LOG PLAIN 01 11:00-12:00',
+				'new OUTSIDER 07 09:00-10:00'
+			]);
 		});
 	});
 
@@ -671,6 +742,11 @@ describe('Manual time — whose time a write records, over REST and GraphQL, on 
 				'a CHANGE_SELECTED_EMPLOYEE caller names anyone',
 				ADMIN,
 				(s, t) => s.add(t, body(OUTSIDER, '07', '09:00', '10:00'))
+			],
+			[
+				'a CHANGE_SELECTED_EMPLOYEE caller moves a member’s log to another employee',
+				ADMIN,
+				(s, t) => s.update(t, MEMBER_LOG, body(OUTSIDER, '01', '09:00', '10:15'))
 			],
 			[
 				'a team manager’s batch',
