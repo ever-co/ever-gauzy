@@ -629,6 +629,15 @@ export class InboxService implements IInboxItemWriter {
 		const tab = input.tab ?? InboxTabEnum.ALL;
 		if (tab === InboxTabEnum.ARCHIVED) {
 			query.andWhere('recipient.isArchived = :archived', { archived: true });
+		} else if (tab === InboxTabEnum.SNOOZED) {
+			// Snoozed and not archived: where a snoozed item can be found (and woken) before its time.
+			query.andWhere(
+				new Brackets((where) => {
+					where.where('recipient.isArchived = :notArchived', { notArchived: false });
+					where.orWhere('recipient.isArchived IS NULL');
+				})
+			);
+			query.andWhere('recipient.snoozedUntil > :now', { now: new Date() });
 		} else {
 			query.andWhere(
 				new Brackets((where) => {

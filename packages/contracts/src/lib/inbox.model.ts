@@ -60,6 +60,8 @@ export enum InboxTabEnum {
 	ALL = 'all',
 	DECISIONS = 'decisions',
 	EMAIL = 'email',
+	/** My items snoozed until a time still to come (hidden from the other tabs until then). */
+	SNOOZED = 'snoozed',
 	ARCHIVED = 'archived'
 }
 

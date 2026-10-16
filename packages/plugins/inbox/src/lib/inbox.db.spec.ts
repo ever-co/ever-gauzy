@@ -398,6 +398,8 @@ describe('Inbox on SQLite', () => {
 			});
 			const archived = await question({ title: 'Old question' });
 			await service.setState(archived.item.id as string, { isArchived: true });
+			const snoozed = await question({ title: 'Later' });
+			await service.setState(snoozed.item.id as string, { snoozedUntil: new Date(Date.now() + 3_600_000) });
 
 			const titles = async (input: Parameters<InboxService['list']>[0]) =>
 				(await service.list(input)).items.map((item) => item.title).sort();
@@ -405,6 +407,8 @@ describe('Inbox on SQLite', () => {
 			expect(await titles({})).toEqual(['Budget at 80%', 'Deploy the billing fix?']);
 			expect(await titles({ tab: InboxTabEnum.DECISIONS })).toEqual(['Deploy the billing fix?']);
 			expect(await titles({ tab: InboxTabEnum.ARCHIVED })).toEqual(['Old question']);
+			// Hidden from the other tabs until its time; listed under Snoozed meanwhile.
+			expect(await titles({ tab: InboxTabEnum.SNOOZED })).toEqual(['Later']);
 			expect(await titles({ kind: InboxItemKindEnum.NOTICE })).toEqual(['Budget at 80%']);
 			expect(await titles({ projectId: project })).toEqual(['Deploy the billing fix?']);
 			expect(await titles({ unread: true })).toEqual(['Deploy the billing fix?']);
