@@ -350,14 +350,22 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				let employeePresentInTeam = null;
 
 				if (employee) {
-					// A miss means "not on the team yet", so it is read from `success` instead of thrown as a 404.
-					const { success } = await this._organizationTeamService.findOneOrFailByWhereOptions({
-						members: {
-							employeeId: employee.id
-						},
-						id: request.organizationTeamId
-					});
-					employeePresentInTeam = success;
+					try {
+						await this._organizationTeamService.findOneByWhereOptions({
+							members: {
+								employeeId: employee.id
+							},
+							id: request.organizationTeamId
+						});
+						employeePresentInTeam = true;
+					} catch (error) {
+						// A miss (404) means "not on the team yet". Any other failure is not an answer to that
+						// question, so it is raised rather than read as a miss that would add the employee again.
+						if (!(error instanceof NotFoundException)) {
+							throw error;
+						}
+						employeePresentInTeam = false;
+					}
 				}
 
 				/**
