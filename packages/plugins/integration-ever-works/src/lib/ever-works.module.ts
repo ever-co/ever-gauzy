@@ -23,6 +23,8 @@ import { EverWorksMappingContextService } from './mapping/ever-works-mapping-con
 import { EverWorksAgentsService } from './people/ever-works-agents.service';
 import { EverWorksPeopleController } from './people/ever-works-people.controller';
 import { EverWorksPeopleService } from './people/ever-works-people.service';
+import { EverWorksProjectsController } from './projects/ever-works-projects.controller';
+import { EverWorksProjectsService } from './projects/ever-works-projects.service';
 import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubscriber } from './teams/ever-works-team.signals';
 import { EverWorksTeamsController } from './teams/ever-works-teams.controller';
 import { EverWorksTeamsService } from './teams/ever-works-teams.service';
@@ -57,13 +59,15 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly applier: EverWorksInboundApplier,
 		private readonly pusher: EverWorksOutboundPusher,
 		private readonly agents: EverWorksAgentsService,
-		private readonly teams: EverWorksTeamsService
+		private readonly teams: EverWorksTeamsService,
+		private readonly projects: EverWorksProjectsService
 	) {}
 
 	onModuleInit(): void {
 		this.applier.register(this.agents);
 		this.applier.register(this.teams);
 		this.pusher.register(this.teams);
+		this.applier.register(this.projects);
 	}
 }
 
@@ -90,7 +94,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksWebhookController],
+	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksProjectsController, EverWorksWebhookController],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -114,6 +118,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksPeopleService,
 		EverWorksAgentsService,
 		EverWorksTeamsService,
+		EverWorksProjectsService,
 		EverWorksTeamCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
