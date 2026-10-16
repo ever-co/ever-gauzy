@@ -13,7 +13,8 @@ import {
 	IDailyActivity,
 	IActivity,
 	IEmployee,
-	IURLMetaData
+	IURLMetaData,
+	TimeFormatEnum
 } from '@gauzy/contracts';
 import {
 	ActivityService,
@@ -77,6 +78,10 @@ type Loadable<T> = { loading: boolean; failed: boolean; value: T };
 
 /** Rows a member card lists before "Show all". */
 const MEMBER_ITEM_LIMIT = 5;
+/** Page size for a site's pages: the endpoint returns only 30 records unless asked for more. */
+const PAGES_PAGE_SIZE = 500;
+/** Upper bound on the pages read for one site, so a runaway site cannot loop forever. */
+const PAGES_MAX_PAGES = 40;
 
 /**
  * Apps / Visited sites, in the manner of Hubstaff's Apps & URLs page: a short
@@ -125,12 +130,16 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	private _employees = new Map<string, { name: string; avatarUrl?: string }>();
+	/** The organization whose employees were read successfully. */
 	private _employeesFor: string | null = null;
+	/** The employee read in flight, shared by every activity load of that organization. */
+	private _employeesLoad: { organizationId: string; promise: Promise<void> } | null = null;
 	private _loadSequence = 0;
 	private _derived: {
 		from: IDailyActivity[];
 		search: string;
 		sortBy: string;
+		timeFormat: TimeFormatEnum;
 		items: IActivityItemRow[];
 		members: IMemberGroup[];
 		hours: IHourGroup[];
@@ -257,36 +266,54 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	/**
-	 * Names and photos for the member view, read once per organization. A user
-	 * who may not list employees still sees their own name; anyone else falls
-	 * back to a neutral label.
+	 * Names and photos for the member view, read once per organization.
+	 *
+	 * Every activity load awaits the same read while it is in flight, so none of
+	 * them renders before the names arrive. A read only counts as done once it
+	 * succeeds: a failed one is tried again on the next load. A user who may not
+	 * list employees still sees their own name; anyone else falls back to a
+	 * neutral label.
 	 */
-	private async loadEmployees(): Promise<void> {
+	private loadEmployees(): Promise<void> {
 		const { id: organizationId, tenantId } = this.organization;
-		if (this._employeesFor === organizationId) return;
-		this._employeesFor = organizationId;
-		this._employees = new Map();
+		if (this._employeesFor === organizationId) return Promise.resolve();
+		if (this._employeesLoad?.organizationId === organizationId) return this._employeesLoad.promise;
 
-		const user = this.store.user;
-		if (user?.employee?.id) {
-			this._employees.set(user.employee.id, {
-				name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || user.email,
-				avatarUrl: user.image?.fullUrl || user.imageUrl
-			});
-		}
-		try {
-			const { items } = await firstValueFrom(
-				this.employeesService.getAll(['user'], { organizationId, tenantId } as any)
-			);
-			for (const employee of items || []) {
-				this._employees.set(employee.id, {
-					name: AppUrlActivityComponent.nameOf(employee),
-					avatarUrl: employee.user?.image?.fullUrl || employee.user?.imageUrl
+		const promise = (async () => {
+			const names = new Map<string, { name: string; avatarUrl?: string }>();
+			const user = this.store.user;
+			if (user?.employee?.id) {
+				names.set(user.employee.id, {
+					name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || user.email,
+					avatarUrl: user.image?.fullUrl || user.imageUrl
 				});
 			}
-		} catch {
-			// Without access to the employee list, only the user's own name is known.
-		}
+			let succeeded = false;
+			try {
+				const { items } = await firstValueFrom(
+					this.employeesService.getAll(['user'], { organizationId, tenantId } as any)
+				);
+				for (const employee of items || []) {
+					names.set(employee.id, {
+						name: AppUrlActivityComponent.nameOf(employee),
+						avatarUrl: employee.user?.image?.fullUrl || employee.user?.imageUrl
+					});
+				}
+				succeeded = true;
+			} catch {
+				// Without access to the employee list, only the user's own name is known.
+			} finally {
+				if (this._employeesLoad?.promise === promise) this._employeesLoad = null;
+			}
+			// Published only while that organization is still the one on screen.
+			if (this.organization?.id !== organizationId) return;
+			this._employees = names;
+			if (succeeded) this._employeesFor = organizationId;
+			// The member groups read these names: rebuild them now they have arrived.
+			this._derived = null;
+		})();
+		this._employeesLoad = { organizationId, promise };
+		return promise;
 	}
 
 	/**
@@ -303,18 +330,36 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		const sequence = this._loadSequence;
 		this.setPages(row.title, { loading: true, failed: false, value: [] });
 		try {
-			const request: IGetActivitiesInput = {
-				...this.payloads$.getValue(),
-				types: [ActivityType.URL],
-				titles: [row.title]
-			};
-			const activities = await this.activityService.getActivities(request);
+			const activities = await this.fetchSitePages(row.title);
 			if (sequence !== this._loadSequence || !this.pages.has(row.title)) return;
-			this.setPages(row.title, { loading: false, failed: false, value: this.toPages(activities || []) });
+			this.setPages(row.title, { loading: false, failed: false, value: this.toPages(activities) });
 		} catch {
 			if (sequence !== this._loadSequence || !this.pages.has(row.title)) return;
 			this.setPages(row.title, { loading: false, failed: true, value: [] });
 		}
+	}
+
+	/**
+	 * Every activity record of one site over the period. The endpoint returns its
+	 * first 30 records unless paged, so the pages are read until one comes back
+	 * short: the breakdown and its percentages then cover the same time as the
+	 * site's total.
+	 */
+	private async fetchSitePages(title: string): Promise<IActivity[]> {
+		const all: IActivity[] = [];
+		for (let page = 0; page < PAGES_MAX_PAGES; page++) {
+			const request: IGetActivitiesInput = {
+				...this.payloads$.getValue(),
+				types: [ActivityType.URL],
+				titles: [title],
+				limit: PAGES_PAGE_SIZE,
+				page
+			};
+			const batch = (await this.activityService.getActivities(request)) || [];
+			all.push(...batch);
+			if (batch.length < PAGES_PAGE_SIZE) break;
+		}
+		return all;
 	}
 
 	private setPages(title: string, value: Loadable<IPageRow[]>): void {
@@ -352,7 +397,13 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	private get derived() {
 		const from = this.activities;
 		const search = this.search.trim().toLowerCase();
-		if (this._derived?.from === from && this._derived.search === search && this._derived.sortBy === this.sortBy) {
+		const timeFormat = this.timeFormat;
+		if (
+			this._derived?.from === from &&
+			this._derived.search === search &&
+			this._derived.sortBy === this.sortBy &&
+			this._derived.timeFormat === timeFormat
+		) {
 			return this._derived;
 		}
 
@@ -386,6 +437,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			from,
 			search,
 			sortBy: this.sortBy,
+			timeFormat,
 			items,
 			members,
 			hours,
@@ -441,6 +493,8 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	 * in the viewer's zone, as before; a row without an hour falls into its day.
 	 */
 	private groupByHour(rows: IDailyActivity[]): IHourGroup[] {
+		// The clock the filters (or the organization) are set to, as the old dateTimeFormat pipe used.
+		const clock = this.timeFormat === TimeFormatEnum.FORMAT_24_HOURS ? 'HH:mm' : 'hh:mm A';
 		const groups = new Map<string, { at: moment.Moment; hasHour: boolean; rows: IDailyActivity[] }>();
 		for (const row of rows) {
 			const day = moment.utc(row.date).format('YYYY-MM-DD');
@@ -459,12 +513,22 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 					key,
 					label: group.at.format('dddd, ll'),
 					sublabel: group.hasHour
-						? `${group.at.format('LT')} – ${group.at.clone().add(1, 'hour').format('LT')}`
+						? `${group.at.format(clock)} – ${group.at.clone().add(1, 'hour').format(clock)}`
 						: undefined,
 					duration,
 					items: this.rankItems(group.rows, duration)
 				};
 			});
+	}
+
+	/**
+	 * 12- or 24-hour clock: the one picked in the filter row, else the
+	 * organization's setting, else 12-hour — the old dateTimeFormat pipe's default.
+	 */
+	get timeFormat(): TimeFormatEnum {
+		return (this.filters?.timeFormat ||
+			this.organization?.timeFormat ||
+			TimeFormatEnum.FORMAT_12_HOURS) as TimeFormatEnum;
 	}
 
 	/* ── View helpers ────────────────────────────────────────────────────── */
