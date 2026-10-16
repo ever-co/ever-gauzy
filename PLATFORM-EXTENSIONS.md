@@ -109,9 +109,10 @@ reading only this repository sees the code without its reasoning.
 
 Two records of the design's promises do live here, because a gate keeps each
 one true against the composed schema:
-[`docs/platform-extensions/design-name-triage.md`](docs/platform-extensions/design-name-triage.md)
+[`tools/scripts/design-name-triage.md`](tools/scripts/design-name-triage.md)
 — every root field the design named and nothing served, with its decision
-(`tools/scripts/design-name-triage-check.mjs`).
+(`tools/scripts/design-name-triage-check.mjs`), published at
+[docs.gauzy.co](https://docs.gauzy.co/platform-extensions/design-name-triage/).
 
 ## Verifying it
 

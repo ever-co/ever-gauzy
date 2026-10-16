@@ -22,8 +22,7 @@ import { WarehouseZoneService } from './warehouse-zone.service';
 import {
 	CreateWarehouseZoneDTO,
 	ReorderWarehouseZonesDTO,
-	UpdateWarehouseZoneDTO,
-	WarehouseZoneDTO
+	UpdateWarehouseZoneDTO
 } from './dto';
 
 /**
@@ -102,7 +101,8 @@ export class WarehouseZoneController extends CrudController<WarehouseZone> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: UpdateWarehouseZoneDTO & WarehouseZoneDTO
+		// One class, so the pipe sees it (see the bin route; SEC-D-12).
+		@Body() entity: UpdateWarehouseZoneDTO
 	): Promise<WarehouseZone> {
 		return await this.warehouseZoneService.update(id, entity as any);
 	}

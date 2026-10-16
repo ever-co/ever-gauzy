@@ -32,6 +32,7 @@ import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activep
 import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
+import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -94,6 +95,12 @@ export const plugins = [
 	// EVER_CONNECT_ENABLED=true; when off it is not loaded at all (no route, no timer, no outbound
 	// request). Any other value keeps it off and is logged once.
 	...(isEverConnectEnabled(process.env, (message) => console.warn(message)) ? [EverConnectPlugin] : []),
+
+	// Ever Works integration (two-way sync of tasks, teams, goals, missions, ideas, agents, inbox and
+	// docs with an Ever Works tenant). Off unless EVER_WORKS_ENABLED=true; when off it is not loaded at
+	// all (no route, no table, no timer, no outbound request). Any other value keeps it off and is
+	// logged once.
+	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

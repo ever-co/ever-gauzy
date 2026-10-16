@@ -224,6 +224,34 @@ function asCaller(options: {
 	);
 }
 
+/**
+ * A GraphQL field's execution context: the arguments are what the guard reads, `switchToHttp()` is the root value.
+ */
+function createGraphqlContext(
+	permissions: PermissionsEnum[],
+	args: Record<string, unknown>,
+	target?: { entity: unknown; param: string; source: 'args' }
+): ExecutionContext {
+	const handler = function resolverStub() {
+		/* resolver */
+	};
+	class ResolverStub {}
+	Reflect.defineMetadata(PERMISSIONS_METADATA, permissions, handler);
+	if (target) {
+		Reflect.defineMetadata(ORGANIZATION_POLICY_TARGET_METADATA, target, handler);
+	}
+	const values = [undefined, args, { req: {} }, {}];
+
+	return {
+		getType: () => 'graphql',
+		getHandler: () => handler,
+		getClass: () => ResolverStub,
+		getArgs: () => values,
+		getArgByIndex: (index: number) => values[index],
+		switchToHttp: () => ({ getRequest: () => values[0] })
+	} as unknown as ExecutionContext;
+}
+
 describe('OrganizationPermissionGuard', () => {
 	beforeEach(() => {
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -849,6 +877,71 @@ describe('OrganizationPermissionGuard', () => {
 
 			await expect(guard.canActivate(context)).resolves.toBe(false);
 			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * SEC-A-05: the policy (GHSA-rmq9-85v7-f365) was not enforced on GraphQL. The guard read organizations and target
+	 * records from the HTTP request only — on a GraphQL field that is the root value, which names none — so it fell
+	 * back to the caller's own organization: an ADMIN of A (manual time allowed) and B (forbidden) wrote manual time
+	 * into B, or deleted B's logs, on A's policy.
+	 */
+	describe('GraphQL fields (SEC-A-05)', () => {
+		it('evaluates the organization the input names, not the one the caller is pinned to', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
+
+			// addManualTime(input: { organizationId: <denied> }) — passed on the pinned, permissive organization.
+			const denied = createGraphqlContext([PermissionsEnum.ALLOW_MANUAL_TIME], { input: { organizationId: 'org-deny' } });
+			await expect(guard.canActivate(denied)).resolves.toBe(false);
+
+			const allowed = createGraphqlContext([PermissionsEnum.ALLOW_MANUAL_TIME], { input: { organizationId: 'org-allow' } });
+			await expect(guard.canActivate(allowed)).resolves.toBe(true);
+		});
+
+		it('reads a top-level organizationId argument', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
+
+			const context = createGraphqlContext([PermissionsEnum.ALLOW_DELETE_TIME], { ids: [], organizationId: 'org-deny' });
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+		});
+
+		it('evaluates the organization of the records the input targets', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
+
+			// deleteTimeLogs(input: { logIds: [<a log of the denied organization>], organizationId: <permissive> })
+			const target = { entity: TimeLogStub, param: 'input.logIds', source: 'args' as const };
+			const denied = createGraphqlContext(
+				[PermissionsEnum.ALLOW_DELETE_TIME],
+				{ input: { logIds: ['log-in-deny'], organizationId: 'org-allow' } },
+				target
+			);
+			await expect(guard.canActivate(denied)).resolves.toBe(false);
+
+			const allowed = createGraphqlContext(
+				[PermissionsEnum.ALLOW_DELETE_TIME],
+				{ input: { logIds: ['log-in-allow'], organizationId: 'org-allow' } },
+				target
+			);
+			await expect(guard.canActivate(allowed)).resolves.toBe(true);
+		});
+
+		it('reads a single id at an input path, and refuses a record of another tenant', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
+
+			const target = { entity: TimeLogStub, param: 'input.id', source: 'args' as const };
+			await expect(
+				guard.canActivate(createGraphqlContext([PermissionsEnum.ALLOW_MODIFY_TIME], { input: { id: 'log-in-deny' } }, target))
+			).resolves.toBe(false);
+			await expect(
+				guard.canActivate(createGraphqlContext([PermissionsEnum.ALLOW_MODIFY_TIME], { input: { id: 'log-foreign' } }, target))
+			).resolves.toBe(false);
+			await expect(
+				guard.canActivate(createGraphqlContext([PermissionsEnum.ALLOW_MODIFY_TIME], { input: { id: 'log-in-allow' } }, target))
+			).resolves.toBe(true);
 		});
 	});
 });

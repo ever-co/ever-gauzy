@@ -27,9 +27,13 @@
 
 extend type Query {
 	"""
-	The activity log of the caller's tenant, newest first.
+	The activity log of one organization the caller belongs to, newest first.
 	"""
 	activityLogs(
+		"""
+		The organization whose log is read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+		"""
+		organizationId: ID
 		filter: ActivityLogFilter
 		sort: [ActivityLogSort!]
 		page: PageInput

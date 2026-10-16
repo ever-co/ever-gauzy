@@ -71,6 +71,12 @@ export interface GraphqlConfigurationOptions {
 	 * @description Overridable through the environment.
 	 */
 	maxBatchSize?: number;
+
+	/**
+	 * Maximum number of lexical tokens in one GraphQL document; the parser refuses a larger one before validation.
+	 * @description Overridable through the environment (`GRAPHQL_MAX_TOKENS`).
+	 */
+	maxTokens?: number;
 }
 
 /**

@@ -15,6 +15,7 @@ import { buildSchema, parse, printSchema } from 'graphql';
 import { IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UserController } from './user.controller';
 import { UserModule } from './user.module';
@@ -102,6 +103,7 @@ function surfaces() {
 		findAll: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		getUserByEmail: jest.fn().mockResolvedValue(ROWS[0]),
+		getUserByEmailInTenant: jest.fn().mockResolvedValue(ROWS[0]),
 		findMeUser: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		updateProfile: jest.fn().mockResolvedValue(ROWS[0]),
@@ -118,7 +120,7 @@ function surfaces() {
 		userService,
 		factoryResetService,
 		commandBus,
-		resolver: new UserResolver(userService as never, factoryResetService as never, commandBus as never)
+		resolver: new UserResolver(userService as never, factoryResetService as never, commandBus as never, {} as never)
 	};
 }
 
@@ -313,6 +315,7 @@ describe('UserResolver — the SDL declares the capabilities the REST routes ser
 		// as the list and the page is what the connection answers with.
 		expect(ownedRootFields('Query')).toEqual(['me', 'user', 'userByEmail', 'userCount', 'users']);
 		expect(ownedRootFields('Mutation')).toEqual([
+			'bulkCreateUsers',
 			'createUser',
 			'deleteUser',
 			'factoryReset',
@@ -653,16 +656,22 @@ describe('UserResolver — one concept, two protocols, the same operations', () 
 		expect(await resolver.user(SECOND)).toBeNull();
 	});
 
-	it('reads one account by address through the same service method the REST route calls', async () => {
+	it('reads one account by address in the caller’s tenant, through the same service method the REST route calls', async () => {
+		// SEC-E-01: the field called the GLOBAL `getUserByEmail` (documented as for the pre-authentication flows only)
+		// and answered any tenant's user profile — and an account-existence oracle — to anyone with ORG_USERS_VIEW.
+		// `GET /user/email/:email` was already fixed to the tenant-scoped look-up.
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-a');
 		const { resolver, userService } = surfaces();
 
 		expect(await resolver.userByEmail('ada@example.com')).toBe(ROWS[0]);
-		expect(userService.getUserByEmail).toHaveBeenCalledWith('ada@example.com');
+		expect(userService.getUserByEmailInTenant).toHaveBeenCalledWith('ada@example.com', 'tenant-a');
+		expect(userService.getUserByEmail).not.toHaveBeenCalled();
 	});
 
-	it('answers null for an address no account holds, which is what the delivered read answers', async () => {
+	it('answers null for an address no account of the caller’s tenant holds, which is what the delivered read answers', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-a');
 		const { resolver, userService } = surfaces();
-		userService.getUserByEmail.mockResolvedValueOnce(null);
+		userService.getUserByEmailInTenant.mockResolvedValueOnce(null);
 
 		expect(await resolver.userByEmail('nobody@example.com')).toBeNull();
 	});
@@ -786,6 +795,7 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'me', route: 'findMe' },
 	{ field: 'userCount', route: 'getCount' },
 	{ field: 'createUser', route: 'create' },
+	{ field: 'bulkCreateUsers', route: 'bulk' },
 	{ field: 'updateUser', route: 'update' },
 	{ field: 'updatePreferredLanguage', route: 'updatePreferredLanguage' },
 	{ field: 'updatePreferredComponentLayout', route: 'updatePreferredComponentLayout' },
@@ -995,3 +1005,5 @@ describe('UserResolver — a capability that is switched off is not served', () 
 		await expect(guard.canActivate(graphqlContext('users'))).resolves.toBe(true);
 	});
 });
+
+afterEach(() => jest.restoreAllMocks());

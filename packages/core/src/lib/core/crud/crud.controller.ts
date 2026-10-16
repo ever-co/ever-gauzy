@@ -153,7 +153,19 @@ export abstract class CrudController<T extends BaseEntity> {
 		@Body() entity: QueryDeepPartialEntity<T>,
 		...options: any[]
 	): Promise<any> {
-		return this.crudService.update(id, entity); // FIXME: https://github.com/typeorm/typeorm/issues/1544
+		// Members a body never writes: the row's identity (`id` would rewrite the primary key), its tenant (the
+		// service keeps the row in the caller's tenant as well — SEC-A-03), and `deletedAt`, which would retire the
+		// row past whatever guards its delete route runs (SEC-D-12).
+		const { id: _id, deletedAt: _deletedAt, tenantId: _tenantId, tenant: _tenant, ...patch } = (entity ?? {}) as Record<
+			string,
+			unknown
+		>;
+		void _id;
+		void _deletedAt;
+		void _tenantId;
+		void _tenant;
+
+		return this.crudService.update(id, patch as QueryDeepPartialEntity<T>); // FIXME: https://github.com/typeorm/typeorm/issues/1544
 	}
 
 	/**

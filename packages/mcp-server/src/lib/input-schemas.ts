@@ -124,7 +124,7 @@ export const ActivityLogEntityEnum = z.enum([
 	'DEAL',
 	'CANDIDATE'
 ]);
-export const ActorTypeEnum = z.enum(['System', 'User']);
+export const ActorTypeEnum = z.enum(['System', 'User', 'Agent']);
 export const SortOrderEnum = z.enum(['ASC', 'DESC']);
 export const ActivityLogSortByEnum = z.enum(['createdAt', 'updatedAt', 'entity', 'action']);
 

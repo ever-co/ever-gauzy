@@ -71,6 +71,16 @@ extend type Mutation {
 	createOrganization(input: CreateOrganizationInput!): Organization!
 
 	"""
+	Files a batch of organizations — each item exactly as `createOrganization` files one, with everything
+	that command creates beside it — and answers one outcome per item. The batch `POST /organization/bulk`
+	applies, under the same permission and cap (20: each organization is created with its defaults).
+	A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+	`BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+	so the batch cannot be rolled back as one.
+	"""
+	bulkCreateOrganizations(input: BulkCreateOrganizationsInput!): BulkCreateOrganizationsPayload!
+
+	"""
 	Replaces the stated facts of an organization. The visibility flags of the public profile are
 	written from the body as stated, so a member of that family the caller leaves out is turned off
 	rather than left as it is — see `UpdateOrganizationInput`.

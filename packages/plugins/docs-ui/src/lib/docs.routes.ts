@@ -6,13 +6,15 @@ import { DOCS_PAGE_LINK, DOCS_SECTIONS_LOCATION } from './docs.constants';
 import { docsFeatureGuard } from './guards/docs-feature.guard';
 import { docsUnsavedChangesGuard } from './guards/docs-unsaved-changes.guard';
 import { DocsBrowsePageComponent } from './pages/browse/docs-browse-page.component';
+import { DocumentFilePageComponent } from './pages/file-view/document-file-page.component';
 import { ReviewPageComponent } from './pages/review/review-page.component';
 
 /**
  * Builds the internal route table for /pages/documents: shell (tree column +
  * router-outlet + detail panel host) with the browse list, the lazily loaded
  * page editor (the full TipTap editor stack is one chunk behind this route —
- * spec 05 §12), the review queue, and any routes other plugins contributed at
+ * spec 05 §12), one document on its own at full width (how a favorite opens an
+ * uploaded file), the review queue, and any routes other plugins contributed at
  * the 'documents-sections' location.
  */
 export function createDocsRoutes(registry: PageRouteRegistryService): Route[] {
@@ -48,6 +50,11 @@ export function createDocsRoutes(registry: PageRouteRegistryService): Route[] {
 					// flush fails — `ngOnDestroy`'s fire-and-forget flush cannot (spec 05 §9.2).
 					canDeactivate: [docsUnsavedChangesGuard],
 					data: { title: 'DOCS.EDITOR.TITLE' }
+				},
+				{
+					path: 'file/:id',
+					component: DocumentFilePageComponent,
+					data: { title: 'DOCS.TITLE' }
 				},
 				{
 					path: 'review',

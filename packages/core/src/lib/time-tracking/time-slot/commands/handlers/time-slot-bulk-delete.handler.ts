@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import * as chalk from 'chalk';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
@@ -134,7 +135,10 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	/**
 	 * Conditionally deletes time slots based on associated time logs.
 	 *
-	 * If a time slot only has one time log and that time log matches the provided one, the time slot is deleted.
+	 * A time slot is deleted when the provided time log is the ONLY time log that holds it; a slot another log still
+	 * holds is that log's time and stays, and a slot no log holds is not this log's to delete. Every slot of the log
+	 * is considered — the loop used to return after the first one it removed, leaving the rest of the log's slots
+	 * behind, and it read `timeLogs[0].id` before checking the slot had a log at all.
 	 *
 	 * @param timeSlots - The time slots to conditionally delete.
 	 * @param timeLog - The specific time log to check for deletion.
@@ -146,31 +150,21 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		timeLog: ITimeLog,
 		forceDelete: boolean
 	): Promise<ITimeSlot[]> {
-		console.log(`conditional ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+		const deletable = timeSlots.filter(
+			({ timeLogs = [] }) => timeLogs.length === 1 && timeLogs[0]?.id === timeLog.id
+		);
 
-		const matchingTimeSlots: ITimeSlot[] = [];
+		console.log(
+			(forceDelete ? chalk.red : chalk.yellow)(
+				`--------------------${forceDelete ? 'hard' : 'soft'} removing time slots--------------------`
+			),
+			deletable.map((timeSlot) => timeSlot.id)
+		);
 
-		// Loop through each time slot
-		for await (const timeSlot of timeSlots) {
-			const { timeLogs = [] } = timeSlot;
-			const [firstTimeLog] = timeLogs;
-
-			console.log('Matching TimeLog ID:', firstTimeLog?.id === timeLog.id);
-			console.log('TimeSlots Ids Will Be Deleted:', timeSlot.id);
-
-			if (timeLogs.length === 1) {
-				const [firstTimeLog] = timeLogs;
-				if (firstTimeLog.id === timeLog.id) {
-					// If the time slot has only one time log and it matches the provided time log, delete the time slot
-					matchingTimeSlots.push(timeSlot);
-				}
-			}
-		}
-
-		if (isEmpty(matchingTimeSlots)) {
+		if (isEmpty(deletable)) {
 			return [];
 		}
 
-		return await this.bulkDeleteTimeSlots(matchingTimeSlots, forceDelete);
+		return await this.bulkDeleteTimeSlots(deletable, forceDelete);
 	}
 }

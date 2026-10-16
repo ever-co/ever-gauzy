@@ -22,7 +22,7 @@
  * - `drop`      — clearly not needed; listed for the owner in the PR that recorded it rather than dropped silently.
  *
  * The design documents are not in this repository (`PLATFORM-EXTENSIONS.md`, "Where the design lives"); the amendments
- * the `naming`, `retired` and `drop` rows imply are recorded in `docs/platform-extensions/design-name-triage.md`, which
+ * the `naming`, `retired` and `drop` rows imply are recorded in `tools/scripts/design-name-triage.md`, which
  * `--write` regenerates from the table below (`--markdown` prints it).
  *
  * Run from the repository root: `node tools/scripts/design-name-triage-check.mjs [--write | --markdown]`
@@ -38,7 +38,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
  * The number of `build` rows: the missing capabilities not yet served. It may only shrink — a delivered capability
  * moves its row to `delivered` and lowers this number in the same change.
  */
-const BUILD_BASELINE = 7;
+const BUILD_BASELINE = 0;
 
 /** @type {{ name: string, kind: 'Query'|'Mutation', decision: 'delivered'|'naming'|'retired'|'build'|'drop', served: string[], note: string }[]} */
 const TRIAGE = [
@@ -80,6 +80,19 @@ const TRIAGE = [
 	{ name: 'softDeleteTask', kind: 'Mutation', decision: 'delivered', served: [], note: 'the soft-delete pair' },
 	{ name: 'taskByNumber', kind: 'Query', decision: 'delivered', served: [], note: 'task by its project number' },
 	{ name: 'termsAcceptances', kind: 'Query', decision: 'delivered', served: [], note: 'terms-acceptance surface' },
+	{
+		name: 'upcomingSubscriptionBilling',
+		kind: 'Query',
+		decision: 'delivered',
+		served: [],
+		note: 'a preview of the next billing, priced by the function the cycle bills with; REST `GET /subscriptions/:id/upcoming-billing`'
+	},
+	{ name: 'bulkCreateTags', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /tags/bulk` + `bulkCreateTags`, every item the single create (`POST /tags` / `createTag`)' },
+	{ name: 'bulkCreateTasks', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /tasks/bulk` + `bulkCreateTasks`, every item the single create (`POST /tasks` / `createTask`), numbered by its handler one item at a time' },
+	{ name: 'bulkCreateExpenses', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /expense/bulk` + `bulkCreateExpenses`, every item the single create (`POST /expense` / `createExpense`) on the bulk kernel' },
+	{ name: 'bulkCreateTimeLogs', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /timesheet/time-log/bulk` + `bulkCreateTimeLogs`, every item the manual-time create (`addManualTime`: policy guard, employee, date and overlap rules)' },
+	{ name: 'bulkCreateOrganizations', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /organization/bulk` + `bulkCreateOrganizations`, every item the single create (`OrganizationCreateCommand`)' },
+	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'delivered', served: [], note: 'delivered: `POST /user/bulk` + `bulkCreateUsers`, every item the single create (`UserCreateCommand`, its role checks), ids only in the answer' },
 
 	// — Naming: the platform's resources carry the REST-aligned `Organization*` names (§7.68 class 4).
 	{ name: 'createDepartment', kind: 'Mutation', decision: 'naming', served: ['createOrganizationDepartment'], note: 'REST `/organization-department`' },
@@ -167,14 +180,7 @@ const TRIAGE = [
 	{ name: 'createShippingLabel', kind: 'Mutation', decision: 'retired', served: ['requestFulfillmentLabel'], note: 'design-retired; a carrier label is requested for a shipment' },
 	{ name: 'setProductVariantPrice', kind: 'Mutation', decision: 'retired', served: ['updateProductVariantPrice', 'bulkUpsertProductPrices'], note: 'design-retired' },
 
-	// — Missing capabilities: neither surface serves them.
-	{ name: 'bulkCreateExpenses', kind: 'Mutation', decision: 'build', served: [], note: 'no `POST /expense/bulk` either; build both surfaces on the bulk kernel (`BulkOperation`/`BulkExecutor`)' },
-	{ name: 'bulkCreateOrganizations', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either' },
-	{ name: 'bulkCreateTags', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either' },
-	{ name: 'bulkCreateTasks', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either' },
-	{ name: 'bulkCreateTimeLogs', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `addManualTime` one at a time' },
-	{ name: 'bulkCreateUsers', kind: 'Mutation', decision: 'build', served: [], note: 'no REST bulk route either; `createEmployeesBulk` covers employees only' },
-	{ name: 'upcomingSubscriptionBilling', kind: 'Query', decision: 'build', served: [], note: 'a preview of the next billing; no REST route either' },
+	// — Missing capabilities: none left — every name triaged `build` is `delivered` above.
 
 	// — Not needed.
 	{
@@ -192,8 +198,15 @@ const TRIAGE = [
  */
 const AUDITED_NAMES = 81;
 
-/** Where the human-readable copy of this table lives; the gate refuses a copy that has drifted from the table. */
-const MARKDOWN = join(ROOT, 'docs', 'platform-extensions', 'design-name-triage.md');
+/**
+ * Where the human-readable copy of this table lives; the gate refuses a copy that has drifted from the table. The
+ * same page is published from `ever-co/ever-gauzy-docs` (`PUBLISHED`): refresh that copy from `--markdown` when the
+ * table changes.
+ */
+const MARKDOWN = join(ROOT, 'tools', 'scripts', 'design-name-triage.md');
+
+/** The published copy, in `ever-co/ever-gauzy-docs` (the hostname is left to the docs: no Ever host in code here). */
+const PUBLISHED = 'website/docs/platform-extensions/design-name-triage.md';
 
 const schema = readFileSync(SDL, 'utf8').replace(/"""[\s\S]*?"""/g, '');
 
@@ -220,7 +233,7 @@ const code = (name) => `\`${name}\``;
 /**
  * The human-readable copy of the table: prose wrapped at 80 columns, then one table row per name.
  *
- * @returns The whole of `docs/platform-extensions/design-name-triage.md`.
+ * @returns The whole of `tools/scripts/design-name-triage.md`.
  */
 function renderMarkdown() {
 	const backlog = TRIAGE.filter((row) => row.decision === 'build').map((row) => code(row.name));
@@ -270,6 +283,11 @@ function renderMarkdown() {
 				'`static-checks.yml` — fails when the page and the table differ, when a `delivered` name stops being ' +
 				'served, when an equivalent is not served as the same kind, when a name that is not `delivered` ' +
 				`becomes served, when one of the ${AUDITED_NAMES} rows disappears, and when the build backlog grows.`
+		),
+		wrap(
+			'**Where it lives.** The gate checks `tools/scripts/design-name-triage.md` in `ever-co/ever-gauzy`; ' +
+				`the documentation site publishes the same page from \`ever-co/ever-gauzy-docs\` (\`${PUBLISHED}\`), ` +
+				'and `node tools/scripts/design-name-triage-check.mjs --markdown` prints it.'
 		),
 		wrap(
 			`**Totals:** ${TRIAGE.length} names — **${count('delivered')} delivered**, ` +
