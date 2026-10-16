@@ -42,7 +42,7 @@ export class EverWorksSyncLogService {
 			action: input.action.slice(0, 64),
 			status: input.status,
 			message: input.message ? input.message.slice(0, 2000) : null,
-			details: input.details ? JSON.stringify(input.details).slice(0, 20_000) : null
+			details: input.details ? serializeDetails(input.details) : null
 		} as never);
 	}
 
@@ -54,4 +54,17 @@ export class EverWorksSyncLogService {
 		const resolved = await repository.delete({ createdAt: LessThan(cutoff), status: 'conflict', resolvedAt: LessThan(now) } as never);
 		return (old.affected ?? 0) + (resolved.affected ?? 0);
 	}
+}
+
+/** The most a log entry's `details` holds. */
+export const SYNC_LOG_DETAILS_MAX = 20_000;
+
+/**
+ * `details` as JSON, always valid: above {@link SYNC_LOG_DETAILS_MAX} characters a placeholder records
+ * the size and the start of the JSON (as a string), so a consumer's `JSON.parse` never fails on a cut.
+ */
+export function serializeDetails(details: unknown): string {
+	const json = JSON.stringify(details);
+	if (json.length <= SYNC_LOG_DETAILS_MAX) return json;
+	return JSON.stringify({ truncated: true, length: json.length, preview: json.slice(0, 2_000) });
 }

@@ -92,28 +92,38 @@ export class EverWorksOutboundPusher {
 		}
 		// Claim it first: from here a new trigger for this record opens a new pending change instead of
 		// merging into this one, so an edit made during the push is pushed after it, not lost.
+		// The claim is its own token: the whole second its hold ends at (stored exactly on every dialect,
+		// MySQL DATETIME included). Every result below is written only while that claim still stands, so a
+		// push whose claim lapsed and was taken over never overwrites the newer push.
+		const claimUntil = new Date(Math.ceil((now.getTime() + OUTBOUND_CLAIM_MS) / 1000) * 1000);
 		const claimed = await repository.update(
 			{ id: change.id, status: change.status },
-			{ status: EverWorksOutboundStatus.PUSHING, availableAt: new Date(now.getTime() + OUTBOUND_CLAIM_MS) }
+			{ status: EverWorksOutboundStatus.PUSHING, availableAt: claimUntil }
 		);
 		if (!claimed.affected) return false; // another process took it
+		const ours = { id: change.id, status: EverWorksOutboundStatus.PUSHING, availableAt: claimUntil };
+		const settle = async (values: Record<string, unknown>): Promise<boolean> => {
+			const result = await repository.update(ours as never, values as never);
+			if (!result.affected) {
+				this.logger.warn(`Connection ${connection.id}: the claim on the ${change.entityType} change of ${change.gauzyId} lapsed; its result was dropped.`);
+				return false;
+			}
+			return true;
+		};
 		try {
 			const outcome = await handler.push(change, { connection, mapping });
 			if (outcome.status === 'deferred') {
-				await repository.update(
-					{ id: change.id },
-					{ status: EverWorksOutboundStatus.DEFERRED, lastError: outcome.message.slice(0, 2000), availableAt: new Date(now.getTime() + (outcome.retryInMs ?? OUTBOUND_DEFER_MS)) }
-				);
+				await settle({
+					status: EverWorksOutboundStatus.DEFERRED,
+					lastError: outcome.message.slice(0, 2000),
+					availableAt: new Date(now.getTime() + (outcome.retryInMs ?? OUTBOUND_DEFER_MS))
+				});
 				return false;
 			}
-			await repository.update(
-				{ id: change.id },
-				{
-					status: outcome.status === 'pushed' ? EverWorksOutboundStatus.PUSHED : EverWorksOutboundStatus.SKIPPED,
-					lastError: outcome.status === 'skipped' ? outcome.message.slice(0, 2000) : null
-				} as never
-			);
-			return true;
+			return await settle({
+				status: outcome.status === 'pushed' ? EverWorksOutboundStatus.PUSHED : EverWorksOutboundStatus.SKIPPED,
+				lastError: outcome.status === 'skipped' ? outcome.message.slice(0, 2000) : null
+			});
 		} catch (error) {
 			const attempts = (change.attempts ?? 0) + 1;
 			const retryable = error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable);
@@ -126,16 +136,13 @@ export class EverWorksOutboundPusher {
 						? `${error.name}: ${error.message}`
 						: 'error';
 			const retryAfterMs = error instanceof EverWorksApiError && error.retryAfterSeconds !== null ? error.retryAfterSeconds * 1000 : 0;
-			await repository.update(
-				{ id: change.id },
-				{
-					status: dead ? EverWorksOutboundStatus.DEAD : EverWorksOutboundStatus.FAILED,
-					attempts,
-					lastError: reason.slice(0, 2000),
-					availableAt: new Date(now.getTime() + Math.max(retryAfterMs, Math.min(60 * 60_000, 2 ** attempts * 1000)))
-				}
-			);
-			if (dead) {
+			const written = await settle({
+				status: dead ? EverWorksOutboundStatus.DEAD : EverWorksOutboundStatus.FAILED,
+				attempts,
+				lastError: reason.slice(0, 2000),
+				availableAt: new Date(now.getTime() + Math.max(retryAfterMs, Math.min(60 * 60_000, 2 ** attempts * 1000)))
+			});
+			if (dead && written) {
 				await this.log.write({
 					tenantId: change.tenantId as ID,
 					organizationId: change.organizationId as ID,

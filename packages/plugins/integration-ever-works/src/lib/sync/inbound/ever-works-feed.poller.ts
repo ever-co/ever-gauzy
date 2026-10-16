@@ -4,7 +4,8 @@ import { ID } from '@gauzy/contracts';
 import { EverWorksApiError } from '../../client/ever-works-client';
 import { EverWorksConnection, EverWorksConnectionStatus } from '../../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
-import { compareSeq, parseEverWorksEnvelope } from './ever-works-envelope';
+import type { EverWorksEventEnvelope } from '../../client/ever-works-client.types';
+import { compareSeq, EverWorksEnvelopeError, parseEverWorksEnvelope } from './ever-works-envelope';
 import { EverWorksInboundStore } from './ever-works-inbound.store';
 
 /** Poll every minute when no webhook arrived for 5 minutes, otherwise every 10 minutes (plan 03 §C.4). */
@@ -19,8 +20,12 @@ export interface EverWorksFeedPollResult {
 	polled: boolean;
 	stored: number;
 	duplicates: number;
+	/** Malformed events passed (logged, never stored). */
+	invalid?: number;
 	cursor: string | null;
 	expired?: boolean;
+	/** The lease moved to another process during the poll: the cursor was not saved. */
+	leaseLost?: boolean;
 }
 
 /**
@@ -49,12 +54,18 @@ export class EverWorksFeedPoller {
 		return now.getTime() - new Date(last).getTime() >= (quiet ? FEED_POLL_FAST_MS : FEED_POLL_SLOW_MS);
 	}
 
-	async poll(connection: EverWorksConnection): Promise<EverWorksFeedPollResult> {
+	/**
+	 * Reads the feed on from the saved cursor. With `owner` (the sync loop's lease holder) the cursor is
+	 * saved only while that process still holds the connection's lease; events stored meanwhile are
+	 * deduplicated, so a stale poll never moves another owner's cursor.
+	 */
+	async poll(connection: EverWorksConnection, owner?: string): Promise<EverWorksFeedPollResult> {
 		if (connection.status !== EverWorksConnectionStatus.ACTIVE) return { polled: false, stored: 0, duplicates: 0, cursor: connection.feedCursor ?? null };
 		const client = this.connections.client(connection);
 		let cursor = connection.feedCursor ?? null;
 		let stored = 0;
 		let duplicates = 0;
+		let invalid = 0;
 		try {
 			if (cursor === null) {
 				// Never polled: follow from now; history is the initial sync's job (plan 03 §C.6).
@@ -64,7 +75,20 @@ export class EverWorksFeedPoller {
 				const result = await client.events({ after: cursor, limit: 500, excludeOrigin: `gauzy:${connection.id}` });
 				let last: string | null = cursor;
 				for (const raw of result.events ?? []) {
-					const envelope = parseEverWorksEnvelope(raw);
+					let envelope: EverWorksEventEnvelope;
+					try {
+						envelope = parseEverWorksEnvelope(raw);
+					} catch (error) {
+						if (!(error instanceof EverWorksEnvelopeError)) throw error;
+						// One malformed event must not stop the feed: it is logged and passed (by its seq when
+						// that is readable), and the events after it are read as usual.
+						invalid++;
+						const seq = (raw as { seq?: unknown } | null)?.seq;
+						const readable = typeof seq === 'string' && /^\d{1,20}$/.test(seq) ? seq : null;
+						if (readable && (last === null || compareSeq(readable, last) > 0)) last = readable;
+						this.logger.warn(`Connection ${connection.id}: a malformed feed event was passed (${error.message.slice(0, 200)}).`);
+						continue;
+					}
 					if (envelope.tenantId !== connection.ewTenantId) continue;
 					const { duplicate } = await this.inbound.record(connection, envelope, 'feed');
 					if (duplicate) duplicates++;
@@ -74,25 +98,32 @@ export class EverWorksFeedPoller {
 				cursor = result.nextCursor && (last === null || compareSeq(result.nextCursor, last) >= 0) ? result.nextCursor : last;
 				if (!result.hasMore) break;
 			}
-			await this.save(connection.id as ID, { feedCursor: cursor, lastFeedPollAt: new Date() });
-			return { polled: true, stored, duplicates, cursor };
+			const saved = await this.save(connection.id as ID, { feedCursor: cursor, lastFeedPollAt: new Date() }, owner);
+			return { polled: true, stored, duplicates, invalid, cursor, ...(saved ? {} : { leaseLost: true }) };
 		} catch (error) {
 			if (error instanceof EverWorksApiError && error.status === 410) {
 				const head = String((await client.whoami().catch(() => null))?.feedHead ?? cursor ?? '0');
-				await this.save(connection.id as ID, { feedCursor: head, lastFeedPollAt: new Date(), resyncRequestedAt: new Date() });
+				await this.save(connection.id as ID, { feedCursor: head, lastFeedPollAt: new Date(), resyncRequestedAt: new Date() }, owner);
 				this.logger.warn(`Connection ${connection.id}: the feed cursor expired; a resync is requested.`);
-				return { polled: true, stored, duplicates, cursor: head, expired: true };
+				return { polled: true, stored, duplicates, invalid, cursor: head, expired: true };
 			}
 			if (error instanceof EverWorksApiError && error.status === 401) {
 				await this.connections.checkHealth(connection);
 			}
 			// Keep what was stored: the cursor stays before anything not yet stored.
-			if (stored || duplicates) await this.save(connection.id as ID, { feedCursor: cursor, lastFeedPollAt: new Date() });
+			if (stored || duplicates || invalid) await this.save(connection.id as ID, { feedCursor: cursor, lastFeedPollAt: new Date() }, owner);
 			throw error;
 		}
 	}
 
-	private async save(id: ID, values: Record<string, unknown>): Promise<void> {
-		await this.dataSource.getRepository(EverWorksConnection).update({ id }, values as never);
+	/** Saves the feed position; with `owner`, only while that process holds the lease. True when saved. */
+	private async save(id: ID, values: Record<string, unknown>, owner?: string): Promise<boolean> {
+		const where = owner ? { id, leaseOwner: owner } : { id };
+		const result = await this.dataSource.getRepository(EverWorksConnection).update(where as never, values as never);
+		if (owner && !result.affected) {
+			this.logger.warn(`Connection ${id}: the lease moved to another process during the feed poll; its cursor was not saved.`);
+			return false;
+		}
+		return true;
 	}
 }

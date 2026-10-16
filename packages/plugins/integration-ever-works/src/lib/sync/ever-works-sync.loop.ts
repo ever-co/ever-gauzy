@@ -11,6 +11,19 @@ import { EverWorksFeedPoller } from './inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './inbound/ever-works-inbound.applier';
 import { EverWorksOutboundPusher } from './outbound/ever-works-outbound.pusher';
 
+/**
+ * A failure's cause for the log: its name and the start of its message, with anything that looks like a
+ * key or a bearer token masked (the client's own errors never carry them; a driver error might).
+ */
+export function describeSyncError(error: unknown): string {
+	if (!(error instanceof Error)) return 'error';
+	const message = (error.message ?? '')
+		.replace(/(bearer\s+)\S+/gi, '$1<redacted>')
+		.replace(/\bew_(int|live)_[A-Za-z0-9_-]+/g, 'ew_$1_<redacted>')
+		.slice(0, 200);
+	return message ? `${error.name}: ${message}` : error.name;
+}
+
 /** How often a process looks for work. */
 export const SYNC_TICK_MS = 5_000;
 /** How long a lease on a connection lasts; renewed during the work, and the work stops once it is lost. */
@@ -81,7 +94,7 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 				if (!(await this.claim(connection.id as ID, at))) continue;
 				worked.push(connection.id as ID);
 				await this.work(connection, pinned).catch((error) =>
-					this.logger.warn(`Connection ${connection.id}: sync pass failed (${error instanceof Error ? error.name : 'error'}).`)
+					this.logger.warn(`Connection ${connection.id}: sync pass failed (${describeSyncError(error)}).`)
 				);
 			}
 			if (now.getTime() - this.lastPrune > 60 * 60_000) {
@@ -90,7 +103,7 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 			}
 		} catch (error) {
 			// The tables may not exist yet (migrations pending); the next tick tries again.
-			this.logger.debug?.(`Sync tick skipped (${error instanceof Error ? error.name : 'error'}).`);
+			this.logger.debug?.(`Sync tick skipped (${describeSyncError(error)}).`);
 		} finally {
 			this.running = false;
 		}
@@ -101,7 +114,10 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 	private async work(connection: EverWorksConnection, tickNow: Date | undefined): Promise<void> {
 		const id = connection.id as ID;
 		let renewedAt = Date.now();
-		// Renews the lease every SYNC_RENEW_MS while working; false once another process holds it.
+		// Renews the lease every SYNC_RENEW_MS while working; false once another process holds it. A cached
+		// `true` is safe: the lease was just extended by SYNC_LEASE_MS (5 min, ten renewals), and another
+		// process can claim it only once it has run out. Every write is fenced as well: the feed cursor and
+		// the inbound outcomes on `leaseOwner`, the outbound results on their claim.
 		const stillOwner = async (): Promise<boolean> => {
 			if (Date.now() - renewedAt < SYNC_RENEW_MS) return true;
 			renewedAt = Date.now();
@@ -109,13 +125,13 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		};
 		const fresh = (await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id } })) ?? connection;
 		if (this.feed.isDue(fresh)) {
-			await this.feed.poll(fresh).catch((error) =>
-				this.logger.warn(`Connection ${connection.id}: feed poll failed (${error instanceof Error ? error.name : 'error'}).`)
+			await this.feed.poll(fresh, this.owner).catch((error) =>
+				this.logger.warn(`Connection ${connection.id}: feed poll failed (${describeSyncError(error)}).`)
 			);
 		}
 		renewedAt = 0; // the feed may have taken a while: renew before applying
 		if (!(await stillOwner())) return;
-		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner);
+		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner, this.owner);
 		if (!(await stillOwner())) return;
 		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner);
 	}
