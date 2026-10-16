@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, IsNull } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, LessThanOrEqual } from 'typeorm';
 import { ID, IWebhookAttemptResult, IWebhookDelivery, JsonData, WebhookDeliveryStatus, WebhookHeader } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { readAffectedRows } from '../database/database.helper';
 import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
@@ -34,8 +35,28 @@ export interface IWebhookDeliveryInput {
 export interface IWebhookDeliveryAttempt {
 	delivery: WebhookDelivery;
 	result: IWebhookAttemptResult;
-	/** True when no request was made, because the subscription is switched off. */
+	/**
+	 * True when no request was made: the subscription is switched off, or the claim was refused (then
+	 * `claimRefused` is true as well).
+	 */
 	skipped: boolean;
+	/**
+	 * True when the attempt asked to claim the row and could not: another attempt holds it, or it is no longer
+	 * pending or failed and due. Nothing was done to the row, so a caller counting attempts leaves it out.
+	 */
+	claimRefused?: boolean;
+}
+
+/**
+ * How `deliver` makes its attempt.
+ */
+export interface IWebhookAttemptOptions {
+	/**
+	 * Takes the row before the request is made, so two processes that read it together post it once. A row
+	 * that is no longer pending or failed and due, or that another attempt holds, is left untouched and
+	 * returned as skipped.
+	 */
+	readonly claim?: boolean;
 }
 
 /**
@@ -123,6 +144,15 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	static readonly REQUEST_TIMEOUT_MS = 10_000;
 
 	/**
+	 * How long a claimed delivery stays out of another attempt's reach.
+	 *
+	 * Well above what one attempt takes: the endpoint lookup, the request and the writes. Every outcome
+	 * replaces `nextAttemptAt`, so the lease only matters when an attempt dies midway, and the row is due
+	 * again once it runs out.
+	 */
+	static readonly ATTEMPT_LEASE_MS = 60_000;
+
+	/**
 	 * Connect timeout.
 	 *
 	 * Kept as a named constant because it is part of the published contract, and applied through the
@@ -203,12 +233,18 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	 * sends exactly what was originally intended.
 	 *
 	 * @param deliveryId The delivery row id.
+	 * @param options How the attempt is made; see {@link IWebhookAttemptOptions}.
 	 * @returns The updated delivery and the attempt's result.
 	 * @throws NotFoundException when the delivery or its subscription no longer exists.
 	 */
-	async deliver(deliveryId: ID): Promise<IWebhookDeliveryAttempt> {
+	async deliver(deliveryId: ID, options: IWebhookAttemptOptions = {}): Promise<IWebhookDeliveryAttempt> {
 		// The runtime's own readers: an attempt is made from a queue job, which has no caller to scope by.
 		const delivery = await this.getDeliveryForAttempt(deliveryId);
+
+		if (options.claim && !(await this.claimForAttempt(delivery))) {
+			return { delivery, result: { delivered: false, durationMs: 0 }, skipped: true, claimRefused: true };
+		}
+
 		const subscription = await this.subscriptions.getSubscriptionForDelivery(delivery.subscriptionId);
 		const attempt = (delivery.attemptCount ?? 0) + 1;
 
@@ -388,6 +424,34 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 		}
 
 		return delivery;
+	}
+
+	/**
+	 * Takes a delivery for one attempt, before the endpoint is called.
+	 *
+	 * One conditional write, so the store settles a race between two processes that read the row together.
+	 * It matches only while the row is pending or failed, due, and still on the attempt that was read, which
+	 * keeps the `X-Delivery` and `X-Attempt` values built from that read. It moves `nextAttemptAt` out by the
+	 * lease, so the retry scan stops returning the row while the attempt runs.
+	 *
+	 * @param delivery The delivery as it was just read.
+	 * @returns True when this attempt holds the row.
+	 */
+	private async claimForAttempt(delivery: WebhookDelivery): Promise<boolean> {
+		const now = Date.now();
+		const result = await this.typeOrmWebhookDeliveryRepository.update(
+			{
+				id: delivery.id,
+				status: In([WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED]),
+				attemptCount: delivery.attemptCount ?? 0,
+				// One second of slack: MySQL keeps this column to the second, rounded, so a row made due just
+				// now can read up to half a second ahead.
+				nextAttemptAt: LessThanOrEqual(new Date(now + 1_000))
+			} as FindOptionsWhere<WebhookDelivery>,
+			{ nextAttemptAt: new Date(now + WebhookDeliveryService.ATTEMPT_LEASE_MS) }
+		);
+
+		return readAffectedRows(result) === 1;
 	}
 
 	/**
