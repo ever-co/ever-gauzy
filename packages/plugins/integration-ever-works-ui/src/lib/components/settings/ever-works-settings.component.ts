@@ -284,7 +284,7 @@ type Loaded =
 										</tbody>
 									</table>
 									@if (conflictsCursor) {
-										<button nbButton ghost size="small" type="button" data-test="more-conflicts" (click)="loadConflicts(false)">{{ 'EVER_WORKS.SETTINGS.MORE' | translate }}</button>
+										<button nbButton ghost size="small" type="button" data-test="more-conflicts" [disabled]="conflictsLoading" (click)="loadConflicts(false)">{{ 'EVER_WORKS.SETTINGS.MORE' | translate }}</button>
 									}
 								}
 								<h6>{{ 'EVER_WORKS.SETTINGS.LOG' | translate }}</h6>
@@ -317,7 +317,7 @@ type Loaded =
 									</tbody>
 								</table>
 								@if (logCursor) {
-									<button nbButton ghost size="small" type="button" data-test="more-log" (click)="loadLog(false)">{{ 'EVER_WORKS.SETTINGS.MORE' | translate }}</button>
+									<button nbButton ghost size="small" type="button" data-test="more-log" [disabled]="logLoading" (click)="loadLog(false)">{{ 'EVER_WORKS.SETTINGS.MORE' | translate }}</button>
 								}
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_WORKS.SETTINGS.TABS.ADVANCED' | translate" data-test="tab-advanced">
@@ -432,6 +432,9 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	conflicts: EverWorksConflict[] = [];
 	conflictsCursor: string | null = null;
 	conflictsState: 'open' | 'resolved' | 'all' = 'open';
+	/** A page of the log or the conflicts is on its way ("Show more" waits for it). */
+	logLoading = false;
+	conflictsLoading = false;
 	newKey = '';
 	confirmDisconnect = false;
 	busy = false;
@@ -575,8 +578,15 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		const cursor = reset ? null : this.logCursor;
 		// The latest request wins: a filter changed twice, or "Show more" clicked twice, never shows old rows.
 		this.logRequest$.next();
+		this.logLoading = true;
 		this.scoped(this.api.syncLog(this.organizationId, id, { status: this.logStatus || null, direction: this.logDirection || null, cursor }))
-			.pipe(takeUntil(this.logRequest$))
+			.pipe(
+				takeUntil(this.logRequest$),
+				finalize(() => {
+					this.logLoading = false;
+					this.cdr.markForCheck();
+				})
+			)
 			.subscribe({
 			next: (page) => {
 				this.log = reset ? page.items : [...this.log, ...page.items];
@@ -592,8 +602,15 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		if (!id) return;
 		const cursor = reset ? null : this.conflictsCursor;
 		this.conflictsRequest$.next();
+		this.conflictsLoading = true;
 		this.scoped(this.api.conflicts(this.organizationId, id, this.conflictsState, cursor))
-			.pipe(takeUntil(this.conflictsRequest$))
+			.pipe(
+				takeUntil(this.conflictsRequest$),
+				finalize(() => {
+					this.conflictsLoading = false;
+					this.cdr.markForCheck();
+				})
+			)
 			.subscribe({
 			next: (page) => {
 				this.conflicts = reset ? page.items : [...this.conflicts, ...page.items];
