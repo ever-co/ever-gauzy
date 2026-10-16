@@ -15,6 +15,8 @@ import { EverWorksCatalogService } from './ever-works-catalog.service';
 import { readEverWorksConfig } from './ever-works-config';
 import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
+import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
+import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
 import { EverWorksMappingController } from './mapping/ever-works-mapping.controller';
@@ -150,6 +152,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksConflictsService,
 		EverWorksInitialSyncService,
 		EverWorksSyncStatusService,
+		// Ideas ↔ Idea tasks (G-P2-3): registers itself with the applier and the pusher.
+		EverWorksIdeasService,
+		EverWorksIdeaTaskCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,
