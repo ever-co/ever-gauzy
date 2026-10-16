@@ -545,7 +545,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		organizationId: ID,
 		forRange: IDateRangePicker | any,
 		withUser: boolean = false,
-		humansOnly: boolean = false
+		humansOnly = false
 	): Promise<IPagination<IEmployee>> {
 		try {
 			switch (this.ormType) {
@@ -743,8 +743,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		qb: SelectQueryBuilder<Employee>,
 		organizationId: string,
 		forRange: IDateRangePicker | any,
-		humansOnly: boolean = false,
-		agentsWithoutStartWork: boolean = false
+		humansOnly = false,
+		agentsWithoutStartWork = false
 	) {
 		// Retrieve the current tenant ID from the RequestContext
 		const tenantId = RequestContext.currentTenantId();
