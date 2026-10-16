@@ -1,0 +1,312 @@
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { DataSource, IsNull, LessThan, Not } from 'typeorm';
+import { ID } from '@gauzy/contracts';
+import { OrganizationProject, OrganizationTeam, RequestContext, TaskUpdateCommand } from '@gauzy/core';
+import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
+import { EverWorksLinkType, EverWorksSyncLog } from '../entities/ever-works-sync.entities';
+import { EverWorksSyncLogService, serializeDetails } from '../ever-works-sync-log.service';
+import type { FieldMergeResult } from '../merge/three-way-merge';
+import { EverWorksOutboundQueue } from '../outbound/ever-works-outbound.queue';
+
+/** The `action` of a conflict row in `ever_works_sync_log`. */
+export const CONFLICT_ACTION = 'merge_conflict';
+
+/**
+ * What a conflict row's `details` hold (plan 03 §C.5: both values, so the UI can offer "use the other
+ * value"). Values are in Gauzy's representation (an Ever Works status already mapped to Gauzy's, for
+ * example), so either one can be written back into the Gauzy record as it is.
+ */
+export interface EverWorksConflictDetails {
+	/** The shared field (the snapshot's name). */
+	field: string;
+	/** The Gauzy property "use the other value" writes (defaults to `field`). */
+	gauzyField?: string;
+	gauzyValue: unknown;
+	everWorksValue: unknown;
+	/** The side last-writer-wins chose. */
+	winner: 'gauzy' | 'ever_works';
+	gauzyAt?: string | null;
+	everWorksAt?: string | null;
+	/** Set when an admin resolves it. */
+	resolution?: 'keep' | 'use_other';
+}
+
+/** One conflict to record (a handler calls {@link EverWorksConflictsService.record} after its 3-way merge). */
+export interface EverWorksConflictInput extends Omit<EverWorksConflictDetails, 'resolution'> {
+	tenantId: ID;
+	organizationId: ID;
+	integrationTenantId: ID;
+	connectionId?: ID | null;
+	direction: 'inbound' | 'outbound';
+	entityType: EverWorksLinkType | string;
+	gauzyId: ID;
+	ewId: string;
+	message?: string | null;
+}
+
+/** A conflict as the Activity tab shows it. */
+export interface EverWorksConflictView {
+	id: ID;
+	createdAt: Date | null;
+	direction: string;
+	entityType: string | null;
+	gauzyId: ID | null;
+	ewId: string | null;
+	message: string | null;
+	details: EverWorksConflictDetails | null;
+	resolved: boolean;
+	resolvedAt: Date | null;
+	resolvedByUserId: ID | null;
+	/** Whether "use the other value" can be applied to this record type and field. */
+	canUseOther: boolean;
+}
+
+/** Writes the losing value of a conflict back into the Gauzy record ("use the other value"). */
+export interface EverWorksConflictResolver {
+	readonly entityTypes: ReadonlyArray<string>;
+	/** The Gauzy properties it may write (anything else is refused). */
+	readonly fields: ReadonlyArray<string>;
+	useValue(context: EverWorksMappingContext, gauzyId: ID, field: string, value: unknown): Promise<void>;
+}
+
+/**
+ * The conflict half of the 3-way merge from a field result (`mergeField`): who won, and both values.
+ * `gauzyField` names the Gauzy property when it differs from the shared field name.
+ */
+export function conflictFromMerge(
+	field: string,
+	result: FieldMergeResult,
+	options: { gauzyField?: string; gauzyAt?: Date | string | null; everWorksAt?: Date | string | null } = {}
+): Omit<EverWorksConflictDetails, 'resolution'> | null {
+	if (!result.conflict || !result.loserSide) return null;
+	const winner = result.loserSide === 'gauzy' ? 'ever_works' : 'gauzy';
+	const iso = (value: Date | string | null | undefined) => (value ? new Date(value).toISOString() : null);
+	return {
+		field,
+		...(options.gauzyField && options.gauzyField !== field ? { gauzyField: options.gauzyField } : {}),
+		gauzyValue: winner === 'gauzy' ? result.value : result.loser,
+		everWorksValue: winner === 'ever_works' ? result.value : result.loser,
+		winner,
+		gauzyAt: iso(options.gauzyAt),
+		everWorksAt: iso(options.everWorksAt)
+	};
+}
+
+/** The other side's value of a conflict: the one last-writer-wins dropped. */
+export function otherValue(details: EverWorksConflictDetails): unknown {
+	return details.winner === 'gauzy' ? details.everWorksValue : details.gauzyValue;
+}
+
+/** The most conflicts one page returns. */
+export const CONFLICTS_PAGE_MAX = 200;
+
+/**
+ * Conflicts (plan 03 §C.5, plan 06 G-P1-10): last-writer-wins conflicts are `ever_works_sync_log` rows
+ * with `status = 'conflict'`, kept until an admin resolves them (the log's 30-day pruning skips them).
+ * The Activity tab lists them; resolving one either keeps the merged value or writes the other side's
+ * value into the Gauzy record through the platform (a task through `TaskUpdateCommand`), as the signed-in
+ * admin and outside the sync's own context, so the change is captured and pushed to Ever Works like any
+ * Gauzy edit.
+ */
+@Injectable()
+export class EverWorksConflictsService {
+	private readonly logger = new Logger('EverWorksConflicts');
+	private readonly resolvers = new Map<string, EverWorksConflictResolver>();
+
+	constructor(
+		private readonly dataSource: DataSource,
+		private readonly contexts: EverWorksMappingContextService,
+		private readonly log: EverWorksSyncLogService,
+		private readonly queue: EverWorksOutboundQueue,
+		private readonly commandBus: CommandBus
+	) {
+		for (const resolver of defaultResolvers(this.dataSource, this.queue, this.commandBus)) this.register(resolver);
+	}
+
+	/** Registers the "use the other value" writer of a record type (the later registration wins). */
+	register(resolver: EverWorksConflictResolver): void {
+		for (const type of resolver.entityTypes) this.resolvers.set(type, resolver);
+	}
+
+	/** Records one conflict (both values, the winner). Handlers call this after their 3-way merge. */
+	async record(input: EverWorksConflictInput): Promise<void> {
+		const details: EverWorksConflictDetails = {
+			field: input.field,
+			...(input.gauzyField ? { gauzyField: input.gauzyField } : {}),
+			gauzyValue: input.gauzyValue,
+			everWorksValue: input.everWorksValue,
+			winner: input.winner,
+			gauzyAt: input.gauzyAt ?? null,
+			everWorksAt: input.everWorksAt ?? null
+		};
+		await this.log.write({
+			tenantId: input.tenantId,
+			organizationId: input.organizationId,
+			integrationTenantId: input.integrationTenantId,
+			connectionId: input.connectionId ?? null,
+			direction: input.direction,
+			entityType: input.entityType,
+			gauzyId: input.gauzyId,
+			ewId: input.ewId,
+			action: CONFLICT_ACTION,
+			status: 'conflict',
+			message: input.message ?? `${input.field}: both sides changed; ${input.winner === 'gauzy' ? 'Gauzy' : 'Ever Works'} was written last and won.`,
+			details: details as unknown as Record<string, unknown>
+		});
+	}
+
+	/** `GET /mappings/:id/conflicts`: newest first; `state` open (default), resolved or all; `before` pages. */
+	async list(
+		integrationTenantId: ID,
+		query: { state?: string; limit?: string | number; before?: string },
+		organizationId?: ID
+	): Promise<{ items: EverWorksConflictView[]; nextBefore: string | null }> {
+		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
+		const state = query.state === 'resolved' || query.state === 'all' ? query.state : 'open';
+		const limit = clampLimit(query.limit, 50, CONFLICTS_PAGE_MAX);
+		const before = parseBefore(query.before);
+		const rows = await this.dataSource.getRepository(EverWorksSyncLog).find({
+			where: {
+				tenantId: context.tenantId,
+				integrationTenantId: context.integrationTenantId,
+				status: 'conflict',
+				...(state === 'open' ? { resolvedAt: IsNull() } : state === 'resolved' ? { resolvedAt: Not(IsNull()) } : {}),
+				...(before ? { createdAt: LessThan(before) } : {})
+			} as never,
+			order: { createdAt: 'DESC', id: 'DESC' } as never,
+			take: limit + 1
+		});
+		const page = rows.slice(0, limit);
+		const last = page[page.length - 1] as (EverWorksSyncLog & { createdAt?: Date }) | undefined;
+		return {
+			items: page.map((row) => this.view(row)),
+			nextBefore: rows.length > limit && last?.createdAt ? new Date(last.createdAt).toISOString() : null
+		};
+	}
+
+	/**
+	 * `POST /mappings/:id/conflicts/:conflictId/resolve`: `keep` accepts the merged value; `use_other`
+	 * writes the other side's value into the Gauzy record (and from there to Ever Works). Once only.
+	 */
+	async resolve(integrationTenantId: ID, conflictId: ID, resolution: 'keep' | 'use_other', organizationId?: ID): Promise<EverWorksConflictView> {
+		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
+		const repository = this.dataSource.getRepository(EverWorksSyncLog);
+		const row = await repository.findOne({
+			where: { id: conflictId, tenantId: context.tenantId, integrationTenantId: context.integrationTenantId, status: 'conflict' } as never
+		});
+		if (!row) throw new NotFoundException('Conflict not found.');
+		if (row.resolvedAt) throw new ConflictException('This conflict is already resolved.');
+		const details = parseDetails(row.details);
+		if (resolution === 'use_other') {
+			if (!details || !row.gauzyId || !row.entityType) throw new BadRequestException('This conflict does not carry the values to apply.');
+			const field = details.gauzyField ?? details.field;
+			const resolver = this.resolvers.get(row.entityType);
+			if (!resolver || !resolver.fields.includes(field)) {
+				throw new BadRequestException(`"Use the other value" is not available for ${row.entityType} ${field}; edit the record instead.`);
+			}
+			await resolver.useValue(context, row.gauzyId as ID, field, otherValue(details));
+		}
+		const userId = RequestContext.currentUserId() ?? null;
+		// Claimed with a condition, so two admins resolving at once apply the value once.
+		const result = await repository.update({ id: row.id, resolvedAt: IsNull() } as never, {
+			resolvedAt: new Date(),
+			resolvedByUserId: userId,
+			details: serializeDetails({ ...(details ?? {}), resolution })
+		} as never);
+		if (!result.affected) throw new ConflictException('This conflict is already resolved.');
+		this.logger.log(`Conflict ${row.id} (${row.entityType} ${row.gauzyId}) resolved: ${resolution}.`);
+		const saved = await repository.findOneOrFail({ where: { id: row.id } as never });
+		return this.view(saved);
+	}
+
+	/** Open conflicts of a mapping. */
+	countOpen(tenantId: ID, integrationTenantId: ID): Promise<number> {
+		return this.dataSource.getRepository(EverWorksSyncLog).count({
+			where: { tenantId, integrationTenantId, status: 'conflict', resolvedAt: IsNull() } as never
+		});
+	}
+
+	private view(row: EverWorksSyncLog): EverWorksConflictView {
+		const details = parseDetails(row.details);
+		const field = details ? (details.gauzyField ?? details.field) : null;
+		const resolver = row.entityType ? this.resolvers.get(row.entityType) : undefined;
+		return {
+			id: row.id as ID,
+			createdAt: ((row as { createdAt?: Date }).createdAt as Date) ?? null,
+			direction: row.direction,
+			entityType: row.entityType ?? null,
+			gauzyId: (row.gauzyId as ID) ?? null,
+			ewId: row.ewId ?? null,
+			message: row.message ?? null,
+			details,
+			resolved: !!row.resolvedAt,
+			resolvedAt: row.resolvedAt ?? null,
+			resolvedByUserId: (row.resolvedByUserId as ID) ?? null,
+			canUseOther: !row.resolvedAt && !!resolver && !!field && resolver.fields.includes(field) && !!row.gauzyId
+		};
+	}
+}
+
+/** The writers this version ships: tasks (through the platform's command), teams and projects. */
+function defaultResolvers(dataSource: DataSource, queue: EverWorksOutboundQueue, commandBus: CommandBus): EverWorksConflictResolver[] {
+	return [
+		{
+			entityTypes: [EverWorksLinkType.TASK, EverWorksLinkType.IDEA_TASK],
+			fields: ['title', 'description', 'priority', 'size', 'status', 'dueDate', 'startDate', 'estimate'],
+			// Through the platform's own command, as the signed-in admin: validations run, TaskEvent is
+			// published (other integrations mirror it) and the Ever Works listener captures the change.
+			useValue: async (context, gauzyId, field, value) => {
+				await commandBus.execute(new TaskUpdateCommand(gauzyId, { [field]: value, organizationId: context.organizationId, tenantId: context.tenantId } as never, true));
+			}
+		},
+		{
+			entityTypes: [EverWorksLinkType.TEAM],
+			fields: ['name', 'emoji'],
+			useValue: async (context, gauzyId, field, value) => {
+				const repository = dataSource.getRepository(OrganizationTeam);
+				const team = await repository.findOne({ where: { id: gauzyId, tenantId: context.tenantId, organizationId: context.organizationId } as never });
+				if (!team) throw new NotFoundException('The Gauzy team is gone.');
+				(team as unknown as Record<string, unknown>)[field] = value;
+				await repository.save(team);
+				await queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TEAM, gauzyId, op: 'upsert', changedFields: [field] });
+			}
+		},
+		{
+			entityTypes: [EverWorksLinkType.PROJECT_WORK],
+			fields: ['name', 'description', 'projectUrl', 'openSourceProjectUrl'],
+			useValue: async (context, gauzyId, field, value) => {
+				const repository = dataSource.getRepository(OrganizationProject);
+				const project = await repository.findOne({ where: { id: gauzyId, tenantId: context.tenantId, organizationId: context.organizationId } as never });
+				if (!project) throw new NotFoundException('The Gauzy project is gone.');
+				(project as unknown as Record<string, unknown>)[field] = value;
+				await repository.save(project);
+			}
+		}
+	];
+}
+
+/** A conflict row's details, or `null` when they are missing or not a conflict's. */
+export function parseDetails(raw: string | null | undefined): EverWorksConflictDetails | null {
+	if (!raw) return null;
+	try {
+		const value = JSON.parse(raw) as EverWorksConflictDetails;
+		return value && typeof value === 'object' && typeof value.field === 'string' && (value.winner === 'gauzy' || value.winner === 'ever_works') ? value : null;
+	} catch {
+		return null;
+	}
+}
+
+/** A page size from a query value: an integer in `1..max`, else `fallback`. */
+export function clampLimit(raw: string | number | undefined, fallback: number, max: number): number {
+	const value = typeof raw === 'number' ? raw : Number.parseInt(String(raw ?? ''), 10);
+	if (!Number.isFinite(value) || value < 1) return fallback;
+	return Math.min(Math.floor(value), max);
+}
+
+/** A `before` cursor (an ISO time) from a query value, or `null`. */
+export function parseBefore(raw: string | undefined): Date | null {
+	if (!raw) return null;
+	const at = new Date(raw);
+	return Number.isFinite(at.getTime()) ? at : null;
+}
