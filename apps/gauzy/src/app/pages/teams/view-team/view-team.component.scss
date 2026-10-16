@@ -188,28 +188,86 @@ $weight-medium: 500;
   box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
 }
 
-.project-list {
+.project-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: $gap-sm;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.project-item {
+// One project: logo, name, its time and share in the period, and a bar sized
+// against the most-worked project.
+.project-card {
+  display: flex;
+  align-items: flex-start;
+  gap: $gap-md;
+  min-width: 0;
+  padding: $gap-md;
+  border-radius: var(--gauzy-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  // No time this period: still listed, but quieter.
+  &.is-idle .project-logo {
+    opacity: 0.7;
+  }
+}
+
+.project-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.project-name-row {
   display: flex;
   align-items: center;
   gap: $gap-sm;
   min-width: 0;
-  padding: $gap-sm;
-  border-radius: var(--gauzy-radius-sm);
-  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
 
-  .field-value {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: $weight-medium;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.project-chip {
+  flex: 0 0 auto;
+  font-size: 0.625rem;
+}
+
+.project-figures {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $gap-sm;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-time {
+  font-size: 0.75rem;
+  font-weight: $weight-medium;
+  color: var(--gauzy-text-color-1);
+
+  .is-idle & {
+    font-weight: 400;
+    color: var(--gauzy-text-color-2);
   }
 }
 
@@ -218,8 +276,8 @@ $weight-medium: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: var(--gauzy-radius-sm);
   background-color: var(--gauzy-active-tint);
   font-size: 0.6875rem;
