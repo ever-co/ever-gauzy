@@ -18,7 +18,8 @@ $weight-strong: 600;
 $weight-medium: 500;
 $hairline: 1px solid var(--gauzy-border-default-color);
 $radius: var(--gauzy-radius-sm);
-$control-height: 2.25rem;
+// The shared filter controls' height: their triggers are 2rem tall in total.
+$control-height: 2rem;
 
 :host {
   .filters {
@@ -122,26 +123,46 @@ $control-height: 2.25rem;
     color: var(--gauzy-text-color-2);
   }
 
-  /* ── Toolbar ───────────────────────────────────────────────────────── */
+  /* ── Filter row: view, search, sort, then the shared filters ────────── */
 
-  .au-toolbar {
+  .au-filter-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: $gap-sm $gap-md;
+    // End the row where the content below ends. The body is held 11px off the
+    // card's edge for its scrollbar, and the shared filter list's trailing item
+    // overhangs its wrapper (its row gutters are never reset) — the same 27px the
+    // Time & Activities tab carries on its own filter row (`.header-bar`).
+    @include nb-ltr(padding-right, 27px);
+    @include nb-rtl(padding-left, 27px);
+
+    // Takes its natural width on the trailing edge: squeezing it narrowed the
+    // Source and Log Type triggers, and with them their option lists.
+    ngx-gauzy-filters {
+      display: flex;
+      align-items: center;
+      flex: 0 1 auto;
+      margin-inline-start: auto;
+    }
+
+    // Centre every item of the shared row on one line, whatever its own height.
+    ::ng-deep .filter-item-list {
+      align-items: center !important;
+    }
   }
 
-  .au-toolbar-end {
+  // Search and sort are projected into the shared filters as two more items,
+  // so they sit in the same row at the same height as Source, Log Type…
+  .au-filter-item {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: $gap-sm;
-    flex: 1 1 18rem;
-    min-width: 0;
+    min-width: 0 !important;
   }
 
   .au-segmented {
+    box-sizing: border-box;
     display: inline-flex;
     height: $control-height;
     padding: 0.1875rem;
@@ -151,6 +172,7 @@ $control-height: 2.25rem;
   }
 
   .au-segment {
+    height: 100%;
     padding: 0 0.875rem;
     border: 0;
     border-radius: calc(#{$radius} - 2px);
@@ -183,8 +205,9 @@ $control-height: 2.25rem;
     display: flex;
     align-items: center;
     gap: $gap-sm;
-    flex: 0 1 16rem;
-    min-width: 9rem;
+    box-sizing: border-box;
+    width: 14rem;
+    max-width: 100%;
     height: $control-height;
     padding: 0 0.75rem;
     border: $hairline;
@@ -222,6 +245,7 @@ $control-height: 2.25rem;
   }
 
   .au-sort {
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
