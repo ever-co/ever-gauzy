@@ -116,8 +116,8 @@ export const SYNC_RUN_BUDGET_MS = 20_000;
 export const PHASE_SETTLE_MAX_MS = 30 * 60_000;
 /** A phase that keeps failing (Ever Works unreachable) fails the run after this many attempts. */
 export const PHASE_MAX_ATTEMPTS = 5;
-/** Feed events replayed at most at the end of a run. */
-export const REPLAY_MAX = 50_000;
+/** Feed events replayed per batch at the end of a run (in `seq` order, as many batches as the budget allows). */
+export const REPLAY_BATCH = 1_000;
 /** Records per list page read by an import. */
 export const LIST_PAGE_SIZE = 500;
 /** Gauzy records read per export page. */
@@ -159,6 +159,8 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	 * phase stores anything; read again after a restart): the order the phase's records are released in.
 	 */
 	private readonly depthCache = new Map<string, Map<string, number>>();
+	/** Per run, how far its replay got (the last `seq` replayed) and how many events it replayed so far. */
+	private readonly replays = new Map<string, { after: string; replayed: number }>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -243,19 +245,33 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 	}
 
-	/** The feed's cursor expired (410): a resync for every enabled mapping without a running run. */
+	/**
+	 * The feed's cursor expired (410): a resync for every enabled mapping. A mapping whose running run started
+	 * before the request may already have read phases the missed changes belong to: the request stays
+	 * pending until that run ends, and a resync follows it.
+	 */
 	private async startRequestedResyncs(connection: EverWorksConnection, contexts: EverWorksMappingContext[]): Promise<void> {
 		const requestedAt = new Date(connection.resyncRequestedAt as Date);
+		let pending = false;
 		for (const context of contexts) {
-			if (!context.isEnabled || (await this.running(context.tenantId, context.integrationTenantId))) continue;
+			if (!context.isEnabled) continue;
+			const running = await this.running(context.tenantId, context.integrationTenantId);
+			if (running) {
+				if (!running.startedAt || new Date(running.startedAt).getTime() < requestedAt.getTime()) pending = true;
+				continue;
+			}
 			try {
 				await this.createRun(context, 'resync', 'cursor_expired', null);
 			} catch (error) {
-				if (error instanceof ConflictException) continue; // another process started it
+				if (error instanceof ConflictException) {
+					pending = true; // another process started one meanwhile: checked again at the next tick
+					continue;
+				}
 				this.logger.warn(`Mapping ${context.integrationTenantId}: the requested resync could not start (${describeSyncError(error)}).`);
 				return; // the request stays; the next tick tries again
 			}
 		}
+		if (pending) return;
 		// Cleared only if no newer request arrived meanwhile.
 		await this.dataSource
 			.getRepository(EverWorksConnection)
@@ -291,7 +307,13 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				return; // the next phase waits for this one
 			}
 		}
-		const replayed = await this.replay(run, context);
+		run.currentPhase = 'replay';
+		if (!(await this.replay(run, context, deadline))) {
+			await this.save(run, phases); // carries on at the next sweep
+			return;
+		}
+		const replayed = this.replays.get(run.id as string)?.replayed ?? 0;
+		this.replays.delete(run.id as string);
 		await this.finish(run, context, EverWorksSyncRunStatus.DONE, null, phases, replayed);
 	}
 
@@ -667,31 +689,39 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	 * Step 5: feed and webhook events after the run's head that were skipped meanwhile (a record not
 	 * paired yet, say) are applied again. Idempotent: what a link's version already covers is skipped.
 	 */
-	private async replay(run: EverWorksSyncRun, context: EverWorksMappingContext): Promise<number> {
-		if (!run.feedHead) return 0;
+	private async replay(run: EverWorksSyncRun, context: EverWorksMappingContext, deadline: number): Promise<boolean> {
+		if (!run.feedHead) return true;
 		const repository = this.dataSource.getRepository(EverWorksInboundEvent);
-		const ids = (
-			await repository.find({
-				select: { id: true } as never,
+		// In `seq` order from where the replay got: every event after the head is replayed once by this run (an
+		// event the applier skips again is not picked up again), batch by batch within the sweep's budget.
+		const progress = this.replays.get(run.id as string) ?? { after: run.feedHead, replayed: 0 };
+		this.replays.set(run.id as string, progress);
+		for (;;) {
+			if (isOver(deadline)) return false;
+			const rows = await repository.find({
+				select: { id: true, seq: true } as never,
 				where: {
 					connectionId: context.connection.id as ID,
 					organizationId: context.organizationId,
 					receivedVia: In(['webhook', 'feed']),
 					status: EverWorksInboundStatus.SKIPPED,
 					error: Not('own origin'),
-					seq: MoreThan(run.feedHead)
+					seq: MoreThan(progress.after)
 				} as never,
 				order: { seq: 'ASC' } as never,
-				take: REPLAY_MAX
-			})
-		).map((row) => row.id as ID);
-		for (let i = 0; i < ids.length; i += 500) {
-			await repository.update({ id: In(ids.slice(i, i + 500)), status: EverWorksInboundStatus.SKIPPED } as never, {
-				status: EverWorksInboundStatus.PENDING,
-				availableAt: new Date()
-			} as never);
+				take: REPLAY_BATCH
+			});
+			if (!rows.length) return true;
+			const ids = rows.map((row) => row.id as ID);
+			for (let i = 0; i < ids.length; i += 500) {
+				await repository.update({ id: In(ids.slice(i, i + 500)), status: EverWorksInboundStatus.SKIPPED } as never, {
+					status: EverWorksInboundStatus.PENDING,
+					availableAt: new Date()
+				} as never);
+			}
+			progress.after = String(rows[rows.length - 1].seq);
+			progress.replayed += rows.length;
 		}
-		return ids.length;
 	}
 
 	/** Starts a run (one running run per mapping), with the feed head of now. */
