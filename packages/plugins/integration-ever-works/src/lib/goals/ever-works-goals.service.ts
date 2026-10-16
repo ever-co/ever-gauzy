@@ -34,6 +34,7 @@ import {
 import { isSyncedVisibility } from '../teams/ever-works-team-scope';
 import {
 	DesiredKeyResult,
+	KeyResultKey,
 	EverWorksGoal,
 	everWorksGoalShared,
 	GauzyKeyResultRow,
@@ -78,6 +79,30 @@ const isNumeric = (type: string | null | undefined) =>
 
 /** The fields of a key result an Ever Works goal writes, as compared and kept on its link. */
 type KeyResultShared = Omit<DesiredKeyResult, 'key'>;
+/**
+ * The Ever Works id of a key result's link: a digest of its goal and its key (`m`, `c:<criterion>`,
+ * `d:<item>`), since `<goal id>:<key>` can exceed the 64 characters the link column holds. The goal and
+ * the key themselves are kept on the link (`ewOnly`).
+ */
+export function keyResultEwId(ewGoalId: string, key: KeyResultKey): string {
+	return `kr:${createHash('sha256').update(`${ewGoalId}:${key}`).digest('hex').slice(0, 48)}`;
+}
+
+/** The goal and key a key result link stands for, or `null` for a link without them. */
+export function keyOfLink(
+	link: EverWorksEntityLink | null | undefined
+): { ewGoalId: string; key: KeyResultKey } | null {
+	if (!link?.ewOnly) return null;
+	try {
+		const value = JSON.parse(link.ewOnly) as { ewGoalId?: unknown; key?: unknown };
+		return typeof value.ewGoalId === 'string' && typeof value.key === 'string'
+			? { ewGoalId: value.ewGoalId, key: value.key }
+			: null;
+	} catch {
+		return null;
+	}
+}
+
 const KEY_RESULT_FIELDS: ReadonlyArray<keyof KeyResultShared> = [
 	'name',
 	'type',
@@ -312,16 +337,14 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		leadEmployeeId: ID | null
 	): Promise<number> {
 		const repository = this.dataSource.getRepository(KeyResult);
-		const prefix = `${ewGoalId}:`;
 		const existing = (await this.links.list(context.integrationTenantId, EverWorksLinkType.KEY_RESULT)).filter(
-			(l) => l.ewId.startsWith(prefix) && l.state !== EverWorksLinkState.UNLINKED
+			(l) => keyOfLink(l)?.ewGoalId === ewGoalId && l.state !== EverWorksLinkState.UNLINKED
 		);
 		let ownerId: ID | null | undefined;
 		let missing = 0;
 		for (const result of desired) {
-			const ewId = `${prefix}${result.key}`;
-			const { key: _key, ...fields } = result;
-			const link = existing.find((l) => l.ewId === ewId);
+			const { key, ...fields } = result;
+			const link = existing.find((l) => keyOfLink(l)?.key === key);
 			if (!link) {
 				if (ownerId === undefined) ownerId = leadEmployeeId ?? (await this.adminEmployeeOf(context));
 				if (!ownerId) {
@@ -341,7 +364,7 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 					...fields,
 					hardDeadline: fields.hardDeadline ? new Date(fields.hardDeadline) : null
 				} as never);
-				await this.recordKeyResult(context, id, ewId, fields, null);
+				await this.recordKeyResult(context, id, ewGoalId, key, fields, null);
 				continue;
 			}
 			const before = this.links.snapshot<KeyResultShared>(link);
@@ -352,11 +375,11 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 						field === 'hardDeadline' && fields[field] ? new Date(fields[field] as string) : fields[field];
 			}
 			if (Object.keys(changes).length) await repository.update({ id: link.gauzyId } as never, changes as never);
-			await this.recordKeyResult(context, link.gauzyId as ID, ewId, fields, link);
+			await this.recordKeyResult(context, link.gauzyId as ID, ewGoalId, key, fields, link);
 		}
-		const kept = new Set(desired.map((result) => `${prefix}${result.key}`));
+		const kept = new Set(desired.map((result) => result.key));
 		for (const link of existing) {
-			if (kept.has(link.ewId)) continue;
+			if (kept.has(keyOfLink(link)?.key as string)) continue;
 			await repository.update(
 				{ id: link.gauzyId } as never,
 				{ isArchived: true, archivedAt: new Date() } as never
@@ -392,16 +415,14 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		);
 		if (link?.state === EverWorksLinkState.UNLINKED)
 			return { status: 'skipped', message: 'the goal is no longer synced' };
-		const goal = await this.dataSource
-			.getRepository(Goal)
-			.findOne({
-				where: {
-					id: change.gauzyId,
-					tenantId: context.tenantId,
-					organizationId: context.organizationId
-				} as never,
-				withDeleted: true
-			});
+		const goal = await this.dataSource.getRepository(Goal).findOne({
+			where: {
+				id: change.gauzyId,
+				tenantId: context.tenantId,
+				organizationId: context.organizationId
+			} as never,
+			withDeleted: true
+		});
 		if (change.op === 'delete' || !goal || (goal as { deletedAt?: Date | null }).deletedAt) {
 			// Delete policy: Ever Works goals are not deleted from Gauzy (and an integration cannot archive one).
 			return { status: 'skipped', message: 'Gauzy goal deletes are not pushed to Ever Works (delete policy)' };
@@ -639,15 +660,13 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		context: EverWorksMappingContext,
 		change: EverWorksOutboundChange
 	): Promise<EverWorksPushOutcome> {
-		const keyResult = await this.dataSource
-			.getRepository(KeyResult)
-			.findOne({
-				where: {
-					id: change.gauzyId,
-					tenantId: context.tenantId,
-					organizationId: context.organizationId
-				} as never
-			});
+		const keyResult = await this.dataSource.getRepository(KeyResult).findOne({
+			where: {
+				id: change.gauzyId,
+				tenantId: context.tenantId,
+				organizationId: context.organizationId
+			} as never
+		});
 		if (!keyResult) return { status: 'skipped', message: 'the key result is gone' };
 		if (!isNumeric(keyResult.type))
 			return {
@@ -669,7 +688,7 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			EverWorksLinkType.GOAL,
 			keyResult.goalId as ID
 		);
-		if (!goalLink || goalLink.state === EverWorksLinkState.UNLINKED || !link.ewId.startsWith(`${goalLink.ewId}:`))
+		if (!goalLink || goalLink.state === EverWorksLinkState.UNLINKED || keyOfLink(link)?.ewGoalId !== goalLink.ewId)
 			return { status: 'skipped', message: 'the goal is not linked' };
 		const sent = await this.sendSample(context, this.client(context), goalLink, link, keyResult);
 		return sent
@@ -689,7 +708,7 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		link: EverWorksEntityLink,
 		keyResult: { id?: string; update?: number | null; updatedAt?: Date }
 	): Promise<boolean> {
-		const key = link.ewId.slice(goalLink.ewId.length + 1);
+		const key = keyOfLink(link)?.key ?? '';
 		if (key !== 'm' && !key.startsWith('c:')) return false;
 		const value = Number(keyResult.update);
 		const before = this.links.snapshot<KeyResultShared>(link);
@@ -713,7 +732,8 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		await this.recordKeyResult(
 			context,
 			keyResult.id as ID,
-			link.ewId,
+			goalLink.ewId,
+			key,
 			{ ...(before as KeyResultShared), update: value },
 			link
 		);
@@ -748,7 +768,7 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 				EverWorksLinkType.KEY_RESULT,
 				row.id as ID
 			);
-			if (!link || link.state === EverWorksLinkState.UNLINKED || !link.ewId.startsWith(`${goalLink.ewId}:`))
+			if (!link || link.state === EverWorksLinkState.UNLINKED || keyOfLink(link)?.ewGoalId !== goalLink.ewId)
 				continue;
 			const fresh = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.GOAL, goalId);
 			await this.sendSample(context, client, fresh ?? goalLink, link, row);
@@ -798,7 +818,7 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			}
 			const made = key ? sent.get(key) : undefined;
 			if (!key || !made) continue;
-			const ewId = `${ewGoalId}:${key}`;
+			const ewId = keyResultEwId(ewGoalId, key);
 			const existing = await this.links.byGauzy(
 				context.integrationTenantId,
 				EverWorksLinkType.KEY_RESULT,
@@ -816,7 +836,8 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			await this.recordKeyResult(
 				context,
 				row.id as ID,
-				ewId,
+				ewGoalId,
+				key,
 				{
 					...fields,
 					update: kept?.update ?? row.initialValue ?? 0,
@@ -831,25 +852,18 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 
 	/** The goal's key results as the push reads them, each with its key on the goal's link when linked. */
 	private async keyResultRows(context: EverWorksMappingContext, goalId: ID): Promise<GauzyKeyResultRow[]> {
-		const rows = (await this.dataSource
-			.getRepository(KeyResult)
-			.find({
-				where: { goalId, tenantId: context.tenantId, isArchived: false } as never,
-				order: { createdAt: 'ASC' } as never
-			})) as KeyResult[];
+		const rows = (await this.dataSource.getRepository(KeyResult).find({
+			where: { goalId, tenantId: context.tenantId, isArchived: false } as never,
+			order: { createdAt: 'ASC' } as never
+		})) as KeyResult[];
 		const goalLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.GOAL, goalId);
 		const result: GauzyKeyResultRow[] = [];
 		for (const row of rows) {
 			const link = goalLink
 				? await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.KEY_RESULT, row.id as ID)
 				: null;
-			const ewKey =
-				link &&
-				goalLink &&
-				link.state !== EverWorksLinkState.UNLINKED &&
-				link.ewId.startsWith(`${goalLink.ewId}:`)
-					? link.ewId.slice(goalLink.ewId.length + 1)
-					: null;
+			const linked = link && goalLink && link.state !== EverWorksLinkState.UNLINKED ? keyOfLink(link) : null;
+			const ewKey = linked && goalLink && linked.ewGoalId === goalLink.ewId ? linked.key : null;
 			result.push({
 				id: row.id as string,
 				name: row.name,
@@ -898,15 +912,13 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		timeFrameName: string | null | undefined
 	): Promise<string | null> {
 		if (!timeFrameName) return null;
-		const frame = await this.dataSource
-			.getRepository(GoalTimeFrame)
-			.findOne({
-				where: {
-					name: timeFrameName,
-					tenantId: context.tenantId,
-					organizationId: context.organizationId
-				} as never
-			});
+		const frame = await this.dataSource.getRepository(GoalTimeFrame).findOne({
+			where: {
+				name: timeFrameName,
+				tenantId: context.tenantId,
+				organizationId: context.organizationId
+			} as never
+		});
 		const end = frame?.endDate ? new Date(frame.endDate) : null;
 		return end && !Number.isNaN(end.getTime()) ? end.toISOString() : null;
 	}
@@ -961,11 +973,9 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 	private async adminEmployeeOf(context: EverWorksMappingContext): Promise<ID | null> {
 		const userId = context.connection.connectedByUserId;
 		if (!userId) return null;
-		const employee = await this.dataSource
-			.getRepository(Employee)
-			.findOne({
-				where: { userId, tenantId: context.tenantId, organizationId: context.organizationId } as never
-			});
+		const employee = await this.dataSource.getRepository(Employee).findOne({
+			where: { userId, tenantId: context.tenantId, organizationId: context.organizationId } as never
+		});
 		return (employee?.id as ID) ?? null;
 	}
 
@@ -1025,7 +1035,8 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 	private async recordKeyResult(
 		context: EverWorksMappingContext,
 		keyResultId: ID,
-		ewId: string,
+		ewGoalId: string,
+		key: KeyResultKey,
 		fields: KeyResultShared,
 		link: EverWorksEntityLink | null
 	): Promise<void> {
@@ -1035,8 +1046,9 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			integrationTenantId: context.integrationTenantId,
 			entityType: EverWorksLinkType.KEY_RESULT,
 			gauzyId: keyResultId,
-			ewId,
+			ewId: keyResultEwId(ewGoalId, key),
 			snapshot: fields as unknown as Record<string, unknown>,
+			ewOnly: { ewGoalId, key },
 			direction: link ? (link.lastDirection === 'outbound' ? 'outbound' : 'inbound') : 'inbound'
 		});
 	}
