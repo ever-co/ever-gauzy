@@ -89,6 +89,84 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 			await service.findWorkingEmployees('org-1', null);
 			expect(findAndCount.mock.calls[1][0]).not.toHaveProperty('kind');
 		});
+
+		describe('the pickers list agent employees, which have no membership and no start date', () => {
+			const range = { startDate: '2026-10-01', endDate: '2026-10-31' };
+
+			const typeOrmRead = async (humansOnly: boolean) => {
+				const joins: string[] = [];
+				const clauses: string[] = [];
+				const web = {
+					where: jest.fn((clause: string) => clauses.push(`where ${clause}`)),
+					andWhere: jest.fn((clause: string) => clauses.push(`and ${clause}`)),
+					orWhere: jest.fn((clause: string) => clauses.push(`or ${clause}`))
+				};
+				const expand = (condition: unknown) =>
+					typeof condition === 'string'
+						? clauses.push(condition)
+						: typeof condition === 'function'
+							? condition(qb)
+							: (condition as { whereFactory?: (builder: unknown) => void })?.whereFactory?.(web);
+				const qb: Record<string, any> = {
+					alias: 'employee',
+					innerJoin: jest.fn((path: string) => joins.push(`inner ${path}`)),
+					leftJoin: jest.fn((path: string) => joins.push(`left ${path}`)),
+					setFindOptions: jest.fn(),
+					where: jest.fn(expand),
+					andWhere: jest.fn(expand),
+					getManyAndCount: jest.fn().mockResolvedValue([[], 0])
+				};
+				jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+				const service = Object.create(EmployeeService.prototype) as EmployeeService;
+				Object.defineProperty(service, 'typeOrmEmployeeRepository', {
+					value: { createQueryBuilder: jest.fn(() => qb) },
+					configurable: true
+				});
+				Object.defineProperty(service, 'tableName', { value: 'employee', configurable: true });
+				await service.findWorkingEmployees('org-1', range, false, humansOnly);
+				return { joins, sql: clauses.join(' | ') };
+			};
+
+			it('the default read does not require a membership or a start date of an agent', async () => {
+				const { joins, sql } = await typeOrmRead(false);
+
+				expect(joins).toEqual(['inner employee.user', 'left user.organizations']);
+				expect(sql).toMatch(/where "organizations"\."id" IS NOT NULL \| or "employee"\."kind" = :agentKind/);
+				expect(sql).toMatch(
+					/and "employee"\."startedWorkOn" <= :startedWorkOn \| or \("employee"\."kind" = :agentKind AND "employee"\."startedWorkOn" IS NULL\)/
+				);
+			});
+
+			it('CONTROL: people are filtered exactly as before (membership and start date), on the statistics read too', async () => {
+				const { joins, sql } = await typeOrmRead(true);
+
+				expect(joins).toEqual(['inner employee.user', 'inner user.organizations']);
+				expect(sql).not.toMatch(/agentKind/);
+				expect(sql).toMatch(/and "employee"\."startedWorkOn" <= :startedWorkOn/);
+			});
+
+			it('the MikroORM branch: an agent without a start date is working, people need one', async () => {
+				jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
+				const findAndCount = jest.fn().mockResolvedValue([[], 0]);
+				const service = new EmployeeService(
+					{ metadata: { tableName: 'employee' } } as never,
+					{ findAndCount } as never
+				);
+
+				await service.findWorkingEmployees('org-1', range);
+				const [pickers] = findAndCount.mock.calls[0];
+				expect(pickers).not.toHaveProperty('startedWorkOn');
+				expect(pickers.$and[0].$or).toEqual([
+					{ startedWorkOn: { $lte: expect.anything() } },
+					{ kind: EmployeeKindEnum.AGENT, startedWorkOn: null }
+				]);
+
+				await service.findWorkingEmployees('org-1', range, false, true);
+				const [people] = findAndCount.mock.calls[1];
+				expect(people.startedWorkOn).toEqual({ $lte: expect.anything() });
+				expect(people).not.toHaveProperty('$and');
+			});
+		});
 	});
 
 	it('GET /employee/count counts people only', async () => {
@@ -255,7 +333,7 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
 			const calls: string[] = [];
 			const qb: Record<string, jest.Mock> = {};
-			for (const method of ['innerJoin', 'where', 'select']) {
+			for (const method of ['withDeleted', 'innerJoin', 'where', 'andWhere', 'select']) {
 				qb[method] = jest.fn((...args: unknown[]) => {
 					calls.push(`${method}:${String(args[0])}`);
 					return qb;
@@ -273,14 +351,24 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 		it("the caller's tenant when there is one", async () => {
 			const { count, qb } = agentUsers('tenant-1');
 			await expect(count()).resolves.toBe(3);
-			expect(qb.where).toHaveBeenCalledWith('user.tenantId = :tenantId', { tenantId: 'tenant-1' });
+			expect(qb.andWhere).toHaveBeenCalledWith('user.tenantId = :tenantId', { tenantId: 'tenant-1' });
 		});
 
 		it('the whole instance when there is none (GET /stats/global)', async () => {
-			const { count, qb, calls } = agentUsers(null);
+			const { count, qb } = agentUsers(null);
 			await expect(count()).resolves.toBe(3);
-			expect(qb.where).not.toHaveBeenCalled();
-			expect(calls[0]).toMatch(/^innerJoin:/);
+			expect(qb.andWhere).not.toHaveBeenCalled();
+		});
+
+		it('an account stays an agent account after its agent employee is retired; a deleted user is in neither count', async () => {
+			const { count, calls } = agentUsers('tenant-1');
+			await count();
+			// Retired (soft-deleted) agent employee rows are joined; the soft-delete filter of the users is restated.
+			expect(calls.slice(0, 3)).toEqual([
+				'withDeleted:undefined',
+				expect.stringMatching(/^innerJoin:/),
+				'where:user.deletedAt IS NULL'
+			]);
 		});
 	});
 

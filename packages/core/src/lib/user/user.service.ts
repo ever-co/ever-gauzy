@@ -153,19 +153,25 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * statistics, which count people.
 	 *
 	 * Scoped like the user count it is subtracted from: the caller's tenant when there is one, and the whole
-	 * instance when there is none (the public `GET /stats/global`).
+	 * instance when there is none (the public `GET /stats/global`). An account behind an agent employee stays
+	 * an agent account after that employee is retired (soft-deleted), so retired employee rows count here; a
+	 * soft-deleted USER is in neither count.
 	 *
 	 * @returns {Promise<number>} - The number of agent users
 	 */
 	async countAgentUsers(): Promise<number> {
 		const tenantId = RequestContext.currentTenantId();
+		// `withDeleted` keeps the retired agent employees in the join; it also lifts the soft-delete filter of
+		// the users, which is therefore stated explicitly.
 		const query = this.typeOrmRepository
 			.createQueryBuilder('user')
+			.withDeleted()
 			.innerJoin(Employee, 'employee', 'employee.userId = user.id AND employee.kind = :agentKind', {
 				agentKind: EmployeeKindEnum.AGENT
-			});
+			})
+			.where('user.deletedAt IS NULL');
 		if (tenantId) {
-			query.where('user.tenantId = :tenantId', { tenantId });
+			query.andWhere('user.tenantId = :tenantId', { tenantId });
 		}
 		const row = await query
 			.select('COUNT(DISTINCT user.id)', 'agentUsers')
