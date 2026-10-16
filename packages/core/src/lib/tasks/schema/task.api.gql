@@ -593,6 +593,16 @@ extend type Mutation {
 	createTask(input: CreateTaskInput!): Task!
 
 	"""
+	Files a batch of tasks — each item exactly as `createTask` files one, numbered by the same handler from
+	its project's highest number as the items before it left it — and answers one outcome per item. The
+	batch `POST /tasks/bulk` applies, under the same permission and cap (200).
+	A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+	`BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+	so the batch cannot be rolled back as one.
+	"""
+	bulkCreateTasks(input: BulkCreateTasksInput!): BulkCreateTasksPayload!
+
+	"""
 	Edits a task that exists.
 	"""
 	updateTask(input: UpdateTaskInput!): Task!

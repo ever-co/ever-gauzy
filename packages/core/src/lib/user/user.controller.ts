@@ -18,7 +18,18 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
-import { ID, IPagination, IUser, IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPagination, IUser, IUserCreateInput, IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BulkExecutor,
+	BulkOperation,
+	BulkResult,
+	IBulkCreateRequest,
+	applyAsSingleCreate,
+	bulkCreateRequest,
+	bulkOptionsOf,
+	singleRouteBody
+} from './../api';
+import { Idempotent } from './../idempotency/idempotent.decorator';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
@@ -48,7 +59,8 @@ export class UserController extends CrudController<User> {
 	constructor(
 		private readonly _userService: UserService,
 		private readonly _factoryResetService: FactoryResetService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
 	) {
 		super(_userService);
 	}
@@ -262,6 +274,76 @@ export class UserController extends CrudController<User> {
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
 		return await this._commandBus.execute(new UserCreateCommand(entity));
+	}
+
+	/**
+	 * CREATE users in bulk
+	 *
+	 * One request creates many users of the caller's tenant and answers one outcome per item. The batch is
+	 * the platform's — `@BulkOperation` declares what this route accepts, the executor is configured from
+	 * that declaration, authorises the whole request once and refuses a batch it cannot read before writing
+	 * anything.
+	 *
+	 * **Each item is `POST /user`**: its body runs through that route's own validation pipe — whose
+	 * whitelist keeps every credential member out of the write, as it does for a single user — and then
+	 * through that route's handler, which dispatches `UserCreateCommand`. That command is where a user's
+	 * role is decided: it ignores a stated id, pins the role the payload names to one id, resolves it in the
+	 * caller's tenant and refuses `SUPER_ADMIN` to a caller who does not hold `SUPER_ADMIN_EDIT`. A batch
+	 * runs that decision for every item, so it can assign no role the caller could not assign one user at
+	 * a time, and an item asking for one is refused with the command's own reason while the others apply.
+	 *
+	 * The outcome names the user each item created by its id and nothing else: no member of the row — no
+	 * credential, no hash — is ever part of a batch's answer.
+	 *
+	 * A batch creates what it can and reports the rest; **`atomic: true` is refused before item 0**
+	 * (`BULK_ATOMIC_UNSUPPORTED`, declared `atomic: false`): each item runs the single create, which writes
+	 * through its own repositories, so the batch cannot be rolled back as one. The route declares no dry run
+	 * and no write mode either (see `bulkCreateRequest`).
+	 *
+	 * @param request The batch: the items, each the body `POST /user` takes.
+	 * @returns What applied, what did not, and the counts derived from both.
+	 */
+	@ApiOperation({ summary: 'Create users in bulk' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The batch was applied, with one outcome per item' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The request or an item could not be read, or it asked for "atomic" (BULK_ATOMIC_UNSUPPORTED)'
+	})
+	@ApiResponse({ status: HttpStatus.PAYLOAD_TOO_LARGE, description: 'BULK_LIMIT_EXCEEDED' })
+	@ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'BULK_ALL_ITEMS_FAILED' })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Idempotent({ scope: 'user.bulk', required: false, resourceType: 'user' })
+	@BulkOperation({
+		resource: 'user',
+		// Below the platform's 200: a user create is the batch with the most at stake — every item resolves its
+		// role in the database and runs the role-grant check before it writes — so a batch is kept to a size an
+		// operator can review item by item.
+		maxItems: 50,
+		permission: PermissionsEnum.ORG_USERS_EDIT,
+		// Each item is the single create, which writes through its own repositories: no batch transaction.
+		atomic: false
+	})
+	@Post('/bulk')
+	async bulk(@Body() request: IBulkCreateRequest<IUserCreateInput>): Promise<BulkResult<IUserCreateInput>> {
+		const batch = bulkCreateRequest(request);
+
+		return await this.bulkExecutor.execute<IUserCreateInput>(
+			batch,
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createAsSingleRoute(body)),
+			bulkOptionsOf(UserController, 'bulk')
+		);
+	}
+
+	/**
+	 * Creates one item of a batch exactly as `POST /user` creates its body: through the route's own pipes,
+	 * then through the route's handler.
+	 *
+	 * @param body The item, as the single route's body.
+	 * @returns The user created.
+	 */
+	private async createAsSingleRoute(body: IUserCreateInput): Promise<IUser> {
+		return await this.create(await singleRouteBody<CreateUserDTO>(UserController, 'create')(body));
 	}
 
 	/**

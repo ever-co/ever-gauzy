@@ -120,7 +120,7 @@ function surfaces() {
 		userService,
 		factoryResetService,
 		commandBus,
-		resolver: new UserResolver(userService as never, factoryResetService as never, commandBus as never)
+		resolver: new UserResolver(userService as never, factoryResetService as never, commandBus as never, {} as never)
 	};
 }
 
@@ -315,6 +315,7 @@ describe('UserResolver — the SDL declares the capabilities the REST routes ser
 		// as the list and the page is what the connection answers with.
 		expect(ownedRootFields('Query')).toEqual(['me', 'user', 'userByEmail', 'userCount', 'users']);
 		expect(ownedRootFields('Mutation')).toEqual([
+			'bulkCreateUsers',
 			'createUser',
 			'deleteUser',
 			'factoryReset',
@@ -794,6 +795,7 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'me', route: 'findMe' },
 	{ field: 'userCount', route: 'getCount' },
 	{ field: 'createUser', route: 'create' },
+	{ field: 'bulkCreateUsers', route: 'bulk' },
 	{ field: 'updateUser', route: 'update' },
 	{ field: 'updatePreferredLanguage', route: 'updatePreferredLanguage' },
 	{ field: 'updatePreferredComponentLayout', route: 'updatePreferredComponentLayout' },

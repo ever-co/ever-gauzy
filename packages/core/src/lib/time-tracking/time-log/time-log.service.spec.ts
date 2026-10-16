@@ -26,7 +26,21 @@ import {
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { RequestContext } from '../../core/context';
-import { TimeLogCreateCommand, IGetConflictTimeLogCommand, TimeLogUpdateCommand } from './commands';
+import { ForbiddenException } from '@nestjs/common';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	DeleteTimeSpanCommand,
+	TimeLogCreateCommand,
+	IGetConflictTimeLogCommand,
+	TimeLogUpdateCommand,
+	UpdateEmployeeTotalWorkedHoursCommand
+} from './commands';
+import { TimeLogUpdateHandler } from './commands/handlers/time-log-update.handler';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
+import { TimeSlotBulkDeleteCommand } from '../time-slot/commands';
+import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-slot-bulk-delete.handler';
+import { generateTimeSlots } from '../time-slot/utils';
+import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
@@ -303,7 +317,11 @@ describe('TimeLogService', () => {
 							findOne: jest.fn().mockResolvedValue({
 								id: TARGET_EMPLOYEE_ID,
 								organizationId: EMPLOYEE_ORGANIZATION_ID,
-								organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true }
+								organization: {
+									id: EMPLOYEE_ORGANIZATION_ID,
+									futureDateAllowed: true,
+									allowManualTime: true
+								}
 							})
 						};
 					}
@@ -342,11 +360,27 @@ describe('TimeLogService', () => {
 			});
 		});
 
+		it("addManualTime refuses when the employee's organization does not allow manual time, whatever the body names", async () => {
+			// The policy guard judged the body's organization (and the caller's own); the log is the employee's
+			// organization's, so that organization's policy is the one that has to allow it.
+			jest.spyOn(manualService as any, 'findEmployeeInTenant').mockResolvedValue({
+				id: TARGET_EMPLOYEE_ID,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true, allowManualTime: false }
+			});
+
+			await expect(manualService.addManualTime(request)).rejects.toThrow(
+				"Manual time is not allowed in the employee's organization"
+			);
+			// Refused before any conflict is read, trimmed or written.
+			expect(execute).not.toHaveBeenCalled();
+		});
+
 		describe("a team manager editing a member's log (no CHANGE_SELECTED_EMPLOYEE)", () => {
 			// Stand-in for the per-request store withoutEmployeeFilter() keeps its state in.
 			const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
 			const originalClsService = RequestContext['clsService'];
-			let memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID };
+			let memberLog = { id: 'log-1', employeeId: TARGET_EMPLOYEE_ID, organizationId: EMPLOYEE_ORGANIZATION_ID };
 			let readsWithFilter: number;
 
 			const inRequest = <R>(callback: () => Promise<R>) => requestStorage.run(new Map(), callback);
@@ -405,12 +439,551 @@ describe('TimeLogService', () => {
 		});
 
 		it("updateManualTime looks for conflicts in the employee's organization", async () => {
-			jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({ id: 'log-1' } as any);
+			jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({
+				id: 'log-1',
+				organizationId: EMPLOYEE_ORGANIZATION_ID
+			} as any);
 
 			await manualService.updateManualTime('log-1', { ...request });
 
 			expect(commandsOfType(IGetConflictTimeLogCommand)[0].input).toMatchObject({
 				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
+		});
+
+		/**
+		 * A log stays in its organization. `TimeLogUpdateHandler` keeps the stored row's organization, but
+		 * `employeeId` is not a scope field, and a caller with CHANGE_SELECTED_EMPLOYEE reaches every employee of the
+		 * tenant: naming an employee of ANOTHER organization re-pointed the log at them while it stayed in its own
+		 * organization, and ran the overlap cleanup in theirs — deleting that organization's time slots, whose
+		 * `allowModifyTime` nobody asked (the policy guard judges the log's organization).
+		 */
+		describe('updateManualTime keeps the log inside its own organization', () => {
+			const OTHER_ORGANIZATION_ID = 'c9f3e8d0-2b5a-4d6e-9f3c-4e6a8b0d2c3f';
+			const SAME_ORGANIZATION_EMPLOYEE_ID = '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e';
+			const OTHER_ORGANIZATION_EMPLOYEE_ID = '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f';
+			const CROSS_ORGANIZATION = 'A time log cannot be moved to an employee of another organization';
+
+			/** The stored intervals the overlap lookup reads, across both organizations of the tenant. */
+			let stored: Array<{ id: string; employeeId: string; organizationId: string; tenantId: string }>;
+			let deleted: string[];
+
+			const update = (employeeId: string, organizationId = EMPLOYEE_ORGANIZATION_ID) =>
+				manualService.updateManualTime('log-1', { ...request, employeeId, organizationId });
+
+			beforeEach(() => {
+				deleted = [];
+				// An interval overlapping the edit, per employee — the other organization's one included.
+				stored = [
+					{
+						id: 'same-org-log',
+						employeeId: SAME_ORGANIZATION_EMPLOYEE_ID,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						tenantId: TENANT_ID
+					},
+					{
+						id: 'other-org-log',
+						employeeId: OTHER_ORGANIZATION_EMPLOYEE_ID,
+						organizationId: OTHER_ORGANIZATION_ID,
+						tenantId: TENANT_ID
+					}
+				];
+
+				const employees: Record<string, string> = {
+					[TARGET_EMPLOYEE_ID]: EMPLOYEE_ORGANIZATION_ID,
+					[SAME_ORGANIZATION_EMPLOYEE_ID]: EMPLOYEE_ORGANIZATION_ID,
+					[OTHER_ORGANIZATION_EMPLOYEE_ID]: OTHER_ORGANIZATION_ID
+				};
+				jest.spyOn(manualService as any, 'findEmployeeInTenant').mockImplementation(
+					async (employeeId: any) => ({
+						id: employeeId,
+						organizationId: employees[employeeId],
+						organization: { id: employees[employeeId], futureDateAllowed: true, allowManualTime: true }
+					})
+				);
+				// The stored log: the target employee's, in the employee organization.
+				jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({
+					id: 'log-1',
+					employeeId: TARGET_EMPLOYEE_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					tenantId: TENANT_ID
+				} as any);
+				// The overlap lookup answers as GetConflictTimeLogHandler filters (tenant, organization, employee), and
+				// the trim records which interval's slot it deleted.
+				execute.mockImplementation(async (command: unknown) => {
+					if (command instanceof IGetConflictTimeLogCommand) {
+						const { tenantId, organizationId, employeeId } = command.input;
+						return stored
+							.filter(
+								(log) =>
+									log.tenantId === tenantId &&
+									log.organizationId === organizationId &&
+									log.employeeId === employeeId
+							)
+							.map((log) => ({ ...log, timeSlots: [{ id: `${log.id}-slot` }] }));
+					}
+					if (command instanceof DeleteTimeSpanCommand) {
+						deleted.push(command.timeLog.id);
+					}
+					return undefined;
+				});
+			});
+
+			it('an update naming an employee of another organization is refused and writes nothing', async () => {
+				const refusal = await update(OTHER_ORGANIZATION_EMPLOYEE_ID).catch((thrown) => thrown);
+
+				// 403, as the move refusal for a caller without CHANGE_SELECTED_EMPLOYEE answers.
+				expect(refusal).toBeInstanceOf(ForbiddenException);
+				expect((refusal as ForbiddenException).message).toBe(CROSS_ORGANIZATION);
+				expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+				expect(commandsOfType(IGetConflictTimeLogCommand)).toHaveLength(0);
+				expect(deleted).toEqual([]);
+			});
+
+			it("the conflict cleanup of an update never deletes another organization's slots", async () => {
+				// Naming the other organization in the body as well changes nothing: the log is not moved there.
+				const across = await update(OTHER_ORGANIZATION_EMPLOYEE_ID, OTHER_ORGANIZATION_ID).catch(
+					(thrown) => thrown
+				);
+				expect(across).toBeInstanceOf(ForbiddenException);
+				expect(deleted).toEqual([]);
+
+				// The cleanup that does run looks in the log's own organization, whatever the body names.
+				await update(SAME_ORGANIZATION_EMPLOYEE_ID, OTHER_ORGANIZATION_ID);
+
+				expect(commandsOfType(IGetConflictTimeLogCommand).map((command) => command.input)).toEqual([
+					expect.objectContaining({
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						employeeId: SAME_ORGANIZATION_EMPLOYEE_ID
+					})
+				]);
+				expect(deleted).toEqual(['same-org-log']);
+			});
+
+			it('CONTROL: an update moving the log to another employee of the same organization still works for a CHANGE_SELECTED_EMPLOYEE caller', async () => {
+				await update(SAME_ORGANIZATION_EMPLOYEE_ID);
+
+				expect(commandsOfType(TimeLogUpdateCommand).map((command) => command.input.employeeId)).toEqual([
+					SAME_ORGANIZATION_EMPLOYEE_ID
+				]);
+			});
+		});
+
+		/**
+		 * A move to another employee of the same organization stays allowed, and the log takes everything that is
+		 * its own with it. `TimeLogUpdateHandler` wrote the new employee onto the row but kept the PREVIOUS employee
+		 * for the timesheet, the time slots and the worked hours — so the log pointed at one employee while its
+		 * timesheet, its slots and its hours stayed with the other. These run the real handler behind the real
+		 * service, with the repositories and the other commands scripted as the handler specs script them.
+		 */
+		describe('a same-organization employee move (real TimeLogUpdateHandler)', () => {
+			const PREVIOUS = TARGET_EMPLOYEE_ID;
+			const NEXT = '4d5e6f7a-8b9c-4dae-9f0a-3b4c5d6e7f80';
+			const STARTED_AT = new Date('2026-01-05T09:00:00.000Z');
+			const STOPPED_AT = new Date('2026-01-05T10:00:00.000Z');
+			const TRACKED = 'A time log with tracked activity or screenshots cannot be moved to another employee';
+
+			type Slot = {
+				id: string;
+				employeeId: string;
+				organizationId: string;
+				tenantId: string;
+				startedAt: Date;
+				timeLogs: Array<{ id: string }>;
+				screenshots: unknown[];
+				activities: unknown[];
+				timeSlotMinutes: unknown[];
+				keyboard?: number;
+				mouse?: number;
+				deletedAt?: Date;
+			};
+
+			let row: TimeLog;
+			let slots: Slot[];
+			let recalculated: string[];
+			let workedHours: string[];
+			/** When set, saving the log fails with it (a lost connection, a constraint). */
+			let saveFailure: Error | undefined;
+
+			const slotsOf = (employeeId: string) =>
+				slots.filter((slot) => !slot.deletedAt && slot.employeeId === employeeId);
+
+			beforeEach(() => {
+				recalculated = [];
+				workedHours = [];
+				saveFailure = undefined;
+				// The log and the previous employee's six ten-minute slots of it, as the create left them.
+				row = Object.assign(new TimeLog(), {
+					id: 'log-1',
+					tenantId: TENANT_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					employeeId: PREVIOUS,
+					timesheetId: `timesheet-${PREVIOUS}`,
+					startedAt: STARTED_AT,
+					stoppedAt: STOPPED_AT,
+					logType: TimeLogType.MANUAL,
+					source: TimeLogSourceEnum.WEB_TIMER
+				});
+				slots = generateTimeSlots(STARTED_AT, STOPPED_AT).map((slot, index) => ({
+					id: `slot-${index}`,
+					employeeId: PREVIOUS,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					tenantId: TENANT_ID,
+					startedAt: new Date(slot.startedAt),
+					timeLogs: [{ id: 'log-1' }],
+					screenshots: [],
+					activities: [],
+					timeSlotMinutes: []
+				}));
+
+				jest.spyOn(manualService as any, 'findEmployeeInTenant').mockImplementation(
+					async (employeeId: any) => ({
+						id: employeeId,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true, allowManualTime: true }
+					})
+				);
+				// The stored log as the service reads it (its own instance), with the slots it is linked to.
+				jest.spyOn(manualService, 'findOneByIdString').mockImplementation(async () =>
+					Object.assign(new TimeLog(), row, {
+						timeSlots: slots.filter(
+							(slot) => !slot.deletedAt && slot.timeLogs.some((log) => log.id === row.id)
+						)
+					})
+				);
+
+				const timeLogRepository = {
+					findOneBy: jest.fn(async (where: { id: string }) => (where.id === row.id ? row : null)),
+					update: jest.fn(async (_where: unknown, changes: Partial<TimeLog>) => {
+						Object.assign(row, changes);
+						return { affected: 1 };
+					}),
+					// Saving a log with `timeSlots` makes them its slots (the join rows), as TypeORM persists the relation.
+					save: jest.fn(async (log: TimeLog) => {
+						if (saveFailure) {
+							throw saveFailure;
+						}
+						// The saved columns are the row's (a move saves the log once, instead of an update).
+						const { timeSlots: _relation, ...columns } = log as TimeLog & { timeSlots?: unknown };
+						if (log.id === row.id && log !== row) {
+							Object.assign(row, columns);
+						}
+						if (Array.isArray(log.timeSlots)) {
+							const linked = new Set(log.timeSlots.map((slot) => slot.id));
+							for (const slot of slots.filter((stored) => !stored.deletedAt)) {
+								const others = slot.timeLogs.filter((timeLog) => timeLog.id !== log.id);
+								slot.timeLogs = linked.has(slot.id) ? [...others, { id: log.id }] : others;
+							}
+						}
+						return log;
+					})
+				};
+				const timeSlotRepository = {
+					createQueryBuilder: () => {
+						const params: Record<string, any> = {};
+						const builder = {
+							alias: 'time_slot',
+							leftJoinAndSelect: () => builder,
+							where: (_sql: string, values: Record<string, unknown>) => (
+								Object.assign(params, values),
+								builder
+							),
+							andWhere: (_sql: string, values: Record<string, unknown>) => (
+								Object.assign(params, values),
+								builder
+							),
+							getParameters: () => params,
+							// The join-row operations of `relation(TimeSlot, 'timeLogs').of(slot)`.
+							relation: () => ({
+								of: (slotId: string) => ({
+									remove: async (timeLogId: string) => {
+										const stored = slots.find((candidate) => candidate.id === slotId);
+										if (stored) {
+											stored.timeLogs = stored.timeLogs.filter((log) => log.id !== timeLogId);
+										}
+									}
+								})
+							}),
+							getMany: async () =>
+								slots.filter(
+									(slot) =>
+										!slot.deletedAt &&
+										slot.organizationId === params.organizationId &&
+										slot.tenantId === params.tenantId &&
+										slot.employeeId === params.employeeId &&
+										(!params.startTimes ||
+											(params.startTimes as Date[]).some(
+												(time) => time.getTime() === slot.startedAt.getTime()
+											)) &&
+										(!params.timeSlotsIds || (params.timeSlotsIds as string[]).includes(slot.id))
+								)
+						};
+						return builder;
+					},
+					softRemove: jest.fn(async (removed: Slot | Slot[]) => {
+						[removed].flat().forEach((slot) => (slot.deletedAt = new Date()));
+						return removed;
+					})
+				};
+				const timeSlotService = {
+					generateTimeSlots: (start: Date, end: Date) => generateTimeSlots(start, end),
+					// As TimeSlotBulkCreateHandler: a slot the employee already has at that start is not created again
+					// (nor linked); a new one is linked to the slot's `timeLogId`; the employee's slots at those starts
+					// are returned (what its merge answers).
+					bulkCreate: jest.fn(async (created: any[], employeeId: string, organizationId: string) => {
+						const starts = created.map((slot) => new Date(slot.startedAt).getTime());
+						const missing = created.filter(
+							(slot) =>
+								!slotsOf(employeeId).some(
+									(existing) => existing.startedAt.getTime() === new Date(slot.startedAt).getTime()
+								)
+						);
+						slots.push(
+							...missing.map((slot, index) => ({
+								...slot,
+								id: `slot-${employeeId}-${index}`,
+								employeeId,
+								organizationId,
+								startedAt: new Date(slot.startedAt),
+								// Linked only to a log already the employee's (the handler looks the log up by employee).
+								timeLogs: row.employeeId === employeeId ? [{ id: slot.timeLogId }] : [],
+								screenshots: [],
+								activities: [],
+								timeSlotMinutes: []
+							}))
+						);
+						return slotsOf(employeeId).filter((slot) => starts.includes(slot.startedAt.getTime()));
+					})
+				};
+				const handler = new TimeLogUpdateHandler(
+					{ execute } as any,
+					timeLogRepository as any,
+					timeSlotRepository as any,
+					{} as any,
+					timeSlotService as any
+				);
+				Object.defineProperty(handler, 'ormType', { value: MultiORMEnum.TypeORM });
+				// The slot cleanup the log-delete path uses, real, over the same scripted slots.
+				const bulkDelete = new TimeSlotBulkDeleteHandler(timeSlotRepository as any, {} as any);
+				Object.defineProperty(bulkDelete, 'ormType', { value: MultiORMEnum.TypeORM });
+				jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+				execute.mockImplementation(async (command: unknown) => {
+					if (command instanceof TimeLogUpdateCommand) return handler.execute(command);
+					if (command instanceof TimeSlotBulkDeleteCommand) return bulkDelete.execute(command);
+					if (command instanceof IGetConflictTimeLogCommand) return [];
+					if (command instanceof TimesheetFirstOrCreateCommand)
+						return { id: `timesheet-${command.employeeId}` };
+					if (command instanceof TimesheetRecalculateCommand)
+						return void recalculated.push(String(command.id));
+					if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) {
+						return void workedHours.push(String(command.employeeId));
+					}
+					return undefined;
+				});
+			});
+
+			const move = (startedAt = STARTED_AT, stoppedAt = STOPPED_AT) =>
+				manualService.updateManualTime('log-1', {
+					...request,
+					employeeId: NEXT,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					startedAt,
+					stoppedAt
+				});
+
+			/** One stored slot of the scripted tenant. */
+			const slot = (id: string, employeeId: string, at: string, logs: string[]): Slot => ({
+				id,
+				employeeId,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				tenantId: TENANT_ID,
+				startedAt: new Date(at),
+				timeLogs: logs.map((log) => ({ id: log })),
+				screenshots: [],
+				activities: [],
+				timeSlotMinutes: []
+			});
+			const logsOf = (stored: Slot) => stored.timeLogs.map((log) => log.id).sort();
+
+			it("moving one of two logs that share a slot keeps the other log's time for the previous employee", async () => {
+				// 09:00–09:05 (this log) and 09:05–09:10 (log-2, the previous employee's too) share the 09:00 slot.
+				Object.assign(row, {
+					startedAt: new Date('2026-01-05T09:00:00.000Z'),
+					stoppedAt: new Date('2026-01-05T09:05:00.000Z')
+				});
+				slots = [slot('shared', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1', 'log-2'])];
+
+				await move(row.startedAt, row.stoppedAt);
+
+				// As deleting the log would: the slot log-2 still holds stays the previous employee's, without this log.
+				expect(slotsOf(PREVIOUS).map((stored) => [stored.id, logsOf(stored)])).toEqual([['shared', ['log-2']]]);
+				// ...and the log's time is the new employee's.
+				expect(slotsOf(NEXT).map((stored) => [stored.startedAt.toISOString(), logsOf(stored)])).toEqual([
+					['2026-01-05T09:00:00.000Z', ['log-1']]
+				]);
+			});
+
+			it("keeps the previous employee's slot at one of the log's start times when another log holds it and this one does not", async () => {
+				// 09:05–09:15 covers the 09:00 and 09:10 slots; the 09:10 slot is log-2's alone (this log was never
+				// linked to it). The previous employee's slots are read by start time, so only the link decides.
+				Object.assign(row, {
+					startedAt: new Date('2026-01-05T09:05:00.000Z'),
+					stoppedAt: new Date('2026-01-05T09:15:00.000Z')
+				});
+				slots = [
+					slot('mine-0900', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1']),
+					slot('neighbour-0910', PREVIOUS, '2026-01-05T09:10:00.000Z', ['log-2'])
+				];
+
+				await move(row.startedAt, row.stoppedAt);
+
+				expect(slotsOf(PREVIOUS).map((stored) => [stored.id, logsOf(stored)])).toEqual([
+					['neighbour-0910', ['log-2']]
+				]);
+				expect(slots.find((stored) => stored.id === 'mine-0900')?.deletedAt).toBeInstanceOf(Date);
+			});
+
+			it("a moved log is linked to the new employee's existing slot at the same boundary", async () => {
+				// The new employee already has the 09:00 slot (their own 09:00–09:05 log-3); this log is 09:05–09:10.
+				Object.assign(row, {
+					startedAt: new Date('2026-01-05T09:05:00.000Z'),
+					stoppedAt: new Date('2026-01-05T09:10:00.000Z')
+				});
+				slots = [
+					slot('previous-0900', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1']),
+					slot('next-0900', NEXT, '2026-01-05T09:00:00.000Z', ['log-3'])
+				];
+
+				await move(row.startedAt, row.stoppedAt);
+
+				expect(slotsOf(PREVIOUS)).toEqual([]);
+				// The slot is not created twice; the moved log is linked to the one the new employee has.
+				expect(slotsOf(NEXT).map((stored) => [stored.id, logsOf(stored)])).toEqual([
+					['next-0900', ['log-1', 'log-3']]
+				]);
+			});
+
+			it("a same-organization employee move re-homes the log's timesheet and slots and recalculates both employees", async () => {
+				await move();
+
+				// The row, its timesheet and its slots are the new employee's.
+				expect(row).toMatchObject({ employeeId: NEXT, timesheetId: `timesheet-${NEXT}` });
+				expect(slotsOf(PREVIOUS)).toEqual([]);
+				expect(slotsOf(NEXT).map((slot) => slot.startedAt.toISOString())).toEqual(
+					generateTimeSlots(STARTED_AT, STOPPED_AT).map((slot) => new Date(slot.startedAt).toISOString())
+				);
+				expect(slotsOf(NEXT).every((slot) => slot.timeLogs.some((log) => log.id === 'log-1'))).toBe(true);
+				// Both timesheets and both employees' worked hours are recalculated.
+				expect([...recalculated].sort()).toEqual([`timesheet-${NEXT}`, `timesheet-${PREVIOUS}`].sort());
+				expect([...workedHours].sort()).toEqual([NEXT, PREVIOUS].sort());
+			});
+
+			it.each(['keyboard', 'mouse'] as const)(
+				'refuses to move a log one of whose slots carries %s activity alone',
+				async (input) => {
+					slots[4][input] = 12;
+
+					const refusal = await move().catch((thrown) => thrown);
+
+					expect(refusal).toBeInstanceOf(ForbiddenException);
+					expect((refusal as ForbiddenException).message).toBe(TRACKED);
+					expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+					expect(slotsOf(PREVIOUS)).toHaveLength(6);
+				}
+			);
+
+			it('refuses to move a log whose slots carry tracked screenshots or activity, before writing anything', async () => {
+				slots[2].screenshots = [{ id: 'screenshot-1' }];
+
+				const refusal = await move().catch((thrown) => thrown);
+
+				// The capture is the previous employee's; moving it would attribute it to someone else.
+				expect(refusal).toBeInstanceOf(ForbiddenException);
+				expect((refusal as ForbiddenException).message).toBe(TRACKED);
+				expect(commandsOfType(IGetConflictTimeLogCommand)).toHaveLength(0);
+				expect(commandsOfType(TimeLogUpdateCommand)).toHaveLength(0);
+				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
+				expect(slotsOf(PREVIOUS)).toHaveLength(6);
+			});
+
+			it.each([TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.DESKTOP])(
+				"shortening a log that shares a boundary slot with a neighbour keeps the neighbour's slot (%s)",
+				async (source) => {
+					// 09:00–09:15 holds the 09:00 slot alone and shares the 09:10 one with log-2 (09:15–09:20).
+					Object.assign(row, {
+						source,
+						startedAt: new Date('2026-01-05T09:00:00.000Z'),
+						stoppedAt: new Date('2026-01-05T09:15:00.000Z')
+					});
+					slots = [
+						slot('mine-0900', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1']),
+						slot('shared-0910', PREVIOUS, '2026-01-05T09:10:00.000Z', ['log-1', 'log-2'])
+					];
+
+					// Shortened to 09:00–09:10: the 09:10 slot leaves this log, and stays log-2's.
+					await manualService.updateManualTime('log-1', {
+						...request,
+						employeeId: PREVIOUS,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						startedAt: new Date('2026-01-05T09:00:00.000Z'),
+						stoppedAt: new Date('2026-01-05T09:10:00.000Z')
+					});
+
+					expect(slotsOf(PREVIOUS).map((stored) => [stored.id, logsOf(stored)])).toEqual([
+						['mine-0900', ['log-1']],
+						['shared-0910', ['log-2']]
+					]);
+				}
+			);
+
+			it("a failed save during a move is reported and leaves the previous employee's slots untouched", async () => {
+				saveFailure = new Error('connection lost');
+
+				const failure = await move().catch((thrown) => thrown);
+
+				// The route answers the failure instead of the row as if it had moved…
+				expect(failure).toBeInstanceOf(Error);
+				expect((failure as Error).message).toContain('connection lost');
+				// …and nothing of the previous employee's was touched: the log, its timesheet and its six slots.
+				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
+				expect(slotsOf(PREVIOUS).map((stored) => logsOf(stored))).toEqual(Array(6).fill(['log-1']));
+				expect(workedHours).toEqual([]);
+			});
+
+			it('a failed save during a same-employee edit is reported, before any slot is released', async () => {
+				saveFailure = new Error('connection lost');
+
+				// Shortened to 09:00–09:40: the 09:40 and 09:50 slots would be released after the save.
+				const failure = await manualService
+					.updateManualTime('log-1', {
+						...request,
+						employeeId: PREVIOUS,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						startedAt: STARTED_AT,
+						stoppedAt: new Date('2026-01-05T09:40:00.000Z')
+					})
+					.catch((thrown) => thrown);
+
+				expect(failure).toBeInstanceOf(Error);
+				expect((failure as Error).message).toContain('connection lost');
+				expect(slotsOf(PREVIOUS)).toHaveLength(6);
+			});
+
+			it('CONTROL: an edit that keeps the employee leaves the timesheet, the slots and the hours where they are', async () => {
+				await manualService.updateManualTime('log-1', {
+					...request,
+					employeeId: PREVIOUS,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					startedAt: STARTED_AT,
+					stoppedAt: STOPPED_AT
+				});
+
+				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
+				expect(slotsOf(NEXT)).toEqual([]);
+				expect(slotsOf(PREVIOUS)).toHaveLength(6);
+				expect(recalculated).toEqual([`timesheet-${PREVIOUS}`]);
+				expect(workedHours).toEqual([PREVIOUS]);
 			});
 		});
 	});

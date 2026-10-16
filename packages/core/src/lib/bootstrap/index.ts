@@ -37,12 +37,11 @@ import helmet from 'helmet';
 import * as chalk from 'chalk';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { urlencoded, json } from 'express';
+import { graphqlEndpointPath, installBodyParsers } from './body-parsers';
 import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
-import { DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
 import {
 	getEntitiesFromPlugins,
 	getMigrationsFromPlugins,
@@ -154,8 +153,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			request.rawBody = buffer;
 		}
 	};
-	app.use(json({ limit: '50mb', verify: captureRawBody }));
-	app.use(urlencoded({ extended: true, limit: '50mb', verify: captureRawBody }));
+	// 50 MB for every route, and a ceiling of its own for the GraphQL endpoint, whose body is parsed and validated
+	// before authentication (SEC-C-03).
+	for (const warning of installBodyParsers(app, {
+		graphqlPath: graphqlEndpointPath(config.apiConfigOptions?.graphqlConfigOptions?.path),
+		env: process.env,
+		verify: captureRawBody
+	})) {
+		console.warn(`[GraphQL] ${warning}`);
+	}
 
 	// Enable CORS with specific settings
 	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.
@@ -268,7 +274,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// whose grants were perfectly correct. Mounting the same middleware on that endpoint is what makes
 	// a resolver's request scope real; the REST surface is untouched, because the pattern it already
 	// had still applies.
-	const graphqlPath = `/${DEFAULT_GRAPHQL_API_PATH}`;
+	// The configured path, where Apollo serves the endpoint — not the default, which a deployment may have changed.
+	const graphqlPath = graphqlEndpointPath(config.apiConfigOptions?.graphqlConfigOptions?.path);
 	try {
 		// Resolved per request, not once here. Nest instantiates the middleware while the application
 		// is initialised — after this code runs — so an instance read now does not exist yet, and one

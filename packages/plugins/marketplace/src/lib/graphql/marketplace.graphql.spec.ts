@@ -295,6 +295,10 @@ const PLATFORM_STUB = `
 	type Mutation {
 		_thePlatform: Boolean
 	}
+
+	type Subscription {
+		_thePlatform: Boolean
+	}
 `;
 
 /** The schema the marketplace contributes to, composed the way the boot composes it. */

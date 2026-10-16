@@ -2,12 +2,16 @@ import { Component, DestroyRef, EventEmitter, inject, OnDestroy, OnInit, Output,
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { GA_MENU_ALWAYS_EXPANDED } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'gauzy-workspace-menu',
 	templateUrl: './workspace-menu.component.html',
 	styleUrls: ['./workspace-menu.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager,
+	// The panel's nav menus are full-width lists, so they must not follow the menu sidebar
+	// into its collapsed icon rail.
+	providers: [{ provide: GA_MENU_ALWAYS_EXPANDED, useValue: true }],
 	standalone: false
 })
 export class WorkspaceMenuComponent implements OnInit, OnDestroy {

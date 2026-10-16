@@ -36,8 +36,18 @@ const THEIRS = 'organization-theirs';
 /** The REST validator's lookup, scripted: the caller belongs to MINE only. */
 const membership = { checkOrganizationExistence: jest.fn(async (id: string) => id === MINE) };
 
+/** The REST employee validator, scripted: 'employee-mine' works for MINE, 'employee-theirs' for THEIRS. */
+const EMPLOYEE_MINE = 'employee-mine';
+const EMPLOYEE_THEIRS = 'employee-theirs';
+const employeeMembership = {
+	validate: jest.fn(async (employeeId: string, args: { object: { organizationId?: string } }) =>
+		(employeeId === EMPLOYEE_MINE && args.object.organizationId === MINE) ||
+		(employeeId === EMPLOYEE_THEIRS && args.object.organizationId === THEIRS)
+	)
+};
+
 function interceptor(): GraphqlOrganizationMembershipInterceptor {
-	return new GraphqlOrganizationMembershipInterceptor(new Reflector(), membership as never);
+	return new GraphqlOrganizationMembershipInterceptor(new Reflector(), membership as never, employeeMembership as never);
 }
 
 /** A GraphQL execution context for one root field of the schema, with the arguments a client sent. */
@@ -146,5 +156,40 @@ describe('GraphQL organization membership (R7-03) — the REST validator’s rul
 		expect(membershipAt).toBeGreaterThan(-1);
 		expect(source.slice(source.lastIndexOf('provide:', membershipAt), membershipAt)).toContain('APP_INTERCEPTOR');
 		expect(membershipAt).toBeLessThan(idempotencyAt);
+	});
+
+	/**
+	 * SEC-A-08: the employee ↔ organization rule (`@IsEmployeeBelongsToOrganization`, 16 REST DTOs) was REST-only. An
+	 * admin of A could write `createEmployeeAward(input:{ organizationId: A, employeeId: <B's employee> })` onto another
+	 * organization's employee profile, or `createExpense` rewriting that employee's averages; REST answers 400.
+	 */
+	describe('the employee ↔ organization rule (SEC-A-08)', () => {
+		beforeEach(() => employeeMembership.validate.mockClear());
+
+		it.each([
+			['an award on an employee', 'Mutation', 'createEmployeeAward', (employeeId: string) => ({ input: { organizationId: MINE, employeeId, name: 'x', year: '2026' } })],
+			['an expense of an employee', 'Mutation', 'createExpense', (employeeId: string) => ({ input: { organizationId: MINE, employeeId, amount: '10' } })],
+			['a bulk panel of employees', 'Mutation', 'createCandidateInterviewersBulk', (employeeId: string) => ({ input: { organizationId: MINE, employeeIds: [EMPLOYEE_MINE, employeeId] } })]
+		] as const)('refuses %s of another organization, and serves the caller’s own (%s.%s)', async (_label, operation, field, args) => {
+			const error = (await run(graphqlCall(operation, field, args(EMPLOYEE_THEIRS))).catch((thrown) => thrown)) as ApiException;
+			expect(error).toBeInstanceOf(ApiException);
+			expect(error.getStatus()).toBe(400);
+			expect(error.details).toEqual({ field: 'employeeId' });
+			expect(employeeMembership.validate).toHaveBeenCalledWith(EMPLOYEE_THEIRS, expect.objectContaining({ object: { organizationId: MINE } }));
+
+			await expect(run(graphqlCall(operation, field, args(EMPLOYEE_MINE)))).resolves.toEqual({ value: 'resolved', called: 1 });
+		});
+
+		it('checks nothing where no organization is stated beside the employee, as the REST rule does not', async () => {
+			await expect(run(graphqlCall('Mutation', 'createExpense', { input: { employeeId: EMPLOYEE_THEIRS, amount: '10' } }))).resolves.toBeDefined();
+			expect(employeeMembership.validate).not.toHaveBeenCalled();
+		});
+
+		it('leaves an employee filter alone: an IDFilter names no employee to write', async () => {
+			await expect(
+				run(graphqlCall('Query', 'employeeAwards', { filter: { organizationId: { eq: MINE }, employeeId: { eq: EMPLOYEE_THEIRS } } }))
+			).resolves.toBeDefined();
+			expect(employeeMembership.validate).not.toHaveBeenCalled();
+		});
 	});
 });
