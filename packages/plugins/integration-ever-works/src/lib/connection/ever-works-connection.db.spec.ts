@@ -98,14 +98,14 @@ const coreSchemas = [
 		target: IntegrationTenant,
 		tableName: 'integration_tenant',
 		columns: { ...base, name: { type: String } },
-		relations: { settings: { type: 'one-to-many', target: 'IntegrationSetting', inverseSide: 'integration', cascade: true } }
+		relations: { settings: { type: 'one-to-many', target: 'IntegrationSetting', inverseSide: 'integration', cascade: true } } as never
 	}),
 	new EntitySchema({
 		name: 'IntegrationSetting',
 		target: IntegrationSetting,
 		tableName: 'integration_setting',
 		columns: { ...base, settingsName: { type: String }, settingsValue: { type: String, nullable: true } },
-		relations: { integration: { type: 'many-to-one', target: 'IntegrationTenant', joinColumn: { name: 'integrationId' } } }
+		relations: { integration: { type: 'many-to-one', target: 'IntegrationTenant', joinColumn: { name: 'integrationId' } } } as never
 	})
 ];
 
@@ -246,7 +246,7 @@ describe('Ever Works connection on SQLite', () => {
 				authMode: 'api_key',
 				status: 'active',
 				isActive
-			});
+			}) as never;
 			await raw().insert(row(false));
 			await raw().insert(row(false));
 			await raw().insert(row(true));
@@ -423,7 +423,7 @@ describe('Ever Works connection on SQLite', () => {
 			expect(mock.webhooks.size).toBe(0);
 			const stored = await raw().findOneByOrFail({ id: view.id });
 			expect(stored).toMatchObject({ status: EverWorksConnectionStatus.DISCONNECTED, isActive: false, isArchived: true, webhookSecretEncrypted: null });
-			const archived = await dataSource.getRepository(IntegrationTenant).findOneOrFail({ where: { id: (mapping as { id: string }).id }, relations: { settings: true } } as never);
+			const archived = await dataSource.getRepository(IntegrationTenant).findOneOrFail({ where: { id: (mapping as unknown as { id: string }).id }, relations: { settings: true } } as never);
 			expect(archived).toMatchObject({ isActive: false, isArchived: true });
 			expect((archived as { settings: Array<{ settingsName: string; settingsValue: string }> }).settings.find((s) => s.settingsName === 'IS_ENABLED')?.settingsValue).toBe('false');
 			expect(await service.current()).toBeNull();
