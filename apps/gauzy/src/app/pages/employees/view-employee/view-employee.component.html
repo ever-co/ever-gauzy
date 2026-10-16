@@ -418,8 +418,14 @@
 									</span>
 									}
 									@if (task.people.length > 3) {
-									<span class="task-person task-person--more" [nbTooltip]="task.moreNames" nbTooltipPlacement="top"
-										>+{{ task.people.length - 3 }}</span
+									<span
+										class="task-person task-person--more"
+										[nbPopover]="morePeople"
+										[nbPopoverContext]="task.morePeople"
+										nbPopoverTrigger="hover"
+										nbPopoverPlacement="top"
+										nbPopoverClass="person-popover"
+									>+{{ task.people.length - 3 }}</span
 									>
 									}
 									@if (!task.people.length) {
@@ -656,6 +662,27 @@
 	</ngx-record-view>
 	}
 </ngx-record-view-drawer>
+
+<!-- Hover list on the "+N" avatar: the assignees it stands for, photo and name. -->
+<ng-template #morePeople let-people>
+	<ul class="people-list">
+		@for (person of people; track $index) {
+		<li>
+			<!-- Each person opens their employee profile. -->
+			<a class="people-list-row" [routerLink]="['/pages/employees/view', person.id]">
+				<span class="people-list-avatar">
+					@if (person.avatarUrl) {
+					<img [src]="person.avatarUrl" [alt]="person.name" />
+					} @else {
+					<span aria-hidden="true">{{ person.initials }}</span>
+					}
+				</span>
+				<span class="people-list-name">{{ person.name }}</span>
+			</a>
+		</li>
+		}
+	</ul>
+</ng-template>
 
 <!-- Hover card on an assignee's avatar: a profile card — banner, photo with presence, name, about. -->
 <ng-template #personCard let-person>
