@@ -12,9 +12,9 @@ import { INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
 import {
 	IEmailProviderPlugin,
 	IEmailProviderRegistry,
+	IInboundDeliveryIdentity,
 	IInboundEmailProvider,
 	IInboundWebhookRequest,
-	InboundReplayGuard,
 	IParsedInboundAttachment,
 	IProviderAccountContext,
 	messageIdOf,
@@ -23,7 +23,14 @@ import {
 	referencesOf,
 	safeFilename
 } from '@gauzy/plugin-inbox';
-import { FetchLike, ResendApiClient, ResendApiError, ResendReceivedEmail } from './resend-api.client';
+import {
+	FetchLike,
+	fetchDownloader,
+	RESEND_MAX_DOWNLOAD_BYTES,
+	ResendApiClient,
+	ResendApiError,
+	ResendReceivedEmail
+} from './resend-api.client';
 import { createResendTransport } from './resend-transport';
 import {
 	SVIX_ID_HEADER,
@@ -62,7 +69,7 @@ const addresses = (values: unknown): Array<{ address: string; name?: string }> =
  * Resend (plan 04 §5.2, G-P4-4): the reference email provider plugin.
  *
  * - **Inbound.** Resend posts an `email.received` webhook (Svix-signed: `svix-id`, `svix-timestamp`,
- *   `svix-signature`, HMAC-SHA256 under the account's `whsec_` secret, 5-minute window, single use per `svix-id`). The
+ *   `svix-signature`, HMAC-SHA256 under the account's `whsec_` secret, 5-minute window; the delivery, `svix-id` + timestamp, is single use in the pipeline). The
  *   event carries metadata only, so the plugin fetches the message from the Receiving API with the account's API key
  *   (`GET /emails/receiving/:id`), and its attachments (`…/attachments`: short-lived signed URLs). When Resend offers
  *   the raw message, that is parsed instead. The webhook's recipients are the envelope.
@@ -111,7 +118,6 @@ export class ResendProvider implements IEmailProviderPlugin, IInboundEmailProvid
 
 	constructor(
 		@Optional() @Inject(INBOX_EMAIL_PROVIDER_REGISTRY) private readonly registry?: IEmailProviderRegistry,
-		@Optional() @Inject(InboundReplayGuard) private readonly replay?: InboundReplayGuard,
 		@Optional() @Inject(RESEND_FETCH) private readonly fetcher?: FetchLike
 	) {}
 
@@ -129,38 +135,25 @@ export class ResendProvider implements IEmailProviderPlugin, IInboundEmailProvid
 		this.registry?.unregister(this.id);
 	}
 
-	async verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<void> {
+	async verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<IInboundDeliveryIdentity> {
 		const secret =
 			typeof account.config['webhookSecret'] === 'string' ? (account.config['webhookSecret'] as string) : '';
 		const id = header(request, SVIX_ID_HEADER);
+		const timestamp = header(request, SVIX_TIMESTAMP_HEADER);
 		const valid =
 			!!secret &&
 			!!request.rawBody?.length &&
 			verifySvixSignature(
 				secret,
-				{
-					id,
-					timestamp: header(request, SVIX_TIMESTAMP_HEADER),
-					signature: header(request, SVIX_SIGNATURE_HEADER)
-				},
+				{ id, timestamp, signature: header(request, SVIX_SIGNATURE_HEADER) },
 				request.rawBody.toString('utf8')
 			);
 		if (!valid) {
 			throw new UnauthorizedException('The Resend webhook is not signed with this account’s secret.');
 		}
-		// Single use of this exact delivery (id + timestamp): Resend re-signs a retry with a new timestamp, so a retry
-		// after a failure is never refused, while a captured request replayed as it was is.
-		const timestamp = header(request, SVIX_TIMESTAMP_HEADER);
-		if (
-			this.replay &&
-			!(await this.replay.consume(
-				`resend:${account.id}`,
-				`${id}.${timestamp}`,
-				(2 * SVIX_TOLERANCE_SECONDS + 60) * 1000
-			))
-		) {
-			throw new UnauthorizedException('The Resend webhook was already received.');
-		}
+		// The delivery: svix-id + timestamp. Resend re-signs a retry with a new timestamp, so a retry passes; the
+		// pipeline makes this single use (and releases it when storing fails).
+		return { fingerprint: `${id}.${timestamp}`, ttlMs: (2 * SVIX_TOLERANCE_SECONDS + 60) * 1000 };
 	}
 
 	async parse(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<ParsedInboundEmail[]> {
@@ -219,7 +212,10 @@ export class ResendProvider implements IEmailProviderPlugin, IInboundEmailProvid
 
 	private client(account: IProviderAccountContext): ResendApiClient {
 		const apiKey = typeof account.config['apiKey'] === 'string' ? (account.config['apiKey'] as string) : '';
-		return new ResendApiClient(apiKey, this.fetcher ?? undefined);
+		return new ResendApiClient(
+			apiKey,
+			this.fetcher ? { fetcher: this.fetcher, downloader: fetchDownloader(this.fetcher) } : {}
+		);
 	}
 
 	/** A received email (JSON) and its downloaded attachments, as the normalized message. */
@@ -235,9 +231,14 @@ export class ResendProvider implements IEmailProviderPlugin, IInboundEmailProvid
 		}
 		const listed = (email.attachments ?? []).length > 0 ? await client.receivedAttachments(email.id) : [];
 		const attachments: IParsedInboundAttachment[] = [];
+		// One budget for all of a message's attachments (not 40 MB each).
+		let budget = RESEND_MAX_DOWNLOAD_BYTES;
 		for (const attachment of listed.slice(0, 50)) {
 			if (!attachment.download_url) continue;
-			const content = await client.download(attachment.download_url);
+			if (budget <= 0)
+				throw new ResendApiError(413, 'too_large', 'The message’s attachments are larger than allowed.');
+			const content = await client.download(attachment.download_url, budget);
+			budget -= content.length;
 			attachments.push({
 				filename: safeFilename(attachment.filename),
 				...(attachment.content_type ? { contentType: attachment.content_type } : {}),

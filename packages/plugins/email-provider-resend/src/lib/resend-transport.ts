@@ -44,8 +44,9 @@ export interface ResendSendInfo {
 	resendId: string;
 }
 
+const clean = (value: string | undefined) => String(value ?? '').replace(/[\r\n]/g, '');
 const format = (entry: MailAddress) =>
-	entry.name ? `${entry.name.replace(/["\r\n]/g, '')} <${entry.address}>` : String(entry.address);
+	entry.name ? `${clean(entry.name).replace(/"/g, '')} <${clean(entry.address)}>` : clean(entry.address);
 const list = (entries: MailAddress[] | undefined) =>
 	(entries ?? []).filter((entry) => typeof entry.address === 'string' && entry.address).map(format);
 

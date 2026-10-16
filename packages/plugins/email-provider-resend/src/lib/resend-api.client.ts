@@ -1,3 +1,5 @@
+import { request as httpsRequest } from 'node:https';
+import { createSsrfSafeHttpsAgent } from '@gauzy/core';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 
 /** The Resend API (https only, no redirects followed). */
@@ -8,6 +10,87 @@ const TIMEOUT_MS = 15_000;
 
 /** What `fetch` the client uses (the global one; a spec passes a recorder). */
 export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
+
+/** Downloads one URL, at most `maxBytes`. */
+export type Downloader = (url: string, maxBytes: number) => Promise<Buffer>;
+
+const tooLarge = () => new ResendApiError(413, 'too_large', 'A Resend download is larger than allowed.');
+
+/**
+ * The production downloader: HTTPS through `createSsrfSafeHttpsAgent()` (every address the host resolves to is checked
+ * at connect time, so a public name that resolves to a private address is refused — no DNS-rebinding window), no
+ * redirects followed, a timeout, and the body read in chunks up to the cap.
+ */
+export const ssrfSafeDownload: Downloader = (url, maxBytes) =>
+	new Promise<Buffer>((resolve, reject) => {
+		const request = httpsRequest(
+			url,
+			{ method: 'GET', agent: createSsrfSafeHttpsAgent(), timeout: TIMEOUT_MS },
+			(response) => {
+				const status = response.statusCode ?? 0;
+				if (status < 200 || status >= 300) {
+					response.resume();
+					reject(new ResendApiError(status, 'download_failed', `A Resend download answered ${status}.`));
+					return;
+				}
+				if (Number(response.headers['content-length'] ?? '0') > maxBytes) {
+					response.destroy();
+					reject(tooLarge());
+					return;
+				}
+				const chunks: Buffer[] = [];
+				let total = 0;
+				response.on('data', (chunk: Buffer) => {
+					total += chunk.length;
+					if (total > maxBytes) {
+						response.destroy();
+						reject(tooLarge());
+						return;
+					}
+					chunks.push(chunk);
+				});
+				response.on('end', () => resolve(Buffer.concat(chunks, total)));
+				response.on('error', reject);
+			}
+		);
+		request.on('timeout', () => request.destroy(new Error('A Resend download timed out.')));
+		request.on('error', reject);
+		request.end();
+	});
+
+/** A downloader over a `fetch` (tests; same cap, no redirects). */
+export function fetchDownloader(fetcher: FetchLike): Downloader {
+	return async (url, maxBytes) => {
+		const response = await fetcher(url, {
+			method: 'GET',
+			redirect: 'error',
+			signal: AbortSignal.timeout(TIMEOUT_MS)
+		});
+		if (!response.ok) {
+			throw new ResendApiError(
+				response.status,
+				'download_failed',
+				`A Resend download answered ${response.status}.`
+			);
+		}
+		if (Number(response.headers.get('content-length') ?? '0') > maxBytes) throw tooLarge();
+		if (!response.body) return Buffer.alloc(0);
+		const reader = response.body.getReader();
+		const chunks: Buffer[] = [];
+		let total = 0;
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			total += value.byteLength;
+			if (total > maxBytes) {
+				await reader.cancel().catch(() => undefined);
+				throw tooLarge();
+			}
+			chunks.push(Buffer.from(value));
+		}
+		return Buffer.concat(chunks, total);
+	};
+}
 
 /** A Resend API error, with the status and Resend's own error name (never the API key). */
 export class ResendApiError extends Error {
@@ -71,11 +154,18 @@ export interface ResendSendRequest {
  * against the SSRF rules (no private, loopback or link-local host) before they are fetched, and redirects are refused.
  */
 export class ResendApiClient {
+	private readonly fetcher: FetchLike;
+	private readonly downloader: Downloader;
+	private readonly baseUrl: string;
+
 	constructor(
 		private readonly apiKey: string,
-		private readonly fetcher: FetchLike = (url, init) => fetch(url, init),
-		private readonly baseUrl = RESEND_API_BASE_URL
+		options: { fetcher?: FetchLike; downloader?: Downloader; baseUrl?: string } = {}
 	) {
+		this.fetcher = options.fetcher ?? ((url, init) => fetch(url, init));
+		// Downloads go through the SSRF-safe agent unless a test hands its own downloader.
+		this.downloader = options.downloader ?? ssrfSafeDownload;
+		this.baseUrl = options.baseUrl ?? RESEND_API_BASE_URL;
 		if (!apiKey) throw new ResendApiError(0, 'missing_api_key', 'The Resend account has no API key.');
 	}
 
@@ -103,40 +193,13 @@ export class ResendApiClient {
 	}
 
 	/** Downloads a signed URL the API answered (an attachment, the raw message). */
+	/** Downloads a signed URL the API answered (an attachment, the raw message): URL rules first, then the downloader. */
 	async download(url: string, maxBytes = RESEND_MAX_DOWNLOAD_BYTES): Promise<Buffer> {
 		const unsafe = getUnsafeOutboundUrlReason(url);
-		if (unsafe)
+		if (unsafe) {
 			throw new ResendApiError(0, 'unsafe_url', `Resend answered a download URL that is not allowed: ${unsafe}.`);
-		const response = await this.fetcher(url, {
-			method: 'GET',
-			redirect: 'error',
-			signal: AbortSignal.timeout(TIMEOUT_MS)
-		});
-		if (!response.ok)
-			throw new ResendApiError(
-				response.status,
-				'download_failed',
-				`A Resend download answered ${response.status}.`
-			);
-		const declared = Number(response.headers.get('content-length') ?? '0');
-		if (declared > maxBytes)
-			throw new ResendApiError(413, 'too_large', 'A Resend download is larger than allowed.');
-		// Read in chunks and stop at the cap: a response without a length must not grow without bound.
-		if (!response.body) return Buffer.alloc(0);
-		const reader = response.body.getReader();
-		const chunks: Buffer[] = [];
-		let total = 0;
-		for (;;) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			total += value.byteLength;
-			if (total > maxBytes) {
-				await reader.cancel().catch(() => undefined);
-				throw new ResendApiError(413, 'too_large', 'A Resend download is larger than allowed.');
-			}
-			chunks.push(Buffer.from(value));
 		}
-		return Buffer.concat(chunks, total);
+		return this.downloader(url, maxBytes);
 	}
 
 	private async json<T>(method: 'GET' | 'POST', path: string, body?: unknown, idempotencyKey?: string): Promise<T> {

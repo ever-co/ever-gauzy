@@ -9,9 +9,8 @@ jest.mock('@gauzy/plugin-inbox', () => ({
 }));
 
 import { UnauthorizedException } from '@nestjs/common';
-import { InboundReplayGuard } from '@gauzy/plugin-inbox';
 import { isResendEnabled } from './resend-enabled';
-import { FetchLike } from './resend-api.client';
+import { FetchLike, RESEND_MAX_DOWNLOAD_BYTES, ResendApiClient } from './resend-api.client';
 import { ResendProvider } from './resend.provider';
 import { svixSignature, verifySvixSignature } from './svix-signature';
 import {
@@ -88,13 +87,13 @@ describe('Resend email provider', () => {
 	});
 
 	describe('webhook signature (Svix)', () => {
-		const provider = () => new ResendProvider(undefined, new InboundReplayGuard(null));
+		const provider = () => new ResendProvider();
 
-		it('accepts a request signed with the account secret, once', async () => {
+		it('accepts a request signed with the account secret, named by its svix-id and timestamp', async () => {
 			const request = webhook(EMAIL_RECEIVED_EVENT);
-			const resend = provider();
-			await expect(resend.verify(request, account)).resolves.toBeUndefined();
-			await expect(resend.verify(request, account)).rejects.toThrow(/already received/);
+			const identity = await provider().verify(request, account);
+			expect(identity.fingerprint).toBe(`${request.headers['svix-id']}.${request.headers['svix-timestamp']}`);
+			expect(identity.ttlMs).toBeGreaterThanOrEqual(10 * 60 * 1000);
 		});
 
 		it('refuses an unsigned request, a forged one, a stale one and a changed body', async () => {
@@ -120,13 +119,15 @@ describe('Resend email provider', () => {
 			).rejects.toBeInstanceOf(UnauthorizedException);
 		});
 
-		it('accepts a retry Resend re-signed with a new timestamp (same svix-id)', async () => {
+		it('names a retry Resend re-signed (same svix-id, new timestamp) as another delivery', async () => {
 			const resend = provider();
 			const now = Math.floor(Date.now() / 1000);
-			await resend.verify(webhook(EMAIL_RECEIVED_EVENT, SECRET, 'msg_retry', String(now - 10)), account);
-			await expect(
-				resend.verify(webhook(EMAIL_RECEIVED_EVENT, SECRET, 'msg_retry', String(now)), account)
-			).resolves.toBeUndefined();
+			const first = await resend.verify(
+				webhook(EMAIL_RECEIVED_EVENT, SECRET, 'msg_retry', String(now - 10)),
+				account
+			);
+			const retry = await resend.verify(webhook(EMAIL_RECEIVED_EVENT, SECRET, 'msg_retry', String(now)), account);
+			expect(retry.fingerprint).not.toBe(first.fingerprint);
 		});
 
 		it('refuses everything when the account has no webhook secret (no unsigned mode)', async () => {
@@ -168,7 +169,7 @@ describe('Resend email provider', () => {
 				},
 				[`GET ${ATTACHMENT_URL}`]: { body: Buffer.from('%PDF-1.4 test') }
 			});
-			const [message] = await new ResendProvider(undefined, undefined, fetcher).parse(
+			const [message] = await new ResendProvider(undefined, fetcher).parse(
 				webhook(EMAIL_RECEIVED_EVENT),
 				account
 			);
@@ -202,11 +203,27 @@ describe('Resend email provider', () => {
 
 		it('ignores events that carry no received mail', async () => {
 			const { calls, fetcher } = recorder({});
-			const resend = new ResendProvider(undefined, undefined, fetcher);
+			const resend = new ResendProvider(undefined, fetcher);
 			expect(await resend.parse(webhook({ type: 'email.delivered', data: { email_id: 'x' } }), account)).toEqual(
 				[]
 			);
 			expect(calls).toHaveLength(0);
+		});
+
+		it('keeps one byte budget for all attachments of a message', async () => {
+			const big = Buffer.alloc(1024, 1);
+			const { fetcher } = recorder({
+				[`GET https://api.resend.com/emails/receiving/${RECEIVED_EMAIL_ID}`]: { body: RECEIVED_EMAIL },
+				[`GET https://api.resend.com/emails/receiving/${RECEIVED_EMAIL_ID}/attachments`]: {
+					body: RECEIVED_ATTACHMENTS
+				},
+				[`GET ${ATTACHMENT_URL}`]: { body: big }
+			});
+			const resend = new ResendProvider(undefined, fetcher);
+			const download = jest.spyOn(ResendApiClient.prototype, 'download');
+			await resend.parse(webhook(EMAIL_RECEIVED_EVENT), account);
+			expect(download).toHaveBeenCalledWith(ATTACHMENT_URL, RESEND_MAX_DOWNLOAD_BYTES);
+			download.mockRestore();
 		});
 
 		it('refuses a download URL to a private address', async () => {
@@ -216,7 +233,7 @@ describe('Resend email provider', () => {
 				}
 			});
 			await expect(
-				new ResendProvider(undefined, undefined, fetcher).parse(webhook(EMAIL_RECEIVED_EVENT), account)
+				new ResendProvider(undefined, fetcher).parse(webhook(EMAIL_RECEIVED_EVENT), account)
 			).rejects.toThrow(/not allowed/);
 		});
 	});
@@ -226,7 +243,7 @@ describe('Resend email provider', () => {
 			const { calls, fetcher } = recorder({
 				'POST https://api.resend.com/emails': { body: { id: 'resend-id-1' } }
 			});
-			const transport = new ResendProvider(undefined, undefined, fetcher).createTransport(account) as {
+			const transport = new ResendProvider(undefined, fetcher).createTransport(account) as {
 				send(mail: unknown, callback: (error: Error | null, info?: Record<string, unknown>) => void): void;
 			};
 			const mail = {
@@ -281,7 +298,7 @@ describe('Resend email provider', () => {
 	describe('connection test', () => {
 		it('reports the verified domains, and a refused key', async () => {
 			const ok = recorder({ 'GET https://api.resend.com/domains': { body: DOMAINS } });
-			expect(await new ResendProvider(undefined, undefined, ok.fetcher).verifyAccount(account)).toMatchObject({
+			expect(await new ResendProvider(undefined, ok.fetcher).verifyAccount(account)).toMatchObject({
 				ok: true,
 				details: { verifiedDomains: ['acme.test'] }
 			});
@@ -291,7 +308,7 @@ describe('Resend email provider', () => {
 					body: { name: 'validation_error', message: 'API key is invalid' }
 				}
 			});
-			expect(await new ResendProvider(undefined, undefined, refused.fetcher).verifyAccount(account)).toEqual({
+			expect(await new ResendProvider(undefined, refused.fetcher).verifyAccount(account)).toEqual({
 				ok: false,
 				message: 'Resend refused the API key.'
 			});
@@ -301,9 +318,7 @@ describe('Resend email provider', () => {
 					body: { name: 'restricted_api_key', message: 'restricted' }
 				}
 			});
-			expect((await new ResendProvider(undefined, undefined, restricted.fetcher).verifyAccount(account)).ok).toBe(
-				true
-			);
+			expect((await new ResendProvider(undefined, restricted.fetcher).verifyAccount(account)).ok).toBe(true);
 		});
 	});
 
