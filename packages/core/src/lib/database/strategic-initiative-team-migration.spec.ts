@@ -95,3 +95,48 @@ describe('CreateOrganizationStrategicInitiativeTeamTable1791000000731 on SQLite'
 		expect(await rows()).toHaveLength(1);
 	});
 });
+
+/**
+ * MySQL commits each DDL statement on its own: the pivot is created by ONE statement that carries both foreign
+ * keys (a failure can no longer leave a key-less table that a re-run would skip), inside a named lock.
+ */
+describe('CreateOrganizationStrategicInitiativeTeamTable1791000000731 on MySQL', () => {
+	const run = async (tableExists: boolean) => {
+		const statements: string[] = [];
+		const queryRunner = {
+			connection: { options: { type: 'mysql' } },
+			hasTable: jest.fn(async () => {
+				statements.push('hasTable');
+				return tableExists;
+			}),
+			query: jest.fn(async (sql: string) => {
+				statements.push(sql);
+				return sql.startsWith('SELECT GET_LOCK') ? [{ acquired: 1 }] : [];
+			})
+		};
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		await new CreateOrganizationStrategicInitiativeTeamTable1791000000731().up(queryRunner as never);
+		return statements;
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('creates the pivot with both foreign keys in one statement, under a named lock', async () => {
+		const statements = await run(false);
+
+		expect(statements[0]).toMatch(/^SELECT GET_LOCK\(/);
+		expect(statements[1]).toBe('hasTable');
+		const creates = statements.filter((sql) => /^(CREATE|ALTER)/.test(sql));
+		expect(creates).toHaveLength(1);
+		expect(creates[0]).toContain('CONSTRAINT `FK_ffecd6e749d0dc1ce89b02e9a51` FOREIGN KEY');
+		expect(creates[0]).toContain('CONSTRAINT `FK_04e60eebe8d6ba3a336ec707707` FOREIGN KEY');
+		expect(statements[statements.length - 1]).toMatch(/^SELECT RELEASE_LOCK\(/);
+	});
+
+	it('adds nothing when the pivot exists, and still releases the lock', async () => {
+		const statements = await run(true);
+
+		expect(statements.filter((sql) => /^(CREATE|ALTER)/.test(sql))).toHaveLength(0);
+		expect(statements[statements.length - 1]).toMatch(/^SELECT RELEASE_LOCK\(/);
+	});
+});
