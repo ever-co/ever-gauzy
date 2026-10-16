@@ -14,7 +14,8 @@ import {
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -126,6 +127,7 @@ const COMPONENTS = [
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
+		NbPopoverModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
 		TranslatePipe,
