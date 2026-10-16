@@ -1,4 +1,4 @@
-import { IPagination, ISplitExpenseOutput } from '@gauzy/contracts';
+import { EmployeeKindEnum, IPagination, ISplitExpenseOutput } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../../employee/employee.service';
 import { ExpenseService } from '../../expense.service';
@@ -34,6 +34,20 @@ export class FindSplitExpenseHandler
 			relations: ['organization']
 		});
 
+		// An agent employee takes no share of a split expense (they are divided among people only): it gets
+		// its own expenses that are not split, and no share of the organization's.
+		if (employee.kind === EmployeeKindEnum.AGENT) {
+			const own = await this.expenseService.findAllExpenses(
+				{
+					where: { employee: { id: employeeId } },
+					relations: parseFindOptionsRelations(relations)
+				},
+				filterDate
+			);
+			const items = own.items.filter((expense) => !expense.splitExpense);
+			return { items, total: items.length };
+		}
+
 		//1. Find all expenses for organization which have splitExpense = true & all for the employee
 		const { items, total } = await this.expenseService.findAllExpenses(
 			{
@@ -53,10 +67,11 @@ export class FindSplitExpenseHandler
 			filterDate
 		);
 
-		//2. Find all employees of the organization
+		//2. Find all employees of the organization: people only, an agent employee takes no share of an expense
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organizationId: employee.organization.id
+				organizationId: employee.organization.id,
+				kind: EmployeeKindEnum.HUMAN
 			}
 		});
 

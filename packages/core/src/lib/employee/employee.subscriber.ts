@@ -1,4 +1,5 @@
 import { EventSubscriber } from 'typeorm';
+import { EmployeeKindEnum } from '@gauzy/contracts';
 import { extractNameFromEmail, sluggable } from '@gauzy/utils';
 import { Employee } from './employee.entity';
 import { getORMType, getUserDummyImage, MultiORM, MultiORMEnum } from '../core/utils';
@@ -40,7 +41,8 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	}
 
 	/**
-	 * Counts the total number of employees for an organization.
+	 * Counts the total number of employees for an organization: people only, agent employees
+	 * (`kind = 'agent'`) are not part of the headcount.
 	 *
 	 * @param em The entity manager
 	 * @param organizationId The organization ID
@@ -57,12 +59,13 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		switch (ormType) {
 			case MultiORMEnum.TypeORM:
 				if (em instanceof TypeOrmEntityManager) {
-					return em.countBy(Employee, { organizationId, tenantId });
+					// People only: an agent employee (`kind = 'agent'`) is not part of the headcount.
+					return em.countBy(Employee, { organizationId, tenantId, kind: EmployeeKindEnum.HUMAN });
 				}
 				break;
 			case MultiORMEnum.MikroORM:
 				if (em instanceof MikroOrmEntityManager) {
-					return em.count(Employee, { organizationId, tenantId });
+					return em.count(Employee, { organizationId, tenantId, kind: EmployeeKindEnum.HUMAN });
 				}
 				break;
 		}

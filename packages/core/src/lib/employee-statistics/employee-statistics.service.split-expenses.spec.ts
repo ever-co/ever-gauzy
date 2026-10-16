@@ -46,7 +46,8 @@ describe('EmployeeStatisticsService split expenses', () => {
 			'org-1'
 		);
 
-		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(new Date(2024, 0, 17)));
+		// People only (`humansOnly`): an agent employee takes no share of a split expense.
+		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(new Date(2024, 0, 17)), false, true);
 		expect(map.get('0-2024')).toMatchObject({ splitAmong: 4, splitExpense: 250 });
 	});
 
@@ -67,7 +68,7 @@ describe('EmployeeStatisticsService split expenses', () => {
 		]);
 
 		expect(valueDates).toEqual(firstQuarterMonths);
-		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(new Date(2024, 1, 1)));
+		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(new Date(2024, 1, 1)), false, true);
 	});
 
 	it('keeps each month dated in its own month when several recurring expenses cover it', async () => {

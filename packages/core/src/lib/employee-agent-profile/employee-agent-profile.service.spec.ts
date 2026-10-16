@@ -1,14 +1,24 @@
 import '../core/entities/internal';
 
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Employee } from '../core/entities/internal';
 import { EmployeeAgentProfile } from './employee-agent-profile.entity';
 import { pickAgentProfileInput, writeAgentProfile } from './employee-agent-profile.service';
 
 const TENANT = 'a0000000-0000-4000-8000-000000000001';
 const ORGANIZATION = 'b0000000-0000-4000-8000-000000000001';
-const AGENT = { id: 'e0000000-0000-4000-8000-000000000001', tenantId: TENANT, organizationId: ORGANIZATION };
-const LEAD = { id: 'e0000000-0000-4000-8000-000000000002', tenantId: TENANT, organizationId: ORGANIZATION };
+const AGENT = {
+	id: 'e0000000-0000-4000-8000-000000000001',
+	tenantId: TENANT,
+	organizationId: ORGANIZATION,
+	kind: 'agent'
+};
+const LEAD = {
+	id: 'e0000000-0000-4000-8000-000000000002',
+	tenantId: TENANT,
+	organizationId: ORGANIZATION,
+	kind: 'human'
+};
 
 function fakeManager(rows: { employees?: any[]; profiles?: any[] } = {}) {
 	const employees = rows.employees ?? [AGENT, LEAD];
@@ -70,6 +80,26 @@ describe('writeAgentProfile', () => {
 		await writeAgentProfile(em as any, AGENT, { status: 'paused', lastRunAt: new Date('2026-10-15T00:00:00Z') });
 		expect(em.profiles).toHaveLength(1);
 		expect(em.profiles[0]).toMatchObject({ id: 'p-1', source: 'ever_works', status: 'paused' });
+	});
+
+	it('writes for the employee row as stored: its organization, never the caller-stated one', async () => {
+		const profile = await writeAgentProfile(
+			fakeManager() as any,
+			{ ...AGENT, organizationId: 'other-org' },
+			{
+				source: 'ever_works'
+			}
+		);
+		expect(profile).toMatchObject({ employeeId: AGENT.id, organizationId: ORGANIZATION });
+	});
+
+	it('refuses an employee that does not exist in the tenant, and a person', async () => {
+		await expect(
+			writeAgentProfile(fakeManager() as any, { ...AGENT, tenantId: 'other-tenant' }, { source: 'ever_works' })
+		).rejects.toBeInstanceOf(NotFoundException);
+		await expect(writeAgentProfile(fakeManager() as any, LEAD, { source: 'ever_works' })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
 	});
 
 	it('needs a source for a new profile', async () => {
