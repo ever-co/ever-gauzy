@@ -1,94 +1,587 @@
+// The page frame (card, scrolling body, filter row) is the Time & Activities tab's own.
 @forward '../time-activities/time-activities/time-activities.component';
+@use 'themes' as *;
+
+/*
+ * ── Apps / Visited sites ─────────────────────────────────────────────────────
+ *
+ * In the manner of Hubstaff's Apps & URLs page: a short summary strip, a
+ * toolbar (view, search, sort), then hairline panels with plain rows — name,
+ * share and time. One accent colour (the theme's primary) carries every bar
+ * and the active view; everything else stays in the neutral text tokens.
+ */
+
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$weight-strong: 600;
+$weight-medium: 500;
+$hairline: 1px solid var(--gauzy-border-default-color);
+$radius: var(--gauzy-radius-sm);
+$control-height: 2.25rem;
 
 :host {
-  .percentage-col {
-    width: 90px;
-  }
   .filters {
     flex: 0 0 auto;
   }
-  ::ng-deep {
-    nb-progress-bar {
-      .progress-container {
-        height: 5px !important;
-      }
-      .progress-value {
-        span {
-          display: none;
-        }
+
+  .au-body {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-lg;
+    padding-bottom: $gap-lg;
+
+    // The body scrolls; its blocks keep their own height rather than being
+    // squeezed to fit (which clipped the summary and the opened site rows).
+    > * {
+      flex: 0 0 auto;
+    }
+  }
+
+  .au-ellipsis {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .au-num {
+    text-align: end;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .au-strong {
+    font-size: 0.8125rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .au-muted {
+    font-size: 0.75rem;
+    color: var(--gauzy-text-color-2);
+  }
+
+  /* ── Summary strip ─────────────────────────────────────────────────── */
+
+  .au-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: $hairline;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1);
+
+    @media screen and (max-width: 40rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .au-summary-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    padding: 0.875rem $gap-lg;
+
+    & + & {
+      border-inline-start: $hairline;
+
+      @media screen and (max-width: 40rem) {
+        border-inline-start: 0;
+        border-top: $hairline;
       }
     }
   }
-  .screenshot-container {
-    height: calc(100% - 3.5rem);
-    .no-data {
-      margin-top: 12px;
-      height: 100%;
+
+  .au-summary-label {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2);
+  }
+
+  .au-summary-value {
+    font-size: 1.25rem;
+    font-weight: $weight-strong;
+    line-height: 1.75rem;
+    color: var(--gauzy-text-color-1);
+    font-variant-numeric: tabular-nums;
+
+    &--name {
+      display: flex;
+      align-items: baseline;
+      gap: $gap-sm;
+      min-width: 0;
+      font-size: 1rem;
     }
   }
-}
-.mini-card {
-  background-color: nb-theme(background-basic-color-1);
-  padding: 20px;
-  margin-bottom: 5px;
-  border-radius: nb-theme(border-radius);
-  // The column-heading strip. `rgba(white, 0.5)` is a fixed 50 %-white wash: on
-  // the light themes it reads as a faint tint, but on `gauzy-dark` it paints a
-  // near-white block across the top of the list. `gauzy-card-3` is the token for
-  // exactly this — a translucent step over a panel — and it flips to a DARKENING
-  // overlay on the themes whose panels are light-on-dark.
-  &.head {
-    background-color: var(--gauzy-card-3);
-    padding: 12px 20px;
-  }
-  .times {
-    font-size: 12px;
+
+  .au-summary-aside {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
     font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-}
-.arrow {
-  width: 32px;
-}
-
-// Apps / Visited Sites tabs — see the cap comment in
-// `time-activities.component.scss`, which this file forwards.
-:host {
-  // `.mini-card` is both the column-heading strip and every row group, and its
-  // cells carry no size of their own, so capping the card caps the lot.
-  .mini-card {
-    font-size: nb-theme(gauzy-table-header-font-size);
-
-    &.head {
-      color: var(--gauzy-text-color-2);
-    }
-
-    .times {
-      font-size: nb-theme(gauzy-table-header-font-size);
-      color: var(--gauzy-text-color-2);
-    }
+    color: var(--gauzy-text-color-2);
   }
 
-  ngx-activity-item ::ng-deep {
-    .no-child,
-    .child {
-      font-size: nb-theme(gauzy-table-header-font-size);
-      line-height: nb-theme(gauzy-table-header-line-height);
+  /* ── Toolbar ───────────────────────────────────────────────────────── */
+
+  .au-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: $gap-sm $gap-md;
+  }
+
+  .au-toolbar-end {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $gap-sm;
+    flex: 1 1 18rem;
+    min-width: 0;
+  }
+
+  .au-segmented {
+    display: inline-flex;
+    height: $control-height;
+    padding: 0.1875rem;
+    border: $hairline;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1);
+  }
+
+  .au-segment {
+    padding: 0 0.875rem;
+    border: 0;
+    border-radius: calc(#{$radius} - 2px);
+    background: transparent;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-2);
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease-in-out,
+      color 0.12s ease-in-out;
+
+    &:hover {
+      color: var(--gauzy-text-color-1);
     }
 
-    .child-items {
-      font-size: nb-theme(gauzy-table-header-font-size);
+    &:focus-visible {
+      outline: 2px solid var(--gauzy-action-info-text);
+      outline-offset: 1px;
     }
 
-    // Percentage and duration columns: the same muted numeric treatment the
-    // dashboard already gives this component's time column.
-    .percentage-col,
-    .col-sm-2.text-right,
-    .child-items .col-sm-3.text-right {
-      font-variant-numeric: tabular-nums;
+    &.is-active {
+      background-color: var(--gauzy-active-tint);
+      color: var(--gauzy-text-color-1);
+    }
+  }
+
+  .au-search {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+    flex: 0 1 16rem;
+    min-width: 9rem;
+    height: $control-height;
+    padding: 0 0.75rem;
+    border: $hairline;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1);
+    color: var(--gauzy-text-color-2);
+
+    &:focus-within {
+      border-color: nb-theme(color-primary-500);
+    }
+
+    nb-icon {
+      flex: 0 0 auto;
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
+    }
+  }
+
+  // The theme styles every input with its own border, height and padding; the
+  // field here is just text inside the search box, which draws the frame.
+  .au-search-input {
+    all: unset;
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    font-size: 0.8125rem;
+    color: var(--gauzy-text-color-1);
+
+    &::placeholder {
       color: var(--gauzy-text-color-2);
+      opacity: 1;
+    }
+  }
+
+  .au-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: $control-height;
+    padding: 0 0.75rem;
+    border: $hairline;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-2);
+    cursor: pointer;
+    white-space: nowrap;
+
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
+
+    &:hover {
+      color: var(--gauzy-text-color-1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--gauzy-action-info-text);
+      outline-offset: 2px;
+    }
+  }
+
+  /* ── Panels ────────────────────────────────────────────────────────── */
+
+  .au-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: $hairline;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1);
+  }
+
+  .au-panel-header {
+    display: flex;
+    align-items: center;
+    gap: $gap-md;
+    min-height: 3rem;
+    padding: $gap-sm $gap-lg;
+    border-bottom: $hairline;
+  }
+
+  .au-panel-title {
+    flex: 1 1 auto;
+    font-size: 0.8125rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .au-panel-caption {
+    font-weight: 400;
+    color: var(--gauzy-text-color-2);
+  }
+
+  .au-panel-total {
+    flex: 0 0 auto;
+    font-size: 0.8125rem;
+    font-weight: $weight-strong;
+    color: var(--gauzy-text-color-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── By app / site table ───────────────────────────────────────────── */
+
+  .au-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(8rem, 1fr) 5.5rem;
+    align-items: center;
+    column-gap: 1.5rem;
+    min-height: 3.25rem;
+    padding: 0 $gap-lg;
+
+    &--head {
+      min-height: 2.5rem;
+      border-bottom: $hairline;
+      font-size: 0.6875rem;
+      font-weight: $weight-medium;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--gauzy-text-color-2);
+    }
+
+    @media screen and (max-width: 40rem) {
+      grid-template-columns: minmax(0, 1fr) 4.5rem;
+
+      > :nth-child(2) {
+        display: none;
+      }
+    }
+  }
+
+  .au-row-group {
+    border-bottom: $hairline;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover > .au-row,
+    &.is-open > .au-row {
+      background-color: var(--gauzy-hover-tint);
+    }
+  }
+
+  .au-name-cell {
+    display: flex;
+    align-items: center;
+    gap: $gap-md;
+    min-width: 0;
+  }
+
+  .au-name {
+    font-size: 0.8125rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .au-expand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-inline-start: -0.375rem;
+    padding: 0;
+    border: 0;
+    border-radius: $radius;
+    background: transparent;
+    color: var(--gauzy-text-color-2);
+    cursor: pointer;
+
+    nb-icon {
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
+    }
+
+    &:hover {
+      color: var(--gauzy-text-color-1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--gauzy-action-info-text);
+      outline-offset: 1px;
+    }
+  }
+
+  // A neutral letter tile: identifies the row without adding colour.
+  .au-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: $radius;
+    background-color: var(--gauzy-hover-tint);
+    font-size: 0.75rem;
+    font-weight: $weight-strong;
+    color: var(--gauzy-text-color-2);
+  }
+
+  .au-share-cell {
+    display: flex;
+    align-items: center;
+    gap: $gap-md;
+    min-width: 0;
+  }
+
+  .au-bar-track {
+    flex: 1 1 auto;
+    height: 0.375rem;
+    border-radius: 999px;
+    background-color: var(--gauzy-hover-tint);
+    overflow: hidden;
+  }
+
+  .au-bar {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-color: nb-theme(color-primary-500);
+  }
+
+  .au-share {
+    flex: 0 0 2.75rem;
+    text-align: end;
+    font-size: 0.75rem;
+    color: var(--gauzy-text-color-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Pages of an opened site */
+
+  .au-pages {
+    // Lines the page list up under the site's name.
+    padding: 0.25rem $gap-lg $gap-md calc(#{$gap-lg} + 3.375rem);
+  }
+
+  .au-pages-state {
+    margin: 0;
+    padding: $gap-sm 0;
+    font-size: 0.75rem;
+    color: var(--gauzy-text-color-2);
+  }
+
+  .au-page-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .au-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
+    align-items: center;
+    column-gap: 1.5rem;
+    padding: 0.375rem 0;
+
+    & + & {
+      border-top: 1px dashed var(--gauzy-border-default-color);
+    }
+  }
+
+  .au-page-link,
+  .au-page-text {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .au-page-link {
+    text-decoration: none;
+
+    &:hover {
+      color: nb-theme(color-primary-500);
+      text-decoration: underline;
+    }
+  }
+
+  /* ── By member cards / by hour list ────────────────────────────────── */
+
+  .au-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: $gap-lg;
+    align-items: start;
+  }
+
+  .au-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-md;
+  }
+
+  .au-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: var(--gauzy-hover-tint);
+    font-size: 0.6875rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-1);
+
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+
+  .au-mini-list {
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+  }
+
+  .au-mini-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: $gap-md;
+    padding: 0.5rem $gap-lg;
+
+    .au-name {
+      font-weight: 400;
+    }
+  }
+
+  .au-more {
+    width: 100%;
+    padding: $gap-sm;
+    border: 0;
+    border-top: $hairline;
+    background: transparent;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-2);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--gauzy-text-color-1);
+      background-color: var(--gauzy-hover-tint);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--gauzy-action-info-text);
+      outline-offset: -2px;
+    }
+  }
+
+  /* ── Empty / failed ────────────────────────────────────────────────── */
+
+  .au-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $gap-sm;
+    min-height: 14rem;
+    padding: $gap-lg;
+    border: $hairline;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1);
+    text-align: center;
+
+    nb-icon {
+      width: 1.75rem;
+      height: 1.75rem;
+      font-size: 1.75rem;
+      color: var(--gauzy-text-color-2);
+    }
+
+    p {
+      max-width: 28rem;
+      margin: 0;
+      font-size: 0.8125rem;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .au-segment {
+      transition: none;
     }
   }
 }
