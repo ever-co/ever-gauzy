@@ -218,6 +218,13 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		}
 
 		await em.flush();
+
+		if (isNotEmpty(mergedSlotIds)) {
+			// nativeUpdate bypasses the identity map, where getTimeSlots already loaded these collections, and an
+			// initialized collection is not reloaded by a later populate: refresh them so a read in the same request
+			// (CreateTimeSlotHandler's findOne) returns the moved screenshots and activities too
+			await em.populate(timeSlot, ['screenshots', 'activities'], { refresh: true });
+		}
 	}
 
 	/**
