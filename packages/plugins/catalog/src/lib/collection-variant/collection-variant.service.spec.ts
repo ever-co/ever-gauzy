@@ -64,7 +64,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { ProductVariant, RequestContext } from '@gauzy/core';
 import { Collection } from '../collection/collection.entity';
 import { CollectionVariant } from './collection-variant.entity';
 import { CollectionVariantService } from './collection-variant.service';
@@ -123,7 +123,9 @@ function fixture(rows: Row[] = []) {
 		collection: [
 			{ id: COLLECTION, tenantId: TENANT, organizationId: ORG },
 			{ id: FOREIGN_COLLECTION, tenantId: OTHER_TENANT, organizationId: 'org-x' }
-		]
+		],
+		// The caller's variants, which a set write now checks its members against.
+		product_variant: [V1, V2, V3, V4].map((id) => ({ id, tenantId: TENANT, organizationId: ORG }))
 	};
 	const tableOf = (entity: unknown) => {
 		if (entity === CollectionVariant) {
@@ -131,6 +133,9 @@ function fixture(rows: Row[] = []) {
 		}
 		if (entity === Collection) {
 			return tables.collection;
+		}
+		if (entity === ProductVariant) {
+			return tables.product_variant;
 		}
 
 		throw new Error('the in-memory double was handed an entity it does not know');
@@ -140,6 +145,22 @@ function fixture(rows: Row[] = []) {
 		findOne: async (entity: unknown, options: any = {}) =>
 			tableOf(entity).find((row) => matches(row, options.where)) ?? null,
 		transaction: async (run: (transactional: any) => Promise<any>) => run(manager),
+		// The scoped existence check a set write runs on its member ids: alternative conditions with `In` / `IsNull`.
+		count: async (entity: unknown, options: any = {}) => {
+			const conditions = Array.isArray(options.where) ? options.where : [options.where ?? {}];
+			const holds = (value: unknown, expected: any): boolean => {
+				if (expected && typeof expected === 'object' && ('_type' in expected || 'type' in expected)) {
+					const type = expected._type ?? expected.type;
+					const operand = expected._value ?? expected.value;
+					if (type === 'in') return (operand as unknown[]).some((one) => same(one, value));
+					if (type === 'isNull') return value === null || value === undefined;
+				}
+				return same(value, expected);
+			};
+			return tableOf(entity).filter((row) =>
+				conditions.some((condition: any) => Object.entries(condition).every(([field, expected]) => holds(row[field], expected)))
+			).length;
+		},
 		delete: async (entity: unknown, ids: unknown[]) => {
 			const table = tableOf(entity);
 

@@ -67,25 +67,40 @@ export type BulkItemHandler<T> = (item: BulkItemRequest<T>, context: IBulkItemCo
 export type IBulkTransactionRunner = <R>(work: (manager: EntityManager) => Promise<R>) => Promise<R>;
 
 /**
+ * What a batch is authorised against: one permission, or a list any one of which suffices.
+ *
+ * The list form exists because the platform's routes state their grants as `@Permissions(...)` lists
+ * that `PermissionGuard` reads as *any of* — `POST /tags` admits a caller holding `ALL_ORG_EDIT` or
+ * `ORG_TAGS_ADD`. A batch that mirrors such a route and could name only one of the two would refuse a
+ * caller the route serves, so the declaration takes the route's own list and reads it the same way.
+ */
+export type BulkPermission = PermissionsEnum | readonly PermissionsEnum[];
+
+/**
  * What a route declares about its batch.
  */
 export interface IBulkExecutionOptions {
 	/** The resource that changes, as the result and the errors name it: `variant`. */
 	readonly resource: string;
 	/**
-	 * The single permission the whole request is authorised against.
+	 * The permission the whole request is authorised against — or the list, any one of which suffices.
 	 *
 	 * It is evaluated once, before item 0, because a batch is one request and not a sequence of
 	 * them: a caller either holds the permission for the operation or does not, and evaluating it
 	 * per item would make an 8-item batch eight authorisation decisions with eight answers.
 	 */
-	readonly permission?: PermissionsEnum;
+	readonly permission?: BulkPermission;
 	/** The largest batch this resource accepts; defaults to the platform cap. */
 	readonly cap?: number;
 	/** The keys an item of a given op must carry, beyond the platform defaults. */
 	readonly requiredKeys?: IBulkLimits['requiredKeys'];
 	/** The transactional runner the resource's writes go through. */
 	readonly transaction?: IBulkTransactionRunner;
+	/**
+	 * Whether the route can apply a batch atomically; omitted means it can. `false` makes the executor
+	 * refuse `atomic: true` before item 0 with `400 BULK_ATOMIC_UNSUPPORTED` (see `@BulkOperation`).
+	 */
+	readonly atomic?: boolean;
 }
 
 /**
@@ -119,7 +134,8 @@ export class BulkExecutor {
 	 * @param options What the route declares.
 	 * @returns The result body: what applied, what did not, and the counters derived from both.
 	 * @throws ApiException `403` when the caller does not hold the route's permission, `400` when the
-	 * request or an item cannot be read, `413` above the cap, `409` for a refused atomic batch, and
+	 * request or an item cannot be read, `400 BULK_ATOMIC_UNSUPPORTED` for an atomic batch on a route
+	 * that declares it cannot apply one, `413` above the cap, `409` for a refused atomic batch, and
 	 * `422` when no item applied. `500` when an atomic batch was requested without a transactional
 	 * runner, because the guarantee the caller asked for cannot be provided.
 	 */
@@ -135,13 +151,27 @@ export class BulkExecutor {
 
 		// One decision for the whole request, before item 0.
 		if (options.permission) {
-			this.visibility.assertCanSee(options.permission, { resource: options.resource, mode: 'write' });
+			this.authorise(options.permission, options.resource);
 		}
 
 		const defect = inspectBulkRequest(request, limits);
 
 		if (defect) {
 			throw new ApiException(defect.status, defect.code, defect.message, defect.details);
+		}
+
+		if (atomic && options.atomic === false) {
+			// Refused before item 0, whatever else the route supplies: the route has declared that its items
+			// are applied through writes no batch transaction covers, so an atomic answer would be a promise
+			// it cannot keep — items that applied before a refused one would stay applied.
+			throw new ApiException(
+				400,
+				ApiErrorCode.BULK_ATOMIC_UNSUPPORTED,
+				`A ${options.resource} batch cannot be applied atomically: each item runs the ${options.resource}'s ` +
+					'own single-item path, which writes through its own repositories, so the batch cannot be rolled ' +
+					'back as one. Send it without "atomic": it then applies every item it can and reports the rest.',
+				{ field: 'atomic', resource: options.resource }
+			);
 		}
 
 		const total = request.items.length;
@@ -227,6 +257,43 @@ export class BulkExecutor {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Refuses the request unless the caller holds the declared permission, or one of the declared list.
+	 *
+	 * A single permission is asked exactly as it always was — through `assertCanSee`, whose denial names
+	 * the grant — so a route that declares one behaves as before. A list is read as `PermissionGuard`
+	 * reads a `@Permissions(...)` list: any one grant admits the caller. An empty list declares nothing,
+	 * which is the same answer the guard gives empty metadata, and the guard in front of the route is
+	 * what stands there.
+	 *
+	 * @param permission What the route declares.
+	 * @param resource The resource the denial names.
+	 * @throws ApiException `403 PERMISSION_DENIED` when the caller holds none of it.
+	 */
+	private authorise(permission: BulkPermission, resource: string): void {
+		const field = { resource, mode: 'write' as const };
+
+		if (!isPermissionList(permission)) {
+			this.visibility.assertCanSee(permission, field);
+
+			return;
+		}
+
+		if (permission.length === 0 || permission.some((granted) => this.visibility.canSee(granted))) {
+			return;
+		}
+
+		// The denial is the platform's own, naming every grant that would have admitted the caller rather
+		// than the first of them: a client that reads the detail must not be told one grant is required
+		// when any of several is.
+		const denial = this.visibility.denialFor(permission[0], field);
+		const details: Record<string, unknown> = { ...denial.details, requiredPermissions: [...permission] };
+
+		delete details.requiredPermission;
+
+		throw new ApiException(denial.status, denial.code, denial.message, details);
 	}
 
 	/**
@@ -327,6 +394,18 @@ export class BulkExecutor {
 			}
 		}
 	}
+}
+
+/**
+ * Whether a declaration states a list of grants rather than one.
+ *
+ * `Array.isArray` does not narrow a `readonly` array out of a union, so the check is stated once here.
+ *
+ * @param permission The declaration.
+ * @returns True for a list.
+ */
+function isPermissionList(permission: BulkPermission): permission is readonly PermissionsEnum[] {
+	return Array.isArray(permission);
 }
 
 /**

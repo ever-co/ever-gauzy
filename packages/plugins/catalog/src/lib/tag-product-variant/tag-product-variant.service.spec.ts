@@ -213,8 +213,18 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 		 * the caller's own; the refusal of another tenant's subject is pinned against a real database in
 		 * `catalog-tenant-scope.db.spec.ts`.
 		 */
-		count: async (entity: unknown, options: any = {}) =>
-			entityToTable.has(entity) ? rows(entity).filter((row: any) => same(row.id, options.where?.id)).length : 1,
+		// A table this double does not keep — the variant, the facet values — is one whose rows exist: the scoped
+		// existence checks are answered as found (one per id an `In(...)` names), and the tenant boundary itself is
+		// pinned by `catalog-tenant-scope.db.spec.ts`.
+		count: async (entity: unknown, options: any = {}) => {
+			if (entityToTable.has(entity)) {
+				return rows(entity).filter((row: any) => same(row.id, options.where?.id)).length;
+			}
+			const where = Array.isArray(options.where) ? options.where[0] : options.where;
+			const id = where?.id;
+			const listed = id && typeof id === 'object' ? (id._value ?? id.value) : undefined;
+			return Array.isArray(listed) ? listed.length : 1;
+		},
 		/**
 		 * The transaction the write path asks for: the callback sees the same datastore, and a throw
 		 * from anywhere inside it leaves the datastore exactly as it was — which is the property every

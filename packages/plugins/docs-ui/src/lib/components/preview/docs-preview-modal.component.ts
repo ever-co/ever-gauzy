@@ -149,15 +149,16 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	}
 
 	// Document-wide, so the dialog pages with the focus anywhere in it; embedded (`inline`), only keys pressed inside
-	// the preview count — see `previewTakesArrowKey`.
+	// the preview count — see `previewTakesArrowKey`. The handlers take `Event`, not `KeyboardEvent`: strict host-binding
+	// type checking types a key pseudo-event's `$event` as `Event`, and only its `target` is read.
 	@HostListener('document:keydown.arrowRight', ['$event'])
-	onArrowRight(event?: KeyboardEvent): void {
+	onArrowRight(event?: Event): void {
 		if (!previewTakesArrowKey(this.inline, this.elementRef.nativeElement, event?.target ?? null)) return;
 		void this.pdfViewer?.next();
 	}
 
 	@HostListener('document:keydown.arrowLeft', ['$event'])
-	onArrowLeft(event?: KeyboardEvent): void {
+	onArrowLeft(event?: Event): void {
 		if (!previewTakesArrowKey(this.inline, this.elementRef.nativeElement, event?.target ?? null)) return;
 		void this.pdfViewer?.prev();
 	}

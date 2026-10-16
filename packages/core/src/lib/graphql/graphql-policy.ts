@@ -14,7 +14,7 @@
  * while a production deployment stops publishing a schema map unless it is told to.
  */
 
-/** The four ceilings a query is measured against. */
+/** The five ceilings a query is measured against. */
 export interface IGraphqlLimitSettings {
 	/** Maximum selection-set depth. */
 	maxDepth?: number;
@@ -24,6 +24,8 @@ export interface IGraphqlLimitSettings {
 	maxAliases?: number;
 	/** Maximum number of operations in one HTTP request. */
 	maxBatchSize?: number;
+	/** Maximum number of lexical tokens in one document; the parser stops at it, before any validation. */
+	maxTokens?: number;
 }
 
 /** The deployment's settings, as the shipped configuration object states them. */
@@ -45,6 +47,7 @@ export interface IGraphqlPolicy {
 	maxComplexity: number;
 	maxAliases: number;
 	maxBatchSize: number;
+	maxTokens: number;
 	/** Anything the environment stated that could not be used, for the boot log. */
 	warnings: string[];
 }
@@ -58,7 +61,8 @@ export const GRAPHQL_POLICY_ENV = {
 	MAX_DEPTH: 'GRAPHQL_MAX_DEPTH',
 	MAX_COMPLEXITY: 'GRAPHQL_MAX_COMPLEXITY',
 	MAX_ALIASES: 'GRAPHQL_MAX_ALIASES',
-	MAX_BATCH_SIZE: 'GRAPHQL_MAX_BATCH_SIZE'
+	MAX_BATCH_SIZE: 'GRAPHQL_MAX_BATCH_SIZE',
+	MAX_TOKENS: 'GRAPHQL_MAX_TOKENS'
 } as const;
 
 /**
@@ -67,12 +71,21 @@ export const GRAPHQL_POLICY_ENV = {
  * Generous enough that no ordinary client meets them — the cost model prices a page of a hundred
  * rows with a batched relation at 1800 — and low enough that a query built to consume the database
  * is refused before it runs.
+ *
+ * `maxTokens` bounds the work done before any of the others is measured (SEC-C-03). Validation runs
+ * before authentication, and the specified `OverlappingFieldsCanBeMerged` rule is quadratic in the
+ * fields of a selection set: against the composed schema, a document of ~2,200 tokens validates in
+ * ~0.2 s, ~4,400 in ~1 s, ~17,600 in ~14 s. The parser stops at the ceiling, so an oversized document
+ * never reaches validation. The full introspection query is under 200 tokens and the platform's own
+ * GraphQL clients send well under 100; a document that states its data inline rather than through
+ * variables is the one that meets it.
  */
 export const GRAPHQL_LIMIT_DEFAULTS: Required<IGraphqlLimitSettings> = {
 	maxDepth: 12,
 	maxComplexity: 5000,
 	maxAliases: 50,
-	maxBatchSize: 10
+	maxBatchSize: 10,
+	maxTokens: 2000
 };
 
 /**
@@ -157,7 +170,7 @@ export function mergeLimitSettings(...sources: Array<IGraphqlLimitSettings | und
 
 		const next = { ...merged };
 
-		for (const key of ['maxDepth', 'maxComplexity', 'maxAliases', 'maxBatchSize'] as const) {
+		for (const key of ['maxDepth', 'maxComplexity', 'maxAliases', 'maxBatchSize', 'maxTokens'] as const) {
 			const value = source[key];
 
 			if (typeof value === 'number' && Number.isFinite(value) && value >= 1) {
@@ -170,7 +183,7 @@ export function mergeLimitSettings(...sources: Array<IGraphqlLimitSettings | und
 }
 
 /**
- * Reads the four ceilings from the environment.
+ * Reads the five ceilings from the environment.
  *
  * A ceiling the environment does not state is left undefined so it cannot overwrite a configured
  * one; a ceiling the environment states badly is reported and replaced by the built-in default,
@@ -198,7 +211,8 @@ export function limitsFromEnvironment(
 		maxDepth: read(GRAPHQL_POLICY_ENV.MAX_DEPTH, GRAPHQL_LIMIT_DEFAULTS.maxDepth),
 		maxComplexity: read(GRAPHQL_POLICY_ENV.MAX_COMPLEXITY, GRAPHQL_LIMIT_DEFAULTS.maxComplexity),
 		maxAliases: read(GRAPHQL_POLICY_ENV.MAX_ALIASES, GRAPHQL_LIMIT_DEFAULTS.maxAliases),
-		maxBatchSize: read(GRAPHQL_POLICY_ENV.MAX_BATCH_SIZE, GRAPHQL_LIMIT_DEFAULTS.maxBatchSize)
+		maxBatchSize: read(GRAPHQL_POLICY_ENV.MAX_BATCH_SIZE, GRAPHQL_LIMIT_DEFAULTS.maxBatchSize),
+		maxTokens: read(GRAPHQL_POLICY_ENV.MAX_TOKENS, GRAPHQL_LIMIT_DEFAULTS.maxTokens)
 	};
 }
 
@@ -279,6 +293,7 @@ export function resolveGraphqlPolicy(
 		maxComplexity: limits.maxComplexity as number,
 		maxAliases: limits.maxAliases as number,
 		maxBatchSize: limits.maxBatchSize as number,
+		maxTokens: limits.maxTokens as number,
 		warnings
 	};
 }
