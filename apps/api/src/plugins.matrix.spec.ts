@@ -24,6 +24,7 @@ class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
 class InboxPlugin {}
+class InboxEmailPlugin {}
 
 /** A stand-in plugin class; `init()` mimics the configurable plugins. */
 function stubPluginClass() {
@@ -71,7 +72,9 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			}));
 			jest.doMock('@gauzy/plugin-inbox', () => ({
 				InboxPlugin,
-				isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled
+				InboxEmailPlugin,
+				isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
+				isInboxEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/email/inbox-email-enabled').isInboxEmailEnabled
 			}));
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			plugins = require('./plugins').plugins;
@@ -253,6 +256,34 @@ describe('API plugin list: Inbox', () => {
 		} finally {
 			warn.mockRestore();
 		}
+	});
+});
+
+describe('API plugin list: Inbox email', () => {
+	// Only on top of the Inbox, and only by the exact value `true` of both switches.
+	it.each([
+		['both unset (the default)', undefined, undefined, false, false, 0],
+		['Inbox on, email unset', 'true', undefined, true, false, 0],
+		['Inbox on, email false', 'true', 'false', true, false, 0],
+		['Inbox on, email true', 'true', 'true', true, true, 0],
+		['Inbox off, email true', undefined, 'true', false, false, 0],
+		['Inbox false, email true', 'false', 'true', false, false, 0],
+		['Inbox on, email TRUE', 'true', 'TRUE', true, false, 1],
+		['Inbox on, email 1', 'true', '1', true, false, 1]
+	])('%s: Inbox %s, email %s, %i log line(s)', (_name, inbox, email, inboxLoaded, emailLoaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ GAUZY_INBOX_ENABLED: inbox, GAUZY_INBOX_EMAIL_ENABLED: email });
+			expect([plugins.includes(InboxPlugin), plugins.includes(InboxEmailPlugin)]).toEqual([inboxLoaded, emailLoaded]);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('GAUZY_INBOX_EMAIL_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	it('loads the email plugin after the Inbox', () => {
+		const plugins = loadPlugins({ GAUZY_INBOX_ENABLED: 'true', GAUZY_INBOX_EMAIL_ENABLED: 'true' });
+		expect(plugins.indexOf(InboxEmailPlugin)).toBeGreaterThan(plugins.indexOf(InboxPlugin));
 	});
 });
 
