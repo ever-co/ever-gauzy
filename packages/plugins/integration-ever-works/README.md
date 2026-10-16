@@ -126,6 +126,8 @@ below use the `INTEGRATION_` prefix; paths share the
 | POST | `/mappings/:integrationTenantId/agents/import` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/teams` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/projects` | `VIEW` |
+| PUT | `/mappings/:integrationTenantId/projects` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
@@ -175,6 +177,15 @@ and answered `202`.
   manager) and members either side cannot map are kept. Ever Works nesting
   stays on the link (Gauzy teams are flat). A team deleted in Ever Works is
   archived in Gauzy; a Gauzy team delete is not pushed.
+- **Projects ↔ works (link only).** The Projects tab pairs them (same-URL
+  or same-name suggestions, or a project created from a work); nothing is
+  paired silently. For a pair, what changes in Ever Works is written to the
+  project: name, description, website, primary repository, status (archived →
+  archived), members (owner/manager → manager) and teams. Nothing is pushed;
+  the kind and every repository URL stay on the link. Members and teams paired
+  later join the project through the sync loop's sweep. Private works are not
+  listed and never sync. Creating a project from a work needs the mapping
+  enabled and works not switched off.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
