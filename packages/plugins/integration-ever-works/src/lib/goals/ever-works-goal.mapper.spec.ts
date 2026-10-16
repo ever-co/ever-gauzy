@@ -6,6 +6,8 @@
 import { KeyResultDeadlineEnum, KeyResultTypeEnum, KeyResultWeightEnum } from '@gauzy/contracts';
 import {
 	bucketWeight,
+	criteriaWritable,
+	mergeGauzyGoal,
 	everWorksGoalShared,
 	gauzyGoalToEverWorks,
 	goalCreateBody,
@@ -193,6 +195,112 @@ describe('the Ever Works goal of a Gauzy goal', () => {
 		expect(gauzyGoalToEverWorks({ name: 'Empty' }, null, [kr('t', 'Task')], [])).toBeNull();
 		// The kind is fixed once the goal exists in Ever Works.
 		expect(gauzyGoalToEverWorks({ name: 'Grow' }, null, [kr('d', 'True/False')], [], 'metric')).toBeNull();
+	});
+
+	it('a linked goal keeps Ever Works\u2019 items and changes only what a person changed in Gauzy', () => {
+		const before = everWorksGoalShared({
+			id: 'g1',
+			title: 'Grow',
+			goalKind: 'metric',
+			comparator: 'gte',
+			targetValue: 120,
+			unit: 'customers',
+			baselineValue: 80,
+			criteria: [
+				{ id: 'kr-churn', name: 'Churn', weight: 3, target: 2.2, direction: 'lte', unit: '%', window: 'month' }
+			],
+			dodCriteria: [{ id: 'launch', text: 'Launch', status: 'waived', evidence: 'skipped by the board' }]
+		});
+		// What the import wrote to Gauzy (rounded, bucketed), and the key result links' snapshots of it.
+		const churn = {
+			id: 'k1',
+			name: 'Churn',
+			type: 'Numerical',
+			targetValue: 2,
+			initialValue: 0,
+			unit: '%',
+			update: 0,
+			progress: 0,
+			weight: '4',
+			ewKey: 'c:kr-churn'
+		};
+		const launch = {
+			id: 'k2',
+			name: 'Launch',
+			type: 'True/False',
+			targetValue: 1,
+			initialValue: 0,
+			unit: null,
+			update: 1,
+			progress: 100,
+			weight: '1',
+			ewKey: 'd:launch'
+		};
+		const snapshotOf = (row: Record<string, unknown>) => ({ ...row });
+		const rows = [
+			{ ...churn, snapshot: snapshotOf(churn) },
+			{ ...launch, snapshot: snapshotOf(launch) }
+		];
+		const unchanged = mergeGauzyGoal({ name: 'Grow' }, null, rows, [], before);
+		// Nothing changed in Gauzy: Ever Works' exact target, weight, direction, window and evidence stay.
+		expect(unchanged?.criteria).toEqual(before.criteria);
+		expect(unchanged?.dodCriteria).toEqual(before.dodCriteria);
+		expect(goalPushPlan(unchanged!, before)).toEqual({ patch: null, criteria: false, dod: false });
+		// A rename changes the name only; unchecking the item reopens it; a deleted key result leaves.
+		const edited = mergeGauzyGoal(
+			{ name: 'Grow' },
+			null,
+			[
+				{ ...rows[0], name: 'Monthly churn' },
+				{ ...rows[1], update: 0, progress: 0 }
+			],
+			[],
+			before
+		);
+		expect(edited?.criteria).toEqual([{ ...before.criteria[0], name: 'Monthly churn' }]);
+		expect(edited?.dodCriteria).toEqual([{ ...before.dodCriteria[0], status: 'open' }]);
+		expect(mergeGauzyGoal({ name: 'Grow' }, null, [rows[0]], [], before)?.dodCriteria).toEqual([]);
+	});
+
+	it('criteria reading a provider are not writable by the integration', () => {
+		expect(criteriaWritable([{ id: 'a', name: 'A', weight: 1, target: 1, direction: 'gte' }])).toBe(true);
+		expect(
+			criteriaWritable([
+				{
+					id: 'a',
+					name: 'A',
+					weight: 1,
+					target: 1,
+					direction: 'gte',
+					metricSource: { pluginId: 'external', metricId: 'v' }
+				}
+			])
+		).toBe(true);
+		expect(
+			criteriaWritable([
+				{
+					id: 'a',
+					name: 'A',
+					weight: 1,
+					target: 1,
+					direction: 'gte',
+					metricSource: { pluginId: 'stripe', metricId: 'mrr' }
+				}
+			])
+		).toBe(false);
+	});
+
+	it('values Gauzy stores in integer columns are rounded', () => {
+		const [metric] = keyResultsOfGoal({
+			id: 'g1',
+			title: 'Churn',
+			goalKind: 'metric',
+			targetValue: 2.2,
+			baselineValue: 3.6,
+			currentValue: 2.5,
+			unit: '%'
+		});
+		expect(metric).toMatchObject({ targetValue: 2, initialValue: 4, update: 3 });
 	});
 
 	it('the create body never carries a status (always a draft) and reads the external metric source', () => {
