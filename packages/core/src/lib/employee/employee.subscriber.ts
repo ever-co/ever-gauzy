@@ -375,7 +375,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 *
 	 * @param em The entity manager
 	 * @param id The employee ID
-	 * @param organizationId The organization ID
+	 * @param organizationId The organization ID; when the write omits it, the employee is matched in any organization
 	 * @param tenantId The tenant ID
 	 * @param ormType The ORM type
 	 * @returns The employee entity or null if not found
@@ -387,15 +387,17 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		tenantId: string,
 		ormType: MultiORM
 	): Promise<Employee | null> {
+		const where = { id, tenantId, ...(organizationId ? { organizationId } : {}) };
+
 		switch (ormType) {
 			case MultiORMEnum.TypeORM:
 				if (em instanceof TypeOrmEntityManager) {
-					return em.findOne(Employee, { where: { id, organizationId, tenantId } });
+					return em.findOne(Employee, { where });
 				}
 				break;
 			case MultiORMEnum.MikroORM:
 				if (em instanceof MikroOrmEntityManager) {
-					return em.findOne(Employee, { id, organizationId, tenantId });
+					return em.findOne(Employee, where);
 				}
 				break;
 		}
@@ -485,8 +487,16 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				return;
 			}
 
-			// Update the UserOrganization status
-			await this.updateUserOrganization(em, employee.userId, organizationId, isActive, isArchived, ormType);
+			// The stored employee's organization: a write may omit it (a TypeORM entity holds only the payload,
+			// and Back to Work sends only the end date), and when it is sent the lookup above matched it.
+			await this.updateUserOrganization(
+				em,
+				employee.userId,
+				employee.organizationId,
+				isActive,
+				isArchived,
+				ormType
+			);
 		} catch (error) {
 			console.error('EmployeeSubscriber: Error while updating user organization as active/inactive:', error);
 		}
