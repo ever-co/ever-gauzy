@@ -45,6 +45,9 @@ interface IMemberGroup {
 	initials: string;
 	avatarUrl?: string;
 	duration: number;
+	/** The member's share of everyone's time in the period, 0–100. */
+	share: number;
+	/** Their apps or sites; each row's share is of the member's own time. */
 	items: IActivityItemRow[];
 }
 
@@ -368,6 +371,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 					initials: AppUrlActivityComponent.initialsOf(name),
 					avatarUrl: person?.avatarUrl,
 					duration,
+					share: total ? (duration / total) * 100 : 0,
 					items: this.rankItems(own, duration)
 				};
 			})
