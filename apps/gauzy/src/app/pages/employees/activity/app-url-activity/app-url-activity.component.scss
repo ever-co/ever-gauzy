@@ -413,7 +413,27 @@ $control-height: 2.25rem;
     display: block;
     height: 100%;
     border-radius: 999px;
-    background-color: nb-theme(color-primary-500);
+
+    // The screenshot cards' scale: red up to 25 %, yellow to 50 %, blue to 75 %, green above.
+    &--danger {
+      background-color: nb-theme(color-danger-default);
+    }
+
+    &--warning {
+      background-color: nb-theme(color-warning-default);
+    }
+
+    &--info {
+      background-color: nb-theme(color-info-default);
+    }
+
+    &--success {
+      background-color: nb-theme(color-success-default);
+    }
+  }
+
+  .au-bar-track--sm {
+    height: 0.25rem;
   }
 
   .au-share {
@@ -446,7 +466,7 @@ $control-height: 2.25rem;
 
   .au-page {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 5.5rem;
+    grid-template-columns: minmax(0, 1.4fr) minmax(8rem, 1fr) 5.5rem;
     align-items: center;
     column-gap: 1.5rem;
     padding: 0.375rem 0;
