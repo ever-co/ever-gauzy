@@ -3785,17 +3785,20 @@
 		"USER": {
 			"MANAGE": "Gérer les invitations d'utilisateurs",
 			"HEADER": "Inviter les utilisateurs",
-			"ACTION": "Inviter des utilisateurs"
+			"ACTION": "Inviter des utilisateurs",
+			"DESCRIPTION": "Invitez des personnes à rejoindre votre organisation en tant qu’utilisateurs. Chaque destinataire reçoit un e-mail contenant un lien sécurisé pour accepter."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gérer les invitations des employés",
 			"HEADER": "Inviter les employés",
-			"ACTION": "Invitez les employés"
+			"ACTION": "Invitez les employés",
+			"DESCRIPTION": "Invitez des personnes à rejoindre votre organisation en tant qu’employés. Chaque destinataire reçoit un e-mail contenant un lien sécurisé pour accepter."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gérer les invitations des candidats",
 			"HEADER": "Inviter les candidats.",
-			"ACTION": "Inviter les candidats"
+			"ACTION": "Inviter les candidats",
+			"DESCRIPTION": "Invitez des candidats dans votre processus de recrutement. Chaque destinataire reçoit un e-mail contenant un lien sécurisé pour accepter."
 		},
 		"SENT": "{{total}} Invitations envoyées.",
 		"IGNORED": "{{total}} Invitations ont été envoyées. Parmi celles-ci, {{ignored}} ont déjà été invités et ont été ignorés.",
@@ -3805,6 +3808,23 @@
 			"TWO_WEEK": "14 jours",
 			"MONTH": "30 Jours",
 			"NEVER": "Jamais"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinataires",
+			"EMAILS_PLACEHOLDER": "nom@entreprise.com",
+			"EMAILS_HINT": "Appuyez sur Entrée après chaque adresse pour ajouter plusieurs destinataires.",
+			"CLEAR_EMAILS": "Tout effacer",
+			"ACCESS": "Accès",
+			"ACCESS_HINT": "Facultatif. Choisissez ce à quoi les nouveaux membres auront accès dès leur arrivée.",
+			"DETAILS": "Détails de l’invitation",
+			"RECIPIENT_COUNT": "Destinataires : {{count}}",
+			"NO_RECIPIENTS": "Aucun destinataire ajouté pour le moment"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Supprimer l’invitation",
+			"WARNING": "L’invitation pour {{ email }} sera définitivement supprimée et son lien ne fonctionnera plus. Cette action est irréversible.",
+			"TYPE_TO_CONFIRM": "Saisissez ce qui suit pour confirmer :",
+			"CONFIRM": "Supprimer l’invitation"
 		}
 	},
 	"INVOICES_PAGE": {

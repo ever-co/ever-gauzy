@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -26,6 +27,7 @@ import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
+import { InviteDeleteConfirmationComponent } from './invite-delete-confirmation/invite-delete-confirmation.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -48,12 +50,14 @@ const COMPONENTS = [
 	ProjectNamesComponent,
 	ClientNamesComponent,
 	DepartmentNamesComponent,
-	ResendConfirmationComponent
+	ResendConfirmationComponent,
+	InviteDeleteConfirmationComponent
 ];
 
 @NgModule({
 	imports: [
 		...NB_MODULES,
+		FormsModule,
 		NgSelectModule,
 		ClipboardModule,
 		TranslatePipe,

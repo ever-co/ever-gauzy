@@ -3791,17 +3791,20 @@
 		"USER": {
 			"MANAGE": "Gestisci gli inviti degli utenti",
 			"HEADER": "Invita gli utenti",
-			"ACTION": "Invita gli utenti"
+			"ACTION": "Invita gli utenti",
+			"DESCRIPTION": "Invita persone a unirsi alla tua organizzazione come utenti. Ogni destinatario riceve un’email con un link sicuro per accettare."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gestire gli inviti dei dipendenti",
 			"HEADER": "Invitare i dipendenti",
-			"ACTION": "Invita i dipendenti"
+			"ACTION": "Invita i dipendenti",
+			"DESCRIPTION": "Invita persone a unirsi alla tua organizzazione come dipendenti. Ogni destinatario riceve un’email con un link sicuro per accettare."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gestisci Inviti ai Candidati",
 			"HEADER": "Invitare i candidati",
-			"ACTION": "Invita candidati"
+			"ACTION": "Invita candidati",
+			"DESCRIPTION": "Invita candidati nel tuo processo di selezione. Ogni destinatario riceve un’email con un link sicuro per accettare."
 		},
 		"SENT": "{{total}} Inviti inviati",
 		"IGNORED": "{{total}} Inviti inviati. {{ignored}} sono già stati invitati e sono stati ignorati",
@@ -3811,6 +3814,23 @@
 			"TWO_WEEK": "14 Giorni",
 			"MONTH": "30 giorni",
 			"NEVER": "Mai"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinatari",
+			"EMAILS_PLACEHOLDER": "nome@azienda.com",
+			"EMAILS_HINT": "Premi Invio dopo ogni indirizzo per aggiungere più destinatari.",
+			"CLEAR_EMAILS": "Cancella tutto",
+			"ACCESS": "Accesso",
+			"ACCESS_HINT": "Facoltativo. Scegli a cosa potranno accedere i nuovi membri appena entrano.",
+			"DETAILS": "Dettagli dell’invito",
+			"RECIPIENT_COUNT": "Destinatari: {{count}}",
+			"NO_RECIPIENTS": "Nessun destinatario aggiunto"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Elimina invito",
+			"WARNING": "L’invito per {{ email }} verrà eliminato definitivamente e il suo link smetterà di funzionare. Questa azione non può essere annullata.",
+			"TYPE_TO_CONFIRM": "Digita quanto segue per confermare:",
+			"CONFIRM": "Elimina invito"
 		}
 	},
 	"INVOICES_PAGE": {

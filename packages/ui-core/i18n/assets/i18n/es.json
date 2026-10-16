@@ -3793,17 +3793,20 @@
 		"USER": {
 			"MANAGE": "Gestionar Invitaciones de Usuarios",
 			"HEADER": "Invita a los usuarios",
-			"ACTION": "Invitar a usuarios"
+			"ACTION": "Invitar a usuarios",
+			"DESCRIPTION": "Invita a personas a unirse a tu organización como usuarios. Cada destinatario recibe un correo con un enlace seguro para aceptar."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gestionar invitaciones de empleados",
 			"HEADER": "Invitar a los empleados",
-			"ACTION": "Invitar a los empleados."
+			"ACTION": "Invitar a los empleados.",
+			"DESCRIPTION": "Invita a personas a unirse a tu organización como empleados. Cada destinatario recibe un correo con un enlace seguro para aceptar."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gestionar invitaciones de candidatos",
 			"HEADER": "Invitar a los candidatos",
-			"ACTION": "Invitar a los candidatos."
+			"ACTION": "Invitar a los candidatos.",
+			"DESCRIPTION": "Invita a candidatos a tu proceso de selección. Cada destinatario recibe un correo con un enlace seguro para aceptar."
 		},
 		"SENT": "{{total}} Invitaciones Enviadas.",
 		"IGNORED": "Se han enviado {{total}} invitaciones. {{ignored}} ya habían sido invitados y han sido ignorados.",
@@ -3813,6 +3816,23 @@
 			"TWO_WEEK": "14 Días",
 			"MONTH": "30 días",
 			"NEVER": "Nunca"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinatarios",
+			"EMAILS_PLACEHOLDER": "nombre@empresa.com",
+			"EMAILS_HINT": "Pulsa Intro después de cada dirección para añadir varios destinatarios.",
+			"CLEAR_EMAILS": "Borrar todo",
+			"ACCESS": "Acceso",
+			"ACCESS_HINT": "Opcional. Elige a qué podrán acceder los nuevos miembros en cuanto se unan.",
+			"DETAILS": "Detalles de la invitación",
+			"RECIPIENT_COUNT": "Destinatarios: {{count}}",
+			"NO_RECIPIENTS": "Aún no se han añadido destinatarios"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Eliminar invitación",
+			"WARNING": "La invitación para {{ email }} se eliminará de forma permanente y su enlace dejará de funcionar. Esta acción no se puede deshacer.",
+			"TYPE_TO_CONFIRM": "Escribe lo siguiente para confirmar:",
+			"CONFIRM": "Eliminar invitación"
 		}
 	},
 	"INVOICES_PAGE": {
