@@ -122,7 +122,7 @@ describe('User lookup by email is tenant scoped (GHSA-6qvm-3wg4-26w4, finding 1)
 							) ?? null
 					)
 			};
-			const controller = new UserController(userService as any, {} as any, {} as any);
+			const controller = new UserController(userService as any, {} as any, {} as any, {} as any);
 			return { controller, userService };
 		};
 

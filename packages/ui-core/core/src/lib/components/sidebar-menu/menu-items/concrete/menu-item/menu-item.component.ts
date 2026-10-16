@@ -20,6 +20,7 @@ import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum } from '../../../../../s
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
 import { isSameMenuItem } from '../../menu-item.utils';
+import { GA_MENU_ALWAYS_EXPANDED } from '../../menu-item.tokens';
 
 /** Tag of the Nebular sidebar this menu renders into (see one-column.layout.html). */
 const MENU_SIDEBAR_TAG = 'menu-sidebar';
@@ -52,6 +53,7 @@ export class MenuItemComponent implements OnInit {
 	private readonly _jitsuService = inject(JitsuService);
 	private readonly _store = inject(Store);
 	private readonly _permissionsService = inject(NgxPermissionsService);
+	private readonly _alwaysExpanded = inject(GA_MENU_ALWAYS_EXPANDED, { optional: true }) ?? false;
 
 	private _user: IUser;
 
@@ -453,6 +455,12 @@ export class MenuItemComponent implements OnInit {
 	 * forever waiting for a second emission that never comes.
 	 */
 	private syncSidebarState(): void {
+		// Rendered outside the menu sidebar (the workspace panel): never fold into the icon rail.
+		if (this._alwaysExpanded) {
+			this.state = true;
+			this._cdr.markForCheck();
+			return;
+		}
 		this._sidebarService
 			.getSidebarState(MENU_SIDEBAR_TAG)
 			.pipe(
