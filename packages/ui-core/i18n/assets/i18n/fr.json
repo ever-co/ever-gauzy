@@ -838,6 +838,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Vous devez être employé afin de pouvoir suivre le temps, créer des dépenses partagées et utiliser d'autres fonctionnalités liées aux employés."
 	},
 	"MENU": {
+		"INITIATIVES": "Initiatives",
 		"BREADCRUMB": "Fil d'Ariane",
 		"PIPELINES": "Les pipelines",
 		"DASHBOARD": "Tableau de bord",
@@ -2090,6 +2091,60 @@
 			},
 			"SHOWING": "{{ shown }} tâches affichées sur {{ total }}",
 			"NO_TASKS_IN_VIEW": "Aucune tâche dans cette vue"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Initiatives stratégiques",
+		"SUBTITLE": "Les directions dans lesquelles votre organisation a décidé d'avancer, et les objectifs, projets et équipes qui s'y alignent.",
+		"ADD": "Ajouter une initiative",
+		"EDIT": "Modifier l'initiative",
+		"EMPTY": "Aucune initiative stratégique pour l'instant.",
+		"TITLE": "Titre",
+		"STATE": "État",
+		"VISIBILITY": "Visibilité",
+		"TEAMS": "Équipes",
+		"TEAMS_HINT": "Avec la visibilité « Équipe », les membres de ces équipes (et des équipes des projets alignés) voient l'initiative.",
+		"PROJECTS": "Projets",
+		"GOALS": "Objectifs",
+		"CONFIDENCE": "Confiance",
+		"MOMENTUM": "Dynamique",
+		"INTENT": "Intention",
+		"INTENT_HINT": "Que voulons-nous faire avancer délibérément, et pourquoi ?",
+		"STEWARD": "Responsable",
+		"SIGNALS": "Signaux",
+		"KNOWN_RISKS": "Risques connus",
+		"KNOWN_RISKS_HINT": "Un risque par ligne",
+		"NOTES": "Notes",
+		"LAST_ASSESSED": "Dernière évaluation",
+		"NO_TEAMS": "Aucune équipe liée.",
+		"NO_GOALS": "Aucun objectif aligné.",
+		"NO_PROJECTS": "Aucun projet aligné.",
+		"NOT_FOUND": "L'initiative est introuvable ou vous ne pouvez pas la voir.",
+		"DELETE_TITLE": "Supprimer l'initiative",
+		"DELETE_CONFIRMATION": "Supprimer l'initiative « {{ name }} » ?",
+		"DELETED": "Initiative « {{ name }} » supprimée.",
+		"CREATED": "Initiative « {{ name }} » créée.",
+		"UPDATED": "Initiative « {{ name }} » mise à jour.",
+		"STATES": {
+			"DRAFT": "Brouillon",
+			"ACTIVE": "Active",
+			"RESOLVED": "Atteinte",
+			"RETIRED": "Abandonnée"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Direction",
+			"ORGANIZATION": "Organisation",
+			"TEAM": "Équipe"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Faible",
+			"MEDIUM": "Moyenne",
+			"HIGH": "Élevée"
+		},
+		"MOMENTUMS": {
+			"STALLED": "À l'arrêt",
+			"PROGRESSING": "En progression",
+			"ACCELERATING": "En accélération"
 		}
 	},
 	"GOALS_PAGE": {

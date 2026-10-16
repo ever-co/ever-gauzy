@@ -839,6 +839,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Debes ser empleado para poder realizar el seguimiento del tiempo, crear gastos divididos y utilizar otras funciones relacionadas con los empleados."
 	},
 	"MENU": {
+		"INITIATIVES": "Iniciativas",
 		"BREADCRUMB": "Ruta de navegación",
 		"PIPELINES": "Las tuberías.",
 		"DASHBOARD": "Tablero de control",
@@ -2091,6 +2092,60 @@
 			},
 			"SHOWING": "Mostrando {{ shown }} de {{ total }} tareas",
 			"NO_TASKS_IN_VIEW": "No hay tareas en esta vista"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Iniciativas estratégicas",
+		"SUBTITLE": "Las direcciones en las que su organización ha decidido avanzar, y los objetivos, proyectos y equipos alineados con ellas.",
+		"ADD": "Añadir iniciativa",
+		"EDIT": "Editar iniciativa",
+		"EMPTY": "Aún no hay iniciativas estratégicas.",
+		"TITLE": "Título",
+		"STATE": "Estado",
+		"VISIBILITY": "Visibilidad",
+		"TEAMS": "Equipos",
+		"TEAMS_HINT": "Con visibilidad \"Equipo\", los miembros de estos equipos (y de los equipos de los proyectos alineados) pueden ver la iniciativa.",
+		"PROJECTS": "Proyectos",
+		"GOALS": "Objetivos",
+		"CONFIDENCE": "Confianza",
+		"MOMENTUM": "Impulso",
+		"INTENT": "Intención",
+		"INTENT_HINT": "¿Qué queremos impulsar deliberadamente, y por qué?",
+		"STEWARD": "Responsable",
+		"SIGNALS": "Señales",
+		"KNOWN_RISKS": "Riesgos conocidos",
+		"KNOWN_RISKS_HINT": "Un riesgo por línea",
+		"NOTES": "Notas",
+		"LAST_ASSESSED": "Última evaluación",
+		"NO_TEAMS": "No hay equipos vinculados.",
+		"NO_GOALS": "No hay objetivos alineados.",
+		"NO_PROJECTS": "No hay proyectos alineados.",
+		"NOT_FOUND": "No se encontró la iniciativa o no tiene permiso para verla.",
+		"DELETE_TITLE": "Eliminar iniciativa",
+		"DELETE_CONFIRMATION": "¿Eliminar la iniciativa \"{{ name }}\"?",
+		"DELETED": "Iniciativa \"{{ name }}\" eliminada.",
+		"CREATED": "Iniciativa \"{{ name }}\" creada.",
+		"UPDATED": "Iniciativa \"{{ name }}\" actualizada.",
+		"STATES": {
+			"DRAFT": "Borrador",
+			"ACTIVE": "Activa",
+			"RESOLVED": "Resuelta",
+			"RETIRED": "Retirada"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Dirección",
+			"ORGANIZATION": "Organización",
+			"TEAM": "Equipo"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Baja",
+			"MEDIUM": "Media",
+			"HIGH": "Alta"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Estancada",
+			"PROGRESSING": "Avanzando",
+			"ACCELERATING": "Acelerando"
 		}
 	},
 	"GOALS_PAGE": {

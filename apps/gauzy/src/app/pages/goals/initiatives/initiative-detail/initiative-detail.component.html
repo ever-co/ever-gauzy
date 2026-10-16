@@ -1,0 +1,138 @@
+<nb-card class="initiative-detail" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<nb-card-header class="header">
+		<div class="title">
+			<button nbButton ghost size="small" (click)="back()" [attr.aria-label]="'BUTTONS.BACK' | translate">
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+			</button>
+			<h4>{{ initiative?.title || ('STRATEGIC_INITIATIVES.HEADER' | translate) }}</h4>
+			@if (initiative) {
+				<span class="badge" [class]="'state-' + initiative.state">
+					{{ 'STRATEGIC_INITIATIVES.STATES.' + (initiative.state | uppercase) | translate }}
+				</span>
+			}
+		</div>
+		@if (initiative) {
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE]">
+				<button nbButton status="primary" size="small" (click)="edit()">
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+			</ng-template>
+		}
+	</nb-card-header>
+	<nb-card-body>
+		@if (notFound) {
+			<div class="empty">{{ 'STRATEGIC_INITIATIVES.NOT_FOUND' | translate }}</div>
+		}
+		@if (initiative) {
+			<section class="block">
+				<h6>{{ 'STRATEGIC_INITIATIVES.INTENT' | translate }}</h6>
+				<p class="intent">{{ initiative.intent || '—' }}</p>
+			</section>
+
+			<section class="facts">
+				<div>
+					<span class="label">{{ 'STRATEGIC_INITIATIVES.STEWARD' | translate }}</span>
+					<span>{{ stewardName() }}</span>
+				</div>
+				<div>
+					<span class="label">{{ 'STRATEGIC_INITIATIVES.VISIBILITY' | translate }}</span>
+					<span>
+						{{
+							'STRATEGIC_INITIATIVES.VISIBILITY_SCOPES.' + (initiative.visibilityScope | uppercase)
+								| translate
+						}}
+					</span>
+				</div>
+				<div>
+					<span class="label">{{ 'STRATEGIC_INITIATIVES.CONFIDENCE' | translate }}</span>
+					<span>
+						@if (signals.confidenceLevel) {
+							{{
+								'STRATEGIC_INITIATIVES.CONFIDENCE_LEVELS.' + (signals.confidenceLevel | uppercase)
+									| translate
+							}}
+						} @else {
+							—
+						}
+					</span>
+				</div>
+				<div>
+					<span class="label">{{ 'STRATEGIC_INITIATIVES.MOMENTUM' | translate }}</span>
+					<span>
+						@if (signals.perceivedMomentum) {
+							{{
+								'STRATEGIC_INITIATIVES.MOMENTUMS.' + (signals.perceivedMomentum | uppercase) | translate
+							}}
+						} @else {
+							—
+						}
+					</span>
+				</div>
+				<div>
+					<span class="label">{{ 'STRATEGIC_INITIATIVES.LAST_ASSESSED' | translate }}</span>
+					<span>{{ signals.lastAssessedAt ? (signals.lastAssessedAt | date: 'medium') : '—' }}</span>
+				</div>
+			</section>
+
+			@if (signals.knownRisks?.length || signals.strategicNotes) {
+				<section class="block">
+					@if (signals.knownRisks?.length) {
+						<h6>{{ 'STRATEGIC_INITIATIVES.KNOWN_RISKS' | translate }}</h6>
+						<ul>
+							@for (risk of signals.knownRisks; track $index) {
+								<li>{{ risk }}</li>
+							}
+						</ul>
+					}
+					@if (signals.strategicNotes) {
+						<h6>{{ 'STRATEGIC_INITIATIVES.NOTES' | translate }}</h6>
+						<p>{{ signals.strategicNotes }}</p>
+					}
+				</section>
+			}
+
+			<section class="columns">
+				<div class="block">
+					<h6>{{ 'STRATEGIC_INITIATIVES.TEAMS' | translate }}</h6>
+					@if (teams.length) {
+						<ul>
+							@for (team of teams; track team.id) {
+								<li>{{ team.name }}</li>
+							}
+						</ul>
+					} @else {
+						<p class="muted">{{ 'STRATEGIC_INITIATIVES.NO_TEAMS' | translate }}</p>
+					}
+				</div>
+				<div class="block">
+					<h6>{{ 'STRATEGIC_INITIATIVES.GOALS' | translate }}</h6>
+					@if (goals.length) {
+						<ul>
+							@for (goal of goals; track goal.id) {
+								<li>
+									{{ goal.name }}
+									<span class="muted">· {{ goal.progress || 0 }}%</span>
+								</li>
+							}
+						</ul>
+					} @else {
+						<p class="muted">{{ 'STRATEGIC_INITIATIVES.NO_GOALS' | translate }}</p>
+					}
+				</div>
+				<div class="block">
+					<h6>{{ 'STRATEGIC_INITIATIVES.PROJECTS' | translate }}</h6>
+					@if (initiative.projects?.length) {
+						<ul>
+							@for (project of initiative.projects; track project.id) {
+								<li>{{ project.name }}</li>
+							}
+						</ul>
+					} @else {
+						<p class="muted">{{ 'STRATEGIC_INITIATIVES.NO_PROJECTS' | translate }}</p>
+					}
+				</div>
+			</section>
+		}
+	</nb-card-body>
+</nb-card>

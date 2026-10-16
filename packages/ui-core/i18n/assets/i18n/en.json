@@ -893,6 +893,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"INITIATIVES": "Initiatives",
 		"ADD_ITEM": "Add {{ name }}",
 		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "Pipelines",
@@ -2575,6 +2576,60 @@
 			},
 			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
 			"NO_TASKS_IN_VIEW": "No tasks in this view"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Strategic Initiatives",
+		"SUBTITLE": "The directions your organization has decided to move in, and the goals, projects and teams aligned to them.",
+		"ADD": "Add initiative",
+		"EDIT": "Edit initiative",
+		"EMPTY": "No strategic initiatives yet.",
+		"TITLE": "Title",
+		"STATE": "State",
+		"VISIBILITY": "Visibility",
+		"TEAMS": "Teams",
+		"TEAMS_HINT": "With \"Team\" visibility, members of these teams (and of the teams of aligned projects) can see the initiative.",
+		"PROJECTS": "Projects",
+		"GOALS": "Goals",
+		"CONFIDENCE": "Confidence",
+		"MOMENTUM": "Momentum",
+		"INTENT": "Intent",
+		"INTENT_HINT": "What are we deliberately trying to move forward, and why?",
+		"STEWARD": "Steward",
+		"SIGNALS": "Signals",
+		"KNOWN_RISKS": "Known risks",
+		"KNOWN_RISKS_HINT": "One risk per line",
+		"NOTES": "Notes",
+		"LAST_ASSESSED": "Last assessed",
+		"NO_TEAMS": "No teams linked.",
+		"NO_GOALS": "No goals aligned.",
+		"NO_PROJECTS": "No projects aligned.",
+		"NOT_FOUND": "The initiative was not found, or you cannot see it.",
+		"DELETE_TITLE": "Delete initiative",
+		"DELETE_CONFIRMATION": "Delete the initiative \"{{ name }}\"?",
+		"DELETED": "Initiative \"{{ name }}\" deleted.",
+		"CREATED": "Initiative \"{{ name }}\" created.",
+		"UPDATED": "Initiative \"{{ name }}\" updated.",
+		"STATES": {
+			"DRAFT": "Draft",
+			"ACTIVE": "Active",
+			"RESOLVED": "Resolved",
+			"RETIRED": "Retired"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Leadership",
+			"ORGANIZATION": "Organization",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Low",
+			"MEDIUM": "Medium",
+			"HIGH": "High"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Stalled",
+			"PROGRESSING": "Progressing",
+			"ACCELERATING": "Accelerating"
 		}
 	},
 	"GOALS_PAGE": {
