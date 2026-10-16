@@ -47,15 +47,26 @@ On, the API runs the plugin's migrations, lists **Ever Works** on the
 Integrations page (a catalog row written at start, on every database; never by
 the seed) and answers the routes below.
 
-| Variable | Meaning |
-| --- | --- |
-| `EVER_WORKS_API_URL` | The Ever Works API base URL the connect form offers, for example `https://api.ever.works/api` for Ever Works Cloud. Public HTTPS without a query or fragment; anything else is ignored with a warning. |
-| `EVER_WORKS_APP_URL` | The Ever Works web app, for example `https://app.ever.works`, used only to link the admin to the page that creates an integration key. |
-| `ENCRYPTION_KEY` | A base64-encoded 32-byte key. The integration key and the webhook secret are stored encrypted with it (AES-256-GCM); a malformed value is refused. Without it, a strong `JWT_SECRET` that is not a published default is used; with neither, nothing can be connected. |
-| `API_BASE_URL` | The public HTTPS address of this API, where Ever Works delivers webhooks. Without one, the change feed alone keeps the sync going. |
-| `EVER_WORKS_WEBHOOK_REQUESTS_PER_MINUTE` | Per-process limit of the public webhook route (default 1200). |
-| `EVER_WORKS_SYNC_LOOP=off` | Keeps this process out of the sync loop (it still serves the API). |
-| `EVER_WORKS_HEALTH_CHECK=off` | Keeps this process out of the daily key check. |
+- `EVER_WORKS_API_URL`: the Ever Works API base URL the connect form offers,
+  for example `https://api.ever.works/api` for Ever Works Cloud. A public HTTPS
+  URL without a query or fragment; anything else is ignored with a warning.
+  Unset, the admin types the URL.
+- `EVER_WORKS_APP_URL`: the Ever Works web app, for example
+  `https://app.ever.works`, used only to link the admin to the page that
+  creates an integration key.
+- `ENCRYPTION_KEY`: a base64-encoded 32-byte key. The integration key and the
+  webhook secret are stored encrypted with it (AES-256-GCM, bound to their
+  purpose and connection); a malformed or published value is refused. Without
+  it, a strong `JWT_SECRET` that is not a published default is used; with
+  neither, nothing can be connected.
+- `API_BASE_URL`: the public HTTPS address of this API, where Ever Works
+  delivers webhooks. Without one, no webhook is registered and the change feed
+  alone keeps the sync going.
+- `EVER_WORKS_WEBHOOK_REQUESTS_PER_MINUTE`: per-process limit of the public
+  webhook route (default 1200).
+- `EVER_WORKS_SYNC_LOOP=off`: keeps this process out of the sync loop (it still
+  serves the API).
+- `EVER_WORKS_HEALTH_CHECK=off`: keeps this process out of the daily key check.
 
 ## Configure the integration
 
@@ -127,15 +138,15 @@ and answered `202`.
 - **Apply.** Pending events are applied per aggregate in `seq` order, inside
   `EverWorksSyncContext` (loop guard 1). Events of our own origin are skipped
   (loop guard 3); events of a kind no handler covers yet are deferred, not lost.
-- **Capture and push.** Gauzy changes (`TaskEvent`, and the entity subscribers of
-  later items) become one coalesced `ever_works_outbound_change` per record;
+- **Capture and push.** Gauzy changes (`TaskEvent`, and the entity subscribers
+  of later items) become one coalesced `ever_works_outbound_change` per record;
   the pusher recomputes the state, diffs it against the link snapshot (loop
   guard 2) and retries 429/5xx with back-off, dead-lettering after eight tries.
 - **Merge.** Per field, against the snapshot: one side changed wins; both
   changed → last writer wins for scalars and rich text (the loser is kept), a
   3-way set merge for sets; Ever Works' gates decide status.
-- **Runtime.** Every process that loads the plugin ticks; a database lease on the
-  connection row lets one process work a connection at a time, on every
+- **Runtime.** Every process that loads the plugin ticks; a database lease on
+  the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.
 
 ## Build and verification

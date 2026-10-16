@@ -92,6 +92,42 @@ describe('EverWorksPageComponent', () => {
 		expect(fixture.componentInstance.view).toBe('unavailable');
 	});
 
+	it('a late answer to a retry for the previous organization never overwrites the current one', () => {
+		const organizations = new BehaviorSubject<{ id: string }>(ORGANIZATION);
+		const answers: Subject<EverWorksStatus>[] = [];
+		api.status.mockImplementation(() => {
+			const answer = new Subject<EverWorksStatus>();
+			answers.push(answer);
+			return answer;
+		});
+		TestBed.configureTestingModule({
+			imports: [EverWorksPageComponent],
+			providers: [
+				{ provide: EverWorksUiService, useValue: api },
+				{ provide: Store, useValue: { selectedOrganization$: organizations } }
+			]
+		});
+		const fixture = TestBed.createComponent(EverWorksPageComponent);
+		fixture.detectChanges();
+		answers[0].error({ status: 500 }); // the first organization fails
+		fixture.componentInstance.load(); // a retry for the first organization, still in flight…
+		organizations.next({ id: '22222222-2222-4333-8444-555555555555' }); // …when another is selected
+		expect(api.status).toHaveBeenLastCalledWith('22222222-2222-4333-8444-555555555555');
+		answers[2].error({ status: 404 });
+		answers[1].next(STATUS); // the retry's slow answer arrives last
+		expect(fixture.componentInstance.view).toBe('unavailable');
+	});
+
+	it('a retry asks again for the current organization', () => {
+		api.status.mockReturnValueOnce(throwError(() => ({ status: 500 }))).mockReturnValueOnce(of(STATUS));
+		const { component } = render();
+		expect(component.view).toBe('error');
+		component.load();
+		expect(api.status).toHaveBeenCalledTimes(2);
+		expect(api.status).toHaveBeenLastCalledWith(ORGANIZATION.id);
+		expect(component.view).toBe('ready');
+	});
+
 	it('never links to a non-HTTPS app URL', () => {
 		api.status.mockReturnValue(of({ ...STATUS, appUrl: 'javascript:alert(1)' }));
 		const { find } = render();
