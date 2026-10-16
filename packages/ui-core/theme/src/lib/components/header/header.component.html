@@ -109,6 +109,16 @@
            (`.ai-agent-launch` in one-column.layout.html); a second copy here was
            redundant, so the header no longer carries a chat control. -->
 
+      <!-- Actions plugins add (NavigationBuilderService.registerHeaderAction), e.g. the Inbox badge;
+           none unless a plugin registered one. -->
+      @for (action of navigationBuilderService.headerActions$ | async; track action.id) {
+        @if (navigationBuilderService.hasPermissions(action.permissions ?? [])) {
+          <nb-action [class]="action.class ?? ''">
+            <ng-container *ngComponentOutlet="action.component"></ng-container>
+          </nb-action>
+        }
+      }
+
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {
         <nb-action
           [icon]="action.icon"

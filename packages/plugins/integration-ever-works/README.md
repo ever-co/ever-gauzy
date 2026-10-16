@@ -89,10 +89,17 @@ the seed) and answers the routes below.
    when they are first needed.
 
 A revoked or expired key turns the connection `needs_reauth`: the sync pauses
-and the admin who connected gets a notification. Entering a new key of the same
+and the admin who connected gets a notice. Entering a new key of the same
 Ever Works tenant resumes it. Disconnecting archives the connection and its
 mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
+
+Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
+Inbox items (`NOTICE`, `source = SYSTEM`), one per connection, admin and kind
+of notice: `needs_reauth`, and `dead_letter` for a change that stopped for good
+(it names the latest record). A repeat updates the notice and marks it unread
+again. Without the Inbox, `needs_reauth` falls back to an employee notification
+for the admin's employee, and dead letters show only in the sync activity.
 
 ## API boundary
 
@@ -257,12 +264,18 @@ and answered `202`.
 yarn nx build plugin-integration-ever-works
 yarn nx build plugin-integration-ever-works-ui --configuration=production
 yarn nx test plugin-integration-ever-works
+yarn nx run plugin-integration-ever-works:test-integration
 yarn nx test plugin-integration-ever-works-ui
 ```
 
 The suites run the plugin's migrations on SQLite and its services against the
 mock Ever Works server (`src/lib/testing/mock-ever-works.server.ts`, test code
-that is not part of the package build).
+that is not part of the package build). `test-integration` is the boundary
+suite (`.scripts/ever-works-integration.test.cjs`, `node:test`): migrations
+up/up/down/up on SQLite, and on Postgres when `EVER_WORKS_TEST_DATABASE_URL`
+names a loopback `_test` database; tenant and organization isolation; webhook
+signatures; dedupe; loop suppression; the 412 merge; an initial sync resumed by
+another process; and record scope. The Build workflow runs all three.
 
 Both packages participate in the workspace and Docker builds. The backend is
 listed, behind `EVER_WORKS_ENABLED`, in the API and worker plugin lists and
