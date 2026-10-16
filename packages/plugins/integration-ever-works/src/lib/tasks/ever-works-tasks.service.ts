@@ -159,12 +159,20 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (!fromEverWorks(context.directions.tasks)) return { status: 'skipped', message: 'tasks are not synced from Ever Works' };
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, envelope.aggregate.id);
-		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the task is no longer synced' };
+		const data = (envelope.data ?? {}) as Record<string, unknown>;
+		if (link?.state === EverWorksLinkState.UNLINKED) {
+			// A task that turned private stopped syncing (rule 5); shared again, it resumes on the same Gauzy task.
+			// Any other unlinked task (deleted on either side) stays stopped.
+			const sharedAgain = link.lastError === NO_LONGER_SHARED && typeof data['visibility'] === 'string' && isSyncedVisibility(data['visibility']);
+			if (!sharedAgain) return { status: 'skipped', message: 'the task is no longer synced' };
+			if (envelope.type === 'task.visibility_changed') {
+				return this.refetch(context, link, envelope);
+			}
+		}
 		const version = envelope.aggregate.version ?? null;
 		if (link && link.ewVersion != null && version != null && version <= link.ewVersion) {
 			return { status: 'skipped', message: 'already applied (version)' };
 		}
-		const data = (envelope.data ?? {}) as Record<string, unknown>;
 		try {
 			switch (envelope.type) {
 				case 'task.created':
@@ -323,7 +331,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		};
 		const input: Partial<ITaskUpdateInput> = {};
 		const applied = new Set<keyof TaskGauzySide>();
-		let lostDescription: string | null = null;
+		/** The description that lost a conflict, kept as a comment (plan 03 §C.5): `side` is whose it was. */
+		let lostDescription: { side: 'gauzy' | 'ever_works'; html: string } | null = null;
 
 		if (takes('title', 'title') && task.title && task.title !== row.title) {
 			input.title = task.title;
@@ -332,10 +341,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (takes('description', 'description')) {
 			const html = markdownToHtml(stripTitleAppendix(task.description));
 			if (html !== (row.description ?? '')) {
-				if (gauzyChanged('description')) lostDescription = row.description ?? '';
+				if (gauzyChanged('description')) lostDescription = { side: 'gauzy', html: row.description ?? '' };
 				input.description = html;
 			}
 			applied.add('description');
+		} else if (conflicts.some((conflict) => conflict.field === 'description' && conflict.winner === 'gauzy')) {
+			// Gauzy's later description is pushed over Ever Works' edit: that edit is kept here first.
+			lostDescription = { side: 'ever_works', html: markdownToHtml(stripTitleAppendix(task.description)) };
 		}
 		if (takes('priority', 'priority')) {
 			const slug = everWorksPriorityToGauzy(task.priority);
@@ -343,16 +355,19 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			if (slug && slug !== g.priority) {
 				const option = await this.store.priorityFor(this.scopeOf(context, row), slug);
 				input.priority = option.value as never;
-				if (option.id) input.taskPriorityId = option.id;
+				// The row id goes with the value, `null` included: a stale priority row must not stay attached.
+				input.taskPriorityId = (option.id ?? null) as never;
 			}
 			applied.add('priority');
 		}
+		/** Set fields whose Gauzy snapshot moves by Ever Works' change only (not to Gauzy's whole current set). */
+		const setSnapshots: Partial<Record<'tags' | 'teamIds' | 'memberIds' | 'watcherIds' | 'blockedBy' | 'relations', string[]>> = {};
 		if (everWorksChanged('labels')) {
 			const names = applySetChange(g.tags ?? [], prevE.labels ?? [], e.labels ?? [], lower);
 			if (!sameField(names, g.tags)) {
 				input.tags = (await this.store.ensureTags(context.tenantId, context.organizationId, names)).map((tag) => ({ id: tag.id })) as never;
 			}
-			applied.add('tags');
+			setSnapshots.tags = applySetChange(prevG.tags ?? g.tags ?? [], prevE.labels ?? [], e.labels ?? [], lower).sort((a, b) => lower(a).localeCompare(lower(b)));
 		}
 		let unmappedTeams = ewOnly.unmappedTeams ?? [];
 		let nextTeamIds: ID[] | null = null;
@@ -363,14 +378,14 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				nextTeamIds = result.ids;
 				input.teams = result.ids.map((id) => ({ id })) as never;
 			}
-			applied.add('teamIds');
+			setSnapshots.teamIds = EverWorksTasksService.moved(prevG.teamIds, g.teamIds, result);
 		}
 		let unmappedAssignees = ewOnly.unmappedAssignees ?? [];
 		if (everWorksChanged('assignees') || unmappedAssignees.length) {
 			const result = await this.mergeIntoGauzy(g.memberIds ?? [], prevE.assignees ?? [], e.assignees ?? [], unmappedAssignees, (keys) => this.gauzyMembersOf(context, keys));
 			unmappedAssignees = result.unmapped;
 			if (!sameField(result.ids, g.memberIds)) input.members = result.ids.map((id) => ({ id })) as never;
-			applied.add('memberIds');
+			setSnapshots.memberIds = EverWorksTasksService.moved(prevG.memberIds, g.memberIds, result);
 		}
 		if (takes('parentTaskId', 'parentId')) {
 			const parentId = e.parentTaskId ? await this.ensureTaskLinked(context, e.parentTaskId, depth + 1) : null;
@@ -405,26 +420,26 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				const teams = nextTeamIds ?? g.teamIds ?? [];
 				const scope: EverWorksTaskScope = { ...this.scopeOf(context, row), projectId: (input.projectId as ID) ?? (row.projectId as ID) ?? null, teamId: (teams[0] as ID) ?? null };
 				const option = await this.store.statusFor(scope, task.status, target.slug);
-				if (option.value !== row.status || (option.id && option.id !== row.taskStatusId)) {
+				if (option.value !== row.status || (option.id ?? null) !== (row.taskStatusId ?? null)) {
 					input.status = option.value as never;
-					if (option.id) input.taskStatusId = option.id;
+					// The row id goes with the value, `null` included: a stale status row must not stay attached.
+					input.taskStatusId = (option.id ?? null) as never;
 				}
 				applied.add('status');
 			}
 		}
 
 		if (Object.keys(input).length) await this.store.asActor(context, actor, () => this.store.update(row.id as ID, input));
-		const edges = await this.applyEdgeSets(context, row.id as ID, prevE, e, g, ewOnly, depth);
-		for (const field of edges.applied) applied.add(field);
+		const edges = await this.applyEdgeSets(context, row.id as ID, prevE, e, g, ewOnly, depth, prevG);
+		Object.assign(setSnapshots, edges.snapshot);
 		const after = Object.keys(input).length ? ((await this.store.load(context.tenantId, row.id as ID)) ?? row) : row;
 		if (lostDescription !== null) {
-			// Nothing is lost: the Gauzy version the later Ever Works edit replaced is kept as a comment (plan 03 §C.5).
-			await this.store.addComment(
-				context,
-				row.id as ID,
-				`<p><em>${escapeHtml(`Conflicting edit: this description was replaced by a later edit from Ever Works at ${occurredAt ?? 'an unknown time'}. The Gauzy version was:`)}</em></p>${lostDescription}`,
-				ActorTypeEnum.System
-			);
+			// Nothing is lost: the version the later edit replaced is kept as a comment (plan 03 §C.5).
+			const note =
+				lostDescription.side === 'gauzy'
+					? `Conflicting edit: this description was replaced by a later edit from Ever Works at ${occurredAt ?? 'an unknown time'}. The Gauzy version was:`
+					: `Conflicting edit: a later Gauzy edit replaced this Ever Works description (edited at ${occurredAt ?? 'an unknown time'}). The Ever Works version was:`;
+			await this.store.addComment(context, row.id as ID, `<p><em>${escapeHtml(note)}</em></p>${lostDescription.html}`, ActorTypeEnum.System);
 		}
 		// The Gauzy snapshot moves only for what was applied here: a Gauzy edit not pushed yet stays a difference.
 		const gAfter = await this.gauzySide(context, after);
@@ -432,6 +447,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		for (const field of Object.keys(gAfter) as Array<keyof TaskGauzySide>) {
 			if (applied.has(field) || !(field in prevG)) Object.assign(nextG, { [field]: gAfter[field] });
 		}
+		Object.assign(nextG, setSnapshots);
 		await this.record(
 			context,
 			row.id as ID,
@@ -465,9 +481,14 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		e: TaskEverWorksSide,
 		g: TaskGauzySide,
 		ewOnly: TaskEverWorksOnly,
-		depth: number
-	): Promise<{ applied: Array<keyof TaskGauzySide>; unmappedWatchers: string[]; unmappedEdges: string[] }> {
-		const applied: Array<keyof TaskGauzySide> = [];
+		depth: number,
+		previousGauzy: TaskGauzySide = {}
+	): Promise<{ snapshot: Pick<TaskGauzySide, 'watcherIds' | 'blockedBy' | 'relations'>; unmappedWatchers: string[]; unmappedEdges: string[] }> {
+		// The Gauzy snapshot of these sets moves by exactly what is applied here, so a Gauzy edit not pushed yet
+		// stays a difference (it is pushed next).
+		const snapshot: Pick<TaskGauzySide, 'watcherIds' | 'blockedBy' | 'relations'> = {};
+		/** The previous Gauzy snapshot of a set, or (none yet) Gauzy's current one. */
+		const prevG = (current: TaskGauzySide, field: 'watcherIds' | 'blockedBy' | 'relations') => (field in previousGauzy ? previousGauzy[field] : current[field]);
 		const scope = { tenantId: context.tenantId, organizationId: context.organizationId };
 		let unmappedWatchers = ewOnly.unmappedWatchers ?? [];
 		if (!('watchers' in prevE) || !sameField(e.watchers, prevE.watchers) || unmappedWatchers.length) {
@@ -475,17 +496,24 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const previous = prevE.watchers ?? [];
 			const next = e.watchers ?? [];
 			const current = new Set(g.watcherIds ?? []);
+			const change = { added: [] as string[], removed: [] as string[] };
 			unmappedWatchers = [];
 			for (const userId of previous.filter((id) => !next.includes(id))) {
 				const employeeId = await this.employeeOfUser(context, userId);
-				if (employeeId && current.has(employeeId)) await this.store.removeWatcher(context.tenantId, taskId, employeeId);
+				if (!employeeId) continue;
+				if (current.has(employeeId)) await this.store.removeWatcher(context.tenantId, taskId, employeeId);
+				change.removed.push(employeeId);
 			}
 			for (const userId of next.filter((id) => !previous.includes(id) || retry.has(id))) {
 				const employeeId = await this.employeeOfUser(context, userId);
-				if (!employeeId) unmappedWatchers.push(userId);
-				else if (!current.has(employeeId)) await this.store.addWatcher(scope, taskId, employeeId);
+				if (!employeeId) {
+					unmappedWatchers.push(userId);
+					continue;
+				}
+				if (!current.has(employeeId)) await this.store.addWatcher(scope, taskId, employeeId);
+				change.added.push(employeeId);
 			}
-			applied.push('watcherIds');
+			snapshot.watcherIds = EverWorksTasksService.moved(prevG(g, 'watcherIds'), g.watcherIds, change);
 		}
 		let unmappedEdges = ewOnly.unmappedEdges ?? [];
 		const edgesChanged = !('blockedBy' in prevE) || !sameField(e.blockedBy, prevE.blockedBy) || !sameField(e.relations, prevE.relations);
@@ -494,6 +522,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const previous = edgeKeysOf(prevE);
 			const next = edgeKeysOf(e);
 			const mirrors = new Map<ID, { add: string[]; remove: string[] }>();
+			/** Gauzy-side edge keys (`blocked:<id>`, `related:<id>`, `duplicates:<id>`) applied here. */
+			const change = { added: [] as string[], removed: [] as string[] };
+			const gauzyKey = (kind: 'blocked' | 'related' | 'duplicates', otherId: string) => `${kind}:${otherId}`;
 			const mirror = (otherId: ID) => mirrors.get(otherId) ?? (mirrors.set(otherId, { add: [], remove: [] }).get(otherId) as { add: string[]; remove: string[] });
 			unmappedEdges = [];
 			for (const key of previous.filter((k) => !next.includes(k))) {
@@ -503,6 +534,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				const other = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, edge.id);
 				if (!other || other.state === EverWorksLinkState.UNLINKED) continue;
 				await this.store.deleteLinkedIssues(context.tenantId, linkedIssueRowsFor(edge.kind, taskId, other.gauzyId as ID));
+				change.removed.push(gauzyKey(edge.kind, other.gauzyId as ID));
 				if (edge.kind === 'related') mirror(other.gauzyId as ID).remove.push(`related:${taskId}`);
 			}
 			for (const key of next.filter((k) => !previous.includes(k) || retry.has(k))) {
@@ -512,12 +544,16 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				if (otherId === undefined) unmappedEdges.push(key);
 				if (!otherId || otherId === taskId) continue;
 				await this.store.ensureLinkedIssues(scope, linkedIssueRowsFor(edge.kind, taskId, otherId));
+				change.added.push(gauzyKey(edge.kind, otherId));
 				if (edge.kind === 'related') mirror(otherId).add.push(`related:${taskId}`);
 			}
-			for (const [otherId, change] of mirrors) await this.absorbMirror(context, otherId, change);
-			applied.push('blockedBy', 'relations');
+			for (const [otherId, mirrored] of mirrors) await this.absorbMirror(context, otherId, mirrored);
+			const blocked = (keys: string[]) => keys.filter((k) => k.startsWith('blocked:')).map((k) => k.slice('blocked:'.length));
+			const related = (keys: string[]) => keys.filter((k) => !k.startsWith('blocked:'));
+			snapshot.blockedBy = EverWorksTasksService.moved(prevG(g, 'blockedBy'), g.blockedBy, { added: blocked(change.added), removed: blocked(change.removed) });
+			snapshot.relations = EverWorksTasksService.moved(prevG(g, 'relations'), g.relations, { added: related(change.added), removed: related(change.removed) });
 		}
-		return { applied, unmappedWatchers, unmappedEdges };
+		return { snapshot, unmappedWatchers, unmappedEdges };
 	}
 
 	/** Records the pair rows the sync wrote on another task in that task's snapshot (they mirror Ever Works). */
@@ -556,13 +592,21 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		next: ReadonlyArray<string>,
 		previouslyUnmapped: ReadonlyArray<string>,
 		resolve: (everWorksIds: string[]) => Promise<{ ids: ID[]; unmapped: string[] }>
-	): Promise<{ ids: ID[]; unmapped: string[] }> {
+	): Promise<{ ids: ID[]; unmapped: string[]; added: ID[]; removed: ID[] }> {
 		const retry = new Set(previouslyUnmapped);
 		const removed = await resolve(previous.filter((id) => !next.includes(id)));
 		const added = await resolve(next.filter((id) => !previous.includes(id) || retry.has(id)));
 		const ids = current.filter((id) => !removed.ids.includes(id as ID));
 		for (const id of added.ids) if (!ids.includes(id)) ids.push(id);
-		return { ids: sortedIds(ids) as ID[], unmapped: added.unmapped };
+		return { ids: sortedIds(ids) as ID[], unmapped: added.unmapped, added: added.ids, removed: removed.ids };
+	}
+
+	/** A set of the Gauzy snapshot moved by exactly what Ever Works added and removed (nothing of Gauzy's own). */
+	private static moved(snapshot: ReadonlyArray<string> | undefined, current: ReadonlyArray<string> | undefined, change: { added: ReadonlyArray<string>; removed: ReadonlyArray<string> }): string[] {
+		const base = snapshot ?? current ?? [];
+		const result = base.filter((id) => !change.removed.includes(id));
+		for (const id of change.added) if (!result.includes(id)) result.push(id);
+		return sortedIds(result);
 	}
 
 	/** An Ever Works delete: the Gauzy task is soft-deleted (plan 01 §7 delete policy) and its link stops syncing. */
@@ -854,16 +898,21 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		};
 		const idempotencyKey = createHash('sha256').update(`${connectionId}:${EverWorksLinkType.TASK}:${task.id}:create`).digest('hex');
 		// CR-2 (T17a): a create whose answer was lost may exist in Ever Works already; look it up before creating again.
-		let created = (change.attempts ?? 0) > 0 ? await this.lookUpOwn(client, task.id as ID) : null;
-		if (!created) {
-			created = await this.withActAs(actAs, (actor) =>
-				client.request<EverWorksTask>('POST', '/tasks', {
-					body,
-					idempotencyKey: actor === actAs ? idempotencyKey : createHash('sha256').update(`${idempotencyKey}:no-act-as`).digest('hex'),
-					actAsUserId: actor
-				})
-			);
+		const recovered = (change.attempts ?? 0) > 0 ? await this.lookUpOwn(client, task.id as ID) : null;
+		if (recovered) {
+			// What it was created with is not known (Gauzy may have been edited since): it is linked with no Gauzy
+			// side, so the update below sends every Gauzy value that differs from it.
+			await this.record(context, task.id as ID, recovered, recovered.version ?? null, { g: {}, e: everWorksSideOf(recovered) }, 'outbound', {});
+			const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, task.id as ID);
+			if (link) return this.updateInEverWorks(context, client, task, link, actAs);
 		}
+		const created = await this.withActAs(actAs, (actor) =>
+			client.request<EverWorksTask>('POST', '/tasks', {
+				body,
+				idempotencyKey: actor === actAs ? idempotencyKey : createHash('sha256').update(`${idempotencyKey}:no-act-as`).digest('hex'),
+				actAsUserId: actor
+			})
+		);
 		let dto = created;
 		let g = out.g;
 		if (wanted && wanted !== dto.status) {
@@ -899,7 +948,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const prevG = snapshot.g;
 			const prevE = snapshot.e;
 			const g = out.g;
-			const changed = (field: keyof TaskGauzySide) => field in prevG && !sameField(g[field], prevG[field]);
+			// A field with no Gauzy snapshot yet (a recovered create; a field added later) counts as changed: it is sent
+			// when it differs from Ever Works.
+			const changed = (field: keyof TaskGauzySide) => !(field in prevG) || !sameField(g[field], prevG[field]);
 			const patch: Record<string, unknown> = {};
 			if (changed('title') || changed('description')) {
 				const { title, truncated } = titleForEverWorks(row.title);
@@ -1058,7 +1109,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				if (target) {
 					const option = await this.store.statusFor(this.scopeOf(context, task), remote.status, target.slug);
 					await this.store.asActor(context, await this.adminActor(context), () =>
-						this.store.update(task.id as ID, { status: option.value as never, ...(option.id ? { taskStatusId: option.id } : {}) })
+						this.store.update(task.id as ID, { status: option.value as never, taskStatusId: (option.id ?? null) as never })
 					);
 					revertedTo = gauzyStatusSlug(option.value) || null;
 				}

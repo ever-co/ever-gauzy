@@ -632,3 +632,86 @@ describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
 		expect(t.queue.enqueued).toEqual([expect.objectContaining({ gauzyId: 'g1' })]);
 	});
 });
+
+describe('task sync review fixes (#10804)', () => {
+	it('a Gauzy set edit not pushed yet survives an Ever Works edit of the same set, and goes out', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Labels', tags: [{ name: 'A' }] });
+		await t.push('g1');
+		const [ew] = [...t.mock.tasks.values()];
+		// Gauzy adds B (its push is still queued); Ever Works adds C meanwhile.
+		(t.tasks.get('g1') as GauzyTask)['tags'] = [{ name: 'A' }, { name: 'B' }];
+		Object.assign(ew as Record<string, unknown>, { labels: ['A', 'C'], version: Number(ew?.['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...(ew as Record<string, unknown>) }, aggregate: { id: ew?.['id'] as string, version: Number(ew?.['version']) } });
+		expect(((t.tasks.get('g1') as GauzyTask)['tags'] as Array<{ name: string }>).map((tag) => tag.name).sort()).toEqual(['A', 'B', 'C']);
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect([...(ew?.['labels'] as string[])].sort()).toEqual(['A', 'B', 'C']);
+	});
+
+	it('a task shared again after it turned private resumes on the same Gauzy task', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Hidden for a while' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		await t.deliver({ type: 'task.visibility_changed', data: { id: task['id'], visibility: 'private' }, aggregate: { id: task['id'] as string, version: 2 } });
+		expect(t.links.find((l) => l.ewId === task['id'])?.state).toBe(EverWorksLinkState.UNLINKED);
+		Object.assign(task, { title: 'Shared again', visibility: 'organization', version: 3 });
+		expect((await t.deliver({ type: 'task.visibility_changed', data: { id: task['id'], visibility: 'organization' }, aggregate: { id: task['id'] as string, version: 3 } })).status).toBe('applied');
+		expect(t.links.find((l) => l.ewId === task['id'])?.state).toBe(EverWorksLinkState.OK);
+		expect(t.tasks.size).toBe(1);
+		expect((t.tasks.get('g-task-1') as GauzyTask)['title']).toBe('Shared again');
+	});
+
+	it('writes the status row id with the status, null included (a stale row never stays attached)', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Status', status: 'todo' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		(t.tasks.get('g-task-1') as GauzyTask)['taskStatusId'] = 'ts-old';
+		await t.deliver({ type: 'task.transitioned', data: { ...task, status: 'done' }, aggregate: { id: task['id'] as string, version: 2 } });
+		const update = t.writes.filter((write) => write.kind === 'update').pop();
+		expect(update?.input).toMatchObject({ status: 'done', taskStatusId: null });
+	});
+
+	it('keeps the losing Ever Works description as a comment when the later Gauzy edit wins', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Desc', description: 'one' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		Object.assign(t.tasks.get('g-task-1') as GauzyTask, { description: '<p>gauzy</p>', updatedAt: new Date('2026-10-16T12:00:00Z') });
+		await t.deliver({ type: 'task.updated', data: { ...task, description: 'ever works' }, aggregate: { id: task['id'] as string, version: 2 }, occurredAt: '2026-10-16T11:00:00Z' });
+		expect((t.tasks.get('g-task-1') as GauzyTask)['description']).toBe('<p>gauzy</p>');
+		expect(t.comments).toEqual([expect.objectContaining({ taskId: 'g-task-1', html: expect.stringContaining('<p>ever works</p>') })]);
+	});
+
+	it('a create recovered after a lost answer gets the Gauzy values edited since', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Edited since' });
+		// The first attempt reached Ever Works with the old title; its answer was lost.
+		const ew = t.mock.addTask(t.org.id, { title: 'Old title', status: 'todo' });
+		t.mock.links.push({ organizationId: t.org.id, entityType: 'task', entityId: ew['id'] as string, source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null });
+		const outcome = await t.service.push(
+			{ tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', entityType: EverWorksLinkType.TASK, gauzyId: 'g1', op: 'upsert', actorUserId: null, attempts: 1 } as never,
+			{ connection: t.context.connection, mapping: { id: 'm1' } } as never
+		);
+		expect(outcome).toEqual({ status: 'pushed' });
+		expect(t.mock.tasks.size).toBe(1);
+		expect(ew['title']).toBe('Edited since');
+		expect(t.links.find((l) => l.gauzyId === 'g1')?.ewId).toBe(ew['id']);
+	});
+});
+
+describe('task watchers: a Gauzy edit not pushed yet (#10804 review, applied to part 2)', () => {
+	it('survives an Ever Works watcher change and goes out', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Watched' });
+		await t.push('g1');
+		const [ew] = [...t.mock.tasks.values()];
+		// Gauzy adds Alice (its push is still queued); Ever Works adds Bob meanwhile.
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		Object.assign(ew as Record<string, unknown>, { watchers: ['ew-bob'], version: Number(ew?.['version']) + 1 });
+		await t.deliver({ type: 'task.watcher.added', data: { taskId: ew?.['id'], userId: 'ew-bob' }, aggregate: { id: ew?.['id'] as string, version: Number(ew?.['version']) } });
+		expect(t.subscriptions.map((row) => row.employeeId).sort()).toEqual(['e-alice', 'e-bob']);
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect([...(ew?.['watchers'] as string[])].sort()).toEqual(['ew-alice', 'ew-bob']);
+	});
+});
