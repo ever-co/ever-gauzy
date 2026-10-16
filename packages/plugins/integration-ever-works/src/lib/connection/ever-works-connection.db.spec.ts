@@ -1,3 +1,4 @@
+// cspell:ignore unknownunknownunknown
 /**
  * The connection (G-P1-3) on a real database (better-sqlite3), against the mock Ever Works: the
  * migration (up, up again, down, up), connect / validate / rotate / pause / resume / health / webhook /
