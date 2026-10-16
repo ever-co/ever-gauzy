@@ -63,6 +63,10 @@ export async function seedCanaryDatabase(dataSource: DataSource, d: TestDialect)
 	await add('employee', { tenantId: acme, isActive: true, isArchived: false });
 	await add('employee', { tenantId: zephyr, isActive: false, isArchived: false });
 	await add('employee', { tenantId: zephyr, isActive: true, deletedAt: '2026-09-01 00:00:00' });
+	// An agent employee (an Ever Works agent) and the password-less user behind it: counted in no number.
+	const agentUser = randomUUID();
+	await insert(dataSource, d, 'user', { id: agentUser, tenantId: acme, email: 'agent-1@agents.invalid', firstName: 'Agent', lastName: '', isActive: true, createdAt: '2026-09-02 00:00:00' });
+	await add('employee', { tenantId: acme, userId: agentUser, kind: 'agent', isActive: true, isArchived: false });
 	await add('organization_team', { tenantId: acme, name: seed('Firmware Wizards') });
 	await add('organization_team', { tenantId: zephyr, name: seed('Tax Strategy Desk') });
 	for (const title of ['Calibrate gripper arm', 'Audit Globex ledger', 'Draft Initech proposal', 'Fix Umbrella login']) {

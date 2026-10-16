@@ -153,6 +153,8 @@ type Employee {
 	upworkId: String
 	"The employee's identifier at LinkedIn."
 	linkedInId: String
+	"What the row represents: `human` for a person, `agent` for an agent employee provisioned by an integration. Never written through this surface."
+	kind: String
 	"The account this engagement belongs to. The account row is read from this surface's own `user(id)` by this identifier."
 	userId: ID
 	"The contact row the engagement keeps its postal and fiscal facts in, where it has one. The contact is read from the contact surface."
@@ -270,6 +272,7 @@ input EmployeeFilter {
 	trackAllDisplays: BooleanFilter
 	upworkId: StringFilter
 	linkedInId: StringFilter
+	kind: StringFilter
 	userId: IDFilter
 	contactId: IDFilter
 	organizationPositionId: IDFilter

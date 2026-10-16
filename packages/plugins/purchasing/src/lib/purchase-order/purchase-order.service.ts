@@ -9,6 +9,7 @@ import {
 	readAffectedRows,
 	SequenceService,
 	TenantAwareCrudService,
+	User,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import {
@@ -150,6 +151,11 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		}
 
 		const vendor = await this.assertVendorUsable(entity.vendorId);
+
+		if (entity.buyerUserId) {
+			await this.assertBuyerInTenant(entity.buyerUserId);
+		}
+
 		const currency = entity.currency as CurrencyCode;
 		const totals = this.lineService.computeOrderTotals(lines as IPurchaseOrderLineInput[], currency, entity.shippingTotal);
 		const number = await this.allocateNumber(PURCHASE_ORDER_NUMBER_KEY, 'purchase orders');
@@ -215,6 +221,10 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 
 		this.assertVersion(purchaseOrder, (entity as { version?: number }).version);
 		this.assertStatus(purchaseOrder, EDITABLE_STATUSES, 'amended');
+
+		if (entity.buyerUserId) {
+			await this.assertBuyerInTenant(entity.buyerUserId);
+		}
 
 		const currency = (entity.currency ?? purchaseOrder.currency) as CurrencyCode;
 		const changes: Record<string, unknown> = {};
@@ -1050,6 +1060,30 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		return await this.commitDerived(id, async (purchaseOrder) => ({
 			...this.lineService.computeTotalsForLines(lines, currency, purchaseOrder.shippingTotal)
 		}));
+	}
+
+	/**
+	 * Refuses a buyer who is not a user of the caller's tenant (security audit P0 #6c).
+	 *
+	 * `buyerUserId` is the order's routing key for every approval and follow-up, and it is a plain column: no relation
+	 * declares it, so the platform's cross-tenant check (`TenantAwareCrudService`, SEC-D-03), which reads relation join
+	 * columns, never saw it, and `POST` / `PUT /purchase-orders` and `createPurchaseOrder` / `updatePurchaseOrder` stored
+	 * any user id as given — a user of another tenant included. Users are rows of a tenant, so the buyer is read by the
+	 * caller's tenant, and one that is not there is answered as one that does not exist.
+	 *
+	 * @param buyerUserId The user the caller named.
+	 * @throws NotFoundException with `PURCHASE_ORDER_BUYER_NOT_FOUND` when no user of that id is in the caller's tenant.
+	 */
+	private async assertBuyerInTenant(buyerUserId: ID): Promise<void> {
+		const found = await this.typeOrmPurchaseOrderRepository.manager.count(User, {
+			where: { id: buyerUserId, tenantId: RequestContext.currentTenantId() } as never
+		});
+
+		if (!found) {
+			throw new NotFoundException(
+				`PURCHASE_ORDER_BUYER_NOT_FOUND: user '${buyerUserId}' could not be found in this tenant.`
+			);
+		}
 	}
 
 	/**

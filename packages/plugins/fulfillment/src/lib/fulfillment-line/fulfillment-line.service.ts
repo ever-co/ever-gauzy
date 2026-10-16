@@ -5,8 +5,14 @@ import { ID } from '@gauzy/contracts';
 import { FulfillmentLine } from './fulfillment-line.entity';
 import { TypeOrmFulfillmentLineRepository } from './repository/type-orm-fulfillment-line.repository';
 import { MikroOrmFulfillmentLineRepository } from './repository/mikro-orm-fulfillment-line.repository';
-import { TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
+import {
+	RequestContext,
+	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
+	compareDecimalStrings
+} from '@gauzy/core';
 import { Quantity, isPositiveQuantity, toQuantityText } from '../fulfillment.quantity';
+import { FULFILLMENT_LINE_REFERENCES } from '../fulfillment.references';
 import { isCountedShipment, removalCriteria } from '../fulfillment.removal';
 
 /**
@@ -48,6 +54,25 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 	}
 
 	/**
+	 * Refuses lines, or a change to one, that name an order line or a location of another tenant
+	 * (`fulfillment.references.ts`).
+	 *
+	 * `create` and `update` run it; the shipment's own creation runs it for all of its lines before the
+	 * shipment is written, so a refused line does not leave a shipment behind without it.
+	 *
+	 * @param payloads The line or lines, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	public async assertReferences(payloads: object | readonly object[]): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmFulfillmentLineRepository.manager,
+			payloads,
+			FULFILLMENT_LINE_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
 	 * Creates a line, refusing a non-positive quantity or a second row for the same order line.
 	 *
 	 * The quantity is read as a quantity rather than compared as one: a value that is not a number at
@@ -64,6 +89,8 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 				details: { quantity: entity.quantity }
 			});
 		}
+
+		await this.assertReferences(entity);
 
 		const existing = await this.findAll({
 			where: { fulfillmentId: entity.fulfillmentId as string, orderLineId: entity.orderLineId as string }
@@ -126,6 +153,8 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 				}
 			}
 		}
+
+		await this.assertReferences(partialEntity);
 
 		return super.update(id, partialEntity);
 	}

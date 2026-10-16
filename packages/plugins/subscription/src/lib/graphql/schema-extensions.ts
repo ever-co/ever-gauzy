@@ -515,6 +515,19 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"The next billing a subscription is due, previewed: computed exactly as the bill will be, and written nowhere."
+	type UpcomingSubscriptionBilling {
+		subscriptionId: ID!
+		"What the cycle will bill: the amount billSubscription records on the cycle and raises its order for."
+		amount: Decimal!
+		currency: String!
+		periodStart: DateTime!
+		"The end of the period the cycle covers, exclusive."
+		periodEnd: DateTime!
+		"The instant the cycle is due to bill: the start of the period it covers, or the next retry when a charge of that period failed."
+		nextBillingAt: DateTime!
+	}
+
 	"What one billing pass did."
 	type SubscriptionBillingRunPayload {
 		examined: Int!
@@ -536,6 +549,8 @@ export const schemaExtensions = gql`
 		subscriptions(filter: SubscriptionFilter, page: PageInput, withDeleted: Boolean): CustomerSubscriptionConnection!
 		"One subscription, with its lines and its billing history."
 		subscription(id: ID!): CustomerSubscription
+		"The next billing of a subscription, previewed without writing anything; null when it will not bill again as it stands."
+		upcomingSubscriptionBilling(id: ID!): UpcomingSubscriptionBilling
 		"The recurring lines of a subscription."
 		subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
 		"One recurring line."
@@ -636,5 +651,18 @@ export const schemaExtensions = gql`
 		softDeleteSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
 		"Restores a soft-deleted billing cycle."
 		recoverSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
+	}
+
+	extend type Subscription {
+		"""
+		Every lifecycle move of a customer's subscription of the caller's tenant — created, activated, paused, resumed,
+		canceled, expired, renewed, or a cycle's payment failed — with the subscription as \`subscription(id:)\` reads it
+		when the move is delivered, not a snapshot of the move: a move made since may already show in it. Narrowed by \`subscriptionId\`, by the customer, and by \`action\` (the move:
+		\`activated\`, \`payment-failed\`, …); each only narrows what the credential may read. Follows the
+		\`subscription.*\` facts the subscription service appends to the outbox. The field is not \`subscriptionChanged\`
+		because the type is \`CustomerSubscription\`: \`Subscription\` is the root operation type. A subscription is a
+		notification and never a system of record: a move made while the client is disconnected is not replayed.
+		"""
+		customerSubscriptionChanged(subscriptionId: ID, customerId: ID, action: String): CustomerSubscription!
 	}
 `;

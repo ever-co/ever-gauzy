@@ -31,8 +31,7 @@ import {
 	PutAwayWarehouseBinDTO,
 	ReconcileWarehouseBinDTO,
 	ReparentWarehouseBinDTO,
-	UpdateWarehouseBinDTO,
-	WarehouseBinDTO
+	UpdateWarehouseBinDTO
 } from './dto';
 
 /**
@@ -198,7 +197,9 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: UpdateWarehouseBinDTO & WarehouseBinDTO
+		// One class, so the pipe sees it: an intersection type is reflected as `Object`, and `whitelist` then strips
+		// nothing — a body's `deletedAt` retired the bin past its content / children checks (SEC-D-12).
+		@Body() entity: UpdateWarehouseBinDTO
 	): Promise<WarehouseBin> {
 		return await this.warehouseBinService.update(id, entity as any);
 	}

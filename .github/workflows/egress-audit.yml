@@ -22,7 +22,7 @@ name: Egress audit
 #                   blind one
 #   every_trigger   both modules on against the mock platform and every trigger of every call
 #                   exercised: the calls made are exactly the Gauzy rows of the contract this
-#                   release makes (docs/ever-platform/outbound-calls.md), row for row
+#                   release makes (tools/ever-platform/outbound-calls.md), row for row
 #   connect_off_sign_in_on  the connection off and the Ever ID sign-in plugin on with an issuer on
 #                   an Ever host: the issuer is left unused, nothing looked up or sent, in both legs
 #   entitlement_ladder  entitlement documents in grace, paused, issued in the future (refused) and
@@ -72,7 +72,6 @@ on:
       - 'packages/plugin-ui/**'
       - 'packages/plugins/*-ui/**'
       - 'tools/ever-platform/**'
-      - 'docs/ever-platform/**'
       - 'packages/**'
       - 'apps/**'
       - 'eslint.config.js'
@@ -95,7 +94,6 @@ on:
       - 'packages/plugin-ui/**'
       - 'packages/plugins/*-ui/**'
       - 'tools/ever-platform/**'
-      - 'docs/ever-platform/**'
       - 'packages/**'
       - 'apps/**'
       - 'eslint.config.js'
@@ -126,6 +124,8 @@ env:
   # The baseline of Ever links the UI rendered before the modules (tools/egress-audit/ui-baseline.json)
   # may only shrink. It was adopted (--first-version) by the change that added it; from then on every
   # pull request compares it with its base. 'true' only in a change that adds a new baseline file.
+  # A promotion into a branch that does not have the baseline yet (develop → stage, stage → master)
+  # adopts it the same way without this switch: see "The baseline of Ever links only shrinks".
   BASELINE_FIRST_VERSION: 'false'
   # 'true' only in a change that makes the browser walk open routes it did not open before (a newer
   # harness or route generator): the baseline may then gain entries for those routes, and only for
@@ -191,9 +191,27 @@ jobs:
         if: ${{ steps.base.outputs.ref != '' }}
         env:
           BASE: ${{ steps.base.outputs.ref }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PR_HEAD_REF: ${{ github.head_ref }}
         run: |
           flag=""
           if [ "$BASELINE_FIRST_VERSION" = "true" ]; then flag="--first-version"; fi
+          # The base predates the baseline: a promotion pull request (develop → stage, stage → master)
+          # into a branch no cascade has carried it to yet. Every change to it was already checked on
+          # develop, push by push, so the promotion adopts it as its first version on that branch.
+          # Nothing to re-walk against either. Only a promotion qualifies: any other pull request into
+          # such a branch could bring entries develop never checked, so it keeps failing the plain check
+          # below, and so does a baseline renamed in the config on a base that has this file.
+          promotion=false
+          case "$PR_BASE_REF:$PR_HEAD_REF" in
+            stage:develop | master:stage) promotion=true ;;
+          esac
+          if [ "$promotion" = "true" ] && ! git cat-file -e "$BASE:$AUDIT_DIR/ui-baseline.json" 2> /dev/null; then
+            echo "$BASE has no $AUDIT_DIR/ui-baseline.json yet: this change adopts it (--first-version)"
+            node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
+              --base "$BASE" --config "$AUDIT_CONFIG" --first-version
+            exit 0
+          fi
           if [ "$BASELINE_REWALK" = "true" ]; then
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "$BASE" --config "$AUDIT_CONFIG" $flag || echo "(the walk opens new routes: the entries they added are checked next)"

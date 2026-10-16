@@ -32,6 +32,7 @@ import {
 	normalizeDecimalString
 } from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
+import { digestCartToken, issueCartToken } from './cart-token';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
 import { CommerceCartShippingMethod } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.entity';
@@ -183,12 +184,13 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Creates a cart.
+	 * Creates a cart and issues its guest-access token.
 	 *
 	 * @param entity The cart to create.
-	 * @returns The created cart, with its (empty) totals already computed.
+	 * @returns The created cart, with its (empty) totals already computed and its guest-access token in
+	 * `token` — the one answer that carries it.
 	 */
-	public async create(entity: DeepPartial<CommerceCart>): Promise<CommerceCart> {
+	public async create(entity: DeepPartial<CommerceCart>): Promise<CommerceCart & { token: string }> {
 		if (!entity.channelId) {
 			throw new BadRequestException('CART_CHANNEL_REQUIRED: a cart belongs to a sales channel.');
 		}
@@ -210,9 +212,78 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		// still gets it and existing rows are untouched.
 		entity.currencyDecimals = entity.currencyDecimals ?? this.decimalsOf(entity.currency as CurrencyCode);
 
-		const cart = await super.create(entity);
+		// The guest-access token. Only its digest is written to the cart, and the token itself is put on this
+		// answer: no read of the cart answers it again. (A create sent under an idempotency key is replayed
+		// from the platform's record of this answer, token included, for the key's retention window — that
+		// replay is the one way a client that lost the answer gets its token back.) Anything
+		// the caller sent under either name is overwritten rather than trusted — a caller that chose its
+		// own token would have chosen one somebody else can guess.
+		const token = issueCartToken();
 
-		return this.recalculate(cart.id, 'CART_CREATED');
+		delete (entity as Record<string, unknown>)['token'];
+		entity.tokenHash = digestCartToken(token);
+
+		const cart = await super.create(entity);
+		const created = await this.recalculate(cart.id, 'CART_CREATED');
+
+		return Object.assign(this.withoutTokenHash(created), { token });
+	}
+
+	/**
+	 * Reads the cart a guest-access token names, within the caller's tenant.
+	 *
+	 * The token is hashed and the digest looked up, so the plaintext is never compared, logged or
+	 * stored, and a database that leaked would not yield a token that works. The lookup **fails closed**:
+	 * with no tenant in context there is nothing to scope it by, and an unscoped lookup by a bearer token
+	 * is a cross-tenant read, so it answers nothing instead. The tenant is stated in the `where` as well
+	 * as merged in by the base class, which is the guard that survives a future caller that assembles the
+	 * criteria by hand.
+	 *
+	 * @param token The plaintext token the create answered with.
+	 * @returns The cart with its lines, delivery choices and promotions, or null when no cart of the
+	 * caller's tenant carries that token.
+	 */
+	public async findByToken(token: string): Promise<CommerceCart | null> {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId || typeof token !== 'string' || token.trim() === '') {
+			return null;
+		}
+
+		try {
+			const cart = await this.findOneByOptions({
+				where: { tokenHash: digestCartToken(token), tenantId } as FindOptionsWhere<CommerceCart>,
+				relations: ['lines', 'shippingMethods', 'promotions']
+			});
+
+			return this.withoutTokenHash(cart);
+		} catch (error) {
+			// The read raises on a miss (`CrudService.findOneByOptions`); a miss is this method's ordinary
+			// answer, and anything else — the store being down — is not one and is raised as it came.
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * A cart as the two token paths answer it: without the digest, whatever the read loaded.
+	 *
+	 * Neither ORM hands the digest out — TypeORM does not select it and MikroORM does not serialize it —
+	 * so this is belt and braces on the two answers that sit next to the token, where a digest beside the
+	 * token it was computed from would be the one place both halves were on one page.
+	 *
+	 * @param cart The cart as it was read.
+	 * @returns The same cart, without `tokenHash`.
+	 */
+	private withoutTokenHash(cart: CommerceCart): CommerceCart {
+		if (cart && 'tokenHash' in cart) {
+			delete cart.tokenHash;
+		}
+
+		return cart;
 	}
 
 	/**
@@ -264,6 +335,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				'CART_LINE_PRICE_REQUIRED: the resolved unit price must be supplied by the price resolver.'
 			);
 		}
+
+		// What the line names has to be the caller's tenant's (P0 #6c): refused before the stock of the variant and
+		// location it names is read, and before the version moves.
+		await this.lineService.assertReferences(line);
 
 		const existing = (await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>;
 		const match = existing.items.find(
@@ -332,6 +407,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException('CART_LINE_QUANTITY_INVALID: a line quantity must be positive.');
 		}
 
+		const editable = this.editableLineFields(changes, cart);
+
+		// A change pointing the line at another tenant's row is refused before any stock is read (P0 #6c).
+		await this.lineService.assertReferences(editable);
+
 		if (changes.quantity !== undefined) {
 			await this.assertStockAvailable({
 				variantId: line.variantId,
@@ -342,7 +422,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		// The caller's version is spent before the child row is touched — see `spendVersion`.
 		await this.spendVersion(cartId, expectation);
-		await this.lineService.update(lineId, this.editableLineFields(changes, cart));
+		await this.lineService.update(lineId, editable);
 
 		return this.recalculate(cartId, 'LINE_UPDATED', ANY_VERSION);
 	}
@@ -404,6 +484,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			where: { cartId }
 		})) as IPagination<CommerceCartShippingMethod>;
 
+		// A choice naming another tenant's option is refused here, before the previous choice is retired (P0 #6c).
+		await this.shippingMethodService.assertReferences(method);
+
 		// The caller's version decides before any row is replaced: the docstring above promises the
 		// previous choice is replaced by this one, not that it is destroyed by a request the cart then
 		// refuses.
@@ -461,6 +544,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				(promotion.promotionId && candidate.promotionId === promotion.promotionId) ||
 				(promotion.code && candidate.code === promotion.code)
 		);
+
+		// A promotion or coupon of another tenant is refused before the version moves (P0 #6c).
+		await this.promotionService.assertReferences(promotion);
 
 		await this.spendVersion(cartId, expectation);
 
@@ -834,10 +920,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			return current;
 		};
 
-		for (const line of source.lines ?? []) {
-			await this.addLine(
-				target.id,
-				{
+		const lines = (source.lines ?? []).map(
+			(line) =>
+				({
 					productId: line.productId,
 					variantId: line.variantId,
 					sellerId: line.sellerId,
@@ -855,17 +940,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					warehouseId: line.warehouseId,
 					subscriptionPlanId: line.subscriptionPlanId,
 					metadata: line.metadata
-				} as DeepPartial<CommerceCartLine>,
-				spend()
-			);
-		}
-
-		if ((target.shippingMethods ?? []).length === 0 && (source.shippingMethods ?? []).length > 0) {
-			const sourceMethod = (source.shippingMethods ?? [])[0];
-
-			await this.setShippingMethod(
-				target.id,
-				{
+				}) as DeepPartial<CommerceCartLine>
+		);
+		const sourceMethod =
+			(target.shippingMethods ?? []).length === 0 ? (source.shippingMethods ?? [])[0] : undefined;
+		const method = sourceMethod
+			? ({
 					shippingOptionId: sourceMethod.shippingOptionId,
 					name: sourceMethod.name,
 					amount: sourceMethod.amount,
@@ -873,9 +953,25 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					taxCategoryId: sourceMethod.taxCategoryId,
 					data: sourceMethod.data,
 					isManual: sourceMethod.isManual
-				} as DeepPartial<CommerceCartShippingMethod>,
-				spend()
-			);
+				} as DeepPartial<CommerceCartShippingMethod>)
+			: undefined;
+
+		// Everything the merge copies is held to the caller's tenant before its first write (P0 #6c). Each verb below
+		// checks what it writes as well, but one at a time: a source cart written before the check existed can name
+		// another tenant's row on its second line or on its delivery choice, and a refusal there would leave the
+		// target with the lines already copied and its version spent — and a retry would copy them again.
+		await this.lineService.assertReferences(lines);
+
+		if (method) {
+			await this.shippingMethodService.assertReferences(method);
+		}
+
+		for (const line of lines) {
+			await this.addLine(target.id, line, spend());
+		}
+
+		if (method) {
+			await this.setShippingMethod(target.id, method, spend());
 		}
 
 		const mergedAt = new Date();

@@ -60,7 +60,6 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 @NgModule({
 	declarations: [
 		TaskComponent,
-		TaskViewHeaderComponent,
 		TaskViewPageComponent,
 		MyTaskDialogComponent,
 		TeamTaskDialogComponent,
@@ -70,6 +69,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		SprintTaskComponent
 	],
 	imports: [
+		TaskViewHeaderComponent,
 		NbTooltipModule,
 		NbBadgeModule,
 		NbCardModule,

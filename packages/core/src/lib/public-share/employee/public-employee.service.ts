@@ -55,7 +55,7 @@ const PUBLIC_EMPLOYEE_SELECT: FindOptionsSelect<Employee> = {
  * @param employee - The loaded (already field-projected) employee.
  * @returns The same employee with hidden financial fields stripped.
  */
-function applyEmployeeVisibility<T extends Partial<IEmployee>>(employee: T): T {
+export function applyEmployeeVisibility<T extends Partial<IEmployee>>(employee: T): T {
 	if (!employee) {
 		return employee;
 	}

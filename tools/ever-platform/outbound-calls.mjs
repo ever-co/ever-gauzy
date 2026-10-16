@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The public list of every call the optional Ever Platform modules can make
- * (docs/ever-platform/outbound-calls.md), generated from the outbound-call rows of the Ever Platform
+ * (tools/ever-platform/outbound-calls.md), generated from the outbound-call rows of the Ever Platform
  * contract at the exact version Gauzy pins, and the checks that keep everything that repeats it in
  * step:
  *
@@ -17,6 +17,10 @@
  * The rows come from `@ever-co/connect-tools` as tools/egress-audit/package-lock.json installs it
  * (`npm ci --prefix tools/egress-audit`); `outbound-calls.config.json` says which rows each
  * module makes in this release.
+ *
+ * The page is published at https://docs.gauzy.co/ever-platform/outbound-calls/ from
+ * ever-co/ever-gauzy-docs (website/docs/ever-platform/outbound-calls.md): after a --write that
+ * changes the tables, copy them there too.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -24,7 +28,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, '..', '..');
-export const DOCS = join(REPO_ROOT, 'docs/ever-platform/outbound-calls.md');
+export const DOCS = join(REPO_ROOT, 'tools/ever-platform/outbound-calls.md');
 const TOOLS = join(REPO_ROOT, 'tools/egress-audit/node_modules/@ever-co/connect-tools');
 const ROWS_FILE = join(TOOLS, 'dist/mock-platform/contracts/generated/outbound-calls.json');
 const CONFIG = JSON.parse(readFileSync(join(HERE, 'outbound-calls.config.json'), 'utf8'));
@@ -154,7 +158,7 @@ export function check({ rows, version }, config = CONFIG) {
 	const docs = readFileSync(DOCS, 'utf8');
 	if (normalised(renderDocs(docs, { rows, version }, config)) !== normalised(docs))
 		problems.push(
-			'docs/ever-platform/outbound-calls.md: the generated tables differ from the pinned contract (run --write)'
+			'tools/ever-platform/outbound-calls.md: the generated tables differ from the pinned contract (run --write)'
 		);
 
 	for (const [module, readme] of Object.entries(config.readmes)) {
@@ -222,7 +226,7 @@ export function main(argv) {
 	}
 	if (argv.includes('--write')) {
 		writeFileSync(DOCS, renderDocs(readFileSync(DOCS, 'utf8'), contract));
-		process.stdout.write('outbound-calls: wrote docs/ever-platform/outbound-calls.md\n');
+		process.stdout.write('outbound-calls: wrote tools/ever-platform/outbound-calls.md\n');
 		return 0;
 	}
 	const problems = check(contract);

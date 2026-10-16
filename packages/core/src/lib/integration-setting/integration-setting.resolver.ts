@@ -1,7 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IIntegrationSetting, PermissionsEnum } from '@gauzy/contracts';
+import { ID as Id, IIntegrationSettingUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -28,9 +28,9 @@ export interface IUpdateIntegrationSettingInput {
  * field states `INTEGRATION_EDIT` and the class states no permission at all. Restating the class pair
  * here would put a permission on this surface that the route does not run under.
  *
- * **The value is written and never answered.** The delivered route is an upsert: it calls the service's
- * `create` with the path identifier inside the body and then answers the row read back. The field does
- * the same, and the type it answers deliberately carries no member for the stored value — the row's
+ * **The value is written and never answered.** The delivered route calls the service's
+ * `updateEditableSetting` — a tenant-scoped read, the allowlist, a value-only write — and answers the row read
+ * back. The field does the same, and the type it answers deliberately carries no member for the stored value — the row's
  * value is the cleartext the delivered projection masks, and a member for it would resolve off the
  * entity property rather than off the masked serialization.
  *
@@ -46,12 +46,12 @@ export class IntegrationSettingResolver {
 	constructor(private readonly integrationSettingService: IntegrationSettingService) {}
 
 	/**
-	 * Stores one credential under the identifier the caller states.
+	 * Rewrites the value of one client-editable credential.
 	 *
-	 * The two steps are the route's own and in the route's own order: the write travels through the
-	 * service's `create`, which persists the body under the identifier it carries, and the answer is the
-	 * row read back through the same service — so the field answers the credential as it now stands
-	 * rather than the store's own write result.
+	 * The entry point is the route's own, `updateEditableSetting` (SEC-E-03, GHSA-4rwq-65wh-45h4): the row is read
+	 * tenant-scoped, a setting off the per-provider allowlist (`installation_id`, OAuth tokens, account ids) is
+	 * refused, and only `settingsValue` is written. This field used to upsert the body by id through `create`,
+	 * which let a client rewrite any setting the server trusts. The answer is the row read back.
 	 *
 	 * A refusal is surfaced rather than translated: the delivered route's translation into a `400` is
 	 * the other protocol's vocabulary for the same fact.
@@ -63,8 +63,9 @@ export class IntegrationSettingResolver {
 	): Promise<IntegrationSetting> {
 		const { id, ...values } = input;
 
-		await this.integrationSettingService.create({ ...values, id } as unknown as IIntegrationSetting);
-
-		return await this.integrationSettingService.findOneByIdString(id);
+		return (await this.integrationSettingService.updateEditableSetting(
+			id,
+			values as IIntegrationSettingUpdateInput
+		)) as IntegrationSetting;
 	}
 }

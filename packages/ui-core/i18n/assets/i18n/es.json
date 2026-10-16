@@ -839,6 +839,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Debes ser empleado para poder realizar el seguimiento del tiempo, crear gastos divididos y utilizar otras funciones relacionadas con los empleados."
 	},
 	"MENU": {
+		"INITIATIVES": "Iniciativas",
 		"BREADCRUMB": "Ruta de navegación",
 		"PIPELINES": "Las tuberías.",
 		"DASHBOARD": "Tablero de control",
@@ -1951,6 +1952,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Tipo",
+		"KIND_ALL": "Todos",
+		"KIND_HUMAN": "Personas",
+		"KIND_AGENT": "Agentes",
+		"AGENT_BADGE": "Agente",
+		"MANAGED_BY_EVER_WORKS": "Gestionado por Ever Works: el nombre y el perfil de este agente se cambian en Ever Works y se sincronizan con Gauzy.",
+		"MANAGED_EXTERNALLY": "Gestionado externamente: el nombre y el perfil de este agente se cambian en su sistema de origen y se sincronizan con Gauzy.",
+		"OPEN_MANAGED_AGENT": "Abrir página del agente",
 		"HEADER": "Administrar empleados",
 		"ADD_EMPLOYEE": "Añadir empleado",
 		"ACTIVE": "Activo",
@@ -2091,6 +2100,60 @@
 			},
 			"SHOWING": "Mostrando {{ shown }} de {{ total }} tareas",
 			"NO_TASKS_IN_VIEW": "No hay tareas en esta vista"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Iniciativas estratégicas",
+		"SUBTITLE": "Las direcciones en las que su organización ha decidido avanzar, y los objetivos, proyectos y equipos alineados con ellas.",
+		"ADD": "Añadir iniciativa",
+		"EDIT": "Editar iniciativa",
+		"EMPTY": "Aún no hay iniciativas estratégicas.",
+		"TITLE": "Título",
+		"STATE": "Estado",
+		"VISIBILITY": "Visibilidad",
+		"TEAMS": "Equipos",
+		"TEAMS_HINT": "Con visibilidad \"Equipo\", los miembros de estos equipos (y de los equipos de los proyectos alineados) pueden ver la iniciativa.",
+		"PROJECTS": "Proyectos",
+		"GOALS": "Objetivos",
+		"CONFIDENCE": "Confianza",
+		"MOMENTUM": "Impulso",
+		"INTENT": "Intención",
+		"INTENT_HINT": "¿Qué queremos impulsar deliberadamente, y por qué?",
+		"STEWARD": "Responsable",
+		"SIGNALS": "Señales",
+		"KNOWN_RISKS": "Riesgos conocidos",
+		"KNOWN_RISKS_HINT": "Un riesgo por línea",
+		"NOTES": "Notas",
+		"LAST_ASSESSED": "Última evaluación",
+		"NO_TEAMS": "No hay equipos vinculados.",
+		"NO_GOALS": "No hay objetivos alineados.",
+		"NO_PROJECTS": "No hay proyectos alineados.",
+		"NOT_FOUND": "No se encontró la iniciativa o no tiene permiso para verla.",
+		"DELETE_TITLE": "Eliminar iniciativa",
+		"DELETE_CONFIRMATION": "¿Eliminar la iniciativa \"{{ name }}\"?",
+		"DELETED": "Iniciativa \"{{ name }}\" eliminada.",
+		"CREATED": "Iniciativa \"{{ name }}\" creada.",
+		"UPDATED": "Iniciativa \"{{ name }}\" actualizada.",
+		"STATES": {
+			"DRAFT": "Borrador",
+			"ACTIVE": "Activa",
+			"RESOLVED": "Resuelta",
+			"RETIRED": "Retirada"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Dirección",
+			"ORGANIZATION": "Organización",
+			"TEAM": "Equipo"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Baja",
+			"MEDIUM": "Media",
+			"HIGH": "Alta"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Estancada",
+			"PROGRESSING": "Avanzando",
+			"ACCELERATING": "Acelerando"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2672,7 +2735,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Gerentes.",
-				"MEMBERS": "Miembros"
+				"MEMBERS": "Miembros",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Detalles"
+					},
+					"PUBLIC": "Pública",
+					"PRIVATE": "Privada",
+					"PREFIX": "Prefijo de tareas",
+					"MEMBERS_COUNT": "{{ count }} miembros",
+					"LIVE": "{{ tracking }} registrando ahora · {{ online }} en línea",
+					"OF_MEMBERS": "{{ count }} de {{ total }} miembros",
+					"CREATED": "Creado",
+					"UPDATED": "Última actualización",
+					"ACTIVE_MEMBERS": "Miembros activos",
+					"ACTIVE_MEMBERS_META": "de {{ total }} miembros registraron tiempo",
+					"TIME_BY_MEMBER": "Tiempo por miembro",
+					"TEAM_TASKS": "Tareas del equipo",
+					"NO_TEAM_TASKS": "No hay tareas asignadas a este equipo",
+					"NO_MEMBERS": "Este equipo aún no tiene miembros",
+					"NO_PROJECTS": "No hay proyectos vinculados a este equipo",
+					"COLUMNS": {
+						"MEMBER": "Miembro",
+						"ROLE": "Rol",
+						"STATUS": "Estado",
+						"CURRENT_TASK": "Tarea actual",
+						"TODAY": "Hoy",
+						"ACTIVITY": "Actividad"
+					},
+					"ROLE": {
+						"MANAGER": "Gerente",
+						"MEMBER": "Miembro"
+					},
+					"GENERAL": "General",
+					"SETTINGS": "Configuración",
+					"RECORD": "Registro",
+					"TEAM_SIZE": "Tamaño del equipo",
+					"COLOR": "Color",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Enlace del perfil",
+					"VISIBILITY": "Visibilidad",
+					"SHARE_PROFILE_VIEW": "Los miembros pueden ver los perfiles de los demás",
+					"REQUIRE_PLAN": "Exigir un plan para registrar tiempo",
+					"NOT_FOUND": "No se encontró este equipo",
+					"LOAD_FAILED": "No se pudo cargar el equipo",
+					"RETRY": "Reintentar",
+					"OPEN_TASK_DETAILS": "Ver detalles de {{ title }}",
+					"OPEN_TASK_PAGE": "Abrir la página de {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Abrir página de la tarea",
+					"UNASSIGNED": "Sin asignar",
+					"SHOW_ALL": "Mostrar todo",
+					"SHOW_LESS": "Mostrar menos",
+					"PROJECTS_CAPTION": "Los proyectos del equipo y el tiempo trabajado en cada uno en este periodo",
+					"NOT_LINKED": "No vinculado",
+					"NOT_LINKED_HINT": "Los miembros registraron tiempo en este proyecto, pero no está vinculado al equipo"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -3785,17 +3902,20 @@
 		"USER": {
 			"MANAGE": "Gestionar Invitaciones de Usuarios",
 			"HEADER": "Invita a los usuarios",
-			"ACTION": "Invitar a usuarios"
+			"ACTION": "Invitar a usuarios",
+			"DESCRIPTION": "Invita a personas a unirse a tu organización como usuarios. Cada destinatario recibe un correo con un enlace seguro para aceptar."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gestionar invitaciones de empleados",
 			"HEADER": "Invitar a los empleados",
-			"ACTION": "Invitar a los empleados."
+			"ACTION": "Invitar a los empleados.",
+			"DESCRIPTION": "Invita a personas a unirse a tu organización como empleados. Cada destinatario recibe un correo con un enlace seguro para aceptar."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gestionar invitaciones de candidatos",
 			"HEADER": "Invitar a los candidatos",
-			"ACTION": "Invitar a los candidatos."
+			"ACTION": "Invitar a los candidatos.",
+			"DESCRIPTION": "Invita a candidatos a tu proceso de selección. Cada destinatario recibe un correo con un enlace seguro para aceptar."
 		},
 		"SENT": "{{total}} Invitaciones Enviadas.",
 		"IGNORED": "Se han enviado {{total}} invitaciones. {{ignored}} ya habían sido invitados y han sido ignorados.",
@@ -3805,6 +3925,23 @@
 			"TWO_WEEK": "14 Días",
 			"MONTH": "30 días",
 			"NEVER": "Nunca"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinatarios",
+			"EMAILS_PLACEHOLDER": "nombre@empresa.com",
+			"EMAILS_HINT": "Pulsa Intro después de cada dirección para añadir varios destinatarios.",
+			"CLEAR_EMAILS": "Borrar todo",
+			"ACCESS": "Acceso",
+			"ACCESS_HINT": "Opcional. Elige a qué podrán acceder los nuevos miembros en cuanto se unan.",
+			"DETAILS": "Detalles de la invitación",
+			"RECIPIENT_COUNT": "Destinatarios: {{count}}",
+			"NO_RECIPIENTS": "Aún no se han añadido destinatarios"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Eliminar invitación",
+			"WARNING": "La invitación para {{ email }} se eliminará de forma permanente y su enlace dejará de funcionar. Esta acción no se puede deshacer.",
+			"TYPE_TO_CONFIRM": "Escribe lo siguiente para confirmar:",
+			"CONFIRM": "Eliminar invitación"
 		}
 	},
 	"INVOICES_PAGE": {

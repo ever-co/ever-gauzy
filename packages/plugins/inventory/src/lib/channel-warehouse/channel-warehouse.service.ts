@@ -77,9 +77,24 @@ export class ChannelWarehouseService extends TenantAwareCrudService<ChannelWareh
 		});
 	}
 
-	/** Removes an assignment. */
-	public async unassign(channelId: ID, warehouseId: ID): Promise<void> {
-		await this.typeOrmChannelWarehouseRepository.delete({ channelId, warehouseId } as any);
+	/**
+	 * Removes an assignment of the caller's tenant.
+	 *
+	 * The delete names the tenant, as every read beside it does (SEC-B-01 = SEC-D-10): by the two ids alone it removed
+	 * another tenant's row, and since a context with no rows is unrestricted, that silently widened the other tenant's
+	 * fulfilment to every location it has. Without a tenant nothing is removed — an absent key would drop out of the
+	 * criteria and match every tenant's row.
+	 *
+	 * @returns Whether an assignment was removed; removing one that is not there leaves the state the caller asked for.
+	 */
+	public async unassign(channelId: ID, warehouseId: ID): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return false;
+		}
+
+		const { affected } = await this.typeOrmChannelWarehouseRepository.delete({ channelId, warehouseId, tenantId } as any);
+		return !!affected;
 	}
 
 	/**

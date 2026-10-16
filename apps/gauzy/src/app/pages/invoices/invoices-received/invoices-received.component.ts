@@ -16,7 +16,7 @@ import {
 	ITag,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, isNotNullOrUndefined, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -390,13 +390,13 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 						type: 'custom',
 						component: RangeFilterComponent
 					},
-					filterFunction: (range: { min?: number; max?: number }) => {
+					filterFunction: (range: { min?: number | null; max?: number | null }) => {
 						const { min, max } = range;
 						// Validate range values
-						if ((min !== undefined && min < 0) || (max !== undefined && max < 0)) {
+						if ((isNotNullOrUndefined(min) && min < 0) || (isNotNullOrUndefined(max) && max < 0)) {
 							return;
 						}
-						if (min !== undefined && max !== undefined && min > max) {
+						if (isNotNullOrUndefined(min) && isNotNullOrUndefined(max) && min > max) {
 							return;
 						}
 						this.setFilter({

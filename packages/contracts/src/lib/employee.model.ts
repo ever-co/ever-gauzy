@@ -117,6 +117,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	profile_link?: string;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
+	/** `human` for a person (every row created through the employee routes), `agent` for an agent employee. */
+	kind?: EmployeeKindEnum;
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
@@ -270,6 +272,16 @@ export interface ISelectedEmployee extends ITaggable {
 export enum DEFAULT_TYPE {
 	ALL_EMPLOYEE = 'ALL_EMPLOYEE',
 	NO_EMPLOYEE = 'NO_EMPLOYEE'
+}
+
+/**
+ * What an employee row represents. Every existing and new employee is a `HUMAN` unless created through the
+ * agent-provisioning path (`AGENT`): an agent has no login, receives no welcome email, and is excluded from
+ * payroll, statistics and seat counts.
+ */
+export enum EmployeeKindEnum {
+	HUMAN = 'human',
+	AGENT = 'agent'
 }
 
 export enum PayPeriodEnum {

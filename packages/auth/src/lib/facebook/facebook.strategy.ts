@@ -34,7 +34,9 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
 
 			// Construct user object
 			const user = {
-				emails,
+				// Graph has no per-address verified flag, so the /me email is trusted the way the token sign-in
+				// (verifyFacebookToken) trusts it. An empty value is never marked verified.
+				emails: (emails ?? []).map(({ value }) => ({ value, verified: Boolean(value) })),
 				accessToken,
 				refreshToken
 			};

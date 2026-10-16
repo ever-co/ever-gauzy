@@ -94,6 +94,8 @@ jest.mock('@gauzy/core', () => {
 		BaseEvent: class {},
 		EventBus: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The plan's discount is range-checked on its digits (`normalizeDiscountFraction`), by the platform's own comparison.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		SequenceService: class SequenceService {},
 		RequestContext: {

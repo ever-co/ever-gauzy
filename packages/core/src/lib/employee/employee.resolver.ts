@@ -2,6 +2,7 @@ import { ForbiddenException, NotFoundException, UseGuards } from '@nestjs/common
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
+	EmployeeKindEnum,
 	ID as Id,
 	IDateRangePicker,
 	IEmployee,
@@ -33,6 +34,7 @@ import {
 	WorkingEmployeeGetCommand
 } from './commands';
 import { deleteRemovedRows } from '../graphql/delete-answer';
+import { requireOrganization } from '../graphql/organization-required';
 
 /** The members `EmployeeUserInput` declares in the schema. */
 export interface IEmployeeUserInput {
@@ -199,6 +201,7 @@ const EMPLOYEE_FILTERABLE = {
 	trackAllDisplays: 'BOOLEAN',
 	upworkId: 'STRING',
 	linkedInId: 'STRING',
+	kind: 'STRING',
 	userId: 'ID',
 	contactId: 'ID',
 	organizationPositionId: 'ID',
@@ -438,7 +441,8 @@ export class EmployeeResolver {
 	@Query('employeeCount')
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	async employeeCount(): Promise<number> {
-		return await this.employeeService.countBy();
+		// The headcount is people, as on the route: agent employees (`kind = 'agent'`) are not counted.
+		return await this.employeeService.countBy({ kind: EmployeeKindEnum.HUMAN });
 	}
 
 	/**
@@ -627,6 +631,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<boolean> {
+		requireOrganization(organizationId, 'deleteEmployee');
 		return deleteRemovedRows(await this.employeeService.delete(id, { where: { organizationId } }));
 	}
 
@@ -643,6 +648,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<Employee> {
+		requireOrganization(organizationId, 'softDeleteEmployee');
 		return await this.employeeService.softRemovedById(id, { organizationId });
 	}
 
@@ -659,6 +665,7 @@ export class EmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<Employee> {
+		requireOrganization(organizationId, 'recoverEmployee');
 		return await this.employeeService.softRecoverById(id, { organizationId });
 	}
 
