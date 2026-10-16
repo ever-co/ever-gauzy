@@ -156,13 +156,21 @@ describe('MentionService.updateEntityMentions, on content another employee menti
 	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
 	const originalClsService = RequestContext['clsService'];
 
-	// The mention another author wrote on the task
+	// The mentions another author wrote on the task: one an edit removes, one it keeps
 	const stored = () => [
 		{
 			id: 'mention-1',
 			entity: BaseEntityEnum.Task,
 			entityId: 'task-1',
 			mentionedEmployeeId: 'mentioned-employee',
+			employeeId: 'author-employee',
+			tenantId: editor.tenantId
+		},
+		{
+			id: 'mention-2',
+			entity: BaseEntityEnum.Task,
+			entityId: 'task-1',
+			mentionedEmployeeId: 'kept-employee',
 			employeeId: 'author-employee',
 			tenantId: editor.tenantId
 		}
@@ -223,14 +231,14 @@ describe('MentionService.updateEntityMentions, on content another employee menti
 		);
 
 	it('publishes nothing for a mention another author already wrote', async () => {
-		await sync(['mentioned-employee']);
+		await sync(['mentioned-employee', 'kept-employee']);
 
 		expect(eventBus.publish).not.toHaveBeenCalled();
 		expect(deleted).not.toHaveBeenCalled();
 	});
 
-	it("deletes another author's mention the edit removed, within the tenant", async () => {
-		await sync([]);
+	it("deletes only another author's mention the edit removed, within the tenant", async () => {
+		await sync(['kept-employee']);
 
 		expect(deleted).toHaveBeenCalledTimes(1);
 		const [criteria] = deleted.mock.calls[0];
@@ -241,7 +249,7 @@ describe('MentionService.updateEntityMentions, on content another employee menti
 	});
 
 	it('reads the mentions of the entity within the tenant, as full rows', async () => {
-		await sync(['mentioned-employee']);
+		await sync(['mentioned-employee', 'kept-employee']);
 
 		const [options] = read.mock.calls[0];
 		expect(options.where).toMatchObject({
@@ -261,7 +269,7 @@ describe('MentionService.updateEntityMentions, on content another employee menti
 			filterSkipped = (service as any).getSkipEmployeeFilter();
 		});
 
-		await sync(['other-employee']);
+		await sync(['kept-employee', 'other-employee']);
 
 		expect(eventBus.publish).toHaveBeenCalledTimes(1);
 		expect(eventBus.publish.mock.calls[0][0].input).toMatchObject({
