@@ -1574,7 +1574,9 @@
 		"ffecd",
 		"indexname",
 		"unsets",
-		"UI's"
+		"UI's",
+		"cancelation",
+		"cancelations"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

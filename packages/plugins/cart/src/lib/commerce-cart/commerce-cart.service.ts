@@ -336,6 +336,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			);
 		}
 
+		// What the line names has to be the caller's tenant's (P0 #6c): refused before the stock of the variant and
+		// location it names is read, and before the version moves.
+		await this.lineService.assertReferences(line);
+
 		const existing = (await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>;
 		const match = existing.items.find(
 			(candidate: CommerceCartLine) =>
@@ -403,6 +407,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException('CART_LINE_QUANTITY_INVALID: a line quantity must be positive.');
 		}
 
+		const editable = this.editableLineFields(changes, cart);
+
+		// A change pointing the line at another tenant's row is refused before any stock is read (P0 #6c).
+		await this.lineService.assertReferences(editable);
+
 		if (changes.quantity !== undefined) {
 			await this.assertStockAvailable({
 				variantId: line.variantId,
@@ -413,7 +422,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		// The caller's version is spent before the child row is touched — see `spendVersion`.
 		await this.spendVersion(cartId, expectation);
-		await this.lineService.update(lineId, this.editableLineFields(changes, cart));
+		await this.lineService.update(lineId, editable);
 
 		return this.recalculate(cartId, 'LINE_UPDATED', ANY_VERSION);
 	}
@@ -475,6 +484,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			where: { cartId }
 		})) as IPagination<CommerceCartShippingMethod>;
 
+		// A choice naming another tenant's option is refused here, before the previous choice is retired (P0 #6c).
+		await this.shippingMethodService.assertReferences(method);
+
 		// The caller's version decides before any row is replaced: the docstring above promises the
 		// previous choice is replaced by this one, not that it is destroyed by a request the cart then
 		// refuses.
@@ -532,6 +544,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				(promotion.promotionId && candidate.promotionId === promotion.promotionId) ||
 				(promotion.code && candidate.code === promotion.code)
 		);
+
+		// A promotion or coupon of another tenant is refused before the version moves (P0 #6c).
+		await this.promotionService.assertReferences(promotion);
 
 		await this.spendVersion(cartId, expectation);
 
@@ -905,10 +920,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			return current;
 		};
 
-		for (const line of source.lines ?? []) {
-			await this.addLine(
-				target.id,
-				{
+		const lines = (source.lines ?? []).map(
+			(line) =>
+				({
 					productId: line.productId,
 					variantId: line.variantId,
 					sellerId: line.sellerId,
@@ -926,17 +940,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					warehouseId: line.warehouseId,
 					subscriptionPlanId: line.subscriptionPlanId,
 					metadata: line.metadata
-				} as DeepPartial<CommerceCartLine>,
-				spend()
-			);
-		}
-
-		if ((target.shippingMethods ?? []).length === 0 && (source.shippingMethods ?? []).length > 0) {
-			const sourceMethod = (source.shippingMethods ?? [])[0];
-
-			await this.setShippingMethod(
-				target.id,
-				{
+				}) as DeepPartial<CommerceCartLine>
+		);
+		const sourceMethod =
+			(target.shippingMethods ?? []).length === 0 ? (source.shippingMethods ?? [])[0] : undefined;
+		const method = sourceMethod
+			? ({
 					shippingOptionId: sourceMethod.shippingOptionId,
 					name: sourceMethod.name,
 					amount: sourceMethod.amount,
@@ -944,9 +953,25 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					taxCategoryId: sourceMethod.taxCategoryId,
 					data: sourceMethod.data,
 					isManual: sourceMethod.isManual
-				} as DeepPartial<CommerceCartShippingMethod>,
-				spend()
-			);
+				} as DeepPartial<CommerceCartShippingMethod>)
+			: undefined;
+
+		// Everything the merge copies is held to the caller's tenant before its first write (P0 #6c). Each verb below
+		// checks what it writes as well, but one at a time: a source cart written before the check existed can name
+		// another tenant's row on its second line or on its delivery choice, and a refusal there would leave the
+		// target with the lines already copied and its version spent — and a retry would copy them again.
+		await this.lineService.assertReferences(lines);
+
+		if (method) {
+			await this.shippingMethodService.assertReferences(method);
+		}
+
+		for (const line of lines) {
+			await this.addLine(target.id, line, spend());
+		}
+
+		if (method) {
+			await this.setShippingMethod(target.id, method, spend());
 		}
 
 		const mergedAt = new Date();

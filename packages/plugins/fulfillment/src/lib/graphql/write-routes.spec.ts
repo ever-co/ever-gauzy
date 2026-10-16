@@ -1150,7 +1150,10 @@ describe('the fourteen routes — four buckets, none of them left unread', () =>
 			}),
 			create: jest.fn().mockResolvedValue(FOREIGN),
 			delete: jest.fn().mockResolvedValue(REMOVED),
-			update: jest.fn().mockResolvedValue(FOREIGN)
+			update: jest.fn().mockResolvedValue(FOREIGN),
+			// The cross-tenant check of the added variants; it reads a database, and is exercised in
+			// `fulfillment-references.db.spec.ts`.
+			assertReferences: jest.fn().mockResolvedValue(undefined)
 		};
 		const service = new ShippingProfileService({} as never, {} as never, pivotService as never);
 

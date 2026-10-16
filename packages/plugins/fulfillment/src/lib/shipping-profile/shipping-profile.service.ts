@@ -102,6 +102,9 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 			throw new BadRequestException(`SHIPPING_PROFILE_NOT_FOUND: no profile exists with id ${profileId}.`);
 		}
 
+		// A variant of another tenant is refused before any attachment is removed or moved (P0 #6c).
+		await this.pivotService.assertReferences((changes.add ?? []).map((variantId) => ({ variantId })));
+
 		for (const variantId of changes.remove ?? []) {
 			const existing = (await this.pivotService.findAll({
 				where: { profileId, variantId }
