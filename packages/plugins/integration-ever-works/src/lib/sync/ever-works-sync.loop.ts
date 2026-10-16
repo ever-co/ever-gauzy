@@ -13,8 +13,10 @@ import { EverWorksOutboundPusher } from './outbound/ever-works-outbound.pusher';
 
 /** How often a process looks for work. */
 export const SYNC_TICK_MS = 5_000;
-/** How long a lease on a connection lasts (renewed every tick while held). */
-export const SYNC_LEASE_MS = 60_000;
+/** How long a lease on a connection lasts; renewed during the work, and the work stops once it is lost. */
+export const SYNC_LEASE_MS = 5 * 60_000;
+/** How often a pass renews its lease while it works. */
+export const SYNC_RENEW_MS = 30_000;
 
 /**
  * The sync loop (plan 03 §C.7): every process that loads the plugin (each API replica and the worker)
@@ -63,7 +65,9 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 	}
 
 	/** One pass over the active connections; returns the ids this process worked. */
-	async tick(now: Date = new Date()): Promise<ID[]> {
+	async tick(pinned?: Date): Promise<ID[]> {
+		// Tests pin the clock; production reads it afresh for every claim.
+		const now = pinned ?? new Date();
 		if (this.running) return [];
 		this.running = true;
 		const worked: ID[] = [];
@@ -72,9 +76,11 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 				where: { isActive: true, status: EverWorksConnectionStatus.ACTIVE }
 			});
 			for (const connection of connections) {
-				if (!(await this.claim(connection.id as ID, now))) continue;
+				// A fresh time per claim (a long pass over earlier connections must not shorten this lease).
+				const at = this.timeFor(pinned);
+				if (!(await this.claim(connection.id as ID, at))) continue;
 				worked.push(connection.id as ID);
-				await this.work(connection).catch((error) =>
+				await this.work(connection, pinned).catch((error) =>
 					this.logger.warn(`Connection ${connection.id}: sync pass failed (${error instanceof Error ? error.name : 'error'}).`)
 				);
 			}
@@ -92,15 +98,31 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 	}
 
 	/** Feed (when due), then inbound, then outbound, for one connection this process holds. */
-	private async work(connection: EverWorksConnection): Promise<void> {
-		const fresh = (await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connection.id as ID } })) ?? connection;
+	private async work(connection: EverWorksConnection, tickNow: Date | undefined): Promise<void> {
+		const id = connection.id as ID;
+		let renewedAt = Date.now();
+		// Renews the lease every SYNC_RENEW_MS while working; false once another process holds it.
+		const stillOwner = async (): Promise<boolean> => {
+			if (Date.now() - renewedAt < SYNC_RENEW_MS) return true;
+			renewedAt = Date.now();
+			return this.claim(id, this.timeFor(tickNow));
+		};
+		const fresh = (await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id } })) ?? connection;
 		if (this.feed.isDue(fresh)) {
 			await this.feed.poll(fresh).catch((error) =>
 				this.logger.warn(`Connection ${connection.id}: feed poll failed (${error instanceof Error ? error.name : 'error'}).`)
 			);
 		}
-		await this.applier.drain(fresh);
-		await this.pusher.drain(fresh);
+		renewedAt = 0; // the feed may have taken a while: renew before applying
+		if (!(await stillOwner())) return;
+		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner);
+		if (!(await stillOwner())) return;
+		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner);
+	}
+
+	/** The current time, or the time a test pins the tick to. */
+	private timeFor(pinned: Date | undefined): Date {
+		return pinned ?? new Date();
 	}
 
 	/** Claims (or renews) the lease on a connection; true when this process holds it now. */

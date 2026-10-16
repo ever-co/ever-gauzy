@@ -430,13 +430,116 @@ describe('Ever Works sync engine on SQLite', () => {
 		expect(await one.claim(connection.id as string, now)).toBe(true);
 		expect(await two.claim(connection.id as string, now)).toBe(false);
 		expect(await one.claim(connection.id as string, now)).toBe(true); // renewal
-		expect(await two.claim(connection.id as string, new Date(now.getTime() + 61_000))).toBe(true);
-		const worked = await two.tick(new Date(now.getTime() + 62_000));
+		expect(await two.claim(connection.id as string, new Date(now.getTime() + 301_000))).toBe(true);
+		const worked = await two.tick(new Date(now.getTime() + 302_000));
 		expect(worked).toEqual([connection.id]);
-		expect(await one.tick(new Date(now.getTime() + 62_000))).toEqual([]);
+		expect(await one.tick(new Date(now.getTime() + 302_000))).toEqual([]);
 		await connections.pause(connection.id as string);
-		expect(await two.tick(new Date(now.getTime() + 63_000))).toEqual([]); // paused: not worked
+		expect(await two.tick(new Date(now.getTime() + 303_000))).toEqual([]); // paused: not worked
 		await reload();
 		expect(connection.status).toBe(EverWorksConnectionStatus.PAUSED);
+	});
+
+	describe('review hardening (#10776)', () => {
+		const record = async (over: Record<string, unknown>) => store.record(connection, envelope(over) as never, 'webhook');
+		const trigger = (gauzyId: string, extra: Record<string, unknown> = {}) => ({
+			tenantId: A.tenantId,
+			organizationId: A.organizationId,
+			entityType: EverWorksLinkType.TASK,
+			gauzyId,
+			...extra
+		});
+
+		it('an earlier event waiting for its retry blocks the later events of its aggregate, not the others', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log);
+			const seen: string[] = [];
+			let failFirst = true;
+			applier.register({
+				aggregateTypes: ['task'],
+				apply: async (env) => {
+					seen.push(`${env.aggregate.id}:${env.seq}`);
+					if (env.seq === '1' && failFirst) throw new Error('not yet');
+					return { status: 'applied' };
+				}
+			});
+			await record({ seq: '1' });
+			await applier.drain(connection); // seq 1 fails → waits for its retry
+			await record({ seq: '2' });
+			await record({ seq: '3', aggregate: { type: 'task', id: 'task-2', version: 1 } });
+			await applier.drain(connection);
+			expect(seen).toEqual(['task-1:1', 'task-2:3']); // seq 2 did not overtake seq 1
+			expect((await events().findOneByOrFail({ seq: '2' } as never)).status).toBe(EverWorksInboundStatus.PENDING);
+			failFirst = false;
+			await events().update({ seq: '1' } as never, { availableAt: new Date(0) });
+			await applier.drain(connection);
+			expect(seen.slice(2)).toEqual(['task-1:1', 'task-1:2']);
+		});
+
+		it('an edit made while a push is in flight is kept as a new pending change', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log);
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async () => {
+					await queue.enqueue(trigger('t1', { changedFields: ['title'] }), new Date());
+					return { status: 'pushed' };
+				}
+			});
+			await queue.enqueue(trigger('t1'));
+			await pusher.drain(connection, 100, new Date(Date.now() + 10_000));
+			const rows = await dataSource.getRepository(EverWorksOutboundChange).find({ where: { gauzyId: 't1' } });
+			expect(rows.map((r) => r.status).sort()).toEqual([EverWorksOutboundStatus.PENDING, EverWorksOutboundStatus.PUSHED]);
+		});
+
+		it('a refusal (4xx) is terminal at once, logged once, and never retried', async () => {
+			const { EverWorksApiError } = await import('../client/ever-works-client');
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log);
+			let calls = 0;
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async () => {
+					calls++;
+					throw new EverWorksApiError(422, 'domain_rule', 'refused');
+				}
+			});
+			await queue.enqueue(trigger('t2'));
+			const later = new Date(Date.now() + 10_000);
+			await pusher.drain(connection, 100, later);
+			await pusher.drain(connection, 100, new Date(later.getTime() + 24 * 3600_000));
+			expect(calls).toBe(1);
+			expect(await dataSource.getRepository(EverWorksOutboundChange).findOneByOrFail({ gauzyId: 't2' })).toMatchObject({ status: EverWorksOutboundStatus.DEAD });
+			expect(await dataSource.getRepository(EverWorksSyncLog).count({ where: { action: 'push_refused' } })).toBe(1);
+		});
+
+		it('an organization mapped a moment after a refused trigger is seen at once (no negative cache)', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const other = randomUUID();
+			await dataSource.getRepository(Organization).save({ id: other, tenantId: A.tenantId, name: 'o2' });
+			expect(await queue.enqueue(trigger('t3', { organizationId: other }))).toBe(false);
+			await dataSource.getRepository(IntegrationTenant).save({
+				id: randomUUID(),
+				tenantId: A.tenantId,
+				organizationId: other,
+				name: 'Ever_Works',
+				isActive: true,
+				isArchived: false,
+				settings: [{ id: randomUUID(), tenantId: A.tenantId, organizationId: other, settingsName: EverWorksSettingName.IS_ENABLED, settingsValue: 'true' }]
+			} as never);
+			expect(await queue.enqueue(trigger('t3', { organizationId: other }))).toBe(true);
+		});
+
+		it('concurrent triggers for one record coalesce into one pending change and keep the delete', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			await Promise.all([
+				queue.enqueue(trigger('t4', { changedFields: ['title'] })),
+				queue.enqueue(trigger('t4', { op: 'delete' })),
+				queue.enqueue(trigger('t4', { changedFields: ['status'] }))
+			]);
+			const rows = await dataSource.getRepository(EverWorksOutboundChange).find({ where: { gauzyId: 't4' } });
+			expect(rows).toHaveLength(1);
+			expect(rows[0].op).toBe('delete');
+			expect(JSON.parse(rows[0].changedFieldsHint as string).sort()).toEqual(['status', 'title']);
+		});
 	});
 });

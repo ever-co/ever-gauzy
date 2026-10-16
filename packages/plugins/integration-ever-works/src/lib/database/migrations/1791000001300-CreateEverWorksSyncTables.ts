@@ -18,6 +18,8 @@ type Column = [name: string, type: (d: EverWorksDialect) => string, notNull?: bo
 
 const varchar = (n: number) => (d: EverWorksDialect) => (d === 'postgres' ? `character varying(${n})` : `varchar(${n})`);
 const text = () => 'text';
+/** Bodies that can exceed MySQL TEXT's 64 KiB (an event is accepted up to 1 MiB): LONGTEXT there. */
+const longText = (d: EverWorksDialect) => (d === 'mysql' ? 'longtext' : 'text');
 const int = (d: EverWorksDialect) => (d === 'mysql' ? 'int' : 'integer');
 const bigint = (d: EverWorksDialect) => (d === 'sqlite' ? 'integer' : 'bigint');
 const ts = (d: EverWorksDialect) => (d === 'postgres' ? 'TIMESTAMP' : 'datetime');
@@ -34,8 +36,8 @@ const TABLES: Record<string, { prefix: string; columns: Column[]; indexes: Index
 			['ewVersion', int],
 			['ewUpdatedAt', ts],
 			['gauzyUpdatedAt', ts],
-			['snapshot', text],
-			['ewOnly', text],
+			['snapshot', longText],
+			['ewOnly', longText],
 			['lastDirection', varchar(16)],
 			['lastSyncedAt', ts],
 			['state', varchar(16), true, 'ok'],
@@ -59,7 +61,7 @@ const TABLES: Record<string, { prefix: string; columns: Column[]; indexes: Index
 			['aggregateId', varchar(64), true],
 			['aggregateVersion', int],
 			['ewOrganizationId', varchar(64)],
-			['payload', text, true],
+			['payload', longText, true],
 			['receivedVia', varchar(16), true],
 			['status', varchar(16), true, 'pending'],
 			['attempts', int, true, '0'],
@@ -112,7 +114,7 @@ const TABLES: Record<string, { prefix: string; columns: Column[]; indexes: Index
 			['action', varchar(64), true],
 			['status', varchar(16), true],
 			['message', text],
-			['details', text],
+			['details', longText],
 			['resolvedByUserId', varchar(36)],
 			['resolvedAt', ts]
 		],

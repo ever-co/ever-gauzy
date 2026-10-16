@@ -47,6 +47,8 @@ export enum EverWorksInboundStatus {
 
 export enum EverWorksOutboundStatus {
 	PENDING = 'pending',
+	/** Claimed by a pusher; a trigger arriving meanwhile opens a new pending change. Retried if left past its lease. */
+	PUSHING = 'pushing',
 	PUSHED = 'pushed',
 	SKIPPED = 'skipped',
 	DEFERRED = 'deferred',

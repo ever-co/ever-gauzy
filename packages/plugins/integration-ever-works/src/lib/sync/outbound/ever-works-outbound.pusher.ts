@@ -33,6 +33,8 @@ export interface EverWorksOutboundHandler {
 /** Attempts before a change is dead (plan 03 §C.3). */
 export const OUTBOUND_MAX_ATTEMPTS = 8;
 export const OUTBOUND_DEFER_MS = 60 * 60_000;
+/** How long a claimed (in-flight) push is held before another pass may take it over. */
+export const OUTBOUND_CLAIM_MS = 10 * 60_000;
 
 /**
  * The outbound pusher (plan 03 §C.3): drains a connection's due changes through the handler of their
@@ -55,20 +57,23 @@ export class EverWorksOutboundPusher {
 	}
 
 	/** Pushes up to `limit` due changes of the connection's mappings; returns how many were settled. */
-	async drain(connection: EverWorksConnection, limit = 100, now: Date = new Date()): Promise<number> {
+	async drain(connection: EverWorksConnection, limit = 100, now: Date = new Date(), stillOwner?: () => Promise<boolean>): Promise<number> {
 		const mappings = await this.mappingsOf(connection);
 		if (!mappings.length) return 0;
 		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
 		const due = await repository.find({
 			where: {
 				integrationTenantId: In(mappings.map((m) => m.id as ID)),
-				status: In([EverWorksOutboundStatus.PENDING, EverWorksOutboundStatus.DEFERRED, EverWorksOutboundStatus.FAILED]),
+				// PUSHING rows are due only once their claim has lapsed (a process stopped mid-push).
+				status: In([EverWorksOutboundStatus.PENDING, EverWorksOutboundStatus.DEFERRED, EverWorksOutboundStatus.FAILED, EverWorksOutboundStatus.PUSHING]),
 				availableAt: LessThanOrEqual(now)
 			},
+			order: { availableAt: 'ASC' },
 			take: limit
 		});
 		let settled = 0;
 		for (const change of due) {
+			if (stillOwner && !(await stillOwner())) return settled;
 			const mapping = mappings.find((m) => m.id === change.integrationTenantId) as IntegrationTenant;
 			if (await this.pushOne(connection, mapping, change, now)) settled++;
 		}
@@ -80,11 +85,18 @@ export class EverWorksOutboundPusher {
 		const handler = this.handlers.get(change.entityType);
 		if (!handler) {
 			await repository.update(
-				{ id: change.id },
+				{ id: change.id, status: change.status },
 				{ status: EverWorksOutboundStatus.DEFERRED, lastError: `no handler for ${change.entityType} yet`, availableAt: new Date(now.getTime() + OUTBOUND_DEFER_MS) }
 			);
 			return true;
 		}
+		// Claim it first: from here a new trigger for this record opens a new pending change instead of
+		// merging into this one, so an edit made during the push is pushed after it, not lost.
+		const claimed = await repository.update(
+			{ id: change.id, status: change.status },
+			{ status: EverWorksOutboundStatus.PUSHING, availableAt: new Date(now.getTime() + OUTBOUND_CLAIM_MS) }
+		);
+		if (!claimed.affected) return false; // another process took it
 		try {
 			const outcome = await handler.push(change, { connection, mapping });
 			if (outcome.status === 'deferred') {
@@ -105,6 +117,7 @@ export class EverWorksOutboundPusher {
 		} catch (error) {
 			const attempts = (change.attempts ?? 0) + 1;
 			const retryable = error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable);
+			// A refusal (4xx other than 429) does not change by retrying: it is terminal at once.
 			const dead = !retryable || attempts >= OUTBOUND_MAX_ATTEMPTS;
 			const reason =
 				error instanceof EverWorksApiError
@@ -116,7 +129,7 @@ export class EverWorksOutboundPusher {
 			await repository.update(
 				{ id: change.id },
 				{
-					status: dead ? (retryable ? EverWorksOutboundStatus.DEAD : EverWorksOutboundStatus.FAILED) : EverWorksOutboundStatus.FAILED,
+					status: dead ? EverWorksOutboundStatus.DEAD : EverWorksOutboundStatus.FAILED,
 					attempts,
 					lastError: reason.slice(0, 2000),
 					availableAt: new Date(now.getTime() + Math.max(retryAfterMs, Math.min(60 * 60_000, 2 ** attempts * 1000)))
@@ -131,7 +144,7 @@ export class EverWorksOutboundPusher {
 					direction: 'outbound',
 					entityType: change.entityType,
 					gauzyId: change.gauzyId,
-					action: retryable ? 'dead_letter' : 'push_failed',
+					action: retryable ? 'dead_letter' : 'push_refused',
 					status: 'error',
 					message: reason
 				});

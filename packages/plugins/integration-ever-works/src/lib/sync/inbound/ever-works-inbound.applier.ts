@@ -68,26 +68,43 @@ export class EverWorksInboundApplier {
 	}
 
 	/** Processes up to `limit` due events of one connection; returns how many were settled. */
-	async drain(connection: EverWorksConnection, limit = 200, now: Date = new Date()): Promise<number> {
+	async drain(connection: EverWorksConnection, limit = 200, now: Date = new Date(), stillOwner?: () => Promise<boolean>): Promise<number> {
 		const repository = this.dataSource.getRepository(EverWorksInboundEvent);
+		const unfinished = [EverWorksInboundStatus.PENDING, EverWorksInboundStatus.DEFERRED, EverWorksInboundStatus.FAILED];
+		// The oldest due events first, so a backlog is worked in feed order.
 		const due = await repository.find({
-			where: {
-				connectionId: connection.id as ID,
-				status: In([EverWorksInboundStatus.PENDING, EverWorksInboundStatus.DEFERRED, EverWorksInboundStatus.FAILED]),
-				availableAt: LessThanOrEqual(now)
-			},
+			where: { connectionId: connection.id as ID, status: In(unfinished), availableAt: LessThanOrEqual(now) },
+			order: { seq: 'ASC' },
 			take: limit
 		});
-		// Group by aggregate; order each group by seq (as integers).
+		if (!due.length) return 0;
+		// Per aggregate, the earliest event not yet settled — due or not, in this batch or not. A later event
+		// never overtakes it: an aggregate whose batch does not start there waits for it.
+		const earliest = new Map<string, string>();
+		const rows = await repository
+			.createQueryBuilder('e')
+			.select('e.aggregateType', 'aggregateType')
+			.addSelect('e.aggregateId', 'aggregateId')
+			.addSelect('MIN(e.seq)', 'minSeq')
+			.where('e.connectionId = :connectionId', { connectionId: connection.id })
+			.andWhere('e.status IN (:...unfinished)', { unfinished })
+			.andWhere('e.aggregateId IN (:...ids)', { ids: [...new Set(due.map((event) => event.aggregateId))] })
+			.groupBy('e.aggregateType')
+			.addGroupBy('e.aggregateId')
+			.getRawMany<{ aggregateType: string; aggregateId: string; minSeq: string | number }>();
+		for (const row of rows) earliest.set(`${row.aggregateType}:${row.aggregateId}`, String(row.minSeq));
 		const groups = new Map<string, EverWorksInboundEvent[]>();
 		for (const event of due) {
 			const key = `${event.aggregateType}:${event.aggregateId}`;
 			groups.set(key, [...(groups.get(key) ?? []), event]);
 		}
 		let settled = 0;
-		for (const events of groups.values()) {
+		for (const [key, events] of groups) {
 			events.sort((a, b) => compareSeq(String(a.seq), String(b.seq)));
+			const first = earliest.get(key);
+			if (first !== undefined && compareSeq(String(events[0].seq), first) > 0) continue; // an earlier event still waits
 			for (const event of events) {
+				if (stillOwner && !(await stillOwner())) return settled;
 				const done = await this.applyOne(connection, event, now);
 				if (!done) break; // keep the order: the rest of this aggregate waits
 				settled++;

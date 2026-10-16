@@ -32,11 +32,15 @@ const MAPPING_CACHE_MS = 30_000;
 @Injectable()
 export class EverWorksOutboundQueue {
 	private readonly logger = new Logger('EverWorksOutbound');
-	private readonly mappings = new Map<string, { id: ID | null; at: number }>();
+	private readonly mappings = new Map<string, { id: ID; at: number }>();
+	private readonly inFlight = new Map<string, Promise<boolean>>();
 
 	constructor(private readonly dataSource: DataSource) {}
 
-	/** The active, enabled mapping of an organization, or `null` (cached briefly). */
+	/**
+	 * The active, enabled mapping of an organization, or `null`. Only a found mapping is cached (briefly):
+	 * an organization mapped or enabled a moment ago is seen at once, so its first edits are not dropped.
+	 */
 	async mappingFor(tenantId: ID, organizationId: ID, now = Date.now()): Promise<ID | null> {
 		const key = `${tenantId}:${organizationId}`;
 		const cached = this.mappings.get(key);
@@ -47,7 +51,8 @@ export class EverWorksOutboundQueue {
 		});
 		const enabled = row?.settings?.find((s) => s.settingsName === EverWorksSettingName.IS_ENABLED)?.settingsValue === 'true';
 		const id = row?.id && enabled ? (row.id as ID) : null;
-		this.mappings.set(key, { id, at: now });
+		if (id) this.mappings.set(key, { id, at: now });
+		else this.mappings.delete(key);
 		return id;
 	}
 
@@ -60,9 +65,34 @@ export class EverWorksOutboundQueue {
 	async enqueue(trigger: EverWorksOutboundTrigger, now: Date = new Date()): Promise<boolean> {
 		const integrationTenantId = await this.mappingFor(trigger.tenantId, trigger.organizationId, now.getTime());
 		if (!integrationTenantId) return false;
-		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
+		// One enqueue per record at a time in this process (the listener does not wait for the previous one).
+		const key = `${integrationTenantId}:${trigger.entityType}:${trigger.gauzyId}`;
+		const previous = this.inFlight.get(key) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.enqueueLocked(integrationTenantId, key, trigger, now));
+		this.inFlight.set(key, current);
+		try {
+			return await current;
+		} finally {
+			if (this.inFlight.get(key) === current) this.inFlight.delete(key);
+		}
+	}
+
+	/**
+	 * Reads and writes the pending change of a record inside one transaction under a database lock, so
+	 * processes cannot overwrite each other's delete or hints, nor insert two pending rows (MySQL has no
+	 * partial unique index): a Postgres advisory lock per record, the mapping row on MySQL, the single
+	 * writer on SQLite.
+	 */
+	private async enqueueLocked(integrationTenantId: ID, key: string, trigger: EverWorksOutboundTrigger, now: Date): Promise<boolean> {
 		const availableAt = new Date(now.getTime() + OUTBOUND_DEBOUNCE_MS);
-		for (let attempt = 0; attempt < 3; attempt++) {
+		return this.dataSource.transaction(async (manager) => {
+			const type = manager.connection.options.type;
+			if (type === 'postgres') {
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`ever-works:outbound:${key}`]);
+			} else if (type === 'mysql' || type === 'mariadb') {
+				await manager.findOne(IntegrationTenant, { where: { id: integrationTenantId }, lock: { mode: 'pessimistic_write' } });
+			}
+			const repository = manager.getRepository(EverWorksOutboundChange);
 			const pending = await repository.findOne({
 				where: { integrationTenantId, entityType: trigger.entityType, gauzyId: trigger.gauzyId, status: EverWorksOutboundStatus.PENDING }
 			});
@@ -79,28 +109,22 @@ export class EverWorksOutboundQueue {
 				);
 				return true;
 			}
-			try {
-				await repository.insert({
-					id: randomUUID(),
-					tenantId: trigger.tenantId,
-					organizationId: trigger.organizationId,
-					integrationTenantId,
-					entityType: trigger.entityType,
-					gauzyId: trigger.gauzyId,
-					op: trigger.op ?? 'upsert',
-					changedFieldsHint: JSON.stringify(trigger.changedFields ?? []),
-					actorUserId: trigger.actorUserId ?? null,
-					status: EverWorksOutboundStatus.PENDING,
-					attempts: 0,
-					availableAt
-				} as never);
-				return true;
-			} catch (error) {
-				// Another process inserted the pending row first (the partial unique index): merge into it.
-				this.logger.debug?.(`Outbound enqueue raced (${error instanceof Error ? error.name : 'error'}); merging.`);
-			}
-		}
-		return false;
+			await repository.insert({
+				id: randomUUID(),
+				tenantId: trigger.tenantId,
+				organizationId: trigger.organizationId,
+				integrationTenantId,
+				entityType: trigger.entityType,
+				gauzyId: trigger.gauzyId,
+				op: trigger.op ?? 'upsert',
+				changedFieldsHint: JSON.stringify(trigger.changedFields ?? []),
+				actorUserId: trigger.actorUserId ?? null,
+				status: EverWorksOutboundStatus.PENDING,
+				attempts: 0,
+				availableAt
+			} as never);
+			return true;
+		});
 	}
 
 	private parse(raw: string | null | undefined): string[] {
