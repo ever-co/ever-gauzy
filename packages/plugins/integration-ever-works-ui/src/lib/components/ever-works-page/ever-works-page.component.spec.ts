@@ -118,6 +118,32 @@ describe('EverWorksPageComponent', () => {
 		expect(fixture.componentInstance.view).toBe('unavailable');
 	});
 
+	it('while the next organization is asked for, the previous status (and its key link) is not shown', () => {
+		const organizations = new BehaviorSubject<{ id: string }>(ORGANIZATION);
+		const second = new Subject<EverWorksStatus>();
+		api.status.mockImplementation((id: string) => (id === ORGANIZATION.id ? of(STATUS) : second));
+		TestBed.configureTestingModule({
+			imports: [EverWorksPageComponent],
+			providers: [
+				{ provide: EverWorksUiService, useValue: api },
+				{ provide: Store, useValue: { selectedOrganization$: organizations } }
+			]
+		});
+		const fixture = TestBed.createComponent(EverWorksPageComponent);
+		fixture.detectChanges();
+		const el: HTMLElement = fixture.nativeElement;
+		expect(el.querySelector('[data-test="create-key"]')).not.toBeNull();
+		organizations.next({ id: '22222222-2222-4333-8444-555555555555' }); // its answer is still pending
+		fixture.detectChanges();
+		expect(fixture.componentInstance.view).toBe('loading');
+		expect(el.querySelector('[data-test="ready"]')).toBeNull();
+		expect(el.querySelector('[data-test="create-key"]')).toBeNull();
+		second.next({ ...STATUS, appUrl: null });
+		fixture.detectChanges();
+		expect(fixture.componentInstance.view).toBe('ready');
+		expect(el.querySelector('[data-test="create-key"]')).toBeNull();
+	});
+
 	it('a retry asks again for the current organization', () => {
 		api.status.mockReturnValueOnce(throwError(() => ({ status: 500 }))).mockReturnValueOnce(of(STATUS));
 		const { component } = render();
