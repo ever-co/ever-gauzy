@@ -46,7 +46,7 @@
 	},
 	"CONNECT": {
 		"API_URL": "Ever Works API URL",
-		"API_URL_HINT": "For example https://api.ever.works/api. Self-hosted, stage and dev addresses work too (HTTPS, no query or fragment).",
+		"API_URL_HINT": "The address of the Ever Works API, ending in /api (for example https://<your Ever Works API host>/api). Self-hosted, stage and dev addresses work too (HTTPS, no query or fragment).",
 		"KEY": "Integration key",
 		"KEY_HINT": "Stored encrypted and never shown again.",
 		"VALIDATE": "Validate",
