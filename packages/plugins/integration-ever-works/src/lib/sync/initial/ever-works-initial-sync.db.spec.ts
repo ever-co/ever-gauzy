@@ -59,7 +59,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntitySchema, MoreThan } from 'typeorm';
 import {
 	IntegrationSetting,
 	IntegrationTenant,
@@ -173,6 +173,8 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 	let dataSource: DataSource;
 	let mock: MockEverWorksServer;
 	let lists: Map<string, Array<Record<string, unknown>>>;
+	/** The list page size the transport serves (tests read several pages with a small one). */
+	let pageSize: number;
 	let connections: EverWorksConnectionService;
 	let store: EverWorksInboundStore;
 	let log: EverWorksSyncLogService;
@@ -252,6 +254,7 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		mockCaller.organizationId = A.organizationId;
 		mock = new MockEverWorksServer();
 		lists = new Map();
+		pageSize = 500;
 		// The mock answers whoami, the feed and webhooks; list routes the engine items have not added to it yet are served here.
 		const transport = {
 			send: async (request: EverWorksHttpRequest) => {
@@ -259,7 +262,10 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 				const marker = '/integrations/v1';
 				const path = url.pathname.slice(url.pathname.indexOf(marker) + marker.length);
 				const rows = request.method === 'GET' ? lists.get(path) : undefined;
-				if (rows) return { status: 200, headers: {}, data: MockEverWorksServer.page(rows, Object.fromEntries(url.searchParams.entries())) };
+				if (rows) {
+					const query = Object.fromEntries(url.searchParams.entries());
+					return { status: 200, headers: {}, data: MockEverWorksServer.page(rows, { ...query, limit: String(Math.min(Number(query['limit'] || 200), pageSize)) }) };
+				}
 				return mock.handle(request);
 			}
 		};
@@ -418,6 +424,37 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(done.status).toBe('done');
 		expect(phase(done, 'agents')).toMatchObject({ queued: 0, duplicates: 2, status: 'done' });
 		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { aggregateType: 'agent' } as never })).toBe(2);
+	});
+
+	it('parents first across pages: an agent read before its manager is applied after it', async () => {
+		pageSize = 1; // one agent per page: the report is read on page 1, its manager on page 2
+		await initial.start(integrationTenantId, 'initial');
+		await runToEnd();
+		expect(applied.filter((entry) => entry.startsWith('agent:'))).toEqual(['agent:agent-manager', 'agent:agent-report']);
+		// Nothing stays held back once the run is over.
+		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { status: EverWorksInboundStatus.PENDING } as never })).toBe(0);
+	});
+
+	it('a run that ends early releases what its phase held back', async () => {
+		await initial.start(integrationTenantId, 'initial');
+		// A record stored held, as an import cut short by the cancel leaves it.
+		const envelope = {
+			id: 'initial:agent:held:v1',
+			seq: '0',
+			type: 'agent.updated',
+			version: 1,
+			occurredAt: new Date().toISOString(),
+			tenantId: mock.tenant.id,
+			organizationId: ewOrgId,
+			aggregate: { type: 'agent', id: 'held', version: 1 },
+			actor: { type: 'system', id: 'initial-sync' },
+			data: { id: 'held' }
+		};
+		await store.record(connection, envelope as never, 'initial', { availableAt: new Date('9999-01-01T00:00:00.000Z') });
+		const held = () => dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', availableAt: MoreThan(new Date('9000-01-01')) } as never });
+		expect(await held()).toBe(1);
+		await initial.cancel(integrationTenantId);
+		expect(await held()).toBe(0);
 	});
 
 	it('a phase waits for its records: the next phase starts only once they are applied', async () => {
@@ -599,7 +636,7 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(errors.items.map((item) => item.action).sort()).toEqual(['a2', 'dead_letter']);
 		const first = await status.log(integrationTenantId, { limit: '2' });
 		expect(first.items).toHaveLength(2);
-		expect(first.nextCursor).toBe('2');
+		expect(first.nextCursor).toBeTruthy();
 		// Rows written in the same second are not skipped between pages.
 		const second = await status.log(integrationTenantId, { limit: '2', cursor: first.nextCursor as string });
 		expect(second.items).toHaveLength(1);
@@ -666,6 +703,27 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 			const name = (await dataSource.getRepository(OrganizationTeam).findOneOrFail({ where: { id: team.id } as never })).name;
 			// The value in Gauzy matches the resolution that won.
 			expect(name).toBe(resolved.details?.resolution === 'use_other' ? 'Platform' : 'Platform team');
+		});
+
+		it('a resolution cut short frees its conflict after the claim time; a fresh claim is respected', async () => {
+			await teamConflict(randomUUID());
+			const [conflict] = (await conflicts.list(integrationTenantId, {})).items;
+			// Another admin's resolution is in progress (claimed a moment ago): refused.
+			await dataSource.getRepository(EverWorksSyncLog).update({ id: conflict.id } as never, { resolvedByUserId: randomUUID(), updatedAt: new Date() } as never);
+			await expect(conflicts.resolve(integrationTenantId, conflict.id, 'keep')).rejects.toBeInstanceOf(ConflictException);
+			// The process stopped mid-way long ago: the conflict can be resolved again.
+			await dataSource.getRepository(EverWorksSyncLog).update({ id: conflict.id } as never, { updatedAt: new Date(Date.now() - 10 * 60_000) } as never);
+			await expect(conflicts.resolve(integrationTenantId, conflict.id, 'keep')).resolves.toMatchObject({ resolved: true, resolvedByUserId: A.userId });
+		});
+
+		it('pages of open conflicts never skip one when earlier ones are resolved in between', async () => {
+			for (let i = 0; i < 3; i++) await teamConflict(randomUUID());
+			const first = await conflicts.list(integrationTenantId, { limit: '2' });
+			expect(first.items).toHaveLength(2);
+			for (const item of first.items) await conflicts.resolve(integrationTenantId, item.id, 'keep');
+			const next = await conflicts.list(integrationTenantId, { limit: '2', cursor: first.nextCursor as string });
+			expect(next.items).toHaveLength(1);
+			expect(first.items.map((item) => item.id)).not.toContain(next.items[0].id);
 		});
 
 		it('a task value goes through the platform command; a field without a writer is refused', async () => {

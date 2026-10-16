@@ -5,7 +5,7 @@ import { EverWorksConnectionStatus } from '../../connection/ever-works-connectio
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
 import type { EverWorksDirection, EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
-import { clampLimit, EverWorksConflictsService, parseOffset } from '../conflicts/ever-works-conflicts.service';
+import { clampLimit, EverWorksConflictsService } from '../conflicts/ever-works-conflicts.service';
 import {
 	EverWorksEntityLink,
 	EverWorksInboundEvent,
@@ -14,6 +14,7 @@ import {
 	EverWorksOutboundStatus,
 	EverWorksSyncLog
 } from '../entities/ever-works-sync.entities';
+import { logCursorOf, parseLogCursor } from '../ever-works-sync-log.service';
 import { describeSyncError } from '../ever-works-sync.loop';
 import { EverWorksInitialSyncService, EverWorksSyncRunView } from '../initial/ever-works-initial-sync.service';
 
@@ -67,7 +68,7 @@ export interface EverWorksSyncLogQuery {
 	direction?: string;
 	entityType?: string;
 	limit?: string | number;
-	/** The page cursor (an offset) the previous page returned. */
+	/** The page cursor the previous page returned. */
 	cursor?: string;
 }
 
@@ -141,12 +142,13 @@ export class EverWorksSyncStatusService {
 
 	/**
 	 * `GET /mappings/:id/sync/log`: newest first, filtered by status, direction and record type; paged by
-	 * `cursor` (an offset, so rows written in the same instant are never skipped between pages).
+	 * `cursor` (the last row's time and id: rows written in the same instant are never skipped, and rows
+	 * written meanwhile never shift a page).
 	 */
 	async log(integrationTenantId: ID, query: EverWorksSyncLogQuery, organizationId?: ID): Promise<{ items: EverWorksSyncLogEntryView[]; nextCursor: string | null }> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
 		const limit = clampLimit(query.limit, 50, SYNC_LOG_PAGE_MAX);
-		const offset = parseOffset(query.cursor);
+		const cursor = parseLogCursor(query.cursor);
 		const builder = this.dataSource
 			.getRepository(EverWorksSyncLog)
 			.createQueryBuilder('log')
@@ -155,9 +157,17 @@ export class EverWorksSyncStatusService {
 		if (query.status && LOG_STATUSES.includes(query.status)) builder.andWhere('log.status = :status', { status: query.status });
 		if (query.direction && LOG_DIRECTIONS.includes(query.direction)) builder.andWhere('log.direction = :direction', { direction: query.direction });
 		if (query.entityType && /^[A-Za-z_.]{1,32}$/.test(query.entityType)) builder.andWhere('log.entityType = :entityType', { entityType: query.entityType });
-		const rows = await builder.orderBy('log.createdAt', 'DESC').addOrderBy('log.id', 'DESC').skip(offset).take(limit + 1).getMany();
+		if (cursor) {
+			builder.andWhere(
+				new Brackets((where) => {
+					where.where('log.createdAt < :at', { at: cursor.at }).orWhere(new Brackets((same) => same.where('log.createdAt = :at', { at: cursor.at }).andWhere('log.id < :id', { id: cursor.id })));
+				})
+			);
+		}
+		const rows = await builder.orderBy('log.createdAt', 'DESC').addOrderBy('log.id', 'DESC').take(limit + 1).getMany();
+		const page = rows.slice(0, limit);
 		return {
-			items: rows.slice(0, limit).map((row) => ({
+			items: page.map((row) => ({
 				id: row.id as ID,
 				createdAt: ((row as { createdAt?: Date }).createdAt as Date) ?? null,
 				direction: row.direction,
@@ -170,7 +180,7 @@ export class EverWorksSyncStatusService {
 				details: parseJson(row.details),
 				resolvedAt: row.resolvedAt ?? null
 			})),
-			nextCursor: rows.length > limit ? String(offset + limit) : null
+			nextCursor: rows.length > limit ? logCursorOf(page[page.length - 1] as EverWorksSyncLog & { createdAt?: Date }) : null
 		};
 	}
 

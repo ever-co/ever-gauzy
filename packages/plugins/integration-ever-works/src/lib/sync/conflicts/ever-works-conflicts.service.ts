@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, IsNull, Not } from 'typeorm';
+import { Brackets, DataSource, IsNull } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { OrganizationProject, OrganizationTeam, RequestContext, TaskUpdateCommand } from '@gauzy/core';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
 import { EverWorksLinkType, EverWorksSyncLog } from '../entities/ever-works-sync.entities';
-import { EverWorksSyncLogService, serializeDetails } from '../ever-works-sync-log.service';
+import { EverWorksSyncLogService, logCursorOf, parseLogCursor, serializeDetails } from '../ever-works-sync-log.service';
 import type { FieldMergeResult } from '../merge/three-way-merge';
 import { EverWorksOutboundQueue } from '../outbound/ever-works-outbound.queue';
 
@@ -102,6 +102,12 @@ export function otherValue(details: EverWorksConflictDetails): unknown {
 export const CONFLICTS_PAGE_MAX = 200;
 
 /**
+ * How long a resolution in progress holds its conflict. A resolution that never finished (the process
+ * stopped in between) frees the conflict after this, so it can be resolved again.
+ */
+export const CONFLICT_CLAIM_MS = 2 * 60_000;
+
+/**
  * Conflicts (plan 03 §C.5, plan 06 G-P1-10): last-writer-wins conflicts are `ever_works_sync_log` rows
  * with `status = 'conflict'`, kept until an admin resolves them (the log's 30-day pruning skips them).
  * The Activity tab lists them; resolving one either keeps the merged value or writes the other side's
@@ -156,7 +162,10 @@ export class EverWorksConflictsService {
 		});
 	}
 
-	/** `GET /mappings/:id/conflicts`: newest first; `state` open (default), resolved or all; paged by `cursor` (an offset). */
+	/**
+	 * `GET /mappings/:id/conflicts`: newest first; `state` open (default), resolved or all; paged by
+	 * `cursor` (the last row's time and id, so conflicts resolved meanwhile never hide later ones).
+	 */
 	async list(
 		integrationTenantId: ID,
 		query: { state?: string; limit?: string | number; cursor?: string },
@@ -165,31 +174,41 @@ export class EverWorksConflictsService {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
 		const state = query.state === 'resolved' || query.state === 'all' ? query.state : 'open';
 		const limit = clampLimit(query.limit, 50, CONFLICTS_PAGE_MAX);
-		const offset = parseOffset(query.cursor);
-		// An offset, not a time: rows written in the same instant (second-precision timestamps on SQLite) are
-		// never skipped between pages.
-		const rows = await this.dataSource.getRepository(EverWorksSyncLog).find({
-			where: {
-				tenantId: context.tenantId,
-				integrationTenantId: context.integrationTenantId,
-				status: 'conflict',
-				...(state === 'open' ? { resolvedAt: IsNull() } : state === 'resolved' ? { resolvedAt: Not(IsNull()) } : {})
-			} as never,
-			order: { createdAt: 'DESC', id: 'DESC' } as never,
-			skip: offset,
-			take: limit + 1
-		});
+		const cursor = parseLogCursor(query.cursor);
+		const builder = this.dataSource
+			.getRepository(EverWorksSyncLog)
+			.createQueryBuilder('log')
+			.where('log.tenantId = :tenantId', { tenantId: context.tenantId })
+			.andWhere('log.integrationTenantId = :integrationTenantId', { integrationTenantId: context.integrationTenantId })
+			.andWhere('log.status = :status', { status: 'conflict' });
+		if (state === 'open') builder.andWhere('log.resolvedAt IS NULL');
+		if (state === 'resolved') builder.andWhere('log.resolvedAt IS NOT NULL');
+		if (cursor) {
+			builder.andWhere(
+				new Brackets((where) => {
+					where.where('log.createdAt < :at', { at: cursor.at }).orWhere(new Brackets((same) => same.where('log.createdAt = :at', { at: cursor.at }).andWhere('log.id < :id', { id: cursor.id })));
+				})
+			);
+		}
+		const rows = await builder.orderBy('log.createdAt', 'DESC').addOrderBy('log.id', 'DESC').take(limit + 1).getMany();
+		const page = rows.slice(0, limit);
 		return {
-			items: rows.slice(0, limit).map((row) => this.view(row)),
-			nextCursor: rows.length > limit ? String(offset + limit) : null
+			items: page.map((row) => this.view(row)),
+			nextCursor: rows.length > limit ? logCursorOf(page[page.length - 1] as EverWorksSyncLog & { createdAt?: Date }) : null
 		};
 	}
 
 	/**
 	 * `POST /mappings/:id/conflicts/:conflictId/resolve`: `keep` accepts the merged value; `use_other`
-	 * writes the other side's value into the Gauzy record (and from there to Ever Works). Once only: the
-	 * conflict is claimed first (a conditional update), so of two requests at once only one applies
-	 * anything; a write that fails gives the claim back.
+	 * writes the other side's value into the Gauzy record (and from there to Ever Works). Once only:
+	 *
+	 * 1. the conflict is **claimed** (`resolvedByUserId` and the claim time, with a condition), so of two
+	 *    requests at once only one goes on; the conflict is still open while claimed;
+	 * 2. the value is written (for `use_other`);
+	 * 3. the conflict is marked resolved, by the claimer only.
+	 *
+	 * A write that fails gives the claim back at once; a resolution cut short (the process stopped) frees
+	 * it after {@link CONFLICT_CLAIM_MS}, so the admin can resolve the conflict again.
 	 */
 	async resolve(integrationTenantId: ID, conflictId: ID, resolution: 'keep' | 'use_other', organizationId?: ID): Promise<EverWorksConflictView> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
@@ -210,26 +229,36 @@ export class EverWorksConflictsService {
 			}
 			apply = () => resolver.useValue(context, row.gauzyId as ID, field, otherValue(details));
 		}
-		const userId = RequestContext.currentUserId() ?? null;
-		// Claimed first, with a condition: of two admins resolving at once (keep or use the other value),
-		// exactly one wins, and only the winner writes anything.
-		const claimed = await repository.update({ id: row.id, resolvedAt: IsNull() } as never, {
-			resolvedAt: new Date(),
-			resolvedByUserId: userId,
-			details: serializeDetails({ ...(details ?? {}), resolution })
-		} as never);
-		if (!claimed.affected) throw new ConflictException('This conflict is already resolved.');
+		const claimer = (RequestContext.currentUserId() as ID | null) ?? ('system' as ID);
+		const now = new Date();
+		const claim = this.dataSource.createQueryBuilder().update(EverWorksSyncLog);
+		const c = (name: string) => claim.escape(name);
+		const claimed = await claim
+			.set({ resolvedByUserId: claimer, updatedAt: now } as never)
+			.where(`${c('id')} = :id`, { id: row.id })
+			.andWhere(`${c('resolvedAt')} IS NULL`)
+			.andWhere(
+				new Brackets((free) => {
+					free.where(`${c('resolvedByUserId')} IS NULL`).orWhere(`${c('updatedAt')} < :stale`, { stale: new Date(now.getTime() - CONFLICT_CLAIM_MS) });
+				})
+			)
+			.execute();
+		if (!claimed.affected) throw new ConflictException('This conflict is already resolved, or being resolved right now.');
+		const mine = { id: row.id, resolvedAt: IsNull(), resolvedByUserId: claimer };
 		if (apply) {
 			try {
 				await apply();
 			} catch (error) {
-				// Nothing was applied: the conflict is open again, as it was.
-				await repository
-					.update({ id: row.id, resolvedByUserId: userId } as never, { resolvedAt: null, resolvedByUserId: null, details: row.details ?? null } as never)
-					.catch(() => undefined);
+				// Nothing was applied: the claim is given back and the conflict stays open, as it was.
+				await repository.update(mine as never, { resolvedByUserId: null } as never).catch(() => undefined);
 				throw error;
 			}
 		}
+		const done = await repository.update(mine as never, {
+			resolvedAt: new Date(),
+			details: serializeDetails({ ...(details ?? {}), resolution })
+		} as never);
+		if (!done.affected) throw new ConflictException('This conflict was resolved meanwhile.');
 		this.logger.log(`Conflict ${row.id} (${row.entityType} ${row.gauzyId}) resolved: ${resolution}.`);
 		const saved = await repository.findOneOrFail({ where: { id: row.id } as never });
 		return this.view(saved);
@@ -257,7 +286,8 @@ export class EverWorksConflictsService {
 			details,
 			resolved: !!row.resolvedAt,
 			resolvedAt: row.resolvedAt ?? null,
-			resolvedByUserId: (row.resolvedByUserId as ID) ?? null,
+			// A claim of a resolution in progress is not a resolution.
+			resolvedByUserId: row.resolvedAt ? ((row.resolvedByUserId as ID) ?? null) : null,
 			canUseOther: !row.resolvedAt && !!resolver && !!field && resolver.fields.includes(field) && !!row.gauzyId
 		};
 	}
@@ -319,8 +349,3 @@ export function clampLimit(raw: string | number | undefined, fallback: number, m
 	return Math.min(Math.floor(value), max);
 }
 
-/** A page cursor (an offset) from a query value: a non-negative integer, else 0. */
-export function parseOffset(raw: string | undefined): number {
-	if (!raw || !/^\d{1,9}$/.test(raw)) return 0;
-	return Number.parseInt(raw, 10);
-}

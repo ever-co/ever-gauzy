@@ -83,11 +83,15 @@ export const PHASE_MAX_PAGES = 2000;
 export const PREVIEW_MAX_PAGES = 20;
 
 /**
- * Initial `seq`s: each page read gets a band of {@link PAGE_SEQ_STRIDE}, so pages apply in the order read;
- * inside a page, records of one depth share a band of {@link DEPTH_STRIDE}, so parents apply first.
+ * Initial `seq`s: the records of one depth share a band of {@link DEPTH_STRIDE} (in the order read), so a
+ * phase's parents apply before their children across every page (its records are released together).
  */
-export const PAGE_SEQ_STRIDE = 1_000_000;
-export const DEPTH_STRIDE = 1_000;
+export const DEPTH_STRIDE = 1_000_000_000;
+
+/** A phase's records are stored held back (not due) until the whole phase is read, then released together. */
+export const HOLD_UNTIL = new Date('9999-01-01T00:00:00.000Z');
+/** Held records are the ones due after this. */
+export const HELD_AFTER = new Date('9000-01-01T00:00:00.000Z');
 
 /** Comment events sort after every task event of an initial sync (far above any page band). */
 export const COMMENTS_SEQ_BASE = 1_000_000_000_000_000;
@@ -134,9 +138,9 @@ export function orderForImport<T extends Record<string, unknown>>(records: Reado
 		.map(({ record, depth }) => ({ record, depth }));
 }
 
-/** The initial `seq` of the n-th record of a depth band in a page band (a decimal string, compared as an integer). */
-export function initialSeq(depth: number, index: number, base = 0): string {
-	return String(base + Math.min(depth, 999) * DEPTH_STRIDE + Math.min(index, DEPTH_STRIDE - 1));
+/** The initial `seq` of the n-th record read of a depth (a decimal string, compared as an integer). */
+export function initialSeq(depth: number, index: number): string {
+	return String(Math.min(depth, 999) * DEPTH_STRIDE + Math.min(index, DEPTH_STRIDE - 1));
 }
 
 /** Event ids are at most 64 characters (`ever_works_inbound_event.eventId`). */
