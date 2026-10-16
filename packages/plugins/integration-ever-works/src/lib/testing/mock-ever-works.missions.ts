@@ -3,7 +3,7 @@ import type { EverWorksHttpResponse } from '../client/ever-works-transport';
 import { MockEverWorksExtension, MockEverWorksRouteContext, MockEverWorksServer } from './mock-ever-works.server';
 
 /**
- * Missions for the mock Ever Works API (contract v1 B.6 + CR-7, EW-P2-5; TEST CODE): `GET /missions`,
+ * Missions for the mock Ever Works API (contract v1 B.6, EW-P2-5: ever-works #2652 / CR-8; TEST CODE): `GET /missions`,
  * `GET /missions/:id`, `POST /missions` (always `paused`; `externalRef` repeat → 200 existing), `PATCH
  * /missions/:id` (never `active` → 422), `PUT /missions/:id/works` and `PUT /missions/:id/goals` (at most
  * one primary). `If-Match` → 412. Writes act as the mission's owner: another user's mission answers 404.
@@ -17,7 +17,7 @@ export class MockEverWorksMissions {
 		mock.extensions.push(this.route);
 	}
 
-	/** Adds (or replaces) a mission (CR-7 mission DTO) of an organization and returns it. */
+	/** Adds (or replaces) a mission (mission DTO, ever-works #2652) of an organization and returns it. */
 	addMission(organizationId: string, mission: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
 		const id = (mission['id'] as string) ?? randomUUID();
 		const now = new Date().toISOString();
@@ -117,7 +117,7 @@ export class MockEverWorksMissions {
 
 	private create(context: MockEverWorksRouteContext): EverWorksHttpResponse {
 		const input = (context.body ?? {}) as Record<string, unknown>;
-		const allowed = new Set(['title', 'description', 'type', 'schedule', 'teamIds', 'visibility', 'externalRef']);
+		const allowed = new Set(['title', 'description', 'teamIds', 'visibility', 'externalRef']);
 		const refused = Object.keys(input).filter((field) => !allowed.has(field));
 		if (refused.length)
 			return MockEverWorksServer.error(400, 'validation_failed', `Unknown properties: ${refused.join(', ')}.`);
@@ -145,7 +145,7 @@ export class MockEverWorksMissions {
 		const mission = this.addMission(context.org?.id as string, {
 			title,
 			description,
-			type: (input['type'] as string) ?? 'one-shot',
+			type: 'one-shot',
 			teamIds,
 			visibility: (input['visibility'] as string) ?? (teamIds.length ? 'team' : 'organization'),
 			status: 'paused',

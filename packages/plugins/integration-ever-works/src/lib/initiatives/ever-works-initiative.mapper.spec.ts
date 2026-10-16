@@ -122,7 +122,7 @@ describe('the Ever Works side of an initiative', () => {
 		expect(missionPushPlan({ ...now, works: [] }, before, null).works).toBe(true);
 	});
 
-	it('the create body is a one-shot mission with no status (Ever Works creates it paused), linked back', () => {
+	it('the create body has no status or type (Ever Works creates it paused and one-shot), linked back', () => {
 		const body = missionCreateBody(
 			gauzyInitiativeShared({ title: 'Win SMB', intent: 'Grow' }, ['ew-t1'], [], []),
 			'c1',
@@ -131,7 +131,6 @@ describe('the Ever Works side of an initiative', () => {
 		expect(body).toEqual({
 			title: 'Win SMB',
 			description: 'Grow',
-			type: 'one-shot',
 			teamIds: ['ew-t1'],
 			visibility: 'team',
 			externalRef: { source: 'gauzy', installationId: 'c1', externalId: 'init-1' }

@@ -22,7 +22,7 @@ export interface EverWorksMissionGoal {
 	isPrimary?: boolean;
 }
 
-/** An Ever Works mission (contract v1 mission DTO, EW-P2-5 / CR-7; also the `data` of `mission.*` events). */
+/** An Ever Works mission (contract v1 mission DTO, EW-P2-5, ever-works #2652 / CR-8; also the `data` of `mission.*` events). */
 export interface EverWorksMission {
 	id: string;
 	organizationId?: string;
@@ -206,12 +206,11 @@ export function missionPushPlan(
 	};
 }
 
-/** `POST /missions` body (CR-7): Ever Works always creates it `paused` (D9); a one-shot mission. */
+/** `POST /missions` body (`CreateMission`, ever-works #2652): Ever Works always creates it `paused`, one-shot, with no schedule or auto-build (D9). */
 export function missionCreateBody(now: MissionShared, connectionId: ID, initiativeId: ID): Record<string, unknown> {
 	return {
 		title: now.title,
 		description: now.description,
-		type: 'one-shot',
 		teamIds: now.teamIds,
 		visibility: now.teamIds.length ? 'team' : 'organization',
 		externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: connectionId, externalId: initiativeId }
