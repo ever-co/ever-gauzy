@@ -1,12 +1,65 @@
 // cspell:ignore dmarc softfail temperror permerror mailparser
 import { createHash } from 'node:crypto';
-import { MailparserAddress, MailparserAddressObject, simpleParser } from 'mailparser';
 import {
 	IInboundEmailAddress,
 	InboundAuthVerdict,
 	IParsedInboundAttachment,
 	ParsedInboundEmail
 } from '../providers/email-provider.types';
+
+/** An address of a parsed header, as `mailparser` gives it (groups nest). */
+export interface MimeAddress {
+	address?: string;
+	name?: string;
+	group?: MimeAddress[];
+}
+
+/** A parsed address header (`From`, `To`, …), as `mailparser` gives it. */
+export interface MimeAddressObject {
+	value: MimeAddress[];
+	text?: string;
+}
+
+/** The part of `mailparser`'s `simpleParser` result this module reads. */
+interface MimeParsedMail {
+	headerLines?: Array<{ key: string; line: string }>;
+	subject?: string;
+	from?: MimeAddressObject;
+	to?: MimeAddressObject | MimeAddressObject[];
+	cc?: MimeAddressObject | MimeAddressObject[];
+	replyTo?: MimeAddressObject;
+	messageId?: string;
+	inReplyTo?: string;
+	references?: string | string[];
+	date?: Date;
+	text?: string;
+	html?: string | false;
+	attachments?: Array<{
+		content?: Buffer;
+		contentType?: string;
+		contentDisposition?: string;
+		filename?: string;
+		cid?: string;
+		related?: boolean;
+	}>;
+}
+
+type SimpleParser = (
+	input: Buffer,
+	options: {
+		keepCidLinks?: boolean;
+		skipHtmlToText?: boolean;
+		skipTextToHtml?: boolean;
+		skipTextLinks?: boolean;
+		skipImageLinks?: boolean;
+	}
+) => Promise<MimeParsedMail>;
+
+// `mailparser` 3 ships no type declarations, so it is loaded untyped, behind the shape above. A typed import would
+// need a module declaration in every program that compiles this file (the plugins that use it from source), and would
+// leak `mailparser` types into this package's declarations.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { simpleParser } = require('mailparser') as { simpleParser: SimpleParser };
 
 /** The headers a stored message keeps (lower-case names). Everything else stays in the raw message only. */
 export const ALLOWLISTED_HEADERS = new Set([
@@ -78,12 +131,10 @@ export function verdictsFromAuthenticationResults(header: unknown): {
 }
 
 /** The addresses of a parsed address header (groups flattened). */
-export function addressesOf(
-	value: MailparserAddressObject | MailparserAddressObject[] | undefined
-): IInboundEmailAddress[] {
+export function addressesOf(value: MimeAddressObject | MimeAddressObject[] | undefined): IInboundEmailAddress[] {
 	const objects = value === undefined ? [] : Array.isArray(value) ? value : [value];
 	const out: IInboundEmailAddress[] = [];
-	const visit = (entry: MailparserAddress) => {
+	const visit = (entry: MimeAddress) => {
 		if (Array.isArray(entry.group)) {
 			entry.group.forEach(visit);
 			return;
