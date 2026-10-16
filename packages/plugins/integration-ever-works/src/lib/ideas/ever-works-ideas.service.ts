@@ -25,7 +25,13 @@ import {
 	EverWorksDirection
 } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
-import { everWorksUserOfGauzyUser, gauzyUserOfActor, runAsGauzyUser } from '../sync/ever-works-actor';
+import {
+	EverWorksNoRequestContextError,
+	everWorksUserOfGauzyUser,
+	gauzyUserOfActor,
+	NO_REQUEST_CONTEXT_RETRY_MS,
+	runAsGauzyUser
+} from '../sync/ever-works-actor';
 import {
 	EverWorksEntityLink,
 	EverWorksLinkState,
@@ -161,7 +167,14 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 			return { status: 'skipped', message: `${envelope.type} is not synced` };
 		}
 		const actorUserId = await gauzyUserOfActor(this.dataSource, this.links, context, envelope.actor);
-		return this.applyIdea(context, link, idea, version, actorUserId);
+		try {
+			return await this.applyIdea(context, link, idea, version, actorUserId);
+		} catch (error) {
+			// The worker cannot write through Gauzy's task commands: an API process applies it.
+			if (error instanceof EverWorksNoRequestContextError)
+				return { status: 'deferred', message: error.message, retryInMs: NO_REQUEST_CONTEXT_RETRY_MS };
+			throw error;
+		}
 	}
 
 	private async applyIdea(
@@ -342,8 +355,15 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				message: `waiting for the Gauzy team ${scope.waitingFor} to be paired (teams first)`
 			};
 		const now = gauzyTaskToIdea(task, scope.scope);
-		if (!link) return this.create(context, client, task, now, change.actorUserId as ID | null);
-		return this.update(context, client, task, now, link);
+		try {
+			if (!link) return await this.create(context, client, task, now, change.actorUserId as ID | null);
+			return await this.update(context, client, task, now, link);
+		} catch (error) {
+			// A Gauzy write of this push (a refused move written back) needs a request context: an API process pushes it.
+			if (error instanceof EverWorksNoRequestContextError)
+				return { status: 'deferred', message: error.message, retryInMs: NO_REQUEST_CONTEXT_RETRY_MS };
+			throw error;
+		}
 	}
 
 	private async create(

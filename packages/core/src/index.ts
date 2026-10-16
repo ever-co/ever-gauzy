@@ -389,3 +389,22 @@ export { TermsAcceptanceService } from './lib/terms-acceptance/terms-acceptance.
 // which reads the same counters outside any request (instance-wide, never per tenant).
 export { StatsModule } from './lib/stats/stats.module';
 export { StatsService } from './lib/stats/stats.service';
+// The email transport seam (plan 04 §5.5, G-P4-5): a provider plugin (Resend, Postmark, ...) registers a resolver
+// that supplies an API transport per tenant / organization, and the Inbox sends its replies and forwards through
+// `EmailSendService.sendMessage`. With no resolver registered every send takes the SMTP chain as before. Exported at
+// the end: `./lib/core` above has loaded the module graph by then, so this adds no edge to it.
+export { EmailSendModule } from './lib/email-send/email-send.module';
+export { EmailSendService } from './lib/email-send/email-send.service';
+export type {
+	IOutboundEmailMessage,
+	IOutboundEmailResult,
+	IOutboundEmailScope,
+	OutboundEmailAddress
+} from './lib/email-send/email-send.service';
+export { EmailTransportRegistry, getEmailTransportRegistry } from './lib/email-send/email-transport.registry';
+export type {
+	IEmailTransportRequest,
+	IEmailTransportResolution,
+	IEmailTransportResolver
+} from './lib/email-send/email-transport.registry';
+export { describeEmailSendError, redactEmailAddresses } from './lib/email-send/email-send-error';

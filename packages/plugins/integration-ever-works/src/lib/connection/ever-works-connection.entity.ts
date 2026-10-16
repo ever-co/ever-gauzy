@@ -133,7 +133,7 @@ export class EverWorksConnection extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ nullable: true })
 	lastWebhookAt?: Date;
 
-	/** Set when the feed cursor expired (410): the reconcile pass resyncs every type. */
+	/** Set when the feed cursor expired (410): the reconcile pass syncs every type again. */
 	@MultiORMColumn({ nullable: true })
 	resyncRequestedAt?: Date;
 }

@@ -43,12 +43,32 @@ jest.mock('@gauzy/core', () => {
 				'ResourceLink'
 			].map((name) => [name, entity(name)])
 		),
-		RequestContext: {
-			currentTenantId: () => null,
-			currentUserId: () => null,
-			currentOrganizationId: () => null,
-			runWithRequest: (_req: unknown, fn: () => unknown) => fn()
-		}
+		// A request context the sync opens (`runWithRequest`), or none at all (`noContext`: the worker).
+		RequestContext: (() => {
+			const state: { noContext: boolean; current: { user?: { id?: string; tenantId?: string } } | null } = {
+				noContext: false,
+				current: null
+			};
+			return {
+				state,
+				currentTenantId: () => state.current?.user?.tenantId ?? null,
+				currentUserId: () => state.current?.user?.id ?? null,
+				currentOrganizationId: () => null,
+				runWithRequest: async (
+					req: { user?: { id?: string; tenantId?: string } },
+					fn: () => Promise<unknown>
+				) => {
+					if (state.noContext) return fn();
+					const previous = state.current;
+					state.current = req;
+					try {
+						return await fn();
+					} finally {
+						state.current = previous;
+					}
+				}
+			};
+		})()
 	};
 });
 jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
@@ -59,6 +79,7 @@ import {
 	IntegrationSetting,
 	OrganizationProject,
 	OrganizationProjectCreateCommand,
+	RequestContext,
 	ResourceLink,
 	Tag,
 	Task,
@@ -388,6 +409,21 @@ describe('EverWorksIdeasService — EW → G', () => {
 			applyContext
 		);
 		expect(tasks).toHaveLength(1);
+	});
+
+	it('a process without a request context (the worker) writes nothing and defers the idea to an API process', async () => {
+		const { service, tasks, projects } = setup();
+		const state = (RequestContext as unknown as { state: { noContext: boolean } }).state;
+		state.noContext = true;
+		try {
+			expect(await service.apply(envelope('idea.created', idea) as never, applyContext)).toMatchObject({
+				status: 'deferred'
+			});
+		} finally {
+			state.noContext = false;
+		}
+		expect(tasks).toHaveLength(0);
+		expect(projects).toHaveLength(0);
 	});
 
 	it('ideas switched to Gauzy → Ever Works only are not applied', async () => {

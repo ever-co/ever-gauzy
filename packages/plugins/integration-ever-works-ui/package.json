@@ -28,6 +28,7 @@
 		"@angular/router": "22.2.2"
 	},
 	"dependencies": {
+		"@angular/forms": "22.2.2",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin-ui": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",

@@ -54,9 +54,26 @@ export async function everWorksUserOfGauzyUser(
 }
 
 /**
+ * This process cannot open a request context: the worker builds its own module graph without core's
+ * `AppModule`, so it has no CLS service (and no task command handlers). Writes through Gauzy's commands
+ * are then applied by a process that serves the API; the event or change is deferred and retried there.
+ */
+export class EverWorksNoRequestContextError extends Error {
+	constructor() {
+		super('This process has no request context for Gauzy writes; a process that serves the API applies them.');
+		this.name = 'EverWorksNoRequestContextError';
+	}
+}
+
+/** How long a write deferred for want of a request context waits before it is tried again. */
+export const NO_REQUEST_CONTEXT_RETRY_MS = 5 * 60_000;
+
+/**
  * Runs `fn` inside a request context of its own, signed in as `userId` in the mapping's tenant and
  * organization (Gauzy's commands stamp the tenant and the author from it). No employee is set, so a
- * command never adds "the current employee" as a member of what the sync creates.
+ * command never adds "the current employee" as a member of what the sync creates, and no permission is
+ * held. Where no request context can be opened (the worker), nothing is written:
+ * {@link EverWorksNoRequestContextError} is thrown before `fn` runs.
  */
 export function runAsGauzyUser<T>(
 	context: EverWorksMappingContext,
@@ -67,7 +84,15 @@ export function runAsGauzyUser<T>(
 		id: userId ?? undefined,
 		tenantId: context.tenantId,
 		lastOrganizationId: context.organizationId,
+		name: 'Ever Works',
+		firstName: 'Ever Works',
+		lastName: '',
+		employeeId: undefined,
 		permissions: []
 	};
-	return RequestContext.runWithRequest({ user, headers: {} } as never, fn);
+	return RequestContext.runWithRequest({ user, headers: {}, query: {}, params: {}, body: {} } as never, async () => {
+		// Without the platform's request context the commands would write tenant-less rows: refuse first.
+		if (RequestContext.currentTenantId() !== context.tenantId) throw new EverWorksNoRequestContextError();
+		return fn();
+	});
 }
