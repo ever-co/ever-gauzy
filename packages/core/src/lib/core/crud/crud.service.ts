@@ -43,6 +43,7 @@ import {
 	MultiORM,
 	MultiORMEnum,
 	concatIdToWhere,
+	convertTypeORMWhereToMikroORM,
 	getORMType,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -841,6 +842,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					let where: MikroFilterQuery<T>;
 					if (typeof id === 'string') {
 						where = { id } as any;
+					} else if (Utils.isPlainObject(id)) {
+						// Translated as `delete()` and the reads translate it: a TypeORM operator left in the criteria (`In`,
+						// `IsNull`, `LessThan`) reached the statement as the value '[object Object]'.
+						where = convertTypeORMWhereToMikroORM(id as MikroFilterQuery<T>);
 					} else {
 						where = id as MikroFilterQuery<T>;
 					}
