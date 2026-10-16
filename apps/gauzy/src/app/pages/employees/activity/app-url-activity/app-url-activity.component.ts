@@ -1,10 +1,9 @@
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, filter } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -13,32 +12,125 @@ import {
 	ActivityType,
 	IDailyActivity,
 	IActivity,
+	IEmployee,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { ActivityService, DateRangePickerBuilderService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isEmpty, isObject, toLocal, toUTC } from '@gauzy/ui-core/common';
+import {
+	ActivityService,
+	DateRangePickerBuilderService,
+	EmployeesService,
+	Store,
+	TimesheetFilterService
+} from '@gauzy/ui-core/core';
+import { distinctUntilChange, isEmpty, isObject, toLocal } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
+/** How the page lays the period's activity out. */
+export type AppUrlView = 'items' | 'members' | 'hours';
+
+/** One app or site over the whole period. */
+export interface IActivityItemRow {
+	title: string;
+	/** First letter of the name, for its icon tile. */
+	letter: string;
+	duration: number;
+	/** Share of the period's total, 0–100. */
+	share: number;
+	/** Bar length, 0–100, against the most-used row. */
+	width: number;
+}
+
+/** One member, with the apps or sites they used. */
+interface IMemberGroup {
+	id: string;
+	name: string;
+	initials: string;
+	avatarUrl?: string;
+	duration: number;
+	items: IActivityItemRow[];
+}
+
+/** One hour (or one day, when the API returns no hour) of activity. */
+interface IHourGroup {
+	key: string;
+	label: string;
+	sublabel?: string;
+	duration: number;
+	items: IActivityItemRow[];
+}
+
+/** One page of a visited site, for the expanded URL row. */
+interface IPageRow {
+	/** The address when one was recorded, else the page's title. */
+	label: string;
+	/** Set only for a real http(s) address, so the row can link to it. */
+	href?: string;
+	duration: number;
+}
+
+type Loadable<T> = { loading: boolean; failed: boolean; value: T };
+
+/** Rows a member card lists before "Show all". */
+const MEMBER_ITEM_LIMIT = 5;
+
+/**
+ * Apps / Visited sites, in the manner of Hubstaff's Apps & URLs page: a short
+ * summary of the period (total time, how many apps or sites, the most used
+ * one), then the activity laid out three ways —
+ *
+ * - by app or site: one row per name over the whole period, with its share;
+ *   a site expands into the pages visited on it;
+ * - by member: each member's apps or sites, most used first;
+ * - by hour: the hour-by-hour log the page used to show.
+ *
+ * Every figure comes from the daily activities endpoint for the filters above;
+ * the page only groups and ranks them.
+ */
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-app-url-activity',
 	styleUrls: ['./app-url-activity.component.scss'],
 	templateUrl: './app-url-activity.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
-	standalone: false
+	standalone: false,
+	// Not provided in root: the member view reads names and photos through it.
+	providers: [EmployeesService]
 })
 export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
-	apps: {
-		hour: string;
-		activities: IDailyActivity[];
-	}[];
+	failed = false;
 	type: 'apps' | 'urls';
+
+	/** The period's activity as the API returned it, one row per day / hour / name / member. */
+	public activities: IDailyActivity[] = [];
+
+	public view: AppUrlView = 'items';
+	public readonly views: AppUrlView[] = ['items', 'members', 'hours'];
+	public search = '';
+	public sortBy: 'time' | 'name' = 'time';
+	public readonly memberItemLimit = MEMBER_ITEM_LIMIT;
+	/** Member cards opened past their first rows. */
+	public expandedMembers = new Set<string>();
+	/** Sites opened into their pages, by title. */
+	public pages = new Map<string, Loadable<IPageRow[]>>();
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
+	private _employees = new Map<string, { name: string; avatarUrl?: string }>();
+	private _employeesFor: string | null = null;
+	private _loadSequence = 0;
+	private _derived: {
+		from: IDailyActivity[];
+		search: string;
+		sortBy: string;
+		items: IActivityItemRow[];
+		members: IMemberGroup[];
+		hours: IHourGroup[];
+		total: number;
+	} | null = null;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -46,6 +138,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly activityService: ActivityService,
+		private readonly employeesService: EmployeesService,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
 	) {
@@ -106,70 +199,20 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		const request: IGetActivitiesInput = {
 			...this.filters,
 			...this.getFilterRequest(this.request),
-			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
+			types: [this.activityType]
 		};
 		this.payloads$.next(request);
 	}
 
-	/**
-	 * Load child activities for the given item.
-	 *
-	 * @param item The daily activity item to load child activities for.
-	 */
-	async loadChild(item: IDailyActivity) {
-		const date = moment(item.date).format('YYYY-MM-DD');
-		const dateTime = toLocal(moment.utc(date + ' ' + item.time));
-
-		try {
-			const request: IGetActivitiesInput = {
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId,
-				startDate: toUTC(dateTime).format('YYYY-MM-DD HH:mm:ss'),
-				endDate: toUTC(dateTime).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-				employeeIds: [item.employeeId],
-				types: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
-				titles: [item.title]
-			};
-
-			const activities = await this.activityService.getActivities(request);
-			item.childItems = activities.map((activity) => this.createDailyActivity(activity, item.duration));
-		} catch (error) {
-			console.error('Error loading child activities:', error);
-		}
+	get activityType(): ActivityType {
+		return this.type === 'urls' ? ActivityType.URL : ActivityType.APP;
 	}
 
-	/**
-	 * Creates a daily activity object from the given activity data.
-	 *
-	 * @param activity The activity data.
-	 * @param parentDuration The duration of the parent activity.
-	 * @returns The daily activity object.
-	 */
-	private createDailyActivity(activity: IActivity, parentDuration: number): IDailyActivity {
-		const dailyActivity: IDailyActivity = {
-			duration: activity.duration,
-			employeeId: activity.employeeId,
-			date: activity.date,
-			title: activity.title,
-			description: activity.description,
-			durationPercentage: (activity.duration * 100) / parentDuration
-		};
-
-		if (activity.metaData) {
-			let metaData: IURLMetaData = {};
-
-			if (typeof activity.metaData === 'string') {
-				metaData = JSON.parse(activity.metaData) as IURLMetaData;
-			} else if (isObject(activity.metaData)) {
-				metaData = activity.metaData as IURLMetaData;
-			}
-
-			dailyActivity.metaData = metaData;
-			dailyActivity.url = metaData.url || '';
-		}
-
-		return dailyActivity;
+	get isUrls(): boolean {
+		return this.type === 'urls';
 	}
+
+	/* ── Loading ─────────────────────────────────────────────────────────── */
 
 	/**
 	 * Get APP & URL's activity logs
@@ -181,46 +224,307 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			return;
 		}
 
+		const sequence = ++this._loadSequence;
 		this.loading = true;
+		this.failed = false;
+		this.pages = new Map();
+		this.expandedMembers = new Set();
 
 		try {
 			const payloads = this.payloads$.getValue();
-			const activities = await this.activityService.getDailyActivities(payloads);
-			this.apps = chain(activities)
-				.map((activity) => {
-					activity.hours = toLocal(
-						moment.utc(moment.utc(activity.date).format('YYYY-MM-DD') + ' ' + activity.time)
-					);
-					return activity;
-				})
-				.groupBy('hours')
-				.map((activities, hour) => this.calculateActivityDurations(activities, hour))
-				.values()
-				.value();
+			const [activities] = await Promise.all([
+				this.activityService.getDailyActivities(payloads),
+				this.loadEmployees()
+			]);
+			if (sequence !== this._loadSequence) return;
+			this.activities = (activities || []).map((activity) => ({
+				...activity,
+				duration: Number(activity.duration) || 0
+			}));
 		} catch (error) {
+			if (sequence !== this._loadSequence) return;
 			console.error('Failed to get daily activities:', error);
+			this.activities = [];
+			this.failed = true;
 		} finally {
-			this.loading = false;
+			if (sequence === this._loadSequence) this.loading = false;
 		}
 	}
 
 	/**
-	 * Calculate the duration percentages for activities and group them by hour.
-	 *
-	 * @param activities The list of activities for a specific hour.
-	 * @param hour The hour to group activities by.
-	 * @returns An object containing the hour and its activities with duration percentages.
+	 * Names and photos for the member view, read once per organization. A user
+	 * who may not list employees still sees their own name; anyone else falls
+	 * back to a neutral label.
 	 */
-	private calculateActivityDurations(activities: any[], hour: string): { hour: string; activities: any[] } {
-		const limitedActivities = activities.slice(0, 6);
-		const totalDuration = reduce(limitedActivities, (sum, activity) => sum + parseInt(activity.duration, 10), 0);
+	private async loadEmployees(): Promise<void> {
+		const { id: organizationId, tenantId } = this.organization;
+		if (this._employeesFor === organizationId) return;
+		this._employeesFor = organizationId;
+		this._employees = new Map();
 
-		const activitiesWithDurations = limitedActivities.map((activity) => {
-			activity.durationPercentage = parseFloat(((activity.duration * 100) / totalDuration).toFixed(1));
-			return activity;
-		});
+		const user = this.store.user;
+		if (user?.employee?.id) {
+			this._employees.set(user.employee.id, {
+				name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || user.email,
+				avatarUrl: user.image?.fullUrl || user.imageUrl
+			});
+		}
+		try {
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], { organizationId, tenantId } as any)
+			);
+			for (const employee of items || []) {
+				this._employees.set(employee.id, {
+					name: AppUrlActivityComponent.nameOf(employee),
+					avatarUrl: employee.user?.image?.fullUrl || employee.user?.imageUrl
+				});
+			}
+		} catch {
+			// Without access to the employee list, only the user's own name is known.
+		}
+	}
 
-		return { hour, activities: activitiesWithDurations };
+	/**
+	 * Opens a site into the pages visited on it over the whole period, or closes
+	 * it. The pages are read once per site and filter set.
+	 */
+	async togglePages(row: IActivityItemRow): Promise<void> {
+		if (this.pages.has(row.title)) {
+			const next = new Map(this.pages);
+			next.delete(row.title);
+			this.pages = next;
+			return;
+		}
+		const sequence = this._loadSequence;
+		this.setPages(row.title, { loading: true, failed: false, value: [] });
+		try {
+			const request: IGetActivitiesInput = {
+				...this.payloads$.getValue(),
+				types: [ActivityType.URL],
+				titles: [row.title]
+			};
+			const activities = await this.activityService.getActivities(request);
+			if (sequence !== this._loadSequence || !this.pages.has(row.title)) return;
+			this.setPages(row.title, { loading: false, failed: false, value: this.toPages(activities || []) });
+		} catch {
+			if (sequence !== this._loadSequence || !this.pages.has(row.title)) return;
+			this.setPages(row.title, { loading: false, failed: true, value: [] });
+		}
+	}
+
+	private setPages(title: string, value: Loadable<IPageRow[]>): void {
+		const next = new Map(this.pages);
+		next.set(title, value);
+		this.pages = next;
+	}
+
+	/** The site's pages: one row per address, most visited first. */
+	private toPages(activities: IActivity[]): IPageRow[] {
+		const byUrl = new Map<string, IPageRow>();
+		for (const activity of activities) {
+			const url = (AppUrlActivityComponent.metaOf(activity).url || '').trim();
+			const label = url || activity.description || activity.title;
+			const row = byUrl.get(label) || {
+				label,
+				href: /^https?:\/\//i.test(url) ? url : undefined,
+				duration: 0
+			};
+			row.duration += Number(activity.duration) || 0;
+			byUrl.set(label, row);
+		}
+		return [...byUrl.values()].sort((a, b) => b.duration - a.duration);
+	}
+
+	/* ── Derived views ───────────────────────────────────────────────────── */
+
+	/** Every grouping the template reads, computed once per data, search or sort change. */
+	private get derived() {
+		const from = this.activities;
+		const search = this.search.trim().toLowerCase();
+		if (this._derived?.from === from && this._derived.search === search && this._derived.sortBy === this.sortBy) {
+			return this._derived;
+		}
+
+		const rows = search ? from.filter((row) => (row.title || '').toLowerCase().includes(search)) : from;
+		const total = rows.reduce((sum, row) => sum + row.duration, 0);
+		const memberIds = new Set(rows.map((row) => row.employeeId).filter(Boolean));
+
+		const items = this.rankItems(rows, total);
+
+		const members: IMemberGroup[] = [...memberIds]
+			.map((id) => {
+				const own = rows.filter((row) => row.employeeId === id);
+				const duration = own.reduce((sum, row) => sum + row.duration, 0);
+				const person = this._employees.get(id);
+				const name = person?.name || this.getTranslation('ACTIVITY.APPS_URLS.UNKNOWN_MEMBER');
+				return {
+					id,
+					name,
+					initials: AppUrlActivityComponent.initialsOf(name),
+					avatarUrl: person?.avatarUrl,
+					duration,
+					items: this.rankItems(own, duration)
+				};
+			})
+			.sort((a, b) => b.duration - a.duration || a.name.localeCompare(b.name));
+
+		const hours = this.groupByHour(rows);
+
+		this._derived = {
+			from,
+			search,
+			sortBy: this.sortBy,
+			items,
+			members,
+			hours,
+			total
+		};
+		return this._derived;
+	}
+
+	get items(): IActivityItemRow[] {
+		return this.derived.items;
+	}
+
+	get memberGroups(): IMemberGroup[] {
+		return this.derived.members;
+	}
+
+	get hourGroups(): IHourGroup[] {
+		return this.derived.hours;
+	}
+
+	get totalDuration(): number {
+		return this.derived.total;
+	}
+
+	/** The most used app or site, whatever the sort. */
+	get topItem(): IActivityItemRow | undefined {
+		return this.derived.items.reduce<IActivityItemRow | undefined>(
+			(top, row) => (!top || row.duration > top.duration ? row : top),
+			undefined
+		);
+	}
+
+	/** One row per name over a set of activity rows, ranked and sized. */
+	private rankItems(rows: IDailyActivity[], total: number): IActivityItemRow[] {
+		const byTitle = new Map<string, number>();
+		for (const row of rows) {
+			const title = row.title || '—';
+			byTitle.set(title, (byTitle.get(title) || 0) + row.duration);
+		}
+		const max = Math.max(0, ...byTitle.values());
+		const list = [...byTitle.entries()].map(([title, duration]) => ({
+			title,
+			letter: AppUrlActivityComponent.letterOf(title),
+			duration,
+			share: total ? (duration / total) * 100 : 0,
+			width: max ? Math.max(duration ? 2 : 0, (duration / max) * 100) : 0
+		}));
+		return this.sortBy === 'name'
+			? list.sort((a, b) => a.title.localeCompare(b.title))
+			: list.sort((a, b) => b.duration - a.duration || a.title.localeCompare(b.title));
+	}
+
+	/**
+	 * Rows grouped by the hour they happened in, newest first. The hour is read
+	 * in the viewer's zone, as before; a row without an hour falls into its day.
+	 */
+	private groupByHour(rows: IDailyActivity[]): IHourGroup[] {
+		const groups = new Map<string, { at: moment.Moment; hasHour: boolean; rows: IDailyActivity[] }>();
+		for (const row of rows) {
+			const day = moment.utc(row.date).format('YYYY-MM-DD');
+			const hasHour = !!row.time;
+			const at = hasHour ? toLocal(moment.utc(`${day} ${row.time}`)) : moment(day);
+			const key = hasHour ? at.format('YYYY-MM-DD HH') : day;
+			const group = groups.get(key) || { at, hasHour, rows: [] };
+			group.rows.push(row);
+			groups.set(key, group);
+		}
+		return [...groups.entries()]
+			.sort(([, a], [, b]) => b.at.valueOf() - a.at.valueOf())
+			.map(([key, group]) => {
+				const duration = group.rows.reduce((sum, row) => sum + row.duration, 0);
+				return {
+					key,
+					label: group.at.format('dddd, ll'),
+					sublabel: group.hasHour
+						? `${group.at.format('LT')} – ${group.at.clone().add(1, 'hour').format('LT')}`
+						: undefined,
+					duration,
+					items: this.rankItems(group.rows, duration)
+				};
+			});
+	}
+
+	/* ── View helpers ────────────────────────────────────────────────────── */
+
+	setView(view: AppUrlView): void {
+		this.view = view;
+	}
+
+	toggleSort(): void {
+		this.sortBy = this.sortBy === 'time' ? 'name' : 'time';
+	}
+
+	toggleMember(id: string): void {
+		const next = new Set(this.expandedMembers);
+		next.has(id) ? next.delete(id) : next.add(id);
+		this.expandedMembers = next;
+	}
+
+	visibleMemberItems(group: IMemberGroup): IActivityItemRow[] {
+		return this.expandedMembers.has(group.id) ? group.items : group.items.slice(0, MEMBER_ITEM_LIMIT);
+	}
+
+	/** Seconds as "5h 07m" — the unit every time figure on the page is read in. */
+	formatDuration(seconds: number): string {
+		const total = Math.max(0, Math.round(Number(seconds) || 0));
+		const h = Math.floor(total / 3600);
+		const m = Math.floor((total % 3600) / 60);
+		if (!h && !m && total) return `${total}s`;
+		return `${h}h ${m.toString().padStart(2, '0')}m`;
+	}
+
+	formatPercent(value: number): string {
+		const rounded = Math.round((Number(value) || 0) * 10) / 10;
+		return `${rounded < 10 && rounded % 1 ? rounded.toFixed(1) : Math.round(rounded)}%`;
+	}
+
+	/* ── Helpers ─────────────────────────────────────────────────────────── */
+
+	private static metaOf(activity: IActivity): IURLMetaData {
+		if (!activity.metaData) return {};
+		if (typeof activity.metaData === 'string') {
+			try {
+				return JSON.parse(activity.metaData) as IURLMetaData;
+			} catch {
+				return {};
+			}
+		}
+		return isObject(activity.metaData) ? (activity.metaData as IURLMetaData) : {};
+	}
+
+	private static nameOf(employee: IEmployee): string {
+		const user = employee?.user;
+		const parts = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+		return employee?.fullName || user?.name || parts || user?.email || '';
+	}
+
+	private static initialsOf(name: string): string {
+		return (name || '')
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part) => part[0].toUpperCase())
+			.join('');
+	}
+
+	/** First letter of the name, skipping a leading "www." for a site. */
+	private static letterOf(title: string): string {
+		const clean = (title || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+		const match = clean.match(/[\p{L}\p{N}]/u);
+		return match ? match[0].toUpperCase() : '?';
 	}
 
 	ngOnDestroy(): void {}
