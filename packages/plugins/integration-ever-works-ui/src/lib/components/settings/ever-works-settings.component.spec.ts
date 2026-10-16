@@ -234,4 +234,13 @@ describe('EverWorksSettingsComponent', () => {
 		expect(component.confirmDisconnect).toBe(false);
 		expect(navigate).toHaveBeenCalledWith(['/pages/integrations/ever-works']);
 	});
+
+	it('a webhook the wizard could not register is shown when the settings open', () => {
+		const state = jest.spyOn(globalThis.history, 'state', 'get').mockReturnValue({ everWorksWebhookWarning: 'API_BASE_URL is not set.' });
+		const { component, find } = render();
+		expect(component.notice).toBe('EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED');
+		expect(component.noticeParams).toEqual({ reason: 'API_BASE_URL is not set.' });
+		expect(find('notice')).not.toBeNull();
+		state.mockRestore();
+	});
 });

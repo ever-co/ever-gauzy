@@ -19,6 +19,7 @@ import type {
 } from '../../services/ever-works.service';
 import { EverWorksUiService } from '../../services/ever-works.service';
 import { EverWorksDirectionsComponent } from '../directions/ever-works-directions.component';
+import { webhookWarningOf } from '../ever-works-page/ever-works-page.component';
 import { EverWorksMatchReviewComponent } from '../match-review/ever-works-match-review.component';
 import { EverWorksPreviewComponent } from '../preview/ever-works-preview.component';
 import { errorText } from '../shared/ever-works-ui.utils';
@@ -437,6 +438,9 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
+		// The connect wizard could start the first sync but not register the webhook: say so here.
+		const webhookWarning = webhookWarningOf(globalThis.history?.state);
+		if (webhookWarning) this.done('EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED', { reason: webhookWarning });
 		const ids$ = this.route.paramMap.pipe(
 			map((params) => params.get('integrationTenantId')),
 			distinctUntilChanged()
