@@ -315,7 +315,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 				const items = await this.mikroOrmRepository.find(where, {
 					populate,
-					orderBy: { duration: 'DESC' } as any,
+					// `id` breaks ties between equal durations, so consecutive pages neither repeat nor skip a row.
+					orderBy: { duration: 'DESC', id: 'ASC' } as any,
 					...(request.limit > 0 ? { limit: request.limit, offset: (request.page || 0) * request.limit } : {})
 				});
 				return items.map((e) => this.serialize(e)) as IActivity[];
@@ -333,6 +334,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				}
 
 				query.orderBy(`${query.alias}.duration`, 'DESC');
+				// Breaks ties between equal durations, so consecutive pages neither repeat nor skip a row.
+				query.addOrderBy(`${query.alias}.id`, 'ASC');
 				return await query.getMany();
 			}
 		}
