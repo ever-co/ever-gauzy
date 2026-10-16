@@ -20,3 +20,10 @@ export const EVER_WORKS_PLUGIN_VERSION = '0.1.0';
 
 /** Base path of every route of this plugin (under the API's global `/api` prefix). */
 export const EVER_WORKS_ROUTE_PREFIX = '/integration/ever-works';
+
+/**
+ * The `externalRef.source` (and `externalLinks[].source`) of every record this plugin links in Ever Works.
+ * Ever Works derives a key's link source from its `integrationKind` — an `ever-gauzy` key links as `gauzy`
+ * (contract v1, CR-1) — and refuses any other value with `400 validation_failed` (`externalRef.source`).
+ */
+export const EVER_WORKS_LINK_SOURCE = 'gauzy';
