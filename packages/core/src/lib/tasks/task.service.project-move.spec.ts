@@ -80,6 +80,18 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(updated).toMatchObject({ projectId: 'project-new', number: 5, prefix: 'Eve' });
 	});
 
+	it('numbers the task above the soft-deleted tasks of the project it moves to', async () => {
+		// #10724 — the target's highest number, 9, belongs to a soft-deleted task, which keeps it in the
+		// `taskNumber` unique index: the live tasks alone (up to 4) would hand out a taken number.
+		maxNumberBy.mockImplementation(async ({ projectId }, flags?: { withDeleted?: boolean }) =>
+			projectId === 'project-new' ? (flags?.withDeleted ? 9 : 4) : 99
+		);
+
+		await service.update('task-1', { projectId: 'project-new' });
+
+		expect(save).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-new', number: 10 }));
+	});
+
 	it('writes the move in the one save of the update: a failed save leaves the task where it was', async () => {
 		save.mockRejectedValueOnce(new Error('a member of another tenant'));
 
