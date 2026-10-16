@@ -20,6 +20,11 @@ import { UserService } from './user.service';
  * their published default password. The seed guard only protects new databases.
  */
 describe('UserService.findAccountsUsingPasswords', () => {
+	// The hashing is real (scrypt and bcrypt, both deliberately slow), and several tests hash and verify a
+	// handful of passwords each: alone they take about a second, but next to other suites on a busy
+	// machine they ran past jest's 5 s default. Give them room rather than weaker hashes.
+	jest.setTimeout(30_000);
+
 	const scrypt = new ScryptHashStrategy();
 	const bcrypt = new BcryptHashStrategy();
 	const hashing = new PasswordHashService(scrypt, [scrypt, bcrypt]);
