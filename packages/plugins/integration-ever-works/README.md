@@ -58,7 +58,10 @@ the seed) and answers the routes below.
   webhook secret are stored encrypted with it (AES-256-GCM, bound to their
   purpose and connection); a malformed or published value is refused. Without
   it, a strong `JWT_SECRET` that is not a published default is used; with
-  neither, nothing can be connected.
+  neither, nothing can be connected. Secrets stored under the `JWT_SECRET`
+  fallback are encrypted again under `ENCRYPTION_KEY` at the next health check
+  (daily, or `POST …/connections/:id/health`); the old `JWT_SECRET` can be
+  retired after that.
 - `API_BASE_URL`: the public HTTPS address of this API, where Ever Works
   delivers webhooks. Without one, no webhook is registered and the change feed
   alone keeps the sync going.

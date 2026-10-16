@@ -289,7 +289,11 @@ describe('Ever Works organization mapping on SQLite', () => {
 		const issueType = await dataSource.getRepository(IssueType).findOneByOrFail({ id: view.ideaIssueTypeId as string });
 		expect(issueType).toMatchObject({ name: 'Idea', value: 'Idea', organizationId: A.organizationId, tenantId: A.tenantId });
 		const ideas = await dataSource.getRepository(TaskView).findOneByOrFail({ id: view.ideasTaskViewId as string });
-		expect(JSON.parse((ideas as { filterOptions: string }).filterOptions)).toEqual({ issueType: ['Idea'] });
+		// Read the way TaskService.findTasksByViewQuery reads a view on SQLite: JSON, then `types` and the organization.
+		const { types = [], organizationId } = JSON.parse((ideas as { queryParams: string }).queryParams) as { types?: string[]; organizationId?: string };
+		expect(types).toEqual(['Idea']);
+		expect(organizationId).toBe(A.organizationId);
+		expect(JSON.parse((ideas as { filterOptions: string }).filterOptions)).toEqual({ types: ['Idea'] });
 		// The catalog row exists and the mapping points at it.
 		const integration = await dataSource.getRepository(Integration).findOneByOrFail({ name: 'Ever_Works' });
 		const row = await dataSource.getRepository(IntegrationTenant).findOneByOrFail({ id: view.integrationTenantId });
@@ -375,5 +379,45 @@ describe('Ever Works organization mapping on SQLite', () => {
 		await connections.disconnect(connection!.id);
 		expect(await mappings.current()).toBeNull();
 		expect(await dataSource.getRepository(IntegrationTenant).findOneByOrFail({ id: view.integrationTenantId })).toMatchObject({ isActive: false });
+	});
+
+	describe('review hardening (#10774)', () => {
+		it('a disconnect that lands after the connection was read but before the mapping is written leaves no mapping', async () => {
+			const connection = await connections.current();
+			// The catalog step runs between the read and the transaction: disconnect there.
+			const racing = new EverWorksMappingService(
+				dataSource,
+				new EverWorksScopeService(dataSource),
+				connections,
+				{ ensure: async () => (await connections.disconnect(connection!.id), new EverWorksCatalogService(dataSource).ensure()) } as never,
+				commandBus as never
+			);
+			await expect(racing.create({ everWorksOrganizationId: ewOrgs[0].id })).rejects.toBeInstanceOf(ConflictException);
+			expect(await dataSource.getRepository(IntegrationTenant).count({ where: { isActive: true } as never })).toBe(0);
+		});
+
+		it('two requests in one process create the Ideas project once', async () => {
+			const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			const [a, b] = await Promise.all([mappings.ensureIdeasProject(view.integrationTenantId), mappings.ensureIdeasProject(view.integrationTenantId)]);
+			expect(a.projectId).toBe(b.projectId);
+			expect(commandBus.execute).toHaveBeenCalledTimes(1);
+			expect([a.created, b.created].sort()).toEqual([false, true]);
+		});
+
+		it('a project another process recorded first wins; the one made here is archived', async () => {
+			const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			const theirs = await dataSource.getRepository(OrganizationProject).save({ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, name: 'theirs' });
+			// While this process creates its project, the other one records its own.
+			commandBus.execute.mockImplementationOnce(async (command: { input: Record<string, unknown> }) => {
+				const row = await dataSource.getRepository(IntegrationTenant).findOneOrFail({ where: { id: view.integrationTenantId }, relations: { settings: true } } as never);
+				const setting = (row as { settings: Array<{ settingsName: string; settingsValue: string }> }).settings.find((s) => s.settingsName === 'IDEAS_PROJECT_ID');
+				await dataSource.getRepository(IntegrationSetting).update({ id: (setting as unknown as { id: string }).id } as never, { settingsValue: (theirs as { id: string }).id } as never);
+				return dataSource.getRepository(OrganizationProject).save({ id: randomUUID(), ...command.input });
+			});
+			const result = await mappings.ensureIdeasProject(view.integrationTenantId);
+			expect(result).toEqual({ projectId: (theirs as { id: string }).id, created: false });
+			const ours = await dataSource.getRepository(OrganizationProject).findOneByOrFail({ name: EVER_WORKS_IDEAS_PROJECT_NAME });
+			expect(ours).toMatchObject({ isActive: false, isArchived: true });
+		});
 	});
 });

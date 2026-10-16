@@ -8,10 +8,10 @@ import {
 	IntegrationSetting,
 	IntegrationTenant,
 	IssueType,
-	Organization,
 	OrganizationProject,
 	OrganizationProjectCreateCommand,
-	TaskView
+	TaskView,
+	Tenant
 } from '@gauzy/core';
 import { EverWorksCatalogService } from '../ever-works-catalog.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../ever-works.constants';
@@ -67,6 +67,7 @@ type Mapping = IntegrationTenant & { id: ID; tenantId: ID; organizationId: ID };
 @Injectable()
 export class EverWorksMappingService {
 	private readonly logger = new Logger('EverWorksMapping');
+	private readonly projectCreations = new Map<string, Promise<{ projectId: ID; created: boolean }>>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -104,6 +105,12 @@ export class EverWorksMappingService {
 		}
 		const integration = await this.catalog.ensure();
 		const mapping = await this.transaction(scope, async (manager) => {
+			// Under the lock disconnect takes too: a disconnect that finished after the read above is seen
+			// here, so no enabled mapping is ever saved onto a disconnected connection.
+			const current = await manager.findOne(EverWorksConnection, { where: { id: connection.id as ID, tenantId: scope.tenantId, isActive: true } });
+			if (!current || current.status === EverWorksConnectionStatus.NEEDS_REAUTH) {
+				throw new ConflictException('The Ever Works connection changed meanwhile (disconnected or needs a new key). Try again.');
+			}
 			const all = await manager.find(IntegrationTenant, {
 				where: { tenantId: scope.tenantId, name: EVER_WORKS_INTEGRATION_NAME },
 				relations: { settings: true }
@@ -233,6 +240,18 @@ export class EverWorksMappingService {
 	 * gets its task statuses, priorities, sizes and issue types like any other) and records it.
 	 */
 	private async ensureProject(integrationTenantId: ID, name: S, projectName: string, organizationId?: ID): Promise<{ projectId: ID; created: boolean }> {
+		const key = `${integrationTenantId}:${name}`;
+		const previous = this.projectCreations.get(key) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.ensureProjectOnce(integrationTenantId, name, projectName, organizationId));
+		this.projectCreations.set(key, current);
+		try {
+			return await current;
+		} finally {
+			if (this.projectCreations.get(key) === current) this.projectCreations.delete(key);
+		}
+	}
+
+	private async ensureProjectOnce(integrationTenantId: ID, name: S, projectName: string, organizationId?: ID): Promise<{ projectId: ID; created: boolean }> {
 		const scope = await this.scopes.resolve(organizationId);
 		const mapping = await this.require(this.dataSource.manager, scope, integrationTenantId);
 		const configured = this.setting(mapping, name);
@@ -256,12 +275,28 @@ export class EverWorksMappingService {
 					description: 'Created by the Ever Works integration.'
 				} as never)
 			)) as OrganizationProject);
-		await this.transaction(scope, async (manager) => {
+		const recorded = await this.transaction(scope, async (manager) => {
 			const row = await this.require(manager, scope, integrationTenantId);
+			// Another process recorded a live project first: keep it.
+			const winner = this.setting(row, name);
+			if (winner && winner !== project.id) {
+				const alive = await manager.count(OrganizationProject, {
+					where: { id: winner, tenantId: scope.tenantId, organizationId: scope.organizationId, isActive: true, isArchived: false }
+				});
+				if (alive) return winner as ID;
+			}
 			this.set(row, { [name]: project.id as ID }, manager, true);
 			await manager.save(IntegrationTenant, row);
+			return project.id as ID;
 		});
-		return { projectId: project.id as ID, created: !named };
+		if (recorded !== project.id && !named) {
+			// The project made here lost the race: archive it (it is empty and seconds old) rather than leave a twin.
+			await this.dataSource
+				.getRepository(OrganizationProject)
+				.update({ id: project.id as ID }, { isActive: false, isArchived: true } as never)
+				.catch(() => undefined);
+		}
+		return { projectId: recorded, created: recorded === project.id && !named };
 	}
 
 	/** One sync toggle per synced entity, all on, created once. */
@@ -316,8 +351,9 @@ export class EverWorksMappingService {
 					...where,
 					...EVER_WORKS_IDEAS_VIEW,
 					visibilityLevel: VisibilityLevelEnum.ORGANIZATION,
-					queryParams: json({ issueType: EVER_WORKS_IDEA_ISSUE_TYPE.value }),
-					filterOptions: json({ issueType: [EVER_WORKS_IDEA_ISSUE_TYPE.value] }),
+					// The shape TaskService.findTasksByViewQuery reads: `types` (issue types) and the organization.
+					queryParams: json({ types: [EVER_WORKS_IDEA_ISSUE_TYPE.value], organizationId: mapping.organizationId }),
+					filterOptions: json({ types: [EVER_WORKS_IDEA_ISSUE_TYPE.value] }),
 					isLocked: false
 				} as never)
 			);
@@ -398,14 +434,17 @@ export class EverWorksMappingService {
 		return (await this.dataSource.manager.findOneOrFail(IntegrationTenant, { where: { id }, relations: { settings: true } })) as Mapping;
 	}
 
-	/** A transaction serialised per organization (Postgres advisory lock, MySQL row lock). */
+	/**
+	 * A transaction serialised per tenant, under the same lock as the connection's connect and disconnect
+	 * (Postgres advisory lock, MySQL tenant row lock; SQLite has one writer).
+	 */
 	private async transaction<T>(scope: EverWorksScope, work: (manager: EntityManager) => Promise<T>): Promise<T> {
 		return this.dataSource.transaction(async (manager) => {
 			const type = manager.connection.options.type;
 			if (type === 'postgres') {
-				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`ever-works:mapping:${scope.tenantId}`]);
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`ever-works:connection:${scope.tenantId}`]);
 			} else if (type === 'mysql' || type === 'mariadb') {
-				await manager.findOne(Organization, { where: { id: scope.organizationId, tenantId: scope.tenantId }, lock: { mode: 'pessimistic_write' } });
+				await manager.findOne(Tenant, { where: { id: scope.tenantId }, lock: { mode: 'pessimistic_write' } });
 			}
 			return work(manager);
 		});
