@@ -13,6 +13,11 @@ export interface EverWorksConfig {
 	 * creates an integration key. `null` when unset or unusable.
 	 */
 	appUrl: string | null;
+	/**
+	 * The public HTTPS address of this Gauzy API (`API_BASE_URL`), where Ever Works delivers webhooks.
+	 * `null` when unset or not HTTPS: the change feed keeps syncing without webhooks.
+	 */
+	gauzyApiUrl: string | null;
 }
 
 /**
@@ -45,6 +50,8 @@ export function readEverWorksConfig(
 ): EverWorksConfig {
 	return {
 		defaultApiUrl: normaliseEverWorksBaseUrl(env['EVER_WORKS_API_URL'], 'EVER_WORKS_API_URL', warn),
-		appUrl: normaliseEverWorksBaseUrl(env['EVER_WORKS_APP_URL'], 'EVER_WORKS_APP_URL', warn)
+		appUrl: normaliseEverWorksBaseUrl(env['EVER_WORKS_APP_URL'], 'EVER_WORKS_APP_URL', warn),
+		// Not a warning when unusable: a local or private API simply receives no webhooks.
+		gauzyApiUrl: normaliseEverWorksBaseUrl(env['API_BASE_URL'], 'API_BASE_URL', () => undefined)
 	};
 }
