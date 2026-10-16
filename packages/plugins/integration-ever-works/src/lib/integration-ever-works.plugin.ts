@@ -1,10 +1,11 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { CreateEverWorksConnection1791000001100 } from './database/migrations/1791000001100-CreateEverWorksConnection';
+import { CreateEverWorksSyncTables1791000001300 } from './database/migrations/1791000001300-CreateEverWorksSyncTables';
 import { EVER_WORKS_ENTITIES, EverWorksModule } from './ever-works.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
-export const EVER_WORKS_MIGRATIONS = [CreateEverWorksConnection1791000001100];
+export const EVER_WORKS_MIGRATIONS = [CreateEverWorksConnection1791000001100, CreateEverWorksSyncTables1791000001300];
 
 /**
  * Ever Gauzy ↔ Ever Works integration (`@gauzy/plugin-integration-ever-works`).

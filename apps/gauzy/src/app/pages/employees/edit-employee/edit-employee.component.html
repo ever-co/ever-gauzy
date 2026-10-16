@@ -64,6 +64,22 @@
     }
   </nb-card-header>
   <nb-card-body class="p-0">
+    @if (agentProfile?.managedExternally) {
+      <div class="managed-externally-banner" role="status">
+        <nb-icon icon="info-outline"></nb-icon>
+        <span>
+          {{
+            (isManagedByEverWorks ? 'EMPLOYEES_PAGE.MANAGED_BY_EVER_WORKS' : 'EMPLOYEES_PAGE.MANAGED_EXTERNALLY')
+              | translate
+          }}
+        </span>
+        @if (agentProfile?.externalUrl) {
+          <a [href]="agentProfile.externalUrl" target="_blank" rel="noopener noreferrer">
+            {{ 'EMPLOYEES_PAGE.OPEN_MANAGED_AGENT' | translate }}
+          </a>
+        }
+      </div>
+    }
     <ngx-edit-employee-profile (updatedImage)="updateImage($event)"></ngx-edit-employee-profile>
   </nb-card-body>
 </nb-card>

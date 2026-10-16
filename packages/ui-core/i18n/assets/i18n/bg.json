@@ -2026,6 +2026,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Вид",
+		"KIND_ALL": "Всички",
+		"KIND_HUMAN": "Хора",
+		"KIND_AGENT": "Агенти",
+		"AGENT_BADGE": "Агент",
+		"MANAGED_BY_EVER_WORKS": "Управлява се от Ever Works: името и профилът на този агент се променят в Ever Works и се синхронизират с Gauzy.",
+		"MANAGED_EXTERNALLY": "Управлява се външно: името и профилът на този агент се променят в системата, от която идва, и се синхронизират с Gauzy.",
+		"OPEN_MANAGED_AGENT": "Отвори страницата на агента",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "Добавяне на служител",
 		"ACTIVE": "Активен",
@@ -2785,7 +2793,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Подробности"
+					},
+					"PUBLIC": "Публичен",
+					"PRIVATE": "Частен",
+					"PREFIX": "Префикс на задачите",
+					"MEMBERS_COUNT": "{{ count }} членове",
+					"LIVE": "{{ tracking }} проследяват сега · {{ online }} на линия",
+					"OF_MEMBERS": "{{ count }} от {{ total }} членове",
+					"CREATED": "Създаден",
+					"UPDATED": "Последна актуализация",
+					"ACTIVE_MEMBERS": "Активни членове",
+					"ACTIVE_MEMBERS_META": "от {{ total }} членове отчетоха време",
+					"TIME_BY_MEMBER": "Време по членове",
+					"TEAM_TASKS": "Задачи на екипа",
+					"NO_TEAM_TASKS": "Няма задачи, възложени на този екип",
+					"NO_MEMBERS": "Този екип все още няма членове",
+					"NO_PROJECTS": "Няма проекти, свързани с този екип",
+					"COLUMNS": {
+						"MEMBER": "Член",
+						"ROLE": "Роля",
+						"STATUS": "Статус",
+						"CURRENT_TASK": "Текуща задача",
+						"TODAY": "Днес",
+						"ACTIVITY": "Активност"
+					},
+					"ROLE": {
+						"MANAGER": "Мениджър",
+						"MEMBER": "Член"
+					},
+					"GENERAL": "Общи",
+					"SETTINGS": "Настройки",
+					"RECORD": "Запис",
+					"TEAM_SIZE": "Размер на екипа",
+					"COLOR": "Цвят",
+					"EMOJI": "Емоджи",
+					"PROFILE_LINK": "Връзка към профила",
+					"VISIBILITY": "Видимост",
+					"SHARE_PROFILE_VIEW": "Членовете виждат профилите си",
+					"REQUIRE_PLAN": "Изисква план за отчитане на време",
+					"NOT_FOUND": "Този екип не е намерен",
+					"LOAD_FAILED": "Екипът не можа да бъде зареден",
+					"RETRY": "Опитай отново",
+					"OPEN_TASK_DETAILS": "Покажи подробности за {{ title }}",
+					"OPEN_TASK_PAGE": "Отвори страницата на {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Отвори страницата на задачата",
+					"UNASSIGNED": "Неразпределена",
+					"SHOW_ALL": "Покажи всички",
+					"SHOW_LESS": "Покажи по-малко",
+					"PROJECTS_CAPTION": "Проектите на екипа и времето, отработено по всеки през този период",
+					"NOT_LINKED": "Несвързан",
+					"NOT_LINKED_HINT": "Членовете са отчели време по този проект, но той не е свързан с екипа"
+				}
 			}
 		},
 		"PERMISSIONS": {
