@@ -271,6 +271,12 @@ $control-height: 2.25rem;
     min-height: 3rem;
     padding: $gap-sm $gap-lg;
     border-bottom: $hairline;
+
+    // Member cards: the share bar under the header carries the divider instead.
+    &--flush {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
   }
 
   .au-panel-title {
@@ -392,6 +398,12 @@ $control-height: 2.25rem;
     font-size: 0.75rem;
     font-weight: $weight-strong;
     color: var(--gauzy-text-color-2);
+
+    &--sm {
+      width: 1.5rem;
+      height: 1.5rem;
+      font-size: 0.6875rem;
+    }
   }
 
   .au-share-cell {
@@ -546,6 +558,24 @@ $control-height: 2.25rem;
     .au-name {
       font-weight: 400;
     }
+
+    // Member card rows: icon, name, share of the member's time, time.
+    &--bar {
+      grid-template-columns: auto minmax(0, 1fr) minmax(6rem, 0.9fr) 4.5rem;
+    }
+  }
+
+  .au-member-heading {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  // The member's share of everyone's time, as a full-width bar under the header.
+  .au-member-share {
+    padding: 0.625rem $gap-lg 0.75rem;
+    border-bottom: $hairline;
   }
 
   .au-more {
