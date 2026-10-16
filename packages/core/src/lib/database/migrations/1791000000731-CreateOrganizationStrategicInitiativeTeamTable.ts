@@ -121,19 +121,27 @@ export class CreateOrganizationStrategicInitiativeTeamTable1791000000731 impleme
 	/**
 	 * MySQL Up Migration
 	 *
+	 * MySQL commits every DDL statement on its own, so a table created by one statement and given its foreign
+	 * keys by later ones could be left without them by a failure in between — and a re-run, finding the table,
+	 * would never add them. The table is therefore created by ONE statement, keys included. A named lock makes
+	 * the existence check and that statement one critical section when two processes migrate at once.
+	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		if (await queryRunner.hasTable(TABLE)) return;
+		const lockName = `gauzy:migration:${this.name}`;
+		const [row] = await queryRunner.query(`SELECT GET_LOCK(?, 120) AS \`acquired\``, [lockName]);
+		if (Number(row?.acquired) !== 1) {
+			throw new Error(`${this.name}: could not acquire the MySQL migration lock ${lockName}.`);
+		}
+		try {
+			if (await queryRunner.hasTable(TABLE)) return;
 
-		await queryRunner.query(
-			`CREATE TABLE \`${TABLE}\` (\`organizationStrategicInitiativeId\` varchar(36) NOT NULL, \`organizationTeamId\` varchar(36) NOT NULL, INDEX \`${NAMES.initiativeIndex}\` (\`organizationStrategicInitiativeId\`), INDEX \`${NAMES.teamIndex}\` (\`organizationTeamId\`), PRIMARY KEY (\`organizationStrategicInitiativeId\`, \`organizationTeamId\`)) ENGINE=InnoDB`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`${TABLE}\` ADD CONSTRAINT \`${NAMES.initiativeForeignKey}\` FOREIGN KEY (\`organizationStrategicInitiativeId\`) REFERENCES \`organization_strategic_initiative\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`${TABLE}\` ADD CONSTRAINT \`${NAMES.teamForeignKey}\` FOREIGN KEY (\`organizationTeamId\`) REFERENCES \`organization_team\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
+			await queryRunner.query(
+				`CREATE TABLE \`${TABLE}\` (\`organizationStrategicInitiativeId\` varchar(36) NOT NULL, \`organizationTeamId\` varchar(36) NOT NULL, INDEX \`${NAMES.initiativeIndex}\` (\`organizationStrategicInitiativeId\`), INDEX \`${NAMES.teamIndex}\` (\`organizationTeamId\`), PRIMARY KEY (\`organizationStrategicInitiativeId\`, \`organizationTeamId\`), CONSTRAINT \`${NAMES.initiativeForeignKey}\` FOREIGN KEY (\`organizationStrategicInitiativeId\`) REFERENCES \`organization_strategic_initiative\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT \`${NAMES.teamForeignKey}\` FOREIGN KEY (\`organizationTeamId\`) REFERENCES \`organization_team\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB`
+			);
+		} finally {
+			await queryRunner.query(`SELECT RELEASE_LOCK(?)`, [lockName]);
+		}
 	}
 }

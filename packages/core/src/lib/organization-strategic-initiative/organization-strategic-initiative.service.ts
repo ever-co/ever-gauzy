@@ -26,6 +26,49 @@ import { OrganizationStrategicInitiative } from './organization-strategic-initia
 import { TypeOrmOrganizationStrategicInitiativeRepository } from './repository/type-orm-organization-strategic-initiative.repository';
 import { MikroOrmOrganizationStrategicInitiativeRepository } from './repository/mikro-orm-organization-strategic-initiative.repository';
 
+/**
+ * The relations to load: the ones a caller asked for, in whichever form it used (a list of paths, or the
+ * object form `BaseQueryDTO` also accepts), plus the ones a read needs. The object form stays an object, so a
+ * request such as `{ steward: true }` keeps its relations.
+ *
+ * @param requested - The caller's relations, if any.
+ * @param required - Dotted paths the read needs.
+ * @returns A list when the caller sent a list (or nothing), an object when it sent an object.
+ */
+export function withRelations(requested: unknown, required: string[]): string[] | Record<string, unknown> {
+	if (requested && typeof requested === 'object' && !Array.isArray(requested)) {
+		const merged: Record<string, unknown> = { ...(requested as Record<string, unknown>) };
+		for (const path of required) {
+			let level = merged;
+			const segments = path.split('.');
+			segments.forEach((segment, index) => {
+				const last = index === segments.length - 1;
+				const current = level[segment];
+				if (last) {
+					if (!current) level[segment] = true;
+					return;
+				}
+				const next = current && typeof current === 'object' ? { ...(current as Record<string, unknown>) } : {};
+				level[segment] = next;
+				level = next;
+			});
+		}
+		return merged;
+	}
+	const list = Array.isArray(requested) ? (requested as string[]) : [];
+	return [...new Set([...list, ...required])];
+}
+
+/**
+ * A write input without a raw `teams` list: the directly linked teams are set through `teamIds` only, which
+ * {@link OrganizationStrategicInitiativeService} checks against the initiative's organization.
+ */
+function withoutRawTeams<T extends object>(input: T): Omit<T, 'teams'> {
+	const values = { ...(input ?? {}) } as T & { teams?: unknown };
+	delete values.teams;
+	return values;
+}
+
 @Injectable()
 export class OrganizationStrategicInitiativeService extends TenantAwareCrudService<OrganizationStrategicInitiative> {
 	constructor(
@@ -63,8 +106,10 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				}
 			}
 
-			// The directly linked teams, each one a team of the initiative's organization
-			const { teamIds, ...values } = input;
+			// The directly linked teams, each one a team of the initiative's organization. They are set through
+			// `teamIds` only: a raw `teams` list in the body (which the DTO does not declare, but a non-whitelisting
+			// pipe keeps) would skip the organization check, so it is dropped.
+			const { teamIds, ...values } = withoutRawTeams(input);
 			const teams = await this.resolveTeams(teamIds, organizationId, tenantId);
 
 			// Create the organization strategic initiative
@@ -137,11 +182,16 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				}
 			}
 
-			// The directly linked teams are replaced when `teamIds` is stated, and left as they are otherwise
-			const { teamIds, ...values } = input;
+			// The directly linked teams are replaced when `teamIds` is stated, and left as they are otherwise. They
+			// are checked against the organization the initiative is SAVED in: when the update moves it to another
+			// organization without stating `teamIds`, the links to the old organization's teams are removed, so no
+			// member of those teams keeps `team` visibility of it there. A raw `teams` list is dropped (see create).
+			const { teamIds, ...values } = withoutRawTeams(input);
+			const organizationId = values.organizationId ?? originalOrganizationStrategicInitiative.organizationId;
+			const movesOrganization = organizationId !== originalOrganizationStrategicInitiative.organizationId;
 			const teams = await this.resolveTeams(
-				teamIds,
-				originalOrganizationStrategicInitiative.organizationId,
+				teamIds ?? (movesOrganization ? [] : undefined),
+				organizationId,
 				originalOrganizationStrategicInitiative.tenantId
 			);
 
@@ -192,15 +242,12 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-		// Ensure relations for visibility check are loaded (the directly linked teams, projects and their teams)
-		const relationsToLoad = ['teams', 'projects', 'projects.teams'];
-		const existingRelations = Array.isArray(filters.relations) ? filters.relations : [];
-		const mergedRelations = [...new Set([...existingRelations, ...relationsToLoad])];
-
+		// Ensure relations for visibility check are loaded (the directly linked teams, projects and their teams),
+		// next to the ones the caller asked for, in whichever form it asked (a list or an object)
 		const { items } = await super.findAll({
 			...filters,
-			relations: mergedRelations
-		});
+			relations: withRelations(filters.relations, ['teams', 'projects', 'projects.teams'])
+		} as typeof filters);
 
 		// Pre-fetch employee team memberships to avoid N+1 queries
 		const employeeTeamIds = await this.getEmployeeTeamIds(currentEmployeeId);
@@ -233,11 +280,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<IOrganizationStrategicInitiative> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-		// Find the organization strategic initiative with optional relations, and its directly linked teams
-		const requestedRelations = Array.isArray(params?.relations) ? params.relations : [];
+		// Find the organization strategic initiative with the requested relations (a list or an object), and its
+		// directly linked teams
 		const organizationStrategicInitiative = await this.findOneByOptions({
-			...(params),
-			relations: [...new Set([...requestedRelations, 'teams'])],
+			...params,
+			relations: withRelations(params?.relations, [
+				'teams'
+			]) as BaseQueryDTO<OrganizationStrategicInitiative>['relations'],
 			where: {
 				...(params?.where && { ...params.where }),
 				id

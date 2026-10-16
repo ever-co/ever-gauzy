@@ -5,7 +5,7 @@ import { IOrganizationStrategicInitiativeRead, OrganizationStrategicVisibilitySc
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../core/entities/internal';
-import { OrganizationStrategicInitiativeService } from './organization-strategic-initiative.service';
+import { OrganizationStrategicInitiativeService, withRelations } from './organization-strategic-initiative.service';
 
 const TENANT = 'a0000000-0000-4000-8000-000000000001';
 const ORGANIZATION = 'b0000000-0000-4000-8000-000000000001';
@@ -100,6 +100,79 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 
 			await service.update('initiative-1', { teamIds: [] });
 			expect((save.mock.calls[2][0] as any).teams).toEqual([]);
+		});
+	});
+
+	describe('writes take teams through teamIds only, in the organization the initiative is saved in', () => {
+		const OTHER_ORGANIZATION = 'b0000000-0000-4000-8000-0000000000ff';
+		const stored = () =>
+			jest.spyOn(TenantAwareCrudService.prototype, 'findOneByWhereOptions').mockResolvedValue({
+				id: 'initiative-1',
+				title: 'T',
+				organizationId: ORGANIZATION,
+				tenantId: TENANT
+			} as never);
+
+		it('drops a raw teams list on create and on update (it would skip the organization check)', async () => {
+			stored();
+			await service.create({ organizationId: ORGANIZATION, title: 'T', teams: [{ id: OTHER_ORG_TEAM }] } as any);
+			expect(save.mock.calls[0][0]).not.toHaveProperty('teams');
+
+			await service.update('initiative-1', { teams: [{ id: OTHER_ORG_TEAM }] } as any);
+			expect(save.mock.calls[1][0]).not.toHaveProperty('teams');
+		});
+
+		it('checks teamIds against the organization the update moves the initiative to', async () => {
+			stored();
+			await expect(
+				service.update('initiative-1', { organizationId: OTHER_ORGANIZATION, teamIds: [TEAM_A] } as any)
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			await service.update('initiative-1', {
+				organizationId: OTHER_ORGANIZATION,
+				teamIds: [OTHER_ORG_TEAM]
+			} as any);
+			expect((save.mock.calls[0][0] as any).teams).toEqual([{ id: OTHER_ORG_TEAM }]);
+		});
+
+		it("unlinks the old organization's teams when the update moves it without stating teamIds", async () => {
+			stored();
+			await service.update('initiative-1', { organizationId: OTHER_ORGANIZATION } as any);
+			expect((save.mock.calls[0][0] as any).teams).toEqual([]);
+
+			await service.update('initiative-1', { organizationId: ORGANIZATION, title: 'Same org' } as any);
+			expect(save.mock.calls[1][0]).not.toHaveProperty('teams');
+		});
+	});
+
+	describe('reads keep the relations the caller asked for, in either form', () => {
+		it('the single-row read merges teams into an object-form request', async () => {
+			const findOne = jest
+				.spyOn(TenantAwareCrudService.prototype, 'findOneByOptions')
+				.mockResolvedValue({ id: 'initiative-1', stewardId: EMPLOYEE, teams: [] } as never);
+
+			await service.findOneById('initiative-1', { relations: { steward: true } } as any);
+			expect((findOne.mock.calls[0][0] as any).relations).toEqual({ steward: true, teams: true });
+
+			await service.findOneById('initiative-1', { relations: ['steward'] } as any);
+			expect((findOne.mock.calls[1][0] as any).relations).toEqual(['steward', 'teams']);
+		});
+
+		it('withRelations merges dotted paths into the object form, and unions the list form', () => {
+			expect(withRelations({ steward: true, projects: true }, ['teams', 'projects', 'projects.teams'])).toEqual({
+				steward: true,
+				teams: true,
+				projects: { teams: true }
+			});
+			expect(withRelations({ projects: { goals: true } }, ['projects.teams'])).toEqual({
+				projects: { goals: true, teams: true }
+			});
+			expect(withRelations(['steward', 'teams'], ['teams', 'projects'])).toEqual([
+				'steward',
+				'teams',
+				'projects'
+			]);
+			expect(withRelations(undefined, ['teams'])).toEqual(['teams']);
 		});
 	});
 
