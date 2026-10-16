@@ -407,23 +407,29 @@ describe('POST /timesheet/time-log/bulk — each item is POST /timesheet/time-lo
 });
 
 describe('bulkCreateTimeLogs — the same batch over GraphQL, each item `addManualTime`', () => {
-	it('records each item as `addManualTime` does: the caller’s own employee unless it may choose one', async () => {
+	it('records each item as `addManualTime` does: the named employee when the caller may write for them, its own when it names none', async () => {
 		callerMayChooseEmployee(false);
 		const { resolver, logs } = surfaces();
-
-		const payload = await resolver.bulkCreateTimeLogs({
-			items: [
-				{
-					organizationId: ORGANIZATION,
-					employeeId: EMPLOYEE,
-					startedAt: new Date('2026-10-01T09:00:00.000Z'),
-					stoppedAt: new Date('2026-10-01T10:00:00.000Z')
-				}
-			]
+		const item = (employeeId: string | undefined, hour: string) => ({
+			organizationId: ORGANIZATION,
+			employeeId,
+			startedAt: new Date(`2026-10-01T${hour}:00:00.000Z`),
+			stoppedAt: new Date(`2026-10-01T${hour}:30:00.000Z`)
 		});
 
-		expect(payload).toMatchObject({ succeeded: 1, failed: 0, total: 1 });
+		// As the route's pipe does: a named employee is kept and the service decides (the scripted manager check
+		// admits EMPLOYEE and refuses UNMANAGED_EMPLOYEE); only a missing one is the caller's own.
+		const payload = await resolver.bulkCreateTimeLogs({
+			items: [item(EMPLOYEE, '09'), item(UNMANAGED_EMPLOYEE, '10'), item(undefined, '11')] as never
+		});
+
+		expect(payload).toMatchObject({ succeeded: 2, failed: 1, total: 3 });
+		expect(payload.results[1].error).toMatchObject({
+			code: ApiErrorCode.PERMISSION_DENIED,
+			message: 'You do not have permission to log time for this employee'
+		});
 		expect(logs.map((log: any) => [log.employeeId, log.logType, log.source])).toEqual([
+			[EMPLOYEE, TimeLogType.MANUAL, TimeLogSourceEnum.WEB_TIMER],
 			[OWN_EMPLOYEE, TimeLogType.MANUAL, TimeLogSourceEnum.WEB_TIMER]
 		]);
 	});

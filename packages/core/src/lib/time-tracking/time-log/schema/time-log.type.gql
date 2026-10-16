@@ -474,8 +474,10 @@ What a caller states when it records time by hand.
 
 The organization is stated because the delivered create does not derive one: the tenant is stamped
 from the credential, never from an argument, but the organization is a member the caller names. The
-employee is stated and is the caller's own unless the caller may change the selected employee — the
-delivered pipe rewrites it, and this surface restates that rule rather than trusting the body.
+employee is stated and kept, as the delivered pipe keeps it, and the write refuses one the caller may
+not record time for (403) rather than recording the interval against the caller: a caller writes for
+its own employee, for a member of a team it manages, or for anyone if it may change the selected
+employee.
 
 Neither the log type nor the source is a member. The delivered body's own transform states both for
 itself — `MANUAL` and `BROWSER` — whatever a caller sends, so an input carrying them would be offering
@@ -483,7 +485,7 @@ two values the write ignores.
 """
 input CreateManualTimeLogInput {
 	organizationId: ID!
-	"The employee the interval belongs to. A caller that may not choose one records against itself."
+	"The employee the interval belongs to: the caller's own, a member of a team it manages, or anyone if it may change the selected employee."
 	employeeId: ID!
 	"The instant the interval starts."
 	startedAt: DateTime!
