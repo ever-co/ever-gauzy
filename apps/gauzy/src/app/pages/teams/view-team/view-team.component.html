@@ -618,6 +618,21 @@
 	</nb-card-body>
 </nb-card>
 
+<!-- Quick look: the same task drawer the task lists use, with an expand icon to the task's own page. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask"
+	[heading]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TEAM_TASKS'"
+	[wide]="true"
+	[fullViewLink]="viewedTask ? '/pages/tasks/view/' + viewedTask.id : null"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
+
 <!-- Change against the previous period: arrow + percentage, then what it is measured against. -->
 <ng-template #deltaTpl let-delta>
 	<span class="delta" [class]="'delta--' + delta.direction">
