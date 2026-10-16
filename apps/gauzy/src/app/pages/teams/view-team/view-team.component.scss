@@ -295,13 +295,13 @@ $weight-medium: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  margin-inline-start: -0.375rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-inline-start: -0.3125rem;
   border-radius: 50%;
   background-color: var(--gauzy-active-tint);
   box-shadow: 0 0 0 2px var(--gauzy-card-1);
-  font-size: 0.5625rem;
+  font-size: 0.5rem;
   font-weight: $weight-medium;
   color: var(--gauzy-text-color-1);
 
@@ -323,9 +323,9 @@ $weight-medium: 500;
     color: var(--gauzy-text-color-2);
 
     nb-icon {
-      width: 0.75rem;
-      height: 0.75rem;
-      font-size: 0.75rem;
+      width: 0.625rem;
+      height: 0.625rem;
+      font-size: 0.625rem;
     }
   }
 }
