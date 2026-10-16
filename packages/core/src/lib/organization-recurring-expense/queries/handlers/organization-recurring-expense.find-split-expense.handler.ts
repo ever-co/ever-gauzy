@@ -1,4 +1,4 @@
-import { IOrganizationRecurringExpenseForEmployeeOutput, IPagination } from '@gauzy/contracts';
+import { EmployeeKindEnum, IOrganizationRecurringExpenseForEmployeeOutput, IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
@@ -57,10 +57,11 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 			id: orgId
 		});
 
-		//2. Find all employees of the organization
+		//2. Find all employees of the organization: people only, an agent employee takes no share of an expense
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organizationId: organization.id
+				organizationId: organization.id,
+				kind: EmployeeKindEnum.HUMAN
 			}
 		});
 

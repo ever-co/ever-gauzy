@@ -15,7 +15,8 @@ import {
 	IPayrollSummary,
 	PayrollItemCategoryEnum,
 	PayrollItemTypeEnum,
-	PayrollRunStatusEnum
+	PayrollRunStatusEnum,
+	EmployeeKindEnum
 } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -281,6 +282,31 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 	}
 
 	/**
+	 * The employee a payroll line pays must be an employee of the run's organization, and a person: an agent
+	 * employee (`kind = 'agent'`, e.g. an Ever Works agent) is never paid.
+	 *
+	 * @param employeeId the employee the line pays
+	 * @param tenantId the caller's tenant
+	 * @param organizationId the run's organization
+	 * @throws NotFoundException when the employee is not one of the organization's
+	 * @throws BadRequestException when the employee is an agent
+	 */
+	private async assertPayableEmployee(employeeId: ID, tenantId: ID, organizationId: ID): Promise<void> {
+		const employee = await this.typeOrmRepository.manager.findOne(Employee, {
+			where: { id: employeeId, tenantId, organizationId },
+			select: { id: true, kind: true }
+		});
+
+		if (!employee) {
+			throw new NotFoundException(`Employee with id '${employeeId}' was not found in this organization`);
+		}
+
+		if (employee.kind === EmployeeKindEnum.AGENT) {
+			throw new BadRequestException(`Employee with id '${employeeId}' is an agent and cannot be paid`);
+		}
+	}
+
+	/**
 	 * Add an earning or deduction line to a run that has not been paid.
 	 *
 	 * @param payrollRunId the run to add the line to
@@ -299,14 +325,8 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 		}
 
 		// The employee must belong to the same organization, or a caller could pay somebody
-		// outside their own company out of their own payroll run.
-		const employees = await this.typeOrmRepository.manager.count(Employee, {
-			where: { id: employeeId, tenantId, organizationId }
-		});
-
-		if (employees === 0) {
-			throw new NotFoundException(`Employee with id '${employeeId}' was not found in this organization`);
-		}
+		// outside their own company out of their own payroll run; and it must be a person.
+		await this.assertPayableEmployee(employeeId, tenantId, organizationId);
 
 		const item = this.typeOrmPayrollItemRepository.create({
 			...input,
@@ -363,16 +383,9 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 		const changes = this.itemChanges(input);
 
 		if (changes.employeeId !== undefined && changes.employeeId !== item.employeeId) {
-			// The same check `addItem` makes: a line may not be paid to somebody outside the organization.
-			const employees = await this.typeOrmRepository.manager.count(Employee, {
-				where: { id: changes.employeeId, tenantId, organizationId }
-			});
-
-			if (employees === 0) {
-				throw new NotFoundException(
-					`Employee with id '${changes.employeeId}' was not found in this organization`
-				);
-			}
+			// The same check `addItem` makes: a line may not be paid to somebody outside the organization,
+			// nor to an agent employee.
+			await this.assertPayableEmployee(changes.employeeId, tenantId, organizationId);
 		}
 
 		Object.assign(item, changes);
