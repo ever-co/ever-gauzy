@@ -284,6 +284,27 @@ export class SearchReindexService {
 	}
 
 	/**
+	 * Drops the documents of one entity that belong to the organization an inactive definition is the own copy of.
+	 *
+	 * @param entity The entity key.
+	 * @param definition The organization's own definition.
+	 * @returns How many documents were dropped.
+	 */
+	private async dropOrganization(
+		entity: string,
+		definition: { tenantId?: ID | null; organizationId?: ID | null }
+	): Promise<{ deletedCount: number }> {
+		const result = await this.typeOrmSearchDocumentRepository.softDelete({
+			entity,
+			...this.tenantScope(),
+			...(definition.tenantId ? { tenantId: definition.tenantId } : {}),
+			organizationId: definition.organizationId
+		} as any);
+
+		return { deletedCount: Number(result?.affected ?? 0) };
+	}
+
+	/**
 	 * Rebuilds one entity.
 	 *
 	 * @param entity The entity key.
@@ -303,7 +324,12 @@ export class SearchReindexService {
 		if (!active) {
 			// An inactive definition is neither indexed nor queried, and its documents are removed so
 			// that re-activating it starts from a clean index rather than from stale rows.
-			const dropped = await this.drop(entity);
+			// An organization's own definition is that organization's (SEC-B-04): switching it off drops its
+			// documents only. Dropped for the whole tenant, every other organization — still on the shipped
+			// definition, which is active — lost its search for the entity (Greptile).
+			const dropped = persisted?.organizationId
+				? await this.dropOrganization(entity, persisted)
+				: await this.drop(entity);
 
 			return { entity, indexed: 0, skipped: 0, removed: dropped.deletedCount, batches: 0, stale: 0 };
 		}

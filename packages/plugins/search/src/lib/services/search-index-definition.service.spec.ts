@@ -518,4 +518,98 @@ describe('SearchIndexDefinitionService — a shipped definition is changed for o
 		await expect(fixture.service.updateDefinition('d1', { isActive: false })).rejects.toThrow(/organization/);
 		expect(fixture.store('d1')?.isActive).toBe(true);
 	});
+
+	it('applies a first change that lost the race to make the copy onto the copy that won (Greptile)', async () => {
+		// Two first changes of one organization both found no copy; the other one's insert landed first, and the
+		// unique index refused this one's — which used to reach the caller as the database's error.
+		const won = definitionRow('copy-won', { tenantId: TENANT, organizationId: ORG, isSystem: false, label: 'Won' });
+		const fixture = definitionFixture({ definitions: [definitionRow('d1'), won] });
+		const repository = fixture.service.typeOrmSearchIndexDefinitionRepository as any;
+		const findOne = repository.findOne;
+		const save = repository.save;
+		let looked = false;
+
+		// The copy lookup ran before the other change's insert committed, so it found nothing.
+		repository.findOne = async (options: any) => {
+			const where = options?.where;
+
+			if (!looked && where && !Array.isArray(where) && where.organizationId === ORG) {
+				looked = true;
+
+				return null;
+			}
+
+			return findOne(options);
+		};
+		// `UQ_search_index_definition_org_entity_nokey`: one live engine-less row per organization and entity.
+		repository.save = async (row: Row) => {
+			const taken = fixture.tables.search_index_definition.some(
+				(candidate) =>
+					!row.id &&
+					!candidate.deletedAt &&
+					(candidate.engineKey ?? null) === null &&
+					candidate.entity === row.entity &&
+					String(candidate.organizationId ?? '') === String(row.organizationId ?? '')
+			);
+
+			if (taken) {
+				throw Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
+			}
+
+			return save(row);
+		};
+
+		const changed = await fixture.service.updateDefinition('d1', { defaultWeight: 2 });
+
+		expect(changed.id).toBe('copy-won');
+		expect(fixture.store('copy-won')).toMatchObject({ label: 'Won', defaultWeight: '2', version: 2 });
+		expect(fixture.tables.search_index_definition.filter((row) => row.tenantId === TENANT)).toHaveLength(1);
+		expect(fixture.store('d1')).toMatchObject({ defaultWeight: '1.000000', version: 1 });
+	});
+});
+
+/**
+ * CodeRabbit on #10655: an organization's copy holds its own field set, and the boot-time synchronisation updated the
+ * platform rows only. `findFor` keeps answering the copy for its organization, so a field a package added never reached
+ * that organization's index and a field it removed was still read there. The copy now follows the declaration's field
+ * set exactly as the platform row does, keeping what the organization tuned.
+ */
+describe('SearchIndexDefinitionService — an organization’s copy follows the shipped field set', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** A copy made before the declaration gained its `name` field, with the `sku` weight its organization tuned. */
+	const copyRow = () =>
+		definitionRow('copy', {
+			tenantId: TENANT,
+			organizationId: ORG,
+			isSystem: false,
+			version: 3,
+			defaultWeight: '2.000000',
+			fields: [{ ...DECLARATION.fields[0], weight: 9 }]
+		});
+
+	it('takes the declared fields into the copy, keeps its tuning, and bumps its version', async () => {
+		const fixture = definitionFixture({ definitions: [definitionRow('d1'), copyRow()] });
+
+		await fixture.service.syncFromRegistry();
+
+		expect(fixture.store('copy')).toMatchObject({ version: 4, isSystem: false, defaultWeight: '2.000000' });
+		expect(fixture.store('copy')?.fields).toEqual([{ ...DECLARATION.fields[0], weight: 9 }, DECLARATION.fields[1]]);
+		// The organization's documents are rebuilt by the next sweep, because the version in force for it moved.
+		expect(await fixture.service.versionOf('product_variant')).toBe(4);
+	});
+
+	it('leaves a copy that already follows the declaration at its version', async () => {
+		const fixture = definitionFixture({ definitions: [definitionRow('d1'), copyRow()] });
+
+		await fixture.service.syncFromRegistry();
+		await fixture.service.syncFromRegistry();
+
+		expect(fixture.store('copy')?.version).toBe(4);
+	});
 });

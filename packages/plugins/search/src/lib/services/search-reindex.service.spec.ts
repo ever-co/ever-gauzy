@@ -761,3 +761,55 @@ describe('SearchReindexService — what a paged sweep must not do to the documen
 		expect(fixture.documents().every((document) => document.definitionVersion === 4)).toBe(true);
 	});
 });
+
+/**
+ * Greptile on #10655: a change to a shipped definition lands on an organization's own copy (SEC-B-04), and switching
+ * that copy off made the organization's next reindex drop the entity's documents for the whole tenant — every other
+ * organization, still on the active shipped definition, lost its search for the entity. The drop is the organization's.
+ */
+describe('SearchReindexService — an organization’s own definition switched off', () => {
+	const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('drops that organization’s documents and leaves every other organization’s alone', async () => {
+		const own: Row = { entity: 'product_variant', version: 2, isActive: true, tenantId: TENANT, organizationId: ORG };
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [own]
+		});
+		const variants = () => fixture.documents().filter((document) => document.entity === 'product_variant');
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+		expect(variants()).toHaveLength(2);
+
+		own.isActive = false;
+
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		expect(runs[0]).toMatchObject({ indexed: 0, removed: 1 });
+		expect(variants().map((document) => [document.entityId, document.organizationId])).toEqual([['v2', OTHER_ORG]]);
+	});
+
+	it('still drops the whole tenant’s documents when the shipped definition itself is off', async () => {
+		const shipped: Row = { entity: 'product_variant', version: 1, isActive: true, tenantId: null, organizationId: null };
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped]
+		});
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		shipped.isActive = false;
+
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		expect(runs[0]).toMatchObject({ indexed: 0, removed: 2 });
+		expect(fixture.documents().filter((document) => document.entity === 'product_variant')).toEqual([]);
+	});
+});
