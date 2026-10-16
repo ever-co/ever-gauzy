@@ -194,6 +194,9 @@ jest.mock('@gauzy/core', () => {
 		// the three-decimal case below pass for the wrong reason.
 		currencyPrecision: jest.requireActual('@gauzy/core/src/lib/money/currency-precision').currencyPrecision,
 		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
+		// The child services' cross-tenant reference check reads a real database; it is exercised in
+		// `cart-references.db.spec.ts`, and the order the cart's verbs run it in is asserted below.
+		assertPlainReferencesNotForeign: async () => undefined,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -209,6 +212,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { createHash } from 'node:crypto';
+import { ForbiddenException } from '@nestjs/common';
 import { AdjustmentOwnerType, CommerceCartStatus, CommerceCheckoutSessionStatus, TaxLineOwnerType } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { CommerceCartService } from './commerce-cart.service';
@@ -1648,6 +1652,51 @@ describe('CommerceCartService — the versioned write', () => {
 
 		expect(tables.commerce_cart_line.filter((row: any) => !row.deletedAt)).toHaveLength(1);
 		expect(tables.commerce_cart_shipping_method).toHaveLength(0);
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+	});
+
+	it('refuses a reference to another tenant’s row before the version moves or a delivery choice is retired', async () => {
+		// The child services refuse a plain id column that names another tenant's row (security audit P0 #6c; the
+		// refusal itself is exercised against a real database in `cart-references.db.spec.ts`). The cart's verbs ask
+		// them first: a delivery choice is replaced by retiring the previous one, so a refusal raised by the create
+		// that follows would have left the cart with no choice at all and its version spent.
+		const { service, tables, lineService, shippingMethodService, promotionService } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 5 });
+		const line = tables.commerce_cart_line[0];
+		const before = Number(tables.commerce_cart[0].version);
+		const foreign = new ForbiddenException('A related record belongs to another tenant');
+
+		for (const child of [lineService, shippingMethodService, promotionService]) {
+			jest.spyOn(child, 'assertReferences').mockRejectedValue(foreign);
+		}
+
+		await expect(
+			service.addLine(cart.id, {
+				variantId: 'v2',
+				title: 'B',
+				quantity: 1,
+				unitPrice: 10,
+				productId: 'foreign'
+			} as any)
+		).rejects.toBe(foreign);
+		await expect(service.updateLine(cart.id, line.id, { warehouseId: 'foreign' } as any)).rejects.toBe(foreign);
+		await expect(
+			service.setShippingMethod(cart.id, { name: 'Express', amount: 15, shippingOptionId: 'foreign' } as any)
+		).rejects.toBe(foreign);
+		await expect(
+			service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4, promotionId: 'foreign' } as any)
+		).rejects.toBe(foreign);
+
+		expect(Number(tables.commerce_cart[0].version)).toBe(before);
+		expect(tables.commerce_cart_line.filter((row: any) => !row.deletedAt)).toEqual([
+			expect.objectContaining({ id: line.id, variantId: 'v1' })
+		]);
+		expect(line.warehouseId).toBeUndefined();
+		expect(tables.commerce_cart_shipping_method.filter((row: any) => !row.deletedAt)).toEqual([
+			expect.objectContaining({ name: 'Standard' })
+		]);
 		expect(tables.commerce_cart_promotion).toHaveLength(0);
 	});
 
