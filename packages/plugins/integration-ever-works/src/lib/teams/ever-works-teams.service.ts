@@ -7,6 +7,7 @@ import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client'
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
+import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
@@ -600,7 +601,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			body: {
 				name: team.name,
 				...(emoji ? { avatarIcon: emoji } : {}),
-				externalRef: { source: 'ever-gauzy', installationId: connectionId, externalId: team.id }
+				externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: connectionId, externalId: team.id }
 			},
 			idempotencyKey: createHash('sha256').update(`${connectionId}:${EverWorksLinkType.TEAM}:${team.id}:create`).digest('hex')
 		});

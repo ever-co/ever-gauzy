@@ -284,7 +284,7 @@ describe('EverWorksTeamsService', () => {
 		expect(await service.push({ id: 'a', tenantId: 't1', organizationId: 'o1', gauzyId: 'g-new', op: 'upsert' } as never, pushContext)).toMatchObject({ status: 'pushed' });
 		const [method, path, options] = client.request.mock.calls[0];
 		expect([method, path]).toEqual(['POST', '/teams']);
-		expect(options?.['body']).toMatchObject({ name: 'New team', externalRef: { source: 'ever-gauzy', installationId: 'c1', externalId: 'g-new' } });
+		expect(options?.['body']).toMatchObject({ name: 'New team', externalRef: { source: 'gauzy', installationId: 'c1', externalId: 'g-new' } });
 		expect(options?.['idempotencyKey']).toMatch(/^[0-9a-f]{64}$/);
 		expect(links.find((l) => l.gauzyId === 'g-new')?.ewId).toBe('ew-team-new');
 		expect(await service.push({ id: 'b', tenantId: 't1', organizationId: 'o1', gauzyId: 'g-old', op: 'upsert' } as never, pushContext)).toMatchObject({ status: 'skipped' });
