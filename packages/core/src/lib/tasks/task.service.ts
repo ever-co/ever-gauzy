@@ -163,8 +163,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				const organizationId = data.organizationId ?? task.organizationId;
 				const projectId = data.projectId;
 
+				// Fails closed: a project that is not one of the organization's, or one that cannot be checked, is
+				// refused before anything is written (the tenant guard of the save checks the tenant only).
 				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
-				if (destination.exists === false) {
+				if (!destination.exists) {
 					throw new BadRequestException(
 						"The task cannot move to a project that is not one of the task's organization."
 					);
@@ -180,8 +182,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				moved = {
 					projectId,
 					number: maxNumber + 1,
-					// The stored prefix stays when the project could not be read: never the input's.
-					prefix: destination.exists ? destination.prefix : task.prefix,
+					// The destination's prefix, never the input's.
+					prefix: destination.prefix,
 					// A relation object in the input would otherwise point the save back at another project.
 					...('project' in data ? { project: { id: projectId } as Task['project'] } : {})
 				};
@@ -1129,8 +1131,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * The project a task moves to, read in the caller's tenant and the task's organization: whether it is one
 	 * of that organization's projects, and its task-number prefix by the rule the create path uses (the first
-	 * three characters of its name, or `null` for a project without a name). `exists` is `undefined` when that
-	 * cannot be told (no tenant or organization, or the read failed); the caller then keeps the stored prefix.
+	 * three characters of its name, or `null` for a project without a name). Without a tenant or an
+	 * organization to read it in, the answer is "not one of them"; a failed read is thrown, so the update fails
+	 * rather than moving the task to a project nobody checked.
 	 *
 	 * @param projectId The project the task moves to.
 	 * @param tenantId The caller's tenant.
@@ -1140,23 +1143,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		projectId: ID,
 		tenantId: ID,
 		organizationId: ID
-	): Promise<{ exists: boolean | undefined; prefix?: string | null }> {
+	): Promise<{ exists: boolean; prefix?: string | null }> {
 		if (!tenantId || !organizationId) {
-			return { exists: undefined };
+			return { exists: false };
 		}
-		try {
-			const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
-				where: { id: projectId, tenantId, organizationId },
-				select: { id: true, name: true }
-			});
-			if (!project) {
-				return { exists: false };
-			}
-			return { exists: true, prefix: project.name?.slice(0, 3) || null };
-		} catch (error) {
-			console.error(`Failed to read project ${projectId}:`, error?.message);
-			return { exists: undefined };
+		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+			where: { id: projectId, tenantId, organizationId },
+			select: { id: true, name: true }
+		});
+		if (!project) {
+			return { exists: false };
 		}
+		return { exists: true, prefix: project.name?.slice(0, 3) || null };
 	}
 
 	/**

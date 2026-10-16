@@ -127,14 +127,32 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ organizationId: fixture.organizationId }));
 	});
 
-	it('keeps the stored prefix (never the input one) when the project cannot be read', async () => {
+	it('fails closed when the project cannot be checked: nothing is written', async () => {
 		findProject.mockRejectedValue(new Error('connection reset'));
 		jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
+		await expect(service.update('task-1', { projectId: 'project-new', prefix: 'XYZ' } as never)).rejects.toThrow();
+		expect(save).not.toHaveBeenCalled();
+	});
+
+	it('fails closed without an organization to check the project in', async () => {
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			...stored,
+			organizationId: undefined
+		} as never);
+
+		await expect(service.update('task-1', { projectId: 'project-new' } as never)).rejects.toThrow(
+			/not one of the task's organization/
+		);
+		expect(findProject).not.toHaveBeenCalled();
+		expect(save).not.toHaveBeenCalled();
+	});
+
+	it("uses the destination's prefix, never the input's", async () => {
 		await service.update('task-1', { projectId: 'project-new', prefix: 'XYZ' } as never);
 
 		expect(save).toHaveBeenCalledWith(
-			expect.objectContaining({ projectId: 'project-new', number: 5, prefix: 'OLD' })
+			expect.objectContaining({ projectId: 'project-new', number: 5, prefix: 'Eve' })
 		);
 	});
 
