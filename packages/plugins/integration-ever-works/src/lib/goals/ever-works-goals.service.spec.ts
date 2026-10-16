@@ -44,7 +44,7 @@ import { EverWorksClient } from '../client/ever-works-client';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { MockEverWorksGoals } from '../testing/mock-ever-works.goals';
 import { MockEverWorksServer } from '../testing/mock-ever-works.server';
-import { EverWorksGoalsService } from './ever-works-goals.service';
+import { EverWorksGoalsService, keyResultEwId } from './ever-works-goals.service';
 
 type Row = Record<string, any>;
 
@@ -226,10 +226,17 @@ describe('EverWorksGoalsService — EW → G', () => {
 			['Numerical', 96, 40, 'e-admin'],
 			['True/False', 1, 100, 'e-admin']
 		]);
-		expect(links.filter((l) => l['entityType'] === EverWorksLinkType.KEY_RESULT).map((l) => l['ewId'])).toEqual([
-			'ew-goal-1:m',
-			'ew-goal-1:d:launch'
+		const keyLinks = links.filter((l) => l['entityType'] === EverWorksLinkType.KEY_RESULT);
+		// Link ids are digests (`<goal>:<key>` may exceed the 64-character column); the goal and key are kept.
+		expect(keyLinks.map((l) => JSON.parse(l['ewOnly']))).toEqual([
+			{ ewGoalId: 'ew-goal-1', key: 'm' },
+			{ ewGoalId: 'ew-goal-1', key: 'd:launch' }
 		]);
+		expect(keyLinks.map((l) => l['ewId'])).toEqual([
+			keyResultEwId('ew-goal-1', 'm'),
+			keyResultEwId('ew-goal-1', 'd:launch')
+		]);
+		for (const link of keyLinks) expect(link['ewId'].length).toBeLessThanOrEqual(64);
 	});
 
 	it('only what changed in Ever Works is written; a key result Ever Works dropped is archived, not deleted', async () => {
@@ -320,9 +327,9 @@ describe('EverWorksGoalsService — G → EW', () => {
 		expect(
 			links
 				.filter((l) => l['entityType'] === EverWorksLinkType.KEY_RESULT)
-				.map((l) => l['ewId'])
+				.map((l) => JSON.parse(l['ewOnly'])['key'])
 				.sort()
-		).toEqual([`${created['id']}:d:kr-b`, `${created['id']}:m`]);
+		).toEqual(['d:kr-b', 'm']);
 		for (const request of mock.requests.filter((r) => r.method !== 'GET'))
 			expect(JSON.stringify(request.body ?? {})).not.toMatch(/"status":"(active|paused|completed)"/);
 	});
