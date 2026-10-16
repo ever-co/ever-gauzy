@@ -125,6 +125,19 @@ describe('verifying a received signature', () => {
 		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${'0'.repeat(64)}`, { now: TS })).toBe(false);
 	});
 
+	it('refuses a signature of the right length that is not hex, without throwing', () => {
+		const digest = expectedDigest(SECRET, TS, BODY);
+		const notHex = `zz${digest.slice(2)}`;
+		const upperCase = digest.toUpperCase();
+
+		expect(() => verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${notHex}`, { now: TS })).not.toThrow();
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${notHex}`, { now: TS })).toBe(false);
+		// A non-hex value beside a valid one does not hide the valid one.
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${notHex},v1=${digest}`, { now: TS })).toBe(true);
+		// Upper-case hex decodes to the same bytes and stays accepted, as before.
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${upperCase}`, { now: TS })).toBe(true);
+	});
+
 	it('honours a caller’s own window when one is supplied', () => {
 		expect(verifyWebhookSignature(SECRET, BODY, signed.header, { now: TS + 60, toleranceSeconds: 30 })).toBe(false);
 		expect(verifyWebhookSignature(SECRET, BODY, signed.header, { now: TS + 600, toleranceSeconds: 3_600 })).toBe(true);

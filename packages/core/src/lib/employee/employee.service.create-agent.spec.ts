@@ -250,7 +250,7 @@ describe('EmployeeService.createAgentEmployee', () => {
 		).rejects.toBeInstanceOf(ConflictException);
 	});
 
-	it('creates an agent once when two calls for it overlap (the organization row is locked)', async () => {
+	it('creates an agent once when two calls for it overlap (the tenant row is locked)', async () => {
 		const input = { tenantId: TENANT, organizationId: ORGANIZATION, name: 'Bot', email: 'agent-7@agents.invalid' };
 
 		const results = await Promise.all([service.createAgentEmployee(input), service.createAgentEmployee(input)]);
@@ -369,7 +369,7 @@ describe('EmployeeService.createAgentEmployee', () => {
 		).rejects.toBeInstanceOf(ConflictException);
 	});
 
-	it('takes the organization lock without eager joins (Postgres refuses FOR UPDATE on an outer join)', async () => {
+	it('takes the tenant lock without eager joins (Postgres refuses FOR UPDATE on an outer join)', async () => {
 		await service.createAgentEmployee({
 			tenantId: TENANT,
 			organizationId: ORGANIZATION,

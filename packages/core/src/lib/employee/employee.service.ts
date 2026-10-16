@@ -249,7 +249,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * must not become a person who is paid, counted and invited.
 	 *
 	 * @param userId The account the new employee would stand on.
-	 * @param tenantId The tenant.
+	 * @param tenantId The tenant. Without one (no request tenant), the agent employees of the account are
+	 * looked for in every tenant: a user id belongs to one tenant, so the answer is the same, and the check
+	 * never becomes a no-op.
 	 * @throws ConflictException when the account stands behind an agent employee.
 	 */
 	public async assertNotAgentAccount(userId: ID, tenantId: ID): Promise<void> {
