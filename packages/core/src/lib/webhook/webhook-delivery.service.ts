@@ -37,6 +37,11 @@ export interface IWebhookDeliveryAttempt {
 	result: IWebhookAttemptResult;
 	/** True when no request was made, because the subscription is switched off. */
 	skipped: boolean;
+	/**
+	 * True when the attempt asked to claim the row and could not: another attempt holds it, or it is no longer
+	 * pending or failed and due. Nothing was done to the row, so a caller counting attempts leaves it out.
+	 */
+	claimRefused?: boolean;
 }
 
 /**
@@ -234,7 +239,7 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 		const delivery = await this.getDeliveryForAttempt(deliveryId);
 
 		if (options.claim && !(await this.claimForAttempt(delivery))) {
-			return { delivery, result: { delivered: false, durationMs: 0 }, skipped: true };
+			return { delivery, result: { delivered: false, durationMs: 0 }, skipped: true, claimRefused: true };
 		}
 
 		const subscription = await this.subscriptions.getSubscriptionForDelivery(delivery.subscriptionId);

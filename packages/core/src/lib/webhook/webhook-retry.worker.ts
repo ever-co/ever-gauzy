@@ -74,11 +74,18 @@ export class WebhookRetryWorker extends QueueWorkerHost {
 		}
 
 		let attempted = 0;
+		// Rows the fan-out or an overlapping pass took after `findDue` read them: not attempted by this pass.
+		let taken = 0;
 
 		for (const delivery of due) {
 			try {
-				await this.webhookDeliveryService.deliver(delivery.id as ID, { claim: true });
-				attempted += 1;
+				const outcome = await this.webhookDeliveryService.deliver(delivery.id as ID, { claim: true });
+
+				if (outcome?.claimRefused) {
+					taken += 1;
+				} else {
+					attempted += 1;
+				}
 			} catch (error) {
 				// `deliver` records a refusal rather than raising, so this is a failure to *write* the
 				// attempt. The row keeps the `nextAttemptAt` it already had and the next pass meets it
@@ -87,6 +94,9 @@ export class WebhookRetryWorker extends QueueWorkerHost {
 			}
 		}
 
-		this.logger.log(`Attempted ${attempted} of ${due.length} due webhook delivery(ies)`);
+		this.logger.log(
+			`Attempted ${attempted} of ${due.length} due webhook delivery(ies)` +
+				(taken > 0 ? `; ${taken} already taken by another attempt or no longer due` : '')
+		);
 	}
 }
