@@ -177,4 +177,15 @@ describe('EverWorksConnectComponent', () => {
 		component.ngOnChanges({ mapping: {} as never });
 		expect(component.step).toBe('review');
 	});
+
+	it('once the first sync has started, Start asks for nothing more', () => {
+		api.registerWebhook.mockReturnValue(of(CONNECTION));
+		api.startSync.mockReturnValue(of({ id: 'run-1', status: 'running' }));
+		const { component } = render({ connection: CONNECTION, mapping: MAPPING });
+		component.go('start');
+		component.start();
+		component.start();
+		expect(api.startSync).toHaveBeenCalledTimes(1);
+		expect(component.busy).toBe(true);
+	});
 });
