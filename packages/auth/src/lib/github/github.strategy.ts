@@ -35,14 +35,15 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 			// Extract the user's profile picture
 			const [photo] = photos;
 
-			// With allRawEmails, each address keeps GitHub's own primary and verified flags. Only verified ones can
-			// sign in, and the primary address goes first so it wins when several of them match existing users.
+			// With allRawEmails, each address keeps GitHub's own primary and verified flags. Only the primary address
+			// is offered, as the token sign-in (verifyGithubToken) accepts only that one, and it signs in only when
+			// GitHub reports it verified. A secondary address can stay verified on GitHub long after its owner lost it.
 			const githubEmails: Array<{ value: string; primary?: boolean; verified?: boolean }> = emails ?? [];
 
 			// Construct user object
 			const user = {
-				emails: [...githubEmails]
-					.sort((a, b) => Number(b.primary === true) - Number(a.primary === true))
+				emails: githubEmails
+					.filter(({ primary }) => primary === true)
 					.map(({ value, verified }) => ({ value, verified: verified === true })),
 				firstName,
 				lastName,
@@ -102,7 +103,7 @@ export const parseGithubConfig = (configService: ConfigService): StrategyOptions
 		scope: ['read:user', 'user:email'],
 		// Retrieve the GitHub user agent from the configuration.
 		userAgent: userAgent,
-		// Keep GitHub's primary and verified flags on every email, so sign-in can refuse unverified addresses.
+		// Keep GitHub's primary and verified flags on every email, so sign-in can refuse an unverified primary address.
 		allRawEmails: true
 	};
 };
