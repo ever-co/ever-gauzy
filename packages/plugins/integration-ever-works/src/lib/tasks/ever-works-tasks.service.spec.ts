@@ -64,6 +64,7 @@ import {
 	titleForEverWorks,
 	transitionBlockedMessage
 } from './ever-works-task.mapper';
+import { commentBodyForEverWorks, EverWorksTaskCommentsService } from './ever-works-task-comments.service';
 import { EverWorksRequestContextUnavailableError } from './ever-works-task.store';
 import { EverWorksTasksService } from './ever-works-tasks.service';
 
@@ -171,6 +172,7 @@ interface LinkRow {
 	ewOnly: string | null;
 	state: string;
 	lastError?: string | null;
+	ewUpdatedAt?: string | Date | null;
 }
 
 type GauzyTask = Record<string, any>;
@@ -199,16 +201,18 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 		snapshot: (link: LinkRow | null) => (link?.snapshot ? JSON.parse(link.snapshot) : {}),
 		record: async (input: Record<string, any>) => {
 			const existing = links.find((l) => l.entityType === input['entityType'] && (l.ewId === input['ewId'] || l.gauzyId === input['gauzyId']));
+			// Like the real link service: only the fields given are written.
 			const values = {
 				gauzyId: input['gauzyId'],
 				ewId: input['ewId'],
-				ewVersion: input['ewVersion'] ?? null,
-				snapshot: JSON.stringify(input['snapshot']),
-				ewOnly: JSON.stringify(input['ewOnly']),
+				...(input['ewVersion'] !== undefined ? { ewVersion: input['ewVersion'] ?? null } : {}),
+				...(input['snapshot'] !== undefined ? { snapshot: JSON.stringify(input['snapshot']) } : {}),
+				...(input['ewOnly'] !== undefined ? { ewOnly: JSON.stringify(input['ewOnly']) } : {}),
+				...(input['ewUpdatedAt'] !== undefined ? { ewUpdatedAt: input['ewUpdatedAt'] } : {}),
 				state: EverWorksLinkState.OK
 			};
 			if (existing) Object.assign(existing, values);
-			else links.push({ id: `l${links.length + 1}`, integrationTenantId: input['integrationTenantId'], entityType: input['entityType'], ...values });
+			else links.push({ id: `l${links.length + 1}`, integrationTenantId: input['integrationTenantId'], entityType: input['entityType'], ewVersion: null, snapshot: null, ewOnly: null, ...values });
 		},
 		unlink: async (link: LinkRow, reason: string) => Object.assign(link, { state: EverWorksLinkState.UNLINKED, lastError: reason })
 	};
@@ -218,7 +222,8 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 	// ── Gauzy stand-ins ──
 	const tasks = new Map<string, GauzyTask>();
 	const tags = new Map<string, { id: string; name: string }>();
-	const comments: Array<{ taskId: string; html: string; actorType: unknown }> = [];
+	const comments: Array<{ id: string; taskId: string; html: string; actorType: unknown; employeeId: string | null; deletedAt?: Date | null }> = [];
+	const resourceLinks: Array<{ id: string; taskId: string; title: string; url: string }> = [];
 	const subscriptions: Array<{ taskId: string; employeeId: string }> = [];
 	const linkedIssues: LinkedIssueRow[] = [];
 	const sameRow = (a: LinkedIssueRow, b: LinkedIssueRow) => a.taskToId === b.taskToId && a.taskFromId === b.taskFromId && a.action === b.action;
@@ -260,7 +265,35 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 				if (!tags.has(k)) tags.set(k, { id: `tag-${k}`, name });
 				return tags.get(k) as { id: string; name: string };
 			}),
-		addComment: async (_scope: unknown, taskId: string, html: string, actorType: unknown) => void comments.push({ taskId, html, actorType }),
+		addComment: async (_scope: unknown, taskId: string, html: string, actorType: unknown, employeeId: string | null = null) => {
+			const id = `g-comment-${comments.length + 1}`;
+			comments.push({ id, taskId, html, actorType, employeeId });
+			return id;
+		},
+		loadComment: async (_t: string, id: string) => {
+			const row = comments.find((comment) => comment.id === id);
+			return row
+				? { id: row.id, comment: row.html, entity: 'Task', entityId: row.taskId, organizationId: 'o1', employeeId: row.employeeId, deletedAt: row.deletedAt ?? null }
+				: null;
+		},
+		updateComment: async (id: string, html: string) => void Object.assign(comments.find((comment) => comment.id === id) as object, { html }),
+		softDeleteComment: async (id: string) => void Object.assign(comments.find((comment) => comment.id === id) as object, { deletedAt: new Date() }),
+		removeResourceLink: async (_t: string, id: string) => {
+			const at = resourceLinks.findIndex((row) => row.id === id);
+			if (at >= 0) resourceLinks.splice(at, 1);
+		},
+		upsertResourceLink: async (_s: unknown, taskId: string, title: string, url: string, known: { id: string; owned: boolean } | null) => {
+			const row = known ? resourceLinks.find((link) => link.id === known.id) : undefined;
+			if (row && known) {
+				if (known.owned) Object.assign(row, { title, url });
+				if (known.owned || row.url === url) return known;
+			}
+			const same = resourceLinks.find((link) => link.taskId === taskId && link.url === url);
+			if (same) return { id: same.id, owned: false };
+			const id = `g-link-${resourceLinks.length + 1}`;
+			resourceLinks.push({ id, taskId, title, url });
+			return { id, owned: true };
+		},
 		userOfEmployee: async (employeeId: string) => ({ userId: `user-of-${employeeId}`, name: 'Someone' }),
 		employeeOfUser: async (_t: string, _o: string, userId: string) => (userId === 'u-alice' ? 'e-alice' : null),
 		projectExists: async (_t: string, _o: string, projectId: string) => ['p-default', 'p-site'].includes(projectId),
@@ -308,7 +341,8 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 	});
 	const connections = { client: () => client };
 	const mappings = { ensureProjectForSync: async () => 'p-default' };
-	const service = new EverWorksTasksService(contexts as never, connections as never, linkService as never, queue as never, store as never, mappings as never, log as never);
+	const comments$ = new EverWorksTaskCommentsService(contexts as never, connections as never, linkService as never, queue as never, store as never, log as never);
+	const service = new EverWorksTasksService(contexts as never, connections as never, linkService as never, queue as never, store as never, mappings as never, log as never, comments$);
 	const applyContext = { connection: context.connection, event: {}, organizationId: 'o1' };
 	/** Runs an Ever Works event through the handler as the inbound applier does (inside the sync context). */
 	const deliver = (event: { type: string; data: Record<string, unknown>; aggregate: { id: string; version: number }; actor?: Record<string, unknown>; occurredAt?: string }) =>
@@ -334,7 +368,33 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			connection: context.connection,
 			mapping: { id: 'm1' }
 		} as never);
-	return { mock, org, context, links, link, tasks, tags, comments, writes, addGauzyTask, queue, logged, service, deliver, push, subscriptions, linkedIssues };
+	const pushComment = (gauzyId: string, op: 'upsert' | 'delete' = 'upsert') =>
+		comments$.push({ tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', entityType: EverWorksLinkType.COMMENT, gauzyId, op, actorUserId: null, attempts: 0 } as never, {
+			connection: context.connection,
+			mapping: { id: 'm1' }
+		} as never);
+	return {
+		mock,
+		org,
+		context,
+		links,
+		link,
+		tasks,
+		tags,
+		comments,
+		resourceLinks,
+		writes,
+		addGauzyTask,
+		queue,
+		logged,
+		service,
+		deliver,
+		push,
+		pushComment,
+		commentsService: comments$,
+		subscriptions,
+		linkedIssues
+	};
 }
 
 describe('EW → G tasks', () => {
@@ -751,5 +811,212 @@ describe('task watchers: a Gauzy edit not pushed yet (#10804 review, applied to 
 		expect(t.subscriptions.map((row) => row.employeeId).sort()).toEqual(['e-alice', 'e-bob']);
 		expect(await t.push('g1')).toEqual({ status: 'pushed' });
 		expect([...(ew?.['watchers'] as string[])].sort()).toEqual(['ew-alice', 'ew-bob']);
+	});
+});
+
+describe('task comments and links (G-P1-9, 3/3)', () => {
+	const comment = (taskId: string, extra: Record<string, unknown> = {}) => ({
+		id: `ew-comment-${Math.random().toString(16).slice(2)}`,
+		taskId,
+		organizationId: 'org',
+		authorType: 'agent',
+		authorId: 'ew-agent',
+		externalAuthor: null,
+		body: 'Opened **PR #12**.',
+		mentions: [],
+		editedAt: null,
+		createdAt: '2026-10-16T10:00:00Z',
+		updatedAt: '2026-10-16T10:00:00Z',
+		externalLinks: [],
+		...extra
+	});
+
+	it('an agent’s chat message becomes a Gauzy comment by its agent employee; edits and deletes follow', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.AGENT, 'e-agent', 'ew-agent');
+		const task = t.mock.addTask(t.org.id, { title: 'Chatty' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const message = comment(task['id'] as string);
+		// The comment event carries the task's version, which the task link already has: it is applied anyway.
+		expect(await t.deliver({ type: 'task.comment.created', data: message, aggregate: { id: task['id'] as string, version: 1 } })).toEqual({ status: 'applied' });
+		expect(t.comments).toEqual([expect.objectContaining({ taskId: 'g-task-1', html: '<p>Opened <strong>PR #12</strong>.</p>', actorType: 'Agent', employeeId: 'e-agent' })]);
+		// The same event again (a replay) adds nothing.
+		await t.deliver({ type: 'task.comment.created', data: message, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.comments).toHaveLength(1);
+		await t.deliver({ type: 'task.comment.updated', data: { ...message, body: 'Merged.' }, aggregate: { id: task['id'] as string, version: 2 } });
+		expect(t.comments[0]?.html).toBe('<p>Merged.</p>');
+		await t.deliver({ type: 'task.comment.deleted', data: { ...message, deleted: true }, aggregate: { id: task['id'] as string, version: 3 } });
+		expect(t.comments[0]?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('an author Gauzy cannot attribute is named in the comment', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Chatty' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		await t.deliver({ type: 'task.comment.created', data: comment(task['id'] as string, { authorType: 'user', authorId: 'ew-nobody', externalAuthor: { name: 'Dana' } }), aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.comments[0]).toMatchObject({ html: '<p><strong>Dana</strong> (Ever Works):</p><p>Opened <strong>PR #12</strong>.</p>', employeeId: null });
+	});
+
+	it('a Gauzy comment is posted as its author with an externalRef, cut to 16384; an edit is patched', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
+		await t.push('g1');
+		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Looks <em>good</em></p>', actorType: 'User', employeeId: 'e-alice' });
+		expect(await t.pushComment('gc1')).toEqual({ status: 'pushed', message: 'posted to the Ever Works task chat' });
+		const post = t.mock.requests.find((r) => r.method === 'POST' && r.path.endsWith('/comments'));
+		expect(post?.headers['x-act-as-user']).toBe('ew-alice');
+		expect(post?.body).toMatchObject({ body: 'Looks *good*', externalRef: { source: 'gauzy', installationId: 'c1', externalId: 'gc1' } });
+		(t.comments.find((c) => c.id === 'gc1') as { html: string }).html = '<p>Looks great</p>';
+		expect(await t.pushComment('gc1')).toEqual({ status: 'pushed' });
+		expect([...t.mock.comments.values()][0]).toMatchObject({ body: 'Looks great' });
+		expect(commentBodyForEverWorks(`<p>${'x'.repeat(20000)}</p>`).length).toBe(16384);
+	});
+
+	it('a Gauzy comment of a task not in Ever Works yet waits for the task, which is queued', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Not yet' });
+		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Hi</p>', actorType: 'User', employeeId: null });
+		expect(await t.pushComment('gc1')).toMatchObject({ status: 'deferred' });
+		expect(t.queue.enqueued).toEqual([expect.objectContaining({ entityType: EverWorksLinkType.TASK, gauzyId: 'g1' })]);
+	});
+
+	it('links the Gauzy task to its Ever Works page and to its pull request once there is one', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Linked', slug: 'T-7' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks).toEqual([expect.objectContaining({ taskId: 'g-task-1', title: 'Ever Works task T-7', url: task['webUrl'] })]);
+		const runtime = { prUrl: 'https://github.com/acme/site/pull/12', prState: 'open', ciState: 'pending', latestRunStatus: 'running' };
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime }, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks).toEqual(expect.arrayContaining([expect.objectContaining({ title: 'Pull request', url: runtime.prUrl })]));
+		// A new PR URL updates the same link.
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { ...runtime, prUrl: 'https://github.com/acme/site/pull/13' } }, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks.filter((row) => row.title === 'Pull request').map((row) => row.url)).toEqual(['https://github.com/acme/site/pull/13']);
+	});
+});
+
+describe('task comments review fixes (#10813)', () => {
+	const ewComment = (taskId: string, extra: Record<string, unknown> = {}) => ({
+		id: `ew-comment-${Math.random().toString(16).slice(2)}`,
+		taskId,
+		organizationId: 'org',
+		authorType: 'user',
+		authorId: 'ew-alice',
+		externalAuthor: null,
+		body: 'Hello',
+		mentions: [],
+		editedAt: null,
+		createdAt: '2026-10-16T10:00:00Z',
+		updatedAt: '2026-10-16T10:00:00Z',
+		externalLinks: [],
+		...extra
+	});
+
+	async function pushed(t: ReturnType<typeof setup>, html: string) {
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
+		await t.push('g1');
+		t.comments.push({ id: 'gc1', taskId: 'g1', html, actorType: 'User', employeeId: 'e-alice' });
+		await t.pushComment('gc1');
+		const [ewTask] = [...t.mock.tasks.values()];
+		const [ew] = [...t.mock.comments.values()];
+		return { ewTask: ewTask as Record<string, unknown>, ew: ew as Record<string, unknown> };
+	}
+
+	it('a long Gauzy comment, cut in Ever Works, still takes the author’s later Ever Works edits', async () => {
+		const t = setup();
+		const long = 'x'.repeat(20000);
+		const { ewTask, ew } = await pushed(t, `<p>${long}</p>`);
+		expect((ew['body'] as string).length).toBe(16384);
+		await t.deliver({ type: 'task.comment.updated', data: { ...ew, body: 'Shorter now.' }, aggregate: { id: ewTask['id'] as string, version: 9 } });
+		expect(t.comments.find((c) => c.id === 'gc1')?.html).toBe('<p>Shorter now.</p>');
+	});
+
+	it('a refused Gauzy edit stays in Gauzy when the author edits in Ever Works later, and is not sent again', async () => {
+		const t = setup();
+		const { ewTask, ew } = await pushed(t, '<p>First</p>');
+		(t.comments.find((c) => c.id === 'gc1') as { html: string }).html = '<p>Edited in Gauzy</p>';
+		t.mock.fail({ method: 'PATCH', path: /\/comments\//, status: 422, body: { error: { code: 'domain_rule', message: 'The edit window has passed.' } } });
+		expect((await t.pushComment('gc1')).status).toBe('skipped');
+		expect(t.logged).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'comment_edit_refused' })]));
+		await t.deliver({ type: 'task.comment.updated', data: { ...ew, body: 'Edited in Ever Works' }, aggregate: { id: ewTask['id'] as string, version: 9 } });
+		expect(t.comments.find((c) => c.id === 'gc1')?.html).toBe('<p>Edited in Gauzy</p>');
+		const patches = t.mock.requests.filter((r) => r.method === 'PATCH').length;
+		expect((await t.pushComment('gc1')).status).toBe('skipped');
+		expect(t.mock.requests.filter((r) => r.method === 'PATCH').length).toBe(patches);
+	});
+
+	it('a Gauzy delete is sent as the comment’s Ever Works author', async () => {
+		const t = setup();
+		await pushed(t, '<p>Bye</p>');
+		(t.comments.find((c) => c.id === 'gc1') as { deletedAt?: Date }).deletedAt = new Date();
+		expect(await t.pushComment('gc1', 'delete')).toEqual({ status: 'pushed', message: 'deleted in Ever Works' });
+		expect(t.mock.requests.find((r) => r.method === 'DELETE')?.headers['x-act-as-user']).toBe('ew-alice');
+		expect(t.mock.comments.size).toBe(0);
+	});
+
+	it('the sweep queues a linked comment that was edited or deleted without a captured event', async () => {
+		const t = setup();
+		await pushed(t, '<p>Swept</p>');
+		t.queue.enqueued.length = 0;
+		await t.service.sweep(t.context.connection as never);
+		const comments = t.commentsService;
+		await comments.sweep(t.context.connection as never);
+		expect(t.queue.enqueued.filter((q) => q['entityType'] === EverWorksLinkType.COMMENT)).toEqual([]);
+		(t.comments.find((c) => c.id === 'gc1') as { html: string }).html = '<p>Changed by a partial save</p>';
+		await comments.sweep(t.context.connection as never);
+		expect(t.queue.enqueued.filter((q) => q['entityType'] === EverWorksLinkType.COMMENT)).toEqual([expect.objectContaining({ entityType: EverWorksLinkType.COMMENT, gauzyId: 'gc1', op: 'upsert' })]);
+	});
+
+	it('a lost-answer link back only pairs a comment of the same task', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g-other', title: 'Other' });
+		t.comments.push({ id: 'gc-other', taskId: 'g-other', html: '<p>Elsewhere</p>', actorType: 'User', employeeId: null });
+		const task = t.mock.addTask(t.org.id, { title: 'Chat' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const stale = ewComment(task['id'] as string, { externalLinks: [{ source: 'gauzy', installationId: 'c1', externalId: 'gc-other' }] });
+		await t.deliver({ type: 'task.comment.created', data: stale, aggregate: { id: task['id'] as string, version: 1 } });
+		// A new comment on the right task, not a pairing with the other task's comment.
+		const gauzyTaskId = t.links.find((l) => l.entityType === EverWorksLinkType.TASK && l.ewId === task['id'])?.gauzyId;
+		expect(t.comments.filter((c) => c.taskId === gauzyTaskId)).toHaveLength(1);
+		expect(t.links.find((l) => l.entityType === EverWorksLinkType.COMMENT)?.gauzyId).not.toBe('gc-other');
+	});
+
+	it('removes the "Pull request" link when Ever Works drops the PR', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'PR', runtime: { prUrl: 'https://github.com/acme/site/pull/1', prState: 'open', ciState: null, latestRunStatus: null } });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks.some((row) => row.title === 'Pull request')).toBe(true);
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { prUrl: null, prState: null, ciState: null, latestRunStatus: null } }, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks.some((row) => row.title === 'Pull request')).toBe(false);
+	});
+});
+
+describe('task comments and links review round 2 (#10813)', () => {
+	it('a link a person added with the PR URL is reused and stays when Ever Works drops the PR', async () => {
+		const t = setup();
+		const prUrl = 'https://github.com/acme/site/pull/5';
+		const task = t.mock.addTask(t.org.id, { title: 'Mine' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		t.resourceLinks.push({ id: 'user-link', taskId: 'g-task-1', title: 'My PR', url: prUrl });
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { prUrl, prState: 'open', ciState: null, latestRunStatus: null } }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T10:00:00Z' });
+		expect(t.resourceLinks.filter((row) => row.url === prUrl)).toEqual([{ id: 'user-link', taskId: 'g-task-1', title: 'My PR', url: prUrl }]);
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { prUrl: null, prState: null, ciState: null, latestRunStatus: null } }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T11:00:00Z' });
+		expect(t.resourceLinks.some((row) => row.id === 'user-link')).toBe(true);
+	});
+
+	it('an older run state or comment state (a late delivery) does not overwrite a newer one', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.AGENT, 'e-agent', 'ew-agent');
+		const task = t.mock.addTask(t.org.id, { title: 'Late' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const runtime = (prUrl: string) => ({ prUrl, prState: 'open', ciState: null, latestRunStatus: null });
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: runtime('https://github.com/acme/site/pull/2') }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T12:00:00Z' });
+		expect((await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: runtime('https://github.com/acme/site/pull/1') }, aggregate: { id: task['id'] as string, version: 1 }, occurredAt: '2026-10-16T11:00:00Z' })).status).toBe('skipped');
+		expect(t.resourceLinks.filter((row) => row.title === 'Pull request').map((row) => row.url)).toEqual(['https://github.com/acme/site/pull/2']);
+		const base = { id: 'ew-c1', taskId: task['id'], authorType: 'agent', authorId: 'ew-agent', externalAuthor: null, mentions: [], editedAt: null, createdAt: '2026-10-16T10:00:00Z', externalLinks: [] };
+		await t.deliver({ type: 'task.comment.created', data: { ...base, body: 'v2', updatedAt: '2026-10-16T12:00:00Z' }, aggregate: { id: task['id'] as string, version: 1 } });
+		expect((await t.deliver({ type: 'task.comment.updated', data: { ...base, body: 'v1', updatedAt: '2026-10-16T11:00:00Z' }, aggregate: { id: task['id'] as string, version: 1 } })).status).toBe('skipped');
+		expect(t.comments[0]?.html).toBe('<p>v2</p>');
 	});
 });

@@ -11,6 +11,7 @@ import {
 	OrganizationProject,
 	OrganizationStrategicInitiative,
 	RequestContext,
+	ResourceLink,
 	Tag,
 	Task,
 	TaskCreateCommand,
@@ -215,10 +216,10 @@ export class EverWorksTaskStore {
 		return result;
 	}
 
-	/** Adds a comment to a task (the sync's own notes: a kept status, a conflicting edit). */
-	async addComment(scope: { tenantId: ID; organizationId: ID }, taskId: ID, html: string, actorType: ActorTypeEnum, employeeId: ID | null = null): Promise<void> {
+	/** Adds a comment to a task (a synced chat message, or the sync's own notes); returns its id. */
+	async addComment(scope: { tenantId: ID; organizationId: ID }, taskId: ID, html: string, actorType: ActorTypeEnum, employeeId: ID | null = null): Promise<ID> {
 		const repository = this.dataSource.getRepository(Comment);
-		await repository.save(
+		const saved = await repository.save(
 			repository.create({
 				entity: BaseEntityEnum.Task,
 				entityId: taskId,
@@ -229,6 +230,69 @@ export class EverWorksTaskStore {
 				organizationId: scope.organizationId
 			} as unknown as Comment)
 		);
+		return saved.id as ID;
+	}
+
+	/** A comment, deleted ones included. */
+	async loadComment(
+		tenantId: ID,
+		commentId: ID
+	): Promise<{ id: ID; comment: string; entity: string; entityId: ID; organizationId: ID; employeeId: ID | null; deletedAt: Date | null } | null> {
+		const row = await this.dataSource.getRepository(Comment).findOne({ where: { id: commentId, tenantId } as never, withDeleted: true });
+		if (!row) return null;
+		return {
+			id: row.id as ID,
+			comment: row.comment,
+			entity: row.entity,
+			entityId: row.entityId as ID,
+			organizationId: row.organizationId as ID,
+			employeeId: (row.employeeId as ID) ?? null,
+			deletedAt: (row as { deletedAt?: Date | null }).deletedAt ?? null
+		};
+	}
+
+	/** Rewrites a comment's text (an edit synced from Ever Works). */
+	async updateComment(commentId: ID, html: string): Promise<void> {
+		await this.dataSource.getRepository(Comment).update({ id: commentId } as never, { comment: html, editedAt: new Date() } as never);
+	}
+
+	/** Soft-deletes a comment (a delete synced from Ever Works; nothing is hard-deleted). */
+	async softDeleteComment(commentId: ID): Promise<void> {
+		await this.dataSource.getRepository(Comment).softDelete({ id: commentId } as never);
+	}
+
+	/** Soft-deletes a resource link the sync made (its Ever Works target is gone). */
+	async removeResourceLink(tenantId: ID, linkId: ID): Promise<void> {
+		await this.dataSource.getRepository(ResourceLink).softDelete({ id: linkId, tenantId } as never);
+	}
+
+	/**
+	 * The task's resource link with this title and URL: the one recorded before (updated when the URL
+	 * changed), else one with the same URL, else a new one. Returns its id.
+	 */
+	async upsertResourceLink(
+		scope: { tenantId: ID; organizationId: ID },
+		taskId: ID,
+		title: string,
+		url: string,
+		known: { id: ID; owned: boolean } | null
+	): Promise<{ id: ID; owned: boolean }> {
+		const repository = this.dataSource.getRepository(ResourceLink);
+		if (known) {
+			const row = await repository.findOne({ where: { id: known.id, tenantId: scope.tenantId } as never });
+			if (row) {
+				// Only a link the sync made is rewritten; a person's link with the old URL is left as it is.
+				if (known.owned && (row.url !== url || row.title !== title)) await repository.update({ id: known.id } as never, { url, title } as never);
+				if (known.owned || row.url === url) return known;
+			}
+		}
+		// A link a person already added with this URL is reused as it is (and never removed by the sync).
+		const same = await repository.findOne({ where: { tenantId: scope.tenantId, entity: BaseEntityEnum.Task, entityId: taskId, url } as never });
+		if (same) return { id: same.id as ID, owned: false };
+		const saved = await repository.save(
+			repository.create({ tenantId: scope.tenantId, organizationId: scope.organizationId, entity: BaseEntityEnum.Task, entityId: taskId, title, url } as unknown as ResourceLink)
+		);
+		return { id: saved.id as ID, owned: true };
 	}
 
 	/** The user (and display name) of an employee. */

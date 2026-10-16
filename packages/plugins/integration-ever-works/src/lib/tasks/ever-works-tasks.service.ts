@@ -27,7 +27,8 @@ import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutco
 import type { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 import { isSyncedVisibility, teamScopeFor } from '../teams/ever-works-team-scope';
-import { escapeHtml, htmlToMarkdown, markdownToHtml } from './ever-works-markdown';
+import { escapeHtml, htmlToMarkdown, isSafeUrl, markdownToHtml } from './ever-works-markdown';
+import { EverWorksTaskCommentsService } from './ever-works-task-comments.service';
 import {
 	applySetChange,
 	createStatusFor,
@@ -147,7 +148,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		private readonly queue: EverWorksOutboundQueue,
 		private readonly store: EverWorksTaskStore,
 		private readonly mappings: EverWorksMappingService,
-		private readonly log: EverWorksSyncLogService
+		private readonly log: EverWorksSyncLogService,
+		private readonly comments: EverWorksTaskCommentsService
 	) {}
 
 	// ── EW → G ─────────────────────────────────────────────────────────────────────────────────────
@@ -174,6 +176,15 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 					throw error;
 				}
 			}
+		}
+		try {
+			// Comments are children applied by their own id (CR-1), and run state does not bump the task's
+			// version: neither is skipped by the task link's version.
+			if (envelope.type.startsWith('task.comment.')) return await this.comments.apply(context, envelope);
+			if (envelope.type === 'task.runtime_updated') return await this.applyRuntime(context, link, data as unknown as EverWorksTask, envelope.occurredAt);
+		} catch (error) {
+			if (error instanceof EverWorksRequestContextUnavailableError) return { status: 'deferred', message: error.message, retryInMs: TASK_NO_CONTEXT_RETRY_MS };
+			throw error;
 		}
 		const version = envelope.aggregate.version ?? null;
 		if (link && link.ewVersion != null && version != null && version <= link.ewVersion) {
@@ -312,6 +323,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			unmappedWatchers: edges.unmappedWatchers,
 			unmappedEdges: edges.unmappedEdges
 		});
+		await this.syncResourceLinks(context, taskId, task, {});
 		await this.putExternalLink(context, task.id, taskId);
 		this.logger.log(`Ever Works task ${task.id} created as Gauzy task ${taskId} (organization ${context.organizationId}).`);
 		return { status: 'applied' };
@@ -478,6 +490,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			{ unmappedTeams, unmappedAssignees, unmappedWatchers: edges.unmappedWatchers, unmappedEdges: edges.unmappedEdges },
 			link
 		);
+		await this.syncResourceLinks(context, row.id as ID, task, ewOnly);
 		for (const conflict of conflicts) {
 			await this.logConflict(context, row.id as ID, task.id, `conflict:${conflict.field}`, `Both sides changed ${conflict.field}; the later edit (${conflict.winner === 'gauzy' ? 'Gauzy' : 'Ever Works'}) won.`, conflict);
 		}
@@ -627,6 +640,82 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		const result = base.filter((id) => !change.removed.includes(id));
 		for (const id of change.added) if (!result.includes(id)) result.push(id);
 		return sortedIds(result);
+	}
+
+	/**
+	 * `task.runtime_updated` (machine-owned PR / CI / run state; it bumps neither the version nor `updatedAt`):
+	 * the "Pull request" link and the run state kept on the link follow it. Display only (plan 01 §7).
+	 */
+	private async applyRuntime(context: EverWorksMappingContext, link: EverWorksEntityLink | null, task: EverWorksTask, occurredAt: string | null | undefined): Promise<EverWorksApplyOutcome> {
+		if (!link) return { status: 'skipped', message: 'the task is not linked' };
+		const ewOnly = this.everWorksOnly(link);
+		// No version on run state: an older event (a late delivery) never overwrites a newer one.
+		if (occurredAt && ewOnly.runtimeAt && new Date(occurredAt).getTime() < new Date(ewOnly.runtimeAt).getTime()) {
+			return { status: 'skipped', message: 'older run state than the one applied' };
+		}
+		const runtime = task.runtime ?? null;
+		const links = await this.syncResourceLinks(context, link.gauzyId as ID, { ...task, id: link.ewId, webUrl: task.webUrl ?? ewOnly.webUrl ?? null, runtime }, ewOnly, false);
+		await this.links.record({
+			tenantId: context.tenantId,
+			organizationId: context.organizationId,
+			integrationTenantId: context.integrationTenantId,
+			entityType: EverWorksLinkType.TASK,
+			gauzyId: link.gauzyId as ID,
+			ewId: link.ewId,
+			ewOnly: { ...ewOnly, runtime, resourceLinks: links, runtimeAt: occurredAt ?? ewOnly.runtimeAt ?? null } as unknown as Record<string, unknown>,
+			direction: 'inbound'
+		});
+		return { status: 'applied' };
+	}
+
+	/**
+	 * The task's links to Ever Works (plan 01 §7): "Ever Works task <slug>" → the task's web page, and "Pull
+	 * request" → its PR once it has one. Kept up to date (the URL can change), never duplicated. Only
+	 * `http(s)` URLs are written. Returns the link ids (also recorded on the task link when `record`).
+	 */
+	private async syncResourceLinks(
+		context: EverWorksMappingContext,
+		taskId: ID,
+		task: Pick<EverWorksTask, 'id' | 'slug' | 'webUrl' | 'runtime'>,
+		ewOnly: TaskEverWorksOnly,
+		record = true
+	): Promise<NonNullable<TaskEverWorksOnly['resourceLinks']>> {
+		const known = ewOnly.resourceLinks ?? {};
+		const result: NonNullable<TaskEverWorksOnly['resourceLinks']> = { ...known };
+		const scope = { tenantId: context.tenantId, organizationId: context.organizationId };
+		// Links recorded before ownership was tracked were all made by the sync.
+		const knownOf = (id: string | undefined, owned: boolean | undefined) => (id ? { id: id as ID, owned: owned !== false } : null);
+		const webUrl = task.webUrl ?? null;
+		if (webUrl && isSafeUrl(webUrl, false)) {
+			const row = await this.store.upsertResourceLink(scope, taskId, `Ever Works task${task.slug ? ` ${task.slug}` : ''}`, webUrl, knownOf(known.task, known.taskOwned));
+			Object.assign(result, { task: row.id, taskOwned: row.owned });
+		}
+		const prUrl = task.runtime?.prUrl ?? null;
+		if (prUrl && isSafeUrl(prUrl, false)) {
+			const row = await this.store.upsertResourceLink(scope, taskId, 'Pull request', prUrl, knownOf(known.pr, known.prOwned));
+			Object.assign(result, { pr: row.id, prOwned: row.owned });
+		} else if (task.runtime && task.runtime.prUrl === null && known.pr) {
+			// Ever Works dropped the task's PR: a link the sync made for it goes too (soft-deleted); a person's stays.
+			if (known.prOwned !== false) await this.store.removeResourceLink(context.tenantId, known.pr as ID);
+			delete result.pr;
+			delete result.prOwned;
+		}
+		if (record && (result.task !== known.task || result.pr !== known.pr || result.taskOwned !== known.taskOwned || result.prOwned !== known.prOwned)) {
+			const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, taskId);
+			if (link) {
+				await this.links.record({
+					tenantId: context.tenantId,
+					organizationId: context.organizationId,
+					integrationTenantId: context.integrationTenantId,
+					entityType: EverWorksLinkType.TASK,
+					gauzyId: taskId,
+					ewId: link.ewId,
+					ewOnly: { ...this.everWorksOnly(link), resourceLinks: result } as unknown as Record<string, unknown>,
+					direction: 'inbound'
+				});
+			}
+		}
+		return result;
 	}
 
 	/** An Ever Works delete: the Gauzy task is soft-deleted (plan 01 §7 delete policy) and its link stops syncing. */
@@ -954,6 +1043,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			pendingWatchers: out.pendingWatchers,
 			pendingEdges: out.pendingEdges
 		});
+		await this.syncResourceLinks(context, task.id as ID, dto, {});
 		this.logger.log(`Gauzy task ${task.id} created in Ever Works as ${dto.id}.`);
 		return { status: 'pushed', message: 'created in Ever Works' };
 	}
@@ -1360,7 +1450,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 					unmappedWatchers: extras?.unmappedWatchers ?? before.unmappedWatchers ?? [],
 					unmappedEdges: extras?.unmappedEdges ?? before.unmappedEdges ?? [],
 					pendingWatchers: extras?.pendingWatchers ?? before.pendingWatchers ?? [],
-					pendingEdges: extras?.pendingEdges ?? before.pendingEdges ?? []
+					pendingEdges: extras?.pendingEdges ?? before.pendingEdges ?? [],
+					...(before.resourceLinks ? { resourceLinks: before.resourceLinks } : {})
 				}
 			: { ...before, ...(extras?.pendingWatchers ? { pendingWatchers: extras.pendingWatchers } : {}), ...(extras?.pendingEdges ? { pendingEdges: extras.pendingEdges } : {}) };
 		await this.links.record({

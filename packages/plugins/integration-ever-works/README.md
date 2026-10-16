@@ -221,7 +221,12 @@ and answered `202`.
   parent, teams (the scope), assignees ↔ members (agents included), watchers ↔
   manual subscriptions (people), and blockers and relations ↔ linked issues
   (written as a pair on both Gauzy tasks; `follow-up` is "relates to", the kind
-  kept on the link; a bulk delete is caught by a 10-minute sweep). Each
+  kept on the link; a bulk delete is caught by a 10-minute sweep). Task chat ↔
+  task comments: an agent's message is a comment by its agent employee
+  (`Agent` actor), a Gauzy comment is posted as its author (cut to 16384
+  characters); Ever Works lets only the author edit, a person for 5 minutes, so
+  a later Gauzy edit is logged, not pushed. The Gauzy task links to its Ever
+  Works page and, once there is one, its pull request. Each
   side is compared with its own last-synced value, so a value the other side
   cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
   changed a field the later edit wins, and a lost description is kept as a

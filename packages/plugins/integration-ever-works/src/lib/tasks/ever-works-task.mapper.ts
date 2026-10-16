@@ -135,6 +135,13 @@ export interface TaskEverWorksOnly {
 	/** Gauzy watchers and edge targets Ever Works could not take at the last push (no link yet); retried. */
 	pendingWatchers?: string[];
 	pendingEdges?: string[];
+	/**
+	 * The task's Gauzy resource links to Ever Works (its web page, its pull request); `*Owned` when the sync
+	 * made the link (a link a person added with the same URL is reused, never removed).
+	 */
+	resourceLinks?: { task?: string; pr?: string; taskOwned?: boolean; prOwned?: boolean };
+	/** When the run state was last applied (`task.runtime_updated` carries no version: applied by recency). */
+	runtimeAt?: string | null;
 }
 
 /** Ever Works' title limit (contract v1). */
