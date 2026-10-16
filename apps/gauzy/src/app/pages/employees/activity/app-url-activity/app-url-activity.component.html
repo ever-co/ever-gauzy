@@ -137,11 +137,18 @@
 					<ul class="au-page-list">
 						@for (page of sitePages.value; track page.label) {
 						<li class="au-page">
-							@if (page.href) {
-							<a class="au-page-link au-ellipsis" [href]="page.href" target="_blank" rel="noopener noreferrer" [nbTooltip]="page.href" nbTooltipPlacement="top">{{ page.label }}</a>
-							} @else {
-							<span class="au-page-text au-ellipsis" [nbTooltip]="page.label" nbTooltipPlacement="top">{{ page.label }}</span>
-							}
+							<!-- The site name and its link, as the page listed them before, on one line. -->
+							<span class="au-page-main">
+								<span class="au-page-title au-ellipsis">{{ page.title }}</span>
+								@if (page.href) {
+								<a class="au-page-link" [href]="page.href" target="_blank" rel="noopener noreferrer" [nbTooltip]="page.href" nbTooltipPlacement="top">
+									<span class="au-ellipsis">{{ page.label }}</span>
+									<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+								</a>
+								} @else {
+								<span class="au-page-text au-ellipsis" [nbTooltip]="page.label" nbTooltipPlacement="top">{{ page.label }}</span>
+								}
+							</span>
 							<span class="au-share-cell">
 								<span class="au-bar-track" aria-hidden="true"
 									><span [class]="'au-bar au-bar--' + barStatus(page.share)" [style.width.%]="page.share"></span
