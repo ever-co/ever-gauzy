@@ -1576,7 +1576,8 @@
 		"unsets",
 		"UI's",
 		"cancelation",
-		"cancelations"
+		"cancelations",
+		"resyncs"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
