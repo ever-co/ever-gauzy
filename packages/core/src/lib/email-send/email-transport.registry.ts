@@ -76,9 +76,9 @@ export class EmailTransportRegistry {
 		this.logger.log(`Email transport resolver registered: ${id}`);
 	}
 
-	/** Removes a resolver (a plugin that is shutting down). */
+	/** Removes a resolver (a plugin that is shutting down). The id is trimmed, as `register` stores it. */
 	unregister(id: string): void {
-		this.resolvers.delete(id);
+		this.resolvers.delete(typeof id === 'string' ? id.trim() : id);
 	}
 
 	/** The registered resolver ids (diagnostics). */
@@ -99,21 +99,21 @@ export class EmailTransportRegistry {
 		if (this.resolvers.size === 0) {
 			return null;
 		}
-		for (const resolver of [...this.resolvers.values()]) {
+		for (const [id, resolver] of [...this.resolvers.entries()]) {
 			try {
 				const resolution = await resolver.resolve({ ...request });
 				if (!resolution) {
 					continue;
 				}
 				if (!resolution.transport || typeof resolution.transport !== 'object') {
-					this.logger.warn(`Email transport resolver ${resolver.id} answered without a transport; skipped.`);
+					this.logger.warn(`Email transport resolver ${id} answered without a transport; skipped.`);
 					continue;
 				}
-				return { ...resolution, source: resolution.source || resolver.id };
+				return { ...resolution, source: resolution.source || id };
 			} catch (error) {
 				// Log-safe: a provider's error text can carry addresses, so they are masked.
 				this.logger.warn(
-					`Email transport resolver ${resolver.id} failed; trying the next transport: ${describeEmailSendError(error)}`
+					`Email transport resolver ${id} failed; trying the next transport: ${describeEmailSendError(error)}`
 				);
 			}
 		}

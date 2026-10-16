@@ -77,6 +77,18 @@ describe('EmailTransportRegistry', () => {
 		expect(() => registry.register({ id: 'x' } as any)).toThrow();
 	});
 
+	it('unregisters a resolver registered under a padded id (both trim it)', () => {
+		const registry = new EmailTransportRegistry();
+		const padded = resolver(' inbox ', null);
+		registry.register(padded);
+		expect(registry.ids()).toEqual(['inbox']);
+		registry.unregister(padded.id);
+		expect(registry.size).toBe(0);
+		// A replacement can register afterwards.
+		registry.register(resolver('inbox', null));
+		expect(registry.ids()).toEqual(['inbox']);
+	});
+
 	it('unregisters a resolver', async () => {
 		const registry = new EmailTransportRegistry();
 		registry.register(resolver('inbox', { transport }));
