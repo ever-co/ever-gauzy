@@ -110,9 +110,10 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 	 *
 	 * `update` replaces `data` with what the client sends, so two clients that each read the setting, change a
 	 * different key and write it back lose one change (the second write carries the first one's stale copy). Here
-	 * the row is read and written in one transaction, under a row lock on Postgres and MySQL (the embedded
-	 * dialect serializes writers, so there the transaction is the lock): concurrent patches apply one after the
-	 * other, each on top of the last, whichever API process they reach.
+	 * the row is read and written in one transaction. On Postgres and MySQL it holds a row lock, so concurrent
+	 * patches apply one after the other, each on top of the last, whichever API process they reach. On the embedded
+	 * dialect (a single-process database, e.g. the demo) a process-local queue orders the patches instead (see
+	 * `embeddedPatches`); separate processes sharing one SQLite file are not coordinated by it.
 	 *
 	 * Only the setting's own employee may patch it, unless the caller may act for other employees.
 	 *
