@@ -126,9 +126,10 @@ export class EmployeeStatisticsController {
 		await assertCurrentUserBelongsToSentOrganization(manager, findInput?.organizationId);
 
 		// Without an organization the income and expense reads drop that filter and reach the employee in
-		// whichever organization it belongs to, so that organization is the one checked
-		if (!isSent(findInput?.organizationId) && isSent(findInput?.employeeId)) {
-			if (!isUUID(findInput.employeeId)) {
+		// whichever organization it belongs to, so that organization is the one checked. An employee is then
+		// required: without one the split expense reads look up the tenant's first employee instead
+		if (!isSent(findInput?.organizationId)) {
+			if (!isUUID(findInput?.employeeId)) {
 				throw new BadRequestException('employeeId must be a UUID');
 			}
 			const employee = await this.employeeService.findOneByIdString(findInput.employeeId);
