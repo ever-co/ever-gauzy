@@ -118,6 +118,7 @@ export interface EverWorksHealthResult {
 export class EverWorksConnectionService {
 	private readonly logger = new Logger('EverWorksConnection');
 	private readonly secretBox: EverWorksSecretBox;
+	private readonly webhookRegistrations = new Map<string, Promise<EverWorksConnectionView>>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -289,6 +290,19 @@ export class EverWorksConnectionService {
 	 * secret (returned once) is stored encrypted; a replaced subscription is deleted afterwards.
 	 */
 	async registerWebhook(id: ID, organizationId?: ID): Promise<EverWorksConnectionView> {
+		// One registration per connection at a time in this process; across processes the write below
+		// re-checks the row and removes a subscription that lost the race.
+		const previous = this.webhookRegistrations.get(id) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.registerWebhookOnce(id, organizationId));
+		this.webhookRegistrations.set(id, current);
+		try {
+			return await current;
+		} finally {
+			if (this.webhookRegistrations.get(id) === current) this.webhookRegistrations.delete(id);
+		}
+	}
+
+	private async registerWebhookOnce(id: ID, organizationId?: ID): Promise<EverWorksConnectionView> {
 		const scope = await this.scopes.resolve(organizationId);
 		this.assertSecretsUsable();
 		const connection = await this.require(id, scope);
@@ -317,13 +331,25 @@ export class EverWorksConnectionService {
 		if (!subscription?.id || typeof subscription.secret !== 'string' || subscription.secret.length < 32) {
 			throw new BadGatewayException('Ever Works did not return a webhook signing secret.');
 		}
+		const race = { lost: false };
 		const saved = await this.mutate(connection.id as ID, scope.tenantId, (row) => {
+			// Disconnected, paused or re-registered by someone else meanwhile: this subscription is not the one to keep.
+			if (!row.isActive || row.status !== EverWorksConnectionStatus.ACTIVE || (row.webhookSubscriptionId ?? null) !== previousId) {
+				race.lost = true;
+				return;
+			}
 			Object.assign(row, {
 				webhookSubscriptionId: subscription.id,
 				webhookSecretEncrypted: this.secretBox.seal(subscription.secret as string, 'webhook_secret', row.id as ID),
 				webhookUrl: url
 			});
 		});
+		if (race.lost) {
+			await client
+				.deleteWebhook(subscription.id)
+				.catch((error) => this.logger.warn(`An unused webhook subscription could not be deleted (${this.reason(error)}).`));
+			throw new ConflictException('The connection changed while its webhook was being registered; nothing was kept. Try again.');
+		}
 		if (previousId && previousId !== subscription.id) {
 			await client.deleteWebhook(previousId).catch((error) => this.logger.warn(`The replaced webhook subscription could not be deleted (${this.reason(error)}).`));
 		}
@@ -399,6 +425,7 @@ export class EverWorksConnectionService {
 	 */
 	async checkHealth(connection: EverWorksConnection, options: { resuming?: boolean } = {}): Promise<EverWorksHealthResult> {
 		const now = new Date();
+		const keyAtCall = connection.apiKeyEncrypted;
 		let whoami: EverWorksWhoami | null = null;
 		let failure: unknown = null;
 		try {
@@ -406,23 +433,33 @@ export class EverWorksConnectionService {
 		} catch (error) {
 			failure = error;
 		}
-		const keepPaused = connection.status === EverWorksConnectionStatus.PAUSED && !options.resuming;
-		const wasNeedingReauth = connection.status === EverWorksConnectionStatus.NEEDS_REAUTH;
-		let next: EverWorksConnectionStatus;
-		let lastError: string | null = null;
-		if (whoami && whoami.tenant?.id === connection.ewTenantId) {
-			next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ACTIVE;
-		} else if (whoami) {
-			next = EverWorksConnectionStatus.ERROR;
-			lastError = 'tenant_changed: the key now answers for another Ever Works tenant';
-		} else if (failure instanceof EverWorksApiError && failure.status === 401) {
-			next = EverWorksConnectionStatus.NEEDS_REAUTH;
-			lastError = `${failure.code}: ${failure.message}`;
-		} else {
-			next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
-			lastError = this.reason(failure);
-		}
+		const out: { result?: EverWorksHealthResult; notify: boolean } = { notify: false };
 		const saved = await this.mutate(connection.id as ID, connection.tenantId as ID, (row) => {
+			// The result applies to the row as it is now: disconnected or given another key during the call →
+			// the result is stale and is discarded (it must not undo an admin's change or judge a new key).
+			if (!row.isActive || row.apiKeyEncrypted !== keyAtCall) {
+				out.result = { status: row.status, healthy: false, lastError: 'superseded: the connection changed during the check' };
+				return;
+			}
+			const keepPaused = row.status === EverWorksConnectionStatus.PAUSED && !options.resuming;
+			let next: EverWorksConnectionStatus;
+			let lastError: string | null = null;
+			if (whoami && whoami.tenant?.id === row.ewTenantId && String(whoami.apiVersion) === EVER_WORKS_CONTRACT_VERSION) {
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ACTIVE;
+			} else if (whoami && whoami.tenant?.id !== row.ewTenantId) {
+				next = EverWorksConnectionStatus.ERROR;
+				lastError = 'tenant_changed: the key now answers for another Ever Works tenant';
+			} else if (whoami) {
+				next = EverWorksConnectionStatus.ERROR;
+				lastError = `api_version: Ever Works speaks integration API v${String(whoami.apiVersion)}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}`;
+			} else if (failure instanceof EverWorksApiError && failure.status === 401) {
+				next = EverWorksConnectionStatus.NEEDS_REAUTH;
+				lastError = `${failure.code}: ${failure.message}`;
+			} else {
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
+				lastError = this.reason(failure);
+			}
+			out.notify = next === EverWorksConnectionStatus.NEEDS_REAUTH && row.status !== EverWorksConnectionStatus.NEEDS_REAUTH;
 			row.status = next;
 			row.lastCheckedAt = now;
 			if (lastError) {
@@ -439,12 +476,38 @@ export class EverWorksConnectionService {
 					keyId: whoami.keyId ?? row.keyId,
 					keyName: whoami.keyName ?? row.keyName
 				});
+				this.reseal(row);
 			}
+			out.result = { status: next, healthy: !lastError, lastError };
 		});
-		if (next === EverWorksConnectionStatus.NEEDS_REAUTH && !wasNeedingReauth) {
-			await this.notifier.needsReauth(saved).catch((error) => this.logger.warn(`The needs_reauth notice could not be sent (${this.reason(error)}).`));
+		if (out.notify) {
+			await this.notifier
+				.needsReauth(saved)
+				.catch((error) => this.logger.warn(`The needs_reauth notice could not be sent (${this.reason(error)}).`));
 		}
-		return { status: saved.status, healthy: !lastError, lastError };
+		return out.result ?? { status: saved.status, healthy: false, lastError: null };
+	}
+
+	/**
+	 * Secrets stored under the `JWT_SECRET` fallback are encrypted again under `ENCRYPTION_KEY` once it is
+	 * usable — at the next successful health check (daily, or `POST …/health`) — so an operator can move to
+	 * `ENCRYPTION_KEY` and later retire the old `JWT_SECRET`. Runs inside the row's locked write.
+	 */
+	private reseal(row: EverWorksConnection): void {
+		try {
+			if (this.secretBox.needsReseal(row.apiKeyEncrypted)) {
+				row.apiKeyEncrypted = this.secretBox.seal(this.secretBox.open(row.apiKeyEncrypted, 'api_key', row.id as ID), 'api_key', row.id as ID);
+			}
+			if (row.webhookSecretEncrypted && this.secretBox.needsReseal(row.webhookSecretEncrypted)) {
+				row.webhookSecretEncrypted = this.secretBox.seal(
+					this.secretBox.open(row.webhookSecretEncrypted, 'webhook_secret', row.id as ID),
+					'webhook_secret',
+					row.id as ID
+				);
+			}
+		} catch (error) {
+			this.logger.warn(`Connection ${row.id}: a stored secret could not be re-encrypted (${this.reason(error)}).`);
+		}
 	}
 
 	/** Every active connection (the daily health check walks them). */

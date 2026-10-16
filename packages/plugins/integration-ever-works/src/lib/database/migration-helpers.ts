@@ -72,7 +72,13 @@ export async function createIndexIfMissing(queryRunner: QueryRunner, table: stri
 	const columns = spec.columns.map((column) => q(dialect, column)).join(', ');
 	const partial = dialect !== 'mysql' && spec.where ? ` WHERE ${spec.where[dialect]}` : '';
 	const unique = spec.unique && (dialect !== 'mysql' || !spec.where) ? 'UNIQUE ' : '';
-	await queryRunner.query(`CREATE ${unique}INDEX ${q(dialect, spec.name)} ON ${q(dialect, table)} (${columns})${partial}`);
+	try {
+		await queryRunner.query(`CREATE ${unique}INDEX ${q(dialect, spec.name)} ON ${q(dialect, table)} (${columns})${partial}`);
+	} catch (error) {
+		// Another process (the API and the worker start together) created it between the probe and here.
+		if (await hasIndex(queryRunner, table, spec.name)) return;
+		throw error;
+	}
 }
 
 /** Whether a foreign key (constraint) of that name exists on the table (Postgres and MySQL). */
@@ -106,12 +112,18 @@ export async function addForeignKeyIfMissing(
 ): Promise<void> {
 	const dialect = dialectOf(queryRunner);
 	if (dialect === 'sqlite' || (await hasConstraint(queryRunner, table, fk.name))) return;
-	await queryRunner.query(
-		`ALTER TABLE ${q(dialect, table)} ADD CONSTRAINT ${q(dialect, fk.name)} FOREIGN KEY (${q(dialect, fk.column)}) REFERENCES ${q(
-			dialect,
-			fk.references
-		)}(${q(dialect, 'id')}) ON DELETE ${fk.onDelete} ON UPDATE NO ACTION`
-	);
+	try {
+		await queryRunner.query(
+			`ALTER TABLE ${q(dialect, table)} ADD CONSTRAINT ${q(dialect, fk.name)} FOREIGN KEY (${q(dialect, fk.column)}) REFERENCES ${q(
+				dialect,
+				fk.references
+			)}(${q(dialect, 'id')}) ON DELETE ${fk.onDelete} ON UPDATE NO ACTION`
+		);
+	} catch (error) {
+		// Created by another process between the probe and here.
+		if (await hasConstraint(queryRunner, table, fk.name)) return;
+		throw error;
+	}
 }
 
 /**
