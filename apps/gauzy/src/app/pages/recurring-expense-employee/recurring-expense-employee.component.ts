@@ -243,9 +243,11 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 					recordType: this.getTranslation('EMPLOYEES_PAGE.RECURRING_EXPENSE'),
 					start: `${this.getMonthString(selectedExpense.startMonth)}, ${selectedExpense.startYear}`,
 					current: `${this.getMonthString(startDate.getMonth())}, ${startDate.getFullYear()}`,
-					end: selectedExpense.endMonth
-						? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear}`
-						: 'end'
+					// January is month 0, so test for a missing end month, not a falsy one
+					end:
+						selectedExpense.endMonth !== null && selectedExpense.endMonth !== undefined
+							? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear}`
+							: 'end'
 				}
 			}).onClose
 		);
