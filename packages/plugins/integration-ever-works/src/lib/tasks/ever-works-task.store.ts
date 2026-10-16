@@ -2,23 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommandBus } from '@nestjs/cqrs';
 import { randomUUID } from 'node:crypto';
-import { DataSource, IsNull } from 'typeorm';
-import { ActorTypeEnum, BaseEntityEnum, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import { DataSource, In, IsNull } from 'typeorm';
+import { ActorTypeEnum, BaseEntityEnum, EntitySubscriptionTypeEnum, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	Comment,
 	Employee,
+	EntitySubscription,
 	OrganizationProject,
 	OrganizationStrategicInitiative,
 	RequestContext,
 	Tag,
 	Task,
 	TaskCreateCommand,
+	TaskLinkedIssue,
 	TaskPriority,
 	TaskService,
 	TaskStatus,
 	TaskUpdateCommand
 } from '@gauzy/core';
 import { gauzyStatusSlug, resolveGauzyStatusRow } from '../sync/mappers/status-priority.mapper';
+import { edgesFromRows, LinkedIssueRow } from './ever-works-task.mapper';
 
 /** Who a Gauzy write made by the sync is attributed to (plan 01 §3, plan 03 §C.4 step 4). */
 export interface EverWorksTaskActor {
@@ -269,5 +272,71 @@ export class EverWorksTaskStore {
 			cursor = (row?.parentId as ID) ?? null;
 		}
 		return false;
+	}
+
+	// ── Watchers and linked issues (plan 01 §7) ──────────────────────────────────────────────────
+
+	/** The employees watching tasks (`EntitySubscription` of type `manual`), per task. */
+	async watchersOf(tenantId: ID, taskIds: ReadonlyArray<ID>): Promise<Map<ID, ID[]>> {
+		const result = new Map<ID, ID[]>(taskIds.map((id) => [id, []]));
+		if (!taskIds.length) return result;
+		const rows = await this.dataSource.getRepository(EntitySubscription).find({
+			where: { tenantId, entity: BaseEntityEnum.Task, entityId: In([...taskIds]), type: EntitySubscriptionTypeEnum.MANUAL } as never,
+			select: { entityId: true, employeeId: true } as never
+		});
+		for (const row of rows) {
+			if (row.employeeId && result.has(row.entityId as ID)) (result.get(row.entityId as ID) as ID[]).push(row.employeeId as ID);
+		}
+		for (const [id, ids] of result) result.set(id, [...new Set(ids)].sort());
+		return result;
+	}
+
+	/** Adds an employee as a watcher of a task (a `manual` subscription), once. */
+	async addWatcher(scope: { tenantId: ID; organizationId: ID }, taskId: ID, employeeId: ID): Promise<void> {
+		const repository = this.dataSource.getRepository(EntitySubscription);
+		const where = { tenantId: scope.tenantId, entity: BaseEntityEnum.Task, entityId: taskId, employeeId, type: EntitySubscriptionTypeEnum.MANUAL };
+		if (await repository.count({ where: where as never })) return;
+		await repository.save(repository.create({ ...where, organizationId: scope.organizationId } as unknown as EntitySubscription));
+	}
+
+	/** Removes an employee's `manual` subscription to a task (the other kinds — assignment, mention, … — stay). */
+	async removeWatcher(tenantId: ID, taskId: ID, employeeId: ID): Promise<void> {
+		await this.dataSource
+			.getRepository(EntitySubscription)
+			.delete({ tenantId, entity: BaseEntityEnum.Task, entityId: taskId, employeeId, type: EntitySubscriptionTypeEnum.MANUAL } as never);
+	}
+
+	/** The blockers and relations of tasks in Ever Works' shape, per task (from their linked-issue rows). */
+	async edgesOf(tenantId: ID, taskIds: ReadonlyArray<ID>): Promise<Map<ID, { blockedBy: string[]; relations: string[] }>> {
+		const result = new Map<ID, { blockedBy: string[]; relations: string[] }>();
+		if (!taskIds.length) return result;
+		const ids = In([...taskIds]);
+		const rows = (await this.dataSource.getRepository(TaskLinkedIssue).find({
+			where: [
+				{ tenantId, taskToId: ids },
+				{ tenantId, taskFromId: ids }
+			] as never,
+			select: { taskToId: true, taskFromId: true, action: true } as never
+		})) as unknown as LinkedIssueRow[];
+		for (const taskId of taskIds) result.set(taskId, edgesFromRows(taskId, rows.filter((row) => row.taskToId === taskId || row.taskFromId === taskId)));
+		return result;
+	}
+
+	/** Writes linked-issue rows that are missing (a pair is written row by row; existing rows stay). */
+	async ensureLinkedIssues(scope: { tenantId: ID; organizationId: ID }, rows: ReadonlyArray<LinkedIssueRow>): Promise<void> {
+		const repository = this.dataSource.getRepository(TaskLinkedIssue);
+		for (const row of rows) {
+			const where = { tenantId: scope.tenantId, taskToId: row.taskToId, taskFromId: row.taskFromId, action: row.action };
+			if (await repository.count({ where: where as never })) continue;
+			await repository.save(repository.create({ ...where, organizationId: scope.organizationId } as unknown as TaskLinkedIssue));
+		}
+	}
+
+	/** Deletes these linked-issue rows (both rows of a pair, wherever they are). */
+	async deleteLinkedIssues(tenantId: ID, rows: ReadonlyArray<LinkedIssueRow>): Promise<void> {
+		const repository = this.dataSource.getRepository(TaskLinkedIssue);
+		for (const row of rows) {
+			await repository.delete({ tenantId, taskToId: row.taskToId, taskFromId: row.taskFromId, action: row.action } as never);
+		}
 	}
 }

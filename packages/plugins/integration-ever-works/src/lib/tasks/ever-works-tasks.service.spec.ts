@@ -55,6 +55,9 @@ import { htmlToMarkdown, markdownToHtml, normaliseMarkdown } from './ever-works-
 import {
 	applySetChange,
 	descriptionForEverWorks,
+	edgesFromRows,
+	LINKED_ISSUE,
+	LinkedIssueRow,
 	gauzyWins,
 	labelsForEverWorks,
 	stripTitleAppendix,
@@ -137,6 +140,19 @@ describe('task field rules', () => {
 		expect(gauzyWins('2026-10-16T10:00:00Z', null)).toBe(true);
 	});
 
+	it('reads blockers and relations from linked issues on either task of a pair', () => {
+		const rows: LinkedIssueRow[] = [
+			{ taskToId: 'x', taskFromId: 'y', action: LINKED_ISSUE.IS_BLOCKED_BY },
+			{ taskToId: 'z', taskFromId: 'x', action: LINKED_ISSUE.BLOCKS },
+			{ taskToId: 'x', taskFromId: 'r', action: LINKED_ISSUE.RELATES_TO },
+			{ taskToId: 'd', taskFromId: 'x', action: LINKED_ISSUE.IS_DUPLICATED_BY },
+			{ taskToId: 'x', taskFromId: 'c', action: 4 }
+		];
+		expect(edgesFromRows('x', rows)).toEqual({ blockedBy: ['y', 'z'], relations: ['duplicates:d', 'related:r'] });
+		// z is the blocker in "z blocks x": nothing blocks z.
+		expect(edgesFromRows('z', rows)).toEqual({ blockedBy: [], relations: [] });
+	});
+
 	it('says why Ever Works kept a status', () => {
 		expect(transitionBlockedMessage('in_progress', 'done', { blockers: [{ slug: 'T-43' }], pendingApprovers: [{ id: 'u' }] })).toBe(
 			'Ever Works kept the status "in_progress" instead of "done": blocked by T-43; 1 approval(s) pending.'
@@ -203,6 +219,9 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 	const tasks = new Map<string, GauzyTask>();
 	const tags = new Map<string, { id: string; name: string }>();
 	const comments: Array<{ taskId: string; html: string; actorType: unknown }> = [];
+	const subscriptions: Array<{ taskId: string; employeeId: string }> = [];
+	const linkedIssues: LinkedIssueRow[] = [];
+	const sameRow = (a: LinkedIssueRow, b: LinkedIssueRow) => a.taskToId === b.taskToId && a.taskFromId === b.taskFromId && a.action === b.action;
 	const writes: Array<{ kind: 'create' | 'update' | 'delete'; id: string; input?: Record<string, any>; applying: boolean }> = [];
 	const relate = (input: Record<string, any>, row: GauzyTask) => {
 		for (const [field, value] of Object.entries(input)) {
@@ -246,7 +265,26 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 		employeeOfUser: async (_t: string, _o: string, userId: string) => (userId === 'u-alice' ? 'e-alice' : null),
 		projectExists: async (_t: string, _o: string, projectId: string) => ['p-default', 'p-site'].includes(projectId),
 		initiativeProjects: async () => [],
-		isSelfOrAncestor: async (taskId: string, parentId: string) => taskId === parentId
+		isSelfOrAncestor: async (taskId: string, parentId: string) => taskId === parentId,
+		watchersOf: async (_t: string, ids: string[]) =>
+			new Map(ids.map((id) => [id, subscriptions.filter((row) => row.taskId === id).map((row) => row.employeeId).sort()])),
+		addWatcher: async (_s: unknown, taskId: string, employeeId: string) => {
+			if (!subscriptions.some((row) => row.taskId === taskId && row.employeeId === employeeId)) subscriptions.push({ taskId, employeeId });
+		},
+		removeWatcher: async (_t: string, taskId: string, employeeId: string) => {
+			const at = subscriptions.findIndex((row) => row.taskId === taskId && row.employeeId === employeeId);
+			if (at >= 0) subscriptions.splice(at, 1);
+		},
+		edgesOf: async (_t: string, ids: string[]) => new Map(ids.map((id) => [id, edgesFromRows(id, linkedIssues)])),
+		ensureLinkedIssues: async (_s: unknown, rows: LinkedIssueRow[]) => {
+			for (const row of rows) if (!linkedIssues.some((existing) => sameRow(existing, row))) linkedIssues.push({ ...row });
+		},
+		deleteLinkedIssues: async (_t: string, rows: LinkedIssueRow[]) => {
+			for (const row of rows) {
+				const at = linkedIssues.findIndex((existing) => sameRow(existing, row));
+				if (at >= 0) linkedIssues.splice(at, 1);
+			}
+		}
 	};
 	const addGauzyTask = (row: GauzyTask) => {
 		const full: GauzyTask = { tenantId: 't1', organizationId: 'o1', members: [], teams: [], tags: [], status: 'open', priority: 'medium', createdAt: new Date(), ...row };
@@ -258,7 +296,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 	const queue = { enqueued: [] as Array<Record<string, unknown>>, enqueue: async (trigger: Record<string, unknown>) => void queue.enqueued.push(trigger) };
 	const logged: Array<Record<string, unknown>> = [];
 	const log = { write: async (entry: Record<string, unknown>) => void logged.push(entry) };
-	const contexts = { forEverWorksOrganization: async () => context, forOrganization: async () => context };
+	const contexts = { forEverWorksOrganization: async () => context, forOrganization: async () => context, forConnection: async () => [context] };
 	const client = new EverWorksClient({
 		apiBaseUrl: 'http://mock.test/api',
 		apiKey: key,
@@ -296,7 +334,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			connection: context.connection,
 			mapping: { id: 'm1' }
 		} as never);
-	return { mock, org, context, links, link, tasks, tags, comments, writes, addGauzyTask, queue, logged, service, deliver, push };
+	return { mock, org, context, links, link, tasks, tags, comments, writes, addGauzyTask, queue, logged, service, deliver, push, subscriptions, linkedIssues };
 }
 
 describe('EW → G tasks', () => {
@@ -519,6 +557,120 @@ describe('G → EW tasks', () => {
 	});
 });
 
+describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
+	it('EW watchers become manual subscriptions; EW blockers and relations become pairs on both Gauzy tasks', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		const blocker = t.mock.addTask(t.org.id, { title: 'Blocker' });
+		const related = t.mock.addTask(t.org.id, { title: 'Related' });
+		await t.deliver({ type: 'task.created', data: blocker, aggregate: { id: blocker['id'] as string, version: 1 } });
+		await t.deliver({ type: 'task.created', data: related, aggregate: { id: related['id'] as string, version: 1 } });
+		const task = t.mock.addTask(t.org.id, {
+			title: 'Blocked',
+			watchers: ['ew-bob', 'ew-unknown'],
+			blockedBy: [blocker['id']],
+			relations: [{ taskId: related['id'], kind: 'follow-up' }]
+		});
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		// g-task-1 = Blocker, g-task-2 = Related, g-task-3 = Blocked.
+		expect(t.subscriptions).toEqual([{ taskId: 'g-task-3', employeeId: 'e-bob' }]);
+		expect(t.linkedIssues).toEqual(
+			expect.arrayContaining([
+				{ taskToId: 'g-task-3', taskFromId: 'g-task-1', action: LINKED_ISSUE.IS_BLOCKED_BY },
+				{ taskToId: 'g-task-1', taskFromId: 'g-task-3', action: LINKED_ISSUE.BLOCKS },
+				{ taskToId: 'g-task-3', taskFromId: 'g-task-2', action: LINKED_ISSUE.RELATES_TO },
+				{ taskToId: 'g-task-2', taskFromId: 'g-task-3', action: LINKED_ISSUE.RELATES_TO }
+			])
+		);
+		const ewOnly = JSON.parse(t.links.find((l) => l.gauzyId === 'g-task-3')?.ewOnly as string);
+		expect(ewOnly.unmappedWatchers).toEqual(['ew-unknown']);
+		// The pair row on "Related" mirrors Ever Works: it is in that task's snapshot, so pushing it sends nothing.
+		const before = t.mock.requests.length;
+		expect(await t.push('g-task-2')).toEqual({ status: 'skipped', message: 'nothing changed' });
+		expect(t.mock.requests.length).toBe(before);
+		// Removing the blocker in Ever Works removes both rows of the pair.
+		await t.deliver({ type: 'task.updated', data: { ...task, blockedBy: [] }, aggregate: { id: task['id'] as string, version: 2 } });
+		expect(t.linkedIssues.some((row) => row.action === LINKED_ISSUE.IS_BLOCKED_BY || row.action === LINKED_ISSUE.BLOCKS)).toBe(false);
+	});
+
+	it('two new Ever Works tasks that relate to each other are imported once each', async () => {
+		const t = setup();
+		const a = t.mock.addTask(t.org.id, { title: 'A' });
+		const b = t.mock.addTask(t.org.id, { title: 'B', relations: [{ taskId: a['id'], kind: 'related' }] });
+		a['relations'] = [{ taskId: b['id'], kind: 'related' }];
+		await t.deliver({ type: 'task.created', data: a, aggregate: { id: a['id'] as string, version: 1 } });
+		expect(t.tasks.size).toBe(2);
+		expect(t.links.filter((l) => l.entityType === EverWorksLinkType.TASK)).toHaveLength(2);
+		expect(t.linkedIssues).toEqual(
+			expect.arrayContaining([
+				{ taskToId: 'g-task-1', taskFromId: 'g-task-2', action: LINKED_ISSUE.RELATES_TO },
+				{ taskToId: 'g-task-2', taskFromId: 'g-task-1', action: LINKED_ISSUE.RELATES_TO }
+			])
+		);
+	});
+
+	it('a task whose edge could not be followed is finished by the retried event', async () => {
+		const t = setup();
+		const other = t.mock.addTask(t.org.id, { title: 'Other' });
+		const task = t.mock.addTask(t.org.id, { title: 'Blocked', blockedBy: [other['id']] });
+		t.mock.fail({ method: 'GET', path: `/tasks/${other['id'] as string}`, status: 503 });
+		await expect(t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } })).rejects.toThrow();
+		expect(await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } })).toEqual({ status: 'applied' });
+		expect(t.tasks.size).toBe(2);
+		expect(t.linkedIssues).toEqual(expect.arrayContaining([expect.objectContaining({ taskToId: 'g-task-1', action: LINKED_ISSUE.IS_BLOCKED_BY })]));
+	});
+
+	it('pushes Gauzy watcher and blocker changes as Ever Works sets', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g-blocker', title: 'Blocker' });
+		t.addGauzyTask({ id: 'g1', title: 'Work' });
+		await t.push('g-blocker');
+		await t.push('g1');
+		const ewBlocker = [...t.mock.tasks.values()].find((row) => row['title'] === 'Blocker') as Record<string, unknown>;
+		const ewTask = [...t.mock.tasks.values()].find((row) => row['title'] === 'Work') as Record<string, unknown>;
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		// One row, written the Ever Teams way: "the blocker blocks g1".
+		t.linkedIssues.push({ taskToId: 'g-blocker', taskFromId: 'g1', action: LINKED_ISSUE.BLOCKS });
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect(ewTask).toMatchObject({ watchers: ['ew-alice'], blockedBy: [ewBlocker['id']] });
+		const puts = t.mock.requests.filter((r) => r.method === 'PUT').map((r) => r.path.split('/').pop());
+		expect(puts).toEqual(['watchers', 'blocks']);
+	});
+
+	it('an edge to a task not in Ever Works yet queues that task and goes out once it is linked', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g-other', title: 'Other' });
+		t.addGauzyTask({ id: 'g1', title: 'Work' });
+		t.linkedIssues.push({ taskToId: 'g1', taskFromId: 'g-other', action: LINKED_ISSUE.RELATES_TO });
+		await t.push('g1');
+		expect(t.queue.enqueued).toEqual([expect.objectContaining({ gauzyId: 'g-other' })]);
+		expect(JSON.parse(t.links.find((l) => l.gauzyId === 'g1')?.ewOnly as string).pendingEdges).toEqual(['related:g-other']);
+		await t.push('g-other');
+		// The sweep sees the pending edge can go out now and queues the task; its push sends the relation.
+		t.queue.enqueued.length = 0;
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued).toEqual([expect.objectContaining({ gauzyId: 'g1' })]);
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		const ewOther = [...t.mock.tasks.values()].find((row) => row['title'] === 'Other') as Record<string, unknown>;
+		expect([...t.mock.tasks.values()].find((row) => row['title'] === 'Work')).toMatchObject({ relations: [{ taskId: ewOther['id'], kind: 'related' }] });
+	});
+
+	it('the sweep queues a task whose watchers changed without a captured event (a bulk delete)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Watched' });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		await t.push('g1');
+		t.queue.enqueued.length = 0;
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued).toEqual([]);
+		t.subscriptions.length = 0;
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued).toEqual([expect.objectContaining({ gauzyId: 'g1' })]);
+	});
+});
+
 describe('task sync review fixes (#10804)', () => {
 	it('a Gauzy set edit not pushed yet survives an Ever Works edit of the same set, and goes out', async () => {
 		const t = setup();
@@ -581,5 +733,23 @@ describe('task sync review fixes (#10804)', () => {
 		expect(t.mock.tasks.size).toBe(1);
 		expect(ew['title']).toBe('Edited since');
 		expect(t.links.find((l) => l.gauzyId === 'g1')?.ewId).toBe(ew['id']);
+	});
+});
+
+describe('task watchers: a Gauzy edit not pushed yet (#10804 review, applied to part 2)', () => {
+	it('survives an Ever Works watcher change and goes out', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Watched' });
+		await t.push('g1');
+		const [ew] = [...t.mock.tasks.values()];
+		// Gauzy adds Alice (its push is still queued); Ever Works adds Bob meanwhile.
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		Object.assign(ew as Record<string, unknown>, { watchers: ['ew-bob'], version: Number(ew?.['version']) + 1 });
+		await t.deliver({ type: 'task.watcher.added', data: { taskId: ew?.['id'], userId: 'ew-bob' }, aggregate: { id: ew?.['id'] as string, version: Number(ew?.['version']) } });
+		expect(t.subscriptions.map((row) => row.employeeId).sort()).toEqual(['e-alice', 'e-bob']);
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect([...(ew?.['watchers'] as string[])].sort()).toEqual(['ew-alice', 'ew-bob']);
 	});
 });
