@@ -1,6 +1,6 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, FindOperator, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -12,6 +12,7 @@ import {
 	InvoiceStats,
 	LanguagesEnum
 } from '@gauzy/contracts';
+import { isPlainObject } from '@gauzy/utils';
 import { addDecimalStrings, normalizeDecimalString } from '../money/decimal';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { MultiORMEnum } from './../core/utils';
@@ -477,8 +478,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				}
 			}
 
-			if ('totalValue' in where && where.totalValue) {
-				const { min, max } = where.totalValue as { min?: number; max?: number };
+			// Only a `{ min, max }` range is rewritten: a scalar is the exact amount the Invoices search form sends.
+			if (isPlainObject(where.totalValue) && !(where.totalValue instanceof FindOperator)) {
+				const range = where.totalValue as { min?: unknown; max?: unknown };
+				const min = this.toRangeBound(range.min);
+				const max = this.toRangeBound(range.max);
 
 				if (min !== undefined && max !== undefined && min > max) {
 					throw new BadRequestException('Minimum value cannot be greater than maximum value');
@@ -490,9 +494,25 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					filter.where.totalValue = MoreThanOrEqual(min);
 				} else if (max !== undefined) {
 					filter.where.totalValue = LessThanOrEqual(max);
+				} else {
+					delete filter.where.totalValue;
 				}
 			}
 		}
 		return super.paginate(filter);
+	}
+
+	/**
+	 * Reads one bound of a range filter as a number.
+	 *
+	 * Bounds come from the query string as text, which compares as text ('50' > '100'), and a bound the
+	 * client left empty comes as `false` (it sends `null`, which `convertNativeLeaf` maps to `false`).
+	 *
+	 * @param value - The `min` or `max` of the range, as received.
+	 * @returns A finite number, or `undefined` for a missing, empty or non-numeric bound.
+	 */
+	private toRangeBound(value: unknown): number | undefined {
+		const bound = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+		return typeof bound === 'number' && Number.isFinite(bound) ? bound : undefined;
 	}
 }
