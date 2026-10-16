@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { Brackets, DataSource, EntityManager } from 'typeorm';
+import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ID,
 	IEmailProviderCapabilities,
@@ -156,7 +157,7 @@ export class InboxProviderAccountService {
 	async update(id: ID, input: IInboxProviderAccountUpdateInput, organizationId?: ID): Promise<IInboxProviderAccount> {
 		const row = await this.managed(id, organizationId, true);
 		const provider = this.provider(row.providerId);
-		const change: Partial<InboxProviderAccount> = {};
+		const change: QueryDeepPartialEntity<InboxProviderAccount> = {};
 		if (input?.name !== undefined) change.name = this.name(input.name);
 		if (input?.status !== undefined) {
 			if (
