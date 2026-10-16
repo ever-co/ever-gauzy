@@ -27,6 +27,7 @@ import {
 	MultiORMEnum,
 	RequestContext,
 	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	compareDecimalStrings,
 	subtractDecimalStrings
@@ -37,6 +38,7 @@ import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { FULFILLMENT_REFERENCES } from '../fulfillment.references';
 import { isCountedShipment, removalCriteria } from '../fulfillment.removal';
 import {
 	Quantity,
@@ -286,6 +288,22 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	}
 
 	/**
+	 * Refuses a shipment, or a change to one, naming an order or a location of another tenant
+	 * (`fulfillment.references.ts`).
+	 *
+	 * @param payload The shipment, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: unknown): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmFulfillmentRepository.manager,
+			payload,
+			FULFILLMENT_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
 	 * Lists fulfilments without the carrier's label payload.
 	 *
 	 * A page of shipments is a list of journeys, and the label payload is a document: it is the
@@ -343,6 +361,12 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		for (const line of lines) {
 			await this.assertQuantityAvailable(line.orderLineId as ID, line.quantity as Quantity, direction);
 		}
+
+		// What the shipment and its lines name has to be the caller's tenant's (P0 #6c). Checked before the shipment is
+		// written: the writes below are separate statements, so a line refused after the header would leave a shipment
+		// without it.
+		await this.assertReferences(entity);
+		await this.lineService.assertReferences(lines);
 
 		const fulfillment = await super.create({
 			...entity,
@@ -423,6 +447,8 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				'FULFILLMENT_ORDER_REQUIRED: a return leg is raised against the order its goods came from.'
 			);
 		}
+
+		await this.assertReferences(entity);
 
 		const leg = await super.create({
 			...entity,
@@ -781,6 +807,8 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				}
 			}
 		}
+
+		await this.assertReferences(partialEntity);
 
 		return super.update(id, partialEntity);
 	}

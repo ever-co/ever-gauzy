@@ -113,6 +113,8 @@ jest.mock('@gauzy/core', () => {
 		ImageAsset: class {},
 		OrganizationContact: class {},
 		Warehouse: class {},
+		// The cross-tenant reference check reads a real database; it is exercised in `catalog-references.db.spec.ts`.
+		assertPlainReferencesNotForeign: async () => undefined,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,

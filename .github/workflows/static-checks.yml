@@ -277,6 +277,14 @@ jobs:
         if: always()
         run: node tools/scripts/design-name-triage-check.mjs
 
+      # The packaged Gauzy Desktop / Server / API Server fork an embedded API whose bundle require()s every
+      # @gauzy package at load, and electron-builder ships only what the app manifest lists in "dependencies".
+      # The released Gauzy Server v111.50.14 lacked 17 of them (ai-chat, docs, the AI providers), so its API could
+      # not start; nothing in the monorepo's builds or tests can see that.
+      - name: The packaged desktop apps ship every @gauzy package their embedded API requires
+        if: always()
+        run: node tools/scripts/desktop-api-dependency-check.mjs
+
       # Owner decision (2026-09-21): a pull request into develop does not start a workflow - the Actions
       # minutes belonged to every commit of the branch being merged, and the run belongs to the merge. The
       # decision is a trigger, so a job-level guard cannot express it and only this check can keep it.

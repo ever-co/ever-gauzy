@@ -35,6 +35,7 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BulkExecutor } from '../../api/bulk-executor.service';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TagModule } from '../../tags/tag.module';
 import { TagService } from '../../tags/tag.service';
@@ -205,8 +206,15 @@ describe('task metadata module exports', () => {
 		// so a module that hosts one and imports the tag module receives the bus only if the tag
 		// module re-exports it. That was a deliberate change to the tag domain — the GraphQL view of
 		// its resource — and this assertion records the exports as they now are rather than as they
-		// were before it.
-		expectExactExports(TagModule, [TagService, CqrsModule, TypeOrmTagRepository, MikroOrmTagRepository]);
+		// were before it. The batch executor is handed on for the same reason: `bulkCreateTags` injects it,
+		// and the host that scans the resolver resolves it here.
+		expectExactExports(TagModule, [
+			TagService,
+			CqrsModule,
+			TypeOrmTagRepository,
+			MikroOrmTagRepository,
+			BulkExecutor
+		]);
 	});
 
 	it('declares the standalone bootstrap module with only the exact dependencies and components', () => {

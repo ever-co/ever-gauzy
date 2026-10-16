@@ -2,6 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base
 import { IEmployee } from './employee.model';
 import { IGoal } from './goals.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IOrganizationTeam } from './organization-team.model';
 
 /**
  * Organization Strategic State enum
@@ -161,22 +162,38 @@ export interface IOrganizationStrategicInitiative
 	 * Provides strategic context to OKR measurements
 	 */
 	goals?: IGoal[];
+	/**
+	 * Teams the initiative is linked to directly (many-to-many). With `visibilityScope = 'team'`, the members
+	 * of these teams can see the initiative, as can the members of the teams of its aligned projects.
+	 */
+	teams?: IOrganizationTeam[];
 }
+
+/**
+ * A strategic initiative as the reads answer it: with `teamIds`, the identifiers of the directly linked teams.
+ * Kept out of {@link IOrganizationStrategicInitiative} on purpose: an array of identifiers there would not be a
+ * valid TypeORM find condition for the entities that embed the initiative.
+ */
+export type IOrganizationStrategicInitiativeRead = IOrganizationStrategicInitiative & { teamIds?: ID[] };
 
 /**
  * Create input for organization strategic initiative
  */
 export interface IOrganizationStrategicInitiativeCreateInput
-	extends OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward'> {
+	extends OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward' | 'teams'> {
 	stewardId?: ID;
+	/** The teams to link the initiative to directly; each must be a team of the initiative's organization. */
+	teamIds?: ID[];
 }
 
 /**
  * Update input for organization strategic initiative
  */
 export interface IOrganizationStrategicInitiativeUpdateInput
-	extends Partial<OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward'>> {
+	extends Partial<OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward' | 'teams'>> {
 	stewardId?: ID;
+	/** Replaces the directly linked teams when stated (an empty list unlinks them all); omitted, they stay. */
+	teamIds?: ID[];
 }
 
 /**

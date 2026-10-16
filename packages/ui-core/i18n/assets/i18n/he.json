@@ -841,6 +841,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"INITIATIVES": "יוזמות",
 		"BREADCRUMB": "נתיב ניווט",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
@@ -1993,6 +1994,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "סוג",
+		"KIND_ALL": "הכול",
+		"KIND_HUMAN": "אנשים",
+		"KIND_AGENT": "סוכנים",
+		"AGENT_BADGE": "סוכן",
+		"MANAGED_BY_EVER_WORKS": "מנוהל על ידי Ever Works: השם והפרופיל של סוכן זה משתנים ב-Ever Works ומסונכרנים ל-Gauzy.",
+		"MANAGED_EXTERNALLY": "מנוהל חיצונית: השם והפרופיל של סוכן זה משתנים במערכת שממנה הוא מגיע ומסונכרנים ל-Gauzy.",
+		"OPEN_MANAGED_AGENT": "פתח את דף הסוכן",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"ACTIVE": "פעיל",
@@ -2131,6 +2140,60 @@
 			},
 			"SHOWING": "מוצגות {{ shown }} מתוך {{ total }} משימות",
 			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "יוזמות אסטרטגיות",
+		"SUBTITLE": "הכיוונים שהארגון שלך החליט להתקדם בהם, והיעדים, הפרויקטים והצוותים המיושרים אליהם.",
+		"ADD": "הוספת יוזמה",
+		"EDIT": "עריכת יוזמה",
+		"EMPTY": "אין עדיין יוזמות אסטרטגיות.",
+		"TITLE": "כותרת",
+		"STATE": "מצב",
+		"VISIBILITY": "נראות",
+		"TEAMS": "צוותים",
+		"TEAMS_HINT": "בנראות \"צוות\", חברי הצוותים האלה (וצוותי הפרויקטים המיושרים) יכולים לראות את היוזמה.",
+		"PROJECTS": "פרויקטים",
+		"GOALS": "יעדים",
+		"CONFIDENCE": "ביטחון",
+		"MOMENTUM": "תנופה",
+		"INTENT": "כוונה",
+		"INTENT_HINT": "מה אנחנו רוצים לקדם במכוון, ולמה?",
+		"STEWARD": "אחראי",
+		"SIGNALS": "אותות",
+		"KNOWN_RISKS": "סיכונים ידועים",
+		"KNOWN_RISKS_HINT": "סיכון אחד בכל שורה",
+		"NOTES": "הערות",
+		"LAST_ASSESSED": "הערכה אחרונה",
+		"NO_TEAMS": "אין צוותים מקושרים.",
+		"NO_GOALS": "אין יעדים מיושרים.",
+		"NO_PROJECTS": "אין פרויקטים מיושרים.",
+		"NOT_FOUND": "היוזמה לא נמצאה או שאין לך הרשאה לראות אותה.",
+		"DELETE_TITLE": "מחיקת יוזמה",
+		"DELETE_CONFIRMATION": "למחוק את היוזמה \"{{ name }}\"?",
+		"DELETED": "היוזמה \"{{ name }}\" נמחקה.",
+		"CREATED": "היוזמה \"{{ name }}\" נוצרה.",
+		"UPDATED": "היוזמה \"{{ name }}\" עודכנה.",
+		"STATES": {
+			"DRAFT": "טיוטה",
+			"ACTIVE": "פעילה",
+			"RESOLVED": "הושגה",
+			"RETIRED": "הופסקה"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "הנהלה",
+			"ORGANIZATION": "ארגון",
+			"TEAM": "צוות"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "נמוך",
+			"MEDIUM": "בינוני",
+			"HIGH": "גבוה"
+		},
+		"MOMENTUMS": {
+			"STALLED": "תקועה",
+			"PROGRESSING": "מתקדמת",
+			"ACCELERATING": "מאיצה"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2698,7 +2761,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "פרטים"
+					},
+					"PUBLIC": "ציבורי",
+					"PRIVATE": "פרטי",
+					"PREFIX": "קידומת משימות",
+					"MEMBERS_COUNT": "{{ count }} חברים",
+					"LIVE": "{{ tracking }} עוקבים כעת · {{ online }} מחוברים",
+					"OF_MEMBERS": "{{ count }} מתוך {{ total }} חברים",
+					"CREATED": "נוצר",
+					"UPDATED": "עודכן לאחרונה",
+					"ACTIVE_MEMBERS": "חברים פעילים",
+					"ACTIVE_MEMBERS_META": "מתוך {{ total }} חברים רשמו זמן",
+					"TIME_BY_MEMBER": "זמן לפי חבר",
+					"TEAM_TASKS": "משימות הצוות",
+					"NO_TEAM_TASKS": "אין משימות שהוקצו לצוות זה",
+					"NO_MEMBERS": "לצוות זה אין עדיין חברים",
+					"NO_PROJECTS": "אין פרויקטים המקושרים לצוות זה",
+					"COLUMNS": {
+						"MEMBER": "חבר",
+						"ROLE": "תפקיד",
+						"STATUS": "סטטוס",
+						"CURRENT_TASK": "משימה נוכחית",
+						"TODAY": "היום",
+						"ACTIVITY": "פעילות"
+					},
+					"ROLE": {
+						"MANAGER": "מנהל",
+						"MEMBER": "חבר"
+					},
+					"GENERAL": "כללי",
+					"SETTINGS": "הגדרות",
+					"RECORD": "רשומה",
+					"TEAM_SIZE": "גודל הצוות",
+					"COLOR": "צבע",
+					"EMOJI": "אמוג'י",
+					"PROFILE_LINK": "קישור לפרופיל",
+					"VISIBILITY": "נראות",
+					"SHARE_PROFILE_VIEW": "חברים יכולים לראות את הפרופילים של האחרים",
+					"REQUIRE_PLAN": "דרוש תכנון למעקב אחר זמן",
+					"NOT_FOUND": "צוות זה לא נמצא",
+					"LOAD_FAILED": "לא ניתן לטעון את הצוות",
+					"RETRY": "נסה שוב",
+					"OPEN_TASK_DETAILS": "הצג פרטים של {{ title }}",
+					"OPEN_TASK_PAGE": "פתח את הדף של {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "פתח את דף המשימה",
+					"UNASSIGNED": "לא הוקצתה",
+					"SHOW_ALL": "הצג הכל",
+					"SHOW_LESS": "הצג פחות",
+					"PROJECTS_CAPTION": "הפרויקטים של הצוות והזמן שהושקע בכל אחד בתקופה זו",
+					"NOT_LINKED": "לא מקושר",
+					"NOT_LINKED_HINT": "חברים רשמו זמן בפרויקט זה, אך הוא אינו מקושר לצוות"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -3801,17 +3918,20 @@
 		"USER": {
 			"MANAGE": "Manage User Invites",
 			"HEADER": "Invite Users",
-			"ACTION": "Invite Users"
+			"ACTION": "Invite Users",
+			"DESCRIPTION": "הזמינו אנשים להצטרף לארגון שלכם כמשתמשים. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Manage Employee Invites",
 			"HEADER": "Invite Employees",
-			"ACTION": "Invite Employees"
+			"ACTION": "Invite Employees",
+			"DESCRIPTION": "הזמינו אנשים להצטרף לארגון שלכם כעובדים. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Manage Candidate Invites",
 			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"ACTION": "Invite Candidates",
+			"DESCRIPTION": "הזמינו מועמדים לתהליך הגיוס שלכם. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
@@ -3826,6 +3946,23 @@
 			"TWO_WEEK": "14 Days",
 			"MONTH": "30 Days",
 			"NEVER": "Never"
+		},
+		"FORM": {
+			"RECIPIENTS": "נמענים",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "הקישו Enter אחרי כל כתובת כדי להוסיף כמה נמענים.",
+			"CLEAR_EMAILS": "נקה הכול",
+			"ACCESS": "גישה",
+			"ACCESS_HINT": "אופציונלי. בחרו למה חברים חדשים יוכלו לגשת מיד עם הצטרפותם.",
+			"DETAILS": "פרטי ההזמנה",
+			"RECIPIENT_COUNT": "נמענים: {{count}}",
+			"NO_RECIPIENTS": "עדיין לא נוספו נמענים"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "מחיקת הזמנה",
+			"WARNING": "ההזמנה עבור {{ email }} תימחק לצמיתות והקישור שלה יפסיק לעבוד. לא ניתן לבטל פעולה זו.",
+			"TYPE_TO_CONFIRM": "הקלידו את הטקסט הבא לאישור:",
+			"CONFIRM": "מחק הזמנה"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5597,7 +5734,40 @@
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
 		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
 		"NO_TIME_TRACKED": "לא נמדד זמן",
-		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו",
+		"APPS_URLS": {
+			"TOTAL_TIME": "זמן כולל",
+			"APPS_USED": "אפליקציות בשימוש",
+			"SITES_VISITED": "אתרים שבוקרו",
+			"TOP_APP": "האפליקציה הנפוצה ביותר",
+			"TOP_SITE": "האתר המבוקר ביותר",
+			"VIEW": "תצוגה",
+			"BY_APP": "לפי אפליקציה",
+			"BY_SITE": "לפי אתר",
+			"BY_MEMBERS": "לפי חבר",
+			"BY_HOURS": "לפי שעה",
+			"SEARCH_APPS": "חיפוש אפליקציות…",
+			"SEARCH_SITES": "חיפוש אתרים…",
+			"SORT": "שינוי סדר המיון",
+			"SORT_TIME": "הכי הרבה זמן",
+			"SORT_NAME": "שם א–ת",
+			"LOAD_FAILED": "לא ניתן לטעון את הפעילות. נסה שוב.",
+			"NO_MATCH": "אין תוצאות עבור „{{ search }}”.",
+			"APP": "אפליקציה",
+			"SITE": "אתר",
+			"TIME": "זמן",
+			"SHOW_PAGES": "הצג את הדפים שבוקרו ב-{{ site }}",
+			"LOADING_PAGES": "טוען דפים…",
+			"PAGES_FAILED": "לא ניתן לטעון את הדפים.",
+			"NO_PAGES": "לא נרשמו פרטי דפים עבור אתר זה.",
+			"SHOW_ALL": "הצג את כל {{ count }}",
+			"SHOW_LESS": "הצג פחות",
+			"UNKNOWN_MEMBER": "חבר לא ידוע",
+			"APPS_COUNT": "{{ count }} אפליקציות",
+			"SITES_COUNT": "{{ count }} אתרים",
+			"OF_TOTAL": "{{ value }} מהסך הכול",
+			"PAGES_TRUNCATED": "לאתר זה יש יותר רשומות ממה שניתן להציג; הפירוט מכסה רק חלק מהזמן שלו."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",

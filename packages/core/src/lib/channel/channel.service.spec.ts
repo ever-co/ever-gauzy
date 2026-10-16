@@ -33,6 +33,20 @@ jest.mock('../core/crud/tenant-aware-crud.service', () => {
 		async softDelete(id: any): Promise<any> {
 			return this.typeOrmRepository.update(id, { deletedAt: new Date() });
 		}
+
+		// The real base resolves the row by tenant only, so the doubles below withdraw and restore by id alone:
+		// an organization check has to come from the service under test.
+		async softRemove(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: new Date() });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
+
+		async softRecover(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: null });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
 	}
 
 	return { TenantAwareCrudService };
@@ -57,6 +71,7 @@ jest.mock('@gauzy/config', () => ({
 	isMySQL: () => false
 }));
 
+import { HttpException } from '@nestjs/common';
 import { ChannelStatus } from '@gauzy/contracts';
 import { Channel } from './channel.entity';
 import { ChannelService } from './channel.service';
@@ -323,6 +338,20 @@ async function refusalOf(call: () => Promise<unknown>): Promise<string | undefin
 		return undefined;
 	} catch (error) {
 		return (error as Error).message;
+	}
+}
+
+/** The HTTP status and the message of the error a call raises, or `undefined` when the call does not raise. */
+async function httpRefusalOf(call: () => Promise<unknown>): Promise<{ status?: number; message: string } | undefined> {
+	try {
+		await call();
+
+		return undefined;
+	} catch (error) {
+		return {
+			status: error instanceof HttpException ? error.getStatus() : undefined,
+			message: (error as Error).message
+		};
 	}
 }
 
@@ -656,5 +685,57 @@ describe('ChannelService — scoping and the answering form', () => {
 		const listed = await channelService.listChannels();
 
 		expect(listed.map((one) => one.id)).toEqual([OTHER_CHANNEL, CHANNEL]);
+	});
+});
+
+describe('ChannelService — soft delete and recover stay inside the caller organization', () => {
+	it('refuses to withdraw a channel of another organization, and leaves the row alone', async () => {
+		const { channelService, channel } = channels({
+			channels: [channelRow(CHANNEL, { organizationId: 'another-org' })]
+		});
+
+		expect(await httpRefusalOf(() => channelService.softRemove(CHANNEL))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/)
+		});
+		expect(channel()?.deletedAt).toBeUndefined();
+	});
+
+	it('withdraws a channel of the caller organization', async () => {
+		const { channelService, channel } = channels({ channels: [channelRow(CHANNEL)] });
+
+		await channelService.softRemove(CHANNEL);
+
+		expect(channel()?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('refuses to restore a withdrawn channel of another organization, and leaves it withdrawn', async () => {
+		const deletedAt = new Date('2026-01-01T00:00:00.000Z');
+		const { channelService, channel } = channels({
+			channels: [channelRow(CHANNEL, { organizationId: 'another-org', deletedAt })]
+		});
+
+		expect(await httpRefusalOf(() => channelService.softRecover(CHANNEL))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/)
+		});
+		expect(channel()?.deletedAt).toBe(deletedAt);
+	});
+
+	it('restores a withdrawn channel of the caller organization, reading withdrawn rows to find it', async () => {
+		const { channelService, channel } = channels({
+			channels: [channelRow(CHANNEL, { deletedAt: new Date('2026-01-01T00:00:00.000Z') })]
+		});
+		const find = jest.spyOn(channelService, 'find');
+
+		await channelService.softRecover(CHANNEL);
+
+		expect(find).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ id: CHANNEL, organizationId: ORG }),
+				withDeleted: true
+			})
+		);
+		expect(channel()?.deletedAt).toBeNull();
 	});
 });

@@ -1,0 +1,176 @@
+import '../core/entities/internal';
+
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { IUser, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from '../core/crud';
+import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
+import { TaskEvent } from '../event-bus/events';
+import { TaskService } from './task.service';
+
+/**
+ * `TaskEvent` covered create and update only: a task removed through `DELETE /tasks/:id`, `DELETE
+ * /tasks/:id/soft` or the GraphQL twins left every subscriber (GitHub, SIM workflows, the Ever Works
+ * integration) believing it still existed. Both delete paths now publish `DELETED`, carrying the task and
+ * its scope in `input` — the members the existing subscribers read before they switch on the type.
+ */
+describe('TaskService — TaskEvent DELETED', () => {
+	const fixture = createTenantFixture({ user: { employeeId: 'caller-employee' } as IUser });
+	const stored = {
+		id: 'task-1',
+		title: 'Task 1',
+		tenantId: fixture.tenantId,
+		organizationId: fixture.organizationId,
+		projectId: 'project-1',
+		teams: []
+	};
+
+	let restore: () => void;
+	let publish: jest.Mock;
+	let service: TaskService;
+
+	const published = (): TaskEvent[] => publish.mock.calls.map(([event]) => event);
+
+	/** Signs in as the fixture's user holding exactly these permissions (`hasPermission` and `hasAnyPermission`). */
+	const signIn = (permissions: PermissionsEnum[]) => {
+		({ restore } = asTenantUser(fixture, { permissions }));
+		jest.spyOn(RequestContext, 'hasAnyPermission').mockImplementation((wanted: PermissionsEnum[]) =>
+			wanted.some((permission) => permissions.includes(permission))
+		);
+	};
+
+	beforeEach(() => {
+		publish = jest.fn();
+		service = Object.create(TaskService.prototype);
+		Object.assign(service, {
+			_domainEventBus: { publish },
+			_managedEmployeeService: { isManagerOfTeamsOrProjects: jest.fn().mockResolvedValue(false) }
+		});
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
+	});
+
+	afterEach(() => {
+		restore?.();
+		jest.restoreAllMocks();
+	});
+
+	it('publishes DELETED after a hard delete, with the task and its scope', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		const remove = jest
+			.spyOn(TenantAwareCrudService.prototype, 'delete')
+			.mockResolvedValue({ affected: 1, raw: [] });
+
+		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
+
+		expect(remove).toHaveBeenCalledWith('task-1');
+		expect(published()).toHaveLength(1);
+		const [event] = published();
+		expect(event).toBeInstanceOf(TaskEvent);
+		expect(event.type).toBe(BaseEntityEventTypeEnum.DELETED);
+		expect(event.entity).toBe(stored);
+		expect(event.input).toEqual({
+			tenantId: fixture.tenantId,
+			organizationId: fixture.organizationId,
+			projectId: 'project-1'
+		});
+	});
+
+	it('stops the delete when the task cannot be read, so no task disappears without its event', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockRejectedValue(
+			new Error('connection reset')
+		);
+		const remove = jest.spyOn(TenantAwareCrudService.prototype, 'delete');
+
+		await expect(service.deleteTask('task-1')).rejects.toThrow('connection reset');
+
+		expect(remove).not.toHaveBeenCalled();
+		expect(published()).toEqual([]);
+	});
+
+	it('deletes as before when the task does not exist, and publishes nothing', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockRejectedValue(
+			new NotFoundException('The requested record was not found')
+		);
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 0, raw: [] });
+
+		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 0, raw: [] });
+		expect(published()).toEqual([]);
+	});
+
+	it('publishes nothing when the delete removed nothing', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 0, raw: [] });
+
+		await service.deleteTask('task-1');
+
+		expect(published()).toEqual([]);
+	});
+
+	it('publishes nothing when the caller may not delete the task', async () => {
+		signIn([PermissionsEnum.ORG_TASK_EDIT]);
+		const remove = jest.spyOn(TenantAwareCrudService.prototype, 'delete');
+
+		await expect(service.deleteTask('task-1')).rejects.toBeInstanceOf(ForbiddenException);
+
+		expect(remove).not.toHaveBeenCalled();
+		expect(published()).toEqual([]);
+	});
+
+	it('publishes DELETED after a soft delete', async () => {
+		signIn([PermissionsEnum.ALL_ORG_EDIT]);
+		const softRemoved = { ...stored, deletedAt: new Date() };
+		jest.spyOn(CrudService.prototype, 'softRemove').mockResolvedValue(softRemoved as never);
+
+		await expect(service.softRemove('task-1')).resolves.toBe(softRemoved);
+
+		const [event] = published();
+		expect(event.type).toBe(BaseEntityEventTypeEnum.DELETED);
+		expect(event.entity).toBe(softRemoved);
+		expect(event.input).toMatchObject({ projectId: 'project-1', organizationId: fixture.organizationId });
+	});
+
+	it('never fails the delete when publishing throws', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		publish.mockImplementation(() => {
+			throw new Error('subscriber exploded');
+		});
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
+		const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
+		expect(log).toHaveBeenCalled();
+	});
+
+	it('never leaves a rejected publish unhandled after the delete', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		publish.mockRejectedValue(new Error('subscriber rejected'));
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
+		const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		const unhandled = jest.fn();
+		process.on('unhandledRejection', unhandled);
+
+		try {
+			await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
+			// Let the rejected publish settle, then give Node's unhandled-rejection tracking a turn.
+			await new Promise((resolve) => setImmediate(resolve));
+			await new Promise((resolve) => setImmediate(resolve));
+
+			expect(log).toHaveBeenCalledWith(expect.stringContaining('task-1'), 'subscriber rejected');
+			expect(unhandled).not.toHaveBeenCalled();
+		} finally {
+			process.off('unhandledRejection', unhandled);
+		}
+	});
+
+	it('works without the domain event bus (a service built by hand)', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		Object.assign(service, { _domainEventBus: undefined });
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
+
+		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
+	});
+});

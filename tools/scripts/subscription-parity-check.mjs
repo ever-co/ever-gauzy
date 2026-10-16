@@ -50,7 +50,7 @@ const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 's
 const SOURCE_ROOTS = [join(ROOT, 'packages', 'plugins'), join(ROOT, 'packages', 'core', 'src', 'lib')];
 
 /** Promised subscription fields not yet served. Only shrinks (rule 3). */
-const BACKLOG_BASELINE = 11;
+const BACKLOG_BASELINE = 0;
 
 /** Served plugin streams no producer feeds. Only shrinks (rule 4). */
 const SILENT_BASELINE = 6;
@@ -92,6 +92,84 @@ const PROMISED = [
 	{ name: 'couponRedeemed', owner: 'promotion', source: 'served' },
 	{ name: 'giftCardRedeemed', owner: 'promotion', source: 'served' },
 
+	// — Served by lane q12b (owner decision 8, 2026-10-13; built 2026-10-15): the design-named backlog and the typed
+	//   fields of the durable aggregates the plugins stream. Each follows outbox facts on the subscriber's own tenant
+	//   topic, re-read as the subscriber. Most facts are appended in the transaction of the write they describe; the
+	//   exceptions, so this table does not claim more than the code does:
+	//   - `fulfillment.created` is appended after the shipment's CRUD create, not inside it (the create has no
+	//     transaction-bound form — `FulfillmentService` documents it); the later `fulfillment.*` moves are appended
+	//     right after their conditional update, and in one transaction with it only for a cancellation on TypeORM;
+	//   - the subscription service's facts other than `subscription.created` are appended after the transaction of
+	//     their write, not inside it;
+	//   - `pick_list.created` is the last step of the list's create, in its own transaction, and a failed append
+	//     withdraws the list; the pick-list moves are atomic with their writes;
+	//   - `integration_tenant.synced` is atomic with the connection's `lastSyncedAt` stamp, and that recording is the
+	//     run's epilogue — appended after the import — and, for Hubstaff and Upwork, best-effort.
+	{
+		name: 'sellerChanged',
+		owner: 'marketplace',
+		source: 'served',
+		aggregates: ['seller'],
+		note: 'design-named (§7.65 item 19); follows `seller.*`, including the `updated`, `submitted` and `offboarding-started` moves that appended nothing before'
+	},
+	{
+		name: 'fulfillmentCreated',
+		owner: 'fulfillment',
+		source: 'served',
+		note: 'design-named (§7.65 item 19); rides `fulfillment.created`'
+	},
+	{
+		name: 'pickListChanged',
+		owner: 'warehouse',
+		source: 'served',
+		aggregates: ['pick_list'],
+		note: 'design-named (§7.65 item 19); follows `pick_list.*`, which the pick-list service now appends with each move'
+	},
+	{
+		name: 'integrationSyncCompleted',
+		owner: 'core/integration',
+		source: 'served',
+		aggregates: ['integration_tenant'],
+		note: 'design-named (§7.68 class 5); follows `integration_tenant.synced`, which GitHub, Hubstaff and Upwork append when a run finishes'
+	},
+	{
+		name: 'fulfillmentChanged',
+		owner: 'fulfillment',
+		source: 'served',
+		aggregates: ['fulfillment'],
+		note: 'follows `fulfillment.*` (shipped, in transit, delivered, canceled — `fulfillmentCreated` is the first move only)'
+	},
+	{
+		name: 'sellerOfferingChanged',
+		owner: 'marketplace',
+		source: 'served',
+		aggregates: ['seller_offering'],
+		note: 'follows `seller_offering.created` and `seller_offering.withdrawn`; `seller_offering.updated` — every edit, status move (submit, publish, pause) and bulk-reprice item — is withheld, as from `Subscription.events`'
+	},
+	{ name: 'sellerPayoutChanged', owner: 'marketplace', source: 'served', aggregates: ['seller_payout'], note: 'follows `seller_payout.*`' },
+	{ name: 'sellerSettlementChanged', owner: 'marketplace', source: 'served', aggregates: ['seller_settlement'], note: 'follows `seller_settlement.*`' },
+	{
+		name: 'sellerTransactionChanged',
+		owner: 'marketplace',
+		source: 'served',
+		aggregates: ['seller.transaction'],
+		note: 'follows `seller.transaction.*` (the ledger); answers the rows a fact moved'
+	},
+	{
+		name: 'customerSubscriptionChanged',
+		owner: 'subscription',
+		source: 'served',
+		aggregates: ['subscription'],
+		note: 'follows `subscription.*`; the type is `CustomerSubscription`, so the field cannot be `subscriptionChanged` without reading as the root type'
+	},
+	{
+		name: 'entitlementKeyChanged',
+		owner: 'entitlement',
+		source: 'served',
+		aggregates: ['entitlement_key'],
+		note: 'follows `entitlement_key.revoked` (`entitlement_key.issued` stays withheld: its payload carries the holder’s e-mail)'
+	},
+
 	// — Promised by the design and served by nothing (handover 2026-09-20 §7.65 item 19, §7.68).
 	{
 		name: 'checkoutCompleted',
@@ -99,50 +177,10 @@ const PROMISED = [
 		source: 'design',
 		note: 'follows `order.placed` (the order catalogue says it "rides `order.placed`")'
 	},
-	{ name: 'sellerChanged', owner: 'marketplace', source: 'design', aggregates: ['seller'], note: 'follows `seller.*`' },
 	{ name: 'orderReturnChanged', owner: 'returns', source: 'design', aggregates: ['return'], note: 'follows `return.*`' },
-	{ name: 'fulfillmentCreated', owner: 'fulfillment', source: 'design', note: 'follows `fulfillment.created`' },
-	{ name: 'pickListChanged', owner: 'warehouse', source: 'design', note: 'the warehouse plugin publishes no event yet' },
-	{
-		name: 'integrationSyncCompleted',
-		owner: 'core/integration',
-		source: 'design',
-		note: 'no integration publishes a sync-completed fact yet (§7.68 class 5)'
-	},
 
 	// — Derived: a durable aggregate the plugins stream through `events(names:)` with no typed field of its own.
 	{ name: 'orderChanged', owner: 'order', source: 'event', aggregates: ['order'], note: 'follows `order.*`' },
-	{
-		name: 'fulfillmentChanged',
-		owner: 'fulfillment',
-		source: 'event',
-		aggregates: ['fulfillment'],
-		note: 'follows `fulfillment.*` (shipped, in transit, delivered, canceled — `fulfillmentCreated` is the first move only)'
-	},
-	{ name: 'sellerOfferingChanged', owner: 'marketplace', source: 'event', aggregates: ['seller_offering'], note: 'follows `seller_offering.*`' },
-	{ name: 'sellerPayoutChanged', owner: 'marketplace', source: 'event', aggregates: ['seller_payout'], note: 'follows `seller_payout.*`' },
-	{ name: 'sellerSettlementChanged', owner: 'marketplace', source: 'event', aggregates: ['seller_settlement'], note: 'follows `seller_settlement.*`' },
-	{
-		name: 'sellerTransactionChanged',
-		owner: 'marketplace',
-		source: 'event',
-		aggregates: ['seller.transaction'],
-		note: 'follows `seller.transaction.*` (the ledger)'
-	},
-	{
-		name: 'customerSubscriptionChanged',
-		owner: 'subscription',
-		source: 'event',
-		aggregates: ['subscription'],
-		note: 'follows `subscription.*`; the type is `CustomerSubscription`, so the field cannot be `subscriptionChanged` without reading as the root type'
-	},
-	{
-		name: 'entitlementKeyChanged',
-		owner: 'entitlement',
-		source: 'event',
-		aggregates: ['entitlement_key'],
-		note: 'follows `entitlement_key.revoked` (`entitlement_key.issued` stays withheld: its payload carries the holder’s e-mail)'
-	}
 ];
 
 /** Names a promise covered and the platform's own subscription doctrine refuses, with the reason. */

@@ -175,6 +175,7 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		this.assertOwnerType(ownerType);
 		this.assertOwnerConsistency(ownerType, input.ownerId, input.customerId);
+		await this.assertCustomerInScope(input.customerId);
 
 		const manager = this.typeOrmAddressRepository.manager;
 		const countryId = await this.resolveCountryId(manager, countryCode, input.countryId);
@@ -275,6 +276,11 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		this.assertOwnerType(ownerType);
 		this.assertOwnerConsistency(ownerType, ownerId, customerId);
+		if (input.customerId !== undefined) {
+			await this.assertCustomerInScope(customerId);
+		}
+		// A move to another customer (or to none) is decided and written under the address's row lock, below.
+		const movesCustomer = input.customerId !== undefined && String(customerId ?? '') !== String(address.customerId ?? '');
 
 		if (input.line1 !== undefined && !this.isStated(input.line1)) {
 			throw new BadRequestException(
@@ -304,7 +310,20 @@ export class AddressService extends TenantAwareCrudService<Address> {
 			customerId: customerId ?? null
 		};
 
-		if (Object.keys(descriptive).length) {
+		if (movesCustomer) {
+			// The default check and the move are one step under the lock `setDefaultAddress` takes, so a default set
+			// concurrently cannot slip in between the check and the write (CodeRabbit on #10649).
+			await this.typeOrmAddressRepository.manager.transaction(async (manager: EntityManager) => {
+				const locked = await this.lockAddress(manager, id);
+
+				if (!locked) {
+					throw new NotFoundException(`${ApiErrorCode.RESOURCE_NOT_FOUND}: no such address in this organization.`);
+				}
+
+				await this.assertNotMovingADefault(locked, manager);
+				await manager.update(Address, { id: locked.id, ...this.scope } as never, descriptive as never);
+			});
+		} else if (Object.keys(descriptive).length) {
 			await this.update(id, descriptive as never);
 		}
 
@@ -408,12 +427,12 @@ export class AddressService extends TenantAwareCrudService<Address> {
 				// must never take the party's real default with it, and the column is the authority for
 				// exactly one row.
 				const party: OrganizationContact | null = await manager.findOne(OrganizationContact, {
-					where: { id: address.customerId }
+					where: { id: address.customerId, ...this.scope }
 				} as never);
 				const authoritative = party ? (party as unknown as Record<string, unknown>)[column] : null;
 
 				if (authoritative && String(authoritative) === String(address.id)) {
-					await manager.update(OrganizationContact, { id: address.customerId } as never, {
+					await manager.update(OrganizationContact, { id: address.customerId, ...this.scope } as never, {
 						[column]: null
 					} as never);
 				}
@@ -631,7 +650,7 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		const party: OrganizationContact | null = await this.typeOrmAddressRepository.manager.findOne(
 			OrganizationContact,
-			{ where: { id: address.customerId } } as never
+			{ where: { id: address.customerId, ...this.scope } } as never
 		);
 		const authoritative = party ? (party as unknown as Record<string, unknown>)[column] : null;
 
@@ -673,6 +692,67 @@ export class AddressService extends TenantAwareCrudService<Address> {
 		if (!Object.values(AddressOwnerType).includes(ownerType)) {
 			throw new BadRequestException(
 				`${ApiErrorCode.VALIDATION_INVALID_ENUM}: '${String(ownerType)}' is not a kind of thing an address belongs to.`
+			);
+		}
+	}
+
+	/**
+	 * Refuses a buyer reference that is not a contact of the caller (SEC-D-11).
+	 *
+	 * `customerId` is the party whose two default-address columns this service writes, so an address may only name a
+	 * contact in the caller's tenant and organization. `assertOwnerConsistency` compares two values the caller states
+	 * and could not see that both named another tenant's contact. Not stated is not refused: the guest cart address
+	 * carries none.
+	 *
+	 * @param customerId The stated buyer reference.
+	 * @throws NotFoundException `RESOURCE_NOT_FOUND` when no contact with that id is in the caller's scope.
+	 */
+	private async assertCustomerInScope(customerId?: ID | null): Promise<void> {
+		if (!this.isStated(customerId)) {
+			return;
+		}
+
+		const party = await this.typeOrmAddressRepository.manager.findOne(OrganizationContact, {
+			where: { id: customerId, ...this.scope }
+		} as never);
+
+		if (!party) {
+			throw new NotFoundException(`${ApiErrorCode.RESOURCE_NOT_FOUND}: no such customer in this organization.`);
+		}
+	}
+
+	/**
+	 * Refuses moving an address that is a default of its customer to another customer, or to none.
+	 *
+	 * The customer's column is the authority for its default (rule 3 above): moving the row out of that customer's
+	 * book would leave the column naming an address the customer no longer has (CodeRabbit on #10649). The default
+	 * is cleared first — {@link clearDefaultAddress} is the door that clears the column and the mirror together.
+	 *
+	 * @param address The stored address, read under its row lock.
+	 * @param manager The transaction the move is written in.
+	 * @throws ApiException `ADDRESS_DEFAULT_MISMATCH` (409) when the address is a default of its customer.
+	 */
+	private async assertNotMovingADefault(
+		address: Pick<IAddressBook, 'id' | 'customerId' | 'ownerType' | 'isDefaultShipping' | 'isDefaultBilling'>,
+		manager: EntityManager = this.typeOrmAddressRepository.manager
+	): Promise<void> {
+		let isDefault = !!(address.isDefaultShipping || address.isDefaultBilling);
+
+		if (!isDefault && address.ownerType === AddressOwnerType.CONTACT && address.customerId) {
+			const party = (await manager.findOne(OrganizationContact, {
+				where: { id: address.customerId, ...this.scope }
+			} as never)) as unknown as Record<string, unknown> | null;
+			const columns = [AddressRoleEnum.SHIPPING, AddressRoleEnum.BILLING].map((role) => this.partyDefaultColumn(role));
+
+			isDefault = !!party && columns.some((column) => !!column && !!party[column] && String(party[column]) === String(address.id));
+		}
+
+		if (isDefault) {
+			throw new ApiException(
+				409,
+				ApiErrorCode.ADDRESS_DEFAULT_MISMATCH,
+				`This address is a default address of customer ${String(address.customerId)}; clear the default before moving it to another customer.`,
+				{ customerId: address.customerId, requested: address.id }
 			);
 		}
 	}
@@ -907,7 +987,9 @@ export class AddressService extends TenantAwareCrudService<Address> {
 			return;
 		}
 
-		await manager.update(OrganizationContact, { id: address.customerId } as never, {
+		// The party is read and written in the caller's scope only (SEC-D-11): by its id alone, an address of the
+		// caller pointed another tenant's contact's default at itself.
+		await manager.update(OrganizationContact, { id: address.customerId, ...this.scope } as never, {
 			[column]: addressId
 		} as never);
 	}
@@ -929,7 +1011,7 @@ export class AddressService extends TenantAwareCrudService<Address> {
 
 		const party: OrganizationContact | null = await this.typeOrmAddressRepository.manager.findOne(
 			OrganizationContact,
-			{ where: { id: address.customerId } } as never
+			{ where: { id: address.customerId, ...this.scope } } as never
 		);
 
 		if (!party) {

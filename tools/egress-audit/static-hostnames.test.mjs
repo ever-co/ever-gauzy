@@ -59,7 +59,7 @@ test('the modules, docs, the audit and tests may name Ever hosts; core code may 
 	for (const file of [
 		'packages/plugins/ever-connect/src/lib/sdk.ts',
 		'packages/plugins/ever-stats-ui/src/index.ts',
-		'docs/ever-platform/outbound-calls.md',
+		'tools/ever-platform/outbound-calls.md',
 		'README.md',
 		'packages/core/src/lib/user/user.service.spec.ts',
 		'tools/egress-audit/adapter.mjs'

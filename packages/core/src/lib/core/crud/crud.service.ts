@@ -43,6 +43,7 @@ import {
 	MultiORM,
 	MultiORMEnum,
 	concatIdToWhere,
+	convertTypeORMWhereToMikroORM,
 	getORMType,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -830,12 +831,21 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
 		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped DB error.
 		assertCriteriaHasPredicate(id, 'update');
+		// Nothing to write — e.g. a `PUT /:id` body of only the members the inherited route drops — is no statement:
+		// an empty `SET` is refused by both ORMs. The answer is the one an id matching no row gets (CodeRabbit, #10647).
+		if (partialEntity && typeof partialEntity === 'object' && !Array.isArray(partialEntity) && !Object.keys(partialEntity).length) {
+			return { generatedMaps: [], raw: [], affected: 0 } as UpdateResult;
+		}
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					let where: MikroFilterQuery<T>;
 					if (typeof id === 'string') {
 						where = { id } as any;
+					} else if (Utils.isPlainObject(id)) {
+						// Translated as `delete()` and the reads translate it: a TypeORM operator left in the criteria (`In`,
+						// `IsNull`, `LessThan`) reached the statement as the value '[object Object]'.
+						where = convertTypeORMWhereToMikroORM(id as MikroFilterQuery<T>);
 					} else {
 						where = id as MikroFilterQuery<T>;
 					}

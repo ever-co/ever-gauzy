@@ -27,6 +27,7 @@ export * from './file-storage';
 export * from './gauzy-ai';
 export * from './github';
 export * from './goal';
+export * from './strategic-initiative';
 export * from './help-center';
 export * from './hubstaff';
 export * from './image-asset';

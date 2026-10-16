@@ -214,7 +214,7 @@ export class WebhookOutboxConsumer implements IEventConsumer, OnModuleInit {
 		}
 
 		try {
-			await this.deliveries.deliver(delivery.id as ID);
+			await this.deliveries.deliver(delivery.id as ID, { claim: true });
 		} catch (error) {
 			// The row exists and is due, so the endpoint is still owed its call; what failed is this
 			// attempt, not the fan-out. It is logged rather than raised for the reason `handle` states:

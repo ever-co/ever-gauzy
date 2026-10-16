@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "您必须成为公司职员才能够追踪时间、创建分摊费用以及使用其他与员工相关的功能。"
 	},
 	"MENU": {
+		"INITIATIVES": "举措",
 		"BREADCRUMB": "面包屑导航",
 		"PIPELINES": "管道",
 		"DASHBOARD": "仪表盘",
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "类型",
+		"KIND_ALL": "全部",
+		"KIND_HUMAN": "人员",
+		"KIND_AGENT": "智能体",
+		"AGENT_BADGE": "智能体",
+		"MANAGED_BY_EVER_WORKS": "由 Ever Works 管理：此智能体的名称和资料在 Ever Works 中修改，并同步到 Gauzy。",
+		"MANAGED_EXTERNALLY": "由外部系统管理：此智能体的名称和资料在其来源系统中修改，并同步到 Gauzy。",
+		"OPEN_MANAGED_AGENT": "打开智能体页面",
 		"HEADER": "管理员工",
 		"ADD_EMPLOYEE": "添加员工",
 		"ACTIVE": "活动",
@@ -2089,6 +2098,60 @@
 			},
 			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
 			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "战略举措",
+		"SUBTITLE": "组织决定前进的方向，以及与之对齐的目标、项目和团队。",
+		"ADD": "添加举措",
+		"EDIT": "编辑举措",
+		"EMPTY": "暂无战略举措。",
+		"TITLE": "标题",
+		"STATE": "状态",
+		"VISIBILITY": "可见性",
+		"TEAMS": "团队",
+		"TEAMS_HINT": "可见性为“团队”时，这些团队（以及对齐项目的团队）的成员可以查看该举措。",
+		"PROJECTS": "项目",
+		"GOALS": "目标",
+		"CONFIDENCE": "信心",
+		"MOMENTUM": "势头",
+		"INTENT": "意图",
+		"INTENT_HINT": "我们有意推动什么，为什么？",
+		"STEWARD": "负责人",
+		"SIGNALS": "信号",
+		"KNOWN_RISKS": "已知风险",
+		"KNOWN_RISKS_HINT": "每行一个风险",
+		"NOTES": "备注",
+		"LAST_ASSESSED": "上次评估",
+		"NO_TEAMS": "未关联团队。",
+		"NO_GOALS": "未对齐目标。",
+		"NO_PROJECTS": "未对齐项目。",
+		"NOT_FOUND": "未找到该举措，或您无权查看。",
+		"DELETE_TITLE": "删除举措",
+		"DELETE_CONFIRMATION": "删除举措“{{ name }}”？",
+		"DELETED": "举措“{{ name }}”已删除。",
+		"CREATED": "举措“{{ name }}”已创建。",
+		"UPDATED": "举措“{{ name }}”已更新。",
+		"STATES": {
+			"DRAFT": "草稿",
+			"ACTIVE": "进行中",
+			"RESOLVED": "已达成",
+			"RETIRED": "已停止"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "管理层",
+			"ORGANIZATION": "组织",
+			"TEAM": "团队"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "低",
+			"MEDIUM": "中",
+			"HIGH": "高"
+		},
+		"MOMENTUMS": {
+			"STALLED": "停滞",
+			"PROGRESSING": "推进中",
+			"ACCELERATING": "加速中"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2670,7 +2733,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",
-				"MEMBERS": "成员"
+				"MEMBERS": "成员",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "详情"
+					},
+					"PUBLIC": "公开",
+					"PRIVATE": "私有",
+					"PREFIX": "任务前缀",
+					"MEMBERS_COUNT": "{{ count }} 名成员",
+					"LIVE": "{{ tracking }} 人正在计时 · {{ online }} 人在线",
+					"OF_MEMBERS": "{{ total }} 名成员中的 {{ count }} 名",
+					"CREATED": "创建时间",
+					"UPDATED": "最后更新",
+					"ACTIVE_MEMBERS": "活跃成员",
+					"ACTIVE_MEMBERS_META": "（共 {{ total }} 名成员）记录了时间",
+					"TIME_BY_MEMBER": "按成员统计时间",
+					"TEAM_TASKS": "团队任务",
+					"NO_TEAM_TASKS": "此团队没有分配任务",
+					"NO_MEMBERS": "此团队还没有成员",
+					"NO_PROJECTS": "此团队没有关联项目",
+					"COLUMNS": {
+						"MEMBER": "成员",
+						"ROLE": "角色",
+						"STATUS": "状态",
+						"CURRENT_TASK": "当前任务",
+						"TODAY": "今天",
+						"ACTIVITY": "活跃度"
+					},
+					"ROLE": {
+						"MANAGER": "经理",
+						"MEMBER": "成员"
+					},
+					"GENERAL": "常规",
+					"SETTINGS": "设置",
+					"RECORD": "记录",
+					"TEAM_SIZE": "团队规模",
+					"COLOR": "颜色",
+					"EMOJI": "表情",
+					"PROFILE_LINK": "个人资料链接",
+					"VISIBILITY": "可见性",
+					"SHARE_PROFILE_VIEW": "成员可以查看彼此的资料",
+					"REQUIRE_PLAN": "计时前需要制定计划",
+					"NOT_FOUND": "找不到此团队",
+					"LOAD_FAILED": "无法加载团队",
+					"RETRY": "重试",
+					"OPEN_TASK_DETAILS": "查看 {{ title }} 的详情",
+					"OPEN_TASK_PAGE": "打开 {{ title }} 的页面",
+					"OPEN_TASK_PAGE_SHORT": "打开任务页面",
+					"UNASSIGNED": "未分配",
+					"SHOW_ALL": "显示全部",
+					"SHOW_LESS": "收起",
+					"PROJECTS_CAPTION": "团队的项目及本期间在每个项目上的工作时间",
+					"NOT_LINKED": "未关联",
+					"NOT_LINKED_HINT": "成员在此项目上记录了时间，但该项目未关联到团队"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -3783,17 +3900,20 @@
 		"USER": {
 			"MANAGE": "管理用户邀请",
 			"HEADER": "邀请用户",
-			"ACTION": "邀请用户"
+			"ACTION": "邀请用户",
+			"DESCRIPTION": "邀请他人以用户身份加入您的组织。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"EMPLOYEE": {
 			"MANAGE": "管理员工邀请",
 			"HEADER": "邀请员工",
-			"ACTION": "邀请员工"
+			"ACTION": "邀请员工",
+			"DESCRIPTION": "邀请他人以员工身份加入您的组织。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"CANDIDATE": {
 			"MANAGE": "管理候选人邀请",
 			"HEADER": "邀请候选人",
-			"ACTION": "邀请候选人"
+			"ACTION": "邀请候选人",
+			"DESCRIPTION": "邀请候选人进入您的招聘流程。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"SENT": "{{total}} 已发送邀请。",
 		"IGNORED": "发送了{{total}}个邀请。其中{{ignored}}个已经被邀请并忽略。",
@@ -3803,6 +3923,23 @@
 			"TWO_WEEK": "14天",
 			"MONTH": "30天",
 			"NEVER": "永不"
+		},
+		"FORM": {
+			"RECIPIENTS": "收件人",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "每输入一个地址后按回车键，即可添加多位收件人。",
+			"CLEAR_EMAILS": "全部清除",
+			"ACCESS": "访问权限",
+			"ACCESS_HINT": "可选。选择新成员加入后即可访问的内容。",
+			"DETAILS": "邀请详情",
+			"RECIPIENT_COUNT": "收件人：{{count}}",
+			"NO_RECIPIENTS": "尚未添加收件人"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "删除邀请",
+			"WARNING": "发送给 {{ email }} 的邀请将被永久删除，其链接也将失效。此操作无法撤销。",
+			"TYPE_TO_CONFIRM": "请输入以下内容以确认：",
+			"CONFIRM": "删除邀请"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5585,7 +5722,40 @@
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
 		"SCREEN_SELECTED": "{{ count }} 屏幕已选择",
 		"NO_TIME_TRACKED": "未记录时间",
-		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟"
+		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟",
+		"APPS_URLS": {
+			"TOTAL_TIME": "总时间",
+			"APPS_USED": "使用的应用",
+			"SITES_VISITED": "访问的网站",
+			"TOP_APP": "最常用的应用",
+			"TOP_SITE": "最常访问的网站",
+			"VIEW": "视图",
+			"BY_APP": "按应用",
+			"BY_SITE": "按网站",
+			"BY_MEMBERS": "按成员",
+			"BY_HOURS": "按小时",
+			"SEARCH_APPS": "搜索应用…",
+			"SEARCH_SITES": "搜索网站…",
+			"SORT": "更改排序方式",
+			"SORT_TIME": "时间最多",
+			"SORT_NAME": "名称 A–Z",
+			"LOAD_FAILED": "无法加载活动，请重试。",
+			"NO_MATCH": "没有与“{{ search }}”匹配的结果。",
+			"APP": "应用",
+			"SITE": "网站",
+			"TIME": "时间",
+			"SHOW_PAGES": "显示在 {{ site }} 上访问的页面",
+			"LOADING_PAGES": "正在加载页面…",
+			"PAGES_FAILED": "无法加载页面。",
+			"NO_PAGES": "此网站没有记录页面详情。",
+			"SHOW_ALL": "显示全部 {{ count }} 项",
+			"SHOW_LESS": "收起",
+			"UNKNOWN_MEMBER": "未知成员",
+			"APPS_COUNT": "{{ count }} 个应用",
+			"SITES_COUNT": "{{ count }} 个网站",
+			"OF_TOTAL": "占总时间 {{ value }}",
+			"PAGES_TRUNCATED": "此网站的记录超出可显示的数量；明细仅涵盖其部分时间。"
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",

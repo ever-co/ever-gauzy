@@ -117,7 +117,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * This function first retrieves the current employee's ID from the request context,
 	 * then attempts to locate the comment matching the provided id and employeeId.
 	 * If the comment is found, it creates an updated version of the comment using the input data.
-	 * Additionally, it synchronizes any mention updates via the _mentionService.
+	 * Additionally, it synchronizes any mention updates via the _mentionService: an omitted
+	 * `mentionEmployeeIds` leaves the comment's mentions as they are, and an array, `[]` included,
+	 * replaces them.
 	 *
 	 * @param {ID} id - The unique identifier of the comment to update.
 	 * @param {ICommentUpdateInput} input - The update data for the comment, including any mention updates.
@@ -128,7 +130,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		try {
 			const employeeId = RequestContext.currentEmployeeId();
 			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-			const { mentionEmployeeIds = [] } = input;
+			const { mentionEmployeeIds } = input;
 
 			// Find the comment for the current employee with the given id. Callers holding
 			// CHANGE_SELECTED_EMPLOYEE may edit any comment of the tenant; everyone else must be the
@@ -152,16 +154,20 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				id
 			});
 
-			// Synchronize any mention updates for the comment.
-			await this._mentionService.updateEntityMentions(
-				BaseEntityEnum.Comment,
-				id,
-				mentionEmployeeIds,
-				updatedComment.entityId,
-				updatedComment.entity,
-				// The saved organization: the edit may have moved the comment to another one
-				updatedComment.organizationId ?? comment.organizationId
-			);
+			// Synchronize mention updates only when the caller sent the list (a resolve or reopen does not).
+			if (Array.isArray(mentionEmployeeIds)) {
+				await this._mentionService.updateEntityMentions(
+					BaseEntityEnum.Comment,
+					id,
+					mentionEmployeeIds,
+					// The parent is read from the stored row: an update cannot move a comment, and the
+					// TypeORM save result carries neither field
+					comment.entityId,
+					comment.entity,
+					// The saved organization: the edit may have moved the comment to another one
+					updatedComment.organizationId ?? comment.organizationId
+				);
+			}
 
 			return updatedComment;
 		} catch (error) {

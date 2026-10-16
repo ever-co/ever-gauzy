@@ -20,7 +20,9 @@ export enum EventConsumerRunOutcome {
 	/** The consumer had already acknowledged this event, so nothing was invoked. */
 	ALREADY_DELIVERED = 'ALREADY_DELIVERED',
 	/** The consumer threw; the record carries the error for the retry scan. */
-	FAILED = 'FAILED'
+	FAILED = 'FAILED',
+	/** The consumer's record is dead-lettered, so nothing was invoked; a replay re-drives it. */
+	DEAD_LETTERED = 'DEAD_LETTERED'
 }
 
 /**
@@ -170,7 +172,12 @@ export class EventConsumerRegistry {
 		});
 
 		if (!claim.claimed) {
-			return { outcome: EventConsumerRunOutcome.ALREADY_DELIVERED, consumerKey, delivery: claim.delivery };
+			const outcome =
+				claim.delivery?.status === EventOutboxStatus.DEAD
+					? EventConsumerRunOutcome.DEAD_LETTERED
+					: EventConsumerRunOutcome.ALREADY_DELIVERED;
+
+			return { outcome, consumerKey, delivery: claim.delivery };
 		}
 
 		try {

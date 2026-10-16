@@ -238,6 +238,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.INBOX_MAILBOX_MANAGE,
+			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -695,6 +700,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.INBOX_MAILBOX_MANAGE,
+			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -1045,6 +1055,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Organization Strategic Initiative Permissions Start */
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -1078,6 +1091,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			/** Inbox Permissions End */
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
 			PermissionsEnum.DOCS_CREATE,

@@ -201,3 +201,164 @@ describe('check constraint helper — a rule MySQL cannot hold beside a foreign-
 		expect(postgres.executed.map((one) => one.sql)).toEqual([DEFINITION.postgres]);
 	});
 });
+
+/**
+ * #10676: TypeORM's MySQL runner never loads `CHECK` constraints, so `getTable()` lists none there and the probe
+ * has to ask `information_schema.TABLE_CONSTRAINTS`. This runner answers the two `information_schema` reads
+ * separately (the constraint probe and the foreign-key probe), and lets a test make the drop statement fail the
+ * way MySQL 8.0.16 to 8.0.18 do.
+ */
+function catalogRunner(
+	type: DatabaseTypeEnum,
+	catalog: {
+		metadataChecks?: string[];
+		tableConstraints?: string[];
+		dropFailure?: unknown;
+		probeFailure?: unknown;
+	} = {}
+): { queryRunner: QueryRunner; executed: ExecutedQuery[]; probes: ExecutedQuery[] } {
+	const executed: ExecutedQuery[] = [];
+	const probes: ExecutedQuery[] = [];
+
+	const queryRunner = {
+		connection: { options: { type } },
+		query: async (sql: string, parameters: any[] = []) => {
+			if (sql.includes('information_schema.TABLE_CONSTRAINTS')) {
+				probes.push({ sql, parameters });
+
+				if (catalog.probeFailure) {
+					throw catalog.probeFailure;
+				}
+
+				// Answer like MySQL: only rows whose table and name match the bound parameters.
+				const [table, name] = parameters;
+
+				return table === 'example'
+					? (catalog.tableConstraints ?? []).filter((one) => one === name).map((one) => ({ name: one }))
+					: [];
+			}
+			if (sql.includes('information_schema')) {
+				return [];
+			}
+
+			executed.push({ sql, parameters });
+
+			if (catalog.dropFailure && sql.includes('DROP CONSTRAINT')) {
+				throw catalog.dropFailure;
+			}
+
+			return [];
+		},
+		hasTable: async () => true,
+		hasColumn: async () => true,
+		getTable: async () => ({ name: 'example', checks: (catalog.metadataChecks ?? []).map((name) => ({ name })) })
+	} as unknown as QueryRunner;
+
+	return { queryRunner, executed, probes };
+}
+
+describe('check constraint helper — MySQL, whose table metadata never lists a CHECK (#10676)', () => {
+	it('finds a CHECK the metadata does not list through information_schema.TABLE_CONSTRAINTS', async () => {
+		const { queryRunner, probes } = catalogRunner(DatabaseTypeEnum.mysql, { tableConstraints: [DEFINITION.name] });
+
+		expect(await hasCheckConstraint(queryRunner, 'example', DEFINITION.name)).toBe(true);
+		expect(probes).toHaveLength(1);
+		expect(probes[0].sql).toContain('CONSTRAINT_SCHEMA = DATABASE()');
+		expect(probes[0].sql).toContain(`CONSTRAINT_TYPE = 'CHECK'`);
+		expect(probes[0].parameters).toEqual(['example', DEFINITION.name]);
+	});
+
+	it('answers false when neither the metadata nor the catalog has it, and ignores other names', async () => {
+		const absent = catalogRunner(DatabaseTypeEnum.mysql, { tableConstraints: ['CHK_example_other'] });
+
+		expect(await hasCheckConstraint(absent.queryRunner, 'example', DEFINITION.name)).toBe(false);
+	});
+
+	it('does not ask the catalog when the metadata already lists it, nor on PostgreSQL', async () => {
+		const listed = catalogRunner(DatabaseTypeEnum.mysql, { metadataChecks: [DEFINITION.name] });
+
+		expect(await hasCheckConstraint(listed.queryRunner, 'example', DEFINITION.name)).toBe(true);
+		expect(listed.probes).toEqual([]);
+
+		// PostgreSQL's metadata does list checks, so its answer stays metadata-only.
+		const postgres = catalogRunner(DatabaseTypeEnum.postgres, { tableConstraints: [DEFINITION.name] });
+
+		expect(await hasCheckConstraint(postgres.queryRunner, 'example', DEFINITION.name)).toBe(false);
+		expect(postgres.probes).toEqual([]);
+	});
+
+	it('leaves an existing MySQL CHECK alone on a re-run instead of adding it twice (3822)', async () => {
+		const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		const { queryRunner, executed } = catalogRunner(DatabaseTypeEnum.mysql, {
+			tableConstraints: [DEFINITION.name]
+		});
+
+		expect(await addCheckConstraint(queryRunner, DEFINITION, 'TestMigration')).toBe('present');
+		expect(executed).toEqual([]);
+
+		log.mockRestore();
+	});
+
+	it('drops a MySQL CHECK that only the catalog knows about', async () => {
+		const { queryRunner, executed } = catalogRunner(DatabaseTypeEnum.mysql, {
+			tableConstraints: [DEFINITION.name]
+		});
+
+		expect(await dropCheckConstraint(queryRunner, DEFINITION)).toBe(true);
+		expect(executed.map((one) => one.sql)).toEqual([
+			'ALTER TABLE `example` DROP CONSTRAINT `CHK_example_positive`'
+		]);
+	});
+
+	it('retries with DROP CHECK when MySQL 8.0.16 to 8.0.18 cannot parse DROP CONSTRAINT', async () => {
+		// TypeORM's QueryFailedError copies the driver's `code` onto itself; a raw driver error carries it too.
+		for (const dropFailure of [{ code: 'ER_PARSE_ERROR' }, { driverError: { code: 'ER_PARSE_ERROR' } }]) {
+			const { queryRunner, executed } = catalogRunner(DatabaseTypeEnum.mysql, {
+				tableConstraints: [DEFINITION.name],
+				dropFailure
+			});
+
+			expect(await dropCheckConstraint(queryRunner, DEFINITION)).toBe(true);
+			expect(executed.map((one) => one.sql)).toEqual([
+				'ALTER TABLE `example` DROP CONSTRAINT `CHK_example_positive`',
+				'ALTER TABLE `example` DROP CHECK `CHK_example_positive`'
+			]);
+		}
+	});
+
+	it('answers "present" when the catalog cannot be read, like a table that cannot be described', async () => {
+		// The helper's contract: a constraint it cannot see the absence of is never added. The rule then rests on
+		// the write path and the nightly audit, as for every rule the helper does not create.
+		const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		const { queryRunner, executed, probes } = catalogRunner(DatabaseTypeEnum.mysql, {
+			probeFailure: new Error('information_schema could not be read')
+		});
+
+		expect(await hasCheckConstraint(queryRunner, 'example', DEFINITION.name)).toBe(true);
+		expect(await addCheckConstraint(queryRunner, DEFINITION, 'TestMigration')).toBe('present');
+		expect(probes).toHaveLength(2);
+		expect(executed).toEqual([]);
+
+		log.mockRestore();
+	});
+
+	it('rethrows any other drop failure, and a parse error outside MySQL, without retrying', async () => {
+		const mysql = catalogRunner(DatabaseTypeEnum.mysql, {
+			tableConstraints: [DEFINITION.name],
+			dropFailure: { code: 'ER_LOCK_WAIT_TIMEOUT' }
+		});
+
+		await expect(dropCheckConstraint(mysql.queryRunner, DEFINITION)).rejects.toEqual({
+			code: 'ER_LOCK_WAIT_TIMEOUT'
+		});
+		expect(mysql.executed).toHaveLength(1);
+
+		const postgres = catalogRunner(DatabaseTypeEnum.postgres, {
+			metadataChecks: [DEFINITION.name],
+			dropFailure: { code: 'ER_PARSE_ERROR' }
+		});
+
+		await expect(dropCheckConstraint(postgres.queryRunner, DEFINITION)).rejects.toEqual({ code: 'ER_PARSE_ERROR' });
+		expect(postgres.executed).toHaveLength(1);
+	});
+});

@@ -129,6 +129,8 @@ jest.mock('@gauzy/core', () => {
 		},
 		BaseEvent: class {},
 		EventBus: class {},
+		// The cross-tenant reference check reads a real database; it is exercised in `fulfillment-references.db.spec.ts`.
+		assertPlainReferencesNotForeign: async () => undefined,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,

@@ -4,6 +4,7 @@ import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'ty
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
 import {
+	EmployeeKindEnum,
 	PermissionsEnum,
 	IGetActivitiesStatistics,
 	IGetTimeSlotStatistics,
@@ -125,6 +126,17 @@ function toMikroOrmProfileDateTime(value: Date, dbType: ProfileActivityDatabaseT
 /** Sorts statistics by their (summed) duration, largest first. */
 export const byDurationDesc = (a: { duration?: number | string }, b: { duration?: number | string }): number =>
 	Number(b.duration || 0) - Number(a.duration || 0);
+
+/**
+ * Leaves out the soft-deleted rows of the given tables or aliases, applied with `.modify()`. Raw knex skips
+ * MikroORM's soft-delete filter, while the TypeORM query builder adds this condition for the main entity and
+ * every joined one on its own. Typed by the one method it calls, as MikroORM ships its own copy of the knex types.
+ */
+function excludeSoftDeleted(qb: { whereNull(column: string): unknown }, ...aliases: string[]): void {
+	for (const alias of aliases) {
+		qb.whereNull(`${alias}.deletedAt`);
+	}
+}
 
 @Injectable()
 export class StatisticService {
@@ -1092,6 +1104,7 @@ export class StatisticService {
 					.innerJoin('time_log as timeLogs', 'employee.id', 'timeLogs.employeeId')
 					.innerJoin('time_slot_time_logs', 'timeLogs.id', 'time_slot_time_logs.timeLogId')
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
+					.modify(excludeSoftDeleted, 'employee', 'user', 'timeLogs', 'time_slot')
 					.select([
 						'employee.id as id',
 						'user.id as user_id',
@@ -1130,6 +1143,7 @@ export class StatisticService {
 					let weekQb = knex('time_slot')
 						.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 						.innerJoin('time_log as timeLogs', 'time_slot_time_logs.timeLogId', 'timeLogs.id')
+						.modify(excludeSoftDeleted, 'time_slot', 'timeLogs')
 						.select([
 							knex.raw(`${durationQueryStr} as week_duration`),
 							knex.raw(`COALESCE(SUM("time_slot"."overall"), 0) as overall`),
@@ -1190,6 +1204,7 @@ export class StatisticService {
 					let dayQb = knex('time_slot')
 						.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 						.innerJoin('time_log as timeLogs', 'time_slot_time_logs.timeLogId', 'timeLogs.id')
+						.modify(excludeSoftDeleted, 'time_slot', 'timeLogs')
 						.select([
 							knex.raw(`${durationQueryStr} as today_duration`),
 							knex.raw(`COALESCE(SUM("time_slot"."overall"), 0) as overall`),
@@ -1276,6 +1291,7 @@ export class StatisticService {
 							.innerJoin('time_log as timeLogs', 'emp.id', 'timeLogs.employeeId')
 							.innerJoin('time_slot_time_logs', 'timeLogs.id', 'time_slot_time_logs.timeLogId')
 							.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
+							.modify(excludeSoftDeleted, 'emp', 'timeLogs', 'time_slot')
 							.select([
 								knex.raw(`${getTotalDurationQueryString(dbType, 'timeLogs')} as duration`),
 								knex.raw(`${dowExpr} as day`)
@@ -1699,6 +1715,7 @@ export class StatisticService {
 					.innerJoin('organization_project as project', 'time_log.projectId', 'project.id')
 					.innerJoin('time_slot_time_logs', 'time_log.id', 'time_slot_time_logs.timeLogId')
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
+					.modify(excludeSoftDeleted, 'time_log', 'project', 'time_slot')
 					.select([
 						'project.name as name',
 						'project.id as projectId',
@@ -1763,6 +1780,7 @@ export class StatisticService {
 
 				let totalQb = knex('time_log')
 					.innerJoin('organization_project as project', 'time_log.projectId', 'project.id')
+					.modify(excludeSoftDeleted, 'time_log', 'project')
 					.select(knex.raw(`${totalDurationExpr} as duration`))
 					.whereBetween('time_log.startedAt', [start, end])
 					.andWhere('time_log.tenantId', tenantId)
@@ -2070,6 +2088,7 @@ export class StatisticService {
 						[`${qb.alias}.tenantId`]: tenantId,
 						[`${qb.alias}.organizationId`]: organizationId
 					});
+					sq.modify(excludeSoftDeleted, qb.alias, 'task', 'time_slot');
 
 					if (start && end) {
 						sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
@@ -2348,6 +2367,7 @@ export class StatisticService {
 					[`time_slot.tenantId`]: tenantId,
 					[`time_slot.organizationId`]: organizationId
 				});
+				sq.modify(excludeSoftDeleted, qb.alias, 'task', 'time_slot');
 
 				if (start && end) {
 					sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
@@ -2570,9 +2590,19 @@ export class StatisticService {
 				let qb = knex('time_log')
 					.innerJoin('time_slot_time_logs', 'time_log.id', 'time_slot_time_logs.timeLogId')
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
-					.leftJoin('organization_project', 'time_log.projectId', 'organization_project.id')
-					.leftJoin('employee', 'time_log.employeeId', 'employee.id')
-					.leftJoin('user', 'employee.userId', 'user.id')
+					.modify(excludeSoftDeleted, 'time_log', 'time_slot')
+					// In the ON clause: a deleted project, employee or user only empties its fields, as with TypeORM.
+					.leftJoin('organization_project', function () {
+						this.on('time_log.projectId', 'organization_project.id').andOnNull(
+							'organization_project.deletedAt'
+						);
+					})
+					.leftJoin('employee', function () {
+						this.on('time_log.employeeId', 'employee.id').andOnNull('employee.deletedAt');
+					})
+					.leftJoin('user', function () {
+						this.on('employee.userId', 'user.id').andOnNull('user.deletedAt');
+					})
 					.select([
 						'time_log.id as id',
 						'time_log.startedAt as startedAt',
@@ -2746,6 +2776,7 @@ export class StatisticService {
 					.innerJoin('time_slot', 'activity.timeSlotId', 'time_slot.id')
 					.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
+					.modify(excludeSoftDeleted, 'activity', 'time_slot', 'time_log')
 					.select([
 						knex.raw('COUNT("activity"."id") AS sessions'),
 						knex.raw('SUM("activity"."duration") AS duration'),
@@ -2779,6 +2810,7 @@ export class StatisticService {
 					.innerJoin('time_slot', 'activity.timeSlotId', 'time_slot.id')
 					.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
+					.modify(excludeSoftDeleted, 'activity', 'time_slot', 'time_log')
 					.select(knex.raw('SUM("activity"."duration") AS duration'))
 					.whereRaw(activityDurationFilter, { start, end })
 					.whereBetween('time_log.startedAt', [start, end])
@@ -2967,6 +2999,7 @@ export class StatisticService {
 					.innerJoin('time_slot_time_logs', 'time_log.id', 'time_slot_time_logs.timeLogId')
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
 					.innerJoin('user', 'employee.userId', 'user.id')
+					.modify(excludeSoftDeleted, 'time_log', 'employee', 'time_slot', 'user')
 					.select([
 						'time_log.employeeId as id',
 						'employee.isOnline as isOnline',
@@ -3024,11 +3057,14 @@ export class StatisticService {
 					const timeSlotRows = await knex('time_slot')
 						.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 						.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
-						.leftJoin('employee as emp', 'time_slot.employeeId', 'emp.id')
+						.modify(excludeSoftDeleted, 'time_slot', 'time_log')
+						.leftJoin('employee as emp', function () {
+							this.on('time_slot.employeeId', 'emp.id').andOnNull('emp.deletedAt');
+						})
 						// Filtered in the ON clause so a slot with only soft-removed screenshots still comes back
-						.leftJoin('screenshot', (join) =>
-							join.on('time_slot.id', '=', 'screenshot.timeSlotId').andOnNull('screenshot.deletedAt')
-						)
+						.leftJoin('screenshot', function () {
+							this.on('time_slot.id', 'screenshot.timeSlotId').andOnNull('screenshot.deletedAt');
+						})
 						.select([
 							'time_slot.*',
 							'emp.id as emp_id',
@@ -3191,7 +3227,8 @@ export class StatisticService {
 	}
 
 	/**
-	 * Get the count of employees who worked this week.
+	 * Get the count of employees who worked this week: people only, an agent employee (`kind = 'agent'`) is
+	 * not a member in this head count.
 	 *
 	 * @param request The counts request, with its employee ids already scoped by {@link getCounts}.
 	 * @returns The count of unique employees
@@ -3214,11 +3251,13 @@ export class StatisticService {
 					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
 					.innerJoin('time_slot_time_logs', 'time_log.id', 'time_slot_time_logs.timeLogId')
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
+					.modify(excludeSoftDeleted, 'time_log', 'employee', 'time_slot')
 					.select(knex.raw('COUNT(DISTINCT "time_log"."employeeId") as count'))
 					.where('time_log.tenantId', tenantId)
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_log.startedAt', [start, end])
-					.whereBetween('time_slot.startedAt', [start, end]);
+					.whereBetween('time_slot.startedAt', [start, end])
+					.andWhere('employee.kind', EmployeeKindEnum.HUMAN);
 
 				if (isNotEmpty(activityLevel)) {
 					qb = qb.whereBetween('time_slot.overall', [activityLevel.start * 6, activityLevel.end * 6]);
@@ -3243,7 +3282,8 @@ export class StatisticService {
 						new Brackets((where: WhereExpressionBuilder) => {
 							this.getFilterQuery(query, where, request);
 						})
-					);
+					)
+					.andWhere(p(`"employee"."kind" = :humanKind`), { humanKind: EmployeeKindEnum.HUMAN });
 				const result = await query.getRawOne();
 				const count = parseInt(result.count, 10);
 				return count;
@@ -3276,6 +3316,7 @@ export class StatisticService {
 					.innerJoin('organization_project', 'time_log.projectId', 'organization_project.id')
 					.innerJoin('time_slot_time_logs', 'time_log.id', 'time_slot_time_logs.timeLogId')
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
+					.modify(excludeSoftDeleted, 'time_log', 'employee', 'organization_project', 'time_slot')
 					.select(knex.raw('COUNT(DISTINCT "time_log"."projectId") as count'))
 					.where('time_log.tenantId', tenantId)
 					.andWhere('time_log.organizationId', organizationId)

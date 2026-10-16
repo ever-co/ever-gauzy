@@ -23,6 +23,7 @@ import {
 	splitKeywords
 } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { assertCurrentUserBelongsToSentOrganization } from '../user-organization/assert-organization-membership';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
@@ -76,6 +77,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		await this.typeOrmRequestApprovalRepository.save(requestApproval);
 
 		return timeOffRequest;
+	}
+
+	/**
+	 * Refuses a `GET /time-off-request` list scoped to an organization the current user is not a member of.
+	 *
+	 * The route reads its filter from a `?data=` JSON parameter that no DTO validates, and
+	 * `getAllTimeOffRequests` filters on the organization it is given. Without one, the list matches nothing.
+	 *
+	 * @param organizationId the organization the request names
+	 */
+	async assertOrganizationMember(organizationId: unknown): Promise<void> {
+		await assertCurrentUserBelongsToSentOrganization(this.typeOrmRepository.manager, organizationId);
 	}
 
 	async getAllTimeOffRequests(

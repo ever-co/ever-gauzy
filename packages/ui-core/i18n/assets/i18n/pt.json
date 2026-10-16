@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Você precisa ser um funcionário para poder rastrear o tempo, criar despesas divididas e usar outras funcionalidades relacionadas a outros funcionários."
 	},
 	"MENU": {
+		"INITIATIVES": "Iniciativas",
 		"BREADCRUMB": "Trilha de navegação",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Painel de Controle",
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Tipo",
+		"KIND_ALL": "Todos",
+		"KIND_HUMAN": "Pessoas",
+		"KIND_AGENT": "Agentes",
+		"AGENT_BADGE": "Agente",
+		"MANAGED_BY_EVER_WORKS": "Gerido pelo Ever Works: o nome e o perfil deste agente são alterados no Ever Works e sincronizados com o Gauzy.",
+		"MANAGED_EXTERNALLY": "Gerido externamente: o nome e o perfil deste agente são alterados no sistema de origem e sincronizados com o Gauzy.",
+		"OPEN_MANAGED_AGENT": "Abrir página do agente",
 		"HEADER": "Gerenciar funcionários",
 		"ADD_EMPLOYEE": "Adicionar Funcionário",
 		"ACTIVE": "Ativo",
@@ -2089,6 +2098,60 @@
 			},
 			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
 			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Iniciativas estratégicas",
+		"SUBTITLE": "As direções em que a sua organização decidiu avançar, e os objetivos, projetos e equipas alinhados com elas.",
+		"ADD": "Adicionar iniciativa",
+		"EDIT": "Editar iniciativa",
+		"EMPTY": "Ainda não há iniciativas estratégicas.",
+		"TITLE": "Título",
+		"STATE": "Estado",
+		"VISIBILITY": "Visibilidade",
+		"TEAMS": "Equipas",
+		"TEAMS_HINT": "Com visibilidade \"Equipa\", os membros destas equipas (e das equipas dos projetos alinhados) podem ver a iniciativa.",
+		"PROJECTS": "Projetos",
+		"GOALS": "Objetivos",
+		"CONFIDENCE": "Confiança",
+		"MOMENTUM": "Impulso",
+		"INTENT": "Intenção",
+		"INTENT_HINT": "O que queremos fazer avançar deliberadamente, e porquê?",
+		"STEWARD": "Responsável",
+		"SIGNALS": "Sinais",
+		"KNOWN_RISKS": "Riscos conhecidos",
+		"KNOWN_RISKS_HINT": "Um risco por linha",
+		"NOTES": "Notas",
+		"LAST_ASSESSED": "Última avaliação",
+		"NO_TEAMS": "Nenhuma equipa ligada.",
+		"NO_GOALS": "Nenhum objetivo alinhado.",
+		"NO_PROJECTS": "Nenhum projeto alinhado.",
+		"NOT_FOUND": "A iniciativa não foi encontrada ou não a pode ver.",
+		"DELETE_TITLE": "Eliminar iniciativa",
+		"DELETE_CONFIRMATION": "Eliminar a iniciativa \"{{ name }}\"?",
+		"DELETED": "Iniciativa \"{{ name }}\" eliminada.",
+		"CREATED": "Iniciativa \"{{ name }}\" criada.",
+		"UPDATED": "Iniciativa \"{{ name }}\" atualizada.",
+		"STATES": {
+			"DRAFT": "Rascunho",
+			"ACTIVE": "Ativa",
+			"RESOLVED": "Concluída",
+			"RETIRED": "Retirada"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Liderança",
+			"ORGANIZATION": "Organização",
+			"TEAM": "Equipa"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Baixa",
+			"MEDIUM": "Média",
+			"HIGH": "Alta"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Parada",
+			"PROGRESSING": "A progredir",
+			"ACCELERATING": "A acelerar"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2670,7 +2733,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Gerentes",
-				"MEMBERS": "Membros"
+				"MEMBERS": "Membros",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Detalhes"
+					},
+					"PUBLIC": "Público",
+					"PRIVATE": "Privado",
+					"PREFIX": "Prefixo das tarefas",
+					"MEMBERS_COUNT": "{{ count }} membros",
+					"LIVE": "{{ tracking }} registrando agora · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} de {{ total }} membros",
+					"CREATED": "Criado",
+					"UPDATED": "Última atualização",
+					"ACTIVE_MEMBERS": "Membros ativos",
+					"ACTIVE_MEMBERS_META": "de {{ total }} membros registraram tempo",
+					"TIME_BY_MEMBER": "Tempo por membro",
+					"TEAM_TASKS": "Tarefas da equipe",
+					"NO_TEAM_TASKS": "Nenhuma tarefa atribuída a esta equipe",
+					"NO_MEMBERS": "Esta equipe ainda não tem membros",
+					"NO_PROJECTS": "Nenhum projeto vinculado a esta equipe",
+					"COLUMNS": {
+						"MEMBER": "Membro",
+						"ROLE": "Função",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Tarefa atual",
+						"TODAY": "Hoje",
+						"ACTIVITY": "Atividade"
+					},
+					"ROLE": {
+						"MANAGER": "Gerente",
+						"MEMBER": "Membro"
+					},
+					"GENERAL": "Geral",
+					"SETTINGS": "Configurações",
+					"RECORD": "Registro",
+					"TEAM_SIZE": "Tamanho da equipe",
+					"COLOR": "Cor",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Link do perfil",
+					"VISIBILITY": "Visibilidade",
+					"SHARE_PROFILE_VIEW": "Os membros podem ver os perfis uns dos outros",
+					"REQUIRE_PLAN": "Exigir um plano para registrar tempo",
+					"NOT_FOUND": "Esta equipe não foi encontrada",
+					"LOAD_FAILED": "Não foi possível carregar a equipe",
+					"RETRY": "Tentar novamente",
+					"OPEN_TASK_DETAILS": "Ver detalhes de {{ title }}",
+					"OPEN_TASK_PAGE": "Abrir a página de {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Abrir página da tarefa",
+					"UNASSIGNED": "Não atribuída",
+					"SHOW_ALL": "Mostrar tudo",
+					"SHOW_LESS": "Mostrar menos",
+					"PROJECTS_CAPTION": "Os projetos da equipe e o tempo trabalhado em cada um neste período",
+					"NOT_LINKED": "Não vinculado",
+					"NOT_LINKED_HINT": "Membros registraram tempo neste projeto, mas ele não está vinculado à equipe"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -3783,17 +3900,20 @@
 		"USER": {
 			"MANAGE": "Gerenciar convites de usuários",
 			"HEADER": "Convidar usuários",
-			"ACTION": "Convidar Usuários"
+			"ACTION": "Convidar Usuários",
+			"DESCRIPTION": "Convide pessoas para participar da sua organização como usuários. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gerenciar convites de funcionários",
 			"HEADER": "Convidar funcionários",
-			"ACTION": "Convidar funcionários"
+			"ACTION": "Convidar funcionários",
+			"DESCRIPTION": "Convide pessoas para participar da sua organização como funcionários. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gerenciar Convites de Candidatos.",
 			"HEADER": "Convidar Candidatos",
-			"ACTION": "Convidar candidatos"
+			"ACTION": "Convidar candidatos",
+			"DESCRIPTION": "Convide candidatos para o seu processo seletivo. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"SENT": "{{total}} Convites enviados.",
 		"IGNORED": "{{total}} Convites Enviados. {{ignored}} já foram convidados e foram ignorados.",
@@ -3803,6 +3923,23 @@
 			"TWO_WEEK": "14 dias",
 			"MONTH": "30 Dias",
 			"NEVER": "Nunca"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinatários",
+			"EMAILS_PLACEHOLDER": "nome@empresa.com",
+			"EMAILS_HINT": "Pressione Enter após cada endereço para adicionar vários destinatários.",
+			"CLEAR_EMAILS": "Limpar tudo",
+			"ACCESS": "Acesso",
+			"ACCESS_HINT": "Opcional. Escolha o que os novos membros poderão acessar assim que entrarem.",
+			"DETAILS": "Detalhes do convite",
+			"RECIPIENT_COUNT": "Destinatários: {{count}}",
+			"NO_RECIPIENTS": "Nenhum destinatário adicionado ainda"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Excluir convite",
+			"WARNING": "O convite para {{ email }} será excluído permanentemente e o link deixará de funcionar. Esta ação não pode ser desfeita.",
+			"TYPE_TO_CONFIRM": "Digite o seguinte para confirmar:",
+			"CONFIRM": "Excluir convite"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5585,7 +5722,40 @@
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
 		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)",
 		"NO_TIME_TRACKED": "Nenhum tempo registrado",
-		"MINUTES_TRACKED": "{{ minutes }} min registrados"
+		"MINUTES_TRACKED": "{{ minutes }} min registrados",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Tempo total",
+			"APPS_USED": "Aplicativos usados",
+			"SITES_VISITED": "Sites visitados",
+			"TOP_APP": "Aplicativo mais usado",
+			"TOP_SITE": "Site mais visitado",
+			"VIEW": "Visualização",
+			"BY_APP": "Por aplicativo",
+			"BY_SITE": "Por site",
+			"BY_MEMBERS": "Por membro",
+			"BY_HOURS": "Por hora",
+			"SEARCH_APPS": "Pesquisar aplicativos…",
+			"SEARCH_SITES": "Pesquisar sites…",
+			"SORT": "Alterar a ordenação",
+			"SORT_TIME": "Mais tempo",
+			"SORT_NAME": "Nome A–Z",
+			"LOAD_FAILED": "Não foi possível carregar a atividade. Tente novamente.",
+			"NO_MATCH": "Nada corresponde a “{{ search }}”.",
+			"APP": "Aplicativo",
+			"SITE": "Site",
+			"TIME": "Tempo",
+			"SHOW_PAGES": "Mostrar as páginas visitadas em {{ site }}",
+			"LOADING_PAGES": "Carregando páginas…",
+			"PAGES_FAILED": "Não foi possível carregar as páginas.",
+			"NO_PAGES": "Nenhum detalhe de página foi registrado para este site.",
+			"SHOW_ALL": "Mostrar todos ({{ count }})",
+			"SHOW_LESS": "Mostrar menos",
+			"UNKNOWN_MEMBER": "Membro desconhecido",
+			"APPS_COUNT": "{{ count }} aplicativos",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} do total",
+			"PAGES_TRUNCATED": "Este site tem mais registros do que é possível mostrar; o detalhamento cobre apenas parte do seu tempo."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",

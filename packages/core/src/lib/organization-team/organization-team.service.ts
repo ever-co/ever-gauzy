@@ -6,7 +6,7 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions } from 'typeorm';
+import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions, SaveOptions } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -35,6 +35,7 @@ import {
 	parseFindOptionsSelect
 } from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
@@ -719,6 +720,97 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
+	 * Soft deletes a team (`DELETE /organization-team/:id/soft`, `softDeleteOrganizationTeam`), only for a
+	 * caller who may edit it. See {@link assertMayManageTeam}.
+	 *
+	 * @param id - The team to soft delete.
+	 * @param options - Find options, passed to the base method with `where.id` bound to `id`.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The soft-deleted team.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<OrganizationTeam>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationTeam> {
+		await this.assertMayManageTeam(id, false);
+
+		return super.softRemove(id, this.bindTeamId(id, options), saveOptions);
+	}
+
+	/**
+	 * Restores a soft-deleted team (`PUT /organization-team/:id/recover`, `recoverOrganizationTeam`), only for
+	 * a caller who may edit it. See {@link assertMayManageTeam}.
+	 *
+	 * @param id - The team to restore.
+	 * @param options - Find options, passed to the base method with `where.id` bound to `id`.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored team.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<OrganizationTeam>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationTeam> {
+		await this.assertMayManageTeam(id, true);
+
+		return super.softRecover(id, this.bindTeamId(id, options), saveOptions);
+	}
+
+	/**
+	 * The find options for the base method, with the checked team's id set last: the base lookup spreads
+	 * `options.where` over the id, so a `where.id` there would name a team the check never saw. The inherited
+	 * routes pass their rest parameter, an array, which carries no options.
+	 *
+	 * @param id - The team the check passed for.
+	 * @param options - The find options received.
+	 * @returns The options, acting on `id` only.
+	 */
+	private bindTeamId(id: ID, options?: IFindOneOptions<OrganizationTeam>): IFindOneOptions<OrganizationTeam> {
+		const findOptions = options && typeof options === 'object' && !Array.isArray(options) ? options : {};
+		const { where } = findOptions as { where?: Record<string, unknown> };
+
+		return { ...findOptions, where: { ...where, id } } as IFindOneOptions<OrganizationTeam>;
+	}
+
+	/**
+	 * Applies the rule `deleteTeam` enforces: without CHANGE_SELECTED_EMPLOYEE, the caller must be a manager
+	 * of the team, which needs an employee identity. A caller without one is refused, as `deleteTeam` refuses
+	 * it: `currentEmployeeId()` is also null when the request context cannot be read. The manager membership
+	 * must carry the team's own tenant and organization. It runs before the base method, which turns every
+	 * failure into a 404.
+	 *
+	 * @param id - The team acted on.
+	 * @param withDeleted - Whether the team is read among soft-deleted rows (a restoration).
+	 * @throws {ForbiddenException} When the caller does not manage the team.
+	 */
+	private async assertMayManageTeam(id: ID, withDeleted: boolean): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			throw new ForbiddenException();
+		}
+
+		const deleted = withDeleted ? { withDeleted: true } : {};
+		try {
+			const { tenantId, organizationId } = await this.findOneByIdString(id, deleted);
+			await this.findOneByIdString(id, {
+				where: {
+					tenantId,
+					organizationId,
+					members: { employeeId, tenantId, organizationId, role: { name: RolesEnum.MANAGER } }
+				},
+				...deleted
+			});
+		} catch {
+			throw new ForbiddenException();
+		}
+	}
+
+	/**
 	 * Checks if a user is a member of any teams and performs necessary actions.
 	 *
 	 * @param userId - The ID of the user to check.
@@ -753,16 +845,24 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		try {
-			// Check if the user is only a manager (has no specific role)
-			await this.organizationTeamEmployeeService.findOneByOptions({
+			// The teams the user leaves: the ones they joined as a plain member (no role), not the ones they manage
+			const memberships = await this.organizationTeamEmployeeService.find({
 				where: {
 					employeeId: employee.id,
 					roleId: IsNull()
 				}
 			});
 
-			// Unassign this user from all tasks in a team
-			await this.taskService.unassignEmployeeFromTeamTasks(employee.id, undefined);
+			if (!memberships.length) {
+				throw new NotFoundException('The user is not a plain member of any team');
+			}
+
+			// Unassign this user only from the tasks of the teams they leave, one team at a time so that two
+			// saves never race on a task shared by two of these teams
+			const organizationTeamIds = new Set(memberships.map(({ organizationTeamId }) => organizationTeamId));
+			for (const organizationTeamId of organizationTeamIds) {
+				await this.taskService.unassignEmployeeFromTeamTasks(employee.id, organizationTeamId);
+			}
 
 			// Delete the team employee record
 			return await this.organizationTeamEmployeeService.delete({

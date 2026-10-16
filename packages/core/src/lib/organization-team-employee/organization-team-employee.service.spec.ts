@@ -1,7 +1,8 @@
 import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { IUser, RolesEnum } from '@gauzy/contracts';
+import { ForbiddenException } from '@nestjs/common';
+import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
@@ -155,5 +156,218 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 
 		expect(deleted).toEqual(['row-member']);
 		expect(result).toMatchObject({ affected: 1 });
+	});
+});
+
+/**
+ * #10706 — a team manager with the default EMPLOYEE role got a 403 when reordering a member, toggling their
+ * tracking or setting their active task.
+ *
+ * The manager check passed, but the write that followed still carried the automatic `employeeId = <manager>`
+ * filter, so it only matched the manager's own row; and the GraphQL fields read the member back through the
+ * same filter. The stand-ins below apply the `employeeId` and team conditions the way the database would.
+ */
+describe('OrganizationTeamEmployeeService — a team manager changing another member (#10706)', () => {
+	const tenant = createTenantFixture();
+	const teamId = 'team-1';
+	const otherTeamId = 'team-2';
+	const asEmployee = (employeeId: string) =>
+		createTenantFixture({
+			tenantId: tenant.tenantId,
+			organizationId: tenant.organizationId,
+			user: { employeeId } as IUser
+		});
+	const manager = asEmployee('manager-employee');
+	const member = asEmployee('member-employee');
+	const otherTeamManager = asEmployee('other-manager-employee');
+
+	const rows = [
+		{
+			id: 'row-manager',
+			employeeId: 'manager-employee',
+			organizationTeamId: teamId,
+			role: { name: RolesEnum.MANAGER }
+		},
+		{ id: 'row-member', employeeId: 'member-employee', organizationTeamId: teamId, role: null },
+		{
+			id: 'row-other-manager',
+			employeeId: 'other-manager-employee',
+			organizationTeamId: otherTeamId,
+			role: { name: RolesEnum.MANAGER }
+		}
+	].map((row) => ({ ...row, tenantId: tenant.tenantId, organizationId: tenant.organizationId }));
+
+	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
+	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
+	const originalClsService = RequestContext['clsService'];
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const matches = (row: any, where: any = {}) =>
+		(where.employeeId === undefined || row.employeeId === where.employeeId) &&
+		(where.organizationTeamId === undefined || row.organizationTeamId === where.organizationTeamId) &&
+		(where.id === undefined || row.id === where.id) &&
+		(where.role?.name === undefined || row.role?.name === where.role.name);
+
+	let restore: () => void = () => undefined;
+	let updated: { id: unknown; changes: Record<string, unknown> }[];
+	let service: OrganizationTeamEmployeeService;
+
+	beforeEach(() => {
+		RequestContext['clsService'] = {
+			get: (key: string) => requestStorage.getStore()?.get(key),
+			set: (key: string, value: unknown) => requestStorage.getStore()?.set(key, value)
+		} as never;
+		updated = [];
+
+		jest.spyOn(CrudService.prototype, 'findOneByWhereOptions').mockImplementation(async (where) => {
+			const row = rows.find((candidate) => matches(candidate, where));
+			if (!row) throw new Error('not found');
+			return row as never;
+		});
+		jest.spyOn(CrudService.prototype, 'findOneByIdString').mockImplementation(async (id, options) => {
+			const row = rows.find((candidate) => matches(candidate, { ...options?.where, id }));
+			if (!row) throw new Error('not found');
+			return row as never;
+		});
+		jest.spyOn(CrudService.prototype, 'update').mockImplementation(async (id, changes) => {
+			updated.push({ id, changes: changes as Record<string, unknown> });
+			return {} as never;
+		});
+
+		service = new OrganizationTeamEmployeeService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true } } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ publish: jest.fn() } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ unassignEmployeeFromTeamTasks: jest.fn() } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ deleteForEmployee: jest.fn() } as any
+		);
+	});
+
+	afterEach(() => {
+		RequestContext['clsService'] = originalClsService;
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	/** Runs one request as the given caller. */
+	const as = <R>(
+		caller: ReturnType<typeof asEmployee>,
+		call: () => Promise<R>,
+		permissions: PermissionsEnum[] = []
+	): Promise<R> => {
+		({ restore } = asTenantUser(caller, { permissions }));
+		return requestStorage.run(new Map(), call);
+	};
+
+	const inTeam = (organizationTeamId: string) => ({ organizationId: tenant.organizationId, organizationTeamId });
+
+	describe('PUT /organization-team-employee/:id (reorder, tracking)', () => {
+		it("lets a manager change another member of the team, scoped to the team and not to the manager's row", async () => {
+			await expect(
+				as(manager, () => service.update('row-member', { ...inTeam(teamId), order: 2 }))
+			).resolves.toBeDefined();
+
+			expect(updated).toEqual([
+				{
+					id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+					changes: { ...inTeam(teamId), order: 2 }
+				}
+			]);
+		});
+
+		/** A body that also names a tenant and an organization, as the REST DTO admits. */
+		const withScopeFields = {
+			...inTeam(teamId),
+			order: 2,
+			isTrackingEnabled: false,
+			activeTaskId: 'task-1',
+			tenantId: null,
+			tenant: { id: 'other-tenant' },
+			organization: { id: 'other-organization' }
+		} as never;
+
+		it.each([
+			['a manager of the team', []],
+			['a caller with CHANGE_SELECTED_EMPLOYEE', [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]]
+		])(
+			"writes only the membership's own fields for %s: the tenant and organization in the body are not written",
+			async (_, permissions: PermissionsEnum[]) => {
+				await expect(
+					as(manager, () => service.update('row-member', withScopeFields), permissions)
+				).resolves.toBeDefined();
+
+				expect(updated).toEqual([
+					{
+						id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+						changes: { ...inTeam(teamId), order: 2, isTrackingEnabled: false, activeTaskId: 'task-1' }
+					}
+				]);
+			}
+		);
+
+		it('refuses a plain member changing another member', async () => {
+			await expect(
+				as(member, () => service.update('row-manager', { ...inTeam(teamId), order: 2 }))
+			).rejects.toThrow(ForbiddenException);
+			expect(updated).toEqual([]);
+		});
+
+		it('refuses a manager of another team, whichever team the request names', async () => {
+			await expect(
+				as(otherTeamManager, () => service.update('row-member', { ...inTeam(teamId), order: 2 }))
+			).rejects.toThrow(ForbiddenException);
+			// Naming the team they manage passes the manager check, but the member is not on that team.
+			await expect(
+				as(otherTeamManager, () => service.update('row-member', { ...inTeam(otherTeamId), order: 2 }))
+			).rejects.toThrow(ForbiddenException);
+			expect(updated).toEqual([]);
+		});
+	});
+
+	describe('PUT /organization-team-employee/:id/active-task', () => {
+		it("lets a manager set another member's active task", async () => {
+			await expect(
+				as(manager, () => service.updateActiveTask('row-member', { ...inTeam(teamId), activeTaskId: 'task-1' }))
+			).resolves.toBeDefined();
+
+			expect(updated).toEqual([
+				{
+					id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+					changes: { activeTaskId: 'task-1' }
+				}
+			]);
+		});
+
+		it('refuses a manager of another team naming their own team', async () => {
+			await expect(
+				as(otherTeamManager, () =>
+					service.updateActiveTask('row-member', { ...inTeam(otherTeamId), activeTaskId: 'task-1' })
+				)
+			).rejects.toThrow(ForbiddenException);
+			expect(updated).toEqual([]);
+		});
+	});
+
+	describe('reading the member back (the GraphQL update fields)', () => {
+		it('answers a manager the member of their team', async () => {
+			await expect(as(manager, () => service.findOneByIdString('row-member'))).resolves.toMatchObject({
+				id: 'row-member'
+			});
+		});
+
+		it('keeps the miss for a plain member reading another member', async () => {
+			await expect(as(member, () => service.findOneByIdString('row-manager'))).rejects.toThrow('not found');
+		});
+
+		it('keeps the miss for a manager of another team', async () => {
+			await expect(as(otherTeamManager, () => service.findOneByIdString('row-member'))).rejects.toThrow(
+				'not found'
+			);
+		});
 	});
 });

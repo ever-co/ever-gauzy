@@ -13,7 +13,9 @@
  *
  * The services are the package's own; the database is an in-memory better-sqlite3 connection; the repositories
  * are TypeORM's own, so a refused edit is read back from the table rather than from a double. The stock ledger is
- * a port to another package and is the one thing recorded rather than run. `@gauzy/core` is doubled at the module
+ * a port to another package and is the one thing doubled rather than run: it records each request, and writes a row
+ * the way the inventory ledger does — on the caller's TypeORM transaction when it is handed one, on its own
+ * otherwise — so a movement a rolled-back pick wrote is read back from the table too. `@gauzy/core` is doubled at the module
  * boundary for the reason the package's other suites give, its CRUD base reduced to the tenant-scoped reads and
  * writes the real one performs.
  */
@@ -101,7 +103,7 @@ jest.mock('@gauzy/core', () => {
 const mockCaller: { tenantId: string | null; organizationId: string | null } = { tenantId: null, organizationId: null };
 
 import 'reflect-metadata';
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntityManager, EntitySchema, Repository } from 'typeorm';
 import { CarrierManifest } from './carrier-manifest/carrier-manifest.entity';
 import { CarrierManifestService } from './carrier-manifest/carrier-manifest.service';
 import { PackSlip } from './pack-slip/pack-slip.entity';
@@ -136,6 +138,12 @@ const LIST = '00000000-0000-4000-8000-0000000005a1';
 const LINE = '00000000-0000-4000-8000-0000000006a1';
 const SLIP = '00000000-0000-4000-8000-0000000007a1';
 const MANIFEST = '00000000-0000-4000-8000-0000000008a1';
+const LINE_2 = '00000000-0000-4000-8000-0000000006a2';
+/** A second list of the wave, and its one line. */
+const LIST_2 = '00000000-0000-4000-8000-0000000005a2';
+const LINE_OF_LIST_2 = '00000000-0000-4000-8000-0000000006b1';
+/** The variant a substitution takes instead of `VARIANT`. */
+const SUBSTITUTE = '00000000-0000-4000-8000-0000000003a2';
 
 /*
 |--------------------------------------------------------------------------
@@ -192,6 +200,10 @@ const schemas = [
 			lineCount: count,
 			version: { type: 'int', default: 1 },
 			metadata: json
+		},
+		// The wave's own read (`findOneDetailed`) answers it with its lists.
+		relations: {
+			pickLists: { type: 'one-to-many', target: 'PickList', inverseSide: 'wave' }
 		}
 	}),
 	new EntitySchema<any>({
@@ -219,7 +231,7 @@ const schemas = [
 			metadata: json
 		},
 		relations: {
-			wave: { type: 'many-to-one', target: 'PickWave', joinColumn: { name: 'waveId' } },
+			wave: { type: 'many-to-one', target: 'PickWave', joinColumn: { name: 'waveId' }, inverseSide: 'pickLists' },
 			zone: { type: 'many-to-one', target: 'WarehouseZone', joinColumn: { name: 'zoneId' } }
 		}
 	}),
@@ -336,17 +348,38 @@ interface IHarness {
 	manifests: CarrierManifestService;
 	/** Every movement the services asked the stock ledger for. */
 	movements: Row[];
+	/** The movements the ledger holds — what committed, as the table reads after the call. */
+	stockMovements: () => Promise<Row[]>;
+	/** Every statement the connection ran, in order — `BEGIN` and `COMMIT` included. */
+	queries: string[];
+	/**
+	 * The platform outbox, recorded: each fact it was asked to append, and whether the manager it was handed was
+	 * inside an open transaction. `failOn` names a fact it refuses, after the move that earned it was written.
+	 */
+	outbox: { appended: Row[]; failOn: string | null };
 	row: (table: string, id: string) => Promise<Row | undefined>;
 	set: (table: string, id: string, values: Row) => Promise<void>;
 }
 
 async function harness(): Promise<IHarness> {
+	const queries: string[] = [];
 	const dataSource = new DataSource({
 		type: 'better-sqlite3',
 		database: ':memory:',
 		entities: schemas,
 		synchronize: true,
-		logging: false
+		logging: false,
+		// A logger object is handed every statement whatever `logging` says; it keeps them, and prints nothing.
+		logger: {
+			logQuery: (query: string) => {
+				queries.push(query);
+			},
+			logQueryError: () => undefined,
+			logQuerySlow: () => undefined,
+			logSchemaBuild: () => undefined,
+			logMigration: () => undefined,
+			log: () => undefined
+		}
 	});
 	await dataSource.initialize();
 
@@ -408,23 +441,60 @@ async function harness(): Promise<IHarness> {
 		...scope
 	});
 
+	// The ledger's table, reduced to what a movement is read back by.
+	await dataSource.query(
+		'CREATE TABLE "stock_movement" ("id" INTEGER PRIMARY KEY, "referenceId" varchar NOT NULL, "variantId" varchar NOT NULL, "quantity" varchar NOT NULL)'
+	);
 	const movements: Row[] = [];
 	const ledger = {
-		recordMovement: async (request: Row) => {
+		// `StockLedgerService.recordMovement(request, manager?)`: written on the caller's transaction when handed one.
+		recordMovement: async (request: Row, manager?: EntityManager) => {
 			movements.push(request);
+			await (manager ?? dataSource).query(
+				'INSERT INTO "stock_movement" ("referenceId", "variantId", "quantity") VALUES (?, ?, ?)',
+				[request.referenceId, request.variantId, String(request.quantity)]
+			);
 
 			return { id: `movement-${movements.length}` };
 		}
 	} as unknown as IWarehouseStockLedgerPort;
 
+	const outbox: IHarness['outbox'] = { appended: [], failOn: null };
+	const outboxService = {
+		append: async (manager: any, event: Row) => {
+			if (event.name === outbox.failOn) {
+				throw new Error('the outbox is unavailable');
+			}
+
+			outbox.appended.push({
+				...event,
+				inTransaction: Boolean(manager.queryRunner?.isTransactionActive),
+				// What the list's lines look like from inside the transaction the fact is appended in.
+				lineStatuses: (
+					await manager.query('SELECT "status" FROM "pick_list_line" WHERE "pickListId" = ?', [event.aggregateId])
+				).map((row: Row) => row.status)
+			});
+
+			return event;
+		}
+	};
+
 	const repository = (entity: unknown) => dataSource.getRepository(entity as any) as any;
-	const lines = new PickListLineService(repository(PickListLine), undefined as any, repository(PickList), ledger);
+	const lines = new PickListLineService(
+		repository(PickListLine),
+		undefined as any,
+		repository(PickList),
+		outboxService as any,
+		ledger
+	);
 	const waves = new PickWaveService(
 		repository(PickWave),
 		undefined as any,
 		repository(PickList),
 		repository(PickListLine),
-		undefined as any
+		undefined as any,
+		lines,
+		outboxService as any
 	);
 	const lists = new PickListService(
 		repository(PickList),
@@ -435,6 +505,7 @@ async function harness(): Promise<IHarness> {
 		undefined as any,
 		undefined as any,
 		repository(PickWave),
+		outboxService as any,
 		undefined,
 		ledger
 	);
@@ -447,6 +518,10 @@ async function harness(): Promise<IHarness> {
 		slips: new PackSlipService(repository(PackSlip), undefined as any, lists, lines, undefined as any),
 		manifests: new CarrierManifestService(repository(CarrierManifest), undefined as any, undefined as any),
 		movements,
+		stockMovements: async () =>
+			await dataSource.query('SELECT "referenceId", "variantId", "quantity" FROM "stock_movement" ORDER BY "id"'),
+		queries,
+		outbox,
 		row: async (table, id) => (await dataSource.query(`SELECT * FROM "${table}" WHERE "id" = ?`, [id]))[0],
 		set: async (table, id, values) => {
 			const columns = Object.keys(values);
@@ -457,6 +532,19 @@ async function harness(): Promise<IHarness> {
 		}
 	};
 }
+
+/**
+ * A statement, reduced to its verb and the table it reads or writes: `SELECT pick_list`, `UPDATE pick_list_line`.
+ *
+ * @param sql The statement.
+ * @returns The verb and the table.
+ */
+const statementOf = (sql: string): string => {
+	const verb = sql.trim().split(/\s+/)[0].toUpperCase();
+	const table = (verb === 'SELECT' ? /\bFROM\s+"(\w+)"/i : /^\s*(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM)\s+"(\w+)"/i).exec(sql)?.[1];
+
+	return table ? `${verb} ${table}` : verb;
+};
 
 /** An instant as SQLite holds it: TypeORM writes a `datetime` as UTC text without a zone. */
 const instant = (stored: unknown): number => new Date(`${String(stored).replace(' ', 'T')}Z`).getTime();
@@ -477,6 +565,9 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 	});
 
 	afterEach(async () => {
+		// Every spy a case installs is undone here as well as in the case itself, so one that rejected before its own
+		// restore cannot leak a doubled method — above all a prototype's — into the cases after it.
+		jest.restoreAllMocks();
 		mockCaller.tenantId = null;
 		mockCaller.organizationId = null;
 		await h.dataSource.destroy();
@@ -578,6 +669,417 @@ describe('a generic edit cannot move what a warehouse document’s operations mo
 			await h.lists.cancel(LIST, 'changed plan');
 			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
 			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.CANCELED);
+		});
+	});
+
+	describe('a pick list move and the fact it announces commit together (pickListChanged)', () => {
+		/** A second open line on the list, asking for five units from the same bin. */
+		const insertLine = async (id: string) =>
+			await h.dataSource.query(
+				'INSERT INTO "pick_list_line" ("id", "pickListId", "variantId", "binId", "quantityRequested", "status", "tenantId", "organizationId") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+				[id, LIST, VARIANT, BIN, '5', PickListLineStatus.PENDING, TENANT, ORG]
+			);
+
+		it('appends the fact through the transaction that writes the move', async () => {
+			await h.lists.start(LIST);
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.IN_PROGRESS);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId, event.inTransaction])).toEqual([
+				['pick_list.started', LIST, true]
+			]);
+			expect(h.outbox.appended[0]).toMatchObject({ tenantId: TENANT, organizationId: ORG, aggregateType: 'PICK_LIST' });
+		});
+
+		it('rolls the move back when its fact cannot be appended', async () => {
+			h.outbox.failOn = 'pick_list.started';
+
+			await expect(h.lists.start(LIST)).rejects.toThrow(/outbox is unavailable/);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.startedAt, list?.version]).toEqual([PickListStatus.ASSIGNED, null, 1]);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('announces nothing for a move that did not happen: a list another call moved meanwhile is refused', async () => {
+			// The list was read ASSIGNED and is CANCELED by the time the move's statement runs: the statement is
+			// predicated on the status the operation read, so it changes no row, and the fact is never appended.
+			const read = await h.lists.findOneScoped(LIST);
+			await h.set('pick_list', LIST, { status: PickListStatus.CANCELED });
+
+			await expect(
+				(h.lists as any).move(read, 'pick_list.started', { status: PickListStatus.IN_PROGRESS })
+			).rejects.toMatchObject({ status: 409, response: { code: 'PICK_LIST_EDIT_CONFLICT' } });
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('control: a cancellation is written and announced once', async () => {
+			await h.lists.cancel(LIST, 'changed plan');
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
+			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.canceled']);
+		});
+
+		it('cancels the list’s open lines in the transaction that writes the cancellation and appends its fact', async () => {
+			await h.lists.cancel(LIST, 'changed plan');
+
+			// From inside the transaction the fact is appended in, the lines are already withdrawn: a consumer is never
+			// handed a CANCELED list whose lines are still open.
+			expect(h.outbox.appended.map((event) => [event.name, event.inTransaction, event.lineStatuses])).toEqual([
+				['pick_list.canceled', true, [PickListLineStatus.CANCELED]]
+			]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.CANCELED);
+		});
+
+		it('rolls the cancellation and its fact back when a line cannot be withdrawn', async () => {
+			jest.spyOn(h.lines, 'cancelOpenLine').mockRejectedValue(new Error('the line could not be written'));
+
+			await expect(h.lists.cancel(LIST, 'changed plan')).rejects.toThrow(/the line could not be written/);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 1]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('refuses a move from a read whose version moved on, though the status did not', async () => {
+			const read = await h.lists.findOneScoped(LIST);
+			// Another transition took the version the move read (the status it reached is the same one).
+			await h.set('pick_list', LIST, { version: 5 });
+
+			await expect(
+				(h.lists as any).move(read, 'pick_list.started', {
+					status: PickListStatus.IN_PROGRESS,
+					version: (read.version ?? 1) + 1
+				})
+			).rejects.toMatchObject({ status: 409, response: { code: 'PICK_LIST_EDIT_CONFLICT' } });
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 5]);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('two moves from one read: the second is refused, and one fact is appended', async () => {
+			const read = await h.lists.findOneScoped(LIST);
+			const startFrom = (from: unknown) =>
+				(h.lists as any).move(from, 'pick_list.started', {
+					status: PickListStatus.IN_PROGRESS,
+					version: (read.version ?? 1) + 1
+				});
+
+			await startFrom(read);
+			await expect(startFrom(read)).rejects.toMatchObject({ status: 409, response: { code: 'PICK_LIST_EDIT_CONFLICT' } });
+
+			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.started']);
+		});
+
+		it('announces a created list with the version create() answers, not the one it had before its caches were written', async () => {
+			const facts: Row[] = [];
+			const lists = new PickListService(
+				h.dataSource.getRepository(PickList) as any,
+				undefined as any,
+				h.lines,
+				h.waves,
+				undefined as any,
+				undefined as any,
+				{ allocate: async () => ({ formatted: 'PICK-9' }) } as any,
+				h.dataSource.getRepository(PickWave) as any,
+				{ append: async (_manager: unknown, event: Row) => facts.push(event) } as any,
+				undefined,
+				undefined
+			);
+
+			const created = await lists.create({ warehouseId: WAREHOUSE } as any);
+			const stored = await h.row('pick_list', created.id);
+
+			expect(facts.map((event) => [event.name, event.data.version])).toEqual([['pick_list.created', created.version]]);
+			expect(created.version).toBe(stored?.version);
+		});
+
+		it('the first pick announces pick_list.started once, with the version it stored', async () => {
+			await insertLine(LINE_2);
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+			await h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 2, 2]);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId, event.inTransaction, event.data.version])).toEqual([
+				['pick_list.started', LIST, true, 2]
+			]);
+		});
+
+		it.each([
+			{
+				kind: 'pick',
+				record: (harness: IHarness) => harness.lines.recordPick(LINE, { pickedQuantity: '5' } as any),
+				recorded: PickListLineStatus.PICKED
+			},
+			{
+				kind: 'skip',
+				record: (harness: IHarness) => harness.lines.recordSkip(LINE, 'blocked aisle'),
+				recorded: PickListLineStatus.SKIPPED
+			}
+		])(
+			'a $kind whose promotion cannot append its fact records nothing (line still PENDING, list not moved), so the same $kind can be retried',
+			async ({ record, recorded }) => {
+				h.outbox.failOn = 'pick_list.started';
+
+				await expect(record(h)).rejects.toThrow(/outbox is unavailable/);
+
+				const line = await h.row('pick_list_line', LINE);
+				const list = await h.row('pick_list', LIST);
+				expect([line?.status, line?.pickedAt]).toEqual([PickListLineStatus.PENDING, null]);
+				expect([list?.status, list?.version, list?.pickedCount, list?.shortCount]).toEqual([PickListStatus.ASSIGNED, 1, 0, 0]);
+				expect(h.outbox.appended).toEqual([]);
+
+				// The outbox is back: the same outcome is recorded, and the start announced once.
+				h.outbox.failOn = null;
+				await expect(record(h)).resolves.toMatchObject({ status: recorded });
+
+				expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.IN_PROGRESS);
+				expect(h.outbox.appended.map((event) => [event.name, event.inTransaction])).toEqual([['pick_list.started', true]]);
+			}
+		);
+
+		it.each([
+			{
+				kind: 'short pick',
+				record: (harness: IHarness) => harness.lines.recordPick(LINE, { pickedQuantity: '3' } as any),
+				// The two units the bin never held are written off.
+				written: [[LINE, VARIANT, -2]]
+			},
+			{
+				kind: 'substitution',
+				record: (harness: IHarness) =>
+					harness.lines.recordSubstitution(LINE, { substituteVariantId: SUBSTITUTE, substituteQuantity: '5' }),
+				// The requested variant goes back on the level; the substitute leaves instead.
+				written: [
+					[LINE, VARIANT, 5],
+					[LINE, SUBSTITUTE, -5]
+				]
+			}
+		])('a pick retried after its promotion failed writes its stock movements once ($kind)', async ({ record, written }) => {
+			const held = async () =>
+				(await h.stockMovements()).map((movement) => [movement.referenceId, movement.variantId, Number(movement.quantity)]);
+			h.outbox.failOn = 'pick_list.started';
+
+			await expect(record(h)).rejects.toThrow(/outbox is unavailable/);
+
+			// The outcome was not recorded, and neither is the stock it would have moved.
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
+			expect(await held()).toEqual([]);
+
+			// The outbox is back: the retry records the outcome and its movements, once.
+			h.outbox.failOn = null;
+			await expect(record(h)).resolves.toBeDefined();
+
+			expect(await held()).toEqual(written);
+		});
+
+		it('control: a pick whose promotion succeeds writes its movements with it', async () => {
+			await h.lines.recordPick(LINE, { pickedQuantity: '3' } as any);
+
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.SHORT);
+			expect((await h.stockMovements()).map((movement) => Number(movement.quantity))).toEqual([-2]);
+		});
+
+		it('an outcome takes its list’s row first in its transaction — before it writes the line or reads the counters', async () => {
+			// An IN_PROGRESS list: its counters are all an outcome moves on it, and two overlapping outcomes on different
+			// lines each re-counted without the other's line (READ COMMITTED does not show an uncommitted one), so one
+			// pick went missing from the count. The outcome now reads the list's row first, under a write lock where the
+			// database has row locks — PostgreSQL and MySQL — so the second outcome waits for the first to commit, and
+			// counts it. Lists before lines is the order a cancellation takes them in (`movePickList` writes the list,
+			// then its lines), so the two never wait on each other in a cycle. The waiting needs a server database;
+			// SQLite serializes its writers, and what is proven here is where the read sits.
+			await h.set('pick_list', LIST, { status: PickListStatus.IN_PROGRESS });
+			h.queries.length = 0;
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			const begin = h.queries.findIndex((sql) => /^\s*BEGIN/i.test(sql));
+			const commit = h.queries.findIndex((sql, index) => index > begin && /^\s*COMMIT/i.test(sql));
+			const inTransaction = h.queries.slice(begin + 1, commit).map(statementOf);
+
+			expect(begin).toBeGreaterThanOrEqual(0);
+			expect(inTransaction.slice(0, 2)).toEqual(['SELECT pick_list', 'UPDATE pick_list_line']);
+			expect(inTransaction.indexOf('SELECT pick_list_line')).toBeGreaterThan(1);
+			// SQLite has no row lock and TypeORM refuses the clause there: the statement asks for none.
+			expect(h.queries.some((sql) => /\bFOR\s+UPDATE\b/i.test(sql))).toBe(false);
+			expect((await h.row('pick_list', LIST))?.pickedCount).toBe(1);
+		});
+
+		it('the pick, the counters and the promotion are one transaction: the fact sees the outcome it announces', async () => {
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			expect(h.outbox.appended.map((event) => [event.name, event.lineStatuses])).toEqual([
+				['pick_list.started', [PickListLineStatus.PICKED]]
+			]);
+		});
+
+		it('two concurrent first picks announce once and both picks are recorded', async () => {
+			await insertLine(LINE_2);
+			// The second pick read the list before the first pick's promotion committed: it holds ASSIGNED at version 1.
+			const staleRead = await h.dataSource.getRepository(PickList).findOne({ where: { id: LIST } });
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+			// The second pick's read of the list — made through its own transaction's repository — answers that stale
+			// row once; every other read is the database's.
+			const original = Repository.prototype.findOne;
+			let served = false;
+			const staleOnce = jest.spyOn(Repository.prototype, 'findOne').mockImplementation(function (
+				this: Repository<any>,
+				options: any
+			) {
+				if (!served && this.metadata.target === PickList) {
+					served = true;
+					return Promise.resolve(staleRead) as any;
+				}
+				return original.call(this, options);
+			});
+			try {
+				await expect(h.lines.recordPick(LINE_2, { pickedQuantity: '5' } as any)).resolves.toMatchObject({
+					status: PickListLineStatus.PICKED
+				});
+			} finally {
+				// Restored whatever the pick answered: the prototype is shared by every repository of every later case.
+				staleOnce.mockRestore();
+			}
+			// The stale read was the one the promotion was decided on: the second pick did try to start the list.
+			expect(served).toBe(true);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 2, 2]);
+			expect([(await h.row('pick_list_line', LINE))?.status, (await h.row('pick_list_line', LINE_2))?.status]).toEqual([
+				PickListLineStatus.PICKED,
+				PickListLineStatus.PICKED
+			]);
+			expect(h.outbox.appended.map((event) => event.name)).toEqual(['pick_list.started']);
+		});
+
+		it('a counter refresh that moves no status announces nothing and keeps the version', async () => {
+			await h.set('pick_list', LIST, { status: PickListStatus.IN_PROGRESS });
+
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version, list?.pickedCount]).toEqual([PickListStatus.IN_PROGRESS, 1, 1]);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('cancelling a wave cancels its open lists’ lines and announces each list', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+
+			await h.waves.cancel(WAVE, 'no longer needed');
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.CANCELED, 2]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.CANCELED);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId, event.inTransaction, event.lineStatuses])).toEqual([
+				['pick_list.canceled', LIST, true, [PickListLineStatus.CANCELED]]
+			]);
+		});
+
+		it('closing a wave short withdraws only what was never picked, so no CANCELED list keeps an open line', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			await insertLine(LINE_2);
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			await h.waves.closeShort(WAVE, 'the shift ended');
+
+			expect((await h.row('pick_list', LIST))?.status).toBe(PickListStatus.CANCELED);
+			expect([(await h.row('pick_list_line', LINE))?.status, (await h.row('pick_list_line', LINE_2))?.status]).toEqual([
+				PickListLineStatus.PICKED,
+				PickListLineStatus.CANCELED
+			]);
+			expect(h.outbox.appended.map((event) => [event.name, event.lineStatuses])).toEqual([
+				['pick_list.started', [PickListLineStatus.PICKED, PickListLineStatus.PENDING]],
+				['pick_list.canceled', [PickListLineStatus.PICKED, PickListLineStatus.CANCELED]]
+			]);
+		});
+
+		it('a wave’s list whose open line cannot be withdrawn keeps its status, its lines and announces nothing', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			jest.spyOn(h.lines, 'cancelOpenLine').mockRejectedValue(new Error('the line could not be written'));
+
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).rejects.toThrow(/the line could not be written/);
+
+			const list = await h.row('pick_list', LIST);
+			expect([list?.status, list?.version]).toEqual([PickListStatus.ASSIGNED, 1]);
+			expect((await h.row('pick_list_line', LINE))?.status).toBe(PickListLineStatus.PENDING);
+			expect(h.outbox.appended).toEqual([]);
+		});
+
+		it('a wave cancellation that failed on its second list can be retried and finishes', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			await h.dataSource.query(
+				'INSERT INTO "pick_list" ("id", "warehouseId", "number", "status", "waveId", "lineCount", "tenantId", "organizationId") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+				[LIST_2, WAREHOUSE, 'PICK-2', PickListStatus.ASSIGNED, WAVE, 1, TENANT, ORG]
+			);
+			await h.dataSource.query(
+				'INSERT INTO "pick_list_line" ("id", "pickListId", "variantId", "binId", "quantityRequested", "status", "tenantId", "organizationId") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+				[LINE_OF_LIST_2, LIST_2, VARIANT, BIN, '5', PickListLineStatus.PENDING, TENANT, ORG]
+			);
+			// The first list's line is withdrawn; the second list's cannot be, once.
+			const withdraw = h.lines.cancelOpenLine.bind(h.lines);
+			let calls = 0;
+			const failsOnSecond = jest.spyOn(h.lines, 'cancelOpenLine').mockImplementation(async (id, transaction) => {
+				calls += 1;
+				if (calls === 2) {
+					throw new Error('the line could not be written');
+				}
+				return await withdraw(id, transaction);
+			});
+
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).rejects.toThrow(/the line could not be written/);
+			failsOnSecond.mockRestore();
+
+			// One list is cancelled, complete with its line; the other, and the wave, are not.
+			const statuses = async () => [
+				(await h.row('pick_wave', WAVE))?.status,
+				[(await h.row('pick_list', LIST))?.status, (await h.row('pick_list', LIST_2))?.status].sort(),
+				[(await h.row('pick_list_line', LINE))?.status, (await h.row('pick_list_line', LINE_OF_LIST_2))?.status].sort()
+			];
+			expect(await statuses()).toEqual([
+				PickWaveStatus.DRAFT,
+				[PickListStatus.ASSIGNED, PickListStatus.CANCELED],
+				[PickListLineStatus.CANCELED, PickListLineStatus.PENDING]
+			]);
+
+			// The withdrawn line is not a recorded pick: the retry finishes the cascade, and each list is announced once.
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).resolves.toMatchObject({ status: PickWaveStatus.CANCELED });
+
+			expect(await statuses()).toEqual([
+				PickWaveStatus.CANCELED,
+				[PickListStatus.CANCELED, PickListStatus.CANCELED],
+				[PickListLineStatus.CANCELED, PickListLineStatus.CANCELED]
+			]);
+			expect(h.outbox.appended.map((event) => [event.name, event.aggregateId]).sort()).toEqual(
+				[
+					['pick_list.canceled', LIST],
+					['pick_list.canceled', LIST_2]
+				].sort()
+			);
+		});
+
+		it('control: a wave with a picked line is still refused cancellation (PICK_LIST_HAS_PICKS)', async () => {
+			await h.set('pick_list', LIST, { waveId: WAVE });
+			await h.lines.recordPick(LINE, { pickedQuantity: '5' } as any);
+
+			await expect(h.waves.cancel(WAVE, 'no longer needed')).rejects.toMatchObject({
+				status: 400,
+				message: expect.stringMatching(/^PICK_LIST_HAS_PICKS/)
+			});
+			expect((await h.row('pick_wave', WAVE))?.status).toBe(PickWaveStatus.DRAFT);
+		});
+
+		it('announces the version the move stored', async () => {
+			await h.lists.start(LIST);
+
+			const stored = await h.row('pick_list', LIST);
+			expect(h.outbox.appended.map((event) => event.data.version)).toEqual([stored?.version]);
+			expect(stored?.version).toBe(2);
 		});
 	});
 

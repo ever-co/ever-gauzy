@@ -375,6 +375,27 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Define the where condition of a read given as conditions only, scoped to the current user's tenant
+	 * and employee.
+	 *
+	 * A public route or a background job has no user in context, hence no tenant to read off it, so the
+	 * stated condition is used unchanged, as {@link findOneWithTenant} does.
+	 *
+	 * @param options - The caller's where condition.
+	 * @returns The where condition the read runs with.
+	 */
+	private findWhereWithTenant(options?: FindOptionsWhere<T>): FindOptionsWhere<T> {
+		const user = RequestContext.currentUser();
+		if (!user) {
+			return options;
+		}
+		return {
+			...options,
+			...this.findConditionsWithTenantByUser(user)
+		};
+	}
+
+	/**
 	 * Counts entities that match given options.
 	 * Useful for pagination.
 	 *
@@ -393,11 +414,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async countBy(options?: FindOptionsWhere<T>): Promise<number> {
-		const user = RequestContext.currentUser();
-		return await super.countBy({
-			...options,
-			...this.findConditionsWithTenantByUser(user)
-		});
+		return await super.countBy(this.findWhereWithTenant(options));
 	}
 
 	/**
@@ -471,11 +488,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async findOneOrFailByWhereOptions(options: FindOptionsWhere<T>): Promise<ITryRequest<T>> {
-		const user = RequestContext.currentUser();
-		return await super.findOneOrFailByWhereOptions({
-			...options,
-			...this.findConditionsWithTenantByUser(user)
-		});
+		return await super.findOneOrFailByWhereOptions(this.findWhereWithTenant(options));
 	}
 
 	/*
@@ -514,11 +527,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async findOneByWhereOptions(options: FindOptionsWhere<T>): Promise<T> {
-		const user = RequestContext.currentUser();
-		return await super.findOneByWhereOptions({
-			...options,
-			...this.findConditionsWithTenantByUser(user)
-		});
+		return await super.findOneByWhereOptions(this.findWhereWithTenant(options));
 	}
 
 	/**
@@ -795,11 +804,19 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		// time — has no tenant to be scoped by, and the criteria it states are the criteria the statement
 		// runs with. Reading the tenant off a user that is not there would fail the write instead.
 		const scoped = user ? this.scalarConditions(this.findConditionsWithTenantByUser(user)) : {};
+		// The criteria above keep the statement on the caller's rows; the payload must not move them out:
+		// a `PUT` carrying `{"tenantId": "<B>"}` re-tenanted the caller's own row (SEC-A-03).
+		const patch = user ? this.withoutScopeChanges(partialEntity) : partialEntity;
 
 		if (typeof id === 'string') {
 			await this.findOneByIdString(id);
 
-			return await super.update({ ...scoped, id } as FindOptionsWhere<T>, partialEntity);
+			if (this.isEmptyPatch(patch)) return this.nothingUpdated();
+			// What the patch points at must be the caller's too — a foreign-key column or a relation naming another
+			// tenant's row is refused, as create() and save() refuse it (SEC-D-03).
+			if (user) await this.assertNestedGraphNotForeign([patch as IPartialEntity<T>], RequestContext.currentTenantId());
+
+			return await super.update({ ...scoped, id } as FindOptionsWhere<T>, patch);
 		}
 
 		if (typeof id === 'object' && id !== null) {
@@ -809,10 +826,63 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				await this.findOneByWhereOptions(criteria);
 			}
 
-			return await super.update({ ...criteria, ...scoped }, partialEntity);
+			if (this.isEmptyPatch(patch)) return this.nothingUpdated();
+			if (user) await this.assertNestedGraphNotForeign([patch as IPartialEntity<T>], RequestContext.currentTenantId());
+
+			return await super.update({ ...criteria, ...scoped }, patch);
 		}
 
 		return await super.update(id, partialEntity);
+	}
+
+	/**
+	 * The payload of an update without the scope columns the caller may not move.
+	 *
+	 * `create()` stamps the caller's tenant — and, for a caller who may not act for other employees, their
+	 * employee — over whatever the payload says. An update scoped its criteria the same way but wrote the payload
+	 * as given, so the tenant (and the employee) of the caller's own row was the caller's to change: a tenant
+	 * setting moved into another tenant took that tenant's uploads to the caller's bucket, a bin moved into another
+	 * tenant's pick paths (SEC-A-03, SEC-D-12). The tenant is never written from a payload; the employee is not for a
+	 * caller the employee scope applies to. Any other member is written as before.
+	 *
+	 * @param partialEntity The columns the caller asked to write.
+	 * @returns The same columns without the ones that would move the row out of the caller's scope.
+	 */
+	private withoutScopeChanges(partialEntity: QueryDeepPartialEntity<T>): QueryDeepPartialEntity<T> {
+		if (!partialEntity || typeof partialEntity !== 'object' || Array.isArray(partialEntity)) {
+			return partialEntity;
+		}
+
+		const { tenantId, tenant, ...rest } = partialEntity as Record<string, unknown>;
+		void tenantId;
+		void tenant;
+
+		const employeeId = RequestContext.currentEmployeeId();
+		const employeeScoped =
+			isNotEmpty(employeeId) &&
+			this.hasScopeColumn('employeeId') &&
+			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			!this.getSkipEmployeeFilter();
+
+		if (employeeScoped) {
+			delete rest['employeeId'];
+			delete rest['employee'];
+		}
+
+		return rest as QueryDeepPartialEntity<T>;
+	}
+
+	/** Whether nothing is left to write once the scope columns are taken out. */
+	private isEmptyPatch(patch: QueryDeepPartialEntity<T>): boolean {
+		return !!patch && typeof patch === 'object' && !Array.isArray(patch) && Object.keys(patch).length === 0;
+	}
+
+	/**
+	 * The answer to an update that had nothing left to write: the row is the caller's (the read above found it),
+	 * and no column changed. An empty `SET` is not a statement either ORM accepts.
+	 */
+	private nothingUpdated(): UpdateResult {
+		return { generatedMaps: [], raw: [], affected: 0 } as UpdateResult;
 	}
 
 	/**

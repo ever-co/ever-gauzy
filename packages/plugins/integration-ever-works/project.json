@@ -1,0 +1,44 @@
+{
+	"name": "plugin-integration-ever-works",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/integration-ever-works/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"manifestRootsToUpdate": ["dist/{projectRoot}"],
+			"currentVersionResolver": "git-tag",
+			"fallbackCurrentVersionResolver": "disk"
+		}
+	},
+	"tags": ["type:plugin"],
+	"implicitDependencies": ["common", "contracts", "core", "plugin", "utils"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/integration-ever-works",
+				"tsConfig": "packages/plugins/integration-ever-works/tsconfig.lib.json",
+				"packageJson": "packages/plugins/integration-ever-works/package.json",
+				"main": "packages/plugins/integration-ever-works/src/index.ts",
+				"assets": ["packages/plugins/integration-ever-works/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/integration-ever-works/jest.config.ts"
+			}
+		}
+	}
+}

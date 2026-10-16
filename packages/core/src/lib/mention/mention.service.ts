@@ -144,11 +144,13 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 		try {
 			const user = RequestContext.currentUser();
 
-			// Retrieve existing mentions for the entity
-			const existingMentions = await super.find({
-				where: { entity, entityId },
-				select: { mentionedEmployeeId: true }
-			});
+			// Retrieve existing mentions for the entity, whoever wrote them. Scoped to the caller's employee,
+			// the mentions written by someone else were published again on each edit and never removed.
+			// No `select`: on MikroORM `mentionedEmployeeId` is a `persist: false` relation mirror that a
+			// partial load leaves unset, so every id read back as undefined. A full load fills it on both ORMs
+			const existingMentions = await this.withoutEmployeeFilter(() =>
+				super.find({ where: { entity, entityId } })
+			);
 
 			// Extract the IDs of currently mentioned users
 			const existingMentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedEmployeeId));
@@ -160,6 +162,14 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			const mentionsToRemoveIds = [...existingMentionEmployeeIds].filter(
 				(id) => !mentionEmployeeIds.includes(id)
 			);
+
+			// Remove outdated mentions, whoever wrote them. This runs before the new mentions are published, so
+			// their handler, which creates the rows through this service in this same request, runs outside the bypass
+			if (mentionsToRemoveIds.length > 0) {
+				await this.withoutEmployeeFilter(() =>
+					super.delete({ mentionedEmployeeId: In(mentionsToRemoveIds), entity, entityId })
+				);
+			}
 
 			// Add new mentions
 			if (mentionsToAddEmployeeIds.length > 0) {
@@ -177,11 +187,6 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 						})
 					)
 				);
-			}
-
-			// Remove outdated mentions
-			if (mentionsToRemoveIds.length > 0) {
-				await super.delete({ mentionedEmployeeId: In(mentionsToRemoveIds), entity, entityId });
 			}
 		} catch (error) {
 			console.log(`Error while updating mention: ${error.message}`, error);

@@ -15,6 +15,7 @@ import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
+import { matchesSubscriberOrganization } from '../graphql/subscriptions/subscription-request-context';
 // Imported from the files that declare them rather than from this domain's barrel: the barrel exports
 // the module, the module declares this resolver, and a resolver that reached its own module through
 // the barrel would close a require cycle the boot would then have to survive.
@@ -428,6 +429,7 @@ export class WebhookResolver {
 		filter: (payload: IWebhookDeliveryFailedEnvelope, variables: { subscriptionId?: Id }) =>
 			Boolean(payload) &&
 			payload.tenantId === RequestContext.currentTenantId() &&
+			matchesSubscriberOrganization(payload.organizationId) &&
 			(!variables?.subscriptionId ||
 				String(payload.delivery?.subscriptionId) === String(variables.subscriptionId)),
 		resolve: (payload: IWebhookDeliveryFailedEnvelope) => payload.delivery
@@ -453,6 +455,7 @@ export class WebhookResolver {
 		filter: (payload: IWebhookSubscriptionDisabledEnvelope, variables: { subscriptionId?: Id }) =>
 			Boolean(payload) &&
 			payload.tenantId === RequestContext.currentTenantId() &&
+			matchesSubscriberOrganization(payload.organizationId) &&
 			(!variables?.subscriptionId || String(payload.subscription?.id) === String(variables.subscriptionId)),
 		resolve: (payload: IWebhookSubscriptionDisabledEnvelope) => payload.subscription
 	})

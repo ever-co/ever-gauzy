@@ -161,3 +161,22 @@ input UpdateIntegrationTenantInput {
 	"The credentials to write with the edit, one member per key."
 	settings: [IntegrationSettingInput!]
 }
+
+"""
+A synchronisation of a connected integration that finished: what `Subscription.integrationSyncCompleted` delivers.
+
+The connection is re-read as the subscriber when the event is delivered, so it is the row `integrationTenant(id:)`
+would answer then — a later run may already have moved its `lastSyncedAt`; `syncedAt` is this run's own moment. The
+counts are what the run stated about itself and are counts only: no synchronised record and no identifier of one
+travels with the fact.
+"""
+type IntegrationSyncCompleted {
+	"The connection that finished synchronizing."
+	integrationTenant: IntegrationTenant!
+	"The provider, as the connection names it (`GITHUB`, `HUBSTAFF`, …)."
+	name: String!
+	"When the run finished."
+	syncedAt: DateTime!
+	"How many records of each kind the run handled, keyed by entity (`issue`, `project`, `task`, …)."
+	counts: JSON!
+}

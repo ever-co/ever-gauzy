@@ -1,5 +1,13 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, ForbiddenException, HttpStatus, HttpException, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpStatus,
+	HttpException,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
 import {
 	DeleteResult,
 	IsNull,
@@ -11,9 +19,11 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
-	Raw
+	Raw,
+	SaveOptions
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -56,6 +66,11 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { OrganizationProject } from '../core/entities/internal';
+import { EventBus as DomainEventBus } from '../event-bus/event-bus';
+import { TaskEvent } from '../event-bus/events/task.event';
+import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -78,7 +93,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
 		private readonly _employeeRecentVisitService: EmployeeRecentVisitService,
-		private readonly _managedEmployeeService: ManagedEmployeeService
+		private readonly _managedEmployeeService: ManagedEmployeeService,
+		/**
+		 * The in-process domain event bus `TaskEvent` travels on (the one the create and update handlers
+		 * publish to). Optional so that a service built by hand in a test needs no stand-in for it.
+		 */
+		@Optional() private readonly _domainEventBus?: DomainEventBus
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -149,27 +169,55 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				: [];
 			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
+			// A task that moves to another project is renumbered in the project it moves TO: `number` is unique
+			// per project, so the next number of the old project (what this computed before) could collide in
+			// the new one, or leave the task numbered as if it had never moved. The prefix follows the project
+			// too, by the rule the create path uses (the first three characters of the project's name). The move
+			// is written by the one save below, together with the rest of the update: a save that fails leaves
+			// the task where it was.
+			let moved: Partial<Task> | null = null;
 			if (data.projectId && data.projectId !== task.projectId) {
-				const { organizationId, projectId } = task;
+				// The task's organization after the update: the destination must be a project of it, and the next
+				// number is counted in it (counting in another organization could hand out a taken number).
+				const organizationId = data.organizationId ?? task.organizationId;
+				const projectId = data.projectId;
 
-				// Get the maximum task number for the project
-				const maxNumber = await this.getMaxTaskNumberByProject({
-					tenantId,
-					organizationId,
-					projectId
-				});
+				// Fails closed: a project that is not one of the organization's, or one that cannot be checked, is
+				// refused before anything is written (the tenant guard of the save checks the tenant only).
+				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
+				if (!destination.exists) {
+					throw new BadRequestException(
+						"The task cannot move to a project that is not one of the task's organization."
+					);
+				}
 
-				// Update the task with the new project and task number
-				await super.update(id, {
+				// Get the maximum task number for the project the task moves to, soft-deleted tasks included: they
+				// keep their number in the `taskNumber` unique index, as for a new task
+				const maxNumber = await this.getMaxTaskNumberByProject(
+					{
+						tenantId,
+						organizationId,
+						projectId
+					},
+					{ withDeleted: true }
+				);
+
+				moved = {
 					projectId,
-					number: maxNumber + 1
-				});
+					number: maxNumber + 1,
+					// The destination's prefix, never the input's.
+					prefix: destination.prefix,
+					// A relation object in the input would otherwise point the save back at another project.
+					...('project' in data ? { project: { id: projectId } as Task['project'] } : {})
+				};
 			}
 
-			// Update the task with the provided data
+			// Update the task with the provided data. When the task moved, the project, number and prefix computed
+			// above win over any the input carries: a client that sends the whole task back sends the old number.
 			const updatedTask = await super.create({
 				...data,
-				id
+				id,
+				...(moved ?? {})
 			});
 
 			// Register Task Sprint moving history
@@ -431,7 +479,79 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 
-		return await this.delete(id);
+		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first. A task that
+		// does not exist is a delete that removes nothing, as before; a read that FAILS stops the delete, so a task
+		// is never removed without its DELETED event.
+		let task: Task | null = null;
+		try {
+			task = await this.findOneByIdString(id);
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
+
+		const result = await this.delete(id);
+
+		if (task && result?.affected) {
+			this.publishTaskDeleted(task);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Soft-deletes a task (`DELETE /tasks/:id/soft`, GraphQL `softDeleteTask`) and publishes
+	 * `TaskEvent` `DELETED` for it, as a hard delete does.
+	 *
+	 * @param id - The task to soft-delete
+	 * @param options - Find options for the lookup
+	 * @param saveOptions - Save options for the write
+	 * @returns The soft-deleted task
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		const task = await super.softRemove(id, options, saveOptions);
+
+		if (task) {
+			this.publishTaskDeleted(task);
+		}
+
+		return task;
+	}
+
+	/**
+	 * Publishes `TaskEvent` `DELETED` for a task that was removed (hard or soft), so that integrations
+	 * that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows) learn about the removal the way they
+	 * learn about a create or an update.
+	 *
+	 * The event's `input` carries the task's scope (`tenantId`, `organizationId`, `projectId`): existing
+	 * `TaskEvent` subscribers read it before they switch on the event type. Publishing never fails the
+	 * delete: the row is already gone when this runs.
+	 *
+	 * @param task - The removed task
+	 */
+	private publishTaskDeleted(task: Task): void {
+		if (!this._domainEventBus) {
+			return;
+		}
+		const logFailure = (error: unknown) =>
+			console.error(`Failed to publish the deleted event of task ${task?.id}:`, (error as Error)?.message);
+		try {
+			const ctx = RequestContext.currentRequestContext();
+			const { tenantId, organizationId, projectId } = task;
+			// `publish` is async: a rejection is caught here as well, never left unhandled after the delete.
+			Promise.resolve(
+				this._domainEventBus.publish(
+					new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
+						tenantId,
+						organizationId,
+						projectId
+					} as ITaskUpdateInput)
+				)
+			).catch(logFailure);
+		} catch (error) {
+			logFailure(error);
+		}
 	}
 
 	/**
@@ -840,7 +960,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					const tenantId = RequestContext.currentTenantId();
 
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
-					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
+					if (isNotEmpty(projectId) && isEmpty(teams)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
 					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
@@ -884,6 +1004,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						if (advancedTeams) {
 							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
 						}
+					}
+
+					// With a project and teams, the project's tasks are listed alongside the team's, as in the TypeORM
+					// branch. Every other condition stays at the top level, so it applies to both.
+					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+						mikroWhere.$or = [{ teams: mikroWhere.teams }, { projectId }];
+						delete mikroWhere.teams;
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
@@ -1104,12 +1231,46 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * The project a task moves to, read in the caller's tenant and the task's organization: whether it is one
+	 * of that organization's projects, and its task-number prefix by the rule the create path uses (the first
+	 * three characters of its name, or `null` for a project without a name). Without a tenant or an
+	 * organization to read it in, the answer is "not one of them"; a failed read is thrown, so the update fails
+	 * rather than moving the task to a project nobody checked.
+	 *
+	 * @param projectId The project the task moves to.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationId The task's organization (after the update).
+	 */
+	private async findDestinationProject(
+		projectId: ID,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<{ exists: boolean; prefix?: string | null }> {
+		if (!tenantId || !organizationId) {
+			return { exists: false };
+		}
+		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+			where: { id: projectId, tenantId, organizationId },
+			select: { id: true, name: true }
+		});
+		if (!project) {
+			return { exists: false };
+		}
+		return { exists: true, prefix: project.name?.slice(0, 3) || null };
+	}
+
+	/**
 	 * GET maximum task number by project filter
 	 *
 	 * @param options The filtering options including tenant, organization, and project details.
+	 * @param withDeleted Also count soft-deleted tasks: they keep their number in the `taskNumber` unique
+	 * index, so a caller that stores `max + 1` needs it. The max-number read routes leave it off.
 	 * @returns A Promise that resolves to the maximum task number for the given project.
 	 */
-	public async getMaxTaskNumberByProject(options: IGetTaskOptions): Promise<number> {
+	public async getMaxTaskNumberByProject(
+		options: IGetTaskOptions,
+		{ withDeleted = false }: { withDeleted?: boolean } = {}
+	): Promise<number> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
@@ -1123,11 +1284,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} else {
 						mikroWhere.projectId = null;
 					}
+					if (withDeleted) {
+						// Soft-deleted rows may predate task numbers, and PostgreSQL sorts NULL first in DESC
+						mikroWhere.number = { $ne: null };
+					}
 
 					const items = await this.mikroOrmRepository.find(mikroWhere, {
 						orderBy: { number: 'DESC' as any },
 						limit: 1,
-						fields: ['number'] as any[]
+						fields: ['number'] as any[],
+						...(withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					const maxTaskNumber = items.length > 0 ? (items[0] as any).number || 0 : 0;
 					console.log('get max task number (MikroORM)', maxTaskNumber);
@@ -1154,6 +1320,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 					} else {
 						query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
+					}
+
+					if (withDeleted) {
+						query.withDeleted();
 					}
 
 					// Execute the query and parse the result to a number

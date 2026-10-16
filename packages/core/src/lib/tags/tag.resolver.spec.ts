@@ -102,7 +102,7 @@ function surfaces() {
 	return {
 		tagService,
 		commandBus,
-		resolver: new TagResolver(tagService as never, commandBus as never)
+		resolver: new TagResolver(tagService as never, commandBus as never, {} as never)
 	};
 }
 
@@ -233,7 +233,8 @@ const ROUTE_OF_FIELD: ReadonlyArray<readonly [string, string]> = [
 	['updateTag', 'update'],
 	['deleteTag', 'delete'],
 	['softDeleteTag', 'softRemove'],
-	['recoverTag', 'softRecover']
+	['recoverTag', 'softRecover'],
+	['bulkCreateTags', 'bulk']
 ];
 
 describe('TagResolver — the SDL declares the capabilities the REST routes serve', () => {
@@ -253,6 +254,7 @@ describe('TagResolver — the SDL declares the capabilities the REST routes serv
 		// be a second surface that could disagree with this one.
 		expect(ownedRootFields('Query')).toEqual(['tag', 'tagCount', 'tags', 'tagsByLevel']);
 		expect(ownedRootFields('Mutation')).toEqual([
+			'bulkCreateTags',
 			'createTag',
 			'deleteTag',
 			'recoverTag',

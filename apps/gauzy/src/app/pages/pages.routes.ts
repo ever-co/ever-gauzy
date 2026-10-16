@@ -488,6 +488,12 @@ function getGoalsRoutes(_pageRouteRegistryService: PageRouteRegistryService): Ro
 						import('./goal-settings/goal-settings.module').then((m) => m.GoalSettingsModule),
 					data: { selectors: { project: false, team: false, employee: false, date: false } }
 				},
+				{
+					path: 'initiatives',
+					loadChildren: () =>
+						import('./goals/initiatives/initiatives.module').then((m) => m.InitiativesModule),
+					data: { selectors: { project: false, team: false, employee: false, date: false } }
+				},
 				..._pageRouteRegistryService.getPageLocationRoutes('goals-sections')
 			]
 		}

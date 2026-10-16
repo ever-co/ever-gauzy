@@ -1,0 +1,10 @@
+{
+	"error": {
+		"code": "version_mismatch",
+		"message": "If-Match \"16\" does not match the current version \"17\".",
+		"details": {
+			"expected": 16,
+			"current": 17
+		}
+	}
+}

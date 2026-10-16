@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { GLOBAL_MODULE_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
+import { SUBSCRIPTION_OPTIONS_METADATA } from '@nestjs/graphql/dist/graphql.constants';
 import { buildSchema, printSchema } from 'graphql';
 import { EventOutboxStatus, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
@@ -949,6 +950,67 @@ describe('EventOutboxResolver — the streamed fact (§10.2, §10.4, §10.6)', (
 
 	it('declares the two narrowing arguments the filter applies', () => {
 		expect(fieldArgs('Subscription', 'eventDeliveryChanged')).toEqual(['deliveryId', 'action']);
+	});
+});
+
+describe('EventOutboxResolver — what eventDeliveryChanged delivers to one subscriber', () => {
+	const SIBLING_ORGANIZATION = '00000000-0000-4000-8000-000000000003';
+
+	/** The filter the field was declared with, as the subscription runtime calls it. */
+	const filter = (payload: Record<string, unknown>, variables: Record<string, unknown> = {}): boolean =>
+		Reflect.getMetadata(SUBSCRIPTION_OPTIONS_METADATA, EventOutboxResolver.prototype.eventDeliveryChanged).filter(
+			payload,
+			variables
+		);
+
+	/** One fact about a delivery record, of the subscriber's tenant and organization unless stated otherwise. */
+	const fact = (overrides: Record<string, unknown> = {}) => ({
+		tenantId: TENANT,
+		organizationId: ORGANIZATION,
+		action: 'replayed',
+		delivery: { id: DELIVERY },
+		...overrides
+	});
+
+	/** Runs the filter as a subscriber of the tenant acting in `organizationId`. */
+	const as = (organizationId: string | null) => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(organizationId);
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('withholds a record of another organization of the same tenant', () => {
+		as(ORGANIZATION);
+
+		expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(false);
+	});
+
+	it('delivers a record of the subscriber organization, and a tenant-wide record to every subscriber', () => {
+		as(ORGANIZATION);
+
+		expect(filter(fact())).toBe(true);
+		expect(filter(fact({ organizationId: undefined }))).toBe(true);
+
+		as(null);
+
+		expect(filter(fact({ organizationId: undefined }))).toBe(true);
+	});
+
+	it('withholds an organization’s record from a subscriber with no organization, as the list read does', () => {
+		as(null);
+
+		expect(filter(fact({ organizationId: SIBLING_ORGANIZATION }))).toBe(false);
+		expect(filter(fact())).toBe(false);
+	});
+
+	it('still withholds another tenant and still applies the delivery and action arguments', () => {
+		as(ORGANIZATION);
+
+		expect(filter(fact({ tenantId: 'another-tenant' }))).toBe(false);
+		expect(filter(fact(), { deliveryId: 'another-delivery' })).toBe(false);
+		expect(filter(fact(), { deliveryId: DELIVERY, action: 'replayed' })).toBe(true);
+		expect(filter(fact(), { action: 'marked-dead' })).toBe(false);
 	});
 });
 

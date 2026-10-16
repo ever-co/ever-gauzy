@@ -47,7 +47,6 @@ export const ALLOWED = [
 	'packages/plugins/ever-stats/',
 	'packages/plugins/ever-stats-ui/',
 	'packages/plugins/ever-instance/',
-	'docs/ever-platform/',
 	'tools/egress-audit/',
 	'tools/ever-platform/',
 	'**/*.md',

@@ -284,6 +284,51 @@ export class SearchReindexService {
 	}
 
 	/**
+	 * Drops the documents of one entity that belong to the organization an inactive definition is the own copy of.
+	 *
+	 * @param entity The entity key.
+	 * @param definition The organization's own definition.
+	 * @returns How many documents were dropped.
+	 */
+	private async dropOrganization(
+		entity: string,
+		definition: { tenantId?: ID | null; organizationId?: ID | null }
+	): Promise<{ deletedCount: number }> {
+		const result = await this.typeOrmSearchDocumentRepository.softDelete({
+			entity,
+			...this.tenantScope(),
+			...(definition.tenantId ? { tenantId: definition.tenantId } : {}),
+			organizationId: definition.organizationId
+		} as any);
+
+		return { deletedCount: Number(result?.affected ?? 0) };
+	}
+
+	/**
+	 * Drops what an active sweep wrote for the organizations that switched their own definition of the entity off.
+	 *
+	 * The sweep reads every organization's source rows in its tenant, so an organization still on the shipped
+	 * definition rebuilt the documents of one whose own copy is off — the documents its switch had dropped, which a
+	 * search answers again (CodeRabbit). Each such organization's documents are dropped again, scoped to it.
+	 *
+	 * @param entity The entity key.
+	 * @returns How many documents were dropped.
+	 */
+	private async dropSwitchedOffOrganizations(entity: string): Promise<number> {
+		const copies = await this.definitionService.inactiveOrganizationCopies(
+			entity,
+			RequestContext.currentTenantId()
+		);
+		let dropped = 0;
+
+		for (const copy of copies) {
+			dropped += (await this.dropOrganization(entity, copy)).deletedCount;
+		}
+
+		return dropped;
+	}
+
+	/**
 	 * Rebuilds one entity.
 	 *
 	 * @param entity The entity key.
@@ -303,7 +348,12 @@ export class SearchReindexService {
 		if (!active) {
 			// An inactive definition is neither indexed nor queried, and its documents are removed so
 			// that re-activating it starts from a clean index rather than from stale rows.
-			const dropped = await this.drop(entity);
+			// An organization's own definition is that organization's (SEC-B-04): switching it off drops its
+			// documents only. Dropped for the whole tenant, every other organization — still on the shipped
+			// definition, which is active — lost its search for the entity (Greptile).
+			const dropped = persisted?.organizationId
+				? await this.dropOrganization(entity, persisted)
+				: await this.drop(entity);
 
 			return { entity, indexed: 0, skipped: 0, removed: dropped.deletedCount, batches: 0, stale: 0 };
 		}
@@ -362,6 +412,7 @@ export class SearchReindexService {
 		// source has been hard-deleted is unreachable by any event, and this is the only path that
 		// notices it.
 		run.removed += await this.removeOrphans(definition);
+		run.removed += await this.dropSwitchedOffOrganizations(entity);
 		run.stale = await this.staleCount(entity, version);
 
 		return run;
