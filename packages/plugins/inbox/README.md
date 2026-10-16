@@ -81,10 +81,12 @@ a parameter. Answers are `Cache-Control: no-store`.
   **synchronously**, so the source's own refusal (for example "already decided
   in Ever Works") reaches the user. The reply is claimed once: two overlapping
   replies dispatch once. When the source refuses, the item is `OPEN` again;
-  once the source took it, it stays answered.
+  once the source took it, it stays answered. A source may return the answer
+  it holds (another answer won there), which is recorded instead.
 - **`PATCH /items/:id/state`:** `{ isRead?, isArchived?, snoozedUntil? }`: my
   state only. The source handler is told about it on a best-effort basis.
-- **`POST /items/mark-all-read`:** `{ tab? }`.
+- **`POST /items/mark-all-read`:** `{ tab? }`. Each item's source handler is
+  told, as for one item (in the background, best effort).
 
 The Notifications tab of the UI reads `/employee-notification` directly. A
 GraphQL mirror of the read routes, and the mailbox, email and provider routes
