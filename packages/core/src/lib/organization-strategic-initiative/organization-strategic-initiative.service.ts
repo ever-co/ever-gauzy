@@ -8,6 +8,7 @@ import {
 	IOrganizationStrategicInitiative,
 	IOrganizationStrategicInitiativeCreateInput,
 	IOrganizationStrategicInitiativeFindInput,
+	IOrganizationStrategicInitiativeRead,
 	IOrganizationStrategicInitiativeUpdateInput,
 	IPagination,
 	OrganizationStrategicVisibilityScopeEnum,
@@ -20,9 +21,53 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { RoleService } from '../role/role.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from '../organization-project/repository/type-orm-organization-project.repository';
+import { OrganizationTeam } from '../core/entities/internal';
 import { OrganizationStrategicInitiative } from './organization-strategic-initiative.entity';
 import { TypeOrmOrganizationStrategicInitiativeRepository } from './repository/type-orm-organization-strategic-initiative.repository';
 import { MikroOrmOrganizationStrategicInitiativeRepository } from './repository/mikro-orm-organization-strategic-initiative.repository';
+
+/**
+ * The relations to load: the ones a caller asked for, in whichever form it used (a list of paths, or the
+ * object form `BaseQueryDTO` also accepts), plus the ones a read needs. The object form stays an object, so a
+ * request such as `{ steward: true }` keeps its relations.
+ *
+ * @param requested - The caller's relations, if any.
+ * @param required - Dotted paths the read needs.
+ * @returns A list when the caller sent a list (or nothing), an object when it sent an object.
+ */
+export function withRelations(requested: unknown, required: string[]): string[] | Record<string, unknown> {
+	if (requested && typeof requested === 'object' && !Array.isArray(requested)) {
+		const merged: Record<string, unknown> = { ...(requested as Record<string, unknown>) };
+		for (const path of required) {
+			let level = merged;
+			const segments = path.split('.');
+			segments.forEach((segment, index) => {
+				const last = index === segments.length - 1;
+				const current = level[segment];
+				if (last) {
+					if (!current) level[segment] = true;
+					return;
+				}
+				const next = current && typeof current === 'object' ? { ...(current as Record<string, unknown>) } : {};
+				level[segment] = next;
+				level = next;
+			});
+		}
+		return merged;
+	}
+	const list = Array.isArray(requested) ? (requested as string[]) : [];
+	return [...new Set([...list, ...required])];
+}
+
+/**
+ * A write input without a raw `teams` list: the directly linked teams are set through `teamIds` only, which
+ * {@link OrganizationStrategicInitiativeService} checks against the initiative's organization.
+ */
+function withoutRawTeams<T extends object>(input: T): Omit<T, 'teams'> {
+	const values = { ...(input ?? {}) } as T & { teams?: unknown };
+	delete values.teams;
+	return values;
+}
 
 @Injectable()
 export class OrganizationStrategicInitiativeService extends TenantAwareCrudService<OrganizationStrategicInitiative> {
@@ -61,14 +106,22 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				}
 			}
 
+			// The directly linked teams, each one a team of the initiative's organization. They are set through
+			// `teamIds` only: a raw `teams` list in the body (which the DTO does not declare, but a non-whitelisting
+			// pipe keeps) would skip the organization check, so it is dropped.
+			const { teamIds, ...values } = withoutRawTeams(input);
+			const teams = await this.resolveTeams(teamIds, organizationId, tenantId);
+
 			// Create the organization strategic initiative
 			const organizationStrategicInitiative = await super.create({
-				...input,
+				...values,
+				...(teams ? { teams } : {}),
 				tenantId,
 				organizationId,
 				// Set current employee as creator if employeeId not provided
 				stewardId: input.stewardId ?? currentEmployeeId
 			});
+			this.withTeamIds(organizationStrategicInitiative);
 
 			// Log activity for initiative creation
 			this._activityLogService.logActivity<OrganizationStrategicInitiative>(
@@ -84,7 +137,11 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 
 			return organizationStrategicInitiative;
 		} catch (error) {
-			if (error instanceof ForbiddenException || error instanceof NotFoundException) {
+			if (
+				error instanceof ForbiddenException ||
+				error instanceof NotFoundException ||
+				error instanceof BadRequestException
+			) {
 				throw error;
 			}
 			throw new BadRequestException('Organization strategic initiative creation failed', error);
@@ -125,11 +182,26 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				}
 			}
 
+			// The directly linked teams are replaced when `teamIds` is stated, and left as they are otherwise. They
+			// are checked against the organization the initiative is SAVED in: when the update moves it to another
+			// organization without stating `teamIds`, the links to the old organization's teams are removed, so no
+			// member of those teams keeps `team` visibility of it there. A raw `teams` list is dropped (see create).
+			const { teamIds, ...values } = withoutRawTeams(input);
+			const organizationId = values.organizationId ?? originalOrganizationStrategicInitiative.organizationId;
+			const movesOrganization = organizationId !== originalOrganizationStrategicInitiative.organizationId;
+			const teams = await this.resolveTeams(
+				teamIds ?? (movesOrganization ? [] : undefined),
+				organizationId,
+				originalOrganizationStrategicInitiative.tenantId
+			);
+
 			// Update the organization strategic initiative
 			const updatedOrganizationStrategicInitiative = await super.create({
-				...input,
+				...values,
+				...(teams ? { teams } : {}),
 				id
 			});
+			this.withTeamIds(updatedOrganizationStrategicInitiative);
 
 			// Log activity for organization strategic initiative update
 			this._activityLogService.logActivity<OrganizationStrategicInitiative>(
@@ -147,7 +219,11 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 
 			return updatedOrganizationStrategicInitiative;
 		} catch (error) {
-			if (error instanceof ForbiddenException || error instanceof NotFoundException) {
+			if (
+				error instanceof ForbiddenException ||
+				error instanceof NotFoundException ||
+				error instanceof BadRequestException
+			) {
 				throw error;
 			}
 			console.error(`Error while updating strategic initiative: ${error.message}`, error);
@@ -166,15 +242,12 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-		// Ensure relations for visibility check are loaded (projects and their teams)
-		const relationsToLoad = ['projects', 'projects.teams'];
-		const existingRelations = Array.isArray(filters.relations) ? filters.relations : [];
-		const mergedRelations = [...new Set([...existingRelations, ...relationsToLoad])];
-
+		// Ensure relations for visibility check are loaded (the directly linked teams, projects and their teams),
+		// next to the ones the caller asked for, in whichever form it asked (a list or an object)
 		const { items } = await super.findAll({
 			...filters,
-			relations: mergedRelations
-		});
+			relations: withRelations(filters.relations, ['teams', 'projects', 'projects.teams'])
+		} as typeof filters);
 
 		// Pre-fetch employee team memberships to avoid N+1 queries
 		const employeeTeamIds = await this.getEmployeeTeamIds(currentEmployeeId);
@@ -188,7 +261,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		);
 
 		return {
-			items: filteredOrganizationStrategicInitiatives,
+			items: filteredOrganizationStrategicInitiatives.map((initiative) => this.withTeamIds(initiative)),
 			total: filteredOrganizationStrategicInitiatives.length
 		};
 	}
@@ -207,9 +280,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<IOrganizationStrategicInitiative> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-		// Find the organization strategic initiative with optional relations
+		// Find the organization strategic initiative with the requested relations (a list or an object), and its
+		// directly linked teams
 		const organizationStrategicInitiative = await this.findOneByOptions({
-			...(params),
+			...params,
+			relations: withRelations(params?.relations, [
+				'teams'
+			]) as BaseQueryDTO<OrganizationStrategicInitiative>['relations'],
 			where: {
 				...(params?.where && { ...params.where }),
 				id
@@ -228,7 +305,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			);
 		}
 
-		return organizationStrategicInitiative;
+		return this.withTeamIds(organizationStrategicInitiative);
 	}
 
 	/**
@@ -245,12 +322,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		const project = await this._typeOrmOrganizationProjectRepository.findOne({
 			where: { id: projectId, tenantId },
 			relations: {
-                organizationStrategicInitiatives: {
-                    projects: {
-                        teams: true
-                    }
-                }
-            }
+				organizationStrategicInitiatives: {
+					teams: true,
+					projects: {
+						teams: true
+					}
+				}
+			}
 		});
 
 		if (!project) {
@@ -266,9 +344,16 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		const hasLeadership = await this.hasLeadershipAccess();
 
 		// Filter by visibility (no extra queries)
-		return organizationStrategicInitiatives.filter((initiative) =>
-			this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership)
-		);
+		return organizationStrategicInitiatives
+			.filter((initiative) =>
+				this.canViewOrganizationStrategicInitiativeSync(
+					initiative,
+					currentEmployeeId,
+					employeeTeamIds,
+					hasLeadership
+				)
+			)
+			.map((initiative) => this.withTeamIds(initiative));
 	}
 
 	/**
@@ -396,7 +481,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				return hasLeadershipAccess;
 
 			case OrganizationStrategicVisibilityScopeEnum.TEAM:
-				// Check if employee is a member of any team linked to associated projects (using pre-loaded data)
+				// A member of a team linked directly, or of a team of an associated project (pre-loaded data)
 				return this.isTeamMemberOfAssociatedProjectsSync(organizationStrategicInitiative, employeeTeamIds);
 
 			default:
@@ -416,7 +501,16 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		organizationStrategicInitiative: IOrganizationStrategicInitiative,
 		employeeTeamIds: Set<ID>
 	): boolean {
-		if (!organizationStrategicInitiative.projects?.length || employeeTeamIds.size === 0) {
+		if (employeeTeamIds.size === 0) {
+			return false;
+		}
+
+		// A team linked to the initiative directly
+		if (organizationStrategicInitiative.teams?.some((team) => employeeTeamIds.has(team.id))) {
+			return true;
+		}
+
+		if (!organizationStrategicInitiative.projects?.length) {
 			return false;
 		}
 
@@ -523,19 +617,15 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			if (!employeeId) {
 				return false;
 			}
-			// Load the organization strategic initiative with its projects and their teams
+			// Load the organization strategic initiative with its directly linked teams, projects and their teams
 			const organizationStrategicInitiativeWithProjects = await this.findOneByOptions({
 				where: { id: organizationStrategicInitiative.id },
-				relations: ['projects', 'projects.teams']
+				relations: ['teams', 'projects', 'projects.teams']
 			});
 
-			if (!organizationStrategicInitiativeWithProjects?.projects?.length) {
-				return false;
-			}
-
-			// Collect all team IDs from associated projects
-			const teamIds: ID[] = [];
-			for (const project of organizationStrategicInitiativeWithProjects.projects) {
+			// Collect the directly linked teams and the teams of the associated projects
+			const teamIds: ID[] = (organizationStrategicInitiativeWithProjects?.teams ?? []).map((team) => team.id);
+			for (const project of organizationStrategicInitiativeWithProjects?.projects ?? []) {
 				if (project.teams?.length) {
 					teamIds.push(...project.teams.map((team) => team.id));
 				}
@@ -559,5 +649,60 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			console.error('Error checking team membership for initiative:', error.message);
 			return false;
 		}
+	}
+
+	/**
+	 * Fills `teamIds` from the loaded `teams`, so every read answers the identifiers of the directly linked
+	 * teams (REST and GraphQL alike).
+	 *
+	 * @param initiative - The initiative as read.
+	 * @returns The same initiative.
+	 */
+	private withTeamIds<T extends IOrganizationStrategicInitiative>(
+		initiative: T
+	): T & IOrganizationStrategicInitiativeRead {
+		if (initiative && Array.isArray(initiative.teams)) {
+			(initiative as T & IOrganizationStrategicInitiativeRead).teamIds = initiative.teams.map((team) => team.id);
+		}
+		return initiative as T & IOrganizationStrategicInitiativeRead;
+	}
+
+	/**
+	 * Resolves the directly linked teams an initiative write states, by identifier. Every identifier must name a
+	 * team of the initiative's organization in the caller's tenant: a team of another organization or tenant is
+	 * refused rather than linked.
+	 *
+	 * @param teamIds - The stated identifiers; `undefined` when the write does not touch the teams.
+	 * @param organizationId - The initiative's organization.
+	 * @param tenantId - The initiative's tenant.
+	 * @returns The teams to link (an empty list unlinks them all), or `undefined` to leave them as they are.
+	 * @throws {BadRequestException} When an identifier names no team of the organization.
+	 */
+	private async resolveTeams(
+		teamIds: ID[] | undefined,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<OrganizationTeam[] | undefined> {
+		if (teamIds === undefined || teamIds === null) {
+			return undefined;
+		}
+		if (!Array.isArray(teamIds)) {
+			throw new BadRequestException('teamIds must be a list of team identifiers.');
+		}
+		const ids = [...new Set(teamIds)];
+		if (ids.length === 0) {
+			return [];
+		}
+		if (!organizationId || !tenantId) {
+			throw new BadRequestException('The teams of an initiative are read in its organization and tenant.');
+		}
+		const teams = await this.typeOrmRepository.manager.find(OrganizationTeam, {
+			where: { id: In(ids), organizationId, tenantId },
+			select: { id: true }
+		});
+		if (teams.length !== ids.length) {
+			throw new BadRequestException("Every linked team must be a team of the initiative's organization.");
+		}
+		return ids.map((id) => ({ id }) as OrganizationTeam);
 	}
 }

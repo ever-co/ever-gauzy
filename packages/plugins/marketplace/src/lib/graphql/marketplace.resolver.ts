@@ -1,5 +1,5 @@
 import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { applyDecorators, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import type { ID as Id, ISellerPayoutRunResult } from '@gauzy/contracts';
 import {
@@ -67,20 +67,7 @@ import {
 	SellerTransactionType,
 	SellerType
 } from './marketplace.types';
-
-/**
- * The codes a payout, payout-line or settlement field requires: the endpoint, the marketplace and its
- * payouts, which is what `SellerPayoutController`, `SellerPayoutLineController` and
- * `SellerSettlementController` require of their routes — and `sellerStatement`, which carries the
- * seller's payouts and settlements, as `GET /sellers/:id/statement` does. A field-level statement replaces the class's
- * codes for that field, so all three are stated here.
- */
-const MarketplacePayoutsGate = () =>
-	applyDecorators(
-		FeatureFlag(FEATURE_GRAPHQL),
-		FeatureFlag(MarketplaceFeatures.MARKETPLACE),
-		FeatureFlag(MarketplaceFeatures.PAYOUTS)
-	);
+import { MarketplacePayoutsGate } from './marketplace-gates';
 
 /**
  * The marketplace in GraphQL, with the parity the REST surface has.

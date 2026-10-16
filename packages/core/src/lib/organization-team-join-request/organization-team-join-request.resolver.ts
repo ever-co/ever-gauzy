@@ -301,8 +301,8 @@ export class OrganizationTeamJoinRequestResolver {
 	 * The delivered method answers nothing at all — its own signature is `void` — so this field answers
 	 * whether the call ran, which is the most the route's answer carries. That is not a statement that
 	 * the request moved: the delivered move is conditional, and leaves the row exactly as it was when
-	 * the applicant is already a member of the team, or when the address has no employee record in the
-	 * tenant. A caller that needs the row as it now stands reads it back through the connection above.
+	 * the address has no employee record in the tenant. A caller that needs the row as it now stands
+	 * reads it back through the connection above.
 	 */
 	@Mutation('acceptOrganizationTeamJoinRequest')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)

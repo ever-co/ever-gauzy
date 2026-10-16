@@ -1,13 +1,26 @@
-<nb-card>
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="closeDialog()"></i
-		></span>
-		<h5 class="title">
-			{{ 'INVITE_PAGE.' + invitationType + '.HEADER' | translate }}
-		</h5>
+<nb-card class="invite-dialog">
+	<nb-card-header class="invite-header">
+		<div class="header-icon" aria-hidden="true">
+			<nb-icon icon="email-outline" pack="eva"></nb-icon>
+		</div>
+		<div class="header-text">
+			<h5 class="title">
+				{{ 'INVITE_PAGE.' + invitationType + '.HEADER' | translate }}
+			</h5>
+			<p class="subtitle">
+				{{ 'INVITE_PAGE.' + invitationType + '.DESCRIPTION' | translate }}
+			</p>
+		</div>
+		<button
+			type="button"
+			class="close-button"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="closeDialog()"
+		>
+			<nb-icon icon="close-outline" pack="eva"></nb-icon>
+		</button>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="invite-body">
 		<ga-email-invite-form
 			#emailInviteForm
 			[organizationProjects]="organizationProjects"
@@ -17,18 +30,29 @@
 			[invitationType]="invitationType"
 		></ga-email-invite-form>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button class="mr-2" status="basic" outline (click)="closeDialog()" nbButton>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button
-			class="mr-2"
-			[disabled]="emailInviteForm.form.invalid"
-			status="success"
-			(click)="add()"
-			nbButton
-		>
-			{{ 'INVITE_PAGE.' + invitationType + '.ACTION' | translate }}
-		</button>
+	<nb-card-footer class="invite-footer">
+		<span class="recipient-count" [class.has-recipients]="emailInviteForm.emails.size > 0">
+			<nb-icon icon="people-outline" pack="eva"></nb-icon>
+			@if (emailInviteForm.emails.size > 0) {
+				{{ 'INVITE_PAGE.FORM.RECIPIENT_COUNT' | translate: { count: emailInviteForm.emails.size } }}
+			} @else {
+				{{ 'INVITE_PAGE.FORM.NO_RECIPIENTS' | translate }}
+			}
+		</span>
+		<div class="actions">
+			<button type="button" nbButton ghost status="basic" (click)="closeDialog()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				type="button"
+				nbButton
+				status="primary"
+				[disabled]="emailInviteForm.form.invalid"
+				(click)="add()"
+			>
+				<nb-icon icon="paper-plane-outline" pack="eva"></nb-icon>
+				{{ 'INVITE_PAGE.' + invitationType + '.ACTION' | translate }}
+			</button>
+		</div>
 	</nb-card-footer>
 </nb-card>

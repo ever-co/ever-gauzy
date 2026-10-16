@@ -152,6 +152,12 @@ export {
 } from './lib/organization-vendor';
 
 export * from './lib/employee';
+export {
+	EmployeeAgentProfile,
+	EmployeeAgentProfileModule,
+	EmployeeAgentProfileService,
+	pickAgentProfileInput
+} from './lib/employee-agent-profile';
 export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, TaskUpdateCommand } from './lib/tasks';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';
@@ -186,10 +192,13 @@ export {
 	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
+export type { IIntegrationSyncCompletion } from './lib/integration-tenant';
 export {
+	INTEGRATION_TENANT_SYNCED,
 	IntegrationTenantGetCommand,
 	IntegrationTenantModule,
 	IntegrationTenantService,
+	IntegrationTenantSyncService,
 	IntegrationTenantUpdateOrCreateCommand
 } from './lib/integration-tenant';
 

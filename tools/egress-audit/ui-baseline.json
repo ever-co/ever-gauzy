@@ -11227,6 +11227,150 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "the same sidebar or footer link as on every other page, on a record-view route the walk opens since the route list was regenerated after #10254"
+		},
+		{
+			"route": "/pages/goals/initiatives",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/goals/initiatives/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #10779 (Goals → Initiatives pages) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works/:integrationTenantId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works/:integrationTenantId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works/:integrationTenantId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works/:integrationTenantId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works/:integrationTenantId",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/ever-works/:integrationTenantId",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
 		}
 	]
 }

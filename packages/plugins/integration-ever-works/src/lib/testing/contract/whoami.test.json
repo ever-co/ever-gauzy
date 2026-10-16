@@ -1,0 +1,35 @@
+{
+	"keyId": "3bf3b5d7-9eaf-4be8-8c13-8e9fabbccdde",
+	"keyName": "Ever Gauzy — Acme",
+	"integrationKind": "ever-gauzy",
+	"tenant": {
+		"id": "7c1e9a52-3b0d-4c8e-9f21-5d6a7b8c9d01",
+		"slug": "ruslan"
+	},
+	"organizations": [
+		{
+			"id": "0f4b2c6d-8e1a-4b3c-9d5e-6f7a8b9c0d12",
+			"slug": "acme",
+			"displayName": "Acme Inc."
+		}
+	],
+	"scopes": [
+		"org:read",
+		"members:read",
+		"agents:read",
+		"teams:read",
+		"teams:write",
+		"works:read",
+		"tasks:read",
+		"tasks:write",
+		"events:read",
+		"webhooks:manage",
+		"links:write"
+	],
+	"apiVersion": "1",
+	"feedHead": "102952",
+	"limits": {
+		"readsPerMin": 3000,
+		"writesPerMin": 600
+	}
+}

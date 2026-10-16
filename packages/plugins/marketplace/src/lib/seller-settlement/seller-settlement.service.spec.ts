@@ -197,7 +197,11 @@ function settlementFixture(seed: { settlements?: Row[]; transactions?: Row[] } =
 	};
 	const appended: any[] = [];
 
-	const manager: any = { transaction: async (run: (transactional: any) => Promise<any>) => await run(manager) };
+	const manager: any = {
+		transaction: async (run: (transactional: any) => Promise<any>) => await run(manager),
+		// A settlement is saved through the transaction its fact is appended in, onto the same table.
+		save: async (_entity: unknown, entityRow: Row) => await settlementRepository.save(entityRow)
+	};
 	const settlementRepository: any = {
 		manager,
 		create: (partial: Row) => ({ ...partial }),

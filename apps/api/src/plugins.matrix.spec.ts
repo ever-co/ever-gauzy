@@ -13,13 +13,17 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-auth-zitadel' &&
 		name !== '@gauzy/plugin-auth-keycloak' &&
 		name !== '@gauzy/plugin-ever-stats' &&
-		name !== '@gauzy/plugin-ever-connect'
+		name !== '@gauzy/plugin-ever-connect' &&
+		name !== '@gauzy/plugin-integration-ever-works' &&
+		name !== '@gauzy/plugin-inbox'
 );
 
 class AuthZitadelPlugin {}
 class AuthKeycloakPlugin {}
 class EverStatsPlugin {}
 class EverConnectPlugin {}
+class IntegrationEverWorksPlugin {}
+class InboxPlugin {}
 
 /** A stand-in plugin class; `init()` mimics the configurable plugins. */
 function stubPluginClass() {
@@ -60,6 +64,14 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-ever-connect', () => ({
 				EverConnectPlugin,
 				isEverConnectEnabled: jest.requireActual('../../../packages/plugins/ever-connect/src/lib/ever-connect-enabled').isEverConnectEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-ever-works', () => ({
+				IntegrationEverWorksPlugin,
+				isEverWorksEnabled: jest.requireActual('../../../packages/plugins/integration-ever-works/src/lib/ever-works-enabled').isEverWorksEnabled
+			}));
+			jest.doMock('@gauzy/plugin-inbox', () => ({
+				InboxPlugin,
+				isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled
 			}));
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			plugins = require('./plugins').plugins;
@@ -158,6 +170,86 @@ describe('API plugin list: Ever Platform connection', () => {
 				zitadel,
 				keycloak
 			]);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Ever Works integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1],
+		['yes', 'yes', false, 1]
+	])('EVER_WORKS_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ EVER_WORKS_ENABLED: value });
+			expect(plugins.includes(IntegrationEverWorksPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('EVER_WORKS_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	// Independent of the other optional plugins: each switch loads exactly its own.
+	it.each([
+		[false, false],
+		[false, true],
+		[true, false],
+		[true, true]
+	])('Ever Works %s, Ever Platform connection %s', (works, connect) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({
+				EVER_WORKS_ENABLED: works ? 'true' : undefined,
+				EVER_CONNECT_ENABLED: connect ? 'true' : undefined
+			});
+			expect([plugins.includes(IntegrationEverWorksPlugin), plugins.includes(EverConnectPlugin)]).toEqual([works, connect]);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Inbox', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1],
+		['yes', 'yes', false, 1]
+	])('GAUZY_INBOX_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ GAUZY_INBOX_ENABLED: value });
+			expect(plugins.includes(InboxPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('GAUZY_INBOX_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	// Independent of the Ever Works integration (which feeds it when both are on).
+	it.each([
+		[false, false],
+		[false, true],
+		[true, false],
+		[true, true]
+	])('Inbox %s, Ever Works %s', (inbox, works) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({
+				GAUZY_INBOX_ENABLED: inbox ? 'true' : undefined,
+				EVER_WORKS_ENABLED: works ? 'true' : undefined
+			});
+			expect([plugins.includes(InboxPlugin), plugins.includes(IntegrationEverWorksPlugin)]).toEqual([inbox, works]);
 		} finally {
 			warn.mockRestore();
 		}

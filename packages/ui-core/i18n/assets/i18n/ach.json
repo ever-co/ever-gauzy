@@ -734,6 +734,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "crwdns11507:0crwdne11507:0"
 	},
 	"MENU": {
+		"INITIATIVES": "Initiatives",
 		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
 		"DASHBOARD": "crwdns174:0crwdne174:0",
@@ -1835,6 +1836,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Kind",
+		"KIND_ALL": "All",
+		"KIND_HUMAN": "People",
+		"KIND_AGENT": "Agents",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Managed by Ever Works: this agent's name and profile are changed in Ever Works and synced to Gauzy.",
+		"MANAGED_EXTERNALLY": "Managed externally: this agent's name and profile are changed in the system it comes from and synced to Gauzy.",
+		"OPEN_MANAGED_AGENT": "Open agent page",
 		"HEADER": "crwdns10268:0crwdne10268:0",
 		"ADD_EMPLOYEE": "crwdns220:0crwdne220:0",
 		"ACTIVE": "crwdns222:0crwdne222:0",
@@ -1971,6 +1980,60 @@
 			},
 			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
 			"NO_TASKS_IN_VIEW": "No tasks in this view"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Strategic Initiatives",
+		"SUBTITLE": "The directions your organization has decided to move in, and the goals, projects and teams aligned to them.",
+		"ADD": "Add initiative",
+		"EDIT": "Edit initiative",
+		"EMPTY": "No strategic initiatives yet.",
+		"TITLE": "Title",
+		"STATE": "State",
+		"VISIBILITY": "Visibility",
+		"TEAMS": "Teams",
+		"TEAMS_HINT": "With \"Team\" visibility, members of these teams (and of the teams of aligned projects) can see the initiative.",
+		"PROJECTS": "Projects",
+		"GOALS": "Goals",
+		"CONFIDENCE": "Confidence",
+		"MOMENTUM": "Momentum",
+		"INTENT": "Intent",
+		"INTENT_HINT": "What are we deliberately trying to move forward, and why?",
+		"STEWARD": "Steward",
+		"SIGNALS": "Signals",
+		"KNOWN_RISKS": "Known risks",
+		"KNOWN_RISKS_HINT": "One risk per line",
+		"NOTES": "Notes",
+		"LAST_ASSESSED": "Last assessed",
+		"NO_TEAMS": "No teams linked.",
+		"NO_GOALS": "No goals aligned.",
+		"NO_PROJECTS": "No projects aligned.",
+		"NOT_FOUND": "The initiative was not found, or you cannot see it.",
+		"DELETE_TITLE": "Delete initiative",
+		"DELETE_CONFIRMATION": "Delete the initiative \"{{ name }}\"?",
+		"DELETED": "Initiative \"{{ name }}\" deleted.",
+		"CREATED": "Initiative \"{{ name }}\" created.",
+		"UPDATED": "Initiative \"{{ name }}\" updated.",
+		"STATES": {
+			"DRAFT": "Draft",
+			"ACTIVE": "Active",
+			"RESOLVED": "Resolved",
+			"RETIRED": "Retired"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Leadership",
+			"ORGANIZATION": "Organization",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Low",
+			"MEDIUM": "Medium",
+			"HIGH": "High"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Stalled",
+			"PROGRESSING": "Progressing",
+			"ACCELERATING": "Accelerating"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2505,7 +2568,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "crwdns4764:0crwdne4764:0",
-				"MEMBERS": "crwdns4766:0crwdne4766:0"
+				"MEMBERS": "crwdns4766:0crwdne4766:0",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Details"
+					},
+					"PUBLIC": "Public",
+					"PRIVATE": "Private",
+					"PREFIX": "Task prefix",
+					"MEMBERS_COUNT": "{{ count }} members",
+					"LIVE": "{{ tracking }} tracking now · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} of {{ total }} members",
+					"CREATED": "Created",
+					"UPDATED": "Last updated",
+					"ACTIVE_MEMBERS": "Active members",
+					"ACTIVE_MEMBERS_META": "of {{ total }} members tracked time",
+					"TIME_BY_MEMBER": "Time by member",
+					"TEAM_TASKS": "Team tasks",
+					"NO_TEAM_TASKS": "No tasks assigned to this team",
+					"NO_MEMBERS": "This team has no members yet",
+					"NO_PROJECTS": "No projects linked to this team",
+					"COLUMNS": {
+						"MEMBER": "Member",
+						"ROLE": "Role",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Current task",
+						"TODAY": "Today",
+						"ACTIVITY": "Activity"
+					},
+					"ROLE": {
+						"MANAGER": "Manager",
+						"MEMBER": "Member"
+					},
+					"GENERAL": "General",
+					"SETTINGS": "Settings",
+					"RECORD": "Record",
+					"TEAM_SIZE": "Team size",
+					"COLOR": "Color",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Profile link",
+					"VISIBILITY": "Visibility",
+					"SHARE_PROFILE_VIEW": "Members can see each other's profiles",
+					"REQUIRE_PLAN": "Require a plan to track time",
+					"NOT_FOUND": "This team could not be found",
+					"LOAD_FAILED": "The team could not be loaded",
+					"RETRY": "Try again",
+					"OPEN_TASK_DETAILS": "Show details of {{ title }}",
+					"OPEN_TASK_PAGE": "Open the page of {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Open task page",
+					"UNASSIGNED": "Unassigned",
+					"SHOW_ALL": "Show all",
+					"SHOW_LESS": "Show less",
+					"PROJECTS_CAPTION": "The team's projects and the time worked on each in this period",
+					"NOT_LINKED": "Not linked",
+					"NOT_LINKED_HINT": "Members tracked time on this project, but it is not linked to the team"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -3488,17 +3605,20 @@
 		"USER": {
 			"MANAGE": "crwdns10278:0crwdne10278:0",
 			"HEADER": "crwdns2369:0crwdne2369:0",
-			"ACTION": "crwdns2371:0crwdne2371:0"
+			"ACTION": "crwdns2371:0crwdne2371:0",
+			"DESCRIPTION": "Invite people to join your organization as users. Each recipient receives an email with a secure link to accept."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "crwdns10280:0crwdne10280:0",
 			"HEADER": "crwdns2375:0crwdne2375:0",
-			"ACTION": "crwdns2377:0crwdne2377:0"
+			"ACTION": "crwdns2377:0crwdne2377:0",
+			"DESCRIPTION": "Invite people to join your organization as employees. Each recipient receives an email with a secure link to accept."
 		},
 		"CANDIDATE": {
 			"MANAGE": "crwdns10282:0crwdne10282:0",
 			"HEADER": "crwdns3444:0crwdne3444:0",
-			"ACTION": "crwdns3446:0crwdne3446:0"
+			"ACTION": "crwdns3446:0crwdne3446:0",
+			"DESCRIPTION": "Invite candidates to your hiring pipeline. Each recipient receives an email with a secure link to accept."
 		},
 		"SENT": "crwdns2379:0{{total}}crwdne2379:0",
 		"IGNORED": "crwdns2381:0{{total}}crwdnd2381:0{{ignored}}crwdne2381:0",
@@ -3513,6 +3633,23 @@
 			"TWO_WEEK": "crwdns10569:0crwdne10569:0",
 			"MONTH": "crwdns10571:0crwdne10571:0",
 			"NEVER": "crwdns10573:0crwdne10573:0"
+		},
+		"FORM": {
+			"RECIPIENTS": "Recipients",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "Press Enter after each address to add multiple recipients.",
+			"CLEAR_EMAILS": "Clear all",
+			"ACCESS": "Access",
+			"ACCESS_HINT": "Optional. Choose what new members can access as soon as they join.",
+			"DETAILS": "Invitation details",
+			"RECIPIENT_COUNT": "Recipients: {{count}}",
+			"NO_RECIPIENTS": "No recipients added yet"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Delete invitation",
+			"WARNING": "The invitation for {{ email }} will be permanently deleted and its link will stop working. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete invitation"
 		}
 	},
 	"INVOICES_PAGE": {

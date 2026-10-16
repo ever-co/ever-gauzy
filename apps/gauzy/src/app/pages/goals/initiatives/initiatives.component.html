@@ -1,0 +1,100 @@
+<nb-card class="initiatives">
+	<nb-card-header class="header">
+		<div class="title">
+			<h4>{{ 'STRATEGIC_INITIATIVES.HEADER' | translate }}</h4>
+			<p class="caption">{{ 'STRATEGIC_INITIATIVES.SUBTITLE' | translate }}</p>
+		</div>
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_CREATE]">
+			<button nbButton status="success" size="small" class="action" (click)="edit()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'STRATEGIC_INITIATIVES.ADD' | translate }}
+			</button>
+		</ng-template>
+	</nb-card-header>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
+		@if (!loading && initiatives.length === 0) {
+			<div class="empty">{{ 'STRATEGIC_INITIATIVES.EMPTY' | translate }}</div>
+		} @else {
+			<table class="initiatives-table">
+				<thead>
+					<tr>
+						<th>{{ 'STRATEGIC_INITIATIVES.TITLE' | translate }}</th>
+						<th>{{ 'STRATEGIC_INITIATIVES.STATE' | translate }}</th>
+						<th>{{ 'STRATEGIC_INITIATIVES.VISIBILITY' | translate }}</th>
+						<th>{{ 'STRATEGIC_INITIATIVES.TEAMS' | translate }}</th>
+						<th>{{ 'STRATEGIC_INITIATIVES.PROJECTS' | translate }}</th>
+						<th>{{ 'STRATEGIC_INITIATIVES.CONFIDENCE' | translate }}</th>
+						<th>{{ 'STRATEGIC_INITIATIVES.MOMENTUM' | translate }}</th>
+						<th class="actions"></th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (initiative of initiatives; track initiative.id) {
+						<tr>
+							<td>
+								<a class="link" [routerLink]="['/pages/goals/initiatives', initiative.id]">{{
+									initiative.title
+								}}</a>
+							</td>
+							<td>
+								<span class="badge" [class]="'state-' + initiative.state">
+									{{ 'STRATEGIC_INITIATIVES.STATES.' + (initiative.state | uppercase) | translate }}
+								</span>
+							</td>
+							<td>
+								{{
+									'STRATEGIC_INITIATIVES.VISIBILITY_SCOPES.' +
+										(initiative.visibilityScope | uppercase) | translate
+								}}
+							</td>
+							<td>{{ teamNames(initiative).join(', ') || '—' }}</td>
+							<td>{{ initiative.projects?.length || 0 }}</td>
+							<td>
+								@if (signals(initiative).confidenceLevel; as confidence) {
+									{{
+										'STRATEGIC_INITIATIVES.CONFIDENCE_LEVELS.' + (confidence | uppercase)
+											| translate
+									}}
+								} @else {
+									—
+								}
+							</td>
+							<td>
+								@if (signals(initiative).perceivedMomentum; as momentum) {
+									{{ 'STRATEGIC_INITIATIVES.MOMENTUMS.' + (momentum | uppercase) | translate }}
+								} @else {
+									—
+								}
+							</td>
+							<td class="actions">
+								<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE]">
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										(click)="edit(initiative)"
+										[attr.aria-label]="'BUTTONS.EDIT' | translate"
+									>
+										<nb-icon icon="edit-outline"></nb-icon>
+									</button>
+								</ng-template>
+								<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE]">
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										status="danger"
+										(click)="delete(initiative)"
+										[attr.aria-label]="'BUTTONS.DELETE' | translate"
+									>
+										<nb-icon icon="trash-2-outline"></nb-icon>
+									</button>
+								</ng-template>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+	</nb-card-body>
+</nb-card>

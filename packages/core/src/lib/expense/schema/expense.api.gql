@@ -154,6 +154,16 @@ extend type Mutation {
 	createExpense(input: CreateExpenseInput!): Expense!
 
 	"""
+	Records a batch of costs — each item exactly as `createExpense` records one, its employee's average
+	expense recomputed as a single expense's is — and answers one outcome per item. The batch
+	`POST /expense/bulk` applies, under the same permission and cap (200).
+	A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+	`BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+	so the batch cannot be rolled back as one.
+	"""
+	bulkCreateExpenses(input: BulkCreateExpensesInput!): BulkCreateExpensesPayload!
+
+	"""
 	Changes a cost that exists.
 
 	The delivered edit reaches the same write the create does, carrying the identifier in the path and

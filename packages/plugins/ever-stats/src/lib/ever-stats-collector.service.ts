@@ -186,17 +186,21 @@ export class EverStatsCollector {
 	private async collectNow(query: Query, period: StatsPeriod, now: Date): Promise<CollectedStats> {
 		const d = dialectOf(this.dataSource);
 		const activeSince = new Date(now.getTime() - ACTIVE_USER_DAYS * 86_400_000);
+		// People only: agent employees (`employee.kind = 'agent'`, e.g. Ever Works agents) and the password-less
+		// users behind them are neither employees nor users of the instance in these numbers.
+		const human = `${quote(d, 'kind')} <> 'agent'`;
+		const notAnAgentUser = `NOT EXISTS (SELECT 1 FROM ${quote(d, 'employee')} WHERE ${quote(d, 'employee')}.${quote(d, 'userId')} = ${quote(d, 'user')}.${quote(d, 'id')} AND ${quote(d, 'employee')}.${quote(d, 'kind')} = 'agent')`;
 		const counts = {
 			tenants: await this.countRows(query, d, 'tenant'),
 			organizations: await this.countRows(query, d, 'organization'),
-			users: await this.countRows(query, d, 'user'),
+			users: await this.countRows(query, d, 'user', notAnAgentUser),
 			users_active_30d: await this.countRows(query, d, 'user', `${quote(d, 'lastLoginAt')} > ${placeholder(d, 1)}`, [sqlTimestamp(activeSince)]),
-			employees: await this.countRows(query, d, 'employee'),
+			employees: await this.countRows(query, d, 'employee', human),
 			employees_active: await this.countRows(
 				query,
 				d,
 				'employee',
-				`${quote(d, 'isActive')} = ${boolLiteral(d, true)} AND (${quote(d, 'isArchived')} IS NULL OR ${quote(d, 'isArchived')} = ${boolLiteral(d, false)})`
+				`${quote(d, 'isActive')} = ${boolLiteral(d, true)} AND (${quote(d, 'isArchived')} IS NULL OR ${quote(d, 'isArchived')} = ${boolLiteral(d, false)}) AND ${human}`
 			),
 			teams: await this.countRows(query, d, 'organization_team'),
 			projects: await this.countRows(query, d, 'organization_project'),

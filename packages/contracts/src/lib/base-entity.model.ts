@@ -86,10 +86,12 @@ export interface IBasePerEntityType extends IBasePerTenantAndOrganizationEntityM
 	entity: BaseEntityEnum; // The type of the entity, defined in BaseEntityEnum enumeration.
 }
 
-// Actor type defines if it's User or system performed some action
+// Actor type defines who performed some action: the system, a user, or an agent
+// Stored as an integer by `ActorTypeTransformer`: System = 0, User = 1, Agent = 2.
 export enum ActorTypeEnum {
 	System = 'System', // System performed the action
-	User = 'User' // User performed the action
+	User = 'User', // User performed the action
+	Agent = 'Agent' // An agent employee (e.g. an Ever Works agent) performed the action
 }
 
 // BaseEntityEnum defines the type of the entity, used in BaseEntity model
@@ -106,8 +108,12 @@ export enum BaseEntityEnum {
 	Employee = 'Employee',
 	Equipment = 'Equipment',
 	Expense = 'Expense',
+	Goal = 'Goal',
+	InboxEmail = 'InboxEmail',
+	InboxItem = 'InboxItem',
 	Invoice = 'Invoice',
 	Income = 'Income',
+	KeyResult = 'KeyResult',
 	Language = 'Language',
 	Organization = 'Organization',
 	OrganizationContact = 'OrganizationContact',

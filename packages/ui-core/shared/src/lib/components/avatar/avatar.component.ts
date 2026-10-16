@@ -1,8 +1,24 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy, Optional } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ID, IEmployee } from '@gauzy/contracts';
+import { TranslateService } from '@ngx-translate/core';
+import { EmployeeKindEnum, ID, IEmployee } from '@gauzy/contracts';
+
+const AGENT_BADGE_KEY = 'EMPLOYEES_PAGE.AGENT_BADGE';
+
+/**
+ * The agent badge label: the translation of `EMPLOYEES_PAGE.AGENT_BADGE`, or `Agent` while it is not loaded
+ * (or without a translation service).
+ */
+export function agentBadgeLabel(translate?: TranslateService): Observable<string> {
+	if (!translate) {
+		return of('Agent');
+	}
+	return translate
+		.stream(AGENT_BADGE_KEY)
+		.pipe(map((translated: string) => (translated && translated !== AGENT_BADGE_KEY ? translated : 'Agent')));
+}
 
 @Component({
     selector: 'ngx-avatar',
@@ -54,7 +70,24 @@ export class AvatarComponent implements OnInit {
 		return this._name;
 	}
 
-	constructor(private readonly router: Router) {}
+	constructor(
+		private readonly router: Router,
+		@Optional() private readonly translate?: TranslateService
+	) {
+		this.agentLabel$ = agentBadgeLabel(translate);
+	}
+
+	/** Whether the employee is an agent employee (`kind = 'agent'`, e.g. an Ever Works agent). */
+	get isAgent(): boolean {
+		return this.employee?.kind === EmployeeKindEnum.AGENT;
+	}
+
+	/**
+	 * The label of the agent badge, translated when a translation service is available. A stream, created
+	 * once per avatar: it follows the language and the translation file loading, instead of an `instant`
+	 * lookup on every change-detection pass that answers the key while the file is still loading.
+	 */
+	public readonly agentLabel$: Observable<string>;
 
 	ngOnInit() {
 		if (this._employee) {
