@@ -38,7 +38,17 @@ export class EmployeeSettingDataOperationDTO implements IEmployeeSettingDataOper
 	@IsNotEmpty({ each: true })
 	readonly path: string[];
 
-	@ApiPropertyOptional({ description: 'The value a set operation writes (any JSON value, null included).' })
+	@ApiPropertyOptional({
+		description: 'The value a set operation writes: any JSON value, null included.',
+		nullable: true,
+		oneOf: [
+			{ type: 'object', additionalProperties: true },
+			{ type: 'array', items: {} },
+			{ type: 'string' },
+			{ type: 'number' },
+			{ type: 'boolean' }
+		]
+	})
 	@ValidateIf((operation: EmployeeSettingDataOperationDTO) => operation.op === EmployeeSettingDataOperationEnum.SET)
 	// Not `@IsDefined()`, which also refuses null: a set may store an explicit null.
 	@ValidateBy({
