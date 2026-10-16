@@ -372,12 +372,21 @@ describe('ChannelResolver — what channelChanged delivers to one subscriber', (
 		expect(filter(fact())).toBe(true);
 	});
 
-	it('lets the tenant decide when either side has no organization, as Subscription.events does', () => {
+	it('withholds an organization’s channel from a subscriber with no organization, as `channels` does', () => {
+		// `ChannelService` reads with the caller's organization, so a caller with none reads only the
+		// channels stored without one: a missing organization is not a tenant-wide wildcard.
 		as(null);
 
-		expect(filter(fact({ organizationId: SIBLING_ORG }))).toBe(true);
+		expect(filter(fact({ organizationId: SIBLING_ORG }))).toBe(false);
+		expect(filter(fact())).toBe(false);
+	});
 
+	it('delivers a tenant-wide channel, stored without an organization, to every subscriber of the tenant', () => {
 		as(ORG);
+
+		expect(filter(fact({ organizationId: undefined }))).toBe(true);
+
+		as(null);
 
 		expect(filter(fact({ organizationId: undefined }))).toBe(true);
 	});
