@@ -70,6 +70,7 @@ jest.mock('@gauzy/config', () => ({
 	isMySQL: () => false
 }));
 
+import { HttpException } from '@nestjs/common';
 import { ChannelDomain } from './channel-domain.entity';
 import { ChannelDomainService } from './channel-domain.service';
 
@@ -223,6 +224,20 @@ async function refusalOf(call: () => Promise<unknown>): Promise<string | undefin
 		return undefined;
 	} catch (error) {
 		return (error as Error).message;
+	}
+}
+
+/** The HTTP status and the message of the error a call raises, or `undefined` when the call does not raise. */
+async function httpRefusalOf(call: () => Promise<unknown>): Promise<{ status?: number; message: string } | undefined> {
+	try {
+		await call();
+
+		return undefined;
+	} catch (error) {
+		return {
+			status: error instanceof HttpException ? error.getStatus() : undefined,
+			message: (error as Error).message
+		};
 	}
 }
 
@@ -460,9 +475,10 @@ describe('ChannelDomainService — soft delete and recover stay inside the calle
 			domains: [domainRow('domain-1', 'shop.example.com', { organizationId: 'another-org' })]
 		});
 
-		expect(await refusalOf(() => store.service.softRemove('domain-1'))).toMatch(
-			/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/
-		);
+		expect(await httpRefusalOf(() => store.service.softRemove('domain-1'))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/)
+		});
 		expect(store.domain('domain-1')?.deletedAt).toBeUndefined();
 	});
 
@@ -480,9 +496,10 @@ describe('ChannelDomainService — soft delete and recover stay inside the calle
 			domains: [domainRow('domain-1', 'shop.example.com', { organizationId: 'another-org', deletedAt })]
 		});
 
-		expect(await refusalOf(() => store.service.softRecover('domain-1'))).toMatch(
-			/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/
-		);
+		expect(await httpRefusalOf(() => store.service.softRecover('domain-1'))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/)
+		});
 		expect(store.domain('domain-1')?.deletedAt).toBe(deletedAt);
 	});
 

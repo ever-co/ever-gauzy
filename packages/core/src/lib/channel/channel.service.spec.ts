@@ -71,6 +71,7 @@ jest.mock('@gauzy/config', () => ({
 	isMySQL: () => false
 }));
 
+import { HttpException } from '@nestjs/common';
 import { ChannelStatus } from '@gauzy/contracts';
 import { Channel } from './channel.entity';
 import { ChannelService } from './channel.service';
@@ -337,6 +338,20 @@ async function refusalOf(call: () => Promise<unknown>): Promise<string | undefin
 		return undefined;
 	} catch (error) {
 		return (error as Error).message;
+	}
+}
+
+/** The HTTP status and the message of the error a call raises, or `undefined` when the call does not raise. */
+async function httpRefusalOf(call: () => Promise<unknown>): Promise<{ status?: number; message: string } | undefined> {
+	try {
+		await call();
+
+		return undefined;
+	} catch (error) {
+		return {
+			status: error instanceof HttpException ? error.getStatus() : undefined,
+			message: (error as Error).message
+		};
 	}
 }
 
@@ -679,9 +694,10 @@ describe('ChannelService — soft delete and recover stay inside the caller orga
 			channels: [channelRow(CHANNEL, { organizationId: 'another-org' })]
 		});
 
-		expect(await refusalOf(() => channelService.softRemove(CHANNEL))).toMatch(
-			/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/
-		);
+		expect(await httpRefusalOf(() => channelService.softRemove(CHANNEL))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/)
+		});
 		expect(channel()?.deletedAt).toBeUndefined();
 	});
 
@@ -699,9 +715,10 @@ describe('ChannelService — soft delete and recover stay inside the caller orga
 			channels: [channelRow(CHANNEL, { organizationId: 'another-org', deletedAt })]
 		});
 
-		expect(await refusalOf(() => channelService.softRecover(CHANNEL))).toMatch(
-			/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/
-		);
+		expect(await httpRefusalOf(() => channelService.softRecover(CHANNEL))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/)
+		});
 		expect(channel()?.deletedAt).toBe(deletedAt);
 	});
 
