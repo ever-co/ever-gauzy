@@ -255,6 +255,14 @@ export enum PermissionsEnum {
 	ORG_STRATEGIC_INITIATIVE_UPDATE = 'ORG_STRATEGIC_INITIATIVE_UPDATE',
 	ORG_STRATEGIC_INITIATIVE_DELETE = 'ORG_STRATEGIC_INITIATIVE_DELETE',
 	/** Organization Strategic Initiative Permissions End */
+	/** Inbox Permissions Start (@gauzy/plugin-inbox) */
+	/** Read and act on the inbox items addressed to me. */
+	INBOX_VIEW = 'INBOX_VIEW',
+	/** Manage the organization's and teams' mailboxes and provider accounts. */
+	INBOX_MAILBOX_MANAGE = 'INBOX_MAILBOX_MANAGE',
+	/** Read the items of every shared mailbox of the organization (shared-mailbox administrators). */
+	INBOX_MAILBOX_READ_ALL = 'INBOX_MAILBOX_READ_ALL',
+	/** Inbox Permissions End */
 	/** AI Chat Permissions Start */
 	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',
 	AI_CHAT_SETTINGS = 'AI_CHAT_SETTINGS',
@@ -685,6 +693,9 @@ export const PermissionGroups = {
 		/** Organization Strategic Initiative Permissions Start */
 		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 		/** Organization Strategic Initiative Permissions End */
+		/** Inbox Permissions Start */
+		PermissionsEnum.INBOX_VIEW,
+		/** Inbox Permissions End */
 		/** Documents Permissions Start */
 		PermissionsEnum.DOCS_READ,
 		PermissionsEnum.DOCS_CREATE,
@@ -886,6 +897,10 @@ export const PermissionGroups = {
 		/** OAuth App Client Registry */
 		PermissionsEnum.OAUTH_CLIENT_VIEW,
 		PermissionsEnum.OAUTH_CLIENT_EDIT,
+		/** Inbox Permissions Start */
+		PermissionsEnum.INBOX_MAILBOX_MANAGE,
+		PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+		/** Inbox Permissions End */
 		/** Documents Permissions Start */
 		PermissionsEnum.DOCS_DELETE,
 		PermissionsEnum.DOCS_MANAGE,

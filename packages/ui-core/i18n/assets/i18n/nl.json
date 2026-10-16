@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Je moet werknemer zijn om tijd te kunnen bijhouden, kosten te kunnen splitsen en andere functies gerelateerd aan werknemers te kunnen gebruiken."
 	},
 	"MENU": {
+		"INITIATIVES": "Initiatieven",
 		"BREADCRUMB": "Kruimelpad",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
@@ -2097,6 +2098,60 @@
 			},
 			"SHOWING": "{{ shown }} van {{ total }} taken getoond",
 			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Strategische initiatieven",
+		"SUBTITLE": "De richtingen waarin uw organisatie wil bewegen, en de doelen, projecten en teams die daarop zijn afgestemd.",
+		"ADD": "Initiatief toevoegen",
+		"EDIT": "Initiatief bewerken",
+		"EMPTY": "Nog geen strategische initiatieven.",
+		"TITLE": "Titel",
+		"STATE": "Status",
+		"VISIBILITY": "Zichtbaarheid",
+		"TEAMS": "Teams",
+		"TEAMS_HINT": "Bij zichtbaarheid \"Team\" zien de leden van deze teams (en van de teams van gekoppelde projecten) het initiatief.",
+		"PROJECTS": "Projecten",
+		"GOALS": "Doelen",
+		"CONFIDENCE": "Vertrouwen",
+		"MOMENTUM": "Momentum",
+		"INTENT": "Intentie",
+		"INTENT_HINT": "Wat willen we bewust vooruit helpen, en waarom?",
+		"STEWARD": "Verantwoordelijke",
+		"SIGNALS": "Signalen",
+		"KNOWN_RISKS": "Bekende risico's",
+		"KNOWN_RISKS_HINT": "Eén risico per regel",
+		"NOTES": "Notities",
+		"LAST_ASSESSED": "Laatst beoordeeld",
+		"NO_TEAMS": "Geen teams gekoppeld.",
+		"NO_GOALS": "Geen doelen gekoppeld.",
+		"NO_PROJECTS": "Geen projecten gekoppeld.",
+		"NOT_FOUND": "Het initiatief is niet gevonden of u mag het niet zien.",
+		"DELETE_TITLE": "Initiatief verwijderen",
+		"DELETE_CONFIRMATION": "Initiatief \"{{ name }}\" verwijderen?",
+		"DELETED": "Initiatief \"{{ name }}\" verwijderd.",
+		"CREATED": "Initiatief \"{{ name }}\" aangemaakt.",
+		"UPDATED": "Initiatief \"{{ name }}\" bijgewerkt.",
+		"STATES": {
+			"DRAFT": "Concept",
+			"ACTIVE": "Actief",
+			"RESOLVED": "Bereikt",
+			"RETIRED": "Stopgezet"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Leiding",
+			"ORGANIZATION": "Organisatie",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Laag",
+			"MEDIUM": "Gemiddeld",
+			"HIGH": "Hoog"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Stilgevallen",
+			"PROGRESSING": "Vordert",
+			"ACCELERATING": "Versnelt"
 		}
 	},
 	"GOALS_PAGE": {

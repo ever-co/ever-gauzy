@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "您必须成为公司职员才能够追踪时间、创建分摊费用以及使用其他与员工相关的功能。"
 	},
 	"MENU": {
+		"INITIATIVES": "举措",
 		"BREADCRUMB": "面包屑导航",
 		"PIPELINES": "管道",
 		"DASHBOARD": "仪表盘",
@@ -2097,6 +2098,60 @@
 			},
 			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
 			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "战略举措",
+		"SUBTITLE": "组织决定前进的方向，以及与之对齐的目标、项目和团队。",
+		"ADD": "添加举措",
+		"EDIT": "编辑举措",
+		"EMPTY": "暂无战略举措。",
+		"TITLE": "标题",
+		"STATE": "状态",
+		"VISIBILITY": "可见性",
+		"TEAMS": "团队",
+		"TEAMS_HINT": "可见性为“团队”时，这些团队（以及对齐项目的团队）的成员可以查看该举措。",
+		"PROJECTS": "项目",
+		"GOALS": "目标",
+		"CONFIDENCE": "信心",
+		"MOMENTUM": "势头",
+		"INTENT": "意图",
+		"INTENT_HINT": "我们有意推动什么，为什么？",
+		"STEWARD": "负责人",
+		"SIGNALS": "信号",
+		"KNOWN_RISKS": "已知风险",
+		"KNOWN_RISKS_HINT": "每行一个风险",
+		"NOTES": "备注",
+		"LAST_ASSESSED": "上次评估",
+		"NO_TEAMS": "未关联团队。",
+		"NO_GOALS": "未对齐目标。",
+		"NO_PROJECTS": "未对齐项目。",
+		"NOT_FOUND": "未找到该举措，或您无权查看。",
+		"DELETE_TITLE": "删除举措",
+		"DELETE_CONFIRMATION": "删除举措“{{ name }}”？",
+		"DELETED": "举措“{{ name }}”已删除。",
+		"CREATED": "举措“{{ name }}”已创建。",
+		"UPDATED": "举措“{{ name }}”已更新。",
+		"STATES": {
+			"DRAFT": "草稿",
+			"ACTIVE": "进行中",
+			"RESOLVED": "已达成",
+			"RETIRED": "已停止"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "管理层",
+			"ORGANIZATION": "组织",
+			"TEAM": "团队"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "低",
+			"MEDIUM": "中",
+			"HIGH": "高"
+		},
+		"MOMENTUMS": {
+			"STALLED": "停滞",
+			"PROGRESSING": "推进中",
+			"ACCELERATING": "加速中"
 		}
 	},
 	"GOALS_PAGE": {

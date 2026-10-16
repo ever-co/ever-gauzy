@@ -347,8 +347,10 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 			.createQueryBuilder()
 			.update(TimeOffBalance)
 			.set({
-				taken: () => takenExpression,
-				remaining: () => p(`"accrued" + "carriedForward" - (${takenExpression}) - "carriedOut"`)
+				// `remaining` goes first: MySQL evaluates single-table SET assignments left to right, so
+				// after `taken` it would read the new `taken` and count the days twice.
+				remaining: () => p(`"accrued" + "carriedForward" - (${takenExpression}) - "carriedOut"`),
+				taken: () => takenExpression
 			})
 			.where(
 				p(

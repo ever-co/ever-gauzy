@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Skill } from './skill.entity';
+import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MultiORMEnum } from './../core/utils';
@@ -13,15 +14,17 @@ export class SkillService extends TenantAwareCrudService<Skill> {
 	}
 
 	/**
-	 * Finds a skill by its name.
+	 * Finds a skill of the current tenant by its name.
 	 *
 	 * @param {string} name - The name of the skill to retrieve.
 	 * @returns {Promise<Skill | null>} - A promise resolving to the skill entity if found, or `null` if not found.
 	 */
 	async findOneByName(name: string): Promise<Skill | null> {
+		const tenantId = RequestContext.currentTenantId();
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const item = await this.mikroOrmRepository.findOne({ name } as any);
+				const item = await this.mikroOrmRepository.findOne({ name, tenantId } as any);
 				return item ? (this.serialize(item) as Skill) : null;
 			}
 			case MultiORMEnum.TypeORM:
@@ -29,6 +32,7 @@ export class SkillService extends TenantAwareCrudService<Skill> {
 				return await this.typeOrmRepository
 					.createQueryBuilder('skill')
 					.where(p(`"skill"."name" = :name`), { name })
+					.andWhere(p(`"skill"."tenantId" = :tenantId`), { tenantId })
 					.getOne();
 		}
 	}

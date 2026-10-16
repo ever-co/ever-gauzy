@@ -93,10 +93,8 @@ const SKILL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The delivered name route is folded into the connection's filter.** It reads one skill by its
  * name and joins nothing the list read does not, so a `name` filter answers the same row the route
- * does. One difference is stated rather than hidden: the delivered route builds its own query and
- * names no tenant in it, so it can answer a skill of another tenant, while this connection narrows
- * the tenant-scoped list read. The filter is therefore narrower than that one route, and reproducing
- * the wider read would mean handing this surface a cross-tenant one on purpose.
+ * does. Both read the caller's tenant only: the route scopes its own query by that tenant, and this
+ * connection narrows the tenant-scoped list read.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one

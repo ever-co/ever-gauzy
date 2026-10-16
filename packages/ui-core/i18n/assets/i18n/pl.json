@@ -836,6 +836,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Musisz być pracownikiem, aby móc śledzić czas, tworzyć podziały kosztów i korzystać z innych funkcji związanych z pracownikami"
 	},
 	"MENU": {
+		"INITIATIVES": "Inicjatywy",
 		"BREADCRUMB": "Ścieżka nawigacji",
 		"PIPELINES": "Rurociągi",
 		"DASHBOARD": "Dashboard",
@@ -2096,6 +2097,60 @@
 			},
 			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
 			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Inicjatywy strategiczne",
+		"SUBTITLE": "Kierunki, w których Twoja organizacja postanowiła się rozwijać, oraz powiązane z nimi cele, projekty i zespoły.",
+		"ADD": "Dodaj inicjatywę",
+		"EDIT": "Edytuj inicjatywę",
+		"EMPTY": "Brak inicjatyw strategicznych.",
+		"TITLE": "Tytuł",
+		"STATE": "Stan",
+		"VISIBILITY": "Widoczność",
+		"TEAMS": "Zespoły",
+		"TEAMS_HINT": "Przy widoczności „Zespół” inicjatywę widzą członkowie tych zespołów (oraz zespołów powiązanych projektów).",
+		"PROJECTS": "Projekty",
+		"GOALS": "Cele",
+		"CONFIDENCE": "Pewność",
+		"MOMENTUM": "Dynamika",
+		"INTENT": "Intencja",
+		"INTENT_HINT": "Co świadomie chcemy posunąć naprzód i dlaczego?",
+		"STEWARD": "Opiekun",
+		"SIGNALS": "Sygnały",
+		"KNOWN_RISKS": "Znane ryzyka",
+		"KNOWN_RISKS_HINT": "Jedno ryzyko w wierszu",
+		"NOTES": "Notatki",
+		"LAST_ASSESSED": "Ostatnia ocena",
+		"NO_TEAMS": "Brak powiązanych zespołów.",
+		"NO_GOALS": "Brak powiązanych celów.",
+		"NO_PROJECTS": "Brak powiązanych projektów.",
+		"NOT_FOUND": "Nie znaleziono inicjatywy lub nie masz do niej dostępu.",
+		"DELETE_TITLE": "Usuń inicjatywę",
+		"DELETE_CONFIRMATION": "Usunąć inicjatywę „{{ name }}”?",
+		"DELETED": "Usunięto inicjatywę „{{ name }}”.",
+		"CREATED": "Utworzono inicjatywę „{{ name }}”.",
+		"UPDATED": "Zaktualizowano inicjatywę „{{ name }}”.",
+		"STATES": {
+			"DRAFT": "Szkic",
+			"ACTIVE": "Aktywna",
+			"RESOLVED": "Zrealizowana",
+			"RETIRED": "Wycofana"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Kierownictwo",
+			"ORGANIZATION": "Organizacja",
+			"TEAM": "Zespół"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Niska",
+			"MEDIUM": "Średnia",
+			"HIGH": "Wysoka"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Zastój",
+			"PROGRESSING": "Postępuje",
+			"ACCELERATING": "Przyspiesza"
 		}
 	},
 	"GOALS_PAGE": {
