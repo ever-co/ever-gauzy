@@ -495,18 +495,23 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (!this._domainEventBus) {
 			return;
 		}
+		const logFailure = (error: unknown) =>
+			console.error(`Failed to publish the deleted event of task ${task?.id}:`, (error as Error)?.message);
 		try {
 			const ctx = RequestContext.currentRequestContext();
 			const { tenantId, organizationId, projectId } = task;
-			this._domainEventBus.publish(
-				new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
-					tenantId,
-					organizationId,
-					projectId
-				} as ITaskUpdateInput)
-			);
+			// `publish` is async: a rejection is caught here as well, never left unhandled after the delete.
+			Promise.resolve(
+				this._domainEventBus.publish(
+					new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
+						tenantId,
+						organizationId,
+						projectId
+					} as ITaskUpdateInput)
+				)
+			).catch(logFailure);
 		} catch (error) {
-			console.error(`Failed to publish the deleted event of task ${task?.id}:`, error?.message);
+			logFailure(error);
 		}
 	}
 

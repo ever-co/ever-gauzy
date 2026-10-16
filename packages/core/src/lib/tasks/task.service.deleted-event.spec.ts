@@ -125,6 +125,27 @@ describe('TaskService — TaskEvent DELETED', () => {
 		expect(log).toHaveBeenCalled();
 	});
 
+	it('never leaves a rejected publish unhandled after the delete', async () => {
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		publish.mockRejectedValue(new Error('subscriber rejected'));
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
+		const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		const unhandled = jest.fn();
+		process.on('unhandledRejection', unhandled);
+
+		try {
+			await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
+			// Let the rejected publish settle, then give Node's unhandled-rejection tracking a turn.
+			await new Promise((resolve) => setImmediate(resolve));
+			await new Promise((resolve) => setImmediate(resolve));
+
+			expect(log).toHaveBeenCalledWith(expect.stringContaining('task-1'), 'subscriber rejected');
+			expect(unhandled).not.toHaveBeenCalled();
+		} finally {
+			process.off('unhandledRejection', unhandled);
+		}
+	});
+
 	it('works without the domain event bus (a service built by hand)', async () => {
 		signIn([PermissionsEnum.ORG_TASK_DELETE]);
 		Object.assign(service, { _domainEventBus: undefined });
