@@ -292,6 +292,46 @@ describe('EverWorksProjectsService — create in Ever Works (G-P2-5)', () => {
 		expect(postsOf(mock)[0].headers['x-act-as-user']).toBe('ew-ann');
 	});
 
+	it("when Ever Works refuses the admin's user (403 act_as_forbidden), the work is created as the integration under its own key", async () => {
+		const { service, mock, addLink, links, projects, employees } = setup();
+		projects.push({ id: 'p1', organizationId: 'o1', name: 'Portal' });
+		employees.push({ id: 'e-ann', userId: 'u-ann', organizationId: 'o1' });
+		addLink(EverWorksLinkType.MEMBER, 'e-ann', 'ew-ann');
+		(RequestContext.currentUserId as unknown as jest.Mock).mockReturnValue('u-ann');
+		mock.fail({
+			method: 'POST',
+			path: '/works',
+			status: 403,
+			body: MockEverWorksServer.error(403, 'act_as_forbidden', 'Not a member.').data
+		});
+		const view = await service.decide('m1' as never, { createInEverWorks: ['p1'] as never });
+		expect(view.failures).toBeUndefined();
+		const [refused, fallback] = postsOf(mock);
+		expect(refused.headers['x-act-as-user']).toBe('ew-ann');
+		expect(fallback.headers['x-act-as-user']).toBeUndefined();
+		expect(fallback.headers['idempotency-key']).not.toBe(refused.headers['idempotency-key']);
+		const workLinks = links.filter((l) => l['entityType'] === EverWorksLinkType.PROJECT_WORK);
+		expect(workLinks).toHaveLength(1);
+		expect(workLinks[0]['gauzyId']).toBe('p1');
+	});
+
+	it('an Ever Works outage after the creates still returns their results (the view falls back to the first list)', async () => {
+		const { service, mock, links, projects } = setup();
+		projects.push({ id: 'p1', organizationId: 'o1', name: 'Portal' });
+		let lists = 0;
+		const handle = mock.handle.bind(mock);
+		jest.spyOn(mock, 'handle').mockImplementation(async (request) => {
+			if (request.method === 'GET' && request.url.includes('/works') && ++lists === 2)
+				throw new Error('connect ECONNREFUSED');
+			return handle(request);
+		});
+		const view = await service.decide('m1' as never, { createInEverWorks: ['p1'] as never });
+		const link = links.find((l) => l['entityType'] === EverWorksLinkType.PROJECT_WORK);
+		expect(link?.['gauzyId']).toBe('p1');
+		expect(view.works.find((row) => row.ewWorkId === link?.['ewId'])?.linkedProjectId).toBe('p1');
+		expect(view.unmatchedProjects.map((p) => p.projectId)).not.toContain('p1');
+	});
+
 	it('Ever Works with project works switched off: the reason is reported, nothing is linked, and a retry works once it is on', async () => {
 		const { service, mock, works, links, projects } = setup({ projectWorksEnabled: false });
 		projects.push({ id: 'p1', organizationId: 'o1', name: 'Portal' });
