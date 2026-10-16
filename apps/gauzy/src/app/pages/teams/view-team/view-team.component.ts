@@ -103,6 +103,21 @@ interface IMemberFigures {
 	today: number;
 }
 
+/** An assignee, as their avatar and its hover card show them. */
+interface ITaskPerson {
+	id: string;
+	name: string;
+	initials: string;
+	avatarUrl?: string;
+	email?: string;
+	/** Live presence, as the dot on the card's photo and the line under the name. */
+	presence: 'tracking' | 'online' | 'away' | 'offline';
+	/** Their short description, from the profile. */
+	bio?: string;
+	/** "Oct 12, 2025": when they started working, if set. */
+	since?: string;
+}
+
 /** A team task as the Team tasks panel lists it. */
 interface ITeamTaskRow {
 	/** The task as the list loaded it — what the quick look opens with before its full read lands. */
@@ -121,7 +136,7 @@ interface ITeamTaskRow {
 	priority?: string;
 	priorityLevel?: 'urgent' | 'high' | 'medium' | 'low';
 	/** Assignees as avatars; the first few are drawn, the rest counted. */
-	people: { name: string; initials: string; avatarUrl?: string }[];
+	people: ITaskPerson[];
 	/** Names behind the "+N" avatar. */
 	moreNames?: string;
 	/** The due date written out in full (weekday included), for its tooltip. */
@@ -920,10 +935,15 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			.map((member) => {
 				const name = ViewTeamComponent.nameOf(member);
 				return {
+					id: member.id,
 					name,
 					initials: ViewTeamComponent.initialsOf(name),
-					avatarUrl: member.user?.image?.fullUrl || member.user?.imageUrl || undefined
-				};
+					avatarUrl: member.user?.image?.fullUrl || member.user?.imageUrl || undefined,
+					email: member.user?.email,
+					presence: ViewTeamComponent.presenceOf(member as IEmployee),
+					bio: member.short_description?.trim() || undefined,
+					since: member.startedWorkOn ? moment(member.startedWorkOn).format('ll') : undefined
+				} as ITaskPerson;
 			})
 			.filter((person) => !!person.name);
 		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
