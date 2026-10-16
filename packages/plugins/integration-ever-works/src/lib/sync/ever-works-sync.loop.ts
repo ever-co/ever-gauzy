@@ -24,6 +24,15 @@ export function describeSyncError(error: unknown): string {
 	return message ? `${error.name}: ${message}` : error.name;
 }
 
+/**
+ * A periodic pass a handler runs for a connection the loop holds (e.g. the team membership sweep): due
+ * every `sweepIntervalMs`, after the inbound and outbound drains, under the same lease.
+ */
+export interface EverWorksSyncSweeper {
+	readonly sweepIntervalMs: number;
+	sweep(connection: EverWorksConnection): Promise<void>;
+}
+
 /** How often a process looks for work. */
 export const SYNC_TICK_MS = 5_000;
 /** How long a lease on a connection lasts; renewed during the work, and the work stops once it is lost. */
@@ -48,6 +57,8 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 	private timer: NodeJS.Timeout | null = null;
 	private running = false;
 	private lastPrune = 0;
+	private readonly sweepers: EverWorksSyncSweeper[] = [];
+	private readonly lastSweep = new Map<string, number>();
 	private readonly env: Record<string, string | undefined>;
 
 	constructor(
@@ -59,6 +70,11 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		@Optional() @Inject(EVER_WORKS_ENV) env?: Record<string, string | undefined>
 	) {
 		this.env = env ?? process.env;
+	}
+
+	/** Registers a periodic sweep (run per connection, under its lease). */
+	registerSweeper(sweeper: EverWorksSyncSweeper): void {
+		this.sweepers.push(sweeper);
 	}
 
 	onApplicationBootstrap(): void {
@@ -134,6 +150,13 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner, this.owner);
 		if (!(await stillOwner())) return;
 		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner);
+		for (const [index, sweeper] of this.sweepers.entries()) {
+			const key = `${id}:${index}`;
+			if (Date.now() - (this.lastSweep.get(key) ?? 0) < sweeper.sweepIntervalMs) continue;
+			if (!(await stillOwner())) return;
+			this.lastSweep.set(key, Date.now());
+			await sweeper.sweep(fresh).catch((error) => this.logger.warn(`Connection ${connection.id}: a sweep failed (${describeSyncError(error)}).`));
+		}
 	}
 
 	/** The current time, or the time a test pins the tick to. */

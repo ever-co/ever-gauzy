@@ -56,6 +56,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 	constructor(
 		private readonly applier: EverWorksInboundApplier,
 		private readonly pusher: EverWorksOutboundPusher,
+		private readonly loop: EverWorksSyncLoop,
 		private readonly agents: EverWorksAgentsService,
 		private readonly teams: EverWorksTeamsService
 	) {}
@@ -64,6 +65,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.applier.register(this.agents);
 		this.applier.register(this.teams);
 		this.pusher.register(this.teams);
+		this.loop.registerSweeper(this.teams);
 	}
 }
 
