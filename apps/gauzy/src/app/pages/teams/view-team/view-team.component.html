@@ -261,6 +261,62 @@
 				</section>
 			</div>
 
+			<!-- ── Projects: every project of the team, and the time it got in the period ── -->
+			<section class="panel" [nbSpinner]="projectStats.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title">
+							{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}
+							@if (projectOverview.length) {
+							<span class="title-count">{{ projectOverview.length }}</span>
+							}
+						</h5>
+						<span class="panel-caption">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECTS_CAPTION' | translate }}</span>
+					</div>
+				</header>
+				<div class="panel-body">
+					@if (!projectOverview.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_PROJECTS', icon: 'briefcase-outline' }"></ng-container>
+					} @else {
+					<ul class="project-grid">
+						@for (project of projectOverview; track project.id) {
+						<li class="project-card" [class.is-idle]="!project.duration">
+							<span class="project-logo">
+								@if (project.imageUrl) {
+								<img [src]="project.imageUrl" [alt]="project.name" />
+								} @else {
+								<span aria-hidden="true">{{ project.initials }}</span>
+								}
+							</span>
+							<span class="project-body">
+								<span class="project-name-row">
+									<span class="project-name" [nbTooltip]="project.name" nbTooltipPlacement="top">{{ project.name }}</span>
+									@if (!project.linked) {
+									<span
+										class="chip project-chip"
+										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_LINKED_HINT' | translate"
+										nbTooltipPlacement="top"
+										>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_LINKED' | translate }}</span
+									>
+									}
+								</span>
+								<span class="project-figures">
+									<span class="project-time">{{ projectStats.failed ? '—' : project.duration ? formatDuration(project.duration) : '—' }}</span>
+									@if (!projectStats.failed && project.duration) {
+									<span class="project-share">{{ formatPercent(project.share) }}</span>
+									} @else if (!projectStats.failed) {
+									<span class="project-share">{{ 'EMPLOYEES_PAGE.VIEW.NO_TIME' | translate }}</span>
+									}
+								</span>
+								<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="project.width"></span></span>
+							</span>
+						</li>
+						}
+					</ul>
+					}
+				</div>
+			</section>
+
 			<!-- ── Work: the team's tasks, and where the time went ─────────────── -->
 			<div class="grid">
 				<section class="panel" [nbSpinner]="tasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
@@ -425,17 +481,6 @@
 				</section>
 
 				<div class="stack">
-					<section class="panel" [nbSpinner]="projectStats.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-						<header class="panel-header">
-							<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}</h5>
-						</header>
-						<div class="panel-body panel-body--flush">
-							<ng-container
-								*ngTemplateOutlet="ranked; context: { $implicit: projectStats, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'briefcase-outline' }"
-							></ng-container>
-						</div>
-					</section>
-
 					<section class="panel" [nbSpinner]="topTasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 						<header class="panel-header">
 							<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.TOP_TASKS' | translate }}</h5>
@@ -566,30 +611,6 @@
 					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SETTINGS', icon: 'settings-2-outline' }"></ng-container>
 					<div class="panel-body">
 						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: details.settings }"></ng-container>
-					</div>
-				</section>
-
-				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROJECTS', icon: 'briefcase-outline' }"></ng-container>
-					<div class="panel-body">
-						@if (projects.length) {
-						<ul class="project-list">
-							@for (project of projects; track project.id) {
-							<li class="project-item">
-								<span class="project-logo">
-									@if (project.imageUrl) {
-									<img [src]="project.imageUrl" [alt]="project.name" />
-									} @else {
-									<span aria-hidden="true">{{ project.initials }}</span>
-									}
-								</span>
-								<span class="field-value">{{ project.name }}</span>
-							</li>
-							}
-						</ul>
-						} @else {
-						<p class="not-provided">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_PROJECTS' | translate }}</p>
-						}
 					</div>
 				</section>
 			</div>
