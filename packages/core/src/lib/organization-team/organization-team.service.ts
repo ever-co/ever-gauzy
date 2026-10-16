@@ -758,9 +758,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
-	 * Applies the rule `update` enforces: without CHANGE_SELECTED_EMPLOYEE, a caller with an employee record
-	 * must be a manager of the team, and a caller without one passes as it does in `update`. It runs before
-	 * the base method, which turns every failure into a 404.
+	 * Applies the rule `deleteTeam` enforces: without CHANGE_SELECTED_EMPLOYEE, the caller must be a manager
+	 * of the team, which needs an employee identity. A caller without one is refused, as `deleteTeam` refuses
+	 * it: `currentEmployeeId()` is also null when the request context cannot be read. The manager membership
+	 * must carry the team's own tenant and organization. It runs before the base method, which turns every
+	 * failure into a 404.
 	 *
 	 * @param id - The team acted on.
 	 * @param withDeleted - Whether the team is read among soft-deleted rows (a restoration).
@@ -773,13 +775,19 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		const employeeId = RequestContext.currentEmployeeId();
 		if (!employeeId) {
-			return;
+			throw new ForbiddenException();
 		}
 
+		const deleted = withDeleted ? { withDeleted: true } : {};
 		try {
+			const { tenantId, organizationId } = await this.findOneByIdString(id, deleted);
 			await this.findOneByIdString(id, {
-				where: { members: { employeeId, role: { name: RolesEnum.MANAGER } } },
-				...(withDeleted ? { withDeleted: true } : {})
+				where: {
+					tenantId,
+					organizationId,
+					members: { employeeId, tenantId, organizationId, role: { name: RolesEnum.MANAGER } }
+				},
+				...deleted
 			});
 		} catch {
 			throw new ForbiddenException();

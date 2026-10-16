@@ -26,8 +26,8 @@ import { OrganizationTeamService } from './organization-team.service';
  * #10704 — `DELETE /organization-team/:id/soft` / `softDeleteOrganizationTeam` and
  * `PUT /organization-team/:id/recover` / `recoverOrganizationTeam` ran the CRUD base's `softRemove` and
  * `softRecover`, which check the tenant only: any employee holding ORG_TEAM_EDIT retired or restored a team
- * they do not manage. Both now apply the rule `update` applies: without CHANGE_SELECTED_EMPLOYEE, an
- * employee must be a MANAGER member of the team.
+ * they do not manage. Both now apply the rule `deleteTeam` applies: without CHANGE_SELECTED_EMPLOYEE, the
+ * caller must be an employee with a MANAGER membership of the team, in the team's tenant and organization.
  *
  * Each case runs the service's real `softRemove` / `softRecover` — the override and the CRUD base under it —
  * against a real in-memory SQLite database under each ORM, with the soft-delete mechanism each ORM uses in
@@ -36,6 +36,9 @@ import { OrganizationTeamService } from './organization-team.service';
 
 const TENANT = '70000000-0000-4000-8000-00000000000a';
 const ORGANIZATION = '70000000-0000-4000-8000-0000000000a1';
+/** A tenant and an organization the teams are not part of. */
+const OTHER_TENANT = '70000000-0000-4000-8000-00000000000b';
+const OTHER_ORGANIZATION = '70000000-0000-4000-8000-0000000000b1';
 const RETIRED_AT = new Date('2026-01-01T00:00:00.000Z');
 
 const MANAGER_ROLE = '70000000-0000-4000-8000-0000000000f1';
@@ -52,7 +55,11 @@ const EMPLOYEE = {
 	/** A plain member (no role) of LIVE_TEAM and RETIRED_TEAM. */
 	member: '70000000-0000-4000-8000-0000000000e2',
 	/** A MANAGER of OTHER_TEAM only. */
-	otherManager: '70000000-0000-4000-8000-0000000000e3'
+	otherManager: '70000000-0000-4000-8000-0000000000e3',
+	/** A MANAGER of LIVE_TEAM and RETIRED_TEAM by membership rows that name another organization. */
+	foreignOrganizationManager: '70000000-0000-4000-8000-0000000000e4',
+	/** A MANAGER of LIVE_TEAM and RETIRED_TEAM by membership rows that name another tenant. */
+	foreignTenantManager: '70000000-0000-4000-8000-0000000000e5'
 };
 
 const ROLES = [{ id: MANAGER_ROLE, name: RolesEnum.MANAGER }];
@@ -63,6 +70,7 @@ const TEAMS = [
 	{ id: OTHER_TEAM, name: 'other', tenantId: TENANT, organizationId: ORGANIZATION, deletedAt: null }
 ];
 
+/** In the team's own tenant and organization unless the row says otherwise. */
 const MEMBERS = [
 	{
 		id: '70000000-0000-4000-8000-0000000000c1',
@@ -83,8 +91,36 @@ const MEMBERS = [
 		teamId: OTHER_TEAM,
 		employeeId: EMPLOYEE.otherManager,
 		roleId: MANAGER_ROLE
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000c6',
+		teamId: LIVE_TEAM,
+		employeeId: EMPLOYEE.foreignOrganizationManager,
+		roleId: MANAGER_ROLE,
+		organizationId: OTHER_ORGANIZATION
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000c7',
+		teamId: RETIRED_TEAM,
+		employeeId: EMPLOYEE.foreignOrganizationManager,
+		roleId: MANAGER_ROLE,
+		organizationId: OTHER_ORGANIZATION
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000c8',
+		teamId: LIVE_TEAM,
+		employeeId: EMPLOYEE.foreignTenantManager,
+		roleId: MANAGER_ROLE,
+		tenantId: OTHER_TENANT
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000c9',
+		teamId: RETIRED_TEAM,
+		employeeId: EMPLOYEE.foreignTenantManager,
+		roleId: MANAGER_ROLE,
+		tenantId: OTHER_TENANT
 	}
-];
+].map((member) => ({ tenantId: TENANT, organizationId: ORGANIZATION, ...member }));
 
 /*
 |--------------------------------------------------------------------------
@@ -125,7 +161,9 @@ const OrganizationTeamEmployeeSchema = new EntitySchema<any>({
 		id: { primary: true, type: 'varchar' },
 		organizationTeamId: { type: 'varchar' },
 		employeeId: { type: 'varchar' },
-		roleId: { type: 'varchar', nullable: true }
+		roleId: { type: 'varchar', nullable: true },
+		tenantId: { type: 'varchar', nullable: true },
+		organizationId: { type: 'varchar', nullable: true }
 	},
 	relations: {
 		organizationTeam: {
@@ -188,6 +226,12 @@ class OrganizationTeamEmployeeRow {
 
 	@ManyToOne(() => RoleRow, { fieldName: 'roleId', nullable: true })
 	role?: RoleRow | null;
+
+	@Property({ type: 'string', nullable: true })
+	tenantId?: string | null;
+
+	@Property({ type: 'string', nullable: true })
+	organizationId?: string | null;
 }
 
 /**
@@ -281,8 +325,8 @@ async function mikroOrmHarness(): Promise<IHarness> {
 			em.persist(ROLES.map((role) => em.create(RoleRow, role)));
 			em.persist(TEAMS.map((team) => em.create(OrganizationTeamRow, team)));
 			em.persist(
-				MEMBERS.map(({ id, teamId, employeeId, roleId }) =>
-					em.create(OrganizationTeamEmployeeRow, { id, organizationTeam: teamId, employeeId, role: roleId })
+				MEMBERS.map(({ teamId, roleId, ...member }) =>
+					em.create(OrganizationTeamEmployeeRow, { ...member, organizationTeam: teamId, role: roleId })
 				)
 			);
 			await em.flush();
@@ -321,7 +365,7 @@ describe.each([
 	 * The caller: an employee, with or without CHANGE_SELECTED_EMPLOYEE. As in production, a holder of that
 	 * permission has no current employee id.
 	 */
-	const signInAs = (employeeId: string, canChangeSelectedEmployee = false) => {
+	const signInAs = (employeeId: string | null, canChangeSelectedEmployee = false) => {
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(canChangeSelectedEmployee ? null : employeeId);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
 			(permission: PermissionsEnum) =>
@@ -339,6 +383,23 @@ describe.each([
 
 		it('refuses the manager of another team, and the team stays live', async () => {
 			signInAs(EMPLOYEE.otherManager);
+
+			await expect(harness.service().softRemove(LIVE_TEAM)).rejects.toThrow(ForbiddenException);
+			expect(await harness.deletedAt(LIVE_TEAM)).toBeNull();
+		});
+
+		it('refuses a caller without an employee identity, as deleteTeam does, and the team stays live', async () => {
+			signInAs(null);
+
+			await expect(harness.service().softRemove(LIVE_TEAM)).rejects.toThrow(ForbiddenException);
+			expect(await harness.deletedAt(LIVE_TEAM)).toBeNull();
+		});
+
+		it.each([
+			['another organization', EMPLOYEE.foreignOrganizationManager],
+			['another tenant', EMPLOYEE.foreignTenantManager]
+		])('refuses a manager whose membership row names %s, and the team stays live', async (_, employeeId) => {
+			signInAs(employeeId);
 
 			await expect(harness.service().softRemove(LIVE_TEAM)).rejects.toThrow(ForbiddenException);
 			expect(await harness.deletedAt(LIVE_TEAM)).toBeNull();
@@ -369,6 +430,23 @@ describe.each([
 
 		it('refuses the manager of another team, and the team stays retired', async () => {
 			signInAs(EMPLOYEE.otherManager);
+
+			await expect(harness.service().softRecover(RETIRED_TEAM)).rejects.toThrow(ForbiddenException);
+			expect(await harness.deletedAt(RETIRED_TEAM)).not.toBeNull();
+		});
+
+		it('refuses a caller without an employee identity, as deleteTeam does, and the team stays retired', async () => {
+			signInAs(null);
+
+			await expect(harness.service().softRecover(RETIRED_TEAM)).rejects.toThrow(ForbiddenException);
+			expect(await harness.deletedAt(RETIRED_TEAM)).not.toBeNull();
+		});
+
+		it.each([
+			['another organization', EMPLOYEE.foreignOrganizationManager],
+			['another tenant', EMPLOYEE.foreignTenantManager]
+		])('refuses a manager whose membership row names %s, and the team stays retired', async (_, employeeId) => {
+			signInAs(employeeId);
 
 			await expect(harness.service().softRecover(RETIRED_TEAM)).rejects.toThrow(ForbiddenException);
 			expect(await harness.deletedAt(RETIRED_TEAM)).not.toBeNull();
