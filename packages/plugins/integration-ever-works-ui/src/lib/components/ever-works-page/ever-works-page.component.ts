@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inje
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbAlertModule, NbCardModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { distinctUntilChanged, Observable, of } from 'rxjs';
+import { distinctUntilChanged, merge, Observable, of, Subject } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
 import { EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
@@ -82,6 +82,8 @@ export class EverWorksPageComponent implements OnInit {
 	view: EverWorksView = 'loading';
 	protected status: EverWorksStatus | null = null;
 	private organizationId: string | null = null;
+	/** Retries of the current organization's status; they share the stream organization changes switch. */
+	private readonly reload$ = new Subject<void>();
 
 	/** The Ever Works page that creates an integration key, when the operator configured the app URL. */
 	protected get newKeyUrl(): string | null {
@@ -90,12 +92,15 @@ export class EverWorksPageComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		const organizations$ = this.store.selectedOrganization$.pipe(
+			distinctUntilChanged((a, b) => a?.id === b?.id),
+			tap((organization) => (this.organizationId = organization?.id ?? null))
+		);
+		// Organization changes and retries share one switchMap: whichever comes last replaces the request in
+		// flight, so a late answer for a previous organization (or an earlier retry) never wins.
+		merge(organizations$, this.reload$)
 			.pipe(
-				distinctUntilChanged((a, b) => a?.id === b?.id),
-				tap((organization) => (this.organizationId = organization?.id ?? null)),
-				// A new organization replaces the request in flight, so a late answer for the previous one never wins.
-				switchMap((organization) => this.statusOf(organization?.id ?? null)),
+				switchMap(() => this.statusOf(this.organizationId)),
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((result) => this.apply(result));
@@ -103,9 +108,7 @@ export class EverWorksPageComponent implements OnInit {
 
 	/** Reads the status for the selected organization again (a retry). */
 	load(): void {
-		this.statusOf(this.organizationId)
-			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe((result) => this.apply(result));
+		this.reload$.next();
 	}
 
 	/** The status, or the error that tells why there is none (404: the plugin is not loaded). */
