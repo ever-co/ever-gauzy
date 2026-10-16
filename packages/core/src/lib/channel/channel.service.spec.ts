@@ -33,6 +33,20 @@ jest.mock('../core/crud/tenant-aware-crud.service', () => {
 		async softDelete(id: any): Promise<any> {
 			return this.typeOrmRepository.update(id, { deletedAt: new Date() });
 		}
+
+		// The real base resolves the row by tenant only, so the doubles below withdraw and restore by id alone:
+		// an organization check has to come from the service under test.
+		async softRemove(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: new Date() });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
+
+		async softRecover(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: null });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
 	}
 
 	return { TenantAwareCrudService };
@@ -656,5 +670,55 @@ describe('ChannelService — scoping and the answering form', () => {
 		const listed = await channelService.listChannels();
 
 		expect(listed.map((one) => one.id)).toEqual([OTHER_CHANNEL, CHANNEL]);
+	});
+});
+
+describe('ChannelService — soft delete and recover stay inside the caller organization', () => {
+	it('refuses to withdraw a channel of another organization, and leaves the row alone', async () => {
+		const { channelService, channel } = channels({
+			channels: [channelRow(CHANNEL, { organizationId: 'another-org' })]
+		});
+
+		expect(await refusalOf(() => channelService.softRemove(CHANNEL))).toMatch(
+			/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/
+		);
+		expect(channel()?.deletedAt).toBeUndefined();
+	});
+
+	it('withdraws a channel of the caller organization', async () => {
+		const { channelService, channel } = channels({ channels: [channelRow(CHANNEL)] });
+
+		await channelService.softRemove(CHANNEL);
+
+		expect(channel()?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('refuses to restore a withdrawn channel of another organization, and leaves it withdrawn', async () => {
+		const deletedAt = new Date('2026-01-01T00:00:00.000Z');
+		const { channelService, channel } = channels({
+			channels: [channelRow(CHANNEL, { organizationId: 'another-org', deletedAt })]
+		});
+
+		expect(await refusalOf(() => channelService.softRecover(CHANNEL))).toMatch(
+			/^RESOURCE_NOT_FOUND: CHANNEL_NOT_FOUND/
+		);
+		expect(channel()?.deletedAt).toBe(deletedAt);
+	});
+
+	it('restores a withdrawn channel of the caller organization, reading withdrawn rows to find it', async () => {
+		const { channelService, channel } = channels({
+			channels: [channelRow(CHANNEL, { deletedAt: new Date('2026-01-01T00:00:00.000Z') })]
+		});
+		const find = jest.spyOn(channelService, 'find');
+
+		await channelService.softRecover(CHANNEL);
+
+		expect(find).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ id: CHANNEL, organizationId: ORG }),
+				withDeleted: true
+			})
+		);
+		expect(channel()?.deletedAt).toBeNull();
 	});
 });

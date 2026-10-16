@@ -32,6 +32,20 @@ jest.mock('../core/crud/tenant-aware-crud.service', () => {
 		async softDelete(id: any): Promise<any> {
 			return this.typeOrmRepository.update(id, { deletedAt: new Date() });
 		}
+
+		// The real base resolves the row by tenant only, so the doubles below withdraw and restore by id alone:
+		// an organization check has to come from the service under test.
+		async softRemove(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: new Date() });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
+
+		async softRecover(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: null });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
 	}
 
 	return { TenantAwareCrudService };
@@ -437,5 +451,55 @@ describe('ChannelDomainService — removal and the servability invariant (I-25)'
 		expect(await refusalOf(() => store.service.findDomainOrFail('domain-1'))).toMatch(
 			/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/
 		);
+	});
+});
+
+describe('ChannelDomainService — soft delete and recover stay inside the caller organization', () => {
+	it('refuses to withdraw a hostname of another organization, and leaves the row alone', async () => {
+		const store = world({
+			domains: [domainRow('domain-1', 'shop.example.com', { organizationId: 'another-org' })]
+		});
+
+		expect(await refusalOf(() => store.service.softRemove('domain-1'))).toMatch(
+			/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/
+		);
+		expect(store.domain('domain-1')?.deletedAt).toBeUndefined();
+	});
+
+	it('withdraws a hostname of the caller organization', async () => {
+		const store = world({ domains: [domainRow('domain-1', 'shop.example.com')] });
+
+		await store.service.softRemove('domain-1');
+
+		expect(store.domain('domain-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('refuses to restore a withdrawn hostname of another organization, and leaves it withdrawn', async () => {
+		const deletedAt = new Date('2026-01-01T00:00:00.000Z');
+		const store = world({
+			domains: [domainRow('domain-1', 'shop.example.com', { organizationId: 'another-org', deletedAt })]
+		});
+
+		expect(await refusalOf(() => store.service.softRecover('domain-1'))).toMatch(
+			/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/
+		);
+		expect(store.domain('domain-1')?.deletedAt).toBe(deletedAt);
+	});
+
+	it('restores a withdrawn hostname of the caller organization, reading withdrawn rows to find it', async () => {
+		const store = world({
+			domains: [domainRow('domain-1', 'shop.example.com', { deletedAt: new Date('2026-01-01T00:00:00.000Z') })]
+		});
+		const find = jest.spyOn(store.service, 'find');
+
+		await store.service.softRecover('domain-1');
+
+		expect(find).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ id: 'domain-1', organizationId: ORG }),
+				withDeleted: true
+			})
+		);
+		expect(store.domain('domain-1')?.deletedAt).toBeNull();
 	});
 });
