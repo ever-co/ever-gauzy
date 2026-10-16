@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, combineLatest, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, timer } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
@@ -68,7 +68,6 @@ interface IMemberRow {
 	isTrackingEnabled: boolean;
 	presence: Presence;
 	activeTask?: string;
-	joinedOn?: string;
 	order: number;
 }
 
@@ -112,7 +111,6 @@ interface ITeamTaskRow {
 	key: string;
 	title: string;
 	project?: string;
-	assignees?: string;
 	status: string;
 	statusGroup: 'todo' | 'progress' | 'blocked' | 'done';
 	dueDate?: string;
@@ -177,6 +175,8 @@ const FULL_RELATIONS = [
 ];
 const BASE_RELATIONS = ['members.role', 'members.employee.user', 'tags', 'projects'];
 
+/** How often member presence and current tasks are re-read while the page is open. */
+const PRESENCE_REFRESH_MS = 60_000;
 const LIST_LIMIT = 6;
 const TASK_LIMIT = 8;
 
@@ -308,6 +308,16 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			)
 			.subscribe();
 
+		// Presence (tracking / online / away) and current tasks change while the page
+		// is open: re-read them every minute while a team is on screen and the tab is visible.
+		timer(PRESENCE_REFRESH_MS, PRESENCE_REFRESH_MS)
+			.pipe(
+				filter(() => this.state === 'ready' && !!this.team && document.visibilityState === 'visible'),
+				tap(() => void this.refreshPresence()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.translateService.onLangChange
 			.pipe(
 				filter(() => !!this.team),
@@ -326,6 +336,10 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		if (!id || !organization) return;
 
 		const sequence = ++this._loadSequence;
+		// Nothing of the previous team stays on screen: not its open task, not its
+		// figures, and no reply still in flight for it may land afterwards.
+		this.closeTask();
+		this.resetPanels();
 		this.state = 'loading';
 		this.team = null;
 		this.members = [];
@@ -352,6 +366,24 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		}
 	}
 
+	/**
+	 * Empties every panel and forgets the requests in flight, so a reply for the
+	 * previous team is dropped by `track()` rather than painted over this one.
+	 */
+	private resetPanels(): void {
+		this._pending = {};
+		this.counts = Loadable.empty(null);
+		this.previousCounts = Loadable.empty(null);
+		this.hours = Loadable.empty([]);
+		this.memberStats = Loadable.empty({});
+		this.projectStats = Loadable.empty([]);
+		this.topTasks = Loadable.empty([]);
+		this.apps = Loadable.empty([]);
+		this.tasks = Loadable.empty([]);
+		this.taskFilter = 'open';
+		this.showAllTasks = false;
+	}
+
 	/** The team with every relation the page reads; the base relations alone if the API refuses one. */
 	private async fetchTeam(id: string, organization: IOrganization): Promise<IOrganizationTeam | null> {
 		const where = { id, organizationId: organization.id, tenantId: organization.tenantId } as any;
@@ -361,6 +393,30 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		} catch (error) {
 			if (error?.status === 403 || error?.status === 404) throw error;
 			return pick(await this._teamsService.getAll(BASE_RELATIONS, where));
+		}
+	}
+
+	/**
+	 * Re-reads the team's members and updates only what goes stale on an open
+	 * page — presence and current task. The rest of the page is left as it is,
+	 * and a failed read keeps the last known state.
+	 */
+	private async refreshPresence(): Promise<void> {
+		const team = this.team;
+		const organization = this._organization;
+		const sequence = this._loadSequence;
+		if (!team || !organization) return;
+		try {
+			const fresh = await this.fetchTeam(team.id, organization);
+			// Another team (or organization) was loaded meanwhile: this read is not for it.
+			if (sequence !== this._loadSequence || !fresh) return;
+			const latest = new Map(this.buildMembers(fresh.members || []).map((member) => [member.id, member]));
+			this.members = this.members.map((member) => {
+				const update = latest.get(member.id);
+				return update ? { ...member, presence: update.presence, activeTask: update.activeTask } : member;
+			});
+		} catch {
+			// Keep the last known presence.
 		}
 	}
 
@@ -482,10 +538,6 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 					isTrackingEnabled: member.isTrackingEnabled !== false,
 					presence: ViewTeamComponent.presenceOf(employee),
 					activeTask: member.activeTask?.title,
-					joinedOn:
-						member.assignedAt || member.createdAt
-							? moment(member.assignedAt || member.createdAt).format('ll')
-							: undefined,
 					order: Number(member.order) || 0
 				} as IMemberRow;
 			})
@@ -690,10 +742,26 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		// A team with nobody on it has no figures: an empty employee filter would
 		// read the whole organization instead.
 		if (!this.members.length) {
-			for (const key of ['counts', 'previousCounts', 'hours', 'projectStats', 'topTasks', 'apps'] as PanelKey[]) {
-				(this as any)[key] = { loading: false, failed: false, value: (this as any)[key].value };
+			// Also cancels any request still in flight for these panels.
+			for (const key of [
+				'counts',
+				'previousCounts',
+				'hours',
+				'memberStats',
+				'projectStats',
+				'topTasks',
+				'apps'
+			] as PanelKey[]) {
+				delete this._pending[key];
 			}
-			this.memberStats = { loading: false, failed: false, value: {} };
+			const done = <T>(value: T): Loadable<T> => ({ loading: false, failed: false, value });
+			this.counts = done(null);
+			this.previousCounts = done(null);
+			this.hours = done([]);
+			this.memberStats = done({});
+			this.projectStats = done([]);
+			this.topTasks = done([]);
+			this.apps = done([]);
 		} else {
 			const request = this.buildRequest(this.periodRange());
 			const previous = this.buildRequest(this.previousRange());
@@ -845,7 +913,6 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				};
 			})
 			.filter((person) => !!person.name);
-		const assignees = people.map((person) => person.name).join(', ');
 		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
 		return {
 			task,
@@ -862,7 +929,6 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 			title: task.title,
 			project: task.project?.name,
-			assignees: assignees || undefined,
 			status: task.taskStatus?.name || ViewTeamComponent.humanize(task.status) || '',
 			statusGroup,
 			dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
