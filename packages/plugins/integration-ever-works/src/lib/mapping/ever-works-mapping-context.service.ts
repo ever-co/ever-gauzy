@@ -73,6 +73,21 @@ export class EverWorksMappingContextService {
 		return mapping ? this.build(mapping, connection) : null;
 	}
 
+	/** For the engine's sweeps: every active mapping that syncs through a connection. */
+	async forConnection(connection: EverWorksConnection): Promise<EverWorksMappingContext[]> {
+		const mappings = await this.dataSource.getRepository(IntegrationTenant).find({
+			where: { tenantId: connection.tenantId, name: EVER_WORKS_INTEGRATION_NAME, isActive: true, isArchived: false },
+			relations: { settings: true }
+		});
+		const contexts: EverWorksMappingContext[] = [];
+		for (const mapping of mappings) {
+			if (setting(mapping, S.CONNECTION_ID) !== connection.id) continue;
+			const context = await this.build(mapping, connection);
+			if (context) contexts.push(context);
+		}
+		return contexts;
+	}
+
 	private async build(mapping: IntegrationTenant, known?: EverWorksConnection): Promise<EverWorksMappingContext | null> {
 		const connectionId = setting(mapping, S.CONNECTION_ID);
 		const connection =
