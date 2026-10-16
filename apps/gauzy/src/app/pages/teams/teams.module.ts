@@ -23,12 +23,14 @@ import {
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
 import { ViewTeamComponent } from './view-team/view-team.component';
+import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view-header.component';
 import { EmployeeHoursChartComponent } from '../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 
 @NgModule({
@@ -55,7 +57,9 @@ import { EmployeeHoursChartComponent } from '../employees/view-employee/employee
 		ProjectSelectModule,
 		SmartDataViewLayoutModule,
 		ImageUploaderModule,
-		EmployeeHoursChartComponent
+		RecordViewModule,
+		EmployeeHoursChartComponent,
+		TaskViewHeaderComponent
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent, ViewTeamComponent],
 	providers: [OrganizationTeamsService]
