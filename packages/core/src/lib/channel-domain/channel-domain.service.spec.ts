@@ -58,6 +58,7 @@ jest.mock('@gauzy/config', () => ({
 
 import { ChannelDomain } from './channel-domain.entity';
 import { ChannelDomainService } from './channel-domain.service';
+import { RequestContext } from '../core/context/request-context';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORG = '00000000-0000-4000-8000-000000000002';
@@ -160,7 +161,13 @@ function world(seed: { domains?: Row[] } = {}) {
 	const repository = {
 		manager,
 		metadata: { tableName: 'channel_domain', hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => tables.channel_domain.filter((row) => matches(row, options.where)),
+		// An array `where` is an alternative, as TypeORM reads it: a row matches when one branch does.
+		find: async (options: any = {}) =>
+			tables.channel_domain.filter((row) =>
+				Array.isArray(options.where)
+					? options.where.some((one: Row) => matches(row, one))
+					: matches(row, options.where)
+			),
 		findOne: async (options: any = {}) =>
 			tables.channel_domain.find((row) => matches(row, options.where)) ?? null,
 		findOneBy: async (where: Row) => tables.channel_domain.find((row) => matches(row, where)) ?? null,
@@ -385,6 +392,65 @@ describe('ChannelDomainService — one primary per channel, moved and never dupl
 		expect(updated.isPrimary).toBe(true);
 		expect(updated.redirectToPrimary).toBe(true);
 		expect(store.domain('domain-1')?.isPrimary).toBe(false);
+	});
+});
+
+describe('ChannelDomainService — the organization-wide lists', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	/** Two hostnames of the caller's organization and one of a sibling organization of the same tenant. */
+	const twoOrganizations = () =>
+		world({
+			domains: [
+				domainRow('domain-1', 'shop.example.com'),
+				domainRow('domain-2', 'www.example.com', { channelId: OTHER_CHANNEL }),
+				domainRow('domain-3', 'shop.sibling.example', { organizationId: 'another-org' })
+			]
+		});
+
+	it('lists only the hostnames of the caller organization when no channel narrows the read', async () => {
+		const store = twoOrganizations();
+
+		const rows = await store.service.find();
+
+		expect(rows.map((row) => row.id).sort()).toEqual(['domain-1', 'domain-2']);
+	});
+
+	it('keeps the caller filter and adds the organization to it', async () => {
+		const store = twoOrganizations();
+
+		expect((await store.service.find({ where: { hostname: 'shop.sibling.example' } } as never)).length).toBe(0);
+		expect(
+			(await store.service.find({ where: { channelId: OTHER_CHANNEL } } as never)).map((row) => row.id)
+		).toEqual(['domain-2']);
+	});
+
+	it('does not let a stated organization widen the read past the caller organization', async () => {
+		const store = twoOrganizations();
+
+		const rows = await store.service.find({ where: { organizationId: 'another-org' } } as never);
+
+		// The caller's organization replaces the stated one: no hostname of the sibling organization is read.
+		expect(rows.map((row) => row.id).sort()).toEqual(['domain-1', 'domain-2']);
+	});
+
+	it('adds the organization to every branch of an alternative', async () => {
+		const store = twoOrganizations();
+
+		const rows = await store.service.find({
+			where: [{ hostname: 'shop.example.com' }, { hostname: 'shop.sibling.example' }]
+		} as never);
+
+		expect(rows.map((row) => row.id)).toEqual(['domain-1']);
+	});
+
+	it('keeps the tenant-wide read for a caller with no current organization', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+		const store = twoOrganizations();
+
+		const rows = await store.service.find();
+
+		expect(rows.map((row) => row.id).sort()).toEqual(['domain-1', 'domain-2', 'domain-3']);
 	});
 });
 
