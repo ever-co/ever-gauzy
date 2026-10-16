@@ -1484,6 +1484,66 @@ describe('CommerceCartService — merge', () => {
 		expect(merged.shippingSubtotal).toBe(15);
 	});
 
+	it.each([
+		['its second line', { warehouseId: 'foreign-location' }, {}],
+		['its delivery choice', {}, { shippingOptionId: 'foreign-option' }]
+	])(
+		'refuses a source whose %s names another tenant’s row before it copies anything (P0 #6c)',
+		async (_label, secondLine, delivery) => {
+			// A source cart written before the reference check existed can name another tenant's row anywhere in
+			// what the merge copies. The verbs check one write at a time, so a refusal on the second line or on the
+			// delivery choice used to leave the target with the lines already copied and its version spent, the
+			// source unmerged — and a retry copied the same quantities again. The check itself reads a real database
+			// (`cart-references.db.spec.ts`); here the child services refuse the two foreign ids.
+			const { service, tables, lineService, shippingMethodService } = cartFixture();
+			const target = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			const source = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+			await service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+			await service.addLine(source.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+			await service.addLine(source.id, {
+				variantId: 'v2',
+				title: 'B',
+				quantity: 1,
+				unitPrice: 5,
+				...secondLine
+			} as any);
+			await service.setShippingMethod(source.id, { name: 'Express', amount: 15, ...delivery } as any);
+
+			const foreign = new ForbiddenException('A related record belongs to another tenant');
+			const refuse =
+				(column: string, value: string) =>
+				async (payloads: unknown): Promise<void> => {
+					const rows = (Array.isArray(payloads) ? payloads : [payloads]) as Array<Record<string, unknown>>;
+
+					if (rows.some((row) => row?.[column] === value)) {
+						throw foreign;
+					}
+				};
+
+			jest.spyOn(lineService, 'assertReferences').mockImplementation(refuse('warehouseId', 'foreign-location'));
+			jest.spyOn(shippingMethodService, 'assertReferences').mockImplementation(
+				refuse('shippingOptionId', 'foreign-option')
+			);
+
+			const targetRow = () => tables.commerce_cart.find((row: any) => row.id === target.id);
+			const sourceRow = () => tables.commerce_cart.find((row: any) => row.id === source.id);
+			const liveLines = (cartId: string) =>
+				tables.commerce_cart_line.filter((row: any) => row.cartId === cartId && !row.deletedAt);
+			const before = Number(targetRow().version);
+
+			await expect(service.merge(target.id, source.id)).rejects.toBe(foreign);
+
+			expect(Number(targetRow().version)).toBe(before);
+			expect(liveLines(target.id)).toEqual([expect.objectContaining({ variantId: 'v1', quantity: 1 })]);
+			expect(
+				tables.commerce_cart_shipping_method.filter((row: any) => row.cartId === target.id && !row.deletedAt)
+			).toEqual([]);
+			expect(sourceRow().status).not.toBe(CommerceCartStatus.MERGED);
+			expect(liveLines(source.id)).toHaveLength(2);
+		}
+	);
+
 	it('refuses to merge a cart into itself and refuses to merge a completed source', async () => {
 		const fixture = cartFixture();
 		const cart = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });

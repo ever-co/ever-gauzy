@@ -920,10 +920,9 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			return current;
 		};
 
-		for (const line of source.lines ?? []) {
-			await this.addLine(
-				target.id,
-				{
+		const lines = (source.lines ?? []).map(
+			(line) =>
+				({
 					productId: line.productId,
 					variantId: line.variantId,
 					sellerId: line.sellerId,
@@ -941,17 +940,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					warehouseId: line.warehouseId,
 					subscriptionPlanId: line.subscriptionPlanId,
 					metadata: line.metadata
-				} as DeepPartial<CommerceCartLine>,
-				spend()
-			);
-		}
-
-		if ((target.shippingMethods ?? []).length === 0 && (source.shippingMethods ?? []).length > 0) {
-			const sourceMethod = (source.shippingMethods ?? [])[0];
-
-			await this.setShippingMethod(
-				target.id,
-				{
+				}) as DeepPartial<CommerceCartLine>
+		);
+		const sourceMethod =
+			(target.shippingMethods ?? []).length === 0 ? (source.shippingMethods ?? [])[0] : undefined;
+		const method = sourceMethod
+			? ({
 					shippingOptionId: sourceMethod.shippingOptionId,
 					name: sourceMethod.name,
 					amount: sourceMethod.amount,
@@ -959,9 +953,25 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					taxCategoryId: sourceMethod.taxCategoryId,
 					data: sourceMethod.data,
 					isManual: sourceMethod.isManual
-				} as DeepPartial<CommerceCartShippingMethod>,
-				spend()
-			);
+				} as DeepPartial<CommerceCartShippingMethod>)
+			: undefined;
+
+		// Everything the merge copies is held to the caller's tenant before its first write (P0 #6c). Each verb below
+		// checks what it writes as well, but one at a time: a source cart written before the check existed can name
+		// another tenant's row on its second line or on its delivery choice, and a refusal there would leave the
+		// target with the lines already copied and its version spent — and a retry would copy them again.
+		await this.lineService.assertReferences(lines);
+
+		if (method) {
+			await this.shippingMethodService.assertReferences(method);
+		}
+
+		for (const line of lines) {
+			await this.addLine(target.id, line, spend());
+		}
+
+		if (method) {
+			await this.setShippingMethod(target.id, method, spend());
 		}
 
 		const mergedAt = new Date();
