@@ -176,9 +176,11 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			const isChanged = (property: string) => !changedProperties || changedProperties.includes(property);
 			const hasStartedWork = !!entity.startedWorkOn && isChanged('startedWorkOn');
 			const hasEndedWork = !!entity.endWork && isChanged('endWork');
+			// "Back to Work" clears the stored end date: the employee resumes work.
+			const hasResumedWork = entity.endWork === null && !!changedProperties?.includes('endWork');
 
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em, hasStartedWork, hasEndedWork);
+			this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
