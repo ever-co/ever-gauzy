@@ -20,7 +20,8 @@
 			} @if (isOption) {
 			<div>{{ name }}</div>
 			} } @if (isAgent) {
-			<span class="agent-badge" [title]="agentLabel">{{ agentLabel }}</span>
+			@let label = agentLabel$ | async;
+			<span class="agent-badge" [title]="label">{{ label }}</span>
 			} @if (caption) {
 			<div class="text-caption caption">
 				@if (appendCaption) {

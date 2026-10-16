@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { catchError, firstValueFrom, Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { catchError, firstValueFrom, Observable, of, throwError } from 'rxjs';
 import {
 	IEmployee,
 	IEmployeeAgentProfile,
@@ -96,12 +96,17 @@ export class EmployeesService {
 	 *
 	 * @param id - The employee ID.
 	 * @returns A promise of the agent profile, or `null`.
+	 * @throws The HTTP error of any other failure (refused, server error, network), for the caller to report.
 	 */
 	getAgentProfile(id: ID): Promise<IEmployeeAgentProfile | null> {
 		return firstValueFrom(
 			this.http
 				.get<IEmployeeAgentProfile>(`${API_PREFIX}/employee/${id}/agent-profile`)
-				.pipe(catchError(() => of(null)))
+				.pipe(
+					catchError((error: HttpErrorResponse) =>
+						error?.status === 404 ? of(null) : throwError(() => error)
+					)
+				)
 		);
 	}
 

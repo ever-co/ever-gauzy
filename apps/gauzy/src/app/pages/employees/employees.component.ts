@@ -1039,6 +1039,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	changeKindFilter(kind: '' | EmployeeKindEnum): void {
 		this.kindFilter = kind || '';
+		// Back to the first page in both layouts: a later page of the previous list can be past the end of the
+		// filtered one. The pagination and list signals are debounced into one request.
+		this.refreshPagination();
 		this.refresh$.next(true);
 		this.employees$.next(true);
 	}

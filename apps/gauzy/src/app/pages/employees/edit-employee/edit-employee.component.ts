@@ -147,7 +147,14 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		if (employee?.kind !== EmployeeKindEnum.AGENT) {
 			return;
 		}
-		const profile = await this._employeesService.getAgentProfile(employee.id);
+		let profile: IEmployeeAgentProfile | null;
+		try {
+			profile = await this._employeesService.getAgentProfile(employee.id);
+		} catch (error) {
+			// Not a missing profile (that is `null`): a refused request or a server failure, reported as such.
+			this._errorHandlingService.handleError(error);
+			return;
+		}
 		// The page may have moved on to another employee while the profile was loading.
 		if (this.selectedEmployee?.id === employee.id) {
 			this.agentProfile = profile;
