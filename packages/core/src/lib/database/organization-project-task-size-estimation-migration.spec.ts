@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { AddOrganizationProjectTaskSizeEstimation1791000000747 } from './migrations/1791000000747-AddOrganizationProjectTaskSizeEstimation';
 
 /**
@@ -81,5 +81,31 @@ describe('organization_project.isTaskSizeEstimationEnabled migration on SQLite',
 		await run('up');
 		await run('down');
 		expect(await column()).toBeDefined();
+	});
+});
+
+describe('organization_project.isTaskSizeEstimationEnabled migration on MySQL', () => {
+	it('takes a named lock MySQL accepts (at most 64 characters) and adds a tinyint column', async () => {
+		const queries: Array<{ sql: string; parameters?: unknown[] }> = [];
+		const queryRunner = {
+			connection: { options: { type: 'mysql' } },
+			hasTable: async () => true,
+			hasColumn: async () => false,
+			query: async (sql: string, parameters?: unknown[]) => {
+				queries.push({ sql, parameters });
+				return sql.includes('GET_LOCK') ? [{ acquired: 1 }] : [];
+			}
+		} as unknown as QueryRunner;
+		const migration = new AddOrganizationProjectTaskSizeEstimation1791000000747();
+
+		await migration.up(queryRunner);
+
+		expect(migration.mysqlLockName.length).toBeLessThanOrEqual(64);
+		expect(queries.map((query) => query.sql)).toEqual([
+			'SELECT GET_LOCK(?, 120) AS `acquired`',
+			'ALTER TABLE `organization_project` ADD COLUMN `isTaskSizeEstimationEnabled` tinyint NOT NULL DEFAULT 1',
+			'SELECT RELEASE_LOCK(?)'
+		]);
+		expect(queries[0].parameters).toEqual([migration.mysqlLockName]);
 	});
 });

@@ -85,6 +85,24 @@ describe('applyEmployeeSettingDataOperations', () => {
 		expect(applyEmployeeSettingDataOperations({}, [{ op: SET, path: ['a.b'], value: 1 }])).toEqual({ 'a.b': 1 });
 	});
 
+	it('uses own keys only, so inherited names such as toString are ordinary keys', () => {
+		expect(
+			applyEmployeeSettingDataOperations({}, [
+				{ op: SET, path: ['toString', 'x'], value: 1 },
+				{ op: SET, path: ['valueOf'], value: 2 }
+			])
+		).toEqual({ toString: { x: 1 }, valueOf: 2 });
+		expect(applyEmployeeSettingDataOperations({ a: 1 }, [{ op: UNSET, path: ['hasOwnProperty', 'x'] }])).toEqual({
+			a: 1
+		});
+	});
+
+	it('stores an explicit null', () => {
+		expect(applyEmployeeSettingDataOperations({ a: 1 }, [{ op: SET, path: ['a'], value: null }])).toEqual({
+			a: null
+		});
+	});
+
 	it('refuses a path through an array or a scalar', () => {
 		expect(() => applyEmployeeSettingDataOperations({ a: [1] }, [{ op: SET, path: ['a', 'b'], value: 1 }])).toThrow(
 			BadRequestException

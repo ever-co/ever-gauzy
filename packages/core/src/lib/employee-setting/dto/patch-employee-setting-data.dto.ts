@@ -4,10 +4,10 @@ import {
 	ArrayMaxSize,
 	ArrayMinSize,
 	IsArray,
-	IsDefined,
 	IsEnum,
 	IsNotEmpty,
 	IsString,
+	ValidateBy,
 	ValidateIf,
 	ValidateNested
 } from 'class-validator';
@@ -38,9 +38,16 @@ export class EmployeeSettingDataOperationDTO implements IEmployeeSettingDataOper
 	@IsNotEmpty({ each: true })
 	readonly path: string[];
 
-	@ApiPropertyOptional({ description: 'The value a set operation writes (any JSON value).' })
+	@ApiPropertyOptional({ description: 'The value a set operation writes (any JSON value, null included).' })
 	@ValidateIf((operation: EmployeeSettingDataOperationDTO) => operation.op === EmployeeSettingDataOperationEnum.SET)
-	@IsDefined()
+	// Not `@IsDefined()`, which also refuses null: a set may store an explicit null.
+	@ValidateBy({
+		name: 'isNotUndefined',
+		validator: {
+			validate: (value: unknown) => value !== undefined,
+			defaultMessage: () => 'A set operation needs a value (null is allowed).'
+		}
+	})
 	readonly value?: unknown;
 }
 

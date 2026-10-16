@@ -56,7 +56,8 @@ export function applyEmployeeSettingDataOperations(
 					throw new BadRequestException(`A set operation needs a value (path ${describe(path)}).`);
 				}
 				const target = parent.reduce<JsonObject>((node, segment) => {
-					const child = node[segment];
+					// Own keys only: an inherited member (`toString`, `valueOf`, …) is not stored data.
+					const child = Object.hasOwn(node, segment) ? node[segment] : undefined;
 					if (child === undefined || child === null) {
 						return (node[segment] = {});
 					}
@@ -71,7 +72,7 @@ export function applyEmployeeSettingDataOperations(
 			case EmployeeSettingDataOperationEnum.UNSET: {
 				let node: unknown = result;
 				for (const segment of parent) {
-					node = isPlainObject(node) ? node[segment] : undefined;
+					node = isPlainObject(node) && Object.hasOwn(node, segment) ? node[segment] : undefined;
 				}
 				if (isPlainObject(node)) {
 					delete node[key];

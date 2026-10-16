@@ -35,6 +35,12 @@ export class AddOrganizationProjectTaskSizeEstimation1791000000747 implements Mi
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
 	private readonly advisoryLockKey = 1791000000747;
 
+	/**
+	 * The MySQL named lock of this migration. MySQL refuses lock names over 64 characters, and
+	 * `gauzy:migration:` + the class name is 69, so the name carries the timestamp instead.
+	 */
+	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;
+
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
@@ -48,7 +54,7 @@ export class AddOrganizationProjectTaskSizeEstimation1791000000747 implements Mi
 		// MySQL has no transactional DDL and no migration-run lock: two processes booting together would both see
 		// the column missing. A named lock makes the check and the DDL one critical section.
 		if (dialect === 'mysql') {
-			await withMysqlNamedLock(queryRunner, this.name, () => this.addColumn(queryRunner, dialect));
+			await withMysqlNamedLock(queryRunner, this.mysqlLockName, () => this.addColumn(queryRunner, dialect));
 			return;
 		}
 		await this.addColumn(queryRunner, dialect);
@@ -107,11 +113,14 @@ export class AddOrganizationProjectTaskSizeEstimation1791000000747 implements Mi
  * Runs `work` while holding a MySQL named lock (`GET_LOCK`), so that two processes running the same migration
  * concurrently run its check and DDL one after the other. The lock is session-level and released in `finally`.
  */
-async function withMysqlNamedLock(queryRunner: QueryRunner, name: string, work: () => Promise<void>): Promise<void> {
-	const lockName = `gauzy:migration:${name}`;
+async function withMysqlNamedLock(
+	queryRunner: QueryRunner,
+	lockName: string,
+	work: () => Promise<void>
+): Promise<void> {
 	const [row] = await queryRunner.query(`SELECT GET_LOCK(?, 120) AS \`acquired\``, [lockName]);
 	if (Number(row?.acquired) !== 1) {
-		throw new Error(`${name}: could not acquire the MySQL migration lock ${lockName}.`);
+		throw new Error(`Could not acquire the MySQL migration lock ${lockName}.`);
 	}
 	try {
 		await work();
