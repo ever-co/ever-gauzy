@@ -73,8 +73,8 @@ export interface IOutboxDeliveryClaimInput {
  */
 export interface IOutboxDeliveryClaim {
 	/**
-	 * False when this consumer already acknowledged the event or its record is dead-lettered, in which
-	 * case nothing is invoked.
+	 * False when this consumer already acknowledged the event, or when its record is dead-lettered and
+	 * has not been replayed, in which case nothing is invoked.
 	 */
 	claimed: boolean;
 	delivery: EventDelivery;
@@ -501,10 +501,16 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 				throw error;
 			}
 
-			if (existing.status === EventOutboxStatus.PUBLISHED || existing.status === EventOutboxStatus.DEAD) {
+			if (existing.status === EventOutboxStatus.PUBLISHED) {
 				// This consumer already acknowledged the event, which is what makes at-least-once
-				// delivery safe rather than merely noisy. A dead letter is settled too: its budget is
-				// spent or an operator stopped it, and only a replay hands it over again.
+				// delivery safe rather than merely noisy.
+				return { claimed: false, delivery: existing };
+			}
+
+			if (existing.status === EventOutboxStatus.DEAD) {
+				// A dead letter is terminal, whether the consumer's budget ran out or an operator stopped it,
+				// and the row it belongs to may still be retried for another consumer. Only a replay, which
+				// writes the record back to PENDING, hands it to the consumer again.
 				return { claimed: false, delivery: existing };
 			}
 
