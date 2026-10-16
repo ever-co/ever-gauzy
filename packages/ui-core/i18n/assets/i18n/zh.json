@@ -3783,17 +3783,20 @@
 		"USER": {
 			"MANAGE": "管理用户邀请",
 			"HEADER": "邀请用户",
-			"ACTION": "邀请用户"
+			"ACTION": "邀请用户",
+			"DESCRIPTION": "邀请他人以用户身份加入您的组织。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"EMPLOYEE": {
 			"MANAGE": "管理员工邀请",
 			"HEADER": "邀请员工",
-			"ACTION": "邀请员工"
+			"ACTION": "邀请员工",
+			"DESCRIPTION": "邀请他人以员工身份加入您的组织。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"CANDIDATE": {
 			"MANAGE": "管理候选人邀请",
 			"HEADER": "邀请候选人",
-			"ACTION": "邀请候选人"
+			"ACTION": "邀请候选人",
+			"DESCRIPTION": "邀请候选人进入您的招聘流程。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"SENT": "{{total}} 已发送邀请。",
 		"IGNORED": "发送了{{total}}个邀请。其中{{ignored}}个已经被邀请并忽略。",
@@ -3803,6 +3806,23 @@
 			"TWO_WEEK": "14天",
 			"MONTH": "30天",
 			"NEVER": "永不"
+		},
+		"FORM": {
+			"RECIPIENTS": "收件人",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "每输入一个地址后按回车键，即可添加多位收件人。",
+			"CLEAR_EMAILS": "全部清除",
+			"ACCESS": "访问权限",
+			"ACCESS_HINT": "可选。选择新成员加入后即可访问的内容。",
+			"DETAILS": "邀请详情",
+			"RECIPIENT_COUNT": "收件人：{{count}}",
+			"NO_RECIPIENTS": "尚未添加收件人"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "删除邀请",
+			"WARNING": "发送给 {{ email }} 的邀请将被永久删除，其链接也将失效。此操作无法撤销。",
+			"TYPE_TO_CONFIRM": "请输入以下内容以确认：",
+			"CONFIRM": "删除邀请"
 		}
 	},
 	"INVOICES_PAGE": {

@@ -3488,17 +3488,20 @@
 		"USER": {
 			"MANAGE": "crwdns10278:0crwdne10278:0",
 			"HEADER": "crwdns2369:0crwdne2369:0",
-			"ACTION": "crwdns2371:0crwdne2371:0"
+			"ACTION": "crwdns2371:0crwdne2371:0",
+			"DESCRIPTION": "Invite people to join your organization as users. Each recipient receives an email with a secure link to accept."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "crwdns10280:0crwdne10280:0",
 			"HEADER": "crwdns2375:0crwdne2375:0",
-			"ACTION": "crwdns2377:0crwdne2377:0"
+			"ACTION": "crwdns2377:0crwdne2377:0",
+			"DESCRIPTION": "Invite people to join your organization as employees. Each recipient receives an email with a secure link to accept."
 		},
 		"CANDIDATE": {
 			"MANAGE": "crwdns10282:0crwdne10282:0",
 			"HEADER": "crwdns3444:0crwdne3444:0",
-			"ACTION": "crwdns3446:0crwdne3446:0"
+			"ACTION": "crwdns3446:0crwdne3446:0",
+			"DESCRIPTION": "Invite candidates to your hiring pipeline. Each recipient receives an email with a secure link to accept."
 		},
 		"SENT": "crwdns2379:0{{total}}crwdne2379:0",
 		"IGNORED": "crwdns2381:0{{total}}crwdnd2381:0{{ignored}}crwdne2381:0",
@@ -3513,6 +3516,23 @@
 			"TWO_WEEK": "crwdns10569:0crwdne10569:0",
 			"MONTH": "crwdns10571:0crwdne10571:0",
 			"NEVER": "crwdns10573:0crwdne10573:0"
+		},
+		"FORM": {
+			"RECIPIENTS": "Recipients",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "Press Enter after each address to add multiple recipients.",
+			"CLEAR_EMAILS": "Clear all",
+			"ACCESS": "Access",
+			"ACCESS_HINT": "Optional. Choose what new members can access as soon as they join.",
+			"DETAILS": "Invitation details",
+			"RECIPIENT_COUNT": "Recipients: {{count}}",
+			"NO_RECIPIENTS": "No recipients added yet"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Delete invitation",
+			"WARNING": "The invitation for {{ email }} will be permanently deleted and its link will stop working. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete invitation"
 		}
 	},
 	"INVOICES_PAGE": {

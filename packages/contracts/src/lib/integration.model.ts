@@ -151,7 +151,9 @@ export enum IntegrationEnum {
 	SIM = 'Sim',
 	PLANE = 'Plane',
 	EVER_ASYNC = 'Ever_Async',
-	EVER_CONNECT = 'Ever_Connect'
+	EVER_CONNECT = 'Ever_Connect',
+	/** Ever Works: two-way sync of tasks, teams, goals, missions, ideas, docs, agents and inbox. */
+	EVER_WORKS = 'Ever_Works'
 }
 
 export enum IntegrationEntity {
@@ -173,7 +175,16 @@ export enum IntegrationEntity {
 	PROPOSAL = 'Proposal',
 	/** AI Integration Entity */
 	JOB_MATCHING = 'JOB_MATCHING',
-	EMPLOYEE_PERFORMANCE = 'EMPLOYEE_PERFORMANCE'
+	EMPLOYEE_PERFORMANCE = 'EMPLOYEE_PERFORMANCE',
+	/** Ever Works integration entities (the column is varchar: no migration). */
+	GOAL = 'Goal',
+	KEY_RESULT = 'KeyResult',
+	ORGANIZATION_TEAM = 'OrganizationTeam',
+	STRATEGIC_INITIATIVE = 'StrategicInitiative',
+	COMMENT = 'Comment',
+	DOCUMENT = 'Document',
+	INBOX_ITEM = 'InboxItem',
+	AGENT = 'Agent'
 }
 
 export enum IntegrationTypeGroupEnum {

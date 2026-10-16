@@ -62,6 +62,7 @@
 		"@gauzy/plugin-ever-stats-ui": "^0.1.0",
 		"@gauzy/plugin-ever-connect-ui": "^0.1.0",
 		"@gauzy/plugin-integration-ever-async-ui": "^0.1.0",
+		"@gauzy/plugin-integration-ever-works-ui": "^0.1.0",
 		"@gauzy/plugin-job-employee-ui": "^0.1.0",
 		"@gauzy/plugin-jobs-ui": "^0.1.0",
 		"@gauzy/plugin-job-proposal-ui": "^0.1.0",

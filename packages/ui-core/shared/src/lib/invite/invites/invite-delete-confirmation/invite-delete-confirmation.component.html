@@ -1,0 +1,45 @@
+<nb-card
+	class="dialog"
+	role="alertdialog"
+	aria-labelledby="invite-delete-title"
+	aria-describedby="invite-delete-warning"
+>
+	<nb-card-header>
+		<h6 id="invite-delete-title" class="title">{{ 'INVITE_PAGE.DELETE_DIALOG.TITLE' | translate }}</h6>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="close()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
+	</nb-card-header>
+	<nb-card-body>
+		<div id="invite-delete-warning" class="warning">
+			<nb-icon icon="alert-triangle-outline" status="danger" aria-hidden="true"></nb-icon>
+			<span>{{ 'INVITE_PAGE.DELETE_DIALOG.WARNING' | translate: { email: confirmationPhrase } }}</span>
+		</div>
+		<label class="confirm-label" for="invite-delete-email">
+			{{ 'INVITE_PAGE.DELETE_DIALOG.TYPE_TO_CONFIRM' | translate }}
+			<strong class="confirm-name">{{ confirmationPhrase }}</strong>
+		</label>
+		<input
+			#confirmInput
+			id="invite-delete-email"
+			nbInput
+			fullWidth
+			fieldSize="small"
+			type="text"
+			autocomplete="off"
+			spellcheck="false"
+			[placeholder]="confirmationPhrase"
+			[(ngModel)]="typedText"
+			(keydown.enter)="delete()"
+		/>
+	</nb-card-body>
+	<nb-card-footer>
+		<button type="button" (click)="close()" status="basic" ghost nbButton size="small">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" (click)="delete()" [disabled]="!isConfirmed" status="danger" nbButton size="small">
+			<nb-icon icon="trash-2-outline"></nb-icon>
+			{{ 'INVITE_PAGE.DELETE_DIALOG.CONFIRM' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
