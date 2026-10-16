@@ -5636,7 +5636,8 @@
 			"UNKNOWN_MEMBER": "未知成员",
 			"APPS_COUNT": "{{ count }} 个应用",
 			"SITES_COUNT": "{{ count }} 个网站",
-			"OF_TOTAL": "占总时间 {{ value }}"
+			"OF_TOTAL": "占总时间 {{ value }}",
+			"PAGES_TRUNCATED": "此网站的记录超出可显示的数量；明细仅涵盖其部分时间。"
 		}
 	},
 	"ONBOARDING": {

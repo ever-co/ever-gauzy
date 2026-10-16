@@ -5636,7 +5636,8 @@
 			"UNKNOWN_MEMBER": "Membro desconhecido",
 			"APPS_COUNT": "{{ count }} aplicativos",
 			"SITES_COUNT": "{{ count }} sites",
-			"OF_TOTAL": "{{ value }} do total"
+			"OF_TOTAL": "{{ value }} do total",
+			"PAGES_TRUNCATED": "Este site tem mais registros do que é possível mostrar; o detalhamento cobre apenas parte do seu tempo."
 		}
 	},
 	"ONBOARDING": {

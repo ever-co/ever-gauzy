@@ -5635,7 +5635,8 @@
 			"UNKNOWN_MEMBER": "Nieznany członek",
 			"APPS_COUNT": "Aplikacje: {{ count }}",
 			"SITES_COUNT": "Witryny: {{ count }}",
-			"OF_TOTAL": "{{ value }} całości"
+			"OF_TOTAL": "{{ value }} całości",
+			"PAGES_TRUNCATED": "Ta witryna ma więcej rekordów, niż można wyświetlić; zestawienie obejmuje tylko część jej czasu."
 		}
 	},
 	"ONBOARDING": {

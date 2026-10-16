@@ -5636,7 +5636,8 @@
 			"UNKNOWN_MEMBER": "Onbekend lid",
 			"APPS_COUNT": "{{ count }} apps",
 			"SITES_COUNT": "{{ count }} sites",
-			"OF_TOTAL": "{{ value }} van totaal"
+			"OF_TOTAL": "{{ value }} van totaal",
+			"PAGES_TRUNCATED": "Deze site heeft meer records dan er getoond kunnen worden; de uitsplitsing dekt slechts een deel van de tijd."
 		}
 	},
 	"ONBOARDING": {

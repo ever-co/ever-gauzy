@@ -5008,7 +5008,8 @@
 			"UNKNOWN_MEMBER": "Unknown member",
 			"APPS_COUNT": "{{ count }} apps",
 			"SITES_COUNT": "{{ count }} sites",
-			"OF_TOTAL": "{{ value }} of total"
+			"OF_TOTAL": "{{ value }} of total",
+			"PAGES_TRUNCATED": "This site has more records than can be shown; the breakdown covers only part of its time."
 		}
 	},
 	"ONBOARDING": {

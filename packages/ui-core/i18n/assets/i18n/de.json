@@ -5632,7 +5632,8 @@
 			"UNKNOWN_MEMBER": "Unbekanntes Mitglied",
 			"APPS_COUNT": "{{ count }} Apps",
 			"SITES_COUNT": "{{ count }} Websites",
-			"OF_TOTAL": "{{ value }} der Gesamtzeit"
+			"OF_TOTAL": "{{ value }} der Gesamtzeit",
+			"PAGES_TRUNCATED": "Diese Website hat mehr Einträge, als angezeigt werden können; die Aufschlüsselung deckt nur einen Teil ihrer Zeit ab."
 		}
 	},
 	"ONBOARDING": {

@@ -5648,7 +5648,8 @@
 			"UNKNOWN_MEMBER": "חבר לא ידוע",
 			"APPS_COUNT": "{{ count }} אפליקציות",
 			"SITES_COUNT": "{{ count }} אתרים",
-			"OF_TOTAL": "{{ value }} מהסך הכול"
+			"OF_TOTAL": "{{ value }} מהסך הכול",
+			"PAGES_TRUNCATED": "לאתר זה יש יותר רשומות ממה שניתן להציג; הפירוט מכסה רק חלק מהזמן שלו."
 		}
 	},
 	"ONBOARDING": {

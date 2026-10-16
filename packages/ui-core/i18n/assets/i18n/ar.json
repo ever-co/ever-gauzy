@@ -5621,7 +5621,8 @@
 			"UNKNOWN_MEMBER": "عضو غير معروف",
 			"APPS_COUNT": "{{ count }} تطبيقات",
 			"SITES_COUNT": "{{ count }} مواقع",
-			"OF_TOTAL": "{{ value }} من الإجمالي"
+			"OF_TOTAL": "{{ value }} من الإجمالي",
+			"PAGES_TRUNCATED": "يحتوي هذا الموقع على سجلات أكثر مما يمكن عرضه؛ التفصيل يغطي جزءًا فقط من وقته."
 		}
 	},
 	"ONBOARDING": {
