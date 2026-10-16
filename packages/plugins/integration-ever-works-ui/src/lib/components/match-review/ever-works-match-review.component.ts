@@ -15,6 +15,17 @@ import { errorText, isNotFound } from '../shared/ever-works-ui.utils';
 /** The choice of a row that creates the record on the other side instead of pairing it. */
 export const CREATE = '__create__';
 
+/**
+ * The preselected choice of each unpaired row: its suggestion, unless the admin removed that pairing here,
+ * or the same Gauzy record is suggested for several rows (same names: which one is meant is the admin's
+ * call, as the API's "accept every suggestion" also leaves it).
+ */
+export function preselect(rows: ReadonlyArray<{ id: string; suggested: string | null }>, removed: ReadonlySet<string>): Record<string, string> {
+	const times = new Map<string, number>();
+	for (const row of rows) if (row.suggested) times.set(row.suggested, (times.get(row.suggested) ?? 0) + 1);
+	return Object.fromEntries(rows.map((row) => [row.id, row.suggested && !removed.has(row.id) && times.get(row.suggested) === 1 ? row.suggested : '']));
+}
+
 type Section = 'people' | 'agents' | 'teams' | 'projects';
 
 /**
@@ -30,9 +41,9 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 	template: `
 		<p>{{ 'EVER_WORKS.REVIEW.INTRO' | translate }}</p>
 		<nb-tabset>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.PEOPLE' | translate" data-test="tab-people">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.PEOPLE' | translate" data-test="tab-people">
 				@if (errors.people) {
-					<nb-alert status="danger" role="alert" data-test="people-error">{{ errors.people }}</nb-alert>
+					<nb-alert status="danger" role="alert" data-test="people-error">{{ errors.people | translate }}</nb-alert>
 				}
 				@if (people) {
 					@if (!people.members.length) {
@@ -88,7 +99,7 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 					}
 				}
 			</nb-tab>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.AGENTS' | translate" data-test="tab-agents">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.AGENTS' | translate" data-test="tab-agents">
 				<p>{{ 'EVER_WORKS.REVIEW.AGENTS_INTRO' | translate }}</p>
 				@if (errors.agents) {
 					<nb-alert status="danger" role="alert" data-test="agents-error">{{ errors.agents }}</nb-alert>
@@ -108,9 +119,9 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 					</table>
 				}
 			</nb-tab>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.TEAMS' | translate" data-test="tab-teams">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.TEAMS' | translate" data-test="tab-teams">
 				@if (errors.teams) {
-					<nb-alert status="danger" role="alert" data-test="teams-error">{{ errors.teams }}</nb-alert>
+					<nb-alert status="danger" role="alert" data-test="teams-error">{{ errors.teams | translate }}</nb-alert>
 				}
 				@if (teams) {
 					@if (!teams.teams.length && !teams.unmatchedTeams.length) {
@@ -167,12 +178,12 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 					}
 				}
 			</nb-tab>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.PROJECTS' | translate" data-test="tab-projects">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.PROJECTS' | translate" data-test="tab-projects">
 				@if (projectsUnavailable) {
 					<p data-test="projects-unavailable">{{ 'EVER_WORKS.REVIEW.PROJECTS_UNAVAILABLE' | translate }}</p>
 				}
 				@if (errors.projects) {
-					<nb-alert status="danger" role="alert" data-test="projects-error">{{ errors.projects }}</nb-alert>
+					<nb-alert status="danger" role="alert" data-test="projects-error">{{ errors.projects | translate }}</nb-alert>
 				}
 				@if (projects) {
 					@if (!projects.works.length) {
@@ -252,6 +263,8 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	workChoice: Record<string, string> = {};
 	createInEverWorks: Record<string, boolean> = {};
 	busy: Record<Section, boolean> = { people: false, agents: false, teams: false, projects: false };
+	/** Pairings the admin removed here: their suggestion is not preselected again (it would undo the removal). */
+	private readonly removed: Record<'people' | 'teams' | 'projects', Set<string>> = { people: new Set(), teams: new Set(), projects: new Set() };
 	errors: Record<Section, string | null> = { people: null, agents: null, teams: null, projects: null };
 
 	ngOnChanges(): void {
@@ -279,7 +292,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		const links = (this.people?.members ?? [])
 			.filter((row) => !row.linkedEmployeeId && this.personChoice[row.ewUserId])
 			.map((row) => ({ ewUserId: row.ewUserId, employeeId: this.personChoice[row.ewUserId] }));
-		if (!links.length) return;
+		if (!links.length || this.refuseDuplicates('people', links.map((link) => link.employeeId))) return;
 		this.run('people', this.api.decidePeople(this.organizationId, this.id, { links }), (view) => this.setPeople(view));
 	}
 
@@ -288,6 +301,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	}
 
 	unlinkPerson(ewUserId: string): void {
+		this.removed.people.add(ewUserId);
 		this.run('people', this.api.decidePeople(this.organizationId, this.id, { unlinks: [ewUserId] }), (view) => this.setPeople(view));
 	}
 
@@ -301,6 +315,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 			.filter((team) => this.createInEverWorks[team.teamId])
 			.map((team) => team.teamId);
 		if (!links.length && !createInGauzy.length && !createInEverWorks.length) return;
+		if (this.refuseDuplicates('teams', links.map((link) => link.teamId))) return;
 		this.run(
 			'teams',
 			this.api.decideTeams(this.organizationId, this.id, {
@@ -317,6 +332,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	}
 
 	unlinkTeam(ewTeamId: string): void {
+		this.removed.teams.add(ewTeamId);
 		this.run('teams', this.api.decideTeams(this.organizationId, this.id, { unlinks: [ewTeamId] }), (view) => this.setTeams(view));
 	}
 
@@ -327,6 +343,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		const links = rows.filter((row) => this.workChoice[row.ewWorkId] !== CREATE).map((row) => ({ ewWorkId: row.ewWorkId, projectId: this.workChoice[row.ewWorkId] }));
 		const createInGauzy = rows.filter((row) => this.workChoice[row.ewWorkId] === CREATE).map((row) => row.ewWorkId);
 		if (!links.length && !createInGauzy.length) return;
+		if (this.refuseDuplicates('projects', links.map((link) => link.projectId))) return;
 		this.run(
 			'projects',
 			this.api.decideProjects(this.organizationId, this.id, { ...(links.length ? { links } : {}), ...(createInGauzy.length ? { createInGauzy } : {}) }),
@@ -339,6 +356,7 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	}
 
 	unlinkWork(ewWorkId: string): void {
+		this.removed.projects.add(ewWorkId);
 		this.run('projects', this.api.decideProjects(this.organizationId, this.id, { unlinks: [ewWorkId] }), (view) => this.setProjects(view));
 	}
 
@@ -351,19 +369,36 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	private setPeople(view: EverWorksPeopleView): void {
 		this.people = view;
 		// A suggestion is preselected; nothing is paired until the admin saves.
-		this.personChoice = Object.fromEntries(view.members.filter((row) => !row.linkedEmployeeId).map((row) => [row.ewUserId, row.suggestion?.employeeId ?? '']));
+		this.personChoice = preselect(
+			view.members.filter((row) => !row.linkedEmployeeId).map((row) => ({ id: row.ewUserId, suggested: row.suggestion?.employeeId ?? null })),
+			this.removed.people
+		);
 	}
 
 	private setTeams(view: EverWorksTeamsView): void {
 		this.teams = view;
-		this.teamChoice = Object.fromEntries(view.teams.filter((row) => !row.linkedTeamId).map((row) => [row.ewTeamId, row.suggestion?.teamId ?? '']));
+		this.teamChoice = preselect(
+			view.teams.filter((row) => !row.linkedTeamId).map((row) => ({ id: row.ewTeamId, suggested: row.suggestion?.teamId ?? null })),
+			this.removed.teams
+		);
 		this.createInEverWorks = {};
 	}
 
 	private setProjects(view: EverWorksProjectsView): void {
 		this.projects = view;
 		this.projectsUnavailable = false;
-		this.workChoice = Object.fromEntries(view.works.filter((row) => !row.linkedProjectId).map((row) => [row.ewWorkId, row.suggestion?.projectId ?? '']));
+		this.workChoice = preselect(
+			view.works.filter((row) => !row.linkedProjectId).map((row) => ({ id: row.ewWorkId, suggested: row.suggestion?.projectId ?? null })),
+			this.removed.projects
+		);
+	}
+
+	/** A Gauzy record chosen for two Ever Works records is refused here, before the API refuses the whole save. */
+	private refuseDuplicates(section: 'people' | 'teams' | 'projects', gauzyIds: string[]): boolean {
+		if (new Set(gauzyIds).size === gauzyIds.length) return false;
+		this.errors[section] = 'EVER_WORKS.REVIEW.DUPLICATE_CHOICE';
+		this.cdr.markForCheck();
+		return true;
 	}
 
 	private run<T>(section: Section, request: Observable<T>, apply: (value: T) => void): void {

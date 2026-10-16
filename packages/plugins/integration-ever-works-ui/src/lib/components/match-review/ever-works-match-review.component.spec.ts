@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { EverWorksUiService } from '../../services/ever-works.service';
-import { CREATE, EverWorksMatchReviewComponent } from './ever-works-match-review.component';
+import { CREATE, EverWorksMatchReviewComponent, preselect } from './ever-works-match-review.component';
 
 const PEOPLE = {
 	members: [
@@ -116,5 +116,51 @@ describe('EverWorksMatchReviewComponent', () => {
 		expect(component.projectsUnavailable).toBe(true);
 		expect(component.errors.projects).toBeNull();
 		expect(el.querySelector('[data-test="projects-unavailable"]')).not.toBeNull();
+	});
+
+	it('a pairing removed here is not preselected again (saving another row does not undo it)', () => {
+		const unpaired = { ...TEAMS, teams: [{ ...TEAMS.teams[0] }, TEAMS.teams[1]] };
+		api.decideTeams.mockReturnValue(of(unpaired));
+		const { component } = render();
+		component.unlinkTeam('t1');
+		// The view after the removal suggests the same pair again; it stays unselected.
+		expect(component.teamChoice['t1']).toBe('');
+		component.teamChoice['t2'] = 'g2';
+		component.saveTeams();
+		expect(api.decideTeams).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't2', teamId: 'g2' }] });
+	});
+
+	it('a Gauzy record suggested for several rows is not preselected, and choosing it twice is refused', () => {
+		api.teams.mockReturnValue(
+			of({
+				teams: [
+					{ ewTeamId: 't1', name: 'Platform', slug: null, parentTeamId: null, linkedTeamId: null, suggestion: { teamId: 'g1', reason: 'same_name' } },
+					{ ewTeamId: 't3', name: 'Platform', slug: null, parentTeamId: 't9', linkedTeamId: null, suggestion: { teamId: 'g1', reason: 'same_name' } }
+				],
+				unmatchedTeams: [{ teamId: 'g1', name: 'Platform' }]
+			})
+		);
+		const { component } = render();
+		expect(component.teamChoice).toEqual({ t1: '', t3: '' });
+		component.teamChoice['t1'] = 'g1';
+		component.teamChoice['t3'] = 'g1';
+		component.saveTeams();
+		expect(api.decideTeams).not.toHaveBeenCalled();
+		expect(component.errors.teams).toBe('EVER_WORKS.REVIEW.DUPLICATE_CHOICE');
+	});
+
+	it('preselect: suggestions once, never a removed pairing nor an ambiguous one', () => {
+		expect(
+			preselect(
+				[
+					{ id: 'a', suggested: 'x' },
+					{ id: 'b', suggested: 'y' },
+					{ id: 'c', suggested: 'y' },
+					{ id: 'd', suggested: 'z' },
+					{ id: 'e', suggested: null }
+				],
+				new Set(['d'])
+			)
+		).toEqual({ a: 'x', b: '', c: '', d: '', e: '' });
 	});
 });

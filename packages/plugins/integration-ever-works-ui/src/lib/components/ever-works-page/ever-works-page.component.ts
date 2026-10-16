@@ -13,6 +13,15 @@ import { newKeyUrlOf } from '../shared/ever-works-ui.utils';
 
 export { EVER_WORKS_NEW_KEY_PATH } from '../shared/ever-works-ui.utils';
 
+/** The navigation-state key that carries a webhook registration failure to the settings page. */
+export const EVER_WORKS_WEBHOOK_WARNING = 'everWorksWebhookWarning';
+
+/** The webhook warning a navigation carried, if any (a short text, never a secret). */
+export function webhookWarningOf(state: unknown): string | null {
+	const value = (state as Record<string, unknown> | null | undefined)?.[EVER_WORKS_WEBHOOK_WARNING];
+	return typeof value === 'string' && value ? value.slice(0, 500) : null;
+}
+
 /** What the page shows. */
 export type EverWorksView = 'loading' | 'ready' | 'unavailable' | 'error';
 
@@ -64,6 +73,11 @@ type Loaded =
 								<button nbButton ghost size="small" type="button" (click)="load()">{{ 'EVER_WORKS.RETRY' | translate }}</button>
 							}
 							@case ('connected') {
+								@if (webhookWarning) {
+									<nb-alert status="warning" data-test="webhook-warning">{{
+										'EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED' | translate: { reason: webhookWarning }
+									}}</nb-alert>
+								}
 								<nb-alert status="success" data-test="connected">{{
 									'EVER_WORKS.CONNECTED.TITLE' | translate: { name: mapping?.everWorksOrganization?.displayName || mapping?.everWorksOrganization?.slug }
 								}}</nb-alert>
@@ -113,6 +127,8 @@ export class EverWorksPageComponent implements OnInit {
 	protected mapping: EverWorksMapping | null = null;
 	protected organizationId: string | null = null;
 	protected organizationName: string | null = null;
+	/** Why the webhook could not be registered when the first sync started (the change feed keeps it going). */
+	protected webhookWarning: string | null = null;
 	/** Retries of the current organization's status; they share the stream organization changes switch. */
 	private readonly reload$ = new Subject<void>();
 
@@ -126,6 +142,7 @@ export class EverWorksPageComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		this.webhookWarning = webhookWarningOf(globalThis.history?.state);
 		const organizations$ = this.store.selectedOrganization$.pipe(
 			distinctUntilChanged((a, b) => a?.id === b?.id),
 			tap((organization) => {
@@ -162,8 +179,12 @@ export class EverWorksPageComponent implements OnInit {
 	started(result: EverWorksConnectResult): void {
 		this.mapping = result.mapping;
 		this.setup = 'connected';
+		this.webhookWarning = result.webhookError;
 		this.cdr.markForCheck();
-		void this.router.navigate(['/pages/integrations/ever-works', result.mapping.integrationTenantId]);
+		// A webhook that could not be registered is carried to the settings in the navigation state (never the URL).
+		void this.router.navigate(['/pages/integrations/ever-works', result.mapping.integrationTenantId], {
+			state: result.webhookError ? { [EVER_WORKS_WEBHOOK_WARNING]: result.webhookError } : {}
+		});
 	}
 
 	/** The status (404: the plugin is not loaded), then the connection and the mapping of the organization. */
