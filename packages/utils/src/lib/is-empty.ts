@@ -2,9 +2,7 @@
  * Check if the provided value is empty.
  * This function checks for various types of values:
  * - Arrays: Returns true if the array is empty after filtering out any empty values.
- * - Dates: Returns true only for an invalid date (one that holds no time). A Date has no own enumerable
- *   property, so the object rule below read every date as empty — a date-range filter given Dates was
- *   skipped, and a list of dates read as an empty list.
+ * - Dates: Returns false for a valid date and true for an invalid one (a date whose time is NaN).
  * - Objects: Returns true if the object has no own properties after removing null, undefined, or empty string properties.
  * - Other types: Returns true for null, undefined, or string representations of 'null' or 'undefined'.
  *
