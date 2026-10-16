@@ -148,23 +148,26 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * The users of the caller's tenant that stand behind an agent employee (`employee.kind = 'agent'`): the
-	 * accounts the agent-provisioning path creates, which have no password and never sign in. Left out of the
-	 * user statistics, which count people.
+	 * The users that stand behind an agent employee (`employee.kind = 'agent'`): the accounts the
+	 * agent-provisioning path creates, which have no password and never sign in. Left out of the user
+	 * statistics, which count people.
+	 *
+	 * Scoped like the user count it is subtracted from: the caller's tenant when there is one, and the whole
+	 * instance when there is none (the public `GET /stats/global`).
 	 *
 	 * @returns {Promise<number>} - The number of agent users
 	 */
 	async countAgentUsers(): Promise<number> {
 		const tenantId = RequestContext.currentTenantId();
-		if (!tenantId) {
-			return 0;
-		}
-		const row = await this.typeOrmRepository
+		const query = this.typeOrmRepository
 			.createQueryBuilder('user')
 			.innerJoin(Employee, 'employee', 'employee.userId = user.id AND employee.kind = :agentKind', {
 				agentKind: EmployeeKindEnum.AGENT
-			})
-			.where('user.tenantId = :tenantId', { tenantId })
+			});
+		if (tenantId) {
+			query.where('user.tenantId = :tenantId', { tenantId });
+		}
+		const row = await query
 			.select('COUNT(DISTINCT user.id)', 'agentUsers')
 			.getRawOne<{ agentUsers: string | number }>();
 		return Number(row?.agentUsers ?? 0) || 0;

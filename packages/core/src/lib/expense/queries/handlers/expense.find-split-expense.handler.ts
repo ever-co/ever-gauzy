@@ -34,6 +34,20 @@ export class FindSplitExpenseHandler
 			relations: ['organization']
 		});
 
+		// An agent employee takes no share of a split expense (they are divided among people only): it gets
+		// its own expenses that are not split, and no share of the organization's.
+		if (employee.kind === EmployeeKindEnum.AGENT) {
+			const own = await this.expenseService.findAllExpenses(
+				{
+					where: { employee: { id: employeeId } },
+					relations: parseFindOptionsRelations(relations)
+				},
+				filterDate
+			);
+			const items = own.items.filter((expense) => !expense.splitExpense);
+			return { items, total: items.length };
+		}
+
 		//1. Find all expenses for organization which have splitExpense = true & all for the employee
 		const { items, total } = await this.expenseService.findAllExpenses(
 			{

@@ -14,6 +14,8 @@ import { StatsService } from '../stats/stats.service';
 import { UserService } from '../user/user.service';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
+import { EmployeeStatisticsService } from '../employee-statistics/employee-statistics.service';
+import { RequestContext } from '../core/context';
 import { EmployeeSubscriber } from './employee.subscriber';
 
 /**
@@ -75,7 +77,10 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 		it('the MikroORM branch narrows to people when asked', async () => {
 			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
 			const findAndCount = jest.fn().mockResolvedValue([[], 0]);
-			const service = new EmployeeService({ metadata: { tableName: 'employee' } } as never, { findAndCount } as never);
+			const service = new EmployeeService(
+				{ metadata: { tableName: 'employee' } } as never,
+				{ findAndCount } as never
+			);
 
 			await service.findWorkingEmployees('org-1', null, false, true);
 			expect(findAndCount.mock.calls[0][0]).toMatchObject({ kind: EmployeeKindEnum.HUMAN });
@@ -113,11 +118,118 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 			recurringService as never,
 			organizationService as never,
 			recurringEmployees as never
-		)
-			.execute({ orgId: 'org-1', findInput: { year: 2026, month: 9 } } as never)
-			.catch(() => undefined);
+		).execute({ orgId: 'org-1', findInput: { year: 2026, month: 9 } } as never);
 		expect(recurringEmployees.findAll).toHaveBeenCalledWith({
 			where: { organizationId: 'org-1', kind: EmployeeKindEnum.HUMAN }
+		});
+	});
+
+	describe('an agent employee takes no share of a split expense', () => {
+		const statistics = (kind: EmployeeKindEnum) => {
+			const employeeService = {
+				findOneByOptions: jest.fn().mockResolvedValue({ id: 'e-1', kind, organization: { id: 'org-1' } }),
+				// Two people work in the month; the agent is not among them.
+				findWorkingEmployees: jest.fn().mockResolvedValue({ total: 2 })
+			};
+			const expenseService = {
+				findAll: jest.fn().mockResolvedValue({ items: [{ valueDate: new Date(2026, 8, 10), amount: 300 }] })
+			};
+			const recurringService = {
+				findAll: jest
+					.fn()
+					.mockResolvedValue({ items: [{ startDate: new Date(2026, 0, 1), endDate: null, value: 300 }] })
+			};
+			const service = new EmployeeStatisticsService(
+				{} as never,
+				expenseService as never,
+				{} as never,
+				employeeService as never,
+				recurringService as never
+			);
+			return { service, expenseService, recurringService };
+		};
+		const september = { startDate: new Date(2026, 8, 1), endDate: new Date(2026, 8, 30) };
+
+		it('CONTROL: a person gets half of a $300 expense split between two people', async () => {
+			const { service } = statistics(EmployeeKindEnum.HUMAN);
+			const map = await service.employeeSplitExpenseInNMonths('e-1', september, 'org-1');
+			expect(map.get('8-2026')).toMatchObject({ splitAmong: 2, splitExpense: 150 });
+			const recurring = await service.organizationRecurringSplitExpenses('e-1', september, 'org-1');
+			expect([...recurring.values()].map(({ splitExpense }) => splitExpense)).toEqual([150]);
+		});
+
+		it('the monthly and history statistics give an agent no share, one-off or recurring', async () => {
+			const { service, expenseService, recurringService } = statistics(EmployeeKindEnum.AGENT);
+
+			await expect(service.employeeSplitExpenseInNMonths('e-1', september, 'org-1')).resolves.toEqual(new Map());
+			await expect(service.organizationRecurringSplitExpenses('e-1', september, 'org-1')).resolves.toEqual(
+				new Map()
+			);
+			expect(expenseService.findAll).not.toHaveBeenCalled();
+			expect(recurringService.findAll).not.toHaveBeenCalled();
+		});
+
+		it('the split-expense list gives an agent its own expenses that are not split, and no share', async () => {
+			const own = { id: 'x-1', amount: 40, splitExpense: false };
+			const ownSplit = { id: 'x-2', amount: 300, splitExpense: true };
+			const employeeService = {
+				findOneByOptions: jest.fn().mockResolvedValue({
+					id: 'e-agent',
+					kind: EmployeeKindEnum.AGENT,
+					organization: { id: 'org-1' }
+				}),
+				findAll: jest.fn()
+			};
+			const expenseService = {
+				findAllExpenses: jest.fn().mockResolvedValue({ items: [own, ownSplit], total: 2 })
+			};
+
+			const result = await new FindSplitExpenseHandler(expenseService as never, employeeService as never).execute(
+				{
+					findInput: { employeeId: 'e-agent', relations: [], filterDate: undefined }
+				} as never
+			);
+
+			expect(expenseService.findAllExpenses).toHaveBeenCalledWith(
+				{ where: { employee: { id: 'e-agent' } }, relations: expect.anything() },
+				undefined
+			);
+			expect(result).toEqual({ items: [own], total: 1 });
+			expect(employeeService.findAll).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('countAgentUsers is scoped like the user count it is subtracted from', () => {
+		const agentUsers = (tenantId: string | null) => {
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
+			const calls: string[] = [];
+			const qb: Record<string, jest.Mock> = {};
+			for (const method of ['innerJoin', 'where', 'select']) {
+				qb[method] = jest.fn((...args: unknown[]) => {
+					calls.push(`${method}:${String(args[0])}`);
+					return qb;
+				});
+			}
+			qb.getRawOne = jest.fn().mockResolvedValue({ agentUsers: '3' });
+			const service = Object.create(UserService.prototype) as UserService;
+			Object.defineProperty(service, 'typeOrmRepository', {
+				value: { createQueryBuilder: jest.fn(() => qb) },
+				configurable: true
+			});
+			return { count: () => service.countAgentUsers(), calls, qb };
+		};
+
+		it("the caller's tenant when there is one", async () => {
+			const { count, qb } = agentUsers('tenant-1');
+			await expect(count()).resolves.toBe(3);
+			expect(qb.where).toHaveBeenCalledWith('user.tenantId = :tenantId', { tenantId: 'tenant-1' });
+		});
+
+		it('the whole instance when there is none (GET /stats/global)', async () => {
+			const { count, qb, calls } = agentUsers(null);
+			await expect(count()).resolves.toBe(3);
+			expect(qb.where).not.toHaveBeenCalled();
+			expect(calls[0]).toMatch(/^innerJoin:/);
 		});
 	});
 
@@ -154,16 +266,22 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 		const payroll = (employee: { id: string; kind: EmployeeKindEnum } | null) => {
 			const service = Object.create(PayrollRunService.prototype) as PayrollRunService;
 			const findOne = jest.fn().mockResolvedValue(employee);
-			Object.defineProperty(service, 'typeOrmRepository', { value: { manager: { findOne } }, configurable: true });
+			Object.defineProperty(service, 'typeOrmRepository', {
+				value: { manager: { findOne } },
+				configurable: true
+			});
 			return { assert: (id: string) => service['assertPayableEmployee'](id, 'tenant-1', 'org-1'), findOne };
 		};
 
 		it('accepts a person of the organization', async () => {
 			const { assert, findOne } = payroll({ id: 'e-1', kind: EmployeeKindEnum.HUMAN });
 			await expect(assert('e-1')).resolves.toBeUndefined();
-			expect(findOne).toHaveBeenCalledWith(Employee, expect.objectContaining({
-				where: { id: 'e-1', tenantId: 'tenant-1', organizationId: 'org-1' }
-			}));
+			expect(findOne).toHaveBeenCalledWith(
+				Employee,
+				expect.objectContaining({
+					where: { id: 'e-1', tenantId: 'tenant-1', organizationId: 'org-1' }
+				})
+			);
 		});
 
 		it('refuses an agent', async () => {
