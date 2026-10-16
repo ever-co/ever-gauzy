@@ -186,6 +186,25 @@ and answered `202`.
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
   enabled and works not switched off.
+- **Tasks.** Both ways, through Gauzy's own task commands (numbering,
+  sanitizing, subscriptions and other integrations behave as for any task
+  write), attributed to the mapped person or agent, else to the admin who
+  connected. Title (cut to 200 in Ever Works, the full title in the
+  description), description (Markdown ↔ rich HTML), status (the task's own
+  status set by slug, then by flag; Ever Works' gates decide, and a refused move
+  puts Ever Works' status back with a comment), priority, labels ↔ tags,
+  parent, teams (the scope) and assignees ↔ members, agents included. Each
+  side is compared with its own last-synced value, so a value the other side
+  cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
+  changed a field the later edit wins, and a lost description is kept as a
+  comment. An Ever Works task lands in its work's project, else the Ideas
+  project for an idea's task, else the only project of its mission's initiative,
+  else the default "Ever Works" project. A delete in Ever Works soft-deletes
+  the Gauzy task; a Gauzy delete cancels the Ever Works task with a comment.
+  Private tasks, recurring templates, Idea tasks (synced as ideas) and, unless
+  the setting is on, triage tasks are not synced. Task writes need a process
+  that serves the API (it has the request context the task commands read);
+  where the worker also runs the plugin, set `EVER_WORKS_SYNC_LOOP=off` there.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
