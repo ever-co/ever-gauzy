@@ -1,3 +1,4 @@
+// cspell:ignore svix
 export * from './lib/resend-enabled';
 export * from './lib/resend.plugin';
 export * from './lib/resend.module';

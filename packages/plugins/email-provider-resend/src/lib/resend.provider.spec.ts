@@ -48,7 +48,7 @@ function recorder(routes: Record<string, { status?: number; body: unknown }>) {
 		const route = routes[`${init.method} ${url}`];
 		if (!route) return new Response(JSON.stringify({ name: 'not_found', message: 'no route' }), { status: 404 });
 		const body = Buffer.isBuffer(route.body) ? route.body : JSON.stringify(route.body);
-		return new Response(body, { status: route.status ?? 200 });
+		return new Response(body as never, { status: route.status ?? 200 });
 	};
 	return { calls, fetcher };
 }

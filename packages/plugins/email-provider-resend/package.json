@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/plugin-email-provider-resend",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin: Resend as an Inbox email provider (inbound email.received + Receiving API, Svix-signed webhooks, outbound API transport); off unless EMAIL_PROVIDER_RESEND_ENABLED=true",
+	"description": "Ever Gauzy Platform plugin: Resend as an Inbox email provider (inbound email.received + Receiving API, signed webhooks, outbound API transport); off unless EMAIL_PROVIDER_RESEND_ENABLED=true",
 	"author": {
 		"name": "Ever Co. LTD",
 		"url": "https://github.com/ever-co"
