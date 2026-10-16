@@ -18,6 +18,9 @@ import { EverWorksController } from './ever-works.controller';
 import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
 import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
+import { EverWorksInitiativeCapture, EverWorksInitiativeSubscriber } from './initiatives/ever-works-initiative.signals';
+import { EverWorksInitiativesController } from './initiatives/ever-works-initiatives.controller';
+import { EverWorksInitiativesService } from './initiatives/ever-works-initiatives.service';
 import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
@@ -84,7 +87,8 @@ export const EVER_WORKS_SUBSCRIBERS = [
 	EverWorksTeamMemberSubscriber,
 	EverWorksGoalSubscriber,
 	EverWorksKeyResultSubscriber,
-	EverWorksKeyResultUpdateSubscriber
+	EverWorksKeyResultUpdateSubscriber,
+	EverWorksInitiativeSubscriber
 ];
 
 /** Every table the plugin owns (its migrations create them). */
@@ -107,7 +111,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksProjectsController, EverWorksWebhookController],
+	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksProjectsController, EverWorksInitiativesController, EverWorksWebhookController],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -139,6 +143,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		// Goals ↔ Goal + KeyResults (G-P2-1): registers itself with the applier and the pusher.
 		EverWorksGoalsService,
 		EverWorksGoalCapture,
+		// Missions ↔ Strategic Initiatives (G-P2-2): registers itself with the applier and the pusher.
+		EverWorksInitiativesService,
+		EverWorksInitiativeCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,

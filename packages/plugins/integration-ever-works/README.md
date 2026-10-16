@@ -128,6 +128,8 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/projects` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/projects` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/initiatives` | `VIEW` |
+| PUT | `/mappings/:integrationTenantId/initiatives` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
@@ -220,6 +222,19 @@ and answered `202`.
   edits, criteria and the Definition of Done follow, and key result values are
   pushed as samples (`POST /goals/:id/samples`). Gauzy never activates,
   resumes or completes an Ever Works goal: no status is sent.
+- **Missions ↔ strategic initiatives (G-P2-2).** The Initiatives tab
+  (`GET`/`PUT …/initiatives`) pairs missions and initiatives (same-title
+  suggestions the admin confirms, or "create on the other side"); missions
+  and initiatives created after the mapping pair without a review. From Ever
+  Works: title, description → intent, status (active → active, paused →
+  active with momentum "stalled", completed/failed → resolved with the
+  outcome in the strategic notes), owner → steward, teams (scope team or
+  organization), works → projects and the primary goals → the goals'
+  initiative. To Ever Works (only with the missions direction `both`): a
+  mission Ever Works creates **paused**, then title, intent, teams, works and
+  goals; resolving or retiring the initiative completes the mission. Gauzy
+  never activates a mission. Drafts wait until active, and **leadership
+  initiatives never sync** (one that turns leadership stops syncing, flagged).
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
