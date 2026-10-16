@@ -16,6 +16,7 @@ import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
 import { EmployeeStatisticsService } from '../employee-statistics/employee-statistics.service';
 import { RequestContext } from '../core/context';
+import { StatisticService } from '../time-tracking/statistic/statistic.service';
 import { EmployeeSubscriber } from './employee.subscriber';
 
 /**
@@ -196,6 +197,56 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 			);
 			expect(result).toEqual({ items: [own], total: 1 });
 			expect(employeeService.findAll).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('the members-worked count of the time-tracking dashboard counts people only', () => {
+		const statisticService = (orm: MultiORMEnum) => {
+			const service = Object.create(StatisticService.prototype) as StatisticService;
+			Object.defineProperty(service, 'ormType', { value: orm, configurable: true });
+			return service as unknown as Record<string, unknown> & {
+				getEmployeeWorkedCounts: (request: object) => Promise<number>;
+			};
+		};
+
+		it('TypeORM', async () => {
+			const clauses: unknown[][] = [];
+			const qb: Record<string, jest.Mock> = {};
+			for (const method of ['select', 'innerJoin']) qb[method] = jest.fn(() => qb);
+			qb.andWhere = jest.fn((...args: unknown[]) => {
+				clauses.push(args);
+				return qb;
+			});
+			qb.getRawOne = jest.fn().mockResolvedValue({ count: '2' });
+			const service = statisticService(MultiORMEnum.TypeORM);
+			service.typeOrmTimeLogRepository = { createQueryBuilder: jest.fn(() => qb) };
+
+			await expect(service.getEmployeeWorkedCounts({ organizationId: 'org-1' })).resolves.toBe(2);
+			expect(clauses).toContainEqual([
+				expect.stringMatching(/"employee"\."kind" = :humanKind/),
+				{ humanKind: EmployeeKindEnum.HUMAN }
+			]);
+		});
+
+		it('MikroORM', async () => {
+			const clauses: unknown[][] = [];
+			const qb: Record<string, jest.Mock> = {};
+			for (const method of ['innerJoin', 'select', 'where', 'whereBetween', 'whereIn'])
+				qb[method] = jest.fn(() => qb);
+			qb.andWhere = jest.fn((...args: unknown[]) => {
+				clauses.push(args);
+				return qb;
+			});
+			qb.first = jest.fn().mockResolvedValue({ count: '2' });
+			const knex = Object.assign(
+				jest.fn(() => qb),
+				{ raw: jest.fn((sql: string) => sql) }
+			);
+			const service = statisticService(MultiORMEnum.MikroORM);
+			service.mikroOrmTimeLogRepository = { getKnex: () => knex };
+
+			await expect(service.getEmployeeWorkedCounts({ organizationId: 'org-1' })).resolves.toBe(2);
+			expect(clauses).toContainEqual(['employee.kind', EmployeeKindEnum.HUMAN]);
 		});
 	});
 
