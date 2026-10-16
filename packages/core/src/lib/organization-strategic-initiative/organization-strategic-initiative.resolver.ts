@@ -46,6 +46,8 @@ export interface ICreateOrganizationStrategicInitiativeInput {
 	visibilityScope?: string;
 	signals?: Record<string, unknown>;
 	stewardId?: Id;
+	/** The teams to link directly; each must be a team of the initiative's organization. */
+	teamIds?: Id[];
 }
 
 /** The members `UpdateOrganizationStrategicInitiativeInput` declares in the schema. */

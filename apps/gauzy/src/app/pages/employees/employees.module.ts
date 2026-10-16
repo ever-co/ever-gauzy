@@ -86,7 +86,6 @@ import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 const COMPONENTS = [
 	EmployeesComponent,
 	ViewEmployeeComponent,
-	EmployeeHoursChartComponent,
 	EmployeeBonusComponent,
 	EmployeeAverageIncomeComponent,
 	EmployeeAverageExpensesComponent,
@@ -155,6 +154,7 @@ const COMPONENTS = [
 		TimeZoneSelectorModule,
 		DynamicTabsModule,
 		BaseChartDirective,
+		EmployeeHoursChartComponent,
 		// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 		// imported directly — the Documents hub module is never pulled in here.
 		DocumentLinksPanelComponent

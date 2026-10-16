@@ -836,6 +836,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Musisz być pracownikiem, aby móc śledzić czas, tworzyć podziały kosztów i korzystać z innych funkcji związanych z pracownikami"
 	},
 	"MENU": {
+		"INITIATIVES": "Inicjatywy",
 		"BREADCRUMB": "Ścieżka nawigacji",
 		"PIPELINES": "Rurociągi",
 		"DASHBOARD": "Dashboard",
@@ -1948,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Rodzaj",
+		"KIND_ALL": "Wszyscy",
+		"KIND_HUMAN": "Osoby",
+		"KIND_AGENT": "Agenci",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Zarządzany przez Ever Works: nazwa i profil tego agenta są zmieniane w Ever Works i synchronizowane z Gauzy.",
+		"MANAGED_EXTERNALLY": "Zarządzany zewnętrznie: nazwa i profil tego agenta są zmieniane w systemie źródłowym i synchronizowane z Gauzy.",
+		"OPEN_MANAGED_AGENT": "Otwórz stronę agenta",
 		"HEADER": "Zarządzaj pracownikami",
 		"ADD_EMPLOYEE": "Dodaj pracownika",
 		"ACTIVE": "Aktywny",
@@ -2088,6 +2097,60 @@
 			},
 			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
 			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Inicjatywy strategiczne",
+		"SUBTITLE": "Kierunki, w których Twoja organizacja postanowiła się rozwijać, oraz powiązane z nimi cele, projekty i zespoły.",
+		"ADD": "Dodaj inicjatywę",
+		"EDIT": "Edytuj inicjatywę",
+		"EMPTY": "Brak inicjatyw strategicznych.",
+		"TITLE": "Tytuł",
+		"STATE": "Stan",
+		"VISIBILITY": "Widoczność",
+		"TEAMS": "Zespoły",
+		"TEAMS_HINT": "Przy widoczności „Zespół” inicjatywę widzą członkowie tych zespołów (oraz zespołów powiązanych projektów).",
+		"PROJECTS": "Projekty",
+		"GOALS": "Cele",
+		"CONFIDENCE": "Pewność",
+		"MOMENTUM": "Dynamika",
+		"INTENT": "Intencja",
+		"INTENT_HINT": "Co świadomie chcemy posunąć naprzód i dlaczego?",
+		"STEWARD": "Opiekun",
+		"SIGNALS": "Sygnały",
+		"KNOWN_RISKS": "Znane ryzyka",
+		"KNOWN_RISKS_HINT": "Jedno ryzyko w wierszu",
+		"NOTES": "Notatki",
+		"LAST_ASSESSED": "Ostatnia ocena",
+		"NO_TEAMS": "Brak powiązanych zespołów.",
+		"NO_GOALS": "Brak powiązanych celów.",
+		"NO_PROJECTS": "Brak powiązanych projektów.",
+		"NOT_FOUND": "Nie znaleziono inicjatywy lub nie masz do niej dostępu.",
+		"DELETE_TITLE": "Usuń inicjatywę",
+		"DELETE_CONFIRMATION": "Usunąć inicjatywę „{{ name }}”?",
+		"DELETED": "Usunięto inicjatywę „{{ name }}”.",
+		"CREATED": "Utworzono inicjatywę „{{ name }}”.",
+		"UPDATED": "Zaktualizowano inicjatywę „{{ name }}”.",
+		"STATES": {
+			"DRAFT": "Szkic",
+			"ACTIVE": "Aktywna",
+			"RESOLVED": "Zrealizowana",
+			"RETIRED": "Wycofana"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Kierownictwo",
+			"ORGANIZATION": "Organizacja",
+			"TEAM": "Zespół"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Niska",
+			"MEDIUM": "Średnia",
+			"HIGH": "Wysoka"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Zastój",
+			"PROGRESSING": "Postępuje",
+			"ACCELERATING": "Przyspiesza"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2669,7 +2732,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",
-				"MEMBERS": "Członkowie"
+				"MEMBERS": "Członkowie",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Szczegóły"
+					},
+					"PUBLIC": "Publiczny",
+					"PRIVATE": "Prywatny",
+					"PREFIX": "Prefiks zadań",
+					"MEMBERS_COUNT": "Członkowie: {{ count }}",
+					"LIVE": "Śledzą teraz: {{ tracking }} · Online: {{ online }}",
+					"OF_MEMBERS": "{{ count }} z {{ total }} członków",
+					"CREATED": "Utworzono",
+					"UPDATED": "Ostatnia aktualizacja",
+					"ACTIVE_MEMBERS": "Aktywni członkowie",
+					"ACTIVE_MEMBERS_META": "z {{ total }} członków rejestrowało czas",
+					"TIME_BY_MEMBER": "Czas według członków",
+					"TEAM_TASKS": "Zadania zespołu",
+					"NO_TEAM_TASKS": "Brak zadań przypisanych do tego zespołu",
+					"NO_MEMBERS": "Ten zespół nie ma jeszcze członków",
+					"NO_PROJECTS": "Brak projektów powiązanych z tym zespołem",
+					"COLUMNS": {
+						"MEMBER": "Członek",
+						"ROLE": "Rola",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Bieżące zadanie",
+						"TODAY": "Dziś",
+						"ACTIVITY": "Aktywność"
+					},
+					"ROLE": {
+						"MANAGER": "Menedżer",
+						"MEMBER": "Członek"
+					},
+					"GENERAL": "Ogólne",
+					"SETTINGS": "Ustawienia",
+					"RECORD": "Rekord",
+					"TEAM_SIZE": "Wielkość zespołu",
+					"COLOR": "Kolor",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Link do profilu",
+					"VISIBILITY": "Widoczność",
+					"SHARE_PROFILE_VIEW": "Członkowie widzą nawzajem swoje profile",
+					"REQUIRE_PLAN": "Wymagaj planu do śledzenia czasu",
+					"NOT_FOUND": "Nie znaleziono tego zespołu",
+					"LOAD_FAILED": "Nie udało się wczytać zespołu",
+					"RETRY": "Spróbuj ponownie",
+					"OPEN_TASK_DETAILS": "Pokaż szczegóły: {{ title }}",
+					"OPEN_TASK_PAGE": "Otwórz stronę: {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Otwórz stronę zadania",
+					"UNASSIGNED": "Nieprzypisane",
+					"SHOW_ALL": "Pokaż wszystkie",
+					"SHOW_LESS": "Pokaż mniej",
+					"PROJECTS_CAPTION": "Projekty zespołu i czas poświęcony każdemu z nich w tym okresie",
+					"NOT_LINKED": "Niepowiązany",
+					"NOT_LINKED_HINT": "Członkowie rejestrowali czas w tym projekcie, ale nie jest on powiązany z zespołem"
+				}
 			}
 		},
 		"PERMISSIONS": {
