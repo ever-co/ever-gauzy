@@ -97,6 +97,8 @@ describe('InboxPageComponent', () => {
 		);
 		component.open(component.items()[0]);
 		expect(component.items()).toEqual([]);
+		// It stays open while I read it.
+		expect(component.selected()).toMatchObject({ id: 'a', recipient: { isRead: true } });
 	});
 
 	it('a failed state change is shown', () => {

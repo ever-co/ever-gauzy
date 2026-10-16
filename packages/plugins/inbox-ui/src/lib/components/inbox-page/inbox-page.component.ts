@@ -352,7 +352,17 @@ export class InboxPageComponent implements OnInit {
 	/** Why the last read / archive / snooze failed (the API's message, or a translation key). */
 	readonly actionError = signal<string | null>(null);
 
-	readonly selected = computed(() => this.items().find((item) => item.id === this.selectedId()) ?? null);
+	/**
+	 * The open item, kept here as well: an item read under "unread only" leaves the list but stays open (its
+	 * body and reply form must not vanish while the user reads it).
+	 */
+	private readonly opened = signal<IInboxItemWithState | null>(null);
+	readonly selected = computed(() => {
+		const id = this.selectedId();
+		if (!id) return null;
+		const opened = this.opened();
+		return this.items().find((item) => item.id === id) ?? (opened?.id === id ? opened : null);
+	});
 	readonly hasUnread = computed(() => this.items().some((item) => isUnread(item)));
 
 	/** The search box, debounced into `query`. */
@@ -495,6 +505,7 @@ export class InboxPageComponent implements OnInit {
 	/** Opens an item; an unread one becomes read. */
 	open(item: IInboxItemWithState): void {
 		this.selectedId.set(item.id ?? null);
+		this.opened.set(item);
 		this.replyError.set(null);
 		if (item.id && isUnread(item)) this.changeState(item, { isRead: true });
 	}
@@ -507,6 +518,7 @@ export class InboxPageComponent implements OnInit {
 			next: (next) => {
 				this.busy.set(false);
 				this.items.set(replaceItem(this.items(), next));
+				if (this.opened()?.id === next.id) this.opened.set(next);
 				this.api.notifyChanged();
 			},
 			error: (error: HttpErrorResponse) => {
@@ -525,9 +537,15 @@ export class InboxPageComponent implements OnInit {
 		this.api.setState(item.id, change).subscribe({
 			next: (next) => {
 				this.busy.set(false);
+				if (this.opened()?.id === next.id) this.opened.set(next);
 				if (this.leavesList(change, next)) {
 					this.items.set(this.items().filter((entry) => entry.id !== next.id));
-					if (this.selectedId() === next.id) this.selectedId.set(null);
+					// Archived, snoozed or woken: it is gone from this view. Only read: it stays open.
+					const onlyRead =
+						change.isRead !== undefined &&
+						change.isArchived === undefined &&
+						change.snoozedUntil === undefined;
+					if (this.selectedId() === next.id && !onlyRead) this.selectedId.set(null);
 					// The API pages by offset: with an item gone, the next page would skip one. Start over.
 					if (this.nextCursor()) this.reload();
 				} else {
@@ -568,7 +586,10 @@ export class InboxPageComponent implements OnInit {
 
 	private refresh(id: string): void {
 		this.api.get(id).subscribe({
-			next: (next) => this.items.set(replaceItem(this.items(), next))
+			next: (next) => {
+				this.items.set(replaceItem(this.items(), next));
+				if (this.opened()?.id === next.id) this.opened.set(next);
+			}
 		});
 	}
 }
