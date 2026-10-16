@@ -1,3 +1,4 @@
+// cspell:ignore EINSECURE
 import axios, { AxiosInstance } from 'axios';
 import { createSsrfSafeHttpsAgent } from '@gauzy/core';
 

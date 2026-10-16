@@ -1,3 +1,4 @@
+// cspell:ignore Unmapping sqljs
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { randomUUID } from 'node:crypto';

@@ -1,3 +1,4 @@
+// cspell:ignore sqljs schemaname tablename conrelid relnamespace nspname relname conname
 import { QueryRunner } from 'typeorm';
 
 /** The three SQL families the plugin's migrations are written for. */

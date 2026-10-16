@@ -1,3 +1,4 @@
+// cspell:ignore secretvalue
 import { randomBytes } from 'node:crypto';
 import { EverWorksSecretBox, EverWorksSecretError } from './ever-works-secret-box';
 
