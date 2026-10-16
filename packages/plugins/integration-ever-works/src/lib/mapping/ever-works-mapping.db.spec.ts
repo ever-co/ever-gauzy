@@ -1,3 +1,4 @@
+// cspell:ignore unmapping
 /**
  * Organization mapping and settings (G-P1-4) on a real database (better-sqlite3) with the mock Ever
  * Works: one `integration_tenant` per mapped organization with the plan's settings, the per-entity sync
@@ -98,7 +99,7 @@ const base = {
 	createdAt: { type: Date, createDate: true },
 	updatedAt: { type: Date, updateDate: true }
 } as const;
-const schema = (name: string, target: Function, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
+const schema = (name: string, target: new (...args: never[]) => object, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
 	new EntitySchema({ name, target, tableName, columns: { ...base, ...columns } as never, relations: relations as never });
 
 const coreSchemas = [

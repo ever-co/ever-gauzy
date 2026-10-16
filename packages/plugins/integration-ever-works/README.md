@@ -88,7 +88,7 @@ every database; never by the seed) and answers the routes below.
    type and "Ideas" view; the "Ever Works" and "Ever Works — Ideas" projects are
    created through the platform's own project command when first needed
    (`POST …/mappings/:id/projects/default|ideas`). Each side of a pair is mapped
-   once per tenant; unmapping archives the mapping, and mapping the same pair
+   once per tenant; removing a mapping archives it, and mapping the same pair
    again resumes it.
 
 A revoked or expired key turns the connection `needs_reauth` (the daily check
