@@ -323,17 +323,45 @@ const listRow = (id: string, overrides: Record<string, unknown> = {}) => ({
  * @param options.lines The lines the fixture starts with.
  * @param options.lists The lists the fixture starts with.
  * @param options.withLedger Whether the inventory capability is registered at all.
+ * @param options.failOn A fact the outbox refuses to append, failing the transaction it was asked for in.
+ * @param options.driver The database the transaction's TypeORM manager reports (`postgres` unless stated).
  */
-function lineFixture(options: { lines?: any[]; lists?: any[]; withLedger?: boolean } = {}) {
+function lineFixture(
+	options: { lines?: any[]; lists?: any[]; withLedger?: boolean; failOn?: string; driver?: string } = {}
+) {
 	const tables: ITables = {
 		line: [...(options.lines ?? [])],
 		list: [...(options.lists ?? [listRow('list-1')])]
 	};
 	const capability = ledger();
+	const lineRepository = repository(tables, 'line');
+	const listRepository = repository(tables, 'list');
+	// The first outcome on a line moves its list in a transaction of the list repository's manager and appends
+	// `pick_list.started` through it; the in-memory transaction hands the body the repositories themselves.
+	const appended: any[] = [];
+	(listRepository as any).manager = {
+		transaction: async (work: (manager: unknown) => Promise<unknown>) =>
+			await work({
+				dataSource: { options: { type: options.driver ?? 'postgres' } },
+				getRepository: (entity: { name?: string }) => (entity?.name === 'PickListLine' ? lineRepository : listRepository)
+			})
+	};
+	const outbox = {
+		append: async (_manager: unknown, event: any) => {
+			if (event.name === options.failOn) {
+				throw new Error('the outbox is unavailable');
+			}
+
+			appended.push(event);
+
+			return event;
+		}
+	};
 	const service = new PickListLineService(
-		repository(tables, 'line') as never,
+		lineRepository as never,
 		{} as never,
-		repository(tables, 'list') as never,
+		listRepository as never,
+		outbox as never,
 		(options.withLedger ?? true) ? (capability.port as never) : undefined
 	);
 
@@ -341,6 +369,9 @@ function lineFixture(options: { lines?: any[]; lists?: any[]; withLedger?: boole
 		service,
 		tables,
 		capability,
+		appended,
+		listRepository,
+		lineRepository,
 		store: (id: string) => tables.line.find((row) => row.id === id),
 		list: (id: string) => tables.list.find((row) => row.id === id)
 	};
@@ -587,6 +618,112 @@ describe('PickListLineService — recording a pick (doc 09 §14.5, INV-21)', () 
 			/has no bin, so the shortfall has nowhere to be corrected against/
 		);
 		expect(fixture.capability.movements).toEqual([]);
+	});
+
+	// The in-memory transaction's manager is not a TypeORM one — as under MikroORM, where the inventory ledger cannot
+	// join the warehouse's transaction — so the movements an outcome implies are written on the ledger's own, and a
+	// transaction that then fails has them reversed. (Under TypeORM they join it and roll back with it: the DB-backed
+	// suite, `warehouse-update-guards.db.spec.ts`.)
+	it.each([
+		{
+			kind: 'short pick',
+			record: (service: PickListLineService) => service.recordPick('line-1', { pickedQuantity: '3' }),
+			written: [
+				[VARIANT, '-2.000000', false],
+				[VARIANT, '2.000000', true]
+			]
+		},
+		{
+			kind: 'substitution',
+			record: (service: PickListLineService) =>
+				service.recordSubstitution('line-1', { substituteVariantId: SUBSTITUTE, substituteQuantity: '5' }),
+			// Reversed newest first: the substitute comes back before the requested variant leaves again.
+			written: [
+				[VARIANT, '5.000000', false],
+				[SUBSTITUTE, '-5.000000', false],
+				[SUBSTITUTE, '5.000000', true],
+				[VARIANT, '-5.000000', true]
+			]
+		}
+	])(
+		'a $kind whose transaction fails after the ledger wrote on its own reverses those movements, under the same reference',
+		async ({ record, written }) => {
+			const fixture = lineFixture({ lines: [lineRow('line-1')], failOn: 'pick_list.started' });
+
+			await expect(record(fixture.service)).rejects.toThrow(/outbox is unavailable/);
+
+			expect(
+				fixture.capability.movements.map((movement) => [
+					movement.variantId,
+					movement.quantity,
+					String(movement.reason).startsWith('REVERSAL:')
+				])
+			).toEqual(written);
+			expect(fixture.capability.movements.every((movement) => movement.referenceId === 'line-1')).toBe(true);
+		}
+	);
+
+	it('a reversal the ledger refuses is logged, and the caller is answered with what failed the outcome', async () => {
+		const fixture = lineFixture({ lines: [lineRow('line-1')], failOn: 'pick_list.started' });
+		const write = fixture.capability.port.recordMovement;
+		jest.spyOn(fixture.capability.port, 'recordMovement').mockImplementation(async (request, manager) => {
+			if (String(request.reason).startsWith('REVERSAL:')) {
+				throw new Error('the ledger is unavailable');
+			}
+			return await write(request, manager);
+		});
+		const logged = jest.spyOn((fixture.service as any).logger, 'error').mockImplementation(() => undefined);
+
+		await expect(fixture.service.recordPick('line-1', { pickedQuantity: '3' })).rejects.toThrow(/outbox is unavailable/);
+
+		expect(logged).toHaveBeenCalledWith(expect.stringMatching(/-2\.000000 movement .* pick line line-1 could not be reversed/));
+	});
+
+	it.each([
+		['postgres', { mode: 'pessimistic_write' }],
+		['mysql', { mode: 'pessimistic_write' }],
+		// SQLite has no row lock (TypeORM refuses the clause there) and serializes its writers: the read is plain.
+		['better-sqlite3', undefined]
+	])(
+		'an outcome on %s takes its list’s row first (lock: %o), before it writes the line or reads the counters',
+		async (driver, lock) => {
+			// Two outcomes on different lines of one list each re-count the list's lines in their own transaction; on a
+			// server database the second now waits on the list's row until the first commits, and counts its line.
+			const fixture = lineFixture({
+				driver,
+				lines: [lineRow('line-1'), lineRow('line-2')],
+				lists: [listRow('list-1', { status: PickListStatus.IN_PROGRESS })]
+			});
+			const order: unknown[][] = [];
+			const readList = fixture.listRepository.findOne;
+			const writeLine = fixture.lineRepository.update;
+			const readLines = fixture.lineRepository.find;
+			jest.spyOn(fixture.listRepository, 'findOne').mockImplementation(async (options: any = {}) => {
+				order.push(['read list', options.lock]);
+				return await readList(options);
+			});
+			jest.spyOn(fixture.lineRepository, 'update').mockImplementation(async (...args: any[]) => {
+				order.push(['write line']);
+				return await (writeLine as any)(...args);
+			});
+			jest.spyOn(fixture.lineRepository, 'find').mockImplementation(async (options: any = {}) => {
+				order.push(['read lines']);
+				return await readLines(options);
+			});
+
+			await fixture.service.recordPick('line-1', { pickedQuantity: '5' });
+
+			expect(order.slice(0, 4)).toEqual([['read list', lock], ['write line'], ['read list', undefined], ['read lines']]);
+			expect(fixture.list('list-1')).toMatchObject({ pickedCount: 1 });
+		}
+	);
+
+	it('control: a short pick whose transaction commits writes its movement once and reverses nothing', async () => {
+		const fixture = lineFixture({ lines: [lineRow('line-1')] });
+
+		await fixture.service.recordPick('line-1', { pickedQuantity: '3' });
+
+		expect(fixture.capability.movements.map((movement) => movement.quantity)).toEqual(['-2.000000']);
 	});
 
 	it('records the bin the picker corrected to and the lot and serials that were scanned', async () => {

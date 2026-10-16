@@ -7,6 +7,7 @@ import {
 	ExpenseModule,
 	IncomeModule,
 	IntegrationMapModule,
+	IntegrationTenantModule,
 	OrganizationContactModule,
 	OrganizationModule,
 	OrganizationVendorModule,
@@ -31,6 +32,8 @@ import { UpworkController } from './upwork.controller';
 		ExpenseModule,
 		IncomeModule,
 		IntegrationMapModule,
+		// The run's end is recorded through `IntegrationTenantSyncService`, which this module exports.
+		IntegrationTenantModule,
 		OrganizationContactModule,
 		OrganizationModule,
 		OrganizationVendorModule,
