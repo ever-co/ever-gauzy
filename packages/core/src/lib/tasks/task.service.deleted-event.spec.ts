@@ -2,6 +2,7 @@ import '../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
@@ -32,6 +33,14 @@ describe('TaskService — TaskEvent DELETED', () => {
 
 	const published = (): TaskEvent[] => publish.mock.calls.map(([event]) => event);
 
+	/** Signs in as the fixture's user holding exactly these permissions (`hasPermission` and `hasAnyPermission`). */
+	const signIn = (permissions: PermissionsEnum[]) => {
+		({ restore } = asTenantUser(fixture, { permissions }));
+		jest.spyOn(RequestContext, 'hasAnyPermission').mockImplementation((wanted: PermissionsEnum[]) =>
+			wanted.some((permission) => permissions.includes(permission))
+		);
+	};
+
 	beforeEach(() => {
 		publish = jest.fn();
 		service = Object.create(TaskService.prototype);
@@ -40,9 +49,10 @@ describe('TaskService — TaskEvent DELETED', () => {
 			_managedEmployeeService: { isManagerOfTeamsOrProjects: jest.fn().mockResolvedValue(false) }
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
-		jest
-			.spyOn(TenantAwareCrudService.prototype, 'findOneOrFailByIdString')
-			.mockResolvedValue({ success: true, record: stored } as never);
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneOrFailByIdString').mockResolvedValue({
+			success: true,
+			record: stored
+		} as never);
 	});
 
 	afterEach(() => {
@@ -51,8 +61,10 @@ describe('TaskService — TaskEvent DELETED', () => {
 	});
 
 	it('publishes DELETED after a hard delete, with the task and its scope', async () => {
-		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ORG_TASK_DELETE] }));
-		const remove = jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
+		const remove = jest
+			.spyOn(TenantAwareCrudService.prototype, 'delete')
+			.mockResolvedValue({ affected: 1, raw: [] });
 
 		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
 
@@ -70,7 +82,7 @@ describe('TaskService — TaskEvent DELETED', () => {
 	});
 
 	it('publishes nothing when the delete removed nothing', async () => {
-		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ORG_TASK_DELETE] }));
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
 		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 0, raw: [] });
 
 		await service.deleteTask('task-1');
@@ -79,7 +91,7 @@ describe('TaskService — TaskEvent DELETED', () => {
 	});
 
 	it('publishes nothing when the caller may not delete the task', async () => {
-		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ORG_TASK_EDIT] }));
+		signIn([PermissionsEnum.ORG_TASK_EDIT]);
 		const remove = jest.spyOn(TenantAwareCrudService.prototype, 'delete');
 
 		await expect(service.deleteTask('task-1')).rejects.toBeInstanceOf(ForbiddenException);
@@ -89,7 +101,7 @@ describe('TaskService — TaskEvent DELETED', () => {
 	});
 
 	it('publishes DELETED after a soft delete', async () => {
-		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ALL_ORG_EDIT] }));
+		signIn([PermissionsEnum.ALL_ORG_EDIT]);
 		const softRemoved = { ...stored, deletedAt: new Date() };
 		jest.spyOn(CrudService.prototype, 'softRemove').mockResolvedValue(softRemoved as never);
 
@@ -102,7 +114,7 @@ describe('TaskService — TaskEvent DELETED', () => {
 	});
 
 	it('never fails the delete when publishing throws', async () => {
-		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ORG_TASK_DELETE] }));
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
 		publish.mockImplementation(() => {
 			throw new Error('subscriber exploded');
 		});
@@ -114,7 +126,7 @@ describe('TaskService — TaskEvent DELETED', () => {
 	});
 
 	it('works without the domain event bus (a service built by hand)', async () => {
-		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ORG_TASK_DELETE] }));
+		signIn([PermissionsEnum.ORG_TASK_DELETE]);
 		Object.assign(service, { _domainEventBus: undefined });
 		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
 
