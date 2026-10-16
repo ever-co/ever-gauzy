@@ -38,7 +38,9 @@ describe('TaskService.update — moving a task to another project', () => {
 		({ restore } = asTenantUser(fixture));
 		maxNumberBy = jest.fn(async ({ projectId }) => (projectId === 'project-new' ? 4 : 99));
 		findProject = jest.fn(async (_entity, { where }) =>
-			where.id === 'project-new' && where.tenantId === fixture.tenantId
+			where.id === 'project-new' &&
+			where.tenantId === fixture.tenantId &&
+			where.organizationId === fixture.organizationId
 				? { id: 'project-new', name: 'Ever Works' }
 				: null
 		);
@@ -101,14 +103,28 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(save.mock.calls[0][0].project).toEqual({ id: 'project-new' });
 	});
 
-	it('refuses a move to a project that is not one of the tenant', async () => {
+	it('refuses a move to a project that is not one of the tenant or organization', async () => {
 		findProject.mockResolvedValue(null);
 
 		await expect(service.update('task-1', { projectId: 'project-foreign' })).rejects.toThrow(
-			/not one of this tenant/
+			/not one of the task's organization/
 		);
 		expect(save).not.toHaveBeenCalled();
 		expect(update).not.toHaveBeenCalled();
+	});
+
+	it("refuses a move to a project of another organization, and counts numbers in the task's organization", async () => {
+		await expect(
+			service.update('task-1', { projectId: 'project-new', organizationId: 'org-other' } as never)
+		).rejects.toThrow(/not one of the task's organization/);
+		expect(save).not.toHaveBeenCalled();
+
+		await service.update('task-1', { projectId: 'project-new' });
+		expect(findProject).toHaveBeenLastCalledWith(
+			OrganizationProject,
+			expect.objectContaining({ where: expect.objectContaining({ organizationId: fixture.organizationId }) })
+		);
+		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ organizationId: fixture.organizationId }));
 	});
 
 	it('keeps the stored prefix (never the input one) when the project cannot be read', async () => {

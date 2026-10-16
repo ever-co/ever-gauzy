@@ -158,12 +158,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// the task where it was.
 			let moved: Partial<Task> | null = null;
 			if (data.projectId && data.projectId !== task.projectId) {
-				const { organizationId } = task;
+				// The task's organization after the update: the destination must be a project of it, and the next
+				// number is counted in it (counting in another organization could hand out a taken number).
+				const organizationId = data.organizationId ?? task.organizationId;
 				const projectId = data.projectId;
 
-				const destination = await this.findDestinationProject(projectId, tenantId);
+				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
 				if (destination.exists === false) {
-					throw new BadRequestException('The task cannot move to a project that is not one of this tenant.');
+					throw new BadRequestException(
+						"The task cannot move to a project that is not one of the task's organization."
+					);
 				}
 
 				// Get the maximum task number for the project the task moves to
@@ -1123,24 +1127,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * The project a task moves to, read in the caller's tenant: whether it is one of the tenant's, and its
-	 * task-number prefix by the rule the create path uses (the first three characters of its name, or `null`
-	 * for a project without a name). `exists` is `undefined` when that cannot be told (no tenant in the
-	 * context, or the read failed); the caller then keeps the task's stored prefix.
+	 * The project a task moves to, read in the caller's tenant and the task's organization: whether it is one
+	 * of that organization's projects, and its task-number prefix by the rule the create path uses (the first
+	 * three characters of its name, or `null` for a project without a name). `exists` is `undefined` when that
+	 * cannot be told (no tenant or organization, or the read failed); the caller then keeps the stored prefix.
 	 *
 	 * @param projectId The project the task moves to.
 	 * @param tenantId The caller's tenant.
+	 * @param organizationId The task's organization (after the update).
 	 */
 	private async findDestinationProject(
 		projectId: ID,
-		tenantId: ID
+		tenantId: ID,
+		organizationId: ID
 	): Promise<{ exists: boolean | undefined; prefix?: string | null }> {
-		if (!tenantId) {
+		if (!tenantId || !organizationId) {
 			return { exists: undefined };
 		}
 		try {
 			const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
-				where: { id: projectId, tenantId },
+				where: { id: projectId, tenantId, organizationId },
 				select: { id: true, name: true }
 			});
 			if (!project) {
