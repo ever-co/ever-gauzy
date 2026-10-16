@@ -487,6 +487,11 @@ $control-height: 2rem;
   .au-pages {
     // Lines the page list up under the site's name.
     padding: 0.25rem $gap-lg $gap-md calc(#{$gap-lg} + 3.375rem);
+
+    // On a phone the indent would eat the address's room: start at the row's edge.
+    @media screen and (max-width: 40rem) {
+      padding-inline-start: $gap-lg;
+    }
   }
 
   .au-pages-state {
@@ -511,6 +516,27 @@ $control-height: 2rem;
 
     & + & {
       border-top: 1px dashed var(--gauzy-border-default-color);
+    }
+
+    // The same narrow layout as the site rows above: the bar and its % drop
+    // out, and the site name sits over its link so the address keeps a line.
+    @media screen and (max-width: 40rem) {
+      grid-template-columns: minmax(0, 1fr) 4.5rem;
+      column-gap: $gap-md;
+
+      .au-share-cell {
+        display: none;
+      }
+
+      .au-page-main {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.125rem;
+      }
+
+      .au-page-title {
+        max-width: 100%;
+      }
     }
   }
 
