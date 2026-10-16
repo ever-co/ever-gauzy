@@ -1568,7 +1568,9 @@
 		"redeclaration",
 		"redeclaring",
 		"unawaited",
-		"uppercases"
+		"uppercases",
+		"cancelation",
+		"cancelations"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
