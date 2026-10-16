@@ -174,6 +174,12 @@ export interface DesiredKeyResult {
 
 const clampProgress = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+/**
+ * A key result's target, start and current values are integer columns in Gauzy: an Ever Works value is
+ * stored rounded (an explicit conversion; Ever Works keeps the exact value, and Gauzy only sends one back
+ * when a person changed it).
+ */
+const stored = (value: number) => Math.round(value);
 
 /** Progress of a value between a baseline and a target (either direction), 0..100. */
 export function progressBetween(
@@ -210,10 +216,10 @@ export function keyResultsOfGoal(goal: EverWorksGoal): DesiredKeyResult[] {
 				key: `c:${criterion.id}`,
 				name: criterion.name,
 				type: isCurrencyUnit(unit) ? KeyResultTypeEnum.CURRENCY : KeyResultTypeEnum.NUMERICAL,
-				targetValue: finite(criterion.target) ? criterion.target : null,
+				targetValue: finite(criterion.target) ? stored(criterion.target) : null,
 				initialValue: 0,
 				unit,
-				update: finite(score?.value) ? (score?.value as number) : 0,
+				update: finite(score?.value) ? stored(score?.value as number) : 0,
 				progress: score ? clampProgress(score.ratio * 100) : 0,
 				weight: weightBucket((finite(criterion.weight) ? criterion.weight : 0) / total),
 				...deadlineFields
@@ -225,10 +231,10 @@ export function keyResultsOfGoal(goal: EverWorksGoal): DesiredKeyResult[] {
 			key: 'm',
 			name: goal.title ?? 'Metric',
 			type: isCurrencyUnit(goal.unit) ? KeyResultTypeEnum.CURRENCY : KeyResultTypeEnum.NUMERICAL,
-			targetValue: goal.targetValue,
-			initialValue: baseline,
+			targetValue: stored(goal.targetValue),
+			initialValue: stored(baseline),
 			unit: goal.unit ?? null,
-			update: finite(goal.currentValue) ? goal.currentValue : baseline,
+			update: stored(finite(goal.currentValue) ? goal.currentValue : baseline),
 			progress: finite(goal.progress)
 				? clampProgress(goal.progress)
 				: progressBetween(goal.currentValue, baseline, goal.targetValue),
@@ -282,15 +288,36 @@ export interface GoalShared {
 	targetValue: number | null;
 	unit: string | null;
 	baselineValue: number | null;
-	criteria: Array<{
-		id: string;
-		name: string;
-		weight: number;
-		target: number;
-		direction: 'gte' | 'lte';
-		unit?: string;
-	}>;
-	dodCriteria: Array<{ id: string; text: string; status: 'open' | 'done' | 'waived' }>;
+	criteria: GoalCriterionShared[];
+	dodCriteria: GoalDoDShared[];
+}
+
+/** A criterion as both directions compare it: Ever Works' own details (source, window) ride along. */
+export interface GoalCriterionShared {
+	id: string;
+	name: string;
+	weight: number;
+	target: number;
+	direction: 'gte' | 'lte';
+	unit?: string;
+	metricSource?: { pluginId: string; metricId: string; params?: Record<string, unknown> };
+	window?: string;
+}
+
+/** An approved Definition-of-Done item as both directions compare it (evidence and note ride along). */
+export interface GoalDoDShared {
+	id: string;
+	text: string;
+	status: 'open' | 'done' | 'waived';
+	evidence?: string | null;
+	note?: string | null;
+}
+
+/** The fields of a key result an Ever Works goal writes, as compared and kept on its link. */
+export type KeyResultShared = Omit<DesiredKeyResult, 'key'>;
+
+function same(a: unknown, b: unknown): boolean {
+	return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
 /** Ever Works' title limit (`CreateGoal.title`). */
@@ -383,6 +410,119 @@ export function gauzyGoalToEverWorks(
 	return shared;
 }
 
+/** A Gauzy key result with what its link holds (what Ever Works made of it at the last sync). */
+export interface LinkedKeyResultRow extends GauzyKeyResultRow {
+	snapshot?: Partial<KeyResultShared> | null;
+}
+
+const text = (value: string | null | undefined, max: number) =>
+	String(value ?? '')
+		.trim()
+		.slice(0, max);
+
+/** A new numeric key result as a criterion (its direction from its start value). */
+function criterionOf(row: GauzyKeyResultRow): GoalCriterionShared {
+	const from = finite(row.initialValue) ? row.initialValue : 0;
+	const unit = text(row.unit, 32);
+	return {
+		id: keyId(row, 'c'),
+		name: text(row.name, 200) || 'Key result',
+		weight: bucketWeight(row.weight),
+		target: row.targetValue as number,
+		direction: (row.targetValue as number) >= from ? 'gte' : 'lte',
+		...(unit ? { unit } : {})
+	};
+}
+
+/**
+ * G → EW for a goal already in Ever Works: Ever Works' own goal, criteria and Definition of Done as last
+ * synced, with **only what a person changed in Gauzy** since (each key result against its link): a
+ * renamed key result or a new target, a changed weight or unit, a checked item. What Gauzy only holds
+ * rounded or bucketed (exact values, weights, directions, sources, windows, evidence) stays as Ever Works
+ * has it. A key result deleted in Gauzy leaves; a new one joins (a second numeric one turns the goal's
+ * own metric into weighted criteria). `null` when Ever Works could not hold the result (a delivery goal
+ * without a Definition of Done).
+ */
+export function mergeGauzyGoal(
+	goal: { name?: string | null; description?: string | null },
+	deadline: string | null,
+	rows: ReadonlyArray<LinkedKeyResultRow>,
+	teamIds: ReadonlyArray<string>,
+	before: GoalShared
+): GoalShared | null {
+	const changed = (row: LinkedKeyResultRow, field: 'name' | 'targetValue' | 'initialValue' | 'unit' | 'weight') =>
+		!row.snapshot || !same(row[field] ?? null, row.snapshot[field] ?? null);
+	const byKey = new Map(rows.filter((row) => row.ewKey).map((row) => [row.ewKey as string, row]));
+	const fresh = rows.filter((row) => !row.ewKey);
+	const shared: GoalShared = {
+		...before,
+		title: text(goal.name, EVER_WORKS_GOAL_TITLE_MAX) || before.title,
+		description: goal.description ? String(goal.description) : null,
+		deadline,
+		teamIds: [...teamIds].sort(),
+		criteria: [],
+		dodCriteria: []
+	};
+	if (before.goalKind === 'metric') {
+		const own = byKey.get('m');
+		if (own && numeric(own)) {
+			if (changed(own, 'targetValue') && finite(own.targetValue)) shared.targetValue = own.targetValue;
+			if (changed(own, 'initialValue') && finite(own.initialValue)) shared.baselineValue = own.initialValue;
+			if (changed(own, 'unit') && text(own.unit, 32)) shared.unit = text(own.unit, 32);
+			if ((changed(own, 'targetValue') || changed(own, 'initialValue')) && finite(shared.targetValue)) {
+				shared.comparator = shared.targetValue >= (shared.baselineValue ?? 0) ? 'gte' : 'lte';
+			}
+		}
+		const added = fresh.filter((row) => numeric(row) && finite(row.targetValue)).map(criterionOf);
+		if (before.criteria.length) {
+			for (const criterion of before.criteria) {
+				const row = byKey.get(`c:${criterion.id}`);
+				if (!row || !numeric(row)) continue;
+				const unit = text(row.unit, 32);
+				shared.criteria.push({
+					...criterion,
+					...(changed(row, 'name') && text(row.name, 200) ? { name: text(row.name, 200) } : {}),
+					...(changed(row, 'targetValue') && finite(row.targetValue) ? { target: row.targetValue } : {}),
+					...(changed(row, 'weight') ? { weight: bucketWeight(row.weight) } : {}),
+					...(changed(row, 'unit') && unit ? { unit } : {})
+				});
+			}
+			shared.criteria.push(...added);
+		} else if (added.length && own && numeric(own) && finite(own.targetValue)) {
+			// A second numeric key result: the goal's own metric becomes the first weighted criterion.
+			shared.criteria = [criterionOf({ ...own, ewKey: null }), ...added];
+		}
+	}
+	for (const item of before.dodCriteria) {
+		const row = byKey.get(`d:${item.id}`);
+		if (!row || !isTrueFalse(row)) continue;
+		const checked = Number(row.update) >= 1 || Number(row.progress) >= 100;
+		const moved =
+			!row.snapshot ||
+			Number(row.update ?? 0) !== Number(row.snapshot.update ?? 0) ||
+			Number(row.progress ?? 0) !== Number(row.snapshot.progress ?? 0);
+		shared.dodCriteria.push({
+			...item,
+			...(changed(row, 'name') && text(row.name, 500) ? { text: text(row.name, 500) } : {}),
+			...(moved ? { status: checked ? 'done' : 'open' } : {})
+		});
+	}
+	shared.dodCriteria.push(
+		...fresh.filter(isTrueFalse).map((row) => ({
+			id: keyId(row, 'd'),
+			text: text(row.name, 500) || 'Done',
+			status: (Number(row.update) >= 1 || Number(row.progress) >= 100 ? 'done' : 'open') as 'open' | 'done'
+		}))
+	);
+	if (before.goalKind === 'delivery' && !shared.dodCriteria.length) return null;
+	return shared;
+}
+
+/** Whether Gauzy may send these criteria back: only the external source can be written (Ever Works answers 422 otherwise). */
+export function criteriaWritable(criteria: ReadonlyArray<GoalCriterionShared>): boolean {
+	return criteria.every((criterion) => !criterion.metricSource || criterion.metricSource.pluginId === 'external');
+}
+
 /** The Ever Works side of an Ever Works goal, in the form both directions compare (its link snapshot). */
 export function everWorksGoalShared(goal: EverWorksGoal, before: Partial<GoalShared> = {}): GoalShared {
 	return {
@@ -403,19 +543,26 @@ export function everWorksGoalShared(goal: EverWorksGoal, before: Partial<GoalSha
 						weight: c.weight,
 						target: c.target,
 						direction: c.direction,
-						...(c.unit ? { unit: c.unit } : {})
+						...(c.unit ? { unit: c.unit } : {}),
+						...(c.metricSource ? { metricSource: c.metricSource } : {}),
+						...(c.window ? { window: c.window } : {})
 					}))
 				: (before.criteria ?? []),
+		// Planner proposals are not part of the finish line (and `PUT /dod` takes approved items only).
 		dodCriteria:
 			goal.dodCriteria !== undefined
 				? (goal.dodCriteria ?? [])
 						.filter((item) => !item.proposed)
-						.map((item) => ({ id: item.id, text: item.text, status: item.status }))
+						.map((item) => ({
+							id: item.id,
+							text: item.text,
+							status: item.status,
+							...(item.evidence != null ? { evidence: item.evidence } : {}),
+							...(item.note != null ? { note: item.note } : {})
+						}))
 				: (before.dodCriteria ?? [])
 	};
 }
-
-const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 /** The writes a Gauzy goal needs in Ever Works against the last sync: a `PATCH` body, and the sets to `PUT`. */
 export function goalPushPlan(

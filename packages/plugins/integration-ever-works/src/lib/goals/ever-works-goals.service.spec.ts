@@ -39,7 +39,7 @@ jest.mock('@gauzy/core', () => {
 jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
 
 import 'reflect-metadata';
-import { Employee, Goal, GoalTimeFrame, KeyResult } from '@gauzy/core';
+import { Employee, Goal, GoalTimeFrame, IntegrationTenant, KeyResult } from '@gauzy/core';
 import { EverWorksClient } from '../client/ever-works-client';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { MockEverWorksGoals } from '../testing/mock-ever-works.goals';
@@ -159,8 +159,18 @@ function setup(options: { goals?: string } = {}) {
 		[GoalTimeFrame, table(frames)],
 		[Employee, table(employees)]
 	]);
+	const mappings: Row[] = [
+		{
+			id: 'm1',
+			tenantId: 't1',
+			organizationId: 'o1',
+			settings: [{ settingsName: 'CONNECTION_ID', settingsValue: 'c1' }]
+		}
+	];
+	repositories.set(IntegrationTenant, { find: async () => mappings });
 	const dataSource = { getRepository: (target: unknown) => repositories.get(target) };
 	const contexts = { forEverWorksOrganization: async () => context, forOrganization: async () => context };
+	const queue = { enqueue: jest.fn(async () => true) };
 	const service = new EverWorksGoalsService(
 		dataSource as never,
 		contexts as never,
@@ -168,9 +178,11 @@ function setup(options: { goals?: string } = {}) {
 		linkService as never,
 		{ write: jest.fn() } as never,
 		{ register: jest.fn() } as never,
-		{ register: jest.fn() } as never
+		{ register: jest.fn() } as never,
+		{ registerSweeper: jest.fn() } as never,
+		queue as never
 	);
-	return { service, mock, goalsMock, ewOrg, links, addLink, goals, keyResults, frames };
+	return { service, mock, goalsMock, ewOrg, links, addLink, goals, keyResults, frames, queue };
 }
 
 const envelope = (type: string, data: Row, version = 1) => ({
@@ -359,6 +371,37 @@ describe('EverWorksGoalsService — G → EW', () => {
 		expect(mock.requests.filter((r) => r.method !== 'GET').length).toBe(
 			mock.requests.slice(0, before).filter((r) => r.method !== 'GET').length
 		);
+	});
+
+	it('a key result deleted in Gauzy by id (no row for the subscriber) queues its goal from the sweep; the push takes it out', async () => {
+		const { service, goalsMock, goals, keyResults, links, queue } = setup();
+		goals.push(gauzyGoal());
+		keyResults.push(keyResult('kr-a'), keyResult('kr-b', { type: 'True/False', targetValue: 1, unit: null }));
+		await service.push(change('goal-1'), pushContext);
+		const [created] = [...goalsMock.goals.values()];
+		keyResults.splice(1, 1);
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(queue.enqueue).toHaveBeenCalledWith(
+			expect.objectContaining({ entityType: EverWorksLinkType.GOAL, gauzyId: 'goal-1' })
+		);
+		await service.push(change('goal-1'), pushContext);
+		expect(created['dodCriteria']).toEqual([]);
+		const removed = links.find((l) => l['gauzyId'] === 'kr-b');
+		expect(removed?.['state']).toBe(EverWorksLinkState.UNLINKED);
+	});
+
+	it('an imported goal keeps its exact deadline while the Gauzy time frame is unchanged', async () => {
+		const { service, mock, goals } = setup();
+		await service.apply(
+			envelope('goal.created', { ...ewGoal, deadline: '2027-05-20T00:00:00.000Z' }) as never,
+			applyContext
+		);
+		goals[0]['name'] = 'Renamed in Gauzy';
+		const before = mock.requests.length;
+		// The Ever Works goal is not in the mock (it came from an event): the PATCH it would send is what matters.
+		await service.push(change(goals[0]['id']), pushContext).catch(() => undefined);
+		const patch = mock.requests.slice(before).find((r) => r.method === 'PATCH');
+		expect(patch?.body).toEqual({ title: 'Renamed in Gauzy' });
 	});
 
 	it('a team goal waits for its team; a goal without a numeric or True/False key result is not pushed yet', async () => {
