@@ -593,6 +593,22 @@ describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
 		expect(t.linkedIssues.some((row) => row.action === LINKED_ISSUE.IS_BLOCKED_BY || row.action === LINKED_ISSUE.BLOCKS)).toBe(false);
 	});
 
+	it('two new Ever Works tasks that relate to each other are imported once each', async () => {
+		const t = setup();
+		const a = t.mock.addTask(t.org.id, { title: 'A' });
+		const b = t.mock.addTask(t.org.id, { title: 'B', relations: [{ taskId: a['id'], kind: 'related' }] });
+		a['relations'] = [{ taskId: b['id'], kind: 'related' }];
+		await t.deliver({ type: 'task.created', data: a, aggregate: { id: a['id'] as string, version: 1 } });
+		expect(t.tasks.size).toBe(2);
+		expect(t.links.filter((l) => l.entityType === EverWorksLinkType.TASK)).toHaveLength(2);
+		expect(t.linkedIssues).toEqual(
+			expect.arrayContaining([
+				{ taskToId: 'g-task-1', taskFromId: 'g-task-2', action: LINKED_ISSUE.RELATES_TO },
+				{ taskToId: 'g-task-2', taskFromId: 'g-task-1', action: LINKED_ISSUE.RELATES_TO }
+			])
+		);
+	});
+
 	it('pushes Gauzy watcher and blocker changes as Ever Works sets', async () => {
 		const t = setup();
 		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');

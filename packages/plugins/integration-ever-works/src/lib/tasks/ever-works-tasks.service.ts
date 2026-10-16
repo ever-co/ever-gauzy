@@ -289,9 +289,22 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		const taskId = await this.store.asActor(context, actor, () => this.store.create(input));
 		// A parent that could not be linked yet stays a difference on the Ever Works side: the next change retries it.
 		const e = { ...everWorksSideOf(task), ...(task.parentTaskId && !parent ? { parentTaskId: null } : {}) };
+		const fresh = await this.store.load(context.tenantId, taskId);
+		if (!fresh) throw new Error(`The Gauzy task created for Ever Works task ${task.id} cannot be read back.`);
+		// The link is recorded before the edges are followed: an edge back to this task (two new tasks that
+		// relate to each other) then finds it instead of importing it a second time. Its watchers and edges are
+		// not on the Gauzy side yet, so they count as Ever Works' change below.
+		await this.record(
+			context,
+			taskId,
+			task,
+			version ?? task.version ?? null,
+			{ g: await this.gauzySide(context, fresh), e: { ...e, watchers: [], blockedBy: [], relations: [] } },
+			'inbound',
+			{ unmappedTeams: teams.unmapped, unmappedAssignees: members.unmapped }
+		);
 		const edges = await this.applyEdgeSets(context, taskId, {}, e, { watcherIds: [], blockedBy: [], relations: [] }, {}, depth);
-		const created = await this.store.load(context.tenantId, taskId);
-		if (!created) throw new Error(`The Gauzy task created for Ever Works task ${task.id} cannot be read back.`);
+		const created = (await this.store.load(context.tenantId, taskId)) ?? fresh;
 		await this.record(context, taskId, task, version ?? task.version ?? null, { g: await this.gauzySide(context, created), e }, 'inbound', {
 			unmappedTeams: teams.unmapped,
 			unmappedAssignees: members.unmapped,
