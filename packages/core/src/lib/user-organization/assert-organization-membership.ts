@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
@@ -41,4 +42,35 @@ export async function assertCurrentUserBelongsToOrganization(
 	if (memberships === 0) {
 		throw new ForbiddenException('You are not a member of this organization');
 	}
+}
+
+/**
+ * Whether a request sent a value: `undefined`, `null` and `''` count as absent, as in `TenantOrganizationBaseDTO`.
+ */
+export const isSent = (value: unknown): boolean => value !== undefined && value !== null && value !== '';
+
+/**
+ * The same check for an organization named in a `?data=` JSON query parameter, which no DTO validates, so
+ * neither the `@IsUUID()` nor the `@IsOrganizationBelongsToUser()` rule of `TenantOrganizationBaseDTO` ran.
+ *
+ * An organization that was not sent is left to the caller. One that was must be a UUID before it is looked
+ * up: the reads pass it to the query as it is, where an operator object (MikroORM) or a number (MySQL) can
+ * match other organizations' rows.
+ *
+ * @param manager the TypeORM entity manager to run the membership lookup with
+ * @param organizationId the organization the request names, as parsed from its JSON
+ * @throws BadRequestException when it is not a UUID
+ * @throws ForbiddenException when there is no authenticated tenant user, or they are not a member
+ */
+export async function assertCurrentUserBelongsToSentOrganization(
+	manager: EntityManager,
+	organizationId: unknown
+): Promise<void> {
+	if (!isSent(organizationId)) {
+		return;
+	}
+	if (typeof organizationId !== 'string' || !isUUID(organizationId)) {
+		throw new BadRequestException('organizationId must be a UUID');
+	}
+	await assertCurrentUserBelongsToOrganization(manager, organizationId);
 }
