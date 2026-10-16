@@ -23,6 +23,7 @@ import {
 	SaveOptions
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -190,12 +191,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					);
 				}
 
-				// Get the maximum task number for the project the task moves to
-				const maxNumber = await this.getMaxTaskNumberByProject({
-					tenantId,
-					organizationId,
-					projectId
-				});
+				// Get the maximum task number for the project the task moves to, soft-deleted tasks included: they
+				// keep their number in the `taskNumber` unique index, as for a new task
+				const maxNumber = await this.getMaxTaskNumberByProject(
+					{
+						tenantId,
+						organizationId,
+						projectId
+					},
+					{ withDeleted: true }
+				);
 
 				moved = {
 					projectId,
@@ -1258,9 +1263,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * GET maximum task number by project filter
 	 *
 	 * @param options The filtering options including tenant, organization, and project details.
+	 * @param withDeleted Also count soft-deleted tasks: they keep their number in the `taskNumber` unique
+	 * index, so a caller that stores `max + 1` needs it. The max-number read routes leave it off.
 	 * @returns A Promise that resolves to the maximum task number for the given project.
 	 */
-	public async getMaxTaskNumberByProject(options: IGetTaskOptions): Promise<number> {
+	public async getMaxTaskNumberByProject(
+		options: IGetTaskOptions,
+		{ withDeleted = false }: { withDeleted?: boolean } = {}
+	): Promise<number> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
@@ -1274,11 +1284,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} else {
 						mikroWhere.projectId = null;
 					}
+					if (withDeleted) {
+						// Soft-deleted rows may predate task numbers, and PostgreSQL sorts NULL first in DESC
+						mikroWhere.number = { $ne: null };
+					}
 
 					const items = await this.mikroOrmRepository.find(mikroWhere, {
 						orderBy: { number: 'DESC' as any },
 						limit: 1,
-						fields: ['number'] as any[]
+						fields: ['number'] as any[],
+						...(withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					const maxTaskNumber = items.length > 0 ? (items[0] as any).number || 0 : 0;
 					console.log('get max task number (MikroORM)', maxTaskNumber);
@@ -1305,6 +1320,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 					} else {
 						query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
+					}
+
+					if (withDeleted) {
+						query.withDeleted();
 					}
 
 					// Execute the query and parse the result to a number

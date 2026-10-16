@@ -142,6 +142,31 @@ describe('WebhookRetryWorker — one bounded pass', () => {
 		expect(failure).toHaveBeenCalled();
 	});
 
+	it('claims each row before posting it, and does not count a row another attempt took', async () => {
+		const deliver = jest
+			.fn()
+			.mockResolvedValueOnce({ skipped: false })
+			.mockResolvedValueOnce({ skipped: true, claimRefused: true })
+			.mockResolvedValueOnce({ skipped: false });
+		const { worker } = pass(
+			jest.fn().mockResolvedValue([{ id: 'delivery-1' }, { id: 'delivery-2' }, { id: 'delivery-3' }]),
+			deliver
+		);
+
+		await worker.handleRetry(queued());
+
+		// The fan-out or an overlapping pass took `delivery-2` after this pass read it, so nothing was sent
+		// for it here and the log says so rather than counting it.
+		expect(deliver.mock.calls).toEqual([
+			['delivery-1', { claim: true }],
+			['delivery-2', { claim: true }],
+			['delivery-3', { claim: true }]
+		]);
+		expect(logged()).toContain(
+			'Attempted 2 of 3 due webhook delivery(ies); 1 already taken by another attempt or no longer due'
+		);
+	});
+
 	it('reports an empty pass as the ordinary state it is', async () => {
 		const { worker, deliver } = pass(jest.fn().mockResolvedValue([]));
 

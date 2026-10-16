@@ -23,6 +23,8 @@ import { EverWorksMappingContextService } from './mapping/ever-works-mapping-con
 import { EverWorksAgentsService } from './people/ever-works-agents.service';
 import { EverWorksPeopleController } from './people/ever-works-people.controller';
 import { EverWorksPeopleService } from './people/ever-works-people.service';
+import { EverWorksProjectsController } from './projects/ever-works-projects.controller';
+import { EverWorksProjectsService } from './projects/ever-works-projects.service';
 import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubscriber } from './teams/ever-works-team.signals';
 import { EverWorksTeamsController } from './teams/ever-works-teams.controller';
 import { EverWorksTeamsService } from './teams/ever-works-teams.service';
@@ -64,6 +66,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly loop: EverWorksSyncLoop,
 		private readonly agents: EverWorksAgentsService,
 		private readonly teams: EverWorksTeamsService,
+		private readonly projects: EverWorksProjectsService,
 		private readonly initialSync: EverWorksInitialSyncService
 	) {}
 
@@ -72,6 +75,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.applier.register(this.teams);
 		this.pusher.register(this.teams);
 		this.loop.registerSweeper(this.teams);
+		this.applier.register(this.projects);
+		this.loop.registerSweeper(this.projects);
 		// Initial sync and resync runs advance under the same lease (G-P1-10).
 		this.loop.registerSweeper(this.initialSync);
 	}
@@ -100,7 +105,16 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksWebhookController, EverWorksSyncController],
+	controllers: [
+		EverWorksController,
+		EverWorksConnectionController,
+		EverWorksMappingController,
+		EverWorksPeopleController,
+		EverWorksTeamsController,
+		EverWorksProjectsController,
+		EverWorksWebhookController,
+		EverWorksSyncController
+	],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -124,6 +138,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksPeopleService,
 		EverWorksAgentsService,
 		EverWorksTeamsService,
+		EverWorksProjectsService,
 		EverWorksTeamCapture,
 		EverWorksConflictsService,
 		EverWorksInitialSyncService,

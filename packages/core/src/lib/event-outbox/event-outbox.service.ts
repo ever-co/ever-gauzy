@@ -72,7 +72,10 @@ export interface IOutboxDeliveryClaimInput {
  * Whether the caller must invoke the consumer, and the record it must complete afterwards.
  */
 export interface IOutboxDeliveryClaim {
-	/** False when this consumer already acknowledged the event, in which case nothing is invoked. */
+	/**
+	 * False when this consumer already acknowledged the event, or when its record is dead-lettered and
+	 * has not been replayed, in which case nothing is invoked.
+	 */
 	claimed: boolean;
 	delivery: EventDelivery;
 }
@@ -504,6 +507,13 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 				return { claimed: false, delivery: existing };
 			}
 
+			if (existing.status === EventOutboxStatus.DEAD) {
+				// A dead letter is terminal, whether the consumer's budget ran out or an operator stopped it,
+				// and the row it belongs to may still be retried for another consumer. Only a replay, which
+				// writes the record back to PENDING, hands it to the consumer again.
+				return { claimed: false, delivery: existing };
+			}
+
 			// A pending or failed record means the event was lost mid-delivery the first time round,
 			// so it is handed over again and the attempt is counted against the consumer's budget.
 			await this.incrementDeliveryAttempts(existing.id as ID);
@@ -714,17 +724,23 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 *
 	 * The move writes the state a fresh record is written in — the attempt budget back to zero, the
 	 * last error cleared and the acknowledgement withdrawn — so the retry scan claims it exactly as it
-	 * claims a record whose consumer crashed mid-delivery. Nothing is re-published here and no
-	 * consumer is invoked: the record *is* the queue, and the scan that reads `PENDING` rows is what
-	 * re-drives it. That is also what makes the move safe to repeat, and why it resets the budget
-	 * rather than incrementing anything.
+	 * claims a record whose consumer crashed mid-delivery. No consumer is invoked here. That is also
+	 * what makes the move safe to repeat, and why it resets the budget rather than incrementing
+	 * anything.
+	 *
+	 * The scan is the dispatch pass, and it only claims an event whose outbox row is `PENDING` or
+	 * `FAILED`. A row is `PUBLISHED` once every consumer has settled, a dead letter included, and
+	 * `DEAD` once its own budget is spent, so such a row is put back in the queue as `append` writes a
+	 * fresh one. The pass claims it again in its partition's order, and `claimDelivery` skips the
+	 * consumers that already settled. A row that is still waiting is left alone: its next claim
+	 * reaches the record.
 	 *
 	 * @param id The record id.
 	 * @returns The record as it stands after the move.
 	 * @throws NotFoundException when the record does not exist inside the caller's own scope.
 	 */
 	async replayDelivery(id: ID): Promise<EventDelivery> {
-		await this.deliveryOfTheCaller(id);
+		const delivery = await this.deliveryOfTheCaller(id);
 
 		await this.updateDeliveryRow(id, {
 			status: EventOutboxStatus.PENDING,
@@ -734,6 +750,22 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
 			deliveredAt: null
 		});
+
+		// After the record is reset, so a pass that claims the row at once already finds it pending.
+		const where = { eventId: delivery.eventId, tenantId: delivery.tenantId };
+		const event = this.usesMikroOrm
+			? await this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, where)
+			: await this.typeOrmEventOutboxRepository.findOne({ where });
+
+		if (event?.status === EventOutboxStatus.PUBLISHED || event?.status === EventOutboxStatus.DEAD) {
+			await this.updateOutboxRow(event.id as ID, {
+				status: EventOutboxStatus.PENDING,
+				attemptCount: 0,
+				availableAt: new Date(),
+				lastError: null,
+				publishedAt: null
+			});
+		}
 
 		return this.announce(id, EVENT_DELIVERY_ACTIONS.REPLAYED);
 	}

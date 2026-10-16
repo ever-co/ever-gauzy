@@ -9599,8 +9599,8 @@ type Mutation {
   The delivered write resolves the conflicts of the interval first — trimming the conflicting slots
   of the logs it finds — and files the interval into the payroll period it belongs to. That is the
   handler's work and is not restated here; what this field states is the same body the route states,
-  with the employee replaced by the caller's own and the log type and source set as the delivered
-  body sets them.
+  with the employee it names and the log type and source set as the delivered body sets them. An
+  employee the caller may not record time for is refused (403), as the route refuses it.
   """
   addManualTime(input: CreateManualTimeLogInput!): TimeLog!
 
@@ -9618,8 +9618,9 @@ type Mutation {
   Edits a hand-recorded interval, and answers the row as it stands after the write.
   
   The delivered write resolves the interval's conflicts again, stamps the instant it was edited and
-  files the row into the period its new start belongs to. A body that states an employee the caller
-  may not choose has it replaced by the caller's own, exactly as the create does.
+  files the row into the period its new start belongs to. The employee the body states is kept and
+  judged exactly as the create judges it: one the caller may not record time for is refused (403),
+  never replaced by the caller's own.
   """
   updateManualTime(input: UpdateManualTimeLogInput!): TimeLog!
 
@@ -43356,8 +43357,10 @@ What a caller states when it records time by hand.
 
 The organization is stated because the delivered create does not derive one: the tenant is stamped
 from the credential, never from an argument, but the organization is a member the caller names. The
-employee is stated and is the caller's own unless the caller may change the selected employee — the
-delivered pipe rewrites it, and this surface restates that rule rather than trusting the body.
+employee is stated and kept, as the delivered pipe keeps it, and the write refuses one the caller may
+not record time for (403) rather than recording the interval against the caller: a caller writes for
+its own employee, for a member of a team it manages, or for anyone if it may change the selected
+employee.
 
 Neither the log type nor the source is a member. The delivered body's own transform states both for
 itself — `MANUAL` and `BROWSER` — whatever a caller sends, so an input carrying them would be offering
@@ -43367,7 +43370,7 @@ input CreateManualTimeLogInput {
   organizationId: ID!
 
   """
-  The employee the interval belongs to. A caller that may not choose one records against itself.
+  The employee the interval belongs to: the caller's own, a member of a team it manages, or anyone if it may change the selected employee.
   """
   employeeId: ID!
 

@@ -1,5 +1,5 @@
 import { ID } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ColumnIndex, ExportRedacted, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { MikroOrmEverWorksConnectionRepository } from './repository/mikro-orm-ever-works-connection.repository';
 
 /** How the connection authenticates to Ever Works: an integration key now, an Ever ID token later (plan 02 §5). */
@@ -63,7 +63,13 @@ export class EverWorksConnection extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 32, nullable: true })
 	keyPrefix?: string | null;
 
-	/** The integration key, encrypted. */
+	/**
+	 * The integration key, encrypted. An export archive carries a fixed mask instead (`opaque`, not
+	 * `blank`: the column is NOT NULL, and an empty cell would make the import refuse the row). The
+	 * ciphertext is bound to this row's id and the instance's key, so it could not be read after an
+	 * import anyway: an imported connection fails its health check and asks for a new key.
+	 */
+	@ExportRedacted({ opaque: true })
 	@MultiORMColumn({ type: 'text' })
 	apiKeyEncrypted!: string;
 
@@ -82,6 +88,7 @@ export class EverWorksConnection extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	webhookSubscriptionId?: string | null;
 
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'text', nullable: true })
 	webhookSecretEncrypted?: string | null;
 

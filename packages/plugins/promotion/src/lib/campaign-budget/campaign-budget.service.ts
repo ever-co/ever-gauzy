@@ -484,8 +484,8 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * Executes a statement through whichever ORM is active.
 	 *
 	 * The two ORMs are handed the parameters in the form each one binds: TypeORM's raw query takes the
-	 * values positionally, and so does the MikroORM connection, whose `execute` substitutes one
-	 * placeholder per element of the array it is given. The statements are written with named
+	 * values positionally, and so does the MikroORM connection, whose `execute` substitutes one `?`
+	 * per element of the array it is given, on every dialect. The statements are written with named
 	 * parameters because two of them bind the same value twice, so the MikroORM branch first resolves
 	 * the names into that positional form.
 	 *
@@ -501,7 +501,7 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 		// driver could bind an array to a statement that declares no `?`, so every campaign ceiling
 		// failed on every dialect. `Object.values()` was wrong a second time over: two of these
 		// statements bind the same name twice, and an object has one entry for it.
-		const bound = toPositionalStatement(sql, parameters);
+		const bound = toPositionalStatement(sql, parameters, { questionMarks: this.ormType === MultiORMEnum.MikroORM });
 
 		if (this.ormType === MultiORMEnum.MikroORM) {
 			const connection = this.mikroOrmCampaignBudgetRepository.getEntityManager().getConnection();
@@ -520,8 +520,8 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * to the column, so the single named value is two placeholders carrying the same figure.
 	 *
 	 * **Superseded by `toPositionalStatement` in `@gauzy/core`**, which both branches of
-	 * {@link execute} now go through: it does the same rewrite, chooses `$1` for Postgres rather than
-	 * assuming `?`, and is the one copy every package shares. This one stays because it is part of
+	 * {@link execute} now go through: it does the same rewrite, chooses `$1` for Postgres under TypeORM
+	 * and `?` for MikroORM, and is the one copy every package shares. This one stays because it is part of
 	 * this service's surface and something may still call it; it delegates rather than keeping a
 	 * second implementation that can drift from the first.
 	 *
@@ -530,7 +530,7 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * @returns The statement in positional form, with its values in matching order.
 	 */
 	private toPositional(sql: string, parameters: Record<string, unknown>): { sql: string; values: unknown[] } {
-		const bound = toPositionalStatement(sql, parameters);
+		const bound = toPositionalStatement(sql, parameters, { questionMarks: true });
 
 		return { sql: bound.sql, values: bound.parameters };
 	}
