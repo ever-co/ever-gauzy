@@ -25,7 +25,8 @@ import { EverWorksPeopleController } from './people/ever-works-people.controller
 import { EverWorksPeopleService } from './people/ever-works-people.service';
 import { EverWorksProjectsController } from './projects/ever-works-projects.controller';
 import { EverWorksProjectsService } from './projects/ever-works-projects.service';
-import { EverWorksTaskEdgeCapture, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskWatcherSubscriber } from './tasks/ever-works-task.signals';
+import { EverWorksTaskCommentsService } from './tasks/ever-works-task-comments.service';
+import { EverWorksTaskCommentSubscriber, EverWorksTaskEdgeCapture, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskWatcherSubscriber } from './tasks/ever-works-task.signals';
 import { EverWorksTaskStore } from './tasks/ever-works-task.store';
 import { EverWorksTasksService } from './tasks/ever-works-tasks.service';
 import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubscriber } from './teams/ever-works-team.signals';
@@ -65,7 +66,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly agents: EverWorksAgentsService,
 		private readonly teams: EverWorksTeamsService,
 		private readonly projects: EverWorksProjectsService,
-		private readonly tasks: EverWorksTasksService
+		private readonly tasks: EverWorksTasksService,
+		private readonly taskComments: EverWorksTaskCommentsService
 	) {}
 
 	onModuleInit(): void {
@@ -78,11 +80,12 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.applier.register(this.tasks);
 		this.pusher.register(this.tasks);
 		this.loop.registerSweeper(this.tasks);
+		this.pusher.register(this.taskComments);
 	}
 }
 
 /** The entity subscribers the plugin adds to the ORMs (outbound triggers of records without a platform event). */
-export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber, EverWorksTaskWatcherSubscriber, EverWorksTaskLinkedIssueSubscriber];
+export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber, EverWorksTaskWatcherSubscriber, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskCommentSubscriber];
 
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog];
@@ -131,6 +134,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksProjectsService,
 		EverWorksTaskStore,
 		EverWorksTasksService,
+		EverWorksTaskCommentsService,
 		EverWorksTaskEdgeCapture,
 		EverWorksTeamCapture,
 		EverWorksHandlersRegistrar,

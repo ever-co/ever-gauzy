@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { Subject, Subscription } from 'rxjs';
 import { EventSubscriber } from 'typeorm';
 import { BaseEntityEnum, EntitySubscriptionTypeEnum, ID } from '@gauzy/contracts';
-import { BaseEntityEventSubscriber, EntitySubscription, RequestContext, TaskLinkedIssue } from '@gauzy/core';
+import { BaseEntityEventSubscriber, Comment, EntitySubscription, RequestContext, TaskLinkedIssue } from '@gauzy/core';
 import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
@@ -91,7 +91,56 @@ export class EverWorksTaskLinkedIssueSubscriber extends BaseEntityEventSubscribe
 	}
 }
 
-/** Drains the task edge signals into the outbound queue. */
+/** A Gauzy comment on a task was written, edited or deleted. */
+export interface EverWorksCommentSignal {
+	tenantId: ID;
+	organizationId: ID;
+	commentId: ID;
+	deleted: boolean;
+	actorUserId: ID | null;
+}
+
+/** Outbound trigger 2 for task comments (Gauzy has no comment event the plugin can use). */
+export const EVER_WORKS_COMMENT_SIGNALS = new Subject<EverWorksCommentSignal>();
+
+/** A comment on a task: written, edited (also resolved), soft-deleted or deleted. */
+@EventSubscriber()
+export class EverWorksTaskCommentSubscriber extends BaseEntityEventSubscriber<Comment> {
+	override listenTo() {
+		return Comment;
+	}
+
+	private changed(entity: Comment | undefined, deleted: boolean): void {
+		// Loop guard level 1: what the inbound applier writes (synced chat, the sync's own notes) is never captured.
+		if (EverWorksSyncContext.isApplying()) return;
+		if (!entity?.id || entity.entity !== BaseEntityEnum.Task || !entity.tenantId || !entity.organizationId) return;
+		let actorUserId: ID | null = null;
+		try {
+			actorUserId = (RequestContext.currentUserId() as ID) ?? null;
+		} catch {
+			actorUserId = null;
+		}
+		EVER_WORKS_COMMENT_SIGNALS.next({ tenantId: entity.tenantId as ID, organizationId: entity.organizationId as ID, commentId: entity.id as ID, deleted, actorUserId });
+	}
+
+	override async afterEntityCreate(entity: Comment): Promise<void> {
+		this.changed(entity, false);
+	}
+
+	override async afterEntityUpdate(entity: Comment): Promise<void> {
+		this.changed(entity, false);
+	}
+
+	override async afterEntitySoftRemove(entity: Comment): Promise<void> {
+		this.changed(entity, true);
+	}
+
+	override async afterEntityDelete(entity: Comment): Promise<void> {
+		this.changed(entity, true);
+	}
+}
+
+/** Drains the task edge and comment signals into the outbound queue. */
 @Injectable()
 export class EverWorksTaskEdgeCapture implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('EverWorksTasks');
@@ -112,6 +161,20 @@ export class EverWorksTaskEdgeCapture implements OnModuleInit, OnModuleDestroy {
 				})
 				.catch((error) => this.logger.warn(`A task change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
 		});
+		this.subscription.add(
+			EVER_WORKS_COMMENT_SIGNALS.subscribe((change) => {
+				void this.queue
+					.enqueue({
+						tenantId: change.tenantId,
+						organizationId: change.organizationId,
+						entityType: EverWorksLinkType.COMMENT,
+						gauzyId: change.commentId,
+						op: change.deleted ? 'delete' : 'upsert',
+						actorUserId: change.actorUserId
+					})
+					.catch((error) => this.logger.warn(`A comment change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
+			})
+		);
 	}
 
 	onModuleDestroy(): void {

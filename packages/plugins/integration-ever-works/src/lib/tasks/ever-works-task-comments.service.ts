@@ -1,0 +1,339 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { ActorTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
+import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
+import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
+import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
+import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
+import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
+import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
+import { EverWorksEntityLink, EverWorksLinkState, EverWorksLinkType, EverWorksOutboundChange } from '../sync/entities/ever-works-sync.entities';
+import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
+import type { EverWorksApplyOutcome } from '../sync/inbound/ever-works-inbound.applier';
+import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
+import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
+import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import { escapeHtml, htmlToMarkdown, markdownToHtml, normaliseMarkdown } from './ever-works-markdown';
+import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskStore } from './ever-works-task.store';
+
+/** An Ever Works task chat message (contract v1 comment DTO; also the `data` of `task.comment.*`). */
+export interface EverWorksComment {
+	id: string;
+	taskId: string;
+	organizationId?: string;
+	authorType: 'user' | 'agent' | 'integration';
+	authorId: string;
+	externalAuthor?: { name: string; avatarUrl?: string | null; source?: string } | null;
+	body: string;
+	editedAt?: string | null;
+	createdAt?: string;
+	updatedAt?: string;
+	externalLinks?: Array<{ source: string; installationId?: string | null; externalId: string; externalUrl?: string | null }>;
+	deleted?: boolean;
+}
+
+/** A comment link's snapshot: each side's body (Markdown) at the last sync. */
+interface CommentSnapshot {
+	g?: { body?: string };
+	e?: { body?: string };
+}
+
+/** What only Ever Works has about a linked comment. */
+interface CommentEverWorksOnly {
+	taskId?: string;
+	authorType?: string;
+	authorId?: string;
+}
+
+/** Ever Works' task chat limit (contract v1, CR-2): a longer Gauzy comment is cut, with a note. */
+export const EVER_WORKS_COMMENT_LIMIT = 16384;
+const CUT_NOTE = '\n\n… (cut to fit Ever Works; the full comment is in Gauzy)';
+/** A comment waiting for its task to be linked is retried after this long. */
+export const COMMENT_WAIT_MS = 60_000;
+
+const toEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'gauzy_to_ew';
+
+/** A Gauzy comment's body for Ever Works: Markdown, at most {@link EVER_WORKS_COMMENT_LIMIT} characters. */
+export function commentBodyForEverWorks(html: string | null | undefined): string {
+	const body = htmlToMarkdown(html);
+	if (body.length <= EVER_WORKS_COMMENT_LIMIT) return body;
+	return body.slice(0, EVER_WORKS_COMMENT_LIMIT - CUT_NOTE.length).trimEnd() + CUT_NOTE;
+}
+
+/**
+ * Task comments ↔ Ever Works task chat (plan 01 §7, §3), linked as `COMMENT`.
+ *
+ * - **EW → G** (`task.comment.created/updated/deleted`): a Gauzy comment on the linked task (Markdown →
+ *   sanitised HTML), written as the author's employee — the agent employee for an agent (`ActorTypeEnum.Agent`),
+ *   the mapped person for a user; an unmapped author is named in the comment. Comment events are applied by
+ *   comment id (they carry the task's version, not their own), so a task read later never hides them.
+ * - **G → EW** (the comment subscriber): `POST /tasks/:id/comments` as the author (`X-Act-As-User` = the
+ *   author's linked person), else as the integration with `externalAuthor`, with an `externalRef` and a
+ *   deterministic `Idempotency-Key`; the body is cut to 16384 characters (CR-2). Edits `PATCH`, deletes
+ *   `DELETE`. Ever Works lets only the author edit, and a person only for 5 minutes (`422 domain_rule`): a
+ *   later Gauzy edit is logged, not pushed (plan 01 §7).
+ * - A comment of a task that is not linked yet waits for the task (which is queued).
+ */
+@Injectable()
+export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
+	readonly entityTypes = [EverWorksLinkType.COMMENT] as const;
+	private readonly logger = new Logger('EverWorksTaskComments');
+
+	constructor(
+		private readonly contexts: EverWorksMappingContextService,
+		private readonly connections: EverWorksConnectionService,
+		private readonly links: EverWorksLinkService,
+		private readonly queue: EverWorksOutboundQueue,
+		private readonly store: EverWorksTaskStore,
+		private readonly log: EverWorksSyncLogService
+	) {}
+
+	// ── EW → G ─────────────────────────────────────────────────────────────────────────────────────
+
+	/** `task.comment.*` for a mapping (called by the task handler, which owns the `task` aggregate). */
+	async apply(context: EverWorksMappingContext, envelope: EverWorksEventEnvelope): Promise<EverWorksApplyOutcome> {
+		const comment = { ...(envelope.data as unknown as EverWorksComment) };
+		if (!comment?.id) return { status: 'skipped', message: 'the comment event carries no comment' };
+		const taskLink = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, envelope.aggregate.id);
+		if (!taskLink || taskLink.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the task is not synced' };
+		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.COMMENT, comment.id);
+		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the comment is no longer synced' };
+		if (envelope.type === 'task.comment.deleted' || comment.deleted) {
+			if (!link) return { status: 'skipped', message: 'the comment is not linked' };
+			await this.store.softDeleteComment(link.gauzyId as ID);
+			await this.links.unlink(link, 'deleted in Ever Works; the Gauzy comment is deleted (soft)');
+			return { status: 'applied' };
+		}
+		const body = normaliseMarkdown(comment.body);
+		if (!link) {
+			// Our own comment whose link was not recorded (a lost answer): linked back, not copied.
+			const own = (comment.externalLinks ?? []).find((row) => row.source === EVER_WORKS_LINK_SOURCE && (!row.installationId || row.installationId === context.connection.id));
+			if (own?.externalId && (await this.store.loadComment(context.tenantId, own.externalId as ID))) {
+				await this.record(context, own.externalId as ID, comment, { g: { body }, e: { body } }, 'inbound');
+				return { status: 'applied', message: 'linked back to the Gauzy comment it came from' };
+			}
+			const author = await this.authorOf(context, comment);
+			const html = this.htmlOf(body, author);
+			const commentId = await this.store.asActor(context, author.actor, () =>
+				this.store.addComment(context, taskLink.gauzyId as ID, html, author.actorType, author.actor.employeeId)
+			);
+			await this.record(context, commentId, comment, { g: { body: htmlToMarkdown(html) }, e: { body } }, 'inbound');
+			return { status: 'applied' };
+		}
+		const snapshot = this.snapshotOf(link);
+		if ((snapshot.e?.body ?? null) === body) return { status: 'skipped', message: 'the comment did not change' };
+		const row = await this.store.loadComment(context.tenantId, link.gauzyId as ID);
+		if (!row || row.deletedAt) return { status: 'skipped', message: 'the Gauzy comment is gone' };
+		const current = htmlToMarkdown(row.comment);
+		if (snapshot.g?.body !== undefined && current !== snapshot.g.body) {
+			// Edited in Gauzy too: the Gauzy edit stays (it is pushed, or logged when Ever Works refuses it).
+			await this.record(context, link.gauzyId as ID, comment, { g: snapshot.g, e: { body } }, 'inbound');
+			return { status: 'skipped', message: 'edited on both sides; the Gauzy edit is kept' };
+		}
+		const author = await this.authorOf(context, comment);
+		const html = this.htmlOf(body, author);
+		await this.store.updateComment(link.gauzyId as ID, html);
+		await this.record(context, link.gauzyId as ID, comment, { g: { body: htmlToMarkdown(html) }, e: { body } }, 'inbound');
+		return { status: 'applied' };
+	}
+
+	/** The Gauzy author of an Ever Works comment: a linked agent or person, else (named in the text) the admin who connected. */
+	private async authorOf(context: EverWorksMappingContext, comment: EverWorksComment): Promise<{ actor: EverWorksTaskActor; actorType: ActorTypeEnum; named: string | null }> {
+		const type = comment.authorType === 'agent' ? EverWorksLinkType.AGENT : comment.authorType === 'user' ? EverWorksLinkType.MEMBER : null;
+		const link = type ? await this.links.byEw(context.integrationTenantId, type, comment.authorId) : null;
+		if (link && link.state !== EverWorksLinkState.UNLINKED) {
+			const user = await this.store.userOfEmployee(link.gauzyId as ID);
+			return {
+				actor: { userId: user.userId, name: user.name ?? 'Ever Works', agent: type === EverWorksLinkType.AGENT, employeeId: link.gauzyId as ID },
+				actorType: type === EverWorksLinkType.AGENT ? ActorTypeEnum.Agent : ActorTypeEnum.User,
+				named: null
+			};
+		}
+		const named = comment.externalAuthor?.name || (comment.authorType === 'agent' ? 'An Ever Works agent' : comment.authorType === 'user' ? 'An Ever Works member' : 'Ever Works');
+		return {
+			actor: { userId: (context.connection.connectedByUserId as ID) ?? null, name: named, agent: comment.authorType === 'agent', employeeId: null },
+			actorType: comment.authorType === 'agent' ? ActorTypeEnum.Agent : ActorTypeEnum.System,
+			named
+		};
+	}
+
+	/** The Gauzy HTML of a comment; an author Gauzy cannot attribute is named in front of the text. */
+	private htmlOf(body: string, author: { named: string | null }): string {
+		const html = markdownToHtml(body);
+		return author.named ? `<p><strong>${escapeHtml(author.named)}</strong> (Ever Works):</p>${html}` : html;
+	}
+
+	// ── G → EW ─────────────────────────────────────────────────────────────────────────────────────
+
+	/** Outbound handler: a Gauzy comment on a task was written, edited or deleted. */
+	async push(change: EverWorksOutboundChange, pushContext: EverWorksPushContext): Promise<EverWorksPushOutcome> {
+		const context = await this.contexts.forOrganization(change.tenantId as ID, change.organizationId as ID);
+		if (!context || context.integrationTenantId !== pushContext.mapping.id) return { status: 'skipped', message: 'no mapping for the organization' };
+		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
+		if (!toEverWorks(context.directions.tasks)) return { status: 'skipped', message: 'tasks are not pushed to Ever Works' };
+		const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.COMMENT, change.gauzyId as ID);
+		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the comment is no longer synced' };
+		const row = await this.store.loadComment(context.tenantId, change.gauzyId as ID);
+		try {
+			if (change.op === 'delete' || !row || row.deletedAt) return await this.pushDelete(context, link);
+			if (row.entity !== BaseEntityEnum.Task || row.organizationId !== context.organizationId) return { status: 'skipped', message: 'not a comment of a task of this organization' };
+			const taskLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, row.entityId as ID);
+			if (!taskLink || taskLink.state === EverWorksLinkState.UNLINKED) {
+				if (taskLink) return { status: 'skipped', message: 'the task is no longer synced' };
+				// The comment waits for its task, which is queued (it goes first).
+				await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: row.entityId as ID, op: 'upsert' });
+				return { status: 'deferred', message: 'the task is not in Ever Works yet', retryInMs: COMMENT_WAIT_MS };
+			}
+			const client = this.client(context);
+			const actAs = await this.actAsFor(context, (row.employeeId as ID) ?? null);
+			const body = commentBodyForEverWorks(row.comment);
+			if (!body.trim()) return { status: 'skipped', message: 'the comment has no text' };
+			return link ? await this.pushEdit(context, client, link, taskLink, body, actAs) : await this.pushCreate(context, client, row, taskLink, body, actAs);
+		} catch (error) {
+			if (error instanceof EverWorksRequestContextUnavailableError) return { status: 'deferred', message: error.message, retryInMs: 5 * 60_000 };
+			throw error;
+		}
+	}
+
+	private async pushCreate(
+		context: EverWorksMappingContext,
+		client: EverWorksClient,
+		row: { id?: ID; employeeId?: ID | null },
+		taskLink: EverWorksEntityLink,
+		body: string,
+		actAs: string | null
+	): Promise<EverWorksPushOutcome> {
+		const connectionId = context.connection.id as ID;
+		const commentId = row.id as ID;
+		const idempotencyKey = createHash('sha256').update(`${connectionId}:${EverWorksLinkType.COMMENT}:${commentId}:create`).digest('hex');
+		const name = row.employeeId ? ((await this.store.userOfEmployee(row.employeeId as ID)).name ?? 'Ever Gauzy') : 'Ever Gauzy';
+		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments`;
+		const send = (actor: string | null) =>
+			client.request<EverWorksComment>('POST', path, {
+				body: {
+					body,
+					...(actor ? {} : { externalAuthor: { name, source: EVER_WORKS_LINK_SOURCE } }),
+					externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: connectionId, externalId: commentId }
+				},
+				idempotencyKey: actor === actAs ? idempotencyKey : createHash('sha256').update(`${idempotencyKey}:no-act-as`).digest('hex'),
+				actAsUserId: actor
+			});
+		let created: EverWorksComment;
+		try {
+			created = await send(actAs);
+		} catch (error) {
+			if (!actAs || !(error instanceof EverWorksApiError && error.status === 403 && error.code === 'act_as_forbidden')) throw error;
+			created = await send(null);
+		}
+		await this.record(context, commentId, { ...created, taskId: taskLink.ewId }, { g: { body }, e: { body: normaliseMarkdown(created.body) } }, 'outbound');
+		return { status: 'pushed', message: 'posted to the Ever Works task chat' };
+	}
+
+	private async pushEdit(
+		context: EverWorksMappingContext,
+		client: EverWorksClient,
+		link: EverWorksEntityLink,
+		taskLink: EverWorksEntityLink,
+		body: string,
+		actAs: string | null
+	): Promise<EverWorksPushOutcome> {
+		const snapshot = this.snapshotOf(link);
+		if ((snapshot.g?.body ?? null) === body) return { status: 'skipped', message: 'nothing changed' };
+		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments/${encodeURIComponent(link.ewId)}`;
+		try {
+			const updated = await client.request<EverWorksComment>('PATCH', path, { body: { body }, actAsUserId: actAs });
+			await this.record(context, link.gauzyId as ID, { ...updated, taskId: taskLink.ewId }, { g: { body }, e: { body: normaliseMarkdown(updated.body) } }, 'outbound');
+			return { status: 'pushed' };
+		} catch (error) {
+			if (!(error instanceof EverWorksApiError && (error.status === 422 || error.status === 403))) throw error;
+			// Ever Works lets only the author edit, and a person only for 5 minutes: the Gauzy edit is logged, not pushed.
+			await this.record(context, link.gauzyId as ID, null, { g: { body }, e: snapshot.e ?? {} }, 'outbound', link);
+			await this.logRefusal(context, link, 'comment_edit_refused', error.message);
+			return { status: 'skipped', message: 'Ever Works keeps the comment as it was (edit refused); the Gauzy edit is logged' };
+		}
+	}
+
+	/** A Gauzy comment deleted: deleted in Ever Works too (plan 03 §C.3); only its author may, else it is logged. */
+	private async pushDelete(context: EverWorksMappingContext, link: EverWorksEntityLink | null): Promise<EverWorksPushOutcome> {
+		if (!link) return { status: 'skipped', message: 'the comment is not in Ever Works' };
+		const ewOnly = this.everWorksOnly(link);
+		if (ewOnly.taskId) {
+			try {
+				await this.client(context).request('DELETE', `/tasks/${encodeURIComponent(ewOnly.taskId)}/comments/${encodeURIComponent(link.ewId)}`);
+			} catch (error) {
+				if (!(error instanceof EverWorksApiError && (error.status === 404 || error.status === 422 || error.status === 403))) throw error;
+				if (error.status !== 404) await this.logRefusal(context, link, 'comment_delete_refused', error.message);
+			}
+		}
+		await this.links.unlink(link, 'deleted in Gauzy');
+		return { status: 'pushed', message: 'deleted in Ever Works' };
+	}
+
+	// ── Shared ─────────────────────────────────────────────────────────────────────────────────────
+
+	/** The Ever Works user a Gauzy author writes as, or `null` (the integration writes, with `externalAuthor`). */
+	private async actAsFor(context: EverWorksMappingContext, employeeId: ID | null): Promise<string | null> {
+		if (!employeeId) return null;
+		const person = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, employeeId);
+		return person && person.state !== EverWorksLinkState.UNLINKED ? person.ewId : null;
+	}
+
+	private async record(
+		context: EverWorksMappingContext,
+		commentId: ID,
+		comment: EverWorksComment | null,
+		snapshot: CommentSnapshot,
+		direction: 'inbound' | 'outbound',
+		previous?: EverWorksEntityLink
+	): Promise<void> {
+		const before = this.everWorksOnly(previous ?? null);
+		const ewOnly: CommentEverWorksOnly = comment ? { taskId: comment.taskId, authorType: comment.authorType, authorId: comment.authorId } : before;
+		await this.links.record({
+			tenantId: context.tenantId,
+			organizationId: context.organizationId,
+			integrationTenantId: context.integrationTenantId,
+			entityType: EverWorksLinkType.COMMENT,
+			gauzyId: commentId,
+			ewId: comment?.id ?? (previous?.ewId as string),
+			...(comment?.updatedAt ? { ewUpdatedAt: comment.updatedAt } : {}),
+			snapshot: snapshot as unknown as Record<string, unknown>,
+			ewOnly: ewOnly as unknown as Record<string, unknown>,
+			direction
+		});
+	}
+
+	private snapshotOf(link: EverWorksEntityLink): CommentSnapshot {
+		return this.links.snapshot<CommentSnapshot>(link) as CommentSnapshot;
+	}
+
+	private everWorksOnly(link: EverWorksEntityLink | null | undefined): CommentEverWorksOnly {
+		if (!link?.ewOnly) return {};
+		try {
+			return JSON.parse(link.ewOnly) as CommentEverWorksOnly;
+		} catch {
+			return {};
+		}
+	}
+
+	private async logRefusal(context: EverWorksMappingContext, link: EverWorksEntityLink, action: string, message: string): Promise<void> {
+		await this.log
+			.write({
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				integrationTenantId: context.integrationTenantId,
+				connectionId: context.connection.id as ID,
+				direction: 'outbound',
+				entityType: EverWorksLinkType.COMMENT,
+				gauzyId: link.gauzyId as ID,
+				ewId: link.ewId,
+				action,
+				status: 'conflict',
+				message
+			})
+			.catch(() => undefined);
+	}
+
+	private client(context: EverWorksMappingContext): EverWorksClient {
+		return this.connections.client(context.connection, context.everWorksOrganizationSlug);
+	}
+}

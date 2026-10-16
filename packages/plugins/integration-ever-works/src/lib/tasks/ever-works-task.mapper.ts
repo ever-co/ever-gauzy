@@ -135,6 +135,8 @@ export interface TaskEverWorksOnly {
 	/** Gauzy watchers and edge targets Ever Works could not take at the last push (no link yet); retried. */
 	pendingWatchers?: string[];
 	pendingEdges?: string[];
+	/** The task's Gauzy resource links to Ever Works: its web page, its pull request. */
+	resourceLinks?: { task?: string; pr?: string };
 }
 
 /** Ever Works' title limit (contract v1). */
