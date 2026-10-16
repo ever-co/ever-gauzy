@@ -2,6 +2,7 @@ import { CarrierManifestResolver } from './carrier-manifest.resolver';
 import { PackSlipResolver } from './pack-slip.resolver';
 import { PickListLineResolver } from './pick-list-line.resolver';
 import { PickListResolver } from './pick-list.resolver';
+import { PickListSubscriptionResolver } from './pick-list-subscription.resolver';
 import { PickWaveResolver } from './pick-wave.resolver';
 import { WarehouseBinResolver } from './warehouse-bin.resolver';
 import { WarehouseZoneResolver } from './warehouse-zone.resolver';
@@ -18,6 +19,7 @@ export const resolvers = [
 	WarehouseBinResolver,
 	PickWaveResolver,
 	PickListResolver,
+	PickListSubscriptionResolver,
 	PickListLineResolver,
 	PackSlipResolver,
 	CarrierManifestResolver
@@ -28,6 +30,7 @@ export {
 	WarehouseBinResolver,
 	PickWaveResolver,
 	PickListResolver,
+	PickListSubscriptionResolver,
 	PickListLineResolver,
 	PackSlipResolver,
 	CarrierManifestResolver

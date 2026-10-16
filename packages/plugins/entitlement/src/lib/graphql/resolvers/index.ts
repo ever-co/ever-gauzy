@@ -1,5 +1,6 @@
 import { EntitlementActivationResolver } from './entitlement-activation.resolver';
 import { EntitlementKeyResolver } from './entitlement-key.resolver';
+import { EntitlementKeySubscriptionResolver } from './entitlement-key-subscription.resolver';
 import { EntitlementResolver } from './entitlement.resolver';
 
 /**
@@ -9,6 +10,11 @@ import { EntitlementResolver } from './entitlement.resolver';
  * plugin's module — a resolver injects the same services the REST controllers do, so both surfaces
  * run through one implementation of every rule.
  */
-export const resolvers = [EntitlementResolver, EntitlementActivationResolver, EntitlementKeyResolver];
+export const resolvers = [
+	EntitlementResolver,
+	EntitlementActivationResolver,
+	EntitlementKeyResolver,
+	EntitlementKeySubscriptionResolver
+];
 
-export { EntitlementResolver, EntitlementActivationResolver, EntitlementKeyResolver };
+export { EntitlementResolver, EntitlementActivationResolver, EntitlementKeyResolver, EntitlementKeySubscriptionResolver };

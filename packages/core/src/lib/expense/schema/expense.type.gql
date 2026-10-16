@@ -416,3 +416,38 @@ type ExpenseStatistics {
 	"The totals per project and currency."
 	byProject: [ExpenseGroupTotal!]!
 }
+
+"""
+A batch of costs to record, as `bulkCreateExpenses` takes it: the body `POST /expense/bulk` accepts plus
+the retry key.
+
+Each item is a `CreateExpenseInput` and is recorded exactly as `createExpense` records one, so an item is
+refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it
+is optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateExpensesInput {
+	"The items of the batch, in caller order. The answer refers to them by position."
+	items: [CreateExpenseInput!]!
+	"Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one."
+	atomic: Boolean
+	"The client's retry key for this batch."
+	idempotencyKey: String
+}
+
+"""
+What a batch of costs adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateExpensesPayload {
+	"One entry per request item, in request order."
+	results: [BulkCreateItemResult!]!
+	"How many items applied."
+	succeeded: Int!
+	"How many items did not."
+	failed: Int!
+	"How many items the request carried."
+	total: Int!
+}

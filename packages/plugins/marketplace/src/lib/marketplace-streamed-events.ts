@@ -19,10 +19,13 @@ import { declareStreamedEvents, GraphqlSubscriptionConsumer, SubscriptionCatalog
  */
 export const MARKETPLACE_STREAMED_EVENTS: readonly string[] = [
 	'seller.created',
+	'seller.updated',
+	'seller.submitted',
 	'seller.verified',
 	'seller.activated',
 	'seller.suspended',
 	'seller.rejected',
+	'seller.offboarding-started',
 	'seller_offering.created',
 	'seller_offering.withdrawn',
 	'seller_payout.created',

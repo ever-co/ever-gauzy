@@ -1141,3 +1141,65 @@ describe('VendorProductTermService — pricing one order line (doc 05 §16.5 ste
 		expect(await fixture.service.overReceiptTolerancePercentOf('long-gone')).toBeUndefined();
 	});
 });
+
+/**
+ * SEC-D-09 (the half #10647 does not cover): `variantId` on a term is a plain column, not a relation, so the core
+ * foreign-row check never sees it, and the update re-ran none of the checks the creation runs. A term could be
+ * re-pointed at another tenant's variant — whose deletion the database's RESTRICT key then blocked — or at a supplier
+ * that is archived, inactive or not this organization's.
+ */
+describe('VendorProductTermService — an edit names only what a creation may name (SEC-D-09)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** Rows that exist, but outside the caller's organization: another tenant's, and a sibling organization's. */
+	const OUT_OF_SCOPE: Array<[string, string, string]> = [
+		['another tenant', '00000000-0000-4000-8000-000000000009', OTHER_ORG],
+		['another organization of the same tenant', TENANT, OTHER_ORG]
+	];
+
+	it.each(OUT_OF_SCOPE)(
+		'refuses to re-point a term at a variant of %s, and leaves it as it was',
+		async (_label, tenantId, organizationId) => {
+			const fixture = termFixture({ terms: [termRow('term-1')] });
+			fixture.tables.product_variant.push({ id: 'variant-out-of-scope', tenantId, organizationId });
+
+			await expect(fixture.service.update('term-1', { variantId: 'variant-out-of-scope' })).rejects.toThrow(
+				/VENDOR_TERM_VARIANT_NOT_FOUND/
+			);
+			expect(fixture.live()[0]).toMatchObject({ variantId: VARIANT });
+		}
+	);
+
+	it.each(OUT_OF_SCOPE)(
+		'refuses to re-point a term at a supplier of %s, and leaves it as it was',
+		async (_label, tenantId, organizationId) => {
+			const fixture = termFixture({ terms: [termRow('term-1')] });
+			fixture.tables.organization_vendor.push({
+				id: 'vendor-out-of-scope',
+				tenantId,
+				organizationId,
+				name: 'Not ours',
+				currency: 'USD',
+				isActive: true
+			});
+
+			await expect(fixture.service.update('term-1', { vendorId: 'vendor-out-of-scope' })).rejects.toThrow(
+				/VENDOR_TERM_VENDOR_NOT_FOUND/
+			);
+			expect(fixture.live()[0]).toMatchObject({ vendorId: VENDOR });
+		}
+	);
+
+	it('re-points a term at another variant and supplier of the organization', async () => {
+		const fixture = termFixture({ terms: [termRow('term-1')] });
+
+		await fixture.service.update('term-1', { variantId: OTHER_VARIANT, vendorId: OTHER_VENDOR });
+
+		expect(fixture.live()[0]).toMatchObject({ variantId: OTHER_VARIANT, vendorId: OTHER_VENDOR });
+	});
+});

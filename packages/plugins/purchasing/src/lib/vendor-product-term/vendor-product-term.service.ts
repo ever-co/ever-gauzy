@@ -198,6 +198,15 @@ export class VendorProductTermService extends TenantAwareCrudService<VendorProdu
 		const term = await this.findScoped(id);
 		const vendorId = entity.vendorId ?? term.vendorId;
 		const variantId = entity.variantId ?? term.variantId;
+
+		// A changed supplier or variant is held to what a creation checks (SEC-D-09): `variantId` is a plain column,
+		// not a relation, so no core foreign-row check sees it — a term was re-pointed at another tenant's variant.
+		if (entity.vendorId !== undefined && entity.vendorId !== term.vendorId) {
+			await this.assertVendorUsable(vendorId);
+		}
+		if (entity.variantId !== undefined && entity.variantId !== term.variantId) {
+			await this.assertVariantExists(variantId);
+		}
 		const currency = (entity.currency ?? term.currency) as CurrencyCode;
 		const minQuantity = entity.minQuantity === undefined ? term.minQuantity : normalizeQuantity(entity.minQuantity);
 		const status = entity.status ?? term.status;

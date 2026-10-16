@@ -192,10 +192,13 @@ export {
 	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
+export type { IIntegrationSyncCompletion } from './lib/integration-tenant';
 export {
+	INTEGRATION_TENANT_SYNCED,
 	IntegrationTenantGetCommand,
 	IntegrationTenantModule,
 	IntegrationTenantService,
+	IntegrationTenantSyncService,
 	IntegrationTenantUpdateOrCreateCommand
 } from './lib/integration-tenant';
 

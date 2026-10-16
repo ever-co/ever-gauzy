@@ -15,6 +15,7 @@ import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { BulkExecutor } from '../api/bulk-executor.service';
 import { RequestContext } from '../core/context';
 import { FeatureModule } from '../feature/feature.module';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -158,7 +159,8 @@ function surfaces() {
 			expenseService as never,
 			employeeService as never,
 			commandBus as never,
-			queryBus as never
+			queryBus as never,
+			{} as never
 		)
 	};
 }
@@ -328,6 +330,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'mySplitExpenses', route: 'findMyExpenseWithSplitIncluded' },
 	{ field: 'expenseStatistics', route: 'getStatistics' },
 	{ field: 'createExpense', route: 'create' },
+	{ field: 'bulkCreateExpenses', route: 'bulk' },
 	{ field: 'updateExpense', route: 'update' },
 	{ field: 'deleteExpense', route: 'delete' },
 	{ field: 'softDeleteExpense', route: 'softRemove' },
@@ -335,7 +338,14 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 ];
 
 /** The write fields, whose delegations are asserted one by one below. */
-const WRITES = ['createExpense', 'updateExpense', 'deleteExpense', 'softDeleteExpense', 'recoverExpense'];
+const WRITES = [
+	'createExpense',
+	'bulkCreateExpenses',
+	'updateExpense',
+	'deleteExpense',
+	'softDeleteExpense',
+	'recoverExpense'
+];
 
 /**
  * The gate, over a scripted cache and a scripted feature service.
@@ -405,6 +415,7 @@ describe('ExpenseResolver — the SDL declares the capabilities the REST routes 
 			'splitExpensesByEmployee'
 		]);
 		expect(ownedRootFields('Mutation')).toEqual([
+			'bulkCreateExpenses',
 			'createExpense',
 			'deleteExpense',
 			'recoverExpense',
@@ -510,6 +521,7 @@ describe('ExpenseResolver — the SDL declares the capabilities the REST routes 
 		// half.
 		const WRITE_ARGS: ReadonlyArray<[string, string[]]> = [
 			['createExpense', ['input']],
+			['bulkCreateExpenses', ['input']],
 			['updateExpense', ['input']],
 			['deleteExpense', ['id', 'employeeId']],
 			['softDeleteExpense', ['id']],
@@ -562,7 +574,7 @@ describe('ExpenseResolver — the report’s figures, typed and exact', () => {
 			});
 
 			const unused = {} as never;
-			const controller = new ExpenseController(expenseService as never, unused, unused, unused, unused);
+			const controller = new ExpenseController(expenseService as never, unused, unused, unused, unused, unused);
 			const query = { organizationId: ORGANIZATION, startDate: from } as never;
 			expect(await controller.getStatistics(query)).toBe(STATISTICS);
 			expect(expenseService.getStatistics).toHaveBeenLastCalledWith(query);
@@ -1252,9 +1264,12 @@ describe('ExpenseModule — the resolver is declared where its dependencies are 
 		expect(names).toContain('EmployeeModule');
 		expect(names).toContain('CqrsModule');
 		expect(EmployeeService).toBeDefined();
-		// A resolver is an ordinary provider, so the four collaborators above are the whole of its
+		// The batch field applies its items with the platform's executor, provided and exported by this
+		// module, so it is the resolver's fifth collaborator.
+		expect(exported).toEqual(expect.arrayContaining([BulkExecutor]));
+		// A resolver is an ordinary provider, so the five collaborators above are the whole of its
 		// dependencies.
-		expect(ExpenseResolver.length).toBe(4);
+		expect(ExpenseResolver.length).toBe(5);
 	});
 
 	it('reaches the module that provides the guards, without importing the one the gate resolves through', () => {
