@@ -187,21 +187,24 @@ export class CreateEmployeeAgentProfileTable1791000000722 implements MigrationIn
 		}
 	}
 
-	/** Creates the table, its indexes and foreign keys on MySQL, when the table is not there yet. */
+	/**
+	 * Creates the table, its indexes and foreign keys on MySQL, when the table is not there yet — in ONE
+	 * statement: MySQL commits each DDL statement on its own, so keys added by later statements could be missing
+	 * after a failure in between, and a re-run (finding the table) would never add them.
+	 */
 	private async mysqlCreateTable(queryRunner: QueryRunner): Promise<void> {
 		if (await queryRunner.hasTable(TABLE)) return;
 
 		const indexes = Object.entries(NAMES.indexes)
 			.map(([column, index]) => `INDEX \`${index}\` (\`${column}\`)`)
 			.join(', ');
+		const foreignKeys = FOREIGN_KEYS.map(
+			(fk) =>
+				`CONSTRAINT \`${NAMES.foreignKeys[fk.column]}\` FOREIGN KEY (\`${fk.column}\`) REFERENCES \`${fk.references}\`(\`id\`) ON DELETE ${fk.onDelete} ON UPDATE ${fk.onUpdate}`
+		).join(', ');
 
 		await queryRunner.query(
-			`CREATE TABLE \`${TABLE}\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`source\` varchar(32) NOT NULL, \`externalId\` varchar(255) NULL, \`slug\` varchar(255) NULL, \`title\` varchar(255) NULL, \`capabilities\` json NULL, \`status\` varchar(32) NULL, \`scope\` varchar(32) NULL, \`scopeTargetId\` varchar(255) NULL, \`modelId\` varchar(255) NULL, \`avatarUrl\` text NULL, \`lastRunAt\` datetime NULL, \`managedExternally\` tinyint NOT NULL DEFAULT 0, \`externalUrl\` text NULL, \`metadata\` json NULL, \`employeeId\` varchar(255) NOT NULL, \`reportsToEmployeeId\` varchar(255) NULL, ${indexes}, UNIQUE INDEX \`${NAMES.employeeUnique}\` (\`employeeId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`${TABLE}\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`source\` varchar(32) NOT NULL, \`externalId\` varchar(255) NULL, \`slug\` varchar(255) NULL, \`title\` varchar(255) NULL, \`capabilities\` json NULL, \`status\` varchar(32) NULL, \`scope\` varchar(32) NULL, \`scopeTargetId\` varchar(255) NULL, \`modelId\` varchar(255) NULL, \`avatarUrl\` text NULL, \`lastRunAt\` datetime NULL, \`managedExternally\` tinyint NOT NULL DEFAULT 0, \`externalUrl\` text NULL, \`metadata\` json NULL, \`employeeId\` varchar(255) NOT NULL, \`reportsToEmployeeId\` varchar(255) NULL, ${indexes}, UNIQUE INDEX \`${NAMES.employeeUnique}\` (\`employeeId\`), PRIMARY KEY (\`id\`), ${foreignKeys}) ENGINE=InnoDB`
 		);
-		for (const fk of FOREIGN_KEYS) {
-			await queryRunner.query(
-				`ALTER TABLE \`${TABLE}\` ADD CONSTRAINT \`${NAMES.foreignKeys[fk.column]}\` FOREIGN KEY (\`${fk.column}\`) REFERENCES \`${fk.references}\`(\`id\`) ON DELETE ${fk.onDelete} ON UPDATE ${fk.onUpdate}`
-			);
-		}
 	}
 }
