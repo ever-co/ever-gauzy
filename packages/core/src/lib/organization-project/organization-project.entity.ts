@@ -241,8 +241,8 @@ export class OrganizationProject
 
 	/**
 	 * Whether the project's tasks are estimated with its task sizes (`task.taskSizeId`). On by default, which is
-	 * how every project worked before the setting existed. Clients that offer size estimates (e.g. the Plane UI's
-	 * "Estimates" through the Plane integration) hide them when it is off; the stored sizes are kept.
+	 * how every project worked before the setting existed. Clients that offer size estimates (e.g. "Estimates" in the
+	 * Plane UI, through the Plane integration) hide them when it is off; the stored sizes are kept.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
 	@IsOptional()

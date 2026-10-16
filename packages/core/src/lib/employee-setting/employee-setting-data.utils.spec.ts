@@ -60,7 +60,7 @@ describe('applyEmployeeSettingDataOperations', () => {
 		expect(applyEmployeeSettingDataOperations(null, [{ op: SET, path: ['a'], value: 1 }])).toEqual({ a: 1 });
 	});
 
-	it('unsets a key and treats a missing path as a no-op', () => {
+	it('clears a key and treats a missing path as a no-op', () => {
 		const data = { sidebar_preferences: { views: { is_pinned: true }, home: {} } };
 
 		const result = applyEmployeeSettingDataOperations(data, [
