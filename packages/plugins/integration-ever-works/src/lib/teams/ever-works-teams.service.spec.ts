@@ -392,7 +392,7 @@ describe('EverWorksTeamsService', () => {
 		expect(queue.enqueue).toHaveBeenCalledWith(expect.objectContaining({ entityType: EverWorksLinkType.TEAM, gauzyId: teams[0]['id'], op: 'upsert' }));
 	});
 
-	it('an admin unpairing is durable: the team is not paired or created again on its own', async () => {
+	it('an admin undoing a pair is durable: the team is not paired or created again on its own', async () => {
 		const { service, teams, client, links } = setup();
 		teams.push({ id: 'g-new', name: 'New team', createdAt: new Date('2026-10-10T00:00:00Z') });
 		client.request.mockResolvedValueOnce({ id: 'ew-team-new', name: 'New team', version: 1, members: [] });

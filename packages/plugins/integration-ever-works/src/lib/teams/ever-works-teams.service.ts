@@ -691,7 +691,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 	}
 
 	/**
-	 * Whether a link is a live pairing. An `unlinked` row (an admin's unpairing, or a team deleted in Ever
+	 * Whether a link is a live pairing. An `unlinked` row (a pair the admin undid, or a team deleted in Ever
 	 * Works) gives way to an explicit "create on the other side" from the Teams tab.
 	 */
 	private async livePairOf(link: EverWorksEntityLink | null): Promise<boolean> {
