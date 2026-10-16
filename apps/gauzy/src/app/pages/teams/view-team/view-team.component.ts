@@ -37,6 +37,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { HashNumberPipe, IRecordViewSection, IRecordViewStatus, TimeZoneService } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from '../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
+import { AssigneePopoverKeyboard } from '../../employees/view-employee/assignee-popover-keyboard';
 import {
 	buildTaskViewSections,
 	taskStatusOf,
@@ -262,6 +263,8 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	public viewedTask: ITask | null = null;
 	public viewSections: IRecordViewSection[] = [];
 	public viewStatus: IRecordViewStatus | null = null;
+	/** Keyboard access to the assignee cards and the "+N" list. */
+	public readonly assigneeKeyboard = new AssigneePopoverKeyboard();
 	private _viewSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
 
