@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { EverWorksMapping, EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
-import { EVER_WORKS_NEW_KEY_PATH, EverWorksPageComponent } from './ever-works-page.component';
+import { Router } from '@angular/router';
+import { EVER_WORKS_NEW_KEY_PATH, EVER_WORKS_WEBHOOK_WARNING, EverWorksPageComponent, webhookWarningOf } from './ever-works-page.component';
 
 const ORGANIZATION = { id: '11111111-2222-4333-8444-555555555555' };
 
@@ -202,5 +203,18 @@ describe('EverWorksPageComponent', () => {
 		expect(find('setup-error')).not.toBeNull();
 		expect(find('step-key')).toBeNull();
 	});
-});
 
+	it('a webhook that could not be registered is shown, and carried to the settings in the navigation state', () => {
+		api.status.mockReturnValue(of(STATUS));
+		const { component } = render();
+		const router = TestBed.inject(Router);
+		const navigate = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+		component.started({ mapping: MAPPING, run: { id: 'r1' } as never, webhookError: 'API_BASE_URL is not set.' });
+		expect(navigate).toHaveBeenCalledWith(['/pages/integrations/ever-works', MAPPING.integrationTenantId], {
+			state: { [EVER_WORKS_WEBHOOK_WARNING]: 'API_BASE_URL is not set.' }
+		});
+		expect(webhookWarningOf({ [EVER_WORKS_WEBHOOK_WARNING]: 'x' })).toBe('x');
+		expect(webhookWarningOf({ navigationId: 3 })).toBeNull();
+		expect(webhookWarningOf(null)).toBeNull();
+	});
+});

@@ -89,7 +89,8 @@
 		"AGENTS_INTRO": "Ever Works agents become Gauzy employees of kind \"agent\" when the sync starts. They are managed by Ever Works: edits made in Gauzy are not pushed.",
 		"AGENTS_EMPTY": "No agent is provisioned yet.",
 		"PROJECTS_UNAVAILABLE": "Pairing projects with works is not available on this installation yet.",
-		"EMPTY": "Nothing to pair."
+		"EMPTY": "Nothing to pair.",
+		"DUPLICATE_CHOICE": "The same Gauzy record is chosen for two Ever Works records. Choose it for one of them only."
 	},
 	"DIRECTIONS": {
 		"INTRO": "Choose what syncs and in which direction. Records that are private in Ever Works never sync.",
