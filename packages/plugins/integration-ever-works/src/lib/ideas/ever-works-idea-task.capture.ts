@@ -106,14 +106,12 @@ export class EverWorksIdeaTaskCapture implements OnModuleInit, OnModuleDestroy {
 	private async ideaTypeOf(integrationTenantId: ID, now = Date.now()): Promise<string> {
 		const cached = this.ideaTypes.get(integrationTenantId);
 		if (cached && now - cached.at < IDEA_TYPE_CACHE_MS) return cached.id;
-		const row = await this.dataSource
-			.getRepository(IntegrationSetting)
-			.findOne({
-				where: {
-					integrationId: integrationTenantId,
-					settingsName: EverWorksSettingName.IDEA_ISSUE_TYPE_ID
-				} as never
-			});
+		const row = await this.dataSource.getRepository(IntegrationSetting).findOne({
+			where: {
+				integrationId: integrationTenantId,
+				settingsName: EverWorksSettingName.IDEA_ISSUE_TYPE_ID
+			} as never
+		});
 		const id = row?.settingsValue ?? '';
 		this.ideaTypes.set(integrationTenantId, { id, at: now });
 		return id;
