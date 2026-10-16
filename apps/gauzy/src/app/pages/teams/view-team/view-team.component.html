@@ -309,19 +309,35 @@
 									(click)="openTask(task)"
 									[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
 								>
-									<span class="task-dot" [class]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
+									<span
+										class="task-dot"
+										[class]="'group-' + task.statusGroup"
+										[nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.STATUS' | translate) + ': ' + task.status"
+										nbTooltipPlacement="top"
+										aria-hidden="true"
+									></span>
 									<span class="task-main">
-										<span class="task-title" [title]="task.title">{{ task.title }}</span>
+										<span class="task-title" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
 										<span class="task-meta">
 											@if (task.key) {
 											<span class="task-key">{{ task.key }}</span>
 											}
 											@if (task.project) {
-											<span class="task-meta-item">{{ task.project }}</span>
+											<span
+												class="task-meta-item"
+												[nbTooltip]="('EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT' | translate) + ': ' + task.project"
+												nbTooltipPlacement="top"
+												>{{ task.project }}</span
+											>
 											}
 											<span class="task-meta-item">{{ task.status }}</span>
 											@if (task.priority) {
-											<span class="task-meta-item task-priority" [class]="'priority-' + (task.priorityLevel || 'none')">
+											<span
+												class="task-meta-item task-priority"
+												[class]="'priority-' + (task.priorityLevel || 'none')"
+												[nbTooltip]="('EMPLOYEES_PAGE.VIEW.COLUMNS.PRIORITY' | translate) + ': ' + task.priority"
+												nbTooltipPlacement="top"
+											>
 												<nb-icon
 													[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
 													aria-hidden="true"
@@ -331,9 +347,9 @@
 											}
 										</span>
 									</span>
-									<span class="task-people" [title]="task.assignees || ('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.UNASSIGNED' | translate)">
+									<span class="task-people">
 										@for (person of task.people.slice(0, 3); track $index) {
-										<span class="task-person">
+										<span class="task-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
 											@if (person.avatarUrl) {
 											<img [src]="person.avatarUrl" [alt]="person.name" />
 											} @else {
@@ -342,10 +358,16 @@
 										</span>
 										}
 										@if (task.people.length > 3) {
-										<span class="task-person task-person--more">+{{ task.people.length - 3 }}</span>
+										<span class="task-person task-person--more" [nbTooltip]="task.moreNames" nbTooltipPlacement="top"
+											>+{{ task.people.length - 3 }}</span
+										>
 										}
 										@if (!task.people.length) {
-										<span class="task-person task-person--none" aria-hidden="true">
+										<span
+											class="task-person task-person--none"
+											[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.UNASSIGNED' | translate"
+											nbTooltipPlacement="top"
+										>
 											<nb-icon icon="person-outline"></nb-icon>
 										</span>
 										}
@@ -355,7 +377,13 @@
 										[class.is-overdue]="task.overdue"
 										[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
 									>
-										<span class="task-due-date">{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span>
+										<span
+											class="task-due-date"
+											[nbTooltip]="task.dueDate ? ('EMPLOYEES_PAGE.VIEW.COLUMNS.DUE' | translate) + ': ' + task.dueDateLong : ''"
+											[nbTooltipDisabled]="!task.dueDate"
+											nbTooltipPlacement="top"
+											>{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span
+										>
 										@if (task.dueDate) {
 										<span class="task-due-relative">
 											@if (task.overdue) {
