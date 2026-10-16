@@ -35,7 +35,10 @@ export interface IWebhookDeliveryInput {
 export interface IWebhookDeliveryAttempt {
 	delivery: WebhookDelivery;
 	result: IWebhookAttemptResult;
-	/** True when no request was made, because the subscription is switched off. */
+	/**
+	 * True when no request was made: the subscription is switched off, or the claim was refused (then
+	 * `claimRefused` is true as well).
+	 */
 	skipped: boolean;
 	/**
 	 * True when the attempt asked to claim the row and could not: another attempt holds it, or it is no longer
