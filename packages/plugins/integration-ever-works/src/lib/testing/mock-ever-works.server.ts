@@ -57,6 +57,24 @@ export interface MockEverWorksDelivery {
 
 type Webhook = EverWorksWebhookSubscription & { secret: string; keyId: string };
 
+/** What a resource extension of the mock receives for one organization-scoped request. */
+export interface MockEverWorksRouteContext {
+	method: string;
+	path: string;
+	query: Record<string, string>;
+	body: unknown;
+	key: MockEverWorksKey;
+	headers: Record<string, string>;
+	/** The pinned organization of `X-Scope-Slug` / `X-Organization-Id`, or `null`. */
+	org: { id: string; slug: string; displayName: string } | null;
+	/** `null` when the key has the scope and the organization is pinned, else the refusal to answer. */
+	scoped: (scope: string) => EverWorksHttpResponse | null;
+	ok: (data: unknown, status?: number) => EverWorksHttpResponse;
+}
+
+/** A resource route of the mock: the answer, or `null` when the request is not its route. */
+export type MockEverWorksExtension = (context: MockEverWorksRouteContext) => EverWorksHttpResponse | null;
+
 /** The "Ever Gauzy" preset (02 §3: every scope but org:write and email:write), the default of a new key. */
 export const MOCK_PRESET_SCOPES = [
 	'org:read',
@@ -95,6 +113,8 @@ export class MockEverWorksServer {
 	readonly requests: MockEverWorksRecordedRequest[] = [];
 	readonly deliveries: MockEverWorksDelivery[] = [];
 	readonly failures: MockEverWorksFailure[] = [];
+	/** Resource routes kept in their own files (`mock-ever-works.resources.ts`); the first answer wins. */
+	readonly extensions: MockEverWorksExtension[] = [];
 	apiVersion = '1';
 	limits = { readsPerMin: 3000, writesPerMin: 600 };
 	/** Delivers a webhook POST; default: nothing is sent (`status: null`). Tests set it to call Gauzy. */
@@ -222,7 +242,8 @@ export class MockEverWorksServer {
 		if (replayKey && this.idempotent.has(replayKey)) return this.idempotent.get(replayKey) as EverWorksHttpResponse;
 
 		const response = this.route(request.method, path, recorded.query, request.body, key, headers);
-		if (replayKey && response.status < 500) this.idempotent.set(replayKey, response);
+		// Like Ever Works: only a completed create is stored; a refusal releases the key, so a retry can succeed.
+		if (replayKey && response.status < 400) this.idempotent.set(replayKey, response);
 		return response;
 	}
 
@@ -271,6 +292,10 @@ export class MockEverWorksServer {
 			if (!org) return MockEverWorksServer.error(403, 'org_not_pinned', 'The organization is not pinned to this key.');
 			return null;
 		};
+		for (const extension of this.extensions) {
+			const answer = extension({ method, path, query, body, key, headers, org: org ?? null, scoped, ok });
+			if (answer) return answer;
+		}
 		if (method === 'GET' && path === '/members') {
 			return scoped('members:read') ?? ok(MockEverWorksServer.page(this.members.filter((m) => m['organizationId'] === org?.id), query));
 		}
