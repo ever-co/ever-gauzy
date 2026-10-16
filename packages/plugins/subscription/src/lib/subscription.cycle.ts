@@ -1,5 +1,5 @@
 import { CurrencyCode, DecimalString } from '@gauzy/contracts';
-import { Money, divideDecimalUnits, formatDecimalUnits } from '@gauzy/core';
+import { Money, compareDecimalStrings, divideDecimalUnits, formatDecimalUnits } from '@gauzy/core';
 import { SubscriptionBillingPeriod, ISubscriptionItem } from './subscription.types';
 
 /**
@@ -401,9 +401,10 @@ export function normalizeDiscountFraction(value: DecimalString | number | null |
 	}
 
 	const text = normalizeDecimal(value, '0');
-	const fraction = Number(text);
 
-	if (!Number.isFinite(fraction) || fraction < 0 || fraction > 1) {
+	// The bounds are compared on the digits (CodeRabbit): as a double, `1.00000000000000001` is `1` and passed, and the
+	// text that was stored is the one a cycle multiplies by.
+	if (compareDecimalStrings(text, '0') < 0 || compareDecimalStrings(text, '1') > 0) {
 		throw new Error(
 			`SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE: ${text} is not a fraction between 0 and 1; state a discount as a fraction, not as a percentage.`
 		);

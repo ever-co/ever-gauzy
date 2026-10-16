@@ -151,6 +151,9 @@ jest.mock('@gauzy/core', () => {
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// The comparison an edit makes against the version it read its metadata at, the kernel's own.
+		matchesExpectation: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').matchesExpectation,
+		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
@@ -3797,5 +3800,140 @@ describe('SubscriptionService — the metadata billing trusts is the service’s
 		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: new Date(APRIL.getTime() + 60_000) });
 
 		expect(outcome).toMatchObject({ amount: '120.000000' });
+	});
+
+	it('reserves the proration threshold and the cancellation at the period end too (CodeRabbit)', async () => {
+		// `{ minimumProrationCharge: "1000000" }` waived every upgrade's charge, and `{ cancelAtPeriodEnd: true }`
+		// cancelled the subscription at the next run with no cancellation, reason or event — or, erased, revived one
+		// the customer had cancelled.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true, minimumProrationCharge: '5' } })]
+		});
+
+		await fixture.service.applyChanges(SUBSCRIPTION, {
+			metadata: { minimumProrationCharge: '1000000', note: 'kept' }
+		} as never);
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({
+			cancelAtPeriodEnd: true,
+			minimumProrationCharge: '5',
+			note: 'kept'
+		});
+
+		const created = await subscriptionFixture({ subscriptions: [], items: [], billings: [] }).service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }],
+			metadata: { minimumProrationCharge: '1000000', cancelAtPeriodEnd: true, note: 'kept' }
+		} as never);
+
+		expect(created.metadata).toEqual({ note: 'kept' });
+	});
+
+	it('refuses a creation discount one digit past 1, which rounds to 1 as a double (CodeRabbit)', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+
+		await expect(
+			fixture.service.createSubscription({
+				planId: PLAN,
+				customerId: CUSTOMER,
+				paymentAccountHolderId: HOLDER,
+				paymentMethodTokenId: TOKEN,
+				items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }],
+				discountPercentage: '1.00000000000000001'
+			} as never)
+		).rejects.toMatchObject({ message: expect.stringContaining('SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE') });
+		expect(fixture.tables.subscription).toEqual([]);
+	});
+});
+
+/**
+ * Greptile and CodeRabbit on #10655: an edit carries the reserved keys over from the read it makes before the write.
+ * With `If-Match: *` (or no caller) the write was predicated on whatever version the row held when the statement ran,
+ * so a billing pass that consumed `pendingCredit` between that read and the write had the credit written back, and
+ * the next cycle applied it again. The write is now predicated on the version the read saw: a wildcard re-reads and
+ * rebuilds the merge, and a caller's stated version keeps its meaning.
+ */
+describe('SubscriptionService — an edit never writes back the credit a billing pass consumed', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const credit = { amount: '30.000000', currency: 'USD' };
+
+	/**
+	 * A fixture whose billing pass lands between the edit's first read and its write: the read is a snapshot, then the
+	 * pass consumes the carried credit and moves the row one version on.
+	 */
+	function racedByABillingPass() {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: credit, chargedSetupFeePlanIds: [PLAN] } })]
+		});
+		const original = fixture.service.findOneDetailed.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'findOneDetailed').mockImplementationOnce(async (id: string) => {
+			const read = { ...(await original(id)) };
+			const row = fixture.subscription(SUBSCRIPTION)!;
+
+			// The pass's own write: the credit is consumed and the row is one version further on.
+			row.metadata = { chargedSetupFeePlanIds: [PLAN] };
+			row.version = 2;
+
+			return read as never;
+		});
+
+		return fixture;
+	}
+
+	it('rebuilds a wildcard edit from the row as the pass left it', async () => {
+		const fixture = racedByABillingPass();
+
+		const changed = await fixture.service.applyChanges(SUBSCRIPTION, { metadata: { note: 'kept' } } as never);
+
+		expect(changed.metadata).toEqual({ chargedSetupFeePlanIds: [PLAN], note: 'kept' });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ version: 3 });
+	});
+
+	it('rebuilds an edit whose caller accepted both versions, from the later one', async () => {
+		const fixture = racedByABillingPass();
+
+		await fixture.service.applyChanges(SUBSCRIPTION, { metadata: { note: 'kept' } } as never, {
+			wildcard: false,
+			versions: [1, 2]
+		});
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ chargedSetupFeePlanIds: [PLAN], note: 'kept' });
+	});
+
+	it('refuses an edit stated at a version the read did not see, rather than writing the read’s credit at it', async () => {
+		// `If-Match: "2"` while the read saw 1: predicated on the caller's version, the write landed once the pass
+		// moved the row to 2 — with the credit the pass had just consumed.
+		const fixture = racedByABillingPass();
+
+		const refusal = await fixture.service
+			.applyChanges(SUBSCRIPTION, { metadata: { note: 'kept' } } as never, { wildcard: false, versions: [2] })
+			.catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ metadata: { chargedSetupFeePlanIds: [PLAN] }, version: 2 });
+	});
+
+	it('keeps a caller’s stated version: an edit read at the version the pass moved past is a conflict', async () => {
+		const fixture = racedByABillingPass();
+
+		const refusal = await fixture.service
+			.applyChanges(SUBSCRIPTION, { metadata: { note: 'kept' } } as never, { wildcard: false, versions: [1] })
+			.catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(refusal.getStatus()).toBe(409);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ metadata: { chargedSetupFeePlanIds: [PLAN] }, version: 2 });
 	});
 });
