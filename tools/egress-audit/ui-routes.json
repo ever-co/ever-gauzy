@@ -931,6 +931,22 @@
       "source": "router"
     },
     {
+      "path": "/pages/goals/initiatives",
+      "file": "apps/gauzy/src/app/pages/goals/initiatives/initiatives-routing.module.ts:16",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/goals/initiatives/:id",
+      "file": "apps/gauzy/src/app/pages/goals/initiatives/initiatives-routing.module.ts:22",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
       "path": "/pages/goals/reports",
       "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
       "source": "router"
@@ -1264,7 +1280,7 @@
     },
     {
       "path": "/pages/organization/teams",
-      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:10",
+      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:9",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1272,7 +1288,7 @@
     },
     {
       "path": "/pages/organization/teams/view/:id",
-      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:21",
+      "file": "apps/gauzy/src/app/pages/teams/teams-routing.module.ts:20",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1336,7 +1352,7 @@
     },
     {
       "path": "/pages/reports",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:503",
+      "file": "apps/gauzy/src/app/pages/pages.routes.ts:509",
       "redirect_to": "all",
       "source": "router"
     },
@@ -1895,10 +1911,10 @@
     "apps/gauzy/src/app/pages/pages.routes.ts:306: the wildcard route under /pages is not walked",
     "apps/gauzy/src/app/pages/pages.routes.ts:372: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('employees-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/pages.routes.ts:462: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('organization-sections')): add the routes it adds as manual entries",
-    "apps/gauzy/src/app/pages/pages.routes.ts:491: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('goals-sections')): add the routes it adds as manual entries",
+    "apps/gauzy/src/app/pages/pages.routes.ts:497: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('goals-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/pages.routes.ts:49: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('page-sections')): add the routes it adds as manual entries",
-    "apps/gauzy/src/app/pages/pages.routes.ts:583: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('reports-sections')): add the routes it adds as manual entries",
-    "apps/gauzy/src/app/pages/pages.routes.ts:584: the wildcard route under /pages/reports is not walked",
+    "apps/gauzy/src/app/pages/pages.routes.ts:589: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('reports-sections')): add the routes it adds as manual entries",
+    "apps/gauzy/src/app/pages/pages.routes.ts:590: the wildcard route under /pages/reports is not walked",
     "apps/gauzy/src/app/pages/settings/settings.routes.ts:162: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('settings-sections')): add the routes it adds as manual entries",
     "packages/plugins/public-layout-ui/src/lib/public-layout.routes.ts:128: the wildcard route under /share is not walked",
     "packages/ui-auth/src/lib/auth.routes.ts:86: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('auth-sections')): add the routes it adds as manual entries"

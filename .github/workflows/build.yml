@@ -378,6 +378,12 @@ jobs:
         # when switched on, without ever stopping the API.
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/integration-ever-works/jest.config.ts --runInBand
 
+      - name: Test the Inbox plugin
+        # The switch (only GAUZY_INBOX_ENABLED=true loads it), the source-handler registry, and on a real
+        # SQLite database the migrations (up, up again, down), the role grants, the recipient-scoped reads,
+        # replies through a source handler (claimed once, released on refusal) and the source writes.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/inbox/jest.config.ts --runInBand
+
       - name: Test anonymous usage statistics on SQLite, PostgreSQL and MySQL
         # The database suites of the statistics plugins on the three engines (Postgres in a schema
         # of its own): migrations up/up/down, one identity under concurrent first boots, the operator

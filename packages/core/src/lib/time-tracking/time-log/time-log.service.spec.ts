@@ -159,6 +159,23 @@ describe('TimeLogService', () => {
 			}
 		);
 
+		// `isNotEmpty(request.startDate)` guards the range. REST hands it strings and GraphQL's DateTime scalar
+		// strings or numbers, but an internal caller hands it Dates — which `isEmpty` used to read as empty, so the
+		// query silently ran without any date range at all.
+		it('applies the date range when it is given as Date objects', async () => {
+			actAs({ canChangeSelectedEmployee: true });
+
+			await service.getDailyReport({
+				...request,
+				startDate: new Date(request.startDate as string),
+				endDate: new Date(request.endDate as string)
+			});
+
+			const { conditions, parameters } = executedFilters(builder);
+			expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
+			expect(parameters).toEqual(expect.objectContaining({ startDate: start, endDate: end }));
+		});
+
 		it('narrows a caller who does not manage the requested employees to their own logs', async () => {
 			actAs({ canChangeSelectedEmployee: false });
 			canManageEmployees.mockImplementation(resolveLater(false));

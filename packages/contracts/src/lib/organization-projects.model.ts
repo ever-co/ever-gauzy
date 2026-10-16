@@ -82,6 +82,8 @@ export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizati
 	isTasksAutoSync?: boolean;
 	isTasksAutoSyncOnLabel?: boolean;
 	syncTag?: string;
+	/** Whether the project's tasks are estimated with its task sizes (`taskSizeId`). Defaults to `true`. */
+	isTaskSizeEstimationEnabled?: boolean;
 }
 
 export interface IOrganizationProject extends IOrganizationProjectBase {
