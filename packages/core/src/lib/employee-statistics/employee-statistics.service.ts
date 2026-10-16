@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { DEFAULT_PROFIT_BASED_BONUS, DEFAULT_REVENUE_BASED_BONUS } from '@gauzy/constants';
 import {
 	BonusTypeEnum,
+	EmployeeKindEnum,
 	IEmployeeStatistics,
 	IEmployeeStatisticsFindInput,
 	IMonthAggregatedSplitExpense,
@@ -325,6 +326,11 @@ export class EmployeeStatisticsService {
 			relations: ['organization']
 		});
 
+		// An agent employee takes no share of a split expense: the expense is divided among people only.
+		if (employee.kind === EmployeeKindEnum.AGENT) {
+			return new Map();
+		}
+
 		// 2 Find split expenses for Employee's Organization in last N months
 		const { items } = await this.expenseService.findAll({
 			select: ['valueDate', 'amount', 'currency', 'notes', 'category'],
@@ -351,9 +357,12 @@ export class EmployeeStatisticsService {
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
+				// A split expense is shared among the people working that month, never with agent employees.
 				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 					employee.organization.id,
-					monthOf(expense.valueDate)
+					monthOf(expense.valueDate),
+					false,
+					true
 				);
 
 				const newStat = {
@@ -387,6 +396,11 @@ export class EmployeeStatisticsService {
 			},
 			relations: ['organization']
 		});
+
+		// An agent employee takes no share of a split recurring expense: it is divided among people only.
+		if (employee.kind === EmployeeKindEnum.AGENT) {
+			return new Map<string, IMonthAggregatedSplitExpense>();
+		}
 
 		// 2 Fetch all split recurring expenses of the Employee's Organization
 		const { items } = await this.organizationRecurringExpenseService.findAll({
@@ -445,9 +459,12 @@ export class EmployeeStatisticsService {
 					// A copy: `date` is the loop variable, moved on by `setMonth` after this iteration
 					stat.valueDate = new Date(date);
 				} else {
+					// A split expense is shared among the people working that month, never with agent employees.
 					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 						employee.organization.id,
-						monthOf(date)
+						monthOf(date),
+						false,
+						true
 					);
 
 					// Add a new map entry if the key(month-year) does not already exist

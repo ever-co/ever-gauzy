@@ -117,6 +117,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	profile_link?: string;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
+	/** `human` for a person (every row created through the employee routes), `agent` for an agent employee. */
+	kind?: EmployeeKindEnum;
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
