@@ -30,7 +30,7 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 	template: `
 		<p>{{ 'EVER_WORKS.REVIEW.INTRO' | translate }}</p>
 		<nb-tabset>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.PEOPLE' | translate" data-test="tab-people">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.PEOPLE' | translate" data-test="tab-people">
 				@if (errors.people) {
 					<nb-alert status="danger" role="alert" data-test="people-error">{{ errors.people }}</nb-alert>
 				}
@@ -88,7 +88,7 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 					}
 				}
 			</nb-tab>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.AGENTS' | translate" data-test="tab-agents">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.AGENTS' | translate" data-test="tab-agents">
 				<p>{{ 'EVER_WORKS.REVIEW.AGENTS_INTRO' | translate }}</p>
 				@if (errors.agents) {
 					<nb-alert status="danger" role="alert" data-test="agents-error">{{ errors.agents }}</nb-alert>
@@ -108,7 +108,7 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 					</table>
 				}
 			</nb-tab>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.TEAMS' | translate" data-test="tab-teams">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.TEAMS' | translate" data-test="tab-teams">
 				@if (errors.teams) {
 					<nb-alert status="danger" role="alert" data-test="teams-error">{{ errors.teams }}</nb-alert>
 				}
@@ -167,7 +167,7 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 					}
 				}
 			</nb-tab>
-			<nb-tab [tabTitle]="'EVER_WORKS.REVIEW.PROJECTS' | translate" data-test="tab-projects">
+			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.PROJECTS' | translate" data-test="tab-projects">
 				@if (projectsUnavailable) {
 					<p data-test="projects-unavailable">{{ 'EVER_WORKS.REVIEW.PROJECTS_UNAVAILABLE' | translate }}</p>
 				}
