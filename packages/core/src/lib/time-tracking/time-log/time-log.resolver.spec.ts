@@ -54,8 +54,9 @@ import { IGetConflictTimeLogCommand } from './commands';
  *   class's: each adds `OrganizationPermissionGuard` and one `ALLOW_*` permission, and a field that
  *   inherited the class grant instead would let a caller record time it may not record;
  * - the three members a hand-recorded body is written from are restated, because the delivered pipe
- *   and the delivered body's own transform decide them: the employee is the caller's own unless the
- *   caller may choose one, and a create is always a `MANUAL` log from the browser timer;
+ *   and the delivered body's own transform decide them: a named employee is kept for the service to
+ *   judge, a missing one is the caller's own unless the caller may choose one, and a create is always
+ *   a `MANUAL` log from the browser timer;
  * - every duration says its unit, every amount is an exact decimal and no relation is a field: each
  *   relation is carried as the identifier that always travels, because the reads behind this domain's
  *   fields select different subsets of the rows they nest.

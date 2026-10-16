@@ -875,8 +875,9 @@ export class TimeLogResolver {
 	 * Records time by hand.
 	 *
 	 * The same service method the create route calls, with the same body that route builds: the
-	 * delivered pipe runs first and replaces the employee with the caller's own whenever the caller may
-	 * not change the selected employee, and the delivered validation then states the log type and the
+	 * delivered pipe runs first and fills a missing employee with the caller's own when the caller may
+	 * not change the selected employee (a named one is kept, and the service refuses an employee the
+	 * caller may not write time for), and the delivered validation then states the log type and the
 	 * source for itself — `MANUAL` and `BROWSER` — whatever the body carried. Both are restated here
 	 * rather than left to the caller, because a write that let a caller record a tracked log against
 	 * somebody else would be a wider write than the route's.
@@ -894,9 +895,10 @@ export class TimeLogResolver {
 	 * The batch `POST /timesheet/time-log/bulk` applies, run by the same executor from the same declaration —
 	 * the options are read off the controller's own `@BulkOperation`, so the resource, the cap and the
 	 * permission cannot differ between the two surfaces — and each item is recorded by `addManualTime` itself:
-	 * the caller's own employee unless the caller may choose one, the log type and source stated for the
-	 * caller, then the service's employee, permission, future-date and overlap rules. The items are applied
-	 * one after another, so an item's overlap is resolved against the intervals the items before it recorded.
+	 * the employee the item names (the caller's own when it names none and the caller may not choose one), the
+	 * log type and source stated for the caller, then the service's employee, permission, future-date and
+	 * overlap rules. The items are applied one after another, so an item's overlap is resolved against the
+	 * intervals the items before it recorded.
 	 * The field carries the guard and the permission `addManualTime` carries, and the organization-policy guard is
 	 * asked again about every item, as the route asks it: that guard decides from the organization a body names,
 	 * and neither the batch's input nor a direct call of `addManualTime` puts an item in front of it — without the
@@ -942,8 +944,9 @@ export class TimeLogResolver {
 	 * The same service method the update route calls, with the identifier the route takes from its path
 	 * and the body it reads — which is the create's body without the two members the delivered update
 	 * does not carry, so the log type and the source it already has are left as they are. The pipe
-	 * applies here too, and for the same reason: the employee is the caller's own unless the caller may
-	 * choose one.
+	 * applies here too, and the same way: a named employee is kept and judged by the service — a team
+	 * manager edits a member's log, any other employee the caller may not write time for is refused —
+	 * and only a missing one is the caller's own.
 	 */
 	@Mutation('updateManualTime')
 	@UseGuards(OrganizationPermissionGuard)
