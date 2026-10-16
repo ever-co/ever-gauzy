@@ -9,10 +9,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { SUBSCRIPTION_OPTIONS_METADATA } from '@nestjs/graphql/dist/graphql.constants';
 import { buildSchema } from 'graphql';
 import { ChannelStatus, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context/request-context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ChannelResolver } from './channel.resolver';
 import { CHANNEL_EVENT_NAMES } from './channel-event.publisher';
@@ -326,6 +328,59 @@ describe('ChannelResolver — subscriptions (§10.2, §10.4)', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ChannelResolver.prototype.channelChanged)).toEqual([
 			PermissionsEnum.CHANNELS_VIEW
 		]);
+	});
+
+	describe('the delivery filter, run as the subscriber', () => {
+		/** The filter the decorator registered, which is what the transport runs for every published event. */
+		const filter = Reflect.getMetadata(SUBSCRIPTION_OPTIONS_METADATA, ChannelResolver.prototype.channelChanged)
+			.filter as (payload: unknown, variables: { channelId?: string; action?: string }) => boolean;
+
+		/** A channel event of tenant `tenant-1`, in the organization given. */
+		const event = (organizationId?: string, overrides: Record<string, unknown> = {}) => ({
+			tenantId: 'tenant-1',
+			organizationId,
+			action: 'updated',
+			channel: { id: CHANNEL },
+			...overrides
+		});
+
+		/** Runs the filter as a subscriber of `tenant-1` acting in the organization given. */
+		const deliversTo = (organizationId: string | null, payload: unknown, variables = {}) => {
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(organizationId);
+
+			return filter(payload, variables);
+		};
+
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
+
+		it('withholds a channel of another organization of the same tenant', () => {
+			expect(deliversTo('org-1', event('org-2'))).toBe(false);
+		});
+
+		it('delivers a channel of the subscriber’s own organization', () => {
+			expect(deliversTo('org-1', event('org-1'))).toBe(true);
+		});
+
+		it('withholds an organization’s channel from a subscriber with no organization, as `channels` does', () => {
+			// `ChannelService` reads with the caller's organization, so such a caller reads only the
+			// channels stored without one; a missing organization is not a tenant-wide wildcard.
+			expect(deliversTo(null, event('org-1'))).toBe(false);
+		});
+
+		it('delivers a tenant-wide channel to every subscriber of the tenant', () => {
+			expect(deliversTo('org-1', event(undefined))).toBe(true);
+			expect(deliversTo(null, event(undefined))).toBe(true);
+		});
+
+		it('still withholds another tenant and still applies both narrowing arguments', () => {
+			expect(deliversTo('org-1', event('org-1', { tenantId: 'tenant-2' }))).toBe(false);
+			expect(deliversTo('org-1', event('org-1'), { channelId: OTHER_CHANNEL })).toBe(false);
+			expect(deliversTo('org-1', event('org-1'), { channelId: CHANNEL, action: 'created' })).toBe(false);
+			expect(deliversTo('org-1', event('org-1'), { channelId: CHANNEL, action: 'updated' })).toBe(true);
+		});
 	});
 });
 
