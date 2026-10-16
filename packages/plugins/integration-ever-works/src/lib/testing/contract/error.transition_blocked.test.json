@@ -1,0 +1,26 @@
+{
+	"error": {
+		"code": "transition_blocked",
+		"message": "T-42 cannot move to done: 1 open blocker, 1 pending approver.",
+		"details": {
+			"from": "in_progress",
+			"to": "done",
+			"blockers": [
+				{
+					"taskId": "f8c0e2a4-6b7d-4eb5-9fe0-5b6c7d8e9fab",
+					"slug": "T-43",
+					"title": "Old spike",
+					"status": "todo"
+				}
+			],
+			"pendingApprovers": [
+				{
+					"type": "user",
+					"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56",
+					"state": "pending"
+				}
+			],
+			"path": ["done"]
+		}
+	}
+}

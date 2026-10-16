@@ -3856,17 +3856,20 @@
 		"USER": {
 			"MANAGE": "Manage User Invites",
 			"HEADER": "Invite Users",
-			"ACTION": "Invite Users"
+			"ACTION": "Invite Users",
+			"DESCRIPTION": "הזמינו אנשים להצטרף לארגון שלכם כמשתמשים. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Manage Employee Invites",
 			"HEADER": "Invite Employees",
-			"ACTION": "Invite Employees"
+			"ACTION": "Invite Employees",
+			"DESCRIPTION": "הזמינו אנשים להצטרף לארגון שלכם כעובדים. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Manage Candidate Invites",
 			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"ACTION": "Invite Candidates",
+			"DESCRIPTION": "הזמינו מועמדים לתהליך הגיוס שלכם. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
@@ -3881,6 +3884,23 @@
 			"TWO_WEEK": "14 Days",
 			"MONTH": "30 Days",
 			"NEVER": "Never"
+		},
+		"FORM": {
+			"RECIPIENTS": "נמענים",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "הקישו Enter אחרי כל כתובת כדי להוסיף כמה נמענים.",
+			"CLEAR_EMAILS": "נקה הכול",
+			"ACCESS": "גישה",
+			"ACCESS_HINT": "אופציונלי. בחרו למה חברים חדשים יוכלו לגשת מיד עם הצטרפותם.",
+			"DETAILS": "פרטי ההזמנה",
+			"RECIPIENT_COUNT": "נמענים: {{count}}",
+			"NO_RECIPIENTS": "עדיין לא נוספו נמענים"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "מחיקת הזמנה",
+			"WARNING": "ההזמנה עבור {{ email }} תימחק לצמיתות והקישור שלה יפסיק לעבוד. לא ניתן לבטל פעולה זו.",
+			"TYPE_TO_CONFIRM": "הקלידו את הטקסט הבא לאישור:",
+			"CONFIRM": "מחק הזמנה"
 		}
 	},
 	"INVOICES_PAGE": {

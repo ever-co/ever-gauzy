@@ -10,6 +10,12 @@
  * same list against the real classes and their real module graphs.
  */
 jest.mock('@gauzy/plugin-docs', () => ({ DocsPlugin: class DocsPlugin {} }));
+// The Ever Works integration keeps its real switch (the function the list calls), with a stub class.
+jest.mock('@gauzy/plugin-integration-ever-works', () => ({
+	IntegrationEverWorksPlugin: class IntegrationEverWorksPlugin {},
+	isEverWorksEnabled: jest.requireActual('../../../packages/plugins/integration-ever-works/src/lib/ever-works-enabled')
+		.isEverWorksEnabled
+}));
 jest.mock('@gauzy/plugin-catalog', () => ({ CatalogPlugin: class CatalogPlugin {} }));
 jest.mock('@gauzy/plugin-pricing', () => ({ PricingPlugin: class PricingPlugin {} }));
 jest.mock('@gauzy/plugin-tax', () => ({ TaxPlugin: class TaxPlugin {} }));
@@ -40,6 +46,7 @@ import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { IntegrationEverWorksPlugin } from '@gauzy/plugin-integration-ever-works';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
@@ -110,5 +117,50 @@ describe('worker plugins', () => {
 		// Control: registering a plugin twice starts its BullMQ workers twice, which is two consumers
 		// competing for the same jobs rather than one.
 		expect(new Set(plugins).size).toBe(plugins.length);
+	});
+
+	describe('the Ever Works integration, behind EVER_WORKS_ENABLED', () => {
+		/** The list as the worker builds it with `value` as the switch (the module is evaluated afresh). */
+		function listWith(value: string | undefined): unknown[] {
+			const saved = process.env['EVER_WORKS_ENABLED'];
+			if (value === undefined) delete process.env['EVER_WORKS_ENABLED'];
+			else process.env['EVER_WORKS_ENABLED'] = value;
+			const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+			try {
+				let list: unknown[] = [];
+				jest.isolateModules(() => {
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					list = require('./plugins').plugins;
+				});
+				return list;
+			} finally {
+				warn.mockRestore();
+				if (saved === undefined) delete process.env['EVER_WORKS_ENABLED'];
+				else process.env['EVER_WORKS_ENABLED'] = saved;
+			}
+		}
+
+		const hasEverWorks = (list: unknown[]) =>
+			list.some((plugin) => (plugin as { name?: string })?.name === IntegrationEverWorksPlugin.name);
+
+		it.each([
+			['unset (the default)', undefined, false],
+			['false', 'false', false],
+			['TRUE', 'TRUE', false],
+			['1', '1', false],
+			['true', 'true', true]
+		])('%s: hosted %s', (_name, value, hosted) => {
+			expect(hasEverWorks(listWith(value))).toBe(hosted);
+		});
+
+		it('is not in the list this file exports by default, so the worker is unchanged', () => {
+			expect(plugins).not.toContain(IntegrationEverWorksPlugin);
+		});
+
+		it('switched on, it is hosted after every other plugin and the list still resolves', () => {
+			const list = listWith('true');
+			expect(hasEverWorks(list)).toBe(true);
+			expect(list.length).toBe(listWith(undefined).length + 1);
+		});
 	});
 });

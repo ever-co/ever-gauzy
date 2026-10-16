@@ -3837,17 +3837,20 @@
 		"USER": {
 			"MANAGE": "Zarządzanie zaproszeniami użytkowników",
 			"HEADER": "Zaproś użytkowników",
-			"ACTION": "Zaproś użytkowników"
+			"ACTION": "Zaproś użytkowników",
+			"DESCRIPTION": "Zaproś osoby do dołączenia do Twojej organizacji jako użytkownicy. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Zarządzaj zaproszeniami dla pracowników",
 			"HEADER": "Zaprosić pracowników",
-			"ACTION": "Zaproszenie pracowników"
+			"ACTION": "Zaproszenie pracowników",
+			"DESCRIPTION": "Zaproś osoby do dołączenia do Twojej organizacji jako pracownicy. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Zarządzaj zaproszeniami kandydatów",
 			"HEADER": "Zaproszenie kandydatów",
-			"ACTION": "Zaproszenie kandydatów"
+			"ACTION": "Zaproszenie kandydatów",
+			"DESCRIPTION": "Zaproś kandydatów do procesu rekrutacji. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"SENT": "{{total}} Wysłane zaproszenia",
 		"IGNORED": "Wysłano {{total}} zaproszeń. {{ignored}} zostało już zaproszonych i zostało zignorowanych",
@@ -3857,6 +3860,23 @@
 			"TWO_WEEK": "14 dni",
 			"MONTH": "30 dni",
 			"NEVER": "Nigdy"
+		},
+		"FORM": {
+			"RECIPIENTS": "Odbiorcy",
+			"EMAILS_PLACEHOLDER": "imie@firma.pl",
+			"EMAILS_HINT": "Naciśnij Enter po każdym adresie, aby dodać wielu odbiorców.",
+			"CLEAR_EMAILS": "Wyczyść wszystko",
+			"ACCESS": "Dostęp",
+			"ACCESS_HINT": "Opcjonalnie. Wybierz, do czego nowi członkowie będą mieli dostęp od razu po dołączeniu.",
+			"DETAILS": "Szczegóły zaproszenia",
+			"RECIPIENT_COUNT": "Odbiorcy: {{count}}",
+			"NO_RECIPIENTS": "Nie dodano jeszcze odbiorców"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń zaproszenie",
+			"WARNING": "Zaproszenie dla {{ email }} zostanie trwale usunięte, a jego link przestanie działać. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
+			"CONFIRM": "Usuń zaproszenie"
 		}
 	},
 	"INVOICES_PAGE": {

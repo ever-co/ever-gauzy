@@ -1,0 +1,11 @@
+{
+	"TITLE": "Ever Works",
+	"UNAVAILABLE": "The Ever Works integration is not switched on for this installation. Its operator can switch it on with EVER_WORKS_ENABLED=true; until then nothing is sent to Ever Works.",
+	"ERROR": "The Ever Works integration could not be loaded. Please try again.",
+	"READY": "The Ever Works integration is switched on for this installation.",
+	"INTRO": "Connect this organization to an Ever Works organization with an Ever Works integration key (it starts with ew_int_). Tasks, teams, goals, missions, ideas, agents, docs and the inbox then sync in both directions.",
+	"CONNECT_SOON": "Connecting from this page arrives with the next release of the integration.",
+	"DEFAULT_API_URL": "Ever Works API",
+	"CREATE_KEY": "Create an integration key in Ever Works",
+	"VERSIONS": "Plugin {{ plugin }}, Ever Works integration contract v{{ contract }}"
+}

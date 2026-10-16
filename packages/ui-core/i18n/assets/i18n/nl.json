@@ -3838,17 +3838,20 @@
 		"USER": {
 			"MANAGE": "Beheer gebruikersuitnodigingen",
 			"HEADER": "Nodig gebruikers uit",
-			"ACTION": "Uitnodigen van gebruikers"
+			"ACTION": "Uitnodigen van gebruikers",
+			"DESCRIPTION": "Nodig mensen uit om lid te worden van uw organisatie als gebruiker. Elke ontvanger krijgt een e-mail met een beveiligde link om te accepteren."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Beheer werknemersuitnodigingen",
 			"HEADER": "Nodig werknemers uit",
-			"ACTION": "Nodig werknemers uit."
+			"ACTION": "Nodig werknemers uit.",
+			"DESCRIPTION": "Nodig mensen uit om lid te worden van uw organisatie als medewerker. Elke ontvanger krijgt een e-mail met een beveiligde link om te accepteren."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Beheer Kandidaat Uitnodigingen",
 			"HEADER": "Kandidaten uitnodigen",
-			"ACTION": "Nodig kandidaten uit"
+			"ACTION": "Nodig kandidaten uit",
+			"DESCRIPTION": "Nodig kandidaten uit voor uw wervingsproces. Elke ontvanger krijgt een e-mail met een beveiligde link om te accepteren."
 		},
 		"SENT": "{{total}} Uitnodigingen Verzonden.",
 		"IGNORED": "{{total}} Uitnodigingen verstuurd. {{ignored}} waren al uitgenodigd en zijn genegeerd.",
@@ -3858,6 +3861,23 @@
 			"TWO_WEEK": "14 Dagen",
 			"MONTH": "30 dagen",
 			"NEVER": "Nooit"
+		},
+		"FORM": {
+			"RECIPIENTS": "Ontvangers",
+			"EMAILS_PLACEHOLDER": "naam@bedrijf.nl",
+			"EMAILS_HINT": "Druk na elk adres op Enter om meerdere ontvangers toe te voegen.",
+			"CLEAR_EMAILS": "Alles wissen",
+			"ACCESS": "Toegang",
+			"ACCESS_HINT": "Optioneel. Kies waartoe nieuwe leden direct toegang krijgen zodra ze lid worden.",
+			"DETAILS": "Uitnodigingsdetails",
+			"RECIPIENT_COUNT": "Ontvangers: {{count}}",
+			"NO_RECIPIENTS": "Nog geen ontvangers toegevoegd"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Uitnodiging verwijderen",
+			"WARNING": "De uitnodiging voor {{ email }} wordt permanent verwijderd en de link werkt niet meer. Deze actie kan niet ongedaan worden gemaakt.",
+			"TYPE_TO_CONFIRM": "Typ het volgende om te bevestigen:",
+			"CONFIRM": "Uitnodiging verwijderen"
 		}
 	},
 	"INVOICES_PAGE": {
