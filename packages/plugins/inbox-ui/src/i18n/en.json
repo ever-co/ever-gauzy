@@ -1,0 +1,96 @@
+{
+	"MENU": "Inbox",
+	"TITLE": "Inbox",
+	"UNAVAILABLE": "The Inbox is not switched on for this installation.",
+	"ERROR": "The Inbox could not be loaded.",
+	"RETRY": "Try again",
+	"EMPTY": "Nothing here.",
+	"SELECT": "Select an item to see it here.",
+	"LOAD_MORE": "Load more",
+	"BADGE_LABEL": "Inbox: {{ count }} unread",
+	"DUE": "Due {{ date }}",
+	"ANSWERED": "Answered {{ date }}",
+	"ROUTED": "Delivered: {{ routed }}",
+	"TABS": {
+		"all": "All",
+		"decisions": "Decisions",
+		"email": "Email",
+		"notifications": "Notifications",
+		"archived": "Archived"
+	},
+	"FILTERS": {
+		"KIND": "Kind",
+		"ALL_KINDS": "All kinds",
+		"SOURCE": "Source",
+		"ALL_SOURCES": "All sources",
+		"UNREAD": "Unread only",
+		"SEARCH": "Search"
+	},
+	"KIND": {
+		"QUESTION": "Question",
+		"APPROVAL": "Approval",
+		"ESCALATION": "Escalation",
+		"NOTICE": "Notice",
+		"EMAIL": "Email"
+	},
+	"SOURCE": {
+		"EVER_WORKS": "Ever Works",
+		"EMAIL": "Email",
+		"GAUZY": "Gauzy",
+		"SYSTEM": "System"
+	},
+	"STATUS": {
+		"OPEN": "Open",
+		"ANSWERED": "Answered",
+		"RESOLVED": "Resolved",
+		"CANCELLED": "Cancelled"
+	},
+	"PRIORITY": {
+		"low": "Low",
+		"normal": "Normal",
+		"high": "High",
+		"urgent": "Urgent"
+	},
+	"ESCALATION": {
+		"DECISION": "Decision needed:",
+		"ATTEMPTED": "What was tried:",
+		"CONFIDENCE": "Confidence:"
+	},
+	"REPLY": {
+		"OPTIONS": "Choices",
+		"RECOMMENDED": "recommended",
+		"TEXT": "Reply",
+		"REASON": "Reason (required)",
+		"NOTE": "Note",
+		"RESOLVE_NOTE": "Resolve note",
+		"REASON_REQUIRED": "This item asks for a reason with the reply.",
+		"SEND": "Send"
+	},
+	"APPROVAL": {
+		"APPROVE": "Approve",
+		"REJECT": "Reject"
+	},
+	"ACTIONS": {
+		"MARK_READ": "Mark read",
+		"MARK_UNREAD": "Mark unread",
+		"ARCHIVE": "Archive",
+		"UNARCHIVE": "Unarchive",
+		"UNSNOOZE": "Snoozed until {{ date }}: wake now",
+		"MARK_ALL_READ": "Mark all read"
+	},
+	"SNOOZE": {
+		"hour": "Snooze 1 hour",
+		"tomorrow": "Snooze until tomorrow",
+		"next-week": "Snooze until next week"
+	},
+	"OPEN": {
+		"task": "Open task",
+		"project": "Open project",
+		"agent": "Open agent"
+	},
+	"NOTIFICATIONS": {
+		"NO_EMPLOYEE": "Notifications are addressed to employees; this account has no employee profile.",
+		"ERROR": "The notifications could not be loaded.",
+		"EMPTY": "No notifications."
+	}
+}
