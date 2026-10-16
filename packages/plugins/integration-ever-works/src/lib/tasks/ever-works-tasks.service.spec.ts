@@ -509,7 +509,7 @@ describe('G → EW tasks', () => {
 });
 
 describe('task sync review fixes (#10804)', () => {
-	it('an unpushed Gauzy set edit survives an Ever Works edit of the same set, and goes out', async () => {
+	it('a Gauzy set edit not pushed yet survives an Ever Works edit of the same set, and goes out', async () => {
 		const t = setup();
 		t.addGauzyTask({ id: 'g1', title: 'Labels', tags: [{ name: 'A' }] });
 		await t.push('g1');
