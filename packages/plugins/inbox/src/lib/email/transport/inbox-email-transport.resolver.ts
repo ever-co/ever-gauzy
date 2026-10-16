@@ -52,8 +52,15 @@ export class InboxEmailTransportResolver implements IEmailTransportResolver, OnM
 			const resolution = named ? await this.transportOf(named) : null;
 			if (resolution) return resolution;
 		}
-		const fallback = await this.accounts.defaultOutbound(tenantId, request.organizationId ?? null);
-		return fallback ? this.transportOf(fallback) : null;
+		// The organization's default, then the tenant's: one that cannot build a transport does not stop the next.
+		for (const candidate of await this.accounts.defaultOutboundCandidates(
+			tenantId,
+			request.organizationId ?? null
+		)) {
+			const resolution = await this.transportOf(candidate);
+			if (resolution) return resolution;
+		}
+		return null;
 	}
 
 	/** The account's transport, or `null` when its provider does not send or cannot build one. */

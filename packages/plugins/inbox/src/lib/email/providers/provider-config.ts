@@ -120,7 +120,8 @@ function normalizeValue(name: string, property: IEmailProviderConfigProperty, va
  * - Public field: a value replaces the stored one; `null` (or `''`) clears it; left out, it stays.
  * - Secret field: a value replaces the stored one; `null` clears it; left out or `''`, it stays (the form never
  *   holds the stored secret, so it sends nothing for an unchanged one).
- * - A `generated` secret without a value gets a new random one (reported in `generated`).
+ * - A `generated` secret without a value gets a new random one (reported in `generated`, which the API answers
+ *   once): on create, and on an update that clears it with `null` (a rotation).
  * - A `default` fills a public field that has no value on create.
  * - Every `required` field must have a value afterwards (a stored secret counts).
  */

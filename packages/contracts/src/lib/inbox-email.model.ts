@@ -105,7 +105,8 @@ export interface IInboxProviderAccountCreateInput {
 
 /**
  * `PATCH /api/inbox/provider-accounts/:id`. In `config`, a secret field left out or sent empty keeps its value, and
- * `null` clears it; a non-secret field sent replaces its value.
+ * `null` clears it (a `generated` secret is then generated anew and answered once, in `oneTimeSecrets`: a rotation);
+ * a non-secret field sent replaces its value.
  */
 export interface IInboxProviderAccountUpdateInput {
 	name?: string;
