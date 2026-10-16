@@ -27,6 +27,6 @@ import {
 	],
 	// The GraphQL surface runs no class-validator, so the organization-membership interceptor (R7-03) makes the
 	// same lookup this constraint makes for the REST DTOs — one rule, one implementation.
-	exports: [OrganizationBelongsToUserConstraint]
+	exports: [OrganizationBelongsToUserConstraint, EmployeeBelongsToOrganizationConstraint]
 })
 export class ValidatorModule {}

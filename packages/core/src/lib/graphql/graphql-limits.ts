@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 import type { ASTVisitor, ValidationContext, ValidationRule } from 'graphql';
 import type { ApolloServerPlugin } from '@apollo/server';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
-import { measureOperation } from './graphql-cost';
+import { fragmentsOf, IMeasureContext, measureOperation } from './graphql-cost';
 import type { IGraphqlPolicy } from './graphql-policy';
 
 /**
@@ -19,6 +19,17 @@ import type { IGraphqlPolicy } from './graphql-policy';
  * does not publish its schema.
  */
 
+/**
+ * What a rule measures an operation with: the fragments of the document it is validating — a spread is priced
+ * as what it selects, so a fragment does not hide cost from the ceilings (SEC-C-01) — and the schema, so a
+ * connection is recognised by what it returns (SEC-C-02).
+ *
+ * @param context The validation context.
+ */
+function measureContextOf(context: ValidationContext): IMeasureContext {
+	return { fragments: fragmentsOf(context.getDocument() as any), schema: context.getSchema() };
+}
+
 /** The fields that describe the schema rather than the data. */
 const INTROSPECTION_FIELDS = ['__schema', '__type'];
 
@@ -32,7 +43,7 @@ export function createDepthLimitRule(maxDepth: number): ValidationRule {
 	return (context: ValidationContext): ASTVisitor => ({
 		OperationDefinition: {
 			leave(node) {
-				const measured = measureOperation(node as any);
+				const measured = measureOperation(node as any, {}, measureContextOf(context));
 
 				if (measured.depth > maxDepth) {
 					context.reportError(
@@ -59,7 +70,7 @@ export function createComplexityLimitRule(maxComplexity: number): ValidationRule
 	return (context: ValidationContext): ASTVisitor => ({
 		OperationDefinition: {
 			leave(node) {
-				const measured = measureOperation(node as any);
+				const measured = measureOperation(node as any, {}, measureContextOf(context));
 
 				if (measured.complexity > maxComplexity) {
 					context.reportError(
@@ -91,7 +102,7 @@ export function createAliasLimitRule(maxAliases: number): ValidationRule {
 	return (context: ValidationContext): ASTVisitor => ({
 		OperationDefinition: {
 			leave(node) {
-				const measured = measureOperation(node as any);
+				const measured = measureOperation(node as any, {}, measureContextOf(context));
 
 				if (measured.aliases > maxAliases) {
 					context.reportError(

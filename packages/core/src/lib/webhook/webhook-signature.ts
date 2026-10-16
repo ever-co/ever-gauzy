@@ -120,7 +120,10 @@ function hmacSha256Hex(secret: string, payload: string): string {
  * @returns True when they are equal.
  */
 function equalsInConstantTime(expected: string, received: string): boolean {
-	if (!received || received.length !== expected.length) {
+	// A value that is not hex is a mismatch, never an exception: Buffer.from(…, 'hex') stops at the
+	// first non-hex character, and timingSafeEqual throws on buffers of different lengths (contract vector
+	// invalid-non-hex-signature of the Ever Works integration).
+	if (!received || received.length !== expected.length || !/^[0-9a-fA-F]+$/.test(received)) {
 		return false;
 	}
 

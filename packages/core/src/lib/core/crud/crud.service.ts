@@ -830,6 +830,11 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
 		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped DB error.
 		assertCriteriaHasPredicate(id, 'update');
+		// Nothing to write — e.g. a `PUT /:id` body of only the members the inherited route drops — is no statement:
+		// an empty `SET` is refused by both ORMs. The answer is the one an id matching no row gets (CodeRabbit, #10647).
+		if (partialEntity && typeof partialEntity === 'object' && !Array.isArray(partialEntity) && !Object.keys(partialEntity).length) {
+			return { generatedMaps: [], raw: [], affected: 0 } as UpdateResult;
+		}
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:

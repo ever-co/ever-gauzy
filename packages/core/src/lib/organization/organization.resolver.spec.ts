@@ -98,7 +98,7 @@ function surfaces() {
 	return {
 		organizationService,
 		commandBus,
-		resolver: new OrganizationResolver(organizationService as never, commandBus as never)
+		resolver: new OrganizationResolver(organizationService as never, commandBus as never, {} as never)
 	};
 }
 
@@ -162,7 +162,7 @@ function ownedRootFields(operation: 'Query' | 'Mutation'): string[] {
 	const owned =
 		operation === 'Query'
 			? /^organization(s|Count)?$/
-			: /^(create|update|delete|softDelete|recover)Organization$/;
+			: /^((create|update|delete|softDelete|recover)Organization|bulkCreateOrganizations)$/;
 
 	return rootFields(operation)
 		.filter((field) => owned.test(field))
@@ -238,6 +238,7 @@ describe('OrganizationResolver — the SDL declares the capabilities the REST ro
 		// be a second surface that could disagree with this one.
 		expect(ownedRootFields('Query')).toEqual(['organization', 'organizationCount', 'organizations']);
 		expect(ownedRootFields('Mutation')).toEqual([
+			'bulkCreateOrganizations',
 			'createOrganization',
 			'deleteOrganization',
 			'recoverOrganization',
@@ -553,6 +554,7 @@ describe('OrganizationResolver — the guard stack and the permission are the co
 			['organization', 'findById'],
 			['organizationCount', 'getCount'],
 			['createOrganization', 'create'],
+			['bulkCreateOrganizations', 'bulk'],
 			['updateOrganization', 'update'],
 			['deleteOrganization', 'delete'],
 			['softDeleteOrganization', 'softRemove'],

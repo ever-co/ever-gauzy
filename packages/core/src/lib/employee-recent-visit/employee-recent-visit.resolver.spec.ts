@@ -13,6 +13,7 @@ import { GLOBAL_MODULE_METADATA, MODULE_METADATA } from '@nestjs/common/constant
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { statedOrganizations } from '../graphql/graphql-organization-membership.interceptor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmployeeRecentVisitController } from './employee-recent-visit.controller';
 import { EmployeeRecentVisitModule } from './employee-recent-visit.module';
@@ -309,8 +310,10 @@ describe('EmployeeRecentVisitResolver — the SDL declares the capability the RE
 		expect(printed).toMatch(/enum EmployeeRecentVisitSortField \{\s*visitedAt\s*createdAt\s*updatedAt\s*entity\s*\}/);
 	});
 
-	it('takes the page the connection protocol takes, and no parameter of the route as an argument of its own', () => {
+	it('takes the route’s required organization and the page the connection protocol takes, and nothing else', () => {
 		expect(fieldArgs('Query', 'employeeRecentVisits')).toEqual([
+			// The one route parameter it takes: the route requires it, and the membership interceptor checks it (SEC-A-04).
+			'organizationId',
 			'filter',
 			'sort',
 			'page',
@@ -369,16 +372,50 @@ describe('EmployeeRecentVisitResolver — the SDL declares the capability the RE
 	});
 });
 
+/**
+ * SEC-A-04 (same class): the field took no organization and read every recent visit of the tenant for a caller with no employee record. The route it
+ * mirrors takes a required `organizationId` the caller must belong to (`GetEmployeeRecentVisitsDTO` extends
+ * `TenantOrganizationBaseDTO`), so the field takes the same argument, the membership interceptor checks it, and the
+ * read is held to it.
+ */
+describe('EmployeeRecentVisitResolver — the read is one organization the caller belongs to, as the route’s is', () => {
+	it('refuses a read that names no organization, before anything is read', async () => {
+		const { resolver, employeeRecentVisitService } = surfaces();
+
+		const error = await resolver.employeeRecentVisits(undefined).catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('ORGANIZATION_REQUIRED');
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).not.toHaveBeenCalled();
+	});
+
+	it('reads the organization the caller names, and only that one', async () => {
+		const { resolver, employeeRecentVisitService } = surfaces();
+
+		await resolver.employeeRecentVisits(ORGANIZATION);
+
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledTimes(1);
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
+	});
+
+	it('declares the organization as the argument the membership interceptor checks', () => {
+		const field = schema.getQueryType()?.getFields()['employeeRecentVisits'];
+		const { ids } = statedOrganizations({ organizationId: ORGANIZATION }, field?.args ?? []);
+
+		expect([...ids]).toEqual([ORGANIZATION]);
+	});
+});
+
 describe('EmployeeRecentVisitResolver — the connection contract', () => {
 	it('answers the read with nodes, edges, a total and the boundary cursors', async () => {
 		const { resolver, employeeRecentVisitService } = surfaces();
 
-		const connection = await resolver.employeeRecentVisits(undefined, undefined, undefined, 20);
+		const connection = await resolver.employeeRecentVisits(ORGANIZATION, undefined, undefined, undefined, 20);
 
 		// The read is the one the REST route performs when it is given no query string: the route's own
 		// defaults, which is the empty DTO. The resolver does not restate them, and that is the point —
 		// they are the read's, and a second copy here could disagree with it.
-		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({});
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
 		expect(connection.nodes).toHaveLength(ROWS.length);
 		expect(connection.totalCount).toBe(ROWS.length);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
@@ -391,7 +428,7 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 	it('orders most recent first when the caller states none, which is the delivered read’s own order', async () => {
 		const { resolver } = surfaces();
 
-		const connection = await resolver.employeeRecentVisits();
+		const connection = await resolver.employeeRecentVisits(ORGANIZATION);
 
 		// `visitedAt` descending is the order the delivered read fixes. The identifier descending is the
 		// tie-break the connection states, because the read leaves a tie to the store and an order that
@@ -402,44 +439,44 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 	it('counts the rows the delivered read answered, which is the set the connection is applied to', async () => {
 		const { resolver, employeeRecentVisitService } = surfaces();
 
-		const connection = await resolver.employeeRecentVisits();
+		const connection = await resolver.employeeRecentVisits(ORGANIZATION);
 
 		// The read answers a bounded set — its own page defaults — and the total is the size of that set
 		// after the filters select from it. A total that pretended to count beyond the set the delivered
 		// read answers would be a second, disagreeing count of the same question.
-		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({});
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
 		expect(connection.totalCount).toBe(ROWS.length);
 
-		const narrowed = await resolver.employeeRecentVisits({ entity: { eq: 'Task' } });
+		const narrowed = await resolver.employeeRecentVisits(ORGANIZATION, { entity: { eq: 'Task' } });
 
 		expect(narrowed.totalCount).toBe(1);
 		// The read answered the same set both times; what changed is what the filter selected from it.
-		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({});
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
 	});
 
 	it('narrows by every field the filter declares, including the six the route binds', async () => {
 		const { resolver } = surfaces();
 
-		const byEntity = await resolver.employeeRecentVisits({ entity: { eq: 'OrganizationTeam' } });
+		const byEntity = await resolver.employeeRecentVisits(ORGANIZATION, { entity: { eq: 'OrganizationTeam' } });
 		expect(byEntity.nodes.map((node) => node.id)).toEqual([THIRD]);
 
-		const byEntityId = await resolver.employeeRecentVisits({ entityId: { eq: PROJECT } });
+		const byEntityId = await resolver.employeeRecentVisits(ORGANIZATION, { entityId: { eq: PROJECT } });
 		expect(byEntityId.totalCount).toBe(ROWS.length);
 
-		const byEmployee = await resolver.employeeRecentVisits({ employeeId: { eq: EMPLOYEE } });
+		const byEmployee = await resolver.employeeRecentVisits(ORGANIZATION, { employeeId: { eq: EMPLOYEE } });
 		expect(byEmployee.totalCount).toBe(ROWS.length);
 
-		const byOrganization = await resolver.employeeRecentVisits({ organizationId: { eq: ORGANIZATION } });
+		const byOrganization = await resolver.employeeRecentVisits(ORGANIZATION, { organizationId: { eq: ORGANIZATION } });
 		expect(byOrganization.totalCount).toBe(ROWS.length);
 
-		const live = await resolver.employeeRecentVisits({ isActive: { eq: true }, isArchived: { eq: false } });
+		const live = await resolver.employeeRecentVisits(ORGANIZATION, { isActive: { eq: true }, isArchived: { eq: false } });
 		expect(live.totalCount).toBe(ROWS.length);
 
 		// A payload a visit does not carry is the `isNull` case rather than a row that never happened.
-		const withoutPayload = await resolver.employeeRecentVisits({ data: { isNull: true } });
+		const withoutPayload = await resolver.employeeRecentVisits(ORGANIZATION, { data: { isNull: true } });
 		expect(withoutPayload.nodes.map((node) => node.id)).toEqual([SECOND]);
 
-		const since = await resolver.employeeRecentVisits({ visitedAt: { gte: '2026-03-03T00:00:00.000Z' } });
+		const since = await resolver.employeeRecentVisits(ORGANIZATION, { visitedAt: { gte: '2026-03-03T00:00:00.000Z' } });
 		expect(since.nodes.map((node) => node.id)).toEqual([FIRST]);
 
 		// Every member the input declares is one the evaluator knows: a field declared in the SDL and
@@ -449,7 +486,7 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 				continue;
 			}
 
-			await expect(resolver.employeeRecentVisits({ [field]: { isNull: false } })).resolves.toBeDefined();
+			await expect(resolver.employeeRecentVisits(ORGANIZATION, { [field]: { isNull: false } })).resolves.toBeDefined();
 		}
 	});
 
@@ -458,13 +495,13 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 
 		// `archivedAt` is a column of the row and a member of the object type, and it is deliberately not
 		// a filter member: the map is what the evaluator knows, and the refusal names it.
-		const error = await resolver.employeeRecentVisits({ archivedAt: { isNull: true } }).catch((thrown) => thrown);
+		const error = await resolver.employeeRecentVisits(ORGANIZATION, { archivedAt: { isNull: true } }).catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
 		expect((error as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
 
 		// A relation is not a filter path either, for the same reason it is not a member of the type.
-		const relation = await resolver.employeeRecentVisits({ employee: { eq: EMPLOYEE } }).catch((thrown) => thrown);
+		const relation = await resolver.employeeRecentVisits(ORGANIZATION, { employee: { eq: EMPLOYEE } }).catch((thrown) => thrown);
 		expect(isRefusal(relation)).toBe(true);
 		expect((relation as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
 	});
@@ -473,26 +510,26 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		// The delivered read answers most recent first; a caller may walk the same set the other way.
-		const byVisitAscending = await resolver.employeeRecentVisits(undefined, [{ field: 'visitedAt', direction: 'ASC' }]);
+		const byVisitAscending = await resolver.employeeRecentVisits(ORGANIZATION, undefined, [{ field: 'visitedAt', direction: 'ASC' }]);
 		expect(byVisitAscending.nodes.map((node) => node.id)).toEqual([SECOND, THIRD, FIRST]);
 
-		const byEntity = await resolver.employeeRecentVisits(undefined, [{ field: 'entity', direction: 'ASC' }]);
+		const byEntity = await resolver.employeeRecentVisits(ORGANIZATION, undefined, [{ field: 'entity', direction: 'ASC' }]);
 		expect(byEntity.nodes.map((node) => node.id)).toEqual([FIRST, THIRD, SECOND]);
 
 		for (const field of enumValues('EmployeeRecentVisitSortField')) {
 			await expect(
-				resolver.employeeRecentVisits(undefined, [{ field, direction: 'ASC' }])
+				resolver.employeeRecentVisits(ORGANIZATION, undefined, [{ field, direction: 'ASC' }])
 			).resolves.toBeDefined();
 		}
 	});
 
 	it('resumes a walk from an opaque cursor, forwards and backwards', async () => {
 		const { resolver } = surfaces();
-		const first = await resolver.employeeRecentVisits(undefined, undefined, undefined, 1);
+		const first = await resolver.employeeRecentVisits(ORGANIZATION, undefined, undefined, undefined, 1);
 
 		expect(first.nodes.map((node) => node.id)).toEqual([FIRST]);
 
-		const second = await resolver.employeeRecentVisits(undefined, undefined, {
+		const second = await resolver.employeeRecentVisits(ORGANIZATION, undefined, undefined, {
 			first: 1,
 			after: first.pageInfo.endCursor ?? undefined
 		});
@@ -500,8 +537,8 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 		expect(second.nodes.map((node) => node.id)).toEqual([THIRD]);
 		expect(second.pageInfo.hasPreviousPage).toBe(true);
 
-		const all = await resolver.employeeRecentVisits(undefined, undefined, undefined, 20);
-		const last = await resolver.employeeRecentVisits(undefined, undefined, {
+		const all = await resolver.employeeRecentVisits(ORGANIZATION, undefined, undefined, undefined, 20);
+		const last = await resolver.employeeRecentVisits(ORGANIZATION, undefined, undefined, {
 			last: 1,
 			before: all.edges[1].cursor
 		});
@@ -516,7 +553,7 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 		// `data` is filterable and not sortable: the two declarations are separate, and this is what says
 		// so rather than a comment claiming it.
 		const error = await resolver
-			.employeeRecentVisits(undefined, [{ field: 'data', direction: 'ASC' }] as never)
+			.employeeRecentVisits(ORGANIZATION, undefined, [{ field: 'data', direction: 'ASC' }] as never)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
@@ -527,7 +564,7 @@ describe('EmployeeRecentVisitResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		const error = await resolver
-			.employeeRecentVisits(undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
+			.employeeRecentVisits(ORGANIZATION, undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
@@ -539,11 +576,11 @@ describe('EmployeeRecentVisitResolver — one concept, two protocols, the same r
 	it('reads through the same service method the REST route calls, with the route’s own defaults', async () => {
 		const { resolver, employeeRecentVisitService } = surfaces();
 
-		const connection = await resolver.employeeRecentVisits();
+		const connection = await resolver.employeeRecentVisits(ORGANIZATION);
 
 		// The empty DTO *is* the route's own defaults: no organization, no entity, no relations, the
 		// first page of the read's own order — so the two protocols ask the service the same question.
-		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({});
+		expect(employeeRecentVisitService.findEmployeeRecentVisits).toHaveBeenCalledWith({ organizationId: ORGANIZATION });
 		expect(connection.totalCount).toBe(ROWS.length);
 	});
 
@@ -553,14 +590,14 @@ describe('EmployeeRecentVisitResolver — one concept, two protocols, the same r
 
 		employeeRecentVisitService.findEmployeeRecentVisits.mockRejectedValueOnce(refusal);
 
-		await expect(resolver.employeeRecentVisits()).rejects.toBe(refusal);
+		await expect(resolver.employeeRecentVisits(ORGANIZATION)).rejects.toBe(refusal);
 	});
 
 	it('reports a miss as an empty connection rather than as a field with nothing in it', async () => {
 		const { resolver, employeeRecentVisitService } = surfaces();
 		employeeRecentVisitService.findEmployeeRecentVisits.mockResolvedValueOnce({ items: [], total: 0 });
 
-		const connection = await resolver.employeeRecentVisits();
+		const connection = await resolver.employeeRecentVisits(ORGANIZATION);
 
 		expect(connection.nodes).toEqual([]);
 		expect(connection.totalCount).toBe(0);
@@ -574,7 +611,7 @@ describe('EmployeeRecentVisitResolver — one concept, two protocols, the same r
 
 		// A read that refuses is not a read that found nothing: swallowing it here would answer `null`
 		// where the delivered route answers 404, which is a narrower protocol pretending to be a wider one.
-		await expect(resolver.employeeRecentVisits()).rejects.toBeInstanceOf(NotFoundException);
+		await expect(resolver.employeeRecentVisits(ORGANIZATION)).rejects.toBeInstanceOf(NotFoundException);
 	});
 });
 

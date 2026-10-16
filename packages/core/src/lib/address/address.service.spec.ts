@@ -357,7 +357,8 @@ async function refusalOf(call: () => Promise<unknown>): Promise<string | undefin
 
 describe('AddressService — recording an address in the book', () => {
 	it('records the address in the caller scope, with the country resolved from its code', async () => {
-		const { addressService, address } = book();
+		// The customer is a contact of the caller: `address.customerId` is a foreign key to it, and the service checks it.
+		const { addressService, address } = book({ contacts: [contactRow(CONTACT)] });
 
 		const created = await addressService.createAddress({
 			label: ' Home ',
@@ -857,6 +858,132 @@ describe('AddressService — removal is a soft delete', () => {
 			/^RESOURCE_NOT_FOUND/
 		);
 		expect(await addressService.findAddress('address-missing')).toBeNull();
+	});
+});
+
+/**
+ * SEC-D-11: an address of the caller rewrote the default-address columns of a party OUTSIDE the caller's scope.
+ * `createAddress` / `updateAddress` never checked that the stated `customerId` is a contact of the caller, and every
+ * `organization_contact` read and write keyed on it named the id alone — so tenant A pointed tenant B's contact's
+ * `defaultShippingAddressId` at A's address (B's checkout then failed `ADDRESS_DEFAULT_MISMATCH`), and `clear-default`
+ * nulled B's column.
+ */
+describe('AddressService — a party outside the caller’s scope is never named or written', () => {
+	const OTHER_TENANT = '00000000-0000-4000-8000-000000000009';
+	const theirs = (overrides: Row = {}) =>
+		contactRow(OTHER_CONTACT, { tenantId: OTHER_TENANT, organizationId: OTHER_ORG, ...overrides });
+
+	it.each([
+		['another tenant', { tenantId: OTHER_TENANT, organizationId: OTHER_ORG }],
+		['a sibling organization', { organizationId: OTHER_ORG }]
+	])('refuses an address naming a customer of %s, and writes nothing', async (_label, scope) => {
+		const { addressService, contact, tables } = book({ contacts: [contactRow(OTHER_CONTACT, scope)] });
+
+		const refusal = await refusalOf(() =>
+			addressService.createAddress({
+				line1: 'Hafenstrasse 12',
+				city: 'Hamburg',
+				countryCode: 'DE',
+				ownerId: OTHER_CONTACT,
+				customerId: OTHER_CONTACT,
+				isDefaultShipping: true
+			})
+		);
+
+		expect(refusal).toMatch(/^RESOURCE_NOT_FOUND/);
+		expect(tables.address).toHaveLength(0);
+		expect(contact(OTHER_CONTACT)?.defaultShippingAddressId).toBeNull();
+	});
+
+	it('refuses an update that points an address at a customer outside the scope', async () => {
+		const { addressService, address } = book({
+			addresses: [addressRow(HOME)],
+			contacts: [contactRow(CONTACT), theirs()]
+		});
+
+		const refusal = await refusalOf(() =>
+			addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT })
+		);
+
+		expect(refusal).toMatch(/^RESOURCE_NOT_FOUND/);
+		expect(address()?.customerId).toBe(CONTACT);
+	});
+
+	it('never writes or clears the default column of a party outside the scope', async () => {
+		// An address that already names an outside party (written before this fix) must not reach that party's row.
+		const { addressService, contact } = book({
+			addresses: [addressRow(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT, isDefaultBilling: true })],
+			roles: [roleRow(HOME, AddressRoleEnum.BILLING, { isDefault: true })],
+			contacts: [theirs({ defaultShippingAddressId: 'their-home', defaultBillingAddressId: HOME })]
+		});
+
+		await addressService.setDefaultAddress(HOME, AddressRoleEnum.SHIPPING);
+		await addressService.clearDefaultAddress(HOME, AddressRoleEnum.BILLING);
+
+		expect(contact(OTHER_CONTACT)?.defaultShippingAddressId).toBe('their-home');
+		expect(contact(OTHER_CONTACT)?.defaultBillingAddressId).toBe(HOME);
+	});
+
+	it('refuses moving a default address to another customer, and leaves both parties as they were', async () => {
+		// CodeRabbit on #10649: the address moved to the new customer's book while the old customer's column still named it.
+		const { addressService, address, contact } = book({
+			addresses: [addressRow(HOME, { isDefaultShipping: true })],
+			roles: [roleRow(HOME, AddressRoleEnum.SHIPPING, { isDefault: true })],
+			contacts: [contactRow(CONTACT, { defaultShippingAddressId: HOME }), contactRow(OTHER_CONTACT)]
+		});
+
+		const refusal = await refusalOf(() =>
+			addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT })
+		);
+
+		expect(refusal).toMatch(/^ADDRESS_DEFAULT_MISMATCH/);
+		expect(address()?.customerId).toBe(CONTACT);
+		expect(contact()?.defaultShippingAddressId).toBe(HOME);
+	});
+
+	it('decides a move under the address’s row lock, and writes it in the same step', async () => {
+		// CodeRabbit on #10649: checked before the write, a default set concurrently could slip in between. The check
+		// now reads the address under the lock `setDefaultAddress` takes, then reads the party, then writes.
+		const { addressService, statements } = book({
+			addresses: [addressRow(HOME)],
+			contacts: [contactRow(CONTACT), contactRow(OTHER_CONTACT)]
+		});
+
+		await addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT });
+
+		const locked = statements.findIndex((one) => one.lockedRead === 'address');
+		const partyRead = statements.findIndex((one, index) => index > locked && one.readOne === 'organization_contact' && one.id === CONTACT);
+		const written = statements.findIndex((one, index) => index > partyRead && one.update === 'address');
+
+		expect(locked).toBeGreaterThanOrEqual(0);
+		expect(partyRead).toBeGreaterThan(locked);
+		expect(written).toBeGreaterThan(partyRead);
+	});
+
+	it('moves an address that is no one’s default to another customer of the caller', async () => {
+		const { addressService, address } = book({
+			addresses: [addressRow(HOME)],
+			contacts: [contactRow(CONTACT), contactRow(OTHER_CONTACT)]
+		});
+
+		await addressService.updateAddress(HOME, { ownerId: OTHER_CONTACT, customerId: OTHER_CONTACT });
+
+		expect(address()?.customerId).toBe(OTHER_CONTACT);
+	});
+
+	it('still records and defaults an address of the caller’s own customer', async () => {
+		const { addressService, contact } = book({ contacts: [contactRow(CONTACT)] });
+
+		const created = await addressService.createAddress({
+			line1: 'Hafenstrasse 12',
+			city: 'Hamburg',
+			countryCode: 'DE',
+			ownerId: CONTACT,
+			customerId: CONTACT,
+			isDefaultShipping: true
+		});
+
+		expect(contact()?.defaultShippingAddressId).toBe(created.id);
 	});
 });
 

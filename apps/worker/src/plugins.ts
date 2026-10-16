@@ -2,6 +2,7 @@ import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
@@ -99,5 +100,15 @@ export const plugins = resolvePluginLoadOrder([
 	 * the pricing and tax plugins above are listed — and a single container that runs neither process
 	 * is unchanged, because it has no scheduler root at all.
 	 */
-	OrderPlugin
+	OrderPlugin,
+	/**
+	 * The Ever Works integration — hosted here, behind its switch, for the sync schedules it owns (feed
+	 * poll, reconcile, dirty and orphan sweeps, the daily health check). A `@ScheduledJob` fires only in
+	 * this process, so a plugin that is not hosted here would never sync on its own.
+	 *
+	 * 🛑 Off unless `EVER_WORKS_ENABLED` is exactly `true` — the same switch as the API's list — so a
+	 * worker of an installation that has not switched the integration on is unchanged: the plugin is not
+	 * loaded, its module graph is never built and nothing is scheduled.
+	 */
+	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : [])
 ]);

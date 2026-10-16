@@ -6,7 +6,10 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
+	EmployeeAgentSourceEnum,
+	EmployeeKindEnum,
 	IEmployee,
+	IEmployeeAgentProfile,
 	IFavorite,
 	IImageAsset,
 	IOrganization,
@@ -17,7 +20,7 @@ import {
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
+import { EmployeesService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +37,17 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 
 	avatarFailed = false;
 
+	/**
+	 * The agent profile of an agent employee (`kind = 'agent'`); `null` for a person. A profile that is
+	 * `managedExternally` (e.g. an Ever Works agent) shows the read-only "Managed by …" banner.
+	 */
+	agentProfile: IEmployeeAgentProfile | null = null;
+
+	/** Whether the agent is managed by Ever Works, as opposed to another external system. */
+	get isManagedByEverWorks(): boolean {
+		return this.agentProfile?.source === EmployeeAgentSourceEnum.EVER_WORKS;
+	}
+
 	get avatarUrl(): string | null {
 		return this.selectedEmployee?.user?.image?.fullUrl || this.selectedEmployee?.user?.imageUrl || null;
 	}
@@ -46,7 +60,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		private readonly cdr: ChangeDetectorRef,
 		private readonly _urlSerializer: UrlSerializer,
 		private readonly _location: Location,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -95,6 +110,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 				tap(([{ employee }, params]) => {
 					this.selectedEmployee = employee;
 					this.avatarFailed = false;
+					this.loadAgentProfile(employee);
 				}),
 				tap(([{ employee }, params]) => {
 					try {
@@ -118,6 +134,32 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Loads the agent profile of an agent employee, for the "Managed by …" banner. A person has none, so
+	 * nothing is requested for one.
+	 *
+	 * @param employee The employee shown on the page.
+	 */
+	private async loadAgentProfile(employee: IEmployee): Promise<void> {
+		this.agentProfile = null;
+		if (employee?.kind !== EmployeeKindEnum.AGENT) {
+			return;
+		}
+		let profile: IEmployeeAgentProfile | null;
+		try {
+			profile = await this._employeesService.getAgentProfile(employee.id);
+		} catch (error) {
+			// Not a missing profile (that is `null`): a refused request or a server failure, reported as such.
+			this._errorHandlingService.handleError(error);
+			return;
+		}
+		// The page may have moved on to another employee while the profile was loading.
+		if (this.selectedEmployee?.id === employee.id) {
+			this.agentProfile = profile;
+			this.cdr.markForCheck();
+		}
 	}
 
 	/**

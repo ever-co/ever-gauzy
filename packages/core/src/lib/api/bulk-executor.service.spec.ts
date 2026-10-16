@@ -24,6 +24,20 @@ const visibilityFor = (granted: PermissionsEnum[]): FieldVisibility =>
 	}) as unknown as FieldVisibility;
 
 /**
+ * The double above with the platform's own denial shape, for the list form of a declaration: the
+ * executor builds that denial itself, from the one `FieldVisibility` produces.
+ */
+const withDenials = (visibility: FieldVisibility): FieldVisibility =>
+	Object.assign(visibility, {
+		denialFor: (permission: PermissionsEnum, field: { resource?: string; mode?: string } = {}) => ({
+			code: ApiErrorCode.PERMISSION_DENIED,
+			status: 403,
+			details: { requiredPermission: permission, ...(field.resource ? { resource: field.resource } : {}) },
+			message: `This caller may not ${field.mode ?? 'read'} the requested field.`
+		})
+	}) as FieldVisibility;
+
+/**
  * A transactional runner that behaves like one: work that throws commits nothing.
  *
  * It is what makes the atomic cases assertable without a database — the writes an item performed are
@@ -482,6 +496,103 @@ describe('BulkExecutor', () => {
 			)
 		).rejects.toMatchObject({ code: ApiErrorCode.PERMISSION_DENIED });
 
+		expect(seen).toEqual([]);
+	});
+
+	it('refuses an atomic batch before writing anything on a route that declares it cannot apply one', async () => {
+		const writes: string[] = [];
+		// The route supplies a runner as well: the declaration is what decides, not whether a runner exists.
+		const { runner, commits } = transactional(writes);
+		const executor = new BulkExecutor(visibilityFor([]));
+
+		const refusal = await executor
+			.execute<Line>(
+				{
+					atomic: true,
+					items: [
+						{ op: 'create', sku: 'A' },
+						{ op: 'create', sku: 'B' }
+					]
+				},
+				async (item) => {
+					writes.push(String(item.sku));
+				},
+				{ resource: 'tag', atomic: false, transaction: runner }
+			)
+			.catch((thrown) => thrown);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect((refusal as ApiException).getStatus()).toBe(400);
+		expect((refusal as ApiException).code).toBe(ApiErrorCode.BULK_ATOMIC_UNSUPPORTED);
+		expect((refusal as ApiException).details).toEqual({ field: 'atomic', resource: 'tag' });
+		expect((refusal as ApiException).message).toContain('cannot be rolled back as one');
+		expect(writes).toEqual([]);
+		expect(commits).toEqual([]);
+	});
+
+	it('CONTROL: applies the same batch without "atomic" on that route, item by item', async () => {
+		const writes: string[] = [];
+		const executor = new BulkExecutor(visibilityFor([]));
+
+		const result = await executor.execute<Line>(
+			{
+				items: [
+					{ op: 'create', sku: 'A' },
+					{ op: 'create', sku: 'B' }
+				]
+			},
+			async (item) => {
+				writes.push(String(item.sku));
+			},
+			{ resource: 'tag', atomic: false }
+		);
+
+		expect(result.succeededCount).toBe(2);
+		expect(writes).toEqual(['A', 'B']);
+	});
+
+	it('admits a caller holding any one grant of a declared list, as the route’s own guard reads the list', async () => {
+		const seen: number[] = [];
+		// The caller holds the second grant only: `POST /tags` admits it (`@Permissions(ALL_ORG_EDIT,
+		// ORG_TAGS_ADD)` is any-of), so the batch that mirrors the route must admit it too.
+		const executor = new BulkExecutor(withDenials(visibilityFor([PermissionsEnum.ORG_TAGS_ADD])));
+
+		const result = await executor.execute<Line>(
+			{ items: [{ op: 'create', sku: 'A' }] },
+			async (_item, context) => {
+				seen.push(context.index);
+			},
+			{ resource: 'tag', permission: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD] }
+		);
+
+		expect(result.succeededCount).toBe(1);
+		expect(seen).toEqual([0]);
+	});
+
+	it('refuses a caller holding no grant of a declared list before the first item, naming every grant', async () => {
+		const seen: number[] = [];
+		const executor = new BulkExecutor(withDenials(visibilityFor([PermissionsEnum.ORG_TASK_VIEW])));
+
+		const refusal = await executor
+			.execute<Line>(
+				{ items: [{ op: 'create', sku: 'A' }] },
+				async (_item, context) => {
+					seen.push(context.index);
+				},
+				{ resource: 'tag', permission: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD] }
+			)
+			.catch((thrown) => thrown);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect((refusal as ApiException).getStatus()).toBe(403);
+		expect((refusal as ApiException).code).toBe(ApiErrorCode.PERMISSION_DENIED);
+		// The detail names both grants, either of which would have admitted the caller — not the first alone.
+		expect((refusal as ApiException).details).toEqual(
+			expect.objectContaining({
+				requiredPermissions: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD]
+			})
+		);
+		expect((refusal as ApiException).details).not.toHaveProperty('requiredPermission');
 		expect(seen).toEqual([]);
 	});
 

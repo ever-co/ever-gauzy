@@ -41,7 +41,10 @@ export class TenantBaseGuard implements CanActivate {
 		const headerTenantId = headers['tenant-id'];
 
 		if (headerTenantId && (rawHeaders.includes('tenant-id') || rawHeaders.includes('Tenant-Id'))) {
-			isAuthorized = currentTenantId === headerTenantId;
+			// The header names the caller's tenant — and nothing else in the request may name another one. The
+			// header used to be the whole check, and a `PUT` with header A and body {"tenantId": B} reached an
+			// update that wrote the payload's tenant as given (SEC-A-03, SEC-D-12).
+			isAuthorized = currentTenantId === headerTenantId && !this.statesAnotherTenant(request, currentTenantId);
 		} else {
 			//If request to get/delete data using another tenantId then reject request.
 			const httpMethods = [RequestMethodEnum.GET, RequestMethodEnum.DELETE];
@@ -95,6 +98,49 @@ export class TenantBaseGuard implements CanActivate {
 			console.log('Guard TenantBase: Access Allowed. TenantId:', headerTenantId);
 		}
 		return isAuthorized;
+	}
+
+	/**
+	 * Whether the query string or the payload names a tenant other than the caller's.
+	 *
+	 * Only explicit statements count — a `tenantId` query parameter, a `tenantId` or `tenant.id` member of the
+	 * body or of any object in a body array (bulk routes); a request that names no tenant states nothing.
+	 *
+	 * @param request The HTTP request.
+	 * @param currentTenantId The tenant the caller authenticated as.
+	 * @returns True when another tenant is named anywhere.
+	 */
+	private statesAnotherTenant(request: any, currentTenantId: string): boolean {
+		const named: unknown[] = [];
+		const queryTenantId = request?.query?.['tenantId'];
+		if (queryTenantId !== undefined && queryTenantId !== null && queryTenantId !== '') {
+			named.push(queryTenantId);
+		}
+
+		// The read shape the no-header path checks: `?data={"findInput":{"tenantId":…}}`.
+		const data = request?.query?.['data'];
+		if (typeof data === 'string' && isJSON(data)) {
+			try {
+				const findInput = JSON.parse(data)?.['findInput'];
+				if (findInput && typeof findInput === 'object' && findInput['tenantId'] !== undefined && findInput['tenantId'] !== null) {
+					named.push(findInput['tenantId']);
+				}
+			} catch {
+				// Not parsable after all: it states no tenant.
+			}
+		}
+
+		const body = request?.body;
+		for (const item of Array.isArray(body) ? body : [body]) {
+			if (!item || typeof item !== 'object') continue;
+			if (item['tenantId'] !== undefined && item['tenantId'] !== null) named.push(item['tenantId']);
+			const tenant = item['tenant'];
+			if (tenant && typeof tenant === 'object' && tenant['id'] !== undefined && tenant['id'] !== null) {
+				named.push(tenant['id']);
+			}
+		}
+
+		return named.some((tenantId) => String(tenantId) !== String(currentTenantId));
 	}
 
 	/**

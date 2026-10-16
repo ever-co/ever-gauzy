@@ -398,6 +398,16 @@ extend type Mutation {
 	addManualTime(input: CreateManualTimeLogInput!): TimeLog!
 
 	"""
+	Records a batch of intervals by hand — each item exactly as `addManualTime` records one, its conflicts
+	resolved against the intervals the items before it recorded — and answers one outcome per item. The
+	batch `POST /timesheet/time-log/bulk` applies, under the same guard, permission and cap (200).
+	A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+	`BULK_ATOMIC_UNSUPPORTED`: each item runs the manual-time create, which writes through its own repositories,
+	so the batch cannot be rolled back as one.
+	"""
+	bulkCreateTimeLogs(input: BulkCreateTimeLogsInput!): BulkCreateTimeLogsPayload!
+
+	"""
 	Edits a hand-recorded interval, and answers the row as it stands after the write.
 
 	The delivered write resolves the interval's conflicts again, stamps the instant it was edited and
