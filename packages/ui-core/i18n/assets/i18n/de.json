@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Sie müssen Mitarbeiter sein, um Zeit verfolgen zu können, geteilte Ausgaben zu erstellen und andere mitarbeiterbezogene Funktionen verwenden zu können."
 	},
 	"MENU": {
+		"INITIATIVES": "Initiativen",
 		"BREADCRUMB": "Navigationspfad",
 		"PIPELINES": "Rohrleitungen",
 		"DASHBOARD": "Dashboard",
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Art",
+		"KIND_ALL": "Alle",
+		"KIND_HUMAN": "Personen",
+		"KIND_AGENT": "Agenten",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Von Ever Works verwaltet: Name und Profil dieses Agenten werden in Ever Works geändert und mit Gauzy synchronisiert.",
+		"MANAGED_EXTERNALLY": "Extern verwaltet: Name und Profil dieses Agenten werden im Ursprungssystem geändert und mit Gauzy synchronisiert.",
+		"OPEN_MANAGED_AGENT": "Agentenseite öffnen",
 		"HEADER": "Mitarbeiter verwalten",
 		"ADD_EMPLOYEE": "Mitarbeiter hinzufügen",
 		"ACTIVE": "Aktiv",
@@ -2089,6 +2098,60 @@
 			},
 			"SHOWING": "{{ shown }} von {{ total }} Aufgaben angezeigt",
 			"NO_TASKS_IN_VIEW": "Keine Aufgaben in dieser Ansicht"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Strategische Initiativen",
+		"SUBTITLE": "Die Richtungen, in die sich Ihre Organisation bewegen will, und die Ziele, Projekte und Teams, die darauf ausgerichtet sind.",
+		"ADD": "Initiative hinzufügen",
+		"EDIT": "Initiative bearbeiten",
+		"EMPTY": "Noch keine strategischen Initiativen.",
+		"TITLE": "Titel",
+		"STATE": "Status",
+		"VISIBILITY": "Sichtbarkeit",
+		"TEAMS": "Teams",
+		"TEAMS_HINT": "Bei Sichtbarkeit „Team“ sehen die Mitglieder dieser Teams (und der Teams der zugeordneten Projekte) die Initiative.",
+		"PROJECTS": "Projekte",
+		"GOALS": "Ziele",
+		"CONFIDENCE": "Zuversicht",
+		"MOMENTUM": "Dynamik",
+		"INTENT": "Absicht",
+		"INTENT_HINT": "Was wollen wir bewusst voranbringen, und warum?",
+		"STEWARD": "Verantwortlich",
+		"SIGNALS": "Signale",
+		"KNOWN_RISKS": "Bekannte Risiken",
+		"KNOWN_RISKS_HINT": "Ein Risiko pro Zeile",
+		"NOTES": "Notizen",
+		"LAST_ASSESSED": "Zuletzt bewertet",
+		"NO_TEAMS": "Keine Teams verknüpft.",
+		"NO_GOALS": "Keine Ziele zugeordnet.",
+		"NO_PROJECTS": "Keine Projekte zugeordnet.",
+		"NOT_FOUND": "Die Initiative wurde nicht gefunden, oder Sie dürfen sie nicht sehen.",
+		"DELETE_TITLE": "Initiative löschen",
+		"DELETE_CONFIRMATION": "Die Initiative „{{ name }}“ löschen?",
+		"DELETED": "Initiative „{{ name }}“ gelöscht.",
+		"CREATED": "Initiative „{{ name }}“ erstellt.",
+		"UPDATED": "Initiative „{{ name }}“ aktualisiert.",
+		"STATES": {
+			"DRAFT": "Entwurf",
+			"ACTIVE": "Aktiv",
+			"RESOLVED": "Erreicht",
+			"RETIRED": "Eingestellt"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Leitung",
+			"ORGANIZATION": "Organisation",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Niedrig",
+			"MEDIUM": "Mittel",
+			"HIGH": "Hoch"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Stockend",
+			"PROGRESSING": "Im Fortschritt",
+			"ACCELERATING": "Beschleunigend"
 		}
 	},
 	"GOALS_PAGE": {

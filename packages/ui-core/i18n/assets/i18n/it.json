@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Devi essere un dipendente per poter registrare il tempo, creare spese suddivise e utilizzare altre funzioni legate ai dipendenti"
 	},
 	"MENU": {
+		"INITIATIVES": "Iniziative",
 		"BREADCRUMB": "Percorso di navigazione",
 		"PIPELINES": "Tubature",
 		"DASHBOARD": "Dashboard",
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Tipo",
+		"KIND_ALL": "Tutti",
+		"KIND_HUMAN": "Persone",
+		"KIND_AGENT": "Agenti",
+		"AGENT_BADGE": "Agente",
+		"MANAGED_BY_EVER_WORKS": "Gestito da Ever Works: il nome e il profilo di questo agente si modificano in Ever Works e vengono sincronizzati con Gauzy.",
+		"MANAGED_EXTERNALLY": "Gestito esternamente: il nome e il profilo di questo agente si modificano nel sistema di origine e vengono sincronizzati con Gauzy.",
+		"OPEN_MANAGED_AGENT": "Apri la pagina dell'agente",
 		"HEADER": "Gestire dipendenti",
 		"ADD_EMPLOYEE": "Aggiungi dipendente",
 		"ACTIVE": "Attivo",
@@ -2089,6 +2098,60 @@
 			},
 			"SHOWING": "{{ shown }} di {{ total }} attività mostrate",
 			"NO_TASKS_IN_VIEW": "Nessuna attività in questa vista"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Iniziative strategiche",
+		"SUBTITLE": "Le direzioni in cui la tua organizzazione ha deciso di muoversi, e gli obiettivi, i progetti e i team allineati.",
+		"ADD": "Aggiungi iniziativa",
+		"EDIT": "Modifica iniziativa",
+		"EMPTY": "Ancora nessuna iniziativa strategica.",
+		"TITLE": "Titolo",
+		"STATE": "Stato",
+		"VISIBILITY": "Visibilità",
+		"TEAMS": "Team",
+		"TEAMS_HINT": "Con visibilità \"Team\", i membri di questi team (e dei team dei progetti allineati) possono vedere l'iniziativa.",
+		"PROJECTS": "Progetti",
+		"GOALS": "Obiettivi",
+		"CONFIDENCE": "Fiducia",
+		"MOMENTUM": "Slancio",
+		"INTENT": "Intento",
+		"INTENT_HINT": "Cosa vogliamo far avanzare deliberatamente, e perché?",
+		"STEWARD": "Responsabile",
+		"SIGNALS": "Segnali",
+		"KNOWN_RISKS": "Rischi noti",
+		"KNOWN_RISKS_HINT": "Un rischio per riga",
+		"NOTES": "Note",
+		"LAST_ASSESSED": "Ultima valutazione",
+		"NO_TEAMS": "Nessun team collegato.",
+		"NO_GOALS": "Nessun obiettivo allineato.",
+		"NO_PROJECTS": "Nessun progetto allineato.",
+		"NOT_FOUND": "Iniziativa non trovata o non visibile per te.",
+		"DELETE_TITLE": "Elimina iniziativa",
+		"DELETE_CONFIRMATION": "Eliminare l'iniziativa \"{{ name }}\"?",
+		"DELETED": "Iniziativa \"{{ name }}\" eliminata.",
+		"CREATED": "Iniziativa \"{{ name }}\" creata.",
+		"UPDATED": "Iniziativa \"{{ name }}\" aggiornata.",
+		"STATES": {
+			"DRAFT": "Bozza",
+			"ACTIVE": "Attiva",
+			"RESOLVED": "Raggiunta",
+			"RETIRED": "Ritirata"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Direzione",
+			"ORGANIZATION": "Organizzazione",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Bassa",
+			"MEDIUM": "Media",
+			"HIGH": "Alta"
+		},
+		"MOMENTUMS": {
+			"STALLED": "In stallo",
+			"PROGRESSING": "In avanzamento",
+			"ACCELERATING": "In accelerazione"
 		}
 	},
 	"GOALS_PAGE": {

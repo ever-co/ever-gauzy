@@ -19,7 +19,10 @@
 			<a class="link-text" (click)="edit(id)" [title]="name">{{ name }}</a>
 			} @if (isOption) {
 			<div>{{ name }}</div>
-			} } @if (caption) {
+			} } @if (isAgent) {
+			@let label = agentLabel$ | async;
+			<span class="agent-badge" [title]="label">{{ label }}</span>
+			} @if (caption) {
 			<div class="text-caption caption">
 				@if (appendCaption) {
 				{{ appendCaption }}

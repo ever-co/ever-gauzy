@@ -1,4 +1,4 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { EmployeeAgentSourceEnum, ID, IAgentEmployeeCreateInput, IEmployeeAgentProfileInput } from '@gauzy/contracts';
@@ -6,8 +6,9 @@ import { Employee, EmployeeAgentProfileService, EmployeeService, User } from '@g
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
-import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
+import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import type { EverWorksApplyContext, EverWorksApplyOutcome, EverWorksInboundHandler } from '../sync/inbound/ever-works-inbound.applier';
+import { EverWorksInboundStore } from '../sync/inbound/ever-works-inbound.store';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 
 /** An Ever Works agent (contract v1 agent DTO). */
@@ -65,14 +66,21 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 		private readonly contexts: EverWorksMappingContextService,
 		private readonly connections: EverWorksConnectionService,
 		private readonly links: EverWorksLinkService,
-		private readonly moduleRef: ModuleRef
+		private readonly moduleRef: ModuleRef,
+		private readonly inbound: EverWorksInboundStore
 	) {}
 
-	/** `POST /mappings/:id/agents/import`: provisions every agent of the mapped Ever Works organization. */
-	async importAll(integrationTenantId: ID, organizationId?: ID): Promise<{ created: number; updated: number; archived: number }> {
+	/**
+	 * `POST /mappings/:id/agents/import`: queues every agent of the mapped Ever Works organization as an
+	 * initial event. The sync loop applies them like any other event — one writer per connection, under
+	 * its lease, with the version check — so an import never overwrites a newer change that arrived
+	 * meanwhile. Managers come first (by depth of the reporting chain), so `reportsTo` resolves.
+	 */
+	async importAll(integrationTenantId: ID, organizationId?: ID): Promise<{ queued: number; duplicates: number }> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
+		if (!context.isEnabled) throw new BadRequestException('The mapping is disabled; enable it before importing agents.');
+		if (context.directions.agents === 'off') throw new BadRequestException('Agents are not synced for this mapping.');
 		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
-		const totals = { created: 0, updated: 0, archived: 0 };
 		const agents: EverWorksAgent[] = [];
 		let cursor: string | null = null;
 		for (let page = 0; page < 100; page++) {
@@ -81,13 +89,25 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 			if (!result.hasMore || !result.nextCursor) break;
 			cursor = result.nextCursor;
 		}
-		// Managers first, so `reportsTo` resolves to an employee that exists.
-		agents.sort((a, b) => Number(!!a.reportsToAgentId) - Number(!!b.reportsToAgentId));
+		const depth = reportingDepths(agents);
+		const totals = { queued: 0, duplicates: 0 };
 		for (const agent of agents) {
-			const result = await this.provision(context, agent);
-			if (result.archived) totals.archived++;
-			else if (result.created) totals.created++;
-			else totals.updated++;
+			const version = agent.version ?? 0;
+			const envelope = {
+				id: `initial:agent:${agent.id}:v${version}`.slice(0, 64),
+				// The depth orders managers first; real feed positions are far above, so live events apply after.
+				seq: String(depth.get(agent.id) ?? 0),
+				type: 'agent.updated',
+				version: 1,
+				occurredAt: agent.updatedAt ?? new Date().toISOString(),
+				tenantId: context.connection.ewTenantId,
+				organizationId: context.everWorksOrganizationId,
+				aggregate: { type: 'agent', id: agent.id, version: agent.version ?? null },
+				data: agent
+			} as unknown as EverWorksEventEnvelope;
+			const { duplicate } = await this.inbound.record(context.connection, envelope, 'initial');
+			if (duplicate) totals.duplicates++;
+			else totals.queued++;
 		}
 		return totals;
 	}
@@ -95,7 +115,8 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 	/** `GET /mappings/:id/agents`: the linked agent employees. */
 	async list(integrationTenantId: ID, organizationId?: ID): Promise<Array<{ ewAgentId: string; employeeId: ID; name: string | null; status: string | null; isActive: boolean }>> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
-		const links = await this.links.list(context.integrationTenantId, EverWorksLinkType.AGENT);
+		// An agent that turned private keeps its row (state `unlinked`) but is no longer a linked agent.
+		const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.AGENT)).filter((link) => link.state !== EverWorksLinkState.UNLINKED);
 		if (!links.length) return [];
 		const employees = await this.dataSource.getRepository(Employee).find({
 			where: links.map((l) => ({ id: l.gauzyId, tenantId: context.tenantId })),
@@ -114,6 +135,7 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 			? await this.contexts.forEverWorksOrganization(applyContext.connection, envelope.organizationId)
 			: null;
 		if (!context) return { status: 'skipped', message: 'no mapping for the Ever Works organization' };
+		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (context.directions.agents === 'off') return { status: 'skipped', message: 'agents are not synced' };
 		const data = envelope.data as unknown as EverWorksAgent & { visibility?: string };
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.AGENT, envelope.aggregate.id);
@@ -138,22 +160,24 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 			? await this.links.byEw(context.integrationTenantId, EverWorksLinkType.AGENT, agent.reportsToAgentId)
 			: null;
 		const imageUrl = agent.avatar?.mode === 'image' && agent.avatar.url && /^https:\/\//.test(agent.avatar.url) ? agent.avatar.url : undefined;
-		const profile: Partial<IEmployeeAgentProfileInput> = {
+		// A field Ever Works cleared is cleared here too: explicit `null`s (the profile writer skips only
+		// `undefined`), so the managed profile always follows Ever Works.
+		const profile = {
 			source: EmployeeAgentSourceEnum.EVER_WORKS,
 			externalId: agent.id,
 			slug: agent.slug,
-			title: agent.title ?? undefined,
+			title: agent.title ?? null,
 			capabilities: agent.capabilities ? [agent.capabilities] : [],
 			status: archived ? 'archived' : agent.status,
 			scope: agent.scope,
 			scopeTargetId: agent.scopeTargetId,
-			reportsToEmployeeId: (reportsTo?.gauzyId as ID) ?? undefined,
-			modelId: agent.modelId ?? undefined,
-			avatarUrl: imageUrl,
-			lastRunAt: agent.lastRunAt ? new Date(agent.lastRunAt) : undefined,
+			reportsToEmployeeId: (reportsTo?.gauzyId as ID) ?? null,
+			modelId: agent.modelId ?? null,
+			avatarUrl: imageUrl ?? null,
+			lastRunAt: agent.lastRunAt ? new Date(agent.lastRunAt) : null,
 			managedExternally: true,
-			externalUrl: agent.webUrl && /^https:\/\//.test(agent.webUrl) ? agent.webUrl : undefined
-		};
+			externalUrl: agent.webUrl && /^https:\/\//.test(agent.webUrl) ? agent.webUrl : null
+		} as unknown as Partial<IEmployeeAgentProfileInput>;
 		let employee: Employee | null = link
 			? await this.dataSource.getRepository(Employee).findOne({ where: { id: link.gauzyId, tenantId: context.tenantId }, withDeleted: true })
 			: null;
@@ -173,7 +197,7 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 			created = result.created;
 		} else {
 			if (employee.userId) {
-				await this.dataSource.getRepository(User).update({ id: employee.userId }, { firstName: agent.name, ...(imageUrl ? { imageUrl } : {}) } as never);
+				await this.dataSource.getRepository(User).update({ id: employee.userId }, { firstName: agent.name, imageUrl: imageUrl ?? null } as never);
 			}
 			await this.profiles().upsertForEmployee(employee, profile);
 		}
@@ -209,4 +233,25 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 		if (!service?.upsertForEmployee) throw new ServiceUnavailableException('Agent profiles are not available in this process.');
 		return service;
 	}
+}
+
+/**
+ * How deep each agent sits in its reporting chain (0 = reports to no imported agent), so managers are
+ * applied before the agents that report to them; a cycle is cut where it closes.
+ */
+export function reportingDepths(agents: ReadonlyArray<Pick<EverWorksAgent, 'id' | 'reportsToAgentId'>>): Map<string, number> {
+	const managerOf = new Map(agents.map((agent) => [agent.id, agent.reportsToAgentId ?? null]));
+	const depths = new Map<string, number>();
+	for (const agent of agents) {
+		const chain = new Set<string>([agent.id]);
+		let depth = 0;
+		let manager = managerOf.get(agent.id) ?? null;
+		while (manager && managerOf.has(manager) && !chain.has(manager)) {
+			chain.add(manager);
+			depth++;
+			manager = managerOf.get(manager) ?? null;
+		}
+		depths.set(agent.id, depth);
+	}
+	return depths;
 }

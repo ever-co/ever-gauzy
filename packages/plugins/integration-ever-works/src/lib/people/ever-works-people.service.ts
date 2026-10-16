@@ -175,11 +175,11 @@ export class EverWorksPeopleService {
 				suggestion: match && !linkedEmployees.has(match) ? { employeeId: match, reason: 'verified_email' } : null
 			};
 		});
-		const suggested = new Set(rows.map((r) => r.suggestion?.employeeId).filter(Boolean));
 		return {
 			members: rows,
+			// A suggestion is not a pairing: a suggested person stays unmatched until the admin confirms it.
 			unmatchedEmployees: [...people.entries()]
-				.filter(([id]) => !linkedEmployees.has(id) && !suggested.has(id))
+				.filter(([id]) => !linkedEmployees.has(id))
 				.map(([employeeId, p]) => ({ employeeId, name: p.name, email: p.email }))
 		};
 	}
