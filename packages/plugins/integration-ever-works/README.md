@@ -95,8 +95,8 @@ mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
 
 Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
-Inbox items (`NOTICE`, `source = SYSTEM`), one per connection and kind of
-notice: `needs_reauth`, and `dead_letter` for a change that stopped for good
+Inbox items (`NOTICE`, `source = SYSTEM`), one per connection, admin and kind
+of notice: `needs_reauth`, and `dead_letter` for a change that stopped for good
 (it names the latest record). A repeat updates the notice and marks it unread
 again. Without the Inbox, `needs_reauth` falls back to an employee notification
 for the admin's employee, and dead letters show only in the sync activity.

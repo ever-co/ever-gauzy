@@ -43,7 +43,7 @@ interface EverWorksNotice {
  * Notices for the admin who connected Ever Works (plan 06 G-P3-5).
  *
  * - **Where the Inbox is loaded** (`GAUZY_INBOX_ENABLED=true`): an Inbox `NOTICE` from `source = SYSTEM`,
- *   one per connection and kind (`ever_works_notice` / `<connectionId>:<kind>`). A repeat updates it and marks
+ *   one per connection, kind and admin (`ever_works_notice` / `<connectionId>:<kind>:<userId>`). A repeat updates it and marks
  *   it unread and not archived again, so a recurring problem resurfaces instead of piling up. The admin needs no
  *   employee record.
  * - **Otherwise**, or when the Inbox refuses: the earlier fallback, an employee notification (the bell of
@@ -130,7 +130,9 @@ export class EverWorksNotifier {
 				kind: InboxItemKindEnum.NOTICE,
 				source: InboxItemSourceEnum.SYSTEM,
 				externalSource: EVER_WORKS_NOTICE_SOURCE,
-				externalId: `${connection.id}:${notice.kind}`,
+				// The admin is part of the identity: after a reconnect by another admin, the earlier one keeps
+				// their old notice but never sees the new admin's failures (an item's recipients only grow).
+				externalId: `${connection.id}:${notice.kind}:${scope.userId}`,
 				title: notice.title,
 				body: notice.message,
 				priority: notice.priority,

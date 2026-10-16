@@ -1,5 +1,5 @@
 /**
- * The integration's notices (G-P3-5): an Inbox NOTICE (`source = SYSTEM`, one per connection and kind) where
+ * The integration's notices (G-P3-5): an Inbox NOTICE (`source = SYSTEM`, one per connection, kind and admin) where
  * the Inbox is loaded, otherwise the employee-notification fallback; a dead letter goes to the Inbox only.
  */
 jest.mock('@gauzy/core', () => {
@@ -85,7 +85,7 @@ describe('EverWorksNotifier', () => {
 			kind: InboxItemKindEnum.NOTICE,
 			source: InboxItemSourceEnum.SYSTEM,
 			externalSource: EVER_WORKS_NOTICE_SOURCE,
-			externalId: 'conn-1:needs_reauth',
+			externalId: `conn-1:needs_reauth:${ADMIN}`,
 			priority: InboxItemPriorityEnum.HIGH,
 			entity: BaseEntityEnum.Organization,
 			entityId: ORG,
@@ -140,7 +140,7 @@ describe('EverWorksNotifier', () => {
 			})
 		).resolves.toBe(true);
 		expect(calls[0]).toMatchObject({
-			externalId: 'conn-1:dead_letter',
+			externalId: `conn-1:dead_letter:${ADMIN}`,
 			priority: InboxItemPriorityEnum.NORMAL,
 			metadata: expect.objectContaining({ direction: 'outbound', entityType: 'team', recordId: 'team-9' })
 		});
@@ -164,6 +164,17 @@ describe('EverWorksNotifier', () => {
 			})
 		).resolves.toBe(false);
 		expect(saved).toHaveLength(0);
+	});
+
+	it('after a reconnect by another admin, the new admin gets a notice of their own', async () => {
+		const { dataSource } = fakeDataSource();
+		const { writer, calls } = fakeInbox();
+		const notifier = new EverWorksNotifier(dataSource, writer);
+		const other = '55555555-5555-4555-8555-555555555555';
+		await notifier.needsReauth(connection);
+		await notifier.needsReauth({ ...connection, connectedByUserId: other } as unknown as EverWorksConnection);
+		expect(calls[1].externalId).not.toBe(calls[0].externalId);
+		expect(calls[1].recipients).toEqual([{ userId: other, isRead: false, isArchived: false }]);
 	});
 
 	it('a connection without an admin notifies nobody', async () => {
