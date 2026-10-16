@@ -164,7 +164,7 @@
 		<div class="au-cards">
 			@for (group of memberGroups; track group.id) {
 			<section class="au-panel">
-				<header class="au-panel-header">
+				<header class="au-panel-header au-panel-header--flush">
 					<span class="au-avatar">
 						@if (group.avatarUrl) {
 						<img [src]="group.avatarUrl" [alt]="group.name" />
@@ -172,13 +172,32 @@
 						<span aria-hidden="true">{{ group.initials }}</span>
 						}
 					</span>
-					<span class="au-panel-title au-ellipsis">{{ group.name }}</span>
+					<span class="au-member-heading">
+						<span class="au-panel-title au-ellipsis">{{ group.name }}</span>
+						<span class="au-panel-caption">
+							{{ (isUrls ? 'ACTIVITY.APPS_URLS.SITES_COUNT' : 'ACTIVITY.APPS_URLS.APPS_COUNT') | translate : { count: group.items.length } }}
+							· {{ 'ACTIVITY.APPS_URLS.OF_TOTAL' | translate : { value: formatPercent(group.share) } }}
+						</span>
+					</span>
 					<span class="au-panel-total">{{ formatDuration(group.duration) }}</span>
 				</header>
+				<!-- The member's share of everyone's time in the period -->
+				<div class="au-member-share" [nbTooltip]="'ACTIVITY.APPS_URLS.OF_TOTAL' | translate : { value: formatPercent(group.share) }" nbTooltipPlacement="top">
+					<span class="au-bar-track" aria-hidden="true"
+						><span [class]="'au-bar au-bar--' + barStatus(group.share)" [style.width.%]="group.share"></span
+					></span>
+				</div>
 				<ul class="au-mini-list">
 					@for (row of visibleMemberItems(group); track row.title) {
-					<li class="au-mini-row">
+					<li class="au-mini-row au-mini-row--bar">
+						<span class="au-icon au-icon--sm" aria-hidden="true">{{ row.letter }}</span>
 						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+						<span class="au-share-cell">
+							<span class="au-bar-track" aria-hidden="true"
+								><span [class]="'au-bar au-bar--' + barStatus(row.share)" [style.width.%]="row.share"></span
+							></span>
+							<span class="au-share">{{ formatPercent(row.share) }}</span>
+						</span>
 						<span class="au-num au-muted">{{ formatDuration(row.duration) }}</span>
 					</li>
 					}
