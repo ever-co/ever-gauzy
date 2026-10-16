@@ -167,9 +167,14 @@ export interface IOrganizationStrategicInitiative
 	 * of these teams can see the initiative, as can the members of the teams of its aligned projects.
 	 */
 	teams?: IOrganizationTeam[];
-	/** The identifiers of `teams`, as the reads answer them and the writes take them. */
-	teamIds?: ID[];
 }
+
+/**
+ * A strategic initiative as the reads answer it: with `teamIds`, the identifiers of the directly linked teams.
+ * Kept out of {@link IOrganizationStrategicInitiative} on purpose: an array of identifiers there would not be a
+ * valid TypeORM find condition for the entities that embed the initiative.
+ */
+export type IOrganizationStrategicInitiativeRead = IOrganizationStrategicInitiative & { teamIds?: ID[] };
 
 /**
  * Create input for organization strategic initiative

@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
-import { IsArray, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ID,
 	IEmployee,
@@ -173,14 +173,4 @@ export class OrganizationStrategicInitiative extends TenantOrganizationBaseEntit
 	})
 	@JoinTable({ name: 'organization_strategic_initiative_team' })
 	teams?: IOrganizationTeam[];
-
-	/**
-	 * The identifiers of the directly linked teams. Not a column: the reads fill it from `teams`, and the
-	 * writes take it and link the teams (each must be a team of the initiative's organization).
-	 */
-	@ApiPropertyOptional({ type: () => String, isArray: true })
-	@IsOptional()
-	@IsArray()
-	@IsUUID('all', { each: true })
-	teamIds?: ID[];
 }

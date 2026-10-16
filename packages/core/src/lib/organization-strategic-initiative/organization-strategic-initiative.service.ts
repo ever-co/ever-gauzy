@@ -8,6 +8,7 @@ import {
 	IOrganizationStrategicInitiative,
 	IOrganizationStrategicInitiativeCreateInput,
 	IOrganizationStrategicInitiativeFindInput,
+	IOrganizationStrategicInitiativeRead,
 	IOrganizationStrategicInitiativeUpdateInput,
 	IPagination,
 	OrganizationStrategicVisibilityScopeEnum,
@@ -608,11 +609,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 * @param initiative - The initiative as read.
 	 * @returns The same initiative.
 	 */
-	private withTeamIds<T extends IOrganizationStrategicInitiative>(initiative: T): T {
+	private withTeamIds<T extends IOrganizationStrategicInitiative>(
+		initiative: T
+	): T & IOrganizationStrategicInitiativeRead {
 		if (initiative && Array.isArray(initiative.teams)) {
-			initiative.teamIds = initiative.teams.map((team) => team.id);
+			(initiative as T & IOrganizationStrategicInitiativeRead).teamIds = initiative.teams.map((team) => team.id);
 		}
-		return initiative;
+		return initiative as T & IOrganizationStrategicInitiativeRead;
 	}
 
 	/**

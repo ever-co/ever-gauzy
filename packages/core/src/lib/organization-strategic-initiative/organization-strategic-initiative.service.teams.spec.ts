@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
 import { BadRequestException } from '@nestjs/common';
-import { OrganizationStrategicVisibilityScopeEnum } from '@gauzy/contracts';
+import { IOrganizationStrategicInitiativeRead, OrganizationStrategicVisibilityScopeEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../core/entities/internal';
@@ -74,7 +74,7 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 			const saved = save.mock.calls[0][0] as any;
 			expect(saved.teams).toEqual([{ id: TEAM_A }, { id: TEAM_B }]);
 			expect(saved).not.toHaveProperty('teamIds');
-			expect(created.teamIds).toEqual([TEAM_A, TEAM_B]);
+			expect((created as IOrganizationStrategicInitiativeRead).teamIds).toEqual([TEAM_A, TEAM_B]);
 		});
 
 		it('refuses a team of another organization', async () => {
@@ -136,7 +136,7 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 
 			const row = await service.findOneById('initiative-1');
 
-			expect(row.teamIds).toEqual([TEAM_A]);
+			expect((row as IOrganizationStrategicInitiativeRead).teamIds).toEqual([TEAM_A]);
 			const [{ where }] = membership.findOne.mock.calls[0];
 			expect(where.organizationTeamId._value ?? where.organizationTeamId.value).toEqual([TEAM_A]);
 		});
