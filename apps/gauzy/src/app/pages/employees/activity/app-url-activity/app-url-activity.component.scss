@@ -492,6 +492,15 @@ $control-height: 2rem;
     @media screen and (max-width: 40rem) {
       padding-inline-start: $gap-lg;
     }
+
+    // A by-hour site row has no letter tile: the list lines up under its name, after the chevron.
+    &--hour {
+      padding-inline-start: calc(#{$gap-lg} + 1.875rem);
+
+      @media screen and (max-width: 40rem) {
+        padding-inline-start: $gap-lg;
+      }
+    }
   }
 
   .au-pages-state {

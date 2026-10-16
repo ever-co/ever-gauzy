@@ -127,45 +127,7 @@
 
 				@if (isUrls && pages.get(row.title); as sitePages) {
 				<div class="au-pages">
-					@if (sitePages.loading) {
-					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.LOADING_PAGES' | translate }}</p>
-					} @else if (sitePages.failed) {
-					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.PAGES_FAILED' | translate }}</p>
-					} @else if (!sitePages.value.length) {
-					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.NO_PAGES' | translate }}</p>
-					} @else {
-					@if (sitePages.truncated) {
-					<p class="au-pages-state au-pages-state--notice">
-						<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
-						{{ 'ACTIVITY.APPS_URLS.PAGES_TRUNCATED' | translate }}
-					</p>
-					}
-					<ul class="au-page-list">
-						@for (page of sitePages.value; track page.label) {
-						<li class="au-page">
-							<!-- The site name and its link, as the page listed them before, on one line. -->
-							<span class="au-page-main">
-								<span class="au-page-title au-ellipsis">{{ page.title }}</span>
-								@if (page.href) {
-								<a class="au-page-link" [href]="page.href" target="_blank" rel="noopener noreferrer" [nbTooltip]="page.href" nbTooltipPlacement="top">
-									<span class="au-ellipsis">{{ page.label }}</span>
-									<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
-								</a>
-								} @else {
-								<span class="au-page-text au-ellipsis" [nbTooltip]="page.label" nbTooltipPlacement="top">{{ page.label }}</span>
-								}
-							</span>
-							<span class="au-share-cell">
-								<span class="au-bar-track" aria-hidden="true"
-									><span [class]="'au-bar au-bar--' + barStatus(page.share)" [style.width.%]="page.share"></span
-								></span>
-								<span class="au-share">{{ formatPercent(page.share) }}</span>
-							</span>
-							<span class="au-num au-muted">{{ formatDuration(page.duration) }}</span>
-						</li>
-						}
-					</ul>
-					}
+					<ng-container *ngTemplateOutlet="pageList; context: { $implicit: sitePages }"></ng-container>
 				</div>
 				}
 			</div>
@@ -239,7 +201,21 @@
 				<ul class="au-mini-list">
 					@for (row of group.items; track row.title) {
 					<li class="au-mini-row au-mini-row--hour">
-						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+						<span class="au-name-cell">
+							<!-- A site opens into the pages visited on it in this hour, as the hour log's rows did. -->
+							@if (isUrls && group.range) {
+							<button
+								type="button"
+								class="au-expand"
+								(click)="toggleHourPages(group, row)"
+								[attr.aria-expanded]="hourPages.has(hourPagesKey(group, row))"
+								[attr.aria-label]="'ACTIVITY.APPS_URLS.SHOW_PAGES' | translate : { site: row.title }"
+							>
+								<nb-icon [icon]="hourPages.has(hourPagesKey(group, row)) ? 'chevron-down-outline' : 'chevron-right-outline'" aria-hidden="true"></nb-icon>
+							</button>
+							}
+							<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+						</span>
 						<span class="au-share-cell">
 							<span class="au-bar-track" aria-hidden="true"
 								><span [class]="'au-bar au-bar--' + barStatus(row.share)" [style.width.%]="row.share"></span
@@ -248,6 +224,11 @@
 						</span>
 						<span class="au-num au-muted">{{ formatDuration(row.duration) }}</span>
 					</li>
+					@if (isUrls && hourPages.get(hourPagesKey(group, row)); as sitePages) {
+					<li class="au-pages au-pages--hour">
+						<ng-container *ngTemplateOutlet="pageList; context: { $implicit: sitePages }"></ng-container>
+					</li>
+					}
 					}
 				</ul>
 			</section>
@@ -256,3 +237,46 @@
 		}
 	</div>
 </div>
+
+<!-- The pages of an opened site: shared by the site rows of the by-site table and of the by-hour list. -->
+<ng-template #pageList let-sitePages>
+	@if (sitePages.loading) {
+	<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.LOADING_PAGES' | translate }}</p>
+	} @else if (sitePages.failed) {
+	<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.PAGES_FAILED' | translate }}</p>
+	} @else if (!sitePages.value.length) {
+	<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.NO_PAGES' | translate }}</p>
+	} @else {
+	@if (sitePages.truncated) {
+	<p class="au-pages-state au-pages-state--notice">
+		<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+		{{ 'ACTIVITY.APPS_URLS.PAGES_TRUNCATED' | translate }}
+	</p>
+	}
+	<ul class="au-page-list">
+		@for (page of sitePages.value; track page.label) {
+		<li class="au-page">
+			<!-- The site name and its link, as the page listed them before, on one line. -->
+			<span class="au-page-main">
+				<span class="au-page-title au-ellipsis">{{ page.title }}</span>
+				@if (page.href) {
+				<a class="au-page-link" [href]="page.href" target="_blank" rel="noopener noreferrer" [nbTooltip]="page.href" nbTooltipPlacement="top">
+					<span class="au-ellipsis">{{ page.label }}</span>
+					<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+				</a>
+				} @else {
+				<span class="au-page-text au-ellipsis" [nbTooltip]="page.label" nbTooltipPlacement="top">{{ page.label }}</span>
+				}
+			</span>
+			<span class="au-share-cell">
+				<span class="au-bar-track" aria-hidden="true"
+					><span [class]="'au-bar au-bar--' + barStatus(page.share)" [style.width.%]="page.share"></span
+				></span>
+				<span class="au-share">{{ formatPercent(page.share) }}</span>
+			</span>
+			<span class="au-num au-muted">{{ formatDuration(page.duration) }}</span>
+		</li>
+		}
+	</ul>
+	}
+</ng-template>

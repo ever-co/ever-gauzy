@@ -23,7 +23,7 @@ import {
 	Store,
 	TimesheetFilterService
 } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isEmpty, isObject, progressStatus, toLocal } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, isObject, progressStatus, toLocal, toUTC } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 /** How the page lays the period's activity out. */
@@ -52,13 +52,20 @@ interface IMemberGroup {
 	items: IActivityItemRow[];
 }
 
+/** One app or site in an hour, with the members whose time it adds up. */
+interface IHourItemRow extends IActivityItemRow {
+	employeeIds: string[];
+}
+
 /** One hour (or one day, when the API returns no hour) of activity. */
 interface IHourGroup {
 	key: string;
 	label: string;
 	sublabel?: string;
+	/** The hour's bounds in UTC, as the activity endpoint reads them; absent for a day without an hour. */
+	range?: { startDate: string; endDate: string };
 	duration: number;
-	items: IActivityItemRow[];
+	items: IHourItemRow[];
 }
 
 /** One page of a visited site, for the expanded URL row. */
@@ -127,6 +134,8 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	public expandedMembers = new Set<string>();
 	/** Sites opened into their pages, by title. */
 	public pages = new Map<string, SitePages>();
+	/** Site rows of the by-hour list opened into their pages, by hour and title (`hourPagesKey`). */
+	public hourPages = new Map<string, SitePages>();
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -245,6 +254,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		this.loading = true;
 		this.failed = false;
 		this.pages = new Map();
+		this.hourPages = new Map();
 		this.expandedMembers = new Set();
 
 		try {
@@ -346,19 +356,61 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	/**
+	 * Opens a site row of the by-hour list into the pages visited on it in that
+	 * hour by the members the row adds up, or closes it: what each row of the
+	 * hour log opened into before the page had other views (one hour, one
+	 * member). The by-site table's pages above cover the whole period instead.
+	 */
+	async toggleHourPages(group: IHourGroup, row: IHourItemRow): Promise<void> {
+		const key = this.hourPagesKey(group, row);
+		if (this.hourPages.has(key)) {
+			const next = new Map(this.hourPages);
+			next.delete(key);
+			this.hourPages = next;
+			return;
+		}
+		if (!group.range) return;
+		const sequence = this._loadSequence;
+		this.setHourPages(key, { loading: true, failed: false, value: [] });
+		try {
+			// Every daily row names its member; an empty list would widen the read to everyone, so it is not sent.
+			const { activities, truncated } = await this.fetchSitePages(row.title, {
+				...group.range,
+				...(row.employeeIds.length ? { employeeIds: row.employeeIds } : {})
+			});
+			if (sequence !== this._loadSequence || !this.hourPages.has(key)) return;
+			this.setHourPages(key, { loading: false, failed: false, value: this.toPages(activities), truncated });
+		} catch {
+			if (sequence !== this._loadSequence || !this.hourPages.has(key)) return;
+			this.setHourPages(key, { loading: false, failed: true, value: [] });
+		}
+	}
+
+	/** The key a by-hour site row's pages are kept under. */
+	hourPagesKey(group: IHourGroup, row: IActivityItemRow): string {
+		return `${group.key}|${row.title}`;
+	}
+
+	/**
 	 * Every activity record of one site over the period. The endpoint returns its
 	 * first 30 records unless paged, so the pages are read until one comes back
 	 * short: the breakdown and its percentages then cover the same time as the
 	 * site's total.
 	 *
+	 * `scope` narrows the read, e.g. to one hour and its members for the by-hour list.
+	 *
 	 * `truncated` is set when the read stops at the cap with a full last page —
 	 * there may be more records, so the breakdown is partial and says so.
 	 */
-	private async fetchSitePages(title: string): Promise<{ activities: IActivity[]; truncated: boolean }> {
+	private async fetchSitePages(
+		title: string,
+		scope: Partial<IGetActivitiesInput> = {}
+	): Promise<{ activities: IActivity[]; truncated: boolean }> {
 		const all: IActivity[] = [];
 		for (let page = 0; page < PAGES_MAX_PAGES; page++) {
 			const request: IGetActivitiesInput = {
 				...this.payloads$.getValue(),
+				...scope,
 				types: [ActivityType.URL],
 				titles: [title],
 				limit: PAGES_PAGE_SIZE,
@@ -375,6 +427,12 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		const next = new Map(this.pages);
 		next.set(title, value);
 		this.pages = next;
+	}
+
+	private setHourPages(key: string, value: SitePages): void {
+		const next = new Map(this.hourPages);
+		next.set(key, value);
+		this.hourPages = next;
 	}
 
 	/** The site's pages: one row per address, most visited first. */
@@ -524,8 +582,18 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 					sublabel: group.hasHour
 						? `${group.at.format(clock)} – ${group.at.clone().add(1, 'hour').format(clock)}`
 						: undefined,
+					// The hour as the old hour log read a row's pages: its start in UTC, to one hour later.
+					range: group.hasHour
+						? {
+								startDate: toUTC(group.at).format('YYYY-MM-DD HH:mm:ss'),
+								endDate: toUTC(group.at).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss')
+							}
+						: undefined,
 					duration,
-					items: this.rankItems(group.rows, duration)
+					items: this.rankItems(group.rows, duration).map((item) => ({
+						...item,
+						employeeIds: AppUrlActivityComponent.employeesOf(group.rows, item.title)
+					}))
 				};
 			});
 	}
@@ -609,6 +677,18 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			.slice(0, 2)
 			.map((part) => part[0].toUpperCase())
 			.join('');
+	}
+
+	/** The members whose rows add up to one name's time, as `rankItems` groups names. */
+	private static employeesOf(rows: IDailyActivity[], title: string): string[] {
+		return [
+			...new Set(
+				rows
+					.filter((row) => (row.title || '—') === title)
+					.map((row) => row.employeeId)
+					.filter(Boolean)
+			)
+		];
 	}
 
 	/** First letter of the name, skipping a leading "www." for a site. */
