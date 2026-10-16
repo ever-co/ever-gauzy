@@ -153,17 +153,26 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		} as Partial<SellerOffering>);
 
 		try {
-			const created = await this.typeOrmSellerOfferingRepository.save(offering as SellerOffering);
+			// The row and the fact that announces it commit together: an append that fails rolls the offering
+			// back, and an offering that fails to save appends nothing.
+			return await this.transaction(async (manager) => {
+				const created = await this.repository(manager).save(offering as SellerOffering);
 
-			await this.emit(created, 'seller_offering.created', {
-				variantId: created.variantId,
-				productId: created.productId,
-				sellerSku: created.sellerSku,
-				priceAmount: created.priceAmount,
-				priceCurrency: created.priceCurrency
+				await this.emit(
+					created,
+					'seller_offering.created',
+					{
+						variantId: created.variantId,
+						productId: created.productId,
+						sellerSku: created.sellerSku,
+						priceAmount: created.priceAmount,
+						priceCurrency: created.priceCurrency
+					},
+					manager
+				);
+
+				return created;
 			});
-
-			return created;
 		} catch (error) {
 			if (!isUniqueViolation(error)) {
 				throw error;
@@ -317,8 +326,17 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		return paused;
 	}
 
-	/** Withdraws an offering; the row is kept, because it explains a past line's price and commission. */
+	/**
+	 * Withdraws an offering; the row is kept, because it explains a past line's price and commission.
+	 *
+	 * A call that states no manager opens one transaction for the read, the write and the fact that announces
+	 * it, so the withdrawal and `seller_offering.withdrawn` commit together or not at all.
+	 */
 	async withdraw(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
+		if (!manager) {
+			return await this.transaction((own) => this.withdraw(id, scope, own));
+		}
+
 		const offering = await this.getOffering(id, scope, manager);
 
 		if (offering.status === OfferingStatus.WITHDRAWN) {

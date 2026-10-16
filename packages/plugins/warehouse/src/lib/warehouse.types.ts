@@ -129,6 +129,34 @@ export enum PickListStatus {
 }
 
 /**
+ * The aggregate every `pick_list.*` outbox row is written under.
+ *
+ * The outbox partitions by `<aggregateType>:<aggregateId>` and promises ordering inside a partition, so this is what
+ * makes "one list's moves arrive in the order they happened" true.
+ */
+export const PICK_LIST_AGGREGATE_TYPE = 'PICK_LIST';
+
+/**
+ * The fact each move of a pick list announces, appended to the outbox in the transaction of the move.
+ *
+ * A list is the unit of work on the floor, and nothing outside this package could observe one: a list was assigned,
+ * walked and closed and no dashboard, webhook or subscriber learned of it. The names are the moves of the state
+ * machine above — a list reaching `PICKED` announces `picked` — and `created` for the list's derivation.
+ */
+export const PICK_LIST_EVENTS = {
+	/** A list was derived from the shipments it serves. */
+	CREATED: 'pick_list.created',
+	/** A picker owns it. */
+	ASSIGNED: 'pick_list.assigned',
+	/** It is being walked. */
+	STARTED: 'pick_list.started',
+	/** Every line reached an outcome. */
+	PICKED: 'pick_list.picked',
+	/** It was withdrawn before anything was picked. */
+	CANCELED: 'pick_list.canceled'
+} as const;
+
+/**
  * What happened to one line on the floor.
  *
  * A substituted pick is a `PICKED` line that names a different variant — the pick succeeded, and the
@@ -278,8 +306,14 @@ export interface IWarehouseStockLedgerPort {
 	readExpectedBinBalances(query: { warehouseId: ID; binIds: ID[] }): Promise<IWarehouseBinBalance[]>;
 	/** Reads where a variant is normally kept at a location, and how much of it is there. */
 	resolveHomeBin(query: { warehouseId: ID; variantId: ID }): Promise<IWarehouseHomeBin | undefined>;
-	/** Writes a movement. */
-	recordMovement(request: IWarehouseStockMovementRequest): Promise<IWarehouseStockMovementResult>;
+	/**
+	 * Writes a movement.
+	 *
+	 * A caller that holds a TypeORM transaction hands it in (`manager`), and the movement is written on it — so a pick's
+	 * stock movement commits or rolls back with the pick. The inventory ledger supports exactly that
+	 * (`StockLedgerService.recordMovement(request, manager)`); an adapter that cannot join one writes in its own.
+	 */
+	recordMovement(request: IWarehouseStockMovementRequest, manager?: unknown): Promise<IWarehouseStockMovementResult>;
 	/** Relocates units between two bins of one location as a balanced pair. */
 	relocate(request: {
 		warehouseId: ID;

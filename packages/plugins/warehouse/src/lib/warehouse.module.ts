@@ -1,7 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FeatureModule, RolePermissionModule, SequenceModule, Warehouse } from '@gauzy/core';
+import {
+	EventOutboxModule,
+	FeatureModule,
+	GraphqlSubscriptionModule,
+	RolePermissionModule,
+	SequenceModule,
+	Warehouse
+} from '@gauzy/core';
 import { CarrierManifestController } from './carrier-manifest/carrier-manifest.controller';
 import { CarrierManifest } from './carrier-manifest/carrier-manifest.entity';
 import { CarrierManifestService } from './carrier-manifest/carrier-manifest.service';
@@ -38,6 +45,7 @@ import { WarehouseZone } from './warehouse-zone/warehouse-zone.entity';
 import { WarehouseZoneService } from './warehouse-zone/warehouse-zone.service';
 import { MikroOrmWarehouseZoneRepository } from './warehouse-zone/repository/mikro-orm-warehouse-zone.repository';
 import { TypeOrmWarehouseZoneRepository } from './warehouse-zone/repository/type-orm-warehouse-zone.repository';
+import { WarehouseStreamedEvents } from './warehouse-streamed-events';
 
 /**
  * Every entity this plugin owns, in dependency order, as one array.
@@ -90,7 +98,13 @@ export const ALL_WAREHOUSE_ENTITIES = [
 		// module, so this module is what has to import the feature service it reads.
 		FeatureModule,
 		RolePermissionModule,
-		SequenceModule
+		SequenceModule,
+		// Every `pick_list.*` fact is appended by the same transaction that makes the move it describes, so the module
+		// that owns the outbox row is imported here; an event published after a commit is one a crash loses.
+		EventOutboxModule,
+		// The subscription catalogue the facts are declared with (`WarehouseStreamedEvents`) and the fan-out
+		// `pickListChanged` follows.
+		GraphqlSubscriptionModule
 	],
 	providers: [
 		WarehouseZoneService,
@@ -100,6 +114,7 @@ export const ALL_WAREHOUSE_ENTITIES = [
 		PickListLineService,
 		PackSlipService,
 		CarrierManifestService,
+		WarehouseStreamedEvents,
 		TypeOrmWarehouseZoneRepository,
 		MikroOrmWarehouseZoneRepository,
 		TypeOrmWarehouseBinRepository,

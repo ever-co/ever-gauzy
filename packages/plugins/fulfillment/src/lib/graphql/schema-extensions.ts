@@ -3,9 +3,9 @@ import { gql } from 'graphql-tag';
 /**
  * The fulfilment domain's contribution to the one GraphQL schema.
  *
- * Only `extend type Query` and `extend type Mutation` blocks and the domain's own types are declared:
- * the root types belong to the core schema, and a second `type Query` block would be a duplicate
- * definition that fails the boot. The type names are the concepts' own names.
+ * Only `extend type Query`, `extend type Mutation` and `extend type Subscription` blocks and the domain's own
+ * types are declared: the root types belong to the core schema, and a second `type Query` block would be a
+ * duplicate definition that fails the boot. The type names are the concepts' own names.
  */
 export const fulfillmentSchemaExtensions = gql`
 	"A set of variants that ship the same way."
@@ -357,5 +357,27 @@ export const fulfillmentSchemaExtensions = gql`
 		recoverFulfillmentLine(id: ID!): FulfillmentLine!
 		"Remove a shipment line outright. The recoverable withdrawal is softDeleteFulfillmentLine."
 		deleteFulfillmentLine(id: ID!): Boolean!
+	}
+
+	extend type Subscription {
+		"""
+		A shipment of the caller's tenant was created — outbound for an order, or the leg a return travels back on —
+		with its lines, as \`fulfillment(id:)\` reads it when the event is delivered: a move made since the creation may
+		already show in it. Narrowed by the order and by the location; each only narrows what the credential may
+		read. Follows the \`fulfillment.created\` fact the fulfilment service appends to the
+		outbox. A subscription is a notification and never a system of record: a shipment created while the client is
+		disconnected is not replayed.
+		"""
+		fulfillmentCreated(orderId: ID, warehouseId: ID): Fulfillment!
+		"""
+		Every lifecycle move of a shipment of the caller's tenant — created, shipped, in transit, delivered, canceled —
+		with the shipment as \`fulfillment(id:)\` reads it when the move is delivered, not a snapshot of the move: a move
+		made since may already show in it. Narrowed by
+		\`fulfillmentId\`, by the order the shipment is of, and by \`action\` (the move: \`shipped\`, \`in_transit\`,
+		\`delivered\`, …); each only narrows what the credential may read. Follows the \`fulfillment.*\` facts the
+		fulfilment service appends to the outbox. A subscription is a notification and never a system of record: a move
+		made while the client is disconnected is not replayed.
+		"""
+		fulfillmentChanged(fulfillmentId: ID, orderId: ID, action: String): Fulfillment!
 	}
 `;
