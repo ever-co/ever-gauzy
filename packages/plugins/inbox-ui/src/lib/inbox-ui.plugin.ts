@@ -1,6 +1,6 @@
 import { Injector } from '@angular/core';
 import { Routes } from '@angular/router';
-import { filter, take } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
 import { NavigationBuilderService, NavMenuBuilderService, PermissionsGuard } from '@gauzy/ui-core/core';
@@ -59,21 +59,44 @@ export const INBOX_NAV_SECTION = {
 };
 
 /**
- * Adds the nav entry and the header badge once the API serves the Inbox to the signed-in user. Where the API
- * does not load `@gauzy/plugin-inbox` (`GAUZY_INBOX_ENABLED` unset, the default) neither appears, so the app
- * looks exactly as before; the route still exists and the page then says the Inbox is off.
+ * Adds the nav entry and the header badge once the API serves the Inbox to the signed-in user, and takes them
+ * away again when that changes (signed out, another user). Where the API does not load `@gauzy/plugin-inbox`
+ * (`GAUZY_INBOX_ENABLED` unset, the default) neither appears, so the app looks exactly as before; the route
+ * still exists and the page then says the Inbox is off.
+ *
+ * The nav builder has no way to remove a section, so the entry is added once and hidden (`data.hide`) while
+ * the Inbox is not available; the header action is removed and added again.
  */
-export function registerInboxEntryPoints(injector: Injector): void {
-	const availability = injector.get(InboxAvailabilityService);
-	availability.available$.pipe(filter(Boolean), take(1)).subscribe(() => {
-		injector.get(NavMenuBuilderService).addNavMenuSection(INBOX_NAV_SECTION as never, 'focus');
-		injector.get(NavigationBuilderService).registerHeaderAction({
-			id: INBOX_HEADER_ACTION_ID,
-			component: InboxHeaderBadgeComponent,
-			order: 10,
-			class: 'inbox-action',
-			permissions: [PermissionsEnum.INBOX_VIEW]
-		});
+export function registerInboxEntryPoints(injector: Injector): Subscription {
+	const state = { available: false, navAdded: false, badgeAdded: false };
+	return injector.get(InboxAvailabilityService).available$.subscribe((available) => {
+		state.available = available;
+		const header = injector.get(NavigationBuilderService);
+		if (available && !state.navAdded) {
+			state.navAdded = true;
+			injector
+				.get(NavMenuBuilderService)
+				.addNavMenuSection(
+					{
+						...INBOX_NAV_SECTION,
+						data: { ...INBOX_NAV_SECTION.data, hide: () => !state.available }
+					} as never,
+					'focus'
+				);
+		}
+		if (available && !state.badgeAdded) {
+			state.badgeAdded = true;
+			header.registerHeaderAction({
+				id: INBOX_HEADER_ACTION_ID,
+				component: InboxHeaderBadgeComponent,
+				order: 10,
+				class: 'inbox-action',
+				permissions: [PermissionsEnum.INBOX_VIEW]
+			});
+		} else if (!available && state.badgeAdded) {
+			state.badgeAdded = false;
+			header.removeHeaderAction(INBOX_HEADER_ACTION_ID);
+		}
 	});
 }
 

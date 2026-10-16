@@ -52,9 +52,9 @@ The UI has no switch of its own. It follows the API:
   the item's `metadata`), with a resolve note.
 - **Notice:** read-only.
 - **Email:** a viewer in a **sandboxed `<iframe srcdoc>`**. `sandbox=""`
-  grants nothing (no scripts, no same-origin access, no forms, no navigation),
-  and the document carries its own Content-Security-Policy, which blocks every
-  fetch, remote images included. The message is never put into the app's DOM,
+  grants nothing (no scripts, no same-origin access, no forms, no popups or
+  top-level navigation), and the document carries its own
+  Content-Security-Policy, which blocks every fetch, remote images included. The message is never put into the app's DOM,
   and `bypassSecurityTrustHtml` is never used. The email HTML from P4 plugs
   into the same viewer.
 - **Per item:** mark read / unread, archive / unarchive, snooze (an hour,

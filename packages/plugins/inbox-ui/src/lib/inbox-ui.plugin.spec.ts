@@ -10,7 +10,7 @@ import { InboxAvailabilityService } from './services/inbox-availability.service'
 describe('InboxUiPlugin', () => {
 	function injectorWith(available: BehaviorSubject<boolean | null>) {
 		const nav = { addNavMenuSection: jest.fn() };
-		const header = { registerHeaderAction: jest.fn() };
+		const header = { registerHeaderAction: jest.fn(), removeHeaderAction: jest.fn() };
 		const availability = {
 			available$: available.pipe() as unknown as InboxAvailabilityService['available$']
 		};
@@ -52,6 +52,19 @@ describe('InboxUiPlugin', () => {
 
 		available.next(true);
 		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(1);
+		const section = nav.addNavMenuSection.mock.calls[0][0];
+		expect(section.data.hide()).toBe(false);
+
+		// Signed out (or another user without the Inbox): the badge goes, the entry is hidden.
+		available.next(false);
+		expect(header.removeHeaderAction).toHaveBeenCalledWith(INBOX_HEADER_ACTION_ID);
+		expect(section.data.hide()).toBe(true);
+
+		// Back: the badge again, the same entry shown again.
+		available.next(true);
+		expect(header.registerHeaderAction).toHaveBeenCalledTimes(2);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(1);
+		expect(section.data.hide()).toBe(false);
 	});
 
 	it('adds nothing where the API does not serve the Inbox', () => {

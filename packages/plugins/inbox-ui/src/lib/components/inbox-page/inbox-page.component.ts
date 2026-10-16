@@ -437,7 +437,12 @@ export class InboxPageComponent implements OnInit {
 				const items = page?.items ?? [];
 				this.items.set(append ? [...this.items(), ...items] : items);
 				this.nextCursor.set(page?.nextCursor ?? null);
-				if (!append && !items.some((item) => item.id === this.selectedId())) this.selectedId.set(null);
+				// A fresh page without the selected item closes it, unless it is the item I have open (read under
+				// "unread only", then the list started over): that one stays open.
+				const id = this.selectedId();
+				if (!append && id && !items.some((item) => item.id === id) && this.opened()?.id !== id) {
+					this.selectedId.set(null);
+				}
 			});
 	}
 

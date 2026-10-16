@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { defer, Observable, of, throwError, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, retry, shareReplay, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, retry, shareReplay, switchMap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { InboxUiService } from './inbox-ui.service';
@@ -30,24 +30,27 @@ export class InboxAvailabilityService {
 	 * `true` once the API answered the counts for the signed-in user. A refusal that will not change (404: no
 	 * Inbox; 401 / 403: not for this user) is `false` at once. A temporary failure (5xx, network) is retried
 	 * with a growing delay, so an API that recovers after the app started still shows the Inbox; after the
-	 * last attempt it is `false` until another user signs in.
+	 * last attempt it is `false` until another user signs in. Signing out (no user) is `false` at once and
+	 * cancels a request still in flight, so a late answer never applies to the next user.
 	 */
 	readonly available$: Observable<boolean> = this.store.user$.pipe(
-		filter((user: IUser | null | undefined): user is IUser => !!user?.id),
-		distinctUntilChanged((a, b) => a.id === b.id),
-		switchMap(() =>
-			// `defer`: every retry sends the request again.
-			defer(() => this.api.counts()).pipe(
-				retry({
-					count: INBOX_AVAILABILITY_RETRIES,
-					delay: (error: HttpErrorResponse, attempt: number) =>
-						isFinalRefusal(error)
-							? throwError(() => error)
-							: timer(INBOX_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
-				}),
-				map(() => true),
-				catchError((_error: HttpErrorResponse) => of(false))
-			)
+		map((user: IUser | null | undefined) => user?.id ?? null),
+		distinctUntilChanged(),
+		switchMap((userId) =>
+			!userId
+				? of(false)
+				: // `defer`: every retry sends the request again.
+					defer(() => this.api.counts()).pipe(
+						retry({
+							count: INBOX_AVAILABILITY_RETRIES,
+							delay: (error: HttpErrorResponse, attempt: number) =>
+								isFinalRefusal(error)
+									? throwError(() => error)
+									: timer(INBOX_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
+						}),
+						map(() => true),
+						catchError((_error: HttpErrorResponse) => of(false))
+					)
 		),
 		shareReplay({ bufferSize: 1, refCount: false })
 	);

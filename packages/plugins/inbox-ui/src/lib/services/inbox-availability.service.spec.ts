@@ -7,9 +7,11 @@ import { InboxUiService } from './inbox-ui.service';
 /** Whether the API serves the Inbox: asked once per user, temporary failures retried. */
 describe('InboxAvailabilityService', () => {
 	const api = { counts: jest.fn() };
-	const user$ = new BehaviorSubject<{ id: string } | null>({ id: 'user-1' });
+	let user$: BehaviorSubject<{ id: string } | null>;
 
 	function service(): InboxAvailabilityService {
+		// One per case: the service's stream stays subscribed (shareReplay without refCount).
+		user$ = new BehaviorSubject<{ id: string } | null>({ id: 'user-1' });
 		TestBed.configureTestingModule({
 			providers: [
 				{ provide: InboxUiService, useValue: api },
@@ -27,6 +29,16 @@ describe('InboxAvailabilityService', () => {
 		expect(isFinalRefusal({ status: 502 } as never)).toBe(false);
 		expect(isFinalRefusal({ status: 0 } as never)).toBe(false);
 	});
+
+	it('signing out is false at once and cancels a request in flight', fakeAsync(() => {
+		api.counts.mockReturnValue(throwError(() => ({ status: 502 })));
+		const values: boolean[] = [];
+		service().available$.subscribe((value) => values.push(value));
+		user$.next(null);
+		expect(values).toEqual([false]);
+		tick(INBOX_AVAILABILITY_RETRY_MS * 100);
+		expect(api.counts).toHaveBeenCalledTimes(1);
+	}));
 
 	it('404: false at once, asked once', fakeAsync(() => {
 		api.counts.mockReturnValue(throwError(() => ({ status: 404 })));
