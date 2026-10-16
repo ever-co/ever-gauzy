@@ -30,6 +30,7 @@ import {
 	initialEnvelope,
 	initialSeq,
 	orderForImport,
+	PAGE_SEQ_STRIDE,
 	PHASE_MAX_PAGES,
 	PREVIEW_MAX_PAGES,
 	resolvePass,
@@ -43,8 +44,19 @@ export interface EverWorksSyncPhaseState {
 	/** `applying`: its records are queued and the applier is working through them. */
 	status: 'pending' | 'importing' | 'applying' | 'done' | 'skipped' | 'failed';
 	message?: string | null;
-	/** Children phases: the last parent link processed (keyset). */
+	/**
+	 * The import checkpoint: a list phase's next page (the list cursor) in its current pass, or a
+	 * children phase's last parent link (keyset); `pages` counts the pages read (each page has its own
+	 * band of initial `seq`s).
+	 */
 	cursor?: string | null;
+	pass?: number;
+	pages?: number;
+	/** Set once the import part is complete (the export part may still be running). */
+	imported?: boolean;
+	/** The export checkpoint: the last Gauzy id queued (keyset), and whether the export is complete. */
+	exportCursor?: string | null;
+	exportDone?: boolean;
 	/** Initial events stored, already stored (the same snapshot), and Gauzy records queued for Ever Works. */
 	queued: number;
 	duplicates: number;
@@ -104,6 +116,10 @@ export const PHASE_SETTLE_MAX_MS = 30 * 60_000;
 export const PHASE_MAX_ATTEMPTS = 5;
 /** Feed events replayed at most at the end of a run. */
 export const REPLAY_MAX = 50_000;
+/** Records per list page read by an import. */
+export const LIST_PAGE_SIZE = 500;
+/** Gauzy records read per export page. */
+export const EXPORT_PAGE_SIZE = 500;
 
 const isOver = (deadline: number) => Date.now() >= deadline;
 
@@ -257,8 +273,10 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				return;
 			}
 			if (state.retryAt && Date.parse(state.retryAt) > Date.now()) return; // backing off
-			await this.step(state, spec, context, run, deadline, stillOwner);
-			await this.save(run, phases);
+			// Saved after every page as well; false once the run is no longer running (cancelled).
+			const checkpoint = () => this.save(run, phases);
+			await this.step(state, spec, context, run, deadline, stillOwner, checkpoint);
+			if (!(await this.save(run, phases))) return; // cancelled meanwhile: nothing more is done
 			// `step` moved the state on (the narrowing above does not see it).
 			const outcome = state.status as EverWorksSyncPhaseState['status'];
 			if (outcome !== 'done' && outcome !== 'skipped') {
@@ -270,14 +288,18 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		await this.finish(run, context, EverWorksSyncRunStatus.DONE, null, phases, replayed);
 	}
 
-	/** One step of one phase; updates `state` in place. */
+	/**
+	 * One step of one phase, within the sweep's budget; updates `state` in place. The import and the
+	 * export each carry on from their checkpoint at the next sweep when the budget runs out.
+	 */
 	private async step(
 		state: EverWorksSyncPhaseState,
 		spec: EverWorksSyncPhaseSpec,
 		context: EverWorksMappingContext,
 		run: EverWorksSyncRun,
 		deadline: number,
-		stillOwner?: () => Promise<boolean>
+		stillOwner: (() => Promise<boolean>) | undefined,
+		checkpoint: () => Promise<boolean>
 	): Promise<void> {
 		const now = new Date();
 		state.startedAt ??= now.toISOString();
@@ -298,28 +320,28 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		state.status = 'importing';
 		try {
-			if (plan.import) {
-				if (spec.kind === 'children') {
-					const result = await this.importComments(context, state.cursor ?? null, deadline, stillOwner);
-					state.queued += result.queued;
-					state.duplicates += result.duplicates;
-					state.cursor = result.cursor;
-					if (!result.done) return; // carries on at the next sweep
-				} else {
-					const result = await this.importList(context, spec, run, stillOwner);
-					if ('skip' in result) {
-						Object.assign(state, { status: 'skipped', message: result.skip, finishedAt: now.toISOString() });
-						return;
-					}
-					state.queued += result.queued;
-					state.duplicates += result.duplicates;
+			if (plan.import && !state.imported) {
+				const result =
+					spec.kind === 'children'
+						? await this.importComments(context, state, deadline, stillOwner, checkpoint)
+						: await this.importList(context, spec, run, state, deadline, stillOwner, checkpoint);
+				if ('skip' in result) {
+					Object.assign(state, { status: 'skipped', message: result.skip, finishedAt: now.toISOString() });
+					return;
 				}
+				if (!result.done) return; // carries on from its checkpoint at the next sweep
+				state.imported = true;
 			}
-			if (plan.export) state.exported += await this.exportPhase(context, spec, stillOwner);
+			if (plan.export && !state.exportDone) {
+				if (!(await this.exportPhase(context, spec, state, deadline, stillOwner))) return;
+				state.exportDone = true;
+			}
 			state.attempts = 0;
 			state.retryAt = null;
 			state.message = plan.note;
-			if (state.queued > 0) {
+			if (plan.import) {
+				// Always through `applying`, even when everything was stored already (a run that stopped after
+				// storing and before its checkpoint): the next phase starts only once these records are applied.
 				state.status = 'applying';
 				state.applyingSince = new Date().toISOString();
 			} else {
@@ -357,46 +379,76 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 
 	// ── Import (EW → G) ────────────────────────────────────────────────────────────────────────────
 
-	/** Reads a list route in full and stores every record as an initial event, parents first. */
+	/**
+	 * Reads a list route page by page from the checkpoint and stores every record as an initial event
+	 * (parents before their children within a page; each page has its own band of `seq`s, so pages apply
+	 * in the order read), within the sweep's budget. `done` once every pass is read to its end.
+	 */
 	private async importList(
 		context: EverWorksMappingContext,
 		spec: EverWorksSyncPhaseSpec,
 		run: EverWorksSyncRun,
-		stillOwner?: () => Promise<boolean>
-	): Promise<{ queued: number; duplicates: number } | { skip: string }> {
+		state: EverWorksSyncPhaseState,
+		deadline: number,
+		stillOwner: (() => Promise<boolean>) | undefined,
+		checkpoint: () => Promise<boolean>
+	): Promise<{ done: boolean } | { skip: string }> {
 		const client = this.client(context);
-		const records = new Map<string, Record<string, unknown>>();
-		for (const pass of spec.list?.passes ?? [{}]) {
-			const listed = await this.listAll(client, spec, resolvePass(pass, new Date()), PHASE_MAX_PAGES, stillOwner);
-			if ('skip' in listed) return listed;
-			for (const record of listed.records) if (typeof record['id'] === 'string') records.set(record['id'] as string, record);
-		}
-		const ordered = orderForImport([...records.values()], spec.parentField);
-		const totals = { queued: 0, duplicates: 0 };
-		let index = 0;
-		let previousDepth = -1;
-		for (const { record, depth } of ordered) {
-			if (depth !== previousDepth) {
-				index = 0;
-				previousDepth = depth;
+		const passes = spec.list?.passes ?? [{}];
+		// The "last 30 days" of a pass count from the phase's start, so a resumed import asks for the same.
+		const since = state.startedAt ? new Date(state.startedAt) : new Date();
+		while ((state.pass ?? 0) < passes.length) {
+			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return { done: false };
+			if ((state.pages ?? 0) >= PHASE_MAX_PAGES) {
+				throw new Error(`${spec.name}: more than ${PHASE_MAX_PAGES} pages; the import stopped`);
 			}
-			if (index % 200 === 0 && stillOwner && !(await stillOwner())) throw new Error('the sync lease moved to another process');
-			const envelope = initialEnvelope({
-				aggregateType: spec.aggregateType as string,
-				record,
-				seq: initialSeq(depth, index++),
-				tenantId: context.connection.ewTenantId,
-				organizationId: context.everWorksOrganizationId
-			});
-			const { duplicate } = await this.inbound.record(context.connection, envelope, 'initial');
-			if (duplicate) totals.duplicates++;
-			else totals.queued++;
+			let page: EverWorksListPage<Record<string, unknown>>;
+			try {
+				page = await client.request('GET', spec.list?.path as string, {
+					query: { ...resolvePass(passes[state.pass ?? 0], since), limit: LIST_PAGE_SIZE, cursor: state.cursor ?? null }
+				});
+			} catch (error) {
+				const skip = this.skipReason(error);
+				if (skip) return { skip };
+				throw error;
+			}
+			const band = (state.pages ?? 0) * PAGE_SEQ_STRIDE;
+			const indexByDepth = new Map<number, number>();
+			for (const { record, depth } of orderForImport(page.data ?? [], spec.parentField)) {
+				const index = indexByDepth.get(depth) ?? 0;
+				indexByDepth.set(depth, index + 1);
+				const envelope = initialEnvelope({
+					aggregateType: spec.aggregateType as string,
+					record,
+					seq: initialSeq(depth, index, band),
+					tenantId: context.connection.ewTenantId,
+					organizationId: context.everWorksOrganizationId
+				});
+				const { duplicate } = await this.inbound.record(context.connection, envelope, 'initial');
+				if (duplicate) state.duplicates++;
+				else state.queued++;
+			}
+			state.pages = (state.pages ?? 0) + 1;
+			if (page.hasMore && page.nextCursor) {
+				state.cursor = page.nextCursor;
+			} else {
+				state.pass = (state.pass ?? 0) + 1;
+				state.cursor = null;
+			}
+			if (!(await checkpoint())) return { done: false };
 		}
-		this.logger.log(`Mapping ${context.integrationTenantId} (run ${run.id}): ${spec.name}: ${totals.queued} queued, ${totals.duplicates} already stored.`);
-		return totals;
+		this.logger.log(`Mapping ${context.integrationTenantId} (run ${run.id}): ${spec.name}: ${state.queued} queued, ${state.duplicates} already stored.`);
+		return { done: true };
 	}
 
-	/** Every record of a list route (all pages, at most `maxPages`); a route this Ever Works does not serve skips the phase. */
+	/** Why a list Ever Works refuses or does not serve skips its phase, or `null` for any other failure. */
+	private skipReason(error: unknown): string | null {
+		if (error instanceof EverWorksApiError && error.status === 404) return 'this Ever Works does not serve it yet; a later resync picks it up';
+		if (error instanceof EverWorksApiError && error.status === 403) return `Ever Works refused the list (${error.code})`;
+		return null;
+	}
+
+	/** Every record of a list route, for the dry run (all pages, at most `maxPages`); a route this Ever Works does not serve skips the phase. */
 	private async listAll(
 		client: EverWorksClient,
 		spec: EverWorksSyncPhaseSpec,
@@ -410,7 +462,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			for (let page = 0; page < maxPages; page++) {
 				if (page > 0 && page % 10 === 0 && stillOwner && !(await stillOwner())) throw new Error('the sync lease moved to another process');
 				const result: EverWorksListPage<Record<string, unknown>> = await client.request('GET', spec.list?.path as string, {
-					query: { ...query, limit: 500, cursor }
+					query: { ...query, limit: LIST_PAGE_SIZE, cursor }
 				});
 				records.push(...(result.data ?? []));
 				if (!result.hasMore || !result.nextCursor) return { records, truncated: false };
@@ -418,55 +470,54 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			}
 			return { records, truncated: true };
 		} catch (error) {
-			if (error instanceof EverWorksApiError && error.status === 404) return { skip: 'this Ever Works does not serve it yet; a later resync picks it up' };
-			if (error instanceof EverWorksApiError && error.status === 403) return { skip: `Ever Works refused the list (${error.code})` };
+			const skip = this.skipReason(error);
+			if (skip) return { skip };
 			throw error;
 		}
 	}
 
 	/**
 	 * The comments of the synced tasks (the last {@link COMMENTS_PER_TASK} each), as initial
-	 * `task.comment.created` events on their task, after every task event. Resumable by task link.
+	 * `task.comment.created` events on their task, after every task event. Resumable by task link
+	 * (`state.cursor`), within the sweep's budget.
 	 */
 	private async importComments(
 		context: EverWorksMappingContext,
-		cursor: string | null,
+		state: EverWorksSyncPhaseState,
 		deadline: number,
-		stillOwner?: () => Promise<boolean>
-	): Promise<{ queued: number; duplicates: number; cursor: string | null; done: boolean }> {
+		stillOwner: (() => Promise<boolean>) | undefined,
+		checkpoint: () => Promise<boolean>
+	): Promise<{ done: boolean }> {
 		const client = this.client(context);
-		const totals = { queued: 0, duplicates: 0 };
-		let after = cursor;
-		let index = 0;
 		for (;;) {
 			const links = await this.dataSource.getRepository(EverWorksEntityLink).find({
 				where: {
 					integrationTenantId: context.integrationTenantId,
 					entityType: EverWorksLinkType.TASK,
 					state: Not(EverWorksLinkState.UNLINKED),
-					...(after ? { id: MoreThan(after) } : {})
+					...(state.cursor ? { id: MoreThan(state.cursor) } : {})
 				} as never,
 				order: { id: 'ASC' } as never,
 				take: 100
 			});
-			if (!links.length) return { ...totals, cursor: after, done: true };
+			if (!links.length) return { done: true };
 			for (const link of links) {
-				if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return { ...totals, cursor: after, done: false };
-				const comments = await this.lastComments(client, link.ewId);
-				for (const comment of comments) {
+				if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return { done: false };
+				for (const comment of await this.lastComments(client, link.ewId)) {
 					const envelope = initialCommentEnvelope({
 						taskId: link.ewId,
 						taskVersion: link.ewVersion ?? null,
 						comment,
-						seq: String(COMMENTS_SEQ_BASE + index++),
+						seq: String(COMMENTS_SEQ_BASE + state.queued + state.duplicates),
 						tenantId: context.connection.ewTenantId,
 						organizationId: context.everWorksOrganizationId
 					});
 					const { duplicate } = await this.inbound.record(context.connection, envelope, 'initial');
-					if (duplicate) totals.duplicates++;
-					else totals.queued++;
+					if (duplicate) state.duplicates++;
+					else state.queued++;
 				}
-				after = link.id as string;
+				state.cursor = link.id as string;
+				if (!(await checkpoint())) return { done: false };
 			}
 		}
 	}
@@ -497,46 +548,75 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 
 	/**
 	 * Queues the Gauzy records of a phase for Ever Works (the pusher recomputes and diffs each one):
-	 * paired teams (unpaired ones are paired or created on the Teams tab), and every task in scope.
+	 * paired teams (unpaired ones are paired or created on the Teams tab), and every task in scope. In
+	 * id order from `state.exportCursor`, within the sweep's budget; true once every record is queued.
 	 */
-	private async exportPhase(context: EverWorksMappingContext, spec: EverWorksSyncPhaseSpec, stillOwner?: () => Promise<boolean>): Promise<number> {
-		const ids =
-			spec.name === 'teams'
-				? (await this.links(context, EverWorksLinkType.TEAM)).map((link) => link.gauzyId as ID)
-				: spec.name === 'tasks'
-					? await this.tasksInScope(context)
-					: [];
-		let queued = 0;
-		for (const [index, gauzyId] of ids.entries()) {
-			if (index % 200 === 199 && stillOwner && !(await stillOwner())) throw new Error('the sync lease moved to another process');
-			const entityType = spec.linkType as EverWorksLinkType;
-			if (await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType, gauzyId, op: 'upsert' })) queued++;
+	private async exportPhase(
+		context: EverWorksMappingContext,
+		spec: EverWorksSyncPhaseSpec,
+		state: EverWorksSyncPhaseState,
+		deadline: number,
+		stillOwner?: () => Promise<boolean>
+	): Promise<boolean> {
+		const entityType = spec.linkType as EverWorksLinkType;
+		for (;;) {
+			const after = state.exportCursor ?? null;
+			const ids = spec.name === 'teams' ? await this.pairedTeams(context, after) : spec.name === 'tasks' ? await this.tasksInScope(context, after) : [];
+			if (!ids.length) return true;
+			for (const [index, gauzyId] of ids.entries()) {
+				if (index % 50 === 0 && (isOver(deadline) || (stillOwner && !(await stillOwner())))) return false;
+				if (await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType, gauzyId, op: 'upsert' })) state.exported++;
+				state.exportCursor = gauzyId;
+			}
 		}
-		return queued;
 	}
 
-	/** The tasks the sync covers: of the organization, in a project paired with a work unless unpaired projects sync too (default). */
-	private async tasksInScope(context: EverWorksMappingContext, max = 100_000): Promise<ID[]> {
+	/** The next Gauzy teams paired through this mapping, in id order after `after`. */
+	private async pairedTeams(context: EverWorksMappingContext, after: string | null): Promise<ID[]> {
+		const rows = await this.dataSource.getRepository(EverWorksEntityLink).find({
+			where: {
+				integrationTenantId: context.integrationTenantId,
+				entityType: EverWorksLinkType.TEAM,
+				state: Not(EverWorksLinkState.UNLINKED),
+				...(after ? { gauzyId: MoreThan(after) } : {})
+			} as never,
+			order: { gauzyId: 'ASC' } as never,
+			take: EXPORT_PAGE_SIZE
+		});
+		return rows.map((row) => row.gauzyId as ID);
+	}
+
+	/**
+	 * The tasks the sync covers (of the organization, in a project paired with a work unless unpaired
+	 * projects sync too, the default): one page in id order after `after`.
+	 */
+	private async tasksInScope(context: EverWorksMappingContext, after: string | null, take = EXPORT_PAGE_SIZE): Promise<ID[]> {
 		const syncUnlinked = this.setting(context.mapping, EverWorksSettingName.SYNC_UNLINKED_PROJECT_TASKS) !== 'false';
 		const projectIds = syncUnlinked ? null : (await this.links(context, EverWorksLinkType.PROJECT_WORK)).map((link) => link.gauzyId as ID);
 		if (projectIds && !projectIds.length) return [];
+		const rows: Task[] = await this.dataSource.getRepository(Task).find({
+			select: { id: true } as never,
+			where: {
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				...(projectIds ? { projectId: In(projectIds) } : {}),
+				...(after ? { id: MoreThan(after) } : {})
+			} as never,
+			order: { id: 'ASC' } as never,
+			take
+		});
+		return rows.map((row) => row.id as ID);
+	}
+
+	/** Every task id in scope, for the dry run (at most `max`). */
+	private async allTasksInScope(context: EverWorksMappingContext, max = 100_000): Promise<ID[]> {
 		const ids: ID[] = [];
 		let after: string | null = null;
 		while (ids.length < max) {
-			const rows: Task[] = await this.dataSource.getRepository(Task).find({
-				select: { id: true } as never,
-				where: {
-					tenantId: context.tenantId,
-					organizationId: context.organizationId,
-					...(projectIds ? { projectId: In(projectIds) } : {}),
-					...(after ? { id: MoreThan(after) } : {})
-				} as never,
-				order: { id: 'ASC' } as never,
-				take: 1000
-			});
-			if (!rows.length) break;
-			ids.push(...rows.map((row) => row.id as ID));
-			after = rows[rows.length - 1].id as string;
+			const page = await this.tasksInScope(context, after, 1000);
+			if (!page.length) break;
+			ids.push(...page);
+			after = page[page.length - 1];
 		}
 		return ids;
 	}
@@ -676,13 +756,14 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		});
 	}
 
-	/** Saves a run's progress (only while it is still running). */
-	private async save(run: EverWorksSyncRun, phases?: EverWorksSyncPhaseState[]): Promise<void> {
+	/** Saves a run's progress, only while it is still running; false once it is not (cancelled, finished elsewhere). */
+	private async save(run: EverWorksSyncRun, phases?: EverWorksSyncPhaseState[]): Promise<boolean> {
 		if (phases) run.phases = JSON.stringify(phases);
-		await this.dataSource.getRepository(EverWorksSyncRun).update(
+		const result = await this.dataSource.getRepository(EverWorksSyncRun).update(
 			{ id: run.id, status: EverWorksSyncRunStatus.RUNNING } as never,
 			{ phases: run.phases, currentPhase: run.currentPhase ?? null, lastProgressAt: new Date(), lastError: run.lastError ?? null } as never
 		);
+		return (result.affected ?? 0) > 0;
 	}
 
 	running(tenantId: ID, integrationTenantId: ID): Promise<EverWorksSyncRun | null> {
@@ -770,7 +851,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		if (plan.import) preview.creates.inGauzy = unlinked;
 		if (spec.name === 'tasks') {
-			const inScope = await this.tasksInScope(context);
+			const inScope = await this.allTasksInScope(context);
 			const linkedGauzy = new Set(links.map((link) => link.gauzyId));
 			const linkedInScope = inScope.filter((id) => linkedGauzy.has(id)).length;
 			preview.gauzy = { total: inScope.length, linked: linkedInScope };

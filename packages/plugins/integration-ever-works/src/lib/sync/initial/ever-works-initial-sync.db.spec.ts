@@ -511,6 +511,33 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(await runs().count({ where: { integrationTenantId } as never })).toBe(1);
 	});
 
+	it('a cancelled run is not advanced: nothing more is read or queued', async () => {
+		await initial.start(integrationTenantId, 'initial');
+		await reload();
+		await initial.sweep(connection); // members done, agents queued
+		await applier.drain(connection, 500);
+		await initial.cancel(integrationTenantId);
+		await initial.sweep(connection);
+		const run = await runs().findOneOrFail({ where: { integrationTenantId } as never });
+		expect(run.status).toBe('cancelled');
+		// Nothing after the cancel: the teams phase never read its list.
+		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { aggregateType: 'team' } as never })).toBe(0);
+	});
+
+	it('a restart after storing but before the checkpoint still waits for the records to apply', async () => {
+		const run = await initial.start(integrationTenantId, 'initial');
+		await reload();
+		await initial.sweep(connection); // members done, agents stored + applying
+		// As if the process stopped before its checkpoint: the agents phase is back to pending, its events stored.
+		const phases = JSON.parse((await runs().findOneByOrFail({ id: run.id })).phases as string) as EverWorksSyncPhaseState[];
+		Object.assign(phases.find((p) => p.name === 'agents') as EverWorksSyncPhaseState, { status: 'pending', queued: 0, duplicates: 0, imported: false, pass: 0, pages: 0, cursor: null });
+		await runs().update({ id: run.id }, { phases: JSON.stringify(phases) } as never);
+		await initial.sweep(connection);
+		const after = await runs().findOneByOrFail({ id: run.id });
+		expect(phase(after, 'agents')).toMatchObject({ status: 'applying', queued: 0, duplicates: 2 });
+		expect(phase(after, 'teams')?.status).toBe('pending');
+	});
+
 	it('a disabled mapping cancels its running run; cancel stops one by hand', async () => {
 		const first = await initial.start(integrationTenantId, 'initial');
 		await expect(initial.cancel(integrationTenantId)).resolves.toMatchObject({ id: first.id, status: 'cancelled' });
@@ -572,7 +599,12 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(errors.items.map((item) => item.action).sort()).toEqual(['a2', 'dead_letter']);
 		const first = await status.log(integrationTenantId, { limit: '2' });
 		expect(first.items).toHaveLength(2);
-		expect(first.nextBefore).not.toBeNull();
+		expect(first.nextCursor).toBe('2');
+		// Rows written in the same second are not skipped between pages.
+		const second = await status.log(integrationTenantId, { limit: '2', cursor: first.nextCursor as string });
+		expect(second.items).toHaveLength(1);
+		expect(second.nextCursor).toBeNull();
+		expect([...first.items, ...second.items].map((item) => item.action).sort()).toEqual(['a1', 'a2', 'dead_letter']);
 		expect((await status.log(integrationTenantId, { status: 'not-a-status' })).items).toHaveLength(3);
 	});
 
@@ -612,6 +644,28 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 			await conflicts.resolve(integrationTenantId, conflict.id, 'use_other');
 			expect((await dataSource.getRepository(OrganizationTeam).findOneOrFail({ where: { id: team.id } as never })).name).toBe('Platform');
 			expect(await dataSource.getRepository(EverWorksOutboundChange).count({ where: { entityType: EverWorksLinkType.TEAM, gauzyId: team.id } as never })).toBe(1);
+		});
+
+		it('a failing write gives the claim back: the conflict stays open', async () => {
+			await teamConflict(randomUUID()); // its Gauzy team does not exist: the write fails
+			const [conflict] = (await conflicts.list(integrationTenantId, {})).items;
+			await expect(conflicts.resolve(integrationTenantId, conflict.id, 'use_other')).rejects.toBeTruthy();
+			const [again] = (await conflicts.list(integrationTenantId, {})).items;
+			expect(again).toMatchObject({ id: conflict.id, resolved: false, resolvedByUserId: null });
+			expect(again.details?.resolution).toBeUndefined();
+		});
+
+		it('two resolutions at once: one wins, the other writes nothing', async () => {
+			const team = await dataSource.getRepository(OrganizationTeam).findOneOrFail({ where: { name: 'Platform' } as never });
+			await dataSource.getRepository(OrganizationTeam).update({ id: team.id } as never, { name: 'Platform team' } as never);
+			await teamConflict(team.id as string);
+			const [conflict] = (await conflicts.list(integrationTenantId, {})).items;
+			const results = await Promise.allSettled([conflicts.resolve(integrationTenantId, conflict.id, 'keep'), conflicts.resolve(integrationTenantId, conflict.id, 'use_other')]);
+			expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+			const resolved = (await conflicts.list(integrationTenantId, { state: 'resolved' })).items[0];
+			const name = (await dataSource.getRepository(OrganizationTeam).findOneOrFail({ where: { id: team.id } as never })).name;
+			// The value in Gauzy matches the resolution that won.
+			expect(name).toBe(resolved.details?.resolution === 'use_other' ? 'Platform' : 'Platform team');
 		});
 
 		it('a task value goes through the platform command; a field without a writer is refused', async () => {

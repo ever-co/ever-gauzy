@@ -83,17 +83,17 @@ export class EverWorksSyncController {
 	@Get('/sync/log')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Header('Cache-Control', 'no-store')
-	@ApiOperation({ summary: 'The sync log, newest first (filters: status, direction, entityType; pages: limit, before).' })
+	@ApiOperation({ summary: 'The sync log, newest first (filters: status, direction, entityType; pages: limit, cursor).' })
 	log(
 		@Param('integrationTenantId', UUIDValidationPipe) id: ID,
 		@Query('status') status?: string,
 		@Query('direction') direction?: string,
 		@Query('entityType') entityType?: string,
 		@Query('limit') limit?: string,
-		@Query('before') before?: string,
+		@Query('cursor') cursor?: string,
 		@Query('organizationId') organizationId?: ID
 	) {
-		return this.status.log(id, { status, direction, entityType, limit, before }, organizationId);
+		return this.status.log(id, { status, direction, entityType, limit, cursor }, organizationId);
 	}
 
 	@Get('/conflicts')
@@ -104,10 +104,10 @@ export class EverWorksSyncController {
 		@Param('integrationTenantId', UUIDValidationPipe) id: ID,
 		@Query('state') state?: string,
 		@Query('limit') limit?: string,
-		@Query('before') before?: string,
+		@Query('cursor') cursor?: string,
 		@Query('organizationId') organizationId?: ID
 	) {
-		return this.conflicts.list(id, { state, limit, before }, organizationId);
+		return this.conflicts.list(id, { state, limit, cursor }, organizationId);
 	}
 
 	@Post('/conflicts/:conflictId/resolve')

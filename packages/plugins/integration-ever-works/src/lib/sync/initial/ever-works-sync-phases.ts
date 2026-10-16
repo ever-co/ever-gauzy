@@ -76,17 +76,21 @@ export const EVER_WORKS_SYNC_PHASE_SPECS: ReadonlyArray<EverWorksSyncPhaseSpec> 
 /** Comments read per synced task (plan 03 §C.6: the last 200). */
 export const COMMENTS_PER_TASK = 200;
 
-/** The most list pages one phase reads (500 records each). */
-export const PHASE_MAX_PAGES = 100;
+/** The most list pages one phase reads (500 records each): a phase beyond it fails rather than stop silently. */
+export const PHASE_MAX_PAGES = 2000;
 
 /** The most list pages the dry run reads per phase (it reports `truncated` beyond). */
 export const PREVIEW_MAX_PAGES = 20;
 
-/** Records of one depth share a band of initial `seq`s; deeper records sort after their parents. */
-export const DEPTH_STRIDE = 1_000_000;
+/**
+ * Initial `seq`s: each page read gets a band of {@link PAGE_SEQ_STRIDE}, so pages apply in the order read;
+ * inside a page, records of one depth share a band of {@link DEPTH_STRIDE}, so parents apply first.
+ */
+export const PAGE_SEQ_STRIDE = 1_000_000;
+export const DEPTH_STRIDE = 1_000;
 
-/** Comment events sort after every task event of an initial sync. */
-export const COMMENTS_SEQ_BASE = 1_000_000_000;
+/** Comment events sort after every task event of an initial sync (far above any page band). */
+export const COMMENTS_SEQ_BASE = 1_000_000_000_000_000;
 
 export const fromEverWorks = (direction: EverWorksDirection | undefined): boolean => direction === 'both' || direction === 'ew_to_gauzy';
 export const toEverWorks = (direction: EverWorksDirection | undefined): boolean => direction === 'both' || direction === 'gauzy_to_ew';
@@ -130,7 +134,7 @@ export function orderForImport<T extends Record<string, unknown>>(records: Reado
 		.map(({ record, depth }) => ({ record, depth }));
 }
 
-/** The initial `seq` of the n-th record of a depth band (a decimal string, compared as an integer). */
+/** The initial `seq` of the n-th record of a depth band in a page band (a decimal string, compared as an integer). */
 export function initialSeq(depth: number, index: number, base = 0): string {
 	return String(base + Math.min(depth, 999) * DEPTH_STRIDE + Math.min(index, DEPTH_STRIDE - 1));
 }

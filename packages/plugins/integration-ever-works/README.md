@@ -206,12 +206,14 @@ and answered `202`.
   mapping) that the sync loop advances under the connection's lease, phase by
   phase: members (mapping only), agents, teams, works, missions, goals, ideas,
   tasks (parents first), task edges (in the task records), comments (the last
-  200 per synced task), inbox, docs. A phase reads its list route in full and
-  stores every record as an initial event that the record type's handler
-  applies like a live one, then queues the Gauzy records in scope for Ever
-  Works where its direction writes there; the next phase starts once those
-  records are applied. Each phase's state is saved on the run, so a run
-  resumes in whichever process holds the connection; a phase whose handler is
+  200 per synced task), inbox, docs. A phase reads its list route page by
+  page and stores every record as an initial event that the record type's
+  handler applies like a live one, then queues the Gauzy records in scope for
+  Ever Works where its direction writes there; the next phase starts once
+  those records are applied. Each sweep works within a time budget and saves
+  the phase's checkpoint after every page, so a run resumes where it stopped,
+  in whichever process holds the connection; a cancelled run stops at its next
+  checkpoint; a phase whose handler is
   not part of this version is skipped and picked up by a later resync. At the
   end, feed events after the head that were skipped meanwhile are applied
   again (anything a link's version covers is skipped). `POST …/sync/resync` is

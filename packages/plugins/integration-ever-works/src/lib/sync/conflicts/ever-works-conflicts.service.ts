@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, IsNull, LessThan, Not } from 'typeorm';
+import { DataSource, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { OrganizationProject, OrganizationTeam, RequestContext, TaskUpdateCommand } from '@gauzy/core';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
@@ -156,38 +156,40 @@ export class EverWorksConflictsService {
 		});
 	}
 
-	/** `GET /mappings/:id/conflicts`: newest first; `state` open (default), resolved or all; `before` pages. */
+	/** `GET /mappings/:id/conflicts`: newest first; `state` open (default), resolved or all; paged by `cursor` (an offset). */
 	async list(
 		integrationTenantId: ID,
-		query: { state?: string; limit?: string | number; before?: string },
+		query: { state?: string; limit?: string | number; cursor?: string },
 		organizationId?: ID
-	): Promise<{ items: EverWorksConflictView[]; nextBefore: string | null }> {
+	): Promise<{ items: EverWorksConflictView[]; nextCursor: string | null }> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
 		const state = query.state === 'resolved' || query.state === 'all' ? query.state : 'open';
 		const limit = clampLimit(query.limit, 50, CONFLICTS_PAGE_MAX);
-		const before = parseBefore(query.before);
+		const offset = parseOffset(query.cursor);
+		// An offset, not a time: rows written in the same instant (second-precision timestamps on SQLite) are
+		// never skipped between pages.
 		const rows = await this.dataSource.getRepository(EverWorksSyncLog).find({
 			where: {
 				tenantId: context.tenantId,
 				integrationTenantId: context.integrationTenantId,
 				status: 'conflict',
-				...(state === 'open' ? { resolvedAt: IsNull() } : state === 'resolved' ? { resolvedAt: Not(IsNull()) } : {}),
-				...(before ? { createdAt: LessThan(before) } : {})
+				...(state === 'open' ? { resolvedAt: IsNull() } : state === 'resolved' ? { resolvedAt: Not(IsNull()) } : {})
 			} as never,
 			order: { createdAt: 'DESC', id: 'DESC' } as never,
+			skip: offset,
 			take: limit + 1
 		});
-		const page = rows.slice(0, limit);
-		const last = page[page.length - 1] as (EverWorksSyncLog & { createdAt?: Date }) | undefined;
 		return {
-			items: page.map((row) => this.view(row)),
-			nextBefore: rows.length > limit && last?.createdAt ? new Date(last.createdAt).toISOString() : null
+			items: rows.slice(0, limit).map((row) => this.view(row)),
+			nextCursor: rows.length > limit ? String(offset + limit) : null
 		};
 	}
 
 	/**
 	 * `POST /mappings/:id/conflicts/:conflictId/resolve`: `keep` accepts the merged value; `use_other`
-	 * writes the other side's value into the Gauzy record (and from there to Ever Works). Once only.
+	 * writes the other side's value into the Gauzy record (and from there to Ever Works). Once only: the
+	 * conflict is claimed first (a conditional update), so of two requests at once only one applies
+	 * anything; a write that fails gives the claim back.
 	 */
 	async resolve(integrationTenantId: ID, conflictId: ID, resolution: 'keep' | 'use_other', organizationId?: ID): Promise<EverWorksConflictView> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
@@ -198,6 +200,7 @@ export class EverWorksConflictsService {
 		if (!row) throw new NotFoundException('Conflict not found.');
 		if (row.resolvedAt) throw new ConflictException('This conflict is already resolved.');
 		const details = parseDetails(row.details);
+		let apply: (() => Promise<void>) | null = null;
 		if (resolution === 'use_other') {
 			if (!details || !row.gauzyId || !row.entityType) throw new BadRequestException('This conflict does not carry the values to apply.');
 			const field = details.gauzyField ?? details.field;
@@ -205,16 +208,28 @@ export class EverWorksConflictsService {
 			if (!resolver || !resolver.fields.includes(field)) {
 				throw new BadRequestException(`"Use the other value" is not available for ${row.entityType} ${field}; edit the record instead.`);
 			}
-			await resolver.useValue(context, row.gauzyId as ID, field, otherValue(details));
+			apply = () => resolver.useValue(context, row.gauzyId as ID, field, otherValue(details));
 		}
 		const userId = RequestContext.currentUserId() ?? null;
-		// Claimed with a condition, so two admins resolving at once apply the value once.
-		const result = await repository.update({ id: row.id, resolvedAt: IsNull() } as never, {
+		// Claimed first, with a condition: of two admins resolving at once (keep or use the other value),
+		// exactly one wins, and only the winner writes anything.
+		const claimed = await repository.update({ id: row.id, resolvedAt: IsNull() } as never, {
 			resolvedAt: new Date(),
 			resolvedByUserId: userId,
 			details: serializeDetails({ ...(details ?? {}), resolution })
 		} as never);
-		if (!result.affected) throw new ConflictException('This conflict is already resolved.');
+		if (!claimed.affected) throw new ConflictException('This conflict is already resolved.');
+		if (apply) {
+			try {
+				await apply();
+			} catch (error) {
+				// Nothing was applied: the conflict is open again, as it was.
+				await repository
+					.update({ id: row.id, resolvedByUserId: userId } as never, { resolvedAt: null, resolvedByUserId: null, details: row.details ?? null } as never)
+					.catch(() => undefined);
+				throw error;
+			}
+		}
 		this.logger.log(`Conflict ${row.id} (${row.entityType} ${row.gauzyId}) resolved: ${resolution}.`);
 		const saved = await repository.findOneOrFail({ where: { id: row.id } as never });
 		return this.view(saved);
@@ -304,9 +319,8 @@ export function clampLimit(raw: string | number | undefined, fallback: number, m
 	return Math.min(Math.floor(value), max);
 }
 
-/** A `before` cursor (an ISO time) from a query value, or `null`. */
-export function parseBefore(raw: string | undefined): Date | null {
-	if (!raw) return null;
-	const at = new Date(raw);
-	return Number.isFinite(at.getTime()) ? at : null;
+/** A page cursor (an offset) from a query value: a non-negative integer, else 0. */
+export function parseOffset(raw: string | undefined): number {
+	if (!raw || !/^\d{1,9}$/.test(raw)) return 0;
+	return Number.parseInt(raw, 10);
 }
