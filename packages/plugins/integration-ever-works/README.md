@@ -168,7 +168,9 @@ and answered `202`.
   a private one is unlinked, and Gauzy edits to it are not pushed.
 - **Teams.** Existing teams are paired on the Teams tab (same-name
   suggestions the admin confirms, or "create on the other side"); teams
-  created after the mapping sync without a review. Names and emoji sync both
+  created after the mapping sync without a review. Creating on the other side
+  needs the mapping enabled and a teams direction that writes there; a Gauzy
+  team suggested for several Ever Works teams is paired one by one. Names and emoji sync both
   ways; members sync as a set (adds and removes against the snapshot, lead ↔
   manager) and members either side cannot map are kept. Ever Works nesting
   stays on the link (Gauzy teams are flat). A team deleted in Ever Works is
