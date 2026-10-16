@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DataSource, In, LessThanOrEqual, MoreThan } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import type { EverWorksEventEnvelope } from '../../client/ever-works-client.types';
 import { EverWorksConnection } from '../../connection/ever-works-connection.entity';
+import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
 import { EverWorksSyncContext } from '../ever-works-sync.context';
 import { EverWorksInboundEvent, EverWorksInboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
@@ -67,7 +68,9 @@ export class EverWorksInboundApplier {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly log: EverWorksSyncLogService
+		private readonly log: EverWorksSyncLogService,
+		/** Tells the admin about a dead letter (an Inbox notice, G-P3-5); absent in bare test wiring. */
+		@Optional() private readonly notifier?: EverWorksNotifier
 	) {}
 
 	/** Registers a handler for its aggregate types (the later registration wins). */
@@ -275,6 +278,17 @@ export class EverWorksInboundApplier {
 					message: reason
 				});
 				this.logger.warn(`Connection ${connection.id}: event ${event.eventId} is dead after ${attempts} attempts.`);
+				// Best effort: a notice must never stop the applier.
+				await this.notifier
+					?.deadLetter(connection, {
+						direction: 'inbound',
+						entityType: event.aggregateType,
+						recordId: event.aggregateId,
+						reason
+					})
+					.catch((noticeError) =>
+						this.logger.warn(`Connection ${connection.id}: the dead-letter notice failed (${noticeError instanceof Error ? noticeError.message : 'error'}).`)
+					);
 			}
 			return false;
 		}
