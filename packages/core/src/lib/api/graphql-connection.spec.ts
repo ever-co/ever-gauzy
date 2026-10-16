@@ -272,6 +272,53 @@ describe('buildConnection — what a caller may state', () => {
 	});
 });
 
+describe('buildConnection — a member stated as null states nothing', () => {
+	/** The ids of the page a request answers. */
+	const ids = (request: Parameters<typeof connect>[0]) => connect(request).nodes.map((row) => row.id);
+
+	/** The message of the refusal a request raises, or undefined when it answers. */
+	const refusalOf = (request: Parameters<typeof connect>[0]): string | undefined => {
+		try {
+			connect(request);
+
+			return undefined;
+		} catch (error) {
+			return (error as Error).message;
+		}
+	};
+
+	it('answers the first page for a first fetch that states `after: null`, as a Relay client sends it', () => {
+		const connection = connect({ first: 2, after: null } as never);
+
+		expect(connection.nodes.map((row) => row.id)).toEqual([EARLY, LATE]);
+		expect(connection.pageInfo.hasPreviousPage).toBe(false);
+		expect(connection.pageInfo.hasNextPage).toBe(true);
+	});
+
+	it('walks forward when `last` and `before` are stated as null', () => {
+		expect(ids({ first: 1, last: null, before: null } as never)).toEqual([EARLY]);
+	});
+
+	it('does not read `limit: null` or `offset: null` as offset pagination beside `first`', () => {
+		expect(ids({ first: 1, limit: null, offset: null } as never)).toEqual([EARLY]);
+	});
+
+	it('drops the null members of the page object, and the page object when nothing is left of it', () => {
+		expect(ids({ page: { first: 1, after: null, last: null, before: null }, after: null } as never)).toEqual([
+			EARLY
+		]);
+		expect(ids({ page: { first: null, after: null }, offset: 1 } as never)).toEqual([LATE, UNDATED]);
+		expect(ids({ page: null, filter: null, sort: null, first: 1 } as never)).toEqual([EARLY]);
+	});
+
+	it('still walks backward, still refuses both styles and still refuses a cursor it cannot read', () => {
+		expect(ids({ last: 1, after: null } as never)).toEqual([UNDATED]);
+		expect(refusalOf({ first: 1, offset: 1, after: null } as never)).toContain('QUERY_NESTING_LIMIT_EXCEEDED');
+		expect(refusalOf({ page: { first: 1 }, limit: 1 })).toContain('QUERY_NESTING_LIMIT_EXCEEDED');
+		expect(refusalOf({ first: 1, after: 'not-a-cursor' })).toContain('QUERY_CURSOR_INVALID');
+	});
+});
+
 describe('resolveConnectionWindow — the window a cursor names', () => {
 	/** The failure a window resolver raised, or undefined when it answered. */
 	function refuse(selection: Parameters<typeof resolveConnectionWindow>[0]): string | undefined {
