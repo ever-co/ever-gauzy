@@ -200,6 +200,7 @@ const EMPLOYEE_FILTERABLE = {
 	trackAllDisplays: 'BOOLEAN',
 	upworkId: 'STRING',
 	linkedInId: 'STRING',
+	kind: 'STRING',
 	userId: 'ID',
 	contactId: 'ID',
 	organizationPositionId: 'ID',

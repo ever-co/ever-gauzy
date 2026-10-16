@@ -43,7 +43,8 @@ import {
 	UpdateEmployeeDTO,
 	UpdateProfileDTO,
 	FindMembersInputDTO,
-	EmployeePresenceDTO
+	EmployeePresenceDTO,
+	EmployeeListQueryDTO
 } from './dto';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
@@ -308,14 +309,19 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() options: BaseQueryDTO<Employee>): Promise<IPagination<IEmployee>> {
+	async findAll(@Query() options: EmployeeListQueryDTO): Promise<IPagination<IEmployee>> {
+		// `kind` narrows the list to people or to agents (`GET /employee?kind=agent`); absent, the list is
+		// unchanged. It is a column condition, not a find option, so it is taken out of the options.
+		const { kind, ...findOptions } = options;
+
 		// Enforce that only active, non-archived users are retrieved
 		const where = {
-			...(options.where || {}),
+			...(findOptions.where || {}),
+			...(kind ? { kind } : {}),
 			user: { isActive: true, isArchived: false }
 		};
 
-		return await this._employeeService.findAll({ ...options, where });
+		return await this._employeeService.findAll({ ...findOptions, where });
 	}
 
 	/**
