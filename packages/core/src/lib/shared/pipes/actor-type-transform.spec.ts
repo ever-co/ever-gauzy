@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { ActorTypeEnum } from '@gauzy/contracts';
 import { ActorTypeTransformer } from './actor-type-transform';
 
@@ -32,5 +34,26 @@ describe('ActorTypeTransformer', () => {
 	it('maps every ActorTypeEnum member to a distinct integer', () => {
 		const stored = Object.values(ActorTypeEnum).map((actorType) => transformer.to(actorType));
 		expect(new Set(stored).size).toBe(Object.values(ActorTypeEnum).length);
+	});
+});
+
+/**
+ * The MCP server does not depend on `@gauzy/contracts`, so it keeps its own copy of the actor-type
+ * vocabulary for tool input validation (`get_activity_logs` and friends). A copy that lags the contract
+ * refuses a valid filter, so the copies are read here and held to the contract's values.
+ */
+describe('MCP actor-type vocabulary', () => {
+	const MCP_SOURCES = ['input-schemas.ts', 'schema.ts'].map((file) =>
+		join(__dirname, '..', '..', '..', '..', '..', 'mcp-server', 'src', 'lib', file)
+	);
+
+	it.each(MCP_SOURCES)('%s lists exactly the contract values', (file) => {
+		const match = /const ActorTypeEnum = z\.enum\(\[([^\]]*)\]\)/.exec(readFileSync(file, 'utf8'));
+		expect(match).not.toBeNull();
+		const values = match[1]
+			.split(',')
+			.map((value) => value.trim().replace(/^['"]|['"]$/g, ''))
+			.filter(Boolean);
+		expect([...values].sort()).toEqual([...Object.values(ActorTypeEnum)].sort());
 	});
 });
