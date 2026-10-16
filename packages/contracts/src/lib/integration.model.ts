@@ -152,7 +152,7 @@ export enum IntegrationEnum {
 	PLANE = 'Plane',
 	EVER_ASYNC = 'Ever_Async',
 	EVER_CONNECT = 'Ever_Connect',
-	/** Ever Works (ever.works): two-way sync of tasks, teams, goals, missions, ideas, docs, agents and inbox. */
+	/** Ever Works: two-way sync of tasks, teams, goals, missions, ideas, docs, agents and inbox. */
 	EVER_WORKS = 'Ever_Works'
 }
 
