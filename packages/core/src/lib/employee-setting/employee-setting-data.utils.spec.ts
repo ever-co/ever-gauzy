@@ -123,6 +123,9 @@ describe('applyEmployeeSettingDataOperations', () => {
 
 	it('refuses malformed operations', () => {
 		const bad = [
+			null,
+			undefined,
+			[null],
 			[],
 			[{ op: SET, path: [], value: 1 }],
 			[{ op: SET, path: [''], value: 1 }],

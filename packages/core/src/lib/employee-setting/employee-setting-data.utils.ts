@@ -26,13 +26,14 @@ const isPlainObject = (value: unknown): value is JsonObject =>
  * Operations apply in order, so a later one sees the result of an earlier one.
  *
  * @param data The stored data, as an object (a missing or non-object value starts from `{}`).
- * @param operations The operations to apply.
+ * @param operations The operations to apply. Typed loosely on purpose: the function is the last guard for callers
+ *   that skip the request DTO, so a missing list or a missing operation is refused here.
  * @returns The data with every operation applied.
  * @throws BadRequestException when an operation is malformed or its path cannot be written.
  */
 export function applyEmployeeSettingDataOperations(
 	data: unknown,
-	operations: IEmployeeSettingDataOperation[]
+	operations: ReadonlyArray<IEmployeeSettingDataOperation | null | undefined> | null | undefined
 ): JsonObject {
 	if (!Array.isArray(operations) || operations.length === 0) {
 		throw new BadRequestException('A data patch needs at least one operation.');
@@ -46,7 +47,10 @@ export function applyEmployeeSettingDataOperations(
 	const result: JsonObject = isPlainObject(data) ? structuredClone(data) : {};
 
 	for (const operation of operations) {
-		const path = validatedPath(operation?.path);
+		if (!operation) {
+			throw new BadRequestException('Every operation of a data patch must be an object.');
+		}
+		const path = validatedPath(operation.path);
 		const parent = path.slice(0, -1);
 		const key = path[path.length - 1];
 
@@ -80,7 +84,7 @@ export function applyEmployeeSettingDataOperations(
 				break;
 			}
 			default:
-				throw new BadRequestException(`Unknown data patch operation: ${String(operation?.op)}.`);
+				throw new BadRequestException(`Unknown data patch operation: ${String(operation.op)}.`);
 		}
 	}
 
