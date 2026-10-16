@@ -128,6 +128,15 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/projects` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/projects` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/sync/status` | `VIEW` |
+| GET | `/mappings/:integrationTenantId/sync/preview` | `VIEW` |
+| POST | `/mappings/:integrationTenantId/sync/start` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/sync/resync` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/sync/cancel` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/sync/runs` | `VIEW` |
+| GET | `/mappings/:integrationTenantId/sync/log` | `VIEW` |
+| GET | `/mappings/:integrationTenantId/conflicts` | `VIEW` |
+| POST | `/mappings/:integrationTenantId/conflicts/:id/resolve` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
@@ -190,6 +199,35 @@ and answered `202`.
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
   Works records never sync.
+- **Initial sync and resync.** `GET …/sync/preview` is the dry run: per phase,
+  the records on each side, the pairs still to make on their tab and what a
+  run would create; it writes nothing. `POST …/sync/start` records the change
+  feed's head and starts a run (`ever_works_sync_run`, one running run per
+  mapping) that the sync loop advances under the connection's lease, phase by
+  phase: members (mapping only), agents, teams, works, missions, goals, ideas,
+  tasks (parents first), task edges (in the task records), comments (the last
+  200 per synced task), inbox, docs. A phase reads its list route page by
+  page and stores every record as an initial event that the record type's
+  handler applies like a live one, then queues the Gauzy records in scope for
+  Ever Works where its direction writes there; the next phase starts once
+  those records are applied. Each sweep works within a time budget and saves
+  the phase's checkpoint after every page, so a run resumes where it stopped,
+  in whichever process holds the connection; a cancelled run stops at its next
+  checkpoint; a phase whose handler is
+  not part of this version is skipped and picked up by a later resync. At the
+  end, feed events after the head that were skipped meanwhile are applied
+  again (anything a link's version covers is skipped). `POST …/sync/resync` is
+  the same run as a reconcile pass; an expired feed cursor (`410`) starts one
+  on its own.
+- **Observability.** `GET …/sync/status` returns the lag (Ever Works' feed
+  head against what Gauzy read and applied), the inbound and outbound counts
+  (pending, deferred, failed, dead), the open conflicts, the last error, the
+  link totals per type and the latest runs. `GET …/sync/log` pages the sync
+  log (filters: status, direction, record type). Conflicts are log entries
+  with both values and the winner, kept until resolved: `keep`, or
+  `use_other`, which writes the other side's value into the Gauzy record
+  through the platform (a task through its update command) as the signed-in
+  admin, so the change is pushed to Ever Works like any Gauzy edit.
 - **Runtime.** Every process that loads the plugin ticks; a database lease on
   the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.

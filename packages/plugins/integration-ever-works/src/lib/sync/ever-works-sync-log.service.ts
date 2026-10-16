@@ -29,8 +29,13 @@ export class EverWorksSyncLogService {
 	constructor(private readonly dataSource: DataSource) {}
 
 	async write(input: EverWorksSyncLogInput): Promise<void> {
+		// The time comes from here, at millisecond precision on every dialect (SQLite's column default is
+		// whole seconds): pages of the log are keyed on (createdAt, id), which then compare exactly.
+		const at = new Date();
 		await this.dataSource.getRepository(EverWorksSyncLog).insert({
 			id: randomUUID(),
+			createdAt: at,
+			updatedAt: at,
 			tenantId: input.tenantId,
 			organizationId: input.organizationId ?? undefined,
 			integrationTenantId: input.integrationTenantId ?? null,
@@ -54,6 +59,26 @@ export class EverWorksSyncLogService {
 		const resolved = await repository.delete({ createdAt: LessThan(cutoff), status: 'conflict', resolvedAt: LessThan(now) } as never);
 		return (old.affected ?? 0) + (resolved.affected ?? 0);
 	}
+}
+
+/** A page cursor of the sync log and the conflicts: the last row's `createdAt` (ms) and id. */
+export interface EverWorksLogCursor {
+	at: Date;
+	id: string;
+}
+
+/** `<createdAt ms>_<id>` of a row (opaque to clients). */
+export function logCursorOf(row: { createdAt?: Date | string | null; id?: string | null }): string | null {
+	if (!row.createdAt || !row.id) return null;
+	return `${new Date(row.createdAt).getTime()}_${row.id}`;
+}
+
+/** A page cursor from a query value, or `null` (a malformed one reads from the start). */
+export function parseLogCursor(raw: string | undefined | null): EverWorksLogCursor | null {
+	const match = /^(\d{1,15})_([0-9A-Za-z-]{1,64})$/.exec(raw ?? '');
+	if (!match) return null;
+	const at = new Date(Number(match[1]));
+	return Number.isFinite(at.getTime()) ? { at, id: match[2] } : null;
 }
 
 /** The most a log entry's `details` holds. */
