@@ -12,6 +12,7 @@ import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
 import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { everWorksUserOfGauzyUser } from '../sync/ever-works-actor';
+import { stableUuid } from '../sync/ever-works-stable-id';
 import {
 	EverWorksEntityLink,
 	EverWorksLinkState,
@@ -364,22 +365,25 @@ export class EverWorksGoalsService
 					(await this.timeFrameOf(context, next.deadline)) ??
 					(await this.timeFrameOf(context, new Date().toISOString()));
 				gauzyDeadline = deadline ?? quarterOf(new Date()).name;
-				const id = randomUUID() as ID;
-				await repository.insert({
-					id,
-					tenantId: context.tenantId,
-					organizationId: context.organizationId,
-					name: next.title || 'Goal',
-					description: next.description ?? '',
-					deadline: gauzyDeadline,
-					level: teams.first ? GoalLevelEnum.TEAM : GoalLevelEnum.ORGANIZATION,
-					ownerTeamId: teams.first ?? null,
-					leadId: leadEmployeeId,
-					progress,
-					organizationStrategicInitiativeId: await this.initiativeOf(context, primaryMissionId),
-					isArchived: archived,
-					...(archived ? { archivedAt: new Date() } : {})
-				} as never);
+				// A stable id: a retry after a failure half-way finds the goal it wrote instead of a second one.
+				const id = stableUuid(`${context.integrationTenantId}:goal:${goal.id}`) as ID;
+				const written = await repository.findOne({ where: { id } as never, withDeleted: true });
+				if (!written)
+					await repository.insert({
+						id,
+						tenantId: context.tenantId,
+						organizationId: context.organizationId,
+						name: next.title || 'Goal',
+						description: next.description ?? '',
+						deadline: gauzyDeadline,
+						level: teams.first ? GoalLevelEnum.TEAM : GoalLevelEnum.ORGANIZATION,
+						ownerTeamId: teams.first ?? null,
+						leadId: leadEmployeeId,
+						progress,
+						organizationStrategicInitiativeId: await this.initiativeOf(context, primaryMissionId),
+						isArchived: archived,
+						...(archived ? { archivedAt: new Date() } : {})
+					} as never);
 				goalId = id;
 				this.logger.log(
 					`Ever Works goal ${goal.id} created as Gauzy goal ${goalId} (organization ${context.organizationId}).`
@@ -493,19 +497,21 @@ export class EverWorksGoalsService
 					missing++;
 					continue;
 				}
-				const id = randomUUID() as ID;
-				await repository.insert({
-					id,
-					tenantId: context.tenantId,
-					organizationId: context.organizationId,
-					goalId,
-					ownerId,
-					leadId: leadEmployeeId,
-					description: '',
-					status: KeyResultUpdateStatusEnum.NONE,
-					...fields,
-					hardDeadline: fields.hardDeadline ? new Date(fields.hardDeadline) : null
-				} as never);
+				const id = stableUuid(`${context.integrationTenantId}:key-result:${ewGoalId}:${key}`) as ID;
+				const written = await repository.findOne({ where: { id } as never, withDeleted: true });
+				if (!written)
+					await repository.insert({
+						id,
+						tenantId: context.tenantId,
+						organizationId: context.organizationId,
+						goalId,
+						ownerId,
+						leadId: leadEmployeeId,
+						description: '',
+						status: KeyResultUpdateStatusEnum.NONE,
+						...fields,
+						hardDeadline: fields.hardDeadline ? new Date(fields.hardDeadline) : null
+					} as never);
 				await this.recordKeyResult(context, id, ewGoalId, key, fields, null);
 				continue;
 			}
