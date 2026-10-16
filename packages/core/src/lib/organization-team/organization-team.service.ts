@@ -845,16 +845,24 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		try {
-			// Check if the user is only a manager (has no specific role)
-			await this.organizationTeamEmployeeService.findOneByOptions({
+			// The teams the user leaves: the ones they joined as a plain member (no role), not the ones they manage
+			const memberships = await this.organizationTeamEmployeeService.find({
 				where: {
 					employeeId: employee.id,
 					roleId: IsNull()
 				}
 			});
 
-			// Unassign this user from all tasks in a team
-			await this.taskService.unassignEmployeeFromTeamTasks(employee.id, undefined);
+			if (!memberships.length) {
+				throw new NotFoundException('The user is not a plain member of any team');
+			}
+
+			// Unassign this user only from the tasks of the teams they leave, one team at a time so that two
+			// saves never race on a task shared by two of these teams
+			const organizationTeamIds = new Set(memberships.map(({ organizationTeamId }) => organizationTeamId));
+			for (const organizationTeamId of organizationTeamIds) {
+				await this.taskService.unassignEmployeeFromTeamTasks(employee.id, organizationTeamId);
+			}
 
 			// Delete the team employee record
 			return await this.organizationTeamEmployeeService.delete({
