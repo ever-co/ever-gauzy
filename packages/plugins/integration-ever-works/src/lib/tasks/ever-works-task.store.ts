@@ -270,21 +270,29 @@ export class EverWorksTaskStore {
 	 * The task's resource link with this title and URL: the one recorded before (updated when the URL
 	 * changed), else one with the same URL, else a new one. Returns its id.
 	 */
-	async upsertResourceLink(scope: { tenantId: ID; organizationId: ID }, taskId: ID, title: string, url: string, knownId: ID | null): Promise<ID> {
+	async upsertResourceLink(
+		scope: { tenantId: ID; organizationId: ID },
+		taskId: ID,
+		title: string,
+		url: string,
+		known: { id: ID; owned: boolean } | null
+	): Promise<{ id: ID; owned: boolean }> {
 		const repository = this.dataSource.getRepository(ResourceLink);
-		if (knownId) {
-			const known = await repository.findOne({ where: { id: knownId, tenantId: scope.tenantId } as never });
-			if (known) {
-				if (known.url !== url || known.title !== title) await repository.update({ id: knownId } as never, { url, title } as never);
-				return knownId;
+		if (known) {
+			const row = await repository.findOne({ where: { id: known.id, tenantId: scope.tenantId } as never });
+			if (row) {
+				// Only a link the sync made is rewritten; a person's link with the old URL is left as it is.
+				if (known.owned && (row.url !== url || row.title !== title)) await repository.update({ id: known.id } as never, { url, title } as never);
+				if (known.owned || row.url === url) return known;
 			}
 		}
+		// A link a person already added with this URL is reused as it is (and never removed by the sync).
 		const same = await repository.findOne({ where: { tenantId: scope.tenantId, entity: BaseEntityEnum.Task, entityId: taskId, url } as never });
-		if (same) return same.id as ID;
+		if (same) return { id: same.id as ID, owned: false };
 		const saved = await repository.save(
 			repository.create({ tenantId: scope.tenantId, organizationId: scope.organizationId, entity: BaseEntityEnum.Task, entityId: taskId, title, url } as unknown as ResourceLink)
 		);
-		return saved.id as ID;
+		return { id: saved.id as ID, owned: true };
 	}
 
 	/** The user (and display name) of an employee. */
