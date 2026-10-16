@@ -362,6 +362,8 @@ describe('Inbox on SQLite', () => {
 				recipients: [{ userId: ADA }]
 			});
 			const personal = await question();
+			// A question a source linked to the mailbox is still Ada's own.
+			const linkedQuestion = await question({ mailboxId: mailbox });
 
 			as(BOB, TENANT, [PermissionsEnum.INBOX_VIEW, PermissionsEnum.INBOX_MAILBOX_READ_ALL]);
 			await expect(service.get(shared.item.id as string)).resolves.toMatchObject({
@@ -374,8 +376,9 @@ describe('Inbox on SQLite', () => {
 			);
 			// Not a member of that organization.
 			await expect(service.get(otherOrganization.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
-			// A question addressed to Ada personally stays hers.
+			// A question addressed to Ada personally stays hers, also when it names a mailbox.
 			await expect(service.get(personal.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.get(linkedQuestion.item.id as string)).rejects.toBeInstanceOf(NotFoundException);
 
 			// Without the permission, not even the mailbox item.
 			as(BOB);
@@ -721,7 +724,7 @@ describe('Inbox on SQLite', () => {
 		});
 
 		it('refuses an organization that is not one of the item’s tenant', async () => {
-			for (const organizationId of [FOREIGN_ORG, randomUUID(), 'not-a-uuid']) {
+			for (const organizationId of [FOREIGN_ORG, randomUUID(), 'not-a-uuid', '']) {
 				await expect(question({ organizationId })).rejects.toBeInstanceOf(BadRequestException);
 			}
 			await expect(question({ organizationId: OTHER_ORG })).resolves.toMatchObject({ created: true });

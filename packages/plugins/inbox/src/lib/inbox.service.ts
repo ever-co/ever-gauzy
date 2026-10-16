@@ -490,8 +490,10 @@ export class InboxService implements IInboxItemWriter {
 
 	/** An item's organization must be one of its tenant's (a source names both). */
 	private async assertOrganizationOfTenant(tenantId: ID, organizationId?: ID | null): Promise<void> {
-		if (!organizationId) return;
+		// Only an omitted organization is skipped: an empty or malformed one is refused like an unknown one.
+		if (organizationId === null || organizationId === undefined) return;
 		const found =
+			typeof organizationId === 'string' &&
 			UUID.test(organizationId) &&
 			(await this.dataSource
 				.createQueryBuilder()
@@ -506,11 +508,12 @@ export class InboxService implements IInboxItemWriter {
 	}
 
 	/**
-	 * Whether a reader of every mailbox may read this item without being its recipient: only a mailbox item (P4)
-	 * of an organization the reader is an active member of.
+	 * Whether a reader of every mailbox may read this item without being its recipient: only an EMAIL item of a
+	 * mailbox (P4), of an organization the reader is an active member of. Any other kind is personal, even when a
+	 * source linked it to a mailbox.
 	 */
 	private async readsAsMailboxReader(item: InboxItem, tenantId: ID, userId: ID): Promise<boolean> {
-		if (!item.mailboxId || !item.organizationId) return false;
+		if (item.kind !== InboxItemKindEnum.EMAIL || !item.mailboxId || !item.organizationId) return false;
 		if (!RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_READ_ALL)) return false;
 		const membership = await this.dataSource
 			.createQueryBuilder()
