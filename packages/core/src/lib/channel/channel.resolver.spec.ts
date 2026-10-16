@@ -9,10 +9,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { SUBSCRIPTION_OPTIONS_METADATA } from '@nestjs/graphql/dist/graphql.constants';
 import { buildSchema } from 'graphql';
 import { ChannelStatus, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context/request-context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ChannelResolver } from './channel.resolver';
 import { CHANNEL_EVENT_NAMES } from './channel-event.publisher';
@@ -326,6 +328,77 @@ describe('ChannelResolver — subscriptions (§10.2, §10.4)', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ChannelResolver.prototype.channelChanged)).toEqual([
 			PermissionsEnum.CHANNELS_VIEW
 		]);
+	});
+});
+
+describe('ChannelResolver — what channelChanged delivers to one subscriber', () => {
+	const TENANT = '00000000-0000-4000-8000-000000000001';
+	const ORG = '00000000-0000-4000-8000-000000000002';
+	const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
+
+	/** The filter the field was declared with, as the subscription runtime calls it. */
+	const filter = (payload: Record<string, unknown>, variables: Record<string, unknown> = {}): boolean =>
+		Reflect.getMetadata(SUBSCRIPTION_OPTIONS_METADATA, ChannelResolver.prototype.channelChanged).filter(
+			payload,
+			variables
+		);
+
+	/** One fact about a channel, of the subscriber's tenant unless stated otherwise. */
+	const fact = (overrides: Record<string, unknown> = {}) => ({
+		tenantId: TENANT,
+		organizationId: ORG,
+		action: 'updated',
+		channel: ROWS[0],
+		...overrides
+	});
+
+	/** Runs the filter as a subscriber of the tenant acting in `organizationId`. */
+	const as = (organizationId: string | null) => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(organizationId);
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('withholds a channel of another organization of the same tenant', () => {
+		as(ORG);
+
+		expect(filter(fact({ organizationId: SIBLING_ORG }))).toBe(false);
+	});
+
+	it('delivers a channel of the organization the subscriber acts in', () => {
+		as(ORG);
+
+		expect(filter(fact())).toBe(true);
+	});
+
+	it('withholds an organization’s channel from a subscriber with no organization, as `channels` does', () => {
+		// `ChannelService` reads with the caller's organization, so a caller with none reads only the
+		// channels stored without one: a missing organization is not a tenant-wide wildcard.
+		as(null);
+
+		expect(filter(fact({ organizationId: SIBLING_ORG }))).toBe(false);
+		expect(filter(fact())).toBe(false);
+	});
+
+	it('delivers a tenant-wide channel, stored without an organization, to every subscriber of the tenant', () => {
+		as(ORG);
+
+		expect(filter(fact({ organizationId: undefined }))).toBe(true);
+
+		as(null);
+
+		expect(filter(fact({ organizationId: undefined }))).toBe(true);
+	});
+
+	it('still withholds another tenant and still applies the channel and action arguments', () => {
+		as(ORG);
+
+		expect(filter(fact({ tenantId: 'another-tenant' }))).toBe(false);
+		expect(filter(fact(), { channelId: OTHER_CHANNEL })).toBe(false);
+		expect(filter(fact(), { channelId: CHANNEL })).toBe(true);
+		expect(filter(fact(), { action: 'archived' })).toBe(false);
+		expect(filter(fact(), { action: 'updated' })).toBe(true);
 	});
 });
 

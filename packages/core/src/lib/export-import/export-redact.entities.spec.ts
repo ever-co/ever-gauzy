@@ -404,6 +404,23 @@ describe('export redaction of the real entity graph', () => {
 			expect(redactForExport(address, custom).address).toBe('docs@acme.com');
 		});
 
+		it('masks the Ever Works connection secrets without breaking the NOT NULL key column', () => {
+			const connection = pluginEntities.find((entity) => entity.name === 'EverWorksConnection');
+			expect(connection).toBeDefined();
+
+			const row = Object.assign(new (connection as any)(), {
+				apiBaseUrl: 'https://api.example.com/api',
+				apiKeyEncrypted: 'v1:k:' + 'a'.repeat(24) + ':' + 'b'.repeat(32) + ':' + 'c'.repeat(64),
+				webhookSecretEncrypted: 'v1:k:' + 'd'.repeat(24) + ':' + 'e'.repeat(32) + ':' + 'f'.repeat(64)
+			});
+			const redacted = redactForExport(connection, row);
+
+			// `apiKeyEncrypted` is NOT NULL: a fixed mask imports, an empty cell would not.
+			expect(redacted.apiKeyEncrypted).toBe(OPAQUE_EXPORT_MASK);
+			expect(redacted.webhookSecretEncrypted).toBe('');
+			expect(redacted.apiBaseUrl).toBe('https://api.example.com/api');
+		});
+
 		it('still covers the two key/value columns the name pattern cannot see', () => {
 			// `settingsValue` and `value` look like nothing; they hold every integration token and
 			// every object-storage secret key in the product.
