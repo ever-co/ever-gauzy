@@ -138,3 +138,53 @@ describe('ScreeningTasksService.update', () => {
 		});
 	});
 });
+
+/**
+ * #10724 — a soft-deleted task keeps its number in the `taskNumber` unique index, so the task of a new screening
+ * task is numbered above every task of its project, soft-deleted ones included.
+ */
+describe('ScreeningTasksService.create — the number of the task', () => {
+	const fixture = createTenantFixture();
+
+	let restore: () => void;
+	let taskService: { getMaxTaskNumberByProject: jest.Mock; create: jest.Mock };
+	let self: Record<string, unknown>;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(
+			async (entity) => ({ id: 'screening-1', ...entity }) as never
+		);
+		taskService = {
+			getMaxTaskNumberByProject: jest.fn().mockResolvedValue(5),
+			create: jest.fn(async (task) => ({ id: 'task-1', ...task }))
+		};
+		self = {
+			taskService,
+			organizationProjectService: {
+				findOneByIdString: jest.fn().mockResolvedValue({ id: 'project-1', name: 'Gauzy' })
+			},
+			mentionService: { publishMention: jest.fn() },
+			eventBus: { publish: jest.fn() },
+			activityLogService: { logActivity: jest.fn() }
+		};
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	it('numbers the task above every task of its project, soft-deleted ones included', async () => {
+		await ScreeningTasksService.prototype.create.call(self, {
+			organizationId: fixture.organizationId,
+			task: { title: 'Investigate', projectId: 'project-1' }
+		});
+
+		expect(taskService.getMaxTaskNumberByProject).toHaveBeenCalledWith(
+			{ tenantId: fixture.tenantId, organizationId: fixture.organizationId, projectId: 'project-1' },
+			{ withDeleted: true }
+		);
+		expect(taskService.create).toHaveBeenCalledWith(expect.objectContaining({ number: 6, isScreeningTask: true }));
+	});
+});
