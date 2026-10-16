@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource, EntityManager } from 'typeorm';
-import { ID, IntegrationEnum } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { IntegrationSetting, IntegrationTenant, Tenant } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient, EverWorksNetworkError, EverWorksUrlError, normaliseApiBaseUrl } from '../client/ever-works-client';
 import { EverWorksClientFactory } from '../client/ever-works-client.factory';
@@ -182,6 +182,8 @@ export class EverWorksConnectionService {
 				scopes: JSON.stringify(validation.scopes),
 				pinnedOrganizations: JSON.stringify(validation.organizations),
 				apiVersion: whoami.apiVersion,
+				// Follow the change feed from now (a resumed connection keeps its cursor); history is the initial sync's job.
+				feedCursor: previous?.feedCursor ?? String(whoami.feedHead ?? '0'),
 				lastError: null,
 				lastErrorAt: null,
 				lastHealthyAt: new Date(),
@@ -590,7 +592,7 @@ export class EverWorksConnectionService {
 	/** Archives the organization mappings (`integration_tenant` named `Ever_Works`) of a connection. */
 	private async archiveMappings(manager: EntityManager, tenantId: ID, connectionId: ID): Promise<void> {
 		const mappings = await manager.find(IntegrationTenant, {
-			where: { tenantId, name: EVER_WORKS_INTEGRATION_NAME as unknown as IntegrationEnum, isActive: true },
+			where: { tenantId, name: EVER_WORKS_INTEGRATION_NAME, isActive: true },
 			relations: { settings: true }
 		});
 		for (const mapping of mappings) {

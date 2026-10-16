@@ -143,12 +143,12 @@ export class MockEverWorksServer {
 	async emit(event: Omit<EverWorksEventEnvelope, 'id' | 'seq' | 'tenantId' | 'occurredAt' | 'version'> & Partial<EverWorksEventEnvelope>): Promise<EverWorksEventEnvelope> {
 		this.seq += 1;
 		const envelope: EverWorksEventEnvelope = {
+			...event,
 			id: event.id ?? `evt_${randomUUID().replace(/-/g, '')}`,
 			seq: String(this.seq),
 			version: event.version ?? 1,
 			occurredAt: event.occurredAt ?? new Date().toISOString(),
-			tenantId: this.tenant.id,
-			...event
+			tenantId: event.tenantId ?? this.tenant.id
 		} as EverWorksEventEnvelope;
 		this.events.push(envelope);
 		for (const webhook of this.webhooks.values()) {
