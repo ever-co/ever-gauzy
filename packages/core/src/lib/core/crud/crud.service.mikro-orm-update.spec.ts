@@ -1,5 +1,6 @@
 import { EntityCaseNamingStrategy, EntitySchema, MikroORM } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { In, IsNull, LessThan, Not } from 'typeorm';
 import { MikroOrmBaseEntityRepository } from '../repository/mikro-orm-base-entity.repository';
 import { MultiORMEnum } from '../utils';
 import { CrudService } from './crud.service';
@@ -125,6 +126,67 @@ describe('CrudService.update under MikroORM', () => {
 		expect(created.version).toBe(1);
 		const [row] = await orm.em.getConnection().execute('SELECT version FROM versioned_row WHERE id = ?', ['r2']);
 		expect(row.version).toBe(1);
+	});
+
+	describe('translates TypeORM operators in the criteria (#10670)', () => {
+		const LATER = new Date('2030-01-01T00:00:00.000Z');
+
+		/** r1 (above), r2 with no label and the earlier date, r3 with a label and the later date. */
+		beforeEach(async () => {
+			await orm.em
+				.getConnection()
+				.execute(
+					'INSERT INTO versioned_row (id, label, updatedAt, version) VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
+					['r2', null, EARLIER.getTime(), 1, 'r3', 'third', LATER.getTime(), 1]
+				);
+		});
+
+		const labels = async (): Promise<Record<string, string | null>> => {
+			const rows: any[] = await orm.em.getConnection().execute('SELECT id, label FROM versioned_row ORDER BY id');
+			return Object.fromEntries(rows.map(({ id, label }) => [id, label]));
+		};
+
+		it('updates the rows an In() names, and only those', async () => {
+			// Untranslated, the criterion reached the statement as the text '[object Object]' and matched nothing.
+			await expect(service().update({ id: In(['r1', 'r2']) } as any, { label: 'in' })).resolves.toEqual({
+				affected: 2
+			});
+
+			expect(await labels()).toEqual({ r1: 'in', r2: 'in', r3: 'third' });
+		});
+
+		it('updates the rows an IsNull() matches, and only those', async () => {
+			await expect(service().update({ label: IsNull() } as any, { label: 'was null' })).resolves.toEqual({
+				affected: 1
+			});
+
+			expect(await labels()).toEqual({ r1: 'first', r2: 'was null', r3: 'third' });
+		});
+
+		it('updates the rows a LessThan() on a date matches, and only those', async () => {
+			const cutoff = new Date('2025-01-01T00:00:00.000Z');
+			await expect(
+				service().update({ updatedAt: LessThan(cutoff) } as any, { label: 'expired' })
+			).resolves.toEqual({ affected: 2 });
+
+			expect(await labels()).toEqual({ r1: 'expired', r2: 'expired', r3: 'third' });
+		});
+
+		it('keeps a Date stated as the criterion a predicate rather than dropping it', async () => {
+			await expect(service().update({ updatedAt: LATER } as any, { label: 'dated' })).resolves.toEqual({
+				affected: 1
+			});
+
+			expect(await labels()).toEqual({ r1: 'first', r2: null, r3: 'dated' });
+		});
+
+		it('combines an operator with a plain condition, as the tenant-aware update states them', async () => {
+			await expect(
+				service().update({ id: In(['r1', 'r2', 'r3']), label: Not(IsNull()) } as any, { label: 'both' })
+			).resolves.toEqual({ affected: 2 });
+
+			expect(await labels()).toEqual({ r1: 'both', r2: null, r3: 'both' });
+		});
 	});
 
 	it('passes the payload on untouched to a stand-in that is not a MikroORM repository', async () => {

@@ -101,4 +101,32 @@ describe('the operators a predicate is built from', () => {
 		// is not the one that silently widens.
 		expect(converted['organization']).toEqual({ name: { $like: 'Ever%' } });
 	});
+
+	it('keeps a Date stated as the value of a property a value, not an empty condition (#10670)', () => {
+		const at = new Date('2026-03-01T00:00:00Z');
+		const converted = convertTypeORMWhereToMikroORM({
+			startsAt: at,
+			organization: { createdAt: at }
+		} as any) as Record<string, any>;
+
+		// Recursed into, a Date has no own keys and became `{}`, which drops the predicate: the read
+		// (or update) matched every row instead of the rows of that date.
+		expect(converted['startsAt']).toBe(at);
+		expect(converted['organization']).toEqual({ createdAt: at });
+		expect(converted['organization']['createdAt']).toBe(at);
+	});
+
+	it('keeps any other non-plain object a value, as MikroORM reads it', () => {
+		class Reference {
+			constructor(readonly id: string) {}
+		}
+		const tenant = new Reference('tenant-1');
+		const converted = convertTypeORMWhereToMikroORM({ tenant, name: 'x' } as any) as Record<string, any>;
+
+		expect(converted['tenant']).toBe(tenant);
+		// Control: a plain nested object is still walked, so its operators are translated.
+		expect(convertTypeORMWhereToMikroORM({ tenant: { id: In(['a', 'b']) } } as any)).toEqual({
+			tenant: { id: { $in: ['a', 'b'] } }
+		});
+	});
 });

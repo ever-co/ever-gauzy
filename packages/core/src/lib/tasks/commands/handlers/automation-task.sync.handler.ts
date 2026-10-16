@@ -135,7 +135,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const user = RequestContext.currentUser();
 
 			// Retrieve the maximum task number for the project
-			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options);
+			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options, { withDeleted: true });
 
 			// Create a new task with the provided entity data
 			const newTask = this.typeOrmTaskRepository.create({
