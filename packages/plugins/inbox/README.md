@@ -81,3 +81,8 @@ their replies stay in Gauzy.
   filters, search and pages, the counts, replies (local; through a handler; released when the source refuses; one dispatch
   for two overlapping replies; refused for a source that is not connected), recipient state, mark-all-read, and source
   writes (idempotent, overlapping deliveries create the item once, recipients limited to the tenant).
+
+## Email (Phase 4)
+
+Mailboxes, inbound email and the email provider plugins are a second plugin of this package, `InboxEmailPlugin`, off
+unless `GAUZY_INBOX_EMAIL_ENABLED=true` as well. See [EMAIL.md](./EMAIL.md).
