@@ -86,7 +86,7 @@ const base = {
 	createdAt: { type: Date, createDate: true },
 	updatedAt: { type: Date, updateDate: true }
 } as const;
-const s = (name: string, target: Function, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
+const s = (name: string, target: new (...args: never[]) => object, tableName: string, columns: Record<string, unknown>, relations?: Record<string, unknown>) =>
 	new EntitySchema({ name, target, tableName, columns: { ...base, ...columns } as never, relations: relations as never });
 const str = (nullable = true) => ({ type: String, nullable });
 const txt = (nullable = true) => ({ type: 'text', nullable });

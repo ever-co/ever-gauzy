@@ -7,6 +7,7 @@
  * envelopes must pass the engine's envelope check.
  */
 // The function itself, from its source: `@gauzy/core`'s barrel boots the whole application.
+// eslint-disable-next-line @nx/enforce-module-boundaries -- a spec reads the one core function it checks, not the barrel
 import { verifyWebhookSignature } from '../../../../../../core/src/lib/webhook/webhook-signature';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
