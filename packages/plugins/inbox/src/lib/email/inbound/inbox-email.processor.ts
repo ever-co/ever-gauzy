@@ -1,3 +1,4 @@
+// cspell:ignore permerror softfail dmarc
 import { Inject, Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { Brackets, DataSource, In, IsNull, MoreThanOrEqual } from 'typeorm';
@@ -43,7 +44,8 @@ export const THREAD_SUBJECT_WINDOW_MS = 30 * 24 * 60 * 60_000;
 export const MAX_TEXT_BODY = 1_000_000;
 export const MAX_ITEM_BODY = 5_000;
 /** MIME types that are never offered as what they claim (they could run script when opened inline). */
-const ACTIVE_CONTENT_TYPES = /^(text\/html|application\/xhtml\+xml|image\/svg\+xml|text\/xml|application\/xml|application\/javascript|text\/javascript)/i;
+const ACTIVE_CONTENT_TYPES =
+	/^(text\/html|application\/xhtml\+xml|image\/svg\+xml|text\/xml|application\/xml|application\/javascript|text\/javascript)/i;
 
 const parseList = <T>(value: string | null | undefined): T[] => {
 	if (!value) return [];
@@ -218,7 +220,9 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		if (!mailbox) return null;
 		const itemId = await this.deliver(email, mailbox, {
 			from: senderOf(email),
-			attachments: await this.dataSource.getRepository(InboxEmailAttachment).count({ where: { emailId: email.id as ID } })
+			attachments: await this.dataSource
+				.getRepository(InboxEmailAttachment)
+				.count({ where: { emailId: email.id as ID } })
 		});
 		await this.dataSource.getRepository(InboxEmail).update({ id: email.id as ID }, {
 			status: InboxEmailStatusEnum.PROCESSED,
@@ -244,7 +248,11 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		});
 	}
 
-	private async apply(row: InboxEmail, mailbox: InboxMailbox, message: ParsedInboundEmail): Promise<InboxEmailStatusEnum> {
+	private async apply(
+		row: InboxEmail,
+		mailbox: InboxMailbox,
+		message: ParsedInboundEmail
+	): Promise<InboxEmailStatusEnum> {
 		const config = this.config();
 		const html = message.html ? sanitizeEmailHtml(message.html) : null;
 		const text = (message.text ?? (message.html ? textFromHtml(message.html) : '')).slice(0, MAX_TEXT_BODY);
@@ -270,8 +278,13 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 			await this.count(mailbox);
 			return InboxEmailStatusEnum.QUARANTINED;
 		}
-		const stored = (await this.dataSource.getRepository(InboxEmail).findOne({ where: { id: row.id as ID } })) as InboxEmail;
-		const itemId = await this.deliver(stored, mailbox, { from: message.from ?? null, attachments: attachments.length });
+		const stored = (await this.dataSource
+			.getRepository(InboxEmail)
+			.findOne({ where: { id: row.id as ID } })) as InboxEmail;
+		const itemId = await this.deliver(stored, mailbox, {
+			from: message.from ?? null,
+			attachments: attachments.length
+		});
 		await this.dataSource.getRepository(InboxEmail).update({ id: row.id as ID }, {
 			status: InboxEmailStatusEnum.PROCESSED,
 			...(itemId ? { inboxItemId: itemId } : {})
@@ -288,7 +301,10 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		const out: InboxEmailAttachment[] = [];
 		for (const part of message.attachments.slice(0, 100)) {
 			if (!part.content?.length || part.content.length > max) continue;
-			const contentType = part.contentType && !ACTIVE_CONTENT_TYPES.test(part.contentType) ? part.contentType : 'application/octet-stream';
+			const contentType =
+				part.contentType && !ACTIVE_CONTENT_TYPES.test(part.contentType)
+					? part.contentType
+					: 'application/octet-stream';
 			const key = `inbox/${row.tenantId}/attachments/${row.id}/${randomUUID()}`;
 			const stored = await this.storage.put(part.content, key);
 			out.push(
@@ -411,11 +427,13 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 	/** The mailbox's last-message time and message count. */
 	private async count(mailbox: InboxMailbox): Promise<void> {
 		const total = await this.dataSource.getRepository(InboxEmail).count({
-			where: { mailboxId: mailbox.id as ID, status: In([InboxEmailStatusEnum.PROCESSED, InboxEmailStatusEnum.QUARANTINED]) }
+			where: {
+				mailboxId: mailbox.id as ID,
+				status: In([InboxEmailStatusEnum.PROCESSED, InboxEmailStatusEnum.QUARANTINED])
+			}
 		});
 		await this.dataSource
 			.getRepository(InboxMailbox)
 			.update({ id: mailbox.id as ID }, { lastMessageAt: new Date(), messageCount: total });
 	}
 }
-

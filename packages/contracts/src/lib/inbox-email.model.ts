@@ -1,4 +1,4 @@
-// cspell:ignore sendgrid
+// cspell:ignore sendgrid dmarc
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 
 /**

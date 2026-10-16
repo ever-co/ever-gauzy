@@ -1,3 +1,4 @@
+// cspell:ignore antw Antw
 /** A recipient address as a mailbox is looked up by. */
 export interface INormalizedAddress {
 	/** Lower-case, without angle brackets and without the `+tag` of the local part. */

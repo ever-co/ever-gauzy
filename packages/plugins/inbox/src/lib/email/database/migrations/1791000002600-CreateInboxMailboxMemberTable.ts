@@ -1,5 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { baseIndexes, dropTableIfExists, InboxDialect, IndexSpec, lockMigrations } from '../../../database/migration-helpers';
+import {
+	baseIndexes,
+	dropTableIfExists,
+	InboxDialect,
+	IndexSpec,
+	lockMigrations
+} from '../../../database/migration-helpers';
 import { columnTypes, createEmailTable, EmailTableForeignKey } from '../email-table';
 
 const TABLE = 'inbox_mailbox_member';

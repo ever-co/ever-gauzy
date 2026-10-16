@@ -1,3 +1,4 @@
+// cspell:ignore dmarc
 import { ID, InboxEmailDirectionEnum, InboxEmailSpamVerdictEnum, InboxEmailStatusEnum } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { MikroOrmInboxEmailRepository } from './inbox-email.repositories';

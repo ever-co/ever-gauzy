@@ -1,3 +1,4 @@
+// cspell:ignore dmarc
 import {
 	BadGatewayException,
 	BadRequestException,
@@ -94,10 +95,12 @@ export class InboxEmailService {
 				status: In([InboxEmailStatusEnum.PROCESSED, InboxEmailStatusEnum.SENT, InboxEmailStatusEnum.QUEUED]),
 				deletedAt: IsNull()
 			},
-			order: { receivedAt: 'ASC', createdAt: 'ASC' },
+			// In the order they were stored: received, then sent (a sent message has no receivedAt).
+			order: { createdAt: 'ASC' },
 			take: 200
 		});
-		return rows.map((row) => this.toEmail(row));
+		const at = (row: InboxEmail) => new Date(row.receivedAt ?? row.sentAt ?? row.createdAt ?? 0).getTime();
+		return [...rows].sort((a, b) => at(a) - at(b)).map((row) => this.toEmail(row));
 	}
 
 	/** The raw source (`.eml`, or the normalized JSON): mailbox management only. */
@@ -159,11 +162,14 @@ export class InboxEmailService {
 		const original = this.toEmail(email);
 		const to = original.replyTo.length > 0 ? original.replyTo : original.from ? [original.from] : [];
 		const others = input?.replyAll ? [...original.to, ...original.cc] : [];
-		const cc = this.addresses([...others.map((entry) => entry.address), ...(input?.cc ?? [])], [
-			mailbox.address,
-			...to.map((entry) => entry.address)
-		]);
-		const recipients = this.addresses(to.map((entry) => entry.address), [mailbox.address]);
+		const cc = this.addresses(
+			[...others.map((entry) => entry.address), ...(input?.cc ?? [])],
+			[mailbox.address, ...to.map((entry) => entry.address)]
+		);
+		const recipients = this.addresses(
+			to.map((entry) => entry.address),
+			[mailbox.address]
+		);
 		if (recipients.length === 0) throw new BadRequestException('The message has no address to reply to.');
 		const references = [...original.references, original.messageId].filter(Boolean).slice(-50);
 		return this.send(mailbox, email, {
@@ -193,7 +199,10 @@ export class InboxEmailService {
 								.find({ where: { emailId: email.id as ID }, take: 50 })
 						).map(async (row) => ({
 							filename: row.filename,
-							content: await this.storage.get({ key: row.storageKey, provider: row.storageProvider ?? '' }),
+							content: await this.storage.get({
+								key: row.storageKey,
+								provider: row.storageProvider ?? ''
+							}),
 							...(row.contentType ? { contentType: row.contentType } : {}),
 							...(row.contentId && row.isInline ? { cid: row.contentId } : {})
 						}))
@@ -252,15 +261,23 @@ export class InboxEmailService {
 					providerAccountId: mailbox.providerAccountId ?? null
 				}
 			);
-			await repository.update({ id: row.id as ID }, {
-				status: InboxEmailStatusEnum.SENT,
-				sentAt: new Date(),
-				transport: sent.transport.slice(0, 120),
-				...(sent.messageId && sent.messageId !== messageId ? { providerMessageId: sent.messageId.slice(0, 255) } : {})
-			});
+			await repository.update(
+				{ id: row.id as ID },
+				{
+					status: InboxEmailStatusEnum.SENT,
+					sentAt: new Date(),
+					transport: sent.transport.slice(0, 120),
+					...(sent.messageId && sent.messageId !== messageId
+						? { providerMessageId: sent.messageId.slice(0, 255) }
+						: {})
+				}
+			);
 		} catch (error) {
 			const reason = describeEmailSendError(error);
-			await repository.update({ id: row.id as ID }, { status: InboxEmailStatusEnum.FAILED, error: reason.slice(0, 1000) });
+			await repository.update(
+				{ id: row.id as ID },
+				{ status: InboxEmailStatusEnum.FAILED, error: reason.slice(0, 1000) }
+			);
 			this.logger.warn(`Inbox email ${row.id} was not sent: ${reason}`);
 			throw new BadGatewayException('The message could not be sent. It is kept in the thread as not sent.');
 		}
@@ -281,7 +298,8 @@ export class InboxEmailService {
 		if (!email || !mailbox || email.deletedAt) throw new NotFoundException('The message does not exist.');
 		// A quarantined message is the managers' business until it is released.
 		if (email.status === InboxEmailStatusEnum.QUARANTINED && !quarantined) {
-			if (!(await this.access.canManage(mailbox, userId))) throw new NotFoundException('The message does not exist.');
+			if (!(await this.access.canManage(mailbox, userId)))
+				throw new NotFoundException('The message does not exist.');
 			return { email, mailbox };
 		}
 		const recipient = email.inboxItemId
@@ -315,7 +333,8 @@ export class InboxEmailService {
 	private text(value: unknown, required: boolean): string {
 		const text = typeof value === 'string' ? value.trim() : '';
 		if (required && !text) throw new BadRequestException('A reply needs a text.');
-		if (text.length > MAX_OUTBOUND_TEXT) throw new BadRequestException(`A message is at most ${MAX_OUTBOUND_TEXT} characters.`);
+		if (text.length > MAX_OUTBOUND_TEXT)
+			throw new BadRequestException(`A message is at most ${MAX_OUTBOUND_TEXT} characters.`);
 		return text;
 	}
 
@@ -347,7 +366,11 @@ export class InboxEmailService {
 	}
 
 	private quote(email: IInboxEmail, asReply = true): string {
-		const from = email.from ? (email.from.name ? `${email.from.name} <${email.from.address}>` : email.from.address) : '';
+		const from = email.from
+			? email.from.name
+				? `${email.from.name} <${email.from.address}>`
+				: email.from.address
+			: '';
 		const when = email.receivedAt ? new Date(email.receivedAt).toUTCString() : '';
 		const body = (email.textBody ?? '').slice(0, 20_000);
 		if (!asReply) {

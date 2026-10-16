@@ -1,3 +1,5 @@
+<!-- cspell:ignore dmarc softfail -->
+
 # Inbox email (`@gauzy/plugin-inbox`, Phase 4)
 
 Mailboxes, inbound email and the email provider plugins of the Gauzy Inbox. Plan: `ever-co/homelab`
@@ -70,11 +72,65 @@ never re-enables an account that was disabled meanwhile.
 then nothing, and `EmailSendService` uses Custom SMTP / `MAIL_*` as before. Disabled accounts, accounts of another tenant
 and providers that do not send are never used.
 
+## Inbound: the provider webhook and the worker
+
+`POST /api/inbox/inbound/:providerId/:accountId` is `@Public()`: the provider account's own secret proves each request
+(`provider.inbound.verify`; there is no unsigned mode), with a per-client-address rate limit
+(`GAUZY_INBOX_INBOUND_REQUESTS_PER_MINUTE`, default 600). The platform route `/api/inbox/inbound/generic/platform` is
+proven with `GAUZY_INBOX_PLATFORM_SECRET` (at least 24 characters; unset, the route answers 404); the Cloudflare Email
+Worker of the platform domain (`GAUZY_INBOX_DOMAIN`) posts there.
+
+1. Unknown provider or account (or a disabled one): 404. Unproven: 401. Over `GAUZY_INBOX_MAX_MESSAGE_BYTES`: 413.
+2. Per message, only the envelope recipients (else `To` / `Cc`) that are active mailboxes **of this account** count: a
+   mailbox receives only through the account it points at (the platform route: mailboxes without an account), in the
+   account's tenant and, for an organization's account, organization; a custom-domain mailbox only once its domain is
+   verified; and only from senders its allowlist admits. The mailbox row decides the tenant, never the payload. Everything
+   else is dropped. A `+tag` is kept in the message's headers.
+3. The raw message is stored in FileStorage (`.eml`, or the normalized `.json` when the provider delivers no MIME), and
+   one `inbox_email` row per mailbox (`RECEIVED`; unique on `(mailboxId, messageId)`, so a retry is a duplicate).
+4. The answer is 202 `{ accepted, duplicates, dropped }`, and the rows go to the worker.
+
+The **worker** runs in the API process (a background task right after the webhook, plus a sweep every two minutes for a
+message whose hand-over was lost; `GAUZY_INBOX_EMAIL_WORKER=off` keeps a process out). Each message is claimed with a
+conditional update, so replicas never process one twice. It parses the stored message again, **sanitizes the HTML on the
+server** (`sanitize-html`: no scripts, handlers, forms, frames, `svg`, style sheets; links open without a referrer;
+remote images are blocked into `data-remote-src`), stores the attachments (SHA-256; active content such as HTML or SVG is
+never offered as what it claims), threads the message (`In-Reply-To` / `References`, else the normalized subject with a
+shared participant within 30 days), decides the spam verdict (authentication failures and the provider's score against
+`GAUZY_INBOX_SPAM_SUSPECT_SCORE` / `GAUZY_INBOX_SPAM_QUARANTINE_SCORE`), and creates the `EMAIL` inbox item
+(`source = EMAIL`, linked to the mailbox and the message) for the mailbox's recipients: the employee's user, or the
+members of a shared mailbox (with none: a team's members, or the organization's users whose role grants
+`INBOX_MAILBOX_MANAGE`). A quarantined message gets no item until a manager releases it. A failure is retried three times,
+then left `FAILED` with its error.
+
+## Messages (`/api/inbox/emails`, `INBOX_VIEW` plus access to the mailbox)
+
+| Method | Path                                      | What                                                                                           |
+| ------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| GET    | `/api/inbox/emails/:id`                   | The message: sanitized HTML, text, addresses, verdicts, attachment metadata                    |
+| GET    | `/api/inbox/emails/:id/thread`            | The thread's messages, oldest first                                                            |
+| GET    | `/api/inbox/emails/:id/raw`               | The raw source (mailbox managers): always a download                                           |
+| GET    | `/api/inbox/emails/:id/attachments/:aid`  | An attachment: always a download, `nosniff`, `sandbox` CSP                                     |
+| POST   | `/api/inbox/emails/:id/reply`             | `{ text, replyAll?, cc? }`: from the mailbox's address, `In-Reply-To` / `References`, threaded |
+| POST   | `/api/inbox/emails/:id/forward`           | `{ to, text?, includeAttachments? }`                                                           |
+| GET    | `/api/inbox/emails/quarantine?mailboxId=` | The mailbox's quarantine (managers)                                                            |
+| POST   | `/api/inbox/emails/:id/release`           | Release a quarantined message into the recipients' inboxes (managers)                          |
+
+A message is readable by its inbox item's recipients, the mailbox's recipients, and holders of `INBOX_MAILBOX_READ_ALL`
+in the tenant. Replies and forwards go out through the core transport seam with the mailbox's provider account first
+(then the organization's and the tenant's default outbound accounts, then Custom SMTP / `MAIL_*`), and are kept as `OUT`
+messages of the thread (`SENT`, or `FAILED` with the error).
+
 ## Tables (migrations for PostgreSQL, MySQL and SQLite)
 
-| Table                    | What                                                                                                                                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `inbox_provider_account` | `providerId`, `name`, `scope` (TENANT, ORGANIZATION), `status` (ACTIVE, ERROR, DISABLED), `isDefaultOutbound`, `config` (public JSON), `configEncrypted` (sealed secrets), `capabilities`, `lastVerifiedAt`, `lastError` |
+| Table                    | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `inbox_provider_account` | `providerId`, `name`, `scope` (TENANT, ORGANIZATION), `status` (ACTIVE, ERROR, DISABLED), `isDefaultOutbound`, `config` (public JSON), `configEncrypted` (sealed secrets), `capabilities`, `lastVerifiedAt`, `lastError`                                                                                                                                                                                                                                                                                           |
+| `inbox_mailbox`          | `address` (lower-case, unique across the deployment), `displayName`, `kind` (PLATFORM, CUSTOM_DOMAIN, FORWARDING, CONNECTED), `ownerType` (EMPLOYEE, ORGANIZATION, TEAM), `ownerEmployeeId` / `ownerTeamId`, `purpose`, `providerAccountId` (null: the platform route), `inboundSecretHash`, `senderAllowlist`, `domain` / `domainStatus` / `domainVerificationToken`, `isDefault`, `autoProvisioned`, `lastMessageAt`, `messageCount`, `settings`                                                                 |
+| `inbox_mailbox_member`   | `mailboxId`, `userId` (unique together), `role` (READER, MANAGER)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `inbox_email_thread`     | `mailboxId`, `subjectNormalized`, `participants`, `lastMessageAt`, `messageCount`                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `inbox_email`            | `mailboxId`, `threadId`, `direction`, `messageId` (unique per mailbox), `inReplyTo`, `referenceIds`, `sender` / `toAddresses` / `ccAddresses` / `bccAddresses` / `replyToAddresses` (JSON), `subject`, `textBody`, `htmlSanitized`, `snippet`, `headers` (allowlisted), `spf` / `dkim` / `dmarc`, `spamScore`, `spamVerdict`, `receivedAt`, `sentAt`, `sizeBytes`, `rawStorageKey` / `rawStorageProvider`, `status`, `providerAccountId`, `providerMessageId`, `transport`, `error`, `attemptCount`, `inboxItemId` |
+| `inbox_email_attachment` | `emailId`, `filename`, `contentType`, `size`, `sha256`, `storageKey` / `storageProvider`, `contentId`, `isInline`, `savedDocumentId`                                                                                                                                                                                                                                                                                                                                                                               |
 
 Idempotent, serialised on PostgreSQL with an advisory lock, reversible.
 
@@ -83,6 +139,11 @@ Idempotent, serialised on PostgreSQL with an advisory lock, reversible.
 `node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/inbox/jest.config.ts --runInBand email`
 
 - The form split (secrets, defaults, generated secrets, refusals), the registry and the secret box.
+- Addresses and subjects, MIME parsing, HTML sanitizing, the generic signed webhook (signature, window, single use, raw
+  and structured bodies).
+- The pipeline on a real SQLite database: the webhook's mailbox rules and idempotency, the worker (sanitize, attachments,
+  threading, quarantine and release, retries, the sweep, the EMAIL item through `InboxService`), and the message API
+  (read access, raw, reply and forward through the transport seam).
 - On a real SQLite database: the migration (up, up again, down), secrets never answered or stored in the clear, kept on
   update, scope (organization, tenant, other tenant, non-member), the connection test, one default outbound account per
   scope, and the transport order.

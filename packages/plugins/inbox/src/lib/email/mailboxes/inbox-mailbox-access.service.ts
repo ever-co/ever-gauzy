@@ -40,7 +40,11 @@ export class InboxMailboxAccessService {
 			if (owner) users.add(owner);
 		} else if (users.size === 0 && mailbox.ownerType === InboxMailboxOwnerTypeEnum.TEAM && mailbox.ownerTeamId) {
 			for (const id of await this.teamUserIds(mailbox.tenantId as ID, mailbox.ownerTeamId)) users.add(id);
-		} else if (users.size === 0 && mailbox.ownerType === InboxMailboxOwnerTypeEnum.ORGANIZATION && mailbox.organizationId) {
+		} else if (
+			users.size === 0 &&
+			mailbox.ownerType === InboxMailboxOwnerTypeEnum.ORGANIZATION &&
+			mailbox.organizationId
+		) {
 			for (const id of await this.organizationManagerIds(mailbox.tenantId as ID, mailbox.organizationId as ID)) {
 				users.add(id);
 			}
@@ -64,7 +68,8 @@ export class InboxMailboxAccessService {
 			.getRepository(InboxMailboxMember)
 			.findOne({ where: { mailboxId: mailbox.id as ID, userId, deletedAt: IsNull() } });
 		if (member?.role === InboxMailboxMemberRoleEnum.MANAGER) return true;
-		if (!RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_MANAGE) || !mailbox.organizationId) return false;
+		if (!RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_MANAGE) || !mailbox.organizationId)
+			return false;
 		const membership = await this.dataSource
 			.createQueryBuilder()
 			.select('uo.id', 'id')

@@ -1,3 +1,4 @@
+// cspell:ignore dmarc
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { verifyWebhookSignature, WEBHOOK_SIGNATURE_TOLERANCE_SECONDS } from '@gauzy/core';
 import { InboundReplayGuard } from '../../inbound/replay-guard.service';
@@ -58,7 +59,10 @@ function addresses(value: unknown): IInboundEmailAddress[] {
 
 function strings(value: unknown): string[] {
 	const list = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
-	return list.filter((entry): entry is string => typeof entry === 'string').map((entry) => entry.trim()).filter(Boolean);
+	return list
+		.filter((entry): entry is string => typeof entry === 'string')
+		.map((entry) => entry.trim())
+		.filter(Boolean);
 }
 
 /**
@@ -78,7 +82,9 @@ function strings(value: unknown): string[] {
  * "contentId", "inline" }], "envelope", "spf", "dkim", "dmarc", "spamScore" }`.
  */
 @Injectable()
-export class GenericWebhookProvider implements IEmailProviderPlugin, IInboundEmailProvider, OnModuleInit, OnModuleDestroy {
+export class GenericWebhookProvider
+	implements IEmailProviderPlugin, IInboundEmailProvider, OnModuleInit, OnModuleDestroy
+{
 	readonly id = GENERIC_PROVIDER_ID;
 	readonly displayName = 'Generic signed webhook';
 	readonly description =
@@ -113,7 +119,8 @@ export class GenericWebhookProvider implements IEmailProviderPlugin, IInboundEma
 	}
 
 	async verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<void> {
-		const secret = typeof account.config['signingSecret'] === 'string' ? (account.config['signingSecret'] as string) : '';
+		const secret =
+			typeof account.config['signingSecret'] === 'string' ? (account.config['signingSecret'] as string) : '';
 		const raw = request.headers[GENERIC_SIGNATURE_HEADER];
 		const header = Array.isArray(raw) ? raw[0] : raw;
 		if (!secret || !header || !request.rawBody?.length) {
@@ -158,7 +165,10 @@ export class GenericWebhookProvider implements IEmailProviderPlugin, IInboundEma
 			dkim: toVerdict(entry['dkim']) ?? fromResults.dkim,
 			dmarc: toVerdict(entry['dmarc']) ?? fromResults.dmarc
 		};
-		const spamScore = typeof entry['spamScore'] === 'number' && Number.isFinite(entry['spamScore']) ? entry['spamScore'] : undefined;
+		const spamScore =
+			typeof entry['spamScore'] === 'number' && Number.isFinite(entry['spamScore'])
+				? entry['spamScore']
+				: undefined;
 		const receivedAt = text(entry['receivedAt']) ? new Date(entry['receivedAt'] as string) : new Date();
 		const when = Number.isNaN(receivedAt.getTime()) ? new Date() : receivedAt;
 
@@ -175,7 +185,9 @@ export class GenericWebhookProvider implements IEmailProviderPlugin, IInboundEma
 			});
 		}
 
-		const attachments: IParsedInboundAttachment[] = (Array.isArray(entry['attachments']) ? entry['attachments'] : [])
+		const attachments: IParsedInboundAttachment[] = (
+			Array.isArray(entry['attachments']) ? entry['attachments'] : []
+		)
 			.filter(isObject)
 			.map((attachment) => {
 				const content = Buffer.from(text(attachment['content']) ?? '', 'base64');
@@ -203,11 +215,15 @@ export class GenericWebhookProvider implements IEmailProviderPlugin, IInboundEma
 		const html = text(entry['html']);
 		const inReplyTo = messageIdOf(entry['inReplyTo']);
 		const sizeBytes =
-			(textBody?.length ?? 0) + (html?.length ?? 0) + attachments.reduce((sum, attachment) => sum + attachment.size, 0);
+			(textBody?.length ?? 0) +
+			(html?.length ?? 0) +
+			attachments.reduce((sum, attachment) => sum + attachment.size, 0);
 		return {
 			messageId:
 				messageIdOf(entry['messageId']) ??
-				derivedMessageId(JSON.stringify([from?.address, subject, textBody, html, envelopeRecipients, entry['receivedAt']])),
+				derivedMessageId(
+					JSON.stringify([from?.address, subject, textBody, html, envelopeRecipients, entry['receivedAt']])
+				),
 			...(from ? { from } : {}),
 			to: addresses(entry['to']),
 			cc: addresses(entry['cc']),

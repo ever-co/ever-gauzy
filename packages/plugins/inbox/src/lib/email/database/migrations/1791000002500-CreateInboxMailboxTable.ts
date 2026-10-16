@@ -1,5 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { baseIndexes, dropTableIfExists, InboxDialect, IndexSpec, lockMigrations } from '../../../database/migration-helpers';
+import {
+	baseIndexes,
+	dropTableIfExists,
+	InboxDialect,
+	IndexSpec,
+	lockMigrations
+} from '../../../database/migration-helpers';
 import { columnTypes, createEmailTable, EmailTableForeignKey } from '../email-table';
 
 const TABLE = 'inbox_mailbox';
@@ -41,7 +47,12 @@ export const INBOX_MAILBOX_INDEXES: IndexSpec[] = [
 ];
 
 export const INBOX_MAILBOX_FOREIGN_KEYS: EmailTableForeignKey[] = [
-	{ name: `FK_${PREFIX}_provider_account`, column: 'providerAccountId', references: 'inbox_provider_account', onDelete: 'SET NULL' }
+	{
+		name: `FK_${PREFIX}_provider_account`,
+		column: 'providerAccountId',
+		references: 'inbox_provider_account',
+		onDelete: 'SET NULL'
+	}
 ];
 
 /**

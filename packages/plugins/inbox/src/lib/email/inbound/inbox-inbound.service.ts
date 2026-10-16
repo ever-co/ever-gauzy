@@ -1,3 +1,4 @@
+// cspell:ignore dmarc
 import {
 	Inject,
 	Injectable,
@@ -32,7 +33,9 @@ import { serializeParsedMessage } from './mime';
 
 /** The JSON array text of a value (`null` for nothing). */
 const json = (value: unknown): string | null =>
-	value === undefined || value === null || (Array.isArray(value) && value.length === 0) ? null : JSON.stringify(value);
+	value === undefined || value === null || (Array.isArray(value) && value.length === 0)
+		? null
+		: JSON.stringify(value);
 
 /** A message's mailbox scope, after the account check. */
 interface MatchedMailbox {
@@ -74,7 +77,11 @@ export class InboxInboundService {
 		return getInboxEmailConfig();
 	}
 
-	async receive(providerId: string, accountId: string, request: IInboundWebhookRequest): Promise<IInboxInboundResult> {
+	async receive(
+		providerId: string,
+		accountId: string,
+		request: IInboundWebhookRequest
+	): Promise<IInboxInboundResult> {
 		const config = this.config();
 		const provider = this.providers.get(providerId);
 		if (!provider?.inbound || !provider.capabilities.inbound) {
@@ -89,7 +96,9 @@ export class InboxInboundService {
 			await provider.inbound.verify(request, account);
 		} catch (error) {
 			this.logger.warn(`Refused an unverified ${providerId} delivery for account ${accountId}.`);
-			throw error instanceof UnauthorizedException ? error : new UnauthorizedException('The delivery is not verified.');
+			throw error instanceof UnauthorizedException
+				? error
+				: new UnauthorizedException('The delivery is not verified.');
 		}
 
 		const messages = await provider.inbound.parse(request, account);
@@ -110,7 +119,11 @@ export class InboxInboundService {
 	}
 
 	/** The account a request is for, with its configuration decrypted; 404 for anything that is not one. */
-	private async account(providerId: string, accountId: string, config: InboxEmailConfig): Promise<IProviderAccountContext> {
+	private async account(
+		providerId: string,
+		accountId: string,
+		config: InboxEmailConfig
+	): Promise<IProviderAccountContext> {
 		if (providerId === GENERIC_PROVIDER_ID && accountId === PLATFORM_ACCOUNT_ID) {
 			if (!config.platformSecret) {
 				// The platform route is shut until the operator sets its secret.
@@ -241,7 +254,10 @@ export class InboxInboundService {
 		for (const recipient of recipients) {
 			const mailbox = byAddress.get(recipient.address);
 			if (!mailbox || !this.accepts(mailbox, account)) continue;
-			if (mailbox.kind === InboxMailboxKindEnum.CUSTOM_DOMAIN && mailbox.domainStatus !== InboxMailboxDomainStatusEnum.VERIFIED) {
+			if (
+				mailbox.kind === InboxMailboxKindEnum.CUSTOM_DOMAIN &&
+				mailbox.domainStatus !== InboxMailboxDomainStatusEnum.VERIFIED
+			) {
 				continue;
 			}
 			if (!isSenderAllowed(this.allowlist(mailbox), sender)) continue;
@@ -258,7 +274,10 @@ export class InboxInboundService {
 		if (mailbox.providerAccountId !== account.id || mailbox.tenantId !== account.tenantId) {
 			return false;
 		}
-		return account.scope !== InboxProviderAccountScopeEnum.ORGANIZATION || mailbox.organizationId === account.organizationId;
+		return (
+			account.scope !== InboxProviderAccountScopeEnum.ORGANIZATION ||
+			mailbox.organizationId === account.organizationId
+		);
 	}
 
 	private allowlist(mailbox: InboxMailbox): string[] {

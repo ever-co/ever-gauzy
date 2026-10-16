@@ -15,9 +15,20 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsBoolean, IsEmail, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID, IInboxEmailForwardInput, IInboxEmailReplyInput, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import {
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
 import { INBOX_ROUTE_PREFIX } from '../../inbox.constants';
-import { InboxEmailDownload, InboxEmailService, MAX_OUTBOUND_RECIPIENTS, MAX_OUTBOUND_TEXT } from './inbox-email.service';
+import {
+	InboxEmailDownload,
+	InboxEmailService,
+	MAX_OUTBOUND_RECIPIENTS,
+	MAX_OUTBOUND_TEXT
+} from './inbox-email.service';
 
 export class InboxEmailReplyDTO implements IInboxEmailReplyInput {
 	@IsString()

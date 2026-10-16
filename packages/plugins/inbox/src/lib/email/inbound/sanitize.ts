@@ -1,3 +1,4 @@
+// cspell:ignore cellspacing cellpadding bgcolor nowrap valign
 import * as sanitizeHtml from 'sanitize-html';
 
 /** CSS values without `url(...)`, `expression(...)`, `@import` or escapes: colours, lengths, keywords. */
@@ -147,7 +148,10 @@ export const MAX_HTML_LENGTH = 2 * 1024 * 1024;
 
 /** Inbound email HTML, sanitized for storage and display. */
 export function sanitizeEmailHtml(html: string): string {
-	return sanitizeHtml(html.length > MAX_HTML_LENGTH ? html.slice(0, MAX_HTML_LENGTH) : html, EMAIL_HTML_SANITIZE_OPTIONS);
+	return sanitizeHtml(
+		html.length > MAX_HTML_LENGTH ? html.slice(0, MAX_HTML_LENGTH) : html,
+		EMAIL_HTML_SANITIZE_OPTIONS
+	);
 }
 
 /** A numeric character reference's character (a space for an invalid one). */
@@ -160,7 +164,11 @@ export function textFromHtml(html: string): string {
 	const marked = (html.length > MAX_HTML_LENGTH ? html.slice(0, MAX_HTML_LENGTH) : html)
 		.replace(/<\s*br\s*\/?>/gi, '\n')
 		.replace(/<\/\s*(p|div|tr|li|h[1-6]|blockquote|table)\s*>/gi, '\n');
-	const stripped = sanitizeHtml(marked, { allowedTags: [], allowedAttributes: {}, nonTextTags: ['style', 'script', 'title', 'head'] });
+	const stripped = sanitizeHtml(marked, {
+		allowedTags: [],
+		allowedAttributes: {},
+		nonTextTags: ['style', 'script', 'title', 'head']
+	});
 	return stripped
 		.replace(/&(#\d+|#x[0-9a-f]+|[a-z]+|#39);/gi, (match, name: string) => {
 			const key = name.toLowerCase();
@@ -169,6 +177,7 @@ export function textFromHtml(html: string): string {
 			if (key.startsWith('#')) return codePoint(Number.parseInt(key.slice(1), 10));
 			return match;
 		})
+		.replace(/ /g, ' ')
 		.replace(/[ \t]+\n/g, '\n')
 		.replace(/\n{3,}/g, '\n\n')
 		.trim();

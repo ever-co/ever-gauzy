@@ -37,7 +37,15 @@ export const ALLOWLISTED_HEADERS = new Set([
 ]);
 
 const MAX_HEADER_VALUE = 1000;
-const VERDICTS: readonly InboundAuthVerdict[] = ['pass', 'fail', 'softfail', 'neutral', 'none', 'temperror', 'permerror'];
+const VERDICTS: readonly InboundAuthVerdict[] = [
+	'pass',
+	'fail',
+	'softfail',
+	'neutral',
+	'none',
+	'temperror',
+	'permerror'
+];
 
 /** A verdict word, or `undefined`. */
 export function toVerdict(value: unknown): InboundAuthVerdict | undefined {
@@ -70,7 +78,9 @@ export function verdictsFromAuthenticationResults(header: unknown): {
 }
 
 /** The addresses of a parsed address header (groups flattened). */
-export function addressesOf(value: MailparserAddressObject | MailparserAddressObject[] | undefined): IInboundEmailAddress[] {
+export function addressesOf(
+	value: MailparserAddressObject | MailparserAddressObject[] | undefined
+): IInboundEmailAddress[] {
 	const objects = value === undefined ? [] : Array.isArray(value) ? value : [value];
 	const out: IInboundEmailAddress[] = [];
 	const visit = (entry: MailparserAddress) => {
@@ -111,7 +121,10 @@ export function messageIdOf(value: unknown): string | undefined {
 /** The message ids of a `References` value (a string of ids, or a list). */
 export function referencesOf(value: unknown): string[] {
 	const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/\s+/) : [];
-	return raw.map(messageIdOf).filter((id): id is string => !!id).slice(-50);
+	return raw
+		.map(messageIdOf)
+		.filter((id): id is string => !!id)
+		.slice(-50);
 }
 
 /** A message id derived from the content, for a message that carries none (so a retry still deduplicates). */
@@ -131,7 +144,14 @@ export async function parseMimeMessage(
 	extra: Partial<
 		Pick<
 			ParsedInboundEmail,
-			'envelopeRecipients' | 'envelopeFrom' | 'receivedAt' | 'spf' | 'dkim' | 'dmarc' | 'spamScore' | 'providerMessageId'
+			| 'envelopeRecipients'
+			| 'envelopeFrom'
+			| 'receivedAt'
+			| 'spf'
+			| 'dkim'
+			| 'dmarc'
+			| 'spamScore'
+			| 'providerMessageId'
 		>
 	> = {}
 ): Promise<ParsedInboundEmail> {
@@ -183,7 +203,10 @@ export async function parseMimeMessage(
 /** An attachment name safe to store and to offer for download (no path, no control characters, ≤ 255). */
 export function safeFilename(name: unknown): string {
 	const text = typeof name === 'string' ? name : '';
-	const base = text.replace(/^.*[\\/]/, '').replace(/[\u0000-\u001f\u007f"<>|:*?]/g, '_').trim();
+	const base = text
+		.replace(/^.*[\\/]/, '')
+		.replace(/[\u0000-\u001f\u007f"<>|:*?]/g, '_')
+		.trim();
 	return (base || 'attachment').slice(0, 255);
 }
 
@@ -213,7 +236,9 @@ export function deserializeParsedMessage(buffer: Buffer): ParsedInboundEmail {
 		throw new Error('The stored message is not in a format this version reads.');
 	}
 	const date = (value: unknown) => (typeof value === 'string' || value instanceof Date ? new Date(value) : undefined);
-	const attachments = Array.isArray(data['attachments']) ? (data['attachments'] as Array<Record<string, unknown>>) : [];
+	const attachments = Array.isArray(data['attachments'])
+		? (data['attachments'] as Array<Record<string, unknown>>)
+		: [];
 	const sentAt = date(data['sentAt']);
 	return {
 		...(data as unknown as ParsedInboundEmail),
