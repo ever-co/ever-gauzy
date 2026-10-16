@@ -130,6 +130,27 @@ type UserError {
 }
 
 """
+One item's outcome in a batch that creates rows: the row the item created, or the item's own failure.
+
+Shared by every create-only batch field (`bulkCreateTags`, `bulkCreateTasks`, …): each applies its items
+through the resource's single-item create, so an outcome has the same shape whatever the resource, and the
+index is part of it because a batch is answered in one piece — a caller that sent twenty items reads which
+of them applied without matching rows back to its request by hand.
+"""
+type BulkCreateItemResult {
+	"The item's position in the request."
+	index: Int!
+	"Whether the item applied."
+	ok: Boolean!
+	"The row the item created, when it applied."
+	id: ID
+	"The resource that changed."
+	resource: String
+	"Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to."
+	error: UserError
+}
+
+"""
 How far a durable multi-step operation has come.
 """
 enum OperationStatus {

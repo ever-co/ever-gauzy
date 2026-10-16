@@ -1,4 +1,5 @@
 import { FulfillmentResolver } from './fulfillment.resolver';
+import { FulfillmentSubscriptionResolver } from './fulfillment-subscription.resolver';
 import { ShippingOptionResolver } from './shipping-option.resolver';
 import { ShippingProfileVariantResolver } from './shipping-profile-variant.resolver';
 
@@ -11,8 +12,9 @@ import { ShippingProfileVariantResolver } from './shipping-profile-variant.resol
  */
 export const fulfillmentResolvers = [
 	FulfillmentResolver,
+	FulfillmentSubscriptionResolver,
 	ShippingOptionResolver,
 	ShippingProfileVariantResolver
 ];
 
-export { FulfillmentResolver, ShippingOptionResolver, ShippingProfileVariantResolver };
+export { FulfillmentResolver, FulfillmentSubscriptionResolver, ShippingOptionResolver, ShippingProfileVariantResolver };

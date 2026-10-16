@@ -6,6 +6,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { FieldVisibility } from '../api/field-visibility.service';
 import { CommandHandlers } from './commands/handlers';
 import { User } from './user.entity';
 import { UserService } from './user.service';
@@ -52,10 +54,14 @@ import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 		UserService,
 		// The GraphQL view of the same resource.
 		UserResolver,
+		// Both surfaces apply a batch of users with the platform's executor, which authorises it through the
+		// platform's field visibility.
+		BulkExecutor,
+		FieldVisibility,
 		TypeOrmUserRepository,
 		MikroOrmUserRepository,
 		...CommandHandlers
 	],
-	exports: [UserService, TypeOrmUserRepository, MikroOrmUserRepository, CqrsModule, FactoryResetModule]
+	exports: [UserService, TypeOrmUserRepository, MikroOrmUserRepository, CqrsModule, FactoryResetModule, BulkExecutor]
 })
 export class UserModule {}

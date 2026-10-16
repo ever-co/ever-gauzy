@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertAllInCallerScope } from '../catalog.scope';
 import { Collection } from '../collection/collection.entity';
 import { CollectionVariant } from './collection-variant.entity';
 import { MikroOrmCollectionVariantRepository } from './repository/mikro-orm-collection-variant.repository';
@@ -69,6 +70,8 @@ export class CollectionVariantService extends TenantAwareCrudService<CollectionV
 		const tenantId = RequestContext.currentTenantId();
 
 		await this.assertCollectionInScope(collectionId);
+		// The members are the caller's variants too (SEC-D-04): inserted below without the core foreign-row check.
+		await assertAllInCallerScope(this.typeOrmCollectionVariantRepository.manager, ProductVariant, variantIds, 'variants');
 
 		const existing = await this.typeOrmCollectionVariantRepository.find({
 			where: { collectionId, ...callerScope() }

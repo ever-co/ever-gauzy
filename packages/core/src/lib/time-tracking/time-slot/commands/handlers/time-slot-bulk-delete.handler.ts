@@ -135,70 +135,36 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	/**
 	 * Conditionally deletes time slots based on associated time logs.
 	 *
-	 * If a time slot only has one time log and that time log matches the provided one, the time slot is deleted.
+	 * A time slot is deleted when the provided time log is the ONLY time log that holds it; a slot another log still
+	 * holds is that log's time and stays, and a slot no log holds is not this log's to delete. Every slot of the log
+	 * is considered — the loop used to return after the first one it removed, leaving the rest of the log's slots
+	 * behind, and it read `timeLogs[0].id` before checking the slot had a log at all.
 	 *
 	 * @param timeSlots - The time slots to conditionally delete.
 	 * @param timeLog - The specific time log to check for deletion.
 	 * @param forceDelete - A boolean flag to indicate whether to hard delete or soft delete.
-	 * @returns A promise that resolves to true after deletion.
+	 * @returns A promise that resolves to the deleted time slots.
 	 */
 	private async conditionalDeleteTimeSlots(
 		timeSlots: ITimeSlot[],
 		timeLog: ITimeLog,
 		forceDelete: boolean
-	): Promise<ITimeSlot> {
-		console.log(`conditional ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+	): Promise<ITimeSlot[]> {
+		const deletable = timeSlots.filter(
+			({ timeLogs = [] }) => timeLogs.length === 1 && timeLogs[0]?.id === timeLog.id
+		);
 
-		// Loop through each time slot
-		for await (const timeSlot of timeSlots) {
-			const { timeLogs = [] } = timeSlot;
-			const [firstTimeLog] = timeLogs;
+		console.log(
+			(forceDelete ? chalk.red : chalk.yellow)(
+				`--------------------${forceDelete ? 'hard' : 'soft'} removing time slots--------------------`
+			),
+			deletable.map((timeSlot) => timeSlot.id)
+		);
 
-			console.log('Matching TimeLog ID:', firstTimeLog.id === timeLog.id);
-			console.log('TimeSlots Ids Will Be Deleted:', timeSlot.id);
-
-			if (timeLogs.length === 1) {
-				const [firstTimeLog] = timeLogs;
-				if (firstTimeLog.id === timeLog.id) {
-					// If the time slot has only one time log and it matches the provided time log, delete the time slot
-					switch (this.ormType) {
-						case MultiORMEnum.MikroORM: {
-							const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-							if (forceDelete) {
-								console.log(
-									chalk.red('--------------------hard removing time slot--------------------'),
-									timeSlot.id
-								);
-								await em.removeAndFlush(timeSlot);
-								return timeSlot;
-							} else {
-								console.log(
-									chalk.yellow('--------------------soft removing time slot--------------------'),
-									timeSlot.id
-								);
-								(timeSlot as any).deletedAt = new Date();
-								await em.persistAndFlush(timeSlot);
-								return timeSlot;
-							}
-						}
-						case MultiORMEnum.TypeORM:
-						default:
-							if (forceDelete) {
-								console.log(
-									chalk.red('--------------------hard removing time slot--------------------'),
-									timeSlot.id
-								);
-								return await this.typeOrmTimeSlotRepository.remove(timeSlot);
-							} else {
-								console.log(
-									chalk.yellow('--------------------soft removing time slot--------------------'),
-									timeSlot.id
-								);
-								return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
-							}
-					}
-				}
-			}
+		if (isEmpty(deletable)) {
+			return [];
 		}
+
+		return await this.bulkDeleteTimeSlots(deletable, forceDelete);
 	}
 }

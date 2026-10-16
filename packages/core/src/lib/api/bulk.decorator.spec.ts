@@ -54,6 +54,39 @@ describe('the bulk operation declaration', () => {
 			});
 		});
 
+		it('carries a list of grants through to the executor as the route stated it', () => {
+			class AnyOf {
+				@BulkOperation({
+					resource: 'tag',
+					permission: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD]
+				})
+				async bulk(): Promise<void> {
+					return undefined;
+				}
+			}
+
+			// The list is the route's own `@Permissions(...)` list, read any-of by the executor — so it
+			// reaches the executor whole, in the order it was declared.
+			expect(bulkOptionsOf(AnyOf, 'bulk')).toEqual({
+				resource: 'tag',
+				cap: undefined,
+				permission: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD]
+			});
+		});
+
+		it('carries a route’s declaration that it cannot apply a batch atomically to the executor', () => {
+			class NotAtomic {
+				@BulkOperation({ resource: 'tag', maxItems: 200, atomic: false })
+				async bulk(): Promise<void> {
+					return undefined;
+				}
+			}
+
+			expect(bulkOptionsOf(NotAtomic, 'bulk')).toEqual({ resource: 'tag', cap: 200, atomic: false });
+			// Control: a route that says nothing keeps the executor's default, which is that it can.
+			expect(bulkOptionsOf(Declared, 'bulk')).not.toHaveProperty('atomic');
+		});
+
 		it('refuses a route that accepts a batch and declares none', () => {
 			// A programming mistake rather than a request-level failure, and it must be loud: a batch run
 			// without a declared resource names its items in no error a client can act on.

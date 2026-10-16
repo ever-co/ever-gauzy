@@ -28,11 +28,14 @@ describe('MarketplaceStreamedEvents', () => {
 		expect(catalogue.names()).toEqual([
 			'seller.activated',
 			'seller.created',
+			'seller.offboarding-started',
 			'seller.rejected',
+			'seller.submitted',
 			'seller.suspended',
 			'seller.transaction.recorded',
 			'seller.transaction.reversed',
 			'seller.transaction.settleable',
+			'seller.updated',
 			'seller.verified',
 			'seller_offering.created',
 			'seller_offering.withdrawn',
@@ -56,7 +59,7 @@ describe('MarketplaceStreamedEvents', () => {
 		const catalogue = new SubscriptionCatalogue();
 
 		expect(() => new MarketplaceStreamedEvents(catalogue).onModuleInit()).not.toThrow();
-		expect(catalogue.size).toBe(16);
+		expect(catalogue.size).toBe(19);
 	});
 
 	it('declares only names the package really appends to the outbox', () => {

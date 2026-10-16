@@ -152,9 +152,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			organizationId: RequestContext.currentOrganizationId()
 		} as Partial<SellerSettlement>);
 
-		const saved = await this.typeOrmSellerSettlementRepository.save(settlement as SellerSettlement);
-
-		await this.emit(saved, 'seller_settlement.recorded', {
+		return await this.saveAndEmit(settlement as SellerSettlement, 'seller_settlement.recorded', (saved) => ({
 			providerKey: saved.providerKey,
 			grossAmount: saved.grossAmount,
 			commissionAmount: saved.commissionAmount,
@@ -163,9 +161,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			periodStart: saved.periodStart,
 			periodEnd: saved.periodEnd,
 			discrepancyAmount: saved.discrepancyAmount
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -254,9 +250,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		settlement.closedAt = new Date();
 		settlement.note = note ?? settlement.note;
 
-		const saved = await this.typeOrmSellerSettlementRepository.save(settlement);
-
-		await this.emit(saved, 'seller_settlement.closed', {
+		return await this.saveAndEmit(settlement, 'seller_settlement.closed', (saved) => ({
 			providerKey: saved.providerKey,
 			netAmount: saved.netAmount,
 			closedAt: saved.closedAt,
@@ -265,9 +259,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			// `0`, `-0.000000` and a column the provider left null are one answer, and no monetary decision
 			// in this package is made by parsing a decimal into a double.
 			reconciled: compareDecimalStrings(saved.discrepancyAmount ?? '0', '0') === 0
-		});
-
-		return saved;
+		}));
 	}
 
 	/** Marks a settlement disputed, which requires a reason. */
@@ -349,17 +341,36 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		return platformNet.subtract(reportedNet);
 	}
 
-	/** Writes one outbox row for a settlement state change. */
-	private async emit(settlement: SellerSettlement, name: string, data: Record<string, any>): Promise<void> {
-		await this.typeOrmSellerSettlementRepository.manager.transaction(async (manager) => {
+	/**
+	 * Saves a settlement and appends the fact that describes the save, in one transaction.
+	 *
+	 * The append used to run in a transaction of its own after the save had committed, so an append that
+	 * failed left a recorded or closed settlement nothing announced. The two now commit together or not at
+	 * all: a failing append rolls the save back, and a save that fails appends nothing.
+	 *
+	 * @param settlement The settlement in the state the operation left it.
+	 * @param name The event name.
+	 * @param data The payload beyond the settlement's identity, built from the row as it was saved.
+	 * @returns The saved settlement.
+	 */
+	private async saveAndEmit(
+		settlement: SellerSettlement,
+		name: string,
+		data: (saved: SellerSettlement) => Record<string, any>
+	): Promise<SellerSettlement> {
+		return await this.typeOrmSellerSettlementRepository.manager.transaction(async (manager) => {
+			const saved = await manager.save(SellerSettlement, settlement);
+
 			await this.outbox.append(manager, {
 				name,
 				aggregateType: 'SELLER_SETTLEMENT',
-				aggregateId: settlement.id as ID,
-				data: { settlementId: settlement.id, sellerId: settlement.sellerId, currency: settlement.currency, ...data },
-				tenantId: settlement.tenantId,
-				organizationId: settlement.organizationId
+				aggregateId: saved.id as ID,
+				data: { settlementId: saved.id, sellerId: saved.sellerId, currency: saved.currency, ...data(saved) },
+				tenantId: saved.tenantId,
+				organizationId: saved.organizationId
 			});
+
+			return saved;
 		});
 	}
 }
