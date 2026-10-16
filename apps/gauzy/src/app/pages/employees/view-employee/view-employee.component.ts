@@ -125,6 +125,8 @@ interface IProjectsPanel {
 	stats: IRankedRow[];
 	/** Null when the membership request failed — membership is then unknown. */
 	assigned: IOrganizationProject[] | null;
+	/** True when some project times could not be read, so a missing time is not "no time". */
+	partial: boolean;
 }
 
 /** The views of the Assigned tasks table, each with its count on the tab. */
@@ -228,7 +230,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	public previousCounts: Loadable<ICountsStatistics | null> = Loadable.empty(null);
 	public hours: Loadable<IEmployeeHoursDay[]> = Loadable.empty([]);
 	/** Every project's time in the period, with the projects the employee is a member of. */
-	public projects: Loadable<IProjectsPanel> = Loadable.empty({ stats: [], assigned: [] });
+	public projects: Loadable<IProjectsPanel> = Loadable.empty({ stats: [], assigned: [], partial: false });
 	public topTasks: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public apps: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public tasks: Loadable<IAssignedTaskRow[]> = Loadable.empty([]);
@@ -619,7 +621,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	 * Most worked first; projects with no time keep their place at the end.
 	 */
 	get projectOverview(): IProjectOverviewRow[] {
-		const panel = this.projects.value || { stats: [], assigned: [] };
+		const panel = this.projects.value || { stats: [], assigned: [], partial: false };
 		const stats = panel.stats || [];
 		const assigned = panel.assigned || [];
 		// Membership is only known when the membership list was read.
@@ -724,6 +726,11 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	 * belong to, the overall top five, and the projects of the tasks they worked
 	 * on — in groups of five, each of which the endpoint returns whole. A failed
 	 * membership read leaves membership unknown rather than empty.
+	 *
+	 * Every read stands on its own: a failed one adds nothing, and the panel
+	 * keeps what the others returned — flagged `partial`, so a project whose
+	 * time could not be read is not shown as having none. The panel only fails
+	 * when nothing at all could be read.
 	 */
 	private async fetchProjectsPanel(
 		request: ITimeLogFilters & ITimeLogTodayFilters,
@@ -732,7 +739,8 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	): Promise<IProjectsPanel> {
 		const { organizationId, tenantId } = this.employee;
 		const [top, assigned, tasks] = await Promise.all([
-			this._statisticsService.getProjects(request),
+			// Only adds project ids to read: a failure leaves the list without them.
+			this._statisticsService.getProjects(request).catch(() => null),
 			this._projectsService.getAllByEmployee(employeeId, { organizationId, tenantId }).catch(() => null),
 			taskStatistics.catch(() => [] as ITasksStatistics[])
 		]);
@@ -745,18 +753,26 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		const groups: string[][] = [];
 		const all = [...ids];
 		for (let i = 0; i < all.length; i += PROJECT_STATS_GROUP) groups.push(all.slice(i, i + PROJECT_STATS_GROUP));
-		const totals = (
-			await Promise.all(
-				groups.map((projectIds) => this._statisticsService.getProjects({ ...request, projectIds }))
+		// Each group on its own: a failed one contributes nothing, the others stay.
+		const batches = await Promise.all(
+			groups.map((projectIds) =>
+				this._statisticsService.getProjects({ ...request, projectIds }).catch(() => null)
 			)
-		).flat();
+		);
+		const totals = batches.flatMap((batch) => batch || []);
+		const failedBatches = batches.filter((batch) => batch === null).length;
+
+		// Nothing could be read at all: the panel has nothing true to show.
+		if (top === null && assigned === null && (groups.length === 0 || failedBatches === groups.length)) {
+			throw new Error('The projects panel could not be read');
+		}
 
 		const stats = this.rank(
 			totals,
 			(project: IProjectsStatistics) => ({ id: project.id, name: project.name }),
 			Infinity
 		);
-		return { stats, assigned: assigned || null };
+		return { stats, assigned: assigned || null, partial: top === null || failedBatches > 0 };
 	}
 
 	/** The period's latest time slots for this employee, newest first, with their screenshots. */
