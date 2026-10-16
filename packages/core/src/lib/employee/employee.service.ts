@@ -535,7 +535,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param withUser
 	 * @param humansOnly - Leave agent employees (`kind = 'agent'`) out. The statistics and split-expense reads
 	 * pass `true`: an agent earns no income, books no expense and takes no share of a split expense. The
-	 * pickers and selectors that read this list keep the default.
+	 * pickers and selectors that read this list keep the default, which INCLUDES agents: an agent employee has
+	 * no organization membership of its user (it never signs in) and no employment start date unless one was
+	 * set, so for an agent those two conditions are not required — it is listed so it can be assigned.
+	 * People are filtered exactly as before.
 	 * @returns
 	 */
 	async findWorkingEmployees(
@@ -566,7 +569,19 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							moment.utc(forRange.startDate),
 							moment.utc(forRange.endDate)
 						);
-						mWhere.startedWorkOn = { $lte: endDate };
+						if (humansOnly) {
+							mWhere.startedWorkOn = { $lte: endDate };
+						} else {
+							// An agent with no employment start date is working (see the method's documentation)
+							mWhere.$and = [
+								{
+									$or: [
+										{ startedWorkOn: { $lte: endDate } },
+										{ kind: EmployeeKindEnum.AGENT, startedWorkOn: null }
+									]
+								}
+							];
+						}
 						mWhere.$or = [{ endWork: null }, { endWork: { $gte: startDate } }];
 					}
 
@@ -586,7 +601,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				case MultiORMEnum.TypeORM:
 					const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
 					query.innerJoin(`${query.alias}.user`, 'user');
-					query.innerJoin(`user.organizations`, 'organizations');
+					// A person needs an organization membership of its user; an agent (which never signs in) has
+					// none, so it is not required for one unless the read is for people only.
+					if (humansOnly) {
+						query.innerJoin(`user.organizations`, 'organizations');
+					} else {
+						query.leftJoin(`user.organizations`, 'organizations');
+					}
 					query.setFindOptions({
 						select: {
 							id: true,
@@ -620,8 +641,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					});
 					// Set up the where clause using the provided filter function
 					query.where((qb: SelectQueryBuilder<Employee>) => {
-						this.getFilterQuery(qb, organizationId, forRange, humansOnly);
+						this.getFilterQuery(qb, organizationId, forRange, humansOnly, !humansOnly);
 					});
+					if (!humansOnly) {
+						query.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.where(p(`"organizations"."id" IS NOT NULL`));
+								web.orWhere(p(`"${query.alias}"."kind" = :agentKind`), {
+									agentKind: EmployeeKindEnum.AGENT
+								});
+							})
+						);
+					}
 					const [items, total] = await query.getManyAndCount();
 					return { items, total };
 
@@ -705,12 +736,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param organizationId - The organization ID to filter by.
 	 * @param forRange - An object representing a date range (IDateRangePicker) or any other type.
 	 * @param humansOnly - Leave agent employees (`kind = 'agent'`) out.
+	 * @param agentsWithoutStartWork - Count an agent employee with no employment start date as working in the
+	 * range (the pickers' read, see {@link findWorkingEmployees}).
 	 */
 	getFilterQuery(
 		qb: SelectQueryBuilder<Employee>,
 		organizationId: string,
 		forRange: IDateRangePicker | any,
-		humansOnly: boolean = false
+		humansOnly: boolean = false,
+		agentsWithoutStartWork: boolean = false
 	) {
 		// Retrieve the current tenant ID from the RequestContext
 		const tenantId = RequestContext.currentTenantId();
@@ -748,6 +782,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
 							startedWorkOn: endDate
 						});
+						if (agentsWithoutStartWork) {
+							web.orWhere(
+								p(`("${qb.alias}"."kind" = :agentKind AND "${qb.alias}"."startedWorkOn" IS NULL)`),
+								{ agentKind: EmployeeKindEnum.AGENT }
+							);
+						}
 					})
 				);
 
