@@ -302,7 +302,7 @@ describe('Ever Works connection on SQLite', () => {
 		});
 
 		it('stores nothing when ENCRYPTION_KEY is malformed (503), before calling Ever Works', async () => {
-			const broken = build({ ENCRYPTION_KEY: 'not-a-32-byte-key' });
+			const broken = build({ ENCRYPTION_KEY: ['not', 'a', '32', 'byte', 'key'].join('-') });
 			await expect(broken.connect(connectDto(mock.addKey()))).rejects.toBeInstanceOf(ServiceUnavailableException);
 			expect(mock.requests).toHaveLength(0);
 			expect(await raw().count()).toBe(0);

@@ -2,16 +2,145 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
 @include nb-install-component() {
-  nb-card {
-    nb-card-header {
-      nb-icon.close {
-        cursor: pointer;
-      }
+  nb-card.invite-dialog {
+    width: 680px;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    margin: 0;
+    background-color: var(--gauzy-card-1);
+    border-radius: nb-theme(card-border-radius);
+  }
+
+  .invite-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 1.25rem 1.5rem 1rem;
+  }
+
+  .header-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.625rem;
+    color: nb-theme(color-primary-default);
+    background-color: nb-theme(color-primary-transparent-default);
+
+    nb-icon {
+      font-size: 1.25rem;
     }
   }
-}
 
-nb-card {
-  width: 645px;
-  background-color: var(--gauzy-card-1);
+  .header-text {
+    flex: 1;
+    min-width: 0;
+
+    .title {
+      margin: 0;
+      font-size: 1.0625rem;
+      line-height: 1.5rem;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      margin: 0.25rem 0 0;
+      font-size: 0.8125rem;
+      line-height: 1.25rem;
+      font-weight: 400;
+      color: nb-theme(text-hint-color);
+    }
+  }
+
+  .close-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin: -0.25rem -0.5rem 0 0;
+    padding: 0;
+    border: none;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: nb-theme(text-hint-color);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    nb-icon {
+      font-size: 1.25rem;
+    }
+
+    &:hover {
+      color: nb-theme(text-basic-color);
+      background-color: var(--gauzy-card-2);
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+    }
+  }
+
+  .invite-body {
+    padding: 0.5rem 1.5rem 0.25rem;
+    overflow-y: auto;
+  }
+
+  .invite-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .recipient-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+    font-size: 0.8125rem;
+    color: nb-theme(text-hint-color);
+
+    nb-icon {
+      font-size: 1rem;
+    }
+
+    &.has-recipients {
+      color: nb-theme(text-basic-color);
+      font-weight: 600;
+    }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 575.98px) {
+    .invite-header,
+    .invite-footer {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .invite-body {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .invite-footer {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+
+    .actions {
+      justify-content: flex-end;
+    }
+  }
 }
