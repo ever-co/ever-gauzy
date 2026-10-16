@@ -12,6 +12,7 @@ import { debugInDevelopment } from './../../../../logger';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
+import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
@@ -117,28 +118,19 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			if (moved) {
 				// A moved log leaves the previous employee as deleting it would: the slots only it held go, a slot
 				// another of their logs still holds stays theirs.
-				await this.releaseSlotsOfMovedLog(
+				await this.releaseTimeSlots(
 					timeLog,
 					tenantId,
 					organizationId,
 					previousEmployeeId,
-					timeSlots,
+					timeSlots.map((slot) => new Date(slot.startedAt)),
 					forceDelete
 				);
 			} else {
-				// Identify conflicting start times
+				// The start times the edited range drops: the log releases those slots, as deleting it would (a slot a
+				// neighbouring log still holds stays the neighbour's).
 				const startTimes = this.getConflictingStartTimes(timeSlots, updateTimeSlots);
-
-				// Remove conflicting time slots
-				if (startTimes.length > 0) {
-					await this.removeConflictingTimeSlots(
-						tenantId,
-						organizationId,
-						employeeId,
-						startTimes,
-						forceDelete
-					);
-				}
+				await this.releaseTimeSlots(timeLog, tenantId, organizationId, employeeId, startTimes, forceDelete);
 			}
 			// Create new time slots if needed for Web Timer, and for a moved log under its new employee. The answer
 			// is every slot of the employee at those starts — the ones created and the ones they already had there
@@ -222,97 +214,64 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
-	 * Removes or soft deletes conflicting time slots for a given employee within the specified time range.
+	 * Releases a log's time slots at the given start times — the ones a shortened range drops, or every one of a log
+	 * that moves to another employee.
 	 *
-	 * If `forceDelete` is true, the conflicting time slots will be hard deleted. Otherwise, they will be soft deleted.
+	 * The log leaves those slots exactly as deleting it would: only the slots linked to THIS log are considered, and
+	 * they go through the slot cleanup of `TimeLogDeleteHandler` (`TimeSlotBulkDeleteCommand`), which removes a
+	 * slot only this log holds and keeps a slot another log still holds — two logs that meet inside one ten-minute
+	 * slot share it. A kept slot loses only its link to this log, so the neighbour keeps every minute of its own time.
+	 * (The slots used to be removed by start time alone, the neighbour's shared slot with them.)
 	 *
-	 * @param params - An object containing `tenantId`, `organizationId`, `employeeId`, and `startTimes`.
-	 * @param forceDelete - A boolean flag indicating whether to perform a hard delete (`true`) or a soft delete (`false`).
-	 * @returns A promise that resolves after the time slots have been deleted or soft deleted.
+	 * @param timeLog - The log whose slots are released.
+	 * @param tenantId - The log's tenant.
+	 * @param organizationId - The log's organization.
+	 * @param employeeId - The employee the slots belong to (the log's, or the one a moved log leaves).
+	 * @param startTimes - The slot start times to release.
+	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`) the slots that go.
 	 */
-	private async removeConflictingTimeSlots(
+	private async releaseTimeSlots(
+		timeLog: ITimeLog,
 		tenantId: ID,
 		organizationId: ID,
 		employeeId: ID,
 		startTimes: Date[],
 		forceDelete: boolean
-	): Promise<ITimeSlot | ITimeSlot[]> {
-		const slots = await this.findTimeSlots(tenantId, organizationId, employeeId, startTimes);
-
-		debugInDevelopment(
-			this.logger,
-			() => `conflicting time slots for ${forceDelete ? 'hard' : 'soft'} deleting: ${slots.length}`
-		);
-
-		if (isEmpty(slots)) {
-			return [];
-		}
-
-		// Delete or soft delete the conflicting time slots
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-				if (forceDelete) {
-					await em.removeAndFlush(slots);
-				} else {
-					for (const slot of slots) {
-						(slot as any).deletedAt = new Date();
-					}
-					await em.persistAndFlush(slots);
-				}
-				return slots;
-			}
-			case MultiORMEnum.TypeORM:
-			default:
-				return forceDelete
-					? this.typeOrmTimeSlotRepository.remove(slots)
-					: this.typeOrmTimeSlotRepository.softRemove(slots);
-		}
-	}
-
-	/**
-	 * Releases the previous employee's time slots of a log that moves to another employee.
-	 *
-	 * The previous employee is left exactly as deleting the log would leave them: the log's slots go through the
-	 * slot cleanup of `TimeLogDeleteHandler` (`TimeSlotBulkDeleteCommand`), which removes a slot only this log holds
-	 * and keeps a slot another of their logs still holds — two logs that meet inside one ten-minute slot share it —
-	 * so their timesheet keeps every minute that did not move. The log's link to a slot it shared is dropped when the
-	 * log is saved with its new employee's slots.
-	 *
-	 * @param timeLog - The moving log.
-	 * @param tenantId - The log's tenant.
-	 * @param organizationId - The log's organization.
-	 * @param previousEmployeeId - The employee the log leaves.
-	 * @param previousSlots - The slots of the log's range before the update.
-	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`) the slots that go.
-	 */
-	private async releaseSlotsOfMovedLog(
-		timeLog: ITimeLog,
-		tenantId: ID,
-		organizationId: ID,
-		previousEmployeeId: ID,
-		previousSlots: ITimeSlot[],
-		forceDelete: boolean
 	): Promise<void> {
-		const startTimes = previousSlots.map((slot) => new Date(slot.startedAt));
 		// A length check, not `isEmpty`: that helper reads a Date as an empty object, so a list of dates as empty.
 		if (startTimes.length === 0) {
 			return;
 		}
 
-		const timeSlotsIds = (await this.findTimeSlots(tenantId, organizationId, previousEmployeeId, startTimes))
-			.filter((slot) => (slot.timeLogs ?? []).some((log) => log.id === timeLog.id))
-			.map((slot) => slot.id);
-		if (isEmpty(timeSlotsIds)) {
+		const linked = (await this.findTimeSlots(tenantId, organizationId, employeeId, startTimes)).filter((slot) =>
+			(slot.timeLogs ?? []).some((log) => log.id === timeLog.id)
+		);
+
+		debugInDevelopment(
+			this.logger,
+			() => `time slots released by time log ${timeLog.id} (${forceDelete ? 'hard' : 'soft'}): ${linked.length}`
+		);
+
+		if (isEmpty(linked)) {
 			return;
 		}
 
+		// The slots only this log holds go.
 		await this.commandBus.execute(
 			new TimeSlotBulkDeleteCommand(
-				{ organizationId, employeeId: previousEmployeeId, timeLog, timeSlotsIds, tenantId },
+				{ organizationId, employeeId, timeLog, timeSlotsIds: linked.map((slot) => slot.id), tenantId },
 				forceDelete
 			)
 		);
+
+		// A slot another log still holds stays, without this log.
+		for (const slot of linked.filter((candidate) => candidate.timeLogs.some((log) => log.id !== timeLog.id))) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(slot.id)
+				.remove(timeLog.id);
+		}
 	}
 
 	/**

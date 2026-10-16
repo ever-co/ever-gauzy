@@ -682,6 +682,17 @@ describe('TimeLogService', () => {
 								builder
 							),
 							getParameters: () => params,
+							// The join-row operations of `relation(TimeSlot, 'timeLogs').of(slot)`.
+							relation: () => ({
+								of: (slotId: string) => ({
+									remove: async (timeLogId: string) => {
+										const stored = slots.find((candidate) => candidate.id === slotId);
+										if (stored) {
+											stored.timeLogs = stored.timeLogs.filter((log) => log.id !== timeLogId);
+										}
+									}
+								})
+							}),
 							getMany: async () =>
 								slots.filter(
 									(slot) =>
@@ -883,6 +894,36 @@ describe('TimeLogService', () => {
 				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
 				expect(slotsOf(PREVIOUS)).toHaveLength(6);
 			});
+
+			it.each([TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.DESKTOP])(
+				"shortening a log that shares a boundary slot with a neighbour keeps the neighbour's slot (%s)",
+				async (source) => {
+					// 09:00–09:15 holds the 09:00 slot alone and shares the 09:10 one with log-2 (09:15–09:20).
+					Object.assign(row, {
+						source,
+						startedAt: new Date('2026-01-05T09:00:00.000Z'),
+						stoppedAt: new Date('2026-01-05T09:15:00.000Z')
+					});
+					slots = [
+						slot('mine-0900', PREVIOUS, '2026-01-05T09:00:00.000Z', ['log-1']),
+						slot('shared-0910', PREVIOUS, '2026-01-05T09:10:00.000Z', ['log-1', 'log-2'])
+					];
+
+					// Shortened to 09:00–09:10: the 09:10 slot leaves this log, and stays log-2's.
+					await manualService.updateManualTime('log-1', {
+						...request,
+						employeeId: PREVIOUS,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						startedAt: new Date('2026-01-05T09:00:00.000Z'),
+						stoppedAt: new Date('2026-01-05T09:10:00.000Z')
+					});
+
+					expect(slotsOf(PREVIOUS).map((stored) => [stored.id, logsOf(stored)])).toEqual([
+						['mine-0900', ['log-1']],
+						['shared-0910', ['log-2']]
+					]);
+				}
+			);
 
 			it('CONTROL: an edit that keeps the employee leaves the timesheet, the slots and the hours where they are', async () => {
 				await manualService.updateManualTime('log-1', {

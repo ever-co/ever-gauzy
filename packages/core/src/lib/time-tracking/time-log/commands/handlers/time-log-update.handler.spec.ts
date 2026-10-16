@@ -84,7 +84,7 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 			.mockReturnValueOnce([{ startedAt: kept }])
 			.mockReturnValueOnce([{ startedAt: dropped }, { startedAt: kept }]);
 		(handler as any).commandBus.execute.mockResolvedValue({ id: 'timesheet-1' });
-		const removed = jest.spyOn(handler as any, 'removeConflictingTimeSlots').mockResolvedValue(undefined);
+		const removed = jest.spyOn(handler as any, 'releaseTimeSlots').mockResolvedValue(undefined);
 		jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockResolvedValue(undefined);
 		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
 
@@ -99,7 +99,14 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 			)
 		);
 
-		expect(removed).toHaveBeenCalledWith(TENANT_A, 'org-a', 'employee-a', [dropped], false);
+		expect(removed).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'log-own' }),
+			TENANT_A,
+			'org-a',
+			'employee-a',
+			[dropped],
+			false
+		);
 	});
 
 	it('keeps the fields internal callers rely on (the timer stop sends isRunning / stoppedAt)', () => {
