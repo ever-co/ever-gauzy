@@ -2698,7 +2698,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "פרטים"
+					},
+					"PUBLIC": "ציבורי",
+					"PRIVATE": "פרטי",
+					"PREFIX": "קידומת משימות",
+					"MEMBERS_COUNT": "{{ count }} חברים",
+					"LIVE": "{{ tracking }} עוקבים כעת · {{ online }} מחוברים",
+					"OF_MEMBERS": "{{ count }} מתוך {{ total }} חברים",
+					"CREATED": "נוצר",
+					"UPDATED": "עודכן לאחרונה",
+					"ACTIVE_MEMBERS": "חברים פעילים",
+					"ACTIVE_MEMBERS_META": "מתוך {{ total }} חברים רשמו זמן",
+					"TIME_BY_MEMBER": "זמן לפי חבר",
+					"TEAM_TASKS": "משימות הצוות",
+					"NO_TEAM_TASKS": "אין משימות שהוקצו לצוות זה",
+					"NO_MEMBERS": "לצוות זה אין עדיין חברים",
+					"NO_PROJECTS": "אין פרויקטים המקושרים לצוות זה",
+					"COLUMNS": {
+						"MEMBER": "חבר",
+						"ROLE": "תפקיד",
+						"STATUS": "סטטוס",
+						"CURRENT_TASK": "משימה נוכחית",
+						"TODAY": "היום",
+						"ACTIVITY": "פעילות"
+					},
+					"ROLE": {
+						"MANAGER": "מנהל",
+						"MEMBER": "חבר"
+					},
+					"GENERAL": "כללי",
+					"SETTINGS": "הגדרות",
+					"RECORD": "רשומה",
+					"TEAM_SIZE": "גודל הצוות",
+					"COLOR": "צבע",
+					"EMOJI": "אמוג'י",
+					"PROFILE_LINK": "קישור לפרופיל",
+					"VISIBILITY": "נראות",
+					"SHARE_PROFILE_VIEW": "חברים יכולים לראות את הפרופילים של האחרים",
+					"REQUIRE_PLAN": "דרוש תכנון למעקב אחר זמן",
+					"NOT_FOUND": "צוות זה לא נמצא",
+					"LOAD_FAILED": "לא ניתן לטעון את הצוות",
+					"RETRY": "נסה שוב",
+					"OPEN_TASK_DETAILS": "הצג פרטים של {{ title }}",
+					"OPEN_TASK_PAGE": "פתח את הדף של {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "פתח את דף המשימה",
+					"UNASSIGNED": "לא הוקצתה",
+					"SHOW_ALL": "הצג הכל",
+					"SHOW_LESS": "הצג פחות",
+					"PROJECTS_CAPTION": "הפרויקטים של הצוות והזמן שהושקע בכל אחד בתקופה זו",
+					"NOT_LINKED": "לא מקושר",
+					"NOT_LINKED_HINT": "חברים רשמו זמן בפרויקט זה, אך הוא אינו מקושר לצוות"
+				}
 			}
 		},
 		"PERMISSIONS": {

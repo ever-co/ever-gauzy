@@ -2668,7 +2668,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "المديرين",
-				"MEMBERS": "أعضاء"
+				"MEMBERS": "أعضاء",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "التفاصيل"
+					},
+					"PUBLIC": "عام",
+					"PRIVATE": "خاص",
+					"PREFIX": "بادئة المهام",
+					"MEMBERS_COUNT": "{{ count }} أعضاء",
+					"LIVE": "{{ tracking }} يتتبعون الآن · {{ online }} متصلون",
+					"OF_MEMBERS": "{{ count }} من {{ total }} أعضاء",
+					"CREATED": "تاريخ الإنشاء",
+					"UPDATED": "آخر تحديث",
+					"ACTIVE_MEMBERS": "الأعضاء النشطون",
+					"ACTIVE_MEMBERS_META": "من أصل {{ total }} أعضاء سجلوا وقتًا",
+					"TIME_BY_MEMBER": "الوقت حسب العضو",
+					"TEAM_TASKS": "مهام الفريق",
+					"NO_TEAM_TASKS": "لا توجد مهام مسندة لهذا الفريق",
+					"NO_MEMBERS": "لا يوجد أعضاء في هذا الفريق بعد",
+					"NO_PROJECTS": "لا توجد مشاريع مرتبطة بهذا الفريق",
+					"COLUMNS": {
+						"MEMBER": "العضو",
+						"ROLE": "الدور",
+						"STATUS": "الحالة",
+						"CURRENT_TASK": "المهمة الحالية",
+						"TODAY": "اليوم",
+						"ACTIVITY": "النشاط"
+					},
+					"ROLE": {
+						"MANAGER": "مدير",
+						"MEMBER": "عضو"
+					},
+					"GENERAL": "عام",
+					"SETTINGS": "الإعدادات",
+					"RECORD": "السجل",
+					"TEAM_SIZE": "حجم الفريق",
+					"COLOR": "اللون",
+					"EMOJI": "الرمز التعبيري",
+					"PROFILE_LINK": "رابط الملف الشخصي",
+					"VISIBILITY": "الظهور",
+					"SHARE_PROFILE_VIEW": "يمكن للأعضاء رؤية ملفات بعضهم",
+					"REQUIRE_PLAN": "يتطلب خطة لتتبع الوقت",
+					"NOT_FOUND": "تعذر العثور على هذا الفريق",
+					"LOAD_FAILED": "تعذر تحميل الفريق",
+					"RETRY": "إعادة المحاولة",
+					"OPEN_TASK_DETAILS": "عرض تفاصيل {{ title }}",
+					"OPEN_TASK_PAGE": "فتح صفحة {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "فتح صفحة المهمة",
+					"UNASSIGNED": "غير مسندة",
+					"SHOW_ALL": "عرض الكل",
+					"SHOW_LESS": "عرض أقل",
+					"PROJECTS_CAPTION": "مشاريع الفريق والوقت المستغرق في كل منها خلال هذه الفترة",
+					"NOT_LINKED": "غير مرتبط",
+					"NOT_LINKED_HINT": "سجّل الأعضاء وقتًا على هذا المشروع، لكنه غير مرتبط بالفريق"
+				}
 			}
 		},
 		"PERMISSIONS": {
