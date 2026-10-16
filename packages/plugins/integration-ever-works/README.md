@@ -89,10 +89,17 @@ the seed) and answers the routes below.
    when they are first needed.
 
 A revoked or expired key turns the connection `needs_reauth`: the sync pauses
-and the admin who connected gets a notification. Entering a new key of the same
+and the admin who connected gets a notice. Entering a new key of the same
 Ever Works tenant resumes it. Disconnecting archives the connection and its
 mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
+
+Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
+Inbox items (`NOTICE`, `source = SYSTEM`), one per connection and kind of
+notice: `needs_reauth`, and `dead_letter` for a change that stopped for good
+(it names the latest record). A repeat updates the notice and marks it unread
+again. Without the Inbox, `needs_reauth` falls back to an employee notification
+for the admin's employee, and dead letters show only in the sync activity.
 
 ## API boundary
 

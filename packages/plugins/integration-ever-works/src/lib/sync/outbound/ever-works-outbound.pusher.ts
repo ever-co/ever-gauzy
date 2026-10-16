@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DataSource, In, LessThanOrEqual } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { IntegrationTenant } from '@gauzy/core';
 import { EverWorksApiError, EverWorksNetworkError } from '../../client/ever-works-client';
 import { EverWorksConnection } from '../../connection/ever-works-connection.entity';
+import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
 import { EverWorksLinkType, EverWorksOutboundChange, EverWorksOutboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
 
@@ -49,7 +50,9 @@ export class EverWorksOutboundPusher {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly log: EverWorksSyncLogService
+		private readonly log: EverWorksSyncLogService,
+		/** Tells the admin about a change that stopped (an Inbox notice, G-P3-5); absent in bare test wiring. */
+		@Optional() private readonly notifier?: EverWorksNotifier
 	) {}
 
 	register(handler: EverWorksOutboundHandler): void {
@@ -156,6 +159,17 @@ export class EverWorksOutboundPusher {
 					message: reason
 				});
 				this.logger.warn(`Connection ${connection.id}: the ${change.entityType} change of ${change.gauzyId} stopped (${reason.slice(0, 200)}).`);
+				// Best effort: a notice must never stop the pusher.
+				await this.notifier
+					?.deadLetter(connection, {
+						direction: 'outbound',
+						entityType: change.entityType,
+						recordId: change.gauzyId,
+						reason
+					})
+					.catch((noticeError) =>
+						this.logger.warn(`Connection ${connection.id}: the dead-letter notice failed (${noticeError instanceof Error ? noticeError.message : 'error'}).`)
+					);
 			}
 			return false;
 		}
