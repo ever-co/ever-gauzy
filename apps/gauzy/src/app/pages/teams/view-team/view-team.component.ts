@@ -137,8 +137,8 @@ interface ITeamTaskRow {
 	priorityLevel?: 'urgent' | 'high' | 'medium' | 'low';
 	/** Assignees as avatars; the first few are drawn, the rest counted. */
 	people: ITaskPerson[];
-	/** Names behind the "+N" avatar. */
-	moreNames?: string;
+	/** The assignees behind the "+N" avatar, listed when it is hovered. */
+	morePeople: ITaskPerson[];
 	/** The due date written out in full (weekday included), for its tooltip. */
 	dueDateLong?: string;
 }
@@ -950,11 +950,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		return {
 			task,
 			people,
-			moreNames:
-				people
-					.slice(3)
-					.map((person) => person.name)
-					.join(', ') || undefined,
+			morePeople: people.slice(3),
 			dueDateLong: task.dueDate ? moment(task.dueDate).format('dddd, LL') : undefined,
 			priority: task.taskPriority?.name || ViewTeamComponent.humanize(task.priority) || undefined,
 			priorityLevel: PRIORITY_LEVELS.has(priority) ? (priority as ITeamTaskRow['priorityLevel']) : undefined,
