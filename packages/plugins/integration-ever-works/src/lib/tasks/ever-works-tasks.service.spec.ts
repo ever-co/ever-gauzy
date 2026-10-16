@@ -276,6 +276,10 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 		},
 		updateComment: async (id: string, html: string) => void Object.assign(comments.find((comment) => comment.id === id) as object, { html }),
 		softDeleteComment: async (id: string) => void Object.assign(comments.find((comment) => comment.id === id) as object, { deletedAt: new Date() }),
+		removeResourceLink: async (_t: string, id: string) => {
+			const at = resourceLinks.findIndex((row) => row.id === id);
+			if (at >= 0) resourceLinks.splice(at, 1);
+		},
 		upsertResourceLink: async (_s: unknown, taskId: string, title: string, url: string, knownId: string | null) => {
 			const known = knownId ? resourceLinks.find((row) => row.id === knownId) : undefined;
 			if (known) return Object.assign(known, { title, url }).id;
@@ -382,6 +386,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 		deliver,
 		push,
 		pushComment,
+		commentsService: comments$,
 		subscriptions,
 		linkedIssues
 	};
@@ -871,5 +876,102 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		// A new PR URL updates the same link.
 		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { ...runtime, prUrl: 'https://github.com/acme/site/pull/13' } }, aggregate: { id: task['id'] as string, version: 1 } });
 		expect(t.resourceLinks.filter((row) => row.title === 'Pull request').map((row) => row.url)).toEqual(['https://github.com/acme/site/pull/13']);
+	});
+});
+
+describe('task comments review fixes (#10813)', () => {
+	const ewComment = (taskId: string, extra: Record<string, unknown> = {}) => ({
+		id: `ew-comment-${Math.random().toString(16).slice(2)}`,
+		taskId,
+		organizationId: 'org',
+		authorType: 'user',
+		authorId: 'ew-alice',
+		externalAuthor: null,
+		body: 'Hello',
+		mentions: [],
+		editedAt: null,
+		createdAt: '2026-10-16T10:00:00Z',
+		updatedAt: '2026-10-16T10:00:00Z',
+		externalLinks: [],
+		...extra
+	});
+
+	async function pushed(t: ReturnType<typeof setup>, html: string) {
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
+		await t.push('g1');
+		t.comments.push({ id: 'gc1', taskId: 'g1', html, actorType: 'User', employeeId: 'e-alice' });
+		await t.pushComment('gc1');
+		const [ewTask] = [...t.mock.tasks.values()];
+		const [ew] = [...t.mock.comments.values()];
+		return { ewTask: ewTask as Record<string, unknown>, ew: ew as Record<string, unknown> };
+	}
+
+	it('a long Gauzy comment, cut in Ever Works, still takes the author’s later Ever Works edits', async () => {
+		const t = setup();
+		const long = 'x'.repeat(20000);
+		const { ewTask, ew } = await pushed(t, `<p>${long}</p>`);
+		expect((ew['body'] as string).length).toBe(16384);
+		await t.deliver({ type: 'task.comment.updated', data: { ...ew, body: 'Shorter now.' }, aggregate: { id: ewTask['id'] as string, version: 9 } });
+		expect(t.comments.find((c) => c.id === 'gc1')?.html).toBe('<p>Shorter now.</p>');
+	});
+
+	it('a refused Gauzy edit stays in Gauzy when the author edits in Ever Works later, and is not sent again', async () => {
+		const t = setup();
+		const { ewTask, ew } = await pushed(t, '<p>First</p>');
+		(t.comments.find((c) => c.id === 'gc1') as { html: string }).html = '<p>Edited in Gauzy</p>';
+		t.mock.fail({ method: 'PATCH', path: /\/comments\//, status: 422, body: { error: { code: 'domain_rule', message: 'The edit window has passed.' } } });
+		expect((await t.pushComment('gc1')).status).toBe('skipped');
+		expect(t.logged).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'comment_edit_refused' })]));
+		await t.deliver({ type: 'task.comment.updated', data: { ...ew, body: 'Edited in Ever Works' }, aggregate: { id: ewTask['id'] as string, version: 9 } });
+		expect(t.comments.find((c) => c.id === 'gc1')?.html).toBe('<p>Edited in Gauzy</p>');
+		const patches = t.mock.requests.filter((r) => r.method === 'PATCH').length;
+		expect((await t.pushComment('gc1')).status).toBe('skipped');
+		expect(t.mock.requests.filter((r) => r.method === 'PATCH').length).toBe(patches);
+	});
+
+	it('a Gauzy delete is sent as the comment’s Ever Works author', async () => {
+		const t = setup();
+		await pushed(t, '<p>Bye</p>');
+		(t.comments.find((c) => c.id === 'gc1') as { deletedAt?: Date }).deletedAt = new Date();
+		expect(await t.pushComment('gc1', 'delete')).toEqual({ status: 'pushed', message: 'deleted in Ever Works' });
+		expect(t.mock.requests.find((r) => r.method === 'DELETE')?.headers['x-act-as-user']).toBe('ew-alice');
+		expect(t.mock.comments.size).toBe(0);
+	});
+
+	it('the sweep queues a linked comment that was edited or deleted without a captured event', async () => {
+		const t = setup();
+		await pushed(t, '<p>Swept</p>');
+		t.queue.enqueued.length = 0;
+		await t.service.sweep(t.context.connection as never);
+		const comments = t.commentsService;
+		await comments.sweep(t.context.connection as never);
+		expect(t.queue.enqueued.filter((q) => q['entityType'] === EverWorksLinkType.COMMENT)).toEqual([]);
+		(t.comments.find((c) => c.id === 'gc1') as { html: string }).html = '<p>Changed by a partial save</p>';
+		await comments.sweep(t.context.connection as never);
+		expect(t.queue.enqueued.filter((q) => q['entityType'] === EverWorksLinkType.COMMENT)).toEqual([expect.objectContaining({ entityType: EverWorksLinkType.COMMENT, gauzyId: 'gc1', op: 'upsert' })]);
+	});
+
+	it('a lost-answer link back only pairs a comment of the same task', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g-other', title: 'Other' });
+		t.comments.push({ id: 'gc-other', taskId: 'g-other', html: '<p>Elsewhere</p>', actorType: 'User', employeeId: null });
+		const task = t.mock.addTask(t.org.id, { title: 'Chat' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const stale = ewComment(task['id'] as string, { externalLinks: [{ source: 'gauzy', installationId: 'c1', externalId: 'gc-other' }] });
+		await t.deliver({ type: 'task.comment.created', data: stale, aggregate: { id: task['id'] as string, version: 1 } });
+		// A new comment on the right task, not a pairing with the other task's comment.
+		const gauzyTaskId = t.links.find((l) => l.entityType === EverWorksLinkType.TASK && l.ewId === task['id'])?.gauzyId;
+		expect(t.comments.filter((c) => c.taskId === gauzyTaskId)).toHaveLength(1);
+		expect(t.links.find((l) => l.entityType === EverWorksLinkType.COMMENT)?.gauzyId).not.toBe('gc-other');
+	});
+
+	it('removes the "Pull request" link when Ever Works drops the PR', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'PR', runtime: { prUrl: 'https://github.com/acme/site/pull/1', prState: 'open', ciState: null, latestRunStatus: null } });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks.some((row) => row.title === 'Pull request')).toBe(true);
+		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { prUrl: null, prState: null, ciState: null, latestRunStatus: null } }, aggregate: { id: task['id'] as string, version: 1 } });
+		expect(t.resourceLinks.some((row) => row.title === 'Pull request')).toBe(false);
 	});
 });

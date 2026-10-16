@@ -685,6 +685,10 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		const prUrl = task.runtime?.prUrl ?? null;
 		if (prUrl && isSafeUrl(prUrl, false)) {
 			result.pr = await this.store.upsertResourceLink(scope, taskId, 'Pull request', prUrl, (known.pr as ID) ?? null);
+		} else if (task.runtime && task.runtime.prUrl === null && known.pr) {
+			// Ever Works dropped the task's PR: the link the sync made for it goes too (soft-deleted).
+			await this.store.removeResourceLink(context.tenantId, known.pr as ID);
+			delete result.pr;
 		}
 		if (record && (result.task !== known.task || result.pr !== known.pr)) {
 			const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, taskId);

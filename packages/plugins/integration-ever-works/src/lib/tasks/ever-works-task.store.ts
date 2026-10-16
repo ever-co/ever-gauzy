@@ -261,6 +261,11 @@ export class EverWorksTaskStore {
 		await this.dataSource.getRepository(Comment).softDelete({ id: commentId } as never);
 	}
 
+	/** Soft-deletes a resource link the sync made (its Ever Works target is gone). */
+	async removeResourceLink(tenantId: ID, linkId: ID): Promise<void> {
+		await this.dataSource.getRepository(ResourceLink).softDelete({ id: linkId, tenantId } as never);
+	}
+
 	/**
 	 * The task's resource link with this title and URL: the one recorded before (updated when the URL
 	 * changed), else one with the same URL, else a new one. Returns its id.

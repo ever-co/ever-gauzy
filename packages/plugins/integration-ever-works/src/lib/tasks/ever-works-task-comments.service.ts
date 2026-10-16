@@ -3,12 +3,14 @@ import { createHash } from 'node:crypto';
 import { ActorTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
+import type { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
 import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksLinkState, EverWorksLinkType, EverWorksOutboundChange } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
+import type { EverWorksSyncSweeper } from '../sync/ever-works-sync.loop';
 import type { EverWorksApplyOutcome } from '../sync/inbound/ever-works-inbound.applier';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
@@ -32,17 +34,23 @@ export interface EverWorksComment {
 	deleted?: boolean;
 }
 
-/** A comment link's snapshot: each side's body (Markdown) at the last sync. */
+/**
+ * A comment link's snapshot: each side's own full text (Markdown) at the last sync. The Gauzy side is the
+ * whole Gauzy comment, even when Ever Works got it cut to its limit.
+ */
 interface CommentSnapshot {
 	g?: { body?: string };
 	e?: { body?: string };
 }
 
-/** What only Ever Works has about a linked comment. */
+/** What only Ever Works has about a linked comment (and what the sync must remember about it). */
 interface CommentEverWorksOnly {
 	taskId?: string;
+	/** Ever Works' author: only they may edit or delete it (CR-2). */
 	authorType?: string;
 	authorId?: string;
+	/** A Gauzy edit Ever Works refused (the author's 5-minute window, or not the author): not sent again. */
+	refusedBody?: string | null;
 }
 
 /** Ever Works' task chat limit (contract v1, CR-2): a longer Gauzy comment is cut, with a note. */
@@ -50,12 +58,18 @@ export const EVER_WORKS_COMMENT_LIMIT = 16384;
 const CUT_NOTE = '\n\n… (cut to fit Ever Works; the full comment is in Gauzy)';
 /** A comment waiting for its task to be linked is retried after this long. */
 export const COMMENT_WAIT_MS = 60_000;
+/** How often the comment sweep (edits and deletes the ORM hooks cannot see) runs per connection. */
+export const COMMENT_SWEEP_MS = 10 * 60_000;
+const COMMENT_SWEEP_PAGE = 200;
 
 const toEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'gauzy_to_ew';
 
 /** A Gauzy comment's body for Ever Works: Markdown, at most {@link EVER_WORKS_COMMENT_LIMIT} characters. */
 export function commentBodyForEverWorks(html: string | null | undefined): string {
-	const body = htmlToMarkdown(html);
+	return cutForEverWorks(htmlToMarkdown(html));
+}
+
+function cutForEverWorks(body: string): string {
 	if (body.length <= EVER_WORKS_COMMENT_LIMIT) return body;
 	return body.slice(0, EVER_WORKS_COMMENT_LIMIT - CUT_NOTE.length).trimEnd() + CUT_NOTE;
 }
@@ -67,16 +81,18 @@ export function commentBodyForEverWorks(html: string | null | undefined): string
  *   sanitised HTML), written as the author's employee — the agent employee for an agent (`ActorTypeEnum.Agent`),
  *   the mapped person for a user; an unmapped author is named in the comment. Comment events are applied by
  *   comment id (they carry the task's version, not their own), so a task read later never hides them.
- * - **G → EW** (the comment subscriber): `POST /tasks/:id/comments` as the author (`X-Act-As-User` = the
- *   author's linked person), else as the integration with `externalAuthor`, with an `externalRef` and a
- *   deterministic `Idempotency-Key`; the body is cut to 16384 characters (CR-2). Edits `PATCH`, deletes
- *   `DELETE`. Ever Works lets only the author edit, and a person only for 5 minutes (`422 domain_rule`): a
- *   later Gauzy edit is logged, not pushed (plan 01 §7).
+ * - **G → EW** (the comment subscriber, and a sweep for what the ORM hooks miss): `POST /tasks/:id/comments`
+ *   as the author (`X-Act-As-User` = the author's linked person), else as the integration with
+ *   `externalAuthor`, with an `externalRef` and a deterministic `Idempotency-Key`; the body is cut to 16384
+ *   characters (CR-2). Edits `PATCH`, deletes `DELETE`, both as Ever Works' author of the comment. Ever Works
+ *   lets only the author edit, and a person only for 5 minutes (`422 domain_rule`): a refused Gauzy edit is
+ *   logged, kept in Gauzy and not sent again (plan 01 §7).
  * - A comment of a task that is not linked yet waits for the task (which is queued).
  */
 @Injectable()
-export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
+export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, EverWorksSyncSweeper {
 	readonly entityTypes = [EverWorksLinkType.COMMENT] as const;
+	readonly sweepIntervalMs = COMMENT_SWEEP_MS;
 	private readonly logger = new Logger('EverWorksTaskComments');
 
 	constructor(
@@ -106,10 +122,19 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
 		}
 		const body = normaliseMarkdown(comment.body);
 		if (!link) {
-			// Our own comment whose link was not recorded (a lost answer): linked back, not copied.
+			// Our own comment whose link was not recorded (a lost answer): linked back, not copied — only when it
+			// is a comment of this very task, in this organization, and not paired already.
 			const own = (comment.externalLinks ?? []).find((row) => row.source === EVER_WORKS_LINK_SOURCE && (!row.installationId || row.installationId === context.connection.id));
-			if (own?.externalId && (await this.store.loadComment(context.tenantId, own.externalId as ID))) {
-				await this.record(context, own.externalId as ID, comment, { g: { body }, e: { body } }, 'inbound');
+			const mine = own?.externalId ? await this.store.loadComment(context.tenantId, own.externalId as ID) : null;
+			if (
+				mine &&
+				!mine.deletedAt &&
+				mine.entity === BaseEntityEnum.Task &&
+				mine.entityId === taskLink.gauzyId &&
+				mine.organizationId === context.organizationId &&
+				!(await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.COMMENT, mine.id))
+			) {
+				await this.record(context, mine.id, comment, { g: { body: htmlToMarkdown(mine.comment) }, e: { body } }, 'inbound');
 				return { status: 'applied', message: 'linked back to the Gauzy comment it came from' };
 			}
 			const author = await this.authorOf(context, comment);
@@ -126,14 +151,14 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
 		if (!row || row.deletedAt) return { status: 'skipped', message: 'the Gauzy comment is gone' };
 		const current = htmlToMarkdown(row.comment);
 		if (snapshot.g?.body !== undefined && current !== snapshot.g.body) {
-			// Edited in Gauzy too: the Gauzy edit stays (it is pushed, or logged when Ever Works refuses it).
-			await this.record(context, link.gauzyId as ID, comment, { g: snapshot.g, e: { body } }, 'inbound');
+			// Edited in Gauzy too: the Gauzy edit stays (it is pushed, or kept and logged when Ever Works refuses it).
+			await this.record(context, link.gauzyId as ID, comment, { g: snapshot.g, e: { body } }, 'inbound', link);
 			return { status: 'skipped', message: 'edited on both sides; the Gauzy edit is kept' };
 		}
 		const author = await this.authorOf(context, comment);
 		const html = this.htmlOf(body, author);
 		await this.store.updateComment(link.gauzyId as ID, html);
-		await this.record(context, link.gauzyId as ID, comment, { g: { body: htmlToMarkdown(html) }, e: { body } }, 'inbound');
+		await this.record(context, link.gauzyId as ID, comment, { g: { body: htmlToMarkdown(html) }, e: { body } }, 'inbound', link);
 		return { status: 'applied' };
 	}
 
@@ -184,11 +209,10 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
 				await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: row.entityId as ID, op: 'upsert' });
 				return { status: 'deferred', message: 'the task is not in Ever Works yet', retryInMs: COMMENT_WAIT_MS };
 			}
+			const full = htmlToMarkdown(row.comment);
+			if (!full.trim()) return { status: 'skipped', message: 'the comment has no text' };
 			const client = this.client(context);
-			const actAs = await this.actAsFor(context, (row.employeeId as ID) ?? null);
-			const body = commentBodyForEverWorks(row.comment);
-			if (!body.trim()) return { status: 'skipped', message: 'the comment has no text' };
-			return link ? await this.pushEdit(context, client, link, taskLink, body, actAs) : await this.pushCreate(context, client, row, taskLink, body, actAs);
+			return link ? await this.pushEdit(context, client, link, taskLink, full) : await this.pushCreate(context, client, row, taskLink, full);
 		} catch (error) {
 			if (error instanceof EverWorksRequestContextUnavailableError) return { status: 'deferred', message: error.message, retryInMs: 5 * 60_000 };
 			throw error;
@@ -200,18 +224,18 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
 		client: EverWorksClient,
 		row: { id?: ID; employeeId?: ID | null },
 		taskLink: EverWorksEntityLink,
-		body: string,
-		actAs: string | null
+		full: string
 	): Promise<EverWorksPushOutcome> {
 		const connectionId = context.connection.id as ID;
 		const commentId = row.id as ID;
+		const actAs = await this.actAsFor(context, (row.employeeId as ID) ?? null);
 		const idempotencyKey = createHash('sha256').update(`${connectionId}:${EverWorksLinkType.COMMENT}:${commentId}:create`).digest('hex');
 		const name = row.employeeId ? ((await this.store.userOfEmployee(row.employeeId as ID)).name ?? 'Ever Gauzy') : 'Ever Gauzy';
 		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments`;
 		const send = (actor: string | null) =>
 			client.request<EverWorksComment>('POST', path, {
 				body: {
-					body,
+					body: cutForEverWorks(full),
 					...(actor ? {} : { externalAuthor: { name, source: EVER_WORKS_LINK_SOURCE } }),
 					externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: connectionId, externalId: commentId }
 				},
@@ -225,48 +249,86 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
 			if (!actAs || !(error instanceof EverWorksApiError && error.status === 403 && error.code === 'act_as_forbidden')) throw error;
 			created = await send(null);
 		}
-		await this.record(context, commentId, { ...created, taskId: taskLink.ewId }, { g: { body }, e: { body: normaliseMarkdown(created.body) } }, 'outbound');
+		// The Gauzy side is the whole comment (Ever Works may have got it cut).
+		await this.record(context, commentId, { ...created, taskId: taskLink.ewId }, { g: { body: full }, e: { body: normaliseMarkdown(created.body) } }, 'outbound');
 		return { status: 'pushed', message: 'posted to the Ever Works task chat' };
 	}
 
-	private async pushEdit(
-		context: EverWorksMappingContext,
-		client: EverWorksClient,
-		link: EverWorksEntityLink,
-		taskLink: EverWorksEntityLink,
-		body: string,
-		actAs: string | null
-	): Promise<EverWorksPushOutcome> {
+	private async pushEdit(context: EverWorksMappingContext, client: EverWorksClient, link: EverWorksEntityLink, taskLink: EverWorksEntityLink, full: string): Promise<EverWorksPushOutcome> {
 		const snapshot = this.snapshotOf(link);
-		if ((snapshot.g?.body ?? null) === body) return { status: 'skipped', message: 'nothing changed' };
+		const ewOnly = this.everWorksOnly(link);
+		if ((snapshot.g?.body ?? null) === full) return { status: 'skipped', message: 'nothing changed' };
+		if ((ewOnly.refusedBody ?? null) === full) return { status: 'skipped', message: 'Ever Works refused this edit before; it stays in Gauzy' };
 		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments/${encodeURIComponent(link.ewId)}`;
 		try {
-			const updated = await client.request<EverWorksComment>('PATCH', path, { body: { body }, actAsUserId: actAs });
-			await this.record(context, link.gauzyId as ID, { ...updated, taskId: taskLink.ewId }, { g: { body }, e: { body: normaliseMarkdown(updated.body) } }, 'outbound');
+			// Only Ever Works' author of the comment may edit it: the person it was written as, or the integration.
+			const updated = await client.request<EverWorksComment>('PATCH', path, { body: { body: cutForEverWorks(full) }, actAsUserId: this.everWorksAuthor(ewOnly) });
+			await this.record(context, link.gauzyId as ID, { ...updated, taskId: taskLink.ewId }, { g: { body: full }, e: { body: normaliseMarkdown(updated.body) } }, 'outbound', link, null);
 			return { status: 'pushed' };
 		} catch (error) {
 			if (!(error instanceof EverWorksApiError && (error.status === 422 || error.status === 403))) throw error;
-			// Ever Works lets only the author edit, and a person only for 5 minutes: the Gauzy edit is logged, not pushed.
-			await this.record(context, link.gauzyId as ID, null, { g: { body }, e: snapshot.e ?? {} }, 'outbound', link);
+			// Refused (not the author, or the 5-minute window passed): the Gauzy edit stays in Gauzy and is logged.
+			// The snapshot keeps the last text both sides agreed on, so a later Ever Works edit still sees the Gauzy
+			// edit as Gauzy's; the refused text is remembered so it is not sent again.
+			await this.record(context, link.gauzyId as ID, null, snapshot, 'outbound', link, full);
 			await this.logRefusal(context, link, 'comment_edit_refused', error.message);
 			return { status: 'skipped', message: 'Ever Works keeps the comment as it was (edit refused); the Gauzy edit is logged' };
 		}
 	}
 
-	/** A Gauzy comment deleted: deleted in Ever Works too (plan 03 §C.3); only its author may, else it is logged. */
+	/** A Gauzy comment deleted: deleted in Ever Works too (plan 03 §C.3), as its Ever Works author; a refusal is logged. */
 	private async pushDelete(context: EverWorksMappingContext, link: EverWorksEntityLink | null): Promise<EverWorksPushOutcome> {
 		if (!link) return { status: 'skipped', message: 'the comment is not in Ever Works' };
 		const ewOnly = this.everWorksOnly(link);
+		let refused: string | null = null;
 		if (ewOnly.taskId) {
 			try {
-				await this.client(context).request('DELETE', `/tasks/${encodeURIComponent(ewOnly.taskId)}/comments/${encodeURIComponent(link.ewId)}`);
+				await this.client(context).request('DELETE', `/tasks/${encodeURIComponent(ewOnly.taskId)}/comments/${encodeURIComponent(link.ewId)}`, {
+					actAsUserId: this.everWorksAuthor(ewOnly)
+				});
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && (error.status === 404 || error.status === 422 || error.status === 403))) throw error;
-				if (error.status !== 404) await this.logRefusal(context, link, 'comment_delete_refused', error.message);
+				if (error.status !== 404) {
+					refused = error.message;
+					await this.logRefusal(context, link, 'comment_delete_refused', error.message);
+				}
 			}
 		}
-		await this.links.unlink(link, 'deleted in Gauzy');
-		return { status: 'pushed', message: 'deleted in Ever Works' };
+		await this.links.unlink(link, refused ? `deleted in Gauzy; Ever Works refused the delete (${refused.slice(0, 200)})` : 'deleted in Gauzy');
+		return refused
+			? { status: 'skipped', message: 'deleted in Gauzy; Ever Works refused the delete, so its copy stays (logged)' }
+			: { status: 'pushed', message: 'deleted in Ever Works' };
+	}
+
+	// ── Sweep ──────────────────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * The comment sweep (plan 03 §C.2, the durable backstop): Gauzy deletes comments by criteria and edits them
+	 * with partial saves, which the ORM hooks see incompletely or not at all. A linked comment that is gone, or
+	 * whose text differs from its snapshot (and is not an edit Ever Works refused), is queued.
+	 */
+	async sweep(connection: EverWorksConnection): Promise<void> {
+		for (const context of await this.contexts.forConnection(connection)) {
+			if (!context.isEnabled || !toEverWorks(context.directions.tasks)) continue;
+			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.COMMENT)).filter((link) => link.state === EverWorksLinkState.OK);
+			for (let start = 0; start < links.length; start += COMMENT_SWEEP_PAGE) {
+				for (const link of links.slice(start, start + COMMENT_SWEEP_PAGE)) {
+					const row = await this.store.loadComment(context.tenantId, link.gauzyId as ID);
+					const gone = !row || !!row.deletedAt;
+					const text = row ? htmlToMarkdown(row.comment) : null;
+					const edited = !gone && text !== (this.snapshotOf(link).g?.body ?? null) && text !== (this.everWorksOnly(link).refusedBody ?? null);
+					if (gone || edited) {
+						await this.queue.enqueue({
+							tenantId: context.tenantId,
+							organizationId: context.organizationId,
+							entityType: EverWorksLinkType.COMMENT,
+							gauzyId: link.gauzyId as ID,
+							op: gone ? 'delete' : 'upsert'
+						});
+					}
+				}
+			}
+		}
 	}
 
 	// ── Shared ─────────────────────────────────────────────────────────────────────────────────────
@@ -278,16 +340,26 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler {
 		return person && person.state !== EverWorksLinkState.UNLINKED ? person.ewId : null;
 	}
 
+	/** Who may edit or delete a linked comment in Ever Works: the person it was written as, else the integration. */
+	private everWorksAuthor(ewOnly: CommentEverWorksOnly): string | null {
+		return ewOnly.authorType === 'user' && ewOnly.authorId ? ewOnly.authorId : null;
+	}
+
 	private async record(
 		context: EverWorksMappingContext,
 		commentId: ID,
 		comment: EverWorksComment | null,
 		snapshot: CommentSnapshot,
 		direction: 'inbound' | 'outbound',
-		previous?: EverWorksEntityLink
+		previous?: EverWorksEntityLink,
+		refusedBody?: string | null
 	): Promise<void> {
 		const before = this.everWorksOnly(previous ?? null);
-		const ewOnly: CommentEverWorksOnly = comment ? { taskId: comment.taskId, authorType: comment.authorType, authorId: comment.authorId } : before;
+		const ewOnly: CommentEverWorksOnly = {
+			...before,
+			...(comment ? { taskId: comment.taskId, authorType: comment.authorType, authorId: comment.authorId } : {}),
+			...(refusedBody !== undefined ? { refusedBody } : {})
+		};
 		await this.links.record({
 			tenantId: context.tenantId,
 			organizationId: context.organizationId,
