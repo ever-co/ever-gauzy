@@ -182,7 +182,10 @@ and answered `202`.
   paired silently. For a pair, what changes in Ever Works is written to the
   project: name, description, website, primary repository, status (archived →
   archived), members (owner/manager → manager) and teams. Nothing is pushed;
-  the kind and every repository URL stay on the link.
+  the kind and every repository URL stay on the link. Members and teams paired
+  later join the project through the sync loop's sweep. Private works are not
+  listed and never sync. Creating a project from a work needs the mapping
+  enabled and works not switched off.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever

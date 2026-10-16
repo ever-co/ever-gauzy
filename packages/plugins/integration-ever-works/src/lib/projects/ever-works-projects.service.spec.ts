@@ -29,7 +29,7 @@ jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
 
 import 'reflect-metadata';
 import { ProjectStatusEnum } from '@gauzy/contracts';
-import { OrganizationProject, OrganizationProjectEmployee } from '@gauzy/core';
+import { IntegrationTenant, OrganizationProject, OrganizationProjectEmployee } from '@gauzy/core';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksProjectsService, projectStatusOf, sameUrl } from './ever-works-projects.service';
 
@@ -94,8 +94,12 @@ function setup() {
 			for (const row of members.filter((m) => matches(m, where))) members.splice(members.indexOf(row), 1);
 		}
 	};
+	const mappingRepo = {
+		find: async () => [{ id: 'm1', tenantId: 't1', organizationId: 'o1', settings: [{ settingsName: 'CONNECTION_ID', settingsValue: 'c1' }] }]
+	};
 	const dataSource = {
-		getRepository: (target: unknown) => (target === OrganizationProject ? projectRepo : target === OrganizationProjectEmployee ? memberRepo : null),
+		getRepository: (target: unknown) =>
+			target === OrganizationProject ? projectRepo : target === OrganizationProjectEmployee ? memberRepo : target === IntegrationTenant ? mappingRepo : null,
 		createQueryBuilder: () => ({
 			relation: () => ({
 				of: (projectId: string) => ({
@@ -118,9 +122,9 @@ function setup() {
 			return row;
 		})
 	};
-	const contexts = { forEverWorksOrganization: async () => context, forRequest: async () => context };
+	const contexts = { forEverWorksOrganization: async () => context, forRequest: async () => context, forOrganization: async () => context };
 	const service = new EverWorksProjectsService(dataSource as never, contexts as never, { client: () => client } as never, linkService as never, commandBus as never);
-	return { service, links, addLink, projects, members, projectTeams, client, commandBus };
+	return { service, links, addLink, projects, members, projectTeams, client, commandBus, context };
 }
 
 const work = {
@@ -148,6 +152,7 @@ describe('projects ↔ works helpers', () => {
 	it('URLs compare loosely; statuses map open / in progress, archived is not a status', () => {
 		expect(sameUrl('https://GitHub.com/acme/site.git', 'https://github.com/acme/site/')).toBe(true);
 		expect(sameUrl('', '')).toBe(false);
+		expect(sameUrl('https://github.com/acme/site.git/', 'https://github.com/acme/site')).toBe(true);
 		expect(projectStatusOf('draft')).toBe(ProjectStatusEnum.OPEN);
 		expect(projectStatusOf('registered')).toBe(ProjectStatusEnum.IN_PROGRESS);
 		expect(projectStatusOf('archived')).toBeNull();
@@ -234,5 +239,101 @@ describe('EverWorksProjectsService', () => {
 			status: 'skipped',
 			message: 'works are not synced'
 		});
+	});
+
+	it('"create from work" on the Projects tab follows the mapping switch and the works direction', async () => {
+		const { service, client, commandBus, context } = setup();
+		context.isEnabled = false;
+		await expect(service.decide('m1' as never, { createInGauzy: ['ew-work-1'] })).rejects.toThrow('The mapping is disabled');
+		context.isEnabled = true;
+		context.directions.works = 'off';
+		await expect(service.decide('m1' as never, { createInGauzy: ['ew-work-1'] })).rejects.toThrow('Works are not synced');
+		expect(commandBus.execute).not.toHaveBeenCalled();
+		expect(client.request).not.toHaveBeenCalled();
+	});
+
+	it('private works never sync: not listed, not pairable, and a linked work that turns private stops syncing', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'Acme Site' });
+		client.request.mockResolvedValue({
+			data: [
+				{ id: 'ew-work-1', ...work },
+				{ id: 'ew-secret', ...work, name: 'Secret', visibility: 'private' }
+			],
+			nextCursor: null,
+			hasMore: false
+		});
+		expect((await service.projects('m1' as never)).works.map((row) => row.ewWorkId)).toEqual(['ew-work-1']);
+		await expect(service.decide('m1' as never, { links: [{ ewWorkId: 'ew-secret', projectId: 'p1' }] })).rejects.toThrow('private');
+		await expect(service.decide('m1' as never, { createInGauzy: ['ew-secret'] })).rejects.toThrow('private');
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		expect(await service.apply(envelope('work.updated', { ...work, name: 'Renamed', visibility: 'private' }, 4) as never, applyContext)).toMatchObject({
+			status: 'skipped'
+		});
+		expect(projects[0]['name']).toBe('Acme Site');
+		expect(links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)?.state).toBe(EverWorksLinkState.UNLINKED);
+	});
+
+	it('a project created from an archived work is archived', async () => {
+		const { service, client, projects } = setup();
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work, status: 'archived' }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { createInGauzy: ['ew-work-1'] });
+		expect(projects).toHaveLength(1);
+		expect(projects[0]).toMatchObject({ isArchived: true });
+	});
+
+	it('members and teams Gauzy could not map join the project once they are paired (sweep)', async () => {
+		const { service, client, members, projectTeams, addLink, links } = setup();
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { createInGauzy: ['ew-work-1'] }); // Ann and team 1 are not paired yet
+		expect(members).toHaveLength(0);
+		const link = links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)!;
+		expect(JSON.parse(link.ewOnly as string)).toMatchObject({ unmappedMembers: ['ew-ann'], unmappedTeams: ['ew-team-1'] });
+		addLink(EverWorksLinkType.MEMBER, 'emp-ann', 'ew-ann'); // paired on the People tab
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1'); // and on the Teams tab
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(members).toEqual([expect.objectContaining({ organizationProjectId: link.gauzyId, employeeId: 'emp-ann', isManager: true })]);
+		expect([...(projectTeams.get(link.gauzyId) ?? [])]).toEqual(['g-team-1']);
+		expect(JSON.parse(link.ewOnly as string)).toMatchObject({ unmappedMembers: [], unmappedTeams: [], kind: 'website', repoUrls: ['https://github.com/acme/site'] });
+	});
+
+	it('a member event keeps the kind, the slug and every repository URL on the link', async () => {
+		const { service, client, links, projects, members, addLink } = setup();
+		projects.push({ id: 'p1', name: 'Acme Site' });
+		addLink(EverWorksLinkType.MEMBER, 'emp-bob', 'ew-bob');
+		const repoUrls = ['https://github.com/acme/site', 'https://gitlab.example.test/acme/site'];
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work, repoUrls, webUrl: 'https://ever.works.test/acme/site' }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		await service.apply(envelope('work.member.added', { userId: 'ew-bob', role: 'editor' }, 4) as never, applyContext);
+		expect(members).toEqual([expect.objectContaining({ organizationProjectId: 'p1', employeeId: 'emp-bob', isManager: false })]);
+		const link = links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)!;
+		expect(JSON.parse(link.ewOnly as string)).toMatchObject({ slug: 'acme-site', kind: 'website', webUrl: 'https://ever.works.test/acme/site', repoUrls });
+		expect(JSON.parse(link.snapshot as string).repoUrl).toBe('https://github.com/acme/site');
+	});
+
+	it('accepting suggestions pairs the unambiguous ones and leaves a project suggested for two works to the admin', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p-shared', name: 'Shared', openSourceProjectUrl: 'https://github.com/acme/mono' });
+		projects.push({ id: 'p-docs', name: 'Docs' });
+		client.request.mockResolvedValue({
+			data: [
+				{ id: 'ew-web', name: 'Web', repoUrls: ['https://github.com/acme/mono'] },
+				{ id: 'ew-api', name: 'API', repoUrls: ['https://github.com/acme/mono.git'] },
+				{ id: 'ew-docs', name: 'Docs' }
+			],
+			nextCursor: null,
+			hasMore: false
+		});
+		const view = await service.decide('m1' as never, { acceptSuggestions: true });
+		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK).map((l) => [l.ewId, l.gauzyId])).toEqual([['ew-docs', 'p-docs']]);
+		expect(view.works.find((row) => row.ewWorkId === 'ew-web')?.suggestion).toEqual({ projectId: 'p-shared', reason: 'same_url' });
+	});
+
+	it('two overlapping "create from work" requests create one project', async () => {
+		const { service, client, commandBus, projects } = setup();
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
+		await Promise.all([service.decide('m1' as never, { createInGauzy: ['ew-work-1'] }), service.decide('m1' as never, { createInGauzy: ['ew-work-1'] })]);
+		expect(commandBus.execute).toHaveBeenCalledTimes(1);
+		expect(projects).toHaveLength(1);
 	});
 });

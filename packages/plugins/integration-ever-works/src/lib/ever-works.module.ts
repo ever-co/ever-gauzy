@@ -70,6 +70,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.pusher.register(this.teams);
 		this.loop.registerSweeper(this.teams);
 		this.applier.register(this.projects);
+		this.loop.registerSweeper(this.projects);
 	}
 }
 
