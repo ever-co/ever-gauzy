@@ -2,7 +2,7 @@ import '../core/entities/internal';
 
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { EmployeeAgentSourceEnum, EmployeeKindEnum, RolesEnum } from '@gauzy/contracts';
-import { EmployeeAgentProfile, Organization, Role, User } from '../core/entities/internal';
+import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/entities/internal';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { DEFAULT_AGENT_EMAIL_DOMAIN, isAgentEmail } from './agent-employee';
@@ -31,6 +31,7 @@ function fakeDatabase(type: string = 'postgres') {
 				{ id: OTHER_ORGANIZATION, tenantId: TENANT }
 			]
 		],
+		[Tenant, [{ id: TENANT }, { id: OTHER_TENANT }]],
 		[Role, [{ id: ROLE, tenantId: TENANT, name: RolesEnum.EMPLOYEE }]],
 		[User, []],
 		[Employee, []],
@@ -258,7 +259,25 @@ describe('EmployeeService.createAgentEmployee', () => {
 		expect(results[0].employee.id).toBe(results[1].employee.id);
 		expect(db.tables.get(User)).toHaveLength(1);
 		expect(db.tables.get(Employee)).toHaveLength(1);
-		expect(db.lockRequests).toEqual([`Organization:${ORGANIZATION}`, `Organization:${ORGANIZATION}`]);
+		expect(db.lockRequests).toEqual([`Tenant:${TENANT}`, `Tenant:${TENANT}`]);
+	});
+
+	it('creates one account when two calls for the same agent in two organizations overlap', async () => {
+		const email = 'agent-7b@agents.invalid';
+		const [first, second] = await Promise.all([
+			service.createAgentEmployee({ tenantId: TENANT, organizationId: ORGANIZATION, name: 'Bot', email }),
+			service.createAgentEmployee({ tenantId: TENANT, organizationId: OTHER_ORGANIZATION, name: 'Bot', email })
+		]);
+
+		expect(first.created && second.created).toBe(true);
+		expect(db.tables.get(User)).toHaveLength(1);
+		expect(first.employee.userId).toBe(second.employee.userId);
+		expect(
+			db.tables
+				.get(Employee)
+				.map((employee) => employee.organizationId)
+				.sort()
+		).toEqual([ORGANIZATION, OTHER_ORGANIZATION].sort());
 	});
 
 	it('control: without the row lock the same overlap creates the agent twice', async () => {
@@ -357,7 +376,7 @@ describe('EmployeeService.createAgentEmployee', () => {
 			name: 'Bot',
 			profile: { source: 'ever_works' }
 		});
-		// The organization row and, for the profile write, the employee row: both locked, neither with eager joins.
+		// The tenant row and, for the profile write, the employee row: both locked, neither with eager joins.
 		expect(db.lockRequests).toHaveLength(2);
 		expect(db.eagerLocks).toEqual([]);
 	});
@@ -390,5 +409,27 @@ describe('EmployeeService.createAgentEmployee', () => {
 			})
 		).rejects.toBeInstanceOf(ConflictException);
 		expect(db.tables.get(Employee)).toHaveLength(0);
+	});
+});
+
+describe('EmployeeService.assertNotAgentAccount', () => {
+	it('refuses (409) an account with an agent employee in the tenant, retired ones included', async () => {
+		const count = jest.fn(async () => 1);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const service = new EmployeeService({ count } as any, {} as any);
+
+		await expect(service.assertNotAgentAccount('user-1', TENANT)).rejects.toBeInstanceOf(ConflictException);
+		expect(count).toHaveBeenCalledWith({
+			where: { userId: 'user-1', tenantId: TENANT, kind: EmployeeKindEnum.AGENT },
+			withDeleted: true
+		});
+	});
+
+	it('lets an account with no agent employee through', async () => {
+		const count = jest.fn(async () => 0);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const service = new EmployeeService({ count } as any, {} as any);
+
+		await expect(service.assertNotAgentAccount('user-1', TENANT)).resolves.toBeUndefined();
 	});
 });
