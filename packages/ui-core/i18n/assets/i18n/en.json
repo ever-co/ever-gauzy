@@ -2583,7 +2583,11 @@
 				"IN_DAYS": "In {{ count }} days"
 			},
 			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
-			"NO_TASKS_IN_VIEW": "No tasks in this view"
+			"NO_TASKS_IN_VIEW": "No tasks in this view",
+			"PROJECTS_CAPTION": "Their projects and the time worked on each in this period",
+			"NO_PROJECTS": "Not a member of any project, and no project time in this period",
+			"NOT_A_MEMBER": "Not a member",
+			"NOT_A_MEMBER_HINT": "Time was tracked on this project, but they are not a member of it"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

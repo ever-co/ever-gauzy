@@ -2097,7 +2097,11 @@
 				"IN_DAYS": "Tra {{ count }} giorni"
 			},
 			"SHOWING": "{{ shown }} di {{ total }} attività mostrate",
-			"NO_TASKS_IN_VIEW": "Nessuna attività in questa vista"
+			"NO_TASKS_IN_VIEW": "Nessuna attività in questa vista",
+			"PROJECTS_CAPTION": "I suoi progetti e il tempo dedicato a ciascuno in questo periodo",
+			"NO_PROJECTS": "Non è membro di alcun progetto e non ha tempo sui progetti in questo periodo",
+			"NOT_A_MEMBER": "Non membro",
+			"NOT_A_MEMBER_HINT": "È stato registrato tempo su questo progetto, ma non ne è membro"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

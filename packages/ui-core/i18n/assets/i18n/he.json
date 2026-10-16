@@ -2139,7 +2139,11 @@
 				"IN_DAYS": "בעוד {{ count }} ימים"
 			},
 			"SHOWING": "מוצגות {{ shown }} מתוך {{ total }} משימות",
-			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו"
+			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו",
+			"PROJECTS_CAPTION": "הפרויקטים והזמן שהושקע בכל אחד בתקופה זו",
+			"NO_PROJECTS": "אינו חבר באף פרויקט, ואין זמן בפרויקטים בתקופה זו",
+			"NOT_A_MEMBER": "לא חבר",
+			"NOT_A_MEMBER_HINT": "נרשם זמן בפרויקט זה, אך הוא אינו חבר בו"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {
