@@ -100,7 +100,14 @@ export class EverWorksPageComponent implements OnInit {
 		// flight, so a late answer for a previous organization (or an earlier retry) never wins.
 		merge(organizations$, this.reload$)
 			.pipe(
-				switchMap(() => this.statusOf(this.organizationId)),
+				switchMap(() => {
+					// A new request starts: the previous organization's status (and its key link) must not stay
+					// on screen while it runs.
+					this.status = null;
+					this.view = 'loading';
+					this.cdr.markForCheck();
+					return this.statusOf(this.organizationId);
+				}),
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((result) => this.apply(result));
