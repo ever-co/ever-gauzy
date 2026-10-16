@@ -2,6 +2,7 @@ import { ForbiddenException, NotFoundException, UseGuards } from '@nestjs/common
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
+	EmployeeKindEnum,
 	ID as Id,
 	IDateRangePicker,
 	IEmployee,
@@ -440,7 +441,8 @@ export class EmployeeResolver {
 	@Query('employeeCount')
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	async employeeCount(): Promise<number> {
-		return await this.employeeService.countBy();
+		// The headcount is people, as on the route: agent employees (`kind = 'agent'`) are not counted.
+		return await this.employeeService.countBy({ kind: EmployeeKindEnum.HUMAN });
 	}
 
 	/**

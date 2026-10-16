@@ -19,7 +19,15 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, IEmployeePresence, ID } from '@gauzy/contracts';
+import {
+	EmployeeKindEnum,
+	PermissionsEnum,
+	LanguagesEnum,
+	IPagination,
+	IEmployee,
+	IEmployeePresence,
+	ID
+} from '@gauzy/contracts';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
@@ -178,7 +186,8 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/count')
 	@UseValidationPipe()
 	async getCount(@Query() options: CountQueryDTO<Employee>): Promise<number> {
-		return await this._employeeService.countBy(options);
+		// The headcount is people: agent employees (`kind = 'agent'`) are not counted.
+		return await this._employeeService.countBy({ ...options, kind: EmployeeKindEnum.HUMAN });
 	}
 
 	/**

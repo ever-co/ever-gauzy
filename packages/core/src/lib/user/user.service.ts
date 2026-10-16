@@ -27,6 +27,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import {
 	ComponentLayoutStyleEnum,
+	EmployeeKindEnum,
 	ID,
 	IEmployee,
 	IFindMeUser,
@@ -52,6 +53,7 @@ import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
+import { Employee } from '../core/entities/internal';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { isEmailAddressChange, UNCONFIRMED_EMAIL_STATE } from './email-change.util';
@@ -129,19 +131,52 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getUserStats(): Promise<UserStats> {
 		try {
-			const [count, lastMonthActiveUsers] = await Promise.all([
+			const [count, agentUsers, lastMonthActiveUsers] = await Promise.all([
 				this.count(), // Get the total number of users
+				this.countAgentUsers(), // The users behind agent employees, which are not people
 				this.getMonthlyActiveUsers() // Get the number of users active in the last 30 days
 			]);
 
 			return {
-				count, // The total number of users
-				lastMonthActiveUsers // The number of active users in the last month
+				count: Math.max(0, count - agentUsers), // The total number of users (people)
+				lastMonthActiveUsers // The number of active users in the last month (an agent never signs in)
 			};
 		} catch (error) {
 			console.error('Error fetching user stats:', error);
 			throw new Error(`Failed to retrieve user statistics: ${error.message}`);
 		}
+	}
+
+	/**
+	 * The users that stand behind an agent employee (`employee.kind = 'agent'`): the accounts the
+	 * agent-provisioning path creates, which have no password and never sign in. Left out of the user
+	 * statistics, which count people.
+	 *
+	 * Scoped like the user count it is subtracted from: the caller's tenant when there is one, and the whole
+	 * instance when there is none (the public `GET /stats/global`). An account behind an agent employee stays
+	 * an agent account after that employee is retired (soft-deleted), so retired employee rows count here; a
+	 * soft-deleted USER is in neither count.
+	 *
+	 * @returns {Promise<number>} - The number of agent users
+	 */
+	async countAgentUsers(): Promise<number> {
+		const tenantId = RequestContext.currentTenantId();
+		// `withDeleted` keeps the retired agent employees in the join; it also lifts the soft-delete filter of
+		// the users, which is therefore stated explicitly.
+		const query = this.typeOrmRepository
+			.createQueryBuilder('user')
+			.withDeleted()
+			.innerJoin(Employee, 'employee', 'employee.userId = user.id AND employee.kind = :agentKind', {
+				agentKind: EmployeeKindEnum.AGENT
+			})
+			.where('user.deletedAt IS NULL');
+		if (tenantId) {
+			query.andWhere('user.tenantId = :tenantId', { tenantId });
+		}
+		const row = await query
+			.select('COUNT(DISTINCT user.id)', 'agentUsers')
+			.getRawOne<{ agentUsers: string | number }>();
+		return Number(row?.agentUsers ?? 0) || 0;
 	}
 
 	/**
