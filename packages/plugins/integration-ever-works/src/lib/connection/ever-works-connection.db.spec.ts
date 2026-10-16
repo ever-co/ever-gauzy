@@ -50,6 +50,8 @@ import { BadRequestException, ConflictException, ForbiddenException, NotFoundExc
 import { DataSource, EntitySchema } from 'typeorm';
 import { Employee, EmployeeNotification, IntegrationSetting, IntegrationTenant, Organization, Tenant, UserOrganization } from '@gauzy/core';
 import { TestEverWorksClientFactory } from '../client/ever-works-client.factory';
+import type { EverWorksTransport } from '../client/ever-works-transport';
+import { EverWorksSecretBox } from './ever-works-secret-box';
 import { EverWorksConfig } from '../ever-works-config';
 import { EverWorksScopeService } from '../ever-works-scope.service';
 import { EverWorksSettingName } from '../ever-works-setting.enum';
@@ -430,6 +432,102 @@ describe('Ever Works connection on SQLite', () => {
 			const again = await service.connect(connectDto(mock.addKey()));
 			expect(again.id).toBe(view.id);
 			expect(again.status).toBe(EverWorksConnectionStatus.ACTIVE);
+		});
+	});
+
+	describe('review hardening (#10773)', () => {
+		/** A service over a transport that runs `during` while Ever Works answers the matching request. */
+		const buildWith = (options: { env?: Record<string, string | undefined>; during?: { path: string; run: () => Promise<void> } }) => {
+			const saved = { ...process.env };
+			for (const [key, value] of Object.entries(options.env ?? {})) {
+				if (value === undefined) delete process.env[key];
+				else process.env[key] = value;
+			}
+			const transport: EverWorksTransport = {
+				send: async (request) => {
+					if (options.during && new URL(request.url).pathname.endsWith(options.during.path)) await options.during.run();
+					return mock.handle(request);
+				}
+			};
+			try {
+				return new EverWorksConnectionService(
+					dataSource,
+					new TestEverWorksClientFactory(transport),
+					new EverWorksScopeService(dataSource),
+					new EverWorksNotifier(dataSource),
+					CONFIG
+				);
+			} finally {
+				process.env = saved;
+			}
+		};
+
+		it('a health check never undoes a pause made while it was running', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			const racing = buildWith({ during: { path: '/whoami', run: async () => void (await raw().update({ id: view.id }, { status: EverWorksConnectionStatus.PAUSED })) } });
+			const result = await racing.health(view.id);
+			expect(result).toMatchObject({ status: EverWorksConnectionStatus.PAUSED, healthy: true });
+			expect((await raw().findOneByOrFail({ id: view.id })).status).toBe(EverWorksConnectionStatus.PAUSED);
+		});
+
+		it('a health check of a key replaced while it was running is discarded (the new key is not judged)', async () => {
+			const oldKey = mock.addKey();
+			const view = await service.connect(connectDto(oldKey));
+			const newKey = mock.addKey();
+			mock.revokeKey(oldKey);
+			const racing = buildWith({ during: { path: '/whoami', run: async () => void (await service.rotateKey(view.id, { apiKey: newKey })) } });
+			const result = await racing.health(view.id);
+			expect(result.lastError).toMatch(/^superseded/);
+			const stored = await raw().findOneByOrFail({ id: view.id });
+			expect(stored.status).toBe(EverWorksConnectionStatus.ACTIVE);
+			expect(await dataSource.getRepository(EmployeeNotification).count()).toBe(0);
+		});
+
+		it('an incompatible API version fails the health check and resume refuses it', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await service.pause(view.id);
+			mock.apiVersion = '2';
+			await expect(service.resume(view.id)).rejects.toThrow(/api_version/);
+			const result = await service.health(view.id);
+			expect(result).toMatchObject({ healthy: false });
+			expect(result.lastError).toMatch(/^api_version/);
+			mock.apiVersion = '1';
+		});
+
+		it('two registrations in one process run one after the other and leave one subscription', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await Promise.all([service.registerWebhook(view.id), service.registerWebhook(view.id)]);
+			expect(mock.webhooks.size).toBe(1);
+			const stored = await raw().findOneByOrFail({ id: view.id });
+			expect(stored.webhookSubscriptionId).toBe([...mock.webhooks.keys()][0]);
+		});
+
+		it('a registration that loses a race with another process (or a disconnect) keeps nothing and deletes its subscription', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			const other = randomUUID();
+			const racing = buildWith({ during: { path: '/webhooks', run: async () => void (await raw().update({ id: view.id }, { webhookSubscriptionId: other })) } });
+			await expect(racing.registerWebhook(view.id)).rejects.toBeInstanceOf(ConflictException);
+			expect(mock.webhooks.size).toBe(0);
+			expect((await raw().findOneByOrFail({ id: view.id })).webhookSubscriptionId).toBe(other);
+		});
+
+		it('secrets stored under the JWT_SECRET fallback are re-encrypted under ENCRYPTION_KEY at the next health check', async () => {
+			const jwt = { JWT_SECRET: 'a-strong-unique-jwt-secret-of-this-installation', ENCRYPTION_KEY: undefined };
+			const before = buildWith({ env: jwt });
+			const view = await before.connect(connectDto(mock.addKey()));
+			await before.registerWebhook(view.id);
+			const sealed = await raw().findOneByOrFail({ id: view.id });
+			expect(EverWorksSecretBox.sourceOf(sealed.apiKeyEncrypted)).toBe('j');
+			const secret = [...mock.webhooks.values()][0].secret;
+			const after = buildWith({ env: { JWT_SECRET: jwt.JWT_SECRET, ENCRYPTION_KEY: process.env['ENCRYPTION_KEY'] } });
+			expect((await after.health(view.id)).healthy).toBe(true);
+			const resealed = await raw().findOneByOrFail({ id: view.id });
+			expect(EverWorksSecretBox.sourceOf(resealed.apiKeyEncrypted)).toBe('k');
+			expect(EverWorksSecretBox.sourceOf(resealed.webhookSecretEncrypted)).toBe('k');
+			// Readable with ENCRYPTION_KEY alone: the old JWT_SECRET can be retired.
+			const only = buildWith({ env: { JWT_SECRET: undefined, ENCRYPTION_KEY: process.env['ENCRYPTION_KEY'] } });
+			expect(only.webhookSecret(resealed)).toBe(secret);
+			expect((await only.health(view.id)).healthy).toBe(true);
 		});
 	});
 });

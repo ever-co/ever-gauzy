@@ -16,8 +16,10 @@ export const EVER_WORKS_MIGRATIONS = [CreateEverWorksConnection1791000001100];
  */
 @Plugin({
 	imports: [EverWorksModule],
-	entities: () => [...EVER_WORKS_ENTITIES],
-	migrations: () => [...EVER_WORKS_MIGRATIONS],
+	// Arrays, not factories: the platform resolves a factory for migrations but not for entities, and an
+	// entity the ORMs never receive fails the boot (MikroORM: "Metadata for entity … not found").
+	entities: [...EVER_WORKS_ENTITIES],
+	migrations: [...EVER_WORKS_MIGRATIONS],
 	configuration: (config: ApplicationPluginConfig) => config
 })
 export class IntegrationEverWorksPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
