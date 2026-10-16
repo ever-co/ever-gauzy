@@ -56,6 +56,11 @@ export class EverWorksOutboundPusher {
 		for (const type of handler.entityTypes) this.handlers.set(type, handler);
 	}
 
+	/** Whether a handler pushes this record type (the initial sync queues only what can be pushed). */
+	hasHandler(entityType: EverWorksLinkType | string): boolean {
+		return this.handlers.has(entityType);
+	}
+
 	/** Pushes up to `limit` due changes of the connection's mappings; returns how many were settled. */
 	async drain(connection: EverWorksConnection, limit = 100, now: Date = new Date(), stillOwner?: () => Promise<boolean>): Promise<number> {
 		const mappings = await this.mappingsOf(connection);
