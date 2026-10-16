@@ -1,0 +1,155 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { DataSource, In, LessThanOrEqual } from 'typeorm';
+import { ID } from '@gauzy/contracts';
+import { IntegrationTenant } from '@gauzy/core';
+import { EverWorksApiError, EverWorksNetworkError } from '../../client/ever-works-client';
+import { EverWorksConnection } from '../../connection/ever-works-connection.entity';
+import { EverWorksLinkType, EverWorksOutboundChange, EverWorksOutboundStatus } from '../entities/ever-works-sync.entities';
+import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
+
+/** What a push did. */
+export type EverWorksPushOutcome =
+	| { status: 'pushed'; message?: string }
+	| { status: 'skipped'; message: string }
+	| { status: 'deferred'; message: string; retryInMs?: number };
+
+/** The context of one push: the connection and the organization mapping the change belongs to. */
+export interface EverWorksPushContext {
+	connection: EverWorksConnection;
+	mapping: IntegrationTenant;
+}
+
+/**
+ * Pushes one kind of Gauzy record to Ever Works (plan 03 §C.3; tasks in G-P1-9, teams in G-P1-7, …).
+ * A handler loads the record fresh, normalises it, diffs it against its link's snapshot (nothing
+ * changed → `skipped`: loop guard level 2), creates with `externalRef` + a deterministic
+ * `Idempotency-Key` or patches with `If-Match`, and handles 412 / 409 itself.
+ */
+export interface EverWorksOutboundHandler {
+	readonly entityTypes: ReadonlyArray<EverWorksLinkType>;
+	push(change: EverWorksOutboundChange, context: EverWorksPushContext): Promise<EverWorksPushOutcome>;
+}
+
+/** Attempts before a change is dead (plan 03 §C.3). */
+export const OUTBOUND_MAX_ATTEMPTS = 8;
+export const OUTBOUND_DEFER_MS = 60 * 60_000;
+
+/**
+ * The outbound pusher (plan 03 §C.3): drains a connection's due changes through the handler of their
+ * type. No handler yet → `deferred` (hourly), so nothing is lost before a type ships. 429 / 5xx /
+ * network → retried with back-off (honouring `Retry-After`); after {@link OUTBOUND_MAX_ATTEMPTS} the
+ * change is `dead` and logged. Another 4xx is a `failed` change with the contract's code.
+ */
+@Injectable()
+export class EverWorksOutboundPusher {
+	private readonly logger = new Logger('EverWorksPusher');
+	private readonly handlers = new Map<string, EverWorksOutboundHandler>();
+
+	constructor(
+		private readonly dataSource: DataSource,
+		private readonly log: EverWorksSyncLogService
+	) {}
+
+	register(handler: EverWorksOutboundHandler): void {
+		for (const type of handler.entityTypes) this.handlers.set(type, handler);
+	}
+
+	/** Pushes up to `limit` due changes of the connection's mappings; returns how many were settled. */
+	async drain(connection: EverWorksConnection, limit = 100, now: Date = new Date()): Promise<number> {
+		const mappings = await this.mappingsOf(connection);
+		if (!mappings.length) return 0;
+		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
+		const due = await repository.find({
+			where: {
+				integrationTenantId: In(mappings.map((m) => m.id as ID)),
+				status: In([EverWorksOutboundStatus.PENDING, EverWorksOutboundStatus.DEFERRED, EverWorksOutboundStatus.FAILED]),
+				availableAt: LessThanOrEqual(now)
+			},
+			take: limit
+		});
+		let settled = 0;
+		for (const change of due) {
+			const mapping = mappings.find((m) => m.id === change.integrationTenantId) as IntegrationTenant;
+			if (await this.pushOne(connection, mapping, change, now)) settled++;
+		}
+		return settled;
+	}
+
+	private async pushOne(connection: EverWorksConnection, mapping: IntegrationTenant, change: EverWorksOutboundChange, now: Date): Promise<boolean> {
+		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
+		const handler = this.handlers.get(change.entityType);
+		if (!handler) {
+			await repository.update(
+				{ id: change.id },
+				{ status: EverWorksOutboundStatus.DEFERRED, lastError: `no handler for ${change.entityType} yet`, availableAt: new Date(now.getTime() + OUTBOUND_DEFER_MS) }
+			);
+			return true;
+		}
+		try {
+			const outcome = await handler.push(change, { connection, mapping });
+			if (outcome.status === 'deferred') {
+				await repository.update(
+					{ id: change.id },
+					{ status: EverWorksOutboundStatus.DEFERRED, lastError: outcome.message.slice(0, 2000), availableAt: new Date(now.getTime() + (outcome.retryInMs ?? OUTBOUND_DEFER_MS)) }
+				);
+				return false;
+			}
+			await repository.update(
+				{ id: change.id },
+				{
+					status: outcome.status === 'pushed' ? EverWorksOutboundStatus.PUSHED : EverWorksOutboundStatus.SKIPPED,
+					lastError: outcome.status === 'skipped' ? outcome.message.slice(0, 2000) : null
+				} as never
+			);
+			return true;
+		} catch (error) {
+			const attempts = (change.attempts ?? 0) + 1;
+			const retryable = error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable);
+			const dead = !retryable || attempts >= OUTBOUND_MAX_ATTEMPTS;
+			const reason =
+				error instanceof EverWorksApiError
+					? `${error.status} ${error.code}: ${error.message}`
+					: error instanceof Error
+						? `${error.name}: ${error.message}`
+						: 'error';
+			const retryAfterMs = error instanceof EverWorksApiError && error.retryAfterSeconds !== null ? error.retryAfterSeconds * 1000 : 0;
+			await repository.update(
+				{ id: change.id },
+				{
+					status: dead ? (retryable ? EverWorksOutboundStatus.DEAD : EverWorksOutboundStatus.FAILED) : EverWorksOutboundStatus.FAILED,
+					attempts,
+					lastError: reason.slice(0, 2000),
+					availableAt: new Date(now.getTime() + Math.max(retryAfterMs, Math.min(60 * 60_000, 2 ** attempts * 1000)))
+				}
+			);
+			if (dead) {
+				await this.log.write({
+					tenantId: change.tenantId as ID,
+					organizationId: change.organizationId as ID,
+					integrationTenantId: change.integrationTenantId,
+					connectionId: connection.id as ID,
+					direction: 'outbound',
+					entityType: change.entityType,
+					gauzyId: change.gauzyId,
+					action: retryable ? 'dead_letter' : 'push_failed',
+					status: 'error',
+					message: reason
+				});
+				this.logger.warn(`Connection ${connection.id}: the ${change.entityType} change of ${change.gauzyId} stopped (${reason.slice(0, 200)}).`);
+			}
+			return false;
+		}
+	}
+
+	private async mappingsOf(connection: EverWorksConnection): Promise<IntegrationTenant[]> {
+		const rows = await this.dataSource.getRepository(IntegrationTenant).find({
+			where: { tenantId: connection.tenantId, isActive: true, isArchived: false },
+			relations: { settings: true }
+		});
+		return rows.filter(
+			(row) =>
+				row.settings?.some((s) => s.settingsName === 'CONNECTION_ID' && s.settingsValue === connection.id) &&
+				row.settings?.some((s) => s.settingsName === 'IS_ENABLED' && s.settingsValue === 'true')
+		);
+	}
+}

@@ -6,6 +6,7 @@
       "## Switch it on",
       "## Configure the integration",
       "## API boundary",
+      "## How the sync works",
       "## Build and verification"
     ]
   }
@@ -25,8 +26,7 @@ The design lives in the integration plan (homelab repository,
 `docs/superpowers/specs/2026-10-15-gauzy-ever-works-integration/`). The plugin
 codes against the Ever Works integration contract v1 (`/api/integrations/v1`,
 machine-readable in ever-works
-`docs/specs/features/integrations-api-v1/contract/`). This version adds the
-connection and the organization mapping; the sync engine follows.
+`docs/specs/features/integrations-api-v1/contract/`).
 
 ## Switch it on
 
@@ -40,19 +40,21 @@ EVER_WORKS_ENABLED=true
 Only the exact value `true` switches it on. Unset, empty and `false` keep it
 off silently; any other value (`TRUE`, `1`, `yes`) keeps it off and logs one
 warning. Off, the plugin is not loaded at all by the API or the worker: no
-route, no table (its migration is not even registered), no timer, no catalog
+route, no table (its migrations are not even registered), no timer, no catalog
 entry and no outbound request.
 
-On, the API runs the plugin's migration (`ever_works_connection`), lists
-**Ever Works** on the Integrations page (a catalog row written at start, on
-every database; never by the seed) and answers the routes below.
+On, the API runs the plugin's migrations, lists **Ever Works** on the
+Integrations page (a catalog row written at start, on every database; never by
+the seed) and answers the routes below.
 
 | Variable | Meaning |
 | --- | --- |
 | `EVER_WORKS_API_URL` | The Ever Works API base URL the connect form offers, for example `https://api.ever.works/api` for Ever Works Cloud. Public HTTPS without a query or fragment; anything else is ignored with a warning. |
 | `EVER_WORKS_APP_URL` | The Ever Works web app, for example `https://app.ever.works`, used only to link the admin to the page that creates an integration key. |
-| `ENCRYPTION_KEY` | A base64-encoded 32-byte key. The integration key and the webhook secret are stored encrypted with it (AES-256-GCM, bound to their purpose and connection); a malformed or published value is refused. Without it, a strong `JWT_SECRET` that is not a published default is used; with neither, nothing can be connected. |
-| `API_BASE_URL` | The public HTTPS address of this API, where Ever Works delivers webhooks. Without one, no webhook is registered (the change feed still works). |
+| `ENCRYPTION_KEY` | A base64-encoded 32-byte key. The integration key and the webhook secret are stored encrypted with it (AES-256-GCM); a malformed value is refused. Without it, a strong `JWT_SECRET` that is not a published default is used; with neither, nothing can be connected. |
+| `API_BASE_URL` | The public HTTPS address of this API, where Ever Works delivers webhooks. Without one, the change feed alone keeps the sync going. |
+| `EVER_WORKS_WEBHOOK_REQUESTS_PER_MINUTE` | Per-process limit of the public webhook route (default 1200). |
+| `EVER_WORKS_SYNC_LOOP=off` | Keeps this process out of the sync loop (it still serves the API). |
 | `EVER_WORKS_HEALTH_CHECK=off` | Keeps this process out of the daily key check. |
 
 ## Configure the integration
@@ -60,41 +62,29 @@ every database; never by the seed) and answers the routes below.
 1. In Ever Works, open **Settings → API keys → New key → Integration**, pin the
    key to the organizations to sync and keep the "Ever Gauzy" scope preset. The
    key starts with `ew_int_` and is shown once.
-2. In Gauzy, validate the key (`POST …/connections/validate`) and connect the
-   tenant with the API URL and the key (`POST …/connections`). Gauzy checks the
-   key with `whoami`, refuses an incompatible API version, lists missing scopes
-   and stores the key encrypted. Personal Ever Works keys (`ew_live_…`) are
-   refused.
-3. Register the webhook (`POST …/connections/:id/webhook`): every domain of the
-   catalog, the pinned organizations, Gauzy's own origin excluded. The signing
-   secret Ever Works returns once is stored encrypted.
+2. In Gauzy, connect the tenant with the API URL and the key
+   (`POST …/connections`). Gauzy checks the key with `whoami`, refuses an
+   incompatible API version, lists missing scopes and stores the key encrypted.
+3. Register the webhook (`POST …/connections/:id/webhook`); the change feed is
+   followed either way.
 4. Map each Gauzy organization to one pinned Ever Works organization
-   (`POST …/mappings`): one `integration_tenant` named `Ever_Works` per mapped
-   organization, with the entity directions (defaults of the plan), the default,
-   Ideas and Docs targets, the include flags and one sync toggle per entity
-   (`integration_entity_setting`). Mapping seeds the organization's "Idea" issue
-   type and "Ideas" view; the "Ever Works" and "Ever Works — Ideas" projects are
-   created through the platform's own project command when first needed
-   (`POST …/mappings/:id/projects/default|ideas`). Each side of a pair is mapped
-   once per tenant; unmapping archives the mapping, and mapping the same pair
-   again resumes it.
+   (`POST …/mappings`). Mapping seeds the organization's "Idea" issue type and
+   "Ideas" view; the "Ever Works" and "Ever Works — Ideas" projects are created
+   when they are first needed.
 
-A revoked or expired key turns the connection `needs_reauth` (the daily check
-or any call that gets a 401): the sync pauses and the admin who connected gets
-a notification (an employee notification until the Gauzy Inbox exists).
-Entering a new key of the same Ever Works tenant (`PUT …/connections/:id/key`)
-resumes it. Disconnecting archives the connection and its organization
-mappings and deletes the Ever Works webhook on a best-effort basis; links and
-logs are kept, so a reconnect to the same Ever Works tenant resumes the same
-connection. Nothing synced is deleted on either side.
+A revoked or expired key turns the connection `needs_reauth`: the sync pauses
+and the admin who connected gets a notification. Entering a new key of the same
+Ever Works tenant resumes it. Disconnecting archives the connection and its
+mappings and deletes the Ever Works webhook; links and logs are kept, so a
+reconnect resumes without duplicates. Nothing synced is deleted on either side.
 
 ## API boundary
 
 Management routes use the signed-in Gauzy user, tenant permissions, integration
 permissions and an active membership of the organization (`organizationId`
-query parameter). The tenant always comes from the request context; one
-connection per tenant. Permissions below use the `INTEGRATION_` prefix; paths
-share the `/api/integration/ever-works` prefix.
+query parameter). The tenant always comes from the request context. Permissions
+below use the `INTEGRATION_` prefix; paths share the
+`/api/integration/ever-works` prefix.
 
 | Method | Path | Permission |
 | --- | --- | --- |
@@ -117,15 +107,36 @@ share the `/api/integration/ever-works` prefix.
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
-secret, and every connection response is `Cache-Control: no-store`. Ever Works
-failures are answered as 400 / 502 / 503 with the contract's error code, never
-as 401 (which would sign the Gauzy user out).
+secret, and connection responses are `Cache-Control: no-store`.
 
-Calls to Ever Works go through the SSRF-safe HTTPS agent (every resolved address
-must be public), without redirects or a proxy, with a 15 s timeout and a 10 MiB
-response cap. They carry `X-Sync-Origin: gauzy:<connectionId>` on writes, an
-`Idempotency-Key` on every create, `X-Scope-Slug` where a pinned organization is
-meant, and retry 429 and 5xx with back-off and jitter, honouring `Retry-After`.
+`POST /webhooks/:connectionId` is public and rests on the signature alone:
+`X-Ever-Works-Signature` (`t=<unix>,v1=<hex HMAC-SHA256(secret,
+"<t>.<raw body>")>`, 300 s tolerance, the contract's shared test vectors pass)
+is verified over the raw bytes with the connection's own secret, after a
+per-process rate limit. The tenant and organization come from the stored
+connection and mapping, never from the payload; an event of another Ever Works
+tenant is refused. Accepted events are stored once (deduplicated on their id)
+and answered `202`.
+
+## How the sync works
+
+- **Intake.** Webhooks and the change feed (`/events`, our own origin excluded)
+  store events in `ever_works_inbound_event`; the feed is polled every minute
+  while webhooks are quiet, every ten minutes otherwise. An expired cursor
+  (`410`) requests a resync.
+- **Apply.** Pending events are applied per aggregate in `seq` order, inside
+  `EverWorksSyncContext` (loop guard 1). Events of our own origin are skipped
+  (loop guard 3); events of a kind no handler covers yet are deferred, not lost.
+- **Capture and push.** Gauzy changes (`TaskEvent`, and the entity subscribers of
+  later items) become one coalesced `ever_works_outbound_change` per record;
+  the pusher recomputes the state, diffs it against the link snapshot (loop
+  guard 2) and retries 429/5xx with back-off, dead-lettering after eight tries.
+- **Merge.** Per field, against the snapshot: one side changed wins; both
+  changed → last writer wins for scalars and rich text (the loser is kept), a
+  3-way set merge for sets; Ever Works' gates decide status.
+- **Runtime.** Every process that loads the plugin ticks; a database lease on the
+  connection row lets one process work a connection at a time, on every
+  database, with or without Redis. A daily `whoami` checks every key.
 
 ## Build and verification
 
@@ -136,10 +147,9 @@ yarn nx test plugin-integration-ever-works
 yarn nx test plugin-integration-ever-works-ui
 ```
 
-The suites run the plugin's migration on SQLite and its services against the
+The suites run the plugin's migrations on SQLite and its services against the
 mock Ever Works server (`src/lib/testing/mock-ever-works.server.ts`, test code
-that is not part of the package build), with the contract's fixtures in
-`src/lib/testing/contract/`.
+that is not part of the package build).
 
 Both packages participate in the workspace and Docker builds. The backend is
 listed, behind `EVER_WORKS_ENABLED`, in the API and worker plugin lists and
