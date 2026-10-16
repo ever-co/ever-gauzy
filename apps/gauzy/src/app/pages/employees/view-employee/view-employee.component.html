@@ -208,17 +208,75 @@
 				</div>
 			</section>
 
-			<section class="panel" [nbSpinner]="projects.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<section class="panel" [nbSpinner]="topTasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 				<header class="panel-header">
-					<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}</h5>
+					<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.TOP_TASKS' | translate }}</h5>
 				</header>
 				<div class="panel-body panel-body--flush">
 					<ng-container
-						*ngTemplateOutlet="ranked; context: { $implicit: projects, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'briefcase-outline' }"
+						*ngTemplateOutlet="ranked; context: { $implicit: topTasks, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.TASK', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'list-outline' }"
 					></ng-container>
 				</div>
 			</section>
 		</div>
+
+		<!-- ── Projects: every project of the employee, and the time it got in the period ── -->
+		<section class="panel" [nbSpinner]="projects.loading || assignedProjects.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<header class="panel-header">
+				<div class="panel-heading">
+					<h5 class="panel-title">
+						{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}
+						@if (projectOverview.length) {
+						<span class="title-count">{{ projectOverview.length }}</span>
+						}
+					</h5>
+					<span class="panel-caption">{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS_CAPTION' | translate }}</span>
+				</div>
+			</header>
+			<div class="panel-body">
+				@if (projects.failed && assignedProjects.failed) {
+				<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+				} @else if (!projects.loading && !assignedProjects.loading && !projectOverview.length) {
+				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_PROJECTS', icon: 'briefcase-outline' }"></ng-container>
+				} @else {
+				<ul class="project-grid">
+					@for (project of projectOverview; track project.id) {
+					<li class="project-card" [class.is-idle]="!project.duration">
+						<span class="project-logo">
+							@if (project.imageUrl) {
+							<img [src]="project.imageUrl" [alt]="project.name" />
+							} @else {
+							<span aria-hidden="true">{{ project.initials }}</span>
+							}
+						</span>
+						<span class="project-body">
+							<span class="project-name-row">
+								<span class="project-name" [nbTooltip]="project.name" nbTooltipPlacement="top">{{ project.name }}</span>
+								@if (!project.member) {
+								<span
+									class="chip project-chip"
+									[nbTooltip]="'EMPLOYEES_PAGE.VIEW.NOT_A_MEMBER_HINT' | translate"
+									nbTooltipPlacement="top"
+									>{{ 'EMPLOYEES_PAGE.VIEW.NOT_A_MEMBER' | translate }}</span
+								>
+								}
+							</span>
+							<span class="project-figures">
+								<span class="project-time">{{ projects.failed ? '—' : project.duration ? formatDuration(project.duration) : '—' }}</span>
+								@if (!projects.failed && project.duration) {
+								<span class="project-share">{{ formatPercent(project.share) }}</span>
+								} @else if (!projects.failed) {
+								<span class="project-share">{{ 'EMPLOYEES_PAGE.VIEW.NO_TIME' | translate }}</span>
+								}
+							</span>
+							<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="project.width"></span></span>
+						</span>
+					</li>
+					}
+				</ul>
+				}
+			</div>
+		</section>
 
 		<!-- ── Recent screenshots: the period's latest captured slots ──────── -->
 		<section class="panel" [nbSpinner]="screenshots.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
@@ -352,17 +410,6 @@
 			</section>
 
 			<div class="stack">
-				<section class="panel" [nbSpinner]="topTasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-					<header class="panel-header">
-						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.TOP_TASKS' | translate }}</h5>
-					</header>
-					<div class="panel-body panel-body--flush">
-						<ng-container
-							*ngTemplateOutlet="ranked; context: { $implicit: topTasks, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.TASK', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'list-outline' }"
-						></ng-container>
-					</div>
-				</section>
-
 				<section class="panel" [nbSpinner]="apps.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 					<header class="panel-header">
 						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.APPS_URLS' | translate }}</h5>
