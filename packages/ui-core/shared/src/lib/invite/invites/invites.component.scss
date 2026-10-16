@@ -27,3 +27,14 @@
 // a `.pagination-container`), so the default `$actions` selector reaches the
 // toolbar and the layout selector beside it.
 @include ga-hub.list-page();
+
+// Invites page only: taller rows than the shared dense preset, and a 12px email
+// (the row's identity) while the other cells keep the preset size. Declared
+// after `list-page()` so the token wins on the same `:host`.
+:host {
+  --gauzy-table-cell-padding-y: 0.625rem;
+
+  ::ng-deep angular2-smart-table tbody tr > td:first-child {
+    font-size: 0.75rem;
+  }
+}
