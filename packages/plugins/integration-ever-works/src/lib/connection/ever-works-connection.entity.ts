@@ -111,4 +111,22 @@ export class EverWorksConnection extends TenantOrganizationBaseEntity {
 
 	@MultiORMColumn({ nullable: true })
 	disconnectedAt?: Date;
+
+	/** The sync loop's database lease (one process works a connection at a time). */
+	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
+	leaseOwner?: string | null;
+
+	@MultiORMColumn({ nullable: true })
+	leaseUntil?: Date;
+
+	/** When the change feed was last read, and when a webhook last arrived (the feed's cadence). */
+	@MultiORMColumn({ nullable: true })
+	lastFeedPollAt?: Date;
+
+	@MultiORMColumn({ nullable: true })
+	lastWebhookAt?: Date;
+
+	/** Set when the feed cursor expired (410): the reconcile pass resyncs every type. */
+	@MultiORMColumn({ nullable: true })
+	resyncRequestedAt?: Date;
 }

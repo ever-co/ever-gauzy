@@ -2,7 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RolePermissionModule } from '@gauzy/core';
+import { PluginCommonModule, RolePermissionModule } from '@gauzy/core';
 import { EverWorksClientFactory } from './client/ever-works-client.factory';
 import { EverWorksConnectionController } from './connection/ever-works-connection.controller';
 import { EverWorksConnection } from './connection/ever-works-connection.entity';
@@ -19,9 +19,31 @@ import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
 import { EverWorksMappingController } from './mapping/ever-works-mapping.controller';
 import { EverWorksMappingService } from './mapping/ever-works-mapping.service';
+import {
+	EverWorksEntityLink,
+	EverWorksInboundEvent,
+	EverWorksOutboundChange,
+	EverWorksSyncLog
+} from './sync/entities/ever-works-sync.entities';
+import {
+	MikroOrmEverWorksEntityLinkRepository,
+	MikroOrmEverWorksInboundEventRepository,
+	MikroOrmEverWorksOutboundChangeRepository,
+	MikroOrmEverWorksSyncLogRepository
+} from './sync/entities/ever-works-sync.repositories';
+import { EverWorksSyncLogService } from './sync/ever-works-sync-log.service';
+import { EverWorksSyncLoop } from './sync/ever-works-sync.loop';
+import { EverWorksFeedPoller } from './sync/inbound/ever-works-feed.poller';
+import { EverWorksInboundApplier } from './sync/inbound/ever-works-inbound.applier';
+import { EverWorksInboundStore } from './sync/inbound/ever-works-inbound.store';
+import { EverWorksOutboundPusher } from './sync/outbound/ever-works-outbound.pusher';
+import { EverWorksOutboundQueue } from './sync/outbound/ever-works-outbound.queue';
+import { EverWorksTaskEventListener } from './sync/outbound/ever-works-task-event.listener';
+import { EverWorksRateLimitGuard } from './sync/webhook/ever-works-rate-limit.guard';
+import { EverWorksWebhookController } from './sync/webhook/ever-works-webhook.controller';
 
 /** Every table the plugin owns (its migrations create them). */
-export const EVER_WORKS_ENTITIES = [EverWorksConnection];
+export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog];
 
 /**
  * The Ever Works integration module (`@gauzy/plugin-integration-ever-works`). Loaded only when
@@ -36,10 +58,11 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection];
 		MikroOrmModule.forFeature(EVER_WORKS_ENTITIES),
 		// Gauzy's tenant and permission guards of the management routes need the role permissions.
 		RolePermissionModule,
-		// The platform's command bus (projects are created through OrganizationProjectCreateCommand).
+		// The platform's event bus (TaskEvent) and command bus (project creation).
+		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController],
+	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksWebhookController],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -49,8 +72,21 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection];
 		EverWorksConnectionService,
 		EverWorksHealthScheduler,
 		EverWorksMappingService,
+		EverWorksSyncLogService,
+		EverWorksInboundStore,
+		EverWorksFeedPoller,
+		EverWorksInboundApplier,
+		EverWorksOutboundQueue,
+		EverWorksOutboundPusher,
+		EverWorksTaskEventListener,
+		EverWorksSyncLoop,
+		EverWorksRateLimitGuard,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,
+		MikroOrmEverWorksEntityLinkRepository,
+		MikroOrmEverWorksInboundEventRepository,
+		MikroOrmEverWorksOutboundChangeRepository,
+		MikroOrmEverWorksSyncLogRepository,
 		{
 			provide: EVER_WORKS_CONFIG,
 			useFactory: () => {
@@ -59,6 +95,17 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection];
 			}
 		}
 	],
-	exports: [EverWorksCatalogService, EverWorksConnectionService, EverWorksClientFactory, EverWorksScopeService, EverWorksMappingService, EVER_WORKS_CONFIG]
+	exports: [
+		EverWorksCatalogService,
+		EverWorksConnectionService,
+		EverWorksClientFactory,
+		EverWorksScopeService,
+		EverWorksMappingService,
+		EverWorksInboundApplier,
+		EverWorksOutboundPusher,
+		EverWorksOutboundQueue,
+		EverWorksSyncLogService,
+		EVER_WORKS_CONFIG
+	]
 })
 export class EverWorksModule {}
