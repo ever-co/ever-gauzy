@@ -226,7 +226,9 @@ and answered `202`.
   (`Agent` actor), a Gauzy comment is posted as its author (cut to 16384
   characters); Ever Works lets only the author edit, a person for 5 minutes, so
   a later Gauzy edit is logged, not pushed. The Gauzy task links to its Ever
-  Works page and, once there is one, its pull request. Each
+  Works page and, once there is one, its pull request. Due and start dates and
+  the estimate sync too (Gauzy seconds ↔ Ever Works minutes; a start after the
+  due date is not sent, as Ever Works refuses it). Each
   side is compared with its own last-synced value, so a value the other side
   cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
   changed a field the later edit wins, and a lost description is kept as a

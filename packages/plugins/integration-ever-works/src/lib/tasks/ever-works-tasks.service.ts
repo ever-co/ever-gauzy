@@ -33,11 +33,14 @@ import {
 	applySetChange,
 	createStatusFor,
 	descriptionForEverWorks,
+	estimateMinutesFor,
+	estimateSecondsFor,
 	EverWorksPrincipalRef,
 	EverWorksTask,
 	EverWorksVisibilityChange,
 	everWorksSideOf,
 	gauzyWins,
+	isoOrNull,
 	labelsForEverWorks,
 	linkedIssueRowsFor,
 	parseTaskSnapshot,
@@ -99,7 +102,10 @@ export function gauzySideOf(task: Task): TaskGauzySide {
 		teamIds: sortedIds((task.teams ?? []).map((team) => team.id)),
 		memberIds: sortedIds((task.members ?? []).map((member) => member.id)),
 		parentId: (task.parentId as ID) ?? null,
-		projectId: (task.projectId as ID) ?? null
+		projectId: (task.projectId as ID) ?? null,
+		dueDate: isoOrNull(task.dueDate),
+		startDate: isoOrNull(task.startDate),
+		estimate: typeof task.estimate === 'number' ? task.estimate : null
 	};
 }
 
@@ -291,6 +297,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			...(priority ? { priority: priority.value as never, ...(priority.id ? { taskPriorityId: priority.id } : {}) } : {}),
 			projectId,
 			...(parent ? { parentId: parent } : {}),
+			...(task.dueAt ? { dueDate: new Date(task.dueAt) } : {}),
+			...(task.startAt ? { startDate: new Date(task.startAt) } : {}),
+			...(typeof task.estimateMinutes === 'number' ? { estimate: estimateSecondsFor(task.estimateMinutes) as number } : {}),
 			members: members.ids.map((id) => ({ id })) as never,
 			teams: teams.ids.map((id) => ({ id })) as never,
 			tags: tags.map((tag) => ({ id: tag.id })) as never,
@@ -435,6 +444,28 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				eRecorded.parentTaskId = prevE.parentTaskId ?? null;
 			}
 		}
+		// G-P2-6: due / start dates and the estimate (Ever Works minutes ↔ Gauzy seconds). A field the snapshot
+		// does not have yet (links from before EW-P2-3) is taken only when Ever Works has a value: a Gauzy date is
+		// never cleared by the first sync of the field.
+		const planning: Array<[keyof TaskEverWorksSide, keyof TaskGauzySide, () => unknown]> = [
+			['dueAt', 'dueDate', () => (e.dueAt ? new Date(e.dueAt) : null)],
+			['startAt', 'startDate', () => (e.startAt ? new Date(e.startAt) : null)],
+			['estimateMinutes', 'estimate', () => estimateSecondsFor(e.estimateMinutes)]
+		];
+		/** Planning fields Ever Works has no value for on an older link: not synced yet, so Gauzy's value goes out. */
+		const unsyncedPlanning: Partial<Record<'dueDate' | 'startDate' | 'estimate', null>> = {};
+		for (const [eField, gField, value] of planning) {
+			if (!(eField in prevE) && (e[eField] === null || e[eField] === undefined)) {
+				unsyncedPlanning[gField as 'dueDate' | 'startDate' | 'estimate'] = null;
+				continue;
+			}
+			if (!takes(eField, gField)) continue;
+			const next = value();
+			const current = gField === 'estimate' ? g.estimate ?? null : g[gField];
+			const same = gField === 'estimate' ? current === next : isoOrNull(next as Date | null) === current;
+			if (!same) Object.assign(input, { [gField]: next });
+			applied.add(gField);
+		}
 		if (everWorksChanged('workId') && e.workId) {
 			// A task moves only to the project of a linked work; to an unlinked work (or none) it stays where it is.
 			const workLink = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, e.workId);
@@ -479,7 +510,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		for (const field of Object.keys(gAfter) as Array<keyof TaskGauzySide>) {
 			if (applied.has(field) || !(field in prevG)) Object.assign(nextG, { [field]: gAfter[field] });
 		}
-		Object.assign(nextG, setSnapshots);
+		Object.assign(nextG, setSnapshots, unsyncedPlanning);
 		await this.record(
 			context,
 			row.id as ID,
@@ -951,6 +982,47 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		return null;
 	}
 
+	/**
+	 * G-P2-6: the planning fields Ever Works takes (EW-P2-3, CR-3) — `dueAt`, `startAt` and `estimateMinutes`
+	 * (Gauzy seconds → whole minutes) — for the fields Gauzy changed (all set ones on a create). A value equal
+	 * to Ever Works' is not sent; `null` is sent only to clear a value Ever Works has. A start after the due
+	 * date is refused by Ever Works (`400`), so it is not sent (and logged): the due date still goes out.
+	 */
+	private planningFor(
+		context: EverWorksMappingContext,
+		taskId: ID,
+		g: TaskGauzySide,
+		prevE: TaskEverWorksSide,
+		changed: (field: keyof TaskGauzySide) => boolean = (field) => g[field] !== null && g[field] !== undefined
+	): { fields: { dueAt?: string | null; startAt?: string | null; estimateMinutes?: number | null }; held: Partial<Record<'dueDate' | 'startDate', string | null>> } {
+		const fields: { dueAt?: string | null; startAt?: string | null; estimateMinutes?: number | null } = {};
+		const dueAt = g.dueDate ?? null;
+		const startAt = g.startDate ?? null;
+		const estimateMinutes = estimateMinutesFor(g.estimate);
+		const sendDue = changed('dueDate') && dueAt !== (prevE.dueAt ?? null);
+		const sendStart = changed('startDate') && startAt !== (prevE.startAt ?? null);
+		// Ever Works checks the pair it ends up with (a start after the due date → 400 for the whole request):
+		// what is sent together with what it keeps.
+		const after = (start: string | null, due: string | null) => !!start && !!due && new Date(start).getTime() > new Date(due).getTime();
+		const hold = new Set<'dueDate' | 'startDate'>();
+		if (after(sendStart ? startAt : (prevE.startAt ?? null), sendDue ? dueAt : (prevE.dueAt ?? null))) {
+			if (sendStart) hold.add('startDate');
+			// Without the start, the due date still goes out if it fits Ever Works' own start.
+			if (sendDue && after(prevE.startAt ?? null, dueAt)) hold.add('dueDate');
+			if (!sendStart && sendDue) hold.add('dueDate');
+			void this.logConflict(context, taskId, '', 'start_after_due', 'The start date would be after the due date in Ever Works, which refuses that; it is not sent until the dates fit.');
+		}
+		if (sendDue && !hold.has('dueDate')) fields.dueAt = dueAt;
+		if (sendStart && !hold.has('startDate')) fields.startAt = startAt;
+		if (changed('estimate') && estimateMinutes !== (prevE.estimateMinutes ?? null)) fields.estimateMinutes = estimateMinutes;
+		// A held field keeps Ever Works' value on the Gauzy side of the snapshot: it stays a difference and is sent
+		// as soon as the dates fit (e.g. when the due date moves later).
+		const held: Partial<Record<'dueDate' | 'startDate', string | null>> = {};
+		if (hold.has('dueDate')) held.dueDate = prevE.dueAt ?? null;
+		if (hold.has('startDate')) held.startDate = prevE.startAt ?? null;
+		return { fields, held };
+	}
+
 	/** `PUT /tasks/:id/watchers|blocks|relations` (full sets); a refusal of a set (e.g. a blocking cycle, 422) is logged. */
 	private async putSets(
 		context: EverWorksMappingContext,
@@ -991,6 +1063,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		const connectionId = context.connection.id as ID;
 		const wanted = everWorksStatusOf(task);
 		const priority = gauzyPriorityToEverWorks(out.g.priority);
+		const planning = this.planningFor(context, task.id as ID, out.g, {});
 		const { title } = titleForEverWorks(task.title);
 		const description = descriptionForEverWorks(out.g.description ?? '', task.title);
 		const body = {
@@ -1003,6 +1076,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			workId: out.workId,
 			parentTaskId: out.parentTaskId,
 			assignees: out.assignees,
+			...planning.fields,
 			externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: connectionId, externalId: task.id as ID }
 		};
 		const idempotencyKey = createHash('sha256').update(`${connectionId}:${EverWorksLinkType.TASK}:${task.id}:create`).digest('hex');
@@ -1023,7 +1097,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			})
 		);
 		let dto = created;
-		let g = out.g;
+		let g: TaskGauzySide = { ...out.g, ...planning.held };
 		if (wanted && wanted !== dto.status) {
 			const moved = await this.transition(context, client, task, dto.id, wanted, actAs);
 			dto = moved.task;
@@ -1085,6 +1159,10 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			}
 			if (changed('parentId') && out.parentTaskId !== (prevE.parentTaskId ?? null)) patch['parentTaskId'] = out.parentTaskId;
 			if (changed('projectId') && out.workId !== (prevE.workId ?? null)) patch['workId'] = out.workId;
+			const planning = this.planningFor(context, row.id as ID, g, prevE, (field) => changed(field));
+			Object.assign(patch, planning.fields);
+			/** The Gauzy side as recorded: a held planning field keeps Ever Works' value (sent once it can be). */
+			const gRecorded: TaskGauzySide = { ...g, ...planning.held };
 			let assignees: EverWorksPrincipalRef[] | null = null;
 			if (changed('memberIds')) {
 				const before: string[] = [];
@@ -1133,14 +1211,14 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				// recorded, so the same difference is not looked at again.
 				const fields = Object.keys(g) as Array<keyof TaskGauzySide>;
 				if (!Object.keys(prevG).length || fields.some((field) => changed(field) || !(field in prevG)) || pendingWatchers.size || pendingEdges.size) {
-					await this.record(context, row.id as ID, null, pair.ewVersion ?? null, { g, e: prevE }, 'outbound', pendingNow, pair);
+					await this.record(context, row.id as ID, null, pair.ewVersion ?? null, { g: gRecorded, e: prevE }, 'outbound', pendingNow, pair);
 				}
 				return { status: 'skipped', message: 'nothing changed' };
 			}
 			try {
 				let version = pair.ewVersion ?? undefined;
 				let dto: EverWorksTask | null = null;
-				let nextG = g;
+				let nextG = gRecorded;
 				const ewTaskId = encodeURIComponent(pair.ewId);
 				if (Object.keys(patch).length) {
 					dto = await this.withActAs(actAs, (actor) =>

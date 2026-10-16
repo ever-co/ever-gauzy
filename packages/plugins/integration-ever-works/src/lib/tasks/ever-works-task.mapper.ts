@@ -49,6 +49,10 @@ export interface EverWorksTask {
 	hiddenFromBoard?: boolean;
 	runtime?: { prUrl?: string | null; prState?: string | null; ciState?: string | null; latestRunStatus?: string | null } | null;
 	webUrl?: string | null;
+	/** EW-P2-3 (CR-3): planning fields; ISO or `null`, minutes 0..525600 or `null`. */
+	dueAt?: string | null;
+	startAt?: string | null;
+	estimateMinutes?: number | null;
 	deleted?: boolean;
 }
 
@@ -78,6 +82,10 @@ export interface TaskEverWorksSide {
 	blockedBy?: string[];
 	/** `<kind>:<taskId>` (`related`, `duplicates`, `follow-up`). */
 	relations?: string[];
+	/** EW-P2-3 planning fields (G-P2-6). */
+	dueAt?: string | null;
+	startAt?: string | null;
+	estimateMinutes?: number | null;
 }
 
 /**
@@ -100,6 +108,10 @@ export interface TaskGauzySide {
 	blockedBy?: string[];
 	/** `related:<taskId>` / `duplicates:<taskId>` (from `TaskLinkedIssue`). */
 	relations?: string[];
+	/** Due and start dates (ISO), and the estimate in seconds (G-P2-6). */
+	dueDate?: string | null;
+	startDate?: string | null;
+	estimate?: number | null;
 }
 
 /**
@@ -213,8 +225,32 @@ export function everWorksSideOf(task: EverWorksTask): TaskEverWorksSide {
 		workId: task.workId ?? null,
 		watchers: sorted(task.watchers ?? []),
 		blockedBy: sorted(task.blockedBy ?? []),
-		relations: sorted((task.relations ?? []).map((relation) => `${relation.kind}:${relation.taskId}`))
+		relations: sorted((task.relations ?? []).map((relation) => `${relation.kind}:${relation.taskId}`)),
+		dueAt: isoOrNull(task.dueAt),
+		startAt: isoOrNull(task.startAt),
+		estimateMinutes: typeof task.estimateMinutes === 'number' ? task.estimateMinutes : null
 	};
+}
+
+/** A date as ISO (so equal instants compare equal), or `null` for none or an unreadable one. */
+export function isoOrNull(value: Date | string | null | undefined): string | null {
+	if (value === null || value === undefined || value === '') return null;
+	const time = new Date(value).getTime();
+	return Number.isFinite(time) ? new Date(time).toISOString() : null;
+}
+
+/** Ever Works' estimate limit (minutes, contract v1 EW-P2-3). */
+export const EVER_WORKS_ESTIMATE_MAX_MINUTES = 525600;
+
+/** G → EW estimate: Gauzy seconds → whole minutes (rounded, within Ever Works' limit); none → `null`. */
+export function estimateMinutesFor(seconds: number | null | undefined): number | null {
+	if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) return null;
+	return Math.min(EVER_WORKS_ESTIMATE_MAX_MINUTES, Math.round(seconds / 60));
+}
+
+/** EW → G estimate: minutes → Gauzy seconds; none → `null`. */
+export function estimateSecondsFor(minutes: number | null | undefined): number | null {
+	return typeof minutes === 'number' && Number.isFinite(minutes) && minutes >= 0 ? Math.round(minutes) * 60 : null;
 }
 
 /** The numbers of Gauzy's `TaskRelatedIssuesRelationEnum` the sync reads and writes. */
