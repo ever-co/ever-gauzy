@@ -177,7 +177,11 @@ export interface IInboxRecipientInput {
 	isArchived?: boolean;
 }
 
-/** An item a source (an integration, the platform) creates or updates: `InboxService.upsertExternal`. */
+/**
+ * An item a source (an integration, the platform) creates or updates: `InboxService.upsertExternal`. On an
+ * update (the same external identity again), only the fields stated here change; a field left out keeps its
+ * value. `kind`, `title` and `recipients` are always stated.
+ */
 export interface IInboxItemUpsertInput {
 	tenantId: ID;
 	organizationId?: ID | null;
@@ -197,6 +201,9 @@ export interface IInboxItemUpsertInput {
 	taskId?: ID | null;
 	projectId?: ID | null;
 	agentEmployeeId?: ID | null;
+	/** EMAIL items (P4): the mailbox and the stored message. */
+	mailboxId?: ID | null;
+	emailId?: ID | null;
 	metadata?: Record<string, unknown> | null;
 	/** The item's identity in its source (`upsertExternal` requires both). */
 	externalSource?: string;

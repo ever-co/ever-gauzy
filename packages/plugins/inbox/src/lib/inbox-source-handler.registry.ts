@@ -28,11 +28,11 @@ export class InboxSourceHandlerRegistry implements IInboxSourceHandlerRegistry {
 	}
 
 	unregister(source: string): void {
-		this.handlers.delete(source);
+		this.handlers.delete(typeof source === 'string' ? source.trim() : source);
 	}
 
 	get(source: string): IInboxSourceHandler | undefined {
-		return this.handlers.get(source);
+		return this.handlers.get(typeof source === 'string' ? source.trim() : source);
 	}
 
 	/** The registered sources (diagnostics). */
