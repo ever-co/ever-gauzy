@@ -486,6 +486,35 @@ describe('EverWorksIdeasService — G → EW', () => {
 		expect(mock.requests.length).toBe(before);
 	});
 
+	it('a 412 keeps the newer Gauzy edit: Ever Works’ older title is not written over it, and the retry pushes it', async () => {
+		const { service, ideas, tasks, links } = setup();
+		tasks.push(ideaTask());
+		await service.push(change('task-g'), pushContext);
+		const row = ideas.ideas.get(links[0]['ewId']) as Row;
+		// Ever Works changed the title (its event not applied yet); then a Gauzy user changed it too.
+		Object.assign(row, { title: 'Portal (EW)', version: Number(row['version']) + 1 });
+		tasks[0]['title'] = 'Portal (Gauzy)';
+		expect(await service.push(change('task-g'), pushContext)).toMatchObject({ status: 'pushed' });
+		expect(tasks[0]['title']).toBe('Portal (Gauzy)');
+		expect(row['title']).toBe('Portal (Gauzy)');
+	});
+
+	it('Ever Works teams Gauzy cannot map are kept when Gauzy edits the idea', async () => {
+		const { service, ideas, tasks, links, mock } = setup();
+		tasks.push(ideaTask());
+		await service.push(change('task-g'), pushContext);
+		const ewId = links[0]['ewId'];
+		// Ever Works put the idea on a team Gauzy has no pair for (its event recorded it as unmapped).
+		const row = ideas.ideas.get(ewId) as Row;
+		Object.assign(row, { teamIds: ['ew-unpaired'], visibility: 'team', version: Number(row['version']) + 1 });
+		await service.apply(envelope('idea.updated', { ...row }, Number(row['version'])) as never, applyContext);
+		tasks[0]['title'] = 'Portal v3';
+		await service.push(change('task-g'), pushContext);
+		const patch = [...mock.requests].reverse().find((r) => r.method === 'PATCH');
+		expect(patch?.body).toEqual({ title: 'Portal v3' });
+		expect(row['teamIds']).toEqual(['ew-unpaired']);
+	});
+
 	it('a task on a team not paired yet waits (teams first); a paired team scopes the idea', async () => {
 		const { service, addLink, tasks, mock } = setup();
 		tasks.push(ideaTask({ teams: [{ id: 'g-team-1' }] }));

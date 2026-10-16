@@ -68,7 +68,8 @@ import {
 	ideaStatusAsTaskStatus,
 	ideaTextToHtml,
 	IdeaSharedFields,
-	isIdeaTask
+	isIdeaTask,
+	sameSet
 } from './ever-works-idea.mapper';
 
 /** The shared fields of an idea pair at the last sync, in Ever Works' terms (the merge base of both directions). */
@@ -198,7 +199,8 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		link: EverWorksEntityLink | null,
 		idea: EverWorksIdea,
 		version: number | null,
-		actorUserId: ID | null
+		actorUserId: ID | null,
+		keepGauzy: ReadonlySet<'title' | 'description' | 'teams' | 'status'> = new Set()
 	): Promise<EverWorksApplyOutcome> {
 		const before = this.links.snapshot<IdeaSnapshot>(link);
 		const ew = this.ewOnlyOf(link);
@@ -226,24 +228,30 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		const taskId = link.gauzyId as ID;
 		const task = await this.task(context, taskId);
 		if (!task) return { status: 'skipped', message: 'the Gauzy task is gone' };
+		// `keepGauzy`: fields Gauzy changed after the last sync and is pushing now — its edit is the later one
+		// (a 412 retry), so Ever Works' older value is not written over it; the snapshot still moves to Ever
+		// Works' value, so the retry pushes Gauzy's.
 		const changes: Record<string, unknown> = {};
-		if (next.title && next.title !== before.title) changes['title'] = next.title;
-		if (next.description !== (before.description ?? '')) changes['description'] = ideaTextToHtml(next.description);
-		if (status && status !== (before.status ?? null))
+		if (next.title && next.title !== before.title && !keepGauzy.has('title')) changes['title'] = next.title;
+		if (next.description !== (before.description ?? '') && !keepGauzy.has('description'))
+			changes['description'] = ideaTextToHtml(next.description);
+		if (status && status !== (before.status ?? null) && !keepGauzy.has('status'))
 			Object.assign(changes, await this.statusChanges(context, task.projectId as ID, status));
 		if (Object.keys(changes).length) {
 			await runAsGauzyUser(context, actorUserId, () =>
 				this.commandBus.execute(new TaskUpdateCommand(taskId, changes as never, true))
 			);
 		}
-		const unmapped = await this.applyTeams(
-			context,
-			taskId,
-			before.teamIds ?? [],
-			next.teamIds,
-			ew.unmappedTeams ?? [],
-			teamMap
-		);
+		const unmapped = keepGauzy.has('teams')
+			? gauzyTeamsFor(next.teamIds, teamMap).unmapped
+			: await this.applyTeams(
+					context,
+					taskId,
+					before.teamIds ?? [],
+					next.teamIds,
+					ew.unmappedTeams ?? [],
+					teamMap
+				);
 		if ((idea.source ?? null) !== (ew.source ?? null)) await this.tagSource(context, taskId, idea.source);
 		if (status === 'failed' && idea.failureMessage && idea.failureMessage !== ew.failureMessage)
 			await this.comment(context, taskId, idea.failureMessage);
@@ -370,7 +378,7 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				status: 'deferred',
 				message: `waiting for the Gauzy team ${scope.waitingFor} to be paired (teams first)`
 			};
-		const now = gauzyTaskToIdea(task, scope.scope);
+		const now = gauzyTaskToIdea(task, scope.scope, this.ewOnlyOf(link).unmappedTeams ?? []);
 		try {
 			if (!link) return await this.create(context, client, task, now, change.actorUserId as ID | null);
 			return await this.update(context, client, task, now, link);
@@ -497,6 +505,12 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				// 412: Ever Works moved on. Its newer state is applied first when ideas sync from Ever Works (as
 				// the sync, so it is not captured back), then this push is merged again on top of it.
 				const remote = await client.request<EverWorksIdea>('GET', `/ideas/${encodeURIComponent(pair.ewId)}`);
+				// What Gauzy changed since the last sync is the later edit: Ever Works' value is not written over it.
+				const keep = new Set<'title' | 'description' | 'teams' | 'status'>();
+				if (now.title !== before.title) keep.add('title');
+				if (now.description !== before.description) keep.add('description');
+				if (!sameSet(now.teamIds, before.teamIds ?? [])) keep.add('teams');
+				if (action) keep.add('status');
 				if (fromEverWorks(context.directions.ideas)) {
 					await EverWorksSyncContext.run(
 						{ connectionId: context.connection.id as ID, eventId: `idea-412:${pair.ewId}` },
@@ -506,7 +520,8 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 								pair,
 								{ ...remote, id: pair.ewId },
 								remote.version ?? null,
-								(context.connection.connectedByUserId as ID) ?? null
+								(context.connection.connectedByUserId as ID) ?? null,
+								keep
 							)
 					);
 				} else {
@@ -540,7 +555,7 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 						status: 'deferred',
 						message: `waiting for the Gauzy team ${scope.waitingFor} to be paired (teams first)`
 					};
-				now = gauzyTaskToIdea(freshTask, scope.scope);
+				now = gauzyTaskToIdea(freshTask, scope.scope, this.ewOnlyOf(fresh).unmappedTeams ?? []);
 			}
 		}
 		throw new Error('unreachable');

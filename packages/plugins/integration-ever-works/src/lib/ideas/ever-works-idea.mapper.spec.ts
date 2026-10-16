@@ -1,3 +1,4 @@
+// cspell:ignore bdquo hellip laquo larr ldquo lsquo middot ndash plusmn raquo rarr rdquo rsquo sbquo
 /**
  * G-P2-3 Ideas ↔ Idea tasks: the pure mappers (plan 01 §8) — status both ways (dismiss / restore only),
  * text ↔ HTML without flapping, the idea a Gauzy task makes, the patch diff and the Gauzy task an idea
@@ -61,6 +62,28 @@ describe('Ever Works idea mappers', () => {
 			'One\n\n- a\n\n- b\n\n&lt; stays'
 		);
 		expect(ideaTextToHtml('   ')).toBe('');
+	});
+
+	it('numeric and named character references read as their characters (once: `&amp;lt;` stays `&lt;`)', () => {
+		expect(htmlToIdeaText('<p>A&#8212;B &#x27;q&#x27; &rsquo;s &hellip; &amp;lt; &nbsp;x &unknown;</p>')).toBe(
+			"A—B 'q' ’s … &lt;  x &unknown;"
+		);
+	});
+
+	it('the full title opens the description once, and teams Gauzy cannot map stay on the idea', () => {
+		const long = 'L'.repeat(130);
+		const first = gauzyTaskToIdea(
+			{ title: long, description: '<p>Body</p>' },
+			{ visibility: 'organization', teamIds: [] }
+		);
+		// The description came back from Ever Works with the title in it: not prefixed again.
+		const again = gauzyTaskToIdea(
+			{ title: long, description: ideaTextToHtml(first.description) },
+			{ visibility: 'organization', teamIds: [] }
+		);
+		expect(again.description).toBe(first.description);
+		const kept = gauzyTaskToIdea({ title: 'Portal' }, { visibility: 'organization', teamIds: [] }, ['ew-unpaired']);
+		expect(kept).toMatchObject({ teamIds: ['ew-unpaired'], visibility: 'team' });
 	});
 
 	it('whitespace Gauzy drops never flaps: snapshots keep the text as it reads after a trip through Gauzy', () => {

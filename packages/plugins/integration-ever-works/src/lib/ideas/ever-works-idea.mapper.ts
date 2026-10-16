@@ -1,3 +1,4 @@
+// cspell:ignore bdquo hellip laquo larr ldquo lsquo middot ndash plusmn raquo rarr rdquo rsquo sbquo
 import { ID } from '@gauzy/contracts';
 import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
 import { EVER_WORKS_IDEA_ISSUE_TYPE } from '../mapping/ever-works-mapping.defaults';
@@ -125,21 +126,70 @@ export function ideaTextToHtml(text: string | null | undefined): string {
 
 /** G → EW: a Gauzy task's HTML description as the plain text of an idea (the inverse of {@link ideaTextToHtml}). */
 export function htmlToIdeaText(html: string | null | undefined): string {
-	return String(html ?? '')
-		.replace(/\r\n?/g, '\n')
-		.replace(/<br\s*\/?>/gi, '\n')
-		.replace(/<\/(p|div|li|h[1-6]|blockquote|pre)>/gi, '\n\n')
-		.replace(/<li[^>]*>/gi, '- ')
-		.replace(/<[^>]*>/g, '')
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/&amp;/g, '&')
-		.replace(/[ \t]+\n/g, '\n')
-		.replace(/\n{3,}/g, '\n\n')
-		.trim();
+	return (
+		String(html ?? '')
+			.replace(/\r\n?/g, '\n')
+			.replace(/<br\s*\/?>/gi, '\n')
+			.replace(/<\/(p|div|li|h[1-6]|blockquote|pre)>/gi, '\n\n')
+			.replace(/<li[^>]*>/gi, '- ')
+			.replace(/<[^>]*>/g, '')
+			// One pass over every character reference (numeric and named), so `&amp;lt;` stays `&lt;`.
+			.replace(
+				/&(#x[0-9a-f]{1,6}|#[0-9]{1,7}|[a-z][a-z0-9]{1,31});/gi,
+				(match, ref: string) => decodeReference(ref) ?? match
+			)
+			.replace(/ /g, ' ')
+			.replace(/[ \t]+\n/g, '\n')
+			.replace(/\n{3,}/g, '\n\n')
+			.trim()
+	);
+}
+
+/** Named character references a rich-text editor writes (the rest of HTML's list is rare in task text). */
+const NAMED_REFERENCES: Readonly<Record<string, string>> = {
+	amp: '&',
+	lt: '<',
+	gt: '>',
+	quot: '"',
+	apos: "'",
+	nbsp: ' ',
+	ndash: '–',
+	mdash: '—',
+	lsquo: '‘',
+	rsquo: '’',
+	sbquo: '‚',
+	ldquo: '“',
+	rdquo: '”',
+	bdquo: '„',
+	hellip: '…',
+	bull: '•',
+	middot: '·',
+	laquo: '«',
+	raquo: '»',
+	copy: '©',
+	reg: '®',
+	trade: '™',
+	deg: '°',
+	euro: '€',
+	pound: '£',
+	yen: '¥',
+	cent: '¢',
+	times: '×',
+	divide: '÷',
+	plusmn: '±',
+	larr: '←',
+	rarr: '→',
+	shy: '­'
+};
+
+/** One HTML character reference (`#8212`, `#x27`, `rsquo`) as its character, or `undefined` for one it does not know. */
+function decodeReference(ref: string): string | undefined {
+	if (ref[0] === '#') {
+		const code = ref[1] === 'x' || ref[1] === 'X' ? parseInt(ref.slice(2), 16) : parseInt(ref.slice(1), 10);
+		const valid = Number.isFinite(code) && code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff);
+		return valid ? String.fromCodePoint(code) : undefined;
+	}
+	return NAMED_REFERENCES[ref] ?? NAMED_REFERENCES[ref.toLowerCase()];
 }
 
 /**
@@ -164,19 +214,24 @@ export interface IdeaSharedFields {
  */
 export function gauzyTaskToIdea(
 	task: { title?: string | null; description?: string | null },
-	scope: EverWorksTeamScope
+	scope: EverWorksTeamScope,
+	keepTeamIds: ReadonlyArray<string> = []
 ): IdeaSharedFields & { visibility: EverWorksTeamScope['visibility'] } {
 	const fullTitle = String(task.title ?? '').trim();
 	const title = fullTitle.slice(0, EVER_WORKS_IDEA_TITLE_MAX);
 	let description = htmlToIdeaText(task.description);
-	if (fullTitle.length > EVER_WORKS_IDEA_TITLE_MAX)
+	// The full title opens the description once: a description that already starts with it (it came back
+	// from Ever Works with it) is not prefixed again.
+	if (fullTitle.length > EVER_WORKS_IDEA_TITLE_MAX && !description.startsWith(fullTitle))
 		description = description ? `${fullTitle}\n\n${description}` : fullTitle;
 	if (!description) description = title;
+	// Ever Works teams Gauzy cannot map stay on the idea: Gauzy never had them, so it never removes them.
+	const teamIds = [...new Set([...scope.teamIds, ...keepTeamIds])].sort();
 	return {
 		title,
 		description: description.slice(0, EVER_WORKS_IDEA_DESCRIPTION_MAX),
-		teamIds: [...scope.teamIds].sort(),
-		visibility: scope.visibility
+		teamIds,
+		visibility: teamIds.length ? 'team' : scope.visibility
 	};
 }
 
