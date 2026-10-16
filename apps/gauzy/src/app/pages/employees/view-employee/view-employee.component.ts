@@ -9,6 +9,7 @@ import {
 	IActivitiesStatistics,
 	ICountsStatistics,
 	IEmployee,
+	IOrganizationProject,
 	IProjectsStatistics,
 	ITask,
 	ITasksStatistics,
@@ -21,10 +22,21 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { toUtcOffset } from '@gauzy/ui-core/common';
-import { Store, TasksService, TimesheetService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
+import {
+	OrganizationProjectsService,
+	Store,
+	TasksService,
+	TimesheetService,
+	TimesheetStatisticsService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { TimeZoneService } from '@gauzy/ui-core/shared';
+import { HashNumberPipe, IRecordViewSection, IRecordViewStatus, TimeZoneService } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from './employee-hours-chart/employee-hours-chart.component';
+import {
+	buildTaskViewSections,
+	taskStatusOf,
+	TASK_VIEW_RELATIONS
+} from '../../tasks/components/task-view/task-view-sections';
 
 /** The date windows the overview can be read over. */
 export enum EmployeeViewPeriod {
@@ -49,6 +61,8 @@ interface IRankedRow {
 
 /** A task as the Assigned tasks table lists it. */
 interface IAssignedTaskRow {
+	/** The task as the list loaded it — what the quick look opens with before its full read lands. */
+	task: ITask;
 	id: string;
 	key: string;
 	title: string;
@@ -66,6 +80,25 @@ interface IAssignedTaskRow {
 	/** When it was finished, for ordering the Done view newest first. */
 	doneTime: number;
 	overdue: boolean;
+	/** Assignees as avatars; the first few are drawn, the rest counted. */
+	people: { name: string; initials: string; avatarUrl?: string }[];
+	/** Names behind the "+N" avatar. */
+	moreNames?: string;
+	/** The due date written out in full (weekday included), for its tooltip. */
+	dueDateLong?: string;
+}
+
+/** One project on the Overview: an assigned project and its time in the period. */
+interface IProjectOverviewRow {
+	id: string;
+	name: string;
+	imageUrl?: string;
+	initials: string;
+	duration: number;
+	share: number;
+	width: number;
+	/** False for a project they tracked time on without being a member of it. */
+	member: boolean;
 }
 
 /** The views of the Assigned tasks table, each with its count on the tab. */
@@ -109,7 +142,16 @@ const Loadable = {
 	}
 };
 
-type PanelKey = 'counts' | 'previousCounts' | 'hours' | 'projects' | 'topTasks' | 'apps' | 'tasks' | 'screenshots';
+type PanelKey =
+	| 'counts'
+	| 'previousCounts'
+	| 'hours'
+	| 'projects'
+	| 'assignedProjects'
+	| 'topTasks'
+	| 'apps'
+	| 'tasks'
+	| 'screenshots';
 
 const CLOSED_STATUSES = new Set<string>([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]);
 const IN_PROGRESS_STATUSES = new Set<string>([
@@ -167,6 +209,8 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	public previousCounts: Loadable<ICountsStatistics | null> = Loadable.empty(null);
 	public hours: Loadable<IEmployeeHoursDay[]> = Loadable.empty([]);
 	public projects: Loadable<IRankedRow[]> = Loadable.empty([]);
+	/** The projects the employee is a member of — whether or not they worked on them this period. */
+	public assignedProjects: Loadable<IOrganizationProject[]> = Loadable.empty([]);
 	public topTasks: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public apps: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public tasks: Loadable<IAssignedTaskRow[]> = Loadable.empty([]);
@@ -174,6 +218,21 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 
 	public readonly taskFilters: TaskFilter[] = ['open', 'progress', 'overdue', 'done'];
 	public taskFilter: TaskFilter = 'open';
+	/** The Assigned tasks panel lists every task of the selected view, not just the first few. */
+	public showAllTasks = false;
+	public readonly taskLimit = TASK_LIMIT;
+
+	/** The task open in the quick-look drawer, its sections and status lozenge. */
+	public viewedTask: ITask | null = null;
+	public viewSections: IRecordViewSection[] = [];
+	public viewStatus: IRecordViewStatus | null = null;
+	private _viewSequence = 0;
+	private readonly _hashPipe = new HashNumberPipe();
+	private _projectOverview: {
+		from: IRankedRow[];
+		assigned: IOrganizationProject[];
+		value: IProjectOverviewRow[];
+	} | null = null;
 
 	/*
 	 * The task counts and the hours caption are DERIVED from the panel values
@@ -235,7 +294,8 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		private readonly _timeZoneService: TimeZoneService,
 		private readonly _statisticsService: TimesheetStatisticsService,
 		private readonly _timesheetService: TimesheetService,
-		private readonly _tasksService: TasksService
+		private readonly _tasksService: TasksService,
+		private readonly _projectsService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -483,9 +543,98 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		}
 	}
 
-	/** The rows the table shows: the first few of the selected view. */
+	/** The rows the table shows: the first few of the selected view, or all of them. */
 	get visibleTasks(): IAssignedTaskRow[] {
-		return this.filteredTasks.slice(0, TASK_LIMIT);
+		return this.showAllTasks ? this.filteredTasks : this.filteredTasks.slice(0, TASK_LIMIT);
+	}
+
+	/* ── Task quick look ─────────────────────────────────────────────────── */
+
+	/**
+	 * Opens a task in the quick-look drawer — the same sections and header the
+	 * task lists and the team page show — without leaving the employee page. It
+	 * opens at once with the row's data, then fills in from the task's full read;
+	 * a failed read keeps what the row had.
+	 */
+	async openTask(row: IAssignedTaskRow): Promise<void> {
+		const sequence = ++this._viewSequence;
+		this.showTask(row.task);
+		try {
+			const task = await this._tasksService.getById(row.id, TASK_VIEW_RELATIONS);
+			if (sequence === this._viewSequence && this.viewedTask?.id === row.id && task) {
+				this.showTask(task);
+			}
+		} catch {
+			// The row's own data stays on screen.
+		}
+	}
+
+	closeTask(): void {
+		this._viewSequence++;
+		this.viewedTask = null;
+	}
+
+	/** The task's own full-width page. */
+	taskLink(id: string): string[] {
+		return ['/pages/tasks/view', id];
+	}
+
+	private showTask(task: ITask): void {
+		this.viewStatus = taskStatusOf(task);
+		this.viewSections = buildTaskViewSections(task, {
+			translate: (key) => this.getTranslation(key),
+			hash: (value) => this._hashPipe.transform(value)
+		});
+		this.viewedTask = task;
+	}
+
+	/* ── Projects ────────────────────────────────────────────────────────── */
+
+	/**
+	 * The Overview's Projects panel, as on the team page: every project the
+	 * employee is a member of, with their time on it in the period, plus any
+	 * project they tracked time on without being a member (flagged as such).
+	 * Most worked first; projects with no time keep their place at the end.
+	 */
+	get projectOverview(): IProjectOverviewRow[] {
+		const stats = this.projects.value || [];
+		const assigned = this.assignedProjects.value || [];
+		if (this._projectOverview?.from !== stats || this._projectOverview?.assigned !== assigned) {
+			const time = new Map(stats.map((row) => [row.id, row.duration]));
+			const members = assigned
+				.filter((project) => !!project?.name)
+				.map((project) => ({
+					id: project.id,
+					name: project.name,
+					imageUrl: project.imageUrl || (project as any).image?.fullUrl,
+					initials: ViewEmployeeComponent.initialsOf(project.name),
+					duration: time.get(project.id) || 0,
+					member: true
+				}));
+			const memberIds = new Set(members.map((project) => project.id));
+			const others = stats
+				.filter((row) => !memberIds.has(row.id))
+				.map((row) => ({
+					id: row.id,
+					name: row.name,
+					imageUrl: undefined,
+					initials: ViewEmployeeComponent.initialsOf(row.name),
+					duration: row.duration,
+					member: false
+				}));
+			const all = [...members, ...others];
+			const total = all.reduce((sum, row) => sum + row.duration, 0);
+			const max = Math.max(0, ...all.map((row) => row.duration));
+			const value = all
+				.map((row) => ({
+					...row,
+					share: total ? (row.duration / total) * 100 : 0,
+					width: max ? Math.max(row.duration ? 2 : 0, (row.duration / max) * 100) : 0
+				}))
+				.sort((a, b) => b.duration - a.duration || a.name.localeCompare(b.name));
+			this._projectOverview = { from: stats, assigned, value };
+		}
+		return this._projectOverview.value;
 	}
 
 	/* ── Loading ─────────────────────────────────────────────────────────── */
@@ -507,13 +656,24 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		// the returned promises are deliberately not awaited.
 		void this.track('counts', () => this._statisticsService.getCounts(request));
 		void this.track('previousCounts', () => this._statisticsService.getCounts(previous));
-		void this.track('hours', async () => this.toHoursDays(await this._timesheetService.getDailyReportChart(request)));
-		void this.track('projects', async () =>
-			this.rank(await this._statisticsService.getProjects(request), (project: IProjectsStatistics) => ({
-				id: project.id,
-				name: project.name
-			}))
+		void this.track('hours', async () =>
+			this.toHoursDays(await this._timesheetService.getDailyReportChart(request))
 		);
+		// Kept whole (no top-N cut): the Projects panel lists every project of the employee.
+		void this.track('projects', async () =>
+			this.rank(
+				await this._statisticsService.getProjects(request),
+				(project: IProjectsStatistics) => ({
+					id: project.id,
+					name: project.name
+				}),
+				Infinity
+			)
+		);
+		void this.track('assignedProjects', async () => {
+			const { organizationId, tenantId } = this.employee;
+			return (await this._projectsService.getAllByEmployee(employeeId, { organizationId, tenantId })) || [];
+		});
 		// Fetched in full and ranked here, like Projects and Apps. The endpoint
 		// orders by last update, not by time, and applies `take` first, so a
 		// server-side limit could drop the most-worked tasks and would leave each
@@ -536,7 +696,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			const { organizationId, tenantId } = this.employee;
 			const tasks = await this._tasksService.getAllTasksByEmployee(employeeId, {
 				where: { organizationId, tenantId },
-				relations: ['project', 'members']
+				relations: ['project', 'members', 'members.user']
 			} as any);
 			return this.toAssignedTasks(tasks || [], employeeId);
 		});
@@ -599,7 +759,8 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	/** Sorts by duration, keeps the top rows, and sizes each against the total and the largest. */
 	private rank<T extends { duration?: number }>(
 		items: T[],
-		describe: (item: T) => Pick<IRankedRow, 'id' | 'name' | 'meta'>
+		describe: (item: T) => Pick<IRankedRow, 'id' | 'name' | 'meta'>,
+		limit = LIST_LIMIT
 	): IRankedRow[] {
 		const all = (items || [])
 			.map((item) => ({ ...describe(item), duration: Number(item.duration) || 0 }))
@@ -607,7 +768,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			.sort((a, b) => b.duration - a.duration);
 		const total = all.reduce((sum, row) => sum + row.duration, 0) || 1;
 		const max = all[0]?.duration || 1;
-		return all.slice(0, LIST_LIMIT).map((row) => ({
+		return all.slice(0, limit).map((row) => ({
 			...row,
 			share: (row.duration / total) * 100,
 			width: Math.max(2, (row.duration / max) * 100)
@@ -643,8 +804,32 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		const isDone = statusGroup === 'done';
 		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
 		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
+		const people = (task.members || [])
+			.map((member) => {
+				const user = member?.user;
+				const name =
+					member?.fullName ||
+					user?.name ||
+					[user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+					user?.email ||
+					'';
+				return {
+					name,
+					initials: ViewEmployeeComponent.initialsOf(name),
+					avatarUrl: user?.image?.fullUrl || user?.imageUrl || undefined
+				};
+			})
+			.filter((person) => !!person.name);
 
 		return {
+			task,
+			people,
+			moreNames:
+				people
+					.slice(3)
+					.map((person) => person.name)
+					.join(', ') || undefined,
+			dueDateLong: task.dueDate ? moment(task.dueDate).format('dddd, LL') : undefined,
 			id: task.id,
 			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 			title: task.title,
@@ -659,6 +844,15 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			doneTime: moment(task.resolvedAt || task.updatedAt || 0).valueOf(),
 			overdue: !isDone && daysLeft !== null && daysLeft < 0
 		};
+	}
+
+	private static initialsOf(name: string): string {
+		return (name || '')
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part) => part[0].toUpperCase())
+			.join('');
 	}
 
 	/** Which of the four groups a task status belongs to. */
@@ -743,7 +937,12 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 				{ label: 'FORM.LABELS.RECURRING_WEEKLY_LIMIT', value: this.weeklyLimit }
 			]),
 			contact: keep([
-				{ label: 'SM_TABLE.EMAIL', value: user?.email, href: user?.email && `mailto:${user.email}`, icon: 'email-outline' },
+				{
+					label: 'SM_TABLE.EMAIL',
+					value: user?.email,
+					href: user?.email && `mailto:${user.email}`,
+					icon: 'email-outline'
+				},
 				{
 					label: 'FORM.LABELS.PHONE_NUMBER',
 					value: user?.phoneNumber,
