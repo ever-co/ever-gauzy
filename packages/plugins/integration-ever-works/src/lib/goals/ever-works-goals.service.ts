@@ -71,6 +71,16 @@ interface GoalEverWorksOnly {
 	unmappedTeams?: string[];
 }
 
+/** The Gauzy-side fields a push may be carrying (kept over Ever Works' older values on a 412). */
+type GoalGauzyField = 'title' | 'description' | 'deadline' | 'teams' | 'keyResults';
+const GOAL_PATCH_FIELD: Readonly<Record<string, GoalGauzyField>> = {
+	title: 'title',
+	description: 'description',
+	deadline: 'deadline',
+	teamIds: 'teams',
+	visibility: 'teams'
+};
+
 const fromEverWorks = (direction: EverWorksDirection | undefined) =>
 	direction === 'both' || direction === 'ew_to_gauzy';
 const toEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'gauzy_to_ew';
@@ -212,7 +222,8 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 		context: EverWorksMappingContext,
 		link: EverWorksEntityLink | null,
 		goal: EverWorksGoal,
-		version: number | null
+		version: number | null,
+		keepGauzy: ReadonlySet<GoalGauzyField> = new Set()
 	): Promise<EverWorksApplyOutcome> {
 		const before = this.links.snapshot<GoalSnapshot>(link);
 		const ew = this.ewOnlyOf(link);
@@ -275,15 +286,21 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 				withDeleted: true
 			});
 			if (!row) return { status: 'skipped', message: 'the Gauzy goal is gone' };
+			// `keepGauzy`: fields Gauzy changed after the last sync and is pushing now (a 412 retry) — its edit is
+			// the later one, so Ever Works' older value is not written over it; the snapshot still moves to Ever
+			// Works' value, so the retry pushes Gauzy's.
 			const changes: Record<string, unknown> = {};
-			if (next.title && next.title !== before.title) changes['name'] = next.title;
-			if ((next.description ?? null) !== (before.description ?? null))
+			if (next.title && next.title !== before.title && !keepGauzy.has('title')) changes['name'] = next.title;
+			if ((next.description ?? null) !== (before.description ?? null) && !keepGauzy.has('description'))
 				changes['description'] = next.description ?? '';
-			if (next.deadline && next.deadline !== (before.deadline ?? null)) {
+			if (next.deadline && next.deadline !== (before.deadline ?? null) && !keepGauzy.has('deadline')) {
 				const name = await this.timeFrameOf(context, next.deadline);
 				if (name) changes['deadline'] = name;
 			}
-			if (JSON.stringify(next.teamIds) !== JSON.stringify([...(before.teamIds ?? [])].sort())) {
+			if (
+				JSON.stringify(next.teamIds) !== JSON.stringify([...(before.teamIds ?? [])].sort()) &&
+				!keepGauzy.has('teams')
+			) {
 				if (teams.first) Object.assign(changes, { level: GoalLevelEnum.TEAM, ownerTeamId: teams.first });
 				// No team in Ever Works: organization scope — a Gauzy `Employee` goal (also "no team") stays one.
 				else if (!next.teamIds.length && row.level !== GoalLevelEnum.EMPLOYEE)
@@ -300,15 +317,16 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			}
 			if (Object.keys(changes).length) await repository.update({ id: goalId } as never, changes as never);
 		}
-		const missing = madeInGauzy
-			? 0
-			: await this.applyKeyResults(
-					context,
-					goalId,
-					goal.id,
-					keyResultsOfGoal({ ...goal, ...this.mergedGoal(goal, next) }),
-					leadEmployeeId
-				);
+		const missing =
+			madeInGauzy || keepGauzy.has('keyResults')
+				? 0
+				: await this.applyKeyResults(
+						context,
+						goalId,
+						goal.id,
+						keyResultsOfGoal({ ...goal, ...this.mergedGoal(goal, next) }),
+						leadEmployeeId
+					);
 		await this.record(
 			context,
 			goalId,
@@ -474,6 +492,8 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			// The other Ever Works teams of a goal synced from Ever Works stay with it.
 			teamIds = [team.ewId, ...(this.ewOnlyOf(link).extraTeams ?? [])];
 		}
+		// Ever Works teams Gauzy cannot map stay too: Gauzy never had them, so it never removes them.
+		teamIds.push(...(this.ewOnlyOf(link).unmappedTeams ?? []));
 		const rows = await this.keyResultRows(context, goal.id as ID);
 		const before = this.links.snapshot<GoalSnapshot>(link);
 		const now = gauzyGoalToEverWorks(
@@ -630,10 +650,14 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 				// 412: Ever Works moved on. Its newer state is applied first when goals sync from Ever Works (as
 				// the sync, so it is not captured back), then this push is merged again on top of it.
 				const remote = await client.request<EverWorksGoal>('GET', path);
+				// What Gauzy changed since the last sync is the later edit: Ever Works' value is not written over it.
+				const keep = new Set<GoalGauzyField>();
+				for (const field of Object.keys(plan.patch ?? {})) keep.add(GOAL_PATCH_FIELD[field] ?? 'keyResults');
+				if (plan.criteria || plan.dod) keep.add('keyResults');
 				if (fromEverWorks(context.directions.goals)) {
 					await EverWorksSyncContext.run(
 						{ connectionId: context.connection.id as ID, eventId: `goal-412:${pair.ewId}` },
-						() => this.applyGoal(context, pair, { ...remote, id: pair.ewId }, remote.version ?? null)
+						() => this.applyGoal(context, pair, { ...remote, id: pair.ewId }, remote.version ?? null, keep)
 					);
 				} else {
 					await this.record(
