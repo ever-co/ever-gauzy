@@ -271,4 +271,40 @@ describe('EverWorksSettingsComponent', () => {
 		late.next({ ...SYNC, conflicts: { open: 42 } });
 		expect(component.sync?.conflicts.open).not.toBe(42);
 	});
+
+	it('a failed status read during a running sync keeps polling', () => {
+		jest.useFakeTimers();
+		api.syncStatus.mockReturnValue(of({ ...SYNC, run: RUN, runs: [RUN] }));
+		const { component } = render();
+		api.syncStatus.mockReturnValueOnce(throwError(() => ({ status: 503 })));
+		jest.advanceTimersByTime(SETTINGS_POLL_MS); // this read fails…
+		expect(component.syncError).not.toBeNull();
+		jest.advanceTimersByTime(SETTINGS_POLL_MS); // …and the next one still happens
+		expect(api.syncStatus).toHaveBeenCalledTimes(3);
+	});
+
+	it('the latest log or conflicts request wins; an action dropped by a page change unlocks the controls', () => {
+		const slow = new Subject<{ items: never[]; nextCursor: null }>();
+		const { component } = render();
+		api.syncLog.mockReturnValueOnce(slow).mockReturnValueOnce(of({ items: [{ id: 'new' }], nextCursor: null }));
+		component.logStatus = 'ok';
+		component.loadLog(true);
+		component.logStatus = 'error';
+		component.loadLog(true);
+		slow.next({ items: [], nextCursor: null });
+		expect(component.log.map((entry) => entry.id)).toEqual(['new']);
+		const pending = new Subject<unknown>();
+		api.resync.mockReturnValue(pending);
+		component.resync();
+		expect(component.busy).toBe(true);
+		component.reload();
+		expect(component.busy).toBe(false);
+	});
+
+	it('an unchanged status read keeps the mapping object (an unsaved directions draft survives polling)', () => {
+		const { component } = render();
+		const mapping = component.mapping;
+		component.refreshStatus();
+		expect(component.mapping).toBe(mapping);
+	});
 });

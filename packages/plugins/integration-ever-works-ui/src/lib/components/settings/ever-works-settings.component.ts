@@ -7,7 +7,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule, NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, forkJoin, merge, Observable, of, Subject } from 'rxjs';
-import { catchError, distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, finalize, map, switchMap, takeUntil } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
 import type {
 	EverWorksConflict,
@@ -441,6 +441,9 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	private readonly reload$ = new Subject<void>();
 	/** Emits when the page's mapping or organization changes, or the page closes: requests of before are dropped. */
 	private readonly scope$ = new Subject<void>();
+	/** Emit before a new page of the log or the conflicts is asked for: the previous request is dropped. */
+	private readonly logRequest$ = new Subject<void>();
+	private readonly conflictsRequest$ = new Subject<void>();
 	private pollTimer: ReturnType<typeof setTimeout> | null = null;
 
 	/** The running sync, else the latest one. */
@@ -512,6 +515,8 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 			},
 			error: (error) => {
 				this.syncError = errorText(error);
+				// One failed read (a transient 5xx) does not stop the polling of a running sync.
+				this.schedulePoll();
 				this.cdr.markForCheck();
 			}
 		});
@@ -568,7 +573,11 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		const id = this.integrationTenantId;
 		if (!id) return;
 		const cursor = reset ? null : this.logCursor;
-		this.scoped(this.api.syncLog(this.organizationId, id, { status: this.logStatus || null, direction: this.logDirection || null, cursor })).subscribe({
+		// The latest request wins: a filter changed twice, or "Show more" clicked twice, never shows old rows.
+		this.logRequest$.next();
+		this.scoped(this.api.syncLog(this.organizationId, id, { status: this.logStatus || null, direction: this.logDirection || null, cursor }))
+			.pipe(takeUntil(this.logRequest$))
+			.subscribe({
 			next: (page) => {
 				this.log = reset ? page.items : [...this.log, ...page.items];
 				this.logCursor = page.nextCursor;
@@ -582,7 +591,10 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		const id = this.integrationTenantId;
 		if (!id) return;
 		const cursor = reset ? null : this.conflictsCursor;
-		this.scoped(this.api.conflicts(this.organizationId, id, this.conflictsState, cursor)).subscribe({
+		this.conflictsRequest$.next();
+		this.scoped(this.api.conflicts(this.organizationId, id, this.conflictsState, cursor))
+			.pipe(takeUntil(this.conflictsRequest$))
+			.subscribe({
 			next: (page) => {
 				this.conflicts = reset ? page.items : [...this.conflicts, ...page.items];
 				this.conflictsCursor = page.nextCursor;
@@ -696,18 +708,26 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		this.error = null;
 		this.notice = null;
 		this.cdr.markForCheck();
-		this.scoped(request).subscribe({
-			next: (value) => {
-				this.busy = false;
-				then(value);
-				if (refresh) this.refreshStatus();
-				this.cdr.markForCheck();
-			},
-			error: (error) => {
-				this.busy = false;
-				this.fail(error);
-			}
-		});
+		this.scoped(request)
+			.pipe(
+				// Also when the request is dropped (the page moved to another mapping): the controls never stay locked.
+				finalize(() => {
+					this.busy = false;
+					this.cdr.markForCheck();
+				})
+			)
+			.subscribe({
+				next: (value) => {
+					this.busy = false;
+					then(value);
+					if (refresh) this.refreshStatus();
+					this.cdr.markForCheck();
+				},
+				error: (error) => {
+					this.busy = false;
+					this.fail(error);
+				}
+			});
 	}
 
 	/** A request of this page's current mapping: dropped (and cancelled) once it changes or the page closes. */
@@ -722,10 +742,11 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	private useStatus(sync: EverWorksSyncStatus): void {
 		this.sync = sync;
 		this.syncError = null;
-		if (this.connection && this.connection.id === sync.connection.id) {
+		if (this.connection && this.connection.id === sync.connection.id && (this.connection.status !== sync.connection.status || this.connection.lastError !== sync.connection.lastError)) {
 			this.connection = { ...this.connection, status: sync.connection.status, lastError: sync.connection.lastError };
 		}
-		if (this.mapping) this.mapping = { ...this.mapping, isEnabled: sync.isEnabled };
+		// A new mapping object only when the switch changed: the directions tab resets its draft on a new one.
+		if (this.mapping && this.mapping.isEnabled !== sync.isEnabled) this.mapping = { ...this.mapping, isEnabled: sync.isEnabled };
 	}
 
 	private done(notice: string, params: Record<string, unknown> = {}): void {
