@@ -53,10 +53,10 @@ function createHandler(stored: IStoredSlot[]) {
 	return { handler, repository };
 }
 
-const deleteFor = (timeLogId: string, timeSlotsIds: string[] = []) =>
+const deleteFor = (timeLogId: string, timeSlotsIds: string[] = [], forceDelete = false) =>
 	new TimeSlotBulkDeleteCommand(
 		{ organizationId: ORGANIZATION, employeeId: EMPLOYEE, timeLog: { id: timeLogId }, timeSlotsIds },
-		false
+		forceDelete
 	);
 
 describe('TimeSlotBulkDeleteHandler — the slots of one time log', () => {
@@ -102,5 +102,73 @@ describe('TimeSlotBulkDeleteHandler — the slots of one time log', () => {
 
 		expect(repository.softRemove).not.toHaveBeenCalled();
 		expect(stored.every((slot) => !slot.deletedAt)).toBe(true);
+	});
+});
+
+/**
+ * #10736: the same cleanup on a force delete and on MikroORM. Every slot only the deleted log holds goes in ONE
+ * call, hard or soft like the log; the loop used to remove the first of them and return.
+ */
+describe('TimeSlotBulkDeleteHandler — hard deletes and MikroORM', () => {
+	const ONLY_LOG_1 = ['only-0900', 'only-0910', 'only-0930'];
+
+	const storedSlots = (): IStoredSlot[] => [
+		{ id: 'only-0900', timeLogs: [{ id: 'log-1' }] },
+		{ id: 'only-0910', timeLogs: [{ id: 'log-1' }] },
+		{ id: 'shared-0920', timeLogs: [{ id: 'log-1' }, { id: 'log-2' }] },
+		{ id: 'only-0930', timeLogs: [{ id: 'log-1' }] },
+		{ id: 'other-0940', timeLogs: [{ id: 'log-2' }] },
+		{ id: 'orphan-0950', timeLogs: [] }
+	];
+
+	const ids = (slots: unknown) => (slots as IStoredSlot[]).map((slot) => slot.id);
+
+	function createMikroOrmHandler(stored: IStoredSlot[]) {
+		const em = {
+			find: jest.fn(async () => stored.filter((slot) => !slot.deletedAt)),
+			removeAndFlush: jest.fn(async (_removed: unknown) => undefined),
+			persistAndFlush: jest.fn(async (_persisted: unknown) => undefined)
+		};
+		const handler = new TimeSlotBulkDeleteHandler({} as any, { getEntityManager: () => em } as any);
+		Object.defineProperty(handler, 'ormType', { value: MultiORMEnum.MikroORM });
+		return { handler, em };
+	}
+
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('TypeORM: a force delete hard-removes every slot only the log holds, in one call', async () => {
+		const { handler, repository } = createHandler(storedSlots());
+
+		await handler.execute(deleteFor('log-1', [], true));
+
+		expect(repository.remove).toHaveBeenCalledTimes(1);
+		expect(ids(repository.remove.mock.calls[0][0])).toEqual(ONLY_LOG_1);
+		expect(repository.softRemove).not.toHaveBeenCalled();
+	});
+
+	it('MikroORM: stamps deletedAt on every slot only the log holds, and on no other, in one flush', async () => {
+		const stored = storedSlots();
+		const { handler, em } = createMikroOrmHandler(stored);
+
+		await handler.execute(deleteFor('log-1'));
+
+		expect(em.persistAndFlush).toHaveBeenCalledTimes(1);
+		expect(ids(em.persistAndFlush.mock.calls[0][0])).toEqual(ONLY_LOG_1);
+		expect(em.removeAndFlush).not.toHaveBeenCalled();
+		expect(stored.filter((slot) => slot.deletedAt).map((slot) => slot.id)).toEqual(ONLY_LOG_1);
+	});
+
+	it('MikroORM: a force delete removes every slot only the log holds, in one call', async () => {
+		const { handler, em } = createMikroOrmHandler(storedSlots());
+
+		await handler.execute(deleteFor('log-1', [], true));
+
+		expect(em.removeAndFlush).toHaveBeenCalledTimes(1);
+		expect(ids(em.removeAndFlush.mock.calls[0][0])).toEqual(ONLY_LOG_1);
+		expect(em.persistAndFlush).not.toHaveBeenCalled();
 	});
 });
