@@ -53,7 +53,10 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 			const web = { andWhere: jest.fn((clause: string) => clauses.push(clause)) };
 			const qb = {
 				alias: 'employee',
-				andWhere: jest.fn((brackets: { whereFactory: (builder: unknown) => void }) => brackets.whereFactory(web))
+				// A Brackets argument is expanded into the clauses it adds; a plain clause is recorded as is.
+				andWhere: jest.fn((condition: string | { whereFactory?: (builder: unknown) => void }) =>
+					typeof condition === 'string' ? clauses.push(condition) : condition?.whereFactory?.(web)
+				)
 			};
 			const service = Object.create(EmployeeService.prototype) as EmployeeService;
 			service.getFilterQuery(qb as never, 'org-1', null, humansOnly);

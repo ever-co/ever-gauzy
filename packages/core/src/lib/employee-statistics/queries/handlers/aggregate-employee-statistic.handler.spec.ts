@@ -57,8 +57,9 @@ describe('AggregateOrganizationQueryHandler split expenses', () => {
 
 		// January: A and B $500 each; February: A, B and C $300 each — the shares add back up to $1,000 + $900
 		expect(expenses(employeeMap)).toEqual({ A: 800, B: 800, C: 300 });
-		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(january));
-		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(february));
+		// People only (`humansOnly`): an agent employee takes no share of a split expense.
+		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(january), false, true);
+		expect(employeeService.findWorkingEmployees).toHaveBeenCalledWith('org-1', monthOf(february), false, true);
 	});
 
 	it('does the same for the recurring split expenses, reading each month’s employees once per query', async () => {
