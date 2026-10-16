@@ -5652,7 +5652,10 @@
 			"NO_PAGES": "Для этого сайта не записаны сведения о страницах.",
 			"SHOW_ALL": "Показать все ({{ count }})",
 			"SHOW_LESS": "Свернуть",
-			"UNKNOWN_MEMBER": "Неизвестный участник"
+			"UNKNOWN_MEMBER": "Неизвестный участник",
+			"APPS_COUNT": "Приложений: {{ count }}",
+			"SITES_COUNT": "Сайтов: {{ count }}",
+			"OF_TOTAL": "{{ value }} от общего"
 		}
 	},
 	"ONBOARDING": {

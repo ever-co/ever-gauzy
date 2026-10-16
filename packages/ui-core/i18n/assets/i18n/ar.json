@@ -5618,7 +5618,10 @@
 			"NO_PAGES": "لم يتم تسجيل تفاصيل الصفحات لهذا الموقع.",
 			"SHOW_ALL": "عرض الكل ({{ count }})",
 			"SHOW_LESS": "عرض أقل",
-			"UNKNOWN_MEMBER": "عضو غير معروف"
+			"UNKNOWN_MEMBER": "عضو غير معروف",
+			"APPS_COUNT": "{{ count }} تطبيقات",
+			"SITES_COUNT": "{{ count }} مواقع",
+			"OF_TOTAL": "{{ value }} من الإجمالي"
 		}
 	},
 	"ONBOARDING": {

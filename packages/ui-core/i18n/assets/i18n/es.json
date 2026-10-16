@@ -5635,7 +5635,10 @@
 			"NO_PAGES": "No se registraron detalles de páginas para este sitio.",
 			"SHOW_ALL": "Mostrar los {{ count }}",
 			"SHOW_LESS": "Mostrar menos",
-			"UNKNOWN_MEMBER": "Miembro desconocido"
+			"UNKNOWN_MEMBER": "Miembro desconocido",
+			"APPS_COUNT": "{{ count }} aplicaciones",
+			"SITES_COUNT": "{{ count }} sitios",
+			"OF_TOTAL": "{{ value }} del total"
 		}
 	},
 	"ONBOARDING": {

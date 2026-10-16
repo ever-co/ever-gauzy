@@ -5005,7 +5005,10 @@
 			"NO_PAGES": "No page details were recorded for this site.",
 			"SHOW_ALL": "Show all {{ count }}",
 			"SHOW_LESS": "Show less",
-			"UNKNOWN_MEMBER": "Unknown member"
+			"UNKNOWN_MEMBER": "Unknown member",
+			"APPS_COUNT": "{{ count }} apps",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} of total"
 		}
 	},
 	"ONBOARDING": {

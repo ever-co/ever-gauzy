@@ -5633,7 +5633,10 @@
 			"NO_PAGES": "Er zijn geen paginagegevens vastgelegd voor deze site.",
 			"SHOW_ALL": "Alle {{ count }} tonen",
 			"SHOW_LESS": "Minder tonen",
-			"UNKNOWN_MEMBER": "Onbekend lid"
+			"UNKNOWN_MEMBER": "Onbekend lid",
+			"APPS_COUNT": "{{ count }} apps",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} van totaal"
 		}
 	},
 	"ONBOARDING": {

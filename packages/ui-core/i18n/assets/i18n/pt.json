@@ -5633,7 +5633,10 @@
 			"NO_PAGES": "Nenhum detalhe de página foi registrado para este site.",
 			"SHOW_ALL": "Mostrar todos ({{ count }})",
 			"SHOW_LESS": "Mostrar menos",
-			"UNKNOWN_MEMBER": "Membro desconhecido"
+			"UNKNOWN_MEMBER": "Membro desconhecido",
+			"APPS_COUNT": "{{ count }} aplicativos",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} do total"
 		}
 	},
 	"ONBOARDING": {

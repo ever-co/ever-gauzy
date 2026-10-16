@@ -5645,7 +5645,10 @@
 			"NO_PAGES": "לא נרשמו פרטי דפים עבור אתר זה.",
 			"SHOW_ALL": "הצג את כל {{ count }}",
 			"SHOW_LESS": "הצג פחות",
-			"UNKNOWN_MEMBER": "חבר לא ידוע"
+			"UNKNOWN_MEMBER": "חבר לא ידוע",
+			"APPS_COUNT": "{{ count }} אפליקציות",
+			"SITES_COUNT": "{{ count }} אתרים",
+			"OF_TOTAL": "{{ value }} מהסך הכול"
 		}
 	},
 	"ONBOARDING": {

@@ -5632,7 +5632,10 @@
 			"NO_PAGES": "Dla tej witryny nie zapisano szczegółów stron.",
 			"SHOW_ALL": "Pokaż wszystkie ({{ count }})",
 			"SHOW_LESS": "Pokaż mniej",
-			"UNKNOWN_MEMBER": "Nieznany członek"
+			"UNKNOWN_MEMBER": "Nieznany członek",
+			"APPS_COUNT": "Aplikacje: {{ count }}",
+			"SITES_COUNT": "Witryny: {{ count }}",
+			"OF_TOTAL": "{{ value }} całości"
 		}
 	},
 	"ONBOARDING": {

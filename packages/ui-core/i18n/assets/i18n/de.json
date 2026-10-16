@@ -5629,7 +5629,10 @@
 			"NO_PAGES": "Für diese Website wurden keine Seitendetails erfasst.",
 			"SHOW_ALL": "Alle {{ count }} anzeigen",
 			"SHOW_LESS": "Weniger anzeigen",
-			"UNKNOWN_MEMBER": "Unbekanntes Mitglied"
+			"UNKNOWN_MEMBER": "Unbekanntes Mitglied",
+			"APPS_COUNT": "{{ count }} Apps",
+			"SITES_COUNT": "{{ count }} Websites",
+			"OF_TOTAL": "{{ value }} der Gesamtzeit"
 		}
 	},
 	"ONBOARDING": {

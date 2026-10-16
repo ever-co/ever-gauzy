@@ -5633,7 +5633,10 @@
 			"NO_PAGES": "此网站没有记录页面详情。",
 			"SHOW_ALL": "显示全部 {{ count }} 项",
 			"SHOW_LESS": "收起",
-			"UNKNOWN_MEMBER": "未知成员"
+			"UNKNOWN_MEMBER": "未知成员",
+			"APPS_COUNT": "{{ count }} 个应用",
+			"SITES_COUNT": "{{ count }} 个网站",
+			"OF_TOTAL": "占总时间 {{ value }}"
 		}
 	},
 	"ONBOARDING": {
