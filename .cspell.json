@@ -1561,7 +1561,14 @@
 		"redeclares",
 		"requeues",
 		"uncaptured",
-		"waivable"
+		"waivable",
+		"cockroachdb",
+		"graphiql",
+		"recomputations",
+		"redeclaration",
+		"redeclaring",
+		"unawaited",
+		"uppercases"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
