@@ -170,6 +170,11 @@ export class EverWorksMappingService {
 	/** `PUT /mappings/:integrationTenantId`: directions, projects, docs folder, include flags, enabled, entity toggles. */
 	async update(integrationTenantId: ID, dto: EverWorksUpdateMappingDto, organizationId?: ID): Promise<EverWorksMappingView> {
 		const scope = await this.scopes.resolve(organizationId);
+		// A toggle for an entity Ever Works does not sync would be dropped silently: refused before anything is written.
+		const unsynced = (dto.entitySettings ?? []).filter((change) => !EVER_WORKS_SYNCED_ENTITIES.includes(change.entity));
+		if (unsynced.length) {
+			throw new BadRequestException(`Not a synced Ever Works entity: ${unsynced.map((change) => change.entity).join(', ')}.`);
+		}
 		await this.transaction(scope, async (manager) => {
 			const mapping = await this.require(manager, scope, integrationTenantId);
 			const values: Record<string, string> = {};
@@ -202,10 +207,10 @@ export class EverWorksMappingService {
 				const rows = await manager.find(IntegrationEntitySetting, { where: { integrationId: mapping.id } as never });
 				for (const change of dto.entitySettings) {
 					const row = rows.find((r) => r.entity === change.entity);
-					if (row) {
-						row.sync = change.sync;
-						await manager.save(IntegrationEntitySetting, row);
-					}
+					// Every synced entity has its row from the mapping's creation; a missing one rolls the update back.
+					if (!row) throw new BadRequestException(`The mapping has no ${change.entity} toggle.`);
+					row.sync = change.sync;
+					await manager.save(IntegrationEntitySetting, row);
 				}
 			}
 		});
@@ -459,7 +464,10 @@ export class EverWorksMappingService {
 		};
 		const id = (name: S) => (this.setting(mapping, name) || null) as ID | null;
 		const connectionId = this.setting(mapping, S.CONNECTION_ID) as ID;
-		const connection = connectionId ? await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId } }) : null;
+		// Scoped by tenant like every other connection read: a wrong setting value never shows another tenant's connection.
+		const connection = connectionId
+			? await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId, tenantId: mapping.tenantId as ID } })
+			: null;
 		const everWorksOrganizationId = this.setting(mapping, S.EVER_WORKS_ORGANIZATION_ID);
 		const pin = connection ? this.connections.pins(connection).find((org) => org.id === everWorksOrganizationId) : undefined;
 		const entitySettings = await this.dataSource.getRepository(IntegrationEntitySetting).find({
