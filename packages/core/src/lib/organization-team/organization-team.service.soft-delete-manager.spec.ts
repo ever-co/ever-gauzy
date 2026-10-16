@@ -48,6 +48,8 @@ const LIVE_TEAM = '70000000-0000-4000-8000-000000000001';
 const RETIRED_TEAM = '70000000-0000-4000-8000-000000000002';
 /** A team only EMPLOYEE.otherManager manages. */
 const OTHER_TEAM = '70000000-0000-4000-8000-000000000003';
+/** A retired team only EMPLOYEE.otherManager manages. */
+const OTHER_RETIRED_TEAM = '70000000-0000-4000-8000-000000000004';
 
 const EMPLOYEE = {
 	/** A MANAGER member of LIVE_TEAM and RETIRED_TEAM. */
@@ -67,7 +69,14 @@ const ROLES = [{ id: MANAGER_ROLE, name: RolesEnum.MANAGER }];
 const TEAMS = [
 	{ id: LIVE_TEAM, name: 'live', tenantId: TENANT, organizationId: ORGANIZATION, deletedAt: null },
 	{ id: RETIRED_TEAM, name: 'retired', tenantId: TENANT, organizationId: ORGANIZATION, deletedAt: RETIRED_AT },
-	{ id: OTHER_TEAM, name: 'other', tenantId: TENANT, organizationId: ORGANIZATION, deletedAt: null }
+	{ id: OTHER_TEAM, name: 'other', tenantId: TENANT, organizationId: ORGANIZATION, deletedAt: null },
+	{
+		id: OTHER_RETIRED_TEAM,
+		name: 'other retired',
+		tenantId: TENANT,
+		organizationId: ORGANIZATION,
+		deletedAt: RETIRED_AT
+	}
 ];
 
 /** In the team's own tenant and organization unless the row says otherwise. */
@@ -89,6 +98,12 @@ const MEMBERS = [
 	{
 		id: '70000000-0000-4000-8000-0000000000c5',
 		teamId: OTHER_TEAM,
+		employeeId: EMPLOYEE.otherManager,
+		roleId: MANAGER_ROLE
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000ca',
+		teamId: OTHER_RETIRED_TEAM,
 		employeeId: EMPLOYEE.otherManager,
 		roleId: MANAGER_ROLE
 	},
@@ -412,6 +427,23 @@ describe.each([
 			expect(await harness.deletedAt(LIVE_TEAM)).not.toBeNull();
 		});
 
+		it('retires the checked team only: a where.id in the options cannot name another team', async () => {
+			signInAs(EMPLOYEE.manager);
+
+			await expect(harness.service().softRemove(LIVE_TEAM, { where: { id: OTHER_TEAM } })).resolves.toMatchObject(
+				{ id: LIVE_TEAM }
+			);
+			expect(await harness.deletedAt(OTHER_TEAM)).toBeNull();
+			expect(await harness.deletedAt(LIVE_TEAM)).not.toBeNull();
+		});
+
+		it("takes the inherited route's rest parameter, an empty array, as no options", async () => {
+			signInAs(EMPLOYEE.manager);
+
+			await expect(harness.service().softRemove(LIVE_TEAM, [] as any)).resolves.toMatchObject({ id: LIVE_TEAM });
+			expect(await harness.deletedAt(LIVE_TEAM)).not.toBeNull();
+		});
+
 		it('lets a caller with CHANGE_SELECTED_EMPLOYEE retire any team of the tenant', async () => {
 			signInAs(EMPLOYEE.otherManager, true);
 
@@ -456,6 +488,25 @@ describe.each([
 			signInAs(EMPLOYEE.manager);
 
 			await expect(harness.service().softRecover(RETIRED_TEAM)).resolves.toMatchObject({ id: RETIRED_TEAM });
+			expect(await harness.deletedAt(RETIRED_TEAM)).toBeNull();
+		});
+
+		it('restores the checked team only: a where.id in the options cannot name another team', async () => {
+			signInAs(EMPLOYEE.manager);
+
+			await expect(
+				harness.service().softRecover(RETIRED_TEAM, { where: { id: OTHER_RETIRED_TEAM } })
+			).resolves.toMatchObject({ id: RETIRED_TEAM });
+			expect(await harness.deletedAt(OTHER_RETIRED_TEAM)).not.toBeNull();
+			expect(await harness.deletedAt(RETIRED_TEAM)).toBeNull();
+		});
+
+		it("takes the inherited route's rest parameter, an empty array, as no options", async () => {
+			signInAs(EMPLOYEE.manager);
+
+			await expect(harness.service().softRecover(RETIRED_TEAM, [] as any)).resolves.toMatchObject({
+				id: RETIRED_TEAM
+			});
 			expect(await harness.deletedAt(RETIRED_TEAM)).toBeNull();
 		});
 

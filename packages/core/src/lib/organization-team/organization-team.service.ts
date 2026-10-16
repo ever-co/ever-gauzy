@@ -724,7 +724,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * caller who may edit it. See {@link assertMayManageTeam}.
 	 *
 	 * @param id - The team to soft delete.
-	 * @param options - Find options, passed to the base method unchanged.
+	 * @param options - Find options, passed to the base method with `where.id` bound to `id`.
 	 * @param saveOptions - Save options, passed to the base method unchanged.
 	 * @returns The soft-deleted team.
 	 */
@@ -735,7 +735,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	): Promise<OrganizationTeam> {
 		await this.assertMayManageTeam(id, false);
 
-		return super.softRemove(id, options, saveOptions);
+		return super.softRemove(id, this.bindTeamId(id, options), saveOptions);
 	}
 
 	/**
@@ -743,7 +743,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * a caller who may edit it. See {@link assertMayManageTeam}.
 	 *
 	 * @param id - The team to restore.
-	 * @param options - Find options, passed to the base method unchanged.
+	 * @param options - Find options, passed to the base method with `where.id` bound to `id`.
 	 * @param saveOptions - Save options, passed to the base method unchanged.
 	 * @returns The restored team.
 	 */
@@ -754,7 +754,23 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	): Promise<OrganizationTeam> {
 		await this.assertMayManageTeam(id, true);
 
-		return super.softRecover(id, options, saveOptions);
+		return super.softRecover(id, this.bindTeamId(id, options), saveOptions);
+	}
+
+	/**
+	 * The find options for the base method, with the checked team's id set last: the base lookup spreads
+	 * `options.where` over the id, so a `where.id` there would name a team the check never saw. The inherited
+	 * routes pass their rest parameter, an array, which carries no options.
+	 *
+	 * @param id - The team the check passed for.
+	 * @param options - The find options received.
+	 * @returns The options, acting on `id` only.
+	 */
+	private bindTeamId(id: ID, options?: IFindOneOptions<OrganizationTeam>): IFindOneOptions<OrganizationTeam> {
+		const findOptions = options && typeof options === 'object' && !Array.isArray(options) ? options : {};
+		const { where } = findOptions as { where?: Record<string, unknown> };
+
+		return { ...findOptions, where: { ...where, id } } as IFindOneOptions<OrganizationTeam>;
 	}
 
 	/**
