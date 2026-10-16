@@ -14,6 +14,7 @@ import {
 	ORGANIZATION_POLICY_TARGET_METADATA
 } from '../decorators/organization-policy-target.decorator';
 import { MultiORMEnum, getORMType } from '../../core/utils';
+import { readMikroOrmScopeColumn, resolveMikroOrmScopeColumn } from '../../core/crud/mikro-orm-scope-column.helper';
 import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
@@ -422,13 +423,20 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 			switch (ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Loaded through what hydrates the organization, for the reason findTargetOrganizationId gives.
+					const em = this._mikroOrmOrganizationRepository.getEntityManager();
+					const column = resolveMikroOrmScopeColumn(em.getMetadata(target.entity as any), 'organizationId');
+
+					if (!column) {
+						break;
+					}
+
 					// Soft-deleted rows count too: `forceDelete` can still hard-delete them.
-					records = (await this._mikroOrmOrganizationRepository
-						.getEntityManager()
-						.find(target.entity as any, { id: { $in: ids }, tenantId } as any, {
-							fields: ['id', 'organizationId'] as any,
-							filters: false
-						})) as any[];
+					const rows = await em.find(target.entity as any, { id: { $in: ids }, tenantId } as any, {
+						fields: ['id', column.hydratedBy] as any,
+						filters: false
+					});
+					records = rows.map((row) => ({ organizationId: readMikroOrmScopeColumn(row, column) as ID }));
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
@@ -491,11 +499,22 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 			switch (ormType) {
 				case MultiORMEnum.MikroORM: {
-					const record: any = await this._mikroOrmOrganizationRepository
-						.getEntityManager()
-						.findOne(target.entity as any, { id, tenantId }, { fields: ['id', 'organizationId'] as any });
+					// `organizationId` is the `persist: false` mirror of the `organization` relation, and MikroORM
+					// drops a mirror from `fields`: naming it loaded every record without its organization.
+					const em = this._mikroOrmOrganizationRepository.getEntityManager();
+					const column = resolveMikroOrmScopeColumn(em.getMetadata(target.entity as any), 'organizationId');
 
-					return record?.organizationId ?? undefined;
+					if (!column) {
+						return undefined;
+					}
+
+					const record = await em.findOne(
+						target.entity as any,
+						{ id, tenantId },
+						{ fields: ['id', column.hydratedBy] as any }
+					);
+
+					return (readMikroOrmScopeColumn(record, column) as ID | null | undefined) ?? undefined;
 				}
 				case MultiORMEnum.TypeORM: {
 					const record = await this._typeOrmOrganizationRepository.manager.findOne(
