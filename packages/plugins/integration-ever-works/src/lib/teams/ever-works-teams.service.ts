@@ -205,6 +205,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 	async apply(envelope: EverWorksEventEnvelope, applyContext: EverWorksApplyContext): Promise<EverWorksApplyOutcome> {
 		const context = envelope.organizationId ? await this.contexts.forEverWorksOrganization(applyContext.connection, envelope.organizationId) : null;
 		if (!context) return { status: 'skipped', message: 'no mapping for the Ever Works organization' };
+		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (!fromEverWorks(context.directions.teams)) return { status: 'skipped', message: 'teams are not synced from Ever Works' };
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, envelope.aggregate.id);
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the team is no longer synced' };
@@ -374,6 +375,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 	async push(change: EverWorksOutboundChange, pushContext: EverWorksPushContext): Promise<EverWorksPushOutcome> {
 		const context = await this.contexts.forOrganization(change.tenantId as ID, change.organizationId as ID);
 		if (!context || context.integrationTenantId !== pushContext.mapping.id) return { status: 'skipped', message: 'no mapping for the organization' };
+		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (!toEverWorks(context.directions.teams)) return { status: 'skipped', message: 'teams are not pushed to Ever Works' };
 		const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TEAM, change.gauzyId as ID);
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the team is no longer synced' };
@@ -636,10 +638,10 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 				suggestion: match ? { teamId: match.id as ID, reason: 'same_name' } : null
 			};
 		});
-		const suggested = new Set(rows.map((row) => row.suggestion?.teamId).filter(Boolean));
 		return {
 			teams: rows,
-			unmatchedTeams: gauzy.filter((g) => !linked.has(g.id as ID) && !suggested.has(g.id as ID)).map((g) => ({ teamId: g.id as ID, name: g.name }))
+			// A suggestion is not a pairing: a suggested team stays unmatched until the admin confirms it.
+			unmatchedTeams: gauzy.filter((g) => !linked.has(g.id as ID)).map((g) => ({ teamId: g.id as ID, name: g.name }))
 		};
 	}
 }

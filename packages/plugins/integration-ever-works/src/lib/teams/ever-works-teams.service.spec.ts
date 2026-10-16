@@ -77,6 +77,7 @@ function setup() {
 		connection: { id: 'c1' },
 		everWorksOrganizationSlug: 'acme',
 		directions: { teams: 'both' },
+		isEnabled: true,
 		mapping: { id: 'm1', createdAt: new Date('2026-10-01T00:00:00Z') }
 	};
 	const links: LinkRow[] = [];
@@ -274,5 +275,20 @@ describe('EverWorksTeamsService', () => {
 		expect(links.find((l) => l.gauzyId === 'g-new')?.ewId).toBe('ew-team-new');
 		expect(await service.push({ id: 'b', tenantId: 't1', organizationId: 'o1', gauzyId: 'g-old', op: 'upsert' } as never, pushContext)).toMatchObject({ status: 'skipped' });
 		expect(client.request).toHaveBeenCalledTimes(1);
+	});
+
+	it('a disabled mapping writes nothing in either direction', async () => {
+		const { service, teams, client, context } = setup();
+		(context as { isEnabled: boolean }).isEnabled = false;
+		expect(await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }) as never, applyContext)).toMatchObject({
+			status: 'skipped',
+			message: 'the mapping is disabled'
+		});
+		teams.push({ id: 'g-new', name: 'New team', createdAt: new Date('2026-10-10T00:00:00Z') });
+		expect(
+			await service.push({ id: 'a', tenantId: 't1', organizationId: 'o1', gauzyId: 'g-new', op: 'upsert' } as never, { connection: { id: 'c1' }, mapping: { id: 'm1' } } as never)
+		).toMatchObject({ status: 'skipped', message: 'the mapping is disabled' });
+		expect(teams).toHaveLength(1);
+		expect(client.request).not.toHaveBeenCalled();
 	});
 });
