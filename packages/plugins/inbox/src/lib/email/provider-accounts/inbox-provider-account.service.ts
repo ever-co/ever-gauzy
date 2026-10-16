@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	Inject,
 	Injectable,
@@ -118,7 +119,7 @@ export class InboxProviderAccountService {
 		}
 
 		const repository = this.dataSource.getRepository(InboxProviderAccount);
-		const saved = await this.dataSource.transaction(async (manager) => {
+		const saved = await this.inTransaction(async (manager) => {
 			const row = await manager.getRepository(InboxProviderAccount).save(
 				manager.getRepository(InboxProviderAccount).create({
 					tenantId,
@@ -154,7 +155,16 @@ export class InboxProviderAccountService {
 		return { ...account, oneTimeSecrets: split.generated, oneTimeWebhookUrl };
 	}
 
-	async update(id: ID, input: IInboxProviderAccountUpdateInput, organizationId?: ID): Promise<IInboxProviderAccount> {
+	/**
+	 * Changes an account. The configuration is merged with the stored one under a row lock (two overlapping edits of
+	 * different fields both survive). A `generated` secret sent as `null` is regenerated; the new value (and the
+	 * webhook URL that carries it) is answered this once, in `oneTimeSecrets`.
+	 */
+	async update(
+		id: ID,
+		input: IInboxProviderAccountUpdateInput,
+		organizationId?: ID
+	): Promise<IInboxProviderAccountCreated> {
 		const row = await this.managed(id, organizationId, true);
 		const provider = this.provider(row.providerId);
 		const change: QueryDeepPartialEntity<InboxProviderAccount> = {};
@@ -170,10 +180,8 @@ export class InboxProviderAccountService {
 		}
 		if (input?.config !== undefined) {
 			this.assertSecretsStorable();
-			const previous = this.halves(row);
-			const split = this.split(provider, input.config, previous);
-			change.config = JSON.stringify(split.config);
-			change.configEncrypted = this.seal(split.secrets, row.id as ID);
+			// Checked against the form now (a refusal needs no lock); merged again with the latest row below.
+			this.split(provider, input.config, this.halves(row));
 		}
 		if (input?.isDefaultOutbound === true && !provider.capabilities.outbound) {
 			throw new BadRequestException(
@@ -181,7 +189,15 @@ export class InboxProviderAccountService {
 			);
 		}
 
-		await this.dataSource.transaction(async (manager) => {
+		let generated: Record<string, string> = {};
+		await this.inTransaction(async (manager) => {
+			if (input?.config !== undefined) {
+				const latest = (await this.lockedRow(manager, row.id as ID)) ?? row;
+				const split = this.split(provider, input.config, this.halves(latest));
+				change.config = JSON.stringify(split.config);
+				change.configEncrypted = this.seal(split.secrets, row.id as ID);
+				generated = split.generated;
+			}
 			if (Object.keys(change).length > 0) {
 				await manager.getRepository(InboxProviderAccount).update({ id: row.id }, change);
 			}
@@ -191,7 +207,14 @@ export class InboxProviderAccountService {
 				await manager.getRepository(InboxProviderAccount).update({ id: row.id }, { isDefaultOutbound: false });
 			}
 		});
-		return this.get(id, organizationId);
+		const stored = (await this.dataSource
+			.getRepository(InboxProviderAccount)
+			.findOne({ where: { id: row.id as ID } })) as InboxProviderAccount;
+		const oneTimeWebhookUrl =
+			Object.keys(generated).length > 0 && provider.inbound?.webhookUrl
+				? provider.inbound.webhookUrl(inboundWebhookUrl(provider.id, stored.id as ID), this.context(stored))
+				: null;
+		return { ...this.toAccount(stored), oneTimeSecrets: generated, oneTimeWebhookUrl };
 	}
 
 	/** "Test connection": the provider plugin checks the account's credentials; the result is kept on the account. */
@@ -210,21 +233,21 @@ export class InboxProviderAccountService {
 		}
 		const message =
 			typeof result?.message === 'string' ? result.message.slice(0, PROVIDER_ACCOUNT_ERROR_MAX) : undefined;
-		await this.dataSource.getRepository(InboxProviderAccount).update(
+		const repository = this.dataSource.getRepository(InboxProviderAccount);
+		await repository.update(
 			{ id: row.id },
-			{
-				lastVerifiedAt: checkedAt,
-				lastError: result?.ok ? null : (message ?? 'The connection test failed.'),
-				// A disabled account stays disabled; otherwise the test decides between ACTIVE and ERROR.
-				...(row.status === InboxProviderAccountStatusEnum.DISABLED
-					? {}
-					: {
-							status: result?.ok
-								? InboxProviderAccountStatusEnum.ACTIVE
-								: InboxProviderAccountStatusEnum.ERROR
-						})
-			}
+			{ lastVerifiedAt: checkedAt, lastError: result?.ok ? null : (message ?? 'The connection test failed.') }
 		);
+		// The test decides between ACTIVE and ERROR, unless the account is (or became, while the test ran) disabled.
+		await repository
+			.createQueryBuilder()
+			.update(InboxProviderAccount)
+			.set({ status: result?.ok ? InboxProviderAccountStatusEnum.ACTIVE : InboxProviderAccountStatusEnum.ERROR })
+			.where('id = :id AND status != :disabled', {
+				id: row.id,
+				disabled: InboxProviderAccountStatusEnum.DISABLED
+			})
+			.execute();
 		return {
 			ok: !!result?.ok,
 			...(message ? { message } : {}),
@@ -247,8 +270,11 @@ export class InboxProviderAccountService {
 		return this.registry.get(row.providerId) ? row : null;
 	}
 
-	/** The scope's default outbound account (the organization's, else the tenant's), or `null`. */
-	async defaultOutbound(tenantId: ID, organizationId?: ID | null): Promise<InboxProviderAccount | null> {
+	/**
+	 * The scope's default outbound accounts, in the order they are tried: the organization's, then the tenant's (both
+	 * usable: not deleted, not disabled, of a registered provider that sends).
+	 */
+	async defaultOutboundCandidates(tenantId: ID, organizationId?: ID | null): Promise<InboxProviderAccount[]> {
 		const repository = this.dataSource.getRepository(InboxProviderAccount);
 		const candidates: InboxProviderAccount[] = [];
 		if (organizationId) {
@@ -268,14 +294,17 @@ export class InboxProviderAccountService {
 			order: { updatedAt: 'DESC' }
 		});
 		if (tenant) candidates.push(tenant);
-		return (
-			candidates.find(
-				(row) =>
-					!row.deletedAt &&
-					row.status !== InboxProviderAccountStatusEnum.DISABLED &&
-					!!this.registry.get(row.providerId)?.capabilities.outbound
-			) ?? null
+		return candidates.filter(
+			(row) =>
+				!row.deletedAt &&
+				row.status !== InboxProviderAccountStatusEnum.DISABLED &&
+				!!this.registry.get(row.providerId)?.capabilities.outbound
 		);
+	}
+
+	/** The first of {@link defaultOutboundCandidates}, or `null`. */
+	async defaultOutbound(tenantId: ID, organizationId?: ID | null): Promise<InboxProviderAccount | null> {
+		return (await this.defaultOutboundCandidates(tenantId, organizationId))[0] ?? null;
 	}
 
 	/** The account with its configuration decrypted, for the provider plugin. Throws when it cannot be read. */
@@ -393,8 +422,13 @@ export class InboxProviderAccountService {
 		return row;
 	}
 
-	/** Makes `row` its scope's only default outbound account. */
+	/**
+	 * Makes `row` its scope's only default outbound account. Two overlapping requests for one scope are serialised
+	 * (Postgres: a transaction advisory lock per scope; MySQL: the tenant row's lock; SQLite has one writer), and the
+	 * partial unique indexes of the migration refuse a second default where the database supports them.
+	 */
 	private async makeDefaultOutbound(manager: EntityManager, row: InboxProviderAccount): Promise<void> {
+		await this.lockScope(manager, row);
 		const repository = manager.getRepository(InboxProviderAccount);
 		const others = repository
 			.createQueryBuilder()
@@ -408,6 +442,54 @@ export class InboxProviderAccountService {
 		}
 		await others.execute();
 		await repository.update({ id: row.id }, { isDefaultOutbound: true });
+	}
+
+	/** A transaction whose unique-index refusal (a second default outbound account) answers 409. */
+	private async inTransaction<T>(work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		try {
+			return await this.dataSource.transaction(work);
+		} catch (error) {
+			const text = `${(error as { code?: unknown })?.code ?? ''} ${(error as Error)?.message ?? ''}`;
+			if (
+				/UQ_inbox_provider_account_default|23505|ER_DUP_ENTRY|SQLITE_CONSTRAINT_UNIQUE|UNIQUE constraint/i.test(
+					text
+				)
+			) {
+				throw new ConflictException(
+					'Another default outbound account was saved for this scope at the same time.'
+				);
+			}
+			throw error;
+		}
+	}
+
+	private get dialect(): string {
+		return String(this.dataSource.options.type);
+	}
+
+	/** The account row, locked for the rest of the transaction where the database locks rows. */
+	private async lockedRow(manager: EntityManager, id: ID): Promise<InboxProviderAccount | null> {
+		const query = manager
+			.getRepository(InboxProviderAccount)
+			.createQueryBuilder('account')
+			.where('account.id = :id', { id });
+		if (this.dialect === 'postgres' || this.dialect === 'mysql' || this.dialect === 'mariadb') {
+			query.setLock('pessimistic_write');
+		}
+		return query.getOne();
+	}
+
+	/** Serialises the default-outbound changes of one scope (see {@link makeDefaultOutbound}). */
+	private async lockScope(manager: EntityManager, row: InboxProviderAccount): Promise<void> {
+		const scopeKey =
+			row.scope === InboxProviderAccountScopeEnum.TENANT
+				? `gauzy-inbox:outbound:${row.tenantId}`
+				: `gauzy-inbox:outbound:${row.tenantId}:${row.organizationId}`;
+		if (this.dialect === 'postgres') {
+			await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [scopeKey]);
+		} else if (this.dialect === 'mysql' || this.dialect === 'mariadb') {
+			await manager.query('SELECT `id` FROM `tenant` WHERE `id` = ? FOR UPDATE', [row.tenantId]);
+		}
 	}
 
 	/** The account as the API answers it: the public configuration, which secrets are set, the webhook URL. */

@@ -293,6 +293,16 @@ describe('Email provider accounts on SQLite', () => {
 			);
 		});
 
+		it('rotates a generated secret cleared with null, and answers the new one once', async () => {
+			const created = await create();
+			const first = created.oneTimeSecrets['webhookPassword'];
+			const rotated = await service.update(created.id as string, { config: { webhookPassword: null } });
+			expect(rotated.oneTimeSecrets['webhookPassword']).toMatch(/^[A-Za-z0-9_-]{43}$/);
+			expect(rotated.oneTimeSecrets['webhookPassword']).not.toBe(first);
+			const unchanged = await service.update(created.id as string, { name: 'Renamed' });
+			expect(unchanged.oneTimeSecrets).toEqual({});
+		});
+
 		it("refuses a field the provider's form does not have, and a value it does not allow", async () => {
 			await expect(create({ config: { apiKey: 'k', smtpHost: 'x' } })).rejects.toBeInstanceOf(
 				BadRequestException
@@ -349,6 +359,13 @@ describe('Email provider accounts on SQLite', () => {
 	});
 
 	describe('connection test', () => {
+		it('never turns a disabled account active again', async () => {
+			const created = await create();
+			await service.update(created.id as string, { status: InboxProviderAccountStatusEnum.DISABLED });
+			expect((await service.verify(created.id as string)).ok).toBe(true);
+			expect((await service.get(created.id as string)).status).toBe(InboxProviderAccountStatusEnum.DISABLED);
+		});
+
 		it('records the result on the account', async () => {
 			const created = await create({ config: { apiKey: 'bad-key' } });
 			const failed = await service.verify(created.id as string);
@@ -369,6 +386,35 @@ describe('Email provider accounts on SQLite', () => {
 			const second = await create({ name: 'Second', isDefaultOutbound: true });
 			expect((await service.get(first.id as string)).isDefaultOutbound).toBe(false);
 			expect((await service.get(second.id as string)).isDefaultOutbound).toBe(true);
+		});
+
+		it('refuses a second default outbound account in one scope at the database too', async () => {
+			const first = await create({ isDefaultOutbound: true });
+			const second = await create({ name: 'Second' });
+			await expect(
+				dataSource.query(`UPDATE "inbox_provider_account" SET "isDefaultOutbound" = 1 WHERE "id" = ?`, [
+					second.id
+				])
+			).rejects.toThrow(/UNIQUE/);
+			expect((await service.get(first.id as string)).isDefaultOutbound).toBe(true);
+		});
+
+		it("falls back to the tenant's default when the organization's cannot build a transport", async () => {
+			const broken = fakeProvider('broken');
+			broken.createTransport = () => {
+				throw new Error('no transport');
+			};
+			registry.register(broken);
+			as(ADA, TENANT, ORG, [PermissionsEnum.ALL_ORG_EDIT]);
+			const tenantDefault = await create({
+				scope: InboxProviderAccountScopeEnum.TENANT,
+				name: 'Tenant default',
+				isDefaultOutbound: true
+			});
+			await create({ providerId: 'broken', name: 'Broken org default', isDefaultOutbound: true });
+			expect((await resolver.resolve({ tenantId: TENANT, organizationId: ORG }))?.source).toBe(
+				`fake:${tenantDefault.id}`
+			);
 		});
 
 		it('refuses a provider that does not send as the outbound account', async () => {

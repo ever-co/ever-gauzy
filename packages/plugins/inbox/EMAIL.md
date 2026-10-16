@@ -45,17 +45,19 @@ onModuleInit() {
 
 ## Provider accounts (`INBOX_MAILBOX_MANAGE`, members of the organization)
 
-| Method | Path                                      | What                                                                                                                  |
-| ------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/inbox/providers`                    | The registered provider plugins: id, name, capabilities, config form                                                  |
-| GET    | `/api/inbox/provider-accounts`            | `?organizationId=`: the organization's accounts and the tenant's (never a secret: `secretsSet` names the set ones)    |
-| POST   | `/api/inbox/provider-accounts`            | `{ providerId, name, scope?, organizationId?, config, isDefaultOutbound? }`; generated secrets are answered this once |
-| GET    | `/api/inbox/provider-accounts/:id`        | One account                                                                                                           |
-| PATCH  | `/api/inbox/provider-accounts/:id`        | `{ name?, config?, status? (ACTIVE / DISABLED), isDefaultOutbound? }`; a secret left out or empty keeps its value     |
-| POST   | `/api/inbox/provider-accounts/:id/verify` | "Test connection" through the plugin's `verifyAccount`; the result is kept on the account                             |
+| Method | Path                                      | What                                                                                                                                                                            |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/inbox/providers`                    | The registered provider plugins: id, name, capabilities, config form                                                                                                            |
+| GET    | `/api/inbox/provider-accounts`            | `?organizationId=`: the organization's accounts and the tenant's (never a secret: `secretsSet` names the set ones)                                                              |
+| POST   | `/api/inbox/provider-accounts`            | `{ providerId, name, scope?, organizationId?, config, isDefaultOutbound? }`; generated secrets are answered this once                                                           |
+| GET    | `/api/inbox/provider-accounts/:id`        | One account                                                                                                                                                                     |
+| PATCH  | `/api/inbox/provider-accounts/:id`        | `{ name?, config?, status? (ACTIVE / DISABLED), isDefaultOutbound? }`; a secret left out or empty keeps its value; a generated secret sent as `null` is rotated (answered once) |
+| POST   | `/api/inbox/provider-accounts/:id/verify` | "Test connection" through the plugin's `verifyAccount`; the result is kept on the account                                                                                       |
 
 A tenant-wide account (`scope: TENANT`) also needs `ALL_ORG_EDIT` to be created, changed or tested. Every answer is
-`Cache-Control: no-store`.
+`Cache-Control: no-store`. Configuration changes are merged under a row lock; one default outbound account per scope is
+kept by a per-scope lock and, on PostgreSQL and SQLite, partial unique indexes (a lost race answers 409). A connection test
+never re-enables an account that was disabled meanwhile.
 
 ## Outbound: the transport seam
 
