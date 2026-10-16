@@ -70,6 +70,15 @@ describe('Ever Works idea mappers', () => {
 		);
 	});
 
+	it('what is sent is already in the snapshot form, so an Ever Works event that changed nothing rewrites nothing', () => {
+		const sent = gauzyTaskToIdea(
+			{ title: 'T', description: '<p>One</p><p>&nbsp;Two</p>' },
+			{ visibility: 'organization', teamIds: [] }
+		);
+		expect(sent.description).toBe('One\n\nTwo');
+		expect(normalizeIdeaText(sent.description)).toBe(sent.description);
+	});
+
 	it('the full title opens the description once, and teams Gauzy cannot map stay on the idea', () => {
 		const long = 'L'.repeat(130);
 		const first = gauzyTaskToIdea(

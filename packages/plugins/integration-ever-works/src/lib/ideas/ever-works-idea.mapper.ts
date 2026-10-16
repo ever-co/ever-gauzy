@@ -219,7 +219,8 @@ export function gauzyTaskToIdea(
 ): IdeaSharedFields & { visibility: EverWorksTeamScope['visibility'] } {
 	const fullTitle = String(task.title ?? '').trim();
 	const title = fullTitle.slice(0, EVER_WORKS_IDEA_TITLE_MAX);
-	let description = htmlToIdeaText(task.description);
+	// In the form snapshots keep (text → HTML → text), so what is sent compares equal to what comes back.
+	let description = normalizeIdeaText(htmlToIdeaText(task.description));
 	// The full title opens the description once: a description that already starts with it (it came back
 	// from Ever Works with it) is not prefixed again.
 	if (fullTitle.length > EVER_WORKS_IDEA_TITLE_MAX && !description.startsWith(fullTitle))
