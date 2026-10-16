@@ -34,8 +34,9 @@ import {
  * a reader can check against the migration that created the table. The dialect differences are not
  * hand-rolled: `prepareSQLQuery` rewrites the identifiers for MySQL, which reads a double quote as
  * the start of a string literal rather than of a column name, and `toPositionalStatement` rewrites
- * the named parameters into the form the configured driver binds — `$1` on Postgres, `?` everywhere
- * else. Nothing below `QueryBuilder` substitutes a named parameter, so a statement that skipped that
+ * the named parameters into the form the connection binds: `$1` on Postgres under TypeORM, and `?`
+ * everywhere else, MikroORM included, because its `execute` fills `?` itself on every dialect.
+ * Nothing below `QueryBuilder` substitutes a named parameter, so a statement that skipped that
  * rewrite would bind nothing on any of the four supported databases.
  *
  * It is deliberately a read surface only. Every quantity change on this platform funnels through
@@ -97,7 +98,7 @@ export class InventoryOrmConnection {
 	 * was never asked.
 	 */
 	async rows<T = Record<string, unknown>>(sql: string, parameters: Record<string, unknown> = {}): Promise<T[]> {
-		const bound = toPositionalStatement(prepareSQLQuery(sql), parameters);
+		const bound = toPositionalStatement(prepareSQLQuery(sql), parameters, { questionMarks: this.usesMikroOrm });
 		const answered = this.usesMikroOrm
 			? await this.mikroOrm.em.getConnection().execute(bound.sql, bound.parameters as unknown[])
 			: await this.query(bound.sql, bound.parameters as unknown[]);

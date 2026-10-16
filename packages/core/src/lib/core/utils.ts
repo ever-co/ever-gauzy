@@ -4,6 +4,7 @@ import {
 	FindOptions as MikroORMFindOptions,
 	FilterQuery as MikroFilterQuery,
 	OrderDefinition,
+	Utils as MikroORMUtils,
 	wrap
 } from '@mikro-orm/core';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -1267,9 +1268,13 @@ export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>)
 						mikroORMCondition[key] = part;
 					}
 				}
-			} else {
+			} else if (MikroORMUtils.isPlainObject(value)) {
 				// Recursively convert nested objects
 				mikroORMCondition[key] = convertTypeORMConditionToMikroORM(value);
+			} else {
+				// Any other object (a Date, an entity) is a value, as MikroORM reads it. Recursed into, a Date became `{}`,
+				// an empty condition that dropped the predicate.
+				mikroORMCondition[key] = value;
 			}
 		} else {
 			// Assign simple key-value pairs directly

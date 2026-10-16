@@ -54,8 +54,9 @@ import { IGetConflictTimeLogCommand } from './commands';
  *   class's: each adds `OrganizationPermissionGuard` and one `ALLOW_*` permission, and a field that
  *   inherited the class grant instead would let a caller record time it may not record;
  * - the three members a hand-recorded body is written from are restated, because the delivered pipe
- *   and the delivered body's own transform decide them: the employee is the caller's own unless the
- *   caller may choose one, and a create is always a `MANUAL` log from the browser timer;
+ *   and the delivered body's own transform decide them: a named employee is kept for the service to
+ *   judge, a missing one is the caller's own unless the caller may choose one, and a create is always
+ *   a `MANUAL` log from the browser timer;
  * - every duration says its unit, every amount is an exact decimal and no relation is a field: each
  *   relation is carried as the identifier that always travels, because the reads behind this domain's
  *   fields select different subsets of the rows they nest.
@@ -252,6 +253,8 @@ function surfaces() {
 function caller(mayChooseEmployee: boolean, ownEmployeeId: string | null = OTHER_EMPLOYEE): void {
 	jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(mayChooseEmployee);
 	jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(ownEmployeeId);
+	// The signed-in user, whose employee the route's body pipe fills a missing one with.
+	jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ employeeId: ownEmployeeId } as never);
 }
 
 /** Every spy a test put on the request context is its own, so no test decides another one’s caller. */
@@ -1399,21 +1402,36 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 		});
 	});
 
-	it('records a caller that may not choose an employee against itself, which is the delivered pipe', async () => {
+	it('keeps the employee a caller names and fills only a missing one with its own, which is the delivered pipe', async () => {
 		const { resolver, timeLogService } = surfaces();
 		caller(false, OTHER_EMPLOYEE);
 		const startedAt = new Date('2026-03-01T09:00:00.000Z');
 		const stoppedAt = new Date('2026-03-01T10:00:00.000Z');
 
+		// A caller that may not choose any employee may still write for itself or for a member of a team it
+		// manages, and the service decides which — so the named employee reaches it, as it does from the route.
 		await resolver.addManualTime({ organizationId: ORGANIZATION, employeeId: EMPLOYEE, startedAt, stoppedAt });
+		await resolver.updateManualTime({
+			id: FIRST,
+			organizationId: ORGANIZATION,
+			employeeId: EMPLOYEE,
+			startedAt,
+			stoppedAt
+		});
 
-		expect(timeLogService.addManualTime.mock.calls[0][0].employeeId).toBe(OTHER_EMPLOYEE);
+		expect(timeLogService.addManualTime.mock.calls[0][0].employeeId).toBe(EMPLOYEE);
+		expect(timeLogService.updateManualTime.mock.calls[0][1].employeeId).toBe(EMPLOYEE);
+
+		// No employee named: the caller's own, as the pipe fills it.
+		await resolver.addManualTime({ organizationId: ORGANIZATION, startedAt, stoppedAt } as never);
+
+		expect(timeLogService.addManualTime.mock.calls[1][0].employeeId).toBe(OTHER_EMPLOYEE);
 
 		// A caller that may choose one keeps the employee it stated.
 		caller(true, OTHER_EMPLOYEE);
 		await resolver.addManualTime({ organizationId: ORGANIZATION, employeeId: EMPLOYEE, startedAt, stoppedAt });
 
-		expect(timeLogService.addManualTime.mock.calls[1][0].employeeId).toBe(EMPLOYEE);
+		expect(timeLogService.addManualTime.mock.calls[2][0].employeeId).toBe(EMPLOYEE);
 	});
 
 	it('edits a log through the same service method the update route calls, with the identifier in both places', async () => {

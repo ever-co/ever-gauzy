@@ -66,14 +66,18 @@ export interface IPositionalStatement {
 /**
  * Rewrites a statement's named parameters into the positional form the driver binds.
  *
- * **Nothing below `QueryBuilder` understands `:name`.** `Repository.query()`, `EntityManager.query()`
- * and MikroORM's `Connection.execute()` all hand the statement to the driver untouched, and every
+ * **Nothing below `QueryBuilder` understands `:name`.** `Repository.query()` and
+ * `EntityManager.query()` hand the statement to the driver untouched, and every
  * driver the platform supports binds positionally — `$1, $2, …` for Postgres, `?` for MySQL and for
  * both SQLite drivers. A statement written with named parameters and handed an array of values
  * therefore binds nothing: Postgres and MySQL raise a syntax error at the colon, and the embedded
  * drivers refuse the statement because it declares no placeholder the array can fill. Named
  * parameters read far better than a bare `?`, so the answer is to keep writing them and rewrite them
  * here rather than to give them up.
+ *
+ * MikroORM's `Connection.execute()` is the exception: it fills `?` placeholders into the statement
+ * itself, on every dialect, and sends the result with no bindings. A `$1` handed to it reaches
+ * Postgres unbound and fails with `there is no parameter $1`, so its callers pass `questionMarks`.
  *
  * A name used more than once is bound once per occurrence, in the order the occurrences appear, so a
  * statement that compares `used + :amount` against a ceiling and then adds the same `:amount` to the
@@ -85,9 +89,14 @@ export interface IPositionalStatement {
  *
  * @param sql The statement, written with `:name` parameters.
  * @param parameters The values, keyed by name.
+ * @param options `questionMarks` writes `?` on every dialect, for MikroORM's `Connection.execute()`.
  * @returns The statement in the driver's placeholder form, and its values in matching order.
  */
-export const toPositionalStatement = (sql: string, parameters: Record<string, unknown>): IPositionalStatement => {
+export const toPositionalStatement = (
+	sql: string,
+	parameters: Record<string, unknown>,
+	options?: { questionMarks?: boolean }
+): IPositionalStatement => {
 	const values: unknown[] = [];
 	// `(?<!:)` leaves a `::` cast alone; `\b` stops the name short of a trailing character that is
 	// not part of it.
@@ -98,7 +107,7 @@ export const toPositionalStatement = (sql: string, parameters: Record<string, un
 
 		values.push(parameters[name]);
 
-		return isPostgres() ? `$${values.length}` : '?';
+		return isPostgres() && !options?.questionMarks ? `$${values.length}` : '?';
 	});
 
 	return { sql: positional, parameters: values };
