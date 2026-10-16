@@ -266,8 +266,12 @@ describe('the discount rule a cycle is billed with', () => {
 		try {
 			expect(subscriptionDiscountOverrideOf(metadata)).toBeUndefined();
 			expect(
-				priceCycle({ items: [{ quantity: '1', unitPrice: '100' }], currency: 'USD' as any, plan: { discountPercentage: '0.1' }, metadata })
-					.net.toStorageString()
+				priceCycle({
+					items: [{ quantity: '1', unitPrice: '100' }],
+					currency: 'USD' as any,
+					plan: { discountPercentage: '0.1' },
+					metadata
+				}).net.toStorageString()
 			).toBe('90.000000');
 		} finally {
 			warn.mockRestore();

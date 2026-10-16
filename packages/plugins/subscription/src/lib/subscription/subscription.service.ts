@@ -357,7 +357,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 					// that named one cannot move the row past the version the write was predicated on.
 					// Only the writable members are written: a restated lifecycle member was checked above and is not
 					// echoed back over a cancellation that lands between the check and this statement.
-					patch: writableOnly(patch, SUBSCRIPTION_WRITABLE_MEMBERS) as Record<string, unknown> & Partial<Subscription>
+					patch: writableOnly(patch, SUBSCRIPTION_WRITABLE_MEMBERS) as Record<string, unknown> &
+						Partial<Subscription>
 				});
 			} catch (error) {
 				// The row moved on between the read and the write. The next read rebuilds the merge from the row as it
@@ -2102,7 +2103,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			end: new Date(subscription.currentPeriodEnd)
 		};
 		const { credit, charge, net } = prorate({ oldRecurring, newRecurring, period, at: new Date() });
-		const minimum = Money.of(String(metadata[MINIMUM_PRORATION_CHARGE] ?? DEFAULT_MINIMUM_PRORATION_CHARGE), currency);
+		const minimum = Money.of(
+			String(metadata[MINIMUM_PRORATION_CHARGE] ?? DEFAULT_MINIMUM_PRORATION_CHARGE),
+			currency
+		);
 
 		let settlement: ISubscriptionPlanChangeOutcome['settlement'] = 'DEFERRED';
 

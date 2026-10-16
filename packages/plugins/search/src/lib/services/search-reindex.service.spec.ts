@@ -778,7 +778,13 @@ describe('SearchReindexService — an organization’s own definition switched o
 	afterEach(() => jest.restoreAllMocks());
 
 	it('drops that organization’s documents and leaves every other organization’s alone', async () => {
-		const own: Row = { entity: 'product_variant', version: 2, isActive: true, tenantId: TENANT, organizationId: ORG };
+		const own: Row = {
+			entity: 'product_variant',
+			version: 2,
+			isActive: true,
+			tenantId: TENANT,
+			organizationId: ORG
+		};
 		const fixture = reindexFixture({
 			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
 			definitions: [own]
@@ -790,14 +796,23 @@ describe('SearchReindexService — an organization’s own definition switched o
 
 		own.isActive = false;
 
-		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
 
 		expect(runs[0]).toMatchObject({ indexed: 0, removed: 1 });
 		expect(variants().map((document) => [document.entityId, document.organizationId])).toEqual([['v2', OTHER_ORG]]);
 	});
 
 	it('still drops the whole tenant’s documents when the shipped definition itself is off', async () => {
-		const shipped: Row = { entity: 'product_variant', version: 1, isActive: true, tenantId: null, organizationId: null };
+		const shipped: Row = {
+			entity: 'product_variant',
+			version: 1,
+			isActive: true,
+			tenantId: null,
+			organizationId: null
+		};
 		const fixture = reindexFixture({
 			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
 			definitions: [shipped]
@@ -807,7 +822,10 @@ describe('SearchReindexService — an organization’s own definition switched o
 
 		shipped.isActive = false;
 
-		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
 
 		expect(runs[0]).toMatchObject({ indexed: 0, removed: 2 });
 		expect(fixture.documents().filter((document) => document.entity === 'product_variant')).toEqual([]);

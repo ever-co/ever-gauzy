@@ -541,7 +541,7 @@ describe('SearchIndexDefinitionService — a shipped definition is changed for o
 
 			return findOne(options);
 		};
-		// `UQ_search_index_definition_org_entity_nokey`: one live engine-less row per organization and entity.
+		// The unique index: one live engine-less row per organization and entity.
 		repository.save = async (row: Row) => {
 			const taken = fixture.tables.search_index_definition.some(
 				(candidate) =>

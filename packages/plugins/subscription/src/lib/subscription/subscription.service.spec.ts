@@ -3807,7 +3807,9 @@ describe('SubscriptionService — the metadata billing trusts is the service’s
 		// cancelled the subscription at the next run with no cancellation, reason or event — or, erased, revived one
 		// the customer had cancelled.
 		const fixture = subscriptionFixture({
-			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true, minimumProrationCharge: '5' } })]
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true, minimumProrationCharge: '5' } })
+			]
 		});
 
 		await fixture.service.applyChanges(SUBSCRIPTION, {
@@ -3820,7 +3822,11 @@ describe('SubscriptionService — the metadata billing trusts is the service’s
 			note: 'kept'
 		});
 
-		const created = await subscriptionFixture({ subscriptions: [], items: [], billings: [] }).service.createSubscription({
+		const created = await subscriptionFixture({
+			subscriptions: [],
+			items: [],
+			billings: []
+		}).service.createSubscription({
 			planId: PLAN,
 			customerId: CUSTOMER,
 			paymentAccountHolderId: HOLDER,
@@ -3872,7 +3878,9 @@ describe('SubscriptionService — an edit never writes back the credit a billing
 	 */
 	function racedByABillingPass() {
 		const fixture = subscriptionFixture({
-			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: credit, chargedSetupFeePlanIds: [PLAN] } })]
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: credit, chargedSetupFeePlanIds: [PLAN] } })
+			]
 		});
 		const original = fixture.service.findOneDetailed.bind(fixture.service);
 
@@ -3921,7 +3929,10 @@ describe('SubscriptionService — an edit never writes back the credit a billing
 
 		expect(refusal).toBeInstanceOf(ApiException);
 		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
-		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ metadata: { chargedSetupFeePlanIds: [PLAN] }, version: 2 });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			metadata: { chargedSetupFeePlanIds: [PLAN] },
+			version: 2
+		});
 	});
 
 	it('keeps a caller’s stated version: an edit read at the version the pass moved past is a conflict', async () => {
@@ -3934,6 +3945,9 @@ describe('SubscriptionService — an edit never writes back the credit a billing
 		expect(refusal).toBeInstanceOf(ApiException);
 		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
 		expect(refusal.getStatus()).toBe(409);
-		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ metadata: { chargedSetupFeePlanIds: [PLAN] }, version: 2 });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			metadata: { chargedSetupFeePlanIds: [PLAN] },
+			version: 2
+		});
 	});
 });
