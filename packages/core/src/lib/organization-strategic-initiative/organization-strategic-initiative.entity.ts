@@ -1,20 +1,21 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { JoinColumn, RelationId } from 'typeorm';
-import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { IsArray, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ID,
 	IEmployee,
 	IGoal,
 	IOrganizationProject,
 	IOrganizationStrategicInitiative,
+	IOrganizationTeam,
 	IOrganizationStrategicSignals,
 	OrganizationStrategicStateEnum,
 	OrganizationStrategicVisibilityScopeEnum
 } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { Employee, Goal, OrganizationProject, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Employee, Goal, OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity';
 import { MikroOrmOrganizationStrategicInitiativeRepository } from './repository/mikro-orm-organization-strategic-initiative.repository';
 
@@ -152,4 +153,34 @@ export class OrganizationStrategicInitiative extends TenantOrganizationBaseEntit
 		onDelete: 'CASCADE'
 	})
 	projects?: IOrganizationProject[];
+
+	/**
+	 * Teams the initiative is linked to directly (ManyToMany, owned here; pivot
+	 * `organization_strategic_initiative_team`). With `visibilityScope = 'team'` the members of these teams can
+	 * see the initiative, as can the members of the teams of its aligned projects. Written through `teamIds`.
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@MultiORMManyToMany(() => OrganizationTeam, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'organization_strategic_initiative_team',
+		joinColumn: 'organizationStrategicInitiativeId',
+		inverseJoinColumn: 'organizationTeamId'
+	})
+	@JoinTable({ name: 'organization_strategic_initiative_team' })
+	teams?: IOrganizationTeam[];
+
+	/**
+	 * The identifiers of the directly linked teams. Not a column: the reads fill it from `teams`, and the
+	 * writes take it and link the teams (each must be a team of the initiative's organization).
+	 */
+	@ApiPropertyOptional({ type: () => String, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@IsUUID('all', { each: true })
+	teamIds?: ID[];
 }

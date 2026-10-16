@@ -9,6 +9,6 @@ import { OrganizationStrategicInitiative } from '../organization-strategic-initi
 export class CreateOrganizationStrategicInitiativeDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		OmitType(OrganizationStrategicInitiative, ['steward', 'goals', 'projects'])
+		OmitType(OrganizationStrategicInitiative, ['steward', 'goals', 'projects', 'teams'])
 	)
 	implements IOrganizationStrategicInitiativeCreateInput {}

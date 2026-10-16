@@ -31771,6 +31771,12 @@ type OrganizationStrategicInitiative {
   """
   stewardId: ID
 
+  """
+  The teams the initiative is linked to directly, by identifier. With `visibilityScope` `team`, their
+  members may read it, as may the members of the teams of its aligned projects.
+  """
+  teamIds: [ID!]
+
   """The organization the initiative is filed under, by identifier."""
   organizationId: ID
 
@@ -31910,6 +31916,11 @@ input CreateOrganizationStrategicInitiativeInput {
   The steward who owns the clarity of the intent. Omit it and the caller's own employee is recorded.
   """
   stewardId: ID
+
+  """
+  The teams to link the initiative to directly. Each must be a team of the initiative's organization.
+  """
+  teamIds: [ID!]
 }
 
 """
@@ -31928,6 +31939,11 @@ input UpdateOrganizationStrategicInitiativeInput {
   visibilityScope: String
   signals: JSON
   stewardId: ID
+
+  """
+  Replaces the directly linked teams when stated (an empty list unlinks them all); omitted, they stay.
+  """
+  teamIds: [ID!]
 }
 
 """
