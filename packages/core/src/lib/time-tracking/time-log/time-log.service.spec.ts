@@ -602,6 +602,8 @@ describe('TimeLogService', () => {
 			let slots: Slot[];
 			let recalculated: string[];
 			let workedHours: string[];
+			/** When set, saving the log fails with it (a lost connection, a constraint). */
+			let saveFailure: Error | undefined;
 
 			const slotsOf = (employeeId: string) =>
 				slots.filter((slot) => !slot.deletedAt && slot.employeeId === employeeId);
@@ -609,6 +611,7 @@ describe('TimeLogService', () => {
 			beforeEach(() => {
 				recalculated = [];
 				workedHours = [];
+				saveFailure = undefined;
 				// The log and the previous employee's six ten-minute slots of it, as the create left them.
 				row = Object.assign(new TimeLog(), {
 					id: 'log-1',
@@ -657,6 +660,14 @@ describe('TimeLogService', () => {
 					}),
 					// Saving a log with `timeSlots` makes them its slots (the join rows), as TypeORM persists the relation.
 					save: jest.fn(async (log: TimeLog) => {
+						if (saveFailure) {
+							throw saveFailure;
+						}
+						// The saved columns are the row's (a move saves the log once, instead of an update).
+						const { timeSlots: _relation, ...columns } = log as TimeLog & { timeSlots?: unknown };
+						if (log.id === row.id && log !== row) {
+							Object.assign(row, columns);
+						}
 						if (Array.isArray(log.timeSlots)) {
 							const linked = new Set(log.timeSlots.map((slot) => slot.id));
 							for (const slot of slots.filter((stored) => !stored.deletedAt)) {
@@ -734,7 +745,8 @@ describe('TimeLogService', () => {
 								employeeId,
 								organizationId,
 								startedAt: new Date(slot.startedAt),
-								timeLogs: [{ id: slot.timeLogId }],
+								// Linked only to a log already the employee's (the handler looks the log up by employee).
+								timeLogs: row.employeeId === employeeId ? [{ id: slot.timeLogId }] : [],
 								screenshots: [],
 								activities: [],
 								timeSlotMinutes: []
@@ -924,6 +936,39 @@ describe('TimeLogService', () => {
 					]);
 				}
 			);
+
+			it("a failed save during a move is reported and leaves the previous employee's slots untouched", async () => {
+				saveFailure = new Error('connection lost');
+
+				const failure = await move().catch((thrown) => thrown);
+
+				// The route answers the failure instead of the row as if it had moved…
+				expect(failure).toBeInstanceOf(Error);
+				expect((failure as Error).message).toContain('connection lost');
+				// …and nothing of the previous employee's was touched: the log, its timesheet and its six slots.
+				expect(row).toMatchObject({ employeeId: PREVIOUS, timesheetId: `timesheet-${PREVIOUS}` });
+				expect(slotsOf(PREVIOUS).map((stored) => logsOf(stored))).toEqual(Array(6).fill(['log-1']));
+				expect(workedHours).toEqual([]);
+			});
+
+			it('a failed save during a same-employee edit is reported, before any slot is released', async () => {
+				saveFailure = new Error('connection lost');
+
+				// Shortened to 09:00–09:40: the 09:40 and 09:50 slots would be released after the save.
+				const failure = await manualService
+					.updateManualTime('log-1', {
+						...request,
+						employeeId: PREVIOUS,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						startedAt: STARTED_AT,
+						stoppedAt: new Date('2026-01-05T09:40:00.000Z')
+					})
+					.catch((thrown) => thrown);
+
+				expect(failure).toBeInstanceOf(Error);
+				expect((failure as Error).message).toContain('connection lost');
+				expect(slotsOf(PREVIOUS)).toHaveLength(6);
+			});
 
 			it('CONTROL: an edit that keeps the employee leaves the timesheet, the slots and the hours where they are', async () => {
 				await manualService.updateManualTime('log-1', {

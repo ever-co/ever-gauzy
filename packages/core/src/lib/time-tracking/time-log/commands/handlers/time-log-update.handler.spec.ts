@@ -84,7 +84,8 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 			.mockReturnValueOnce([{ startedAt: kept }])
 			.mockReturnValueOnce([{ startedAt: dropped }, { startedAt: kept }]);
 		(handler as any).commandBus.execute.mockResolvedValue({ id: 'timesheet-1' });
-		const removed = jest.spyOn(handler as any, 'releaseTimeSlots').mockResolvedValue(undefined);
+		const removed = jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+		jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
 		jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockResolvedValue(undefined);
 		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
 
@@ -104,8 +105,7 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 			TENANT_A,
 			'org-a',
 			'employee-a',
-			[dropped],
-			false
+			[dropped]
 		);
 	});
 

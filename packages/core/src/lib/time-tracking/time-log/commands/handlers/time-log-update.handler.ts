@@ -98,56 +98,81 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			updateTimeSlots = this.timeSlotService.generateTimeSlots(startedAt, stoppedAt);
 		}
 
-		// Update the time log in the repository
-		await this.typeOrmTimeLogRepository.update(
-			{ id: timeLog.id, tenantId },
-			{
-				...changes,
-				...(timesheet ? { timesheetId: timesheet.id } : {})
-			}
-		);
-
 		// Regenerate the existing time slots for the time log
 		const timeSlots = this.timeSlotService.generateTimeSlots(timeLog.startedAt, timeLog.stoppedAt);
 
-		// Retrieve the updated time log
-		timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
-
-		// Check if time slots need to be updated
-		if (needToUpdateTimeSlots) {
-			if (moved) {
-				// A moved log leaves the previous employee as deleting it would: the slots only it held go, a slot
-				// another of their logs still holds stays theirs.
-				await this.releaseTimeSlots(
+		// What the log releases — every slot of its range for a move, the start times a shortened range drops
+		// otherwise — decided from the slots' links as they are now, BEFORE anything is written: the save below
+		// replaces the log's links, after which its own slots no longer point at it.
+		const release = needToUpdateTimeSlots
+			? await this.planRelease(
 					timeLog,
 					tenantId,
 					organizationId,
 					previousEmployeeId,
-					timeSlots.map((slot) => new Date(slot.startedAt)),
-					forceDelete
-				);
-			} else {
-				// The start times the edited range drops: the log releases those slots, as deleting it would (a slot a
-				// neighbouring log still holds stays the neighbour's).
-				const startTimes = this.getConflictingStartTimes(timeSlots, updateTimeSlots);
-				await this.releaseTimeSlots(timeLog, tenantId, organizationId, employeeId, startTimes, forceDelete);
-			}
-			// Create new time slots if needed for Web Timer, and for a moved log under its new employee. The answer
-			// is every slot of the employee at those starts — the ones created and the ones they already had there
-			// (another of their logs may share a ten-minute slot) — and, as TimeLogCreateHandler does, it becomes
-			// the log's slots, so the save below links the log to each of them, an existing slot included.
-			if (moved || (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER)) {
-				timeLog.timeSlots = await this.bulkCreateTimeSlots(
-					updateTimeSlots,
-					timeLog,
-					employeeId,
-					organizationId,
-					tenantId
-				);
-			}
+					moved
+						? timeSlots.map((slot) => new Date(slot.startedAt))
+						: this.getConflictingStartTimes(timeSlots, updateTimeSlots)
+				)
+			: undefined;
 
-			// Update the time log in the repository
+		if (moved) {
+			// A move, in the order that leaves a recoverable state at every failure (no transaction can span the
+			// commands below; each writes through its own repositories):
+			// (a) the destination — the new employee's slots for the log's range (created where they have none);
+			const destination = await this.bulkCreateTimeSlots(
+				updateTimeSlots,
+				timeLog,
+				employeeId,
+				organizationId,
+				tenantId
+			);
+			// (b) ONE save of the log — its new employee, its new timesheet and its new slots together. If it fails,
+			// nothing of the previous employee has been touched (at most the new employee keeps blank slots no log
+			// holds), and the error propagates;
+			Object.assign(timeLog, changes, timesheet ? { timesheetId: timesheet.id } : {}, { timeSlots: destination });
 			await this.saveUpdatedTimeLog(timeLog);
+			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
+			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
+			// moved, the previous employee may keep slots that no longer belong to it, and the error propagates.
+		} else {
+			// Update the time log in the repository
+			await this.typeOrmTimeLogRepository.update(
+				{ id: timeLog.id, tenantId },
+				{
+					...changes,
+					...(timesheet ? { timesheetId: timesheet.id } : {})
+				}
+			);
+
+			// Retrieve the updated time log
+			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
+
+			if (needToUpdateTimeSlots) {
+				// Create new time slots if needed for Web Timer. The answer is every slot of the employee at those
+				// starts — the ones created and the ones they already had there (another of their logs may share a
+				// ten-minute slot) — and, as TimeLogCreateHandler does, it becomes the log's slots, so the save links
+				// the log to each of them, an existing slot included.
+				if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+					timeLog.timeSlots = await this.bulkCreateTimeSlots(
+						updateTimeSlots,
+						timeLog,
+						employeeId,
+						organizationId,
+						tenantId
+					);
+				}
+
+				// Update the time log in the repository (a failure propagates, before any slot is released)
+				await this.saveUpdatedTimeLog(timeLog);
+			}
+		}
+
+		// Check if time slots need to be updated
+		if (needToUpdateTimeSlots) {
+			// The release, after the save: a slot only this log held goes, a slot another log still holds stays and
+			// loses only this log's link — exactly what deleting the log would leave.
+			await this.applyRelease(timeLog, tenantId, organizationId, previousEmployeeId, release, forceDelete);
 
 			// Recalculate timesheets and employee hours
 			await this.recalculateTimesheetAndEmployeeHours(timeLog.timesheetId, employeeId);
@@ -214,62 +239,96 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
-	 * Releases a log's time slots at the given start times — the ones a shortened range drops, or every one of a log
-	 * that moves to another employee.
+	 * Plans the release of a log's time slots at the given start times — the ones a shortened range drops, or every
+	 * one of a log that moves to another employee — from the slots' links as they are when it is called.
 	 *
-	 * The log leaves those slots exactly as deleting it would: only the slots linked to THIS log are considered, and
-	 * they go through the slot cleanup of `TimeLogDeleteHandler` (`TimeSlotBulkDeleteCommand`), which removes a
-	 * slot only this log holds and keeps a slot another log still holds — two logs that meet inside one ten-minute
-	 * slot share it. A kept slot loses only its link to this log, so the neighbour keeps every minute of its own time.
-	 * (The slots used to be removed by start time alone, the neighbour's shared slot with them.)
+	 * Only the slots linked to THIS log are considered: one only this log holds is to be removed, one another log
+	 * still holds (two logs that meet inside one ten-minute slot share it) is to be kept, without this log. That is
+	 * the rule the slot cleanup of `TimeLogDeleteHandler` applies; it is decided here, before the log is saved,
+	 * because the save replaces the log's links and its own slots then no longer name it. (The slots used to be
+	 * removed by start time alone, a neighbour's shared slot with them.)
 	 *
 	 * @param timeLog - The log whose slots are released.
 	 * @param tenantId - The log's tenant.
 	 * @param organizationId - The log's organization.
 	 * @param employeeId - The employee the slots belong to (the log's, or the one a moved log leaves).
 	 * @param startTimes - The slot start times to release.
-	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`) the slots that go.
+	 * @returns The slots to remove and the slots to keep without this log.
 	 */
-	private async releaseTimeSlots(
+	private async planRelease(
 		timeLog: ITimeLog,
 		tenantId: ID,
 		organizationId: ID,
 		employeeId: ID,
-		startTimes: Date[],
-		forceDelete: boolean
-	): Promise<void> {
+		startTimes: Date[]
+	): Promise<{ remove: ID[]; unlink: ID[] }> {
 		// A length check, not `isEmpty`: that helper reads a Date as an empty object, so a list of dates as empty.
 		if (startTimes.length === 0) {
-			return;
+			return { remove: [], unlink: [] };
 		}
 
 		const linked = (await this.findTimeSlots(tenantId, organizationId, employeeId, startTimes)).filter((slot) =>
 			(slot.timeLogs ?? []).some((log) => log.id === timeLog.id)
 		);
+		const heldByAnother = (slot: ITimeSlot) => (slot.timeLogs ?? []).some((log) => log.id !== timeLog.id);
 
-		debugInDevelopment(
-			this.logger,
-			() => `time slots released by time log ${timeLog.id} (${forceDelete ? 'hard' : 'soft'}): ${linked.length}`
-		);
+		return {
+			remove: linked.filter((slot) => !heldByAnother(slot)).map((slot) => slot.id),
+			unlink: linked.filter(heldByAnother).map((slot) => slot.id)
+		};
+	}
 
-		if (isEmpty(linked)) {
+	/**
+	 * Applies a planned release (see `planRelease`), after the log is saved.
+	 *
+	 * The slots only this log held go through the slot cleanup the log-delete path uses (`TimeSlotBulkDeleteCommand`)
+	 * in its whole-slot mode — which slots are this log's alone was decided before the save unlinked them — and a
+	 * slot another log still holds stays, losing only its link to this log, dropped through the relation itself
+	 * (`relation(TimeSlot, 'timeLogs').of(slot).remove(log)`): a desktop-source edit or a timer stop never
+	 * re-assigns the log's slots, so its save cannot be relied on to drop it.
+	 *
+	 * @param timeLog - The log whose slots are released.
+	 * @param tenantId - The log's tenant.
+	 * @param organizationId - The log's organization.
+	 * @param employeeId - The employee the slots belong to.
+	 * @param release - The planned release.
+	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`) the slots that go.
+	 */
+	private async applyRelease(
+		timeLog: ITimeLog,
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		release: { remove: ID[]; unlink: ID[] } | undefined,
+		forceDelete: boolean
+	): Promise<void> {
+		if (!release) {
 			return;
 		}
 
-		// The slots only this log holds go.
-		await this.commandBus.execute(
-			new TimeSlotBulkDeleteCommand(
-				{ organizationId, employeeId, timeLog, timeSlotsIds: linked.map((slot) => slot.id), tenantId },
-				forceDelete
-			)
+		debugInDevelopment(
+			this.logger,
+			() =>
+				`time slots released by time log ${timeLog.id} (${forceDelete ? 'hard' : 'soft'}): ${release.remove.length} removed, ${release.unlink.length} kept`
 		);
 
+		// The slots only this log held go.
+		if (!isEmpty(release.remove)) {
+			await this.commandBus.execute(
+				new TimeSlotBulkDeleteCommand(
+					{ organizationId, employeeId, timeLog, timeSlotsIds: release.remove, tenantId },
+					forceDelete,
+					true
+				)
+			);
+		}
+
 		// A slot another log still holds stays, without this log.
-		for (const slot of linked.filter((candidate) => candidate.timeLogs.some((log) => log.id !== timeLog.id))) {
+		for (const slotId of release.unlink) {
 			await this.typeOrmTimeSlotRepository
 				.createQueryBuilder()
 				.relation(TimeSlot, 'timeLogs')
-				.of(slot.id)
+				.of(slotId)
 				.remove(timeLog.id);
 		}
 	}
@@ -381,7 +440,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		try {
 			return await this.typeOrmTimeLogRepository.save(timeLog);
 		} catch (error) {
+			// Logged as before, and re-thrown: a swallowed failure answered the row as if it had been saved, while
+			// the writes around it (a move's employee and slots) went ahead.
 			console.log('Failed to update the time log at line: 217', error);
+			throw error;
 		}
 	}
 
