@@ -153,11 +153,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// A task that moves to another project is renumbered in the project it moves TO: `number` is unique
 			// per project, so the next number of the old project (what this computed before) could collide in
 			// the new one, or leave the task numbered as if it had never moved. The prefix follows the project
-			// too, by the rule the create path uses (the first three characters of the project's name).
+			// too, by the rule the create path uses (the first three characters of the project's name). The move
+			// is written by the one save below, together with the rest of the update: a save that fails leaves
+			// the task where it was.
 			let moved: Partial<Task> | null = null;
 			if (data.projectId && data.projectId !== task.projectId) {
 				const { organizationId } = task;
 				const projectId = data.projectId;
+
+				const destination = await this.findDestinationProject(projectId, tenantId);
+				if (destination.exists === false) {
+					throw new BadRequestException('The task cannot move to a project that is not one of this tenant.');
+				}
 
 				// Get the maximum task number for the project the task moves to
 				const maxNumber = await this.getMaxTaskNumberByProject({
@@ -166,19 +173,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					projectId
 				});
 
-				moved = { projectId, number: maxNumber + 1 };
-
-				const prefix = await this.findProjectPrefix(projectId, tenantId);
-				if (prefix !== undefined) {
-					moved.prefix = prefix;
-				}
-
-				// Update the task with the new project and task number
-				await super.update(id, moved);
+				moved = {
+					projectId,
+					number: maxNumber + 1,
+					// The stored prefix stays when the project could not be read: never the input's.
+					prefix: destination.exists ? destination.prefix : task.prefix,
+					// A relation object in the input would otherwise point the save back at another project.
+					...('project' in data ? { project: { id: projectId } as Task['project'] } : {})
+				};
 			}
 
-			// Update the task with the provided data. When the task moved, the number (and prefix) computed above
-			// win over any the input carries: a client that sends the whole task back sends the old number.
+			// Update the task with the provided data. When the task moved, the project, number and prefix computed
+			// above win over any the input carries: a client that sends the whole task back sends the old number.
 			const updatedTask = await super.create({
 				...data,
 				id,
@@ -1117,16 +1123,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * The task-number prefix of a project, by the rule the create path uses: the first three characters of
-	 * the project's name, or `null` for a project without a name. `undefined` when the project is not one of
-	 * the tenant's, so the caller leaves the task's prefix as it is.
+	 * The project a task moves to, read in the caller's tenant: whether it is one of the tenant's, and its
+	 * task-number prefix by the rule the create path uses (the first three characters of its name, or `null`
+	 * for a project without a name). `exists` is `undefined` when that cannot be told (no tenant in the
+	 * context, or the read failed); the caller then keeps the task's stored prefix.
 	 *
-	 * @param projectId The project.
+	 * @param projectId The project the task moves to.
 	 * @param tenantId The caller's tenant.
 	 */
-	private async findProjectPrefix(projectId: ID, tenantId: ID): Promise<string | null | undefined> {
+	private async findDestinationProject(
+		projectId: ID,
+		tenantId: ID
+	): Promise<{ exists: boolean | undefined; prefix?: string | null }> {
 		if (!tenantId) {
-			return undefined;
+			return { exists: undefined };
 		}
 		try {
 			const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
@@ -1134,12 +1144,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				select: { id: true, name: true }
 			});
 			if (!project) {
-				return undefined;
+				return { exists: false };
 			}
-			return project.name?.slice(0, 3) || null;
+			return { exists: true, prefix: project.name?.slice(0, 3) || null };
 		} catch (error) {
-			console.error(`Failed to read the prefix of project ${projectId}:`, error?.message);
-			return undefined;
+			console.error(`Failed to read project ${projectId}:`, error?.message);
+			return { exists: undefined };
 		}
 	}
 

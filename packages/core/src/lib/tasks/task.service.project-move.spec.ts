@@ -38,7 +38,9 @@ describe('TaskService.update — moving a task to another project', () => {
 		({ restore } = asTenantUser(fixture));
 		maxNumberBy = jest.fn(async ({ projectId }) => (projectId === 'project-new' ? 4 : 99));
 		findProject = jest.fn(async (_entity, { where }) =>
-			where.id === 'project-new' && where.tenantId === fixture.tenantId ? { id: 'project-new', name: 'Ever Works' } : null
+			where.id === 'project-new' && where.tenantId === fixture.tenantId
+				? { id: 'project-new', name: 'Ever Works' }
+				: null
 		);
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
 		update = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({ affected: 1 } as never);
@@ -70,23 +72,54 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-new' }));
 		expect(maxNumberBy).not.toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-old' }));
 		expect(findProject).toHaveBeenCalledWith(OrganizationProject, expect.anything());
-		expect(update).toHaveBeenCalledWith('task-1', { projectId: 'project-new', number: 5, prefix: 'Eve' });
+		expect(save).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'task-1', projectId: 'project-new', number: 5, prefix: 'Eve' })
+		);
 		expect(updated).toMatchObject({ projectId: 'project-new', number: 5, prefix: 'Eve' });
 	});
 
-	it('ignores a stale number the client sends back with the move', async () => {
-		await service.update('task-1', { projectId: 'project-new', number: 12, prefix: 'OLD' } as never);
+	it('writes the move in the one save of the update: a failed save leaves the task where it was', async () => {
+		save.mockRejectedValueOnce(new Error('a member of another tenant'));
 
-		expect(save).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1', projectId: 'project-new', number: 5 }));
-		expect(save.mock.calls[0][0].prefix).toBe('Eve');
+		await expect(service.update('task-1', { projectId: 'project-new' })).rejects.toThrow();
+
+		// No separate write moved or renumbered the task before the save that failed.
+		expect(update).not.toHaveBeenCalled();
 	});
 
-	it('keeps the prefix when the new project cannot be read in the tenant', async () => {
+	it('ignores a stale number and prefix the client sends back with the move', async () => {
+		await service.update('task-1', { projectId: 'project-new', number: 12, prefix: 'OLD' } as never);
+
+		expect(save).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'task-1', projectId: 'project-new', number: 5, prefix: 'Eve' })
+		);
+	});
+
+	it('points a project relation in the input at the project the task moves to', async () => {
+		await service.update('task-1', { projectId: 'project-new', project: { id: 'project-old' } } as never);
+
+		expect(save.mock.calls[0][0].project).toEqual({ id: 'project-new' });
+	});
+
+	it('refuses a move to a project that is not one of the tenant', async () => {
 		findProject.mockResolvedValue(null);
 
-		await service.update('task-1', { projectId: 'project-new' });
+		await expect(service.update('task-1', { projectId: 'project-foreign' })).rejects.toThrow(
+			/not one of this tenant/
+		);
+		expect(save).not.toHaveBeenCalled();
+		expect(update).not.toHaveBeenCalled();
+	});
 
-		expect(update).toHaveBeenCalledWith('task-1', { projectId: 'project-new', number: 5 });
+	it('keeps the stored prefix (never the input one) when the project cannot be read', async () => {
+		findProject.mockRejectedValue(new Error('connection reset'));
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		await service.update('task-1', { projectId: 'project-new', prefix: 'XYZ' } as never);
+
+		expect(save).toHaveBeenCalledWith(
+			expect.objectContaining({ projectId: 'project-new', number: 5, prefix: 'OLD' })
+		);
 	});
 
 	it('leaves number and prefix alone when the project does not change', async () => {
