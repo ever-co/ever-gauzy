@@ -78,6 +78,17 @@ describe('Markdown ↔ HTML', () => {
 		expect(markdownToHtml(null)).toBe('');
 	});
 
+	it('stays linear on crafted input (unmatched emphasis, backticks and brackets; ReDoS)', () => {
+		for (const unit of ['*a ', '_a ', '`a ', '[a ', '**a ', '~~a ']) {
+			const started = Date.now();
+			markdownToHtml(unit.repeat(6500));
+			markdownToHtml(`${unit.repeat(300)}\n`.repeat(60));
+			expect(Date.now() - started).toBeLessThan(2000);
+		}
+		// A line longer than the inline limit is written as plain text.
+		expect(markdownToHtml(`**${'x'.repeat(25_000)}**`)).toBe(`<p>**${'x'.repeat(25_000)}**</p>`);
+	});
+
 	it('writes Gauzy editor HTML as Markdown, escaping what would read as markup', () => {
 		const html =
 			'<p>Hello <strong>world</strong>, <em>it</em> <a href="https://a.example" target="_blank">site</a></p><ul><li><p>one</p></li><li><p>two</p><ul><li><p>three</p></li></ul></li></ul><p># not a heading</p><p>2 * 3</p>';
