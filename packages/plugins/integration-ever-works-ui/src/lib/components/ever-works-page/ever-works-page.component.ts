@@ -1,29 +1,49 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NbAlertModule, NbCardModule } from '@nebular/theme';
+import { Router, RouterLink } from '@angular/router';
+import { NbAlertModule, NbButtonModule, NbCardModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { distinctUntilChanged, merge, Observable, of, Subject } from 'rxjs';
+import { distinctUntilChanged, forkJoin, merge, Observable, of, Subject } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
-import { EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
+import { EverWorksConnection, EverWorksMapping, EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
+import { EverWorksConnectComponent, EverWorksConnectResult } from '../connect/ever-works-connect.component';
+import { newKeyUrlOf } from '../shared/ever-works-ui.utils';
+
+export { EVER_WORKS_NEW_KEY_PATH } from '../shared/ever-works-ui.utils';
+
+/** The navigation-state key that carries a webhook registration failure to the settings page. */
+export const EVER_WORKS_WEBHOOK_WARNING = 'everWorksWebhookWarning';
+
+/** The webhook warning a navigation carried, if any (a short text, never a secret). */
+export function webhookWarningOf(state: unknown): string | null {
+	const value = (state as Record<string, unknown> | null | undefined)?.[EVER_WORKS_WEBHOOK_WARNING];
+	return typeof value === 'string' && value ? value.slice(0, 500) : null;
+}
 
 /** What the page shows. */
 export type EverWorksView = 'loading' | 'ready' | 'unavailable' | 'error';
 
-/** The Ever Works page that creates an integration key with the "Ever Gauzy" preset (plan 02 §1). */
-export const EVER_WORKS_NEW_KEY_PATH = '/settings/api-keys?new=integration&preset=ever-gauzy';
+/** Once the plugin answers: is this organization connected and mapped? */
+export type EverWorksSetup = 'checking' | 'connect' | 'connected' | 'error';
+
+type Loaded =
+	| { status: EverWorksStatus; connection: EverWorksConnection | null; mapping: EverWorksMapping | null; setupError: boolean }
+	| { error: HttpErrorResponse };
 
 /**
- * Integrations > Ever Works (`/pages/integrations/ever-works`, also under `:integrationTenantId`).
+ * Integrations > Ever Works (`/pages/integrations/ever-works`).
  *
  * The page asks the API first. When the API answers 404 the plugin is not loaded on this installation
  * (`EVER_WORKS_ENABLED` is not `true`, the default): the page says so and makes no other request.
+ * Otherwise it reads the tenant's connection and this organization's mapping: a mapped organization
+ * links to its sync settings, any other one gets the connect wizard (plan 02 §1).
  */
 @Component({
 	selector: 'ngx-ever-works-page',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbAlertModule, NbCardModule, TranslatePipe],
+	imports: [NbAlertModule, NbButtonModule, NbCardModule, RouterLink, TranslatePipe, EverWorksConnectComponent],
 	template: `
 		<nb-card>
 			<nb-card-header>{{ 'EVER_WORKS.TITLE' | translate }}</nb-card-header>
@@ -33,9 +53,8 @@ export const EVER_WORKS_NEW_KEY_PATH = '/settings/api-keys?new=integration&prese
 						<p data-test="unavailable">{{ 'EVER_WORKS.UNAVAILABLE' | translate }}</p>
 					}
 					@case ('error') {
-						<nb-alert status="danger" role="alert" data-test="error">{{
-							'EVER_WORKS.ERROR' | translate
-						}}</nb-alert>
+						<nb-alert status="danger" role="alert" data-test="error">{{ 'EVER_WORKS.ERROR' | translate }}</nb-alert>
+						<button nbButton ghost size="small" type="button" data-test="retry" (click)="load()">{{ 'EVER_WORKS.RETRY' | translate }}</button>
 					}
 					@case ('ready') {
 						<p data-test="ready">{{ 'EVER_WORKS.READY' | translate }}</p>
@@ -45,19 +64,44 @@ export const EVER_WORKS_NEW_KEY_PATH = '/settings/api-keys?new=integration&prese
 								{{ 'EVER_WORKS.DEFAULT_API_URL' | translate }}: <code>{{ status.defaultApiUrl }}</code>
 							</p>
 						}
-						@if (newKeyUrl) {
-							<p>
-								<a [href]="newKeyUrl" target="_blank" rel="noopener noreferrer" data-test="create-key">{{
-									'EVER_WORKS.CREATE_KEY' | translate
-								}}</a>
-							</p>
+						@switch (setup) {
+							@case ('checking') {
+								<p data-test="checking">{{ 'EVER_WORKS.CHECKING' | translate }}</p>
+							}
+							@case ('error') {
+								<nb-alert status="danger" role="alert" data-test="setup-error">{{ 'EVER_WORKS.ERROR' | translate }}</nb-alert>
+								<button nbButton ghost size="small" type="button" (click)="load()">{{ 'EVER_WORKS.RETRY' | translate }}</button>
+							}
+							@case ('connected') {
+								@if (webhookWarning) {
+									<nb-alert status="warning" data-test="webhook-warning">{{
+										'EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED' | translate: { reason: webhookWarning }
+									}}</nb-alert>
+								}
+								@if (connection && connection.status !== 'active') {
+									<nb-alert status="warning" data-test="connection-inactive">{{
+										'EVER_WORKS.CONNECTED.INACTIVE' | translate: { status: connection.status }
+									}}</nb-alert>
+								}
+								<nb-alert status="success" data-test="connected">{{
+									'EVER_WORKS.CONNECTED.TITLE' | translate: { name: mapping?.everWorksOrganization?.displayName || mapping?.everWorksOrganization?.slug }
+								}}</nb-alert>
+								<a nbButton status="primary" data-test="open-settings" [routerLink]="settingsLink">{{ 'EVER_WORKS.CONNECTED.OPEN_SETTINGS' | translate }}</a>
+							}
+							@case ('connect') {
+								<ngx-ever-works-connect
+									[organizationId]="organizationId"
+									[organizationName]="organizationName"
+									[defaultApiUrl]="status?.defaultApiUrl ?? null"
+									[newKeyUrl]="newKeyUrl"
+									[connection]="connection"
+									[mapping]="mapping"
+									(started)="started($event)"
+								/>
+							}
 						}
-						<nb-alert status="info" data-test="connect-soon">{{ 'EVER_WORKS.CONNECT_SOON' | translate }}</nb-alert>
 						<p class="versions" data-test="versions">
-							{{
-								'EVER_WORKS.VERSIONS'
-									| translate: { plugin: status?.pluginVersion, contract: status?.contractVersion }
-							}}
+							{{ 'EVER_WORKS.VERSIONS' | translate: { plugin: status?.pluginVersion, contract: status?.contractVersion } }}
 						</p>
 					}
 				}
@@ -69,6 +113,7 @@ export const EVER_WORKS_NEW_KEY_PATH = '/settings/api-keys?new=integration&prese
 			.versions {
 				opacity: 0.7;
 				font-size: 0.85em;
+				margin-top: 1.5rem;
 			}
 		`
 	]
@@ -76,25 +121,39 @@ export const EVER_WORKS_NEW_KEY_PATH = '/settings/api-keys?new=integration&prese
 export class EverWorksPageComponent implements OnInit {
 	private readonly api = inject(EverWorksUiService);
 	private readonly store = inject(Store);
+	private readonly router = inject(Router);
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly destroyRef = inject(DestroyRef);
 
 	view: EverWorksView = 'loading';
+	setup: EverWorksSetup = 'checking';
 	protected status: EverWorksStatus | null = null;
-	private organizationId: string | null = null;
+	protected connection: EverWorksConnection | null = null;
+	protected mapping: EverWorksMapping | null = null;
+	protected organizationId: string | null = null;
+	protected organizationName: string | null = null;
+	/** Why the webhook could not be registered when the first sync started (the change feed keeps it going). */
+	protected webhookWarning: string | null = null;
 	/** Retries of the current organization's status; they share the stream organization changes switch. */
 	private readonly reload$ = new Subject<void>();
 
 	/** The Ever Works page that creates an integration key, when the operator configured the app URL. */
 	protected get newKeyUrl(): string | null {
-		const appUrl = this.status?.appUrl;
-		return appUrl && /^https:\/\//.test(appUrl) ? `${appUrl}${EVER_WORKS_NEW_KEY_PATH}` : null;
+		return newKeyUrlOf(this.status?.appUrl);
+	}
+
+	protected get settingsLink(): string[] {
+		return ['/pages/integrations/ever-works', this.mapping?.integrationTenantId ?? ''];
 	}
 
 	ngOnInit(): void {
+		this.webhookWarning = webhookWarningOf(globalThis.history?.state);
 		const organizations$ = this.store.selectedOrganization$.pipe(
 			distinctUntilChanged((a, b) => a?.id === b?.id),
-			tap((organization) => (this.organizationId = organization?.id ?? null))
+			tap((organization) => {
+				this.organizationId = organization?.id ?? null;
+				this.organizationName = (organization as { name?: string } | null)?.name ?? null;
+			})
 		);
 		// Organization changes and retries share one switchMap: whichever comes last replaces the request in
 		// flight, so a late answer for a previous organization (or an earlier retry) never wins.
@@ -104,9 +163,12 @@ export class EverWorksPageComponent implements OnInit {
 					// A new request starts: the previous organization's status (and its key link) must not stay
 					// on screen while it runs.
 					this.status = null;
+					this.connection = null;
+					this.mapping = null;
 					this.view = 'loading';
+					this.setup = 'checking';
 					this.cdr.markForCheck();
-					return this.statusOf(this.organizationId);
+					return this.load$(this.organizationId);
 				}),
 				takeUntilDestroyed(this.destroyRef)
 			)
@@ -118,18 +180,38 @@ export class EverWorksPageComponent implements OnInit {
 		this.reload$.next();
 	}
 
-	/** The status, or the error that tells why there is none (404: the plugin is not loaded). */
-	private statusOf(organizationId: string | null): Observable<{ status: EverWorksStatus } | { error: HttpErrorResponse }> {
+	/** The wizard started the first sync: on to the mapping's settings. */
+	started(result: EverWorksConnectResult): void {
+		this.mapping = result.mapping;
+		this.setup = 'connected';
+		this.webhookWarning = result.webhookError;
+		this.cdr.markForCheck();
+		// A webhook that could not be registered is carried to the settings in the navigation state (never the URL).
+		void this.router.navigate(['/pages/integrations/ever-works', result.mapping.integrationTenantId], {
+			state: result.webhookError ? { [EVER_WORKS_WEBHOOK_WARNING]: result.webhookError } : {}
+		});
+	}
+
+	/** The status (404: the plugin is not loaded), then the connection and the mapping of the organization. */
+	private load$(organizationId: string | null): Observable<Loaded> {
 		return this.api.status(organizationId).pipe(
-			map((status) => ({ status })),
+			switchMap((status) =>
+				forkJoin({ connection: this.api.connection(organizationId), mapping: this.api.currentMapping(organizationId) }).pipe(
+					map(({ connection, mapping }) => ({ status, connection: connection ?? null, mapping: mapping ?? null, setupError: false })),
+					catchError(() => of({ status, connection: null, mapping: null, setupError: true }))
+				)
+			),
 			catchError((error: HttpErrorResponse) => of({ error }))
 		);
 	}
 
-	private apply(result: { status: EverWorksStatus } | { error: HttpErrorResponse }): void {
+	private apply(result: Loaded): void {
 		if ('status' in result) {
 			this.status = result.status;
+			this.connection = result.connection;
+			this.mapping = result.mapping;
 			this.view = 'ready';
+			this.setup = result.setupError ? 'error' : result.mapping ? 'connected' : 'connect';
 		} else {
 			this.status = null;
 			this.view = result.error?.status === 404 ? 'unavailable' : 'error';
