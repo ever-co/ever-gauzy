@@ -342,7 +342,25 @@ function reindexFixture(
 	const providerRegistry = new SearchProviderRegistry(provider);
 	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
 	const definitionService = {
-		findFor: async (entity: string) => (seed.definitions ?? []).find((row) => row.entity === entity) ?? null
+		// The caller's organization's own row wins and the platform row is the fallback, as `findFor` resolves them.
+		findFor: async (entity: string) => {
+			const rows = (seed.definitions ?? []).filter((row) => row.entity === entity);
+			const organization = RequestContext.currentOrganizationId();
+
+			return (
+				rows.find((row) => !!organization && row.organizationId === organization) ??
+				rows.find((row) => !row.organizationId) ??
+				null
+			);
+		},
+		inactiveOrganizationCopies: async (entity: string, tenantId?: string | null) =>
+			(seed.definitions ?? []).filter(
+				(row) =>
+					row.entity === entity &&
+					!!row.organizationId &&
+					row.isActive === false &&
+					(!tenantId || row.tenantId === tenantId)
+			)
 	};
 
 	const service = new SearchReindexService(indexer, indexRegistry, definitionService as never, documentRepository);
@@ -759,5 +777,113 @@ describe('SearchReindexService — what a paged sweep must not do to the documen
 
 		expect(runs[0].stale).toBe(0);
 		expect(fixture.documents().every((document) => document.definitionVersion === 4)).toBe(true);
+	});
+});
+
+/**
+ * Greptile on #10655: a change to a shipped definition lands on an organization's own copy (SEC-B-04), and switching
+ * that copy off made the organization's next reindex drop the entity's documents for the whole tenant — every other
+ * organization, still on the active shipped definition, lost its search for the entity. The drop is the organization's.
+ */
+describe('SearchReindexService — an organization’s own definition switched off', () => {
+	const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('drops that organization’s documents and leaves every other organization’s alone', async () => {
+		const own: Row = {
+			entity: 'product_variant',
+			version: 2,
+			isActive: true,
+			tenantId: TENANT,
+			organizationId: ORG
+		};
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [own]
+		});
+		const variants = () => fixture.documents().filter((document) => document.entity === 'product_variant');
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+		expect(variants()).toHaveLength(2);
+
+		own.isActive = false;
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ indexed: 0, removed: 1 });
+		expect(variants().map((document) => [document.entityId, document.organizationId])).toEqual([['v2', OTHER_ORG]]);
+	});
+
+	it('still drops the whole tenant’s documents when the shipped definition itself is off', async () => {
+		const shipped: Row = {
+			entity: 'product_variant',
+			version: 1,
+			isActive: true,
+			tenantId: null,
+			organizationId: null
+		};
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped]
+		});
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		shipped.isActive = false;
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ indexed: 0, removed: 2 });
+		expect(fixture.documents().filter((document) => document.entity === 'product_variant')).toEqual([]);
+	});
+
+	it('does not leave a switched-off organization’s documents rebuilt by a sweep on the shipped definition (CodeRabbit)', async () => {
+		// ORG switched its own copy off; OTHER_ORG, still on the active shipped definition, sweeps the tenant, and the
+		// sweep reads ORG's rows too — writing back the documents ORG's switch had dropped.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
+
+		const shipped: Row = {
+			entity: 'product_variant',
+			version: 1,
+			isActive: true,
+			tenantId: null,
+			organizationId: null
+		};
+		const own: Row = {
+			entity: 'product_variant',
+			version: 2,
+			isActive: false,
+			tenantId: TENANT,
+			organizationId: ORG
+		};
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped, own]
+		});
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ removed: 1 });
+		expect(
+			fixture
+				.documents()
+				.filter((document) => document.entity === 'product_variant')
+				.map((document) => [document.entityId, document.organizationId])
+		).toEqual([['v2', OTHER_ORG]]);
 	});
 });

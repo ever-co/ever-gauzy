@@ -5,6 +5,7 @@
  */
 jest.mock('@gauzy/core', () => ({
 	Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+	compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 	divideDecimalUnits: jest.requireActual('@gauzy/core/src/lib/money/decimal').divideDecimalUnits,
 	formatDecimalUnits: jest.requireActual('@gauzy/core/src/lib/money/decimal').formatDecimalUnits
 }));
@@ -17,6 +18,7 @@ import {
 	cycleDiscountOf,
 	endOfPeriod,
 	nextCyclePeriod,
+	normalizeDiscountFraction,
 	periodLengthMs,
 	priceCycle,
 	prorate,
@@ -242,6 +244,38 @@ describe('the discount rule a cycle is billed with', () => {
 		expect(subscriptionDiscountOverrideOf({ discountPercentage: 0.25 })).toBe('0.25');
 		expect(subscriptionDiscountOverrideOf({})).toBeUndefined();
 		expect(subscriptionDiscountOverrideOf(undefined)).toBeUndefined();
+	});
+
+	/**
+	 * CodeRabbit on #10655: the bounds were checked on `Number(text)` and the text was returned, so a value one digit
+	 * past a bound that rounds onto it as a double passed — and the stored text is what a cycle multiplies by.
+	 */
+	it('checks a discount against 0 and 1 on its digits, not on the double it rounds to', () => {
+		expect(() => normalizeDiscountFraction('1.00000000000000001')).toThrow(/SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE/);
+		expect(() => normalizeDiscountFraction('-0.00000000000000001')).toThrow(/SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE/);
+		// Both bounds belong to the range, however many zeroes state them.
+		expect(normalizeDiscountFraction('1.00000000000000000')).toBe('1.00000000000000000');
+		expect(normalizeDiscountFraction('0')).toBe('0');
+		expect(normalizeDiscountFraction('0.99999999999999999')).toBe('0.99999999999999999');
+	});
+
+	it('bills a stored override just past 1 on the plan’s own terms rather than below zero', () => {
+		const metadata = { discountPercentage: '1.00000000000000001' };
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+		try {
+			expect(subscriptionDiscountOverrideOf(metadata)).toBeUndefined();
+			expect(
+				priceCycle({
+					items: [{ quantity: '1', unitPrice: '100' }],
+					currency: 'USD' as any,
+					plan: { discountPercentage: '0.1' },
+					metadata
+				}).net.toStorageString()
+			).toBe('90.000000');
+		} finally {
+			warn.mockRestore();
+		}
 	});
 });
 
