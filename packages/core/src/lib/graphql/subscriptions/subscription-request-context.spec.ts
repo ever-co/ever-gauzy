@@ -9,7 +9,7 @@ import { RequestContext } from '../../core/context/request-context';
 import { TenantBaseGuard } from '../../shared/guards/tenant-base.guard';
 import { GraphqlRequestContext, createGraphqlRequestContext } from '../graphql-context';
 import { GraphqlTopicBroker, subscriptionTopic } from './graphql-pubsub.service';
-import { bindToCurrentContext } from './subscription-request-context';
+import { bindToCurrentContext, matchesSubscriberOrganization } from './subscription-request-context';
 import { createSubscriptionServerOptions, graphqlContextArguments } from './subscription-transport';
 
 /**
@@ -31,11 +31,15 @@ describe('the request context of a socket operation', () => {
 	/** The users the two bearer tokens authenticate as, as `JwtStrategy` would attach them. */
 	const USERS: Record<string, { id: string; tenantId: string; lastOrganizationId: string }> = {
 		'Bearer token-a': { id: 'user-a', tenantId: TENANT_A, lastOrganizationId: 'organization-a' },
-		'Bearer token-b': { id: 'user-b', tenantId: TENANT_B, lastOrganizationId: 'organization-b' }
+		'Bearer token-b': { id: 'user-b', tenantId: TENANT_B, lastOrganizationId: 'organization-b' },
+		// A second organization of tenant A, for the streams that narrow on the organization too.
+		'Bearer token-a2': { id: 'user-a2', tenantId: TENANT_A, lastOrganizationId: 'organization-a2' }
 	};
 
 	/** The event name the subscription below streams. */
 	const EVENT_NAME = 'widget.changed';
+	/** The event name of the stream that also narrows on the subscriber's organization. */
+	const ORGANIZATION_EVENT_NAME = 'gadget.changed';
 
 	const originalClsService = RequestContext['clsService'];
 	let broker: GraphqlTopicBroker;
@@ -87,8 +91,9 @@ describe('the request context of a socket operation', () => {
 			type Query { whoami: Caller }
 			type Caller { tenantId: ID, userId: ID, organizationId: ID, contextId: String, scope: Scope }
 			type Scope { tenantId: ID, organizationId: ID }
-			type Subscription { widgetChanged: Widget }
+			type Subscription { widgetChanged: Widget, gadgetChanged: Gadget }
 			type Widget { id: ID!, tenantId: ID! }
+			type Gadget { id: ID!, tenantId: ID!, organizationId: ID }
 		`);
 
 		const query = schema.getQueryType()!.getFields();
@@ -113,6 +118,21 @@ describe('the request context of a socket operation', () => {
 				)
 		);
 		subscription['widgetChanged'].resolve = (payload: unknown) => payload;
+		// A stream filtered the way the webhook and event delivery streams are: tenant, then organization.
+		subscription['gadgetChanged'].subscribe = ApolloDriver.prototype.subscriptionWithFilter(
+			undefined,
+			(payload: { tenantId?: string; organizationId?: string }) =>
+				Boolean(payload) &&
+				payload.tenantId === RequestContext.currentTenantId() &&
+				matchesSubscriberOrganization(payload.organizationId),
+			() =>
+				guarded(() =>
+					broker.asyncIterableIterator(
+						subscriptionTopic(ORGANIZATION_EVENT_NAME, String(RequestContext.currentTenantId() ?? ''))
+					)
+				)
+		);
+		subscription['gadgetChanged'].resolve = (payload: unknown) => payload;
 
 		return schema;
 	};
@@ -316,6 +336,44 @@ describe('the request context of a socket operation', () => {
 			expect(broker.subscriberCount(topicB)).toBe(0);
 		});
 
+		it('withholds another organization’s event from a subscriber of the same tenant, reading each subscriber’s own organization', async () => {
+			const schema = createSchema();
+			const subscriberA = connect(schema);
+			const subscriberA2 = connect(schema);
+			const query = 'subscription { gadgetChanged { id organizationId } }';
+
+			await subscriberA.send({ type: 'connection_init', payload: { Authorization: 'Bearer token-a' } });
+			await subscriberA2.send({ type: 'connection_init', payload: { Authorization: 'Bearer token-a2' } });
+
+			const openA = subscriberA.send({ id: 's', type: 'subscribe', payload: { query } });
+			const openA2 = subscriberA2.send({ id: 's', type: 'subscribe', payload: { query } });
+			const topic = subscriptionTopic(ORGANIZATION_EVENT_NAME, TENANT_A);
+
+			await until(() => broker.subscriberCount(topic) === 2);
+
+			broker.publish(topic, { id: 'a-1', tenantId: TENANT_A, organizationId: 'organization-a' });
+			broker.publish(topic, { id: 'a2-1', tenantId: TENANT_A, organizationId: 'organization-a2' });
+			// A tenant-wide fact, which names no organization, reaches both.
+			broker.publish(topic, { id: 't-1', tenantId: TENANT_A });
+
+			await until(() => subscriberA.results('s').length === 2 && subscriberA2.results('s').length === 2);
+
+			await subscriberA.send({ id: 's', type: 'complete' });
+			await subscriberA2.send({ id: 's', type: 'complete' });
+			await Promise.all([openA, openA2]);
+			await subscriberA.release();
+			await subscriberA2.release();
+
+			expect(subscriberA.results('s')).toEqual([
+				{ data: { gadgetChanged: { id: 'a-1', organizationId: 'organization-a' } } },
+				{ data: { gadgetChanged: { id: 't-1', organizationId: null } } }
+			]);
+			expect(subscriberA2.results('s')).toEqual([
+				{ data: { gadgetChanged: { id: 'a2-1', organizationId: 'organization-a2' } } },
+				{ data: { gadgetChanged: { id: 't-1', organizationId: null } } }
+			]);
+		});
+
 		it('is refused by the guards when the credential authenticates nobody', async () => {
 			const socket = connect();
 
@@ -339,6 +397,28 @@ describe('the request context of a socket operation', () => {
 			expect(socket.closes[0]).toBe(CloseCode.Forbidden);
 			expect(socket.sent).toEqual([]);
 			expect(seenByGuards).toEqual([]);
+		});
+	});
+
+	describe('matchesSubscriberOrganization', () => {
+		afterEach(() => jest.restoreAllMocks());
+
+		it('withholds an event of another organization than the subscriber’s', () => {
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('organization-a');
+
+			expect(matchesSubscriberOrganization('organization-a2')).toBe(false);
+			expect(matchesSubscriberOrganization('organization-a')).toBe(true);
+		});
+
+		it('lets an event with no organization through, and every event to a subscriber with none', () => {
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('organization-a');
+
+			expect(matchesSubscriberOrganization(undefined)).toBe(true);
+			expect(matchesSubscriberOrganization(null)).toBe(true);
+
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+			expect(matchesSubscriberOrganization('organization-a2')).toBe(true);
 		});
 	});
 
