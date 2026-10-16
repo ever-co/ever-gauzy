@@ -226,8 +226,14 @@
 				</header>
 				<ul class="au-mini-list">
 					@for (row of group.items; track row.title) {
-					<li class="au-mini-row">
+					<li class="au-mini-row au-mini-row--hour">
 						<span class="au-name au-ellipsis" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+						<span class="au-share-cell">
+							<span class="au-bar-track" aria-hidden="true"
+								><span [class]="'au-bar au-bar--' + barStatus(row.share)" [style.width.%]="row.share"></span
+							></span>
+							<span class="au-share">{{ formatPercent(row.share) }}</span>
+						</span>
 						<span class="au-num au-muted">{{ formatDuration(row.duration) }}</span>
 					</li>
 					}
