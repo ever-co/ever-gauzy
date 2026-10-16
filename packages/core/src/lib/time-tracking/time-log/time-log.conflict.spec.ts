@@ -306,7 +306,7 @@ describe('GET /timesheet/time-log/conflict is scoped and validated (GHSA-6qvm-3w
 
 			service = module.get<TimeLogService>(TimeLogService);
 			Object.defineProperty(service, 'ormType', { value: MultiORMEnum.TypeORM });
-			resolver = new TimeLogResolver(service, { execute } as unknown as CommandBus);
+			resolver = new TimeLogResolver(service, { execute } as unknown as CommandBus, {} as never, {} as never);
 		});
 
 		afterEach(() => jest.restoreAllMocks());
@@ -345,12 +345,7 @@ describe('GET /timesheet/time-log/conflict is scoped and validated (GHSA-6qvm-3w
 				}
 			}
 
-			return await resolver.timeLogConflicts(
-				args.startDate,
-				args.endDate,
-				args.employeeId,
-				args.organizationId
-			);
+			return await resolver.timeLogConflicts(args.startDate, args.endDate, args.employeeId, args.organizationId);
 		};
 
 		/** The route's guard alone, over an HTTP request carrying the given raw query. */
