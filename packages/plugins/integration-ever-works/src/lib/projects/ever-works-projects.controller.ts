@@ -47,6 +47,16 @@ export class EverWorksProjectsDecisionDto {
 	@IsString({ each: true })
 	@MaxLength(64, { each: true })
 	readonly createInGauzy?: string[];
+
+	@ApiPropertyOptional({
+		type: [String],
+		description: 'Gauzy project ids to create in Ever Works as repo-less works of kind `project` (G-P2-5; needs Ever Works project works switched on).'
+	})
+	@ValidateIf((_o, v) => v !== undefined)
+	@IsArray()
+	@ArrayMaxSize(100)
+	@IsUUID('all', { each: true })
+	readonly createInEverWorks?: string[];
 }
 
 /**
@@ -70,7 +80,7 @@ export class EverWorksProjectsController {
 	@Put('/projects')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@UseValidationPipe({ whitelist: true })
-	@ApiOperation({ summary: 'Pair projects with works or remove pairings, accept suggestions, or create a project from a work.' })
+	@ApiOperation({ summary: 'Pair projects with works or remove pairings, accept suggestions, create a project from a work, or create a work from a project.' })
 	decide(@Param('integrationTenantId', UUIDValidationPipe) id: ID, @Body() dto: EverWorksProjectsDecisionDto, @Query('organizationId') organizationId?: ID) {
 		return this.projects.decide(id, dto as never, organizationId);
 	}
