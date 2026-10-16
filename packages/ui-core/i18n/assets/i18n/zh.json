@@ -2720,7 +2720,10 @@
 					"OPEN_TASK_PAGE_SHORT": "打开任务页面",
 					"UNASSIGNED": "未分配",
 					"SHOW_ALL": "显示全部",
-					"SHOW_LESS": "收起"
+					"SHOW_LESS": "收起",
+					"PROJECTS_CAPTION": "团队的项目及本期间在每个项目上的工作时间",
+					"NOT_LINKED": "未关联",
+					"NOT_LINKED_HINT": "成员在此项目上记录了时间，但该项目未关联到团队"
 				}
 			}
 		},

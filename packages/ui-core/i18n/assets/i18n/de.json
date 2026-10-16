@@ -2716,7 +2716,10 @@
 					"OPEN_TASK_PAGE_SHORT": "Aufgabenseite öffnen",
 					"UNASSIGNED": "Nicht zugewiesen",
 					"SHOW_ALL": "Alle anzeigen",
-					"SHOW_LESS": "Weniger anzeigen"
+					"SHOW_LESS": "Weniger anzeigen",
+					"PROJECTS_CAPTION": "Die Projekte des Teams und die darauf erfasste Zeit in diesem Zeitraum",
+					"NOT_LINKED": "Nicht verknüpft",
+					"NOT_LINKED_HINT": "Mitglieder haben Zeit auf dieses Projekt erfasst, es ist aber nicht mit dem Team verknüpft"
 				}
 			}
 		},

@@ -2720,7 +2720,10 @@
 					"OPEN_TASK_PAGE_SHORT": "Apri la pagina dell'attività",
 					"UNASSIGNED": "Non assegnata",
 					"SHOW_ALL": "Mostra tutto",
-					"SHOW_LESS": "Mostra meno"
+					"SHOW_LESS": "Mostra meno",
+					"PROJECTS_CAPTION": "I progetti del team e il tempo dedicato a ciascuno in questo periodo",
+					"NOT_LINKED": "Non collegato",
+					"NOT_LINKED_HINT": "I membri hanno registrato tempo su questo progetto, ma non è collegato al team"
 				}
 			}
 		},

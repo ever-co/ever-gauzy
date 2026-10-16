@@ -2721,7 +2721,10 @@
 					"OPEN_TASK_PAGE_SHORT": "Ouvrir la page de la tâche",
 					"UNASSIGNED": "Non assignée",
 					"SHOW_ALL": "Tout afficher",
-					"SHOW_LESS": "Afficher moins"
+					"SHOW_LESS": "Afficher moins",
+					"PROJECTS_CAPTION": "Les projets de l'équipe et le temps passé sur chacun pendant cette période",
+					"NOT_LINKED": "Non lié",
+					"NOT_LINKED_HINT": "Des membres ont suivi du temps sur ce projet, mais il n'est pas lié à l'équipe"
 				}
 			}
 		},

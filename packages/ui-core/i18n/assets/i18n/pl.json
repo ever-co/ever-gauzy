@@ -2719,7 +2719,10 @@
 					"OPEN_TASK_PAGE_SHORT": "Otwórz stronę zadania",
 					"UNASSIGNED": "Nieprzypisane",
 					"SHOW_ALL": "Pokaż wszystkie",
-					"SHOW_LESS": "Pokaż mniej"
+					"SHOW_LESS": "Pokaż mniej",
+					"PROJECTS_CAPTION": "Projekty zespołu i czas poświęcony każdemu z nich w tym okresie",
+					"NOT_LINKED": "Niepowiązany",
+					"NOT_LINKED_HINT": "Członkowie rejestrowali czas w tym projekcie, ale nie jest on powiązany z zespołem"
 				}
 			}
 		},

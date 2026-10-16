@@ -2720,7 +2720,10 @@
 					"OPEN_TASK_PAGE_SHORT": "Taakpagina openen",
 					"UNASSIGNED": "Niet toegewezen",
 					"SHOW_ALL": "Alles tonen",
-					"SHOW_LESS": "Minder tonen"
+					"SHOW_LESS": "Minder tonen",
+					"PROJECTS_CAPTION": "De projecten van het team en de tijd die er deze periode aan is besteed",
+					"NOT_LINKED": "Niet gekoppeld",
+					"NOT_LINKED_HINT": "Leden hebben tijd op dit project geregistreerd, maar het is niet aan het team gekoppeld"
 				}
 			}
 		},

@@ -2555,7 +2555,10 @@
 					"OPEN_TASK_PAGE_SHORT": "Open task page",
 					"UNASSIGNED": "Unassigned",
 					"SHOW_ALL": "Show all",
-					"SHOW_LESS": "Show less"
+					"SHOW_LESS": "Show less",
+					"PROJECTS_CAPTION": "The team's projects and the time worked on each in this period",
+					"NOT_LINKED": "Not linked",
+					"NOT_LINKED_HINT": "Members tracked time on this project, but it is not linked to the team"
 				}
 			}
 		},
