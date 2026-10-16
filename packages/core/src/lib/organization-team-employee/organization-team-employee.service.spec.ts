@@ -2,7 +2,7 @@ import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ForbiddenException } from '@nestjs/common';
-import { IUser, RolesEnum } from '@gauzy/contracts';
+import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
@@ -255,8 +255,12 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 	});
 
 	/** Runs one request as the given caller. */
-	const as = <R>(caller: ReturnType<typeof asEmployee>, call: () => Promise<R>): Promise<R> => {
-		({ restore } = asTenantUser(caller));
+	const as = <R>(
+		caller: ReturnType<typeof asEmployee>,
+		call: () => Promise<R>,
+		permissions: PermissionsEnum[] = []
+	): Promise<R> => {
+		({ restore } = asTenantUser(caller, { permissions }));
 		return requestStorage.run(new Map(), call);
 	};
 
@@ -275,6 +279,36 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 				}
 			]);
 		});
+
+		/** A body that also names a tenant and an organization, as the REST DTO admits. */
+		const withScopeFields = {
+			...inTeam(teamId),
+			order: 2,
+			isTrackingEnabled: false,
+			activeTaskId: 'task-1',
+			tenantId: null,
+			tenant: { id: 'other-tenant' },
+			organization: { id: 'other-organization' }
+		} as never;
+
+		it.each([
+			['a manager of the team', []],
+			['a caller with CHANGE_SELECTED_EMPLOYEE', [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]]
+		])(
+			"writes only the membership's own fields for %s: the tenant and organization in the body are not written",
+			async (_, permissions: PermissionsEnum[]) => {
+				await expect(
+					as(manager, () => service.update('row-member', withScopeFields), permissions)
+				).resolves.toBeDefined();
+
+				expect(updated).toEqual([
+					{
+						id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+						changes: { ...inTeam(teamId), order: 2, isTrackingEnabled: false, activeTaskId: 'task-1' }
+					}
+				]);
+			}
+		);
 
 		it('refuses a plain member changing another member', async () => {
 			await expect(

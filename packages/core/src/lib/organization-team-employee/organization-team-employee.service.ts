@@ -218,6 +218,17 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				organizationTeamId
 			};
 
+			// Write the membership's own fields only. The REST body also carries `tenantId`, `tenant` and
+			// `organization`: they select nothing here, and writing them could clear or move the row's scope.
+			// Both bodies (`UpdateTeamMemberDTO`, `UpdateOrganizationTeamEmployeeInput`) carry `activeTaskId`.
+			const { activeTaskId, isTrackingEnabled, order } = entity as IOrganizationTeamEmployeeUpdateInput &
+				Pick<IOrganizationTeamEmployeeActiveTaskUpdateInput, 'activeTaskId'>;
+			const changes = Object.fromEntries(
+				Object.entries({ organizationId, organizationTeamId, activeTaskId, isTrackingEnabled, order }).filter(
+					([, value]) => value !== undefined
+				)
+			) as IOrganizationTeamEmployeeUpdateInput;
+
 			// Check if user has permission to change the selected employee
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				try {
@@ -238,7 +249,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					// If the employee is a manager, proceed with the update (bypassed: the filter would only match
 					// the manager's own row)
 					return await this.withoutEmployeeFilter(() =>
-						super.update({ id: memberId, ...whereClause }, entity)
+						super.update({ id: memberId, ...whereClause }, changes)
 					);
 				} catch (error) {
 					throw new ForbiddenException('You do not have sufficient permissions to perform this action.');
@@ -246,7 +257,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			}
 
 			// If user has permission, proceed with the update
-			return await super.update({ id: memberId, ...whereClause }, entity);
+			return await super.update({ id: memberId, ...whereClause }, changes);
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while updating the organization team member.');
 		}
