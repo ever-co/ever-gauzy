@@ -103,16 +103,25 @@ function renderInline(source: string): string {
 }
 
 /**
+ * A paragraph's lines (a line break is a `<br>`): as one text, so spans may cross a line break, unless that
+ * text is longer than the inline limit — then line by line, so a long paragraph keeps its formatting.
+ */
+function renderLines(lines: ReadonlyArray<string>): string {
+	const text = lines.join('\n');
+	return text.length <= INLINE_FORMAT_LIMIT ? renderInline(text).replace(/\n/g, '<br>') : lines.map(renderInline).join('<br>');
+}
+
+/**
  * Emphasis on already-escaped text. `_` only at word boundaries, so `snake_case_name` stays as it is. A span
- * stays on one line and is at most 1000 characters (bounded: an unmatched opener cannot rescan the text).
+ * is at most 1000 characters (bounded: an unmatched opener cannot rescan the text).
  */
 function renderEmphasis(html: string): string {
 	return html
-		.replace(/~~(?=\S)([^\n]{0,1000}?\S)~~/g, '<s>$1</s>')
-		.replace(/\*\*(?=\S)([^\n]{0,1000}?\S)\*\*/g, '<strong>$1</strong>')
-		.replace(/(?<![\p{L}\p{N}_])__(?=\S)([^\n]{0,1000}?\S)__(?![\p{L}\p{N}_])/gu, '<strong>$1</strong>')
-		.replace(/\*(?=[^\s*])([^\n]{0,1000}?[^\s*])\*/g, '<em>$1</em>')
-		.replace(/(?<![\p{L}\p{N}_])_(?=[^\s_])([^\n]{0,1000}?[^\s_])_(?![\p{L}\p{N}_])/gu, '<em>$1</em>');
+		.replace(/~~(?=\S)([\s\S]{0,1000}?\S)~~/g, '<s>$1</s>')
+		.replace(/\*\*(?=\S)([\s\S]{0,1000}?\S)\*\*/g, '<strong>$1</strong>')
+		.replace(/(?<![\p{L}\p{N}_])__(?=\S)([\s\S]{0,1000}?\S)__(?![\p{L}\p{N}_])/gu, '<strong>$1</strong>')
+		.replace(/\*(?=[^\s*])([\s\S]{0,1000}?[^\s*])\*/g, '<em>$1</em>')
+		.replace(/(?<![\p{L}\p{N}_])_(?=[^\s_])([\s\S]{0,1000}?[^\s_])_(?![\p{L}\p{N}_])/gu, '<em>$1</em>');
 }
 
 /** A list starting at `start`: its HTML and the index of the first line after it. */
@@ -206,7 +215,7 @@ function renderBlocks(source: ReadonlyArray<string>, depth: number): string[] {
 		if (QUOTE.test(line)) {
 			const quoted: string[] = [];
 			while (index < lines.length && QUOTE.test(lines[index])) quoted.push(lines[index++].replace(QUOTE, ''));
-			const inner = depth < 8 ? renderBlocks(quoted, depth + 1).join('') : `<p>${quoted.map(renderInline).join('<br>')}</p>`;
+			const inner = depth < 8 ? renderBlocks(quoted, depth + 1).join('') : `<p>${renderLines(quoted)}</p>`;
 			out.push(`<blockquote>${inner}</blockquote>`);
 			continue;
 		}
@@ -229,8 +238,7 @@ function renderBlocks(source: ReadonlyArray<string>, depth: number): string[] {
 		}
 		const paragraph: string[] = [];
 		while (index < lines.length && lines[index].trim() && (!paragraph.length || !startsBlock(lines, index))) paragraph.push(lines[index++].trim());
-		// Line by line (a line break is a <br>): the inline limit and the bounded spans apply per line.
-		out.push(`<p>${paragraph.map(renderInline).join('<br>')}</p>`);
+		out.push(`<p>${renderLines(paragraph)}</p>`);
 	}
 	return out;
 }
