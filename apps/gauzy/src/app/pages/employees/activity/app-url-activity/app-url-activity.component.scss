@@ -514,19 +514,57 @@ $control-height: 2rem;
     }
   }
 
+  // Site name and its link on one line, to keep the rows compact: the name
+  // reads first and keeps its width; the address takes the rest and is the
+  // one cut short when space runs out.
+  .au-page-main {
+    display: flex;
+    align-items: baseline;
+    gap: $gap-md;
+    min-width: 0;
+  }
+
+  .au-page-title {
+    flex: 0 1 auto;
+    max-width: 45%;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .au-page-main > .au-page-link,
+  .au-page-main > .au-page-text {
+    flex: 1 1 auto;
+  }
+
   .au-page-link,
   .au-page-text {
     font-size: 0.75rem;
     line-height: 1.125rem;
-    color: var(--gauzy-text-color-1);
+    color: var(--gauzy-text-color-2);
   }
 
   .au-page-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    min-width: 0;
     text-decoration: none;
+
+    nb-icon {
+      flex: 0 0 auto;
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
+    }
 
     &:hover {
       color: nb-theme(color-primary-500);
-      text-decoration: underline;
+
+      .au-ellipsis {
+        text-decoration: underline;
+      }
     }
   }
 
