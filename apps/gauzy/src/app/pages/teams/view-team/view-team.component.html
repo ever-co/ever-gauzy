@@ -295,46 +295,96 @@
 						} @else if (!tasks.loading && !(taskSummary.open + taskSummary.done)) {
 						<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_TEAM_TASKS', icon: 'checkmark-square-outline' }"></ng-container>
 						} @else if (visibleTasks.length) {
+						<!--
+							Each row is one button that opens the task's quick look in the side
+							drawer, plus a real link to the task's own page (so it can also be
+							opened in a new tab or copied).
+						-->
 						<ul class="task-list">
 							@for (task of visibleTasks; track task.id) {
-							<li class="task-row">
-								<span class="task-dot" [class]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
-								<span class="task-main">
-									<span class="task-title" [title]="task.title">{{ task.title }}</span>
-									<span class="task-meta">
-										@if (task.key) {
-										<span class="task-key">{{ task.key }}</span>
-										}
-										@if (task.project) {
-										<span class="task-meta-item">{{ task.project }}</span>
-										}
-										<span class="task-meta-item">{{ task.status }}</span>
-										@if (task.assignees) {
-										<span class="task-meta-item" [title]="task.assignees">{{ task.assignees }}</span>
-										}
-									</span>
-								</span>
-								<span
-									class="task-due"
-									[class.is-overdue]="task.overdue"
-									[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
+							<li class="task-row team-task-row" [class.is-viewed]="viewedTask?.id === task.id">
+								<button
+									type="button"
+									class="task-open"
+									(click)="openTask(task)"
+									[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
 								>
-									<span class="task-due-date">{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span>
-									@if (task.dueDate) {
-									<span class="task-due-relative">
-										@if (task.overdue) {
-										<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-										}
-										{{ task.due.key | translate : { count: task.due.count } }}
+									<span class="task-dot" [class]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
+									<span class="task-main">
+										<span class="task-title" [title]="task.title">{{ task.title }}</span>
+										<span class="task-meta">
+											@if (task.key) {
+											<span class="task-key">{{ task.key }}</span>
+											}
+											@if (task.project) {
+											<span class="task-meta-item">{{ task.project }}</span>
+											}
+											<span class="task-meta-item">{{ task.status }}</span>
+											@if (task.priority) {
+											<span class="task-meta-item task-priority" [class]="'priority-' + (task.priorityLevel || 'none')">
+												<nb-icon
+													[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
+													aria-hidden="true"
+												></nb-icon>
+												{{ task.priority }}
+											</span>
+											}
+										</span>
 									</span>
-									}
-								</span>
+									<span class="task-people" [title]="task.assignees || ('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.UNASSIGNED' | translate)">
+										@for (person of task.people.slice(0, 3); track $index) {
+										<span class="task-person">
+											@if (person.avatarUrl) {
+											<img [src]="person.avatarUrl" [alt]="person.name" />
+											} @else {
+											<span aria-hidden="true">{{ person.initials }}</span>
+											}
+										</span>
+										}
+										@if (task.people.length > 3) {
+										<span class="task-person task-person--more">+{{ task.people.length - 3 }}</span>
+										}
+										@if (!task.people.length) {
+										<span class="task-person task-person--none" aria-hidden="true">
+											<nb-icon icon="person-outline"></nb-icon>
+										</span>
+										}
+									</span>
+									<span
+										class="task-due"
+										[class.is-overdue]="task.overdue"
+										[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
+									>
+										<span class="task-due-date">{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span>
+										@if (task.dueDate) {
+										<span class="task-due-relative">
+											@if (task.overdue) {
+											<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+											}
+											{{ task.due.key | translate : { count: task.due.count } }}
+										</span>
+										}
+									</span>
+								</button>
+								<a
+									class="task-link"
+									[routerLink]="taskLink(task.id)"
+									[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE' | translate : { title: task.title }"
+									[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE_SHORT' | translate"
+									nbTooltipPlacement="left"
+								>
+									<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+								</a>
 							</li>
 							}
 						</ul>
-						@if (filteredTasks.length > visibleTasks.length) {
-						<p class="table-footer">
-							{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}
+						@if (filteredTasks.length > taskLimit) {
+						<p class="table-footer table-footer--action">
+							<span>{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}</span>
+							<button type="button" class="panel-link" (click)="showAllTasks = !showAllTasks">
+								{{ (showAllTasks ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_LESS' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_ALL') | translate }}
+								<nb-icon [icon]="showAllTasks ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></nb-icon>
+							</button>
 						</p>
 						}
 						} @else if (!tasks.loading) {
