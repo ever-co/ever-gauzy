@@ -23,6 +23,9 @@ import { EverWorksMappingContextService } from './mapping/ever-works-mapping-con
 import { EverWorksAgentsService } from './people/ever-works-agents.service';
 import { EverWorksPeopleController } from './people/ever-works-people.controller';
 import { EverWorksPeopleService } from './people/ever-works-people.service';
+import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubscriber } from './teams/ever-works-team.signals';
+import { EverWorksTeamsController } from './teams/ever-works-teams.controller';
+import { EverWorksTeamsService } from './teams/ever-works-teams.service';
 import { EverWorksLinkService } from './sync/links/ever-works-link.service';
 import {
 	EverWorksEntityLink,
@@ -47,18 +50,27 @@ import { EverWorksTaskEventListener } from './sync/outbound/ever-works-task-even
 import { EverWorksRateLimitGuard } from './sync/webhook/ever-works-rate-limit.guard';
 import { EverWorksWebhookController } from './sync/webhook/ever-works-webhook.controller';
 
-/** Registers the per-entity handlers with the applier (and, later, the pusher). */
+/** Registers the per-entity handlers with the applier and the pusher. */
 @Injectable()
 export class EverWorksHandlersRegistrar implements OnModuleInit {
 	constructor(
 		private readonly applier: EverWorksInboundApplier,
-		private readonly agents: EverWorksAgentsService
+		private readonly pusher: EverWorksOutboundPusher,
+		private readonly loop: EverWorksSyncLoop,
+		private readonly agents: EverWorksAgentsService,
+		private readonly teams: EverWorksTeamsService
 	) {}
 
 	onModuleInit(): void {
 		this.applier.register(this.agents);
+		this.applier.register(this.teams);
+		this.pusher.register(this.teams);
+		this.loop.registerSweeper(this.teams);
 	}
 }
+
+/** The entity subscribers the plugin adds to the ORMs (outbound triggers of records without a platform event). */
+export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber];
 
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog];
@@ -80,7 +92,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksWebhookController],
+	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksTeamsController, EverWorksWebhookController],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -103,6 +115,8 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksMappingContextService,
 		EverWorksPeopleService,
 		EverWorksAgentsService,
+		EverWorksTeamsService,
+		EverWorksTeamCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,

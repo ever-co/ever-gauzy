@@ -8,15 +8,16 @@
 jest.mock('./ever-works.module', () => {
 	class EverWorksConnection {}
 	class EverWorksModule {}
-	return { EverWorksModule, EVER_WORKS_ENTITIES: [EverWorksConnection] };
+	class EverWorksTeamSubscriber {}
+	return { EverWorksModule, EVER_WORKS_ENTITIES: [EverWorksConnection], EVER_WORKS_SUBSCRIBERS: [EverWorksTeamSubscriber] };
 });
 jest.mock('./database/migrations/1791000001100-CreateEverWorksConnection', () => ({
 	CreateEverWorksConnection1791000001100: class CreateEverWorksConnection1791000001100 {}
 }));
 
 import 'reflect-metadata';
-import { getEntitiesFromPlugins, getMigrationsFromPlugins } from '@gauzy/plugin';
-import { EVER_WORKS_ENTITIES } from './ever-works.module';
+import { getEntitiesFromPlugins, getMigrationsFromPlugins, getSubscribersFromPlugins } from '@gauzy/plugin';
+import { EVER_WORKS_ENTITIES, EVER_WORKS_SUBSCRIBERS } from './ever-works.module';
 import { EVER_WORKS_MIGRATIONS, IntegrationEverWorksPlugin } from './integration-ever-works.plugin';
 
 describe('IntegrationEverWorksPlugin metadata', () => {
@@ -24,6 +25,10 @@ describe('IntegrationEverWorksPlugin metadata', () => {
 		const entities = getEntitiesFromPlugins([IntegrationEverWorksPlugin]);
 		expect(entities).toEqual(EVER_WORKS_ENTITIES);
 		expect(entities.every((entity) => typeof entity === 'function' && entity.name !== '')).toBe(true);
+	});
+
+	it('hands every entity subscriber to the platform', () => {
+		expect(getSubscribersFromPlugins([IntegrationEverWorksPlugin])).toEqual(EVER_WORKS_SUBSCRIBERS);
 	});
 
 	it('hands every migration to the platform', () => {
