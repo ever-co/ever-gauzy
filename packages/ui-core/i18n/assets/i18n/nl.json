@@ -2101,7 +2101,8 @@
 			"PROJECTS_CAPTION": "Hun projecten en de tijd die er deze periode aan is besteed",
 			"NO_PROJECTS": "Geen lid van een project en geen projecttijd in deze periode",
 			"NOT_A_MEMBER": "Geen lid",
-			"NOT_A_MEMBER_HINT": "Er is tijd op dit project geregistreerd, maar zij zijn er geen lid van"
+			"NOT_A_MEMBER_HINT": "Er is tijd op dit project geregistreerd, maar zij zijn er geen lid van",
+			"VIEW_PROFILE": "Profiel bekijken"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

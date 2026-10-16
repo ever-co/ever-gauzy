@@ -2103,7 +2103,8 @@
 			"PROJECTS_CAPTION": "Sus proyectos y el tiempo trabajado en cada uno en este periodo",
 			"NO_PROJECTS": "No es miembro de ningún proyecto ni tiene tiempo en proyectos en este periodo",
 			"NOT_A_MEMBER": "No es miembro",
-			"NOT_A_MEMBER_HINT": "Se registró tiempo en este proyecto, pero no es miembro de él"
+			"NOT_A_MEMBER_HINT": "Se registró tiempo en este proyecto, pero no es miembro de él",
+			"VIEW_PROFILE": "Ver perfil"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

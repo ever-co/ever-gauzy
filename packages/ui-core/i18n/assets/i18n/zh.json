@@ -2101,7 +2101,8 @@
 			"PROJECTS_CAPTION": "其项目及本期间在每个项目上的工作时间",
 			"NO_PROJECTS": "不是任何项目的成员，本期间也没有项目时间",
 			"NOT_A_MEMBER": "非成员",
-			"NOT_A_MEMBER_HINT": "在此项目上记录了时间，但其不是该项目的成员"
+			"NOT_A_MEMBER_HINT": "在此项目上记录了时间，但其不是该项目的成员",
+			"VIEW_PROFILE": "查看资料"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {
