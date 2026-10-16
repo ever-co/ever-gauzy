@@ -205,7 +205,14 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 
 		Object.assign(seller, values);
 
-		return this.typeOrmSellerRepository.save(seller);
+		// The payload names the members the edit wrote, never their values: a profile carries the seller's
+		// contact details, and a stream pushes the fact to every connected operator of the tenant.
+		return await this.saveAndEmit(seller, 'seller.updated', (saved) => ({
+			sellerId: saved.id,
+			code: saved.code,
+			status: saved.status,
+			changed: Object.keys(values)
+		}));
 	}
 
 	/**
@@ -278,7 +285,12 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 		seller.status = SellerStatus.SUBMITTED;
 		seller.submittedAt = new Date();
 
-		return this.typeOrmSellerRepository.save(seller);
+		return await this.saveAndEmit(seller, 'seller.submitted', (saved) => ({
+			sellerId: saved.id,
+			code: saved.code,
+			status: saved.status,
+			submittedAt: saved.submittedAt
+		}));
 	}
 
 	/**
@@ -363,9 +375,7 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 			seller.status = SellerStatus.ACTION_REQUIRED;
 		}
 
-		const saved = await this.typeOrmSellerRepository.save(seller);
-
-		await this.emit('seller.verified', saved, {
+		return await this.saveAndEmit(seller, 'seller.verified', (saved) => ({
 			sellerId: saved.id,
 			code: saved.code,
 			kind: input.kind,
@@ -374,9 +384,7 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 			payoutAccountStatus: saved.payoutAccountStatus,
 			verifiedAt: saved.verifiedAt,
 			verificationExpiresAt: saved.verificationExpiresAt
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -406,9 +414,7 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 		seller.status = SellerStatus.ACTIVE;
 		seller.activatedAt = new Date();
 
-		const saved = await this.typeOrmSellerRepository.save(seller);
-
-		await this.emit('seller.activated', saved, {
+		return await this.saveAndEmit(seller, 'seller.activated', (saved) => ({
 			sellerId: saved.id,
 			code: saved.code,
 			activatedAt: saved.activatedAt,
@@ -417,9 +423,7 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 			payoutMode: saved.payoutMode,
 			payoutSchedule: saved.payoutSchedule,
 			channelIds: saved.channelIds ?? []
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -451,16 +455,12 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 		seller.suspendedAt = new Date();
 		seller.suspensionReason = reason;
 
-		const saved = await this.typeOrmSellerRepository.save(seller);
-
-		await this.emit('seller.suspended', saved, {
+		return await this.saveAndEmit(seller, 'seller.suspended', (saved) => ({
 			sellerId: saved.id,
 			code: saved.code,
 			suspendedAt: saved.suspendedAt,
 			reason
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -487,16 +487,12 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 		seller.suspendedAt = null;
 		seller.suspensionReason = null;
 
-		const saved = await this.typeOrmSellerRepository.save(seller);
-
-		await this.emit('seller.activated', saved, {
+		return await this.saveAndEmit(seller, 'seller.activated', (saved) => ({
 			sellerId: saved.id,
 			code: saved.code,
 			activatedAt: saved.activatedAt,
 			reinstate: true
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -519,16 +515,12 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 		seller.rejectedAt = new Date();
 		seller.rejectionReason = reason;
 
-		const saved = await this.typeOrmSellerRepository.save(seller);
-
-		await this.emit('seller.rejected', saved, {
+		return await this.saveAndEmit(seller, 'seller.rejected', (saved) => ({
 			sellerId: saved.id,
 			code: saved.code,
 			rejectedAt: saved.rejectedAt,
 			reason
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -548,7 +540,11 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 
 		seller.status = SellerStatus.OFFBOARDING;
 
-		return this.typeOrmSellerRepository.save(seller);
+		return await this.saveAndEmit(seller, 'seller.offboarding-started', (saved) => ({
+			sellerId: saved.id,
+			code: saved.code,
+			status: saved.status
+		}));
 	}
 
 	/**
@@ -757,22 +753,33 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	}
 
 	/**
-	 * Writes one outbox row for a state change.
+	 * Saves a seller and appends the fact that describes the save, in one transaction.
 	 *
-	 * @param name The catalogued event name.
-	 * @param seller The seller the event is about.
-	 * @param data The payload.
+	 * The row and its outbox row commit together or not at all, which is the transactional outbox's whole
+	 * contract and the one the package README states. The append used to run in a transaction of its own
+	 * **after** the save had committed, so an append that failed left a seller that moved with nothing
+	 * announcing it — and the subscribers, projections and webhooks that follow `seller.*` would never learn
+	 * of the move. Now a failing append rolls the save back with it, and a save that fails appends nothing.
+	 *
+	 * @param seller The seller in the state the operation left it.
+	 * @param name The event name.
+	 * @param data The payload, built from the row as it was saved.
+	 * @returns The saved seller.
 	 */
-	private async emit(name: string, seller: Seller, data: Record<string, any>): Promise<void> {
-		await this.typeOrmSellerRepository.manager.transaction(async (manager) => {
+	private async saveAndEmit(seller: Seller, name: string, data: (saved: Seller) => Record<string, any>): Promise<Seller> {
+		return await this.typeOrmSellerRepository.manager.transaction(async (manager) => {
+			const saved = await manager.save(Seller, seller);
+
 			await this.outbox.append(manager, {
 				name,
 				aggregateType: 'SELLER',
-				aggregateId: seller.id as ID,
-				data,
-				tenantId: seller.tenantId,
-				organizationId: seller.organizationId
+				aggregateId: saved.id as ID,
+				data: data(saved),
+				tenantId: saved.tenantId,
+				organizationId: saved.organizationId
 			});
+
+			return saved;
 		});
 	}
 }

@@ -53,7 +53,7 @@ import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
 import { EmployeeAgentProfile, Organization, Role, User } from '../core/entities/internal';
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
-import { defaultAgentEmail, isAgentEmail, isEmployeeKind } from './agent-employee';
+import { defaultAgentEmail, findOneForUpdate, isAgentEmail, isEmployeeKind } from './agent-employee';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -121,8 +121,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * - its user gets the tenant's `EMPLOYEE` role, and no organization membership (it never signs in).
 	 *
 	 * Idempotent on the email: when an agent employee with this email already exists in the organization it
-	 * is returned as is (`created: false`). An address that belongs to a person, or to a user with a password,
-	 * is refused rather than turned into an agent.
+	 * is returned as is (`created: false`), and two overlapping calls for the same agent create it once (the
+	 * organization row is locked for the transaction on Postgres and MySQL; SQLite allows one writer at a
+	 * time). An existing account is reused only when it already stands behind an agent of another
+	 * organization of the tenant; an address that belongs to a person, to a user with a password, or to any
+	 * other account is refused rather than turned into an agent.
 	 *
 	 * @param input The agent to provision. `tenantId` and `organizationId` are required and must agree.
 	 * @returns The agent employee, its profile (or `null`) and whether it was created now.
@@ -144,17 +147,23 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		}
 
 		return await this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
-			const organization = await manager.findOne(Organization, { where: { id: organizationId, tenantId } });
+			// The organization row is locked for the transaction (Postgres, MySQL): two overlapping calls for
+			// the same agent would otherwise both find no user and both create one. The second call waits
+			// here, then finds what the first created and returns it.
+			const organization = await findOneForUpdate(manager, Organization, { id: organizationId, tenantId });
 			if (!organization) {
 				throw new NotFoundException('The organization does not exist in this tenant.');
 			}
 
 			let user = await manager.findOne(User, { where: { email, tenantId } });
 			if (user) {
-				const existing = await manager.findOne(Employee, {
-					where: { userId: user.id, organizationId, tenantId },
+				// Every engagement of this account in the tenant, retired ones included.
+				const employees = await manager.find(Employee, {
+					where: { userId: user.id, tenantId },
 					withDeleted: true
 				});
+
+				const existing = employees.find((employee) => employee.organizationId === organizationId);
 				if (existing) {
 					if (existing.kind !== EmployeeKindEnum.AGENT) {
 						throw new ConflictException('This email belongs to a person, not an agent.');
@@ -164,15 +173,26 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					});
 					return { employee: existing, profile: profile ?? null, created: false };
 				}
+
+				// An account is reused only when it already stands behind an agent (the same agent, mapped into
+				// another organization of the tenant): never a person's account, never one that can sign in.
 				if (user.hash) {
-					// A user that can sign in is a person's account: never reuse it for an agent.
 					throw new ConflictException('This email belongs to a user with a password.');
 				}
-			} else {
-				const role = await manager.findOne(Role, { where: { name: RolesEnum.EMPLOYEE, tenantId } });
-				if (!role) {
-					throw new NotFoundException('The tenant has no EMPLOYEE role.');
+				if (employees.some((employee) => employee.kind !== EmployeeKindEnum.AGENT)) {
+					throw new ConflictException('This email belongs to a person, not an agent.');
 				}
+				if (employees.length === 0) {
+					throw new ConflictException('This email belongs to a user that is not an agent.');
+				}
+
+				// The account of an agent carries the tenant's EMPLOYEE role.
+				if (!user.roleId) {
+					const role = await this.findEmployeeRole(manager, tenantId);
+					user = await manager.save(User, Object.assign(user, { role, roleId: role.id }));
+				}
+			} else {
+				const role = await this.findEmployeeRole(manager, tenantId);
 				user = await manager.save(
 					User,
 					manager.create(User, {
@@ -211,6 +231,21 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			return { employee, profile, created: true };
 		});
+	}
+
+	/**
+	 * The tenant's `EMPLOYEE` role, which the account of an agent employee carries.
+	 *
+	 * @param manager The transaction manager.
+	 * @param tenantId The tenant.
+	 * @throws NotFoundException when the tenant has no such role.
+	 */
+	private async findEmployeeRole(manager: EntityManager, tenantId: ID): Promise<Role> {
+		const role = await manager.findOne(Role, { where: { name: RolesEnum.EMPLOYEE, tenantId } });
+		if (!role) {
+			throw new NotFoundException('The tenant has no EMPLOYEE role.');
+		}
+		return role;
 	}
 
 	/**

@@ -11,12 +11,17 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../api/bulk-create';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { bulkOptionsOf } from '../api/bulk.decorator';
 import { BaseQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Task } from './task.entity';
+import { TaskController } from './task.controller';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 
@@ -175,7 +180,11 @@ const TASK_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 export class TaskResolver {
-	constructor(private readonly taskService: TaskService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly taskService: TaskService,
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
+	) {}
 
 	/**
 	 * The tasks of the caller's organization, newest first.
@@ -493,6 +502,31 @@ export class TaskResolver {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	async createTask(@Args('input') input: ICreateTaskInput): Promise<ITask> {
 		return await this.commandBus.execute(new TaskCreateCommand(this.payload(input) as never));
+	}
+
+	/**
+	 * Files a batch of tasks, one outcome per item.
+	 *
+	 * The batch `POST /tasks/bulk` applies, run by the same executor from the same declaration — the options
+	 * are read off the controller's own `@BulkOperation`, so the resource, the cap and the permission cannot
+	 * differ between the two surfaces — and each item is filed by `createTask` itself: the same mapping of the
+	 * input, the same command, which numbers the task from its project's highest number as the items before it
+	 * left it. `atomic: true` is refused before item 0 with the same `BULK_ATOMIC_UNSUPPORTED` the route
+	 * answers — the declaration (`atomic: false`) is the controller's, read by the same executor.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here.
+	 */
+	@Mutation('bulkCreateTasks')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
+	@Idempotent({ scope: 'task.bulk', required: false, resourceType: 'task' })
+	async bulkCreateTasks(@Args('input') input: IBulkCreateInput<ICreateTaskInput>): Promise<IBulkCreatePayload> {
+		const result = await this.bulkExecutor.execute<ICreateTaskInput>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createTask(body)),
+			bulkOptionsOf(TaskController, 'bulk')
+		);
+
+		return toBulkCreatePayload(result);
 	}
 
 	/**

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { assertInCallerScope, callerScope } from '../catalog.scope';
+import { ProductVariant, RequestContext, Tag, TenantAwareCrudService } from '@gauzy/core';
+import { assertAllInCallerScope, assertInCallerScope, callerScope } from '../catalog.scope';
 import { TagProductVariant } from './tag-product-variant.entity';
 import { MikroOrmTagProductVariantRepository } from './repository/mikro-orm-tag-product-variant.repository';
 import { TypeOrmTagProductVariantRepository } from './repository/type-orm-tag-product-variant.repository';
@@ -54,6 +54,12 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 		await assertInCallerScope(this.typeOrmTagProductVariantRepository.manager, ProductVariant, variantId, 'variant');
+		// The facet values are the caller's, the tenant's or the installation's (SEC-D-04): another tenant's tag went in
+		// by its id and was read back with the variant's facets.
+		await assertAllInCallerScope(this.typeOrmTagProductVariantRepository.manager, Tag, tagIds, 'facet values', {
+			tenantWide: true,
+			global: true
+		});
 
 		const existing = await this.typeOrmTagProductVariantRepository.find({
 			where: { productVariantId: variantId, ...callerScope() }

@@ -84,7 +84,11 @@ import 'reflect-metadata';
 import { NotFoundException } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
-import { EventBus, Product, ProductVariant, Tag } from '@gauzy/core';
+import { EventBus, ImageAsset, Product, ProductVariant, Tag } from '@gauzy/core';
+import { CollectionProduct } from './collection-product/collection-product.entity';
+import { CollectionProductService } from './collection-product/collection-product.service';
+import { CollectionVariant } from './collection-variant/collection-variant.entity';
+import { CollectionVariantService } from './collection-variant/collection-variant.service';
 import { PublicationStatus } from './catalog.types';
 import { CollectionChannel } from './collection-channel/collection-channel.entity';
 import { CollectionChannelService } from './collection-channel/collection-channel.service';
@@ -121,10 +125,19 @@ const IMAGE_B1 = '00000000-0000-4000-8000-0000000005b1';
 const IMAGE_B2 = '00000000-0000-4000-8000-0000000005b2';
 const TAG_A = '00000000-0000-4000-8000-0000000006a1';
 const TAG_B = '00000000-0000-4000-8000-0000000006b1';
+const TAG_GLOBAL = '00000000-0000-4000-8000-0000000006c1';
 
 /** A second organization of tenant A, and a third tenant that happens to carry A's organization id. */
 const ORG_A2 = '00000000-0000-4000-8000-0000000000a2';
 const TENANT_C = '00000000-0000-4000-8000-00000000000c';
+
+/** Tenant A's rows outside organization A: organization A2's, and the tenant's organization-less ones. */
+const PRODUCT_A2 = '00000000-0000-4000-8000-0000000001a2';
+const VARIANT_A2 = '00000000-0000-4000-8000-0000000002a2';
+const TAG_A2 = '00000000-0000-4000-8000-0000000006a2';
+const IMAGE_A2_ORG = '00000000-0000-4000-8000-0000000005a3';
+const TAG_A_TENANT = '00000000-0000-4000-8000-0000000006a0';
+const IMAGE_A_TENANT = '00000000-0000-4000-8000-0000000005a0';
 
 /*
 |--------------------------------------------------------------------------
@@ -220,6 +233,33 @@ const schemas = [
 		tableName: 'tag',
 		columns: { ...(base() as any), name: { type: 'varchar', nullable: true } }
 	}),
+	new EntitySchema<any>({ name: 'ImageAsset', target: ImageAsset, tableName: 'image_asset', columns: { ...(base() as any) } }),
+	new EntitySchema<any>({
+		name: 'CollectionProduct',
+		target: CollectionProduct,
+		tableName: 'collection_product',
+		columns: {
+			...(base() as any),
+			collectionId: { type: 'varchar' },
+			productId: { type: 'varchar' },
+			position: { type: 'int', default: 0 },
+			addedAt: { type: 'datetime', createDate: true }
+		},
+		relations: { product: { type: 'many-to-one', target: 'Product', joinColumn: { name: 'productId' }, createForeignKeyConstraints: false } }
+	}),
+	new EntitySchema<any>({
+		name: 'CollectionVariant',
+		target: CollectionVariant,
+		tableName: 'collection_variant',
+		columns: {
+			...(base() as any),
+			collectionId: { type: 'varchar' },
+			variantId: { type: 'varchar' },
+			position: { type: 'int', default: 0 },
+			addedAt: { type: 'datetime', createDate: true }
+		},
+		relations: { variant: { type: 'many-to-one', target: 'ProductVariant', joinColumn: { name: 'variantId' }, createForeignKeyConstraints: false } }
+	}),
 	new EntitySchema<any>({
 		name: 'ProductChannel',
 		target: ProductChannel,
@@ -250,6 +290,8 @@ interface IHarness {
 	media: ProductVariantMediaService;
 	tags: TagProductVariantService;
 	productChannels: ProductChannelService;
+	collectionProducts: CollectionProductService;
+	collectionVariants: CollectionVariantService;
 	/** Every row of a table that belongs to one tenant, as the database holds it. */
 	rowsOf: (table: string, tenantId: string) => Promise<Row[]>;
 }
@@ -296,6 +338,45 @@ async function harness(): Promise<IHarness> {
 		]);
 	}
 
+	// Each tenant's gallery images, so a gallery names images that exist where it is written.
+	for (const [image, tenantId, organizationId] of [
+		[IMAGE_A1, TENANT_A, ORG_A],
+		[IMAGE_A2, TENANT_A, ORG_A],
+		[IMAGE_B1, TENANT_B, ORG_B],
+		[IMAGE_B2, TENANT_B, ORG_B]
+	]) {
+		await dataSource.query(`INSERT INTO "image_asset" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [
+			image,
+			tenantId,
+			organizationId
+		]);
+	}
+	// A facet value the installation ships to every tenant.
+	await dataSource.query(`INSERT INTO "tag" ("id", "tenantId", "organizationId") VALUES (?, NULL, NULL)`, [TAG_GLOBAL]);
+
+	// Tenant A's rows outside organization A: organization A2's, and the tenant's organization-less ones.
+	await dataSource.query(`INSERT INTO "product" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [
+		PRODUCT_A2,
+		TENANT_A,
+		ORG_A2
+	]);
+	await dataSource.query(
+		`INSERT INTO "product_variant" ("id", "productId", "tenantId", "organizationId") VALUES (?, ?, ?, ?)`,
+		[VARIANT_A2, PRODUCT_A2, TENANT_A, ORG_A2]
+	);
+	for (const [table, id, organizationId] of [
+		['tag', TAG_A2, ORG_A2],
+		['tag', TAG_A_TENANT, null],
+		['image_asset', IMAGE_A2_ORG, ORG_A2],
+		['image_asset', IMAGE_A_TENANT, null]
+	]) {
+		await dataSource.query(`INSERT INTO "${table}" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [
+			id,
+			TENANT_A,
+			organizationId
+		]);
+	}
+
 	const repository = (entity: unknown) => dataSource.getRepository(entity as any) as any;
 	const eventBus = { publish: async () => undefined } as unknown as EventBus;
 
@@ -306,6 +387,8 @@ async function harness(): Promise<IHarness> {
 		media: new ProductVariantMediaService(repository(ProductVariantMedia), undefined as any),
 		tags: new TagProductVariantService(repository(TagProductVariant), undefined as any),
 		productChannels: new ProductChannelService(repository(ProductChannel), undefined as any, eventBus),
+		collectionProducts: new CollectionProductService(repository(CollectionProduct), undefined as any),
+		collectionVariants: new CollectionVariantService(repository(CollectionVariant), undefined as any),
 		rowsOf: async (table, tenantId) =>
 			await dataSource.query(`SELECT * FROM "${table}" WHERE "tenantId" = ? ORDER BY "id"`, [tenantId])
 	};
@@ -547,6 +630,83 @@ describe('catalogue set writes keep to the caller’s tenant (DB-backed, two ten
 				const rows = await h.rowsOf(table, TENANT_A);
 				expect({ what, rows: rows.length }).toEqual({ what, rows: 1 });
 			}
+		});
+	});
+
+	/**
+	 * SEC-D-04: the set writes checked their SUBJECT (the collection, the variant) and inserted the MEMBER ids through
+	 * `manager.insert`, which no core foreign-row check sees — another tenant's product, variant, facet value or image
+	 * went in by its id and was read back through the membership's relations.
+	 */
+	describe('the members of a set write are the caller’s rows (SEC-D-04)', () => {
+		beforeEach(() => actAs(TENANT_A, ORG_A));
+
+		it('refuses another tenant’s product in a collection, and writes no membership', async () => {
+			await expect(h.collectionProducts.replaceProducts(COLLECTION_A, [PRODUCT_A, PRODUCT_B])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			expect(await h.rowsOf('collection_product', TENANT_A)).toEqual([]);
+		});
+
+		it('refuses another tenant’s variant in a collection, through the set write and the addition alike', async () => {
+			await expect(h.collectionVariants.replaceVariants(COLLECTION_A, [VARIANT_B])).rejects.toBeInstanceOf(NotFoundException);
+			await expect(h.collectionVariants.addVariants(COLLECTION_A, [VARIANT_B])).rejects.toBeInstanceOf(NotFoundException);
+			expect(await h.rowsOf('collection_variant', TENANT_A)).toEqual([]);
+		});
+
+		it('refuses another tenant’s facet value, and accepts the installation’s', async () => {
+			await expect(h.tags.replaceTags(VARIANT_A, [TAG_B])).rejects.toBeInstanceOf(NotFoundException);
+			expect(await h.rowsOf('tag_product_variant', TENANT_A)).toEqual([]);
+
+			await h.tags.replaceTags(VARIANT_A, [TAG_A, TAG_GLOBAL]);
+			expect((await h.rowsOf('tag_product_variant', TENANT_A)).map((row) => row.tagId).sort()).toEqual([TAG_A, TAG_GLOBAL].sort());
+		});
+
+		it('refuses another tenant’s image in a gallery', async () => {
+			await expect(h.media.replaceMedia(VARIANT_A, [IMAGE_A1, IMAGE_B1], IMAGE_A1)).rejects.toBeInstanceOf(NotFoundException);
+			expect(await h.rowsOf('product_variant_media', TENANT_A)).toEqual([]);
+		});
+
+		it('refuses a member of another organization of the same tenant, in every set write', async () => {
+			// Review on #10755: the refusals above change the tenant AND the organization, so they would still pass if
+			// the member check stopped filtering by organization. Here only the organization differs.
+			await expect(h.collectionProducts.replaceProducts(COLLECTION_A, [PRODUCT_A2])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(h.collectionVariants.replaceVariants(COLLECTION_A, [VARIANT_A2])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(h.collectionVariants.addVariants(COLLECTION_A, [VARIANT_A2])).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(h.tags.replaceTags(VARIANT_A, [TAG_A2])).rejects.toBeInstanceOf(NotFoundException);
+			await expect(h.media.replaceMedia(VARIANT_A, [IMAGE_A2_ORG], IMAGE_A2_ORG)).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+
+			for (const table of ['collection_product', 'collection_variant', 'tag_product_variant', 'product_variant_media']) {
+				expect({ table, rows: await h.rowsOf(table, TENANT_A) }).toEqual({ table, rows: [] });
+			}
+		});
+
+		it('control: accepts the tenant’s organization-less facet values and images', async () => {
+			await h.tags.replaceTags(VARIANT_A, [TAG_A, TAG_A_TENANT]);
+			await h.media.replaceMedia(VARIANT_A, [IMAGE_A1, IMAGE_A_TENANT], IMAGE_A1);
+
+			expect((await h.rowsOf('tag_product_variant', TENANT_A)).map((row) => row.tagId).sort()).toEqual(
+				[TAG_A, TAG_A_TENANT].sort()
+			);
+			expect((await h.rowsOf('product_variant_media', TENANT_A)).map((row) => row.imageAssetId).sort()).toEqual(
+				[IMAGE_A1, IMAGE_A_TENANT].sort()
+			);
+		});
+
+		it('control: the owner fills its collection with its own products and variants', async () => {
+			await h.collectionProducts.replaceProducts(COLLECTION_A, [PRODUCT_A]);
+			await h.collectionVariants.replaceVariants(COLLECTION_A, [VARIANT_A]);
+
+			expect((await h.rowsOf('collection_product', TENANT_A)).map((row) => row.productId)).toEqual([PRODUCT_A]);
+			expect((await h.rowsOf('collection_variant', TENANT_A)).map((row) => row.variantId)).toEqual([VARIANT_A]);
 		});
 	});
 });

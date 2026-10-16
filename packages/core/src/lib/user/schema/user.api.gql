@@ -107,6 +107,17 @@ extend type Mutation {
 	createUser(input: CreateUserInput!): User!
 
 	"""
+	Files a batch of accounts — each item exactly as `createUser` files one, its role resolved in the
+	caller's tenant and refused when the caller may not grant it — and answers one outcome per item. The
+	batch `POST /user/bulk` applies, under the same permission and cap (50). An outcome names the account by
+	its id and nothing else.
+	A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+	`BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+	so the batch cannot be rolled back as one.
+	"""
+	bulkCreateUsers(input: BulkCreateUsersInput!): BulkCreateUsersPayload!
+
+	"""
 	Edits an account that exists.
 
 	The same write the delivered route performs, with the identifier in both places the route carries it

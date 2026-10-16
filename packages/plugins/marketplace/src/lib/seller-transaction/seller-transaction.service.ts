@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, IsNull, Not } from 'typeorm';
+import { EntityManager, FindOptionsWhere, IsNull, Not } from 'typeorm';
 import {
 	DecimalString,
 	ID,
@@ -108,11 +108,15 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 		transaction.settleableAt = transaction.settleableAt ?? new Date();
 		transaction.holdReason = null;
 
-		const saved = await this.typeOrmSellerTransactionRepository.save(transaction);
+		// The row and `seller.transaction.settleable` commit together: an append that fails rolls the status
+		// back, and a save that fails appends nothing.
+		return await this.typeOrmSellerTransactionRepository.manager.transaction(async (manager) => {
+			const saved = await manager.save(SellerTransaction, transaction);
 
-		await this.emit(saved, 'seller.transaction.settleable', { note });
+			await this.emit(saved, 'seller.transaction.settleable', { note }, manager);
 
-		return saved;
+			return saved;
+		});
 	}
 
 	/**
@@ -272,12 +276,21 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	/**
 	 * Writes one outbox row for a ledger state change.
 	 *
+	 * A call that hands over the transaction its write ran in appends through it, so the fact commits or
+	 * rolls back with the row it describes; a call that states none opens a transaction of its own.
+	 *
 	 * @param transaction The row the event is about.
 	 * @param name The catalogued event name.
 	 * @param extra Payload fields beyond the row's own.
+	 * @param within The transaction the row was written in, when the caller opened one.
 	 */
-	async emit(transaction: SellerTransaction, name: string, extra: Record<string, any> = {}): Promise<void> {
-		await this.typeOrmSellerTransactionRepository.manager.transaction(async (manager) => {
+	async emit(
+		transaction: SellerTransaction,
+		name: string,
+		extra: Record<string, any> = {},
+		within?: EntityManager
+	): Promise<void> {
+		const append = async (manager: EntityManager) => {
 			await this.outbox.append(manager, {
 				name,
 				aggregateType: 'SELLER_TRANSACTION',
@@ -297,7 +310,15 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 				tenantId: transaction.tenantId,
 				organizationId: transaction.organizationId
 			});
-		});
+		};
+
+		if (within) {
+			await append(within);
+
+			return;
+		}
+
+		await this.typeOrmSellerTransactionRepository.manager.transaction(append);
 	}
 
 	/**

@@ -35,6 +35,7 @@ export * from './resource-projection.interceptor';
 export * from './bulk';
 export * from './bulk-executor.service';
 export * from './bulk.decorator';
+export * from './bulk-create';
 export * from './async-operation';
 export * from './accepted-operation.interceptor';
 export * from './accepted.decorator';
