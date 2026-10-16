@@ -125,6 +125,13 @@ export class EverWorksTaskStore {
 		});
 	}
 
+	/** The ids among `taskIds` whose task still exists (not deleted, soft or hard). */
+	async presentTaskIds(tenantId: ID, taskIds: ReadonlyArray<ID>): Promise<Set<ID>> {
+		if (!taskIds.length) return new Set();
+		const rows = await this.dataSource.getRepository(Task).find({ where: { tenantId, id: In([...taskIds]) } as never, select: { id: true } as never });
+		return new Set(rows.map((row) => row.id as ID));
+	}
+
 	/** Creates a task through `TaskCreateCommand` (call inside {@link asActor}); returns its id. */
 	async create(input: Partial<ITaskCreateInput>): Promise<ID> {
 		const task = (await this.commandBus.execute(new TaskCreateCommand(input as ITaskCreateInput, true))) as Task;
