@@ -120,7 +120,8 @@ Worker of the platform domain (`GAUZY_INBOX_DOMAIN`) posts there.
 2. Per message, only the envelope recipients (else `To` / `Cc`) that are active mailboxes **of this account** count: a
    mailbox receives only through the account it points at (the platform route: mailboxes without an account), in the
    account's tenant and, for an organization's account, organization; a custom-domain mailbox only once its domain is
-   verified; and only from senders its allowlist admits. The mailbox row decides the tenant, never the payload. Everything
+   verified; and only from senders its allowlist admits (an allowlist match needs a DMARC `pass` from the provider:
+   the `From` header alone is forgeable). The mailbox row decides the tenant, never the payload. Everything
    else is dropped. A `+tag` is kept in the message's headers.
 3. The raw message is stored (`.eml`, or the normalized `.json` when the provider delivers no MIME; FileStorage, or with
    local storage a private directory, `GAUZY_INBOX_LOCAL_STORAGE_PATH`, never the public asset root), and

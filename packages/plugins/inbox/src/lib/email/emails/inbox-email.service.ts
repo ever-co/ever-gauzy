@@ -295,24 +295,25 @@ export class InboxEmailService {
 			} as InboxEmail)
 		);
 		const attachmentRepository = this.dataSource.getRepository(InboxEmailAttachment);
-		for (const stored of storedAttachments) {
-			await attachmentRepository.save(
-				attachmentRepository.create({
-					tenantId: stored.tenantId,
-					organizationId: stored.organizationId ?? null,
-					emailId: row.id as ID,
-					filename: stored.filename,
-					contentType: stored.contentType ?? null,
-					size: stored.size,
-					sha256: stored.sha256 ?? null,
-					storageKey: stored.storageKey,
-					storageProvider: stored.storageProvider ?? null,
-					...(stored.contentId ? { contentId: stored.contentId } : {}),
-					isInline: !!stored.isInline
-				} as InboxEmailAttachment)
-			);
-		}
+		// The attachment rows inside the send's try: a failure marks the kept message FAILED, never a QUEUED orphan.
 		try {
+			for (const stored of storedAttachments) {
+				await attachmentRepository.save(
+					attachmentRepository.create({
+						tenantId: stored.tenantId,
+						organizationId: stored.organizationId ?? null,
+						emailId: row.id as ID,
+						filename: stored.filename,
+						contentType: stored.contentType ?? null,
+						size: stored.size,
+						sha256: stored.sha256 ?? null,
+						storageKey: stored.storageKey,
+						storageProvider: stored.storageProvider ?? null,
+						...(stored.contentId ? { contentId: stored.contentId } : {}),
+						isInline: !!stored.isInline
+					} as InboxEmailAttachment)
+				);
+			}
 			const sent = await this.sender.sendMessage(
 				{ ...message, from, to: message.to, ...(message.cc.length ? { cc: message.cc } : {}), messageId },
 				{
