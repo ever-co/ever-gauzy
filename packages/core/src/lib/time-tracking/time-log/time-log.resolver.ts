@@ -1026,7 +1026,7 @@ export class TimeLogResolver {
 	 * `TimeLogBodyTransformPipe`, which both the create and the update route run, fills only a MISSING
 	 * employee with the caller's own when the caller does not hold `CHANGE_SELECTED_EMPLOYEE`, and keeps a
 	 * named one. The service then decides whether the caller may write for that employee
-	 * (`assertCanWriteTimeFor`: the employee themself, `CHANGE_SELECTED_EMPLOYEE`, or a manager of a team
+	 * (`assertCanWriteTimeFor`: the employee themselves, `CHANGE_SELECTED_EMPLOYEE`, or a manager of a team
 	 * the employee is in) and refuses anything else with a 403. Replacing a named employee here instead
 	 * would record a team manager's entry for a member against the manager and make the manager's edit of
 	 * a member's log fail, so this restates the pipe exactly.
