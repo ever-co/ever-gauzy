@@ -1,12 +1,15 @@
 /**
- * The plain id columns of a shipment line, written against a real database holding two tenants (security audit
- * P0 #6c).
+ * The plain id columns of the fulfilment package's rows, written against a real database holding two tenants
+ * (security audit P0 #6c).
  *
- * A line names the order line it ships and the location its units came from. Neither column is a relation, so the
+ * A line names the order line it ships and the location its units came from; a shipment the order it ships and the
+ * location it ships from; a shipping-profile attachment its variant. None of those columns is a relation, so the
  * platform's cross-tenant check — which reads relation join columns — never saw them: `POST` / `PUT
- * /fulfillment-lines` and `updateFulfillmentLine` reach `FulfillmentLineService.create` / `update` directly, and a
- * shipment created over `POST /fulfillments` or `createFulfillment` writes its lines through the same `create`. A
- * caller of tenant A stored tenant B's order line or location on its own shipment.
+ * /fulfillment-lines` and `updateFulfillmentLine` reach `FulfillmentLineService.create` / `update` directly, a
+ * shipment created over `POST /fulfillments` or `createFulfillment` writes its lines through the same `create`, a
+ * return leg is raised through `createReturnLeg`, and an attachment is written by `ShippingProfileVariantService` or
+ * the profile's `assignVariants`. A caller of tenant A stored tenant B's ids on its own rows — and, the attachment's
+ * `variantId` being unique across tenants, kept B from attaching its own variant.
  *
  * **Nothing the defect lives in is doubled here.** The services are the real ones over TypeORM repositories of an
  * in-memory better-sqlite3 database; the rows the ids name are real rows of tenant B, of tenant A and of no tenant.
@@ -53,9 +56,14 @@ jest.mock('@gauzy/core', () => {
 		}
 
 		async findOneByIdString(id: any, options: any = {}): Promise<any> {
+			// The platform's reads accept the string-array `relations` form and hand TypeORM the object form.
+			const relations = Array.isArray(options.relations)
+				? Object.fromEntries(options.relations.map((relation: string) => [relation, true]))
+				: options.relations;
 			const record = id
 				? await this.typeOrmRepository.findOne({
 						...options,
+						...(relations ? { relations } : {}),
 						where: this.scoped({ ...(options.where ?? {}), id })
 					})
 				: null;
@@ -79,6 +87,10 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return this.typeOrmRepository.update(this.scoped(typeof id === 'string' ? { id } : id), partial);
+		}
+
+		async delete(id: any): Promise<any> {
+			return this.typeOrmRepository.delete(this.scoped({ id }));
 		}
 	}
 
@@ -150,6 +162,10 @@ import { FulfillmentLine } from './fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from './fulfillment-line/fulfillment-line.service';
 import { Fulfillment } from './fulfillment/fulfillment.entity';
 import { FulfillmentService } from './fulfillment/fulfillment.service';
+import { ShippingProfile } from './shipping-profile/shipping-profile.entity';
+import { ShippingProfileService } from './shipping-profile/shipping-profile.service';
+import { ShippingProfileVariant } from './shipping-profile-variant/shipping-profile-variant.entity';
+import { ShippingProfileVariantService } from './shipping-profile-variant/shipping-profile-variant.service';
 
 type Row = Record<string, any>;
 
@@ -164,6 +180,17 @@ const WAREHOUSE = {
 	b: '00000000-0000-4000-8002-00000000000b',
 	global: '00000000-0000-4000-8002-00000000000c'
 };
+
+/** One order and one variant per owner: tenant A, tenant B (and, for the variant, no tenant). */
+const ORDER = { a: '00000000-0000-4000-8004-00000000000a', b: '00000000-0000-4000-8004-00000000000b' };
+const VARIANT = {
+	a: '00000000-0000-4000-8005-00000000000a',
+	b: '00000000-0000-4000-8005-00000000000b',
+	global: '00000000-0000-4000-8005-00000000000c'
+};
+
+/** Tenant A's shipping profile. */
+const PROFILE_A = '00000000-0000-4000-8006-0000000000a1';
 
 /** Tenant A's shipments the lines are written into. */
 const SHIPMENT_ONE = '00000000-0000-4000-8003-0000000000a1';
@@ -189,6 +216,25 @@ const optional = (type: string) => ({ type, nullable: true });
 const schemas = [
 	new EntitySchema<any>({ name: 'OrderLineRow', tableName: 'order_line', columns: { ...(base() as any) } }),
 	new EntitySchema<any>({ name: 'WarehouseRow', tableName: 'warehouse', columns: { ...(base() as any) } }),
+	new EntitySchema<any>({ name: 'OrderRow', tableName: 'order', columns: { ...(base() as any) } }),
+	new EntitySchema<any>({ name: 'ProductVariantRow', tableName: 'product_variant', columns: { ...(base() as any) } }),
+	new EntitySchema<any>({
+		name: 'ShippingProfile',
+		target: ShippingProfile,
+		tableName: 'shipping_profile',
+		columns: { ...(base() as any), code: optional('varchar') }
+	}),
+	new EntitySchema<any>({
+		name: 'ShippingProfileVariant',
+		target: ShippingProfileVariant,
+		tableName: 'shipping_profile_variant',
+		columns: {
+			...(base() as any),
+			profileId: { type: 'varchar' },
+			variantId: { type: 'varchar' },
+			metadata: optional('simple-json')
+		}
+	}),
 	new EntitySchema<any>({
 		name: 'Fulfillment',
 		target: Fulfillment,
@@ -196,10 +242,12 @@ const schemas = [
 		columns: {
 			...(base() as any),
 			orderId: optional('varchar'),
+			warehouseId: optional('varchar'),
 			direction: optional('varchar'),
 			status: optional('varchar'),
 			version: { type: 'int', default: 1 }
-		}
+		},
+		relations: { lines: { type: 'one-to-many', target: 'FulfillmentLine', inverseSide: 'fulfillment' } }
 	}),
 	new EntitySchema<any>({
 		name: 'FulfillmentLine',
@@ -212,6 +260,15 @@ const schemas = [
 			quantity: { type: 'decimal' },
 			warehouseId: optional('varchar'),
 			metadata: optional('simple-json')
+		},
+		relations: {
+			fulfillment: {
+				type: 'many-to-one',
+				target: 'Fulfillment',
+				inverseSide: 'lines',
+				joinColumn: { name: 'fulfillmentId' },
+				createForeignKeyConstraints: false
+			}
 		}
 	})
 ];
@@ -226,6 +283,8 @@ interface IHarness {
 	dataSource: DataSource;
 	lines: FulfillmentLineService;
 	fulfillments: FulfillmentService;
+	attachments: ShippingProfileVariantService;
+	profiles: ShippingProfileService;
 	rows: (table: string) => Promise<Row[]>;
 	row: (table: string, id: string) => Promise<Row | undefined>;
 }
@@ -255,21 +314,47 @@ async function harness(): Promise<IHarness> {
 		null
 	]);
 
+	await dataSource.query(`INSERT INTO "order" ("id", "tenantId") VALUES (?, ?), (?, ?)`, [
+		ORDER.a,
+		TENANT_A,
+		ORDER.b,
+		TENANT_B
+	]);
+	await dataSource.query(`INSERT INTO "product_variant" ("id", "tenantId") VALUES (?, ?), (?, ?), (?, ?)`, [
+		VARIANT.a,
+		TENANT_A,
+		VARIANT.b,
+		TENANT_B,
+		VARIANT.global,
+		null
+	]);
+	await dataSource.query(`INSERT INTO "shipping_profile" ("id", "tenantId", "code") VALUES (?, ?, ?)`, [
+		PROFILE_A,
+		TENANT_A,
+		'standard'
+	]);
+
 	const repository = (entity: unknown) => dataSource.getRepository(entity as any) as any;
 	const lines = new FulfillmentLineService(repository(FulfillmentLine), undefined as any);
+	// The outbox is not what these cases are about: a raised shipment's announcement is accepted and dropped.
+	const outbox = { append: async () => undefined };
 	const fulfillments = new FulfillmentService(
 		repository(Fulfillment),
 		undefined as any,
 		lines,
 		undefined as any,
-		undefined as any,
+		outbox as any,
 		undefined as any
 	);
+	const attachments = new ShippingProfileVariantService(repository(ShippingProfileVariant), undefined as any);
+	const profiles = new ShippingProfileService(repository(ShippingProfile), undefined as any, attachments);
 
 	return {
 		dataSource,
 		lines,
 		fulfillments,
+		attachments,
+		profiles,
 		rows: (table) => dataSource.query(`SELECT * FROM "${table}"`),
 		row: async (table, id) => (await dataSource.query(`SELECT * FROM "${table}" WHERE "id" = ?`, [id]))[0]
 	};
@@ -378,5 +463,94 @@ describe('fulfilment lines — a plain id column may not name another tenant’s
 
 		expect(await h.rows('fulfillment')).toEqual([]);
 		expect(await h.rows('fulfillment_line')).toEqual([]);
+	});
+
+	describe('the shipment’s orderId and warehouseId', () => {
+		/** A return shipment: it reads no order line for its quantity, so the rows it names are all it is checked on. */
+		const ship = (header: Row) =>
+			h.fulfillments.create({
+				direction: FulfillmentDirection.RETURN,
+				...header,
+				lines: [{ orderLineId: ORDER_LINE.a, quantity: 1 }]
+			} as any);
+
+		it.each([
+			['tenant B’s order', { orderId: ORDER.b, warehouseId: WAREHOUSE.a }],
+			['tenant B’s location', { orderId: ORDER.a, warehouseId: WAREHOUSE.b }]
+		])('refuses a shipment of %s, and writes neither the shipment nor its lines', async (_label, header) => {
+			await expect(ship(header)).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(await h.rows('fulfillment')).toEqual([]);
+			expect(await h.rows('fulfillment_line')).toEqual([]);
+		});
+
+		it.each([
+			['tenant B’s order', { orderId: ORDER.b }],
+			['tenant B’s location', { orderId: ORDER.a, warehouseId: WAREHOUSE.b }]
+		])('refuses to raise a return leg against %s, and writes nothing', async (_label, leg) => {
+			await expect(h.fulfillments.createReturnLeg(leg as any)).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(await h.rows('fulfillment')).toEqual([]);
+		});
+
+		it('refuses to move a shipment to tenant B’s location, and leaves it as it was', async () => {
+			const shipment = await ship({ orderId: ORDER.a, warehouseId: WAREHOUSE.a });
+
+			await expect(
+				h.fulfillments.update(shipment.id, { warehouseId: WAREHOUSE.b } as any)
+			).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect((await h.row('fulfillment', shipment.id)).warehouseId).toBe(WAREHOUSE.a);
+		});
+
+		it('still raises shipments and legs of tenant A’s own order and location, and a location of no tenant', async () => {
+			const shipment = await ship({ orderId: ORDER.a, warehouseId: WAREHOUSE.a });
+			expect(await h.row('fulfillment', shipment.id)).toMatchObject({
+				orderId: ORDER.a,
+				warehouseId: WAREHOUSE.a
+			});
+
+			await h.fulfillments.update(shipment.id, { warehouseId: WAREHOUSE.global } as any);
+			expect((await h.row('fulfillment', shipment.id)).warehouseId).toBe(WAREHOUSE.global);
+
+			const leg = await h.fulfillments.createReturnLeg({ orderId: ORDER.a, warehouseId: WAREHOUSE.a });
+			expect(await h.row('fulfillment', leg.id)).toMatchObject({ orderId: ORDER.a, warehouseId: WAREHOUSE.a });
+		});
+	});
+
+	describe('a shipping-profile attachment’s variantId (unique across tenants)', () => {
+		it('refuses to attach tenant B’s variant, and writes nothing', async () => {
+			await expect(
+				h.attachments.create({ profileId: PROFILE_A, variantId: VARIANT.b } as any)
+			).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(await h.rows('shipping_profile_variant')).toEqual([]);
+		});
+
+		it('refuses to point an attachment at tenant B’s variant, and leaves it as it was', async () => {
+			const own = await h.attachments.create({ profileId: PROFILE_A, variantId: VARIANT.a } as any);
+
+			await expect(h.attachments.update(own.id, { variantId: VARIANT.b } as any)).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+
+			expect((await h.row('shipping_profile_variant', own.id)).variantId).toBe(VARIANT.a);
+		});
+
+		it('refuses an assignment adding tenant B’s variant before it removes or moves any attachment', async () => {
+			const own = await h.attachments.create({ profileId: PROFILE_A, variantId: VARIANT.a } as any);
+
+			await expect(
+				h.profiles.assignVariants(PROFILE_A, { remove: [VARIANT.a], add: [VARIANT.b] })
+			).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect((await h.rows('shipping_profile_variant')).map((row) => row.id)).toEqual([own.id]);
+		});
+
+		it('still attaches tenant A’s own variant and a variant of no tenant', async () => {
+			const attached = await h.profiles.assignVariants(PROFILE_A, { add: [VARIANT.a, VARIANT.global] });
+
+			expect(attached.map((row) => row.variantId).sort()).toEqual([VARIANT.a, VARIANT.global].sort());
+		});
 	});
 });
