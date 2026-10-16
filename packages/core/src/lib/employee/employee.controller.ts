@@ -125,8 +125,8 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/working/count')
 	async findAllWorkingEmployeesCount(@Query('data', ParseJsonPipe) data: any): Promise<{ total: number }> {
 		const { findInput } = data;
-		await this.assertOrganizationMembership(findInput?.organizationId);
 		const { organizationId, forRange } = findInput;
+		await this.assertOrganizationMembership(organizationId);
 		return await this._employeeService.findWorkingEmployeesCount(organizationId, forRange);
 	}
 
