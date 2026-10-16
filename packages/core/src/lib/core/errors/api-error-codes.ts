@@ -120,6 +120,8 @@ export const ApiErrorCode = {
 	BULK_LIMIT_EXCEEDED: 'BULK_LIMIT_EXCEEDED',
 	/** Every item of the batch failed, so the batch is a failure. */
 	BULK_ALL_ITEMS_FAILED: 'BULK_ALL_ITEMS_FAILED',
+	/** The batch asked to be applied atomically and the route declares that it cannot roll one back. */
+	BULK_ATOMIC_UNSUPPORTED: 'BULK_ATOMIC_UNSUPPORTED',
 	/** The operation id is unknown, or its record has been cleaned up. */
 	OPERATION_NOT_FOUND: 'OPERATION_NOT_FOUND',
 	/** The operation is still running and cannot be cancelled at its current step. */

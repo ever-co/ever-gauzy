@@ -308,11 +308,15 @@ export class OneColumnLayoutComponent {
 	}
 
 	/**
-	 * Handles the sidebar collapse event. Auto-expands if both collapsed and compacted.
+	 * Tracks the tenant switcher's accordion state.
+	 *
+	 * This used to expand a compacted sidebar whenever the switcher opened, so clicking it
+	 * from the collapsed rail threw the whole menu open. The switcher's panel is absolutely
+	 * positioned over the rail (see `gauzy-workspace-menu` in the scss), so it opens fine
+	 * without the sidebar changing state.
 	 */
 	onCollapse(event: boolean): void {
 		this.isCollapse.set(event);
-		if (!this.isCollapse() && !this.isExpanded()) this.toggle();
 	}
 
 	/**

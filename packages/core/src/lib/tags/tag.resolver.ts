@@ -12,11 +12,16 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../api/bulk-create';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { bulkOptionsOf } from '../api/bulk.decorator';
 import { RequestContext } from '../core/context';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Tag } from './tag.entity';
+import { TagController } from './tag.controller';
 import { TagService } from './tag.service';
 import { TagListCommand } from './commands';
 import { deleteRemovedRows } from '../graphql/delete-answer';
@@ -119,7 +124,8 @@ const TAG_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 export class TagResolver {
 	constructor(
 		private readonly tagService: TagService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
 	) {}
 
 	/**
@@ -309,6 +315,33 @@ export class TagResolver {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async recoverTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
 		return await this.tagService.softRecover(id);
+	}
+
+	/**
+	 * Files a batch of tags, one outcome per item.
+	 *
+	 * The batch `POST /tags/bulk` applies, run by the same executor from the same declaration — the options
+	 * are read off the controller's own `@BulkOperation`, so the resource, the cap and the permission cannot
+	 * differ between the two surfaces — and each item is filed by `createTag` itself, so an item is the single
+	 * create of this surface: the same service method, with the tenant stamped from the credential. `atomic:
+	 * true` is refused before item 0 with the same `BULK_ATOMIC_UNSUPPORTED` the route answers — the
+	 * declaration (`atomic: false`) is the controller's, read by the same executor.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here, so a
+	 * key it cannot use is refused with the code the route answers.
+	 */
+	@Mutation('bulkCreateTags')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
+	@Idempotent({ scope: 'tag.bulk', required: false, resourceType: 'tag' })
+	async bulkCreateTags(@Args('input') input: IBulkCreateInput<ICreateTagInput>): Promise<IBulkCreatePayload> {
+		const result = await this.bulkExecutor.execute<ICreateTagInput>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createTag(body)),
+			bulkOptionsOf(TagController, 'bulk')
+		);
+
+		return toBulkCreatePayload(result);
 	}
 
 	/**

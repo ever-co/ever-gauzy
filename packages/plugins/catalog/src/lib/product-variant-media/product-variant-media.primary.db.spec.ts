@@ -54,7 +54,7 @@ const ORG = '3c7e0000-0000-4000-8000-0000000000a1';
 
 import 'reflect-metadata';
 import { DataSource, EntitySchema } from 'typeorm';
-import { ProductVariant } from '@gauzy/core';
+import { ImageAsset, ProductVariant } from '@gauzy/core';
 import { CreateCatalogTables1791000000100 } from '../database/migrations/1791000000100-CreateCatalogTables';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { ProductVariantMediaService } from './product-variant-media.service';
@@ -96,6 +96,19 @@ const TypeOrmProductVariant = new EntitySchema<any>({
 	}
 });
 
+/** The images a gallery names: `replaceMedia` checks they are the caller's before writing (SEC-D-04). */
+const TypeOrmImageAsset = new EntitySchema<any>({
+	name: 'ImageAsset',
+	target: ImageAsset,
+	tableName: 'image_asset',
+	columns: {
+		id: { type: 'varchar', primary: true },
+		deletedAt: { type: 'datetime', nullable: true, deleteDate: true },
+		tenantId: { type: 'varchar', nullable: true },
+		organizationId: { type: 'varchar', nullable: true }
+	}
+});
+
 describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_media_primary (SQLite)', () => {
 	let dataSource: DataSource;
 	let service: ProductVariantMediaService;
@@ -105,7 +118,7 @@ describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_m
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [TypeOrmProductVariantMedia, TypeOrmProductVariant],
+			entities: [TypeOrmProductVariantMedia, TypeOrmProductVariant, TypeOrmImageAsset],
 			synchronize: false,
 			logging: false
 		});
@@ -127,6 +140,12 @@ describe('ProductVariantMediaService — moving the thumbnail under UQ_variant_m
 			TENANT,
 			ORG
 		]);
+		await dataSource.query(
+			`CREATE TABLE IF NOT EXISTS "image_asset" ("id" varchar PRIMARY KEY NOT NULL, "deletedAt" datetime, "tenantId" varchar, "organizationId" varchar)`
+		);
+		for (const image of [IMAGE_A, IMAGE_B, IMAGE_C]) {
+			await dataSource.query(`INSERT INTO "image_asset" ("id", "tenantId", "organizationId") VALUES (?, ?, ?)`, [image, TENANT, ORG]);
+		}
 
 		const repository = dataSource.getRepository(ProductVariantMedia);
 		service = new ProductVariantMediaService(repository as any, {} as any);
