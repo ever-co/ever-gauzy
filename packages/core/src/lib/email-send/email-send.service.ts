@@ -23,6 +23,9 @@ import {
 	IEmailTransportResolution
 } from './email-transport.registry';
 
+/** The sender when neither the transport nor `MAIL_FROM_ADDRESS` names one (one literal: the egress baseline counts it). */
+const DEFAULT_FROM_ADDRESS = 'noreply@gauzy.co';
+
 /** An address as nodemailer takes it. */
 export type OutboundEmailAddress = string | { name?: string; address: string };
 
@@ -315,7 +318,7 @@ export class EmailSendService {
 	 */
 	private getProviderEmailConfig(resolution: IEmailTransportResolution): Email<any> {
 		const fromAddress =
-			resolution.fromAddress || SMTPUtils.defaultSMTPTransporter(false)?.fromAddress || 'noreply@gauzy.co';
+			resolution.fromAddress || SMTPUtils.defaultSMTPTransporter(false)?.fromAddress || DEFAULT_FROM_ADDRESS;
 		return this.buildEmail(resolution.transport, fromAddress);
 	}
 
@@ -327,7 +330,7 @@ export class EmailSendService {
 	private getEmailConfig(smtpConfig: ISMTPConfig): Email<any> {
 		// Single source of truth for transport normalization
 		const transport: any = SMTPUtils.buildTransportFromSMTPConfig(smtpConfig);
-		return this.buildEmail(transport, smtpConfig.fromAddress || 'noreply@gauzy.co');
+		return this.buildEmail(transport, smtpConfig.fromAddress || DEFAULT_FROM_ADDRESS);
 	}
 
 	/**
