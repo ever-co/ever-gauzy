@@ -102,7 +102,7 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.AGENTS' | translate" data-test="tab-agents">
 				<p>{{ 'EVER_WORKS.REVIEW.AGENTS_INTRO' | translate }}</p>
 				@if (errors.agents) {
-					<nb-alert status="danger" role="alert" data-test="agents-error">{{ errors.agents }}</nb-alert>
+					<nb-alert status="danger" role="alert" data-test="agents-error">{{ errors.agents | translate }}</nb-alert>
 				}
 				@if (!agents.length) {
 					<p data-test="agents-empty">{{ 'EVER_WORKS.REVIEW.AGENTS_EMPTY' | translate }}</p>

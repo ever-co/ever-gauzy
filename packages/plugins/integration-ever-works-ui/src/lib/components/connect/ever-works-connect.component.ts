@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -116,7 +116,7 @@ export interface EverWorksConnectResult {
 							<dt>{{ 'EVER_WORKS.CONNECT.TENANT' | translate }}</dt>
 							<dd data-test="validation-tenant">{{ validation.tenant.slug }}</dd>
 							<dt>{{ 'EVER_WORKS.CONNECT.KEY_NAME' | translate }}</dt>
-							<dd>{{ validation.keyName }} (<code>{{ validation.keyPrefix }}…</code>)</dd>
+							<dd>{{ validation.keyName }} (<code>{{ validation.keyPrefix }}</code>)</dd>
 							<dt>{{ 'EVER_WORKS.CONNECT.ORGANIZATIONS' | translate }}</dt>
 							<dd data-test="validation-organizations">{{ organizationNames(validation) }}</dd>
 							<dt>{{ 'EVER_WORKS.CONNECT.SCOPES' | translate }}</dt>
@@ -286,9 +286,12 @@ export class EverWorksConnectComponent implements OnChanges {
 		return !!this.validation && this.validation.compatible && !this.validation.missingRequiredScopes.length && !!this.apiKey;
 	}
 
-	ngOnChanges(): void {
+	ngOnChanges(changes?: SimpleChanges): void {
 		if (!this.apiBaseUrl && this.defaultApiUrl) this.apiBaseUrl = this.defaultApiUrl;
-		this.step = this.mapping ? 'review' : this.connection ? 'organization' : this.step === 'connect' ? 'connect' : 'key';
+		// Only a new connection or mapping moves the wizard; any other input (the organization's name, say)
+		// leaves the admin on the step they are on.
+		const resumes = !changes || 'connection' in changes || 'mapping' in changes;
+		if (resumes) this.step = this.mapping ? 'review' : this.connection ? 'organization' : this.step === 'connect' ? 'connect' : 'key';
 		this.preselectOrganization();
 	}
 
