@@ -60,6 +60,11 @@ jest.mock('@gauzy/core', () => {
 		ImageAsset: class ImageAsset {},
 		OrganizationContact: class OrganizationContact {},
 		Warehouse: class Warehouse {},
+		// The cross-tenant reference check is the platform's own, run over this suite's database.
+		assertPlainReferencesNotForeign: (...args: unknown[]) =>
+			jest
+				.requireActual('@gauzy/core/src/lib/core/crud/plain-reference-ownership.helper')
+				.assertPlainReferencesNotForeign(...args),
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,

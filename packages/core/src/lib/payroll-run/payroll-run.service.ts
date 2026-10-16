@@ -706,6 +706,14 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 		run.totalDeductions = deductionCents / 100;
 		run.totalNet = (grossCents - deductionCents) / 100;
 
-		return manager.save(PayrollRun, run);
+		// Only the totals are written. Saving the whole run would also save the `items` it was read with,
+		// and TypeORM deletes any line missing from that list, such as the one `addItem` has just added.
+		await manager.update(
+			PayrollRun,
+			{ id: run.id, tenantId: run.tenantId, organizationId: run.organizationId } as FindOptionsWhere<PayrollRun>,
+			{ totalGross: run.totalGross, totalDeductions: run.totalDeductions, totalNet: run.totalNet }
+		);
+
+		return run;
 	}
 }

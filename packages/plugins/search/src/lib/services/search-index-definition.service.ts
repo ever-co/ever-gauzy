@@ -6,10 +6,24 @@ import {
 	MikroOrmSearchIndexDefinitionRepository,
 	RequestContext,
 	SearchIndexDefinition,
-	TypeOrmSearchIndexDefinitionRepository
+	TypeOrmSearchIndexDefinitionRepository,
+	isUniqueViolation
 } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SEARCH_INDEX_DEFINITIONS } from '../definitions';
+
+/** What an operator may change on a definition. */
+interface IDefinitionChanges {
+	label?: string;
+	fields?: ISearchIndexField[];
+	titleTemplate?: string;
+	bodyTemplate?: string;
+	keywordFields?: string[];
+	defaultWeight?: number;
+	sourceUpdatedAtField?: string;
+	isActive?: boolean;
+	metadata?: JsonData;
+}
 
 /** The fields of a declaration an operator may change, and which bump the version when they do. */
 interface IDefinitionShape {
@@ -133,6 +147,8 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 			existing.deletedAt = null;
 			await repository.save(existing);
 			updated += 1;
+
+			updated += await this.reconcileOrganizationCopies(declaration, existing);
 		}
 
 		if (created > 0 || updated > 0) {
@@ -140,6 +156,47 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 		}
 
 		return { created, updated };
+	}
+
+	/**
+	 * Carries a declaration's field set into the organizations' own copies of its platform row.
+	 *
+	 * A copy (`updateDefinition`) is the definition `findFor` answers for its organization, so a field set it stopped
+	 * following would keep that organization on an index the code no longer declares — a field added in code never
+	 * indexed there, one removed still read (CodeRabbit). The same merge as the platform row's applies: the code owns
+	 * the field set, the copy keeps every weight, flag, template and switch its organization tuned, and its version is
+	 * bumped when its effective shape changed, so the next sweep rebuilds that organization's documents. A copy stays
+	 * the organization's own (`isSystem` false): deleting it still falls back to the shipped row.
+	 *
+	 * @param declaration The declaration.
+	 * @param platform The platform row just synchronised, which is not a copy.
+	 * @returns How many copies changed.
+	 */
+	private async reconcileOrganizationCopies(
+		declaration: ISearchIndexRegistration,
+		platform: SearchIndexDefinition
+	): Promise<number> {
+		const repository = this.typeOrmSearchIndexDefinitionRepository;
+		const copies = (await repository.find({ where: { entity: declaration.entity } as any })).filter(
+			(row) => !!row.organizationId && row.id !== platform.id
+		);
+		let changed = 0;
+
+		for (const copy of copies) {
+			const before = this.serialiseShape(this.shapeOfRow(copy));
+
+			copy.fields = this.mergeDeclaredFields(copy.fields, declaration);
+
+			if (this.serialiseShape(this.shapeOfRow(copy)) === before) {
+				continue;
+			}
+
+			copy.version = Math.max(1, Number(copy.version) || 1) + 1;
+			await repository.save(copy);
+			changed += 1;
+		}
+
+		return changed;
 	}
 
 	/**
@@ -167,6 +224,24 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 		}
 
 		return await repository.findOne({ where: { entity, organizationId: IsNull() } as any });
+	}
+
+	/**
+	 * The organizations' own definitions of one entity that are switched off.
+	 *
+	 * A sweep reads the source rows of every organization in its tenant, so it is the one place an organization that
+	 * switched its own copy off (SEC-B-04) has to be named: its documents are not another organization's to rebuild.
+	 *
+	 * @param entity The entity key.
+	 * @param tenantId The tenant whose copies are read; every tenant's when none is named (a system sweep).
+	 * @returns The switched-off copies, each naming its tenant and organization.
+	 */
+	async inactiveOrganizationCopies(entity: string, tenantId?: ID | null): Promise<SearchIndexDefinition[]> {
+		const rows = await this.typeOrmSearchIndexDefinitionRepository.find({
+			where: { entity, isActive: false, ...(tenantId ? { tenantId } : {}) } as any
+		});
+
+		return rows.filter((row) => !!row.organizationId);
 	}
 
 	/**
@@ -251,21 +326,46 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	 * @returns The updated row.
 	 * @throws BadRequestException when nothing writable was supplied.
 	 */
-	async updateDefinition(
-		id: ID,
-		changes: {
-			label?: string;
-			fields?: ISearchIndexField[];
-			titleTemplate?: string;
-			bodyTemplate?: string;
-			keywordFields?: string[];
-			defaultWeight?: number;
-			sourceUpdatedAtField?: string;
-			isActive?: boolean;
-			metadata?: JsonData;
+	async updateDefinition(id: ID, changes: IDefinitionChanges): Promise<SearchIndexDefinition> {
+		// A shipped (platform) row is every tenant's: a change to it lands on a copy scoped to the caller's tenant and
+		// organization, which `findFor` prefers for that organization (SEC-B-04). The platform row is never saved from
+		// a request — switched off or re-weighted in place, it changed every other tenant's index.
+		const found = await this.findOneScoped(id);
+
+		if (found.tenantId) {
+			return await this.saveChanges(found, changes);
 		}
-	): Promise<SearchIndexDefinition> {
-		const row = await this.findOneScoped(id);
+
+		const copy = await this.organizationCopyOf(found);
+		const first = !copy.id;
+
+		try {
+			return await this.saveChanges(copy, changes);
+		} catch (error) {
+			// Two first changes of one organization both found no copy, and the unique index let one of them in
+			// (Greptile). This change is applied to the copy that won rather than refused with the database's error.
+			if (!first || !isUniqueViolation(error)) {
+				throw error;
+			}
+
+			const winner = await this.organizationCopyOf(found);
+
+			if (!winner.id) {
+				throw error;
+			}
+
+			return await this.saveChanges(winner, changes);
+		}
+	}
+
+	/**
+	 * Applies an operator's change to a tenant's row and saves it.
+	 *
+	 * @param row The row: an organization's own, never a platform row.
+	 * @param changes The fields to change.
+	 * @returns The saved row.
+	 */
+	private async saveChanges(row: SearchIndexDefinition, changes: IDefinitionChanges): Promise<SearchIndexDefinition> {
 		const shapeBefore = this.serialiseShape(this.shapeOfRow(row));
 
 		if (changes.label !== undefined) {
@@ -312,7 +412,58 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 			row.version = Math.max(1, Number(row.version) || 1) + 1;
 		}
 
+		if (!row.tenantId) {
+			throw new BadRequestException('A shipped search index definition is never changed in place; it is changed for one organization.');
+		}
+
 		return await this.typeOrmSearchIndexDefinitionRepository.save(row);
+	}
+
+	/**
+	 * The caller's organization's own copy of a platform definition: the one it already has, or a new one carrying
+	 * the platform row's shape and version, which the change is then applied to.
+	 *
+	 * @param platform The platform row.
+	 * @returns The organization's row, saved or not yet saved.
+	 * @throws BadRequestException when the request names no tenant or organization to scope the copy to.
+	 */
+	private async organizationCopyOf(platform: SearchIndexDefinition): Promise<SearchIndexDefinition> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException(
+				`The "${platform.entity}" index definition is shipped for every organization; select an organization to change it for.`
+			);
+		}
+
+		const existing = await this.typeOrmSearchIndexDefinitionRepository.findOne({
+			where: { entity: platform.entity, tenantId, organizationId } as any
+		});
+
+		if (existing) {
+			return existing;
+		}
+
+		return Object.assign(this.typeOrmSearchIndexDefinitionRepository.create(), {
+			entity: platform.entity,
+			label: platform.label,
+			engineKey: platform.engineKey,
+			fields: JSON.parse(JSON.stringify(platform.fields ?? [])),
+			defaultWeight: platform.defaultWeight,
+			titleTemplate: platform.titleTemplate,
+			bodyTemplate: platform.bodyTemplate,
+			keywordFields: platform.keywordFields ? [...platform.keywordFields] : platform.keywordFields,
+			sourceUpdatedAtField: platform.sourceUpdatedAtField,
+			metadata: platform.metadata,
+			isActive: platform.isActive,
+			// The copy is the organization's own: deleting it falls back to the shipped definition.
+			isSystem: false,
+			// Documents built at the platform version are current for the copy until its shape changes.
+			version: platform.version,
+			tenantId,
+			organizationId
+		}) as SearchIndexDefinition;
 	}
 
 	/**
@@ -472,10 +623,24 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	 * @param declaration The declaration.
 	 */
 	private applyDeclaration(row: SearchIndexDefinition, declaration: ISearchIndexRegistration): void {
-		const stored = row.fields ?? [];
+		row.fields = this.mergeDeclaredFields(row.fields, declaration);
+		row.entity = declaration.entity;
+		row.isSystem = true;
+	}
 
-		row.fields = (declaration.fields ?? []).map((field) => {
-			const existing = stored.find((candidate) => candidate.name === field.name);
+	/**
+	 * The declaration's field set, each field keeping the weight and the flags a row already holds for it.
+	 *
+	 * @param stored The fields the row holds.
+	 * @param declaration The declaration.
+	 * @returns The merged fields.
+	 */
+	private mergeDeclaredFields(
+		stored: ISearchIndexField[] | null | undefined,
+		declaration: ISearchIndexRegistration
+	): ISearchIndexField[] {
+		return (declaration.fields ?? []).map((field) => {
+			const existing = (stored ?? []).find((candidate) => candidate.name === field.name);
 
 			if (!existing) {
 				return field;
@@ -489,9 +654,6 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 				facetable: existing.facetable ?? field.facetable
 			};
 		});
-
-		row.entity = declaration.entity;
-		row.isSystem = true;
 	}
 
 	/**

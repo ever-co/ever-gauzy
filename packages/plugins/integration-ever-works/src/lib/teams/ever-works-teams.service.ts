@@ -1,11 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { DataSource, In } from 'typeorm';
-import { ID } from '@gauzy/contracts';
-import { OrganizationProject, OrganizationTeam, OrganizationTeamEmployee, Task } from '@gauzy/core';
+import { ID, RolesEnum } from '@gauzy/contracts';
+import { IntegrationTenant, OrganizationProject, OrganizationTeam, OrganizationTeamEmployee, Role, Task } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
+import { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
+import { EverWorksSettingName } from '../ever-works-setting.enum';
 import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksLinkState, EverWorksLinkType, EverWorksOutboundChange } from '../sync/entities/ever-works-sync.entities';
@@ -13,6 +15,8 @@ import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import type { EverWorksApplyContext, EverWorksApplyOutcome, EverWorksInboundHandler } from '../sync/inbound/ever-works-inbound.applier';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
+import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import type { EverWorksSyncSweeper } from '../sync/ever-works-sync.loop';
 import { emojiOf } from './ever-works-team-scope';
 
 /** A member of an Ever Works team (contract v1 `TeamMemberRef`). */
@@ -63,6 +67,8 @@ interface TeamEverWorksOnly {
 	/** Ever Works' full member set at the last sync, including members Gauzy cannot map. */
 	members?: EverWorksTeamMemberRef[];
 	resources?: EverWorksTeamResourceRef[];
+	/** Members (`<type>:<id>`) Gauzy could not map at the last sync; tried again on the next change and by the sweep. */
+	unmapped?: string[];
 }
 
 /** One Ever Works team as the Teams tab shows it. */
@@ -97,6 +103,15 @@ const key = (ref: Pick<EverWorksTeamMemberRef, 'memberType' | 'memberId'>) => `$
 const fromEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'ew_to_gauzy';
 const toEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'gauzy_to_ew';
 const sameName = (a: string | null | undefined, b: string | null | undefined) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+/** The platform's rule for a team manager: `isManager`, or the `MANAGER` role on the membership. */
+const isManagerMember = (row: { isManager?: boolean; role?: { name?: string } | null }) => !!row.isManager || row.role?.name === RolesEnum.MANAGER;
+const sameMembers = (a: Array<{ employeeId: ID; isManager: boolean }>, b: Array<{ employeeId: ID; isManager: boolean }>) => {
+	const left = new Map(a.map((m) => [m.employeeId, m.isManager]));
+	return a.length === b.length && b.every((m) => left.has(m.employeeId) && left.get(m.employeeId) === m.isManager);
+};
+
+/** How often the membership sweep runs per connection. */
+export const TEAM_SWEEP_MS = 10 * 60_000;
 
 /**
  * Teams (plan 01 §5, plan 06 G-P1-7), both ways, linked as `TEAM`.
@@ -116,16 +131,19 @@ const sameName = (a: string | null | undefined, b: string | null | undefined) =>
  *   confirms); only teams created after the mapping sync without a review.
  */
 @Injectable()
-export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorksOutboundHandler {
+export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorksOutboundHandler, EverWorksSyncSweeper {
 	readonly aggregateTypes = ['team'] as const;
 	readonly entityTypes = [EverWorksLinkType.TEAM] as const;
+	readonly sweepIntervalMs = TEAM_SWEEP_MS;
 	private readonly logger = new Logger('EverWorksTeams');
+	private readonly managerRoles = new Map<ID, ID | null>();
 
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly contexts: EverWorksMappingContextService,
 		private readonly connections: EverWorksConnectionService,
-		private readonly links: EverWorksLinkService
+		private readonly links: EverWorksLinkService,
+		private readonly queue: EverWorksOutboundQueue
 	) {}
 
 	// ── Teams tab ──────────────────────────────────────────────────────────────────────────────────
@@ -139,12 +157,33 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 	/** `PUT /mappings/:id/teams`: confirms or removes pairs, accepts suggestions, creates on the other side. */
 	async decide(integrationTenantId: ID, decision: EverWorksTeamsDecision, organizationId?: ID): Promise<EverWorksTeamsView> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
+		// Creating a team writes a record, so it follows the mapping switch and the teams direction like the
+		// sync does (pairing only writes links, and stays available while the mapping is being set up).
+		const creates = !!decision.createInGauzy?.length || !!decision.createInEverWorks?.length;
+		if (creates && !context.isEnabled) throw new BadRequestException('The mapping is disabled; enable it before creating teams.');
+		if (decision.createInGauzy?.length && !fromEverWorks(context.directions.teams)) {
+			throw new BadRequestException('Teams are not synced from Ever Works for this mapping, so Ever Works teams cannot be created in Gauzy.');
+		}
+		if (decision.createInEverWorks?.length && !toEverWorks(context.directions.teams)) {
+			throw new BadRequestException('Teams are not pushed to Ever Works for this mapping, so Gauzy teams cannot be created in Ever Works.');
+		}
 		const ewTeams = await this.everWorksTeams(context);
 		const byEw = new Map(ewTeams.map((team) => [team.id, team]));
 		const pairs = [...(decision.links ?? [])];
 		if (decision.acceptSuggestions) {
-			for (const row of (await this.view(context, ewTeams)).teams) {
-				if (row.suggestion && !row.linkedTeamId) pairs.push({ ewTeamId: row.ewTeamId, teamId: row.suggestion.teamId });
+			const suggested = (await this.view(context, ewTeams)).teams.flatMap((row) =>
+				row.suggestion && !row.linkedTeamId ? [{ ewTeamId: row.ewTeamId, teamId: row.suggestion.teamId }] : []
+			);
+			// A Gauzy team suggested for several Ever Works teams (the same name, e.g. nested teams) is ambiguous:
+			// it is left for the admin to pair one by one instead of failing the whole request. An explicit link
+			// in the same request wins over a suggestion for either team.
+			const timesSuggested = new Map<ID, number>();
+			for (const suggestion of suggested) timesSuggested.set(suggestion.teamId, (timesSuggested.get(suggestion.teamId) ?? 0) + 1);
+			const claimedEw = new Set(pairs.map((pair) => pair.ewTeamId));
+			const claimedGauzy = new Set(pairs.map((pair) => pair.teamId));
+			for (const suggestion of suggested) {
+				if (timesSuggested.get(suggestion.teamId) !== 1 || claimedEw.has(suggestion.ewTeamId) || claimedGauzy.has(suggestion.teamId)) continue;
+				pairs.push(suggestion);
 			}
 		}
 		const gauzyIds = [...pairs.map((pair) => pair.teamId), ...(decision.createInEverWorks ?? [])];
@@ -165,8 +204,10 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			if (!gauzyTeams.has(teamId)) throw new BadRequestException(`${teamId} is not an active team of this organization.`);
 		}
 		for (const ewTeamId of decision.unlinks ?? []) {
+			// Kept as `unlinked`, not deleted: the admin's decision is durable, so a later edit of a team
+			// created after the mapping never pairs it (or creates it in Ever Works) again on its own.
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, ewTeamId);
-			if (link) await this.links.remove(link);
+			if (link) await this.links.unlink(link, 'unpaired on the Teams tab');
 		}
 		for (const pair of pairs) {
 			// A pairing replaces the previous one of either side; neither team is changed now.
@@ -187,13 +228,13 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		// The sync writes these, so nothing they change is captured as a Gauzy change (loop guard 1).
 		await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `teams-tab:${context.integrationTenantId}` }, async () => {
 			for (const ewTeamId of decision.createInGauzy ?? []) {
-				if (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, ewTeamId)) continue;
+				if (await this.livePairOf(await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, ewTeamId))) continue;
 				await this.applyTeam(context, null, byEw.get(ewTeamId) as EverWorksTeam, null, true);
 			}
 		});
 		const client = this.client(context);
 		for (const teamId of decision.createInEverWorks ?? []) {
-			if (await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TEAM, teamId)) continue;
+			if (await this.livePairOf(await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TEAM, teamId))) continue;
 			await this.createInEverWorks(context, client, gauzyTeams.get(teamId) as OrganizationTeam);
 		}
 		return this.view(context, await this.everWorksTeams(context));
@@ -244,6 +285,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		const before = this.links.snapshot<TeamSnapshot>(link);
 		const ewBefore = this.everWorksOnly(link);
 		const emoji = emojiOf(team.avatarIcon);
+		const iconChanged = !link || (team.avatarIcon ?? null) !== (ewBefore.avatarIcon ?? null);
 		let teamId = link?.gauzyId as ID | undefined;
 		const repository = this.dataSource.getRepository(OrganizationTeam);
 		if (!teamId) {
@@ -258,44 +300,79 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			const changes: Record<string, unknown> = {};
 			if (team.name && team.name !== before.name) changes['name'] = team.name;
 			// Only a changed Ever Works icon is written (lossy fields never flap).
-			if ((team.avatarIcon ?? null) !== (ewBefore.avatarIcon ?? null) && emoji !== (before.emoji ?? null)) changes['emoji'] = emoji;
+			if (iconChanged && emoji !== (before.emoji ?? null)) changes['emoji'] = emoji;
 			if (Object.keys(changes).length) await repository.update({ id: teamId } as never, changes as never);
 		}
 		const members = team.members ?? ewBefore.members ?? [];
-		await this.applyMemberSet(context, teamId, ewBefore.members ?? [], members, team.managerAgentId ?? null);
+		const applied = await this.applyMemberSet(context, teamId, before.members ?? [], {
+			previous: ewBefore.members ?? [],
+			next: members,
+			previousManagerAgentId: ewBefore.managerAgentId ?? null,
+			nextManagerAgentId: team.managerAgentId ?? null,
+			previouslyUnmapped: ewBefore.unmapped ?? []
+		});
 		await this.record(
 			context,
 			teamId,
 			{ ...team, members, resources: team.resources ?? ewBefore.resources ?? [] },
 			version ?? team.version ?? null,
-			{ name: team.name, emoji, members: await this.currentMembers(teamId) },
-			'inbound'
+			// The snapshot moves only by what was applied here: a Gauzy edit not pushed yet stays a difference.
+			{ name: team.name || before.name || '', emoji: iconChanged ? emoji : (before.emoji ?? null), members: applied.members },
+			'inbound',
+			applied.unmapped
 		);
 		return { status: 'applied' };
 	}
 
-	/** Ever Works' member set moved from `previous` to `next`: the same adds and removes in Gauzy. */
+	/**
+	 * Ever Works' member set moved from `previous` to `next`: the same adds, removes and lead changes in
+	 * Gauzy. Members Ever Works has that Gauzy could not map at the last sync are tried again (a person
+	 * paired since then joins). Returns the Gauzy side of the snapshot advanced by exactly what was applied,
+	 * and the members still unmapped.
+	 */
 	private async applyMemberSet(
 		context: EverWorksMappingContext,
 		teamId: ID,
-		previous: EverWorksTeamMemberRef[],
-		next: EverWorksTeamMemberRef[],
-		managerAgentId: string | null
-	): Promise<void> {
-		const before = new Map(previous.map((ref) => [key(ref), ref]));
-		const after = new Map(next.map((ref) => [key(ref), ref]));
-		const lead = (ref: EverWorksTeamMemberRef) => ref.role === 'lead' || (ref.memberType === 'agent' && ref.memberId === managerAgentId);
+		snapshotMembers: Array<{ employeeId: ID; isManager: boolean }>,
+		change: {
+			previous: EverWorksTeamMemberRef[];
+			next: EverWorksTeamMemberRef[];
+			previousManagerAgentId: string | null;
+			nextManagerAgentId: string | null;
+			previouslyUnmapped: string[];
+		}
+	): Promise<{ members: Array<{ employeeId: ID; isManager: boolean }>; unmapped: string[] }> {
+		const before = new Map(change.previous.map((ref) => [key(ref), ref]));
+		const after = new Map(change.next.map((ref) => [key(ref), ref]));
+		const retry = new Set(change.previouslyUnmapped);
+		// The old member is judged by the old manager agent, the new one by the new (a manager hand-over).
+		const leadBefore = (ref: EverWorksTeamMemberRef) => ref.role === 'lead' || (ref.memberType === 'agent' && ref.memberId === change.previousManagerAgentId);
+		const leadAfter = (ref: EverWorksTeamMemberRef) => ref.role === 'lead' || (ref.memberType === 'agent' && ref.memberId === change.nextManagerAgentId);
+		const snapshot = new Map(snapshotMembers.map((m) => [m.employeeId, m.isManager]));
+		const unmapped: string[] = [];
 		for (const ref of after.values()) {
 			const was = before.get(key(ref));
-			if (was && lead(was) === lead(ref)) continue;
+			const unchanged = !!was && leadBefore(was) === leadAfter(ref) && !retry.has(key(ref));
 			const employeeId = await this.employeeFor(context, ref);
-			if (employeeId) await this.upsertMembership(context, teamId, employeeId, lead(ref));
+			if (!employeeId) {
+				unmapped.push(key(ref));
+				continue;
+			}
+			if (unchanged) continue;
+			await this.upsertMembership(context, teamId, employeeId, leadAfter(ref));
+			snapshot.set(employeeId, leadAfter(ref));
 		}
 		for (const ref of before.values()) {
 			if (after.has(key(ref))) continue;
 			const employeeId = await this.employeeFor(context, ref);
-			if (employeeId) await this.dataSource.getRepository(OrganizationTeamEmployee).delete({ organizationTeamId: teamId, employeeId } as never);
+			if (!employeeId) continue;
+			await this.dataSource.getRepository(OrganizationTeamEmployee).delete({ organizationTeamId: teamId, employeeId } as never);
+			snapshot.delete(employeeId);
 		}
+		return {
+			members: [...snapshot.entries()].map(([employeeId, isManager]) => ({ employeeId, isManager })).sort((a, b) => String(a.employeeId).localeCompare(String(b.employeeId))),
+			unmapped
+		};
 	}
 
 	private async applyMember(
@@ -307,18 +384,25 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 	): Promise<EverWorksApplyOutcome> {
 		if (!link) return { status: 'skipped', message: 'the team is not linked' };
 		const ew = this.everWorksOnly(link);
+		const snapshot = this.links.snapshot<TeamSnapshot>(link);
 		const previous = ew.members ?? [];
 		const next = previous.filter((ref) => key(ref) !== key(member));
 		if (!removed && !member.deleted) next.push({ memberType: member.memberType, memberId: member.memberId, role: member.role });
-		await this.applyMemberSet(context, link.gauzyId as ID, previous, next, ew.managerAgentId ?? null);
-		const snapshot = this.links.snapshot<TeamSnapshot>(link);
+		const applied = await this.applyMemberSet(context, link.gauzyId as ID, snapshot.members ?? [], {
+			previous,
+			next,
+			previousManagerAgentId: ew.managerAgentId ?? null,
+			nextManagerAgentId: ew.managerAgentId ?? null,
+			previouslyUnmapped: ew.unmapped ?? []
+		});
 		await this.record(
 			context,
 			link.gauzyId as ID,
 			{ ...this.teamFrom(link), members: next },
 			version,
-			{ name: snapshot.name ?? '', emoji: snapshot.emoji ?? null, members: await this.currentMembers(link.gauzyId as ID) },
-			'inbound'
+			{ name: snapshot.name ?? '', emoji: snapshot.emoji ?? null, members: applied.members },
+			'inbound',
+			applied.unmapped
 		);
 		return { status: 'applied' };
 	}
@@ -396,19 +480,32 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 	}
 
 	private async update(context: EverWorksMappingContext, client: EverWorksClient, team: OrganizationTeam, link: EverWorksEntityLink): Promise<EverWorksPushOutcome> {
-		const before = this.links.snapshot<TeamSnapshot>(link);
-		const ewTeamId = link.ewId;
-		const nowMembers = await this.currentMembers(team.id as ID);
-		const emoji = team.emoji ?? null;
-		let ew = this.everWorksOnly(link);
-		let version = link.ewVersion ?? undefined;
+		let row = team;
+		let pair = link;
 		for (let attempt = 0; attempt < 2; attempt++) {
+			const before = this.links.snapshot<TeamSnapshot>(pair);
+			const ewTeamId = pair.ewId;
+			const nowMembers = await this.currentMembers(row.id as ID);
+			const emoji = row.emoji ?? null;
+			let ew = this.everWorksOnly(pair);
+			let version = pair.ewVersion ?? undefined;
 			try {
 				const patch: Record<string, unknown> = {};
-				if (team.name !== before.name) patch['name'] = team.name;
+				if (row.name !== before.name) patch['name'] = row.name;
 				if (emoji !== (before.emoji ?? null)) patch['avatarIcon'] = emoji;
 				const merged = await this.mergedMembers(context, before.members ?? [], nowMembers, ew.members ?? []);
-				if (!Object.keys(patch).length && !merged.changed) return { status: 'skipped', message: 'nothing changed' };
+				if (!Object.keys(patch).length && !merged.changed) {
+					// Nothing to send. Members only Gauzy has (no person link) may still differ from the snapshot:
+					// record them, so the drift sweep does not queue this team again.
+					if (!sameMembers(before.members ?? [], nowMembers)) {
+						await this.record(context, row.id as ID, { ...this.teamFrom(pair), id: ewTeamId }, pair.ewVersion ?? null, {
+							name: before.name ?? row.name,
+							emoji: before.emoji ?? null,
+							members: nowMembers
+						}, 'outbound');
+					}
+					return { status: 'skipped', message: 'nothing changed' };
+				}
 				if (Object.keys(patch).length) {
 					const updated = await client.request<EverWorksTeam>('PATCH', `/teams/${encodeURIComponent(ewTeamId)}`, { body: patch, ifMatchVersion: version });
 					version = updated?.version ?? version;
@@ -421,18 +518,43 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 					version = updated?.version ?? version;
 					ew = { ...ew, members: updated?.members ?? merged.members };
 				}
-				await this.record(context, team.id as ID, { ...this.teamFrom(link), ...ew, id: ewTeamId, name: team.name, avatarIcon: emoji }, version ?? null, {
-					name: team.name,
+				await this.record(context, row.id as ID, { ...this.teamFrom(pair), ...ew, id: ewTeamId, name: row.name, avatarIcon: emoji }, version ?? null, {
+					name: row.name,
 					emoji,
 					members: nowMembers
 				}, 'outbound');
 				return { status: 'pushed' };
 			} catch (error) {
-				// 412: Ever Works moved on; read it again and merge once more (plan 03 §C.3).
 				if (!(error instanceof EverWorksApiError && error.status === 412) || attempt === 1) throw error;
-				const current = await client.request<EverWorksTeam>('GET', `/teams/${encodeURIComponent(ewTeamId)}`);
-				version = current.version ?? undefined;
-				ew = { ...ew, members: current.members ?? ew.members, resources: current.resources ?? ew.resources };
+				// 412: Ever Works moved on. When teams sync from Ever Works, its newer state is applied to Gauzy
+				// first (as the sync, so it is not captured back), then this push is merged again on top of it:
+				// no remote change is skipped by the version that gets recorded (plan 03 §C.3).
+				const remote = await client.request<EverWorksTeam>('GET', `/teams/${encodeURIComponent(ewTeamId)}`);
+				if (fromEverWorks(context.directions.teams)) {
+					await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `team-412:${ewTeamId}` }, () =>
+						this.applyTeam(context, pair, { ...remote, id: ewTeamId }, remote.version ?? null, false)
+					);
+				} else {
+					// One way (Gauzy → Ever Works): nothing is written to Gauzy. Only Ever Works' newer state and
+					// version are recorded, with the Gauzy snapshot unchanged, so the retry merges the Gauzy
+					// changes since the last sync on top of Ever Works' current team.
+					await this.record(
+						context,
+						row.id as ID,
+						{ ...remote, id: ewTeamId, members: remote.members ?? ew.members ?? [], resources: remote.resources ?? ew.resources ?? [] },
+						remote.version ?? null,
+						{ name: before.name ?? row.name, emoji: before.emoji ?? null, members: before.members ?? [] },
+						'outbound',
+						ew.unmapped ?? []
+					);
+				}
+				const freshLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TEAM, row.id as ID);
+				const freshTeam = await this.dataSource
+					.getRepository(OrganizationTeam)
+					.findOne({ where: { id: row.id, tenantId: context.tenantId } as never, withDeleted: true });
+				if (!freshLink || !freshTeam) return { status: 'skipped', message: 'the team changed during the push' };
+				pair = freshLink;
+				row = freshTeam;
 			}
 		}
 		throw new Error('unreachable');
@@ -498,6 +620,86 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		this.logger.log(`Gauzy team ${team.id} created in Ever Works as ${created.id}.`);
 	}
 
+	// ── Sweep ──────────────────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * The membership sweep (plan 03 §C.2, the durable backstop), run by the sync loop for a connection it
+	 * holds: (1) Ever Works members Gauzy could not map join once their person is paired; (2) a Gauzy
+	 * member set that drifted from the snapshot without a captured change (a bulk delete the ORM hooks
+	 * cannot see) queues the team's push.
+	 */
+	async sweep(connection: EverWorksConnection): Promise<void> {
+		for (const context of await this.contextsOf(connection)) {
+			if (!context.isEnabled) continue;
+			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.TEAM)).filter((link) => link.state === EverWorksLinkState.OK);
+			for (const link of links) {
+				const ew = this.everWorksOnly(link);
+				if (fromEverWorks(context.directions.teams) && ew.unmapped?.length) {
+					await EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: `team-sweep:${link.ewId}` }, async () => {
+						const snapshot = this.links.snapshot<TeamSnapshot>(link);
+						const applied = await this.applyMemberSet(context, link.gauzyId as ID, snapshot.members ?? [], {
+							previous: ew.members ?? [],
+							next: ew.members ?? [],
+							previousManagerAgentId: ew.managerAgentId ?? null,
+							nextManagerAgentId: ew.managerAgentId ?? null,
+							previouslyUnmapped: ew.unmapped ?? []
+						});
+						// Nothing to record only when the unmapped set and the Gauzy side are both unchanged (equal
+						// counts can hide one member becoming mapped while another becomes unmapped).
+						const previouslyUnmapped = new Set(ew.unmapped ?? []);
+						const sameUnmapped = applied.unmapped.length === previouslyUnmapped.size && applied.unmapped.every((k) => previouslyUnmapped.has(k));
+						if (sameUnmapped && sameMembers(snapshot.members ?? [], applied.members)) return;
+						await this.record(context, link.gauzyId as ID, { ...this.teamFrom(link) }, link.ewVersion ?? null, {
+							name: snapshot.name ?? '',
+							emoji: snapshot.emoji ?? null,
+							members: applied.members
+						}, 'inbound', applied.unmapped);
+					});
+				}
+				if (toEverWorks(context.directions.teams)) {
+					const fresh = (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, link.ewId)) ?? link;
+					const snapshot = this.links.snapshot<TeamSnapshot>(fresh);
+					if (!sameMembers(snapshot.members ?? [], await this.currentMembers(link.gauzyId as ID))) {
+						await this.queue.enqueue({
+							tenantId: context.tenantId,
+							organizationId: context.organizationId,
+							entityType: EverWorksLinkType.TEAM,
+							gauzyId: link.gauzyId as ID,
+							op: 'upsert'
+						});
+					}
+				}
+			}
+		}
+	}
+
+	/** The mappings that sync through a connection. */
+	private async contextsOf(connection: EverWorksConnection): Promise<EverWorksMappingContext[]> {
+		const mappings = await this.dataSource.getRepository(IntegrationTenant).find({
+			where: { tenantId: connection.tenantId, isActive: true, isArchived: false } as never,
+			relations: { settings: true } as never
+		});
+		const contexts: EverWorksMappingContext[] = [];
+		for (const mapping of mappings) {
+			const viaThis = mapping.settings?.some((s) => s.settingsName === EverWorksSettingName.CONNECTION_ID && s.settingsValue === connection.id);
+			if (!viaThis || !mapping.organizationId) continue;
+			const context = await this.contexts.forOrganization(connection.tenantId as ID, mapping.organizationId as ID);
+			if (context && context.connection.id === connection.id) contexts.push(context);
+		}
+		return contexts;
+	}
+
+	/**
+	 * Whether a link is a live pairing. An `unlinked` row (an admin's unpairing, or a team deleted in Ever
+	 * Works) gives way to an explicit "create on the other side" from the Teams tab.
+	 */
+	private async livePairOf(link: EverWorksEntityLink | null): Promise<boolean> {
+		if (!link) return false;
+		if (link.state !== EverWorksLinkState.UNLINKED) return true;
+		await this.links.remove(link);
+		return false;
+	}
+
 	// ── Shared ─────────────────────────────────────────────────────────────────────────────────────
 
 	private async record(
@@ -506,7 +708,8 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		team: EverWorksTeam,
 		version: number | null,
 		snapshot: TeamSnapshot,
-		direction: 'inbound' | 'outbound'
+		direction: 'inbound' | 'outbound',
+		unmapped: string[] = (team as { unmapped?: string[] }).unmapped ?? []
 	): Promise<void> {
 		const ewOnly: TeamEverWorksOnly = {
 			slug: team.slug,
@@ -515,7 +718,8 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			managerAgentId: team.managerAgentId ?? null,
 			avatarIcon: team.avatarIcon ?? null,
 			members: team.members ?? [],
-			resources: team.resources ?? []
+			resources: team.resources ?? [],
+			unmapped
 		};
 		await this.links.record({
 			tenantId: context.tenantId,
@@ -563,22 +767,39 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		return null;
 	}
 
+	/**
+	 * Adds or updates a membership. A manager is marked the way the platform marks one — the tenant's
+	 * `MANAGER` role on the membership — and `isManager` as well, so every reader of either agrees.
+	 */
 	private async upsertMembership(context: EverWorksMappingContext, teamId: ID, employeeId: ID, isManager: boolean): Promise<void> {
 		const repository = this.dataSource.getRepository(OrganizationTeamEmployee);
-		const existing = await repository.findOne({ where: { organizationTeamId: teamId, employeeId } as never });
+		const roleId = isManager ? await this.managerRoleId(context.tenantId) : null;
+		const existing = await repository.findOne({ where: { organizationTeamId: teamId, employeeId } as never, relations: { role: true } as never });
 		if (existing) {
-			if (!!existing.isManager !== isManager) await repository.update({ id: existing.id } as never, { isManager } as never);
+			if (isManagerMember(existing) !== isManager) await repository.update({ id: existing.id } as never, { isManager, roleId } as never);
 			return;
 		}
 		await repository.save(
-			repository.create({ tenantId: context.tenantId, organizationId: context.organizationId, organizationTeamId: teamId, employeeId, isManager } as never)
+			repository.create({ tenantId: context.tenantId, organizationId: context.organizationId, organizationTeamId: teamId, employeeId, isManager, roleId } as never)
 		);
 	}
 
+	/** The tenant's `MANAGER` role (cached per tenant), or `null` when the tenant has none. */
+	private async managerRoleId(tenantId: ID): Promise<ID | null> {
+		if (!this.managerRoles.has(tenantId)) {
+			const role = await this.dataSource.getRepository(Role).findOne({ where: { name: RolesEnum.MANAGER, tenantId } as never });
+			this.managerRoles.set(tenantId, (role?.id as ID) ?? null);
+		}
+		return this.managerRoles.get(tenantId) ?? null;
+	}
+
+	/** Gauzy's members of a team; a manager is `isManager` or holds the `MANAGER` role (the platform's own rule). */
 	private async currentMembers(teamId: ID): Promise<Array<{ employeeId: ID; isManager: boolean }>> {
-		const rows = await this.dataSource.getRepository(OrganizationTeamEmployee).find({ where: { organizationTeamId: teamId } as never });
+		const rows = await this.dataSource
+			.getRepository(OrganizationTeamEmployee)
+			.find({ where: { organizationTeamId: teamId } as never, relations: { role: true } as never });
 		return rows
-			.map((row) => ({ employeeId: row.employeeId as ID, isManager: !!row.isManager }))
+			.map((row) => ({ employeeId: row.employeeId as ID, isManager: isManagerMember(row) }))
 			.sort((a, b) => String(a.employeeId).localeCompare(String(b.employeeId)));
 	}
 

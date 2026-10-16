@@ -39,6 +39,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogListQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
+import { TimeLogConflictAccessGuard } from './guards/time-log-conflict-access.guard';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
@@ -66,6 +67,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(TimeLogConflictAccessGuard)
 	@Get('conflict')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getConflict(@Query() request: GetTimeLogConflictQueryDTO): Promise<ITimeLog[]> {
