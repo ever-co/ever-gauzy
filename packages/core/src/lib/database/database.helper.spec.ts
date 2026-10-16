@@ -18,6 +18,7 @@ jest.mock('@gauzy/config', () => ({
 	isPostgres: () => mockDialect === 'postgres'
 }));
 
+import { PostgreSqlPlatform } from '@mikro-orm/postgresql';
 import {
 	booleanLiteral,
 	currentTimestampExpression,
@@ -108,6 +109,56 @@ describe('binding a statement written with named parameters', () => {
 			sql: 'UPDATE b SET used = used + $1 WHERE used + $2 <= cap AND id = $3',
 			parameters: [5, 5, 'b-1']
 		});
+	});
+
+	it('marks every placeholder with ? for MikroORM, on Postgres too (#10678)', () => {
+		// MikroORM's `Connection.execute()` fills `?` into the statement itself and sends it with no
+		// bindings, so a `$1` reached Postgres unbound: "there is no parameter $1".
+		mockDialect = 'postgres';
+		expect(
+			toPositionalStatement(
+				'UPDATE b SET used = used + :amount WHERE used + :amount <= cap AND id = :id',
+				{ amount: 5, id: 'b-1' },
+				{ questionMarks: true }
+			)
+		).toEqual({
+			sql: 'UPDATE b SET used = used + ? WHERE used + ? <= cap AND id = ?',
+			parameters: [5, 5, 'b-1']
+		});
+
+		// The flag changes nothing where `?` is already the driver's placeholder.
+		for (const dialect of ['mysql', 'sqlite'] as const) {
+			mockDialect = dialect;
+			expect(toPositionalStatement('SELECT 1 WHERE id = :id', { id: 'x' }, { questionMarks: true })).toEqual(
+				toPositionalStatement('SELECT 1 WHERE id = :id', { id: 'x' })
+			);
+		}
+	});
+
+	it('keeps $n on Postgres when the flag is off or absent — the TypeORM path', () => {
+		mockDialect = 'postgres';
+		for (const options of [undefined, {}, { questionMarks: false }]) {
+			expect(
+				toPositionalStatement('SELECT 1 WHERE id = :id AND kind = :kind', { id: 'x', kind: 'y' }, options)
+			).toEqual({ sql: 'SELECT 1 WHERE id = $1 AND kind = $2', parameters: ['x', 'y'] });
+		}
+	});
+
+	it('gives MikroORM’s Postgres formatter a statement whose every value it binds', () => {
+		mockDialect = 'postgres';
+		// The formatter `Connection.execute()` runs before it sends the statement with no bindings.
+		const platform = new PostgreSqlPlatform();
+		const sql = 'SELECT * FROM bin WHERE "tenantId" = :tenantId AND "binId" = :binId';
+		const parameters = { tenantId: 't-1', binId: 'b-1' };
+
+		const forMikroOrm = toPositionalStatement(sql, parameters, { questionMarks: true });
+		expect(platform.formatQuery(forMikroOrm.sql, forMikroOrm.parameters)).toBe(
+			`SELECT * FROM bin WHERE "tenantId" = 't-1' AND "binId" = 'b-1'`
+		);
+
+		// Control: the TypeORM form leaves `$1` in the statement MikroORM sends, which Postgres cannot bind.
+		const forTypeOrm = toPositionalStatement(sql, parameters);
+		expect(platform.formatQuery(forTypeOrm.sql, forTypeOrm.parameters)).toContain('$1');
 	});
 
 	it('leaves alone a colon that is not a parameter', () => {

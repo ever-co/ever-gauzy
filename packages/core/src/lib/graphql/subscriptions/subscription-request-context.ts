@@ -125,6 +125,27 @@ export function bindToCurrentContext<T>(stream: AsyncIterable<T>): AsyncIterable
 }
 
 /**
+ * Whether an event's organization lets it reach the subscriber a `@Subscription` filter runs for.
+ *
+ * The filter runs inside the stream bound to the subscriber's operation, so the organization read here
+ * is the subscriber's (`RequestContext.currentOrganizationId()`, the validated organization of the
+ * credential, never an argument). An event that belongs to an organization reaches only a subscriber
+ * acting in that organization. A subscriber with no organization is not sent it either: the reads
+ * these streams mirror (`webhookDeliveries`, `webhookSubscriptions`, `eventDeliveries`) scope a caller
+ * with no organization to the rows stored without one, so a missing organization is not a tenant-wide
+ * wildcard, which is also the rule the `Subscription.events` field applies. An event with no
+ * organization is tenant-wide and reaches every subscriber of its tenant.
+ *
+ * @param organizationId The organization the event belongs to.
+ * @returns False when the event belongs to another organization than the subscriber's.
+ */
+export function matchesSubscriberOrganization(organizationId: unknown): boolean {
+	const subscriberOrganizationId = RequestContext.currentOrganizationId();
+
+	return !organizationId || String(organizationId) === String(subscriberOrganizationId ?? '');
+}
+
+/**
  * The request an operation was given by the context factory.
  *
  * @param args The execution arguments.

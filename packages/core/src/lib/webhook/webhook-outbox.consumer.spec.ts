@@ -171,7 +171,7 @@ class DeliveryStore {
 		return { delivery: row, created: true };
 	}
 
-	async deliver(id: ID): Promise<{ delivery: Row; skipped: boolean }> {
+	async deliver(id: ID, _options?: { claim?: boolean }): Promise<{ delivery: Row; skipped: boolean }> {
 		const row = this.rows.find((entry) => entry.id === id);
 
 		if (!row) {
@@ -286,6 +286,17 @@ describe('WebhookOutboxConsumer — the scope an event carries', () => {
 		// fan-out that read a tenant from one would read none — and a store handed no tenant answers with
 		// every tenant's endpoints, which is one tenant's order payload posted to another's partner.
 		expect(reached(deliveries)).toEqual([mine.id]);
+	});
+
+	it('claims the row it makes the first attempt on, so a retry pass reaching it meanwhile does not post it too', async () => {
+		const { table, deliveries, consumer } = fanOut();
+		table.seed({ tenantId: 'tenant-1' });
+		const deliver = jest.spyOn(deliveries, 'deliver');
+
+		await consumer.handle(envelope(), context());
+
+		expect(deliver).toHaveBeenCalledTimes(1);
+		expect(deliver.mock.calls[0][1]).toEqual({ claim: true });
 	});
 
 	it('reaches nobody when the event names no tenant', async () => {

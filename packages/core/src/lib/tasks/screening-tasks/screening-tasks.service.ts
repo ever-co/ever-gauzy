@@ -69,11 +69,14 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			}
 
 			// Retrieve the maximum task number for the specified project, or handle null projectId if no project
-			const maxNumber = await this.taskService.getMaxTaskNumberByProject({
-				tenantId,
-				organizationId,
-				projectId: project?.id ?? null
-			});
+			const maxNumber = await this.taskService.getMaxTaskNumberByProject(
+				{
+					tenantId,
+					organizationId,
+					projectId: project?.id ?? null
+				},
+				{ withDeleted: true }
+			);
 
 			// Create task
 			const task = await this.taskService.create({
