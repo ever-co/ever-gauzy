@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,6 +19,11 @@ import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
 import { EverWorksMappingController } from './mapping/ever-works-mapping.controller';
 import { EverWorksMappingService } from './mapping/ever-works-mapping.service';
+import { EverWorksMappingContextService } from './mapping/ever-works-mapping-context.service';
+import { EverWorksAgentsService } from './people/ever-works-agents.service';
+import { EverWorksPeopleController } from './people/ever-works-people.controller';
+import { EverWorksPeopleService } from './people/ever-works-people.service';
+import { EverWorksLinkService } from './sync/links/ever-works-link.service';
 import {
 	EverWorksEntityLink,
 	EverWorksInboundEvent,
@@ -42,6 +47,19 @@ import { EverWorksTaskEventListener } from './sync/outbound/ever-works-task-even
 import { EverWorksRateLimitGuard } from './sync/webhook/ever-works-rate-limit.guard';
 import { EverWorksWebhookController } from './sync/webhook/ever-works-webhook.controller';
 
+/** Registers the per-entity handlers with the applier (and, later, the pusher). */
+@Injectable()
+export class EverWorksHandlersRegistrar implements OnModuleInit {
+	constructor(
+		private readonly applier: EverWorksInboundApplier,
+		private readonly agents: EverWorksAgentsService
+	) {}
+
+	onModuleInit(): void {
+		this.applier.register(this.agents);
+	}
+}
+
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog];
 
@@ -62,7 +80,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		PluginCommonModule,
 		CqrsModule
 	],
-	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksWebhookController],
+	controllers: [EverWorksController, EverWorksConnectionController, EverWorksMappingController, EverWorksPeopleController, EverWorksWebhookController],
 	providers: [
 		EverWorksCatalogService,
 		EverWorksLifecycle,
@@ -81,6 +99,11 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksTaskEventListener,
 		EverWorksSyncLoop,
 		EverWorksRateLimitGuard,
+		EverWorksLinkService,
+		EverWorksMappingContextService,
+		EverWorksPeopleService,
+		EverWorksAgentsService,
+		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksEntityLinkRepository,

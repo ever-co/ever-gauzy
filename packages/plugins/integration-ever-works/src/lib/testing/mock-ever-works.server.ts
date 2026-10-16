@@ -89,6 +89,9 @@ export class MockEverWorksServer {
 	readonly keys = new Map<string, MockEverWorksKey>();
 	readonly webhooks = new Map<string, Webhook>();
 	readonly events: EverWorksEventEnvelope[] = [];
+	/** Organization members and agents (contract DTOs) the org-scoped routes answer from. */
+	readonly members: Array<Record<string, unknown>> = [];
+	readonly agents = new Map<string, Record<string, unknown>>();
 	readonly requests: MockEverWorksRecordedRequest[] = [];
 	readonly deliveries: MockEverWorksDelivery[] = [];
 	readonly failures: MockEverWorksFailure[] = [];
@@ -218,12 +221,12 @@ export class MockEverWorksServer {
 		const replayKey = idempotencyKey && request.method === 'POST' ? `${key.keyId}:${idempotencyKey}` : null;
 		if (replayKey && this.idempotent.has(replayKey)) return this.idempotent.get(replayKey) as EverWorksHttpResponse;
 
-		const response = this.route(request.method, path, recorded.query, request.body, key);
+		const response = this.route(request.method, path, recorded.query, request.body, key, headers);
 		if (replayKey && response.status < 500) this.idempotent.set(replayKey, response);
 		return response;
 	}
 
-	private route(method: string, path: string, query: Record<string, string>, body: unknown, key: MockEverWorksKey): EverWorksHttpResponse {
+	private route(method: string, path: string, query: Record<string, string>, body: unknown, key: MockEverWorksKey, headers: Record<string, string> = {}): EverWorksHttpResponse {
 		const has = (scope: string) => key.scopes.includes(scope);
 		const ok = (data: unknown, status = 200): EverWorksHttpResponse => ({ status, headers: { 'content-type': 'application/json' }, data });
 		if (method === 'GET' && path === '/whoami') {
@@ -261,7 +264,92 @@ export class MockEverWorksServer {
 			if (!has('webhooks:manage')) return MockEverWorksServer.error(403, 'scope_missing', 'webhooks:manage is required.');
 			return this.webhookRoute(method, path, body, key);
 		}
+		// Organization-scoped resources: X-Scope-Slug (or X-Organization-Id) must name a pinned organization.
+		const org = key.organizations.find((o) => o.slug === headers['x-scope-slug'] || o.id === headers['x-organization-id']);
+		const scoped = (scope: string): EverWorksHttpResponse | null => {
+			if (!has(scope)) return MockEverWorksServer.error(403, 'scope_missing', `${scope} is required.`);
+			if (!org) return MockEverWorksServer.error(403, 'org_not_pinned', 'The organization is not pinned to this key.');
+			return null;
+		};
+		if (method === 'GET' && path === '/members') {
+			return scoped('members:read') ?? ok(MockEverWorksServer.page(this.members.filter((m) => m['organizationId'] === org?.id), query));
+		}
+		if (method === 'GET' && path === '/agents') {
+			return scoped('agents:read') ?? ok(MockEverWorksServer.page([...this.agents.values()].filter((a) => a['organizationId'] === org?.id), query));
+		}
+		if (method === 'GET' && path.startsWith('/agents/')) {
+			const denied = scoped('agents:read');
+			if (denied) return denied;
+			const agent = this.agents.get(path.slice('/agents/'.length));
+			return agent && agent['organizationId'] === org?.id ? ok(agent) : MockEverWorksServer.error(404, 'not_found', 'No such agent.');
+		}
 		return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
+	}
+
+	/** A list page (B.1): `?cursor=<offset>&limit=` → `{data, nextCursor, hasMore}`. */
+	static page<T>(rows: T[], query: Record<string, string>): { data: T[]; nextCursor: string | null; hasMore: boolean } {
+		const offset = Number(query['cursor'] || 0);
+		const limit = Math.min(Number(query['limit'] || 200), 500);
+		const data = rows.slice(offset, offset + limit);
+		const hasMore = offset + limit < rows.length;
+		return { data, nextCursor: hasMore ? String(offset + limit) : null, hasMore };
+	}
+
+	/** Adds an organization member (contract member DTO) and returns it. */
+	addMember(organizationId: string, member: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+		const userId = (member['userId'] as string) ?? randomUUID();
+		const now = new Date().toISOString();
+		const row = {
+			organizationId,
+			userId,
+			username: `user-${userId.slice(0, 6)}`,
+			displayName: null,
+			email: `${userId.slice(0, 6)}@example.test`,
+			emailVerified: true,
+			avatarUrl: null,
+			role: 'member',
+			isActive: true,
+			joinedAt: now,
+			updatedAt: now,
+			everIdSubjects: [],
+			...member
+		};
+		this.members.push(row);
+		return row;
+	}
+
+	/** Adds (or replaces) an agent (contract agent DTO) and returns it. */
+	addAgent(organizationId: string, agent: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+		const id = (agent['id'] as string) ?? randomUUID();
+		const now = new Date().toISOString();
+		const row = {
+			id,
+			organizationId,
+			version: 1,
+			createdAt: now,
+			updatedAt: now,
+			visibility: 'organization',
+			visibilityExplicit: false,
+			owner: { type: 'user', id: randomUUID() },
+			createdBy: { type: 'user', id: randomUUID(), label: 'owner' },
+			externalLinks: [],
+			teamIds: [],
+			name: 'Builder',
+			slug: `agent-${id.slice(0, 6)}`,
+			title: 'Builder agent',
+			capabilities: 'Ships pull requests.',
+			status: 'active',
+			scope: 'tenant',
+			scopeTargetId: this.tenant.id,
+			reportsToAgentId: null,
+			avatar: { mode: 'initials', icon: null, url: null },
+			modelId: 'claude-opus-5-5',
+			lastRunAt: null,
+			webUrl: `https://app.example.test/agents/${id}`,
+			...agent
+		};
+		this.agents.set(id, row);
+		return row;
 	}
 
 	private webhookRoute(method: string, path: string, body: unknown, key: MockEverWorksKey): EverWorksHttpResponse {
