@@ -76,6 +76,9 @@ interface IPageRow {
 
 type Loadable<T> = { loading: boolean; failed: boolean; value: T };
 
+/** A site's pages, and whether they stop at the read cap rather than at the site's last record. */
+type SitePages = Loadable<IPageRow[]> & { truncated?: boolean };
+
 /** Rows a member card lists before "Show all". */
 const MEMBER_ITEM_LIMIT = 5;
 /** Page size for a site's pages: the endpoint returns only 30 records unless asked for more. */
@@ -123,7 +126,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	/** Member cards opened past their first rows. */
 	public expandedMembers = new Set<string>();
 	/** Sites opened into their pages, by title. */
-	public pages = new Map<string, Loadable<IPageRow[]>>();
+	public pages = new Map<string, SitePages>();
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -308,7 +311,10 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			// Published only while that organization is still the one on screen.
 			if (this.organization?.id !== organizationId) return;
 			this._employees = names;
-			if (succeeded) this._employeesFor = organizationId;
+			// The map now holds this organization's names (or only the fallback ones),
+			// so it is marked loaded for this organization alone, and only on success:
+			// a failure clears the mark, so no other organization skips its own read.
+			this._employeesFor = succeeded ? organizationId : null;
 			// The member groups read these names: rebuild them now they have arrived.
 			this._derived = null;
 		})();
@@ -330,9 +336,9 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		const sequence = this._loadSequence;
 		this.setPages(row.title, { loading: true, failed: false, value: [] });
 		try {
-			const activities = await this.fetchSitePages(row.title);
+			const { activities, truncated } = await this.fetchSitePages(row.title);
 			if (sequence !== this._loadSequence || !this.pages.has(row.title)) return;
-			this.setPages(row.title, { loading: false, failed: false, value: this.toPages(activities) });
+			this.setPages(row.title, { loading: false, failed: false, value: this.toPages(activities), truncated });
 		} catch {
 			if (sequence !== this._loadSequence || !this.pages.has(row.title)) return;
 			this.setPages(row.title, { loading: false, failed: true, value: [] });
@@ -344,8 +350,11 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	 * first 30 records unless paged, so the pages are read until one comes back
 	 * short: the breakdown and its percentages then cover the same time as the
 	 * site's total.
+	 *
+	 * `truncated` is set when the read stops at the cap with a full last page —
+	 * there may be more records, so the breakdown is partial and says so.
 	 */
-	private async fetchSitePages(title: string): Promise<IActivity[]> {
+	private async fetchSitePages(title: string): Promise<{ activities: IActivity[]; truncated: boolean }> {
 		const all: IActivity[] = [];
 		for (let page = 0; page < PAGES_MAX_PAGES; page++) {
 			const request: IGetActivitiesInput = {
@@ -357,12 +366,12 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			};
 			const batch = (await this.activityService.getActivities(request)) || [];
 			all.push(...batch);
-			if (batch.length < PAGES_PAGE_SIZE) break;
+			if (batch.length < PAGES_PAGE_SIZE) return { activities: all, truncated: false };
 		}
-		return all;
+		return { activities: all, truncated: true };
 	}
 
-	private setPages(title: string, value: Loadable<IPageRow[]>): void {
+	private setPages(title: string, value: SitePages): void {
 		const next = new Map(this.pages);
 		next.set(title, value);
 		this.pages = next;

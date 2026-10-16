@@ -134,6 +134,12 @@
 					} @else if (!sitePages.value.length) {
 					<p class="au-pages-state">{{ 'ACTIVITY.APPS_URLS.NO_PAGES' | translate }}</p>
 					} @else {
+					@if (sitePages.truncated) {
+					<p class="au-pages-state au-pages-state--notice">
+						<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+						{{ 'ACTIVITY.APPS_URLS.PAGES_TRUNCATED' | translate }}
+					</p>
+					}
 					<ul class="au-page-list">
 						@for (page of sitePages.value; track page.label) {
 						<li class="au-page">
