@@ -238,6 +238,18 @@ and answered `202`.
   the setting is on, triage tasks are not synced. Task writes need a process
   that serves the API (it has the request context the task commands read);
   where the worker also runs the plugin, set `EVER_WORKS_SYNC_LOOP=off` there.
+- **Ideas ↔ Idea tasks (G-P2-3).** An Ever Works idea is a Gauzy task of
+  the organization's "Idea" issue type in the "Ever Works — Ideas" project
+  (created when first needed): title, description (plain text, escaped),
+  status (pending → open, queued/building → in progress, accepted → done,
+  dismissed → cancelled, failed → blocked with the failure as a comment),
+  teams and a `source:<value>` tag; only what changed in Ever Works is
+  written. A Gauzy Idea task becomes an Ever Works idea (always `external`
+  and `pending`); title, description and teams are patched, cancelling it
+  dismisses the idea and reopening restores it. Accepting and building stay in
+  Ever Works: no other status move is pushed, and a refused move writes Ever
+  Works' status back. A task whose type changes away from Idea is unlinked
+  (both kept); a deleted idea archives its task; private ideas never sync.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
