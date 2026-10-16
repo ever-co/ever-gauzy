@@ -247,7 +247,7 @@
 		"ENABLED_ON": "Syncing is on for this organization.",
 		"ENABLED_OFF": "Syncing is off for this organization; nothing is read or sent until it is on again.",
 		"KEY_TITLE": "Integration key",
-		"KEY_CURRENT": "Current key: {{ name }} ({{ prefix }}…). A new key must belong to the same Ever Works tenant; the old one keeps working until Ever Works retires it.",
+		"KEY_CURRENT": "Current key: {{ name }} ({{ prefix }}). A new key must belong to the same Ever Works tenant; the old one keeps working until Ever Works retires it.",
 		"ROTATE_KEY": "Use this key",
 		"KEY_ROTATED": "The new key is in use.",
 		"REGISTER_WEBHOOK": "Register the webhook again",

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import type { EverWorksConflict, EverWorksConnection, EverWorksMapping, EverWorksSyncStatus } from '../../services/ever-works.service';
 import { EverWorksUiService } from '../../services/ever-works.service';
@@ -242,5 +242,33 @@ describe('EverWorksSettingsComponent', () => {
 		expect(component.noticeParams).toEqual({ reason: 'API_BASE_URL is not set.' });
 		expect(find('notice')).not.toBeNull();
 		state.mockRestore();
+	});
+
+	it('the sync status cannot be read (an older API): the settings still open, with the error on the overview', () => {
+		api.syncStatus.mockReturnValue(throwError(() => ({ status: 404, error: { message: 'Cannot GET /api/integration/ever-works/mappings/x/sync/status' } })));
+		const { component, find } = render();
+		expect(component.view).toBe('ready');
+		expect(find('sync-error')?.textContent).toContain('Cannot GET');
+		expect(find('tab-advanced')).not.toBeNull();
+	});
+
+	it('a refreshed status also moves the controls (a pause made elsewhere shows on the buttons)', () => {
+		const { component } = render();
+		expect(component.canSync).toBe(true);
+		api.syncStatus.mockReturnValue(of({ ...SYNC, connection: { ...SYNC.connection, status: 'paused' } }));
+		component.refreshStatus();
+		expect(component.connection?.status).toBe('paused');
+		expect(component.canSync).toBe(false);
+	});
+
+	it('answers to requests of a mapping that is no longer shown are dropped', () => {
+		const late = new Subject<EverWorksSyncStatus>();
+		const { component } = render();
+		api.syncStatus.mockReturnValue(late);
+		component.refreshStatus();
+		component.reload(); // the page reads its mapping again (another organization would do the same)
+		api.syncStatus.mockReturnValue(of(SYNC));
+		late.next({ ...SYNC, conflicts: { open: 42 } });
+		expect(component.sync?.conflicts.open).not.toBe(42);
 	});
 });

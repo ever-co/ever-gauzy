@@ -7,7 +7,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule, NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, forkJoin, merge, Observable, of, Subject } from 'rxjs';
-import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
 import type {
 	EverWorksConflict,
@@ -31,7 +31,14 @@ export type EverWorksSettingsView = 'loading' | 'ready' | 'unavailable' | 'not-f
 export const SETTINGS_POLL_MS = 10_000;
 
 type Loaded =
-	| { status: EverWorksStatus; connection: EverWorksConnection | null; mapping: EverWorksMapping | null; sync: EverWorksSyncStatus | null }
+	| {
+			status: EverWorksStatus;
+			connection: EverWorksConnection | null;
+			mapping: EverWorksMapping | null;
+			sync: EverWorksSyncStatus | null;
+			/** Why the sync status could not be read (the other tabs still work). */
+			syncError: string | null;
+	  }
 	| { error: HttpErrorResponse };
 
 /**
@@ -105,6 +112,12 @@ type Loaded =
 									<nb-alert status="warning" data-test="connection-state">{{
 										'EVER_WORKS.SETTINGS.CONNECTION_STATE.' + connection.status | translate
 									}}</nb-alert>
+								}
+								@if (syncError) {
+									<nb-alert status="danger" role="alert" data-test="sync-error">{{ syncError }}</nb-alert>
+									<button nbButton ghost size="small" type="button" data-test="refresh-status" [disabled]="busy" (click)="refreshStatus()">
+										{{ 'EVER_WORKS.COMMON.REFRESH' | translate }}
+									</button>
 								}
 								@if (sync) {
 									<dl class="facts" data-test="overview">
@@ -411,6 +424,7 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	connection: EverWorksConnection | null = null;
 	mapping: EverWorksMapping | null = null;
 	sync: EverWorksSyncStatus | null = null;
+	syncError: string | null = null;
 	log: EverWorksSyncLogEntry[] = [];
 	logCursor: string | null = null;
 	logStatus = '';
@@ -425,6 +439,8 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	notice: string | null = null;
 	noticeParams: Record<string, unknown> = {};
 	private readonly reload$ = new Subject<void>();
+	/** Emits when the page's mapping or organization changes, or the page closes: requests of before are dropped. */
+	private readonly scope$ = new Subject<void>();
 	private pollTimer: ReturnType<typeof setTimeout> | null = null;
 
 	/** The running sync, else the latest one. */
@@ -456,10 +472,12 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 					merge(of(undefined), this.reload$).pipe(
 						switchMap(() => {
 							this.clearPoll();
+							this.scope$.next();
 							this.integrationTenantId = id;
 							this.organizationId = organizationId;
 							this.view = 'loading';
 							this.sync = null;
+							this.syncError = null;
 							this.cdr.markForCheck();
 							return this.load$(id, organizationId);
 						})
@@ -472,6 +490,8 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 
 	ngOnDestroy(): void {
 		this.clearPoll();
+		this.scope$.next();
+		this.scope$.complete();
 	}
 
 	reload(): void {
@@ -484,13 +504,16 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		const id = this.integrationTenantId;
 		if (!id) return;
 		this.clearPoll();
-		this.api.syncStatus(this.organizationId, id).subscribe({
+		this.scoped(this.api.syncStatus(this.organizationId, id)).subscribe({
 			next: (sync) => {
-				this.sync = sync;
+				this.useStatus(sync);
 				this.schedulePoll();
 				this.cdr.markForCheck();
 			},
-			error: (error) => this.fail(error)
+			error: (error) => {
+				this.syncError = errorText(error);
+				this.cdr.markForCheck();
+			}
 		});
 	}
 
@@ -504,16 +527,19 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 
 	/** The first sync of a mapping that never synced: the webhook (best effort), then the run. */
 	startFirstSync(): void {
+		// The mapping the admin started it for, whatever is selected by the time the webhook answers.
 		const connection = this.connection;
+		const organizationId = this.organizationId;
+		const id = this.id;
 		const webhook$ =
 			connection && !connection.webhook?.registered
-				? this.api.registerWebhook(this.organizationId, connection.id).pipe(
+				? this.api.registerWebhook(organizationId, connection.id).pipe(
 						map(() => null as string | null),
 						catchError((error) => of(errorText(error)))
 					)
 				: of(null as string | null);
 		this.act(
-			webhook$.pipe(switchMap((webhookError) => this.api.startSync(this.organizationId, this.id).pipe(map(() => webhookError)))),
+			webhook$.pipe(switchMap((webhookError) => this.api.startSync(organizationId, id).pipe(map(() => webhookError)))),
 			(webhookError) =>
 				webhookError ? this.done('EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED', { reason: webhookError }) : this.done('EVER_WORKS.SETTINGS.SYNC_STARTED'),
 			true
@@ -542,7 +568,7 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		const id = this.integrationTenantId;
 		if (!id) return;
 		const cursor = reset ? null : this.logCursor;
-		this.api.syncLog(this.organizationId, id, { status: this.logStatus || null, direction: this.logDirection || null, cursor }).subscribe({
+		this.scoped(this.api.syncLog(this.organizationId, id, { status: this.logStatus || null, direction: this.logDirection || null, cursor })).subscribe({
 			next: (page) => {
 				this.log = reset ? page.items : [...this.log, ...page.items];
 				this.logCursor = page.nextCursor;
@@ -556,7 +582,7 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		const id = this.integrationTenantId;
 		if (!id) return;
 		const cursor = reset ? null : this.conflictsCursor;
-		this.api.conflicts(this.organizationId, id, this.conflictsState, cursor).subscribe({
+		this.scoped(this.api.conflicts(this.organizationId, id, this.conflictsState, cursor)).subscribe({
 			next: (page) => {
 				this.conflicts = reset ? page.items : [...this.conflicts, ...page.items];
 				this.conflictsCursor = page.nextCursor;
@@ -631,8 +657,12 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 					switchMap(({ connection, mapping }) =>
 						// Only the selected organization's own mapping is shown here.
 						!mapping || !id || mapping.integrationTenantId !== id
-							? of({ status, connection: connection ?? null, mapping: null, sync: null })
-							: this.api.syncStatus(organizationId, id).pipe(map((sync) => ({ status, connection: connection ?? null, mapping, sync })))
+							? of({ status, connection: connection ?? null, mapping: null, sync: null, syncError: null })
+							: this.api.syncStatus(organizationId, id).pipe(
+									map((sync) => ({ status, connection: connection ?? null, mapping, sync, syncError: null as string | null })),
+									// The status route may be missing (an older API) or fail: the settings still open.
+									catchError((error) => of({ status, connection: connection ?? null, mapping, sync: null, syncError: errorText(error) }))
+								)
 					)
 				)
 			),
@@ -648,6 +678,8 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 			this.connection = result.connection;
 			this.mapping = result.mapping;
 			this.sync = result.sync;
+			this.syncError = result.syncError;
+			if (result.sync) this.useStatus(result.sync);
 			this.view = result.mapping ? 'ready' : 'not-found';
 			if (result.mapping) {
 				this.loadLog(true);
@@ -664,7 +696,7 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		this.error = null;
 		this.notice = null;
 		this.cdr.markForCheck();
-		request.subscribe({
+		this.scoped(request).subscribe({
 			next: (value) => {
 				this.busy = false;
 				then(value);
@@ -676,6 +708,24 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 				this.fail(error);
 			}
 		});
+	}
+
+	/** A request of this page's current mapping: dropped (and cancelled) once it changes or the page closes. */
+	private scoped<T>(request: Observable<T>): Observable<T> {
+		return request.pipe(takeUntil(this.scope$));
+	}
+
+	/**
+	 * A sync status read: also the state the controls read (the connection's status, the mapping's switch),
+	 * so a pause or resume made elsewhere shows on the buttons too.
+	 */
+	private useStatus(sync: EverWorksSyncStatus): void {
+		this.sync = sync;
+		this.syncError = null;
+		if (this.connection && this.connection.id === sync.connection.id) {
+			this.connection = { ...this.connection, status: sync.connection.status, lastError: sync.connection.lastError };
+		}
+		if (this.mapping) this.mapping = { ...this.mapping, isEnabled: sync.isEnabled };
 	}
 
 	private done(notice: string, params: Record<string, unknown> = {}): void {
