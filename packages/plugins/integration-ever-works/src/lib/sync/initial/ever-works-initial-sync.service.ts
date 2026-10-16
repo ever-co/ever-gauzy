@@ -355,6 +355,8 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 						? await this.importComments(context, state, deadline, stillOwner, checkpoint)
 						: await this.importList(context, spec, run, state, deadline, stillOwner, checkpoint);
 				if ('skip' in result) {
+					// A list Ever Works stopped serving part-way: what this phase already held back is released.
+					if (spec.aggregateType) await this.release(context, spec.aggregateType);
 					Object.assign(state, { status: 'skipped', message: result.skip, finishedAt: now.toISOString() });
 					return;
 				}
