@@ -12,6 +12,7 @@ import {
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
+import type { LegacyFindManyOptions } from '../core/utils';
 import { ChannelDomain } from './channel-domain.entity';
 import { TypeOrmChannelDomainRepository } from './repository/type-orm-channel-domain.repository';
 import { MikroOrmChannelDomainRepository } from './repository/mikro-orm-channel-domain.repository';
@@ -81,6 +82,33 @@ export class ChannelDomainService extends TenantAwareCrudService<ChannelDomain> 
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		};
+	}
+
+	/**
+	 * Reads hostnames through the CRUD base, narrowed to the caller's organization.
+	 *
+	 * The base only adds the tenant, and the organization-wide lists of the controller and the resolver
+	 * call this method without a channel, so the organization is added here. A caller with no current
+	 * organization keeps the tenant-wide read.
+	 *
+	 * @param options The find options.
+	 * @returns The matching hostnames.
+	 */
+	public async find(options?: LegacyFindManyOptions<ChannelDomain>): Promise<ChannelDomain[]> {
+		const { organizationId } = this.scope;
+
+		if (!organizationId) {
+			return super.find(options);
+		}
+
+		const where = options?.where;
+
+		return super.find({
+			...options,
+			where: Array.isArray(where)
+				? where.map((one) => ({ ...one, organizationId }))
+				: { ...where, organizationId }
+		});
 	}
 
 	/**
