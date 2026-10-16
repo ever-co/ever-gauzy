@@ -548,6 +548,41 @@ describe.each([
 		await expect(service.findOneByIdString(OWN_OTHER_EMPLOYEE)).rejects.toThrow(NotFoundException);
 	});
 
+	it('keeps the caller’s tenant and employee over a conditions-only read that names others', async () => {
+		caller.employeeId = EMPLOYEE_1;
+		caller.mayChangeEmployee = false;
+
+		// The criteria name another tenant's row and another employee's; the caller's scope replaces both.
+		await expect(service.countBy({ name: 'shared', tenantId: TENANT_B } as any)).resolves.toBe(1);
+		await expect(
+			service.findOneByWhereOptions({ name: 'shared', tenantId: TENANT_B } as any)
+		).resolves.toMatchObject({ id: OWN });
+		expect(
+			(await service.findOneOrFailByWhereOptions({ id: OWN_OTHER_EMPLOYEE, employeeId: EMPLOYEE_2 } as any))
+				.success
+		).toBe(false);
+	});
+
+	it('runs a conditions-only read with the stated conditions when no user is in context (#10666)', async () => {
+		// A public route or a background job: accepting a client invite looks up the new tenant's role this way.
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(null);
+		caller.employeeId = null;
+		caller.mayChangeEmployee = false;
+
+		// The stated tenant decides, whichever tenant it is.
+		await expect(service.countBy({ name: 'shared', tenantId: TENANT_B } as any)).resolves.toBe(1);
+		await expect(
+			service.findOneByWhereOptions({ name: 'shared', tenantId: TENANT_B } as any)
+		).resolves.toMatchObject({ id: FOREIGN });
+		const found = await service.findOneOrFailByWhereOptions({ id: OWN_OTHER_EMPLOYEE, tenantId: TENANT_A } as any);
+		expect(found).toMatchObject({ success: true, record: { id: OWN_OTHER_EMPLOYEE } });
+
+		// Nothing is added to what the caller states, and nothing of it is dropped.
+		await expect(service.countBy({ name: 'shared' } as any)).resolves.toBe(2);
+		await expect(service.countBy({ name: 'shared', tenantId: TENANT_A } as any)).resolves.toBe(1);
+		expect((await service.findOneOrFailByWhereOptions({ id: OWN, tenantId: TENANT_B } as any)).success).toBe(false);
+	});
+
 	/*
 	|--------------------------------------------------------------------------
 	| Updates
