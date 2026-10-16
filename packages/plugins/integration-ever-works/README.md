@@ -26,7 +26,7 @@ The design lives in the integration plan (homelab repository,
 codes against the Ever Works integration contract v1 (`/api/integrations/v1`,
 machine-readable in ever-works
 `docs/specs/features/integrations-api-v1/contract/`). This version adds the
-connection; the organization mapping and the sync engine follow.
+connection and the organization mapping; the sync engine follows.
 
 ## Switch it on
 
@@ -80,6 +80,16 @@ every database; never by the seed) and answers the routes below.
 3. Register the webhook (`POST …/connections/:id/webhook`): every domain of the
    catalog, the pinned organizations, Gauzy's own origin excluded. The signing
    secret Ever Works returns once is stored encrypted.
+4. Map each Gauzy organization to one pinned Ever Works organization
+   (`POST …/mappings`): one `integration_tenant` named `Ever_Works` per mapped
+   organization, with the entity directions (defaults of the plan), the default,
+   Ideas and Docs targets, the include flags and one sync toggle per entity
+   (`integration_entity_setting`). Mapping seeds the organization's "Idea" issue
+   type and "Ideas" view; the "Ever Works" and "Ever Works — Ideas" projects are
+   created through the platform's own project command when first needed
+   (`POST …/mappings/:id/projects/default|ideas`). Each side of a pair is mapped
+   once per tenant; removing a mapping archives it, and mapping the same pair
+   again resumes it.
 
 A revoked or expired key turns the connection `needs_reauth` (the daily check
 or any call that gets a 401): the sync pauses and the admin who connected gets
@@ -111,6 +121,12 @@ share the `/api/integration/ever-works` prefix.
 | POST | `/connections/:id/health` | `EDIT` |
 | POST | `/connections/:id/webhook` | `EDIT` |
 | DELETE | `/connections/:id` | `DELETE` |
+| GET | `/mappings` | `VIEW` |
+| POST | `/mappings` | `ADD` |
+| PUT | `/mappings/:integrationTenantId` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/projects/default` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/projects/ideas` | `EDIT` |
+| DELETE | `/mappings/:integrationTenantId` | `DELETE` |
 
 Keys are write-only: no response carries the integration key or the webhook
 secret, and every connection response is `Cache-Control: no-store`. Ever Works
