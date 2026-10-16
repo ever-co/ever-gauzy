@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
-import { EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
-import { EVER_WORKS_NEW_KEY_PATH, EverWorksPageComponent } from './ever-works-page.component';
+import { EverWorksMapping, EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
+import { Router } from '@angular/router';
+import { EVER_WORKS_NEW_KEY_PATH, EVER_WORKS_WEBHOOK_WARNING, EverWorksPageComponent, webhookWarningOf } from './ever-works-page.component';
 
 const ORGANIZATION = { id: '11111111-2222-4333-8444-555555555555' };
 
@@ -14,9 +15,15 @@ const STATUS: EverWorksStatus = {
 	appUrl: 'https://app.example.test'
 };
 
+const MAPPING = {
+	integrationTenantId: '99999999-2222-4333-8444-555555555555',
+	everWorksOrganization: { id: 'ew-org', slug: 'acme', displayName: 'Acme' },
+	directions: {}
+} as unknown as EverWorksMapping;
+
 /** The Ever Works page: where the plugin is not loaded it only says so (and asks nothing else). */
 describe('EverWorksPageComponent', () => {
-	const api = { status: jest.fn() };
+	const api = { status: jest.fn(), connection: jest.fn(), currentMapping: jest.fn() };
 
 	function render() {
 		TestBed.configureTestingModule({
@@ -35,7 +42,12 @@ describe('EverWorksPageComponent', () => {
 		};
 	}
 
-	beforeEach(() => jest.resetAllMocks());
+	beforeEach(() => {
+		jest.resetAllMocks();
+		// Not connected yet, unless a test says otherwise.
+		api.connection.mockReturnValue(of(null));
+		api.currentMapping.mockReturnValue(of(null));
+	});
 
 	it('the plugin is not loaded (404): says so, asks nothing else', () => {
 		api.status.mockReturnValue(throwError(() => ({ status: 404 })));
@@ -45,6 +57,8 @@ describe('EverWorksPageComponent', () => {
 		expect(find('ready')).toBeNull();
 		expect(api.status).toHaveBeenCalledTimes(1);
 		expect(api.status).toHaveBeenCalledWith(ORGANIZATION.id);
+		expect(api.connection).not.toHaveBeenCalled();
+		expect(api.currentMapping).not.toHaveBeenCalled();
 	});
 
 	it('another error: shows the error, not the switched-off notice', () => {
@@ -158,5 +172,59 @@ describe('EverWorksPageComponent', () => {
 		api.status.mockReturnValue(of({ ...STATUS, appUrl: 'javascript:alert(1)' }));
 		const { find } = render();
 		expect(find('create-key')).toBeNull();
+	});
+
+	it('not connected: shows the connect wizard at its first step, for the selected organization', () => {
+		api.status.mockReturnValue(of(STATUS));
+		const { component, find } = render();
+		expect(component.setup).toBe('connect');
+		expect(find('step-key')).not.toBeNull();
+		expect(find('connected')).toBeNull();
+		expect(api.connection).toHaveBeenCalledWith(ORGANIZATION.id);
+		expect(api.currentMapping).toHaveBeenCalledWith(ORGANIZATION.id);
+	});
+
+	it('mapped: links to the sync settings of the mapping instead of the wizard', () => {
+		api.status.mockReturnValue(of(STATUS));
+		api.currentMapping.mockReturnValue(of(MAPPING));
+		const { component, find } = render();
+		expect(component.setup).toBe('connected');
+		expect(find('connected')).not.toBeNull();
+		expect(find('open-settings')?.getAttribute('href')).toContain(`/pages/integrations/ever-works/${MAPPING.integrationTenantId}`);
+		expect(find('step-key')).toBeNull();
+	});
+
+	it('the connection cannot be read: says so, keeps the integration shown, and offers a retry', () => {
+		api.status.mockReturnValue(of(STATUS));
+		api.connection.mockReturnValue(throwError(() => ({ status: 500 })));
+		const { component, find } = render();
+		expect(component.view).toBe('ready');
+		expect(component.setup).toBe('error');
+		expect(find('setup-error')).not.toBeNull();
+		expect(find('step-key')).toBeNull();
+	});
+
+	it('a webhook that could not be registered is shown, and carried to the settings in the navigation state', () => {
+		api.status.mockReturnValue(of(STATUS));
+		const { component } = render();
+		const router = TestBed.inject(Router);
+		const navigate = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+		component.started({ mapping: MAPPING, run: { id: 'r1' } as never, webhookError: 'API_BASE_URL is not set.' });
+		expect(navigate).toHaveBeenCalledWith(['/pages/integrations/ever-works', MAPPING.integrationTenantId], {
+			state: { [EVER_WORKS_WEBHOOK_WARNING]: 'API_BASE_URL is not set.' }
+		});
+		expect(webhookWarningOf({ [EVER_WORKS_WEBHOOK_WARNING]: 'x' })).toBe('x');
+		expect(webhookWarningOf({ navigationId: 3 })).toBeNull();
+		expect(webhookWarningOf(null)).toBeNull();
+	});
+
+	it('mapped but the connection is not active: links to the settings and says the sync is stopped', () => {
+		api.status.mockReturnValue(of(STATUS));
+		api.currentMapping.mockReturnValue(of(MAPPING));
+		api.connection.mockReturnValue(of({ id: 'c1', status: 'needs_reauth' }));
+		const { component, find } = render();
+		expect(component.setup).toBe('connected');
+		expect(find('connection-inactive')).not.toBeNull();
+		expect(find('open-settings')).not.toBeNull();
 	});
 });
