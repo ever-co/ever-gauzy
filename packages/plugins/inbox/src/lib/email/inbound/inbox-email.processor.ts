@@ -13,7 +13,6 @@ import {
 	InboxItemKindEnum,
 	InboxItemSourceEnum
 } from '@gauzy/contracts';
-import { InboxItem } from '../../entities/inbox-item.entity';
 import { InboxEmail } from '../entities/inbox-email.entity';
 import { InboxEmailAttachment } from '../entities/inbox-email-attachment.entity';
 import { InboxEmailThread } from '../entities/inbox-email-thread.entity';
@@ -501,6 +500,9 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 			source: InboxItemSourceEnum.EMAIL,
 			externalSource: 'inbox_email',
 			externalId: email.id as ID,
+			// The links that make it the mailbox's item (mailbox readers, the Email tab's mailbox filter).
+			mailboxId: mailbox.id as ID,
+			emailId: email.id as ID,
 			title: (email.subject?.trim() || '(no subject)').slice(0, 300),
 			body: (email.textBody ?? email.snippet ?? '').slice(0, MAX_ITEM_BODY) || null,
 			bodyFormat: InboxItemBodyFormatEnum.PLAIN,
@@ -513,10 +515,6 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 			},
 			recipients: recipients.map((userId) => ({ userId }))
 		});
-		// The item's mailbox and message links (columns of the item that the writer leaves to its sources).
-		await this.dataSource
-			.getRepository(InboxItem)
-			.update({ id: item.id as ID }, { mailboxId: mailbox.id as ID, emailId: email.id as ID });
 		return (item.id as ID) ?? null;
 	}
 
