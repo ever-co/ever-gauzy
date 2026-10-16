@@ -32,7 +32,9 @@
 					@for (initiative of initiatives; track initiative.id) {
 						<tr>
 							<td>
-								<a class="link" (click)="open(initiative)">{{ initiative.title }}</a>
+								<a class="link" [routerLink]="['/pages/goals/initiatives', initiative.id]">{{
+									initiative.title
+								}}</a>
 							</td>
 							<td>
 								<span class="badge" [class]="'state-' + initiative.state">

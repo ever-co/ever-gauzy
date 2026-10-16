@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -64,6 +64,8 @@ describe('Strategic initiatives pages', () => {
 		delete: jest.Mock;
 	};
 	let dialogRef: { close: jest.Mock };
+	let dialogService: { open: jest.Mock };
+	let store: { selectedOrganization$: BehaviorSubject<any>; selectedOrganization: any };
 
 	beforeEach(async () => {
 		initiatives = {
@@ -75,12 +77,15 @@ describe('Strategic initiatives pages', () => {
 			delete: jest.fn().mockResolvedValue({})
 		};
 		dialogRef = { close: jest.fn() };
+		dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
+		store = { selectedOrganization$: new BehaviorSubject(ORGANIZATION), selectedOrganization: ORGANIZATION };
 
 		await TestBed.configureTestingModule({
 			declarations: [InitiativesComponent, InitiativeMutationComponent, InitiativeDetailComponent],
 			imports: [
 				CommonModule,
 				ReactiveFormsModule,
+				RouterModule.forRoot([]),
 				NbButtonModule,
 				NbCardModule,
 				NbIconModule,
@@ -89,13 +94,7 @@ describe('Strategic initiatives pages', () => {
 				NbSpinnerModule
 			],
 			providers: [
-				{
-					provide: Store,
-					useValue: {
-						selectedOrganization$: new BehaviorSubject(ORGANIZATION),
-						selectedOrganization: ORGANIZATION
-					}
-				},
+				{ provide: Store, useValue: store },
 				{ provide: StrategicInitiativesService, useValue: initiatives },
 				{
 					provide: OrganizationTeamsService,
@@ -121,10 +120,12 @@ describe('Strategic initiatives pages', () => {
 				},
 				{ provide: ToastrService, useValue: { success: jest.fn() } },
 				{ provide: ErrorHandlingService, useValue: { handleError: jest.fn() } },
-				{ provide: NbDialogService, useValue: { open: jest.fn() } },
+				{ provide: NbDialogService, useValue: dialogService },
 				{ provide: NbDialogRef, useValue: dialogRef },
-				{ provide: Router, useValue: { navigate: jest.fn() } },
-				{ provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: INITIATIVE.id })) } }
+				{
+					provide: ActivatedRoute,
+					useValue: { paramMap: of(convertToParamMap({ id: INITIATIVE.id })), snapshot: {} }
+				}
 			],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
@@ -210,6 +211,77 @@ describe('Strategic initiatives pages', () => {
 		expect(text).toContain('Ship v1');
 		expect(text).toContain('Gauzy');
 		expect(text).toContain('Budget');
+	});
+
+	it('opens the detail page from a keyboard-reachable title link', async () => {
+		const fixture = TestBed.createComponent(InitiativesComponent);
+		await settle(fixture);
+
+		const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a.link');
+		expect(link.getAttribute('href')).toBe(`/pages/goals/initiatives/${INITIATIVE.id}`);
+	});
+
+	it('discards the answer of an earlier organization that arrives after the current one', async () => {
+		const OTHER = { id: 'org-2', tenantId: 'tenant-1', name: 'Beta' } as any;
+		let answerFirst: (value: unknown) => void;
+		initiatives.getAll.mockImplementation((organizationId: string) =>
+			organizationId === ORGANIZATION.id
+				? new Promise((resolve) => (answerFirst = resolve))
+				: Promise.resolve({ items: [{ ...INITIATIVE, id: 'initiative-b', title: 'Beta plan' }], total: 1 })
+		);
+		const fixture = TestBed.createComponent(InitiativesComponent);
+		const component = fixture.componentInstance;
+
+		component.organization = ORGANIZATION;
+		const first = component.load();
+		component.organization = OTHER;
+		await component.load();
+		answerFirst({ items: [INITIATIVE], total: 1 });
+		await first;
+
+		expect(component.initiatives.map((initiative) => initiative.title)).toEqual(['Beta plan']);
+		expect(component.loading).toBe(false);
+	});
+
+	it('sends a cleared steward, confidence and momentum as null on an edit', async () => {
+		const fixture = TestBed.createComponent(InitiativeMutationComponent);
+		fixture.componentInstance.organization = ORGANIZATION;
+		fixture.componentInstance.initiative = INITIATIVE;
+		await settle(fixture);
+
+		fixture.componentInstance.form.patchValue({ stewardId: null, confidenceLevel: null, perceivedMomentum: null });
+		await fixture.componentInstance.save();
+
+		expect(initiatives.update).toHaveBeenCalledWith(INITIATIVE.id, expect.objectContaining({ stewardId: null }));
+		expect(initiatives.updateSignals).toHaveBeenCalledWith(
+			INITIATIVE.id,
+			expect.objectContaining({ confidenceLevel: null, perceivedMomentum: null })
+		);
+	});
+
+	it('leaves unset signals and steward out on a create', async () => {
+		const fixture = TestBed.createComponent(InitiativeMutationComponent);
+		fixture.componentInstance.organization = ORGANIZATION;
+		await settle(fixture);
+
+		fixture.componentInstance.form.patchValue({ title: 'New', stewardId: null });
+		await fixture.componentInstance.save();
+
+		const [input] = initiatives.create.mock.calls[0];
+		expect(input).not.toHaveProperty('stewardId');
+		expect(input.signals).not.toHaveProperty('confidenceLevel');
+		expect(input.signals).not.toHaveProperty('perceivedMomentum');
+	});
+
+	it("edits from the detail page in the initiative's organization, whichever one is selected", async () => {
+		store.selectedOrganization = { id: 'org-2', tenantId: 'tenant-1', name: 'Beta' };
+		const fixture = TestBed.createComponent(InitiativeDetailComponent);
+		await settle(fixture);
+
+		await fixture.componentInstance.edit();
+
+		const [, { context }] = dialogService.open.mock.calls[0];
+		expect(context.organization).toMatchObject({ id: ORGANIZATION.id, tenantId: ORGANIZATION.tenantId });
 	});
 
 	it('reads a malformed signals document as no signals', () => {

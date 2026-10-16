@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,27 +47,24 @@ export class InitiativeDetailComponent extends TranslationBaseComponent implemen
 	public steward: IEmployee | null = null;
 	public loading = false;
 	public notFound = false;
-	private organization: IOrganization;
 	private initiativeId: ID;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly store: Store,
-		private readonly dialogService: NbDialogService,
-		private readonly strategicInitiativesService: StrategicInitiativesService,
-		private readonly goalService: GoalService,
-		private readonly employeesService: EmployeesService,
-		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly errorHandlingService: ErrorHandlingService,
-		private readonly cdr: ChangeDetectorRef
-	) {
-		super(translateService);
+	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
+	private readonly store = inject(Store);
+	private readonly dialogService = inject(NbDialogService);
+	private readonly strategicInitiativesService = inject(StrategicInitiativesService);
+	private readonly goalService = inject(GoalService);
+	private readonly employeesService = inject(EmployeesService);
+	private readonly organizationTeamsService = inject(OrganizationTeamsService);
+	private readonly errorHandlingService = inject(ErrorHandlingService);
+	private readonly cdr = inject(ChangeDetectorRef);
+
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {
-		this.organization = this.store.selectedOrganization;
 		this.route.paramMap
 			.pipe(
 				map((params) => params.get('id')),
@@ -131,14 +128,18 @@ export class InitiativeDetailComponent extends TranslationBaseComponent implemen
 		this.router.navigate(['/pages/goals/initiatives']);
 	}
 
+	/**
+	 * Opens the editor in the organization of the INITIATIVE (its employees and teams), whichever one is
+	 * selected: a favorite can open an initiative of an organization other than the selected one.
+	 */
 	async edit(): Promise<void> {
+		const selected = this.store.selectedOrganization;
+		const organization =
+			selected?.id === this.initiative.organizationId
+				? selected
+				: ({ id: this.initiative.organizationId, tenantId: this.initiative.tenantId } as IOrganization);
 		const dialog = this.dialogService.open(InitiativeMutationComponent, {
-			context: {
-				initiative: this.initiative,
-				organization:
-					this.organization ??
-					({ id: this.initiative.organizationId, tenantId: this.initiative.tenantId } as IOrganization)
-			},
+			context: { initiative: this.initiative, organization },
 			closeOnBackdropClick: false
 		});
 		if (await firstValueFrom(dialog.onClose)) {

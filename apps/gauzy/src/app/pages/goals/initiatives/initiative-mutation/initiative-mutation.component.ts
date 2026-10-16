@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -52,18 +52,17 @@ export class InitiativeMutationComponent extends TranslationBaseComponent implem
 	public readonly confidenceLevels = Object.values(OrganizationStrategicConfidenceLevelEnum);
 	public readonly momentums = Object.values(OrganizationStrategicPerceivedMomentumEnum);
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly dialogRef: NbDialogRef<InitiativeMutationComponent>,
-		private readonly fb: UntypedFormBuilder,
-		private readonly strategicInitiativesService: StrategicInitiativesService,
-		private readonly employeesService: EmployeesService,
-		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly toastrService: ToastrService,
-		private readonly errorHandlingService: ErrorHandlingService,
-		private readonly cdr: ChangeDetectorRef
-	) {
-		super(translateService);
+	private readonly dialogRef = inject<NbDialogRef<InitiativeMutationComponent>>(NbDialogRef);
+	private readonly fb = inject(UntypedFormBuilder);
+	private readonly strategicInitiativesService = inject(StrategicInitiativesService);
+	private readonly employeesService = inject(EmployeesService);
+	private readonly organizationTeamsService = inject(OrganizationTeamsService);
+	private readonly toastrService = inject(ToastrService);
+	private readonly errorHandlingService = inject(ErrorHandlingService);
+	private readonly cdr = inject(ChangeDetectorRef);
+
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {
@@ -110,12 +109,17 @@ export class InitiativeMutationComponent extends TranslationBaseComponent implem
 		return employee?.user?.name || [employee?.user?.firstName, employee?.user?.lastName].filter(Boolean).join(' ');
 	}
 
-	/** The signals the form states. Known risks are one per line. */
+	/**
+	 * The signals the form states. Known risks are one per line. On an edit, a cleared confidence or momentum
+	 * is sent as an explicit `null`: the signals are merged into the stored document, so leaving the field out
+	 * would keep the old value.
+	 */
 	private formSignals(): IOrganizationStrategicSignals {
 		const { confidenceLevel, perceivedMomentum, knownRisks, strategicNotes } = this.form.value;
+		const sendCleared = this.isEdit;
 		return {
-			...(confidenceLevel ? { confidenceLevel } : {}),
-			...(perceivedMomentum ? { perceivedMomentum } : {}),
+			...(confidenceLevel || sendCleared ? { confidenceLevel: confidenceLevel || null } : {}),
+			...(perceivedMomentum || sendCleared ? { perceivedMomentum: perceivedMomentum || null } : {}),
 			knownRisks: String(knownRisks ?? '')
 				.split('\n')
 				.map((risk) => risk.trim())
@@ -134,7 +138,8 @@ export class InitiativeMutationComponent extends TranslationBaseComponent implem
 			intent,
 			state,
 			visibilityScope,
-			...(stewardId ? { stewardId: stewardId as ID } : {}),
+			// On an edit, a cleared steward is sent as `null` (an omitted one keeps the stored steward).
+			...(stewardId ? { stewardId: stewardId as ID } : this.isEdit ? { stewardId: null as ID } : {}),
 			teamIds: (teamIds ?? []) as ID[]
 		};
 		this.saving = true;

@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -45,19 +44,19 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 	public loading = false;
 	public organization: IOrganization;
 	private teamsById = new Map<ID, IOrganizationTeam>();
+	/** The latest load: a response or failure of an earlier one (another organization) is discarded. */
+	private loadGeneration = 0;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly store: Store,
-		private readonly router: Router,
-		private readonly dialogService: NbDialogService,
-		private readonly toastrService: ToastrService,
-		private readonly errorHandlingService: ErrorHandlingService,
-		private readonly strategicInitiativesService: StrategicInitiativesService,
-		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly cdr: ChangeDetectorRef
-	) {
-		super(translateService);
+	private readonly store = inject(Store);
+	private readonly dialogService = inject(NbDialogService);
+	private readonly toastrService = inject(ToastrService);
+	private readonly errorHandlingService = inject(ErrorHandlingService);
+	private readonly strategicInitiativesService = inject(StrategicInitiativesService);
+	private readonly organizationTeamsService = inject(OrganizationTeamsService);
+	private readonly cdr = inject(ChangeDetectorRef);
+
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {
@@ -78,6 +77,8 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 			return;
 		}
 		const { id: organizationId, tenantId } = this.organization;
+		const generation = ++this.loadGeneration;
+		const isCurrent = () => generation === this.loadGeneration;
 		this.loading = true;
 		try {
 			const [initiatives, teams] = await Promise.all([
@@ -86,13 +87,20 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 					.getAll([], { organizationId, tenantId })
 					.catch(() => ({ items: [] as IOrganizationTeam[], total: 0 }))
 			]);
+			if (!isCurrent()) {
+				return;
+			}
 			this.initiatives = initiatives?.items ?? [];
 			this.teamsById = new Map((teams?.items ?? []).map((team) => [team.id, team]));
 		} catch (error) {
-			this.errorHandlingService.handleError(error);
+			if (isCurrent()) {
+				this.errorHandlingService.handleError(error);
+			}
 		} finally {
-			this.loading = false;
-			this.cdr.markForCheck();
+			if (isCurrent()) {
+				this.loading = false;
+				this.cdr.markForCheck();
+			}
 		}
 	}
 
@@ -104,10 +112,6 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 
 	signals(initiative: IOrganizationStrategicInitiativeRead): IOrganizationStrategicSignals {
 		return parseInitiativeSignals(initiative.signals);
-	}
-
-	open(initiative: IOrganizationStrategicInitiativeRead): void {
-		this.router.navigate(['/pages/goals/initiatives', initiative.id]);
 	}
 
 	/** Opens the create (no initiative) or edit dialog, and reloads when it saved. */
