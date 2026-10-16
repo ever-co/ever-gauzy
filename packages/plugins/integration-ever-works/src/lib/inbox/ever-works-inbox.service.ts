@@ -207,6 +207,9 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 					idempotencyKey
 				}
 			);
+			// The item as Ever Works now holds it: an older event still queued must not overwrite it (our own
+			// answered event is skipped as an echo, so nothing later would restore it).
+			await this.rememberVersion(context, item, result?.item);
 			if (result?.routed === 'already-decided') {
 				return { routed: 'already-decided', response: answerOf(result.item) };
 			}
@@ -232,7 +235,7 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 			);
 			return;
 		}
-		await this.client(context).request<EverWorksInboxItem>(
+		const updated = await this.client(context).request<EverWorksInboxItem>(
 			'PATCH',
 			`/inbox/items/${encodeURIComponent(ewItemId)}/state`,
 			{
@@ -240,6 +243,39 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 				actAsUserId: ewUserId
 			}
 		);
+		await this.rememberVersion(context, item, updated);
+	}
+
+	/**
+	 * Records the version Ever Works answered with on the item's link, so a queued event of an older version
+	 * is skipped instead of undoing a reply or a state change made from Gauzy. Best effort: a failure here
+	 * only means an older event may be applied (and the next one corrects it).
+	 */
+	private async rememberVersion(
+		context: EverWorksMappingContext,
+		item: IInboxItem,
+		ewItem: EverWorksInboxItem | null | undefined
+	): Promise<void> {
+		if (!ewItem?.id || typeof ewItem.version !== 'number' || !item.id) return;
+		try {
+			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.INBOX_ITEM, ewItem.id);
+			if (link?.ewVersion != null && link.ewVersion >= ewItem.version) return;
+			await this.links.record({
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				integrationTenantId: context.integrationTenantId,
+				entityType: EverWorksLinkType.INBOX_ITEM,
+				gauzyId: item.id as ID,
+				ewId: ewItem.id,
+				ewVersion: ewItem.version,
+				ewUpdatedAt: ewItem.updatedAt ?? null,
+				direction: 'outbound'
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Inbox item ${item.id}: the Ever Works version could not be recorded (${error instanceof Error ? error.message : 'error'}).`
+			);
+		}
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────────────────────────────

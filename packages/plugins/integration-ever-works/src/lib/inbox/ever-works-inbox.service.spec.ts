@@ -255,9 +255,10 @@ describe('EverWorksInboxService', () => {
 	});
 
 	it('a reply acts as the recipient; Ever Works routes it, and its answered event would update Gauzy', async () => {
-		const { mock, ewOrg, adaEw, service, link, gauzyItem } = setup();
+		const { mock, ewOrg, adaEw, service, link, gauzyItem, envelope, apply, writes } = setup();
 		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);
 		const item = mock.addInboxItem(ewOrg.id, { recipientUserId: adaEw });
+		const before = { ...item };
 
 		await expect(
 			service.reply(
@@ -273,6 +274,10 @@ describe('EverWorksInboxService', () => {
 		expect(sent?.headers['idempotency-key']).toMatch(/^[a-f0-9]{64}$/);
 		expect(mock.inboxItems.get(item['id'] as string)).toMatchObject({ status: 'answered', answerOptionId: 'pro' });
 		expect(mock.events.map((e) => e.type)).toContain('inbox.item.answered');
+
+		// An older event still queued (version 1, open) does not undo the reply: the link holds version 2.
+		await expect(apply(envelope('inbox.item.state_changed', before))).resolves.toMatchObject({ status: 'skipped' });
+		expect(writes).toHaveLength(0);
 	});
 
 	it('already decided in Ever Works: the answer there comes back to be recorded', async () => {
