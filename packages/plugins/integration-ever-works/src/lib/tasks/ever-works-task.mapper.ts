@@ -72,6 +72,12 @@ export interface TaskEverWorksSide {
 	assignees?: string[];
 	parentTaskId?: string | null;
 	workId?: string | null;
+	/** Watcher user ids. */
+	watchers?: string[];
+	/** Ids of the tasks that block this one. */
+	blockedBy?: string[];
+	/** `<kind>:<taskId>` (`related`, `duplicates`, `follow-up`). */
+	relations?: string[];
 }
 
 /**
@@ -88,6 +94,12 @@ export interface TaskGauzySide {
 	memberIds?: string[];
 	parentId?: string | null;
 	projectId?: string | null;
+	/** Employees watching the task (`EntitySubscription` of type `manual`). */
+	watcherIds?: string[];
+	/** Tasks that block this one (from `TaskLinkedIssue`, either direction of the pair). */
+	blockedBy?: string[];
+	/** `related:<taskId>` / `duplicates:<taskId>` (from `TaskLinkedIssue`). */
+	relations?: string[];
 }
 
 /**
@@ -117,6 +129,12 @@ export interface TaskEverWorksOnly {
 	/** Ever Works teams and assignees Gauzy could not map at the last sync; tried again on the next change. */
 	unmappedTeams?: string[];
 	unmappedAssignees?: string[];
+	/** Ever Works watchers and edges (`blocked:<id>`, `<kind>:<id>`) Gauzy could not map at the last sync. */
+	unmappedWatchers?: string[];
+	unmappedEdges?: string[];
+	/** Gauzy watchers and edge targets Ever Works could not take at the last push (no link yet); retried. */
+	pendingWatchers?: string[];
+	pendingEdges?: string[];
 }
 
 /** Ever Works' title limit (contract v1). */
@@ -185,8 +203,76 @@ export function everWorksSideOf(task: EverWorksTask): TaskEverWorksSide {
 		teamIds: sorted(task.teamIds ?? []),
 		assignees: sorted((task.assignees ?? []).map(principalKey)),
 		parentTaskId: task.parentTaskId ?? null,
-		workId: task.workId ?? null
+		workId: task.workId ?? null,
+		watchers: sorted(task.watchers ?? []),
+		blockedBy: sorted(task.blockedBy ?? []),
+		relations: sorted((task.relations ?? []).map((relation) => `${relation.kind}:${relation.taskId}`))
 	};
+}
+
+/** The numbers of Gauzy's `TaskRelatedIssuesRelationEnum` the sync reads and writes. */
+export const LINKED_ISSUE = { IS_BLOCKED_BY: 1, BLOCKS: 2, IS_DUPLICATED_BY: 5, DUPLICATES: 6, RELATES_TO: 7 } as const;
+
+/** One `task_linked_issues` row as the sync reads it: `taskTo <action> taskFrom`, listed on `taskTo`. */
+export interface LinkedIssueRow {
+	taskToId: string;
+	taskFromId: string;
+	action: number;
+}
+
+/**
+ * A Gauzy task's blockers and relations from its linked-issue rows, in Ever Works' shape (plan 01 §7). A
+ * row is read from the task it is listed on (`taskTo`): `X IS_BLOCKED_BY Y` and `Y BLOCKS X` both mean X is
+ * blocked by Y; `X DUPLICATES Y` and `Y IS_DUPLICATED_BY X` both mean X duplicates Y; `X RELATES_TO Y` is
+ * X's relation. Clones are Gauzy-only and kept as they are.
+ */
+export function edgesFromRows(taskId: string, rows: ReadonlyArray<LinkedIssueRow>): { blockedBy: string[]; relations: string[] } {
+	const blockedBy = new Set<string>();
+	const relations = new Set<string>();
+	for (const row of rows) {
+		if (row.taskToId === row.taskFromId) continue;
+		if (row.taskToId === taskId) {
+			if (row.action === LINKED_ISSUE.IS_BLOCKED_BY) blockedBy.add(row.taskFromId);
+			else if (row.action === LINKED_ISSUE.DUPLICATES) relations.add(`duplicates:${row.taskFromId}`);
+			else if (row.action === LINKED_ISSUE.RELATES_TO) relations.add(`related:${row.taskFromId}`);
+		} else if (row.taskFromId === taskId) {
+			if (row.action === LINKED_ISSUE.BLOCKS) blockedBy.add(row.taskToId);
+			else if (row.action === LINKED_ISSUE.IS_DUPLICATED_BY) relations.add(`duplicates:${row.taskToId}`);
+		}
+	}
+	return { blockedBy: [...blockedBy].sort(), relations: [...relations].sort() };
+}
+
+/**
+ * The linked-issue rows that say "task blocked by / relates to / duplicates other" in Gauzy — the row on the
+ * task and its pair on the other task (plan 01 §7: pairs are created on both Gauzy tasks).
+ */
+export function linkedIssueRowsFor(kind: 'blocked' | 'related' | 'duplicates', taskId: string, otherId: string): LinkedIssueRow[] {
+	if (kind === 'blocked') {
+		return [
+			{ taskToId: taskId, taskFromId: otherId, action: LINKED_ISSUE.IS_BLOCKED_BY },
+			{ taskToId: otherId, taskFromId: taskId, action: LINKED_ISSUE.BLOCKS }
+		];
+	}
+	if (kind === 'duplicates') {
+		return [
+			{ taskToId: taskId, taskFromId: otherId, action: LINKED_ISSUE.DUPLICATES },
+			{ taskToId: otherId, taskFromId: taskId, action: LINKED_ISSUE.IS_DUPLICATED_BY }
+		];
+	}
+	return [
+		{ taskToId: taskId, taskFromId: otherId, action: LINKED_ISSUE.RELATES_TO },
+		{ taskToId: otherId, taskFromId: taskId, action: LINKED_ISSUE.RELATES_TO }
+	];
+}
+
+/** A relation compared by meaning: Ever Works' `follow-up` is Gauzy's `related` (the kind stays on the link). */
+export const relationKey = (key: string): string => key.replace(/^follow-up:/, 'related:');
+
+/** `<kind>:<id>` → its parts, or `null`. */
+export function relationOf(key: string): { kind: string; id: string } | null {
+	const match = /^(related|duplicates|follow-up):(.+)$/.exec(key);
+	return match ? { kind: match[1] as string, id: match[2] as string } : null;
 }
 
 /** Whether two values of one field are the same (sets compare as sets, case-insensitively for names). */

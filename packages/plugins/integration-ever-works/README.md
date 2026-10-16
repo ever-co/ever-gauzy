@@ -193,7 +193,10 @@ and answered `202`.
   description), description (Markdown ↔ rich HTML), status (the task's own
   status set by slug, then by flag; Ever Works' gates decide, and a refused move
   puts Ever Works' status back with a comment), priority, labels ↔ tags,
-  parent, teams (the scope) and assignees ↔ members, agents included. Each
+  parent, teams (the scope), assignees ↔ members (agents included), watchers ↔
+  manual subscriptions (people), and blockers and relations ↔ linked issues
+  (written as a pair on both Gauzy tasks; `follow-up` is "relates to", the kind
+  kept on the link; a bulk delete is caught by a 10-minute sweep). Each
   side is compared with its own last-synced value, so a value the other side
   cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
   changed a field the later edit wins, and a lost description is kept as a

@@ -25,6 +25,7 @@ import { EverWorksPeopleController } from './people/ever-works-people.controller
 import { EverWorksPeopleService } from './people/ever-works-people.service';
 import { EverWorksProjectsController } from './projects/ever-works-projects.controller';
 import { EverWorksProjectsService } from './projects/ever-works-projects.service';
+import { EverWorksTaskEdgeCapture, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskWatcherSubscriber } from './tasks/ever-works-task.signals';
 import { EverWorksTaskStore } from './tasks/ever-works-task.store';
 import { EverWorksTasksService } from './tasks/ever-works-tasks.service';
 import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubscriber } from './teams/ever-works-team.signals';
@@ -76,11 +77,12 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.loop.registerSweeper(this.projects);
 		this.applier.register(this.tasks);
 		this.pusher.register(this.tasks);
+		this.loop.registerSweeper(this.tasks);
 	}
 }
 
 /** The entity subscribers the plugin adds to the ORMs (outbound triggers of records without a platform event). */
-export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber];
+export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber, EverWorksTaskWatcherSubscriber, EverWorksTaskLinkedIssueSubscriber];
 
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog];
@@ -129,6 +131,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksProjectsService,
 		EverWorksTaskStore,
 		EverWorksTasksService,
+		EverWorksTaskEdgeCapture,
 		EverWorksTeamCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
