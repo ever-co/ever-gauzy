@@ -3067,11 +3067,21 @@ export class StatisticService {
 						}
 						if (row.screenshot_id) {
 							// thumbUrl and fullUrl are not columns: resolve them the way ScreenshotSubscriber does
-							const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
-							const [fullUrl, thumbUrl] = await Promise.all([
-								store?.url(row.screenshot_file),
-								store?.url(row.screenshot_thumb)
-							]);
+							let fullUrl: string | null | undefined;
+							let thumbUrl: string | null | undefined;
+							try {
+								const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
+								[fullUrl, thumbUrl] = await Promise.all([
+									store?.url(row.screenshot_file),
+									store?.url(row.screenshot_thumb)
+								]);
+							} catch (error) {
+								// As in ScreenshotSubscriber.afterEntityLoad: one unresolvable screenshot keeps empty
+								// URLs instead of failing the whole statistics response
+								this.logger.warn(
+									`Could not resolve the URLs of screenshot id=${row.screenshot_id}: ${error?.message}`
+								);
+							}
 							slotMap.get(row.id).screenshots.push({
 								id: row.screenshot_id,
 								file: row.screenshot_file,
