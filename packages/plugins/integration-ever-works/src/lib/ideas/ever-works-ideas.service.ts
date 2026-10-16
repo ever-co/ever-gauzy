@@ -167,6 +167,22 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 			return { status: 'skipped', message: `${envelope.type} is not synced` };
 		}
 		const actorUserId = await gauzyUserOfActor(this.dataSource, this.links, context, envelope.actor);
+		if (!link && idea.title === undefined) {
+			// A first event without the idea's content (an id-only visibility notice): read the idea itself.
+			try {
+				Object.assign(
+					idea,
+					await this.client(context).request<EverWorksIdea>('GET', `/ideas/${encodeURIComponent(idea.id)}`),
+					{ id: idea.id }
+				);
+			} catch (error) {
+				if (error instanceof EverWorksApiError && error.status === 404)
+					return { status: 'skipped', message: 'the idea is not visible in Ever Works' };
+				throw error;
+			}
+			if (!isSyncedVisibility(idea.visibility))
+				return { status: 'skipped', message: 'the idea is private in Ever Works' };
+		}
 		try {
 			return await this.applyIdea(context, link, idea, version, actorUserId);
 		} catch (error) {
