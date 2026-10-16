@@ -237,18 +237,25 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			if (link) await this.links.remove(link);
 		}
 		for (const pair of pairs) {
-			// Under the project's claim, like "create in Ever Works": a pairing never interleaves with a create
-			// of a work for the same project (the later one replaces the earlier, never half of it).
-			await this.withWorkClaim(context, `gauzy-project:${pair.projectId}`, async () => {
-				for (const stale of [
-					await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.ewWorkId),
-					await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.projectId)
-				]) {
-					if (stale) await this.links.remove(stale);
-				}
-				// Pairing changes neither record: from now on the work's changes apply to the project.
-				await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
-			});
+			// Queued behind a "create in Ever Works" of the same project in this process (the later one replaces
+			// the earlier, never half of it). Across processes the create checks the project's link again right
+			// before it records, so it never replaces a pairing made meanwhile. Pairing holds no database lock:
+			// it needs no connection beyond the ones its reads and writes borrow.
+			await this.withWorkClaim(
+				context,
+				`gauzy-project:${pair.projectId}`,
+				async () => {
+					for (const stale of [
+						await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.ewWorkId),
+						await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.projectId)
+					]) {
+						if (stale) await this.links.remove(stale);
+					}
+					// Pairing changes neither record: from now on the work's changes apply to the project.
+					await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
+				},
+				{ database: false }
+			);
 		}
 		await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `projects-tab:${context.integrationTenantId}` }, async () => {
 			for (const ewWorkId of decision.createInGauzy ?? []) {
@@ -547,10 +554,13 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 	 * project: one at a time per work in this process, and across processes a session lock on Postgres
 	 * (advisory lock) or MySQL (`GET_LOCK`). SQLite runs in one process. `fn` checks the link again inside.
 	 */
-	private async withWorkClaim<T>(context: EverWorksMappingContext, ewWorkId: string, fn: () => Promise<T>): Promise<T> {
+	private async withWorkClaim<T>(context: EverWorksMappingContext, ewWorkId: string, fn: () => Promise<T>, options: { database?: boolean } = {}): Promise<T> {
 		const key = `${context.integrationTenantId}:${ewWorkId}`;
 		const previous = this.claims.get(key) ?? Promise.resolve();
-		const current = previous.catch(() => undefined).then(() => this.withDatabaseLock(`ever-works:project-create:${key}`, fn));
+		// `database: false`: this process only — no session lock, so no second pooled connection is held
+		// while `fn` reads and writes through the pool.
+		const run = () => (options.database === false ? fn() : this.withDatabaseLock(`ever-works:project-create:${key}`, fn));
+		const current = previous.catch(() => undefined).then(run);
 		this.claims.set(key, current);
 		try {
 			return await current;
