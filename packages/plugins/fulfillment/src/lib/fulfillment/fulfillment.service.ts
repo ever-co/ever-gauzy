@@ -344,6 +344,10 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			await this.assertQuantityAvailable(line.orderLineId as ID, line.quantity as Quantity, direction);
 		}
 
+		// What the lines name has to be the caller's tenant's (P0 #6c). Checked before the shipment is written: the
+		// writes below are separate statements, so a line refused after the header would leave a shipment without it.
+		await this.lineService.assertReferences(lines);
+
 		const fulfillment = await super.create({
 			...entity,
 			direction,
