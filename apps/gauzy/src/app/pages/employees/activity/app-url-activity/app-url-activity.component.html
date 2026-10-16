@@ -1,10 +1,49 @@
 <div class="custom-card">
-	<div class="filters mb-2 mt-0">
+	<!-- One filter row: the view on the leading edge; search, sort and the shared filters on the trailing edge. -->
+	<div class="filters au-filter-bar mb-2 mt-0">
+		<div class="au-segmented" role="group" [attr.aria-label]="'ACTIVITY.APPS_URLS.VIEW' | translate">
+			@for (option of views; track option) {
+			<button
+				type="button"
+				class="au-segment"
+				[class.is-active]="view === option"
+				[attr.aria-pressed]="view === option"
+				(click)="setView(option)"
+			>
+				{{ (option === 'items' ? (isUrls ? 'ACTIVITY.APPS_URLS.BY_SITE' : 'ACTIVITY.APPS_URLS.BY_APP') : 'ACTIVITY.APPS_URLS.BY_' + option.toUpperCase()) | translate }}
+			</button>
+			}
+		</div>
 		<ngx-gauzy-filters
 			[isTimeFormat]="true"
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
-		></ngx-gauzy-filters>
+		>
+			<div class="col-auto filter-item au-filter-item">
+				<div class="au-search">
+					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+					<input
+						type="text"
+						class="au-search-input"
+						[(ngModel)]="search"
+						[placeholder]="(isUrls ? 'ACTIVITY.APPS_URLS.SEARCH_SITES' : 'ACTIVITY.APPS_URLS.SEARCH_APPS') | translate"
+						[attr.aria-label]="(isUrls ? 'ACTIVITY.APPS_URLS.SEARCH_SITES' : 'ACTIVITY.APPS_URLS.SEARCH_APPS') | translate"
+					/>
+				</div>
+			</div>
+			<div class="col-auto filter-item au-filter-item">
+				<button
+					type="button"
+					class="au-sort"
+					(click)="toggleSort()"
+					[nbTooltip]="'ACTIVITY.APPS_URLS.SORT' | translate"
+					nbTooltipPlacement="top"
+				>
+					<nb-icon icon="swap-outline" aria-hidden="true"></nb-icon>
+					{{ (sortBy === 'time' ? 'ACTIVITY.APPS_URLS.SORT_TIME' : 'ACTIVITY.APPS_URLS.SORT_NAME') | translate }}
+				</button>
+			</div>
+		</ngx-gauzy-filters>
 	</div>
 
 	<div class="au-body custom-card-body" [nbSpinner]="loading" nbSpinnerSize="large" nbSpinnerStatus="primary">
@@ -34,46 +73,6 @@
 				}
 			</div>
 		</section>
-
-		<!-- ── Toolbar: view, search, sort ─────────────────────────────────── -->
-		<div class="au-toolbar">
-			<div class="au-segmented" role="group" [attr.aria-label]="'ACTIVITY.APPS_URLS.VIEW' | translate">
-				@for (option of views; track option) {
-				<button
-					type="button"
-					class="au-segment"
-					[class.is-active]="view === option"
-					[attr.aria-pressed]="view === option"
-					(click)="setView(option)"
-				>
-					{{ (option === 'items' ? (isUrls ? 'ACTIVITY.APPS_URLS.BY_SITE' : 'ACTIVITY.APPS_URLS.BY_APP') : 'ACTIVITY.APPS_URLS.BY_' + option.toUpperCase()) | translate }}
-				</button>
-				}
-			</div>
-
-			<div class="au-toolbar-end">
-				<div class="au-search">
-					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
-					<input
-						type="text"
-						class="au-search-input"
-						[(ngModel)]="search"
-						[placeholder]="(isUrls ? 'ACTIVITY.APPS_URLS.SEARCH_SITES' : 'ACTIVITY.APPS_URLS.SEARCH_APPS') | translate"
-						[attr.aria-label]="(isUrls ? 'ACTIVITY.APPS_URLS.SEARCH_SITES' : 'ACTIVITY.APPS_URLS.SEARCH_APPS') | translate"
-					/>
-				</div>
-				<button
-					type="button"
-					class="au-sort"
-					(click)="toggleSort()"
-					[nbTooltip]="'ACTIVITY.APPS_URLS.SORT' | translate"
-					nbTooltipPlacement="top"
-				>
-					<nb-icon icon="swap-outline" aria-hidden="true"></nb-icon>
-					{{ (sortBy === 'time' ? 'ACTIVITY.APPS_URLS.SORT_TIME' : 'ACTIVITY.APPS_URLS.SORT_NAME') | translate }}
-				</button>
-			</div>
-		</div>
 
 		<!-- ── Content ──────────────────────────────────────────────────────── -->
 		@if (failed) {
