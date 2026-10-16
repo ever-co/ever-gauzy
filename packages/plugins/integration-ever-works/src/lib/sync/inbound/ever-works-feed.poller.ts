@@ -62,7 +62,7 @@ export class EverWorksFeedPoller {
 			}
 			for (let page = 0; page < FEED_MAX_PAGES; page++) {
 				const result = await client.events({ after: cursor, limit: 500, excludeOrigin: `gauzy:${connection.id}` });
-				let last = cursor;
+				let last: string | null = cursor;
 				for (const raw of result.events ?? []) {
 					const envelope = parseEverWorksEnvelope(raw);
 					if (envelope.tenantId !== connection.ewTenantId) continue;
