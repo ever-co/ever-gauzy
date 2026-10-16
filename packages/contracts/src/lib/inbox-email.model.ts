@@ -303,3 +303,101 @@ export interface IInboxInboundResult {
 	/** Recipients that are no active mailbox of this account, and messages over the size cap. */
 	dropped: number;
 }
+
+// ---------------------------------------------------------------- mailbox management (plan 04 §3, §5.1, G-P4-1)
+
+/** `POST /api/inbox/mailboxes`. */
+export interface IInboxMailboxCreateInput {
+	ownerType: InboxMailboxOwnerTypeEnum;
+	/** EMPLOYEE mailboxes. */
+	ownerEmployeeId?: ID;
+	/** TEAM mailboxes. */
+	ownerTeamId?: ID;
+	/** Defaults to PLATFORM (an address on `GAUZY_INBOX_DOMAIN`). */
+	kind?: InboxMailboxKindEnum.PLATFORM | InboxMailboxKindEnum.CUSTOM_DOMAIN | InboxMailboxKindEnum.FORWARDING;
+	/**
+	 * The address's local part: chosen for a custom domain; for a platform address the name part (`support` of
+	 * `support.<orgSlug>@…`), allocated from the owner when left out.
+	 */
+	localPart?: string;
+	/** CUSTOM_DOMAIN: the organization's domain (verified by a DNS TXT record before it receives). */
+	domain?: string;
+	displayName?: string;
+	/** Required for a custom domain; `null` / left out = the platform route. */
+	providerAccountId?: ID | null;
+	senderAllowlist?: string[];
+	organizationId?: ID;
+	isDefault?: boolean;
+	/** FORWARDING: the existing address that forwards to this one (shown in the instructions). */
+	forwardFrom?: string;
+}
+
+/** `PATCH /api/inbox/mailboxes/:id`. */
+export interface IInboxMailboxUpdateInput {
+	displayName?: string | null;
+	isActive?: boolean;
+	senderAllowlist?: string[];
+	providerAccountId?: ID | null;
+	isDefault?: boolean;
+	/** Free settings (P4c: `everWorksAgentId`). */
+	settings?: Record<string, unknown> | null;
+}
+
+/** The DNS record that proves a custom domain (`POST /api/inbox/mailboxes/:id/verify`). */
+export interface IInboxMailboxDomainVerification {
+	recordType: 'TXT';
+	recordName: string;
+	recordValue: string;
+	status: InboxMailboxDomainStatusEnum;
+	message?: string;
+}
+
+/** A mailbox's relay secret, answered once (`POST /api/inbox/mailboxes/:id/rotate-secret`). */
+export interface IInboxMailboxSecret {
+	address: string;
+	inboundSecret: string;
+}
+
+/** `PUT /api/inbox/mailboxes/:id/members`. */
+export interface IInboxMailboxMemberInput {
+	userId: ID;
+	role?: InboxMailboxMemberRoleEnum;
+}
+
+export interface IInboxMailboxMember {
+	userId: ID;
+	role: InboxMailboxMemberRoleEnum;
+}
+
+/** `POST /api/inbox/mailboxes/provision`: create what is missing now. */
+export interface IInboxMailboxProvisionInput {
+	organizationId?: ID;
+	/** A mailbox for every active (human) employee of the organization that has none. */
+	employees?: boolean;
+	/** The organization's default mailbox (`inbox.<orgSlug>@…`) when it has none. */
+	defaultOrganizationMailbox?: boolean;
+}
+
+export interface IInboxMailboxProvisionResult {
+	created: IInboxMailbox[];
+	/** Owners that already had a mailbox. */
+	existing: number;
+}
+
+/** An organization's email settings (`GET / PUT /api/inbox/mailboxes/settings`). */
+export interface IInboxOrganizationEmailSettings {
+	organizationId: ID;
+	/** Create a mailbox for every new employee (agents never get one). */
+	autoProvisionEmployees: boolean;
+}
+
+/**
+ * One address namespace for every inbound address of the platform (plan 04 §5.1): the Inbox provides this token,
+ * and the Docs plugin asks it before it takes a custom capture address (the Inbox asks the Docs table in turn).
+ */
+export const INBOUND_ADDRESS_NAMESPACE = 'INBOUND_ADDRESS_NAMESPACE';
+
+export interface IInboundAddressNamespace {
+	/** Whether an inbound address (lower-case, no `+tag`) is already taken. */
+	isTaken(address: string): Promise<boolean>;
+}
