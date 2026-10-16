@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Product, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertAllInCallerScope } from '../catalog.scope';
 import { Collection } from '../collection/collection.entity';
 import { CollectionProduct } from './collection-product.entity';
 import { MikroOrmCollectionProductRepository } from './repository/mikro-orm-collection-product.repository';
@@ -80,6 +81,9 @@ export class CollectionProductService extends TenantAwareCrudService<CollectionP
 		if (!collection) {
 			throw new NotFoundException('The collection was not found.');
 		}
+
+		// The members are the caller's products too (SEC-D-04): inserted below without the core foreign-row check.
+		await assertAllInCallerScope(this.typeOrmCollectionProductRepository.manager, Product, productIds, 'products');
 
 		const existing = await this.typeOrmCollectionProductRepository.find({
 			where: { collectionId, ...callerScope() }

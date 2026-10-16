@@ -10,31 +10,63 @@ import { DEFAULT_AGENT_EMAIL_DOMAIN, isAgentEmail } from './agent-employee';
 const TENANT = 'a0000000-0000-4000-8000-000000000001';
 const OTHER_TENANT = 'a0000000-0000-4000-8000-000000000002';
 const ORGANIZATION = 'b0000000-0000-4000-8000-000000000001';
+const OTHER_ORGANIZATION = 'b0000000-0000-4000-8000-000000000002';
 const ROLE = 'c0000000-0000-4000-8000-000000000001';
 
 type Row = Record<string, any>;
 
 /**
  * A stand-in for the TypeORM transaction manager `createAgentEmployee` writes through: tables keyed by
- * entity class, `findOne` by exact `where` match, `save` assigning an id.
+ * entity class, `findOne`/`find` by exact `where` match, `save` assigning an id. Every read and write yields
+ * to the event loop, so two overlapping calls interleave the way two transactions do. A `findOne` with a
+ * `pessimistic_write` lock (what `findOneForUpdate` asks for on Postgres and MySQL) holds the row until the
+ * transaction ends, like `SELECT … FOR UPDATE`.
  */
-function fakeDatabase() {
+function fakeDatabase(type: string = 'postgres') {
 	const tables = new Map<unknown, Row[]>([
-		[Organization, [{ id: ORGANIZATION, tenantId: TENANT }]],
+		[
+			Organization,
+			[
+				{ id: ORGANIZATION, tenantId: TENANT },
+				{ id: OTHER_ORGANIZATION, tenantId: TENANT }
+			]
+		],
 		[Role, [{ id: ROLE, tenantId: TENANT, name: RolesEnum.EMPLOYEE }]],
 		[User, []],
 		[Employee, []],
 		[EmployeeAgentProfile, []]
 	]);
+	const locks = new Map<string, Promise<void>>();
+	const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
 	let sequence = 0;
 	const matches = (row: Row, where: Row) => Object.entries(where).every(([key, value]) => row[key] === value);
-	const manager = {
-		findOne: jest.fn(async (entity: unknown, { where }: { where: Row }) => {
+	const lockRequests: string[] = [];
+
+	const managerFor = (held: Array<() => void>) => ({
+		connection: { options: { type } },
+		findOne: jest.fn(async (entity: unknown, { where, lock }: { where: Row; lock?: { mode: string } }) => {
+			if (lock?.mode === 'pessimistic_write') {
+				const key = `${(entity as { name?: string }).name}:${where.id}`;
+				lockRequests.push(key);
+				while (locks.has(key)) await locks.get(key);
+				let release: () => void;
+				locks.set(key, new Promise<void>((resolve) => (release = resolve)));
+				held.push(() => {
+					locks.delete(key);
+					release();
+				});
+			}
+			await tick();
 			return (tables.get(entity) ?? []).find((row) => matches(row, where)) ?? null;
+		}),
+		find: jest.fn(async (entity: unknown, { where }: { where: Row }) => {
+			await tick();
+			return (tables.get(entity) ?? []).filter((row) => matches(row, where));
 		}),
 		create: jest.fn((_entity: unknown, values: Row) => ({ ...values })),
 		merge: jest.fn((_entity: unknown, target: Row, values: Row) => Object.assign(target, values)),
 		save: jest.fn(async (entity: unknown, value: Row) => {
+			await tick();
 			const rows = tables.get(entity);
 			const stored = {
 				id: value.id ?? `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}`,
@@ -45,11 +77,21 @@ function fakeDatabase() {
 			else rows.push(stored);
 			return stored;
 		})
-	};
+	});
+
 	const repository = {
-		manager: { transaction: jest.fn(async (work: (m: typeof manager) => unknown) => work(manager)) }
+		manager: {
+			transaction: jest.fn(async (work: (m: ReturnType<typeof managerFor>) => unknown) => {
+				const held: Array<() => void> = [];
+				try {
+					return await work(managerFor(held));
+				} finally {
+					held.forEach((release) => release()); // commit or rollback releases the row locks
+				}
+			})
+		}
 	};
-	return { tables, manager, repository };
+	return { tables, repository, lockRequests };
 }
 
 describe('EmployeeService.createAgentEmployee', () => {
@@ -193,6 +235,104 @@ describe('EmployeeService.createAgentEmployee', () => {
 				email: 'person@team.invalid'
 			})
 		).rejects.toBeInstanceOf(ConflictException);
+	});
+
+	it('creates an agent once when two calls for it overlap (the organization row is locked)', async () => {
+		const input = { tenantId: TENANT, organizationId: ORGANIZATION, name: 'Bot', email: 'agent-7@agents.invalid' };
+
+		const results = await Promise.all([service.createAgentEmployee(input), service.createAgentEmployee(input)]);
+
+		expect(results.map((result) => result.created).sort()).toEqual([false, true]);
+		expect(results[0].employee.id).toBe(results[1].employee.id);
+		expect(db.tables.get(User)).toHaveLength(1);
+		expect(db.tables.get(Employee)).toHaveLength(1);
+		expect(db.lockRequests).toEqual([`Organization:${ORGANIZATION}`, `Organization:${ORGANIZATION}`]);
+	});
+
+	it('control: without the row lock the same overlap creates the agent twice', async () => {
+		// SQLite takes no row lock (one writer at a time is the database's own rule): this fake does not
+		// serialize, which shows the race the lock closes on Postgres and MySQL.
+		db = fakeDatabase('better-sqlite3');
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		service = new EmployeeService(db.repository as any, {} as any);
+		const input = { tenantId: TENANT, organizationId: ORGANIZATION, name: 'Bot', email: 'agent-8@agents.invalid' };
+
+		await Promise.all([service.createAgentEmployee(input), service.createAgentEmployee(input)]);
+
+		expect(db.lockRequests).toEqual([]);
+		expect(db.tables.get(User)).toHaveLength(2);
+	});
+
+	it('reuses the account of the same agent mapped into another organization, with the EMPLOYEE role', async () => {
+		db.tables
+			.get(User)
+			.push({ id: 'u-9', tenantId: TENANT, email: 'agent-9@agents.invalid', hash: null, roleId: null });
+		db.tables
+			.get(Employee)
+			.push({
+				id: 'e-9',
+				tenantId: TENANT,
+				organizationId: OTHER_ORGANIZATION,
+				userId: 'u-9',
+				kind: EmployeeKindEnum.AGENT
+			});
+
+		const result = await service.createAgentEmployee({
+			tenantId: TENANT,
+			organizationId: ORGANIZATION,
+			name: 'Bot',
+			email: 'agent-9@agents.invalid'
+		});
+
+		expect(result.created).toBe(true);
+		expect(result.employee).toMatchObject({
+			userId: 'u-9',
+			organizationId: ORGANIZATION,
+			kind: EmployeeKindEnum.AGENT
+		});
+		expect(db.tables.get(User)).toHaveLength(1);
+		expect(db.tables.get(User)[0].roleId).toBe(ROLE);
+	});
+
+	it('never reuses the password-less account of a person employed in another organization', async () => {
+		db.tables
+			.get(User)
+			.push({ id: 'u-3', tenantId: TENANT, email: 'invited@team.invalid', hash: null, roleId: ROLE });
+		db.tables
+			.get(Employee)
+			.push({
+				id: 'e-3',
+				tenantId: TENANT,
+				organizationId: OTHER_ORGANIZATION,
+				userId: 'u-3',
+				kind: EmployeeKindEnum.HUMAN
+			});
+
+		await expect(
+			service.createAgentEmployee({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				name: 'Bot',
+				email: 'invited@team.invalid'
+			})
+		).rejects.toBeInstanceOf(ConflictException);
+		expect(db.tables.get(Employee)).toHaveLength(1);
+	});
+
+	it('never reuses an account that stands behind no agent', async () => {
+		db.tables
+			.get(User)
+			.push({ id: 'u-4', tenantId: TENANT, email: 'orphan@team.invalid', hash: null, roleId: null });
+
+		await expect(
+			service.createAgentEmployee({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				name: 'Bot',
+				email: 'orphan@team.invalid'
+			})
+		).rejects.toBeInstanceOf(ConflictException);
+		expect(db.tables.get(Employee)).toHaveLength(0);
 	});
 
 	it('never reuses a user that has a password', async () => {

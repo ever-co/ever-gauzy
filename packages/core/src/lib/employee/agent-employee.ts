@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { EntityManager, EntityTarget, FindOptionsWhere, ObjectLiteral } from 'typeorm';
 
 /**
  * The domain an agent employee's login identity defaults to. Under the RFC 2606 `.invalid` top-level
@@ -26,4 +27,25 @@ export function isAgentEmail(email: string): boolean {
  */
 export function defaultAgentEmail(): string {
 	return `agent-${randomUUID()}@${DEFAULT_AGENT_EMAIL_DOMAIN}`;
+}
+
+/**
+ * Reads one row inside the caller's transaction and, on Postgres and MySQL, locks it for the rest of the
+ * transaction (`SELECT … FOR UPDATE`), so that two transactions doing the same check-then-insert run one
+ * after the other: the second waits for the first to commit, then sees its rows. SQLite has no row locks;
+ * it allows one writer at a time, so the embedded dialect reads the row as is.
+ *
+ * @param manager The transaction manager.
+ * @param entity The entity to read.
+ * @param where The row to read.
+ * @returns The row, or `null`.
+ */
+export async function findOneForUpdate<T extends ObjectLiteral>(
+	manager: EntityManager,
+	entity: EntityTarget<T>,
+	where: FindOptionsWhere<T>
+): Promise<T | null> {
+	const type = manager.connection?.options?.type;
+	const locks = type === 'postgres' || type === 'mysql' || type === 'mariadb';
+	return await manager.findOne(entity, { where, ...(locks ? { lock: { mode: 'pessimistic_write' as const } } : {}) });
 }

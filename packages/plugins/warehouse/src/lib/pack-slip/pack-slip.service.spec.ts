@@ -325,7 +325,12 @@ function packSlipFixture(
 	const slipRepository = repository(tables, 'slip');
 	const lineRepository = repository(tables, 'line');
 	const listRepository = repository(tables, 'list');
-	const lineService = new PickListLineService(lineRepository as never, {} as never, listRepository as never);
+	const lineService = new PickListLineService(
+		lineRepository as never,
+		{} as never,
+		listRepository as never,
+		{ append: async () => undefined } as never
+	);
 	const listService = {
 		findOneScoped: async (id: string) => {
 			const list = tables.list.find((row) => row.id === id);

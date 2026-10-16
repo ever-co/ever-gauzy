@@ -90,3 +90,76 @@ describe('writeAgentProfile', () => {
 		).rejects.toBeInstanceOf(BadRequestException);
 	});
 });
+
+/**
+ * Two first writes for one employee, as two transactions: each reads "no profile yet" unless the employee
+ * row is locked for the transaction. Postgres and MySQL lock it (`findOneForUpdate`), so the second waits,
+ * then updates the profile the first created instead of failing on the one-profile-per-employee constraint.
+ */
+describe('writeAgentProfile — overlapping first writes', () => {
+	function sharedDatabase(type: string) {
+		const profiles: any[] = [];
+		const employees = [AGENT];
+		const locks = new Map<string, Promise<void>>();
+		const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+		const matches = (row: any, where: any) => Object.entries(where).every(([key, value]) => row[key] === value);
+		let sequence = 0;
+		const transaction = async <T>(work: (em: any) => Promise<T>): Promise<T> => {
+			const held: Array<() => void> = [];
+			const em = {
+				connection: { options: { type } },
+				findOne: async (entity: unknown, { where, lock }: any) => {
+					if (lock?.mode === 'pessimistic_write') {
+						const key = String(where.id);
+						while (locks.has(key)) await locks.get(key);
+						let release: () => void;
+						locks.set(key, new Promise<void>((resolve) => (release = resolve)));
+						held.push(() => {
+							locks.delete(key);
+							release();
+						});
+					}
+					await tick();
+					const table = entity === Employee ? employees : entity === EmployeeAgentProfile ? profiles : [];
+					return table.find((row) => matches(row, where)) ?? null;
+				},
+				create: (_entity: unknown, values: any) => ({ ...values }),
+				merge: (_entity: unknown, target: any, values: any) => Object.assign(target, values),
+				save: async (_entity: unknown, value: any) => {
+					await tick();
+					if (!value.id && profiles.some((row) => row.employeeId === value.employeeId)) {
+						throw new Error('UNIQUE constraint failed: employee_agent_profile.employeeId');
+					}
+					const stored = Object.assign(value, { id: value.id ?? `p-${++sequence}` });
+					if (!profiles.includes(stored)) profiles.push(stored);
+					return stored;
+				}
+			};
+			try {
+				return await work(em);
+			} finally {
+				held.forEach((release) => release());
+			}
+		};
+		return { profiles, transaction };
+	}
+
+	it('writes once and then updates when the employee row is locked', async () => {
+		const db = sharedDatabase('postgres');
+		await Promise.all([
+			db.transaction((em) => writeAgentProfile(em, AGENT, { source: 'ever_works', status: 'active' })),
+			db.transaction((em) => writeAgentProfile(em, AGENT, { source: 'ever_works', status: 'paused' }))
+		]);
+		expect(db.profiles).toHaveLength(1);
+		expect(db.profiles[0].status).toBe('paused');
+	});
+
+	it('control: without the lock the second first write fails on the unique constraint', async () => {
+		const db = sharedDatabase('better-sqlite3');
+		const results = await Promise.allSettled([
+			db.transaction((em) => writeAgentProfile(em, AGENT, { source: 'ever_works', status: 'active' })),
+			db.transaction((em) => writeAgentProfile(em, AGENT, { source: 'ever_works', status: 'paused' }))
+		]);
+		expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+	});
+});

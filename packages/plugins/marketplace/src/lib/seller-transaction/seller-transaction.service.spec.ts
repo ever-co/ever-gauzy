@@ -182,7 +182,9 @@ function transactionFixture(seed: { transactions?: Row[]; sellers?: Row[] } = {}
 
 	const manager: any = {
 		transaction: async (run: (transactional: any) => Promise<any>) => await run(manager),
-		save: async () => undefined
+		// A row written inside the transaction lands in the same table the repository writes: a settle saves the
+		// row and appends its fact through the transaction's own manager.
+		save: async (_entity: unknown, entityRow: Row) => await transactionRepository.save(entityRow)
 	};
 
 	const transactionRepository: any = {

@@ -3,6 +3,7 @@ import { EntityManager } from 'typeorm';
 import { ID, IEmployeeAgentProfileInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Employee } from '../core/entities/internal';
+import { findOneForUpdate } from '../employee/agent-employee';
 import { EmployeeAgentProfile } from './employee-agent-profile.entity';
 import { TypeOrmEmployeeAgentProfileRepository } from './repository/type-orm-employee-agent-profile.repository';
 import { MikroOrmEmployeeAgentProfileRepository } from './repository/mikro-orm-employee-agent-profile.repository';
@@ -78,6 +79,11 @@ export async function writeAgentProfile(
 			throw new BadRequestException('reportsToEmployeeId must name an employee of the same organization.');
 		}
 	}
+
+	// The employee row is locked for the transaction (Postgres, MySQL), so two first writes for one employee
+	// run one after the other: the second finds the profile the first created and updates it, instead of
+	// failing on the one-profile-per-employee constraint.
+	await findOneForUpdate(em, Employee, { id: employeeId, tenantId });
 
 	const existing = await em.findOne(EmployeeAgentProfile, { where: { employeeId, tenantId } });
 	if (existing) {
