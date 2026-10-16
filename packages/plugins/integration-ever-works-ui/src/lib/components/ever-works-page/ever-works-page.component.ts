@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inje
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbAlertModule, NbCardModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { distinctUntilChanged } from 'rxjs';
+import { distinctUntilChanged, Observable, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
 import { EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
 
@@ -79,11 +80,11 @@ export class EverWorksPageComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	view: EverWorksView = 'loading';
-	status: EverWorksStatus | null = null;
+	protected status: EverWorksStatus | null = null;
 	private organizationId: string | null = null;
 
 	/** The Ever Works page that creates an integration key, when the operator configured the app URL. */
-	get newKeyUrl(): string | null {
+	protected get newKeyUrl(): string | null {
 		const appUrl = this.status?.appUrl;
 		return appUrl && /^https:\/\//.test(appUrl) ? `${appUrl}${EVER_WORKS_NEW_KEY_PATH}` : null;
 	}
@@ -92,30 +93,37 @@ export class EverWorksPageComponent implements OnInit {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChanged((a, b) => a?.id === b?.id),
+				tap((organization) => (this.organizationId = organization?.id ?? null)),
+				// A new organization replaces the request in flight, so a late answer for the previous one never wins.
+				switchMap((organization) => this.statusOf(organization?.id ?? null)),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe((organization) => {
-				this.organizationId = organization?.id ?? null;
-				this.load();
-			});
+			.subscribe((result) => this.apply(result));
 	}
 
-	/** Reads the status for the selected organization; 404 means the plugin is not loaded. */
+	/** Reads the status for the selected organization again (a retry). */
 	load(): void {
-		this.api
-			.status(this.organizationId)
+		this.statusOf(this.organizationId)
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({
-				next: (status) => {
-					this.status = status;
-					this.view = 'ready';
-					this.cdr.markForCheck();
-				},
-				error: (error: HttpErrorResponse) => {
-					this.status = null;
-					this.view = error?.status === 404 ? 'unavailable' : 'error';
-					this.cdr.markForCheck();
-				}
-			});
+			.subscribe((result) => this.apply(result));
+	}
+
+	/** The status, or the error that tells why there is none (404: the plugin is not loaded). */
+	private statusOf(organizationId: string | null): Observable<{ status: EverWorksStatus } | { error: HttpErrorResponse }> {
+		return this.api.status(organizationId).pipe(
+			map((status) => ({ status })),
+			catchError((error: HttpErrorResponse) => of({ error }))
+		);
+	}
+
+	private apply(result: { status: EverWorksStatus } | { error: HttpErrorResponse }): void {
+		if ('status' in result) {
+			this.status = result.status;
+			this.view = 'ready';
+		} else {
+			this.status = null;
+			this.view = result.error?.status === 404 ? 'unavailable' : 'error';
+		}
+		this.cdr.markForCheck();
 	}
 }

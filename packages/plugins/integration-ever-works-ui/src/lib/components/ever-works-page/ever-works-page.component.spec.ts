@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { EverWorksStatus, EverWorksUiService } from '../../services/ever-works.service';
 import { EVER_WORKS_NEW_KEY_PATH, EverWorksPageComponent } from './ever-works-page.component';
@@ -71,6 +71,25 @@ describe('EverWorksPageComponent', () => {
 		expect(find('ready')).not.toBeNull();
 		expect(find('default-api-url')).toBeNull();
 		expect(find('create-key')).toBeNull();
+	});
+
+	it('a late answer for the previous organization never overwrites the current one', () => {
+		const organizations = new BehaviorSubject<{ id: string }>(ORGANIZATION);
+		const answers: Record<string, Subject<EverWorksStatus>> = { first: new Subject(), second: new Subject() };
+		api.status.mockImplementation((id: string) => (id === ORGANIZATION.id ? answers['first'] : answers['second']));
+		TestBed.configureTestingModule({
+			imports: [EverWorksPageComponent],
+			providers: [
+				{ provide: EverWorksUiService, useValue: api },
+				{ provide: Store, useValue: { selectedOrganization$: organizations } }
+			]
+		});
+		const fixture = TestBed.createComponent(EverWorksPageComponent);
+		fixture.detectChanges();
+		organizations.next({ id: '22222222-2222-4333-8444-555555555555' });
+		answers['second'].error({ status: 404 });
+		answers['first'].next(STATUS); // the slow answer of the first organization arrives last
+		expect(fixture.componentInstance.view).toBe('unavailable');
 	});
 
 	it('never links to a non-HTTPS app URL', () => {
