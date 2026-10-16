@@ -210,7 +210,12 @@ describe('check constraint helper — a rule MySQL cannot hold beside a foreign-
  */
 function catalogRunner(
 	type: DatabaseTypeEnum,
-	catalog: { metadataChecks?: string[]; tableConstraints?: string[]; dropFailure?: unknown } = {}
+	catalog: {
+		metadataChecks?: string[];
+		tableConstraints?: string[];
+		dropFailure?: unknown;
+		probeFailure?: unknown;
+	} = {}
 ): { queryRunner: QueryRunner; executed: ExecutedQuery[]; probes: ExecutedQuery[] } {
 	const executed: ExecutedQuery[] = [];
 	const probes: ExecutedQuery[] = [];
@@ -220,6 +225,10 @@ function catalogRunner(
 		query: async (sql: string, parameters: any[] = []) => {
 			if (sql.includes('information_schema.TABLE_CONSTRAINTS')) {
 				probes.push({ sql, parameters });
+
+				if (catalog.probeFailure) {
+					throw catalog.probeFailure;
+				}
 
 				// Answer like MySQL: only rows whose table and name match the bound parameters.
 				const [table, name] = parameters;
@@ -315,6 +324,22 @@ describe('check constraint helper — MySQL, whose table metadata never lists a 
 				'ALTER TABLE `example` DROP CHECK `CHK_example_positive`'
 			]);
 		}
+	});
+
+	it('answers "present" when the catalog cannot be read, like a table that cannot be described', async () => {
+		// The helper's contract: a constraint it cannot see the absence of is never added. The rule then rests on
+		// the write path and the nightly audit, as for every rule the helper does not create.
+		const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		const { queryRunner, executed, probes } = catalogRunner(DatabaseTypeEnum.mysql, {
+			probeFailure: new Error('information_schema could not be read')
+		});
+
+		expect(await hasCheckConstraint(queryRunner, 'example', DEFINITION.name)).toBe(true);
+		expect(await addCheckConstraint(queryRunner, DEFINITION, 'TestMigration')).toBe('present');
+		expect(probes).toHaveLength(2);
+		expect(executed).toEqual([]);
+
+		log.mockRestore();
 	});
 
 	it('rethrows any other drop failure, and a parse error outside MySQL, without retrying', async () => {
