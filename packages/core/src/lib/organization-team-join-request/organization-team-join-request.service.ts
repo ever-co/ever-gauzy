@@ -350,12 +350,22 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				let employeePresentInTeam = null;
 
 				if (employee) {
-					employeePresentInTeam = await this._organizationTeamService.findOneByWhereOptions({
-						members: {
-							employeeId: employee.id
-						},
-						id: request.organizationTeamId
-					});
+					try {
+						await this._organizationTeamService.findOneByWhereOptions({
+							members: {
+								employeeId: employee.id
+							},
+							id: request.organizationTeamId
+						});
+						employeePresentInTeam = true;
+					} catch (error) {
+						// A miss (404) means "not on the team yet". Any other failure is not an answer to that
+						// question, so it is raised rather than read as a miss that would add the employee again.
+						if (!(error instanceof NotFoundException)) {
+							throw error;
+						}
+						employeePresentInTeam = false;
+					}
 				}
 
 				/**
@@ -368,7 +378,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 						tenantId,
 						organizationId: request.organizationId
 					});
+				}
 
+				/**
+				 * Mark the request accepted, whether the employee was just added or was already on the team
+				 */
+				if (employee) {
 					await super.update(id, {
 						status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 						userId: currentTenantUser.id

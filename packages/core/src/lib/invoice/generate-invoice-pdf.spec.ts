@@ -128,6 +128,54 @@ describe('generateInvoicePdfDefinition', () => {
 		expect(all).toEqual(expect.arrayContaining(['10', '5', '7']));
 		expect(all.some((text) => text.endsWith('%'))).toBe(false);
 	});
+
+	// #10690: the header dates used to print as `Thu Oct 01` (no year, server time zone), and a document
+	// without a due date or a contact threw before the PDF was built.
+	describe('header dates and contact', () => {
+		// 5 and 31 October picked in a UTC+2 / UTC+1 browser are stored as the previous day, UTC.
+		const dated = { invoiceDate: new Date('2026-10-04T22:00:00Z'), dueDate: new Date('2026-10-30T23:00:00Z') };
+		const paris = { ...organization(undefined, 'Europe/Paris'), dateFormat: 'DD.MM.YYYY' };
+
+		it.each([
+			['an invoice', false, 'Invoice Date: '],
+			['an estimate', true, 'Estimate Date: ']
+		])(
+			'prints the dates of %s as full days in the organization time zone and format',
+			async (_, isEstimate, label) => {
+				const all = texts(
+					await generateInvoicePdfDefinition(
+						invoice({ ...dated, isEstimate }),
+						paris,
+						contact,
+						translatedText
+					)
+				);
+
+				expect(all).toEqual(expect.arrayContaining([label, '05.10.2026', 'Due Date: ', '31.10.2026']));
+			}
+		);
+
+		it('renders a document without a due date, printing that date empty', async () => {
+			const all = texts(
+				await generateInvoicePdfDefinition(
+					invoice({ ...dated, isEstimate: true, dueDate: null }),
+					paris,
+					contact,
+					translatedText
+				)
+			);
+
+			expect(all).toContain('05.10.2026');
+			expect(all[all.indexOf('Due Date: ') + 1]).toBe('');
+		});
+
+		it.each([null, undefined])('renders a document whose contact is %s', async (missing) => {
+			const all = texts(await generateInvoicePdfDefinition(invoice(dated), paris, missing, translatedText));
+
+			expect(all[all.indexOf('To:\n') + 1]).toBe('');
+			expect(all).toContain('Total Value: USD 108');
+		});
+	});
 });
 
 describe('generateInvoicePaymentPdfDefinition', () => {

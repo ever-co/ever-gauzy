@@ -1467,7 +1467,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			throw new ForbiddenException('A tenant context is required to read conflicting time logs');
 		}
 
-		const { employeeId } = input;
+		await this.assertCanReadEmployeeTimeLogs(input.employeeId);
+
+		return await this.commandBus.execute(new IGetConflictTimeLogCommand({ ...input, tenantId }));
+	}
+
+	/**
+	 * Refuses a read of an employee's time logs unless the caller is that employee, manages them, or
+	 * holds CHANGE_SELECTED_EMPLOYEE.
+	 *
+	 * Shared by `getConflictTimeLogs` and `TimeLogConflictAccessGuard`. The guard is what checks the
+	 * `timeLogConflicts` GraphQL field, which dispatches the conflict command without going through this
+	 * service.
+	 *
+	 * @param employeeId The employee whose time logs are read.
+	 */
+	async assertCanReadEmployeeTimeLogs(employeeId: ID): Promise<void> {
 		if (!employeeId) {
 			throw new ForbiddenException('An employee is required to read conflicting time logs');
 		}
@@ -1485,8 +1500,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new ForbiddenException('You do not have permission to read time logs for this employee');
 			}
 		}
-
-		return await this.commandBus.execute(new IGetConflictTimeLogCommand({ ...input, tenantId }));
 	}
 
 	/**
@@ -1836,8 +1849,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// If user doesn't have permission to change selected employee, check manager access
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			// Extract unique employeeIds and teamIds from the fetched time logs
-			const uniqueEmployeeIds = [...new Set(timeLogs.map((log) => log.employeeId))];
+			const currentEmployeeId = RequestContext.currentEmployeeId();
+
+			// Extract unique employeeIds and teamIds from the fetched time logs. The caller's own logs are
+			// left out: for logs without a team, `canManageEmployees` has no self case and would refuse them
+			// to an employee who manages no team.
+			const uniqueEmployeeIds = [...new Set(timeLogs.map((log) => log.employeeId))].filter(
+				(employeeId) => !currentEmployeeId || employeeId !== currentEmployeeId
+			);
 			const uniqueTeamIds = [...new Set(timeLogs.map((log) => log.organizationTeamId).filter(Boolean))];
 
 			// Check if user can manage all employees in the time logs

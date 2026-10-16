@@ -15,13 +15,16 @@ import {
     filterSharedEntity,
     generateSharedEntityToken
 } from "./shared-entity.helper";
+import { assertCallerMayShare, isWithinShareRules } from "./shared-entity.access";
+import { ManagedEmployeeService } from "../employee/managed-employee.service";
 
 @Injectable()
 export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     constructor(
         @InjectDataSource() private readonly dataSource: DataSource,
         typeOrmSharedEntityRepository: TypeOrmSharedEntityRepository,
-        mikroOrmSharedEntityRepository: MikroOrmSharedEntityRepository
+        mikroOrmSharedEntityRepository: MikroOrmSharedEntityRepository,
+        private readonly managedEmployeeService: ManagedEmployeeService
     ) {
         super(typeOrmSharedEntityRepository, mikroOrmSharedEntityRepository);
     }
@@ -44,14 +47,23 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // share-link pointing at another tenant's record by its id (cross-tenant IDOR -
             // GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
             const targetRepository = this.resolveRepository(input.entity);
+            const shareRules = this.parseShareRules(input.shareRules);
             // Only real, tenant-scoped relations, to a bounded depth (see assertShareRulesAreSafe).
-            assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(input.shareRules));
+            assertShareRulesAreSafe(targetRepository.metadata, shareRules);
             const owned = await targetRepository.findOne({
                 where: this.buildScopedWhere(targetRepository, input.entityId, tenantId, organizationId)
             });
             if (!owned) {
                 throw new ForbiddenException('Cannot share an entity that does not belong to your tenant');
             }
+            // The link is read without signing in, so the caller must be allowed to read what it shares.
+            await assertCallerMayShare(
+                targetRepository.metadata,
+                owned,
+                shareRules,
+                this.dataSource,
+                this.managedEmployeeService
+            );
 
             // Generate a unique token for the shared entity
             const token = generateSharedEntityToken();
@@ -234,7 +246,27 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 throw new NotFoundException('Shared entity not found');
             }
             const targetRepository = this.resolveRepository(existing.entity);
-            assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(safeInput.shareRules));
+            const shareRules = this.parseShareRules(safeInput.shareRules);
+            assertShareRulesAreSafe(targetRepository.metadata, shareRules);
+            // Only an edit that widens the share is checked like a new one: REST and GraphQL both
+            // require the rules on every edit, so a sharedOptions edit resends them unchanged.
+            if (!isWithinShareRules(shareRules, existing.shareRules)) {
+                const target = await targetRepository.findOne({
+                    where: this.buildScopedWhere(
+                        targetRepository,
+                        existing.entityId,
+                        existing.tenantId,
+                        existing.organizationId
+                    )
+                });
+                await assertCallerMayShare(
+                    targetRepository.metadata,
+                    target,
+                    shareRules,
+                    this.dataSource,
+                    this.managedEmployeeService
+                );
+            }
         }
         return await super.update(id as any, safeInput);
     }

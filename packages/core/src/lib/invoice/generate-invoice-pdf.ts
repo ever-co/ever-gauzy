@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { Product } from '../product/product.entity';
 import { formatCurrencyAmount } from './invoice-currency.util';
+import { formatInvoiceDay } from './invoice-date.util';
 
 /**
  * An invoice line's product, with the invoice's language merged onto it.
@@ -159,7 +160,7 @@ export async function generateInvoicePdfDefinition(
 										: translatedText.invoice
 									} ${translatedText.date}: `
 							},
-							`${invoice.invoiceDate.toString().slice(0, 10)}`
+							invoice.invoiceDate ? formatInvoiceDay(invoice.invoiceDate, organization) : ''
 						]
 					}
 				]
@@ -173,7 +174,7 @@ export async function generateInvoicePdfDefinition(
 								bold: true,
 								text: `${translatedText.dueDate}: `
 							},
-							`${invoice.dueDate.toString().slice(0, 10)}`
+							invoice.dueDate ? formatInvoiceDay(invoice.dueDate, organization) : ''
 						]
 					}
 				]
@@ -199,7 +200,7 @@ export async function generateInvoicePdfDefinition(
 						bold: true,
 						text: `${translatedText.to}:\n`
 					},
-					`${organizationContact.name}`
+					organizationContact?.name ?? ''
 				]
 			},
 			' ',
