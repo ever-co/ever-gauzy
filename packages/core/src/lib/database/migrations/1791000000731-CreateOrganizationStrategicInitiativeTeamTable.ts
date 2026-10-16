@@ -129,7 +129,8 @@ export class CreateOrganizationStrategicInitiativeTeamTable1791000000731 impleme
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		const lockName = `gauzy:migration:${this.name}`;
+		// MySQL accepts lock names of at most 64 characters: the migration's timestamp, not its class name.
+		const lockName = 'gauzy:migration:1791000000731';
 		const [row] = await queryRunner.query(`SELECT GET_LOCK(?, 120) AS \`acquired\``, [lockName]);
 		if (Number(row?.acquired) !== 1) {
 			throw new Error(`${this.name}: could not acquire the MySQL migration lock ${lockName}.`);
