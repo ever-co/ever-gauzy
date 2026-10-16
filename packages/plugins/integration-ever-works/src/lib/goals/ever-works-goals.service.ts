@@ -189,6 +189,22 @@ export class EverWorksGoalsService implements EverWorksInboundHandler, EverWorks
 			return { status: 'applied', message: 'the goal turned private; it is no longer synced' };
 		}
 		if (!envelope.type.startsWith('goal.')) return { status: 'skipped', message: `${envelope.type} is not synced` };
+		if (!link && goal.title === undefined) {
+			// A first event without the goal's content (an id-only notice): read the goal itself.
+			try {
+				Object.assign(
+					goal,
+					await this.client(context).request<EverWorksGoal>('GET', `/goals/${encodeURIComponent(goal.id)}`),
+					{ id: goal.id }
+				);
+			} catch (error) {
+				if (error instanceof EverWorksApiError && error.status === 404)
+					return { status: 'skipped', message: 'the goal is not visible in Ever Works' };
+				throw error;
+			}
+			if (!isSyncedVisibility(goal.visibility))
+				return { status: 'skipped', message: 'the goal is private in Ever Works' };
+		}
 		return this.applyGoal(context, link, goal, version);
 	}
 
