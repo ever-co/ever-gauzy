@@ -21,10 +21,15 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
+import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../api/bulk-create';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { bulkOptionsOf } from '../api/bulk.decorator';
 import { RequestContext } from '../core/context';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { UserController } from './user.controller';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand, UserDeleteCommand } from './commands';
@@ -152,7 +157,8 @@ export class UserResolver {
 	constructor(
 		private readonly userService: UserService,
 		private readonly factoryResetService: FactoryResetService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
 	) {}
 
 	/**
@@ -273,6 +279,34 @@ export class UserResolver {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async createUser(@Args('input') input: ICreateUserInput): Promise<IUser> {
 		return await this.commandBus.execute(new UserCreateCommand(input as unknown as IUserCreateInput));
+	}
+
+	/**
+	 * Files a batch of accounts, one outcome per item.
+	 *
+	 * The batch `POST /user/bulk` applies, run by the same executor from the same declaration — the options
+	 * are read off the controller's own `@BulkOperation`, so the resource, the cap and the permission cannot
+	 * differ between the two surfaces — and each item is filed by `createUser` itself: the same command, which
+	 * resolves the item's role in the caller's tenant and refuses a role the caller may not grant. A batch
+	 * therefore assigns no role a caller could not assign one account at a time. An item's outcome names the
+	 * account by its id and carries nothing else of it. `atomic: true` is refused before item 0 with the same
+	 * `BULK_ATOMIC_UNSUPPORTED` the route answers — the declaration (`atomic: false`) is the controller's,
+	 * read by the same executor.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here.
+	 */
+	@Mutation('bulkCreateUsers')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Idempotent({ scope: 'user.bulk', required: false, resourceType: 'user' })
+	async bulkCreateUsers(@Args('input') input: IBulkCreateInput<ICreateUserInput>): Promise<IBulkCreatePayload> {
+		const result = await this.bulkExecutor.execute<ICreateUserInput>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createUser(body)),
+			bulkOptionsOf(UserController, 'bulk')
+		);
+
+		return toBulkCreatePayload(result);
 	}
 
 	/**
