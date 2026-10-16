@@ -237,14 +237,18 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			if (link) await this.links.remove(link);
 		}
 		for (const pair of pairs) {
-			for (const stale of [
-				await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.ewWorkId),
-				await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.projectId)
-			]) {
-				if (stale) await this.links.remove(stale);
-			}
-			// Pairing changes neither record: from now on the work's changes apply to the project.
-			await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
+			// Under the project's claim, like "create in Ever Works": a pairing never interleaves with a create
+			// of a work for the same project (the later one replaces the earlier, never half of it).
+			await this.withWorkClaim(context, `gauzy-project:${pair.projectId}`, async () => {
+				for (const stale of [
+					await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.ewWorkId),
+					await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.projectId)
+				]) {
+					if (stale) await this.links.remove(stale);
+				}
+				// Pairing changes neither record: from now on the work's changes apply to the project.
+				await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
+			});
 		}
 		await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `projects-tab:${context.integrationTenantId}` }, async () => {
 			for (const ewWorkId of decision.createInGauzy ?? []) {
@@ -256,19 +260,31 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			}
 		});
 		const failures: Array<{ projectId: ID; message: string }> = [];
+		const created: EverWorksWork[] = [];
 		if (createInEverWorks.length) {
 			const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
 			for (const projectId of createInEverWorks) {
 				// Claimed, then checked again: two overlapping requests never create two works for one project.
-				const failure = await this.withWorkClaim(context, `gauzy-project:${projectId}`, async () => {
+				const result = await this.withWorkClaim(context, `gauzy-project:${projectId}`, async () => {
 					const paired = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, projectId);
 					if (paired && paired.state !== EverWorksLinkState.UNLINKED) return null;
 					return this.createInEverWorks(context, client, projects.get(projectId) as OrganizationProject);
 				});
-				if (failure) failures.push({ projectId, message: failure });
+				if (typeof result === 'string') failures.push({ projectId, message: result });
+				else if (result) created.push(result);
 			}
 		}
-		const view = await this.view(context, await this.works(context));
+		let latest = works;
+		try {
+			latest = await this.works(context);
+		} catch (error) {
+			// Works were created (or refused) already: an Ever Works outage now must not hide those results.
+			// The view is built from the list read at the start plus the works created here.
+			if (!createInEverWorks.length) throw error;
+			this.logger.warn(`Mapping ${context.integrationTenantId}: the works could not be listed again (${error instanceof Error ? error.name : 'error'}).`);
+			latest = [...works, ...created.filter((work) => !works.some((known) => known.id === work.id))];
+		}
+		const view = await this.view(context, latest);
 		return failures.length ? { ...view, failures } : view;
 	}
 
@@ -445,12 +461,12 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 
 	/**
 	 * Creates the Ever Works work of a Gauzy project (a repo-less `project` work, EW-P2-4) and links the
-	 * pair. Returns `null` when it is linked, or why Ever Works did not create it. Nothing in Gauzy
+	 * pair. Returns the work when it is linked, or why it was not. Nothing in Gauzy
 	 * changes: the work starts from the project's fields, and from now on Ever Works' changes apply to the
 	 * project like for any pair. The deterministic `Idempotency-Key` plus `externalRef` make a retry
 	 * (or a lost answer) return the same work instead of a second one.
 	 */
-	private async createInEverWorks(context: EverWorksMappingContext, client: EverWorksClient, project: OrganizationProject): Promise<string | null> {
+	private async createInEverWorks(context: EverWorksMappingContext, client: EverWorksClient, project: OrganizationProject): Promise<string | EverWorksWork> {
 		const projectId = project.id as ID;
 		const connectionId = context.connection.id as ID;
 		const team = await this.teamScopeOfProject(context, projectId);
@@ -478,10 +494,15 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		if (holder && holder.state !== EverWorksLinkState.UNLINKED && holder.gauzyId !== projectId) {
 			return `Ever Works already has a work for this project (${work.id}), paired with another Gauzy project`;
 		}
+		// Nor replace a pairing of this project made meanwhile (outside this process's claim) with another work.
+		const pairedNow = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, projectId);
+		if (pairedNow && pairedNow.state !== EverWorksLinkState.UNLINKED && pairedNow.ewId !== work.id) {
+			return `the project was paired with the Ever Works work ${pairedNow.ewId} meanwhile; the created work ${work.id} is not linked`;
+		}
 		// Recorded as Ever Works answered it, so the next Ever Works change is diffed against what it holds.
 		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound');
 		this.logger.log(`Gauzy project ${projectId} created in Ever Works as work ${work.id} (organization ${context.organizationId}).`);
-		return null;
+		return work;
 	}
 
 	/** `POST /works`, as the admin's Ever Works user when they may act here, else as the integration (plan 03 §C.3). */
