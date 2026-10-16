@@ -51,7 +51,7 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
-import { EmployeeAgentProfile, Organization, Role, User } from '../core/entities/internal';
+import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/entities/internal';
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
 import { defaultAgentEmail, findOneForUpdate, isAgentEmail } from './agent-employee';
 
@@ -121,11 +121,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * - its user gets the tenant's `EMPLOYEE` role, and no organization membership (it never signs in).
 	 *
 	 * Idempotent on the email: when an agent employee with this email already exists in the organization it
-	 * is returned as is (`created: false`), and two overlapping calls for the same agent create it once (the
-	 * organization row is locked for the transaction on Postgres and MySQL; SQLite allows one writer at a
-	 * time). An existing account is reused only when it already stands behind an agent of another
-	 * organization of the tenant; an address that belongs to a person, to a user with a password, or to any
-	 * other account is refused rather than turned into an agent.
+	 * is returned as is (`created: false`; a deleted one is refused with 409 so the caller decides to recover
+	 * it), and two overlapping calls for the same agent create it once (the tenant row is locked for the
+	 * transaction on Postgres and MySQL; SQLite allows one writer at a time). An existing account is reused
+	 * only when it already stands behind an agent of another organization of the tenant; an address that
+	 * belongs to a person, to a user with a password, or to any other account is refused rather than turned
+	 * into an agent. The reverse holds on `POST /employee`, which refuses to file a person on the account of
+	 * an agent ({@link assertNotAgentAccount}).
 	 *
 	 * @param input The agent to provision. `tenantId` and `organizationId` are required and must agree.
 	 * @returns The agent employee, its profile (or `null`) and whether it was created now.
@@ -147,10 +149,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		}
 
 		return await this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
-			// The organization row is locked for the transaction (Postgres, MySQL): two overlapping calls for
-			// the same agent would otherwise both find no user and both create one. The second call waits
-			// here, then finds what the first created and returns it.
-			const organization = await findOneForUpdate(manager, Organization, { id: organizationId, tenantId });
+			// The TENANT row is locked for the transaction (Postgres, MySQL): two overlapping calls for the same
+			// agent — in one organization or in two of the tenant, since the account is looked up by tenant and
+			// email — would otherwise both find no user and both create one. The second call waits here, then
+			// finds what the first created.
+			await findOneForUpdate(manager, Tenant, { id: tenantId });
+			const organization = await manager.findOne(Organization, { where: { id: organizationId, tenantId } });
 			if (!organization) {
 				throw new NotFoundException('The organization does not exist in this tenant.');
 			}
@@ -167,6 +171,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				if (existing) {
 					if (existing.kind !== EmployeeKindEnum.AGENT) {
 						throw new ConflictException('This email belongs to a person, not an agent.');
+					}
+					// A deleted agent is not silently handed back as provisioned: the caller decides whether to
+					// recover it (`softRecoverById`), which keeps an administrator's deletion visible.
+					if (existing.deletedAt) {
+						throw new ConflictException('This agent employee was deleted; recover it to use it again.');
 					}
 					const profile = await manager.findOne(EmployeeAgentProfile, {
 						where: { employeeId: existing.id, tenantId }
@@ -231,6 +240,28 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			return { employee, profile, created: true };
 		});
+	}
+
+	/**
+	 * Refuses to file a person on the account of an agent. `POST /employee` reuses an existing account (found
+	 * by email, or named by `userId`) and files it as a `human` employee of the organization; the account
+	 * behind an agent — one with an agent employee in any organization of the tenant, retired ones included —
+	 * must not become a person who is paid, counted and invited.
+	 *
+	 * @param userId The account the new employee would stand on.
+	 * @param tenantId The tenant.
+	 * @throws ConflictException when the account stands behind an agent employee.
+	 */
+	public async assertNotAgentAccount(userId: ID, tenantId: ID): Promise<void> {
+		const agents = await this.typeOrmRepository.count({
+			where: { userId, ...(tenantId ? { tenantId } : {}), kind: EmployeeKindEnum.AGENT },
+			withDeleted: true
+		});
+		if (agents > 0) {
+			throw new ConflictException(
+				'This user stands behind an agent employee; an agent is not filed as a person.'
+			);
+		}
 	}
 
 	/**

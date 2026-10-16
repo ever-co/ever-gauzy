@@ -173,6 +173,22 @@ export class CreateEmployeeAgentProfileTable1791000000722 implements MigrationIn
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// MySQL has no transactional DDL and no migration-run lock: two processes booting together would both see
+		// the table missing. A named lock makes the check and the DDL one critical section.
+		const lockName = `gauzy:migration:${this.name}`;
+		const [row] = await queryRunner.query(`SELECT GET_LOCK(?, 120) AS \`acquired\``, [lockName]);
+		if (Number(row?.acquired) !== 1) {
+			throw new Error(`${this.name}: could not acquire the MySQL migration lock ${lockName}.`);
+		}
+		try {
+			await this.mysqlCreateTable(queryRunner);
+		} finally {
+			await queryRunner.query(`SELECT RELEASE_LOCK(?)`, [lockName]);
+		}
+	}
+
+	/** Creates the table, its indexes and foreign keys on MySQL, when the table is not there yet. */
+	private async mysqlCreateTable(queryRunner: QueryRunner): Promise<void> {
 		if (await queryRunner.hasTable(TABLE)) return;
 
 		const indexes = Object.entries(NAMES.indexes)

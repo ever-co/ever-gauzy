@@ -52,6 +52,17 @@ export class AddEmployeeKind1791000000721 implements MigrationInterface {
 			await queryRunner.query(`SELECT pg_advisory_xact_lock($1)`, [this.advisoryLockKey]);
 		}
 
+		// MySQL has no transactional DDL and no migration-run lock: two processes booting together would both see
+		// the column missing. A named lock makes the checks and the DDL one critical section.
+		if (dialect === 'mysql') {
+			await withMysqlNamedLock(queryRunner, this.name, () => this.addColumnAndIndex(queryRunner, dialect));
+			return;
+		}
+		await this.addColumnAndIndex(queryRunner, dialect);
+	}
+
+	/** Adds the column and its index, each when it is not there yet. */
+	private async addColumnAndIndex(queryRunner: QueryRunner, dialect: Dialect): Promise<void> {
 		// Postgres guards the statement itself; the other two need the column check first.
 		if (dialect === 'postgres' || !(await queryRunner.hasColumn('employee', KIND_COLUMN.name))) {
 			const ifNotExists = dialect === 'postgres' ? 'IF NOT EXISTS ' : '';
@@ -121,6 +132,23 @@ export class AddEmployeeKind1791000000721 implements MigrationInterface {
 			default:
 				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 		}
+	}
+}
+
+/**
+ * Runs `work` while holding a MySQL named lock (`GET_LOCK`), so that two processes running the same migration
+ * concurrently run its checks and DDL one after the other. The lock is session-level and released in `finally`.
+ */
+async function withMysqlNamedLock(queryRunner: QueryRunner, name: string, work: () => Promise<void>): Promise<void> {
+	const lockName = `gauzy:migration:${name}`;
+	const [row] = await queryRunner.query(`SELECT GET_LOCK(?, 120) AS \`acquired\``, [lockName]);
+	if (Number(row?.acquired) !== 1) {
+		throw new Error(`${name}: could not acquire the MySQL migration lock ${lockName}.`);
+	}
+	try {
+		await work();
+	} finally {
+		await queryRunner.query(`SELECT RELEASE_LOCK(?)`, [lockName]);
 	}
 }
 

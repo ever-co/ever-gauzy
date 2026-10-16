@@ -372,6 +372,12 @@ jobs:
       - name: Test Ever Async integration boundary
         run: yarn nx run plugin-integration-ever-async:test-integration
 
+      - name: Test the Ever Works integration plugin
+        # The switch (only EVER_WORKS_ENABLED=true loads it; anything else keeps it off and warns once),
+        # the operator settings (public HTTPS URLs only), and the catalog entry written at start only
+        # when switched on, without ever stopping the API.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/integration-ever-works/jest.config.ts --runInBand
+
       - name: Test anonymous usage statistics on SQLite, PostgreSQL and MySQL
         # The database suites of the statistics plugins on the three engines (Postgres in a schema
         # of its own): migrations up/up/down, one identity under concurrent first boots, the operator
@@ -437,7 +443,8 @@ jobs:
       - name: Test the API plugin list and its boot order
         # The statistics plugin is in the list unless EVER_STATS_ENABLED=false, also when that is
         # written only in .env or .env.local (read before the list is built); the Ever Platform
-        # connection only with EVER_CONNECT_ENABLED=true; every combination of the optional plugins.
+        # connection only with EVER_CONNECT_ENABLED=true; the Ever Works integration only with
+        # EVER_WORKS_ENABLED=true; every combination of the optional plugins.
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c apps/api/jest.config.ts --runInBand plugins.matrix
 
       - name: Build API
