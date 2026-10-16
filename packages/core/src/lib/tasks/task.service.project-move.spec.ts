@@ -71,8 +71,10 @@ describe('TaskService.update — moving a task to another project', () => {
 	it('numbers the task in the project it moves to, and the prefix follows it', async () => {
 		const updated = await service.update('task-1', { projectId: 'project-new' });
 
-		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-new' }));
-		expect(maxNumberBy).not.toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-old' }));
+		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-new' }), {
+			withDeleted: true
+		});
+		expect(maxNumberBy.mock.calls.map(([options]) => options.projectId)).toEqual(['project-new']);
 		expect(findProject).toHaveBeenCalledWith(OrganizationProject, expect.anything());
 		expect(save).toHaveBeenCalledWith(
 			expect.objectContaining({ id: 'task-1', projectId: 'project-new', number: 5, prefix: 'Eve' })
@@ -136,7 +138,9 @@ describe('TaskService.update — moving a task to another project', () => {
 			OrganizationProject,
 			expect.objectContaining({ where: expect.objectContaining({ organizationId: fixture.organizationId }) })
 		);
-		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ organizationId: fixture.organizationId }));
+		expect(maxNumberBy).toHaveBeenCalledWith(expect.objectContaining({ organizationId: fixture.organizationId }), {
+			withDeleted: true
+		});
 	});
 
 	it('fails closed when the project cannot be checked: nothing is written', async () => {
