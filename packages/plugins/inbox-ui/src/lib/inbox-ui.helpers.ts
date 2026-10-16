@@ -10,9 +10,16 @@ import {
 import { INBOX_EMPLOYEE_LINK, INBOX_PROJECT_LINK, INBOX_TASK_LINK } from './inbox-ui.constants';
 
 /** The page's tabs: the API's item tabs plus Notifications (read live from `/employee-notification`). */
-export type InboxUiTab = 'all' | 'decisions' | 'email' | 'notifications' | 'archived';
+export type InboxUiTab = 'all' | 'decisions' | 'email' | 'notifications' | 'snoozed' | 'archived';
 
-export const INBOX_UI_TABS: readonly InboxUiTab[] = ['all', 'decisions', 'email', 'notifications', 'archived'];
+export const INBOX_UI_TABS: readonly InboxUiTab[] = [
+	'all',
+	'decisions',
+	'email',
+	'notifications',
+	'snoozed',
+	'archived'
+];
 
 /** The API tab of a page tab (`null` for Notifications, which is not an inbox tab). */
 export function apiTabOf(tab: InboxUiTab): InboxTabEnum | null {
@@ -23,6 +30,8 @@ export function apiTabOf(tab: InboxUiTab): InboxTabEnum | null {
 			return InboxTabEnum.DECISIONS;
 		case 'email':
 			return InboxTabEnum.EMAIL;
+		case 'snoozed':
+			return InboxTabEnum.SNOOZED;
 		case 'archived':
 			return InboxTabEnum.ARCHIVED;
 		default:

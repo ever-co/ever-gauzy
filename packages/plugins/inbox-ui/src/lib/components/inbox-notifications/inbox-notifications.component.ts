@@ -138,7 +138,13 @@ export class InboxNotificationsComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		// One request at a time: a newer page (or scope) replaces the one in flight.
+		// The page stream first: the scope emits at once, and its first reload must find a subscriber.
+		this.setUpPageStream();
+		this.followScope();
+	}
+
+	/** One request at a time: a newer page (or scope) replaces the one in flight. */
+	private setUpPageStream(): void {
 		this.reload$
 			.pipe(
 				switchMap((skip) => {
@@ -173,8 +179,10 @@ export class InboxNotificationsComponent implements OnInit {
 				this.notifications.set(skip === 0 ? items : [...this.notifications(), ...items]);
 				this.total.set(page?.total ?? items.length);
 			});
+	}
 
-		// After the page stream: the scope emits at once, and its first reload must find a subscriber.
+	/** The signed-in user's employee in the selected organization: a new one starts over. */
+	private followScope(): void {
 		combineLatest([this.store.user$, this.store.selectedOrganization$])
 			.pipe(
 				map(([user, organization]) => ({
@@ -215,9 +223,13 @@ export class InboxNotificationsComponent implements OnInit {
 		});
 	}
 
+	/**
+	 * Marks every notification of my employee read. An employee record belongs to one organization, so this is
+	 * the selected organization's list; it is read again afterwards rather than patched locally.
+	 */
 	markAllRead(): void {
 		this.api.markAllRead().subscribe({
-			next: () => this.notifications.set(this.notifications().map((entry) => ({ ...entry, isRead: true }))),
+			next: () => this.reload$.next(0),
 			error: () => this.error.set(true)
 		});
 	}

@@ -1,5 +1,7 @@
 # @gauzy/plugin-inbox-ui
 
+<!-- cspell:ignore sandboxed srcdoc -->
+
 The Angular side of the Gauzy **Inbox** ([`@gauzy/plugin-inbox`](../inbox/README.md)): one page for everything addressed to
 me, plus an unread badge in the header.
 
@@ -10,14 +12,16 @@ Plan: `ever-co/homelab` `docs/superpowers/specs/2026-10-15-gauzy-ever-works-inte
 The UI has no switch of its own. It follows the API:
 
 - The nav entry and the header badge appear only after the API has answered `GET /api/inbox/items/counts` for the signed-in
-  user. The API serves that route only when `GAUZY_INBOX_ENABLED=true` loads `@gauzy/plugin-inbox`. Where it does not (the
+  user. A temporary failure (5xx, network) is retried with a growing delay; 404, 401 and 403 are final. The API serves that route only when `GAUZY_INBOX_ENABLED=true` loads `@gauzy/plugin-inbox`. Where it does not (the
   default), the app looks exactly as before.
 - The route `/pages/inbox` (permission `INBOX_VIEW`) is always registered. Opened on an installation without the Inbox, the
-  page only says that the Inbox is off.
+  page only says that the Inbox is off: it asks the API first and shows no tab (not even Notifications) until the API
+  answers.
 
 ## What it shows
 
-- **Tabs:** All, Decisions (open questions, approvals and escalations), Email, **Notifications** and Archived. The
+- **Tabs:** All, Decisions (open questions, approvals and escalations), Email, **Notifications**, Snoozed (where a
+  snoozed item can be found and woken before its time) and Archived. The
   Notifications tab reads Gauzy's own `EmployeeNotification`s live from `/api/employee-notification` for the signed-in user's
   employee. This is their first Angular UI; nothing is copied into the Inbox.
 - **Filters:** kind, source, unread only, and text search.

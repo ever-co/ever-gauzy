@@ -30,6 +30,7 @@ import {
 	apiTabOf,
 	INBOX_UI_TABS,
 	InboxUiTab,
+	isSnoozed,
 	isTranslationKey,
 	isUnread,
 	replaceItem,
@@ -104,7 +105,20 @@ export function apiMessage(error: unknown): string | null {
 						}}</nb-alert>
 						<button nbButton size="small" (click)="reload()">{{ 'INBOX.RETRY' | translate }}</button>
 					}
+					@case ('loading') {
+						<div class="loading" data-test="loading" [nbSpinner]="true"></div>
+					}
 					@default {
+						@if (actionError(); as message) {
+							<nb-alert
+								status="danger"
+								role="alert"
+								closable
+								data-test="action-error"
+								(close)="actionError.set(null)"
+								>{{ isKey(message) ? (message | translate) : message }}</nb-alert
+							>
+						}
 						<div class="tabs" role="tablist">
 							@for (entry of tabs; track entry) {
 								<button
@@ -297,6 +311,9 @@ export function apiMessage(error: unknown): string | null {
 			.hint {
 				opacity: 0.7;
 			}
+			.loading {
+				min-height: 8rem;
+			}
 			@media (max-width: 960px) {
 				.panes {
 					grid-template-columns: 1fr;
@@ -332,6 +349,8 @@ export class InboxPageComponent implements OnInit {
 	readonly selectedId = signal<string | null>(null);
 	readonly busy = signal(false);
 	readonly replyError = signal<string | null>(null);
+	/** Why the last read / archive / snooze failed (the API's message, or a translation key). */
+	readonly actionError = signal<string | null>(null);
 
 	readonly selected = computed(() => this.items().find((item) => item.id === this.selectedId()) ?? null);
 	readonly hasUnread = computed(() => this.items().some((item) => isUnread(item)));
@@ -342,15 +361,43 @@ export class InboxPageComponent implements OnInit {
 	private readonly load$ = new Subject<boolean>();
 
 	ngOnInit(): void {
+		this.readRequestedTab();
+		this.setUpListStream();
+		this.setUpSearch();
+		this.checkAvailability();
+	}
+
+	/** `?tab=` of the URL, when it names one of the tabs. */
+	private readRequestedTab(): void {
 		const requested = this.route.snapshot.queryParamMap.get('tab') as InboxUiTab | null;
 		if (requested && INBOX_UI_TABS.includes(requested)) this.tab.set(requested);
+	}
 
-		// One list request at a time: a new tab, filter or page replaces the one in flight.
+	/**
+	 * Asks the API first (the counts route): only where it serves the Inbox does the page show anything else,
+	 * the Notifications tab included. 404 / 403 → the "off" notice.
+	 */
+	private checkAvailability(): void {
+		this.api
+			.counts()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: () => {
+					this.view.set('ready');
+					this.reload();
+				},
+				error: (error: HttpErrorResponse) =>
+					this.view.set(error?.status === 404 || error?.status === 403 ? 'unavailable' : 'error')
+			});
+	}
+
+	/** One list request at a time: a new tab, filter or page replaces the one in flight. */
+	private setUpListStream(): void {
 		this.load$
 			.pipe(
 				switchMap((append) => {
 					const apiTab = apiTabOf(this.tab());
-					if (!apiTab) return EMPTY;
+					if (!apiTab || this.view() !== 'ready') return EMPTY;
 					this.loading.set(true);
 					return this.api
 						.list({
@@ -377,25 +424,30 @@ export class InboxPageComponent implements OnInit {
 			)
 			.subscribe(({ page, append }) => {
 				this.loading.set(false);
-				this.view.set('ready');
 				const items = page?.items ?? [];
 				this.items.set(append ? [...this.items(), ...items] : items);
 				this.nextCursor.set(page?.nextCursor ?? null);
 				if (!append && !items.some((item) => item.id === this.selectedId())) this.selectedId.set(null);
 			});
+	}
 
+	/** The search box, debounced. */
+	private setUpSearch(): void {
 		this.search$
 			.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
 			.subscribe((value) => {
 				this.query.set(value ?? '');
 				this.reload();
 			});
-
-		this.reload();
 	}
 
 	reload(): void {
-		if (this.view() === 'error') this.view.set('loading');
+		if (this.view() === 'error') {
+			// A retry after a failure starts over with the availability check.
+			this.view.set('loading');
+			this.checkAvailability();
+			return;
+		}
 		this.load$.next(false);
 	}
 
@@ -469,30 +521,48 @@ export class InboxPageComponent implements OnInit {
 	changeState(item: IInboxItemWithState, change: IInboxRecipientStateInput): void {
 		if (!item.id) return;
 		this.busy.set(true);
+		this.actionError.set(null);
 		this.api.setState(item.id, change).subscribe({
 			next: (next) => {
 				this.busy.set(false);
-				const leavesTab =
-					(change.isArchived !== undefined && (this.tab() === 'archived') !== !!change.isArchived) ||
-					(!!change.snoozedUntil && this.tab() !== 'archived');
-				this.items.set(
-					leavesTab ? this.items().filter((entry) => entry.id !== next.id) : replaceItem(this.items(), next)
-				);
-				if (leavesTab && this.selectedId() === next.id) this.selectedId.set(null);
+				if (this.leavesList(change, next)) {
+					this.items.set(this.items().filter((entry) => entry.id !== next.id));
+					if (this.selectedId() === next.id) this.selectedId.set(null);
+					// The API pages by offset: with an item gone, the next page would skip one. Start over.
+					if (this.nextCursor()) this.reload();
+				} else {
+					this.items.set(replaceItem(this.items(), next));
+				}
 				this.api.notifyChanged();
 			},
-			error: () => this.busy.set(false)
+			error: (error: HttpErrorResponse) => {
+				this.busy.set(false);
+				this.actionError.set(apiMessage(error) ?? 'INBOX.ACTION_FAILED');
+			}
 		});
+	}
+
+	/** Whether an item no longer belongs to the list shown after a change of my state. */
+	private leavesList(change: IInboxRecipientStateInput, next: IInboxItemWithState): boolean {
+		const tab = this.tab();
+		if (change.isArchived !== undefined && (tab === 'archived') !== !!change.isArchived) return true;
+		if (change.snoozedUntil !== undefined && tab !== 'archived') {
+			// Snoozed leaves the open tabs; woken leaves the Snoozed tab.
+			return tab === 'snoozed' ? !isSnoozed(next) : isSnoozed(next);
+		}
+		return this.unreadOnly() && !isUnread(next);
 	}
 
 	markAllRead(): void {
 		const tab = apiTabOf(this.tab());
 		if (!tab) return;
+		this.actionError.set(null);
 		this.api.markAllRead(tab).subscribe({
 			next: () => {
 				this.api.notifyChanged();
 				this.reload();
-			}
+			},
+			error: (error: HttpErrorResponse) => this.actionError.set(apiMessage(error) ?? 'INBOX.ACTION_FAILED')
 		});
 	}
 

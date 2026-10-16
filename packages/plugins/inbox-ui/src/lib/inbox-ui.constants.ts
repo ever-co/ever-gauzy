@@ -20,4 +20,5 @@ export const INBOX_UI_PAGE_SIZE = 20;
 /** The app's pages an item links to. */
 export const INBOX_TASK_LINK = '/pages/tasks/view';
 export const INBOX_PROJECT_LINK = '/pages/organization/projects';
-export const INBOX_EMPLOYEE_LINK = '/pages/employees/edit';
+/** The read-only employee page (edit needs more than `ORG_EMPLOYEES_VIEW`). */
+export const INBOX_EMPLOYEE_LINK = '/pages/employees/view';

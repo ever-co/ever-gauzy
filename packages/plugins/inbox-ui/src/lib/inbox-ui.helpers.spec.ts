@@ -20,6 +20,7 @@ describe('Inbox UI helpers', () => {
 		expect(apiTabOf('all')).toBe(InboxTabEnum.ALL);
 		expect(apiTabOf('decisions')).toBe(InboxTabEnum.DECISIONS);
 		expect(apiTabOf('email')).toBe(InboxTabEnum.EMAIL);
+		expect(apiTabOf('snoozed')).toBe(InboxTabEnum.SNOOZED);
 		expect(apiTabOf('archived')).toBe(InboxTabEnum.ARCHIVED);
 		expect(apiTabOf('notifications')).toBeNull();
 	});
@@ -76,7 +77,7 @@ describe('Inbox UI helpers', () => {
 		expect(linksOf({ taskId: 't', projectId: 'p', agentEmployeeId: 'e' })).toEqual([
 			{ kind: 'task', commands: ['/pages/tasks/view', 't'] },
 			{ kind: 'project', commands: ['/pages/organization/projects', 'p', 'edit'] },
-			{ kind: 'agent', commands: ['/pages/employees/edit', 'e'] }
+			{ kind: 'agent', commands: ['/pages/employees/view', 'e'] }
 		]);
 		expect(linksOf({})).toEqual([]);
 	});

@@ -3,6 +3,7 @@
 	"TITLE": "Inbox",
 	"UNAVAILABLE": "The Inbox is not switched on for this installation.",
 	"ERROR": "The Inbox could not be loaded.",
+	"ACTION_FAILED": "That did not work. Try again.",
 	"RETRY": "Try again",
 	"EMPTY": "Nothing here.",
 	"SELECT": "Select an item to see it here.",
@@ -16,6 +17,7 @@
 		"decisions": "Decisions",
 		"email": "Email",
 		"notifications": "Notifications",
+		"snoozed": "Snoozed",
 		"archived": "Archived"
 	},
 	"FILTERS": {

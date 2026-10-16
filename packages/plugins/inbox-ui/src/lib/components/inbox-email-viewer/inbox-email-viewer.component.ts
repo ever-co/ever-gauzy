@@ -1,3 +1,4 @@
+// cspell:ignore referrerpolicy srcdoc
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, input, viewChild } from '@angular/core';
 
 /** Escapes text for the viewer's document (a plain-text message is shown as text, never as markup). */
