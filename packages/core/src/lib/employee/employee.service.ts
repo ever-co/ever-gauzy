@@ -1,5 +1,19 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import {
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
+import {
+	Brackets,
+	EntityManager,
+	FindManyOptions,
+	FindOneOptions,
+	In,
+	SelectQueryBuilder,
+	WhereExpressionBuilder
+} from 'typeorm';
 import * as moment from 'moment';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import {
@@ -12,7 +26,11 @@ import {
 	IFindMembersInput,
 	IPagination,
 	PermissionsEnum,
-	BaseEntityEnum
+	BaseEntityEnum,
+	EmployeeKindEnum,
+	IAgentEmployee,
+	IAgentEmployeeCreateInput,
+	RolesEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
@@ -33,6 +51,9 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
+import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/entities/internal';
+import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
+import { defaultAgentEmail, findOneForUpdate, isAgentEmail } from './agent-employee';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -84,6 +105,180 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		await this.update(employeeId, presence);
 
 		return presence;
+	}
+
+	/**
+	 * Provisions an agent employee: an `Employee` with `kind = 'agent'`, the `User` behind it, and
+	 * (when stated) its agent profile, in one transaction. **Used by integrations only** (the Ever Works
+	 * integration turns each Ever Works agent into one); no route calls it.
+	 *
+	 * What makes an agent different from a person filed through `POST /employee`:
+	 * - its user has **no password** (`hash = null`), so password sign-in never matches it, and a login
+	 *   identity under the reserved `.invalid` top-level domain (`agent-<id>@agents.invalid` by default;
+	 *   any other address is refused), so no mail — welcome, password reset, sign-in code — can reach it;
+	 * - **no welcome email** is sent and **no invite** is needed;
+	 * - time tracking and screenshots are **off**, and no pay fields are set;
+	 * - its user gets the tenant's `EMPLOYEE` role, and no organization membership (it never signs in).
+	 *
+	 * Idempotent on the email: when an agent employee with this email already exists in the organization it
+	 * is returned as is (`created: false`; a deleted one is refused with 409 so the caller decides to recover
+	 * it), and two overlapping calls for the same agent create it once (the tenant row is locked for the
+	 * transaction on Postgres and MySQL; SQLite allows one writer at a time). An existing account is reused
+	 * only when it already stands behind an agent of another organization of the tenant; an address that
+	 * belongs to a person, to a user with a password, or to any other account is refused rather than turned
+	 * into an agent. The reverse holds on `POST /employee`, which refuses to file a person on the account of
+	 * an agent ({@link assertNotAgentAccount}).
+	 *
+	 * @param input The agent to provision. `tenantId` and `organizationId` are required and must agree.
+	 * @returns The agent employee, its profile (or `null`) and whether it was created now.
+	 */
+	public async createAgentEmployee(input: IAgentEmployeeCreateInput): Promise<IAgentEmployee> {
+		const { tenantId, organizationId } = input ?? ({} as IAgentEmployeeCreateInput);
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException('An agent employee needs a tenant and an organization.');
+		}
+		const name = typeof input.name === 'string' ? input.name.trim() : '';
+		if (!name) {
+			throw new BadRequestException('An agent employee needs a name.');
+		}
+		const email = (input.email ?? defaultAgentEmail()).trim().toLowerCase();
+		if (!isAgentEmail(email)) {
+			throw new BadRequestException(
+				'The email of an agent must be under the reserved ".invalid" top-level domain.'
+			);
+		}
+
+		return await this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
+			// The TENANT row is locked for the transaction (Postgres, MySQL): two overlapping calls for the same
+			// agent — in one organization or in two of the tenant, since the account is looked up by tenant and
+			// email — would otherwise both find no user and both create one. The second call waits here, then
+			// finds what the first created.
+			await findOneForUpdate(manager, Tenant, { id: tenantId });
+			const organization = await manager.findOne(Organization, { where: { id: organizationId, tenantId } });
+			if (!organization) {
+				throw new NotFoundException('The organization does not exist in this tenant.');
+			}
+
+			let user = await manager.findOne(User, { where: { email, tenantId } });
+			if (user) {
+				// Every engagement of this account in the tenant, retired ones included.
+				const employees = await manager.find(Employee, {
+					where: { userId: user.id, tenantId },
+					withDeleted: true
+				});
+
+				const existing = employees.find((employee) => employee.organizationId === organizationId);
+				if (existing) {
+					if (existing.kind !== EmployeeKindEnum.AGENT) {
+						throw new ConflictException('This email belongs to a person, not an agent.');
+					}
+					// A deleted agent is not silently handed back as provisioned: the caller decides whether to
+					// recover it (`softRecoverById`), which keeps an administrator's deletion visible.
+					if (existing.deletedAt) {
+						throw new ConflictException('This agent employee was deleted; recover it to use it again.');
+					}
+					const profile = await manager.findOne(EmployeeAgentProfile, {
+						where: { employeeId: existing.id, tenantId }
+					});
+					return { employee: existing, profile: profile ?? null, created: false };
+				}
+
+				// An account is reused only when it already stands behind an agent (the same agent, mapped into
+				// another organization of the tenant): never a person's account, never one that can sign in.
+				if (user.hash) {
+					throw new ConflictException('This email belongs to a user with a password.');
+				}
+				if (employees.some((employee) => employee.kind !== EmployeeKindEnum.AGENT)) {
+					throw new ConflictException('This email belongs to a person, not an agent.');
+				}
+				if (employees.length === 0) {
+					throw new ConflictException('This email belongs to a user that is not an agent.');
+				}
+
+				// The account of an agent carries the tenant's EMPLOYEE role.
+				if (!user.roleId) {
+					const role = await this.findEmployeeRole(manager, tenantId);
+					user = await manager.save(User, Object.assign(user, { role, roleId: role.id }));
+				}
+			} else {
+				const role = await this.findEmployeeRole(manager, tenantId);
+				user = await manager.save(
+					User,
+					manager.create(User, {
+						tenantId,
+						tenant: { id: tenantId },
+						role,
+						roleId: role.id,
+						firstName: name,
+						lastName: '',
+						email,
+						hash: null,
+						...(input.imageUrl ? { imageUrl: input.imageUrl } : {})
+					} as Partial<User>)
+				);
+			}
+
+			const employee = await manager.save(
+				Employee,
+				manager.create(Employee, {
+					tenantId,
+					tenant: { id: tenantId },
+					organizationId,
+					organization: { id: organizationId },
+					user,
+					userId: user.id,
+					kind: EmployeeKindEnum.AGENT,
+					isActive: true,
+					isArchived: false,
+					isTrackingEnabled: false,
+					allowScreenshotCapture: false,
+					...(input.shortDescription ? { short_description: input.shortDescription.slice(0, 200) } : {})
+				} as Partial<Employee>)
+			);
+
+			const profile = input.profile ? await writeAgentProfile(manager, employee, input.profile) : null;
+
+			return { employee, profile, created: true };
+		});
+	}
+
+	/**
+	 * Refuses to file a person on the account of an agent. `POST /employee` reuses an existing account (found
+	 * by email, or named by `userId`) and files it as a `human` employee of the organization; the account
+	 * behind an agent — one with an agent employee in any organization of the tenant, retired ones included —
+	 * must not become a person who is paid, counted and invited.
+	 *
+	 * @param userId The account the new employee would stand on.
+	 * @param tenantId The tenant. Without one (no request tenant), the agent employees of the account are
+	 * looked for in every tenant: a user id belongs to one tenant, so the answer is the same, and the check
+	 * never becomes a no-op.
+	 * @throws ConflictException when the account stands behind an agent employee.
+	 */
+	public async assertNotAgentAccount(userId: ID, tenantId: ID): Promise<void> {
+		const agents = await this.typeOrmRepository.count({
+			where: { userId, ...(tenantId ? { tenantId } : {}), kind: EmployeeKindEnum.AGENT },
+			withDeleted: true
+		});
+		if (agents > 0) {
+			throw new ConflictException(
+				'This user stands behind an agent employee; an agent is not filed as a person.'
+			);
+		}
+	}
+
+	/**
+	 * The tenant's `EMPLOYEE` role, which the account of an agent employee carries.
+	 *
+	 * @param manager The transaction manager.
+	 * @param tenantId The tenant.
+	 * @throws NotFoundException when the tenant has no such role.
+	 */
+	private async findEmployeeRole(manager: EntityManager, tenantId: ID): Promise<Role> {
+		const role = await manager.findOne(Role, { where: { name: RolesEnum.EMPLOYEE, tenantId } });
+		if (!role) {
+			throw new NotFoundException('The tenant has no EMPLOYEE role.');
+		}
+		return role;
 	}
 
 	/**
