@@ -985,6 +985,18 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/integrations/ever-works",
+      "file": "packages/plugins/integration-ever-works-ui/src/lib/integration-ever-works-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/ever-works/:integrationTenantId",
+      "file": "packages/plugins/integration-ever-works-ui/src/lib/integration-ever-works-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/integrations/gauzy-ai",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.module.ts",
       "source": "manual",
