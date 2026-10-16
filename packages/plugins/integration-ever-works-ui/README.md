@@ -40,6 +40,28 @@ settings; any other one gets the **connect wizard** (plan item G-P1-11):
    registered (best effort; the change feed keeps the sync going without it)
    and the first sync starts.
 
+The **sync settings** of a mapping (`/pages/integrations/ever-works/:integrationTenantId`,
+the address the list of connected integrations opens) are in tabs:
+
+- **Overview**: the connection's state, how far Gauzy is behind Ever Works' change
+  feed, the queues both ways (pending, deferred, retrying, stopped), open
+  conflicts, the last error, the pairs per record type and the running or last
+  sync with its phases (read again every 10 seconds while it runs); Resync,
+  cancel a running sync, pause and resume. A mapping that never synced offers
+  the dry run and Start.
+- **Mapping**: the match review (people, agents, teams, projects).
+- **Entities and directions**.
+- **Activity**: the conflicts (open, resolved or all; both values and the side
+  that won; **Keep** or **Use the other value**) and the sync log (filters by
+  status and direction, more pages).
+- **Advanced**: sync this organization on or off, replace the integration key
+  (it must belong to the same Ever Works tenant; the field is cleared once the
+  API has it), register the webhook again, and disconnect (asked twice; synced
+  data stays on both sides).
+
+Only the selected organization's own mapping is shown; another organization's
+mapping is not.
+
 The page names no Ever Works address of its own: every address it shows comes
 from the API's configuration or from what the admin typed.
 

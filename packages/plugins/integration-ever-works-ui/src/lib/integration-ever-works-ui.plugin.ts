@@ -9,7 +9,10 @@ export const EVER_WORKS_PATH = 'ever-works';
 /** Absolute link of the page. */
 export const EVER_WORKS_LINK = `/pages/integrations/${EVER_WORKS_PATH}`;
 
-/** The page, also under `:integrationTenantId` (the list of connected integrations opens it that way). */
+/**
+ * The connect page at `''`, and the sync settings of a mapping under `:integrationTenantId` (the list of
+ * connected integrations opens it that way).
+ */
 export const EVER_WORKS_CHILD_ROUTES: Routes = [
 	{
 		path: '',
@@ -19,7 +22,7 @@ export const EVER_WORKS_CHILD_ROUTES: Routes = [
 	{
 		path: ':integrationTenantId',
 		loadComponent: () =>
-			import('./components/ever-works-page/ever-works-page.component').then((m) => m.EverWorksPageComponent)
+			import('./components/settings/ever-works-settings.component').then((m) => m.EverWorksSettingsComponent)
 	}
 ];
 
