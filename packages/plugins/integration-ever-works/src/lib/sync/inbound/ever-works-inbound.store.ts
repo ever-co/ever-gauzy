@@ -18,8 +18,16 @@ import { EverWorksInboundEvent, EverWorksInboundStatus } from '../entities/ever-
 export class EverWorksInboundStore {
 	constructor(private readonly dataSource: DataSource) {}
 
-	/** Stores the event once; `duplicate` when the connection already has it. */
-	async record(connection: EverWorksConnection, envelope: EverWorksEventEnvelope, via: 'webhook' | 'feed' | 'initial'): Promise<{ duplicate: boolean }> {
+	/**
+	 * Stores the event once; `duplicate` when the connection already has it. `availableAt` holds it back
+	 * (the initial sync holds a phase's records until the phase is read, then releases them together).
+	 */
+	async record(
+		connection: EverWorksConnection,
+		envelope: EverWorksEventEnvelope,
+		via: 'webhook' | 'feed' | 'initial',
+		options: { availableAt?: Date } = {}
+	): Promise<{ duplicate: boolean }> {
 		const repository = this.dataSource.getRepository(EverWorksInboundEvent);
 		const exists = await repository.count({ where: { connectionId: connection.id as ID, eventId: envelope.id } });
 		if (exists) return { duplicate: true };
@@ -45,7 +53,7 @@ export class EverWorksInboundStore {
 				receivedVia: via,
 				status: EverWorksInboundStatus.PENDING,
 				attempts: 0,
-				availableAt: new Date()
+				availableAt: options.availableAt ?? new Date()
 			} as never)
 			.orIgnore()
 			.execute();
