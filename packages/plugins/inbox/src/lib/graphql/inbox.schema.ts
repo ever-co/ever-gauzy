@@ -4,7 +4,9 @@ import { gql } from 'graphql-tag';
  * The Inbox's contribution to the one GraphQL schema (plan 04 §3: "GraphQL mirrors the read routes, plus
  * `markInboxItem`"). It is registered only with the plugin, so a deployment without `GAUZY_INBOX_ENABLED=true`
  * serves none of it (and the committed schema snapshot, composed from the default plugin list, does not
- * carry it).
+ * carry it). The field-binding gate reads this document on top of the snapshot — it is named in
+ * `GATED_PLUGIN_SCHEMAS` of `tools/scripts/graphql-field-binding-check.mjs` — so it must stay a plain `gql`
+ * template (no `${…}`), registered by `InboxPlugin` as `schema: inboxSchemaExtensions`.
  *
  * Every field answers the caller's own items: the recipient is taken from the credential, never from an
  * argument, exactly as on `/api/inbox/items`. Enumerated values (`kind`, `status`, `tab`, …) are strings

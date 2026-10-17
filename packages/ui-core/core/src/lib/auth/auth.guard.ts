@@ -3,6 +3,7 @@ import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/ro
 import { firstValueFrom } from 'rxjs';
 import { AuthService, AuthStrategy, ElectronService, Store } from '../services';
 import { getCookie } from './cookie-helper';
+import { LOGIN_URL, loginReturnUrl } from './login-return-url';
 
 @Injectable()
 export class AuthGuard {
@@ -40,8 +41,10 @@ export class AuthGuard {
 			return false; // Prevent navigation
 		}
 
-		// Check if the user is authenticated
-		if (await this._authService.isAuthenticated()) {
+		// Check if the user is authenticated. A check that fails — the API unreachable, or a stale session whose
+		// token refresh failed — answers "not authenticated" rather than rejecting: a rejected guard ends the
+		// navigation in an error, nothing is rendered, and the app's loading skeleton never goes away (Q8d).
+		if (await this._authService.isAuthenticated().catch(() => false)) {
 			return true; // Allow navigation
 		}
 
@@ -64,8 +67,17 @@ export class AuthGuard {
 			}
 		}
 
-		await firstValueFrom(this._authStrategy.logout());
-		await this._router.navigate(['/auth/login'], { queryParams: { returnUrl } });
+		try {
+			await firstValueFrom(this._authStrategy.logout());
+		} catch (error) {
+			// The session is being left either way; a failed clean-up must not keep the user off the sign-in page.
+			console.error('Error while logging out:', error);
+		}
+
+		// Never an authentication page as the place to come back to: that is how the sign-in URL nested (Q8d).
+		const target = loginReturnUrl(returnUrl);
+
+		await this._router.navigate([LOGIN_URL], target ? { queryParams: { returnUrl: target } } : {});
 	}
 
 	/**

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services';
+import { LOGIN_URL, loginReturnUrl } from '../auth/login-return-url';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -21,9 +22,9 @@ export class RoleGuard implements CanActivate {
 			return true;
 		}
 
-		this.router.navigate(['/auth/login'], {
-			queryParams: { returnUrl: state.url }
-		});
+		const returnUrl = loginReturnUrl(state.url);
+
+		this.router.navigate([LOGIN_URL], returnUrl ? { queryParams: { returnUrl } } : {});
 		return false;
 	}
 }
