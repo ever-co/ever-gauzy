@@ -23,6 +23,7 @@ export * from './mailboxes/mailbox-address';
 export * from './entities/inbox-organization-setting.entity';
 export * from './inbound/inbox-email.config';
 export * from './inbound/replay-guard.service';
+export { HOLD_UNVERIFIED_SENDER, HOLD_VIRUS, INBOX_HOLD_HEADER } from './inbound/inbox-email-processor.types';
 export * from './inbound/inbound-raw-body.middleware';
 export {
 	ALLOWLISTED_HEADERS,

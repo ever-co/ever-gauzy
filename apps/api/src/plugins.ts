@@ -38,6 +38,7 @@ import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-em
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
 import { EmailProviderSendGridPlugin, isSendGridEnabled } from '@gauzy/plugin-email-provider-sendgrid';
+import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provider-ses';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -139,6 +140,11 @@ export const plugins = [
 	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
 	// GAUZY_INBOX_EMAIL_ENABLED=true too.
 	...(isSendGridEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSendGridPlugin] : []),
+
+	// Email provider: Amazon SES (plan 04 §5.2). Off unless EMAIL_PROVIDER_SES_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isSesEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSesPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

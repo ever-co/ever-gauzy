@@ -15,6 +15,11 @@
 #   RESULTS_DIR      where checks.tsv, the migration lists and the (scrubbed) logs go
 #   POSTGRES_IMAGE   default postgres:16
 #   BOOT_TIMEOUT_MIN default 60 — one boot, demo seed included
+#   GATED_PLUGIN_FLAGS  optional, upgrade mode: space-separated KEY=true switches of the plugins that load only when
+#                    switched on (the Ever Works integration, the Inbox, Inbox email, the email providers). Set, this
+#                    branch's image boots once more on the same database with them on, and its checks go to
+#                    "$RESULTS_DIR/<db>-gated/" (see "gated plugins" below). Unset, nothing of it runs.
+#   GATED_SMOKE_PATHS   optional: comma-separated GET routes of those plugins that must answer 200 then
 #
 # Every check is written to "$RESULTS_DIR/<label>/checks.tsv" as "check<TAB>pass|fail|info<TAB>detail" for the
 # job summary. The script exits 1 when any check failed. Nothing is pushed or published: the images stay on the
@@ -114,7 +119,7 @@ cleanup() {
 	docker rm -f "$API" >/dev/null 2>&1 || true
 	[ "$DB" = postgres ] && docker rm -f "$PG" >/dev/null 2>&1 || true
 	docker volume rm "$VOL" >/dev/null 2>&1 || true
-	rm -f "$ENV_FILE"
+	rm -f "$ENV_FILE" "${GATED_ENV_FILE:-}"
 }
 trap cleanup EXIT
 
@@ -125,10 +130,10 @@ save_logs() {
 	for value in "${SECRETS[@]}"; do sed -i "s/$value/***/g" "$file"; done
 }
 
-# boot <image> <demo:true|false>
+# boot <image> <demo:true|false> [env file, default $ENV_FILE]
 boot() {
 	docker rm -f "$API" >/dev/null 2>&1 || true
-	docker run -d --name "$API" --network "$NET" --env-file "$ENV_FILE" -e DEMO="$2" "${DB_ARGS[@]}" "$1" >/dev/null
+	docker run -d --name "$API" --network "$NET" --env-file "${3:-$ENV_FILE}" -e DEMO="$2" "${DB_ARGS[@]}" "$1" >/dev/null
 }
 
 # wait_ready <phase> <demo:true|false>: until /api/health answers 200 and, in demo mode, the demo seed finished.
@@ -367,5 +372,101 @@ fi
 echo
 echo "Migrations applied by the after image ($applied):"
 sed 's/^/    /' "$OUT/applied.names"
+
+# ---------------------------------------------------------------------------------------------- gated plugins
+
+# The plugins behind a switch (the Ever Works integration, the Inbox, Inbox email, the email providers) load, and
+# register their migrations, only when their switch is exactly `true`; the boots above run with every switch off, so
+# they never run those migrations (a new one of theirs reads as missing above until develop's image has it). Here
+# this branch's image boots once more on the SAME database with the switches on: their migrations have to apply on
+# top of everything above, and the API has to serve, the switched-on plugins' routes included. Additive: every
+# check above is unchanged; these go to their own column of the summary ("<db>-gated").
+if [ "$MODE" = upgrade ] && [ -n "${GATED_PLUGIN_FLAGS:-}" ]; then
+	MAIN_OUT="$OUT"
+	OUT="$RESULTS_DIR/$LABEL-gated"
+	mkdir -p "$OUT"
+	: >"$OUT/checks.tsv"
+	GATED_ENV_FILE="$(mktemp "${RUNNER_TEMP:-/tmp}/upgrade-test-env-gated.XXXXXX")"
+	chmod 600 "$GATED_ENV_FILE"
+	cp "$ENV_FILE" "$GATED_ENV_FILE"
+	# The integration and the provider accounts store their secrets sealed with ENCRYPTION_KEY (a base64 32-byte key).
+	# One without a `/`: save_logs scrubs every secret with `sed "s/<secret>/***/g"`, where a slash would end the pattern.
+	while :; do
+		ENCRYPTION_KEY_VALUE="$(openssl rand -base64 32)"
+		case "$ENCRYPTION_KEY_VALUE" in */*) ;; *) break ;; esac
+	done
+	echo "::add-mask::$ENCRYPTION_KEY_VALUE" >&3
+	SECRETS+=("$ENCRYPTION_KEY_VALUE")
+	{
+		for flag in $GATED_PLUGIN_FLAGS; do echo "$flag"; done
+		echo "ENCRYPTION_KEY=$ENCRYPTION_KEY_VALUE"
+	} >>"$GATED_ENV_FILE"
+	check "gated plugins: switches" info "$GATED_PLUGIN_FLAGS"
+
+	if [ "$AFTER_UP" != 1 ]; then
+		check "gated plugins: boot on the same database (DEMO=$AFTER_DEMO)" fail "not run: this branch's image did not come up with the switches off"
+	else
+		cp "$MAIN_OUT/after-migrations.tsv" "$OUT/before-migrations.tsv"
+		boot "$AFTER_IMAGE" "$AFTER_DEMO" "$GATED_ENV_FILE"
+		if wait_ready gated "$AFTER_DEMO"; then
+			check "gated plugins: boot on the same database (DEMO=$AFTER_DEMO)" pass "$READY_DETAIL"
+			if run_node gated-smoke .github/scripts/upgrade-test-smoke.mjs SMOKE_COMMERCE=true "SMOKE_GET_PATHS=${GATED_SMOKE_PATHS:-}"; then
+				check "gated plugins: login, GraphQL, the plugins' routes" pass "$(grep -c '^PASS' "$OUT/gated-smoke.out") checks"
+			else
+				check "gated plugins: login, GraphQL, the plugins' routes" fail "$(grep '^FAIL' "$OUT/gated-smoke.out" | head -3)"
+			fi
+			sed 's/^/    /' "$OUT/gated-smoke.out"
+			stop_api
+			save_logs gated
+		else
+			save_logs gated
+			check "gated plugins: boot on the same database (DEMO=$AFTER_DEMO)" fail "$READY_DETAIL: $(error_lines "$OUT/gated.log")"
+			docker logs --tail 200 "$API" 2>&1 | sed 's/^/    /'
+			stop_api
+		fi
+		dump_migrations "$OUT/after-migrations.tsv"
+
+		awk '{ print } /Listening at http/ { exit }' "$OUT/gated.log" >"$OUT/gated-boot.log"
+		errors="$(grep -E 'QueryFailedError|Error during migration|MigrationError|Unable to connect to the database' "$OUT/gated-boot.log" |
+			grep -vc 'pgvector extension unavailable' || true)"
+		if [ "${errors:-0}" = 0 ]; then
+			check "gated plugins: migration errors in the API log" pass "none"
+		else
+			check "gated plugins: migration errors in the API log" fail "$errors line(s): $(error_lines "$OUT/gated-boot.log")"
+		fi
+
+		cut -f2 "$OUT/before-migrations.tsv" | sort -u >"$OUT/before.names"
+		cut -f2 "$OUT/after-migrations.tsv" | sort -u >"$OUT/after.names"
+		comm -13 "$OUT/before.names" "$OUT/after.names" >"$OUT/applied.names"
+		comm -23 "$OUT/before.names" "$OUT/after.names" >"$OUT/lost.names"
+		comm -23 "$MAIN_OUT/expected.names" "$OUT/after.names" >"$OUT/missing.names"
+		gated_expected=$(wc -l <"$MAIN_OUT/expected.names")
+		gated_missing=$(wc -l <"$OUT/missing.names")
+
+		check "gated plugins: migrations applied by the switched-on boot" info \
+			"$(wc -l <"$OUT/applied.names") (rows $(wc -l <"$OUT/before-migrations.tsv") -> $(wc -l <"$OUT/after-migrations.tsv"))"
+		if [ "$gated_missing" = 0 ]; then
+			check "gated plugins: every migration this branch adds is recorded" pass "$gated_expected of $gated_expected"
+		else
+			check "gated plugins: every migration this branch adds is recorded" fail \
+				"$((gated_expected - gated_missing)) of $gated_expected; missing: $(head -5 "$OUT/missing.names" | tr '\n' ' ')$([ "$gated_missing" -gt 5 ] && echo "… (+$((gated_missing - 5)))")"
+		fi
+		if [ -s "$OUT/lost.names" ]; then
+			check "gated plugins: earlier migration rows kept" fail "$(wc -l <"$OUT/lost.names") gone: $(head -5 "$OUT/lost.names" | tr '\n' ' ')"
+		else
+			check "gated plugins: earlier migration rows kept" pass "all $(wc -l <"$OUT/before.names")"
+		fi
+		gated_duplicates=$(cut -f2 "$OUT/after-migrations.tsv" | sort | uniq -d | wc -l)
+		if [ "$gated_duplicates" = 0 ]; then
+			check "gated plugins: no migration recorded twice" pass "0"
+		else
+			check "gated plugins: no migration recorded twice" fail "$gated_duplicates: $(cut -f2 "$OUT/after-migrations.tsv" | sort | uniq -d | head -5 | tr '\n' ' ')"
+		fi
+
+		echo
+		echo "Migrations applied by the switched-on boot ($(wc -l <"$OUT/applied.names")):"
+		sed 's/^/    /' "$OUT/applied.names"
+	fi
+fi
 
 exit "$FAILED"

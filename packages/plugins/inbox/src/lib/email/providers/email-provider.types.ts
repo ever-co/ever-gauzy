@@ -98,6 +98,11 @@ export interface ParsedInboundEmail {
 	dmarc?: InboundAuthVerdict;
 	/** The provider's spam score, when it reports one (higher is more likely spam). */
 	spamScore?: number;
+	/**
+	 * Why the provider wants the message held in the quarantine whatever its spam verdict (a failed virus scan:
+	 * `virus`); a manager decides on its release.
+	 */
+	hold?: string;
 	attachments: IParsedInboundAttachment[];
 	/** The raw MIME, when the provider delivers it (stored as the message's `.eml`). */
 	raw?: Buffer;

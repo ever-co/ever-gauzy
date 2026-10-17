@@ -11,6 +11,8 @@ export const INBOX_EMAIL_PROCESSOR = 'INBOX_EMAIL_PROCESSOR';
 export const INBOX_HOLD_HEADER = 'x-gauzy-inbox-hold';
 /** The hold of a mailbox with an allowlist: the sender is on it, but no DMARC pass proves the From domain. */
 export const HOLD_UNVERIFIED_SENDER = 'unverified-sender';
+/** The hold of a message the provider's virus scan failed. */
+export const HOLD_VIRUS = 'virus';
 
 /** The worker as the webhook sees it: hand over a stored message. */
 export interface IInboxEmailProcessor {
