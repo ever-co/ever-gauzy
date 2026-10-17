@@ -18,7 +18,7 @@ import { EverWorksController } from './ever-works.controller';
 import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
 import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
-import { EverWorksInitiativeCapture, EverWorksInitiativeSubscriber } from './initiatives/ever-works-initiative.signals';
+import { EverWorksInitiativeCapture, EverWorksInitiativeGoalSubscriber, EverWorksInitiativeSubscriber } from './initiatives/ever-works-initiative.signals';
 import { EverWorksInitiativesController } from './initiatives/ever-works-initiatives.controller';
 import { EverWorksInitiativesService } from './initiatives/ever-works-initiatives.service';
 import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
@@ -96,7 +96,8 @@ export const EVER_WORKS_SUBSCRIBERS = [
 	EverWorksGoalSubscriber,
 	EverWorksKeyResultSubscriber,
 	EverWorksKeyResultUpdateSubscriber,
-	EverWorksInitiativeSubscriber
+	EverWorksInitiativeSubscriber,
+	EverWorksInitiativeGoalSubscriber
 ];
 
 /** Every table the plugin owns (its migrations create them). */

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { DataSource, In, IsNull } from 'typeorm';
 import {
 	ID,
@@ -7,13 +7,16 @@ import {
 	OrganizationStrategicStateEnum,
 	OrganizationStrategicVisibilityScopeEnum
 } from '@gauzy/contracts';
-import { Goal, OrganizationStrategicInitiative } from '@gauzy/core';
+import { Goal, IntegrationTenant, OrganizationStrategicInitiative } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
+import type { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
+import { EverWorksSettingName } from '../ever-works-setting.enum';
 import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { everWorksUserOfGauzyUser } from '../sync/ever-works-actor';
+import { stableUuid } from '../sync/ever-works-stable-id';
 import {
 	EverWorksEntityLink,
 	EverWorksLinkState,
@@ -22,6 +25,8 @@ import {
 } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
+import { EverWorksSyncLoop, EverWorksSyncSweeper } from '../sync/ever-works-sync.loop';
+import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 import {
 	EverWorksApplyContext,
 	EverWorksApplyOutcome,
@@ -52,6 +57,9 @@ import {
 	sameTitle
 } from './ever-works-initiative.mapper';
 
+/** How often the initiative sweep (initiatives deleted by id, goals moved between initiatives) runs per connection. */
+export const INITIATIVE_SWEEP_MS = 10 * 60_000;
+
 /** What only Ever Works has, kept on the link (fields one side lacks are preserved, never nulled). */
 interface MissionEverWorksOnly {
 	owner?: EverWorksMission['owner'];
@@ -65,6 +73,19 @@ interface MissionEverWorksOnly {
 	unmappedTeams?: string[];
 	unmappedWorks?: string[];
 	unmappedGoals?: string[];
+	/** The sync set the "stalled" momentum (the mission paused): only then does a resume clear it. */
+	stalledBySync?: boolean;
+	/** Ever Works goals whose Gauzy goal was on this initiative at the last sync (Gauzy showed them here). */
+	representedGoals?: string[];
+}
+
+/** The link state a write records besides the snapshot. */
+interface MissionLinkState {
+	unmappedTeams?: string[];
+	unmappedWorks?: string[];
+	unmappedGoals?: string[];
+	stalledBySync?: boolean;
+	representedGoals?: string[];
 }
 
 /** One Ever Works mission as the Initiatives tab shows it. */
@@ -129,9 +150,12 @@ const toEverWorks = (direction: EverWorksDirection | undefined) => direction ===
  * - Type, schedule, auto-build and guardrails stay Ever Works-only (on the link).
  */
 @Injectable()
-export class EverWorksInitiativesService implements EverWorksInboundHandler, EverWorksOutboundHandler, OnModuleInit {
+export class EverWorksInitiativesService
+	implements EverWorksInboundHandler, EverWorksOutboundHandler, EverWorksSyncSweeper, OnModuleInit
+{
 	readonly aggregateTypes = ['mission'] as const;
 	readonly entityTypes = [EverWorksLinkType.INITIATIVE_MISSION] as const;
+	readonly sweepIntervalMs = INITIATIVE_SWEEP_MS;
 	private readonly logger = new Logger('EverWorksInitiatives');
 
 	constructor(
@@ -141,13 +165,82 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		private readonly links: EverWorksLinkService,
 		private readonly log: EverWorksSyncLogService,
 		private readonly applier: EverWorksInboundApplier,
-		private readonly pusher: EverWorksOutboundPusher
+		private readonly pusher: EverWorksOutboundPusher,
+		private readonly loop: EverWorksSyncLoop,
+		private readonly queue: EverWorksOutboundQueue
 	) {}
 
-	/** Registers itself with the applier (`mission.*`) and the pusher (`INITIATIVE_MISSION`). */
+	/** Registers itself with the applier (`mission.*`), the pusher (`INITIATIVE_MISSION`) and the sync loop (sweep). */
 	onModuleInit(): void {
 		this.applier.register(this);
 		this.pusher.register(this);
+		this.loop.registerSweeper(this);
+	}
+
+	// ── Sweep ──────────────────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * The initiative sweep, run by the sync loop for a connection it holds. It queues the push of:
+	 * - a paired initiative deleted in Gauzy by id (the platform's delete carries no row, so no subscriber
+	 *   sees it): the push completes its mission as cancelled;
+	 * - a paired initiative whose goals changed since the last sync (a goal moved to or off it: the goal's
+	 *   save signals the goal, not the initiative it left).
+	 */
+	async sweep(connection: EverWorksConnection): Promise<void> {
+		for (const context of await this.contextsOf(connection)) {
+			if (!context.isEnabled || !toEverWorks(context.directions.missions)) continue;
+			const links = (
+				await this.links.list(context.integrationTenantId, EverWorksLinkType.INITIATIVE_MISSION)
+			).filter((link) => link.state === EverWorksLinkState.OK);
+			if (!links.length) continue;
+			const alive = new Set<string>();
+			const ids = links.map((link) => link.gauzyId as ID);
+			for (let at = 0; at < ids.length; at += 500) {
+				const found = (await this.dataSource.getRepository(OrganizationStrategicInitiative).find({
+					where: { id: In(ids.slice(at, at + 500)), tenantId: context.tenantId } as never,
+					select: { id: true } as never
+				})) as OrganizationStrategicInitiative[];
+				for (const row of found) alive.add(row.id as string);
+			}
+			for (const link of links) {
+				const gone = !alive.has(link.gauzyId as string);
+				if (!gone) {
+					const represented = new Set(this.ewOnlyOf(link).representedGoals ?? []);
+					const now = await this.representedGoals(context, link.gauzyId as ID);
+					if (now.length === represented.size && now.every((id) => represented.has(id))) continue;
+				}
+				await this.queue.enqueue({
+					tenantId: context.tenantId,
+					organizationId: context.organizationId,
+					entityType: EverWorksLinkType.INITIATIVE_MISSION,
+					gauzyId: link.gauzyId as ID,
+					op: gone ? 'delete' : 'upsert'
+				});
+			}
+		}
+	}
+
+	/** The mappings that sync through a connection. */
+	private async contextsOf(connection: EverWorksConnection): Promise<EverWorksMappingContext[]> {
+		const mappings = await this.dataSource.getRepository(IntegrationTenant).find({
+			where: { tenantId: connection.tenantId, isActive: true, isArchived: false } as never,
+			relations: { settings: true } as never
+		});
+		const contexts: EverWorksMappingContext[] = [];
+		for (const mapping of mappings) {
+			const viaThis = mapping.settings?.some(
+				(setting) =>
+					setting.settingsName === EverWorksSettingName.CONNECTION_ID &&
+					setting.settingsValue === connection.id
+			);
+			if (!viaThis || !mapping.organizationId) continue;
+			const context = await this.contexts.forOrganization(
+				connection.tenantId as ID,
+				mapping.organizationId as ID
+			);
+			if (context && context.connection.id === connection.id) contexts.push(context);
+		}
+		return contexts;
 	}
 
 	// ── Initiatives tab ────────────────────────────────────────────────────────────────────────────
@@ -265,16 +358,18 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			]) {
 				if (stale) await this.links.remove(stale);
 			}
-			// Pairing changes neither record: from now on each side's changes follow.
+			// Pairing changes neither record: from now on each side's changes follow. What the mission has that
+			// Gauzy cannot map is kept on the link, so a Gauzy push never removes it.
 			const mission = byEw.get(pair.ewMissionId) as EverWorksMission;
+			const shared = everWorksMissionShared(mission);
 			await this.record(
 				context,
 				pair.initiativeId,
 				mission,
 				mission.version ?? null,
-				everWorksMissionShared(mission),
+				shared,
 				null,
-				{},
+				await this.linkStateOf(context, pair.initiativeId, shared),
 				'inbound'
 			);
 		}
@@ -364,18 +459,27 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			);
 			if (madeFrom && (await this.initiative(context, madeFrom))) {
 				const mission = { ...(data as unknown as EverWorksMission), id: envelope.aggregate.id };
+				const shared = everWorksMissionShared(mission);
 				await this.record(
 					context,
 					madeFrom,
 					mission,
 					version,
-					everWorksMissionShared(mission),
+					shared,
 					null,
-					{},
+					await this.linkStateOf(context, madeFrom, shared),
 					'inbound'
 				);
 				return { status: 'applied', message: 'linked to the initiative it was created from' };
 			}
+			// A delayed `mission.created` of a mission older than the mapping is not "new": it is reviewed too.
+			const createdAt = new Date(String((data as { createdAt?: string }).createdAt ?? envelope.occurredAt));
+			const mappedAt = (context.mapping as { createdAt?: Date }).createdAt;
+			if (mappedAt && !Number.isNaN(createdAt.getTime()) && createdAt.getTime() < new Date(mappedAt).getTime())
+				return {
+					status: 'skipped',
+					message: 'the mission predates the mapping: pair it on the Initiatives tab'
+				};
 			await this.createInitiative(
 				context,
 				{ ...(data as unknown as EverWorksMission), id: envelope.aggregate.id },
@@ -438,8 +542,12 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		if (next.title && next.title !== before.title && !keepGauzy.has('title')) changes['title'] = next.title;
 		if (next.description !== (before.description ?? '') && !keepGauzy.has('description'))
 			changes['intent'] = next.description;
-		if (next.status !== (before.status ?? null) && !keepGauzy.has('status'))
-			Object.assign(changes, this.statusChanges(row, next.status, mission.outcome ?? ew.outcome ?? null));
+		let stalledBySync = ew.stalledBySync ?? false;
+		if (next.status !== (before.status ?? null) && !keepGauzy.has('status')) {
+			const status = this.statusChanges(row, next.status, mission.outcome ?? ew.outcome ?? null, stalledBySync);
+			Object.assign(changes, status.changes);
+			stalledBySync = status.stalledBySync;
+		}
 		if (mission.owner !== undefined && mission.owner?.id !== ew.owner?.id) {
 			const steward = await this.stewardOf(context, mission.owner ?? null);
 			if (steward) changes['stewardId'] = steward;
@@ -486,7 +594,13 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			version,
 			next,
 			link,
-			{ unmappedTeams: teams, unmappedWorks: works, unmappedGoals: goals },
+			{
+				unmappedTeams: teams,
+				unmappedWorks: works,
+				unmappedGoals: goals,
+				stalledBySync,
+				representedGoals: await this.representedGoals(context, initiativeId)
+			},
 			'inbound'
 		);
 		return { status: 'applied' };
@@ -500,21 +614,25 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 	): Promise<ID> {
 		const next = everWorksMissionShared(mission);
 		const status = missionStatusToInitiative(next.status, mission.outcome ?? null);
-		const id = randomUUID() as ID;
-		const signals = this.mergedSignals(null, status);
-		await this.dataSource.getRepository(OrganizationStrategicInitiative).insert({
-			id,
-			tenantId: context.tenantId,
-			organizationId: context.organizationId,
-			title: next.title || 'Mission',
-			intent: next.description || null,
-			state: status?.state ?? OrganizationStrategicStateEnum.ACTIVE,
-			visibilityScope: next.teamIds.length
-				? OrganizationStrategicVisibilityScopeEnum.TEAM
-				: OrganizationStrategicVisibilityScopeEnum.ORGANIZATION,
-			stewardId: await this.stewardOf(context, mission.owner ?? null),
-			...(signals ? { signals: this.signalsValue(signals) } : {})
-		} as never);
+		// A stable id: a retry after a failure half-way finds the initiative it wrote instead of a second one.
+		const id = stableUuid(`${context.integrationTenantId}:initiative:${mission.id}`) as ID;
+		const merged = this.mergedSignals(null, status, false);
+		const signals = merged.signals;
+		const written = await this.initiative(context, id, true);
+		if (!written)
+			await this.dataSource.getRepository(OrganizationStrategicInitiative).insert({
+				id,
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				title: next.title || 'Mission',
+				intent: next.description || null,
+				state: status?.state ?? OrganizationStrategicStateEnum.ACTIVE,
+				visibilityScope: next.teamIds.length
+					? OrganizationStrategicVisibilityScopeEnum.TEAM
+					: OrganizationStrategicVisibilityScopeEnum.ORGANIZATION,
+				stewardId: await this.stewardOf(context, mission.owner ?? null),
+				...(signals ? { signals: this.signalsValue(signals) } : {})
+			} as never);
 		const teams = await this.applyTeams(context, id, [], next.teamIds, []);
 		const works = await this.applyWorks(context, id, [], next.works, []);
 		const goals = await this.applyGoals(context, id, mission.id, [], next.goals, []);
@@ -525,7 +643,13 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			version,
 			next,
 			null,
-			{ unmappedTeams: teams, unmappedWorks: works, unmappedGoals: goals },
+			{
+				unmappedTeams: teams,
+				unmappedWorks: works,
+				unmappedGoals: goals,
+				stalledBySync: merged.stalledBySync,
+				representedGoals: await this.representedGoals(context, id)
+			},
 			'inbound'
 		);
 		this.logger.log(
@@ -538,33 +662,47 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 	private statusChanges(
 		row: OrganizationStrategicInitiative,
 		status: string | null,
-		outcome: string | null
-	): Record<string, unknown> {
+		outcome: string | null,
+		stalledBySync: boolean
+	): { changes: Record<string, unknown>; stalledBySync: boolean } {
 		const mapped = missionStatusToInitiative(status, outcome);
-		if (!mapped) return {};
+		if (!mapped) return { changes: {}, stalledBySync };
 		const current = this.signalsOf(row);
-		const signals = this.mergedSignals(current, mapped);
-		const changed = JSON.stringify(signals ?? null) !== JSON.stringify(current ?? null);
-		return { state: mapped.state, ...(changed ? { signals: signals ? this.signalsValue(signals) : null } : {}) };
+		const merged = this.mergedSignals(current, mapped, stalledBySync);
+		const changed = JSON.stringify(merged.signals ?? null) !== JSON.stringify(current ?? null);
+		return {
+			changes: {
+				state: mapped.state,
+				...(changed ? { signals: merged.signals ? this.signalsValue(merged.signals) : null } : {})
+			},
+			stalledBySync: merged.stalledBySync
+		};
 	}
 
 	private mergedSignals(
 		current: IOrganizationStrategicSignals | null,
-		mapped: ReturnType<typeof missionStatusToInitiative>
-	): IOrganizationStrategicSignals | null {
-		if (!mapped) return current;
+		mapped: ReturnType<typeof missionStatusToInitiative>,
+		stalledBySync: boolean
+	): { signals: IOrganizationStrategicSignals | null; stalledBySync: boolean } {
+		if (!mapped) return { signals: current, stalledBySync };
 		const next: IOrganizationStrategicSignals = { ...(current ?? {}) };
-		if (mapped.perceivedMomentum) next.perceivedMomentum = mapped.perceivedMomentum;
-		// Only the "stalled" the sync set while the mission was paused is cleared on resume.
-		else if (mapped.perceivedMomentum === null && next.perceivedMomentum === 'stalled')
-			delete next.perceivedMomentum;
+		let owned = stalledBySync;
+		if (mapped.perceivedMomentum) {
+			// Paused: "stalled", owned by the sync only when the sync is the one setting it.
+			if (next.perceivedMomentum !== mapped.perceivedMomentum) owned = true;
+			next.perceivedMomentum = mapped.perceivedMomentum;
+		} else if (mapped.perceivedMomentum === null) {
+			// Resumed: only the "stalled" the sync set is cleared; a person's assessment stays.
+			if (owned && next.perceivedMomentum === 'stalled') delete next.perceivedMomentum;
+			owned = false;
+		}
 		if (mapped.outcome)
 			next.strategicNotes =
 				`Ever Works mission ${mapped.outcome.replace(/_/g, ' ')}.${next.strategicNotes ? `\n\n${next.strategicNotes}` : ''}`.slice(
 					0,
 					5000
 				);
-		return Object.keys(next).length ? next : null;
+		return { signals: Object.keys(next).length ? next : null, stalledBySync: owned };
 	}
 
 	/** The mission's teams moved: the same adds and removes on the initiative's teams. Returns the teams Gauzy cannot map. */
@@ -655,6 +793,39 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		return unmapped;
 	}
 
+	/** The Ever Works goals whose Gauzy goal is on the initiative now (what Gauzy shows on it). */
+	private async representedGoals(context: EverWorksMappingContext, initiativeId: ID): Promise<string[]> {
+		const goalOf = new Map(
+			[...(await this.pairs(context, EverWorksLinkType.GOAL)).entries()].map(([ewId, gauzyId]) => [gauzyId, ewId])
+		);
+		const goals = (await this.dataSource
+			.getRepository(Goal)
+			.find({
+				where: { organizationStrategicInitiativeId: initiativeId, tenantId: context.tenantId } as never
+			})) as Goal[];
+		return goals.flatMap((goal) => (goalOf.has(goal.id as ID) ? [goalOf.get(goal.id as ID) as string] : []));
+	}
+
+	/** The link state of a new pair: what the mission has that Gauzy cannot map, and the goals Gauzy shows here. */
+	private async linkStateOf(
+		context: EverWorksMappingContext,
+		initiativeId: ID,
+		shared: MissionShared
+	): Promise<MissionLinkState> {
+		return {
+			unmappedTeams: this.unmappedOf(shared.teamIds, await this.pairs(context, EverWorksLinkType.TEAM)),
+			unmappedWorks: this.unmappedOf(
+				shared.works.map((w) => w.workId),
+				await this.pairs(context, EverWorksLinkType.PROJECT_WORK)
+			),
+			unmappedGoals: this.unmappedOf(
+				shared.goals.map((g) => g.goalId),
+				await this.pairs(context, EverWorksLinkType.GOAL)
+			),
+			representedGoals: await this.representedGoals(context, initiativeId)
+		};
+	}
+
 	/** The primary mission an Ever Works goal names (kept on its goal link by the goal sync), or `null`. */
 	private async primaryMissionOf(context: EverWorksMappingContext, ewGoalId: string): Promise<string | null> {
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.GOAL, ewGoalId);
@@ -731,6 +902,7 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			if (before.status === 'completed' || before.status === 'failed')
 				return { status: 'skipped', message: 'the mission is finished already' };
 			await this.write(context, client, link, 'PATCH', '', { status: 'completed', outcome: 'cancelled' });
+			await this.links.unlink(link, 'the initiative was removed in Gauzy; its mission is completed as cancelled');
 			return { status: 'pushed', message: 'the initiative was removed; the mission is completed as cancelled' };
 		}
 		if (!link && !this.createdAfterMapping(row, context))
@@ -808,7 +980,7 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 				created.version ?? null,
 				{ ...createdShared, title: now.title, description: now.description, teamIds: now.teamIds },
 				null,
-				{},
+				{ representedGoals: await this.representedGoals(context, row.id as ID) },
 				'outbound'
 			);
 			this.logger.log(`Gauzy initiative ${row.id} created in Ever Works as a paused mission ${created.id}.`);
@@ -861,7 +1033,7 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 					version ?? null,
 					{ ...now, status },
 					pair,
-					{},
+					{ representedGoals: await this.representedGoals(context, row.id as ID) },
 					'outbound'
 				);
 			} catch (error) {
@@ -970,10 +1142,9 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		for (const goal of before.goals ?? []) {
 			const gauzyId = gauzyGoalOf.get(goal.goalId);
 			if (gauzyId && here.has(gauzyId)) continue;
-			// A goal Gauzy moved off this initiative (it was here as its primary mission) leaves the mission; any
-			// other the mission keeps.
-			if (!gauzyId || (await this.primaryMissionOf(context, goal.goalId)) !== link?.ewId)
-				keepGoals.push(goal.goalId);
+			// A goal Gauzy showed on this initiative at the last sync and no longer does was moved off it by a
+			// person: it leaves the mission. Any other (Gauzy never showed it here) the mission keeps.
+			if (!gauzyId || !(ew.representedGoals ?? []).includes(goal.goalId)) keepGoals.push(goal.goalId);
 		}
 		return {
 			now: gauzyInitiativeShared(row, scope.scope.teamIds, workIds, goalIds, before, {
@@ -1103,7 +1274,7 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 		version: number | null,
 		snapshot: MissionShared,
 		link: EverWorksEntityLink | null,
-		unmapped: { unmappedTeams?: string[]; unmappedWorks?: string[]; unmappedGoals?: string[] },
+		unmapped: MissionLinkState,
 		direction: 'inbound' | 'outbound'
 	): Promise<EverWorksEntityLink> {
 		const previous = this.ewOnlyOf(link);
@@ -1117,7 +1288,9 @@ export class EverWorksInitiativesService implements EverWorksInboundHandler, Eve
 			visibility: mission.visibility ?? previous.visibility ?? null,
 			unmappedTeams: unmapped.unmappedTeams ?? previous.unmappedTeams ?? [],
 			unmappedWorks: unmapped.unmappedWorks ?? previous.unmappedWorks ?? [],
-			unmappedGoals: unmapped.unmappedGoals ?? previous.unmappedGoals ?? []
+			unmappedGoals: unmapped.unmappedGoals ?? previous.unmappedGoals ?? [],
+			stalledBySync: unmapped.stalledBySync ?? previous.stalledBySync ?? false,
+			representedGoals: unmapped.representedGoals ?? previous.representedGoals ?? []
 		};
 		return this.links.record({
 			tenantId: context.tenantId,
