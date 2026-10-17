@@ -440,7 +440,8 @@ export class ApiService {
 			body?: string;
 			params?: any
 		} = { method: 'GET' },
-		isFile?: boolean
+		isFile?: boolean,
+		isRetry = false
 	): Promise<Record<string, unknown>> {
 		let url = this.baseURL + path;
 		if (options.method === 'GET' && options.params) {
@@ -466,10 +467,11 @@ export class ApiService {
 				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
 				if (response.status === 401 && !this.isLogout) {
-					const refreshedToken = await this.refreshToken();
+					// Retry only once: a second 401 with a fresh token means the access itself is revoked
+					const refreshedToken = isRetry ? false : await this.refreshToken();
 					if (refreshedToken) {
 						requestOptions.headers.Authorization = `Bearer ${refreshedToken as string}`;
-						return this.request(path, options, isFile);
+						return this.request(path, options, isFile, true);
 					}
 					this.handleUnAuthorize();
 				}
