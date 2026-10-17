@@ -11,7 +11,7 @@
  * Dependency-free except `pg` (only when PG_URL is set), resolved from the repo's node_modules.
  *
  * Usage (from the repo root):
- *   BASE=http://localhost:3999/api EMAIL=admin@ever.co PASSWORD=admin \
+ *   BASE=http://localhost:3999/api EMAIL='<seeded super admin email>' PASSWORD=admin \
  *   PG_URL=postgres://postgres:gauzy@localhost:5432/gauzy_perf \
  *   SEQ=200 CONCURRENCY=16 DURATION=10 LABEL=baseline OUT=tools/perf/results/baseline.json \
  *   node tools/perf/api-bench.mjs [tools/perf/scenarios.json]
@@ -30,7 +30,15 @@ const require = createRequire(path.join(process.cwd(), 'package.json'));
 
 const env = process.env;
 const BASE = (env.BASE || 'http://localhost:3999/api').replace(/\/$/, '');
-const EMAIL = env.EMAIL || 'admin@ever.co';
+// The seeded super admin's sign-in. Its email is not named here: the egress audit allows Ever hosts only in the
+// Ever Platform modules, and the seed reads it from DEMO_SUPER_ADMIN_EMAIL (shipped default in .env.sample).
+const EMAIL = env.EMAIL || env.DEMO_SUPER_ADMIN_EMAIL;
+if (!EMAIL) {
+	console.error(
+		'Set EMAIL (or DEMO_SUPER_ADMIN_EMAIL) to the seeded super admin email; see DEMO_SUPER_ADMIN_EMAIL in .env.sample.'
+	);
+	process.exit(2);
+}
 const PASSWORD = env.PASSWORD || 'admin';
 const SEQ = Number(env.SEQ || 200);
 const WARMUP = Number(env.WARMUP || 20);
@@ -194,7 +202,8 @@ function provenance() {
 		command: process.argv.slice(1).join(' '),
 		env: {
 			BASE,
-			EMAIL,
+			// Who signed in is not part of the result: the provenance names no account.
+			EMAIL: '<redacted>',
 			SEQ,
 			WARMUP,
 			CONCURRENCY,
