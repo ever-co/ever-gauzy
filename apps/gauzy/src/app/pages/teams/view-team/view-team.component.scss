@@ -733,11 +733,11 @@ $weight-medium: 500;
   font-variant-numeric: tabular-nums;
 }
 
-// The chart fills a short, fixed band.
+// The chart fills a fixed band, tall enough for its tooltip (day, tracked, manual).
 .project-view-panel .project-chart-body {
   display: flex;
   flex-direction: column;
-  height: 9.5rem;
+  height: 11.5rem;
   min-height: 0;
   padding: 0.5rem 0.75rem;
 }
