@@ -118,7 +118,8 @@ Management also needs an active membership of the organization; the tenant is al
 (`provider.inbound.verify`; there is no unsigned mode), with a per-client-address rate limit
 (`GAUZY_INBOX_INBOUND_REQUESTS_PER_MINUTE`, default 600). The platform route `/api/inbox/inbound/generic/platform` is
 proven with `GAUZY_INBOX_PLATFORM_SECRET` (at least 24 characters; unset, the route answers 404); the Cloudflare Email
-Worker of the platform domain (`GAUZY_INBOX_DOMAIN`) posts there. JSON and URL-encoded bodies arrive parsed with their
+Worker of the platform domain (`GAUZY_INBOX_DOMAIN`; script and setup in `.deploy/cloudflare/inbox-email-worker/`) posts
+there. JSON and URL-encoded bodies arrive parsed with their
 raw bytes; a `multipart/form-data` body (a form with files: Mailgun, SendGrid) or a `text/plain` one (SNS) is kept raw
 by the route itself (`InboundRawBodyMiddleware`, up to twice `GAUZY_INBOX_MAX_MESSAGE_BYTES` plus 1 MB; 413 beyond),
 and providers read forms with `readInboundForm`.
