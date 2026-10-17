@@ -114,7 +114,7 @@ function criteriaOf(criteria: unknown): Record<string, unknown> {
  * @param usages The `campaign_budget_usage` rows.
  * @returns The service and the two tables it writes to.
  */
-function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = []) {
+function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = [], campaignService?: unknown) {
 	const budgetRepository = {
 		find: async (options?: { where?: Record<string, unknown> }) =>
 			budgets.filter((row) => matches(row, options?.where)),
@@ -284,7 +284,12 @@ function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = []) {
 	return {
 		budgets,
 		usages,
-		service: new CampaignBudgetService(budgetRepository as never, {} as never, usageRepository as never)
+		service: new CampaignBudgetService(
+			budgetRepository as never,
+			{} as never,
+			usageRepository as never,
+			campaignService as never
+		)
 	};
 }
 
@@ -602,5 +607,120 @@ describe('CampaignBudgetService.setBudget — one ceiling per campaign (05 §10.
 			service.setBudget(CAMPAIGN, { type: CampaignBudgetType.SPEND, limit: '100.000000' } as never)
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(budgets).toHaveLength(0);
+	});
+});
+
+/**
+ * R2-G28: a ceiling is the only thing a request writes. `POST /campaign-budgets` went to the inherited create (no shape
+ * check, no scope, `used` from the body), `PUT /campaign-budgets/:id` and `PUT /campaigns/:id/budget` wrote `used` and
+ * `campaignId` as stated, and no path checked that the campaign was the caller's.
+ */
+describe('CampaignBudgetService — campaignId and used are not written from a body (R2-G28)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const ceiling = { type: CampaignBudgetType.SPEND, limit: '100.000000', currency: 'USD' };
+
+	/** The caller's campaigns, read the way `CampaignService.findCampaignOrFail` reads them. */
+	const campaigns = (...owned: string[]) => ({
+		findCampaignOrFail: jest.fn(async (id: string) => {
+			if (!owned.includes(id)) {
+				throw new NotFoundException('CAMPAIGN_NOT_FOUND');
+			}
+
+			return { id };
+		})
+	});
+
+	it('refuses to set a ceiling on a campaign that is not the caller’s, and stores nothing', async () => {
+		const { service, budgets } = serviceUnderTest([], [], campaigns(CAMPAIGN));
+
+		await expect(service.setBudget(OTHER_CAMPAIGN, ceiling as never)).rejects.toBeInstanceOf(NotFoundException);
+		expect(budgets).toHaveLength(0);
+	});
+
+	it('refuses a new ceiling stated as already consumed, and accepts one that restates zero', async () => {
+		const { service, budgets } = serviceUnderTest([], [], campaigns(CAMPAIGN));
+
+		await expect(service.setBudget(CAMPAIGN, { ...ceiling, used: '40' } as never)).rejects.toMatchObject({
+			response: { code: 'CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE', details: { fields: ['used'] } }
+		});
+		expect(budgets).toHaveLength(0);
+
+		await service.setBudget(CAMPAIGN, { ...ceiling, used: '0.000000', campaignId: CAMPAIGN } as never);
+
+		expect(budgets).toHaveLength(1);
+		expect(budgets[0]).toMatchObject({ campaignId: CAMPAIGN, used: '0', tenantId: TENANT, organizationId: ORG });
+	});
+
+	it('never rewinds the consumption of a stored ceiling, nor moves it onto another campaign', async () => {
+		const { service, budgets } = serviceUnderTest([budget({ used: '40.000000' })], [], campaigns(CAMPAIGN));
+
+		await expect(service.setBudget(CAMPAIGN, { ...ceiling, used: '0' } as never)).rejects.toMatchObject({
+			response: { code: 'CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE' }
+		});
+		await expect(
+			service.setBudget(CAMPAIGN, { ...ceiling, campaignId: OTHER_CAMPAIGN } as never)
+		).rejects.toMatchObject({ response: { code: 'CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE' } });
+
+		expect(budgets[0]).toMatchObject({ campaignId: CAMPAIGN, used: '40.000000' });
+
+		// A body that restates both, as a client sending back what it read does, moves the ceiling only.
+		await service.setBudget(CAMPAIGN, {
+			...ceiling,
+			limit: '250.000000',
+			used: '40',
+			campaignId: CAMPAIGN
+		} as never);
+
+		expect(budgets[0]).toMatchObject({ campaignId: CAMPAIGN, used: '40.000000', limit: '250.000000' });
+	});
+
+	it('changes a ceiling by its identifier and leaves campaignId and used alone', async () => {
+		const { service, budgets } = serviceUnderTest([budget({ used: '40.000000' })]);
+
+		await service.updateBudget('budget-1', {
+			limit: '250.000000',
+			used: '40.000000',
+			campaignId: CAMPAIGN
+		} as never);
+
+		expect(budgets[0]).toMatchObject({ limit: '250.000000', used: '40.000000', campaignId: CAMPAIGN });
+
+		await expect(service.updateBudget('budget-1', { used: '0' } as never)).rejects.toMatchObject({
+			response: {
+				code: 'CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE',
+				details: { budgetId: 'budget-1', fields: ['used'] }
+			}
+		});
+		await expect(service.updateBudget('budget-1', { campaignId: OTHER_CAMPAIGN } as never)).rejects.toMatchObject({
+			response: { code: 'CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE', details: { fields: ['campaignId'] } }
+		});
+		expect(budgets[0]).toMatchObject({ used: '40.000000', campaignId: CAMPAIGN });
+	});
+
+	it('refuses an edit that leaves a shape its type refuses, and one of a budget outside the caller’s organization', async () => {
+		const { service, budgets } = serviceUnderTest([
+			budget(),
+			budget({
+				id: 'budget-2',
+				campaignId: OTHER_CAMPAIGN,
+				organizationId: '00000000-0000-4000-8000-0000000000ff'
+			})
+		]);
+
+		await expect(service.updateBudget('budget-1', { currency: null } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		await expect(service.updateBudget('budget-2', { limit: '1' } as never)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+
+		expect(budgets[0].currency).toBe('USD');
+		expect(budgets[1].limit).toBe('100.000000');
 	});
 });

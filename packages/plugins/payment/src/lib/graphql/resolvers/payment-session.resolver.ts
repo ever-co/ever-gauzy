@@ -1,5 +1,6 @@
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, Optional, UseGuards } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
 	deliverPayloadAsIs,
@@ -17,6 +18,7 @@ import {
 import { FeatureFlag } from '@gauzy/common';
 import { PaymentCanceledEvent, PaymentCapturedEvent, PaymentFailedEvent, PaymentAuthorizedEvent } from '../../events';
 import { PaymentCaptureService } from '../../payment-capture/payment-capture.service';
+import { PaymentProviderService } from '../../payment-provider/payment-provider.service';
 import { PaymentSessionService } from '../../payment-session/payment-session.service';
 import { IPaymentCapture, IPaymentSession } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -70,7 +72,13 @@ export class PaymentSessionResolver {
 	constructor(
 		private readonly paymentSessionService: PaymentSessionService,
 		private readonly paymentCaptureService?: PaymentCaptureService,
-		private readonly eventBus?: EventBus
+		private readonly eventBus?: EventBus,
+		/**
+		 * The provider registry, read only to check a `providerCode` the caller stated beside the
+		 * `providerId` (see `openPaymentSession`). Optional, because an input that states no code never
+		 * needs it.
+		 */
+		@Optional() private readonly paymentProviderService?: PaymentProviderService
 	) {}
 
 	/**
@@ -109,6 +117,20 @@ export class PaymentSessionResolver {
 
 	/**
 	 * Opens, or switches, the attempt of a `(collection, provider)` pair.
+	 *
+	 * **The provider is named by its identifier, as on the route (R2-G11).** `POST /payment-sessions`
+	 * validates `providerId` with `@IsUUID()` (required) and `collectionId` / `paymentMethodTokenId` with
+	 * `@IsUUID()`; the SDL declares `providerId` optional, and an input without one reached
+	 * `findProviderOrFail(undefined)` — a lookup whose `id: undefined` constrains nothing, so the attempt
+	 * opened against whichever provider of the organization the store returned first. The same checks
+	 * now run here, before the service is reached, and a refusal is a payload `userError`
+	 * (`VALIDATION_FAILED`, `details.field`). The SDL keeps the member optional, so no client query stops
+	 * parsing.
+	 *
+	 * `providerCode` and `paymentMethod` are SDL members the route does not have, and no service reads
+	 * them. They are no longer passed on to the write. A stated `providerCode` must name the provider
+	 * `providerId` resolves to (`PAYMENT_PROVIDER_MISMATCH`), so a client that relied on it is told
+	 * instead of being answered an attempt at another provider. `paymentMethod` stays accepted and unread.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
 	// Opening an attempt reserves nothing and the service switches the pair rather than opening a second
@@ -117,7 +139,31 @@ export class PaymentSessionResolver {
 	@Mutation('openPaymentSession')
 	async openPaymentSession(@Args('input') input: IOpenPaymentSessionGraphInput): Promise<IOpenPaymentSessionPayload> {
 		try {
-			return { paymentSession: await this.paymentSessionService.openSession(input as never), userErrors: [] };
+			// The two members the route does not have are taken off the write; see the comment above.
+			const attempt: Record<string, unknown> = { ...(input ?? {}) };
+			const providerCode = input?.providerCode;
+
+			delete attempt.providerCode;
+			delete attempt.paymentMethod;
+
+			assertUuidMember(attempt, 'collectionId', true);
+			assertUuidMember(attempt, 'providerId', true);
+			assertUuidMember(attempt, 'paymentMethodTokenId', false);
+
+			if (typeof providerCode === 'string' && providerCode.trim() && this.paymentProviderService) {
+				const provider = await this.paymentProviderService.findProviderOrFail(input.providerId);
+
+				if (provider.code !== providerCode.trim()) {
+					throw new BadRequestException({
+						message:
+							`PAYMENT_PROVIDER_MISMATCH: providerCode '${providerCode.trim()}' does not name the ` +
+							`provider '${input.providerId}' resolves to.`,
+						details: { field: 'providerCode' }
+					});
+				}
+			}
+
+			return { paymentSession: await this.paymentSessionService.openSession(attempt as never), userErrors: [] };
 		} catch (error) {
 			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
 		}
@@ -379,4 +425,29 @@ export class PaymentSessionResolver {
 			read: (event) => this.paymentSessionService.findSessionOrFail(event.sessionId)
 		});
 	}
+}
+
+/**
+ * Refuses an identifier member that is not a UUID, the check the REST DTO's `@IsUUID()` makes.
+ *
+ * @param input The mutation input.
+ * @param member The member to check.
+ * @param required Whether an absent member is refused too (`@IsUUID()` without `@IsOptional()`).
+ * @throws BadRequestException `VALIDATION_FAILED` naming the member, answered as a payload `userError`.
+ */
+function assertUuidMember(input: object, member: string, required: boolean): void {
+	const value = (input as Record<string, unknown>)[member];
+
+	if (value === undefined || value === null) {
+		if (!required) {
+			return;
+		}
+	} else if (typeof value === 'string' && isUUID(value)) {
+		return;
+	}
+
+	throw new BadRequestException({
+		message: `VALIDATION_FAILED: ${member} must be a UUID`,
+		details: { field: member }
+	});
 }

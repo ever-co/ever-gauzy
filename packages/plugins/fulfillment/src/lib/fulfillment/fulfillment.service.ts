@@ -1439,14 +1439,27 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * @param orderId The order.
 	 */
 	private async completeOrderIfSettled(orderId: ID): Promise<void> {
-		try {
-			await this.orderService?.completeIfSettled(orderId);
-		} catch (error) {
-			this.logger.warn(
-				`Order ${orderId} could not be completed after its goods were accounted for: ${
-					error instanceof Error ? error.message : String(error)
-				}`
-			);
+		// A completion is a versioned write that a concurrent re-derivation of the same order can overtake;
+		// it reads the order afresh on every attempt, so a lost race is retried like the recompute above
+		// (CodeRabbit on #10890).
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderService?.completeIfSettled(orderId);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`Order ${orderId} could not be completed after its goods were accounted for: ${
+						error instanceof Error ? error.message : String(error)
+					}`
+				);
+
+				return;
+			}
 		}
 	}
 

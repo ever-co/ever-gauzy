@@ -175,7 +175,8 @@ describe('AddOrderVersionedColumns1791000000560 — what it issues', () => {
 	it('runs after every tick before it', () => {
 		// A migration's timestamp is frozen once it has shipped, so this one runs after every file the
 		// set held when it shipped; the cart unique-index tick (R3-10) is the only one after it.
-		expect(ALL_ORDER_MIGRATIONS[ALL_ORDER_MIGRATIONS.length - 2]).toBe(AddOrderVersionedColumns1791000000560);
+		// The payment-fact unique index (Q7-W1b) follows the cart tick.
+		expect(ALL_ORDER_MIGRATIONS[ALL_ORDER_MIGRATIONS.length - 3]).toBe(AddOrderVersionedColumns1791000000560);
 		expect(ALL_ORDER_MIGRATIONS).toContain(AddOrderVersionedColumns1791000000560);
 	});
 });

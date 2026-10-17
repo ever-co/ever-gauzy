@@ -580,7 +580,11 @@ function searchFixture(
 
 	const provider = new DatabaseSearchProvider(documentRepository, indexRegistry);
 	const providerRegistry = new SearchProviderRegistry(provider);
-	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
+	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, {
+		findOne: async () => null,
+		// No organization holds its own copy of a definition in this suite (Q16).
+		find: async () => []
+	} as never);
 	const reindex = {
 		status: async (entities: string[]) => entities.map((entity) => ({ entity, indexedCount: tables.search_document.length, pendingCount: 0 }))
 	};

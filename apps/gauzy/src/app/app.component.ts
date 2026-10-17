@@ -27,6 +27,7 @@ import {
 	Store
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
+import { unsettledNavigations } from './navigation-settled';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -64,6 +65,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _navigationService: NavigationService
 	) {
 		this.getActivateRouterDataEvent();
+		this.watchUnsettledNavigations();
 		this.getPreferredLanguage();
 
 		setTimeout(() => {
@@ -194,6 +196,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 				baseUrl: chatwootBaseUrl
 			});
 		};
+	}
+
+	/**
+	 * Lets the loading skeleton go when a navigation ends without a `NavigationEnd` and nothing follows it (Q8d): a
+	 * first navigation that failed or was refused left the skeleton over an outlet that would never fill.
+	 */
+	private watchUnsettledNavigations(): void {
+		unsettledNavigations(this._router)
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.routerReady = true;
+				this.checkLoadingComplete();
+			});
 	}
 
 	private checkLoadingComplete(): void {

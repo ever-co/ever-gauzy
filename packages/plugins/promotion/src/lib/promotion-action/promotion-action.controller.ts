@@ -41,6 +41,10 @@ export class PromotionActionController extends CrudController<PromotionAction> {
 	/**
 	 * Creates one action on a promotion.
 	 *
+	 * The action is validated against its promotion's type, the promotion must be the caller's, and the action is
+	 * stamped with the caller's tenant and organization (review R2-G28) — the same rules `PUT /promotions/:id/actions`
+	 * applies to a whole set.
+	 *
 	 * @param entity The action to create.
 	 * @returns The stored action.
 	 */
@@ -51,11 +55,14 @@ export class PromotionActionController extends CrudController<PromotionAction> {
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreatePromotionActionDTO): Promise<PromotionAction> {
-		return this.promotionActionService.create(entity as never);
+		return this.promotionActionService.createAction(entity as never) as Promise<PromotionAction>;
 	}
 
 	/**
 	 * Changes one action.
+	 *
+	 * The action as the change leaves it is validated against its promotion's type, and both the action and the
+	 * promotion it ends up on must be the caller's (review R2-G28).
 	 *
 	 * @param id The action to change.
 	 * @param entity The fields to change.
@@ -68,7 +75,7 @@ export class PromotionActionController extends CrudController<PromotionAction> {
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdatePromotionActionDTO) {
-		return this.promotionActionService.update(id, entity as never);
+		return this.promotionActionService.updateAction(id, entity as never);
 	}
 
 	/**

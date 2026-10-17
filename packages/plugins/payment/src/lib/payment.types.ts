@@ -404,6 +404,27 @@ export interface IReturnRefundRequest {
 	readonly reasonId?: ID;
 	/** Free-text note kept beside the refund. */
 	readonly note?: string;
+	/**
+	 * The caller's identity for this refund (review R3-09r2): the request's `Idempotency-Key` on a return
+	 * refund, the decision key a claim takes when it decides. Kept on the refund, so a retry under the same key
+	 * — after an answer that was lost, or an outcome nobody saw — finds the refund it already produced instead
+	 * of paying again: a succeeded one is answered as it is, a pending one is settled.
+	 */
+	readonly idempotencyKey?: string;
+}
+
+/** What a refund is looked up by from the flow that caused it: the return or the claim, and its key. */
+export interface IReturnRefundLookup {
+	readonly orderId?: ID;
+	readonly returnId?: ID;
+	readonly claimId?: ID;
+	readonly idempotencyKey: string;
+}
+
+/** A refund the lookup found, and whether its money has gone back yet. */
+export interface IReturnRefundFound extends IReturnRefundResult {
+	/** `SUCCEEDED`, or `PENDING` when it was recorded and not settled. */
+	readonly status: RefundStatus;
 }
 
 /**
@@ -659,6 +680,12 @@ export interface IPaymentOrderLedgerPort {
  * `PAYMENT_ORDER_LEDGER_UNAVAILABLE` so an operator can see which orders were not told.
  */
 export const PAYMENT_ORDER_LEDGER = Symbol('PAYMENT_ORDER_LEDGER');
+
+/**
+ * The refund metadata member a caller's identity for the refund is kept under (review R3-09r2): the key a return
+ * or a claim refund was requested under, which a retry under the same key is answered by.
+ */
+export const REFUND_IDEMPOTENCY_KEY = 'idempotencyKey';
 
 /**
  * Paginated provider registrations.

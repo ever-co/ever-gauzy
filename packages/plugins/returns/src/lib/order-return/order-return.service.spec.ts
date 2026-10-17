@@ -264,6 +264,9 @@ function repository(tables: ITables, tableName: keyof ITables) {
 	/** Every operator the services actually build, and nothing else: an unknown one throws. */
 	const matchesOperator = (value: unknown, operator: FindOperator<any>): boolean => {
 		switch (operator.type) {
+			// A running total read as absent is stated as `IS NULL`: `= NULL` matches nothing in SQL.
+			case 'isNull':
+				return value === null || value === undefined;
 			case 'in':
 				return (operator.value ?? []).some((candidate: unknown) => matchesValue(value, candidate));
 			case 'not':
@@ -2502,5 +2505,196 @@ describe('OrderReturnService — retiring, removing and restoring a live return 
 		// repository would answer rows with no status, no quantities and no tenant.
 		expect(fixture.typeOrmReads()).toEqual([]);
 		expect(fixture.mikroOrmReads().length).toBeGreaterThan(0);
+	});
+});
+
+describe('OrderReturnService — a refund claims the return before the money moves (review R3-09r1)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const received = (overrides: Row = {}) =>
+		returnFixture({ returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED, ...overrides })] });
+
+	it('pays once when two refunds stating the same version overlap, and refuses the other before any money moves', async () => {
+		const fixture = received();
+		const atVersionOne = { wildcard: false, versions: [1] };
+
+		// The failure scenario: both asked the payment capability for the money, and the second was then answered
+		// `409` on the header write — a conflict for a refund that had happened, which a client retries.
+		const outcomes = await Promise.allSettled([
+			fixture.service.refund('return-1', '10.00', undefined, undefined, atVersionOne),
+			fixture.service.refund('return-1', '10.00', undefined, undefined, atVersionOne)
+		]);
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+	});
+
+	it('refuses a refund that read the running total before another one landed, whatever version it accepts', async () => {
+		// With `If-Match: *` the version is read at the write, so it alone cannot tell the two apart: the running
+		// total each refund read is the other half of the condition, and the second refund would have written over
+		// the first's total — the return reporting 10 refunded with 20 gone back.
+		const fixture = received({ refundAmount: '0.000000' });
+
+		const outcomes = await Promise.allSettled([
+			fixture.service.refund('return-1', '10.00'),
+			fixture.service.refund('return-1', '10.00')
+		]);
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(outcomes.filter((outcome) => outcome.status === 'rejected')).toHaveLength(1);
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('10.000000');
+	});
+
+	it('gives the claimed total back when the payment capability refuses the refund, so it can be asked again', async () => {
+		const fixture = received({ refundAmount: '5.000000' });
+		const gateway = (fixture.service as any).refundGateway;
+		const pay = gateway.createRefund;
+
+		gateway.createRefund = async () => {
+			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+		};
+
+		await expect(fixture.service.refund('return-1', '10.00')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('5.000000');
+		expect(fixture.events.map((event) => event.name)).not.toContain('return.refunded');
+
+		gateway.createRefund = pay;
+
+		await expect(fixture.service.refund('return-1', '10.00')).resolves.toMatchObject({ amount: '10.000000' });
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('15.000000');
+	});
+
+	it('keeps the claimed total when the refund failed in a way that may have paid it', async () => {
+		const fixture = received({ refundAmount: '0.000000' });
+		const warn = jest.spyOn((fixture.service as any).logger, 'warn').mockImplementation(() => undefined);
+
+		(fixture.service as any).refundGateway.createRefund = async () => {
+			throw new Error('connection reset while reading the settled refund');
+		};
+
+		await expect(fixture.service.refund('return-1', '10.00')).rejects.toThrow(/connection reset/);
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('10.000000');
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('RETURN_REFUND_OUTCOME_UNKNOWN'));
+	});
+
+	it('gives the claimed total back even when another write moved the version while the refund was asked for', async () => {
+		// Greptile, #10895: a close landing while the payment capability was being asked moved the version, and a
+		// release predicated on the version the claim wrote failed — the return then reported money that never moved.
+		const fixture = received({ refundAmount: '5.000000' });
+
+		(fixture.service as any).refundGateway.createRefund = async () => {
+			const row = fixture.returnRow('return-1') as Row;
+
+			row.version = Number(row.version) + 1;
+
+			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+		};
+
+		await expect(fixture.service.refund('return-1', '10.00')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('5.000000');
+	});
+
+	it('records what was actually refunded when the payment capability settles less than was asked for', async () => {
+		// Greptile, #10895: the port may answer a smaller amount; the total and the event must state the same one.
+		const fixture = received({ refundAmount: '0.000000' });
+
+		(fixture.service as any).refundGateway.createRefund = async (request: Row) => ({
+			refundId: 'refund-partial',
+			amount: '6.000000',
+			currency: request.currency
+		});
+
+		const outcome = await fixture.service.refund('return-1', '10.00');
+
+		expect(outcome).toMatchObject({ amount: '6.000000' });
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('6.000000');
+
+		const refunded = fixture.events.find((event) => event.name === 'return.refunded');
+
+		expect(refunded?.data).toMatchObject({ refundedAmount: '6.000000', refundId: 'refund-partial' });
+	});
+
+	it('announces the refund with the refund it produced and the version the claim wrote', async () => {
+		const fixture = received();
+
+		await fixture.service.refund('return-1', '10.00');
+
+		const refunded = fixture.events.find((event) => event.name === 'return.refunded');
+
+		expect(refunded?.data).toMatchObject({ refundedAmount: '10.000000', refundId: 'refund-1', version: 2 });
+	});
+});
+
+describe('OrderReturnService — a retried refund is answered by the refund its key produced (review R3-09r2)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const received = (overrides: Row = {}) =>
+		returnFixture({ returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED, ...overrides })] });
+
+	it('answers a retry whose refund already went back, and claims and pays nothing again', async () => {
+		// The first attempt claimed 10 on the return and its refund settled; its answer never arrived.
+		const fixture = received({ refundAmount: '10.000000', version: 2 });
+		const lookups: Row[] = [];
+
+		(fixture.service as any).refundGateway.findRefund = async (query: Row) => {
+			lookups.push(query);
+
+			return { refundId: 'refund-earlier', amount: '10.000000', currency: 'USD', status: 'SUCCEEDED' };
+		};
+
+		const answer = await fixture.service.refund('return-1', '10.00', undefined, undefined, undefined, 'key-1');
+
+		expect(answer).toMatchObject({ refundId: 'refund-earlier', amount: '10.000000' });
+		expect(lookups).toEqual([{ orderId: ORDER, returnId: 'return-1', idempotencyKey: 'key-1' }]);
+		expect(fixture.refundCalls).toEqual([]);
+		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+		// A plain replay announces nothing again.
+		expect(fixture.events.filter((event) => event.name === 'return.refunded')).toEqual([]);
+	});
+
+	it('settles a refund the key left pending without claiming the return a second time', async () => {
+		const fixture = received({ refundAmount: '10.000000', version: 2 });
+
+		(fixture.service as any).refundGateway.findRefund = async () => ({
+			refundId: 'refund-pending',
+			amount: '10.000000',
+			currency: 'USD',
+			status: 'PENDING'
+		});
+
+		await fixture.service.refund('return-1', '10.00', undefined, undefined, undefined, 'key-1');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.refundCalls[0]).toMatchObject({
+			returnId: 'return-1',
+			idempotencyKey: 'key-1',
+			amount: '10.000000'
+		});
+		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+		// The attempt that left it pending never announced it; the retry that settled it does (Greptile, #10906).
+		expect(fixture.events.filter((event) => event.name === 'return.refunded')).toHaveLength(1);
+	});
+
+	it('claims and pays under the key when the key produced nothing yet', async () => {
+		const fixture = received({ refundAmount: '0.000000' });
+
+		(fixture.service as any).refundGateway.findRefund = async () => null;
+
+		await fixture.service.refund('return-1', '10.00', undefined, undefined, undefined, 'key-1');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.refundCalls[0]).toMatchObject({ idempotencyKey: 'key-1' });
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('10.000000');
 	});
 });

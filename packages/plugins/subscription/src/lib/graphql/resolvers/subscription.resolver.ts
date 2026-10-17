@@ -374,6 +374,29 @@ export class SubscriptionResolver {
 	}
 
 	/**
+	 * Withdraws a cancellation at the end of the period, so the subscription keeps billing — the same transition as
+	 * `POST /subscriptions/:id/undo-cancellation`.
+	 *
+	 * @param id The subscription.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
+	 * @returns The payload.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.undo-cancellation', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
+	@Mutation('undoSubscriptionCancellation')
+	async undoSubscriptionCancellation(@Args('id') id: ID, @Context() context: any) {
+		try {
+			return {
+				subscription: await this.subscriptionService.undoCancellation(id, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
+		} catch (error) {
+			return { subscription: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Expires a subscription.
 	 *
 	 * @param id The subscription.
