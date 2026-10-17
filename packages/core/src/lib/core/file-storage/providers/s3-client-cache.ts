@@ -43,7 +43,8 @@ const clients = new Map<string, S3Client>();
 /**
  * Clients evicted from `clients` but not yet destroyed: still usable by whoever holds them, and brought back
  * into the cache if their configuration is asked for again. Bounded: past MAX_RETIRING_CLIENTS the oldest is
- * destroyed at once, so churn through many configurations cannot pile up clients and timers.
+ * forgotten (left to garbage collection, never destroyed while it may be in use), so churn through many
+ * configurations cannot pile up timers or references.
  */
 const retiring = new Map<string, { client: S3Client; timer: NodeJS.Timeout }>();
 const MAX_RETIRING_CLIENTS = 64;
@@ -114,13 +115,16 @@ export function getCachedS3Client(config: S3ClientConfig): S3Client {
 		timer.unref?.();
 		retiring.set(oldestKey, { client: oldest, timer });
 		if (retiring.size > MAX_RETIRING_CLIENTS) {
+			// Over the bound the oldest retiring client is forgotten, not destroyed: a transfer may still be using
+			// it, and destroy() would cut its sockets. Dropping the reference is how every client was released
+			// before this cache existed; once nothing holds it, it is garbage-collected and its idle keep-alive
+			// sockets close when the remote closes them. Only the grace-period timer ever calls destroy().
 			const [staleKey, stale] = retiring.entries().next().value as [
 				string,
 				{ client: S3Client; timer: NodeJS.Timeout }
 			];
 			clearTimeout(stale.timer);
 			retiring.delete(staleKey);
-			destroyQuietly(stale.client);
 		}
 	}
 	return client;

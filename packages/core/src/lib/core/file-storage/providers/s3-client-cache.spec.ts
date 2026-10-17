@@ -50,7 +50,7 @@ describe('s3-client-cache', () => {
 		}
 	});
 
-	it('bounds the clients awaiting destruction under churn', () => {
+	it('bounds the clients awaiting destruction under churn without destroying one that may be in use', () => {
 		jest.useFakeTimers();
 		try {
 			const destroyed: number[] = [];
@@ -58,10 +58,11 @@ describe('s3-client-cache', () => {
 				const client = getCachedS3Client(config(`churn-${i}`));
 				jest.spyOn(client, 'destroy').mockImplementation(() => destroyed.push(i));
 			}
-			// 200 configurations: 64 cached, 64 retiring, the rest destroyed at once, oldest first.
-			expect(destroyed).toEqual(Array.from({ length: 72 }, (_, i) => i));
+			// 200 configurations: 64 cached, 64 retiring, 72 forgotten - and nothing is destroyed while it may still
+			// be in use. Only the 64 retiring ones are destroyed, after the grace period.
+			expect(destroyed).toEqual([]);
 			jest.advanceTimersByTime(EVICTED_CLIENT_DESTROY_DELAY_MS);
-			expect(destroyed).toHaveLength(136);
+			expect(destroyed).toEqual(Array.from({ length: 64 }, (_, i) => 72 + i));
 		} finally {
 			jest.useRealTimers();
 		}
