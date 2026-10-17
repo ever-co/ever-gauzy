@@ -10,6 +10,7 @@ import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { runWithAuthKey } from '../common/auth-context';
+import { authManager } from '../common/auth-manager';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -348,6 +349,7 @@ export class WebSocketTransport {
 			if (connection.sessionId) {
 				sessionManager.removeConnection(connectionId);
 			}
+			authManager.clearKey(connectionId);
 			this.connections.delete(connectionId);
 		});
 
@@ -358,6 +360,7 @@ export class WebSocketTransport {
 			if (connection.sessionId) {
 				sessionManager.removeConnection(connectionId);
 			}
+			authManager.clearKey(connectionId);
 			this.connections.delete(connectionId);
 		});
 
@@ -462,7 +465,7 @@ export class WebSocketTransport {
 			};
 
 			// Route the request to appropriate MCP server handler
-			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext);
+			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, connection);
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method} for ${connection.id}:`, error);
 			this.sendError(
@@ -480,7 +483,7 @@ export class WebSocketTransport {
 		params: Record<string, unknown> | unknown[] | undefined,
 		id: string | number | null | undefined,
 		transport: McpTransport,
-		userContext?: UserContext
+		connection: WebSocketConnection
 	) {
 		try {
 			// Handle basic MCP protocol methods
@@ -511,8 +514,10 @@ export class WebSocketTransport {
 					break;
 				}
 				case 'tools/call': {
-					// Tools run with the Gauzy login of the session bound to this connection
-					const result = await this.callTool(params as Record<string, unknown>, userContext?.sessionId);
+					const result = await this.callTool(
+						params as Record<string, unknown>,
+						this.resolveAuthKey(connection)
+					);
 					transport.send({
 						jsonrpc: '2.0',
 						id,
@@ -563,6 +568,17 @@ export class WebSocketTransport {
 			logger.error(`Failed to get tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			return [];
 		}
+	}
+
+	/**
+	 * Tools run with the Gauzy login of the session bound to this connection while that session exists,
+	 * otherwise with the connection's own login
+	 */
+	private resolveAuthKey(connection: WebSocketConnection): string {
+		if (connection.sessionId && sessionManager.getSession(connection.sessionId)) {
+			return connection.sessionId;
+		}
+		return connection.id;
 	}
 
 	private async callTool(params: Record<string, unknown>, authKey?: string): Promise<unknown> {

@@ -838,10 +838,13 @@ export class HttpTransport {
 				}
 
 				case 'tools/call': {
-					// Tools run with the Gauzy login of this session, or of this OAuth subject
+					// Tools run with the Gauzy login of this session, or of this OAuth subject.
+					// Callers with neither share one login of their own, so it never replaces the auto-login account.
 					const authKey =
 						userContext?.sessionId ??
-						(tokenInfo?.subject ? `oauth:${tokenInfo.subject}:${tokenInfo.clientId ?? ''}` : undefined);
+						(tokenInfo?.subject
+							? `oauth:${tokenInfo.subject}:${tokenInfo.clientId ?? ''}`
+							: 'http:anonymous');
 					const result = await this.callTool(params as Record<string, unknown>, authKey);
 					transport.send({
 						jsonrpc: '2.0',

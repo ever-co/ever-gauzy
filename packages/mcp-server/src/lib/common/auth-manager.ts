@@ -31,7 +31,7 @@ const createAuthState = (): IAuthState => ({ tokenData: null, isLoginInProgress:
 
 export class AuthManager {
 	private static instance: AuthManager;
-	// Process-wide login, used by stdio and by HTTP/WebSocket calls that carry no session or OAuth identity
+	// Process-wide login: the stdio login, or on HTTP/WebSocket the GAUZY_AUTO_LOGIN account callers may fall back to
 	private readonly processState: IAuthState = createAuthState();
 	// Logins of HTTP/WebSocket sessions and OAuth subjects, by auth key
 	private readonly keyedStates = new Map<string, IAuthState>();
@@ -390,9 +390,18 @@ export class AuthManager {
 	}
 
 	/**
-	 * Forget the login kept for an auth key (called when its session is destroyed)
+	 * Forget the login kept for an auth key (called when its session or connection goes away).
+	 * When that key had a login of its own, `boundKeys` (connections still bound to it) get an empty one,
+	 * so they fail as unauthenticated instead of silently running as the auto-login account.
 	 */
-	public clearKey(authKey: string): void {
+	public clearKey(authKey: string, boundKeys: Iterable<string> = []): void {
+		if (this.keyedStates.has(authKey)) {
+			for (const boundKey of boundKeys) {
+				if (!this.keyedStates.has(boundKey)) {
+					this.keyedStates.set(boundKey, createAuthState());
+				}
+			}
+		}
 		this.keyedStates.delete(authKey);
 	}
 

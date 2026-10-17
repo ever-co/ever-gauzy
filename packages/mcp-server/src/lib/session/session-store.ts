@@ -408,6 +408,11 @@ export class SessionStore {
 			return false;
 		}
 
+		// WebSocket connections stay open after their session is gone and use their own id as auth key from then on
+		const webSocketIds = Array.from(session.connectionIds).filter(
+			(connectionId) => this.connections.get(connectionId)?.type === 'websocket'
+		);
+
 		// Remove all connections
 		for (const connectionId of session.connectionIds) {
 			this.connections.delete(connectionId);
@@ -424,7 +429,7 @@ export class SessionStore {
 		}
 
 		this.sessions.delete(sessionId);
-		authManager.clearKey(sessionId);
+		authManager.clearKey(sessionId, webSocketIds);
 		this.metrics.sessionsDestroyed++;
 
 		if (this.config.enableLogging) {
