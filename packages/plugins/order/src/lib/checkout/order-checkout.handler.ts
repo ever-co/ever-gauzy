@@ -85,7 +85,9 @@ export class OrderCheckoutHandler implements ICartCheckoutHandler {
 			idempotencyKey: context.idempotencyKey,
 			source: 'CHANNEL',
 			// The buyer was quoted the cart's discounts and taxes; the order is placed with them (Q7-W1a).
-			carryCartLedgers: true
+			carryCartLedgers: true,
+			// The promotions the cart was granted are used by this order, and their limits hold (Q7-W1c).
+			recordPromotionUsage: true
 		});
 
 		await this.attachPayments(cart.id, order.id);

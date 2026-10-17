@@ -12,6 +12,7 @@ import {
 	ORDER_APPROVAL,
 	ORDER_CHECKOUT_PAYMENTS,
 	ORDER_INVOICING,
+	ORDER_PROMOTION_USAGE,
 	OrderApprovalAdapter,
 	OrderInvoicingAdapter,
 	OrderLineFulfillmentService,
@@ -30,7 +31,7 @@ import {
 	PaymentOrderLinkService,
 	ReturnRefundService
 } from '@gauzy/plugin-payment';
-import { PromotionModule, PromotionService } from '@gauzy/plugin-promotion';
+import { PromotionModule, PromotionOrderUsageAdapter, PromotionService } from '@gauzy/plugin-promotion';
 import {
 	PURCHASING_APPROVAL,
 	PURCHASING_INVENTORY,
@@ -173,6 +174,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// rather than recording an amount the caller stated — which is what it did before (R3-07): a buyer
 		// could name any code and any discount, and the cart re-priced from it.
 		{ provide: CART_PROMOTION_EVALUATION, useExisting: PromotionService },
+		// What the engine granted is also a redemption: a checkout takes the promotion's use before the order
+		// is written and registers it once placed, and a cancellation gives it back (Q7-W1c). Unbound, a
+		// promotion's usage limit counted nothing and could be redeemed without end.
+		{ provide: ORDER_PROMOTION_USAGE, useExisting: PromotionOrderUsageAdapter },
 		// The warehouse reads bin contents from the ledger and writes every physical move back through
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
@@ -224,7 +229,8 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		ORDER_INVOICING,
 		ORDER_APPROVAL,
 		PAYMENT_ORDER_LEDGER,
-		ORDER_CHECKOUT_PAYMENTS
+		ORDER_CHECKOUT_PAYMENTS,
+		ORDER_PROMOTION_USAGE
 	]
 })
 export class PluginCompositionModule {}

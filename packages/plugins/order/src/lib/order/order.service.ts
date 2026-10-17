@@ -28,7 +28,9 @@ import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository
 import {
 	ANY_ORDER_VERSION,
 	IOrderApprovalPort,
+	IOrderPromotionUsagePort,
 	ORDER_APPROVAL,
+	ORDER_PROMOTION_USAGE,
 	ORDER_EVENTS,
 	OrderVersionExpectation
 } from '../order.types';
@@ -115,7 +117,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		 * placed with the lines alone, which is what every order was before the carry-over existed.
 		 */
 		@Optional()
-		private readonly cartLedgerCarryover?: OrderCartLedgerCarryover
+		private readonly cartLedgerCarryover?: OrderCartLedgerCarryover,
+		/**
+		 * The promotion redemptions a checkout takes and a cancellation gives back (Q7-W1c). Optional and last:
+		 * bound by the installation that hosts the promotion package; the worker binds nothing.
+		 */
+		@Optional()
+		@Inject(ORDER_PROMOTION_USAGE)
+		private readonly promotionUsage?: IOrderPromotionUsagePort
 	) {
 		super(typeOrmOrderRepository, mikroOrmOrderRepository);
 	}
@@ -171,7 +180,11 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// accept the exact decimal string the GraphQL schema promises, and an order line's are numbers.
 		// Naming the shape it is actually handed is what lets the conversion below be the one place the
 		// two vocabularies meet.
-		cart: ICommerceCart & { lines?: ICommerceCartLine[]; shippingMethods?: ICommerceCartShippingMethod[] },
+		cart: ICommerceCart & {
+			lines?: ICommerceCartLine[];
+			shippingMethods?: ICommerceCartShippingMethod[];
+			promotions?: Array<{ promotionId?: ID; couponId?: ID; code?: string; amount?: unknown }>;
+		},
 		options: {
 			idempotencyKey?: string;
 			source?: string;
@@ -183,12 +196,23 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			 * cycle's own discount and tax onto the order itself, so the cart's would be charged twice.
 			 */
 			carryCartLedgers?: boolean;
+			/**
+			 * Take the use of every promotion the cart carries before the order is written, and register it
+			 * against the order once placed (Q7-W1c). Stated by the checkout handler only.
+			 */
+			recordPromotionUsage?: boolean;
 		} = {}
 	): Promise<Order> {
 		if (cart.orderId) {
 			throw new BadRequestException(
 				`CART_ALREADY_COMPLETED: cart ${cart.id} already became order ${cart.orderId}.`
 			);
+		}
+
+		// The use of every promotion is taken before anything is written, so a promotion whose limit is
+		// reached refuses the checkout instead of granting a discount it no longer has (Q7-W1c).
+		if (options.recordPromotionUsage === true) {
+			await this.reservePromotionUsage(cart);
 		}
 
 		const order = await this.create({
@@ -299,10 +323,16 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		// The timeline entry is written once, by the step that actually places the order, and it
 		// carries what the placement came from.
-		return this.placeAndConfirm(order.id, {
+		const placed = await this.placeAndConfirm(order.id, {
 			cartId: cart.id,
 			idempotencyKey: options.idempotencyKey
 		});
+
+		if (options.recordPromotionUsage === true) {
+			await this.registerPromotionUsage(order.id, cart.id);
+		}
+
+		return placed;
 	}
 
 	/**
@@ -472,6 +502,9 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		// A cancelled order will not be approved, so a request still awaiting a decision is refused with it.
 		await this.settleApprovals(order, false);
+
+		// The promotions the order redeemed give their uses back (Q7-W1c).
+		await this.revertPromotionUsage(order.id);
 
 		return cancelled;
 	}
@@ -812,6 +845,76 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * @param placedWith What the placement came from, recorded on the timeline entry.
 	 * @returns The confirmed order.
 	 */
+	/**
+	 * Takes the use of every promotion a cart carries into checkout (Q7-W1c).
+	 *
+	 * Runs before the order row is written: a promotion whose limit is reached refuses the checkout with
+	 * `PROMOTION_USAGE_LIMIT_REACHED`, and nothing is left behind but the reservations of the promotions
+	 * before it — which the cart still holds, and a retry reuses rather than takes again.
+	 *
+	 * @param cart The cart, with its promotion snapshots.
+	 */
+	private async reservePromotionUsage(cart: {
+		id: ID;
+		currency?: string;
+		customerId?: ID;
+		promotions?: Array<{ promotionId?: ID; couponId?: ID; code?: string; amount?: unknown }>;
+	}): Promise<void> {
+		if (!this.promotionUsage) {
+			return;
+		}
+
+		for (const promotion of cart.promotions ?? []) {
+			if (!promotion?.promotionId) {
+				continue;
+			}
+
+			await this.promotionUsage.reserveForCart({
+				cartId: cart.id,
+				promotionId: promotion.promotionId,
+				...(promotion.couponId ? { couponId: promotion.couponId } : {}),
+				...(promotion.code ? { code: promotion.code } : {}),
+				...(cart.customerId ? { customerId: cart.customerId } : {}),
+				amount: String(promotion.amount ?? '0'),
+				currency: cart.currency
+			});
+		}
+	}
+
+	/**
+	 * Registers a placed order's promotion reservations against it (Q7-W1c).
+	 *
+	 * The order is already placed, so a refusal here is logged rather than failing the checkout: the
+	 * reservations stand against the cart, and the use was already taken when they were made.
+	 *
+	 * @param orderId The order.
+	 * @param cartId The cart it came from.
+	 */
+	private async registerPromotionUsage(orderId: ID, cartId: ID): Promise<void> {
+		try {
+			await this.promotionUsage?.registerForOrder(orderId, cartId);
+		} catch (error) {
+			this.logger.warn(
+				`ORDER_PROMOTION_USAGE_NOT_REGISTERED: order ${orderId} (cart ${cartId}): ${describeError(error)}`
+			);
+		}
+	}
+
+	/**
+	 * Gives back the promotion uses a cancelled order took (Q7-W1c).
+	 *
+	 * The cancellation has committed, so a refusal is logged rather than reported as a failed cancellation.
+	 *
+	 * @param orderId The order.
+	 */
+	private async revertPromotionUsage(orderId: ID): Promise<void> {
+		try {
+			await this.promotionUsage?.revertForOrder(orderId);
+		} catch (error) {
+			this.logger.warn(`ORDER_PROMOTION_USAGE_NOT_REVERTED: order ${orderId}: ${describeError(error)}`);
+		}
+	}
+
 	/**
 	 * Copies the cart's money ledgers onto the order before it is placed.
 	 *
