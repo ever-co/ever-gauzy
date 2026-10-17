@@ -2342,3 +2342,49 @@ describe('CommerceCartService — the discount is the promotion engine’s (R3-0
 		});
 	});
 });
+
+/**
+ * R2-G19: the GraphQL cart writes (`createCart`, `addCartLine`, `setCartShippingMethod`, `applyCartPromotion`,
+ * `startCheckout`) wrote `organizationId = NULL`: the inputs declare no organization and the tenant-aware base
+ * stamps the tenant only. The cart takes the request's organization, a child row takes its cart's, and a stated
+ * organization is kept (REST states one, validated against the caller).
+ */
+describe('CommerceCartService — rows are written in the organization (R2-G19)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the request’s organization on a cart, and on every row its verbs write', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 5 });
+		await service.applyPromotion(cart.id, { code: 'TENOFF' } as any);
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_shipping_method[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_promotion[0].organizationId).toBe('org-1');
+	});
+
+	it('writes a child row in its cart’s organization rather than the request’s', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any);
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-2');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-2');
+	});
+
+	it('opens a checkout session in the request’s organization when none is stated', async () => {
+		const { checkoutSessionService, tables } = cartFixture();
+
+		await checkoutSessionService.create({ cartId: 'cart-1', status: CommerceCheckoutSessionStatus.STARTED });
+
+		expect(tables.commerce_checkout_session[0].organizationId).toBe('org-1');
+	});
+});
