@@ -390,7 +390,11 @@ if [ "$MODE" = upgrade ] && [ -n "${GATED_PLUGIN_FLAGS:-}" ]; then
 	chmod 600 "$GATED_ENV_FILE"
 	cp "$ENV_FILE" "$GATED_ENV_FILE"
 	# The integration and the provider accounts store their secrets sealed with ENCRYPTION_KEY (a base64 32-byte key).
-	ENCRYPTION_KEY_VALUE="$(openssl rand -base64 32)"
+	# One without a `/`: save_logs scrubs every secret with `sed "s/<secret>/***/g"`, where a slash would end the pattern.
+	while :; do
+		ENCRYPTION_KEY_VALUE="$(openssl rand -base64 32)"
+		case "$ENCRYPTION_KEY_VALUE" in */*) ;; *) break ;; esac
+	done
 	echo "::add-mask::$ENCRYPTION_KEY_VALUE" >&3
 	SECRETS+=("$ENCRYPTION_KEY_VALUE")
 	{
