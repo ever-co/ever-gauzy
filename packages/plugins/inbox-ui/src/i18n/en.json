@@ -12,6 +12,8 @@
 	"DUE": "Due {{ date }}",
 	"ANSWERED": "Answered {{ date }}",
 	"ROUTED": "Delivered: {{ routed }}",
+	"ALREADY_DECIDED": "Already decided in {{ source }}: this is the answer it holds.",
+	"THE_SOURCE": "the source",
 	"TABS": {
 		"all": "All",
 		"decisions": "Decisions",

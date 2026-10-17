@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
+import { INBOUND_ADDRESS_NAMESPACE, INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
 import { EmailSendModule, RolePermissionModule } from '@gauzy/core';
 import { InboxEmailController } from './emails/inbox-email.controller';
 import { InboxEmailService } from './emails/inbox-email.service';
@@ -10,6 +10,7 @@ import { InboxEmailAttachment } from './entities/inbox-email-attachment.entity';
 import { InboxEmailThread } from './entities/inbox-email-thread.entity';
 import { InboxMailbox } from './entities/inbox-mailbox.entity';
 import { InboxMailboxMember } from './entities/inbox-mailbox-member.entity';
+import { InboxOrganizationSetting } from './entities/inbox-organization-setting.entity';
 import { InboxProviderAccount } from './entities/inbox-provider-account.entity';
 import { InboxEmailProcessor } from './inbound/inbox-email.processor';
 import { INBOX_EMAIL_PROCESSOR } from './inbound/inbox-email-processor.types';
@@ -20,6 +21,9 @@ import { InboundReplayGuard } from './inbound/replay-guard.service';
 import { createInboxSecretBox, INBOX_SECRET_BOX } from './inbox-email.constants';
 import { InboxEmailScopeService } from './inbox-email-scope.service';
 import { InboxMailboxAccessService } from './mailboxes/inbox-mailbox-access.service';
+import { InboxMailboxController } from './mailboxes/inbox-mailbox.controller';
+import { InboxMailboxProvisioner } from './mailboxes/inbox-mailbox.provisioner';
+import { InboxMailboxService } from './mailboxes/inbox-mailbox.service';
 import { InboxProviderAccountController } from './provider-accounts/inbox-provider-account.controller';
 import { InboxProviderAccountService } from './provider-accounts/inbox-provider-account.service';
 import { EmailProviderRegistry } from './providers/email-provider.registry';
@@ -33,7 +37,8 @@ export const INBOX_EMAIL_ENTITIES = [
 	InboxMailboxMember,
 	InboxEmailThread,
 	InboxEmail,
-	InboxEmailAttachment
+	InboxEmailAttachment,
+	InboxOrganizationSetting
 ];
 
 /**
@@ -56,7 +61,7 @@ export const INBOX_EMAIL_ENTITIES = [
 		// Replies and forwards go out through the core transport seam (`EmailSendService.sendMessage`).
 		EmailSendModule
 	],
-	controllers: [InboxProviderAccountController, InboxInboundController, InboxEmailController],
+	controllers: [InboxProviderAccountController, InboxInboundController, InboxEmailController, InboxMailboxController],
 	providers: [
 		EmailProviderRegistry,
 		{ provide: INBOX_EMAIL_PROVIDER_REGISTRY, useExisting: EmailProviderRegistry },
@@ -72,14 +77,20 @@ export const INBOX_EMAIL_ENTITIES = [
 		{ provide: INBOX_EMAIL_PROCESSOR, useExisting: InboxEmailProcessor },
 		InboxInboundService,
 		InboxInboundRateLimitGuard,
-		InboxEmailService
+		InboxEmailService,
+		InboxMailboxService,
+		InboxMailboxProvisioner,
+		// One address namespace: the Docs plugin asks it before it takes a capture address.
+		{ provide: INBOUND_ADDRESS_NAMESPACE, useExisting: InboxMailboxService }
 	],
 	exports: [
 		EmailProviderRegistry,
 		INBOX_EMAIL_PROVIDER_REGISTRY,
 		InboxProviderAccountService,
 		InboxMailboxAccessService,
-		InboundReplayGuard
+		InboundReplayGuard,
+		InboxMailboxService,
+		INBOUND_ADDRESS_NAMESPACE
 	]
 })
 export class InboxEmailModule {}
