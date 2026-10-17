@@ -504,10 +504,14 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		 */
 		await this.mirrorToOrderLines(await this.findRefundOrFail(id));
 
-		if (refund.orderId) {
+		// A refund that names only the payment it gives back belongs to that payment's order, and the order's
+		// ledger has to hear of it all the same (Greptile on #10897).
+		const refundOrderId = refund.orderId ?? payment?.orderId;
+
+		if (refundOrderId) {
 			await this.orderLedger?.mirror(
 				{
-					orderId: refund.orderId,
+					orderId: refundOrderId,
 					type: 'REFUND',
 					amount: refund.amount,
 					currency: refund.currency,
