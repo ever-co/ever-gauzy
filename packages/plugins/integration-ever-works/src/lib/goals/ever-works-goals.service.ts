@@ -516,7 +516,7 @@ export class EverWorksGoalsService
 				continue;
 			}
 			const before = this.links.snapshot<KeyResultShared>(link);
-			const row = (await repository.findOne({ where: { id: link.gauzyId } as never })) as Record<
+			const row = (await repository.findOne({ where: { id: link.gauzyId } as never })) as unknown as Record<
 				string,
 				unknown
 			> | null;

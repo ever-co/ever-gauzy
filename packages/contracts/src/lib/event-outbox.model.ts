@@ -115,6 +115,11 @@ export interface IOutboxWriteInput {
 	tenantId?: ID;
 	/** Overrides the organization taken from the request context. */
 	organizationId?: ID;
+	/**
+	 * The fact belongs to no organization (a tenant-wide one): the request context's organization is not used.
+	 * Without it, an `organizationId` left out is taken from the request context.
+	 */
+	tenantWide?: boolean;
 }
 
 /**
