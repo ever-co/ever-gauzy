@@ -44,7 +44,7 @@ const EVER_ID_WORDMARK_PATH =
 
 /**
  * The content of the "Login with Ever ID" button of the Ever brand kit (`ever-co/platform` packages/brand): the Ever
- * star (the ever.works logo star, one turn every 9 s, still with a reduced-motion setting), the words, and the kit's
+ * star (the Ever Works logo star, one turn every 9 s, still with a reduced-motion setting), the words, and the kit's
  * "ever® ID" wordmark. The same button as in Ever Teams. The wordmark takes the text colour, so it follows the light
  * and dark themes; screen readers read "Login with Ever ID".
  */
