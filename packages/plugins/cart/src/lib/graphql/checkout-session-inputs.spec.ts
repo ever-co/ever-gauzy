@@ -82,7 +82,8 @@ jest.mock('@gauzy/core', () => {
 		// it and the idempotency service behind that, which reaches the entity graph. What the declarations
 		// under test read is the metadata it writes, so that is what the double writes — on the kernel's own
 		// key, taken from the kernel rather than restated as a string literal.
-		VERSIONED_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').VERSIONED_METADATA_KEY,
+		VERSIONED_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util')
+			.VERSIONED_METADATA_KEY,
 		Versioned: (options: any = {}) =>
 			require('@nestjs/common').SetMetadata(
 				jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').VERSIONED_METADATA_KEY,
@@ -143,7 +144,9 @@ describe('R2-G24 — checkout-session members the columns cannot hold', () => {
 	it('refuses updateCommerceCheckoutSession with an unknown status, and writes nothing', async () => {
 		const { session, resolver } = fixture();
 
-		await expect(resolver.updateCommerceCheckoutSession(ID, { status: 'PAID_IN_FULL_HONEST' })).rejects.toMatchObject({
+		await expect(
+			resolver.updateCommerceCheckoutSession(ID, { status: 'PAID_IN_FULL_HONEST' })
+		).rejects.toMatchObject({
 			status: 400,
 			response: { code: 'CHECKOUT_SESSION_STATUS_INVALID', details: { field: 'status' } }
 		});
@@ -170,7 +173,10 @@ describe('R2-G24 — checkout-session members the columns cannot hold', () => {
 	it('still writes members the columns hold', async () => {
 		const { session, resolver } = fixture();
 
-		await resolver.updateCommerceCheckoutSession(ID, { status: CommerceCheckoutSessionStatus.IN_PROGRESS, step: 'PAYMENT' });
+		await resolver.updateCommerceCheckoutSession(ID, {
+			status: CommerceCheckoutSessionStatus.IN_PROGRESS,
+			step: 'PAYMENT'
+		});
 		await resolver.startCheckout({ cartId: ID, step: 'S'.repeat(CHECKOUT_STEP_MAX_LENGTH) });
 		await resolver.completeStepCommerceCheckoutSession(ID, 'SHIPPING');
 
