@@ -798,21 +798,6 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
-	 * Places the order a cart became, and confirms it.
-	 *
-	 * Used by the checkout path: a cart that completed has nothing left to approve, so the order it
-	 * became is confirmed as soon as it is placed. It is placed **through `place`** rather than moved
-	 * straight to `CONFIRMED`, because the documented checkout is two steps — `create-order` inserts
-	 * the order as `DRAFT` (doc 10 §3.4 step 4) and `commit-order` places it as `PENDING` with its
-	 * `placedAt` (step 8) — and `DRAFT -> CONFIRMED` is not a move the transition table contains
-	 * (§5.2). Jumping over `PENDING` is what made every checkout fail, after the draft order, its
-	 * lines and its addresses had already been written.
-	 *
-	 * @param orderId The order.
-	 * @param placedWith What the placement came from, recorded on the timeline entry.
-	 * @returns The confirmed order.
-	 */
-	/**
 	 * Copies the cart's money ledgers onto the order before it is placed.
 	 *
 	 * A failure here leaves a draft that would be placed without the discount and the tax the buyer was
@@ -891,6 +876,21 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		);
 	}
 
+	/**
+	 * Places the order a cart became, and confirms it.
+	 *
+	 * Used by the checkout path: a cart that completed has nothing left to approve, so the order it
+	 * became is confirmed as soon as it is placed. It is placed **through `place`** rather than moved
+	 * straight to `CONFIRMED`, because the documented checkout is two steps — `create-order` inserts
+	 * the order as `DRAFT` (doc 10 §3.4 step 4) and `commit-order` places it as `PENDING` with its
+	 * `placedAt` (step 8) — and `DRAFT -> CONFIRMED` is not a move the transition table contains
+	 * (§5.2). Jumping over `PENDING` is what made every checkout fail, after the draft order, its
+	 * lines and its addresses had already been written.
+	 *
+	 * @param orderId The order.
+	 * @param placedWith What the placement came from, recorded on the timeline entry.
+	 * @returns The confirmed order.
+	 */
 	private async placeAndConfirm(orderId: ID, placedWith: { cartId?: ID; idempotencyKey?: string } = {}): Promise<Order> {
 		await this.place(orderId, placedWith);
 

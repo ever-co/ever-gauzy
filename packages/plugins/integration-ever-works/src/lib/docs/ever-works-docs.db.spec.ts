@@ -3,7 +3,8 @@
  * Docs sync (G-P3-4, plan 05) on a real database (better-sqlite3) against the mock Ever Works Knowledge
  * Base: the synced tree, EW → G documents and folders (content, review state, archive, wikilinks, the
  * conflict version and notice), G → EW pages and folders (create, patch, 412 merge, move, accept, archive,
- * private never), the sweep and the capture's loop guard.
+ * private never), the sweep and the capture's loop guard, and the lease fence on the handler's writes
+ * (plan 03 §C.4: a handler that outlived its lease writes nothing once another process holds it).
  */
 const mockCaller: { current: { user?: { id?: string; tenantId?: string; lastOrganizationId?: string } } | null } = { current: null };
 
@@ -59,7 +60,9 @@ import { DocumentKindEnum, DocumentReviewReasonEnum, DocumentReviewStatusEnum, D
 import { Employee, IntegrationSetting } from '@gauzy/core';
 import { Document, DocumentLink, DocumentVersion } from '@gauzy/plugin-docs';
 import { EverWorksClient } from '../client/ever-works-client';
+import { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksEntityLink, EverWorksLinkState, EverWorksLinkType, EverWorksOutboundChange, EverWorksSyncLog } from '../sync/entities/ever-works-sync.entities';
+import { EverWorksLeaseFenceSubscriber, EverWorksLeaseLostError, everWorksLease, withLeaseFence } from '../sync/ever-works-lease-fence';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
@@ -98,6 +101,8 @@ const int = (nullable = true) => ({ type: Number, nullable });
 const bool = { type: Boolean, nullable: true, default: false };
 
 const schemas = [
+	// The lease row only (the fence reads it); the rest of the connection is not needed here.
+	s('EverWorksConnection', EverWorksConnection, 'ever_works_connection', { leaseOwner: str(), leaseUntil: date }),
 	s('Employee', Employee, 'employee', { userId: str() }),
 	s('IntegrationSetting', IntegrationSetting, 'integration_setting', { integrationId: str(), settingsName: str(false), settingsValue: str() }),
 	s('Document', Document, 'document', {
@@ -181,7 +186,14 @@ describe('Ever Works docs sync on SQLite', () => {
 
 	beforeAll(async () => {
 		dir = mkdtempSync(join(tmpdir(), 'ever-works-docs-'));
-		dataSource = new DataSource({ type: 'better-sqlite3', database: join(dir, 'gauzy.sqlite'), entities: schemas, synchronize: true });
+		dataSource = new DataSource({
+			type: 'better-sqlite3',
+			database: join(dir, 'gauzy.sqlite'),
+			entities: schemas,
+			// Idle outside a fenced unit: only the lease fence tests below arm it.
+			subscribers: [EverWorksLeaseFenceSubscriber],
+			synchronize: true
+		});
 		await dataSource.initialize();
 	});
 
@@ -191,7 +203,17 @@ describe('Ever Works docs sync on SQLite', () => {
 	});
 
 	beforeEach(async () => {
-		for (const table of ['document', 'document_version', 'document_link', 'ever_works_entity_link', 'ever_works_outbound_change', 'ever_works_sync_log', 'integration_setting', 'employee']) {
+		for (const table of [
+			'document',
+			'document_version',
+			'document_link',
+			'ever_works_entity_link',
+			'ever_works_outbound_change',
+			'ever_works_sync_log',
+			'integration_setting',
+			'employee',
+			'ever_works_connection'
+		]) {
 			await dataSource.query(`DELETE FROM "${table}"`);
 		}
 		jest.clearAllMocks();
@@ -468,6 +490,56 @@ describe('Ever Works docs sync on SQLite', () => {
 			const outside = await gauzyPage(null as never, 'Elsewhere');
 			expect(await push(outside)).toEqual({ status: 'skipped', message: 'not in the synced folders' });
 			expect(kb.documents.size).toBe(0);
+		});
+	});
+
+	describe('lease fence (plan 03 §C.4)', () => {
+		/** The loop's claim: `owner` holds the connection's lease for five minutes. */
+		const holdLease = async (owner: string) => {
+			await dataSource.getRepository(EverWorksConnection).delete({ id: 'c1' } as never);
+			await dataSource.getRepository(EverWorksConnection).insert({ id: 'c1', leaseOwner: owner, leaseUntil: new Date(Date.now() + 5 * 60_000) } as never);
+		};
+		/** The applier's unit for one event: the handler fenced on `owner`'s lease. */
+		const applyAs = (owner: string, type: string, data: Row) => withLeaseFence(everWorksLease(dataSource, 'c1', owner), () => apply(type, data));
+
+		it('applies a document while this process holds the lease', async () => {
+			await holdLease('process-a');
+			const document = kb.addDocument(ewOrg.id, { title: 'Refund policy', body: 'Within 30 days.' });
+			expect(await applyAs('process-a', 'kb.document.created', document)).toEqual({ status: 'applied' });
+			const row = (await pageOf(document['id'])) as Row;
+			expect(row['name']).toBe('Refund policy');
+			expect(documentToMarkdown(row['contentJson'])).toBe('Within 30 days.');
+		});
+
+		it('a handler that outlived its lease writes nothing once another process holds it (the #10848 interleaving)', async () => {
+			await holdLease('process-a');
+			const document = kb.addDocument(ewOrg.id, { title: 'Refund policy', body: 'First' });
+			expect(await applyAs('process-a', 'kb.document.created', document)).toEqual({ status: 'applied' });
+			// A's lease runs out while it works on its next event; B claims it and applies the newer version.
+			await holdLease('process-b');
+			Object.assign(document, { title: 'Renamed by B', body: 'Second', version: 2, revision: 2 });
+			expect(await applyAs('process-b', 'kb.document.updated', document)).toEqual({ status: 'applied' });
+			const before = (await pageOf(document['id'])) as Row;
+			const versions = await dataSource.getRepository(DocumentVersion).count();
+			// A's late write — an event its version check lets through (version 3) — is refused, not written over B's.
+			Object.assign(document, { title: 'Stale edit from A', body: 'Third', version: 3, revision: 3 });
+			await expect(applyAs('process-a', 'kb.document.updated', document)).rejects.toBeInstanceOf(EverWorksLeaseLostError);
+			const after = (await pageOf(document['id'])) as Row;
+			expect(after['name']).toBe('Renamed by B');
+			expect(documentToMarkdown(after['contentJson'])).toBe('Second');
+			expect(after['updatedAt']).toEqual(before['updatedAt']);
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(versions);
+			expect((await links.byEw(M as never, EverWorksLinkType.DOC, document['id'] as string))?.ewVersion).toBe(2);
+			// The holder applies the same event as before the fence existed.
+			expect(await applyAs('process-b', 'kb.document.updated', document)).toEqual({ status: 'applied' });
+			expect(((await pageOf(document['id'])) as Row)['name']).toBe('Stale edit from A');
+		});
+
+		it('without a lease (an admin action, the initial wiring) the handler is not fenced', async () => {
+			await holdLease('process-b');
+			const document = kb.addDocument(ewOrg.id, { title: 'Unfenced' });
+			expect(await withLeaseFence(null, () => apply('kb.document.created', document))).toEqual({ status: 'applied' });
+			expect(((await pageOf(document['id'])) as Row)['name']).toBe('Unfenced');
 		});
 	});
 
