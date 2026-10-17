@@ -10,8 +10,10 @@ jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
 	const { SetMetadata, NotAcceptableException } = jest.requireActual('@nestjs/common');
 	return {
+		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		UseValidationPipe: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		RolePermissionModule: class RolePermissionModule {},
