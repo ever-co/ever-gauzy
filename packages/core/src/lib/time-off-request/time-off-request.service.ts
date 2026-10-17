@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
-import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, LessThanOrEqual, Like, MoreThanOrEqual, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
@@ -114,7 +114,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					const where: any = {
 						tenantId,
 						organizationId,
-						...(hasRange ? { start: { $gte: start, $lte: end } } : {})
+						// Every time off overlapping the window, including one starting before it
+						...(hasRange ? { start: { $lte: end }, end: { $gte: start } } : {})
 					};
 					if (employeeId) {
 						where.employees = { id: employeeId };
@@ -147,7 +148,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					}
 
 					if (hasRange) {
-						query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
+						// Every time off overlapping the window: one starting before it (a leave from the 28th of
+						// the previous month) was left out when only its start was checked
+						query.andWhere(p(`"${query.alias}"."start" <= :end AND "${query.alias}"."end" >= :begin`), {
 							begin: start,
 							end: end
 						});
@@ -250,7 +253,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							sd = moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss');
 							ed = moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss');
 						}
-						where.$or = [{ start: { $gte: sd, $lte: ed } }, { end: { $gte: sd, $lte: ed } }];
+						// Every time off overlapping the window: checking only whether its start or its end falls inside
+						// left out one spanning the whole window (a leave from January 25 to March 5, listed for February)
+						where.start = { $lte: ed };
+						where.end = { $gte: sd };
 
 						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
 						if (isNotEmpty(user) && isNotEmpty(user.name)) {
@@ -263,10 +269,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 								);
 							});
 							// Only whitespace typed: no keyword, nothing to filter on
-							if (userFilters.length > 0 && where.$or) {
-								where.$and = [{ $or: where.$or }, { $or: userFilters }];
-								delete where.$or;
-							} else if (userFilters.length > 0) {
+							// The date window no longer takes the `$or`: the name keywords have it to themselves
+							if (userFilters.length > 0) {
 								where.$or = userFilters;
 							}
 						}
@@ -342,14 +346,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							}
 							qb.andWhere(
 								new Brackets((web: WhereExpressionBuilder) => {
-									web.where([
-										{
-											start: Between(startDate, endDate)
-										},
-										{
-											end: Between(startDate, endDate)
-										}
-									]);
+									// Every time off overlapping the window, including one spanning all of it
+									web.where({
+										start: LessThanOrEqual(endDate),
+										end: MoreThanOrEqual(startDate)
+									});
 								})
 							);
 							if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {
