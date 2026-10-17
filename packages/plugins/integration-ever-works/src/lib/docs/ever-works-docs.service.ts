@@ -633,7 +633,7 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		const root = await this.store.existingRoot(context);
 		if (!root) return { status: 'skipped', message: 'not in the synced folders' };
 		const { folders, underRoot } = await this.store.ancestry(context, folder, root);
-		if (folders.some((above) => above.visibility === DocumentVisibilityEnum.PRIVATE)) {
+		if (folders.some((above) => above.visibility === DocumentVisibilityEnum.PRIVATE) || (await this.isPrivateFolder(context, root))) {
 			if (link) await this.links.unlink(link, 'in a private folder in Gauzy; no longer shared with Ever Works');
 			return { status: 'skipped', message: 'folders in a private folder never sync' };
 		}
@@ -770,6 +770,8 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (!underRoot || !folders.length) return null;
 		const hidden = folders.find((folder) => folder.visibility === DocumentVisibilityEnum.PRIVATE);
 		if (hidden) return { privateFolder: hidden.id as ID };
+		// The synced root itself (ancestry stops below it) may be PRIVATE too.
+		if (await this.isPrivateFolder(context, rootId)) return { privateFolder: rootId };
 		const chain = [...folders].reverse(); // from the root's child down to the page's parent
 		const top = chain[0] as Document;
 		if (top.externalSource !== EVER_WORKS_DOCS_SOURCE) return null;
@@ -791,6 +793,11 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			return { area: 'work', workId: marker.slice('tree:work:'.length), segments: chain.slice(2).map((folder) => folder.name) };
 		}
 		return null;
+	}
+
+	/** Whether a Gauzy folder is PRIVATE (the synced root, which `ancestry` does not return). */
+	private async isPrivateFolder(context: EverWorksMappingContext, folderId: ID): Promise<boolean> {
+		return (await this.store.load(context, folderId))?.visibility === DocumentVisibilityEnum.PRIVATE;
 	}
 
 	/**

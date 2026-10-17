@@ -526,6 +526,16 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect([...kb.folders.values()].map((row) => row['name'])).toEqual(['Playbooks']);
 			expect([...kb.documents.values()].map((row) => row['body'])).toEqual(['Text']);
 		});
+
+		it('never pushes under a synced root that was made PRIVATE (review F26, #11018 review)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const root = await store.existingRoot(context as never);
+			await documents().update({ id: root } as never, { visibility: DocumentVisibilityEnum.PRIVATE } as never);
+			const folder = await gauzyFolder(organization, 'Guides');
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'skipped', message: 'folders in a private folder never sync' });
+			expect(await push(await gauzyPage(organization, 'Text'))).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			expect(kb.folders.size + kb.documents.size).toBe(0);
+		});
 	});
 
 	describe('lease fence (plan 03 §C.4)', () => {
