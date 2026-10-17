@@ -50,6 +50,16 @@ const REFUND_SUBJECTS = Object.freeze({
 
 type RefundSubjectKind = keyof typeof REFUND_SUBJECTS;
 
+/** The drivers a refund's ceiling is serialised on with a row lock (`SELECT … FOR UPDATE`); see `lockOrderPayments`. */
+const ROW_LOCKING_DRIVERS: readonly string[] = Object.freeze([
+	'postgres',
+	'aurora-postgres',
+	'cockroachdb',
+	'mysql',
+	'mariadb',
+	'aurora-mysql'
+]);
+
 /** What a refund says it is for — the members whose ownership is checked before they are written. */
 interface IRefundAttribution {
 	orderId?: ID | null;
@@ -213,6 +223,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		const { lines, ...fields } = input;
 
 		const refund = await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (!input.paymentId && input.orderId) {
+				// **A refund that names no payment is measured against its order under the order's lock** (review
+				// R3-08r1). The return or claim flow measured it already, but two of them for one order could both read
+				// the order's headroom before either wrote, and both pass. The order's payment rows are locked first,
+				// the headroom is read again — a refund another call committed meanwhile is counted — and the row is
+				// written before the lock is released, so the second of two such refunds is measured against the first.
+				await this.lockOrderPayments(manager, input.orderId);
+				await this.assertOrderCeiling(input.orderId, currency, amount);
+			}
+
 			const row = manager.create(Refund, {
 				...fields,
 				amount: amount.amount,
@@ -416,6 +436,7 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 
 		if (refund.paymentId) {
 			payment = await this.paymentCaptureService.findPaymentOrFail(refund.paymentId);
+			// Measured here for an early answer, and again under the order's lock inside the write below.
 			await this.assertRefundable(payment, refund.amount, refund.currency, { excludeRefundId: refund.id });
 
 			captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), refund.currency);
@@ -430,6 +451,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		// against one collection that overlapped both read the same total and one increment was lost.
 		await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
 			if (payment && captured && refunded) {
+				if (payment.orderId) {
+					// The payment's own figure is guarded by the compare-and-swap below; the order's — which a refund
+					// naming no payment spends from too — is not. Under the order's lock it is measured again, so an
+					// approval and a return refund of the same order cannot both pass on what they read before (R3-08r1).
+					await this.lockOrderPayments(manager, payment.orderId);
+					await this.assertRefundable(payment, refund.amount, refund.currency, {
+						excludeRefundId: refund.id
+					});
+				}
+
 				const written = await manager.update(
 					Payment,
 					{
@@ -820,6 +851,79 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 					throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
 				}
 			}
+		}
+	}
+
+	/**
+	 * Locks the payment rows of an order for the rest of the caller's transaction.
+	 *
+	 * The order's payments are the money its refunds are measured against, and every write that spends that
+	 * money — a refund that names no payment, an approval that moves a payment — takes this lock before it reads
+	 * the ceiling, so two of them for one order run one after the other instead of both passing on the same read.
+	 * It is a `SELECT … FOR UPDATE` on PostgreSQL and MySQL (rows ordered by id, so two lockers take them in the
+	 * same order). SQLite has no row lock and admits one writer at a time: a transaction that read before another
+	 * committed cannot commit a write of its own, so there the transaction is the serialisation and nothing is
+	 * stated. A read is not blocked by the lock on any of the three, so the ceiling reads below see what the last
+	 * holder committed.
+	 *
+	 * @param manager The manager of the transaction the refund is being written in.
+	 * @param orderId The order whose payments are locked.
+	 */
+	private async lockOrderPayments(manager: EntityManager, orderId: ID): Promise<void> {
+		const type = String((manager?.dataSource?.options as { type?: string } | undefined)?.type ?? '');
+
+		if (!ROW_LOCKING_DRIVERS.includes(type)) {
+			return;
+		}
+
+		await manager
+			.createQueryBuilder(Payment, 'payment')
+			.select('payment.id', 'id')
+			.where('payment.orderId = :orderId', { orderId })
+			.andWhere('payment.tenantId = :tenantId', { tenantId: this.scope.tenantId })
+			.andWhere('payment.organizationId = :organizationId', { organizationId: this.scope.organizationId })
+			.orderBy('payment.id', 'ASC')
+			.setLock('pessimistic_write')
+			.getRawMany();
+	}
+
+	/**
+	 * Refuses a refund that names no payment past what the order's payments can still give back, net of the
+	 * order's other refunds that name no payment. An order with no payment in this currency has no recorded money
+	 * to measure against, which is the documented escape the return and claim flows keep.
+	 *
+	 * @param orderId The order.
+	 * @param currency The refund's currency.
+	 * @param amount The refund's amount.
+	 * @throws BadRequestException with `REFUND_AMOUNT_EXCEEDS_CAPTURED` when the order cannot carry it.
+	 */
+	private async assertOrderCeiling(orderId: ID, currency: string, amount: Money): Promise<void> {
+		const payments: Payment[] =
+			(await this.paymentRepository.find({ where: { orderId, ...this.scope } as never })) ?? [];
+
+		if (
+			!payments.some((payment) => String(payment.currency ?? currency).toUpperCase() === currency.toUpperCase())
+		) {
+			return;
+		}
+
+		const refundable = Money.of(await this.sumOrderHeadroom(orderId, currency), currency).subtract(
+			Money.of(await this.sumUnattributedForOrder(orderId, currency), currency)
+		);
+
+		if (amount.greaterThan(refundable)) {
+			throw new BadRequestException({
+				message:
+					'REFUND_AMOUNT_EXCEEDS_CAPTURED: the order captured less than this refund would give back, ' +
+					'so there is no money on it to pay the amount from.',
+				code: 'REFUND_AMOUNT_EXCEEDS_CAPTURED',
+				details: {
+					orderId,
+					requested: amount.amount,
+					refundable: refundable.isNegative() ? '0' : refundable.amount,
+					currency
+				}
+			});
 		}
 	}
 
