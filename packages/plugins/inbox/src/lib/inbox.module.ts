@@ -8,6 +8,7 @@ import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
 import { InboxController } from './inbox.controller';
 import { InboxService } from './inbox.service';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
+import { InboxRealtime } from './realtime/inbox-realtime';
 
 /** Every table the plugin owns (its migrations create them). */
 export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
@@ -31,6 +32,8 @@ export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
 	providers: [
 		InboxSourceHandlerRegistry,
 		InboxService,
+		// Real time (G-P3-6): `inbox_item.created` appended to the outbox and streamed to the recipients.
+		InboxRealtime,
 		{ provide: INBOX_SOURCE_HANDLER_REGISTRY, useExisting: InboxSourceHandlerRegistry },
 		{ provide: INBOX_ITEM_WRITER, useExisting: InboxService }
 	],
