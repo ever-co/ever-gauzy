@@ -978,6 +978,12 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/inbox/mailbox",
+      "file": "packages/plugins/inbox-ui/src/lib/inbox-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/integrations",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.routes.ts:18",
       "source": "router"
@@ -1710,6 +1716,18 @@
         "PermissionsGuard"
       ],
       "source": "router"
+    },
+    {
+      "path": "/pages/settings/inbox-mailboxes",
+      "file": "packages/plugins/inbox-ui/src/lib/inbox-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/settings/inbox-providers",
+      "file": "packages/plugins/inbox-ui/src/lib/inbox-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
       "path": "/pages/settings/monitoring",

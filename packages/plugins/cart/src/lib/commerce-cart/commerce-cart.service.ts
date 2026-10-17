@@ -55,11 +55,14 @@ import {
 } from '../totals/totals-calculator';
 import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
 import {
+	CART_PRICE_RESOLUTION,
 	CART_PROMOTION_EVALUATION,
 	CART_STOCK_AVAILABILITY,
 	CART_TAX_CALCULATION,
+	ICartPricePort,
 	ICartPromotionApplication,
 	ICartPromotionPort,
+	ICartResolvedPrice,
 	ICartStockPort,
 	ICartTaxPort
 } from '../cart.types';
@@ -118,6 +121,26 @@ const CHECKOUT_CLAIMABLE_STATUSES = [CommerceCartStatus.ACTIVE, CommerceCartStat
 const CHECKOUT_CLAIM_TTL_MS = 10 * 60 * 1000;
 
 /**
+ * The line metadata key that records where a line's price came from (R3-07b).
+ *
+ * `ENGINE` — the price capability resolved it, and checkout resolves it again. `STATED` — an in-process caller
+ * that resolved the price itself stated it (the subscription cycle's cart); checkout keeps it. A line without
+ * the key predates the rule and is re-priced at checkout. A caller cannot set the key: a route's metadata is
+ * overwritten with the line's own source.
+ */
+const LINE_PRICE_SOURCE = 'priceSource';
+
+/** How a caller adds or changes a line. */
+export interface ICartLineWriteOptions {
+	/**
+	 * The caller resolved the price itself and states it (R3-07b). Only an in-process caller does — the
+	 * subscription cycle builds its cart from the recurring price it resolved — and no route passes it:
+	 * without it the price capability prices the line and any stated price is ignored.
+	 */
+	readonly statedPrice?: boolean;
+}
+
+/**
  * What the `STOCK` step refuses with: the ladder's error shape, plus what it measured, so an operator
  * reading the refusal can see the quantity that was asked for and the one that could have been served.
  */
@@ -156,7 +179,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		private readonly taxCalculation?: ICartTaxPort,
 		@Optional()
 		@Inject(CART_PROMOTION_EVALUATION)
-		private readonly promotionEvaluation?: ICartPromotionPort
+		private readonly promotionEvaluation?: ICartPromotionPort,
+		@Optional()
+		@Inject(CART_PRICE_RESOLUTION)
+		private readonly priceResolution?: ICartPricePort
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
 	}
@@ -266,6 +292,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		delete (entity as Record<string, unknown>)['token'];
 		entity.tokenHash = digestCartToken(token);
 
+		// R2-G19: `createCart` states no organization and the tenant-aware base stamps the tenant only, so a
+		// cart created over GraphQL had `organizationId = NULL`. A stated organization is kept (REST states it,
+		// validated against the caller).
+		entity.organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const cart = await super.create(entity);
 		const created = await this.recalculate(cart.id, 'CART_CREATED');
 
@@ -351,21 +382,28 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * Adds a line to a cart, merging into an existing line when every attribute that distinguishes two
 	 * lines matches.
 	 *
-	 * The price is **not** resolved here: resolving a price is the pricing package's job, and a cart
-	 * that invented one would be a second price resolver. The caller states the resolved unit price and
-	 * the line snapshots it.
+	 * **The price is the pricing package's, never the caller's (R3-07b).** The price capability
+	 * (`CART_PRICE_RESOLUTION`) prices the line for the cart's currency, channel, region and buyer and for
+	 * the quantity the line will hold — a line that merges into an existing one is priced, with it, for the
+	 * sum — and a `unitPrice`, `originalUnitPrice` or `isTaxInclusive` in the request is ignored. The cart
+	 * does not invent a price: with no capability bound the addition is refused, and a variant the
+	 * capability cannot price is refused. Only an in-process caller that resolved the price itself states it
+	 * (`options.statedPrice`).
 	 *
 	 * @param cartId The cart.
 	 * @param line The line to add.
 	 * @param expectation The version the caller read the cart at.
+	 * @param options Whether the in-process caller states a price it resolved itself.
 	 * @returns The cart after the addition, re-priced.
 	 */
 	public async addLine(
 		cartId: ID,
 		line: DeepPartial<CommerceCartLine>,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		options: ICartLineWriteOptions = {}
 	): Promise<CommerceCart> {
 		const cart = await this.assertMutable(cartId);
+		const stated = options.statedPrice === true;
 
 		if (!line.variantId) {
 			throw new BadRequestException('CART_LINE_VARIANT_REQUIRED: a line needs a variant.');
@@ -373,7 +411,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		if (!line.quantity || line.quantity <= 0) {
 			throw new BadRequestException('CART_LINE_QUANTITY_INVALID: a line quantity must be positive.');
 		}
-		if (line.unitPrice === undefined || line.unitPrice === null) {
+		if (stated && (line.unitPrice === undefined || line.unitPrice === null)) {
 			throw new BadRequestException(
 				'CART_LINE_PRICE_REQUIRED: the resolved unit price must be supplied by the price resolver.'
 			);
@@ -384,14 +422,20 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await this.lineService.assertReferences(line);
 
 		const existing = (await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>;
+		// A line the capability prices merges with the line of the same variant, location and plan whatever its
+		// current price, and both are priced together for the sum: a quantity band applies to what the cart holds.
 		const match = existing.items.find(
 			(candidate: CommerceCartLine) =>
 				candidate.variantId === line.variantId &&
 				(candidate.warehouseId ?? null) === (line.warehouseId ?? null) &&
-				Number(candidate.unitPrice) === Number(line.unitPrice) &&
-				candidate.isTaxInclusive === (line.isTaxInclusive ?? false) &&
+				(stated
+					? Number(candidate.unitPrice) === Number(line.unitPrice) &&
+					  candidate.isTaxInclusive === (line.isTaxInclusive ?? false)
+					: this.priceSourceOf(candidate) !== 'STATED') &&
 				(candidate.subscriptionPlanId ?? null) === (line.subscriptionPlanId ?? null)
 		);
+		const total = Number(line.quantity) + Number(match?.quantity ?? 0);
+		const priced = stated ? null : await this.resolveLinePrice(cart, line.variantId as ID, total);
 
 		// What the cart would hold after the addition, which is what has to be available: a line that
 		// merges into an existing one asks for the sum of the two. The refusal happens here, where the
@@ -400,7 +444,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await this.assertStockAvailable({
 			variantId: line.variantId,
 			warehouseId: line.warehouseId,
-			quantity: Number(line.quantity) + Number(match?.quantity ?? 0)
+			quantity: total
 		});
 
 		// The caller's version decides before a row is written, not after: an addition the cart is
@@ -410,15 +454,26 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		if (match) {
 			await this.lineService.update(match.id, {
-				quantity: Number(match.quantity) + Number(line.quantity)
-			});
+				quantity: total,
+				...(priced ? this.pricedFields(priced, cart, match.metadata) : {})
+			} as any);
 		} else {
 			await this.lineService.create({
 				...line,
 				cartId: cart.id,
-				unitPrice: this.toColumnAmount(line.unitPrice, cart),
-				originalUnitPrice: this.toColumnAmount(line.originalUnitPrice ?? line.unitPrice, cart),
-				isTaxInclusive: line.isTaxInclusive ?? false,
+				// A line belongs to its cart's organization (R2-G19).
+				organizationId: line.organizationId ?? cart.organizationId,
+				...(priced
+					? this.pricedFields(priced, cart, line.metadata as Record<string, unknown>)
+					: {
+							unitPrice: this.toColumnAmount(line.unitPrice, cart),
+							originalUnitPrice: this.toColumnAmount(line.originalUnitPrice ?? line.unitPrice, cart),
+							isTaxInclusive: line.isTaxInclusive ?? false,
+							metadata: {
+								...((line.metadata as Record<string, unknown>) ?? {}),
+								[LINE_PRICE_SOURCE]: 'STATED'
+							}
+					  }),
 				isDiscountable: line.isDiscountable ?? true,
 				requiresShipping: line.requiresShipping ?? true,
 				position: line.position ?? existing.items.length
@@ -429,28 +484,60 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Changes a line's quantity, note or custom price.
+	 * Changes a line's quantity or note.
+	 *
+	 * **A line's price is not a field a caller changes (R3-07b).** `unitPrice`, `originalUnitPrice` and
+	 * `isTaxInclusive` in the request are ignored, and a line the price capability priced is priced again for
+	 * its new quantity — a quantity band follows the quantity. The line's price source is kept whatever the
+	 * request's `metadata` says. Only an in-process caller that resolved the price itself states one
+	 * (`options.statedPrice`).
 	 *
 	 * @param cartId The cart.
 	 * @param lineId The line.
 	 * @param changes The fields to change.
 	 * @param expectation The version the caller read the cart at.
+	 * @param options Whether the in-process caller states a price it resolved itself.
 	 * @returns The cart after the change, re-priced.
 	 */
 	public async updateLine(
 		cartId: ID,
 		lineId: ID,
 		changes: DeepPartial<CommerceCartLine>,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		options: ICartLineWriteOptions = {}
 	): Promise<CommerceCart> {
 		const cart = await this.assertMutable(cartId);
 		const line = await this.assertLineBelongsToCart(cartId, lineId);
+		const stated = options.statedPrice === true;
 
 		if (changes.quantity !== undefined && Number(changes.quantity) <= 0) {
 			throw new BadRequestException('CART_LINE_QUANTITY_INVALID: a line quantity must be positive.');
 		}
 
-		const editable = this.editableLineFields(changes, cart);
+		const editable = this.editableLineFields(changes, cart) as Record<string, unknown>;
+
+		if (!stated) {
+			delete editable['unitPrice'];
+			delete editable['originalUnitPrice'];
+			delete editable['isTaxInclusive'];
+
+			// The source of the line's price is the line's, not the request's.
+			if (editable['metadata'] !== undefined) {
+				editable['metadata'] = {
+					...((editable['metadata'] as Record<string, unknown>) ?? {}),
+					[LINE_PRICE_SOURCE]: line.metadata?.[LINE_PRICE_SOURCE] ?? null
+				};
+			}
+
+			if (changes.quantity !== undefined && this.priceSourceOf(line) !== 'STATED') {
+				const priced = await this.resolveLinePrice(cart, line.variantId, Number(changes.quantity));
+
+				Object.assign(
+					editable,
+					this.pricedFields(priced, cart, (editable['metadata'] as Record<string, unknown>) ?? line.metadata)
+				);
+			}
+		}
 
 		// A change pointing the line at another tenant's row is refused before any stock is read (P0 #6c).
 		await this.lineService.assertReferences(editable);
@@ -465,7 +552,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		// The caller's version is spent before the child row is touched — see `spendVersion`.
 		await this.spendVersion(cartId, expectation);
-		await this.lineService.update(lineId, editable);
+		await this.lineService.update(lineId, editable as DeepPartial<CommerceCartLine>);
 
 		return this.recalculate(cartId, 'LINE_UPDATED', ANY_VERSION);
 	}
@@ -545,6 +632,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await this.shippingMethodService.create({
 			...method,
 			cartId,
+			organizationId: method.organizationId ?? cart.organizationId,
 			amount: this.toColumnAmount(method.amount, cart),
 			isTaxInclusive: method.isTaxInclusive ?? false,
 			isManual: method.isManual ?? false
@@ -627,6 +715,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			await this.promotionService.create({
 				...promotion,
 				cartId,
+				organizationId: promotion.organizationId ?? cart.organizationId,
 				// The identity and the amount are the engine's: the row records what was granted, under
 				// the promotion that granted it, whatever the request said about either.
 				promotionId: granted.promotionId,
@@ -900,6 +989,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		let result: { orderId: string; orderNumber: string };
 
 		try {
+			// R3-07b: every line the price capability priced is priced again now, so the order is built from
+			// today's price and never from one a line was given before the rule (or before the price changed).
+			await this.repriceLines(existing);
+
 			// The caller's version was spent by the claim; the recomputation rides on the version the
 			// claim produced, and the claim keeps every other writer off the cart meanwhile.
 			cart = await this.recalculate(cartId, 'CHECKOUT_VALIDATION', ANY_VERSION);
@@ -1074,6 +1167,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		if (method) {
 			await this.shippingMethodService.assertReferences(method);
 		}
+
+		// R3-07b: every copied line is priced for the surviving cart before the first one is written, so a line
+		// the capability cannot price there refuses the merge with the target untouched — rather than after the
+		// lines before it were copied, which a retry would copy again.
+		await this.assertLinesPriceable(target, lines);
 
 		for (const line of lines) {
 			await this.addLine(target.id, line, spend());
@@ -2090,6 +2188,185 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		}
 
 		return line;
+	}
+
+	/**
+	 * Asks the price capability what one unit of a variant costs on this cart, for a quantity (R3-07b).
+	 *
+	 * @param cart The cart: its currency, channel, region and buyer.
+	 * @param variantId The variant.
+	 * @param quantity The quantity the line will hold, which selects the quantity band.
+	 * @returns The resolved price.
+	 * @throws ServiceUnavailableException `CART_PRICE_ENGINE_MISSING` when no capability is bound.
+	 * @throws BadRequestException `CART_LINE_PRICE_UNRESOLVED` when the capability has no price for it.
+	 */
+	private async resolveLinePrice(cart: CommerceCart, variantId: ID, quantity: number): Promise<ICartResolvedPrice> {
+		if (!this.priceResolution) {
+			throw new ServiceUnavailableException({
+				message:
+					'CART_PRICE_ENGINE_MISSING: no price capability is bound for this installation, and a cart line is never priced at what its caller stated.',
+				code: 'CART_PRICE_ENGINE_MISSING'
+			});
+		}
+
+		const prices = await this.priceResolution.resolvePrices({
+			variantIds: [variantId],
+			currency: cart.currency as CurrencyCode,
+			quantity,
+			channelId: cart.channelId,
+			regionId: cart.regionId,
+			customerId: cart.customerId
+		});
+		const price = (prices ?? []).find((candidate) => String(candidate.variantId) === String(variantId));
+
+		// A price in another currency is not this cart's price: the capability's legacy fallback answers with the
+		// variant's retail price in whatever currency it was entered in, and recording it would charge 100 JPY for
+		// a 100 USD price. Nothing is converted here; a conversion is the pricing package's decision.
+		const sameCurrency =
+			!price?.currency || `${price.currency}`.toUpperCase() === `${cart.currency ?? ''}`.toUpperCase();
+
+		if (!price || price.amount === undefined || price.amount === null || !sameCurrency) {
+			throw new BadRequestException({
+				message: `CART_LINE_PRICE_UNRESOLVED: variant ${variantId} has no price in ${cart.currency} for this cart.`,
+				code: 'CART_LINE_PRICE_UNRESOLVED',
+				details: {
+					variantId,
+					currency: cart.currency,
+					quantity,
+					...(price && !sameCurrency ? { priceCurrency: price.currency } : {})
+				}
+			});
+		}
+
+		return price;
+	}
+
+	/**
+	 * The columns a resolved price writes onto a line, and the record of where it came from.
+	 *
+	 * @param price The resolved price.
+	 * @param cart The cart, which carries the currency's scale.
+	 * @param metadata The line's metadata the record is merged into.
+	 * @returns The fields to write.
+	 */
+	private pricedFields(
+		price: ICartResolvedPrice,
+		cart: Pick<CommerceCart, 'currency' | 'currencyDecimals'>,
+		metadata?: Record<string, unknown> | null
+	): Record<string, unknown> {
+		// The previous resolution's trace goes with the previous price: a price from no list must not keep the
+		// list the last one came from.
+		const kept: Record<string, unknown> = { ...(metadata ?? {}) };
+
+		delete kept['priceId'];
+		delete kept['priceListId'];
+
+		return {
+			unitPrice: this.toColumnAmount(price.amount, cart),
+			originalUnitPrice: this.toColumnAmount(price.originalAmount ?? price.amount, cart),
+			isTaxInclusive: price.taxInclusive === true,
+			metadata: {
+				...kept,
+				[LINE_PRICE_SOURCE]: 'ENGINE',
+				...(price.priceId ? { priceId: price.priceId } : {}),
+				...(price.priceListId ? { priceListId: price.priceListId } : {})
+			}
+		};
+	}
+
+	/**
+	 * Where a line's price came from: `ENGINE`, `STATED`, or nothing for a line that predates the rule.
+	 *
+	 * @param line The line.
+	 * @returns The source.
+	 */
+	private priceSourceOf(line: Pick<CommerceCartLine, 'metadata'>): string | undefined {
+		const source = line?.metadata?.[LINE_PRICE_SOURCE];
+
+		return typeof source === 'string' ? source : undefined;
+	}
+
+	/**
+	 * Refuses a set of lines the price capability cannot price on a cart, before any of them is written.
+	 *
+	 * Each line is resolved for the quantity it will hold on that cart — with the line it merges into, when
+	 * there is one — which is the resolution `addLine` makes for it next.
+	 *
+	 * @param cart The cart the lines are about to be added to, with its lines.
+	 * @param lines The lines.
+	 */
+	private async assertLinesPriceable(cart: CommerceCart, lines: DeepPartial<CommerceCartLine>[]): Promise<void> {
+		for (const line of lines) {
+			if (!line.variantId) {
+				throw new BadRequestException('CART_LINE_VARIANT_REQUIRED: a line needs a variant.');
+			}
+
+			const into = (cart.lines ?? []).find(
+				(candidate) =>
+					candidate.variantId === line.variantId &&
+					(candidate.warehouseId ?? null) === (line.warehouseId ?? null) &&
+					(candidate.subscriptionPlanId ?? null) === (line.subscriptionPlanId ?? null) &&
+					this.priceSourceOf(candidate) !== 'STATED'
+			);
+
+			const quantity = Number(line.quantity) + Number(into?.quantity ?? 0);
+
+			await this.resolveLinePrice(cart, line.variantId as ID, quantity);
+		}
+	}
+
+	/**
+	 * Prices **every** line again at checkout (R3-07b).
+	 *
+	 * Nothing a line carries is trusted at the moment it becomes an order: not its stored price, and not its
+	 * `metadata.priceSource`, which a direct write to the line resource can set. The cart a buyer completes is
+	 * therefore priced entirely by the capability, for each line's quantity — a line the capability priced, a
+	 * line that predates the rule and a line marked stated alike. (The one cart built from stated prices, the
+	 * subscription cycle's, never goes through checkout: it becomes its order directly.) A line whose price
+	 * moved is rewritten; a line with no variant, or a variant the capability cannot price any more, refuses
+	 * the checkout.
+	 *
+	 * @param cart The cart being checked out.
+	 */
+	private async repriceLines(cart: CommerceCart): Promise<void> {
+		const lines = (
+			(await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>
+		).items;
+
+		// Every price is resolved before any line is written: a line that cannot be priced refuses the checkout
+		// with the cart exactly as it was, rather than with some lines re-priced under totals that were not.
+		const repriced: Array<{ line: CommerceCartLine; fields: Record<string, unknown> }> = [];
+
+		for (const line of lines) {
+			if (!line.variantId) {
+				throw new BadRequestException({
+					message: `CART_LINE_PRICE_UNRESOLVED: line ${line.id} names no variant, so nothing can price it.`,
+					code: 'CART_LINE_PRICE_UNRESOLVED',
+					details: { lineId: line.id }
+				});
+			}
+
+			const priced = await this.resolveLinePrice(cart, line.variantId, Number(line.quantity));
+
+			repriced.push({ line, fields: this.pricedFields(priced, cart, line.metadata) });
+		}
+
+		for (const { line, fields } of repriced) {
+			const trace = fields['metadata'] as Record<string, unknown>;
+
+			// The resolution's trace counts as part of the price: an order copies it, and a price from another
+			// list at the same amount is still another price.
+			if (
+				Number(line.unitPrice) !== fields['unitPrice'] ||
+				Number(line.originalUnitPrice) !== fields['originalUnitPrice'] ||
+				Boolean(line.isTaxInclusive) !== fields['isTaxInclusive'] ||
+				this.priceSourceOf(line) !== 'ENGINE' ||
+				(line.metadata?.['priceId'] ?? null) !== (trace['priceId'] ?? null) ||
+				(line.metadata?.['priceListId'] ?? null) !== (trace['priceListId'] ?? null)
+			) {
+				await this.lineService.update(line.id, fields as any);
+			}
+		}
 	}
 
 	/**

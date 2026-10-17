@@ -1,4 +1,4 @@
-import { BadRequestException, HttpStatus, Optional, UseGuards } from '@nestjs/common';
+import { Optional, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -16,8 +16,7 @@ import {
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PaymentPermission } from '../../payment.permissions';
-import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED } from '../../payment.card-data.pipe';
-import { findCardDataField } from '../../payment.validators';
+import { assertNoCardData } from '../../payment.card-data.pipe';
 import { PaymentMethodTokenLifecycleService } from '../../payment-method-token/payment-method-token-lifecycle.service';
 import { rejection, toConnection, toOrder } from '../types/connection';
 import {
@@ -145,7 +144,7 @@ export class PaymentMethodTokenResolver {
 	async createPaymentMethodToken(
 		@Args('input') input: ICreatePaymentMethodTokenGraphInput
 	): Promise<ICreatePaymentMethodTokenPayload> {
-		this.assertNoCardData(input);
+		assertNoCardData(input);
 
 		try {
 			return { paymentMethodToken: await this.paymentMethodTokenLifecycle.register(input as never), userErrors: [] };
@@ -186,7 +185,7 @@ export class PaymentMethodTokenResolver {
 	async updatePaymentMethodToken(
 		@Args('input') input: IUpdatePaymentMethodTokenGraphInput
 	): Promise<IUpdatePaymentMethodTokenPayload> {
-		this.assertNoCardData(input);
+		assertNoCardData(input);
 
 		// The identifier is separated from the facts before the call, because a path carries it on REST and
 		// a GraphQL input has to state it: what the service receives is one shape from both surfaces rather
@@ -311,29 +310,6 @@ export class PaymentMethodTokenResolver {
 		return this.visibility.guard(PermissionsEnum.PAYMENT_METHOD_TOKENS_CHARGE, () => row?.token, {
 			resource: 'PaymentMethodToken',
 			field: 'token'
-		});
-	}
-
-	/**
-	 * Refuses a mutation input that carries card data, naming the member it carried it in.
-	 *
-	 * @param input The mutation's input.
-	 * @throws BadRequestException `400 PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED` with `details.field`.
-	 */
-	private assertNoCardData(input: unknown): void {
-		const member = findCardDataField(input);
-
-		if (!member) {
-			return;
-		}
-
-		throw new BadRequestException({
-			statusCode: HttpStatus.BAD_REQUEST,
-			code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
-			message:
-				`${PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED}: card data is not accepted. The platform stores a ` +
-				`provider-issued token only; the field '${member}' must be collected by the provider.`,
-			details: { field: member }
 		});
 	}
 }

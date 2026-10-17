@@ -51,21 +51,40 @@ export class RejectCardDataPipe implements PipeTransform {
 			return value;
 		}
 
-		const member = findCardDataField(value);
+		assertNoCardData(value);
 
-		if (!member) {
-			return value;
-		}
-
-		throw new BadRequestException({
-			statusCode: HttpStatus.BAD_REQUEST,
-			code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
-			message:
-				`${PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED}: card data is not accepted. The platform stores a ` +
-				`provider-issued token only; the field '${member}' must be collected by the provider.`,
-			details: { field: member }
-		});
+		return value;
 	}
+}
+
+/**
+ * Refuses a write that carries card data, naming the member it carried it in.
+ *
+ * The one statement of the refusal both surfaces answer with: {@link RejectCardDataPipe} runs it on a
+ * REST body and the GraphQL resolvers run it on a mutation input, so the code, the message and
+ * `details.field` cannot drift between the two. A GraphQL input declares no card member, so what this
+ * catches there is card data nested inside a member that is declared and free-form (`metadata`) — the
+ * same walk, by member name and never by value, the route's pipe makes.
+ *
+ * @param value The body or the mutation input to inspect.
+ * @throws BadRequestException `400 PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED`, with `details.field`
+ * naming the member and the message stating that the field has to be collected by the provider.
+ */
+export function assertNoCardData(value: unknown): void {
+	const member = findCardDataField(value);
+
+	if (!member) {
+		return;
+	}
+
+	throw new BadRequestException({
+		statusCode: HttpStatus.BAD_REQUEST,
+		code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
+		message:
+			`${PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED}: card data is not accepted. The platform stores a ` +
+			`provider-issued token only; the field '${member}' must be collected by the provider.`,
+		details: { field: member }
+	});
 }
 
 /**

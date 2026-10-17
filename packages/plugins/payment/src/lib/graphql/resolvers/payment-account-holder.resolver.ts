@@ -1,19 +1,22 @@
-import { UseGuards } from '@nestjs/common';
+import { Optional, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentAccountHolder, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
+	FieldVisibility,
 	Idempotent,
 	PaymentAccountHolderService,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	VisibleWith,
 	IConnectionPageSelection,
 	resolveConnectionWindow
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PaymentPermission } from '../../payment.permissions';
+import { assertNoCardData } from '../../payment.card-data.pipe';
 import { PaymentAccountHolderLifecycleService } from '../../payment-account-holder/payment-account-holder-lifecycle.service';
 import { PaymentMethodTokenLifecycleService } from '../../payment-method-token/payment-method-token-lifecycle.service';
 import { rejection, toConnection, toOrder } from '../types/connection';
@@ -49,6 +52,13 @@ import {
  * masked summary — brand, last four, expiry — because no list carries a stored instrument reference,
  * for any caller (17-graphql-api-specification.md §6.4).
  *
+ * **No mutation stores card data.** The three writes whose routes refuse a card-shaped body with
+ * `@UseCardDataRefusal()` — record, change and verify — run the same refusal on their input before the
+ * service is reached: the schema declares no card member, so what it catches is card data nested in the
+ * free-form `metadata`, answered with `PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED` and `details.field` as an
+ * error entry rather than as a payload `userError`, exactly as `createPaymentMethodToken` answers it.
+ * Before it, `createPaymentAccountHolder(input: { metadata: { card: { number } } })` stored the number.
+ *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
  * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
@@ -66,7 +76,13 @@ export class PaymentAccountHolderResolver {
 	constructor(
 		private readonly paymentAccountHolderService: PaymentAccountHolderService,
 		private readonly accountHolders: PaymentAccountHolderLifecycleService,
-		private readonly paymentMethodTokens: PaymentMethodTokenLifecycleService
+		private readonly paymentMethodTokens: PaymentMethodTokenLifecycleService,
+		/**
+		 * The platform's field-level visibility decision, which gates `methodTokens` below. Optional and
+		 * defaulted rather than required, exactly as `PaymentMethodTokenResolver` takes it: it is a pure
+		 * decision over the caller's grants and owns no state.
+		 */
+		@Optional() private readonly visibility: FieldVisibility = new FieldVisibility()
 	) {}
 
 	/**
@@ -116,6 +132,9 @@ export class PaymentAccountHolderResolver {
 	async createPaymentAccountHolder(
 		@Args('input') input: ICreatePaymentAccountHolderGraphInput
 	): Promise<ICreatePaymentAccountHolderPayload> {
+		// The route's card refusal, on the input: see `assertNoCardData` and the class comment.
+		assertNoCardData(input);
+
 		try {
 			return { paymentAccountHolder: await this.paymentAccountHolderService.createHolder(input as never), userErrors: [] };
 		} catch (error) {
@@ -131,6 +150,8 @@ export class PaymentAccountHolderResolver {
 	async updatePaymentAccountHolder(
 		@Args('input') input: IUpdatePaymentAccountHolderGraphInput
 	): Promise<IUpdatePaymentAccountHolderPayload> {
+		assertNoCardData(input);
+
 		try {
 			return { paymentAccountHolder: await this.accountHolders.update(input.id, input as never), userErrors: [] };
 		} catch (error) {
@@ -149,6 +170,8 @@ export class PaymentAccountHolderResolver {
 	async verifyPaymentAccountHolder(
 		@Args('input') input: IVerifyPaymentAccountHolderGraphInput
 	): Promise<IVerifyPaymentAccountHolderPayload> {
+		assertNoCardData(input);
+
 		try {
 			return { paymentAccountHolder: await this.accountHolders.verify(input.id, input as never), userErrors: [] };
 		} catch (error) {
@@ -251,12 +274,31 @@ export class PaymentAccountHolderResolver {
 	 * `PAYMENT_ACCOUNT_HOLDERS_VIEW` here instead would have copied the REST account-holder read, which
 	 * returns the same instrument summaries under the account grant; that route is the looser of the two
 	 * and is reported as such rather than mirrored into the resolver.
+	 *
+	 * **The permission is checked here, in the body, because nothing else checks it (R2-G10).** The
+	 * `@Permissions` line above is metadata only: the GraphQL module sets no `fieldResolverEnhancers`, so
+	 * Nest runs the guard chain for root fields and never for a `@ResolveField` — a caller holding
+	 * `PAYMENT_ACCOUNT_HOLDERS_VIEW` alone was answered the instruments. The read now goes through
+	 * `FieldVisibility.guard`, the platform's gate for a withheld GraphQL field (`@VisibleWith`, "resolves
+	 * to `null` with a typed error"): a caller without `PAYMENT_METHOD_TOKENS_VIEW` gets `null` — the field
+	 * is nullable, so the account itself still resolves — plus `403 PERMISSION_DENIED` naming
+	 * `PaymentAccountHolder.methodTokens`, and no instrument is read for it. That is the REST rule (the
+	 * routes leave the member out without the grant) in the GraphQL contract's shape. Turning on
+	 * `fieldResolverEnhancers` globally would also fix it, but it puts every guard and interceptor on every
+	 * field of every type — the idempotency and organization interceptors included — so it is not done here.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)
+	@VisibleWith(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)
 	@ResolveField('methodTokens')
-	async methodTokens(@Parent() holder: IPaymentAccountHolder): Promise<IPaymentMethodToken[]> {
-		const instruments = await this.paymentMethodTokens.list({ accountHolderId: holder.id });
+	async methodTokens(@Parent() holder: IPaymentAccountHolder): Promise<IPaymentMethodToken[] | null> {
+		return this.visibility.guard(
+			PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum,
+			async () => {
+				const instruments = await this.paymentMethodTokens.list({ accountHolderId: holder.id });
 
-		return instruments.items;
+				return instruments.items;
+			},
+			{ resource: 'PaymentAccountHolder', field: 'methodTokens' }
+		);
 	}
 }

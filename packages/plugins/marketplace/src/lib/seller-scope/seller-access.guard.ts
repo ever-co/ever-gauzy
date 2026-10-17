@@ -302,9 +302,9 @@ export class SellerAccessGuard implements CanActivate {
 	}
 
 	/**
-	 * The seller the request names, in the order the platform accepts it: a GraphQL field argument, an
-	 * explicit query parameter, the `X-Seller-Id` header, then the target row's own seller when the
-	 * request carries one.
+	 * The seller the request names, in the order the platform accepts it: a GraphQL field argument (top
+	 * level, then the field's `input` object), an explicit query parameter, the `X-Seller-Id` header, then
+	 * the target row's own seller when the request carries one.
 	 *
 	 * @param context The execution context.
 	 * @param request The request, when the operation has one.
@@ -315,11 +315,40 @@ export class SellerAccessGuard implements CanActivate {
 
 		return (
 			(args?.sellerId as ID) ??
+			SellerAccessGuard.inputSellerId(args) ??
 			(request?.query?.sellerId as ID) ??
 			(request?.headers?.['x-seller-id'] as ID) ??
 			(request?.body?.sellerId as ID) ??
 			(request?.params?.sellerId as ID)
 		);
+	}
+
+	/**
+	 * The seller a GraphQL field names inside its `input` object.
+	 *
+	 * `createSellerOffering(input: CreateSellerOfferingInput!)` carries the seller as `input.sellerId`, the
+	 * way `POST /seller-offerings` carries it in the body, and the guard read only a top-level `sellerId`
+	 * argument. The field therefore resolved no seller: a seller's own member was refused here, and a staff
+	 * caller got a scope naming no seller, which `createOffering` refuses against the input's seller — so the
+	 * mutation answered 403 for every caller that did not also send `X-Seller-Id` (review R2-G43). Reading the
+	 * input's seller is what the REST door does with the body; it does not widen anything, because the seller
+	 * read here is then subject to the same membership and staff checks as any other (a member is narrowed to
+	 * it, a caller with neither is refused by name). A top-level argument still wins, and only a plain object
+	 * carrying a non-empty string counts.
+	 *
+	 * @param args The field's arguments.
+	 * @returns The seller id, or undefined when the input names none.
+	 */
+	private static inputSellerId(args: any): ID | undefined {
+		const input = args?.input;
+
+		if (!input || typeof input !== 'object' || Array.isArray(input)) {
+			return undefined;
+		}
+
+		const sellerId = input.sellerId;
+
+		return typeof sellerId === 'string' && sellerId.length > 0 ? (sellerId as ID) : undefined;
 	}
 
 	/**

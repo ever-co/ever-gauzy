@@ -64,6 +64,7 @@ import {
 	MikroOrmEverWorksSyncLogRepository
 } from './sync/entities/ever-works-sync.repositories';
 import { EverWorksSyncLogService } from './sync/ever-works-sync-log.service';
+import { EverWorksLeaseFenceSubscriber } from './sync/ever-works-lease-fence';
 import { EverWorksProcessCapability } from './sync/ever-works-process';
 import { EverWorksSyncLoop } from './sync/ever-works-sync.loop';
 import { EverWorksFeedPoller } from './sync/inbound/ever-works-feed.poller';
@@ -117,8 +118,12 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 	}
 }
 
-/** The entity subscribers the plugin adds to the ORMs (outbound triggers of records without a platform event). */
+/**
+ * The entity subscribers the plugin adds to the ORMs: the lease fence on every write of a sync pass (idle
+ * outside one), then the outbound triggers of records without a platform event.
+ */
 export const EVER_WORKS_SUBSCRIBERS = [
+	EverWorksLeaseFenceSubscriber,
 	EverWorksTeamSubscriber,
 	EverWorksTeamMemberSubscriber,
 	EverWorksTaskWatcherSubscriber,

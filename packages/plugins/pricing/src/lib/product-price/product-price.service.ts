@@ -18,6 +18,7 @@ import {
 } from '../pricing.types';
 import { ExchangeRateService } from '../exchange-rate/exchange-rate.service';
 import { PricePreferenceService } from '../price-preference/price-preference.service';
+import { assertOrganizationUnchanged, statedOrganizations } from '../organization-scope';
 import { PriceList } from '../price-list/price-list.entity';
 import { ProductPrice } from './product-price.entity';
 import { TypeOrmProductPriceRepository } from './repository/type-orm-product-price.repository';
@@ -166,6 +167,9 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		options: { ignoreTierOf?: Set<string> } = {}
 	): Promise<UpdateResult | ProductPrice> {
 		const existing = await this.findOneByIdString(id);
+
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price');
+
 		const prepared = this.prepare(this.mergeWithStored(existing, entity));
 
 		// Only a list the caller names is checked: a row of a list deleted since stays editable — it no
@@ -1306,7 +1310,8 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			throw new BadRequestException('PRICE_ORGANIZATION_REQUIRED: prices are written inside an organization.');
 		}
 
-		if (entity.organizationId && String(entity.organizationId) !== String(organizationId)) {
+		// The column and the relation alike: the ORM writes either (R2-G34).
+		if (statedOrganizations(entity).some((stated) => stated && String(stated) !== String(organizationId))) {
 			throw new BadRequestException('PRICE_ORGANIZATION_MISMATCH: a price belongs to the caller\'s organization.');
 		}
 
