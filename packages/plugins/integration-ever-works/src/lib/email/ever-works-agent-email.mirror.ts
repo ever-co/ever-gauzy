@@ -182,7 +182,11 @@ export class EverWorksAgentEmailMirror implements EverWorksInboundHandler {
 		// The link write is the engine's monotonic version check (#10827). Refused, another process applied a newer
 		// version while this one worked (its lease lapsed): the copy is written again from the message as Ever Works
 		// holds it now, and recorded with that version — repeated while yet another one lands in between (bounded).
-		let written = { message, version, itemId: result.item.id as ID };
+		let written: { message: EverWorksEmailMessage; version: number | null; itemId: ID } = {
+			message,
+			version,
+			itemId: result.item.id as ID
+		};
 		for (let attempt = 0; ; attempt++) {
 			try {
 				await this.links.record({
