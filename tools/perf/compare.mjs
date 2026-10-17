@@ -15,10 +15,11 @@ const base = runs[0];
 const names = base.results.map((r) => r.name);
 const pick = (run, name) => run.results.find((r) => r.name === name);
 
-console.log(`# ${runs.map((r) => r.label).join(' vs ')}`);
+// A generated table: wider than 80 columns, and the lint config both requires (MD041) and forbids (MD043) a
+// top-level heading, so lint is off for the whole file.
+console.log('<!-- markdownlint-disable -->');
 console.log('');
-// Table rows are wider than markdownlint's 80 columns by nature.
-console.log('<!-- markdownlint-disable MD013 -->');
+console.log(`# ${runs.map((r) => r.label).join(' vs ')}`);
 console.log('');
 const head = ['endpoint', 'metric', ...runs.map((r) => r.label), `${runs[0].label}→${runs[runs.length - 1].label}`];
 console.log(`| ${head.join(' | ')} |`);

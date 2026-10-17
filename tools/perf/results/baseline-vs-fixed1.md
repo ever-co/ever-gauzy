@@ -1,6 +1,6 @@
-# baseline vs fixed1
+<!-- markdownlint-disable -->
 
-<!-- markdownlint-disable MD013 -->
+# baseline vs fixed1
 
 | endpoint | metric | baseline | fixed1 | baseline→fixed1 |
 |---|---|---|---|---|

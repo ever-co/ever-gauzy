@@ -40,6 +40,21 @@ export const EVICTED_CLIENT_DESTROY_DELAY_MS = 15 * 60 * 1000;
 const MAX_URLS = 20_000;
 
 const clients = new Map<string, S3Client>();
+/**
+ * Clients evicted from `clients` but not yet destroyed: still usable by whoever holds them, and brought back
+ * into the cache if their configuration is asked for again. Bounded: past MAX_RETIRING_CLIENTS the oldest is
+ * destroyed at once, so churn through many configurations cannot pile up clients and timers.
+ */
+const retiring = new Map<string, { client: S3Client; timer: NodeJS.Timeout }>();
+const MAX_RETIRING_CLIENTS = 64;
+
+function destroyQuietly(client: S3Client): void {
+	try {
+		client.destroy();
+	} catch {
+		// A client being destroyed has nothing left to report.
+	}
+}
 const clientKeys = new WeakMap<S3Client, string>();
 const urls = new Map<string, { url: string; until: number }>();
 const inFlight = new Map<string, Promise<string>>();
@@ -75,9 +90,17 @@ export function getCachedS3Client(config: S3ClientConfig): S3Client {
 		clients.set(key, client);
 		return client;
 	}
-	client = new S3Client(config);
+	const retired = retiring.get(key);
+	if (retired) {
+		// Asked for again during its grace period: back into the cache, nothing rebuilt.
+		clearTimeout(retired.timer);
+		retiring.delete(key);
+		client = retired.client;
+	} else {
+		client = new S3Client(config);
+		clientKeys.set(client, key);
+	}
 	clients.set(key, client);
-	clientKeys.set(client, key);
 	if (clients.size > MAX_CLIENTS) {
 		const [oldestKey, oldest] = clients.entries().next().value as [string, S3Client];
 		clients.delete(oldestKey);
@@ -85,13 +108,20 @@ export function getCachedS3Client(config: S3ClientConfig): S3Client {
 		// multer-s3, a download whose body is read later), and destroy() closes the sockets in use. It leaves the
 		// cache now and is destroyed once anything it was serving has long finished.
 		const timer = setTimeout(() => {
-			try {
-				oldest.destroy();
-			} catch {
-				// A client being destroyed has nothing left to report.
-			}
+			retiring.delete(oldestKey);
+			destroyQuietly(oldest);
 		}, EVICTED_CLIENT_DESTROY_DELAY_MS);
 		timer.unref?.();
+		retiring.set(oldestKey, { client: oldest, timer });
+		if (retiring.size > MAX_RETIRING_CLIENTS) {
+			const [staleKey, stale] = retiring.entries().next().value as [
+				string,
+				{ client: S3Client; timer: NodeJS.Timeout }
+			];
+			clearTimeout(stale.timer);
+			retiring.delete(staleKey);
+			destroyQuietly(stale.client);
+		}
 	}
 	return client;
 }
@@ -101,7 +131,11 @@ export function getCachedS3Client(config: S3ClientConfig): S3Client {
  * one signature). `key` must identify the object AND everything that changes the URL (provider, endpoint,
  * region, bucket, access key).
  */
-export async function getCachedSignedUrl(key: string, sign: () => Promise<string>, now: number = Date.now()): Promise<string> {
+export async function getCachedSignedUrl(
+	key: string,
+	sign: () => Promise<string>,
+	now: number = Date.now()
+): Promise<string> {
 	const ttlSeconds = signedUrlCacheSeconds();
 	if (ttlSeconds <= 0) {
 		return sign();
@@ -138,7 +172,11 @@ export async function getCachedSignedUrl(key: string, sign: () => Promise<string
  * hash of the secret), the bucket and the object key. A client not created by {@link getCachedS3Client} gets no
  * key, and its URLs are then not cached.
  */
-export function signedUrlCacheKey(client: S3Client, bucket: string | null | undefined, objectKey: string): string | null {
+export function signedUrlCacheKey(
+	client: S3Client,
+	bucket: string | null | undefined,
+	objectKey: string
+): string | null {
 	const clientKey = clientKeys.get(client);
 	return clientKey ? JSON.stringify([clientKey, bucket ?? '', objectKey]) : null;
 }
@@ -167,6 +205,11 @@ export function clearS3Caches(): void {
 		}
 	}
 	clients.clear();
+	for (const { client, timer } of retiring.values()) {
+		clearTimeout(timer);
+		destroyQuietly(client);
+	}
+	retiring.clear();
 	urls.clear();
 	inFlight.clear();
 }

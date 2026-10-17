@@ -37,12 +37,31 @@ describe('s3-client-cache', () => {
 			const first = getCachedS3Client(config('secret-0'));
 			const destroy = jest.spyOn(first, 'destroy');
 			for (let i = 1; i <= 64; i++) getCachedS3Client(config(`secret-${i}`));
-			// Evicted from the cache (a new lookup builds another client)...
-			expect(getCachedS3Client(config('secret-0'))).not.toBe(first);
-			// ...but only destroyed after the grace period.
+			// Evicted from the cache, but asked for again within the grace period: the same client comes back.
+			expect(getCachedS3Client(config('secret-0'))).toBe(first);
+			expect(destroy).not.toHaveBeenCalled();
+			// Evicted again and left alone: destroyed only after the grace period.
+			for (let i = 65; i <= 128; i++) getCachedS3Client(config(`secret-${i}`));
 			expect(destroy).not.toHaveBeenCalled();
 			jest.advanceTimersByTime(EVICTED_CLIENT_DESTROY_DELAY_MS);
 			expect(destroy).toHaveBeenCalledTimes(1);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('bounds the clients awaiting destruction under churn', () => {
+		jest.useFakeTimers();
+		try {
+			const destroyed: number[] = [];
+			for (let i = 0; i < 200; i++) {
+				const client = getCachedS3Client(config(`churn-${i}`));
+				jest.spyOn(client, 'destroy').mockImplementation(() => destroyed.push(i));
+			}
+			// 200 configurations: 64 cached, 64 retiring, the rest destroyed at once, oldest first.
+			expect(destroyed).toEqual(Array.from({ length: 72 }, (_, i) => i));
+			jest.advanceTimersByTime(EVICTED_CLIENT_DESTROY_DELAY_MS);
+			expect(destroyed).toHaveLength(136);
 		} finally {
 			jest.useRealTimers();
 		}

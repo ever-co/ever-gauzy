@@ -25,9 +25,8 @@ for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n
 const dt = new Map();
 const { samples, timeDeltas } = profile;
 for (let i = 0; i < samples.length; i++) {
-	// Chrome DevTools' convention: a sample stands for the interval up to the NEXT sample. The last sample has no
-	// next one, so it counts for nothing rather than repeating its own preceding interval.
-	const d = (timeDeltas[i + 1] ?? 0) / 1000; // ms
+	// The profile format pairs timeDeltas[i] with samples[i]: the interval that ends at that sample.
+	const d = (timeDeltas[i] ?? 0) / 1000; // ms
 	dt.set(i, d);
 }
 
