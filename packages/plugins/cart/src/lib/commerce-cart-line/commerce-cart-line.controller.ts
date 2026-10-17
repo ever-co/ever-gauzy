@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ID } from '@gauzy/contracts';
+import { Request } from 'express';
+import { ID, IPagination } from '@gauzy/contracts';
 import {
 	AbstractValidationPipe,
 	CrudController,
@@ -9,10 +10,14 @@ import {
 	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned,
+	versionExpectationOf
 } from '@gauzy/core';
 import { CommerceCartLine } from './commerce-cart-line.entity';
 import { CommerceCartLineService } from './commerce-cart-line.service';
+import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
+import { cartOfBody } from '../commerce-cart/cart-of-body';
 import { CART_PERMISSIONS } from '../cart.permissions';
 import { CreateCommerceCartLineDTO, UpdateCommerceCartLineDTO } from './dto';
 
@@ -27,7 +32,10 @@ import { CreateCommerceCartLineDTO, UpdateCommerceCartLineDTO } from './dto';
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 @Controller('/cart-lines')
 export class CommerceCartLineController extends CrudController<CommerceCartLine> {
-	constructor(private readonly commerceCartLineService: CommerceCartLineService) {
+	constructor(
+		private readonly commerceCartLineService: CommerceCartLineService,
+		private readonly commerceCartService: CommerceCartService
+	) {
 		super(commerceCartLineService);
 	}
 
@@ -40,15 +48,32 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	 * for. An inherited `create` therefore accepts any body at all — an unknown enumeration member, a
 	 * missing required field, a property the resource does not have. Declaring the DTO is what makes
 	 * the request validated, and it is also what gives the route a documented body.
+	 *
+	 * **The line is added by the cart (R2-G25).** This route used to hand the body to the line's own
+	 * `CrudService.create`, so it wrote a row the cart had not agreed to: into a COMPLETED, MERGED or
+	 * EXPIRED cart, past the stock the variant has, naming another tenant's variant or warehouse, with
+	 * no version and no re-pricing — the cart's totals still described the cart without the line. The
+	 * `addCartLine` mutation and `POST /carts/:id/lines` both go through `CommerceCartService.addLine`,
+	 * which refuses every one of those; this route now does the same, under the same cart version (the
+	 * `If-Match` header states the version of the cart the body's `cartId` names, as on the nested route).
+	 * The answer is still the line: the row the addition created, or the existing line it merged into when
+	 * the two describe the same purchase.
+	 *
+	 * @param entity The line to add, naming its cart.
+	 * @param request The request, which carries the version the caller read the cart at.
+	 * @returns The line the cart now holds for that purchase.
 	 */
 	@ApiOperation({ summary: 'Create a cart line' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The cart line was created', type: CommerceCartLine })
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Versioned({ resource: CommerceCartService, identify: cartOfBody })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateCommerceCartLineDTO): Promise<CommerceCartLine> {
-		return this.commerceCartLineService.create(entity as any);
+	async create(@Body() entity: CreateCommerceCartLineDTO, @Req() request?: Request): Promise<CommerceCartLine> {
+		await this.commerceCartService.addLine(entity.cartId, entity as any, versionExpectationOf(request));
+
+		return this.lineFor(entity);
 	}
 
 	/**
@@ -136,5 +161,39 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
 		return await super.softRecover(id, ...options);
+	}
+
+	/**
+	 * The line the cart holds for the purchase a create described.
+	 *
+	 * `addLine` merges an addition into an existing line when the variant, warehouse, unit price, tax
+	 * mode and plan all match, so the row to answer with is the one carrying those attributes — the newest
+	 * of them, should two exist from before the merge rule. Any line of the cart is the fallback, which can
+	 * only be reached if the cart re-priced the line between the write and this read.
+	 *
+	 * @param entity The created line's body.
+	 * @returns The line.
+	 */
+	private async lineFor(entity: CreateCommerceCartLineDTO): Promise<CommerceCartLine> {
+		const { items } = (await this.commerceCartLineService.findAll({
+			where: { cartId: entity.cartId }
+		})) as IPagination<CommerceCartLine>;
+		const same = (items ?? []).filter(
+			(line) =>
+				line.variantId === entity.variantId &&
+				(line.warehouseId ?? null) === (entity.warehouseId ?? null) &&
+				(line.subscriptionPlanId ?? null) === (entity.subscriptionPlanId ?? null) &&
+				Number(line.unitPrice) === Number(entity.unitPrice)
+		);
+		const newest = (rows: CommerceCartLine[]) =>
+			rows.reduce<CommerceCartLine | undefined>(
+				(found, line) =>
+					!found || new Date(line.updatedAt ?? 0).getTime() >= new Date(found.updatedAt ?? 0).getTime()
+						? line
+						: found,
+				undefined
+			);
+
+		return newest(same) ?? newest(items ?? []);
 	}
 }

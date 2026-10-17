@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ID } from '@gauzy/contracts';
+import { Request } from 'express';
+import { ID, IPagination } from '@gauzy/contracts';
 import {
 	AbstractValidationPipe,
 	CrudController,
@@ -9,10 +10,14 @@ import {
 	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned,
+	versionExpectationOf
 } from '@gauzy/core';
 import { CommerceCartShippingMethod } from './commerce-cart-shipping-method.entity';
 import { CommerceCartShippingMethodService } from './commerce-cart-shipping-method.service';
+import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
+import { cartOfBody } from '../commerce-cart/cart-of-body';
 import { CART_PERMISSIONS } from '../cart.permissions';
 import { CreateCommerceCartShippingMethodDTO, UpdateCommerceCartShippingMethodDTO } from './dto';
 
@@ -27,7 +32,10 @@ import { CreateCommerceCartShippingMethodDTO, UpdateCommerceCartShippingMethodDT
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 @Controller('/cart-shipping-methods')
 export class CommerceCartShippingMethodController extends CrudController<CommerceCartShippingMethod> {
-	constructor(private readonly commerceCartShippingMethodService: CommerceCartShippingMethodService) {
+	constructor(
+		private readonly commerceCartShippingMethodService: CommerceCartShippingMethodService,
+		private readonly commerceCartService: CommerceCartService
+	) {
 		super(commerceCartShippingMethodService);
 	}
 
@@ -40,6 +48,20 @@ export class CommerceCartShippingMethodController extends CrudController<Commerc
 	 * for. An inherited `create` therefore accepts any body at all — an unknown enumeration member, a
 	 * missing required field, a property the resource does not have. Declaring the DTO is what makes
 	 * the request validated, and it is also what gives the route a documented body.
+	 *
+	 * **The choice is set by the cart (R2-G25).** This route used to hand the body to the delivery
+	 * choice's own `CrudService.create`, so it wrote a row the cart had not agreed to: on a COMPLETED,
+	 * MERGED or EXPIRED cart, naming another tenant's option, with no version and no re-pricing — and
+	 * beside the choice already there, so the next recalculation summed a stale and a current delivery
+	 * into `shippingSubtotal`. The `setCartShippingMethod` mutation and `POST /carts/:id/shipping-methods`
+	 * both go through `CommerceCartService.setShippingMethod`, which refuses all of that and retires the
+	 * previous choice; this route now does the same, under the same cart version (the `If-Match` header
+	 * states the version of the cart the body's `cartId` names, as on the nested route). The answer is
+	 * still the delivery choice: the one the cart now holds.
+	 *
+	 * @param entity The chosen method, naming its cart.
+	 * @param request The request, which carries the version the caller read the cart at.
+	 * @returns The delivery choice the cart now holds.
 	 */
 	@ApiOperation({ summary: 'Create a cart shipping method' })
 	@ApiResponse({
@@ -48,11 +70,29 @@ export class CommerceCartShippingMethodController extends CrudController<Commerc
 		type: CommerceCartShippingMethod
 	})
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Versioned({ resource: CommerceCartService, identify: cartOfBody })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateCommerceCartShippingMethodDTO): Promise<CommerceCartShippingMethod> {
-		return this.commerceCartShippingMethodService.create(entity as any);
+	async create(
+		@Body() entity: CreateCommerceCartShippingMethodDTO,
+		@Req() request?: Request
+	): Promise<CommerceCartShippingMethod> {
+		await this.commerceCartService.setShippingMethod(entity.cartId, entity as any, versionExpectationOf(request));
+
+		const { items } = (await this.commerceCartShippingMethodService.findAll({
+			where: { cartId: entity.cartId }
+		})) as IPagination<CommerceCartShippingMethod>;
+
+		// `setShippingMethod` retires every earlier choice before it writes this one, so the cart's one live
+		// row is the answer; the newest is taken should a concurrent choice have landed in between.
+		return (items ?? []).reduce<CommerceCartShippingMethod | undefined>(
+			(found, method) =>
+				!found || new Date(method.createdAt ?? 0).getTime() >= new Date(found.createdAt ?? 0).getTime()
+					? method
+					: found,
+			undefined
+		);
 	}
 
 	/**
