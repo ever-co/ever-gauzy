@@ -946,9 +946,21 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 							idempotencyKey
 						});
 
+			const version = Number(orderReturn.version ?? 1);
+
+			if (found.status !== 'SUCCEEDED') {
+				// The attempt that left the refund pending stopped before it announced it, so the settlement this retry
+				// made is announced now (Greptile, #10906). A succeeded refund is a plain replay and is not announced
+				// again: whichever attempt settled it is the one that could.
+				await this.announce(RETURN_EVENTS.REFUNDED, orderReturn, version, {
+					refundedAmount: refund.amount,
+					refundId: refund.refundId ?? null
+				});
+			}
+
 			await this.refreshOrderTotals(orderReturn.orderId);
 
-			return { refund, version: Number(orderReturn.version ?? 1) };
+			return { refund, version };
 		}
 
 		/**

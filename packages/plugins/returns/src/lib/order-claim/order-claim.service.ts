@@ -567,12 +567,21 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		} else {
 			await this.refundGateway.assertMayRefund?.();
 
+			// A refund the key left pending is settled for its own amount, not for whatever this retry states — the
+			// claim may carry no amount of its own (Greptile, #10906). The payment capability settles it under the key.
+			const amount = found?.amount ?? refundAmount;
+
 			try {
-				refund = await this.settleRefund(claim, refundAmount, note, decisionKey);
+				refund = await this.settleRefund(claim, amount, note, decisionKey);
 			} catch (error) {
-				if (this.isRefusal(error)) {
-					await this.releaseRefundDecision(claim, decidedFrom);
-				}
+				// **A refused resume never releases the decision** (Greptile, #10906). The approval that took it may
+				// still be paying: releasing here would reopen the claim, and another approval could take a new key and
+				// pay a second refund beside the first. The claim stays in flight for an operator, as an unknown
+				// outcome leaves it.
+				this.logger.warn(
+					`CLAIM_REFUND_RESUME_REFUSED: claim ${claim.id} stays APPROVED (decided from ${decidedFrom}) because ` +
+						`its resumed refund was refused (${error instanceof Error ? error.message : String(error)}).`
+				);
 
 				throw error;
 			}

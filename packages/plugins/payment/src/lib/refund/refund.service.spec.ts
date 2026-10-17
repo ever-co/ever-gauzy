@@ -418,14 +418,24 @@ function datastore(tables: ITables) {
 					const parameters = conditions.reduce<Row>((all, one) => ({ ...all, ...one.params }), {});
 
 					if (locked) {
-						// The order lock: held by this transaction until it commits or rolls back.
-						await acquireLock();
-
-						return tables.payment
-							.filter((row) => row.orderId === parameters.orderId)
+						// The order lock, held by this transaction until it commits or rolls back. A `FOR UPDATE` that
+						// matches no row locks nothing — on the order row or on the payment rows alike — and the double
+						// says so, because that is the gap an order with no payment rows used to fall through (#10906).
+						const matched =
+							fromTable === 'order'
+								? ((tables as unknown as Record<string, Row[]>).order ?? []).filter(
+										(row) => row.id === parameters.orderId
+									)
+								: tables.payment.filter((row) => row.orderId === parameters.orderId);
+						const scoped = matched
 							.filter((row) => row.tenantId === parameters.tenantId)
-							.filter((row) => row.organizationId === parameters.organizationId)
-							.map((row) => ({ id: row.id }));
+							.filter((row) => row.organizationId === parameters.organizationId);
+
+						if (scoped.length) {
+							await acquireLock();
+						}
+
+						return scoped.map((row) => ({ id: row.id }));
 					}
 
 					if (fromTable !== 'order_line') {
@@ -1837,5 +1847,37 @@ describe('RefundService — one standing refund per key, decided under the order
 				metadata: { idempotencyKey: 'decision-1' }
 			} as never)
 		).resolves.toMatchObject({ status: RefundStatus.PENDING });
+	});
+});
+
+describe('RefundService — the order row is the lock, whether or not the order has payments (Greptile, #10906)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses the second of two concurrent keyed refunds of an order that has no payment rows', async () => {
+		// No payment row to lock: before, both locked nothing, both read no holder of the key and both wrote.
+		const fixture = refundFixture({
+			payments: [],
+			captures: [],
+			orders: [{ id: ORDER, tenantId: TENANT, organizationId: ORG }]
+		});
+		const refund = () =>
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				claimId: 'claim-1',
+				amount: '10',
+				currency: 'USD',
+				metadata: { idempotencyKey: 'decision-1' }
+			} as never);
+
+		const outcomes = await Promise.allSettled([refund(), refund()]);
+
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+		expect(fixture.tables.refund).toHaveLength(1);
 	});
 });

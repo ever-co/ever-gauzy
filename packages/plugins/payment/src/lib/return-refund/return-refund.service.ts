@@ -204,7 +204,22 @@ export class ReturnRefundService {
 			throw error;
 		}
 
-		const settled = await this.refundService.approveAttributedRefund(created.id);
+		let settled: IRefund;
+
+		try {
+			settled = await this.refundService.approveAttributedRefund(created.id);
+		} catch (error) {
+			// A retry under the same key found this refund pending and settled it first (Greptile, #10906): the
+			// money went back, and answering the refusal of this second settlement would tell the caller — a return
+			// that then gives its claimed total back — that it did not.
+			const current = await this.refundService.findRefundOrFail(created.id);
+
+			if (current.status !== RefundStatus.SUCCEEDED) {
+				throw error;
+			}
+
+			settled = current;
+		}
 
 		return {
 			refundId: settled.id,

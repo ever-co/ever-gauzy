@@ -996,3 +996,30 @@ describe('ReturnRefundService — one refund per key, found again by the flow th
 		await expect(service.findRefund({ returnId: RETURN, idempotencyKey: 'decision-1' })).resolves.toBeNull();
 	});
 });
+
+describe('ReturnRefundService — a settlement another retry made first is the answer (Greptile, #10906)', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('answers the refund it recorded when a concurrent retry settled it first', async () => {
+		const { service, refundService, tables } = fixture({});
+		const settle = refundService.approveAttributedRefund.bind(refundService);
+
+		jest.spyOn(refundService, 'approveAttributedRefund').mockImplementationOnce(async (id: string) => {
+			// The retry found the refund pending and settled it, so this call's own settlement is refused.
+			await settle(id);
+
+			throw new BadRequestException('REFUND_ALREADY_SETTLED');
+		});
+
+		const answer = await service.createRefund({
+			orderId: ORDER,
+			claimId: CLAIM,
+			amount: '25',
+			currency: 'USD',
+			idempotencyKey: 'decision-1'
+		});
+
+		expect(answer).toMatchObject({ refundId: tables.refund[0].id, amount: '25.000000' });
+		expect(tables.refund[0].status).toBe(RefundStatus.SUCCEEDED);
+	});
+});

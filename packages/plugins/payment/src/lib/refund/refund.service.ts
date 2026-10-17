@@ -928,6 +928,28 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			return;
 		}
 
+		// **The order's own row first** (Greptile, #10906). A `FOR UPDATE` that matches no row locks nothing, and a
+		// return or claim refund of an order with no payment rows is a supported path: two such refunds under one key
+		// both locked nothing, both read no holder and both wrote. The order row always exists for a refund (its
+		// identifier is checked as the caller's, R3-08), so it is the lock every refund of the order takes first; the
+		// payment rows follow, in the same order on every path. An installation without the order table keeps the
+		// payment rows alone.
+		if (manager.dataSource.hasMetadata?.('order')) {
+			const order = this.q('lockedOrder');
+
+			await manager
+				.createQueryBuilder()
+				.select(`${order}.${this.q('id')}`, 'id')
+				.from('order', 'lockedOrder')
+				.where(`${order}.${this.q('id')} = :orderId`, { orderId })
+				.andWhere(`${order}.${this.q('tenantId')} = :tenantId`, { tenantId: this.scope.tenantId })
+				.andWhere(`${order}.${this.q('organizationId')} = :organizationId`, {
+					organizationId: this.scope.organizationId
+				})
+				.setLock('pessimistic_write')
+				.getRawMany();
+		}
+
 		await manager
 			.createQueryBuilder(Payment, 'payment')
 			.select('payment.id', 'id')

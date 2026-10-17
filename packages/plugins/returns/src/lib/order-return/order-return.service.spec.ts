@@ -2659,6 +2659,8 @@ describe('OrderReturnService — a retried refund is answered by the refund its 
 		expect(lookups).toEqual([{ orderId: ORDER, returnId: 'return-1', idempotencyKey: 'key-1' }]);
 		expect(fixture.refundCalls).toEqual([]);
 		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+		// A plain replay announces nothing again.
+		expect(fixture.events.filter((event) => event.name === 'return.refunded')).toEqual([]);
 	});
 
 	it('settles a refund the key left pending without claiming the return a second time', async () => {
@@ -2680,6 +2682,8 @@ describe('OrderReturnService — a retried refund is answered by the refund its 
 			amount: '10.000000'
 		});
 		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+		// The attempt that left it pending never announced it; the retry that settled it does (Greptile, #10906).
+		expect(fixture.events.filter((event) => event.name === 'return.refunded')).toHaveLength(1);
 	});
 
 	it('claims and pays under the key when the key produced nothing yet', async () => {
