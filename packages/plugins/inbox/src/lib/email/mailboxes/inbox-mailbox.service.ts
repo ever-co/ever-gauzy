@@ -819,27 +819,32 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				null,
 				input.localPart ? { ...owner, name: input.localPart } : owner
 			);
-			try {
-				const row = await repository.save(
-					repository.create({
-						tenantId,
-						organizationId,
-						address,
-						displayName: owner.displayName || null,
-						kind: InboxMailboxKindEnum.PLATFORM,
-						ownerType: input.ownerType,
-						...(input.ownerEmployeeId ? { ownerEmployeeId: input.ownerEmployeeId } : {}),
-						purpose: InboxMailboxPurposeEnum.INBOX,
-						isDefault: !!input.isDefault,
-						autoProvisioned: true,
-						messageCount: 0
-					} as InboxMailbox)
-				);
-				return this.toMailbox(row);
-			} catch (error) {
-				// The address was taken in between: allocate again.
-				if (!(await this.isTaken(address))) throw error;
-			}
+			// The last check and the save under the address's claim, as every address is taken.
+			const row = await this.claim(address, async () => {
+				if (await this.isTaken(address)) return null;
+				try {
+					return await repository.save(
+						repository.create({
+							tenantId,
+							organizationId,
+							address,
+							displayName: owner.displayName || null,
+							kind: InboxMailboxKindEnum.PLATFORM,
+							ownerType: input.ownerType,
+							...(input.ownerEmployeeId ? { ownerEmployeeId: input.ownerEmployeeId } : {}),
+							purpose: InboxMailboxPurposeEnum.INBOX,
+							isDefault: !!input.isDefault,
+							autoProvisioned: true,
+							messageCount: 0
+						} as InboxMailbox)
+					);
+				} catch (error) {
+					// The address was taken in between (outside the claim): allocate again.
+					if (!(await this.isTaken(address))) throw error;
+					return null;
+				}
+			});
+			if (row) return this.toMailbox(row);
 		}
 		return null;
 	}

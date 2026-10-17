@@ -12,6 +12,10 @@ const MYSQL_LOCK_WAIT_SECONDS = 30;
  *
  * The work uses the ordinary connections, so its writes are committed before the lock is let go. The database name
  * of a lock is a digest of `name` (MySQL allows 64 characters).
+ *
+ * Keep the work short (a check and a save): on PostgreSQL the lock's connection is idle in its transaction while the
+ * work runs, so a server `idle_in_transaction_session_timeout` shorter than the work would end the session and let
+ * the lock go early (the work still finishes; only the serialisation would be lost).
  */
 export class InboxNamedLocks {
 	private readonly chains = new Map<string, Promise<unknown>>();
@@ -39,14 +43,19 @@ export class InboxNamedLocks {
 		await runner.connect();
 		try {
 			if (postgres) {
-				// Released when the transaction ends, whatever happens to the work (or the connection).
+				// Released when the transaction ends, whatever happens to the work (or the connection). It holds nothing
+				// but the lock: committed after the work, rolled back when the work failed.
 				await runner.startTransaction();
+				let result: T;
 				try {
 					await runner.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
-					return await work();
-				} finally {
-					await runner.commitTransaction().catch(() => runner.rollbackTransaction().catch(() => undefined));
+					result = await work();
+				} catch (error) {
+					await runner.rollbackTransaction().catch(() => undefined);
+					throw error;
 				}
+				await runner.commitTransaction().catch(() => runner.rollbackTransaction().catch(() => undefined));
+				return result;
 			}
 			const [row] = (await runner.query('SELECT GET_LOCK(?, ?) AS locked', [
 				key,
