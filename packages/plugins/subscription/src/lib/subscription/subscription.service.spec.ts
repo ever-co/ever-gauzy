@@ -4066,6 +4066,39 @@ describe('SubscriptionService — undoing a cancellation at the end of the perio
 		expect(fixture.events).toEqual([]);
 	});
 
+	it('does not cancel at the period end after an undo that landed while the billing run was deciding (Greptile)', async () => {
+		// The run reads the marker, the undo commits, then the run cancels: predicated on whatever version the row held,
+		// the cancellation landed over the undo the customer had just been told succeeded.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, canceledAt: MARCH })]
+		});
+		const original = fixture.service.findOneScoped.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockImplementationOnce(async (id: string) => {
+			const read = { ...(await original(id)) };
+
+			await fixture.service.undoCancellation(id);
+
+			return read as never;
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)?.status).not.toBe(SubscriptionStatus.CANCELED);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['cancelAtPeriodEnd']).toBeUndefined();
+		expect(fixture.events.map((event) => event.name)).not.toContain('subscription.canceled');
+	});
+
+	it('CONTROL: still cancels at the period end when nothing undid the cancellation', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, canceledAt: MARCH })]
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)?.status).toBe(SubscriptionStatus.CANCELED);
+	});
+
 	it('refuses a stated version the subscription has moved past', async () => {
 		const fixture = subscriptionFixture({
 			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, version: 3 })]

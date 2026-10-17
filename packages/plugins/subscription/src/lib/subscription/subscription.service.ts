@@ -1329,17 +1329,27 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			subscription = await this.findOneScoped(id);
 		}
 
-		if (subscription.metadata?.[CANCEL_AT_PERIOD_END] === true) {
+		for (let attempt = 1; subscription.metadata?.[CANCEL_AT_PERIOD_END] === true; attempt += 1) {
 			const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
 
-			if (periodEnd.getTime() <= now.getTime()) {
+			if (periodEnd.getTime() > now.getTime()) {
+				break;
+			}
+
+			// The cancellation is predicated on the version that showed the marker (Greptile on #10862). Predicated on
+			// whatever version the row holds when its statement runs, it landed after an `undoCancellation` that had
+			// cleared the marker in between — the customer was told the cancellation was withdrawn and still lost the
+			// subscription. On that conflict the row is read again and decided again: an undone cancellation is billed.
+			const stated = spend();
+
+			try {
 				const canceled = await this.cancel(
 					id,
 					{
 						reason: subscription.cancelReason ?? 'Cancelled at the end of the period.',
 						immediate: true
 					},
-					spend()
+					this.readVersionPredicate(subscription, stated)
 				);
 
 				return this.outcome(canceled, {
@@ -1347,7 +1357,23 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 					replayed: false,
 					message: 'The subscription was cancelled at the end of the period it had already paid for.'
 				});
+			} catch (error) {
+				if (stated.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					subscription = await this.findOneScoped(id);
+					continue;
+				}
+
+				throw error;
 			}
+		}
+
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
+			// Read again above and found ended by another writer meanwhile: nothing is billed.
+			return this.outcome(subscription, {
+				status: SubscriptionBillingStatus.PENDING,
+				replayed: false,
+				message: `A subscription in status "${subscription.status}" is not billed.`
+			});
 		}
 
 		const plan = await this.planService.findOneScoped(subscription.planId);
