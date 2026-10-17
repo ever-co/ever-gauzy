@@ -26,6 +26,7 @@ import { TypeOrmProductRepository } from './repository/type-orm-product.reposito
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertTranslationsOfTenant } from '../product-option/translation-ownership.helper';
 
 /** Largest page `findAllProducts` serves when paging is requested. */
 export const MAX_PRODUCTS_PAGE_SIZE = 100;
@@ -411,6 +412,11 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	}
 
 	async saveProductTranslation(productTranslation: ProductTranslation): Promise<ProductTranslation> {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductTranslationRepository,
+			productTranslation,
+			this.typeOrmRepository
+		);
 		return await this.typeOrmProductTranslationRepository.save(productTranslation);
 	}
 
