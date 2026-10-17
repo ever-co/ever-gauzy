@@ -740,7 +740,7 @@
 				}
 			</span>
 			<div class="project-view-title">
-				<h5 class="project-view-name" [title]="viewedProject.name">{{ viewedProject.name }}</h5>
+				<h5 class="project-view-name" [nbTooltip]="viewedProject.name" nbTooltipPlacement="top">{{ viewedProject.name }}</h5>
 				<!-- Status line: status, visibility and client, as far as they are known. -->
 				@if (projectFacts?.status || projectFacts?.isPublic !== undefined || projectFacts?.client) {
 				<p class="project-view-meta">
@@ -754,7 +754,7 @@
 					</span>
 					}
 					@if (projectFacts.client) {
-					<span class="project-meta-item" [title]="projectFacts.client">
+					<span class="project-meta-item" [nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.CONTACT' | translate) + ': ' + projectFacts.client" nbTooltipPlacement="top">
 						<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
 						{{ projectFacts.client }}
 					</span>
@@ -812,6 +812,8 @@
 			</div>
 			<div
 				class="project-budget-track"
+				[nbTooltip]="formatPercent(budget.over ? (budget.usedHours / budget.budgetHours) * 100 : budget.percent)"
+				nbTooltipPlacement="top"
 				role="progressbar"
 				aria-valuemin="0"
 				aria-valuemax="100"
@@ -845,6 +847,12 @@
 				</div>
 				<div
 					class="progress-track"
+					[nbTooltip]="
+						('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate) + ' ' + progress.done + ' · ' +
+						('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate) + ' ' + progress.progress + ' · ' +
+						('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate) + ' ' + progress.todo
+					"
+					nbTooltipPlacement="top"
 					role="progressbar"
 					aria-valuemin="0"
 					aria-valuemax="100"
@@ -894,7 +902,7 @@
 				<li>
 					<a class="attention-task" [routerLink]="taskLink(task.id)">
 						<span class="attention-dot" [class.is-overdue]="task.overdue" aria-hidden="true"></span>
-						<span class="attention-title" [title]="task.title">{{ task.title }}</span>
+						<span class="attention-title" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
 						<span class="attention-due" [class.is-overdue]="task.overdue">{{ task.due.key | translate : { count: task.due.count } }}</span>
 					</a>
 				</li>
@@ -954,7 +962,13 @@
 					@for (person of projectContributors.value; track person.id) {
 					<li class="contributor">
 						<a class="contributor-person" [routerLink]="['/pages/employees/view', person.id]">
-							<span class="member-avatar contributor-avatar" [class]="'presence-' + (person.presence || 'offline')">
+							<span
+								class="member-avatar contributor-avatar"
+								[class]="'presence-' + (person.presence || 'offline')"
+								[nbTooltip]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + (person.presence || 'offline').toUpperCase() | translate"
+								[nbTooltipDisabled]="person.presence !== 'tracking' && person.presence !== 'online'"
+								nbTooltipPlacement="top"
+							>
 								@if (person.avatarUrl) {
 								<img [src]="person.avatarUrl" [alt]="person.name" />
 								} @else {
@@ -962,21 +976,23 @@
 								}
 								<!-- Live dot only for those tracking time or online right now. -->
 								@if (person.presence === 'tracking' || person.presence === 'online') {
-								<span
-									class="avatar-dot"
-									[nbTooltip]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate"
-									nbTooltipPlacement="top"
-								></span>
+								<span class="avatar-dot" aria-hidden="true"></span>
 								}
 							</span>
 							<span class="contributor-text">
-								<span class="contributor-name" [title]="person.name">{{ person.name }}</span>
+								<span class="contributor-name" [nbTooltip]="person.name" nbTooltipPlacement="top">{{ person.name }}</span>
 								@if (person.activity !== undefined) {
 								<span class="contributor-meta">{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent(person.activity) } }}</span>
 								}
 							</span>
 						</a>
-						<span class="contributor-bar" aria-hidden="true"><span [style.width.%]="person.width"></span></span>
+						<span
+							class="contributor-bar"
+							aria-hidden="true"
+							[nbTooltip]="person.name + ': ' + formatDuration(person.duration) + ' · ' + formatPercent(person.share)"
+							nbTooltipPlacement="top"
+							><span [style.width.%]="person.width"></span
+						></span>
 						<span class="contributor-figures">
 							<span class="contributor-time">{{ formatDuration(person.duration) }}</span>
 							<span class="contributor-share">{{ formatPercent(person.share) }}</span>
@@ -1007,9 +1023,15 @@
 					<li class="contributor">
 						<a class="contributor-person" [routerLink]="taskLink(task.id)">
 							<span class="top-task-rank" aria-hidden="true">{{ index + 1 }}</span>
-							<span class="contributor-name" [title]="task.name">{{ task.name }}</span>
+							<span class="contributor-name" [nbTooltip]="task.name" nbTooltipPlacement="top">{{ task.name }}</span>
 						</a>
-						<span class="contributor-bar" aria-hidden="true"><span [style.width.%]="task.width"></span></span>
+						<span
+							class="contributor-bar"
+							aria-hidden="true"
+							[nbTooltip]="task.name + ': ' + formatDuration(task.duration) + ' · ' + formatPercent(task.share)"
+							nbTooltipPlacement="top"
+							><span [style.width.%]="task.width"></span
+						></span>
 						<span class="contributor-figures">
 							<span class="contributor-time">{{ formatDuration(task.duration) }}</span>
 							<span class="contributor-share">{{ formatPercent(task.share) }}</span>
