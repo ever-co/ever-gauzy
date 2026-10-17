@@ -207,7 +207,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				case MultiORMEnum.TypeORM:
 				default: {
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					// Soft-deleted invoices included: they keep their number under UNIQUE(tenantId, invoiceNumber),
+					// so leaving them out (the query builder's default) handed out a number already taken
 					return await query
+						.withDeleted()
 						.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max')
 						.where(`${query.alias}.tenantId = :tenantId`, { tenantId })
 						.getRawOne();
