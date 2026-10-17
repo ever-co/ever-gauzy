@@ -359,6 +359,8 @@ export class InboxEmailService {
 				{ status: InboxEmailStatusEnum.FAILED, error: reason.slice(0, 1000) }
 			);
 			this.logger.warn(`Inbox email ${row.id} was not sent: ${reason}`);
+			// The unsent message stays in the thread view: the thread counts it.
+			await this.touchThread(row.threadId ?? null, mailbox.tenantId as ID).catch(() => undefined);
 			throw new BadGatewayException({
 				message: 'The message could not be sent. It is kept in the thread as not sent.',
 				emailId: row.id

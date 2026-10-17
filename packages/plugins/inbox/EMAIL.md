@@ -72,6 +72,46 @@ never re-enables an account that was disabled meanwhile.
 then nothing, and `EmailSendService` uses Custom SMTP / `MAIL_*` as before. Disabled accounts, accounts of another tenant
 and providers that do not send are never used.
 
+## Mailboxes (`/api/inbox/mailboxes`)
+
+The addresses an organization receives mail at (plan 04 §5.1, G-P4-1). An address is lower-case and unique across the
+deployment, and one namespace with the Docs capture addresses (each side checks the other through the
+`INBOUND_ADDRESS_NAMESPACE` token, and both check and save under the address's claim: a lock per address, across the
+replicas, so two requests for one address never both succeed).
+
+- **Platform addresses** on `GAUZY_INBOX_DOMAIN` (one domain for every tenant; each environment its own), the
+  organization in the local part: `<first>.<last>.<orgSlug>` for an employee, `<name>.<orgSlug>` for the organization
+  (several), `<team>.<orgSlug>` for a team. A collision gets a numeric suffix on the name; a chosen name that is taken is
+  refused. They receive through the platform route.
+- **Custom domains**: any `x@acme.com`, received through a provider account of the organization (or the tenant), once
+  the domain is proven by a DNS TXT record at `_gauzy-inbox.<domain>` (`POST /:id/verify`; a verified domain whose record
+  disappears fails). Each mailbox has its own value (several TXT values can sit at that name), and a check changes only
+  that mailbox. The platform's own domains are reserved.
+- **Forwarding**: a platform address the user forwards an existing mailbox to; no DNS change (`forwardFrom` is kept for
+  the instructions).
+- **Auto-provisioning** (opt-in per organization, `PUT /settings`): a mailbox for every new employee; and
+  `POST /provision` creates the missing employee mailboxes and the default organization mailbox (`inbox.<orgSlug>`) now.
+  Agent employees never get one. The check and the creation run under the organization's lock, so overlapping runs
+  (the employee hook, a manual run, another replica) never create a mailbox twice.
+- **Members** of organization and team mailboxes (`PUT /:id/members`, READER or MANAGER; users of the organization only).
+  With no members, a team mailbox reaches the team's members, an organization mailbox the users whose role grants
+  `INBOX_MAILBOX_MANAGE`. `GET /mine` lists exactly the mailboxes whose mail the caller receives by these rules. A
+  default mailbox is one per owner (the organization, each team, each employee).
+- **Relay secret** (`POST /:id/rotate-secret`): answered once, stored as a scrypt digest.
+
+| Method      | Path                                     | Who                    |
+| ----------- | ---------------------------------------- | ---------------------- |
+| GET         | `/api/inbox/mailboxes/mine`              | `INBOX_VIEW`           |
+| GET / POST  | `/api/inbox/mailboxes`                   | `INBOX_MAILBOX_MANAGE` |
+| GET / PATCH | `/api/inbox/mailboxes/:id`               | `INBOX_MAILBOX_MANAGE` |
+| POST        | `/api/inbox/mailboxes/:id/verify`        | `INBOX_MAILBOX_MANAGE` |
+| POST        | `/api/inbox/mailboxes/:id/rotate-secret` | `INBOX_MAILBOX_MANAGE` |
+| GET / PUT   | `/api/inbox/mailboxes/:id/members`       | `INBOX_MAILBOX_MANAGE` |
+| POST        | `/api/inbox/mailboxes/provision`         | `INBOX_MAILBOX_MANAGE` |
+| GET / PUT   | `/api/inbox/mailboxes/settings`          | `INBOX_MAILBOX_MANAGE` |
+
+Management also needs an active membership of the organization; the tenant is always the caller's.
+
 ## Inbound: the provider webhook and the worker
 
 `POST /api/inbox/inbound/:providerId/:accountId` is `@Public()`: the provider account's own secret proves each request
@@ -131,14 +171,15 @@ messages of the thread (`SENT`, or `FAILED` with the error).
 
 ## Tables (migrations for PostgreSQL, MySQL and SQLite)
 
-| Table                    | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `inbox_provider_account` | `providerId`, `name`, `scope` (TENANT, ORGANIZATION), `status` (ACTIVE, ERROR, DISABLED), `isDefaultOutbound`, `config` (public JSON), `configEncrypted` (sealed secrets), `capabilities`, `lastVerifiedAt`, `lastError`                                                                                                                                                                                                                                                                                           |
-| `inbox_mailbox`          | `address` (lower-case, unique across the deployment), `displayName`, `kind` (PLATFORM, CUSTOM_DOMAIN, FORWARDING, CONNECTED), `ownerType` (EMPLOYEE, ORGANIZATION, TEAM), `ownerEmployeeId` / `ownerTeamId`, `purpose`, `providerAccountId` (null: the platform route), `inboundSecretHash`, `senderAllowlist`, `domain` / `domainStatus` / `domainVerificationToken`, `isDefault`, `autoProvisioned`, `lastMessageAt`, `messageCount`, `settings`                                                                 |
-| `inbox_mailbox_member`   | `mailboxId`, `userId` (unique together), `role` (READER, MANAGER)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `inbox_email_thread`     | `mailboxId`, `subjectNormalized`, `participants`, `lastMessageAt`, `messageCount`                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `inbox_email`            | `mailboxId`, `threadId`, `direction`, `messageId` (unique per mailbox), `inReplyTo`, `referenceIds`, `sender` / `toAddresses` / `ccAddresses` / `bccAddresses` / `replyToAddresses` (JSON), `subject`, `textBody`, `htmlSanitized`, `snippet`, `headers` (allowlisted), `spf` / `dkim` / `dmarc`, `spamScore`, `spamVerdict`, `receivedAt`, `sentAt`, `sizeBytes`, `rawStorageKey` / `rawStorageProvider`, `status`, `providerAccountId`, `providerMessageId`, `transport`, `error`, `attemptCount`, `inboxItemId` |
-| `inbox_email_attachment` | `emailId`, `filename`, `contentType`, `size`, `sha256`, `storageKey` / `storageProvider`, `contentId`, `isInline`, `savedDocumentId`                                                                                                                                                                                                                                                                                                                                                                               |
+| Table                        | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `inbox_provider_account`     | `providerId`, `name`, `scope` (TENANT, ORGANIZATION), `status` (ACTIVE, ERROR, DISABLED), `isDefaultOutbound`, `config` (public JSON), `configEncrypted` (sealed secrets), `capabilities`, `lastVerifiedAt`, `lastError`                                                                                                                                                                                                                                                                                           |
+| `inbox_mailbox`              | `address` (lower-case, unique across the deployment), `displayName`, `kind` (PLATFORM, CUSTOM_DOMAIN, FORWARDING, CONNECTED), `ownerType` (EMPLOYEE, ORGANIZATION, TEAM), `ownerEmployeeId` / `ownerTeamId`, `purpose`, `providerAccountId` (null: the platform route), `inboundSecretHash`, `senderAllowlist`, `domain` / `domainStatus` / `domainVerificationToken`, `isDefault`, `autoProvisioned`, `lastMessageAt`, `messageCount`, `settings`                                                                 |
+| `inbox_mailbox_member`       | `mailboxId`, `userId` (unique together), `role` (READER, MANAGER)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `inbox_email_thread`         | `mailboxId`, `subjectNormalized`, `participants`, `lastMessageAt`, `messageCount`                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `inbox_email`                | `mailboxId`, `threadId`, `direction`, `messageId` (unique per mailbox), `inReplyTo`, `referenceIds`, `sender` / `toAddresses` / `ccAddresses` / `bccAddresses` / `replyToAddresses` (JSON), `subject`, `textBody`, `htmlSanitized`, `snippet`, `headers` (allowlisted), `spf` / `dkim` / `dmarc`, `spamScore`, `spamVerdict`, `receivedAt`, `sentAt`, `sizeBytes`, `rawStorageKey` / `rawStorageProvider`, `status`, `providerAccountId`, `providerMessageId`, `transport`, `error`, `attemptCount`, `inboxItemId` |
+| `inbox_email_attachment`     | `emailId`, `filename`, `contentType`, `size`, `sha256`, `storageKey` / `storageProvider`, `contentId`, `isInline`, `savedDocumentId`                                                                                                                                                                                                                                                                                                                                                                               |
+| `inbox_organization_setting` | `autoProvisionEmployees` (one row per organization)                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Idempotent, serialised on PostgreSQL with an advisory lock, reversible.
 
