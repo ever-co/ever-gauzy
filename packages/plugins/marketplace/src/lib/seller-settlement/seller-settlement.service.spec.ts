@@ -281,6 +281,56 @@ describe('SellerSettlementService — recording what the provider reported (doc 
 		expect(fixture.appended[0].data).toMatchObject({ providerKey: 'acquirer', netAmount: '98.000000' });
 	});
 
+	it('refuses a record that states a status other than OPEN, or a reconcile/close stamp (R2-G45)', async () => {
+		// `POST /seller-settlements` stored the stated status, so a settlement could be recorded CLOSED or
+		// RECONCILED — final before anything had compared it against the ledger.
+		const fixture = settlementFixture({ transactions: [transactionRow('t1', { netAmount: '98.000000' })] });
+		const body = {
+			sellerId: SELLER,
+			providerKey: 'acquirer',
+			currency: EUR,
+			currencyDecimals: 2,
+			grossAmount: '120.000000',
+			commissionAmount: '20.000000',
+			feeAmount: '2.000000'
+		};
+
+		for (const status of [
+			SellerSettlementStatus.CLOSED,
+			SellerSettlementStatus.RECONCILED,
+			SellerSettlementStatus.DISPUTED
+		]) {
+			await expect(fixture.service.record({ ...body, status } as never)).rejects.toThrow(
+				/SELLER_SETTLEMENT_FIELD_NOT_EDITABLE/
+			);
+		}
+		await expect(fixture.service.record({ ...body, closedAt: new Date() } as never)).rejects.toThrow(
+			/SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: closedAt/
+		);
+		await expect(
+			fixture.service.record({ ...body, reconciledAt: new Date(), reconciledByUserId: 'user-1' } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(fixture.tables.seller_settlement).toHaveLength(1);
+		expect(fixture.events()).toEqual([]);
+	});
+
+	it('records OPEN when the body restates OPEN', async () => {
+		const fixture = settlementFixture({ transactions: [transactionRow('t1', { netAmount: '98.000000' })] });
+
+		const recorded = await fixture.service.record({
+			sellerId: SELLER,
+			providerKey: 'acquirer',
+			currency: EUR,
+			currencyDecimals: 2,
+			grossAmount: '120.000000',
+			commissionAmount: '20.000000',
+			feeAmount: '2.000000',
+			status: SellerSettlementStatus.OPEN
+		} as never);
+
+		expect(recorded.status).toBe(SellerSettlementStatus.OPEN);
+	});
+
 	it('refuses a settlement with no seller, no provider or no currency', async () => {
 		const fixture = settlementFixture();
 

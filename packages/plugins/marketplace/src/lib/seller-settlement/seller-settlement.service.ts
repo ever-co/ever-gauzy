@@ -52,6 +52,47 @@ export const SELLER_SETTLEMENT_LIFECYCLE_MEMBERS: readonly string[] = [
 ];
 
 /**
+ * The members of a settlement its lifecycle operations stamp, which a recorded settlement therefore never
+ * takes from its caller: reconcile writes `reconciledAt` and `reconciledByUserId`, close writes `closedAt`.
+ */
+export const SELLER_SETTLEMENT_RECORD_LIFECYCLE_MEMBERS: readonly string[] = [
+	'reconciledAt',
+	'reconciledByUserId',
+	'closedAt'
+];
+
+/**
+ * Refuses a settlement record that states a lifecycle the settlement has not been through.
+ *
+ * `status` may be absent, `null` or `OPEN` — the status every recorded settlement starts in — and nothing
+ * else; the stamps of reconcile and close may not be stated at all.
+ *
+ * @param input The settlement as the caller stated it.
+ * @throws BadRequestException (`SELLER_SETTLEMENT_FIELD_NOT_EDITABLE`) naming what was refused.
+ */
+export function assertRecordedOpen(input: Partial<SellerSettlement>): void {
+	const status = (input as Record<string, unknown>)?.['status'];
+
+	if (status !== undefined && status !== null && status !== SellerSettlementStatus.OPEN) {
+		throw new BadRequestException(
+			`SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: a settlement is recorded ${SellerSettlementStatus.OPEN}, not ` +
+				`${String(status)}; it is reconciled, closed and disputed through its own operations.`
+		);
+	}
+
+	const stamped = SELLER_SETTLEMENT_RECORD_LIFECYCLE_MEMBERS.filter(
+		(member) => (input as Record<string, unknown>)?.[member] !== undefined
+	);
+
+	if (stamped.length > 0) {
+		throw new BadRequestException(
+			`SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: ${stamped.join(', ')} ${stamped.length === 1 ? 'is' : 'are'} not ` +
+				`stated when a settlement is recorded; it is reconciled, closed and disputed through its own operations.`
+		);
+	}
+}
+
+/**
  * Records what a provider reported, and reconciles it against the platform's own ledger.
  *
  * The single most important property here is what the service **refuses** to do: it never edits a
@@ -123,6 +164,13 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			assertSellerScope(scope, input.sellerId);
 		}
 
+		// A recorded settlement is OPEN: reconcile, close and dispute are what move it, each with its own checks
+		// (a closed settlement is final, a dispute needs a reason, a reconciliation compares the ledger). The
+		// recorder used to store whatever `status` the body stated, so `POST /seller-settlements {status:
+		// "CLOSED"}` wrote a settlement that was final before anything had compared it — and the stamps those
+		// operations write could be stated beside it. A body that restates OPEN is accepted (review R2-G45).
+		assertRecordedOpen(input);
+
 		const decimals = input.currencyDecimals ?? 2;
 		const currency = input.currency as CurrencyCode;
 
@@ -142,7 +190,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 
 		const settlement = this.typeOrmSellerSettlementRepository.create({
 			...input,
-			status: input.status ?? SellerSettlementStatus.OPEN,
+			status: SellerSettlementStatus.OPEN,
 			currencyDecimals: decimals,
 			// The net is derived from the reported figures rather than accepted beside them, so the row
 			// cannot state a net its own gross, commission and fee do not produce.
