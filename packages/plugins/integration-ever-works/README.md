@@ -185,6 +185,16 @@ and answered `202`.
   overwriting the newer snapshot: the applier skips that event (the newer
   version covers it), the pusher retries the change against the newer
   snapshot, and an admin action answers `409`.
+- **Lease fence.** Every handler, push and sweep of the sync loop runs fenced
+  on the connection's lease: before each insert, update or delete (the
+  platform's services and commands included), the plugin's ORM subscriber
+  checks that this process still holds the lease. Inside a transaction it
+  reads the lease row in that transaction with a share lock, so a claim
+  cannot commit before the write; outside one it needs a minute of lease
+  left. A handler that outlived its lease therefore writes nothing once
+  another process holds it: the write is refused (rolled back), the rest of
+  that handler's writes too, and the event or change is left to the new
+  holder. A handler that keeps writing renews its lease as it goes.
 - **People.** Ever Works members are paired with Gauzy people on the People
   tab: a verified, case-insensitive email match is only a suggestion the admin
   confirms (one by one or all at once); nothing is linked silently and
@@ -300,6 +310,29 @@ and answered `202`.
   there shows the answer Ever Works holds. Read / unread and archive follow
   to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
   events are skipped.
+- **Mailboxes routed to an agent (G-P4-6, where the Inbox email features
+  run).** A Gauzy mailbox whose settings name an Ever Works agent
+  (`PATCH /api/inbox/mailboxes/:id` with
+  `settings: { everWorksAgentId: <the agent's Ever Works id, or its agent
+  employee's Gauzy id> }`) hands every message it receives to that agent:
+  `POST /email/inbound`, where Ever Works stores it on the agent's inbound
+  address and dispatches it through the agent's inbound assignment; the task
+  that spawns syncs back like any task. The hand-off is durable (an outbound
+  change, retried with back-off, one `Idempotency-Key` per message, linked
+  `AGENT_EMAIL`). It needs the opt-in `email:write` scope on the key and an
+  inbound assignment on the agent (Ever Works answers `422` without one: a
+  terminal refusal in the sync log and the dead-letter notice); a mailbox
+  naming no agent paired here, or a message without a sender, is logged and
+  skipped.
+- **Agent mail in the Inbox (G-P4-6, optional).** With the `agentEmail`
+  direction on (`ew_to_gauzy`; **off** by default, on the Entities and
+  directions tab), Ever Works agent mail (`email.message.*`, served to a key
+  with `email:read`) appears as read-only Gauzy Inbox `EMAIL` items
+  (`source = EVER_WORKS`) of the Gauzy user paired with the agent's owner,
+  under "Ever Works — <agent>", linked to the agent employee and the task. A
+  reply stays in Ever Works. Mail Gauzy handed to the agent itself is not
+  copied back; an owner not paired yet waits like an inbox item; a body left
+  out of a large event is read from `GET /email/messages/:id`.
 - **Docs ↔ the Ever Works Knowledge Base (G-P3-4).** Per mapped
   organization, synced documents live under a root folder ("Ever Works", or
   the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first

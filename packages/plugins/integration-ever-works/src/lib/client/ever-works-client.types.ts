@@ -177,3 +177,57 @@ export interface EverWorksInboxReplyResult {
 
 /** The longest reply text Ever Works takes (`requests.schema.json` `InboxReply`). */
 export const EVER_WORKS_INBOX_REPLY_MAX = 8000;
+
+/** One agent email (contract `email-message.schema.json`, CR-11), the fields the Gauzy bridge reads. */
+export interface EverWorksEmailMessage {
+	id: string;
+	organizationId: string | null;
+	version: number;
+	createdAt: string;
+	updatedAt: string;
+	ownerUserId: string | null;
+	agentId: string | null;
+	taskId: string | null;
+	conversationId: string | null;
+	direction: 'inbound' | 'outbound' | string;
+	status: string;
+	deliveryStatus?: string | null;
+	from: string | null;
+	to: string[];
+	cc: string[];
+	subject: string | null;
+	text: string | null;
+	html: string | null;
+	messageId: string | null;
+	inReplyTo: string | null;
+	references: string[];
+	attachments: Array<{ filename: string; contentType: string; url?: string | null; size?: number | null }>;
+	sentAt: string | null;
+	receivedAt: string | null;
+	webUrl?: string | null;
+	/** Set on an event whose body went over 256 KiB (`text`/`html` are `null` then). */
+	bodyOmitted?: boolean;
+}
+
+/** `POST /email/inbound` (`InboundEmail`, CR-11): a mail a Gauzy mailbox received, for an agent of the pinned org. */
+export interface EverWorksInboundEmail {
+	agentId: string;
+	message: {
+		from: string;
+		to: string[];
+		cc?: string[];
+		subject: string;
+		text?: string | null;
+		html?: string | null;
+		messageId?: string | null;
+		inReplyTo?: string | null;
+		references?: string[];
+		attachments?: Array<{ filename: string; contentType: string; url?: string | null }>;
+	};
+}
+
+/** The answer of `POST /email/inbound` (`email-inbound-result.schema.json`): the stored message and its dispatch. */
+export interface EverWorksInboundEmailResult {
+	message: EverWorksEmailMessage;
+	dispatch: { mode: 'task-spawn' | 'conversation' | string; taskId: string | null; conversationId: string | null; threaded: boolean };
+}

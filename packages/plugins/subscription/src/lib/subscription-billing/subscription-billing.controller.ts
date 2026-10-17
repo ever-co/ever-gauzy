@@ -37,6 +37,7 @@ import {
 } from './dto';
 import { SubscriptionBilling } from './subscription-billing.entity';
 import { SubscriptionBillingService } from './subscription-billing.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 /**
  * Billing cycles.
@@ -52,7 +53,10 @@ import { SubscriptionBillingService } from './subscription-billing.service';
 @Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 @Controller('/subscription-billings')
 export class SubscriptionBillingController extends CrudController<SubscriptionBilling> {
-	constructor(private readonly subscriptionBillingService: SubscriptionBillingService) {
+	constructor(
+		private readonly subscriptionBillingService: SubscriptionBillingService,
+		private readonly subscriptionService: SubscriptionService
+	) {
 		super(subscriptionBillingService);
 	}
 
@@ -174,6 +178,9 @@ export class SubscriptionBillingController extends CrudController<SubscriptionBi
 	/**
 	 * Records that a cycle's money arrived.
 	 *
+	 * The payment goes through the subscription service rather than the ledger alone: an invoiced cycle held
+	 * the rights of its period back, and its payment is what puts them in force (R4-05).
+	 *
 	 * @param id The cycle.
 	 * @param entity When it settled, and a note.
 	 * @returns The updated cycle.
@@ -184,7 +191,7 @@ export class SubscriptionBillingController extends CrudController<SubscriptionBi
 	@Post(':id/pay')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async pay(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: PaySubscriptionBillingDTO): Promise<SubscriptionBilling> {
-		return await this.subscriptionBillingService.markPaid(id, { paidAt: entity.paidAt });
+		return await this.subscriptionService.payCycle(id, { paidAt: entity.paidAt });
 	}
 
 	/**

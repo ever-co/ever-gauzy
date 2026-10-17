@@ -1,0 +1,18 @@
+# Gauzy Inbox — Cloudflare Email Worker (copy to wrangler.toml, one per environment).
+#
+# The secret is never in this file:
+#   wrangler secret put GAUZY_INBOX_PLATFORM_SECRET   # the API's GAUZY_INBOX_PLATFORM_SECRET (at least 24 characters)
+#
+# Then route the platform mailbox domain to the Worker in Email Routing (a catch-all rule, action "Send to a Worker").
+
+name = "gauzy-inbox-email-worker"
+main = "src/worker.mjs"
+compatibility_date = "2026-01-01"
+
+[vars]
+# The Gauzy API of this environment (https; the Worker posts to <url>/api/inbox/inbound/generic/platform).
+GAUZY_INBOX_API_URL = "https://api.example.com"
+# The largest message accepted (the API's GAUZY_INBOX_MAX_MESSAGE_BYTES; default 25 MB).
+# GAUZY_INBOX_MAX_MESSAGE_BYTES = "26214400"
+# Whose Authentication-Results are forwarded (Cloudflare Email Routing's MX by default).
+# GAUZY_INBOX_TRUSTED_AUTHSERV_ID = "mx.cloudflare.net"
