@@ -254,9 +254,13 @@ export class AuthManager {
 			});
 
 			if (response?.token) {
-				// Update only the access token and expiry
+				// Update the access token and expiry, and keep the rotated refresh token
+				// since the API marks the previous one as rotated
 				this.tokenData.accessToken = response.token;
 				this.tokenData.expiresAt = this.calculateTokenExpiry(response.token);
+				if (response.refresh_token) {
+					this.tokenData.refreshToken = response.refresh_token;
+				}
 
 				if (environment.debug) {
 					logger.log('✅ Token refreshed successfully');
@@ -342,8 +346,12 @@ export class AuthManager {
 	public async logout(): Promise<void> {
 		try {
 			if (this.tokenData?.accessToken && this.apiClient) {
-				// Call logout endpoint to invalidate refresh token on server
-				await this.apiClient.get('/api/auth/logout');
+				const { accessToken, refreshToken } = this.tokenData;
+				// Call logout endpoint to invalidate refresh token on server.
+				// The header is set here because the request interceptor skips auth endpoints.
+				await this.apiClient.post('/api/auth/logout', refreshToken ? { refresh_token: refreshToken } : {}, {
+					headers: { Authorization: `Bearer ${accessToken}` }
+				});
 			}
 		} catch (error) {
 			// Ignore logout errors, we're clearing local data anyway
