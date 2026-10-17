@@ -1151,6 +1151,30 @@ describe('task comments review fixes (#10813)', () => {
 		expect(ewSide()['body']).toBe('Original');
 	});
 
+	it("a retried change of the author never carries someone else's later edit or delete as the author (review F21, #11021 review)", async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
+		await t.push('g1');
+		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Mine</p>', actorType: 'User', employeeId: 'e-alice', createdByUserId: 'u-alice' });
+		await t.pushComment('gc1', 'upsert', 'u-alice');
+		const lastAs = (method: string) => [...t.mock.requests].reverse().find((r) => r.method === method)?.headers['x-act-as-user'] ?? null;
+		const row = t.comments[0] as (typeof t.comments)[number];
+		// Alice's edit is queued (actor Alice); before its retry runs, Bob edits the comment: the row now has Bob's text.
+		row.html = '<p>Bob was here</p>';
+		row.updatedByUserId = 'u-bob';
+		expect((await t.pushComment('gc1', 'upsert', 'u-alice')).status).toBe('skipped');
+		expect(lastAs('PATCH')).toBeNull();
+		expect([...t.mock.comments.values()][0]).toMatchObject({ body: 'Mine' });
+		// The same for a delete Bob made while Alice's change waited.
+		row.deletedAt = new Date();
+		row.deletedByUserId = 'u-bob';
+		expect((await t.pushComment('gc1', 'delete', 'u-alice')).status).toBe('skipped');
+		expect(lastAs('DELETE')).toBeNull();
+		expect(t.mock.comments.size).toBe(1);
+	});
+
 	it("a new Gauzy comment is posted as the person who wrote it, not as the comment's stated employee (review F21)", async () => {
 		const t = setup();
 		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
