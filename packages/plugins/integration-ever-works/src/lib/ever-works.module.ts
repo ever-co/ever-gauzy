@@ -16,6 +16,8 @@ import { readEverWorksConfig } from './ever-works-config';
 import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
 import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
+import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
+import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
 import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
@@ -100,7 +102,16 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 }
 
 /** The entity subscribers the plugin adds to the ORMs (outbound triggers of records without a platform event). */
-export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber, EverWorksTaskWatcherSubscriber, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskCommentSubscriber];
+export const EVER_WORKS_SUBSCRIBERS = [
+	EverWorksTeamSubscriber,
+	EverWorksTeamMemberSubscriber,
+	EverWorksTaskWatcherSubscriber,
+	EverWorksTaskLinkedIssueSubscriber,
+	EverWorksTaskCommentSubscriber,
+	EverWorksGoalSubscriber,
+	EverWorksKeyResultSubscriber,
+	EverWorksKeyResultUpdateSubscriber
+];
 
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog, EverWorksSyncRun];
@@ -168,6 +179,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		// Ideas ↔ Idea tasks (G-P2-3): registers itself with the applier and the pusher.
 		EverWorksIdeasService,
 		EverWorksIdeaTaskCapture,
+		// Goals ↔ Goal + KeyResults (G-P2-1): registers itself with the applier and the pusher.
+		EverWorksGoalsService,
+		EverWorksGoalCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,

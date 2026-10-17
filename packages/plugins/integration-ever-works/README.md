@@ -252,6 +252,19 @@ and answered `202`.
   Ever Works: no other status move is pushed, and a refused move writes Ever
   Works' status back. A task whose type changes away from Idea is unlinked
   (both kept); a deleted idea archives its task; private ideas never sync.
+- **Goals ↔ Goal + key results (G-P2-1).** An Ever Works goal is a Gauzy
+  goal: title, description, deadline (the narrowest active time frame that
+  contains it, else a new `Q<n> <yyyy>` time frame), scope (its first team →
+  level Team, no team → Organization; a Gauzy Employee goal stays one), lead
+  (its agent, else its owner), progress, archived and the primary mission's
+  initiative. Criteria, a metric and the Definition of Done become key results
+  (numeric with bucketed weights, True/False for Definition-of-Done items); a
+  key result Ever Works drops is archived. A Gauzy goal becomes an Ever Works
+  goal that is **always a draft** (numeric key results → a metric goal on the
+  external source, else a delivery goal from its True/False key results);
+  edits, criteria and the Definition of Done follow, and key result values are
+  pushed as samples (`POST /goals/:id/samples`). Gauzy never activates,
+  resumes or completes an Ever Works goal: no status is sent.
 - **Inbox (where the Gauzy Inbox is loaded).** Ever Works inbox items
   (questions, approvals, escalations, notices; `inbox.item.*`, served to a key
   with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
