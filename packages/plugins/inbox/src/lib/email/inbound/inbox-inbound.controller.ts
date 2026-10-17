@@ -71,7 +71,8 @@ export class InboxInboundRateLimitGuard implements CanActivate {
  * route `/inbound/generic/platform` is proven with `GAUZY_INBOX_PLATFORM_SECRET`. Unknown providers and accounts answer
  * 404, unproven requests 401, and a stored delivery 202 with `{ accepted, duplicates, dropped }`.
  *
- * The signature is computed over the raw body, which the API captures for every JSON and form request.
+ * The signature is computed over the raw body, which the API captures for every JSON and URL-encoded form request,
+ * and this route's own middleware for a multipart form or a `text/plain` body (`InboundRawBodyMiddleware`).
  */
 @ApiTags('Inbox')
 @Public()
@@ -80,7 +81,8 @@ export class InboxInboundRateLimitGuard implements CanActivate {
 export class InboxInboundController {
 	constructor(private readonly inbound: InboxInboundService) {}
 
-	@Post('/:providerId/:accountId')
+	// The same URL ending in `/mime` too: Mailgun posts the raw message to a route URL that ends in `mime`.
+	@Post(['/:providerId/:accountId', '/:providerId/:accountId/mime'])
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'An email provider delivers mail for a provider account (signed by that account).' })
