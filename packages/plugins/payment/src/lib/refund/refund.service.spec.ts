@@ -1489,6 +1489,29 @@ describe('RefundService — what a refund cites is the caller’s, and the order
 		).resolves.toMatchObject({ returnId: 'external-return', claimId: 'external-claim' });
 	});
 
+	it('measures a correction against what will be written: a cleared return no longer binds the order', async () => {
+		// The payment names no order, so the refund may be corrected to another order of ours — and the return
+		// it cited, which belongs to the first order, is cleared in the same request (Greptile, #10854).
+		const fixture = refundFixture({ ...registered(), payments: [paymentRow(PAYMENT, { orderId: null })] });
+		const refund = await fixture.service.createRefund(refundInput({ returnId: RETURN }) as never);
+
+		await expect(
+			fixture.service.updateRefund(refund.id, { orderId: OTHER_ORDER, returnId: null } as never)
+		).resolves.toMatchObject({ orderId: OTHER_ORDER, returnId: null });
+
+		// A refund with no payment is explained by its return or claim alone, so both cannot be cleared.
+		const attributed = await fixture.service.createAttributedRefund({
+			orderId: ORDER,
+			returnId: RETURN,
+			amount: '5',
+			currency: 'USD'
+		} as never);
+
+		await expect(fixture.service.updateRefund(attributed.id, { returnId: null } as never)).rejects.toThrow(
+			/REFUND_NOT_ALLOWED/
+		);
+	});
+
 	it('holds a changed attribution to the creation rules, and never moves a refund out of the organization', async () => {
 		const fixture = refundFixture(registered());
 		const refund = await fixture.service.createRefund(refundInput() as never);

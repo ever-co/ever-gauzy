@@ -300,13 +300,23 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			changes[field] !== null &&
 			String(changes[field]) !== String((refund as unknown as Record<string, unknown>)[field] ?? '');
 
-		if (changed('orderId') || changed('returnId') || changed('claimId')) {
-			const next: IRefundAttribution = {
-				orderId: (changes.orderId as ID) ?? refund.orderId,
-				returnId: (changes.returnId as ID) ?? refund.returnId,
-				claimId: (changes.claimId as ID) ?? refund.claimId
-			};
+		// What the row will say once written: an explicit `null` clears a return or a claim, and only a member
+		// the body leaves out keeps the stored value. The order is required and cannot be cleared.
+		const next: IRefundAttribution = {
+			orderId: (changes.orderId as ID) ?? refund.orderId,
+			returnId: changes.returnId !== undefined ? (changes.returnId as ID | null) : refund.returnId,
+			claimId: changes.claimId !== undefined ? (changes.claimId as ID | null) : refund.claimId
+		};
 
+		// A refund with no payment is explained by its return or its claim alone; clearing both would leave a
+		// movement nobody can explain, which creation refuses as well.
+		const clears = changes.returnId !== undefined || changes.claimId !== undefined;
+
+		if (clears && !refund.paymentId && !next.returnId && !next.claimId) {
+			throw new BadRequestException('REFUND_NOT_ALLOWED');
+		}
+
+		if (changed('orderId') || changed('returnId') || changed('claimId')) {
 			// Ownership first, as on creation; then the payment the refund is paid back from.
 			await this.assertAttributionInScope(next);
 
