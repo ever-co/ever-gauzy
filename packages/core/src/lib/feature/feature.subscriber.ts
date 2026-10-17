@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { shuffle } from 'underscore';
-import { FeatureStatusEnum, FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from './../core/file-storage/file-storage';
+import { FeatureStatusEnum } from '@gauzy/contracts';
+import { localFileUrl } from './../core/file-storage/file-storage';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { isFeatureEnabledByDefault } from './feature-default-state';
 import { Feature } from './feature.entity';
@@ -38,24 +38,17 @@ export class FeatureSubscriber extends BaseEntityEventSubscriber<Feature> {
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the imageUrl.
+	 * Sets the full image URL, as served by the LOCAL file storage provider.
 	 *
 	 * @param entity
 	 * @returns
 	 */
-	private setImageUrl(entity: Feature): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.imageUrl = await store.getProviderInstance().url(entity.image);
-					resolve();
-				});
-			} catch (error) {
-				console.error('FeatureSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
+	private async setImageUrl(entity: Feature): Promise<void> {
+		try {
+			entity.imageUrl = await localFileUrl(entity.image);
+		} catch (error) {
+			console.error('FeatureSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }

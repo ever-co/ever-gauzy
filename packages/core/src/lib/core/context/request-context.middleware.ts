@@ -44,6 +44,13 @@ export class RequestContextMiddleware implements NestMiddleware {
 
 	private readonly logger = new Logger(RequestContextMiddleware.name);
 	private readonly loggingEnabled = true;
+	/**
+	 * The level of the two lifecycle lines ("... started." / "... completed with status ..."). They are debug lines:
+	 * two synchronous stdout writes (and two Sentry breadcrumbs) per request, printed when LOG_LEVEL allows debug or
+	 * is unset. `API_REQUEST_LIFECYCLE_LOG=true` prints them at the `log` level, as they always were.
+	 */
+	private readonly lifecycleLevel: 'log' | 'debug' =
+		process.env.API_REQUEST_LIFECYCLE_LOG === 'true' ? 'log' : 'debug';
 
 	constructor(private readonly clsService: ClsService) {
 		RequestContextMiddleware.instance = this;
@@ -82,31 +89,25 @@ export class RequestContextMiddleware implements NestMiddleware {
 			const context = new RequestContext({ id, req, res });
 			this.clsService.set(RequestContext.name, context);
 
-			// Build the full request URL
-			const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
-			const logLifecycle = this.loggingEnabled && !isHealthCheckRequest(req);
+			const logLifecycle =
+				this.loggingEnabled && !isHealthCheckRequest(req) && Logger.isLevelEnabled(this.lifecycleLevel);
 
-			// Log the start of the request if logging is enabled
 			if (logLifecycle) {
+				// Build the full request URL
+				const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 				const contextId = RequestContext.getContextId();
-				this.logger.log(`Context ${contextId}: ${req.method} request to ${fullUrl} started.`);
-			}
+				this.logger[this.lifecycleLevel](`Context ${contextId}: ${req.method} request to ${fullUrl} started.`);
 
-			// Capture the original res.end function
-			const originalEnd = res.end.bind(res);
-
-			// Override the res.end function to log when the response finishes
-			res.end = (...args: any[]): Response => {
-				if (logLifecycle) {
-					const contextId = RequestContext.getContextId();
-					this.logger.log(
+				// Capture the original res.end function, and override it to log when the response finishes
+				const originalEnd = res.end.bind(res);
+				res.end = (...args: any[]): Response => {
+					this.logger[this.lifecycleLevel](
 						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with status ${res.statusCode}.`
 					);
-				}
-
-				// Call the original res.end and return its result
-				return originalEnd(...args);
-			};
+					// Call the original res.end and return its result
+					return originalEnd(...args);
+				};
+			}
 
 			next();
 		});

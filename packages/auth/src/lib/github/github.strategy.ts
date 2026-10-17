@@ -16,15 +16,14 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 	 * @param _accessToken - The access token obtained from the OAuth2 provider.
 	 * @param _refreshToken - The refresh token obtained from the OAuth2 provider.
 	 * @param profile - The user's profile information obtained from the OAuth2 provider.
-	 * @param done - Passport callback function to indicate success or failure.
+	 *
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
+	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
+	 * method never calls `done` itself (doing both reported every sign-in twice: a success, then a failure).
+	 *
+	 * @returns The user object built from the profile.
 	 */
-	async validate(
-		_request: Request,
-		_accessToken: string,
-		_refreshToken: string,
-		profile: Profile,
-		done: (error: any, user: any, info?: any) => void
-	) {
+	async validate(_request: Request, _accessToken: string, _refreshToken: string, profile: Profile) {
 		try {
 			// Extract relevant information from the user's profile
 			const { id: providerId, provider, emails, displayName, username, photos } = profile;
@@ -53,12 +52,12 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 				provider
 			};
 
-			// Pass the user object to the callback to indicate successful authentication
-			done(null, user);
+			// The returned user is what passport authenticates
+			return user;
 		} catch (error) {
-			// Pass the error to the callback to indicate authentication failure
+			// The thrown error is what passport reports as the authentication failure
 			console.error('Error during Github OAuth validation:', error);
-			done(error, false);
+			throw error;
 		}
 	}
 }

@@ -12,6 +12,7 @@ import {
 	HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { cachedPresign, getCachedS3Client, PRESIGNED_URL_EXPIRES_IN_SECONDS } from './s3-client-cache';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
@@ -146,15 +147,12 @@ export class S3Provider extends Provider<S3Provider> {
 		try {
 			const s3Client = this.getS3Instance();
 
-			const signedUrl = await getSignedUrl(
-				s3Client,
-				new GetObjectCommand({
-					Bucket: this.getS3Bucket(),
-					Key: fileURL
-				}),
-				{
-					expiresIn: 3600
-				}
+			// One signature per object for a few minutes, from a client shared per configuration (s3-client-cache.ts).
+			const bucket = this.getS3Bucket();
+			const signedUrl = await cachedPresign(s3Client, bucket, fileURL, () =>
+				getSignedUrl(s3Client, new GetObjectCommand({ Bucket: bucket, Key: fileURL }), {
+					expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS
+				})
 			);
 
 			return signedUrl;
@@ -352,7 +350,7 @@ export class S3Provider extends Provider<S3Provider> {
 			const region = this.config.aws_default_region || 'us-east-1';
 
 			if (this.config.aws_access_key_id && this.config.aws_secret_access_key) {
-				const s3Client = new S3Client({
+				const s3Client = getCachedS3Client({
 					credentials: {
 						accessKeyId: this.config.aws_access_key_id,
 						secretAccessKey: this.config.aws_secret_access_key

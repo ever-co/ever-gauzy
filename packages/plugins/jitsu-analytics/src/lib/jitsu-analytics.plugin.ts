@@ -2,7 +2,7 @@ import { DynamicModule } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { JITSU_MODULE_PROVIDER_CONFIG, JitsuModuleOptions } from './jitsu.types';
-import { parseOptions } from './jitsu-helper';
+import { isJitsuServerConfigured, parseOptions } from './jitsu-helper';
 import { JitsuAnalyticsService } from './jitsu-analytics.service';
 import { JitsuEventsSubscriber } from './jitsu-events.subscriber';
 
@@ -14,7 +14,10 @@ import { JitsuEventsSubscriber } from './jitsu-events.subscriber';
 			useFactory: () => JitsuAnalyticsPlugin.options?.config
 		}
 	],
-	subscribers: [JitsuEventsSubscriber]
+	// The subscriber listens to EVERY entity of EVERY query (it has no listenTo), so each loaded row ran its
+	// inherited async hooks even where it could never send anything. It only ever sends with the server-wide
+	// JITSU_SERVER_URL / JITSU_SERVER_WRITE_KEY, so it is only registered when those are set.
+	subscribers: isJitsuServerConfigured() ? [JitsuEventsSubscriber] : []
 })
 export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	static options: JitsuModuleOptions = {} as any;

@@ -496,6 +496,12 @@ export class EverWorksConnectionService {
 			} else if (failure instanceof EverWorksApiError && failure.status === 401) {
 				next = EverWorksConnectionStatus.NEEDS_REAUTH;
 				lastError = `${failure.code}: ${failure.message}`;
+			} else if (EverWorksConnectionService.transient(failure)) {
+				// An outage, a 429 / 5xx, a timeout, or a process that cannot read the key (a worker without the API's
+				// ENCRYPTION_KEY) says nothing about the connection: its status stays and only the error is recorded
+				// (review F16). Turning it to ERROR stopped every sync until the next daily check.
+				next = row.status;
+				lastError = this.reason(failure);
 			} else {
 				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
 				lastError = this.reason(failure);
@@ -527,6 +533,16 @@ export class EverWorksConnectionService {
 				.catch((error) => this.logger.warn(`The needs_reauth notice could not be sent (${this.reason(error)}).`));
 		}
 		return out.result ?? { status: saved.status, healthy: false, lastError: null };
+	}
+
+	/** A failure of the check that is worth trying again, or local to this process (review F16). */
+	private static transient(failure: unknown): boolean {
+		return (
+			failure instanceof EverWorksNetworkError ||
+			(failure instanceof EverWorksApiError && failure.retryable) ||
+			failure instanceof EverWorksSecretError ||
+			failure instanceof ServiceUnavailableException
+		);
 	}
 
 	/**

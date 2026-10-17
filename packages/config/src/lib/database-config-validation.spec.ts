@@ -109,7 +109,14 @@ const DATABASE_ENV_KEYS = [
 	'DB_POOL_SIZE_KNEX',
 	'DB_CONNECTION_TIMEOUT',
 	'DB_IDLE_TIMEOUT',
-	'DB_SLOW_QUERY_LOGGING_TIMEOUT'
+	'DB_SLOW_QUERY_LOGGING_TIMEOUT',
+	'DB_POOL_MIN',
+	'DB_KEEP_ALIVE',
+	'DB_APPLICATION_NAME',
+	'DB_STATEMENT_TIMEOUT',
+	'DB_LOCK_TIMEOUT',
+	'DB_IDLE_IN_TRANSACTION_SESSION_TIMEOUT',
+	'DB_ORM'
 ] as const;
 
 type DatabaseEnv = Partial<Record<(typeof DATABASE_ENV_KEYS)[number], string>>;
@@ -234,7 +241,8 @@ describe('database.ts at import time', () => {
 				'DB ORM Pool Size: 40',
 				'DB Knex Pool Size: 10',
 				`DB Connection Timeout: ${process.env.NODE_ENV === 'production' ? 5000 : 2000}`,
-				'DB Idle Timeout: 10000',
+				// 30 s since the reconnect churn of the 10 s default was measured (perf/api-request-overhead).
+				'DB Idle Timeout: 30000',
 				'DB Slow Query Logging Timeout: 10000'
 			];
 
@@ -388,6 +396,67 @@ describe('database.ts at import time', () => {
 			expect(dbKnexConnectionConfig.config).toMatchObject({
 				connection: { port: 5433 },
 				pool: { max: 12, acquireTimeoutMillis: 5000, idleTimeoutMillis: 30000 }
+			});
+		});
+
+		describe('PostgreSQL connection keep-alive, naming, pool minimum and server-side timeouts', () => {
+			it('keep connections alive, name them and keep two open in the active ORM pool by default', () => {
+				const { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } =
+					loadDatabaseConfig({ DB_TYPE: 'postgres' });
+				const expected = { keepAlive: true, keepAliveInitialDelayMillis: 10000, application_name: 'gauzy' };
+				expect(dbTypeOrmConnectionConfig.extra).toMatchObject({ ...expected, min: 2, idleTimeoutMillis: 30000 });
+				expect(dbKnexConnectionConfig.config.connection).toMatchObject(expected);
+				expect((dbMikroOrmConnectionConfig as any).driverOptions.connection).toMatchObject(expected);
+				// Under TypeORM nothing serves requests from MikroORM's pool, so it keeps nothing open.
+				expect((dbMikroOrmConnectionConfig as any).pool.min).toBe(0);
+				// No server-side timeout unless asked for: a transaction-mode PgBouncer refuses them.
+				expect(dbTypeOrmConnectionConfig.extra).not.toHaveProperty('statement_timeout');
+				expect(dbTypeOrmConnectionConfig.extra).not.toHaveProperty('lock_timeout');
+				expect(dbTypeOrmConnectionConfig.extra).not.toHaveProperty('idle_in_transaction_session_timeout');
+			});
+
+			it('honour the opt-outs and the opt-in timeouts', () => {
+				const { dbTypeOrmConnectionConfig, dbKnexConnectionConfig } = loadDatabaseConfig({
+					DB_TYPE: 'postgres',
+					DB_KEEP_ALIVE: 'false',
+					DB_APPLICATION_NAME: '',
+					DB_POOL_MIN: '0',
+					DB_IDLE_TIMEOUT: '10000',
+					DB_STATEMENT_TIMEOUT: '60000',
+					DB_LOCK_TIMEOUT: '10000',
+					DB_IDLE_IN_TRANSACTION_SESSION_TIMEOUT: '120000'
+				});
+				expect(dbTypeOrmConnectionConfig.extra).toMatchObject({
+					min: 0,
+					idleTimeoutMillis: 10000,
+					statement_timeout: 60000,
+					lock_timeout: 10000,
+					idle_in_transaction_session_timeout: 120000
+				});
+				expect(dbTypeOrmConnectionConfig.extra).not.toHaveProperty('keepAlive');
+				expect(dbTypeOrmConnectionConfig.extra).not.toHaveProperty('application_name');
+				expect(dbKnexConnectionConfig.config.connection).toMatchObject({ statement_timeout: 60000 });
+			});
+
+			it('fall back to the default for an invalid DB_POOL_MIN', () => {
+				const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+				try {
+					for (const value of ['-1', 'many']) {
+						const { dbTypeOrmConnectionConfig } = loadDatabaseConfig({ DB_TYPE: 'postgres', DB_POOL_MIN: value });
+						expect(dbTypeOrmConnectionConfig.extra.min).toBe(2);
+					}
+				} finally {
+					warn.mockRestore();
+				}
+			});
+
+			it('never keep more connections open than the pool may hold', () => {
+				const { dbTypeOrmConnectionConfig } = loadDatabaseConfig({
+					DB_TYPE: 'postgres',
+					DB_POOL_SIZE: '1',
+					DB_POOL_MIN: '5'
+				});
+				expect(dbTypeOrmConnectionConfig.extra).toMatchObject({ max: 1, min: 1 });
 			});
 		});
 

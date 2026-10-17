@@ -419,8 +419,8 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			connection: context.connection,
 			mapping: { id: 'm1' }
 		} as never);
-	const pushComment = (gauzyId: string, op: 'upsert' | 'delete' = 'upsert', actorUserId: string | null = null) =>
-		comments$.push({ tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', entityType: EverWorksLinkType.COMMENT, gauzyId, op, actorUserId, attempts: 0 } as never, {
+	const pushComment = (gauzyId: string, op: 'upsert' | 'delete' = 'upsert', actorUserId: string | null = null, extra: Record<string, unknown> = {}) =>
+		comments$.push({ tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', entityType: EverWorksLinkType.COMMENT, gauzyId, op, actorUserId, attempts: 0, ...extra } as never, {
 			connection: context.connection,
 			mapping: { id: 'm1' }
 		} as never);
@@ -957,6 +957,35 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Hi</p>', actorType: 'User', employeeId: null });
 		expect(await t.pushComment('gc1')).toMatchObject({ status: 'deferred' });
 		expect(t.queue.enqueued).toEqual([expect.objectContaining({ entityType: EverWorksLinkType.TASK, gauzyId: 'g1' })]);
+	});
+
+	it('a comment of a task that never syncs is skipped, not retried every minute (review F22)', async () => {
+		const t = setup({ settings: { SYNC_UNLINKED_PROJECT_TASKS: 'false' } });
+		t.addGauzyTask({ id: 'g-idea', title: 'An idea', issueType: 'Idea', projectId: 'p-default' });
+		t.addGauzyTask({ id: 'g-loose', title: 'Unlinked project', projectId: 'p-loose' });
+		t.comments.push({ id: 'gc-idea', taskId: 'g-idea', html: '<p>Hi</p>', actorType: 'User', employeeId: null });
+		t.comments.push({ id: 'gc-loose', taskId: 'g-loose', html: '<p>Hi</p>', actorType: 'User', employeeId: null });
+		expect(await t.pushComment('gc-idea')).toMatchObject({ status: 'skipped', message: expect.stringContaining('ideas sync as Ever Works ideas') });
+		expect(await t.pushComment('gc-loose')).toMatchObject({ status: 'skipped', message: expect.stringContaining('not linked to a work') });
+		expect(t.queue.enqueued).toEqual([]);
+	});
+
+	it('a comment waiting for its task queues the task once, and gives up after a day (review F22)', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Waiting on its team', teams: [{ id: 'g-team-unlinked' }] });
+		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Hi</p>', actorType: 'User', employeeId: null });
+		const first = await t.pushComment('gc1');
+		expect(first).toMatchObject({ status: 'deferred' });
+		expect(t.queue.enqueued).toHaveLength(1);
+		// Its retries (the change settled with the same wait) do not queue the task again.
+		expect(await t.pushComment('gc1', 'upsert', null, { lastError: (first as { message: string }).message })).toMatchObject({ status: 'deferred' });
+		expect(t.queue.enqueued).toHaveLength(1);
+		// A change waiting longer than a day stops.
+		expect(await t.pushComment('gc1', 'upsert', null, { lastError: (first as { message: string }).message, createdAt: new Date(Date.now() - 25 * 3_600_000) })).toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('24 hours')
+		});
+		expect(t.queue.enqueued).toHaveLength(1);
 	});
 
 	it('links the Gauzy task to its Ever Works page and to its pull request once there is one', async () => {

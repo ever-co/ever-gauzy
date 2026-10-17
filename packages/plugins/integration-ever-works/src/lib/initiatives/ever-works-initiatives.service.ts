@@ -364,10 +364,11 @@ export class EverWorksInitiativesService
 			]) {
 				if (stale) await this.links.remove(stale);
 			}
-			// Pairing changes neither record: from now on each side's changes follow. What the mission has that
-			// Gauzy cannot map is kept on the link, so a Gauzy push never removes it.
+			// From now on each side's changes follow. What the mission has that Gauzy cannot map is kept on the link,
+			// so a Gauzy push never removes it; what it has that Gauzy can map is aligned now (review F25).
 			const mission = byEw.get(pair.ewMissionId) as EverWorksMission;
 			const shared = everWorksMissionShared(mission);
+			if (fromEverWorks(context.directions.missions)) await this.alignOnPairing(context, pair.initiativeId, shared);
 			await this.record(
 				context,
 				pair.initiativeId,
@@ -709,6 +710,36 @@ export class EverWorksInitiativesService
 					5000
 				);
 		return { signals: Object.keys(next).length ? next : null, stalledBySync: owned };
+	}
+
+	/**
+	 * Pairing on the Initiatives tab (review F25): the link's snapshot is the mission, so what the initiative lacks
+	 * would read as a Gauzy change on its first save and be pushed — stripping the mission's teams (widening it to the
+	 * organization) and its works. So the mission's paired works are added to the initiative's projects (a later push
+	 * then only adds the initiative's own works to the mission), and an initiative with no team of its own takes the
+	 * mission's paired teams and is team-scoped (D11). Only additions, never a removal, on the Gauzy side.
+	 */
+	private async alignOnPairing(context: EverWorksMappingContext, initiativeId: ID, shared: MissionShared): Promise<void> {
+		await EverWorksSyncContext.run(
+			{ connectionId: context.connection.id as ID, eventId: `initiatives-tab:pair:${initiativeId}` },
+			async () => {
+				await this.applyWorks(context, initiativeId, [], shared.works, []);
+				const own = (await this.dataSource
+					.createQueryBuilder()
+					.relation(OrganizationStrategicInitiative, 'teams')
+					.of(initiativeId)
+					.loadMany()) as Array<{ id: ID }>;
+				if (own.length) return;
+				const teamOf = await this.pairs(context, EverWorksLinkType.TEAM);
+				if (!shared.teamIds.some((teamId) => teamOf.has(teamId))) return;
+				// Team-scoped first, then the teams: a failure in between leaves it narrower (team-scoped, no team yet),
+				// never wider, and pairing again finishes it (it still has no team of its own).
+				await this.dataSource
+					.getRepository(OrganizationStrategicInitiative)
+					.update({ id: initiativeId } as never, { visibilityScope: OrganizationStrategicVisibilityScopeEnum.TEAM } as never);
+				await this.applyTeams(context, initiativeId, [], shared.teamIds, []);
+			}
+		);
 	}
 
 	/** The mission's teams moved: the same adds and removes on the initiative's teams. Returns the teams Gauzy cannot map. */

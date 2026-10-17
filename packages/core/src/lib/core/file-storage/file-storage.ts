@@ -170,3 +170,17 @@ export class FileStorage {
 		}
 	}
 }
+
+let localProviderInstance: Provider<any> | null | undefined;
+
+/**
+ * The public URL under which the LOCAL provider serves `path` (an icon of a tag, task status, priority, size,
+ * version, issue type, feature or report). Entity load hooks used to build a new `FileStorage` for every row to
+ * compute it; the LOCAL provider is a stateless singleton, so it is resolved once.
+ */
+export function localFileUrl(path: string): Promise<string> {
+	if (localProviderInstance === undefined) {
+		localProviderInstance = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL).getProviderInstance();
+	}
+	return localProviderInstance ? localProviderInstance.url(path) : Promise.resolve(path);
+}

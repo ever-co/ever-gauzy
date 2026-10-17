@@ -193,6 +193,7 @@ import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.mod
 import { TenantModule } from '../tenant/tenant.module';
 import { BillingModule } from '../shared/billing';
 import { createThrottlerStorage } from '../throttler/redis-throttler.storage';
+import { resolveRedisCacheReadTimeout, withKeyvReadDeadline } from './keyv-read-deadline';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
 import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
 import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
@@ -309,7 +310,8 @@ if (environment.THROTTLE_ENABLED) {
 								// - socket.reconnectStrategy: false (overrides any custom strategy)
 								// - throwOnConnectError: false
 
-								const secondary = createKeyvNonBlocking({
+								// Reads from Redis are awaited on every L1 miss: bounded, see keyv-read-deadline.ts.
+								const secondary = withKeyvReadDeadline(createKeyvNonBlocking({
 									url,
 									username,
 									password,
@@ -335,7 +337,7 @@ if (environment.THROTTLE_ENABLED) {
 										  },
 									// Send PING every 30s to keep connection alive
 									pingInterval: 30_000
-								});
+								}), resolveRedisCacheReadTimeout(process.env.REDIS_CACHE_READ_TIMEOUT_MS));
 
 								// Create Cacheable instance with 2-layer caching
 								// Note: The Cacheable instance is prepared for future use but cache-manager currently
