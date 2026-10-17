@@ -58,10 +58,12 @@ import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
 import { ValidatorModule } from '../shared/validators/validator.module';
+import { CachedValidatorContainer } from '../shared/validators/cached-validator-container';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
 import { setupSwagger } from './swagger';
+import { applyKeepAliveTimeouts, resolveKeepAliveTimeout } from './server-timeouts';
 import { resolveTrustProxy } from './trust-proxy';
 import { validateApplicationSecrets } from './validate-secrets';
 import { createPerfMetricsMiddleware, instrumentPg, isPerfMetricsEnabled, startEventLoopMonitor } from './perf-metrics';
@@ -378,9 +380,14 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	await seedDatabaseIfEmpty(app, appService);
 
 	/**
-	 * Dependency injection with class-validator
+	 * Dependency injection with class-validator.
+	 *
+	 * class-validator asks this container for every constraint of every validated property. Handing it Nest's
+	 * context directly made Nest throw (and class-validator catch) an `UnknownElementException` for every
+	 * built-in constraint on every request; the cached container asks Nest once per class and otherwise
+	 * behaves as class-validator's own default container does (see CachedValidatorContainer).
 	 */
-	useContainer(app.select(ValidatorModule), { fallbackOnErrors: true });
+	useContainer(new CachedValidatorContainer(app.select(ValidatorModule)), { fallbackOnErrors: true });
 
 	// Start the server
 	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
@@ -422,6 +429,16 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 				});
 		}
 	});
+
+	// Behind nginx / an ingress, idle upstream connections are reused for up to its keepalive_timeout (60 s by
+	// default). Node's 5 s keepAliveTimeout let the API close a socket nginx was about to reuse — a sporadic
+	// 502. The API now outlives the proxy's idle timeout (API_KEEP_ALIVE_TIMEOUT_MS, default 65 s); see
+	// ./server-timeouts.ts.
+	const { keepAliveTimeout, headersTimeout } = applyKeepAliveTimeouts(
+		app.getHttpServer(),
+		resolveKeepAliveTimeout(process.env.API_KEEP_ALIVE_TIMEOUT_MS)
+	);
+	console.log(chalk.green(`HTTP keepAliveTimeout ${keepAliveTimeout} ms, headersTimeout ${headersTimeout} ms`));
 
 	console.timeEnd(chalk.yellow('✔ Total Application Bootstrap Time'));
 

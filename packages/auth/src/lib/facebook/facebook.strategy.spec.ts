@@ -10,14 +10,21 @@ import { FacebookStrategy } from './facebook.strategy';
 describe('FacebookStrategy', () => {
 	const configService = { get: () => undefined } as unknown as ConfigService;
 
-	/** Runs `validate` and returns what it passed to the Passport callback. */
+	/**
+	 * Runs `validate` the way passport-facebook does — through the verify callback the `PassportStrategy`
+	 * mixin registered — and returns what reached Passport's `done`, which must be called exactly once.
+	 */
 	const runValidate = async (emails: Profile['emails']): Promise<{ error: any; user: any }> => {
 		const strategy = new FacebookStrategy(configService);
-		let result: { error: any; user: any };
-		await strategy.validate('access-token', 'refresh-token', { id: '7', emails } as Profile, (error, user) => {
-			result = { error, user };
-		});
-		return result;
+		const calls: Array<{ error: any; user: any }> = [];
+		await (strategy as any)._verify(
+			'access-token',
+			'refresh-token',
+			{ id: '7', emails } as Profile,
+			(error: any, user: any) => calls.push({ error, user })
+		);
+		expect(calls).toHaveLength(1);
+		return calls[0];
 	};
 
 	it('marks the /me email as verified', async () => {
