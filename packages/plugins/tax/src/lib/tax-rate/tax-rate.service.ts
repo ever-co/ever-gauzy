@@ -1081,7 +1081,7 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			return gross.divide(denominator.amount, { scale: gross.decimals });
 		}
 
-		const { slope, intercept } = this.linearTaxOf(chain, quantity);
+		const { slope, intercept } = this.linearTaxOf(chain, currency, quantity);
 		const denominator = this.addExact(EXACT_ONE, slope);
 
 		if (denominator.units <= 0n) {
@@ -1104,16 +1104,18 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	/**
 	 * The tax of a chain as an exact linear function of the net it is assessed on.
 	 *
-	 * It mirrors {@link chainTaxLines} part by part, without the per-part rounding: a percentage part is
-	 * `rate × baseFactor × share` of the net, or of the running total when its rate compounds; a fixed
-	 * part is `fixedAmount × quantity × share` whatever the net; and the running total starts at the net
-	 * and accumulates every part.
+	 * It mirrors {@link chainTaxLines} part by part: a percentage part is `rate × baseFactor × share` of
+	 * the net, or of the running total when its rate compounds, without the per-part rounding that only
+	 * the drafts apply; a fixed part is the amount {@link partAmount} posts for it — already rounded at the
+	 * currency's scale, because that rounding does not depend on the net and the posted amount is what the
+	 * gross contains; and the running total starts at the net and accumulates every part.
 	 *
 	 * @param chain The rates, in the order they are applied.
+	 * @param currency The currency of the document.
 	 * @param quantity The owner's quantity, which a fixed part is applied per unit of.
 	 * @returns The slope and the intercept of the chain's tax.
 	 */
-	private linearTaxOf(chain: IResolvedTaxRate[], quantity: DecimalString): ILinearTax {
+	private linearTaxOf(chain: IResolvedTaxRate[], currency: CurrencyCode, quantity: DecimalString): ILinearTax {
 		let slope = EXACT_ZERO;
 		let intercept = EXACT_ZERO;
 		let runningSlope = EXACT_ONE;
@@ -1130,9 +1132,9 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 				let partIntercept = EXACT_ZERO;
 
 				if (part.amountType === TaxAmountType.FIXED) {
-					partIntercept = multiplyDecimalUnits(
-						multiplyDecimalUnits(this.exact(part.fixedAmount ?? '0'), this.exact(quantity)),
-						share
+					// The base is not read for a fixed part; the amount is the one the draft will carry.
+					partIntercept = this.exact(
+						this.partAmount(part, Money.zero(currency), rate, currency, quantity).amount
 					);
 				} else {
 					const factor = multiplyDecimalUnits(
@@ -1186,9 +1188,10 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 
 	/**
 	 * @param rate A resolved rate.
-	 * @returns Whether the rate is one percentage part carrying the whole rate on the whole base, which is
-	 * the only breakdown whose net has a closed form. Any other breakdown — a reduced base, a split share,
-	 * a fixed amount — has to be walked, because the net is no longer the only unknown.
+	 * @returns Whether the rate is one percentage part carrying the whole rate on the whole base. Such a rate
+	 * is extracted by one division of the gross by `1 + rate`; every other breakdown — a reduced base, a
+	 * split share, a fixed amount — is extracted through the chain's linear coefficients (see
+	 * {@link linearTaxOf}).
 	 */
 	private isWholeRateOnWholeBase(rate: IResolvedTaxRate): boolean {
 		if (rate.parts.length !== 1) {

@@ -223,6 +223,28 @@ describe('TaxRateService.calculate — exact extraction of an inclusive net (R2-
 		expectNetPlusTaxIsGross(line);
 	});
 
+	it('takes out the fixed amount the draft posts, rounded, not the unrounded one', async () => {
+		// A fixed 0.005 posts as 0.01 at the currency's scale, so the gross 1.00 contains a net of 0.99.
+		// Taking out the unrounded 0.005 gave a net of 1.00 and the residual rule then zeroed the tax.
+		const result = await calculate([rate({ id: 'levy', rate: 0, amountType: 'FIXED' })], '1.000000', [
+			{
+				id: 'levy-part',
+				taxRateId: 'levy',
+				sequence: 1,
+				factorPercent: 100,
+				baseFactor: 1,
+				amountType: 'FIXED',
+				fixedAmount: 0.005
+			}
+		]);
+		const line = result.lines[0];
+
+		expect(line.netAmount).toBe('0.990000');
+		expect(line.taxAmount).toBe('0.010000');
+		expect(line.taxLines[0].amount).toBe('0.010000');
+		expectNetPlusTaxIsGross(line);
+	});
+
 	it('keeps the single whole rate on its one exact division (control)', async () => {
 		// Doc 07 §5.2: 59.99 / 1.05 = 57.1333… → 57.13, tax the residual 2.86.
 		const result = await calculate([rate({ id: 'gst', rate: 0.05 })], '59.990000');
