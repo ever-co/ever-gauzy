@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
@@ -11,6 +11,7 @@ import { InboxEmailThread } from './entities/inbox-email-thread.entity';
 import { InboxMailbox } from './entities/inbox-mailbox.entity';
 import { InboxMailboxMember } from './entities/inbox-mailbox-member.entity';
 import { InboxProviderAccount } from './entities/inbox-provider-account.entity';
+import { InboundRawBodyMiddleware } from './inbound/inbound-raw-body.middleware';
 import { InboxEmailProcessor } from './inbound/inbox-email.processor';
 import { INBOX_EMAIL_PROCESSOR } from './inbound/inbox-email-processor.types';
 import { InboxEmailStorage } from './inbound/inbox-email-storage';
@@ -82,4 +83,9 @@ export const INBOX_EMAIL_ENTITIES = [
 		InboundReplayGuard
 	]
 })
-export class InboxEmailModule {}
+export class InboxEmailModule implements NestModule {
+	/** The webhook route keeps the raw bytes of the bodies the API's parsers leave unread (multipart forms, SNS text). */
+	configure(consumer: MiddlewareConsumer): void {
+		consumer.apply(InboundRawBodyMiddleware).forRoutes(InboxInboundController);
+	}
+}

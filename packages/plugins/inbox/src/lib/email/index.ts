@@ -12,6 +12,7 @@ export * from './providers/email-provider.types';
 export * from './providers/email-provider.registry';
 export * from './providers/provider-config';
 export * from './providers/outbound-mail';
+export * from './providers/form-body';
 export * from './providers/generic/generic-webhook.provider';
 export * from './provider-accounts/inbox-provider-account.service';
 export * from './secrets/inbox-secret-box';
@@ -19,6 +20,7 @@ export * from './mailboxes/address';
 export * from './mailboxes/inbox-mailbox-access.service';
 export * from './inbound/inbox-email.config';
 export * from './inbound/replay-guard.service';
+export * from './inbound/inbound-raw-body.middleware';
 export {
 	ALLOWLISTED_HEADERS,
 	addressesOf,

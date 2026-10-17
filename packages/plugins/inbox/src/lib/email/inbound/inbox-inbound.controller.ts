@@ -71,7 +71,8 @@ export class InboxInboundRateLimitGuard implements CanActivate {
  * route `/inbound/generic/platform` is proven with `GAUZY_INBOX_PLATFORM_SECRET`. Unknown providers and accounts answer
  * 404, unproven requests 401, and a stored delivery 202 with `{ accepted, duplicates, dropped }`.
  *
- * The signature is computed over the raw body, which the API captures for every JSON and form request.
+ * The signature is computed over the raw body, which the API captures for every JSON and URL-encoded form request,
+ * and this route's own middleware for a multipart form or a `text/plain` body (`InboundRawBodyMiddleware`).
  */
 @ApiTags('Inbox')
 @Public()
