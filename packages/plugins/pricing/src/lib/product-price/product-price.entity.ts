@@ -129,7 +129,8 @@ export class ProductPrice extends TenantOrganizationBaseEntity {
 
 	/**
 	 * Signed fraction of the base: positive reduces it, negative is a cost-plus **markup**. Required
-	 * exactly when `computeMode` is `PERCENT_OFF`, and bounded by `-1000 < percent <= 100`.
+	 * exactly when `computeMode` is `PERCENT_OFF`, and bounded by `-1000 < percent <= 1` by the service
+	 * (the database check constraint is the looser `<= 100`).
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
