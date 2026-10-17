@@ -62,9 +62,10 @@ export interface IInboundEmailResponse {
 /**
  * Inbound-email capture (`07-ai-knowledge.md` §17.2).
  *
- * The whole channel is **off unless `GAUZY_DOCS_INBOUND_EMAIL_ENABLED=true`** — a disabled
- * deployment answers 404 (the route does not exist as far as the world can tell), so
- * enabling it is a deliberate act.
+ * The whole channel is **on unless `GAUZY_DOCS_INBOUND_EMAIL_ENABLED=false`** — a disabled
+ * deployment answers 404 (the route does not exist as far as the world can tell). It is enabled
+ * by default because gate 2 fails closed: a delivery without a valid HMAC signature or
+ * per-address relay secret is rejected.
  *
  * Mandatory gates, in order (every one of them fails closed):
  *
@@ -114,7 +115,7 @@ export class InboundEmailService {
 	async handleWebhook(request: IInboundWebhookRequest): Promise<IInboundEmailResponse> {
 		const config = getDocsConfig();
 
-		// Gate 1 — the channel is off unless explicitly enabled.
+		// Gate 1 — the channel is on unless explicitly disabled.
 		if (!config.inboundEmailEnabled) {
 			throw new NotFoundException({
 				message: 'The inbound-email capture channel is not enabled',

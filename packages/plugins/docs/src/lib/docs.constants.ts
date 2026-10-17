@@ -102,9 +102,10 @@ export const ENV_GAUZY_DOCS_VECTOR_STORE = 'GAUZY_DOCS_VECTOR_STORE';
 export const ENV_GAUZY_DOCS_ORG_QUOTA_BYTES = 'GAUZY_DOCS_ORG_QUOTA_BYTES';
 export const ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED = 'GAUZY_DOCS_RETRIEVAL_LOG_ENABLED';
 /**
- * Master switch for provider-vision OCR (scanned PDFs + images). Off by default: OCR is a
- * per-page LLM call, so it is opt-in spend. When off, a PDF with no usable text layer and an
- * image upload both fail permanently exactly as they did before OCR existed.
+ * Master switch for provider-vision OCR (scanned PDFs + images). On by default, but OCR is a
+ * per-page LLM call, so it only runs when the AI pipeline is enabled and a provider has
+ * credentials. When off, a PDF with no usable text layer and an image upload both fail
+ * permanently exactly as they did before OCR existed.
  */
 export const ENV_GAUZY_DOCS_OCR_ENABLED = 'GAUZY_DOCS_OCR_ENABLED';
 /** Hard cap on OCR'd pages per document — the cost fuse of the OCR path. */
