@@ -11,7 +11,7 @@
  * Dependency-free except `pg` (only when PG_URL is set), resolved from the repo's node_modules.
  *
  * Usage (from the repo root):
- *   BASE=http://localhost:3999/api EMAIL=<seeded super admin email> PASSWORD=admin \
+ *   BASE=http://localhost:3999/api EMAIL='<seeded super admin email>' PASSWORD=admin \
  *   PG_URL=postgres://postgres:gauzy@localhost:5432/gauzy_perf \
  *   SEQ=200 CONCURRENCY=16 DURATION=10 LABEL=baseline OUT=tools/perf/results/baseline.json \
  *   node tools/perf/api-bench.mjs [tools/perf/scenarios.json]
