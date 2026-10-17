@@ -152,6 +152,13 @@ members of a shared mailbox (with none: a team's members, or the organization's 
 `INBOX_MAILBOX_MANAGE`), counting only users who are still active members of the mailbox's organization. A quarantined
 message gets no item until a manager releases it. A failure is retried three times, then left `FAILED` with its error.
 
+**Hand-off (P4c).** Once a message is delivered (processed, or released from the quarantine), the listeners registered on
+`INBOX_EMAIL_HANDOFFS` (`InboxEmailHandoffs`) are told: the ids and the mailbox's free `settings`. A listener never fails
+or delays the delivery (its error is logged) and reads the stored message itself when it acts (`read(tenantId,
+emailId)`: a delivered inbound message only, with its addresses, threading headers and attachment metadata). The Ever
+Works integration uses it to hand a mailbox's mail to an Ever Works agent (`settings.everWorksAgentId`, see the
+integration's README); the Inbox depends on no listener.
+
 ## Messages (`/api/inbox/emails`, `INBOX_VIEW` plus access to the mailbox)
 
 | Method | Path                                      | What                                                                                           |
