@@ -87,6 +87,16 @@ describe('IntegrationTenantUpdateHandler — the stated organization is the conn
 		]);
 	});
 
+	it('stamps the settings with the connection’s own organization when the request states none (Greptile)', async () => {
+		const { commandBus, handler } = fixture();
+
+		await handler.update(CONNECTION, { settings: [{ settingsName: 'apiKey', settingsValue: 'mine' }] } as never);
+
+		const command = commandBus.execute.mock.calls[0][0] as IntegrationSettingUpdateCommand;
+
+		expect((command as any).input).toEqual([expect.objectContaining({ organizationId: ORG_B })]);
+	});
+
 	it('CONTROL: with no organization stated the connection is read under the tenant, as before', async () => {
 		const { service, handler } = fixture();
 
