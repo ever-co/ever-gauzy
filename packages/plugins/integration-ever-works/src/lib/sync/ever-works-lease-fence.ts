@@ -6,6 +6,7 @@ import {
 	EntityManager,
 	EntityMetadata,
 	EntitySubscriberInterface,
+	EventSubscriber,
 	InsertEvent,
 	MoreThan,
 	QueryRunner,
@@ -247,8 +248,10 @@ const isTypeOrmEvent = (event: object): event is UpdateEvent<unknown> => 'queryR
  *
  * TypeORM calls `beforeInsert` / `beforeUpdate` / `beforeRemove` / `beforeSoftRemove` / `beforeRecover`;
  * MikroORM `beforeCreate` / `beforeUpdate` / `beforeDelete` / `beforeUpsert` (`beforeUpdate` serves both,
- * told apart by the event).
+ * told apart by the event). `@EventSubscriber()` is what lets TypeORM take the class from the plugin's
+ * `subscribers` (it keeps only decorated classes).
  */
+@EventSubscriber()
 export class EverWorksLeaseFenceSubscriber implements EntitySubscriberInterface<unknown> {
 	// TypeORM
 	beforeInsert(event: InsertEvent<unknown>): Promise<void> | void {
