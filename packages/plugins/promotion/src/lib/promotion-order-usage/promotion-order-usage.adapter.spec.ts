@@ -4,7 +4,10 @@
  * The two services are doubled at their module boundary: what is pinned is how the adapter translates
  * the order's three moments into the engine's calls, and how a reached limit is answered.
  */
-jest.mock('../promotion/promotion.service', () => ({ PromotionService: class {} }));
+jest.mock('../promotion/promotion.service', () => ({
+	PromotionService: class {},
+	PROMOTION_USAGE_LIMIT_EXCEEDED: 'PROMOTION_USAGE_LIMIT_EXCEEDED'
+}));
 jest.mock('../promotion-usage/promotion-usage.service', () => ({ PromotionUsageService: class {} }));
 
 import { BadRequestException, ConflictException } from '@nestjs/common';
@@ -107,5 +110,33 @@ describe('PromotionOrderUsageAdapter — the per-customer limit and a failed che
 
 		await expect(adapter.releaseForCart('cart-1')).resolves.toBe(1);
 		expect(promotionService.releaseCartUsage).toHaveBeenCalledWith('cart-1');
+	});
+});
+
+describe('PromotionOrderUsageAdapter — the refusal shape and a partial revert (CodeRabbit on #10897)', () => {
+	it('reads the limit refusal by the code the engine states, whatever its text', async () => {
+		const { adapter, promotionService } = fixture();
+		// The shape `PromotionService.reserveUsage` throws: a stable code beside the message.
+		promotionService.reserveUsage.mockRejectedValueOnce(
+			new BadRequestException({ message: 'reworded', code: 'PROMOTION_USAGE_LIMIT_EXCEEDED' })
+		);
+
+		await expect(adapter.reserveForCart(reservation)).rejects.toMatchObject({
+			response: { code: 'PROMOTION_USAGE_LIMIT_REACHED' }
+		});
+	});
+
+	it('attempts every redemption of a cancelled order and reports the ones refused together', async () => {
+		const { adapter, promotionService, promotionUsageService } = fixture();
+		promotionUsageService.findByOrder.mockResolvedValueOnce([
+			{ id: 'u-1', promotionId: 'promotion-1', status: PromotionUsageStatus.REGISTERED },
+			{ id: 'u-2', promotionId: 'promotion-2', status: PromotionUsageStatus.REGISTERED }
+		] as never);
+		promotionService.revertUsage.mockRejectedValueOnce(new Error('store down'));
+
+		await expect(adapter.revertForOrder('order-1')).rejects.toThrow(
+			/PROMOTION_USAGE_REVERT_INCOMPLETE.*1 reverted, 1 refused/
+		);
+		expect(promotionService.revertUsage).toHaveBeenCalledTimes(2);
 	});
 });

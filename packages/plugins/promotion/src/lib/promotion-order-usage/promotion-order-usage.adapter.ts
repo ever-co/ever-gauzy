@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { PromotionService } from '../promotion/promotion.service';
+import { PROMOTION_USAGE_LIMIT_EXCEEDED, PromotionService } from '../promotion/promotion.service';
 import { PromotionUsageService } from '../promotion-usage/promotion-usage.service';
 import { PromotionUsageStatus } from '../promotion.types';
 
@@ -68,7 +68,7 @@ export class PromotionOrderUsageAdapter {
 
 			return usage.id;
 		} catch (error) {
-			if (error instanceof BadRequestException && /PROMOTION_USAGE_LIMIT_EXCEEDED/.test(error.message)) {
+			if (isUsageLimitRefusal(error)) {
 				throw new ConflictException({
 					message: `PROMOTION_USAGE_LIMIT_REACHED: promotion ${input.promotionId} has no use left; the cart has to be re-priced without it.`,
 					code: 'PROMOTION_USAGE_LIMIT_REACHED',
@@ -112,14 +112,28 @@ export class PromotionOrderUsageAdapter {
 	 */
 	async revertForOrder(orderId: ID): Promise<number> {
 		let reverted = 0;
+		const failures: string[] = [];
 
 		for (const usage of await this.promotionUsageService.findByOrder(orderId)) {
 			if (usage.status === PromotionUsageStatus.REVERTED) {
 				continue;
 			}
 
-			await this.promotionService.revertUsage(usage.promotionId, orderId);
-			reverted++;
+			// One redemption that cannot be reverted does not leave the others in place: each is attempted,
+			// and the ones refused are reported together (CodeRabbit on #10897). A retry is safe, because a
+			// reverted row is skipped.
+			try {
+				await this.promotionService.revertUsage(usage.promotionId, orderId);
+				reverted++;
+			} catch (error) {
+				failures.push(`${usage.promotionId}: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		}
+
+		if (failures.length > 0) {
+			throw new Error(
+				`PROMOTION_USAGE_REVERT_INCOMPLETE: order ${orderId}: ${reverted} reverted, ${failures.length} refused (${failures.join('; ')}).`
+			);
 		}
 
 		return reverted;
@@ -161,4 +175,26 @@ export class PromotionOrderUsageAdapter {
 			});
 		}
 	}
+}
+
+/**
+ * Whether an error is the engine's refusal of a use because the promotion's limit is reached.
+ *
+ * Read from the refusal's stable `code` member; the message is still recognised for a refusal raised before
+ * the code was stated.
+ *
+ * @param error What `reserveUsage` threw.
+ * @returns True for the limit refusal.
+ */
+export function isUsageLimitRefusal(error: unknown): boolean {
+	if (!(error instanceof BadRequestException)) {
+		return false;
+	}
+
+	const response = error.getResponse() as { code?: string } | string;
+
+	return (
+		(typeof response === 'object' && response?.code === PROMOTION_USAGE_LIMIT_EXCEEDED) ||
+		error.message.startsWith(PROMOTION_USAGE_LIMIT_EXCEEDED)
+	);
 }

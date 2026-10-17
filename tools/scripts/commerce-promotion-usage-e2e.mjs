@@ -13,7 +13,9 @@
  * 2. cart B gets the same code and is completed over **GraphQL** (`completeCheckout`) → refused: the
  *    engine grants nothing more, or the checkout answers `PROMOTION_USAGE_LIMIT_REACHED` — and either way
  *    no second redemption is written;
- * 3. order A is cancelled over REST → the redemption is reverted and `usageCount` is back to 0.
+ * 3. order A is cancelled over REST → the redemption is reverted and `usageCount` is back to 0;
+ * 4. two carts granted a fresh one-use code are completed **concurrently** → exactly one order, the other
+ *    refused `PROMOTION_USAGE_LIMIT_REACHED`, one live redemption.
  *
  * Run by hand against a booted API (see `commerce-wiring-harness.mjs` for the environment):
  *
@@ -210,6 +212,46 @@ async function main() {
 		JSON.stringify(afterCancel.rows.map((row) => ({ status: row.status, orderId: row.orderId })))
 	);
 	record('GraphQL: the promotion has its use back', afterCancel.counter === 0, `usageCount ${afterCancel.counter}`);
+
+	// --- 4. two checkouts racing for the last use (CodeRabbit on #10897) ------------------------------
+	// Both carts are granted the code while it still has its one use; both are completed at the same time.
+	// The engine's counter is a conditional write, so exactly one checkout takes the use and the other is
+	// refused before any order of its own is written.
+	const raceCode = `${PREFIX}-RACE-${Date.now()}`;
+	const racePromotion = await ensurePromotion(api, organizationId, { code: raceCode, value: '5', usageLimit: 1 });
+	const x = racePromotion?.id ? await cartWithCode(session, catalogue, raceCode, 'race cart X') : undefined;
+	const y = racePromotion?.id ? await cartWithCode(session, catalogue, raceCode, 'race cart Y') : undefined;
+
+	if (x?.applied && y?.applied) {
+		const complete = (cart, scope) =>
+			api(
+				'POST',
+				`/api/carts/${cart.id}/complete`,
+				{ idempotencyKey: key(scope) },
+				{
+					'Idempotency-Key': key(scope),
+					...(versionOf({ json: cart }) ? { 'If-Match': versionOf({ json: cart }) } : {})
+				}
+			);
+		const [first, second] = await Promise.all([complete(x.cart, 'race-x'), complete(y.cart, 'race-y')]);
+		const placed = [first, second].filter((answer) => Boolean(answer.json?.orderId));
+		const refused = [first, second].filter((answer) => !answer.json?.orderId);
+		const live = (await usageOf(session, racePromotion.id)).rows.filter((row) => row.status !== 'REVERTED');
+
+		record(
+			'a concurrent pair redeems a one-use promotion once',
+			placed.length === 1 && refused.length === 1,
+			`HTTP ${first.status} / ${second.status}`
+		);
+		record(
+			'the losing checkout is refused PROMOTION_USAGE_LIMIT_REACHED',
+			refused.length === 1 && JSON.stringify(refused[0].json ?? {}).includes('PROMOTION_USAGE_LIMIT_REACHED'),
+			brief(refused[0] ?? { json: {}, text: '' })
+		);
+		record('the promotion holds exactly one live redemption', live.length === 1, `${live.length} live`);
+	} else {
+		record('both race carts are granted the one-use promotion', false, `X ${x?.applied}, Y ${y?.applied}`);
+	}
 
 	finish(RUN);
 }
