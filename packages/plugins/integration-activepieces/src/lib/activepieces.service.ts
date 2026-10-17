@@ -86,51 +86,13 @@ export class ActivepiecesService {
 			];
 
 			// Look up an existing integration tenant for this tenant/org
-			let existingTenant: any = null;
-			try {
-				existingTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						...(organizationId ? { organizationId } : {}),
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					},
-					relations: ['settings']
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
+			const existingTenant = await this.findExistingIntegrationTenant(tenantId, organizationId);
 
 			let integrationTenantId: string;
 
 			if (existingTenant?.id) {
 				// Update existing tenant's settings by merging/replacing API_KEY and IS_ENABLED
-				const existingSettings: any[] = existingTenant.settings ?? [];
-				const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
-
-				// Update existing rows in-place (preserve their database id) and track which were updated
-				const updatedNames = new Set<string>();
-				const mergedSettings = existingSettings.map((existing: any) => {
-					const update = settingsByName.get(existing.settingsName);
-					if (update) {
-						updatedNames.add(existing.settingsName);
-						return { ...existing, settingsValue: update.settingsValue };
-					}
-					return existing;
-				});
-
-				// Append truly new settings that had no pre-existing row
-				for (const [name, setting] of settingsByName) {
-					if (!updatedNames.has(name)) {
-						mergedSettings.push(setting);
-					}
-				}
-
-				await this.integrationTenantService.save({
-					...existingTenant,
-					settings: mergedSettings
-				});
+				await this.saveMergedSettings(existingTenant, settings);
 
 				integrationTenantId = existingTenant.id;
 			} else {
@@ -748,14 +710,23 @@ export class ActivepiecesService {
 				}
 			];
 
-			// Create or update integration tenant
-			const integrationTenant = await this.integrationTenantService.create({
-				name: IntegrationEnum.ACTIVE_PIECES,
-				integration,
-				tenantId,
-				organizationId,
-				settings
-			});
+			// Reuse the integration tenant created by setupIntegration so the connection keeps its API key
+			const existingTenant = await this.findExistingIntegrationTenant(tenantId, organizationId);
+
+			let integrationTenant: any;
+
+			if (existingTenant?.id) {
+				await this.saveMergedSettings(existingTenant, settings);
+				integrationTenant = existingTenant;
+			} else {
+				integrationTenant = await this.integrationTenantService.create({
+					name: IntegrationEnum.ACTIVE_PIECES,
+					integration,
+					tenantId,
+					organizationId,
+					settings
+				});
+			}
 
 			this.logger.log(
 				`Successfully saved ActivePieces connection settings for tenant ${tenantId}. ` +
@@ -769,5 +740,56 @@ export class ActivepiecesService {
 			this.logger.error('Failed to save ActivePieces connection settings:', error);
 			throw new BadRequestException(`Failed to save connection settings: ${error.message}`);
 		}
+	}
+
+	/**
+	 * Find the ActivePieces integration tenant of the tenant, scoped to the organization when one is given.
+	 */
+	private async findExistingIntegrationTenant(tenantId: string, organizationId?: string): Promise<any> {
+		try {
+			return await this.integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					...(organizationId ? { organizationId } : {}),
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				},
+				relations: ['settings']
+			});
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Merge settings into an existing integration tenant by settingsName and save it.
+	 * Matching rows are updated in place so they keep their database id, missing ones are appended.
+	 */
+	private async saveMergedSettings(existingTenant: any, settings: any[]): Promise<void> {
+		const existingSettings: any[] = existingTenant.settings ?? [];
+		const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
+
+		const updatedNames = new Set<string>();
+		const mergedSettings = existingSettings.map((existing: any) => {
+			const update = settingsByName.get(existing.settingsName);
+			if (update) {
+				updatedNames.add(existing.settingsName);
+				return { ...existing, settingsValue: update.settingsValue };
+			}
+			return existing;
+		});
+
+		for (const [name, setting] of settingsByName) {
+			if (!updatedNames.has(name)) {
+				mergedSettings.push(setting);
+			}
+		}
+
+		await this.integrationTenantService.save({
+			...existingTenant,
+			settings: mergedSettings
+		});
 	}
 }
