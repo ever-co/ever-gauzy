@@ -29,6 +29,9 @@ export const EVER_WORKS_EMAIL_AGGREGATE = 'email_message';
 /** The Inbox identity of a mirrored message (`externalSource`; the Ever Works message id is the `externalId`). */
 export const EVER_WORKS_EMAIL_EXTERNAL_SOURCE = 'ever_works_email';
 
+/** How often a copy superseded by another process is rewritten from Ever Works before the event fails (and is retried). */
+export const MIRROR_RECOVERY_ATTEMPTS = 3;
+
 /** The longest text body a mirrored item keeps (the full message stays in Ever Works, `webUrl`). */
 export const MIRRORED_EMAIL_BODY_MAX = 100_000;
 
@@ -176,29 +179,41 @@ export class EverWorksAgentEmailMirror implements EverWorksInboundHandler {
 		if (!result.recipientUserIds.includes(recipientUserId)) {
 			return { status: 'deferred', message: 'the matched Gauzy user is not a user of this tenant' };
 		}
-		try {
-			await this.links.record({
-				tenantId: context.tenantId,
-				organizationId: context.organizationId,
-				integrationTenantId: context.integrationTenantId,
-				entityType: EverWorksLinkType.AGENT_EMAIL_MIRROR,
-				gauzyId: result.item.id as ID,
-				ewId: message.id,
-				ewVersion: version,
-				ewUpdatedAt: message.updatedAt ?? null,
-				direction: 'inbound'
-			});
-		} catch (error) {
-			if (!(error instanceof EverWorksStaleLinkError)) throw error;
-			// Another process applied a newer version while this one worked (its lease lapsed): the copy written above
-			// may be older than that one, so it is written again from the message as Ever Works holds it now.
-			const current = await this.connections
-				.client(context.connection, context.everWorksOrganizationSlug)
-				.request<EverWorksEmailMessage>('GET', `/email/messages/${encodeURIComponent(message.id)}`);
-			await this.inbox.upsertExternal(mirroredEmailUpsertOf({ ...current, id: message.id }, scope, extras));
-			return { status: 'skipped', message: `superseded: ${error.message}`.slice(0, 2000) };
+		// The link write is the engine's monotonic version check (#10827). Refused, another process applied a newer
+		// version while this one worked (its lease lapsed): the copy is written again from the message as Ever Works
+		// holds it now, and recorded with that version — repeated while yet another one lands in between (bounded).
+		let written = { message, version, itemId: result.item.id as ID };
+		for (let attempt = 0; ; attempt++) {
+			try {
+				await this.links.record({
+					tenantId: context.tenantId,
+					organizationId: context.organizationId,
+					integrationTenantId: context.integrationTenantId,
+					entityType: EverWorksLinkType.AGENT_EMAIL_MIRROR,
+					gauzyId: written.itemId,
+					ewId: message.id,
+					ewVersion: written.version,
+					ewUpdatedAt: written.message.updatedAt ?? null,
+					direction: 'inbound'
+				});
+				return attempt === 0
+					? { status: 'applied' }
+					: { status: 'skipped', message: 'superseded: the copy was rewritten from Ever Works' };
+			} catch (error) {
+				if (!(error instanceof EverWorksStaleLinkError) || attempt >= MIRROR_RECOVERY_ATTEMPTS) throw error;
+				const current = await this.connections
+					.client(context.connection, context.everWorksOrganizationSlug)
+					.request<EverWorksEmailMessage>('GET', `/email/messages/${encodeURIComponent(message.id)}`);
+				const rewritten = await this.inbox.upsertExternal(
+					mirroredEmailUpsertOf({ ...current, id: message.id }, scope, extras)
+				);
+				written = {
+					message: current,
+					version: typeof current.version === 'number' ? current.version : null,
+					itemId: rewritten.item.id as ID
+				};
+			}
 		}
-		return { status: 'applied' };
 	}
 
 	/** The Gauzy user paired with an Ever Works user (MEMBER link → employee of the organization). */

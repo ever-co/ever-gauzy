@@ -243,6 +243,23 @@ describe('EverWorksAgentEmailMirror — EW agent mail as read-only Gauzy Inbox c
 		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'skipped' });
 		expect(request).toHaveBeenCalledWith('GET', '/email/messages/ew-mail-1');
 		expect(upserts.map((row) => row['title'])).toEqual(['Your refund', 'Your refund (final)']);
+		// The rewritten copy is recorded with the version it was read at.
+		expect(linkService.record).toHaveBeenLastCalledWith(
+			expect.objectContaining({ ewId: 'ew-mail-1', ewVersion: 9 })
+		);
+	});
+
+	it('yet another newer version between the recovery read and its write: it reads and writes again, then records', async () => {
+		const { mirror, upserts, request, linkService } = setup();
+		linkService.record
+			.mockRejectedValueOnce(new EverWorksStaleLinkError('l1' as never, 'ew-mail-1', 9, 3))
+			.mockRejectedValueOnce(new EverWorksStaleLinkError('l1' as never, 'ew-mail-1', 10, 9));
+		request
+			.mockResolvedValueOnce(message({ version: 9, subject: 'v9' }) as never)
+			.mockResolvedValueOnce(message({ version: 10, subject: 'v10' }) as never);
+		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		expect(upserts.map((row) => row['title'])).toEqual(['Your refund', 'v9', 'v10']);
+		expect(linkService.record).toHaveBeenLastCalledWith(expect.objectContaining({ ewVersion: 10 }));
 	});
 
 	it('reads an omitted body (over 256 KiB) from GET /email/messages/:id', async () => {
