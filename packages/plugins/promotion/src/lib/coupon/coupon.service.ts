@@ -1,6 +1,8 @@
 // cspell:ignore ABCDEFGHJKMNPQRSTVWXYZ
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	booleanLiteral,
@@ -23,6 +25,7 @@ import {
 	PromotionUsageStatus
 } from '../promotion.types';
 import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+import { withoutRestatedMembers } from '../shared/ledger-members';
 
 /**
  * The alphabet codes are drawn from.
@@ -417,6 +420,72 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 	 */
 	private randomBytes(size: number): Uint8Array {
 		return randomBytes(size);
+	}
+
+	/**
+	 * Writes the editable fields of a coupon. Both surfaces reach it: `PUT /coupons/:id` and `updateCoupon`.
+	 *
+	 * Two members of the REST body are not plain fields (review R2-G27), and the GraphQL input carries neither:
+	 *
+	 * * `usageCount` is the redemption counter, moved by `redeem` and `revert` in one conditional statement each;
+	 *   written by hand it re-opens a used-up single-use code. A change is refused with `COUPON_FIELD_NOT_WRITABLE`;
+	 *   a body that restates the stored value is accepted and the member left out of the write.
+	 * * `code` is stored the way {@link createCoupon} stores it: trimmed and upper-cased, and refused with
+	 *   `COUPON_INVALID` when it is empty or another coupon of the organization holds it. It used to be written as
+	 *   typed, so `save10` and `SAVE10` could both exist and a lower-case code never validated.
+	 *
+	 * Either member makes the coupon be read first, in the caller's tenant and organization, so a coupon outside it is
+	 * a 404 before anything is written.
+	 *
+	 * @param id The coupon, or the conditions that select the coupons to change.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException when the counter would move or the code is empty or taken.
+	 */
+	public async update(
+		id: string | number | FindOptionsWhere<Coupon>,
+		partialEntity: QueryDeepPartialEntity<Coupon>
+	): Promise<UpdateResult | Coupon> {
+		let patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+
+		if (patch.usageCount !== undefined || patch.code !== undefined) {
+			const stored = typeof id === 'string' ? await this.findCouponOrFail(id) : null;
+
+			patch = withoutRestatedMembers(patch, ['usageCount'], stored, {
+				code: 'COUPON_FIELD_NOT_WRITABLE',
+				subject: 'a coupon',
+				movedBy: 'the redemption counter moves with the coupon's redemptions only.',
+				details: { couponId: typeof id === 'string' ? id : null }
+			});
+
+			if (patch.code !== undefined) {
+				if (!stored) {
+					throw new BadRequestException({
+						message: 'COUPON_FIELD_NOT_WRITABLE: a code is changed on one coupon at a time, named by its id.',
+						code: 'COUPON_FIELD_NOT_WRITABLE',
+						details: { couponId: null, fields: ['code'] }
+					});
+				}
+
+				const code = this.normalise(typeof patch.code === 'string' ? patch.code : '');
+
+				if (!code) {
+					throw new BadRequestException('COUPON_INVALID: a coupon needs a code.');
+				}
+
+				if (code !== stored.code) {
+					const existing = await this.typeOrmCouponRepository.findOneBy({ code, ...this.scope });
+
+					if (existing && existing.id !== stored.id) {
+						throw new BadRequestException(`COUPON_INVALID: the code "${code}" already exists.`);
+					}
+				}
+
+				patch.code = code;
+			}
+		}
+
+		return super.update(id, patch as QueryDeepPartialEntity<Coupon>);
 	}
 
 	/**
