@@ -93,7 +93,8 @@ describe('EverWorksSettingsComponent', () => {
 		people: jest.fn(),
 		agents: jest.fn(),
 		teams: jest.fn(),
-		projects: jest.fn()
+		projects: jest.fn(),
+		initiatives: jest.fn()
 	};
 
 	function render() {
@@ -125,6 +126,7 @@ describe('EverWorksSettingsComponent', () => {
 		api.agents.mockReturnValue(of([]));
 		api.teams.mockReturnValue(of({ teams: [], unmatchedTeams: [] }));
 		api.projects.mockReturnValue(of({ works: [], unmatchedProjects: [] }));
+		api.initiatives.mockReturnValue(of({ missions: [], unmatchedInitiatives: [] }));
 	});
 
 	afterEach(() => jest.useRealTimers());

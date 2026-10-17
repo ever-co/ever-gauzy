@@ -250,6 +250,13 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 			this.logger.warn(
 				`Inbox email ${emailId}: attempt ${attempt} failed${final ? ', giving up' : ''}: ${(error as Error)?.message}`
 			);
+			if (final) {
+				// Failed inbound work leaves the thread view: its thread (when one was assigned) is recounted.
+				const failed = await this.dataSource.getRepository(InboxEmail).findOne({ where: { id: emailId } });
+				if (failed?.threadId) {
+					await this.recountThread(failed.threadId as ID, failed.tenantId as ID).catch(() => undefined);
+				}
+			}
 			return final ? InboxEmailStatusEnum.FAILED : InboxEmailStatusEnum.RECEIVED;
 		}
 	}

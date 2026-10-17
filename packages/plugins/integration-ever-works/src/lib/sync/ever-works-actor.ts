@@ -1,10 +1,11 @@
 import { DataSource } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { Employee, RequestContext } from '@gauzy/core';
+import { Employee } from '@gauzy/core';
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
 import type { EverWorksMappingContext } from '../mapping/ever-works-mapping-context.service';
 import { EverWorksLinkState, EverWorksLinkType } from './entities/ever-works-sync.entities';
 import type { EverWorksLinkService } from './links/ever-works-link.service';
+import { runInSyncRequestContext, syncRequestUser } from './ever-works-process';
 
 /**
  * Attribution through act-as (plan 01 §3), shared by the record handlers that write through Gauzy's
@@ -54,13 +55,15 @@ export async function everWorksUserOfGauzyUser(
 }
 
 /**
- * This process cannot open a request context: the worker builds its own module graph without core's
- * `AppModule`, so it has no CLS service (and no task command handlers). Writes through Gauzy's commands
- * are then applied by a process that serves the API; the event or change is deferred and retried there.
+ * This process cannot make the write: it cannot open a request context, or it does not host the
+ * platform's write path the write dispatches to (see `ever-works-process.ts`; the worker hosts neither
+ * the task, project nor employee services). Nothing was written; the event or change is deferred and
+ * retried by the process that holds the connection — the sync loop runs only where these writes can
+ * be made, so the retry lands in such a process.
  */
 export class EverWorksNoRequestContextError extends Error {
 	constructor() {
-		super('This process has no request context for Gauzy writes; a process that serves the API applies them.');
+		super('This process cannot make Gauzy writes (no request context or no platform write path); the sync retries it.');
 		this.name = 'EverWorksNoRequestContextError';
 	}
 }
@@ -70,29 +73,16 @@ export const NO_REQUEST_CONTEXT_RETRY_MS = 5 * 60_000;
 
 /**
  * Runs `fn` inside a request context of its own, signed in as `userId` in the mapping's tenant and
- * organization (Gauzy's commands stamp the tenant and the author from it). No employee is set, so a
- * command never adds "the current employee" as a member of what the sync creates, and no permission is
- * held. Where no request context can be opened (the worker), nothing is written:
- * {@link EverWorksNoRequestContextError} is thrown before `fn` runs.
+ * organization (Gauzy's commands stamp the tenant and the author from it), in any process: where the
+ * process has no context store yet (the worker), the process-wide one is attached first. No employee is
+ * set, so a command never adds "the current employee" as a member of what the sync creates, and no
+ * permission is held. Where no request context can be opened, or the write's platform path is not
+ * hosted here, nothing is written: {@link EverWorksNoRequestContextError} is thrown.
  */
 export function runAsGauzyUser<T>(
 	context: EverWorksMappingContext,
 	userId: ID | null,
 	fn: () => Promise<T>
 ): Promise<T> {
-	const user = {
-		id: userId ?? undefined,
-		tenantId: context.tenantId,
-		lastOrganizationId: context.organizationId,
-		name: 'Ever Works',
-		firstName: 'Ever Works',
-		lastName: '',
-		employeeId: undefined,
-		permissions: []
-	};
-	return RequestContext.runWithRequest({ user, headers: {}, query: {}, params: {}, body: {} } as never, async () => {
-		// Without the platform's request context the commands would write tenant-less rows: refuse first.
-		if (RequestContext.currentTenantId() !== context.tenantId) throw new EverWorksNoRequestContextError();
-		return fn();
-	});
+	return runInSyncRequestContext(syncRequestUser(context, userId), fn, () => new EverWorksNoRequestContextError());
 }
