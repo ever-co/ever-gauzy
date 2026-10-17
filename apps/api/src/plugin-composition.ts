@@ -3,13 +3,16 @@ import { PaymentInstrumentEligibilityService, PaymentInstrumentModule } from '@g
 import {
 	CART_PRICE_RESOLUTION,
 	CART_PROMOTION_EVALUATION,
+	CART_SHIPPING_RATE,
 	CART_STOCK_AVAILABILITY,
-	CART_TAX_CALCULATION
+	CART_TAX_CALCULATION,
+	CART_TAX_CATEGORY
 } from '@gauzy/plugin-cart';
 import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
 import {
 	FulfillmentModule,
 	ReturnShipmentService,
+	ShippingOptionService,
 	WarehouseFulfillmentService
 } from '@gauzy/plugin-fulfillment';
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
@@ -48,7 +51,7 @@ import {
 	SUBSCRIPTION_ORDER_GATEWAY,
 	SUBSCRIPTION_PRICING
 } from '@gauzy/plugin-subscription';
-import { TaxModule, TaxRateService } from '@gauzy/plugin-tax';
+import { TaxCategoryService, TaxModule, TaxRateService } from '@gauzy/plugin-tax';
 import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-warehouse';
 
 /**
@@ -167,6 +170,14 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// lists, quantity bands and currency — for the cart and the line's quantity. Unbound, the cart refuses a
 		// line rather than recording the price its caller stated, which is what it did before (R3-07b).
 		{ provide: CART_PRICE_RESOLUTION, useExisting: ProductPriceService },
+		// What a delivery choice costs is the configured shipping option's rate on the cart, and how it is taxed
+		// is the option's too; the fulfilment package owns both. Unbound, the cart refuses a delivery choice
+		// rather than recording the amount its caller stated, which is what it did before (R3-07c).
+		{ provide: CART_SHIPPING_RATE, useExisting: ShippingOptionService },
+		// What a line is taxed under is the variant's category, or the organization's default: the tax package
+		// reads both. Unbound, a line carries no category (the rate resolution then applies the default), never
+		// the one its caller named (R3-07c).
+		{ provide: CART_TAX_CATEGORY, useExisting: TaxCategoryService },
 		// The warehouse reads bin contents from the ledger and writes every physical move back through
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
@@ -210,6 +221,8 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		CART_TAX_CALCULATION,
 		CART_PROMOTION_EVALUATION,
 		CART_PRICE_RESOLUTION,
+		CART_SHIPPING_RATE,
+		CART_TAX_CATEGORY,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,
 		PURCHASING_INVENTORY,

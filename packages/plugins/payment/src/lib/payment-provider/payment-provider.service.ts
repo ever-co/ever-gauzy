@@ -106,11 +106,20 @@ export class PaymentProviderService extends PaymentScopedCrudService<PaymentProv
 	/**
 	 * Loads a registration that belongs to the caller's organization.
 	 *
+	 * **An absent identifier is not found, never "any".** A where clause whose `id` is `undefined` or
+	 * `null` constrains nothing on the ORM side, so the lookup answered the organization's first
+	 * registration — which is how a GraphQL `openPaymentSession` without a `providerId` opened an
+	 * attempt at an arbitrary provider (R2-G11). It is refused before the read instead.
+	 *
 	 * @param id The registration to load.
 	 * @returns The registration.
-	 * @throws NotFoundException when it does not exist inside the caller's scope.
+	 * @throws NotFoundException when it does not exist inside the caller's scope, or no id was given.
 	 */
 	async findProviderOrFail(id: ID): Promise<IPaymentProvider> {
+		if (id === undefined || id === null || id === '') {
+			throw new NotFoundException('PAYMENT_PROVIDER_NOT_FOUND');
+		}
+
 		const provider = await this.findOneByWhereOptions({ id, ...this.scope } as never);
 
 		if (!provider) {
@@ -151,6 +160,11 @@ export class PaymentProviderService extends PaymentScopedCrudService<PaymentProv
 	 * @returns The registration, or null when this organization has none with that identifier.
 	 */
 	async findProviderOrNull(id: ID): Promise<IPaymentProvider | null> {
+		// No identifier names no registration (see `findProviderOrFail`): the read would answer any.
+		if (id === undefined || id === null || id === '') {
+			return null;
+		}
+
 		const outcome = await this.findOneOrFailByWhereOptions({ id, ...this.scope } as never);
 
 		return outcome.success ? (outcome.record as IPaymentProvider) : null;
