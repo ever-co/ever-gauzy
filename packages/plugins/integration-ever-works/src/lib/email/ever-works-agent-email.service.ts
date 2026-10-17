@@ -11,10 +11,18 @@ import {
 import type { EverWorksInboundEmail, EverWorksInboundEmailResult } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
-import { EverWorksLinkState, EverWorksLinkType, EverWorksOutboundChange } from '../sync/entities/ever-works-sync.entities';
+import {
+	EverWorksLinkState,
+	EverWorksLinkType,
+	EverWorksOutboundChange
+} from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
-import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
+import type {
+	EverWorksOutboundHandler,
+	EverWorksPushContext,
+	EverWorksPushOutcome
+} from '../sync/outbound/ever-works-outbound.pusher';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 
 /** The mailbox setting naming the Ever Works agent a mailbox is routed to (plan 04 §2 `inbox_mailbox.settings`). */
@@ -57,13 +65,11 @@ export function inboundEmailBody(agentId: string, email: IInboxEmailHandoff): Ev
 			references: email.references.map((id) => id.slice(0, LIMITS.id)).slice(0, LIMITS.list),
 			// Metadata only: Ever Works records an attachment with its url and never fetches it (CR-11); Gauzy keeps
 			// the files, so no url is offered.
-			attachments: email.attachments
-				.slice(0, LIMITS.attachments)
-				.map((file) => ({
-					filename: (file.filename || 'attachment').slice(0, LIMITS.name),
-					contentType: (file.contentType || 'application/octet-stream').slice(0, LIMITS.name),
-					url: null
-				}))
+			attachments: email.attachments.slice(0, LIMITS.attachments).map((file) => ({
+				filename: (file.filename || 'attachment').slice(0, LIMITS.name),
+				contentType: (file.contentType || 'application/octet-stream').slice(0, LIMITS.name),
+				url: null
+			}))
 		}
 	};
 }
@@ -139,7 +145,11 @@ export class EverWorksAgentEmailService implements EverWorksOutboundHandler, OnM
 		if (done) return { status: 'skipped', message: 'already handed to Ever Works' };
 		if (!this.handoffs) {
 			// The Inbox email features are not loaded in this process: a process that hosts them takes it.
-			return { status: 'deferred', message: 'the Gauzy Inbox email features are not loaded in this process', retryInMs: AGENT_EMAIL_WAIT_MS };
+			return {
+				status: 'deferred',
+				message: 'the Gauzy Inbox email features are not loaded in this process',
+				retryInMs: AGENT_EMAIL_WAIT_MS
+			};
 		}
 		const email = await this.handoffs.read(context.tenantId, emailId);
 		if (!email) return { status: 'skipped', message: 'the message is gone, or it was not delivered' };
@@ -147,10 +157,18 @@ export class EverWorksAgentEmailService implements EverWorksOutboundHandler, OnM
 		if (!routed) return { status: 'skipped', message: 'the mailbox is no longer routed to an Ever Works agent' };
 		const agentId = await this.everWorksAgentOf(context, routed);
 		if (!agentId) {
-			return this.refused(context, change, `the mailbox names ${routed}, which is no Ever Works agent paired with this organization`);
+			return this.refused(
+				context,
+				change,
+				`the mailbox names ${routed}, which is no Ever Works agent paired with this organization`
+			);
 		}
 		if (!this.hasScope(context, EVER_WORKS_EMAIL_WRITE_SCOPE)) {
-			return this.refused(context, change, `the integration key lacks ${EVER_WORKS_EMAIL_WRITE_SCOPE} (opt-in): create a key with it to route mail to agents`);
+			return this.refused(
+				context,
+				change,
+				`the integration key lacks ${EVER_WORKS_EMAIL_WRITE_SCOPE} (opt-in): create a key with it to route mail to agents`
+			);
 		}
 		const body = inboundEmailBody(agentId, email);
 		if (!body) return this.refused(context, change, 'the message has no sender address');
@@ -220,7 +238,11 @@ export class EverWorksAgentEmailService implements EverWorksOutboundHandler, OnM
 	}
 
 	/** A hand-off that cannot happen as configured: skipped (no retry would change it) and logged for the admin. */
-	private async refused(context: EverWorksMappingContext, change: EverWorksOutboundChange, reason: string): Promise<EverWorksPushOutcome> {
+	private async refused(
+		context: EverWorksMappingContext,
+		change: EverWorksOutboundChange,
+		reason: string
+	): Promise<EverWorksPushOutcome> {
 		await this.log.write({
 			tenantId: context.tenantId,
 			organizationId: context.organizationId,

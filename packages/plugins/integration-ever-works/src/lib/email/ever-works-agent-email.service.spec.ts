@@ -17,9 +17,16 @@ jest.mock('@gauzy/core', () => {
 		createSsrfSafeHttpsAgent: () => undefined,
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, currentOrganizationId: () => null },
 		...Object.fromEntries(
-			['Tenant', 'Organization', 'Employee', 'EmployeeNotification', 'User', 'UserOrganization', 'IntegrationTenant', 'IntegrationSetting'].map(
-				(name) => [name, entity(name)]
-			)
+			[
+				'Tenant',
+				'Organization',
+				'Employee',
+				'EmployeeNotification',
+				'User',
+				'UserOrganization',
+				'IntegrationTenant',
+				'IntegrationSetting'
+			].map((name) => [name, entity(name)])
 		)
 	};
 });
@@ -64,7 +71,10 @@ function message(over: Partial<IInboxEmailHandoff> = {}): IInboxEmailHandoff {
 function setup(options: { scopes?: string[]; stored?: IInboxEmailHandoff | null; handoffs?: boolean } = {}) {
 	const mock = new MockEverWorksServer();
 	const ewOrg = { id: 'ew-org-1', slug: 'acme', displayName: 'Acme' };
-	const key = mock.addKey({ organizations: [ewOrg], scopes: options.scopes ?? [...MOCK_PRESET_SCOPES, 'email:write'] });
+	const key = mock.addKey({
+		organizations: [ewOrg],
+		scopes: options.scopes ?? [...MOCK_PRESET_SCOPES, 'email:write']
+	});
 	const email = new MockEverWorksEmail(mock);
 	mock.addAgent(ewOrg.id, { id: 'ew-agent-1' });
 	email.inboundAgents.add('ew-agent-1');
@@ -89,7 +99,13 @@ function setup(options: { scopes?: string[]; stored?: IInboxEmailHandoff | null;
 		isEnabled: true
 	};
 	const links: Row[] = [
-		{ integrationTenantId: 'm1', entityType: EverWorksLinkType.AGENT, gauzyId: 'g-agent-employee-1', ewId: 'ew-agent-1', state: 'ok' }
+		{
+			integrationTenantId: 'm1',
+			entityType: EverWorksLinkType.AGENT,
+			gauzyId: 'g-agent-employee-1',
+			ewId: 'ew-agent-1',
+			state: 'ok'
+		}
 	];
 	const find = (type: string, field: 'ewId' | 'gauzyId', value: string) =>
 		links.find((l) => l['integrationTenantId'] === 'm1' && l['entityType'] === type && l[field] === value) ?? null;
@@ -103,7 +119,11 @@ function setup(options: { scopes?: string[]; stored?: IInboxEmailHandoff | null;
 	};
 	const queue = { enqueue: jest.fn(async () => true) };
 	const log = { write: jest.fn(async () => undefined) };
-	const registry = { register: jest.fn(), unregister: jest.fn(), read: jest.fn(async () => (options.stored === undefined ? message() : options.stored)) };
+	const registry = {
+		register: jest.fn(),
+		unregister: jest.fn(),
+		read: jest.fn(async () => (options.stored === undefined ? message() : options.stored))
+	};
 	const service = new EverWorksAgentEmailService(
 		{ forOrganization: async () => context } as never,
 		{ client: () => client } as never,
@@ -130,10 +150,36 @@ describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works
 
 	it('queues a durable hand-off for a routed mailbox only', async () => {
 		const { service, queue } = setup();
-		await service.delivered({ tenantId: 't1', organizationId: 'o1', mailboxId: 'mb1', mailboxSettings: { everWorksAgentId: 'ew-agent-1' }, emailId: EMAIL_ID, inboxItemId: null });
-		expect(queue.enqueue).toHaveBeenCalledWith({ tenantId: 't1', organizationId: 'o1', entityType: EverWorksLinkType.AGENT_EMAIL, gauzyId: EMAIL_ID });
-		await service.delivered({ tenantId: 't1', organizationId: 'o1', mailboxId: 'mb2', mailboxSettings: { other: true }, emailId: 'e2', inboxItemId: null });
-		await service.delivered({ tenantId: 't1', organizationId: 'o1', mailboxId: 'mb3', mailboxSettings: null, emailId: 'e3', inboxItemId: null });
+		await service.delivered({
+			tenantId: 't1',
+			organizationId: 'o1',
+			mailboxId: 'mb1',
+			mailboxSettings: { everWorksAgentId: 'ew-agent-1' },
+			emailId: EMAIL_ID,
+			inboxItemId: null
+		});
+		expect(queue.enqueue).toHaveBeenCalledWith({
+			tenantId: 't1',
+			organizationId: 'o1',
+			entityType: EverWorksLinkType.AGENT_EMAIL,
+			gauzyId: EMAIL_ID
+		});
+		await service.delivered({
+			tenantId: 't1',
+			organizationId: 'o1',
+			mailboxId: 'mb2',
+			mailboxSettings: { other: true },
+			emailId: 'e2',
+			inboxItemId: null
+		});
+		await service.delivered({
+			tenantId: 't1',
+			organizationId: 'o1',
+			mailboxId: 'mb3',
+			mailboxSettings: null,
+			emailId: 'e3',
+			inboxItemId: null
+		});
 		expect(queue.enqueue).toHaveBeenCalledTimes(1);
 	});
 
@@ -156,34 +202,52 @@ describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works
 		expect(link?.['snapshot']).toMatchObject({ agentId: 'ew-agent-1', dispatch: { mode: 'task-spawn' } });
 		expect(log.write).toHaveBeenCalledWith(expect.objectContaining({ action: 'agent_email', status: 'ok' }));
 		// A second push of the same message (a re-queued change) sends nothing.
-		expect(await service.push(change, pushContext)).toMatchObject({ status: 'skipped', message: 'already handed to Ever Works' });
+		expect(await service.push(change, pushContext)).toMatchObject({
+			status: 'skipped',
+			message: 'already handed to Ever Works'
+		});
 		expect(email.received).toHaveLength(1);
 	});
 
 	it('the mailbox may name the agent by its agent employee in Gauzy', async () => {
-		const { service, email, change, pushContext } = setup({ stored: message({ mailboxSettings: { everWorksAgentId: 'g-agent-employee-1' } }) });
+		const { service, email, change, pushContext } = setup({
+			stored: message({ mailboxSettings: { everWorksAgentId: 'g-agent-employee-1' } })
+		});
 		expect(await service.push(change, pushContext)).toMatchObject({ status: 'pushed' });
 		expect(email.received[0]).toMatchObject({ agentId: 'ew-agent-1' });
 	});
 
-	it('refuses and logs what no retry changes: no email:write, an agent not paired here, no sender, an unrouted mailbox', async () => {
+	it('refuses and logs what no retry changes: no email:write, an agent not paired here, no sender, a mailbox no longer routed', async () => {
 		const noScope = setup({ scopes: ['email:read'] });
-		expect(await noScope.service.push(noScope.change, noScope.pushContext)).toMatchObject({ status: 'skipped', message: expect.stringContaining('email:write') });
-		expect(noScope.log.write).toHaveBeenCalledWith(expect.objectContaining({ action: 'agent_email', status: 'skipped' }));
+		expect(await noScope.service.push(noScope.change, noScope.pushContext)).toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('email:write')
+		});
+		expect(noScope.log.write).toHaveBeenCalledWith(
+			expect.objectContaining({ action: 'agent_email', status: 'skipped' })
+		);
 		expect(noScope.email.received).toHaveLength(0);
 
 		const stranger = setup({ stored: message({ mailboxSettings: { everWorksAgentId: 'ew-agent-unknown' } }) });
-		expect(await stranger.service.push(stranger.change, stranger.pushContext)).toMatchObject({ status: 'skipped', message: expect.stringContaining('no Ever Works agent paired') });
+		expect(await stranger.service.push(stranger.change, stranger.pushContext)).toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('no Ever Works agent paired')
+		});
 
 		const unlinked = setup();
 		unlinked.links[0]['state'] = EverWorksLinkState.UNLINKED;
 		expect(await unlinked.service.push(unlinked.change, unlinked.pushContext)).toMatchObject({ status: 'skipped' });
 
 		const anonymous = setup({ stored: message({ from: null }) });
-		expect(await anonymous.service.push(anonymous.change, anonymous.pushContext)).toMatchObject({ status: 'skipped', message: 'the message has no sender address' });
+		expect(await anonymous.service.push(anonymous.change, anonymous.pushContext)).toMatchObject({
+			status: 'skipped',
+			message: 'the message has no sender address'
+		});
 
-		const unrouted = setup({ stored: message({ mailboxSettings: {} }) });
-		expect(await unrouted.service.push(unrouted.change, unrouted.pushContext)).toMatchObject({ status: 'skipped' });
+		const notRouted = setup({ stored: message({ mailboxSettings: {} }) });
+		expect(await notRouted.service.push(notRouted.change, notRouted.pushContext)).toMatchObject({
+			status: 'skipped'
+		});
 
 		const gone = setup({ stored: null });
 		expect(await gone.service.push(gone.change, gone.pushContext)).toMatchObject({ status: 'skipped' });
@@ -213,14 +277,22 @@ describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works
 				to: [],
 				subject: 's'.repeat(1200),
 				references: Array.from({ length: 150 }, (_, n) => `<r${n}@x>`),
-				attachments: Array.from({ length: 25 }, (_, n) => ({ filename: `f${n}.txt`, contentType: '', size: null }))
+				attachments: Array.from({ length: 25 }, (_, n) => ({
+					filename: `f${n}.txt`,
+					contentType: '',
+					size: null
+				}))
 			})
 		);
 		expect(body?.message.to).toEqual(['support.acme@inbox.example.test']);
 		expect(body?.message.subject).toHaveLength(998);
 		expect(body?.message.references).toHaveLength(100);
 		expect(body?.message.attachments).toHaveLength(20);
-		expect(body?.message.attachments?.[0]).toEqual({ filename: 'f0.txt', contentType: 'application/octet-stream', url: null });
+		expect(body?.message.attachments?.[0]).toEqual({
+			filename: 'f0.txt',
+			contentType: 'application/octet-stream',
+			url: null
+		});
 		expect(inboundEmailBody('ew-agent-1', message({ from: 'x' }))).toBeNull();
 	});
 });

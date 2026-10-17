@@ -23,9 +23,12 @@ export class MockEverWorksEmail {
 		mock.extensions.push(this.route);
 	}
 
-	private readonly route: MockEverWorksExtension = (context: MockEverWorksRouteContext): EverWorksHttpResponse | null => {
+	private readonly route: MockEverWorksExtension = (
+		context: MockEverWorksRouteContext
+	): EverWorksHttpResponse | null => {
 		if (context.path !== '/email/inbound') return null;
-		if (context.method !== 'POST') return MockEverWorksServer.error(404, 'not_found', `No route ${context.method} ${context.path}.`);
+		if (context.method !== 'POST')
+			return MockEverWorksServer.error(404, 'not_found', `No route ${context.method} ${context.path}.`);
 		const denied = context.scoped('email:write');
 		if (denied) return denied;
 		if (!context.headers['idempotency-key']) {
@@ -38,13 +41,18 @@ export class MockEverWorksEmail {
 			return MockEverWorksServer.error(404, 'not_found', 'No such agent.');
 		}
 		if (!this.inboundAgents.has(body.agentId as string)) {
-			return MockEverWorksServer.error(422, 'domain_rule', 'The agent has no active inbound assignment.', { rule: 'no_inbound_assignment' });
+			return MockEverWorksServer.error(422, 'domain_rule', 'The agent has no active inbound assignment.', {
+				rule: 'no_inbound_assignment'
+			});
 		}
 		const input = body.message ?? {};
 		const messageId = (input['messageId'] as string | null) ?? null;
 		const repeat = messageId
 			? [...this.messages.values()].find(
-					(row) => row['messageId'] === messageId && row['organizationId'] === context.org?.id && row['keyId'] === context.key.keyId
+					(row) =>
+						row['messageId'] === messageId &&
+						row['organizationId'] === context.org?.id &&
+						row['keyId'] === context.key.keyId
 				)
 			: undefined;
 		if (repeat) return context.ok({ message: this.dto(repeat), dispatch: repeat['dispatch'] }, 200);

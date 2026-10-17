@@ -28,7 +28,11 @@ function addresses(value: string | null | undefined): string[] {
 	const parsed = json<unknown>(value);
 	const rows = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
 	return rows
-		.map((row) => (row && typeof (row as { address?: unknown }).address === 'string' ? (row as { address: string }).address : null))
+		.map((row) =>
+			row && typeof (row as { address?: unknown }).address === 'string'
+				? (row as { address: string }).address
+				: null
+		)
 		.filter((address): address is string => !!address);
 }
 
@@ -82,7 +86,8 @@ export class InboxEmailHandoffs implements IInboxEmailHandoffs {
 	async read(tenantId: ID, emailId: ID): Promise<IInboxEmailHandoff | null> {
 		const email = await this.dataSource.getRepository(InboxEmail).findOne({ where: { id: emailId, tenantId } });
 		if (!email || email.deletedAt) return null;
-		if (email.direction !== InboxEmailDirectionEnum.IN || email.status !== InboxEmailStatusEnum.PROCESSED) return null;
+		if (email.direction !== InboxEmailDirectionEnum.IN || email.status !== InboxEmailStatusEnum.PROCESSED)
+			return null;
 		const mailbox = await this.dataSource
 			.getRepository(InboxMailbox)
 			.findOne({ where: { id: email.mailboxId, tenantId } });
@@ -106,7 +111,9 @@ export class InboxEmailHandoffs implements IInboxEmailHandoffs {
 			html: email.htmlSanitized ?? null,
 			messageId: email.messageId ?? null,
 			inReplyTo: email.inReplyTo ?? null,
-			references: (json<unknown[]>(email.referenceIds) ?? []).filter((id): id is string => typeof id === 'string'),
+			references: (json<unknown[]>(email.referenceIds) ?? []).filter(
+				(id): id is string => typeof id === 'string'
+			),
 			attachments: attachments
 				.filter((row) => !row.isInline)
 				.map((row) => ({
