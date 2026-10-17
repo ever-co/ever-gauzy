@@ -131,4 +131,58 @@ describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
 		});
 		expect(entitySubscriptionService.delete).not.toHaveBeenCalled();
 	});
+	describe('manager role of an existing member', () => {
+		const update = async (rows: object[], managerIds: string[], memberIds: string[]) => {
+			const repository = { find: jest.fn().mockResolvedValue(rows), update: jest.fn(), save: jest.fn() };
+			const self = {
+				_roleService: { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager' }) },
+				typeOrmOrganizationSprintEmployeeRepository: repository,
+				deleteMemberByIds: jest.fn(),
+				_entitySubscriptionService: { deleteForEmployee: jest.fn() },
+				_eventBus: { publish: jest.fn() }
+			};
+			await OrganizationSprintService.prototype.updateOrganizationSprintMembers.call(
+				self,
+				'sprint-1',
+				fixture.organizationId,
+				[],
+				managerIds,
+				memberIds
+			);
+			return repository.update;
+		};
+
+		it('demotes a manager taken off the managers', async () => {
+			const updated = await update(
+				[{ id: 'row-a', employeeId: 'employee-a', roleId: 'role-manager', isManager: true }],
+				[],
+				['employee-a']
+			);
+
+			expect(updated).toHaveBeenCalledWith('row-a', { role: null, isManager: false });
+		});
+
+		it('promotes a member to manager, flag included', async () => {
+			const updated = await update(
+				[{ id: 'row-a', employeeId: 'employee-a', roleId: null, isManager: false }],
+				['employee-a'],
+				[]
+			);
+
+			expect(updated).toHaveBeenCalledWith('row-a', { role: { id: 'role-manager' }, isManager: true });
+		});
+
+		it('leaves an unchanged member alone', async () => {
+			const updated = await update(
+				[
+					{ id: 'row-a', employeeId: 'employee-a', roleId: 'role-manager', isManager: true },
+					{ id: 'row-b', employeeId: 'employee-b', roleId: null, isManager: false }
+				],
+				['employee-a'],
+				['employee-b']
+			);
+
+			expect(updated).not.toHaveBeenCalled();
+		});
+	});
 });
