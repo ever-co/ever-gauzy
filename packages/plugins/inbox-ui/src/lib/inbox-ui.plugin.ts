@@ -7,6 +7,10 @@ import { NavigationBuilderService, NavMenuBuilderService, PermissionsGuard } fro
 import {
 	INBOX_HEADER_ACTION_ID,
 	INBOX_LINK,
+	INBOX_MAILBOXES_NAV_ID,
+	INBOX_MAILBOXES_SETTINGS_LINK,
+	INBOX_MAILBOXES_SETTINGS_PATH,
+	INBOX_MY_MAILBOX_PATH,
 	INBOX_NAV_ID,
 	INBOX_PATH,
 	INBOX_PROVIDERS_NAV_ID,
@@ -20,11 +24,17 @@ import { InboxAvailabilityService } from './services/inbox-availability.service'
 import { InboxEmailAvailabilityService } from './services/inbox-email-availability.service';
 import en from '../i18n/en.json';
 
-/** The page (standalone, loaded on first visit). */
+/** The page and "My mailbox" (standalone, each loaded on first visit). */
 export const INBOX_CHILD_ROUTES: Routes = [
 	{
 		path: '',
 		loadComponent: () => import('./components/inbox-page/inbox-page.component').then((m) => m.InboxPageComponent)
+	},
+	{
+		// `/pages/inbox/mailbox` (G-P4-1): my addresses and their forwarding instructions; INBOX_VIEW, as the page.
+		path: INBOX_MY_MAILBOX_PATH,
+		loadComponent: () =>
+			import('./settings/my-mailbox-page.component').then((m) => m.InboxMyMailboxPageComponent)
 	}
 ];
 
@@ -76,6 +86,16 @@ export const INBOX_PROVIDERS_SETTINGS_ROUTE: PluginRouteInput = {
 	data: INBOX_SETTINGS_ROUTE_DATA
 };
 
+/** Settings → Inbox → Mailboxes (`/pages/settings/inbox-mailboxes`, G-P4-1), like the providers page. */
+export const INBOX_MAILBOXES_SETTINGS_ROUTE: PluginRouteInput = {
+	location: 'settings-sections',
+	path: INBOX_MAILBOXES_SETTINGS_PATH,
+	loadComponent: () =>
+		import('./settings/inbox-mailboxes-page.component').then((m) => m.InboxMailboxesPageComponent),
+	canActivate: [PermissionsGuard],
+	data: INBOX_SETTINGS_ROUTE_DATA
+};
+
 /** The Settings → Inbox entries of the core Settings nav section (`INBOX_MAILBOX_MANAGE`). */
 export const INBOX_SETTINGS_NAV_ITEMS = [
 	{
@@ -85,6 +105,16 @@ export const INBOX_SETTINGS_NAV_ITEMS = [
 		link: INBOX_PROVIDERS_SETTINGS_LINK,
 		data: {
 			translationKey: 'INBOX.SETTINGS.MENU_PROVIDERS',
+			permissionKeys: [PermissionsEnum.INBOX_MAILBOX_MANAGE]
+		}
+	},
+	{
+		id: INBOX_MAILBOXES_NAV_ID,
+		title: 'Inbox mailboxes',
+		icon: 'fas fa-at',
+		link: INBOX_MAILBOXES_SETTINGS_LINK,
+		data: {
+			translationKey: 'INBOX.SETTINGS.MENU_MAILBOXES',
 			permissionKeys: [PermissionsEnum.INBOX_MAILBOX_MANAGE]
 		}
 	}
@@ -170,7 +200,7 @@ export function registerInboxEntryPoints(injector: Injector): Subscription {
 const declarative = defineDeclarativePlugin('inbox', {
 	version: '0.1.0',
 	location: INBOX_SECTIONS_LOCATION,
-	routes: [INBOX_PAGE_ROUTE, INBOX_PROVIDERS_SETTINGS_ROUTE],
+	routes: [INBOX_PAGE_ROUTE, INBOX_PROVIDERS_SETTINGS_ROUTE, INBOX_MAILBOXES_SETTINGS_ROUTE],
 	permissionKeys: [PermissionsEnum.INBOX_VIEW],
 	translationNamespace: 'INBOX',
 	translations: { en }
@@ -179,7 +209,7 @@ const declarative = defineDeclarativePlugin('inbox', {
 /**
  * Inbox UI plugin (`@gauzy/plugin-inbox-ui`, plan 04 §1, G-P3-2): `/pages/inbox` (All, Decisions, Email,
  * Notifications, Archived), the header badge (counts polled every 60 s) and the nav entry; Settings → Inbox →
- * Providers (G-P4-2) where the API serves the Inbox email features. Registered in
+ * Providers (G-P4-2) and Mailboxes and "My mailbox" (G-P4-1) where the API serves the Inbox email features. Registered in
  * `apps/gauzy/src/plugin-ui.config.ts`; shows nothing but the route unless the API serves the Inbox.
  */
 export const InboxUiPlugin: PluginUiDefinition = {

@@ -1,9 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
 	NbAlertModule,
 	NbButtonModule,
@@ -25,7 +25,7 @@ import {
 	InboxItemKindEnum,
 	InboxItemSourceEnum
 } from '@gauzy/contracts';
-import { INBOX_UI_PAGE_SIZE } from '../../inbox-ui.constants';
+import { INBOX_MY_MAILBOX_LINK, INBOX_UI_PAGE_SIZE } from '../../inbox-ui.constants';
 import {
 	apiTabOf,
 	INBOX_UI_TABS,
@@ -36,6 +36,7 @@ import {
 	replaceItem,
 	sourceLabelOf
 } from '../../inbox-ui.helpers';
+import { InboxEmailAvailabilityService } from '../../services/inbox-email-availability.service';
 import { InboxUiService } from '../../services/inbox-ui.service';
 import { InboxItemDetailComponent } from '../inbox-item-detail/inbox-item-detail.component';
 import { InboxNotificationsComponent } from '../inbox-notifications/inbox-notifications.component';
@@ -73,6 +74,7 @@ export function apiMessage(error: unknown): string | null {
 		NbListModule,
 		NbSelectModule,
 		NbSpinnerModule,
+		RouterLink,
 		TranslatePipe,
 		InboxItemDetailComponent,
 		InboxNotificationsComponent
@@ -81,6 +83,12 @@ export function apiMessage(error: unknown): string | null {
 		<nb-card class="inbox" data-test="inbox-page">
 			<nb-card-header class="inbox-header">
 				<h4>{{ 'INBOX.TITLE' | translate }}</h4>
+				<span class="header-actions">
+				@if (emailAvailable()) {
+					<a nbButton ghost size="small" data-test="my-mailbox" [routerLink]="myMailboxLink">{{
+						'INBOX.MY_MAILBOX.LINK' | translate
+					}}</a>
+				}
 				@if (view() === 'ready' && tab() !== 'notifications') {
 					<button
 						nbButton
@@ -93,6 +101,7 @@ export function apiMessage(error: unknown): string | null {
 						{{ 'INBOX.ACTIONS.MARK_ALL_READ' | translate }}
 					</button>
 				}
+				</span>
 			</nb-card-header>
 			<nb-card-body>
 				@switch (view()) {
@@ -258,6 +267,11 @@ export function apiMessage(error: unknown): string | null {
 			.inbox-header h4 {
 				margin: 0;
 			}
+			.header-actions {
+				display: flex;
+				gap: 0.5rem;
+				align-items: center;
+			}
 			.tabs {
 				display: flex;
 				flex-wrap: wrap;
@@ -334,6 +348,9 @@ export class InboxPageComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	protected readonly tabs = INBOX_UI_TABS;
+	protected readonly myMailboxLink = INBOX_MY_MAILBOX_LINK;
+	/** "My mailbox" is linked only where the API serves the Inbox email features. */
+	readonly emailAvailable = toSignal(inject(InboxEmailAvailabilityService).available$, { initialValue: false });
 	protected readonly kindOptions = Object.values(InboxItemKindEnum);
 	protected readonly sourceOptions = Object.values(InboxItemSourceEnum);
 
