@@ -355,11 +355,26 @@ describe('Ever Works connection on SQLite', () => {
 			expect((await raw().findOneByOrFail({ id: view.id })).ewTenantId).toBe(tenant);
 		});
 
-		it('another failure → error with a safe reason; an admin pause survives the check', async () => {
+		it('a retryable or local failure keeps the status (only the error is recorded); a refusal → error; an admin pause survives (review F16)', async () => {
 			const view = await service.connect(connectDto(mock.addKey()));
+			// An Ever Works outage (5xx after the retries): says nothing about the connection, the sync keeps going.
 			mock.fail({ path: '/whoami', status: 503, times: 3 });
+			expect(await service.health(view.id)).toMatchObject({ status: EverWorksConnectionStatus.ACTIVE, healthy: false });
+			const stored = await raw().findOneByOrFail({ id: view.id });
+			expect(stored).toMatchObject({ status: EverWorksConnectionStatus.ACTIVE });
+			expect(stored.lastError).toMatch(/^internal_error/);
+			expect(stored.lastErrorAt).toBeInstanceOf(Date);
+			// A process that cannot read the stored key (a worker with another ENCRYPTION_KEY): a local failure, not the key's.
+			const sealed = stored.apiKeyEncrypted;
+			const parts = sealed.split(':');
+			parts[3] = Buffer.alloc(16, 7).toString('base64url');
+			await raw().update({ id: view.id }, { apiKeyEncrypted: parts.join(':') });
+			expect((await service.health(view.id)).status).toBe(EverWorksConnectionStatus.ACTIVE);
+			await raw().update({ id: view.id }, { apiKeyEncrypted: sealed });
+			// A refusal that retrying does not change → error, with a safe reason.
+			mock.fail({ path: '/whoami', status: 403, times: 1 });
 			expect(await service.health(view.id)).toMatchObject({ status: EverWorksConnectionStatus.ERROR, healthy: false });
-			expect((await raw().findOneByOrFail({ id: view.id })).lastError).toMatch(/^internal_error/);
+			expect((await service.resume(view.id)).status).toBe(EverWorksConnectionStatus.ACTIVE);
 			await service.pause(view.id);
 			mock.fail({ path: '/whoami', status: 503, times: 3 });
 			expect((await service.health(view.id)).status).toBe(EverWorksConnectionStatus.PAUSED);
