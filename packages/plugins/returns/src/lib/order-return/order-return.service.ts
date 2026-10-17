@@ -852,9 +852,10 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		amount: string | number,
 		reasonId?: ID,
 		note?: string,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		idempotencyKey?: string
 	): Promise<IRefundResult> {
-		const settled = await this.settleRefund(id, amount, reasonId, note, expectation);
+		const settled = await this.settleRefund(id, amount, reasonId, note, expectation, idempotencyKey);
 
 		return settled.refund;
 	}
@@ -882,7 +883,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		amount: string | number,
 		reasonId: ID | undefined,
 		note: string | undefined,
-		expectation: IVersionExpectation
+		expectation: IVersionExpectation,
+		idempotencyKey?: string
 	): Promise<{ refund: IRefundResult; version: number }> {
 		const orderReturn = await this.findOneScoped(id);
 
@@ -914,6 +916,54 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		await this.refundGateway.assertMayRefund?.();
 
 		/**
+		 * **A retry under the same key is answered by the refund it already produced** (review R3-09r2). The route
+		 * requires an `Idempotency-Key`, and the platform replays a completed request under it; a request whose
+		 * outcome nobody saw — the money went back and the answer did not — is not completed, and its retry used to
+		 * claim the return and ask for the money a second time. The refund carries the key, so it is looked up
+		 * first: a succeeded refund is the answer and nothing is written; a pending one was already claimed on the
+		 * return by the attempt that left it, so it is settled without claiming again.
+		 */
+		const found =
+			idempotencyKey && this.refundGateway.findRefund
+				? await this.refundGateway.findRefund({
+						orderId: orderReturn.orderId,
+						returnId: orderReturn.id,
+						idempotencyKey
+					})
+				: null;
+
+		if (found) {
+			const refund: IRefundResult =
+				found.status === 'SUCCEEDED'
+					? { refundId: found.refundId, amount: found.amount, currency: found.currency }
+					: await this.refundGateway.createRefund({
+							orderId: orderReturn.orderId,
+							returnId: orderReturn.id,
+							amount: found.amount,
+							currency: orderReturn.currency,
+							reasonId,
+							note,
+							idempotencyKey
+						});
+
+			const version = Number(orderReturn.version ?? 1);
+
+			if (found.status !== 'SUCCEEDED') {
+				// The attempt that left the refund pending stopped before it announced it, so the settlement this retry
+				// made is announced now (Greptile, #10906). A succeeded refund is a plain replay and is not announced
+				// again: whichever attempt settled it is the one that could.
+				await this.announce(RETURN_EVENTS.REFUNDED, orderReturn, version, {
+					refundedAmount: refund.amount,
+					refundId: refund.refundId ?? null
+				});
+			}
+
+			await this.refreshOrderTotals(orderReturn.orderId);
+
+			return { refund, version };
+		}
+
+		/**
 		 * **Claim, then pay** (review R3-09r1). The return's header used to be written after the money had gone
 		 * back: a version that moved meanwhile (a second refund of the same return, a close) answered `409` for a
 		 * refund that had happened, and the running total `refundAmount` missed it — the caller retried and paid
@@ -939,7 +989,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				amount: refundable.toStorageString(),
 				currency: orderReturn.currency,
 				reasonId,
-				note
+				note,
+				...(idempotencyKey ? { idempotencyKey } : {})
 			});
 		} catch (error) {
 			if (isRefusal(error)) {

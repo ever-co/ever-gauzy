@@ -438,13 +438,26 @@ export class OrderReturnResolver {
 		let refunded: IRefundResult | undefined;
 
 		try {
-			refunded = await this.orderReturnService.refund(
-				id,
-				input.amount,
-				input.reasonId,
-				input.note,
-				versionExpectationOf(context?.req)
-			);
+			// The retry key the field requires, so a retry after an outcome nobody saw finds its refund (R3-09r2).
+			// Passed only when one was sent, exactly as the route passes it.
+			const idempotencyKey = input.idempotencyKey?.trim();
+
+			refunded = idempotencyKey
+				? await this.orderReturnService.refund(
+						id,
+						input.amount,
+						input.reasonId,
+						input.note,
+						versionExpectationOf(context?.req),
+						idempotencyKey
+					)
+				: await this.orderReturnService.refund(
+						id,
+						input.amount,
+						input.reasonId,
+						input.note,
+						versionExpectationOf(context?.req)
+					);
 		} catch (error) {
 			return { orderReturn: null, refundId: null, refundAmount: null, currency: null, userErrors: [toUserError(error)] };
 		}

@@ -209,6 +209,26 @@ export interface IRefundRequest {
 	readonly reasonId?: ID;
 	/** Free-text note kept beside the refund. */
 	readonly note?: string;
+	/**
+	 * This domain's identity for the refund (review R3-09r2): the request's `Idempotency-Key` on a return refund,
+	 * the decision key a claim takes when it decides. The payment capability keeps it on the refund and answers a
+	 * second request under the same key with the refund the first produced, instead of paying again.
+	 */
+	readonly idempotencyKey?: string;
+}
+
+/** What a refund is looked up by: the return or the claim that caused it, and the key it was asked under. */
+export interface IRefundLookup {
+	readonly orderId?: ID;
+	readonly returnId?: ID;
+	readonly claimId?: ID;
+	readonly idempotencyKey: string;
+}
+
+/** A refund the payment capability found under a key, and whether its money has gone back yet. */
+export interface IRefundLookupResult extends IRefundResult {
+	/** `SUCCEEDED`, or `PENDING` when it was recorded and not settled. */
+	readonly status: string;
 }
 
 /** What the payment capability answers with once a refund is recorded. */
@@ -236,6 +256,12 @@ export interface IRefundGatewayPort {
 	 * a gateway that settles nothing need not answer it.
 	 */
 	assertMayRefund?(): void | Promise<void>;
+	/**
+	 * Finds the refund a return or a claim already produced under a key (review R3-09r2), so a flow resumed after
+	 * an outcome nobody saw closes on that refund instead of paying again. Optional: a gateway that cannot answer
+	 * it leaves the flow to refuse the resume.
+	 */
+	findRefund?(query: IRefundLookup): Promise<IRefundLookupResult | null>;
 }
 
 /** What one order line reports about how much of it actually left the building. */
