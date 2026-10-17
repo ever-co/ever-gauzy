@@ -170,6 +170,15 @@ export function sourceLabelOf(source: string | null | undefined): string {
 }
 
 /**
+ * The mailbox a source lists an item under (`metadata.mailbox`, e.g. "Ever Works — Builder" for a read-only copy of an
+ * Ever Works agent's mail), or `null`. Text only, at most 120 characters.
+ */
+export function mailboxLabelOf(item: Pick<IInboxItem, 'metadata'>): string | null {
+	const value = (item.metadata as Record<string, unknown> | null | undefined)?.['mailbox'];
+	return typeof value === 'string' && value.trim() ? value.trim().slice(0, 120) : null;
+}
+
+/**
  * What a source answers a reply with when the item was already decided there (another answer won, in the
  * source or from another client): the item then carries the source's own answer, not the reply sent here.
  */

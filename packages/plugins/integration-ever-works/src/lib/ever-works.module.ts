@@ -17,6 +17,7 @@ import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
 import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
 import { EverWorksAgentEmailService } from './email/ever-works-agent-email.service';
+import { EverWorksAgentEmailMirror } from './email/ever-works-agent-email.mirror';
 import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
 import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
@@ -88,7 +89,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly tasks: EverWorksTasksService,
 		private readonly taskComments: EverWorksTaskCommentsService,
 		private readonly inbox: EverWorksInboxService,
-		private readonly agentEmail: EverWorksAgentEmailService
+		private readonly agentEmail: EverWorksAgentEmailService,
+		private readonly agentEmailMirror: EverWorksAgentEmailMirror
 	) {}
 
 	onModuleInit(): void {
@@ -110,6 +112,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		// Mailboxes routed to an Ever Works agent → POST /email/inbound (only queued where the Inbox email features run).
 		this.pusher.register(this.agentEmail);
 		this.loop.registerSweeper(this.agentEmail);
+		// EW agent mail → read-only Gauzy Inbox copies (the agentEmail direction, off by default).
+		this.applier.register(this.agentEmailMirror);
 	}
 }
 
@@ -191,6 +195,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksTaskEdgeCapture,
 		EverWorksInboxService,
 		EverWorksAgentEmailService,
+		EverWorksAgentEmailMirror,
 		EverWorksTeamCapture,
 		EverWorksConflictsService,
 		EverWorksInitialSyncService,

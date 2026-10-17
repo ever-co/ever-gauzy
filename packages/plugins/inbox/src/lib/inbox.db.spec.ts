@@ -741,6 +741,30 @@ describe('Inbox on SQLite', () => {
 			expect((await service.get(first.item.id as string)).recipient?.isRead).toBe(true);
 		});
 
+		it('replaceRecipients: a recipient the source no longer names loses the item (never all of them)', async () => {
+			const input = {
+				tenantId: TENANT,
+				organizationId: ORG,
+				kind: InboxItemKindEnum.EMAIL,
+				source: InboxItemSourceEnum.EVER_WORKS,
+				externalSource: 'ever_works_email',
+				externalId: 'ew-mail-1',
+				title: 'Your refund',
+				recipients: [{ userId: ADA }],
+				replaceRecipients: true
+			};
+			await service.upsertExternal(input);
+			const moved = await service.upsertExternal({ ...input, recipients: [{ userId: BOB }] });
+			expect(moved.recipientUserIds).toEqual([BOB]);
+			const rows = await dataSource.query(`SELECT "userId" FROM "inbox_item_recipient" WHERE "inboxItemId" = ?`, [
+				moved.item.id
+			]);
+			expect(rows.map((row: { userId: string }) => row.userId)).toEqual([BOB]);
+			// A stated recipient that is no user of the tenant removes nobody.
+			const stranger = await service.upsertExternal({ ...input, recipients: [{ userId: randomUUID() }] });
+			expect(stranger.recipientUserIds).toEqual([BOB]);
+		});
+
 		it('a re-delivery changes only what it states: an answered item keeps its answer and its links', async () => {
 			const project = randomUUID();
 			const input = {
