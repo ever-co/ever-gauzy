@@ -154,6 +154,9 @@ interface IProjectBudget {
 	warning: boolean;
 }
 
+/** Rows the project drawer's task list shows before "Show all". */
+const PROJECT_TASK_LIMIT = 6;
+
 /** Tasks due within this many days count as due soon. */
 const ATTENTION_DAYS = 3;
 
@@ -338,6 +341,11 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	public projectHours: Loadable<IEmployeeHoursDay[]> = Loadable.empty([]);
 	public projectTopTasks: Loadable<IRankedRow[]> = Loadable.empty([]);
 	public projectAttention: IAttentionTask[] = [];
+	/** All the project's tasks as list rows, the filter over them, and whether the list is cut. */
+	public projectTasks: ITeamTaskRow[] = [];
+	public projectTaskFilter: TaskFilter = 'open';
+	public showAllProjectTasks = false;
+	public readonly projectTaskLimit = PROJECT_TASK_LIMIT;
 	public projectBudget: IProjectBudget | null = null;
 	public projectSections: IRecordViewSection[] = [];
 	public projectFacts: IProjectFacts | null = null;
@@ -817,6 +825,9 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this.showProject({ id: row.id, name: row.name, imageUrl: row.imageUrl } as IOrganizationProject);
 		this.projectAttention = [];
 		this.projectBudget = null;
+		this.projectTasks = [];
+		this.projectTaskFilter = 'open';
+		this.showAllProjectTasks = false;
 		void this.loadProjectProgress(row.id, sequence);
 		this.loadProjectPeriodFigures(row.id, sequence);
 		try {
@@ -828,6 +839,25 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		} catch {
 			// The card's own data stays on screen.
 		}
+	}
+
+	/** How many of the project's tasks a filter keeps. */
+	projectTaskCount(filter: TaskFilter): number {
+		return this.filterTaskRows(this.projectTasks, filter).length;
+	}
+
+	get filteredProjectTasks(): ITeamTaskRow[] {
+		return this.filterTaskRows(this.projectTasks, this.projectTaskFilter);
+	}
+
+	get visibleProjectTasks(): ITeamTaskRow[] {
+		const rows = this.filteredProjectTasks;
+		return this.showAllProjectTasks ? rows : rows.slice(0, PROJECT_TASK_LIMIT);
+	}
+
+	setProjectTaskFilter(filter: TaskFilter): void {
+		this.projectTaskFilter = filter;
+		this.showAllProjectTasks = false;
 	}
 
 	/** The team's hours on the open project over the period, tracked and manual. */
@@ -858,12 +888,16 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		try {
 			const result = await firstValueFrom(
 				this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
-					params: toParams({ where: { organizationId, tenantId, projectId }, relations: ['taskStatus'] })
+					params: toParams({
+						where: { organizationId, tenantId, projectId },
+						relations: ['taskStatus', 'taskPriority', 'members', 'members.user']
+					})
 				})
 			);
 			if (sequence !== this._projectSequence) return;
 			const tasks = result?.items || [];
 			this.projectAttention = this.toAttentionTasks(tasks);
+			this.projectTasks = this.toTaskRows(tasks);
 			const done = tasks.filter((task) => isTaskFinished(task)).length;
 			const progress = tasks.filter(
 				(task) => !isTaskFinished(task) && ViewTeamComponent.statusGroupOf(task.status) === 'progress'
@@ -1081,8 +1115,12 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	get filteredTasks(): ITeamTaskRow[] {
-		const rows = this.tasks.value || [];
-		switch (this.taskFilter) {
+		return this.filterTaskRows(this.tasks.value || [], this.taskFilter);
+	}
+
+	/** Open hides done tasks; Done lists the most recently finished first. */
+	private filterTaskRows(rows: ITeamTaskRow[], filter: TaskFilter): ITeamTaskRow[] {
+		switch (filter) {
 			case 'progress':
 				return rows.filter((row) => row.statusGroup === 'progress');
 			case 'overdue':
