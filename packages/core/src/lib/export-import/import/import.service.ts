@@ -373,7 +373,10 @@ export class ImportService {
 		if ('id' in data && isNotEmpty(data['id'])) {
 			delete data['id'];
 		}
-		if ('tenantId' in data && isNotEmpty(data['tenantId'])) {
+		// An empty or missing tenantId would save the row without a tenant, where every tenant reads it
+		// as a platform default, so any table with the column gets the importer's tenant.
+		const hasTenantColumn = !!item.repository.metadata.findColumnWithPropertyName('tenantId');
+		if (hasTenantColumn || ('tenantId' in data && isNotEmpty(data['tenantId']))) {
 			data['tenantId'] = RequestContext.currentTenantId();
 		}
 		if ('organizationId' in data && isNotEmpty(data['organizationId'])) {
