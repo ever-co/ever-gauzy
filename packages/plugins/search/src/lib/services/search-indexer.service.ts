@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { IsNull } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import { ID, IEventEnvelope, ISearchDocument, ISearchIndexRegistration, ISearchProvider } from '@gauzy/contracts';
 import { TypeOrmSearchIndexDefinitionRepository } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
@@ -28,6 +28,18 @@ export interface ISourceRowQuery {
 	engineKey?: string;
 }
 
+/**
+ * The persisted half of a declaration, as far as the write path needs it: whether the entity is indexed, the version
+ * documents are stamped with and the engine that holds them, and — for an organization's own copy — whose it is.
+ */
+export interface IPersistedSearchDefinition {
+	isActive?: boolean | null;
+	version?: number | null;
+	engineKey?: string | null;
+	tenantId?: ID | null;
+	organizationId?: ID | null;
+}
+
 /** What one indexing run did. */
 export interface IIndexRunOutcome {
 	entity: string;
@@ -36,6 +48,12 @@ export interface IIndexRunOutcome {
 	skipped: number;
 	/** The provider that answered, so a caller can say which backend holds the documents. */
 	providerKey: string;
+	/**
+	 * How many source rows the run read, written or not. A paged sweep stops on the page that came back short, and a
+	 * row that is not written — outside the row rule, or of an organization that switched the entity off — is still a
+	 * row of the page.
+	 */
+	read?: number;
 }
 
 /**
@@ -156,7 +174,8 @@ export class SearchIndexerService {
 	 */
 	async index(entity: string, options: ISourceRowQuery = {}): Promise<IIndexRunOutcome> {
 		const definition = this.definitionFor(entity);
-		const engineKey = options.engineKey ?? (await this.engineKeyOf(definition.entity)) ?? undefined;
+		const platform = await this.persistedDefinitionOf(definition.entity);
+		const engineKey = options.engineKey ?? platform?.engineKey ?? undefined;
 		const provider = this.writableProvider(definition, engineKey);
 		const rows = await this.readSourceRows(definition, options);
 
@@ -177,11 +196,18 @@ export class SearchIndexerService {
 						})
 					: 0;
 
-			return { entity: definition.entity, indexed: 0, removed, skipped: 0, providerKey: provider.key };
+			return { entity: definition.entity, indexed: 0, removed, skipped: 0, providerKey: provider.key, read: 0 };
 		}
 
 		const channels = await this.resolveChannels(definition, rows);
-		const version = normaliseVersion(options.definitionVersion ?? 1);
+		const version = normaliseVersion(options.definitionVersion ?? platform?.version ?? 1);
+		// The definition in force is the row's organization's own copy when it has one, else the shipped row (Q16).
+		// A run reads the rows of many organizations — a sweep reads the whole tenant, an event names one row — and
+		// each row is written under its own organization's definition: an organization that switched the entity off
+		// has its rows removed rather than re-indexed, and one that re-weighted it has its documents stamped with its
+		// copy's version rather than the shipped one.
+		const copies = await this.organizationCopiesOf(definition.entity, rows, options);
+		const platformActive = platform ? platform.isActive !== false : definition.isActive !== false;
 		let skipped = 0;
 		const documents: ISearchDocument[] = [];
 		// Keyed by the tenant whose copy is removed: a sweep that names no tenant reads every tenant's
@@ -190,10 +216,15 @@ export class SearchIndexerService {
 		const hidden = new Map<string, ID[]>();
 
 		for (const row of rows) {
+			const own = ownCopyOf(row, options, copies);
+			const active = own ? own.isActive !== false : platformActive;
+
 			// A row the declaration's row rule does not admit is not the entity permission's to show
 			// (a PRIVATE document, review R7-05). It is not written, and a document an earlier run wrote
 			// for it — before the row moved outside the rule, or before the rule existed — is removed.
-			if (!isRowVisible(definition, row)) {
+			// A row whose organization's definition is switched off is removed the same way (Q16): the
+			// switch dropped its documents, and a live event must not write them back.
+			if (!active || !isRowVisible(definition, row)) {
 				const tenantId = String(options.tenantId ?? row.tenantId ?? '');
 				hidden.set(tenantId, [...(hidden.get(tenantId) ?? []), row.id as ID]);
 				continue;
@@ -207,7 +238,7 @@ export class SearchIndexerService {
 						engineKey,
 						channelIds: channels.get(String(row.id)) ?? []
 					}),
-					definitionVersion: version
+					definitionVersion: own ? normaliseVersion(own.version ?? version) : version
 				});
 			} catch (error) {
 				// One unreadable row must not fail the batch: it is counted and reported, and the next
@@ -227,7 +258,7 @@ export class SearchIndexerService {
 			});
 		}
 
-		return { entity: definition.entity, indexed, removed, skipped, providerKey: provider.key };
+		return { entity: definition.entity, indexed, removed, skipped, providerKey: provider.key, read: rows.length };
 	}
 
 	/**
@@ -331,6 +362,11 @@ export class SearchIndexerService {
 		// rewrote a document the sweep had just stamped at version 3 back down to 1 — and the column
 		// the reindex index exists to read (`entity, definitionVersion, indexedAt`) stopped
 		// identifying stale documents at all.
+		//
+		// The version passed is the shipped row's; `index` replaces it, row by row, with the version of
+		// the row's organization's own copy, and leaves a row whose organization switched the entity off
+		// unwritten (Q16). The event path used to read the shipped row alone, so an organization that
+		// had switched the entity off was re-indexed by its next ordinary update.
 		return await this.index(definition.entity, {
 			ids: [aggregateId],
 			tenantId: event.tenantId ?? null,
@@ -454,10 +490,7 @@ export class SearchIndexerService {
 	 * @param rows The source rows.
 	 * @returns Channel ids by source id.
 	 */
-	async resolveChannels(
-		definition: ISearchIndexRegistration,
-		rows: SearchSourceRow[]
-	): Promise<Map<string, ID[]>> {
+	async resolveChannels(definition: ISearchIndexRegistration, rows: SearchSourceRow[]): Promise<Map<string, ID[]>> {
 		const resolved = new Map<string, ID[]>();
 		const pivotName = definition.channels;
 
@@ -611,7 +644,7 @@ export class SearchIndexerService {
 	 * @param entity The entity key.
 	 * @returns The row, or `null` when the entity has no persisted definition or it cannot be read.
 	 */
-	private async persistedDefinitionOf(entity: string): Promise<{ engineKey?: string; version?: number } | null> {
+	private async persistedDefinitionOf(entity: string): Promise<IPersistedSearchDefinition | null> {
 		try {
 			const row = await this.typeOrmSearchIndexDefinitionRepository.findOne({
 				where: { entity, organizationId: IsNull() } as any
@@ -623,6 +656,61 @@ export class SearchIndexerService {
 
 			return null;
 		}
+	}
+
+	/**
+	 * The organizations' own copies of one declaration, for the organizations a batch of rows belongs to.
+	 *
+	 * A copy is what `SearchIndexDefinitionService.findFor` answers for its organization, so it is the definition in
+	 * force for that organization's rows. The read is bounded by the batch: it names only the organizations the rows
+	 * carry (or the one the caller stated), which is a handful per page of a sweep and one for an event. Copies that
+	 * cannot be read are a warning, and the rows are written under the shipped definition as they were before.
+	 *
+	 * @param entity The entity key.
+	 * @param rows The batch.
+	 * @param options The run's scope.
+	 * @returns The copies, by organization id.
+	 */
+	private async organizationCopiesOf(
+		entity: string,
+		rows: SearchSourceRow[],
+		options: ISourceRowQuery
+	): Promise<Map<string, IPersistedSearchDefinition>> {
+		const copies = new Map<string, IPersistedSearchDefinition>();
+		const organizationIds = [
+			...new Set(
+				rows
+					.map((row) => row.organizationId ?? options.organizationId)
+					.filter((value) => !!value)
+					.map((value) => String(value))
+			)
+		];
+
+		if (organizationIds.length === 0) {
+			return copies;
+		}
+
+		try {
+			const found: IPersistedSearchDefinition[] = await this.typeOrmSearchIndexDefinitionRepository.find({
+				where: {
+					entity,
+					organizationId: In(organizationIds),
+					...(options.tenantId ? { tenantId: options.tenantId } : {})
+				} as any
+			});
+
+			for (const copy of found ?? []) {
+				if (copy?.organizationId) {
+					copies.set(String(copy.organizationId), copy);
+				}
+			}
+		} catch (error) {
+			this.logger.warn(
+				`The organizations' own "${entity}" index definitions could not be read: ${describe(error)}`
+			);
+		}
+
+		return copies;
 	}
 
 	/**
@@ -664,6 +752,38 @@ export function normaliseEntityKey(value: string): string {
 }
 
 /**
+ * The organization's own copy of the definition one source row is written under, when its organization has one.
+ *
+ * The copy must belong to the row's tenant: an organization id is unique, but a copy is a tenant's row and a row of
+ * another tenant is never written under it.
+ *
+ * @param row The source row.
+ * @param options The run's scope, whose organization stands in for a row that carries none.
+ * @param copies The copies the batch's organizations hold.
+ * @returns The copy, or `undefined` when the row is written under the shipped definition.
+ */
+function ownCopyOf(
+	row: SearchSourceRow,
+	options: ISourceRowQuery,
+	copies: Map<string, IPersistedSearchDefinition>
+): IPersistedSearchDefinition | undefined {
+	const organizationId = row.organizationId ?? options.organizationId;
+
+	if (!organizationId) {
+		return undefined;
+	}
+
+	const copy = copies.get(String(organizationId));
+	const tenantId = row.tenantId ?? options.tenantId;
+
+	if (!copy || (copy.tenantId && tenantId && String(copy.tenantId) !== String(tenantId))) {
+		return undefined;
+	}
+
+	return copy;
+}
+
+/**
  * The version a document is stamped with.
  *
  * @param value The candidate version.
@@ -683,7 +803,9 @@ function normaliseVersion(value: unknown): number {
  * @returns The singular.
  */
 function singular(table: string): string {
-	return String(table ?? '').replace(/ies$/, 'y').replace(/s$/, '');
+	return String(table ?? '')
+		.replace(/ies$/, 'y')
+		.replace(/s$/, '');
 }
 
 /**

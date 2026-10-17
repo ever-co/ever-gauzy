@@ -245,6 +245,38 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	}
 
 	/**
+	 * The shipped (platform) definition of one entity, whatever organization the caller has selected.
+	 *
+	 * A sweep is the tenant's, not the caller's organization's: it reads every organization's rows and writes each one
+	 * under its own organization's definition (Q16). Resolving the sweep's definition through `findFor` stamped the
+	 * whole tenant with the version — and the switch — of whichever organization the operator happened to have
+	 * selected.
+	 *
+	 * @param entity The entity key.
+	 * @returns The platform row, or `null` when the entity has no persisted definition.
+	 */
+	async platformDefinitionOf(entity: string): Promise<SearchIndexDefinition | null> {
+		return await this.typeOrmSearchIndexDefinitionRepository.findOne({
+			where: { entity, organizationId: IsNull() } as any
+		});
+	}
+
+	/**
+	 * Every organization's own definition of one entity, switched on or off.
+	 *
+	 * @param entity The entity key.
+	 * @param tenantId The tenant whose copies are read; every tenant's when none is named (a system sweep).
+	 * @returns The copies, each naming its tenant and organization.
+	 */
+	async organizationCopies(entity: string, tenantId?: ID | null): Promise<SearchIndexDefinition[]> {
+		const rows = await this.typeOrmSearchIndexDefinitionRepository.find({
+			where: { entity, ...(tenantId ? { tenantId } : {}) } as any
+		});
+
+		return rows.filter((row) => !!row.organizationId);
+	}
+
+	/**
 	 * The definitions a caller may see: its organization's rows and the platform's.
 	 *
 	 * @param entity Narrows the list to one entity.
@@ -413,7 +445,9 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 		}
 
 		if (!row.tenantId) {
-			throw new BadRequestException('A shipped search index definition is never changed in place; it is changed for one organization.');
+			throw new BadRequestException(
+				'A shipped search index definition is never changed in place; it is changed for one organization.'
+			);
 		}
 
 		return await this.typeOrmSearchIndexDefinitionRepository.save(row);

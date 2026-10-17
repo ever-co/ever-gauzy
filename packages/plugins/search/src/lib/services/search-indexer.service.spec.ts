@@ -125,7 +125,10 @@ function matches(row: Row, where: any = {}): boolean {
 				case 'isNull':
 					return row[field] === null || row[field] === undefined;
 				case 'moreThanOrEqual':
-					return row[field] !== undefined && new Date(row[field]).getTime() >= new Date(operator._value as any).getTime();
+					return (
+						row[field] !== undefined &&
+						new Date(row[field]).getTime() >= new Date(operator._value as any).getTime()
+					);
 				default:
 					throw new Error(`the in-memory double does not implement the "${operator._type}" operator`);
 			}
@@ -157,9 +160,30 @@ const DECLARATION: ISearchIndexRegistration = {
 			facetable: false,
 			source: 'product.translations.name'
 		},
-		{ name: 'internalReference', kind: SearchFieldKind.KEYWORD, weight: 1, searchable: true, filterable: true, facetable: false },
-		{ name: 'enabled', kind: SearchFieldKind.BOOLEAN, weight: 1, searchable: false, filterable: true, facetable: true },
-		{ name: 'productId', kind: SearchFieldKind.ENTITY, weight: 1, searchable: false, filterable: true, facetable: true }
+		{
+			name: 'internalReference',
+			kind: SearchFieldKind.KEYWORD,
+			weight: 1,
+			searchable: true,
+			filterable: true,
+			facetable: false
+		},
+		{
+			name: 'enabled',
+			kind: SearchFieldKind.BOOLEAN,
+			weight: 1,
+			searchable: false,
+			filterable: true,
+			facetable: true
+		},
+		{
+			name: 'productId',
+			kind: SearchFieldKind.ENTITY,
+			weight: 1,
+			searchable: false,
+			filterable: true,
+			facetable: true
+		}
 	]
 };
 
@@ -192,12 +216,16 @@ function searchFixture(
 		version?: number;
 		mapPivot?: boolean;
 		declaration?: ISearchIndexRegistration;
+		/** The persisted definitions: the shipped row (no organization) and the organizations' own copies. */
+		definitions?: Row[];
 	} = {}
 ) {
 	let sequence = 0;
 	const tables = {
 		product_variant: [...(seed.rows ?? [sourceRow('v1')])],
-		product_variant_channel: [...(seed.channels ?? [{ id: 'pivot-1', productVariantId: 'v1', channelId: CHANNEL }])],
+		product_variant_channel: [
+			...(seed.channels ?? [{ id: 'pivot-1', productVariantId: 'v1', channelId: CHANNEL }])
+		],
 		search_document: [...(seed.documents ?? [])]
 	};
 
@@ -240,7 +268,8 @@ function searchFixture(
 
 				if (order?.updatedAt === 'ASC') {
 					found = [...found].sort(
-						(left, right) => new Date(left.updatedAt ?? 0).getTime() - new Date(right.updatedAt ?? 0).getTime()
+						(left, right) =>
+							new Date(left.updatedAt ?? 0).getTime() - new Date(right.updatedAt ?? 0).getTime()
 					);
 				}
 
@@ -300,9 +329,13 @@ function searchFixture(
 		// an operator's edits have reached, and the live path needs both: the engine selects the provider
 		// and the version is what the document is stamped with.
 		findOne: async () =>
-			seed.engineKey || seed.version
-				? { entity: 'product_variant', engineKey: seed.engineKey ?? null, version: seed.version ?? 1 }
-				: null
+			seed.definitions
+				? (seed.definitions.find((row) => !row.organizationId) ?? null)
+				: seed.engineKey || seed.version
+					? { entity: 'product_variant', engineKey: seed.engineKey ?? null, version: seed.version ?? 1 }
+					: null,
+		// The organizations' own copies, read for the organizations a batch of rows belongs to (Q16).
+		find: async ({ where }: any = {}) => (seed.definitions ?? []).filter((row) => matches(row, where))
 	};
 
 	const indexRegistry = new SearchIndexRegistry(dataSource);
@@ -311,7 +344,12 @@ function searchFixture(
 
 	indexRegistry.register(seed.declaration ?? DECLARATION);
 
-	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, definitionRepository);
+	const indexer = new SearchIndexerService(
+		new SearchSourceConnection(dataSource),
+		indexRegistry,
+		providerRegistry,
+		definitionRepository
+	);
 
 	return {
 		indexer,
@@ -337,7 +375,13 @@ describe('SearchIndexerService — one row becomes one document (doc 05 §3.18, 
 
 		const outcome = await fixture.indexer.index('product_variant');
 
-		expect(outcome).toMatchObject({ entity: 'product_variant', indexed: 1, removed: 0, skipped: 0, providerKey: 'database' });
+		expect(outcome).toMatchObject({
+			entity: 'product_variant',
+			indexed: 1,
+			removed: 0,
+			skipped: 0,
+			providerKey: 'database'
+		});
 
 		const document = fixture.documents()[0];
 
@@ -352,7 +396,9 @@ describe('SearchIndexerService — one row becomes one document (doc 05 §3.18, 
 		expect(document.title).toContain('SKU-v1');
 		expect(document.title).toContain('Widget v1');
 		// The keywords are the declaration's promoted fields plus the channel the row is published to.
-		expect(document.keywords).toEqual(expect.arrayContaining(['sku:sku-v1', 'enabled:true', `channelid:${CHANNEL}`]));
+		expect(document.keywords).toEqual(
+			expect.arrayContaining(['sku:sku-v1', 'enabled:true', `channelid:${CHANNEL}`])
+		);
 		// The weight is the average declared weight of the searchable fields the row actually filled, so a
 		// six-field entity does not outrank a two-field one carrying the same information.
 		expect(document.attributes).toMatchObject({ sku: 'SKU-v1', name: 'Widget v1', enabled: true, _weight: 2 });
@@ -536,10 +582,16 @@ describe('SearchIndexerService — the event seam (doc 12, doc 05 §3.18)', () =
 		const fixture = searchFixture();
 
 		expect(
-			await fixture.indexer.handleEvent({ name: 'invoice.updated', aggregate: { type: 'Invoice', id: 'i1' } } as never)
+			await fixture.indexer.handleEvent({
+				name: 'invoice.updated',
+				aggregate: { type: 'Invoice', id: 'i1' }
+			} as never)
 		).toBeUndefined();
 		expect(
-			await fixture.indexer.handleEvent({ name: 'product_variant.updated', aggregate: { type: 'ProductVariant' } } as never)
+			await fixture.indexer.handleEvent({
+				name: 'product_variant.updated',
+				aggregate: { type: 'ProductVariant' }
+			} as never)
 		).toBeUndefined();
 	});
 });
@@ -746,7 +798,14 @@ describe('SearchIndexerService — a declaration with a row rule (review R7-05)'
 			channels: [],
 			// v2 was indexed before the rule existed (or before its row moved outside it).
 			documents: [
-				{ id: 'stale-v2', tenantId: TENANT, entity: 'product_variant', entityId: 'v2', engineKey: null, deletedAt: null }
+				{
+					id: 'stale-v2',
+					tenantId: TENANT,
+					entity: 'product_variant',
+					entityId: 'v2',
+					engineKey: null,
+					deletedAt: null
+				}
 			]
 		});
 
@@ -762,5 +821,123 @@ describe('SearchIndexerService — a declaration with a row rule (review R7-05)'
 		const outcome = await fixture.indexer.index('product_variant', { tenantId: TENANT, organizationId: ORG });
 
 		expect(outcome).toMatchObject({ indexed: 2, removed: 0 });
+	});
+});
+
+/**
+ * Q16 (1): the live path read only the shipped definition row and never its switch, so an organization that had
+ * switched the entity off on its own copy (SEC-B-04) was re-indexed by its next ordinary update — the documents the
+ * switch had dropped came back. Each row is now written under its own organization's definition.
+ */
+describe('SearchIndexerService — the definition in force for the event’s organization (Q16)', () => {
+	const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
+	const shipped = (overrides: Row = {}): Row => ({
+		entity: 'product_variant',
+		version: 5,
+		isActive: true,
+		tenantId: null,
+		organizationId: null,
+		...overrides
+	});
+	const ownCopy = (overrides: Row = {}): Row => ({
+		entity: 'product_variant',
+		version: 7,
+		isActive: true,
+		tenantId: TENANT,
+		organizationId: ORG,
+		...overrides
+	});
+	const updated = (id: string, organizationId: string) =>
+		({
+			name: 'product_variant.updated',
+			aggregate: { type: 'ProductVariant', id },
+			tenantId: TENANT,
+			organizationId
+		}) as never;
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('does not re-index a row of an organization that switched the entity off, and removes its document', async () => {
+		const copy = ownCopy();
+		const fixture = searchFixture({ definitions: [shipped(), copy] });
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+		expect(fixture.documents()).toHaveLength(1);
+
+		copy.isActive = false;
+
+		const outcome = await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(outcome).toMatchObject({ indexed: 0, removed: 1 });
+		expect(fixture.documents()).toEqual([]);
+	});
+
+	it('CONTROL: a row of another organization, still on the shipped definition, is indexed', async () => {
+		const fixture = searchFixture({
+			rows: [sourceRow('v1'), sourceRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped(), ownCopy({ isActive: false })]
+		});
+
+		const outcome = await fixture.indexer.handleEvent(updated('v2', OTHER_ORG));
+
+		expect(outcome).toMatchObject({ indexed: 1, removed: 0 });
+		expect(fixture.documents().map((document) => [document.entityId, document.definitionVersion])).toEqual([
+			['v2', 5]
+		]);
+	});
+
+	it('stamps the organization’s own copy’s version rather than the shipped one', async () => {
+		const fixture = searchFixture({ definitions: [shipped(), ownCopy()] });
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(fixture.documents()[0].definitionVersion).toBe(7);
+	});
+
+	it('does not index an entity whose shipped definition is off, unless the organization’s own copy is on', async () => {
+		const fixture = searchFixture({
+			rows: [sourceRow('v1'), sourceRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped({ isActive: false }), ownCopy()]
+		});
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+		await fixture.indexer.handleEvent(updated('v2', OTHER_ORG));
+
+		expect(fixture.documents().map((document) => document.entityId)).toEqual(['v1']);
+	});
+
+	it('writes a tenant-wide batch row by row, each under its own organization’s definition', async () => {
+		const fixture = searchFixture({
+			rows: [sourceRow('v1'), sourceRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped(), ownCopy()]
+		});
+
+		const outcome = await fixture.indexer.index('product_variant', { definitionVersion: 5 });
+
+		expect(outcome).toMatchObject({ indexed: 2, read: 2 });
+		expect(
+			fixture
+				.documents()
+				.map((document) => [document.entityId, document.definitionVersion])
+				.sort()
+		).toEqual([
+			['v1', 7],
+			['v2', 5]
+		]);
+	});
+
+	it('ignores a copy that belongs to another tenant', async () => {
+		const fixture = searchFixture({
+			definitions: [shipped(), ownCopy({ tenantId: 'another-tenant', isActive: false })]
+		});
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(fixture.documents().map((document) => document.definitionVersion)).toEqual([5]);
 	});
 });
