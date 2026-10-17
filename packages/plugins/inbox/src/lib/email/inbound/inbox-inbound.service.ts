@@ -7,7 +7,7 @@ import {
 	PayloadTooLargeException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import {
 	ID,
@@ -220,9 +220,17 @@ export class InboxInboundService {
 			if (fresh.length === 0) continue;
 
 			const extension = message.raw ? 'eml' : 'json';
-			const now = new Date();
-			const key = `inbox/${tenantId}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}.${extension}`;
-			const stored = await this.storage.put(message.raw ?? serializeParsedMessage(message), key);
+			const content = message.raw ?? serializeParsedMessage(message);
+			// A stable key (the message id and the content's digest): overlapping deliveries of one message write the
+			// same file, so a delivery that loses the race leaves no unreferenced copy behind.
+			const digest = createHash('sha256')
+				.update(messageId)
+				.update('\n')
+				.update(createHash('sha256').update(content).digest('hex'))
+				.digest('hex')
+				.slice(0, 48);
+			const key = `inbox/${tenantId}/messages/${digest}.${extension}`;
+			const stored = await this.storage.put(content, key);
 
 			for (const { mailbox, tag, hold } of fresh) {
 				try {
