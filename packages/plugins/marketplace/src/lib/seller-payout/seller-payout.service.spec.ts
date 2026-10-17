@@ -250,7 +250,15 @@ const payoutRow = (id: string, overrides: Row = {}) => ({
  *
  * @param seed What the fixture holds.
  */
-function payoutFixture(seed: { sellers?: Row[]; transactions?: Row[]; payouts?: Row[]; lines?: Row[] } = {}) {
+function payoutFixture(
+	seed: {
+		sellers?: Row[];
+		transactions?: Row[];
+		payouts?: Row[];
+		lines?: Row[];
+		sequence?: Record<string, unknown>;
+	} = {}
+) {
 	let sequence = 0;
 	const tables = {
 		seller: [...(seed.sellers ?? [sellerRow()])],
@@ -359,7 +367,7 @@ function payoutFixture(seed: { sellers?: Row[]; transactions?: Row[]; payouts?: 
 			return tables.seller_payout_line.filter((row) => matches(row, where));
 		}
 	};
-	const sequenceService = {
+	const sequenceService = seed.sequence ?? {
 		allocate: async (key: string) => ({ key, formatted: 'PAY-0001', number: 'PAY-0001', value: 1 })
 	};
 	const outbox = {
@@ -560,6 +568,110 @@ describe('SellerPayoutService — building a payout (doc 20 §7.4, §7.5, MK-11)
 		expect(fixture.rows().find((row) => row.id === 't2')?.status).toBe(SellerTransactionStatus.SETTLEABLE);
 		expect(fixture.rows().find((row) => row.id === 't3')?.status).toBe(SellerTransactionStatus.SETTLEABLE);
 		expect(fixture.rows().find((row) => row.id === 't4')?.status).toBe(SellerTransactionStatus.PENDING);
+	});
+});
+
+describe('SellerPayoutService — the SELLER_PAYOUT numbering series (Q7-W3)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** A series store with no SELLER_PAYOUT series until `ensure` creates it, as `SequenceService` answers. */
+	function sequenceStore(options: { ensureFails?: boolean; createdElsewhere?: boolean; orderPadding?: number } = {}) {
+		let exists = false;
+		let next = 1;
+		let padding = 6;
+		return {
+			findSeries: jest.fn(async (key: string) => {
+				if (key === 'ORDER' && options.orderPadding) {
+					return { key, padding: options.orderPadding };
+				}
+				throw new NotFoundException(`No numbering series is configured for "${key}".`);
+			}),
+			allocate: jest.fn(async (key: string) => {
+				if (!exists) {
+					if (options.createdElsewhere) {
+						// A concurrent first payout created the series after this allocation looked.
+						exists = true;
+					}
+					throw new NotFoundException(
+						`No numbering series is configured for "${key}". Create one before requesting a number.`
+					);
+				}
+				const value = next++;
+				return { key, value, formatted: `SP-${String(value).padStart(padding, '0')}` };
+			}),
+			ensure: jest.fn(async (input: Record<string, unknown>) => {
+				if (options.ensureFails) {
+					throw new Error('UNIQUE constraint failed: sequence.organizationId, sequence.key');
+				}
+				exists = true;
+				padding = Number(input.padding);
+				return { id: 'series-1', ...input };
+			})
+		};
+	}
+
+	it('numbers the first payout of an organization that has no series yet, creating the default one once', async () => {
+		const sequence = sequenceStore();
+		const fixture = payoutFixture({ transactions: [transactionRow('t1')], sequence });
+
+		const payout = await fixture.service.createPayout({ sellerId: SELLER, currency: EUR });
+
+		expect(payout.number).toBe('SP-000001');
+		expect(sequence.ensure).toHaveBeenCalledTimes(1);
+		expect(sequence.ensure).toHaveBeenCalledWith(
+			expect.objectContaining({
+				tenantId: TENANT,
+				organizationId: ORG,
+				key: 'SELLER_PAYOUT',
+				prefix: 'SP-',
+				padding: 6,
+				nextValue: 1,
+				step: 1
+			})
+		);
+		expect(sequence.allocate).toHaveBeenCalledTimes(2);
+	});
+
+	it('pads the created series as wide as the organization’s ORDER series, as the seed would have', async () => {
+		const sequence = sequenceStore({ orderPadding: 4 });
+		const fixture = payoutFixture({ transactions: [transactionRow('t1')], sequence });
+
+		const payout = await fixture.service.createPayout({ sellerId: SELLER, currency: EUR });
+
+		expect(payout.number).toBe('SP-0001');
+		expect(sequence.ensure).toHaveBeenCalledWith(expect.objectContaining({ key: 'SELLER_PAYOUT', padding: 4 }));
+	});
+
+	it('numbers from the row a concurrent first payout created when its own insert is refused', async () => {
+		const sequence = sequenceStore({ ensureFails: true, createdElsewhere: true });
+		const fixture = payoutFixture({ transactions: [transactionRow('t1')], sequence });
+
+		const payout = await fixture.service.createPayout({ sellerId: SELLER, currency: EUR });
+
+		expect(payout.number).toBe('SP-000001');
+		expect(sequence.allocate).toHaveBeenCalledTimes(2);
+	});
+
+	it('repairs only a missing series: an inactive one is refused as before, nothing is created', async () => {
+		const sequence = {
+			allocate: jest.fn(async () => {
+				throw new BadRequestException('The numbering series "SELLER_PAYOUT" is not active.');
+			}),
+			ensure: jest.fn()
+		};
+		const fixture = payoutFixture({ transactions: [transactionRow('t1')], sequence });
+
+		await expect(fixture.service.createPayout({ sellerId: SELLER, currency: EUR })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(sequence.ensure).not.toHaveBeenCalled();
+		expect(fixture.tables.seller_payout).toHaveLength(0);
 	});
 });
 
