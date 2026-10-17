@@ -11,7 +11,11 @@ import type { EverWorksHttpRequest, EverWorksHttpResponse, EverWorksTransport } 
  * It answers in-process through {@link MockEverWorksServer.transport} (no socket) or over HTTP with
  * {@link MockEverWorksServer.listen}. Implemented so far: `GET /whoami`, `GET /events`, webhooks v2
  * (`/webhooks` create/get/list/patch/delete/rotate-secret) with signed delivery, `Idempotency-Key`
- * replay, the error envelope, injected failures and a request log. Resources are added with the engine.
+ * replay, the error envelope, injected failures and a request log; `GET /members`, `GET /agents`; tasks
+ * (`GET`/`POST /tasks`, `GET`/`PATCH`/`DELETE /tasks/:id`, `POST /tasks/:id/transition` with gates,
+ * `PUT /tasks/:id/assignees|watchers|blocks|relations`, task comments) and `GET`/`PUT`/`DELETE /links`,
+ * each task write bumping the version, honouring `If-Match` and recording its event. Resources are added
+ * with the engine.
  */
 
 /** One integration key the mock accepts. */
@@ -56,6 +60,17 @@ export interface MockEverWorksDelivery {
 }
 
 type Webhook = EverWorksWebhookSubscription & { secret: string; keyId: string };
+
+/** One external record link (contract v1 link DTO without its timestamps). */
+export interface MockEverWorksLink {
+	organizationId: string;
+	entityType: string;
+	entityId: string;
+	source: string;
+	installationId: string | null;
+	externalId: string;
+	externalUrl: string | null;
+}
 
 /** What a resource extension of the mock receives for one organization-scoped request. */
 export interface MockEverWorksRouteContext {
@@ -110,6 +125,13 @@ export class MockEverWorksServer {
 	/** Organization members and agents (contract DTOs) the org-scoped routes answer from. */
 	readonly members: Array<Record<string, unknown>> = [];
 	readonly agents = new Map<string, Record<string, unknown>>();
+	/** Tasks (contract task DTOs) and their comments, by id. */
+	readonly tasks = new Map<string, Record<string, unknown>>();
+	readonly comments = new Map<string, Record<string, unknown>>();
+	/** External record links (`/links`). */
+	readonly links: MockEverWorksLink[] = [];
+	/** Statuses a transition may not reach, per task id (its gates): `409 transition_blocked` with these blockers. */
+	readonly transitionGates = new Map<string, { blocked: string[]; blockers: Array<Record<string, unknown>> }>();
 	readonly requests: MockEverWorksRecordedRequest[] = [];
 	readonly deliveries: MockEverWorksDelivery[] = [];
 	readonly failures: MockEverWorksFailure[] = [];
@@ -241,13 +263,20 @@ export class MockEverWorksServer {
 		const replayKey = idempotencyKey && request.method === 'POST' ? `${key.keyId}:${idempotencyKey}` : null;
 		if (replayKey && this.idempotent.has(replayKey)) return this.idempotent.get(replayKey) as EverWorksHttpResponse;
 
-		const response = this.route(request.method, path, recorded.query, request.body, key, headers);
+		const response = await this.route(request.method, path, recorded.query, request.body, key, headers);
 		// Like Ever Works: only a completed create is stored; a refusal releases the key, so a retry can succeed.
 		if (replayKey && response.status < 400) this.idempotent.set(replayKey, response);
 		return response;
 	}
 
-	private route(method: string, path: string, query: Record<string, string>, body: unknown, key: MockEverWorksKey, headers: Record<string, string> = {}): EverWorksHttpResponse {
+	private route(
+		method: string,
+		path: string,
+		query: Record<string, string>,
+		body: unknown,
+		key: MockEverWorksKey,
+		headers: Record<string, string> = {}
+	): EverWorksHttpResponse | Promise<EverWorksHttpResponse> {
 		const has = (scope: string) => key.scopes.includes(scope);
 		const ok = (data: unknown, status = 200): EverWorksHttpResponse => ({ status, headers: { 'content-type': 'application/json' }, data });
 		if (method === 'GET' && path === '/whoami') {
@@ -307,6 +336,313 @@ export class MockEverWorksServer {
 			if (denied) return denied;
 			const agent = this.agents.get(path.slice('/agents/'.length));
 			return agent && agent['organizationId'] === org?.id ? ok(agent) : MockEverWorksServer.error(404, 'not_found', 'No such agent.');
+		}
+		if (path === '/tasks' || path.startsWith('/tasks/')) {
+			const denied = scoped(method === 'GET' ? 'tasks:read' : 'tasks:write');
+			if (denied) return denied;
+			return this.taskRoute(method, path, query, body, key, headers, org?.id as string);
+		}
+		if (path === '/links' || path.startsWith('/links/')) {
+			const denied = scoped(method === 'GET' ? 'tasks:read' : 'links:write');
+			if (denied) return denied;
+			return this.linkRoute(method, path, query, body, key, org?.id as string);
+		}
+		return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
+	}
+
+	/** Adds (or replaces) a task (contract task DTO) and returns it. */
+	addTask(organizationId: string, task: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+		const id = (task['id'] as string) ?? randomUUID();
+		const now = new Date().toISOString();
+		const row: Record<string, unknown> = {
+			id,
+			organizationId,
+			version: 1,
+			createdAt: now,
+			updatedAt: now,
+			visibility: 'organization',
+			visibilityExplicit: false,
+			owner: { type: 'user', id: randomUUID() },
+			createdBy: { type: 'user', id: randomUUID(), label: 'owner' },
+			externalLinks: [],
+			teamIds: [],
+			slug: `T-${this.tasks.size + 1}`,
+			title: 'A task',
+			description: null,
+			status: 'backlog',
+			priority: 'p3',
+			labels: [],
+			workId: null,
+			missionId: null,
+			ideaId: null,
+			goalId: null,
+			agentId: null,
+			parentTaskId: null,
+			assignees: [],
+			watchers: [],
+			approvers: [],
+			reviewers: [],
+			blockedBy: [],
+			relations: [],
+			startedAt: null,
+			completedAt: null,
+			isRecurringTemplate: false,
+			hiddenFromBoard: false,
+			runtime: { prUrl: null, prState: null, ciState: null, latestRunStatus: null },
+			webUrl: `https://app.example.test/tasks/${id}`,
+			dueAt: null,
+			startAt: null,
+			estimateMinutes: null,
+			...task
+		};
+		this.tasks.set(id, row);
+		return row;
+	}
+
+	/** An `ever-gauzy` key links as `gauzy` (contract v1, CR-1). */
+	static linkSource(key: Pick<MockEverWorksKey, 'integrationKind'>): string {
+		return key.integrationKind === 'ever-gauzy' ? 'gauzy' : key.integrationKind || 'generic';
+	}
+
+	/** The task DTO as served: `externalLinks` filtered to the caller's source. */
+	private taskView(task: Record<string, unknown>, key: MockEverWorksKey): Record<string, unknown> {
+		const source = MockEverWorksServer.linkSource(key);
+		const externalLinks = this.links
+			.filter((link) => link.entityType === 'task' && link.entityId === task['id'] && link.source === source)
+			.map((link) => ({ source: link.source, installationId: link.installationId, externalId: link.externalId, externalUrl: link.externalUrl }));
+		return { ...task, externalLinks };
+	}
+
+	/** Bumps a task's version, records its event (with the caller's origin and act-as) and returns the served DTO. */
+	private async touch(
+		task: Record<string, unknown>,
+		type: string,
+		key: MockEverWorksKey,
+		headers: Record<string, string>,
+		changedFields: string[],
+		previous: Record<string, unknown> | null = null,
+		data?: Record<string, unknown>
+	): Promise<Record<string, unknown>> {
+		task['version'] = Number(task['version'] ?? 0) + 1;
+		task['updatedAt'] = new Date().toISOString();
+		const actAs = headers['x-act-as-user'];
+		await this.emit({
+			type,
+			organizationId: task['organizationId'] as string,
+			aggregate: { type: 'task', id: task['id'] as string, version: task['version'] as number },
+			actor: actAs ? { type: 'user', id: actAs } : { type: 'integration', id: key.keyId, label: key.keyName },
+			origin: { tag: headers['x-sync-origin'] ?? null, integrationKeyId: key.keyId },
+			changedFields,
+			data: data ?? this.taskView(task, key),
+			previous
+		});
+		return this.taskView(task, key);
+	}
+
+	/** Contract v1 `/tasks*` (the routes the task sync uses). */
+	private async taskRoute(
+		method: string,
+		path: string,
+		query: Record<string, string>,
+		body: unknown,
+		key: MockEverWorksKey,
+		headers: Record<string, string>,
+		organizationId: string
+	): Promise<EverWorksHttpResponse> {
+		const ok = (data: Record<string, unknown> | unknown, status = 200): EverWorksHttpResponse => {
+			const version = data && typeof data === 'object' ? (data as Record<string, unknown>)['version'] : undefined;
+			return { status, headers: { 'content-type': 'application/json', ...(version !== undefined ? { etag: `"${version}"` } : {}) }, data };
+		};
+		const input = (body ?? {}) as Record<string, unknown>;
+		const parts = path.split('/').filter(Boolean); // ['tasks', id?, sub?, cid?]
+		const visible = (task: Record<string, unknown> | undefined): task is Record<string, unknown> =>
+			!!task && task['organizationId'] === organizationId && task['visibility'] !== 'private';
+		if (parts.length === 1 && method === 'GET') {
+			return ok(MockEverWorksServer.page([...this.tasks.values()].filter(visible).map((task) => this.taskView(task, key)), query));
+		}
+		if (parts.length === 1 && method === 'POST') {
+			const title = input['title'];
+			if (typeof title !== 'string' || !title || title.length > 200) return MockEverWorksServer.error(400, 'validation_failed', 'title is 1 to 200 characters.');
+			if (input['status'] !== undefined && input['status'] !== 'backlog' && input['status'] !== 'todo') {
+				return MockEverWorksServer.error(400, 'validation_failed', 'status on create is backlog or todo.');
+			}
+			if (input['visibility'] === 'private') return MockEverWorksServer.error(422, 'domain_rule', 'An integration cannot create a private record.');
+			const ref = input['externalRef'] as { source?: string; installationId?: string | null; externalId?: string; externalUrl?: string | null } | undefined;
+			const source = MockEverWorksServer.linkSource(key);
+			if (ref && ref.source !== source) return MockEverWorksServer.error(400, 'validation_failed', `externalRef.source must be "${source}", the source of this key`);
+			const installationId = ref?.installationId ?? ((headers['x-sync-origin'] ?? '').replace(/^gauzy:/, '') || null);
+			const existing = ref
+				? this.links.find((link) => link.entityType === 'task' && link.source === source && link.installationId === installationId && link.externalId === ref.externalId)
+				: undefined;
+			const already = existing ? this.tasks.get(existing.entityId) : undefined;
+			if (already) return ok(this.taskView(already, key));
+			const fields = { ...input };
+			delete fields['externalRef'];
+			const teamIds = (fields['teamIds'] as string[] | undefined) ?? [];
+			const task = this.addTask(organizationId, {
+				...fields,
+				status: (fields['status'] as string | undefined) ?? 'backlog',
+				visibility: (fields['visibility'] as string | undefined) ?? (teamIds.length ? 'team' : 'organization'),
+				version: 0
+			});
+			if (ref?.externalId) {
+				this.links.push({ organizationId, entityType: 'task', entityId: task['id'] as string, source, installationId, externalId: ref.externalId, externalUrl: ref.externalUrl ?? null });
+			}
+			return ok(await this.touch(task, 'task.created', key, headers, []), 201);
+		}
+		const found = this.tasks.get(parts[1] ?? '');
+		if (!visible(found)) return MockEverWorksServer.error(404, 'not_found', 'No such task.');
+		const row = found;
+		const ifMatch = headers['if-match'];
+		if (ifMatch && (method === 'PATCH' || method === 'PUT' || method === 'DELETE') && ifMatch !== `"${row['version']}"`) {
+			return MockEverWorksServer.error(412, 'version_mismatch', 'The task changed.', { currentVersion: row['version'] });
+		}
+		if (parts.length === 2 && method === 'GET') return ok(this.taskView(row, key));
+		if (parts.length === 2 && method === 'PATCH') {
+			if ('status' in input) return MockEverWorksServer.error(400, 'validation_failed', 'status moves through /transition.');
+			if (input['visibility'] === 'private') return MockEverWorksServer.error(422, 'domain_rule', 'An integration cannot make a record private.');
+			const previous: Record<string, unknown> = {};
+			for (const [field, value] of Object.entries(input)) {
+				previous[field] = row[field] ?? null;
+				row[field] = value;
+			}
+			if ('teamIds' in input && !row['visibilityExplicit']) row['visibility'] = ((input['teamIds'] as string[] | null) ?? []).length ? 'team' : 'organization';
+			return ok(await this.touch(row, 'task.updated', key, headers, Object.keys(input), previous));
+		}
+		if (parts.length === 2 && method === 'DELETE') {
+			this.tasks.delete(row['id'] as string);
+			await this.touch(row, 'task.deleted', key, headers, [], null, { ...this.taskView(row, key), deleted: true });
+			return { status: 204, headers: {}, data: undefined };
+		}
+		if (parts.length === 3 && parts[2] === 'transition' && method === 'POST') {
+			const to = input['to'];
+			if (input['mode'] !== 'sync' || typeof to !== 'string' || !['backlog', 'todo', 'in_progress', 'in_review', 'blocked', 'done', 'cancelled'].includes(to)) {
+				return MockEverWorksServer.error(400, 'validation_failed', "to is a task status and mode is 'sync'.");
+			}
+			const gate = this.transitionGates.get(row['id'] as string);
+			if (gate?.blocked.includes(to)) {
+				return MockEverWorksServer.error(409, 'transition_blocked', `${String(row['slug'])} cannot move to ${to}.`, {
+					from: row['status'],
+					to,
+					blockers: gate.blockers,
+					pendingApprovers: [],
+					path: [to]
+				});
+			}
+			if (row['status'] === to) return ok(this.taskView(row, key));
+			const previous = { status: row['status'] };
+			row['status'] = to;
+			return ok(await this.touch(row, 'task.transitioned', key, headers, ['status'], previous));
+		}
+		const sets: Record<string, { field: string; bodyKey: string }> = {
+			assignees: { field: 'assignees', bodyKey: 'assignees' },
+			watchers: { field: 'watchers', bodyKey: 'userIds' },
+			blocks: { field: 'blockedBy', bodyKey: 'blockedBy' },
+			relations: { field: 'relations', bodyKey: 'relations' }
+		};
+		const set = parts.length === 3 && method === 'PUT' ? sets[parts[2] ?? ''] : undefined;
+		if (set) {
+			const next = input[set.bodyKey];
+			if (!Array.isArray(next)) return MockEverWorksServer.error(400, 'validation_failed', `${set.bodyKey} is required.`);
+			const previous = { [set.field]: row[set.field] };
+			row[set.field] = next;
+			return ok(await this.touch(row, 'task.updated', key, headers, [set.field], previous));
+		}
+		if (parts[2] === 'comments') return this.commentRoute(method, parts, input, key, headers, row);
+		return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
+	}
+
+	/** Contract v1 task comments (`/tasks/:id/comments[/:cid]`): body ≤ 16384 (CR-2), only the author edits or deletes. */
+	private async commentRoute(
+		method: string,
+		parts: string[],
+		input: Record<string, unknown>,
+		key: MockEverWorksKey,
+		headers: Record<string, string>,
+		task: Record<string, unknown>
+	): Promise<EverWorksHttpResponse> {
+		const ok = (data: unknown, status = 200): EverWorksHttpResponse => ({ status, headers: { 'content-type': 'application/json' }, data });
+		const actAs = headers['x-act-as-user'] ?? null;
+		if (parts.length === 3 && method === 'GET') {
+			return ok({ data: [...this.comments.values()].filter((comment) => comment['taskId'] === task['id']), nextCursor: null, hasMore: false });
+		}
+		if (parts.length === 3 && method === 'POST') {
+			const text = input['body'];
+			if (typeof text !== 'string' || !text || text.length > 16384) return MockEverWorksServer.error(400, 'validation_failed', 'body is 1 to 16384 characters.');
+			const now = new Date().toISOString();
+			const comment: Record<string, unknown> = {
+				id: randomUUID(),
+				taskId: task['id'],
+				organizationId: task['organizationId'],
+				authorType: actAs ? 'user' : 'integration',
+				authorId: actAs ?? key.keyId,
+				externalAuthor: actAs ? null : ((input['externalAuthor'] as Record<string, unknown> | undefined) ?? null),
+				body: text,
+				mentions: [],
+				editedAt: null,
+				createdAt: now,
+				updatedAt: now,
+				externalLinks: []
+			};
+			this.comments.set(comment['id'] as string, comment);
+			await this.touch(task, 'task.comment.created', key, headers, ['comments'], null, comment);
+			return ok(comment, 201);
+		}
+		const comment = this.comments.get(parts[3] ?? '');
+		if (!comment || comment['taskId'] !== task['id']) return MockEverWorksServer.error(404, 'not_found', 'No such comment.');
+		if (comment['authorId'] !== (actAs ?? key.keyId)) return MockEverWorksServer.error(422, 'domain_rule', 'Only the author edits or deletes a comment.');
+		if (parts.length === 4 && method === 'PATCH') {
+			const text = input['body'];
+			if (typeof text !== 'string' || !text || text.length > 16384) return MockEverWorksServer.error(400, 'validation_failed', 'body is 1 to 16384 characters.');
+			const now = new Date().toISOString();
+			Object.assign(comment, { body: text, editedAt: now, updatedAt: now });
+			await this.touch(task, 'task.comment.updated', key, headers, ['comments'], null, comment);
+			return ok(comment);
+		}
+		if (parts.length === 4 && method === 'DELETE') {
+			this.comments.delete(comment['id'] as string);
+			await this.touch(task, 'task.comment.deleted', key, headers, ['comments'], null, { ...comment, deleted: true });
+			return { status: 204, headers: {}, data: undefined };
+		}
+		return MockEverWorksServer.error(404, 'not_found', `No route ${method} /tasks/${String(task['id'])}/comments.`);
+	}
+
+	/** Contract v1 `/links` (`GET ?entityType=&externalId=`, `PUT`/`DELETE /links/:entityType/:entityId`). */
+	private linkRoute(method: string, path: string, query: Record<string, string>, body: unknown, key: MockEverWorksKey, organizationId: string): EverWorksHttpResponse {
+		const ok = (data: unknown, status = 200): EverWorksHttpResponse => ({ status, headers: { 'content-type': 'application/json' }, data });
+		const stamp = (link: MockEverWorksLink) => ({ ...link, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+		const source = MockEverWorksServer.linkSource(key);
+		const parts = path.split('/').filter(Boolean); // ['links', entityType?, entityId?]
+		if (parts.length === 1 && method === 'GET') {
+			const rows = this.links.filter(
+				(link) =>
+					link.organizationId === organizationId &&
+					link.source === source &&
+					(!query['entityType'] || link.entityType === query['entityType']) &&
+					(!query['externalId'] || link.externalId === query['externalId'])
+			);
+			return ok({ data: rows.map(stamp), nextCursor: null, hasMore: false });
+		}
+		const entityType = parts[1];
+		const entityId = parts[2];
+		if (parts.length !== 3 || !entityType || !entityId) return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
+		if (entityType === 'task' && !this.tasks.has(entityId)) return MockEverWorksServer.error(404, 'not_found', 'No such record.');
+		const input = (body ?? {}) as { externalId?: string; externalUrl?: string | null; installationId?: string | null };
+		if (method === 'PUT') {
+			if (!input.externalId) return MockEverWorksServer.error(400, 'validation_failed', 'externalId is required.');
+			const installationId = input.installationId ?? null;
+			const row: MockEverWorksLink = { organizationId, entityType, entityId, source, installationId, externalId: input.externalId, externalUrl: input.externalUrl ?? null };
+			const at = this.links.findIndex((link) => link.entityType === entityType && link.entityId === entityId && link.source === source && link.installationId === installationId);
+			if (at >= 0) this.links.splice(at, 1, row);
+			else this.links.push(row);
+			return ok(stamp(row));
+		}
+		if (method === 'DELETE') {
+			for (let i = this.links.length - 1; i >= 0; i--) {
+				const link = this.links[i];
+				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source) this.links.splice(i, 1);
+			}
+			return { status: 204, headers: {}, data: undefined };
 		}
 		return MockEverWorksServer.error(404, 'not_found', `No route ${method} ${path}.`);
 	}
