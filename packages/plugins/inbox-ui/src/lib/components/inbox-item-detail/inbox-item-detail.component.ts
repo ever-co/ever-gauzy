@@ -27,6 +27,7 @@ import {
 	optionsOf,
 	replyProblem,
 	snoozeUntil,
+	routedNoticeOf,
 	sourceLabelOf
 } from '../../inbox-ui.helpers';
 import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-viewer.component';
@@ -121,10 +122,16 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 						@if (current.response.text) {
 							<div class="body">{{ current.response.text }}</div>
 						}
-						@if (current.response.routed && current.response.routed !== 'local') {
-							<div class="routed">
-								{{ 'INBOX.ROUTED' | translate: { routed: current.response.routed } }}
-							</div>
+						@if (routedNotice(); as notice) {
+							@if (notice.alreadyDecided) {
+								<div class="routed" data-test="already-decided">
+									{{ 'INBOX.ALREADY_DECIDED' | translate: { source: (notice.source | translate) } }}
+								</div>
+							} @else {
+								<div class="routed" data-test="routed">
+									{{ 'INBOX.ROUTED' | translate: { routed: notice.routed } }}
+								</div>
+							}
 						}
 					</div>
 				}
@@ -365,6 +372,8 @@ export class InboxItemDetailComponent {
 	});
 	/** The source's name: translated for the known sources, as stated for a handler's own. */
 	readonly sourceLabel = computed(() => sourceLabelOf(this.item().source));
+	/** Where the answer went: "Already decided in <source>" when the source had decided it first. */
+	readonly routedNotice = computed(() => routedNoticeOf(this.item()));
 	readonly textLabel = computed(() => {
 		const item = this.item();
 		if (item.requireReason) return 'INBOX.REPLY.REASON';
