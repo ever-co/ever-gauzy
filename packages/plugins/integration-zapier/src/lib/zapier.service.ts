@@ -253,29 +253,19 @@ export class ZapierService {
 	 * @param tenantId The tenant ID
 	 * @returns The parsed state if valid, null otherwise
 	 */
-	async validateAndDeleteState(state: string, tenantId: string): Promise<{ state: string; expiresAt?: string }> {
+	async validateAndDeleteState(
+		state: string,
+		tenantId: string
+	): Promise<{ state: string; tenantId?: string; integrationId?: string; expiresAt?: string }> {
 		try {
 			// Basic validation - state should be a non-empty string
 			if (!state || typeof state !== 'string' || state.trim().length === 0) {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
-			// Find the integration by tenant and Zapier provider
-			const integration = await this._integrationService.findOneByOptions({
-				where: {
-					tenantId,
-					name: IntegrationEnum.ZAPIER
-				} as IIntegrationFilter
-			});
-
-			if (!integration) {
-				throw new NotFoundException('Zapier integration not found for current tenant');
-			}
-
-			// Find the state setting
+			// Find the state setting; its row carries the tenant's Zapier integration (integration_tenant) id
 			const stateSettings = await this._integrationSettingService.find({
 				where: {
-					integration: { id: integration.id },
 					settingsName: 'state',
 					tenantId,
 					settingsValue: Like(`%"state":"${state}"%`)
@@ -312,7 +302,7 @@ export class ZapierService {
 				// Delete the state
 				await this._integrationSettingService.delete(stateSetting.id);
 
-				return parsedState;
+				return { ...parsedState, integrationId: stateSetting.integrationId ?? parsedState.integrationId };
 			} catch (error) {
 				if (error instanceof BadRequestException) {
 					throw error;
@@ -523,16 +513,18 @@ export class ZapierService {
 			}
 
 			// Validate and atomically delete the state
-			await this.validateAndDeleteState(state, resolvedTenantId);
+			const { integrationId } = await this.validateAndDeleteState(state, resolvedTenantId);
 
-			// Find the integration by tenant and Zapier provider
-			const integration = await this._integrationService.findOneByOptions({
-				where: {
-					tenantId: resolvedTenantId,
-					name: IntegrationEnum.ZAPIER
-				} as IIntegrationFilter,
-				relations: ['settings']
-			});
+			// Find the tenant's Zapier integration the state was issued for
+			const integration = integrationId
+				? await this._integrationTenantService.findOneByIdString(integrationId, {
+						where: {
+							tenantId: resolvedTenantId,
+							name: IntegrationEnum.ZAPIER
+						} as IIntegrationFilter,
+						relations: ['settings']
+					})
+				: undefined;
 
 			if (!integration) {
 				throw new NotFoundException('Zapier integration not found for current tenant');
@@ -820,7 +812,7 @@ export class ZapierService {
 		}
 
 		// 3) Load the integration tenant, scoped to Zapier, including its settings
-		const integrationTenant = await this._integrationService.findOneByIdString(setting.integrationId, {
+		const integrationTenant = await this._integrationTenantService.findOneByIdString(setting.integrationId, {
 			where: { name: IntegrationEnum.ZAPIER },
 			relations: ['settings']
 		});
@@ -993,7 +985,7 @@ export class ZapierService {
 			if (e instanceof BadRequestException) throw e;
 		}
 
-		const integrationTenant = await this._integrationService.findOneByIdString(codeSetting.integrationId, {
+		const integrationTenant = await this._integrationTenantService.findOneByIdString(codeSetting.integrationId, {
 			where: { name: IntegrationEnum.ZAPIER },
 			relations: ['settings']
 		});
@@ -1031,7 +1023,7 @@ export class ZapierService {
 			throw new NotFoundException('Invalid refresh token');
 		}
 
-		const integrationTenant = await this._integrationService.findOneByIdString(tokenSetting.integrationId, {
+		const integrationTenant = await this._integrationTenantService.findOneByIdString(tokenSetting.integrationId, {
 			where: { name: IntegrationEnum.ZAPIER },
 			relations: ['settings']
 		});
