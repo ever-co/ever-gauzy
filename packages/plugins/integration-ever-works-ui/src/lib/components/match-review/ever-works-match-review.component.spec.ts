@@ -100,6 +100,27 @@ describe('EverWorksMatchReviewComponent', () => {
 		expect(api.decideTeams).toHaveBeenCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }], createInGauzy: ['t2'], createInEverWorks: ['g2'] });
 	});
 
+	it('lists the inbox items waiting for an unpaired member, by name (or id once they left), and nothing when none wait', () => {
+		api.people.mockReturnValue(
+			of({
+				...PEOPLE,
+				deferredInbox: [
+					{ ewUserId: 'u3', count: 2, items: [{ ewItemId: 'i1', title: 'Approve the deploy?', kind: 'approval', occurredAt: null }] },
+					{ ewUserId: 'u-gone', count: 1, items: [{ ewItemId: 'i2', title: '', kind: null, occurredAt: null }] }
+				]
+			})
+		);
+		const { el } = render();
+		const block = el.querySelector('[data-test="deferred-inbox"]');
+		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('cy');
+		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('Approve the deploy?');
+		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('u-gone');
+		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('i2');
+		TestBed.resetTestingModule();
+		api.people.mockReturnValue(of(PEOPLE));
+		expect(render().el.querySelector('[data-test="deferred-inbox"]')).toBeNull();
+	});
+
 	it('an API refusal is shown on its tab', () => {
 		api.decideTeams.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'The mapping is disabled; enable it before creating teams.' } })));
 		const { component, fixture, el } = render();

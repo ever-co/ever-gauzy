@@ -6,8 +6,10 @@ import { EverWorksClient } from '../client/ever-works-client';
 import { EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
-import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
+import { EVER_WORKS_INBOX_AGGREGATE } from '../inbox/ever-works-inbox.service';
+import { EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
+import { DEFERRED_INBOX_SCAN, EverWorksDeferredInboxRow, deferredInboxOf, requeueDeferredInbox } from './ever-works-deferred-inbox';
 
 /** An Ever Works organization member (contract v1 `GET /members`). */
 export interface EverWorksMember {
@@ -44,6 +46,11 @@ export interface EverWorksPeopleView {
 	members: EverWorksPersonRow[];
 	/** Gauzy people of the organization linked to no Ever Works member. */
 	unmatchedEmployees: Array<{ employeeId: ID; name: string; email: string | null }>;
+	/**
+	 * Ever Works inbox items addressed to members not paired yet: not delivered, they wait (deferred) until the
+	 * member is paired — pairing makes them due at once.
+	 */
+	deferredInbox: EverWorksDeferredInboxRow[];
 }
 
 /** The admin's decisions on the People tab. */
@@ -136,7 +143,38 @@ export class EverWorksPeopleService {
 				);
 			}
 		});
+		// Their inbox items waited for this pairing: deliver them now rather than at the next hourly retry. Every
+		// deferred event is woken (page by page, not only the newest the tab lists), so none keeps an older one waiting.
+		const paired = new Set(pairs.map((pair) => pair.ewUserId));
+		if (paired.size) {
+			const repository = this.dataSource.getRepository(EverWorksInboundEvent);
+			for (let skip = 0; ; skip += DEFERRED_INBOX_SCAN) {
+				const page = await this.deferredInboxEvents(context, skip);
+				await requeueDeferredInbox(repository, page, paired);
+				if (page.length < DEFERRED_INBOX_SCAN) break;
+			}
+		}
 		return this.view(context, members);
+	}
+
+	/**
+	 * A page of the connection's deferred Ever Works inbox events of the mapped organization, newest first (the tab
+	 * reads the first; waking a pairing reads them all — waking changes `availableAt` only, so the pages stay put).
+	 */
+	private deferredInboxEvents(context: EverWorksMappingContext, skip = 0): Promise<EverWorksInboundEvent[]> {
+		return this.dataSource.getRepository(EverWorksInboundEvent).find({
+			where: {
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				connectionId: context.connection.id as ID,
+				aggregateType: EVER_WORKS_INBOX_AGGREGATE,
+				status: EverWorksInboundStatus.DEFERRED
+			} as never,
+			select: { id: true, aggregateId: true, payload: true, seq: true } as never,
+			order: { seq: 'DESC', id: 'DESC' } as never,
+			skip,
+			take: DEFERRED_INBOX_SCAN
+		});
 	}
 
 	/** Every member of the mapped Ever Works organization (all pages). */
@@ -180,7 +218,8 @@ export class EverWorksPeopleService {
 			// A suggestion is not a pairing: a suggested person stays unmatched until the admin confirms it.
 			unmatchedEmployees: [...people.entries()]
 				.filter(([id]) => !linkedEmployees.has(id))
-				.map(([employeeId, p]) => ({ employeeId, name: p.name, email: p.email }))
+				.map(([employeeId, p]) => ({ employeeId, name: p.name, email: p.email })),
+			deferredInbox: deferredInboxOf(await this.deferredInboxEvents(context), new Set(linkByUser.keys()))
 		};
 	}
 

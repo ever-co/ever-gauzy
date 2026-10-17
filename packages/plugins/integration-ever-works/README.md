@@ -293,7 +293,9 @@ and answered `202`.
   with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
   Gauzy user paired with the recipient, with the linked task, project and
   agent. An item whose recipient is not paired yet waits (deferred, retried
-  hourly) until the People tab pairs them. A reply in Gauzy goes to Ever Works
+  hourly) until the People tab pairs them; the tab lists those waiting items
+  per member (`deferredInbox` of `GET …/people`), and pairing a member makes
+  their items due at once. A reply in Gauzy goes to Ever Works
   at once, acting as the recipient (`inbox:write`); an item already decided
   there shows the answer Ever Works holds. Read / unread and archive follow
   to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
