@@ -20,7 +20,6 @@ import {
 	registerInboxEntryPoints,
 	registerInboxSettingsEntryPoints
 } from './inbox-ui.plugin';
-import * as enTranslations from '../i18n/en.json';
 import { InboxAvailabilityService } from './services/inbox-availability.service';
 import { InboxEmailAvailabilityService } from './services/inbox-email-availability.service';
 
@@ -58,10 +57,7 @@ describe('InboxUiPlugin', () => {
 			data: { permissions: { only: [PermissionsEnum.INBOX_VIEW] } }
 		});
 		expect(InboxUiPlugin.translationNamespace).toBe('INBOX');
-		// The plugin ships its English strings (`import en from '../i18n/en.json'`). Jest compiles that default import
-		// without the bundler's JSON interop, so the bundle's content is checked on the file itself.
-		expect(Object.keys(InboxUiPlugin.translations ?? {})).toEqual(['en']);
-		expect(enTranslations).toHaveProperty('MENU', 'Inbox');
+		expect(InboxUiPlugin.translations?.['en']).toHaveProperty('MENU', 'Inbox');
 		expect(typeof InboxUiPlugin.bootstrap).toBe('function');
 	});
 
