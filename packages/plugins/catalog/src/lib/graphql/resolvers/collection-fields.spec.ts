@@ -10,7 +10,13 @@
  * resolver, the entity's own names are declared (the old ones stay, deprecated, answering the same values), and
  * the inputs write the image under the entity's name.
  */
-import { DocumentNode, FieldDefinitionNode, InputObjectTypeDefinitionNode, Kind, ObjectTypeDefinitionNode } from 'graphql';
+import {
+	DocumentNode,
+	FieldDefinitionNode,
+	InputObjectTypeDefinitionNode,
+	Kind,
+	ObjectTypeDefinitionNode
+} from 'graphql';
 import { getMetadataArgsStorage } from 'typeorm';
 import { Collection } from '../../collection/collection.entity';
 import { schemaExtensions } from '../schema-extensions';
@@ -46,7 +52,7 @@ function deprecation(field: { directives?: readonly any[] } | undefined): string
 	const directive = field?.directives?.find((it) => it.name.value === 'deprecated');
 	const reason = directive?.arguments?.find((it: any) => it.name.value === 'reason');
 
-	return directive ? reason?.value?.value ?? '' : undefined;
+	return directive ? (reason?.value?.value ?? '') : undefined;
 }
 
 /** Every property the entity maps — columns, relations, relation ids — on it or on a class it extends. */
@@ -83,7 +89,11 @@ function resolvedFields(): Set<string> {
 function resolverWith(channels: Array<Record<string, unknown>>) {
 	const channelService = { findByCollection: jest.fn().mockResolvedValue(channels) };
 	const collectionService = { create: jest.fn(async (row) => row), update: jest.fn(async (_id, row) => row) };
-	const resolver = new CollectionResolver(collectionService as never, { ofType: () => null } as never, channelService as never);
+	const resolver = new CollectionResolver(
+		collectionService as never,
+		{ ofType: () => null } as never,
+		channelService as never
+	);
 
 	return { resolver, channelService, collectionService };
 }
@@ -92,7 +102,9 @@ describe('Collection type vs the entity (R2-22)', () => {
 	it('answers every declared field from an entity property or a field resolver', () => {
 		const properties = entityProperties();
 		const resolved = resolvedFields();
-		const unanswered = [...fields('Collection').keys()].filter((name) => !properties.has(name) && !resolved.has(name));
+		const unanswered = [...fields('Collection').keys()].filter(
+			(name) => !properties.has(name) && !resolved.has(name)
+		);
 
 		expect(unanswered).toEqual([]);
 	});
