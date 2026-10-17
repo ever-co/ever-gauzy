@@ -309,8 +309,13 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 		it('MikroORM', async () => {
 			const clauses: unknown[][] = [];
 			const qb: Record<string, jest.Mock> = {};
-			for (const method of ['innerJoin', 'select', 'where', 'whereBetween', 'whereIn'])
+			for (const method of ['innerJoin', 'select', 'where', 'whereBetween', 'whereIn', 'whereNull'])
 				qb[method] = jest.fn(() => qb);
+			// knex's `modify(callback, ...args)` runs the callback on the builder (the soft-delete conditions)
+			qb.modify = jest.fn((callback: (builder: unknown, ...args: unknown[]) => void, ...args: unknown[]) => {
+				callback(qb, ...args);
+				return qb;
+			});
 			qb.andWhere = jest.fn((...args: unknown[]) => {
 				clauses.push(args);
 				return qb;
