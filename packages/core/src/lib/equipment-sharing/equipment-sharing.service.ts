@@ -98,11 +98,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 						);
 						break;
 					case DatabaseTypeEnum.postgres:
-					case DatabaseTypeEnum.mysql:
 						query.leftJoinAndSelect(
 							'request_approval',
 							'requestApproval',
 							'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+						);
+						break;
+					case DatabaseTypeEnum.mysql:
+						// MySQL's UUID() takes no argument: the PostgreSQL cast failed the whole query (as in pagination())
+						query.leftJoinAndSelect(
+							'request_approval',
+							'requestApproval',
+							p(`"equipment_sharing"."id" = "requestApproval"."requestId"`)
 						);
 						break;
 					default:
@@ -116,8 +123,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					.where(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							const tenantId = RequestContext.currentTenantId();
-							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 						})
 					)
 					.getManyAndCount();
