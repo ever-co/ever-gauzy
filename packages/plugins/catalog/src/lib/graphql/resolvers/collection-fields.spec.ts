@@ -149,10 +149,12 @@ describe('Collection type vs the entity (R2-22)', () => {
 	});
 
 	it('answers a loaded channels relation without reading again', async () => {
-		const rows = [{ id: 'cc1' }] as never[];
+		const rows = [{ id: 'cc1' }] as unknown as Collection['channels'];
 		const { resolver, channelService } = resolverWith([]);
 
-		await expect(resolver.channels({ id: COLLECTION, channels: rows } as Collection)).resolves.toBe(rows);
+		await expect(resolver.channels({ id: COLLECTION, channels: rows } as unknown as Collection)).resolves.toBe(
+			rows
+		);
 		expect(channelService.findByCollection).not.toHaveBeenCalled();
 	});
 

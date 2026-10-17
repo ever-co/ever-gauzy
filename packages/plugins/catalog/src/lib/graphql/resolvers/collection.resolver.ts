@@ -30,10 +30,10 @@ export type CollectionWriteInput = Partial<Collection> & { imageAssetId?: ID | n
  * @returns The same write under the entity's names.
  */
 export function toCollectionWrite(input: CollectionWriteInput | null | undefined): Partial<Collection> {
-	const { imageAssetId, ...write } = input ?? {};
+	const { imageAssetId, ...write } = (input ?? {}) as CollectionWriteInput;
 
 	if (imageAssetId !== undefined && write.imageId === undefined) {
-		return { ...write, imageId: imageAssetId };
+		return { ...write, imageId: imageAssetId } as Partial<Collection>;
 	}
 
 	return write;
