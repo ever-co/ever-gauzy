@@ -471,7 +471,13 @@ const collectionRow = (id: string, overrides: Row = {}) => ({
  * @param options The rows the fixture starts with.
  */
 function captureFixture(
-	options: { payments?: Row[]; captures?: Row[]; collections?: Row[]; dialect?: 'postgres' | 'sqlite' } = {}
+	options: {
+		payments?: Row[];
+		captures?: Row[];
+		collections?: Row[];
+		dialect?: 'postgres' | 'sqlite';
+		orderLedger?: any;
+	} = {}
 ) {
 	const tables: ITables = {
 		payment: options.payments ?? [paymentRow(PAYMENT)],
@@ -492,7 +498,8 @@ function captureFixture(
 
 				return event;
 			}
-		} as never
+		} as never,
+		options.orderLedger
 	);
 
 	return {
@@ -555,6 +562,34 @@ describe('PaymentCaptureService — the ledger and the payment row move together
 			// The tenant the capture was written under: a subscription delivers the event to that tenant only.
 			tenantId: TENANT
 		});
+	});
+
+	// Q7-W1b. The order's ledger is told of the capture after the money moved, keyed by the capture row.
+	it('tells the order its money was taken, after the capture is written', async () => {
+		const orderLedger = { mirror: jest.fn(async (_fact: any, _label?: string) => ({ recorded: true })) };
+		const fixture = captureFixture({ orderLedger });
+
+		const capture = await fixture.service.capture(captureInput() as never);
+
+		expect(orderLedger.mirror).toHaveBeenCalledTimes(1);
+		expect(orderLedger.mirror.mock.calls[0][0]).toMatchObject({
+			orderId: 'order-1',
+			type: 'CAPTURE',
+			amount: '40',
+			currency: 'USD',
+			referenceType: 'PAYMENT_CAPTURE',
+			referenceId: capture.id,
+			paymentId: PAYMENT
+		});
+	});
+
+	it('tells no order about a payment that pays none', async () => {
+		const orderLedger = { mirror: jest.fn() };
+		const fixture = captureFixture({ orderLedger, payments: [paymentRow(PAYMENT, { orderId: null })] });
+
+		await fixture.service.capture(captureInput() as never);
+
+		expect(orderLedger.mirror).not.toHaveBeenCalled();
 	});
 
 	it('appends a row per partial capture and keeps the payment total equal to their sum', async () => {

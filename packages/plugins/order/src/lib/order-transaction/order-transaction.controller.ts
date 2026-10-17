@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	HttpCode,
+	HttpStatus,
+	Optional,
+	Param,
+	Post,
+	Put,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
@@ -15,6 +27,7 @@ import {
 import { OrderTransaction } from './order-transaction.entity';
 import { OrderTransactionService } from './order-transaction.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
+import { OrderPaymentLedgerService } from '../order-payment/order-payment-ledger.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { CreateOrderTransactionDTO, UpdateOrderTransactionDTO } from './dto';
 
@@ -31,7 +44,10 @@ import { CreateOrderTransactionDTO, UpdateOrderTransactionDTO } from './dto';
 export class OrderTransactionController extends CrudController<OrderTransaction> {
 	constructor(
 		private readonly service: OrderTransactionService,
-		private readonly totalsService: OrderTotalsService
+		private readonly totalsService: OrderTotalsService,
+		/** Gives the order its chance to complete once the correction settled it (Q7-W1b). Optional and last. */
+		@Optional()
+		private readonly paymentLedger?: OrderPaymentLedgerService
 	) {
 		super(service);
 	}
@@ -63,6 +79,8 @@ export class OrderTransactionController extends CrudController<OrderTransaction>
 
 		// ADR-26: every ledger move re-derives the order, so the correction is counted now, not at the nightly pass.
 		await this.totalsService.recompute(row.orderId, 'PAYMENT_RECONCILED');
+		// A correction that settles the order is the last thing it was waiting for (Q7-W1b).
+		await this.paymentLedger?.tryComplete(row.orderId);
 
 		return row;
 	}

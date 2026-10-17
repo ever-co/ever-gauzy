@@ -145,9 +145,9 @@ jest.mock('@gauzy/core', () => {
 		},
 		AdjustmentService: class {},
 		TaxLineService: class {},
-		SequenceService: class {},
-	// Added when core grew this export: the double has to carry it, or the code under
-	// test calls nothing and the suite fails for a reason that is not its own.
+		SequenceService: class {}
+		// Added when core grew this export: the double has to carry it, or the code under
+		// test calls nothing and the suite fails for a reason that is not its own.
 	};
 });
 
@@ -1007,5 +1007,60 @@ describe('OrderService — what an update may change (doc 10 §6.1)', () => {
 		const updated = await fixture.service.updateMutable('order-1', { currency: 'EUR' } as never);
 
 		expect(updated.currency).toBe('EUR');
+	});
+});
+
+describe('OrderService — completing an order (Q7-W1b)', () => {
+	const settledOrder = (paid: boolean) => {
+		const fixture = orderFixture({
+			lines: [line('L1', { quantity: 1, unitPrice: 20, requiresShipping: false })],
+			order: { status: OrderStatus.CONFIRMED, isDraft: false, grandTotal: 20 }
+		});
+
+		if (paid) {
+			fixture.tables.order_transaction.push({
+				id: 'tx-1',
+				orderId: 'order-1',
+				type: 'CAPTURE',
+				amount: 20,
+				currency: 'USD',
+				referenceType: 'PAYMENT_CAPTURE',
+				referenceId: 'capture-1'
+			});
+		}
+
+		return fixture;
+	};
+
+	it('completes a confirmed order with nothing to ship once its money is captured', async () => {
+		const fixture = settledOrder(true);
+
+		const completed = await fixture.service.complete('order-1');
+
+		expect(completed.status).toBe(OrderStatus.COMPLETED);
+		expect(completed.completedAt).toBeInstanceOf(Date);
+		expect(timelineOf(fixture)).toContain('ORDER_COMPLETED');
+	});
+
+	it('says what stands in the way instead of completing an order whose money is outstanding', async () => {
+		const fixture = settledOrder(false);
+
+		await expect(fixture.service.complete('order-1')).rejects.toMatchObject({
+			response: {
+				code: 'ORDER_NOT_COMPLETABLE',
+				details: { status: OrderStatus.CONFIRMED, statusAllows: true, paymentSettled: false }
+			}
+		});
+		expect(fixture.tables.order[0].status).toBe(OrderStatus.CONFIRMED);
+	});
+
+	it('answers an order that is already completed as it is, so a retry is not refused', async () => {
+		const fixture = settledOrder(true);
+
+		await fixture.service.complete('order-1');
+		const again = await fixture.service.complete('order-1');
+
+		expect(again.status).toBe(OrderStatus.COMPLETED);
+		expect(timelineOf(fixture).filter((action: string) => action === 'ORDER_COMPLETED')).toHaveLength(1);
 	});
 });

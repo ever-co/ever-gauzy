@@ -10,18 +10,26 @@ import {
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
 import {
 	ORDER_APPROVAL,
+	ORDER_CHECKOUT_PAYMENTS,
 	ORDER_INVOICING,
 	OrderApprovalAdapter,
 	OrderInvoicingAdapter,
 	OrderLineFulfillmentService,
 	OrderLineService,
 	OrderModule,
+	OrderPaymentLedgerService,
 	OrderPlatformAdaptersModule,
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
 import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
-import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
+import {
+	PAYMENT_ORDER_LEDGER,
+	PAYMENT_ORDER_LINE_REFUND,
+	PaymentModule,
+	PaymentOrderLinkService,
+	ReturnRefundService
+} from '@gauzy/plugin-payment';
 import {
 	PURCHASING_APPROVAL,
 	PURCHASING_INVENTORY,
@@ -117,6 +125,13 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// The payment package reports what a succeeded refund paid back per line; the order package is
 		// the only writer of `order_line.refundedQuantity` / `refundedAmount`.
 		{ provide: PAYMENT_ORDER_LINE_REFUND, useExisting: OrderLineService },
+		// Every authorisation, capture, void and refund is a row of the order's own money ledger, which only the
+		// order package writes; the payment package reports each one after its money moved (Q7-W1b). Unbound, an
+		// order paid in full answered NOT_PAID for ever and could never complete.
+		{ provide: PAYMENT_ORDER_LEDGER, useExisting: OrderPaymentLedgerService },
+		// A buyer pays before the order exists, on a collection opened for the cart; the checkout hands that
+		// collection and its payments to the order the cart became (Q7-W1b).
+		{ provide: ORDER_CHECKOUT_PAYMENTS, useExisting: PaymentOrderLinkService },
 		// A return cannot exceed what was sent, and only the order package knows how much that is.
 		{ provide: RETURNS_ORDER_FULFILLMENT, useExisting: OrderLineFulfillmentService },
 		// A billing period is priced by the pricing package, so a subscription asks it rather than
@@ -197,7 +212,9 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		RETURNS_SHIPMENT_GATEWAY,
 		RETURNS_REFUND_GATEWAY,
 		ORDER_INVOICING,
-		ORDER_APPROVAL
+		ORDER_APPROVAL,
+		PAYMENT_ORDER_LEDGER,
+		ORDER_CHECKOUT_PAYMENTS
 	]
 })
 export class PluginCompositionModule {}
