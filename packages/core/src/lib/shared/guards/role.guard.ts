@@ -1,9 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, Type } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Type, Logger } from '@nestjs/common';
 import { ROLES_METADATA } from '@gauzy/constants';
 import { RolesEnum } from '@gauzy/contracts';
 import { Reflector } from '@nestjs/core';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+
+// Per-request trace lines: printed at debug level, i.e. only when LOG_LEVEL is debug/verbose (or unset).
+const logger = new Logger('RoleGuard');
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -15,7 +18,7 @@ export class RoleGuard implements CanActivate {
 	 * @returns A boolean indicating whether the user has the required roles.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		console.log('RoleGuard canActivate called');
+		logger.debug('RoleGuard canActivate called');
 
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
@@ -28,7 +31,7 @@ export class RoleGuard implements CanActivate {
 		// Check if roles are empty or if the request context has the required roles
 		const check = isEmpty(roles) || RequestContext.hasRoles(roles);
 
-		console.log('Guard: Role', roles, check);
+		logger.debug(`Guard: Role ${JSON.stringify(roles)} ${check}`);
 
 		return check;
 	}

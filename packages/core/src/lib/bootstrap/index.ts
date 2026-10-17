@@ -65,6 +65,7 @@ import { setupSwagger } from './swagger';
 import { resolveTrustProxy } from './trust-proxy';
 import { validateApplicationSecrets } from './validate-secrets';
 import { createPerfMetricsMiddleware, instrumentPg, isPerfMetricsEnabled, startEventLoopMonitor } from './perf-metrics';
+import { resolveLogLevels } from './log-levels';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -100,7 +101,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Create the NestJS application
 	console.time(chalk.yellow('✔ Create NestJS Application Time'));
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
+		logger: resolveLogLevels(process.env.LOG_LEVEL), // LOG_LEVEL, every level when unset (see ./log-levels.ts)
 		bufferLogs: environment.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
@@ -145,6 +146,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const { sentry } = environment;
 	if (sentry && sentry.dsn && config.logger) {
 		app.useLogger(config.logger); // Use Sentry logger
+		// The Sentry logger is a ConsoleLogger with every level enabled by default: give it LOG_LEVEL's levels too.
+		(config.logger as { setLogLevels?: (levels: string[]) => void }).setLogLevels?.(resolveLogLevels(process.env.LOG_LEVEL));
 	} else {
 		// Handle uncaught exceptions and unhandled rejections
 		process.on('uncaughtException', handleUncaughtException);
