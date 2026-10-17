@@ -1,0 +1,42 @@
+{
+  "against": "baseline.responses.json",
+  "at": "2026-10-17T21:20:38.181Z",
+  "endpoints": {
+    "health": {
+      "same": true
+    },
+    "feature-toggle-definition": {
+      "same": true
+    },
+    "user-me": {
+      "same": false,
+      "firstDifference": "$.updatedAt: \"2026-10-17T18:56:19.503Z\" vs \"2026-10-17T21:20:36.696Z\""
+    },
+    "role-permissions-me": {
+      "same": true
+    },
+    "tags": {
+      "same": true
+    },
+    "organization-team-me": {
+      "same": true
+    },
+    "projects-pagination": {
+      "same": false,
+      "firstDifference": "$.items[0].budget: 138 vs 260"
+    },
+    "employees-pagination": {
+      "same": true
+    },
+    "tasks-pagination": {
+      "same": false,
+      "firstDifference": "$.items[0].createdAt: \"2026-10-17T14:06:56.136Z\" vs \"2026-10-17T14:07:05.179Z\""
+    },
+    "teams-pagination": {
+      "same": true
+    },
+    "employee-by-id": {
+      "same": true
+    }
+  }
+}

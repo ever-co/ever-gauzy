@@ -24,10 +24,9 @@
       },
       "sqlPerRequest": 1,
       "sqlMsPerRequest": 0.26,
-      "redisPerRequest": 2.02,
+      "redisPerRequest": 2.0,
       "redisCommands": {
         "set": 60,
-        "config|resetstat": 1,
         "get": 60
       },
       "concurrent": {
@@ -64,10 +63,8 @@
       },
       "sqlPerRequest": 0,
       "sqlMsPerRequest": 0,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.04,
@@ -102,10 +99,8 @@
       },
       "sqlPerRequest": 5,
       "sqlMsPerRequest": 0.5,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.23,
@@ -140,10 +135,8 @@
       },
       "sqlPerRequest": 4,
       "sqlMsPerRequest": 1.91,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 11.62,
@@ -178,10 +171,8 @@
       },
       "sqlPerRequest": 5.03,
       "sqlMsPerRequest": 1016.92,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 12.47,
@@ -216,10 +207,8 @@
       },
       "sqlPerRequest": 5,
       "sqlMsPerRequest": 0.33,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.21,
@@ -254,10 +243,8 @@
       },
       "sqlPerRequest": 7,
       "sqlMsPerRequest": 0.75,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.09,
@@ -292,10 +279,8 @@
       },
       "sqlPerRequest": 7,
       "sqlMsPerRequest": 1.02,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.26,
@@ -330,10 +315,8 @@
       },
       "sqlPerRequest": 7,
       "sqlMsPerRequest": 1.32,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.28,
@@ -368,10 +351,8 @@
       },
       "sqlPerRequest": 7,
       "sqlMsPerRequest": 0.38,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.3,
@@ -406,10 +387,8 @@
       },
       "sqlPerRequest": 5,
       "sqlMsPerRequest": 0.39,
-      "redisPerRequest": 0.02,
-      "redisCommands": {
-        "config|resetstat": 1
-      },
+      "redisPerRequest": 0.0,
+      "redisCommands": {},
       "concurrent": {
         "concurrency": 16,
         "seconds": 10.55,

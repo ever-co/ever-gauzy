@@ -21,6 +21,7 @@ import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 import { performance } from 'node:perf_hooks';
 import { execFileSync } from 'node:child_process';
 
@@ -57,13 +58,16 @@ function redisCalls() {
 	let total = 0;
 	for (const line of out.split(/\r?\n/)) {
 		const m = /^cmdstat_([^:]+):calls=(\d+)/.exec(line);
-		if (!m || ['info', 'config', 'ping'].includes(m[1])) continue;
+		// Redis 7+ names subcommands `config|resetstat`: the harness's own INFO / CONFIG RESETSTAT / PING are never counted.
+		if (!m || ['info', 'config', 'ping'].includes(m[1].split('|')[0])) continue;
 		byCommand[m[1]] = Number(m[2]);
 		total += Number(m[2]);
 	}
 	return { total, byCommand };
 }
-const scenarioFile = process.argv[2] || path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), 'scenarios.json');
+const scenarioFile =
+	process.argv[2] ||
+	path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), 'scenarios.json');
 
 const baseUrl = new URL(BASE);
 const lib = baseUrl.protocol === 'https:' ? https : http;
@@ -113,7 +117,15 @@ function stats(samples) {
 	const s = [...samples].sort((a, b) => a - b);
 	const sum = s.reduce((a, b) => a + b, 0);
 	const r = (x) => Math.round(x * 100) / 100;
-	return { n: s.length, mean: r(sum / (s.length || 1)), p50: r(pct(s, 50)), p90: r(pct(s, 90)), p99: r(pct(s, 99)), min: r(s[0]), max: r(s[s.length - 1]) };
+	return {
+		n: s.length,
+		mean: r(sum / (s.length || 1)),
+		p50: r(pct(s, 50)),
+		p90: r(pct(s, 90)),
+		p99: r(pct(s, 99)),
+		min: r(s[0]),
+		max: r(s[s.length - 1])
+	};
 }
 
 function fill(template, vars) {
@@ -148,9 +160,54 @@ async function pgCalls() {
 	return { calls: Number(rows[0].calls), ms: Number(rows[0].ms) };
 }
 
+/**
+ * What produced this result: the commit of the checkout the harness runs from (the build under test is expected to
+ * be that commit; state it in `BUILD_COMMIT` when it is not), the invocation, the runtime and the machine, and the
+ * correctness check that accompanied the run (`CORRECTNESS_RESULT`: the summary written by response-diff.mjs).
+ */
+function provenance() {
+	let commit = null;
+	try {
+		commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+	} catch {
+		// not a git checkout
+	}
+	const cpus = os.cpus();
+	return {
+		harnessCommit: commit,
+		buildCommit: env.BUILD_COMMIT || commit,
+		command: process.argv.slice(1).join(' '),
+		env: {
+			BASE,
+			EMAIL,
+			SEQ,
+			WARMUP,
+			CONCURRENCY,
+			DURATION,
+			ONLY: env.ONLY || null,
+			PG_URL: PG_URL ? '<set>' : null,
+			REDIS_CLI: REDIS_CLI ? '<set>' : null
+		},
+		scenarios: path.relative(process.cwd(), scenarioFile),
+		node: process.version,
+		os: {
+			platform: os.platform(),
+			release: os.release(),
+			arch: os.arch(),
+			cpu: cpus[0]?.model ?? null,
+			cpus: cpus.length,
+			memoryGB: Math.round(os.totalmem() / 1073741824)
+		},
+		correctness: env.CORRECTNESS_RESULT ? JSON.parse(fs.readFileSync(env.CORRECTNESS_RESULT, 'utf8')) : null
+	};
+}
+
 async function resolveContext() {
 	const login = await request('POST', '/auth/login', { body: { email: EMAIL, password: PASSWORD } });
-	if (login.status >= 300 || login.status === 0) throw new Error(`login failed: ${login.status} ${login.error?.message ?? login.body?.toString().slice(0, 300)}`);
+	if (login.status >= 300 || login.status === 0)
+		throw new Error(
+			`login failed: ${login.status} ${login.error?.message ?? login.body?.toString().slice(0, 300)}`
+		);
 	const data = JSON.parse(login.body.toString());
 	const token = data.token;
 	const user = data.user;
@@ -165,10 +222,15 @@ async function resolveContext() {
 		);
 		vars.organizationId = org.rows[0]?.id;
 		if (!vars.employeeId) {
-			const emp = await c.query(`select id from employee where "tenantId" = $1 and "organizationId" = $2 order by "createdAt" limit 1`, [user.tenantId, vars.organizationId]);
+			const emp = await c.query(
+				`select id from employee where "tenantId" = $1 and "organizationId" = $2 order by "createdAt" limit 1`,
+				[user.tenantId, vars.organizationId]
+			);
 			vars.employeeId = emp.rows[0]?.id;
 		}
-		const proj = await c.query(`select id from organization_project where "organizationId" = $1 limit 1`, [vars.organizationId]);
+		const proj = await c.query(`select id from organization_project where "organizationId" = $1 limit 1`, [
+			vars.organizationId
+		]);
 		vars.projectId = proj.rows[0]?.id || '';
 	} else {
 		vars.organizationId = env.ORGANIZATION_ID;
@@ -177,7 +239,11 @@ async function resolveContext() {
 }
 
 async function runEndpoint(ep, ctx) {
-	const headers = { ...(ep.public ? {} : { authorization: `Bearer ${ctx.token}` }), 'tenant-id': ctx.vars.tenantId, 'organization-id': ctx.vars.organizationId };
+	const headers = {
+		...(ep.public ? {} : { authorization: `Bearer ${ctx.token}` }),
+		'tenant-id': ctx.vars.tenantId,
+		'organization-id': ctx.vars.organizationId
+	};
 	const url = fill(ep.path, ctx.vars);
 	const method = ep.method || 'GET';
 	const body = ep.body ? JSON.parse(fill(JSON.stringify(ep.body), ctx.vars)) : undefined;
@@ -189,7 +255,11 @@ async function runEndpoint(ep, ctx) {
 		if (i === 0) first = r;
 	}
 	if (!first || first.status >= 400 || first.status === 0) {
-		return { name: ep.name, url, error: `status ${first?.status} ${first?.error?.message || first?.body?.toString().slice(0, 300)}` };
+		return {
+			name: ep.name,
+			url,
+			error: `status ${first?.status} ${first?.error?.message || first?.body?.toString().slice(0, 300)}`
+		};
 	}
 
 	// Sequential latency + SQL statements per request
@@ -205,7 +275,9 @@ async function runEndpoint(ep, ctx) {
 	const failed = Object.entries(seqStatus).filter(([status]) => !(Number(status) >= 200 && Number(status) < 300));
 	if (failed.length) {
 		// Per-request SQL/Redis averages divide by SEQ: say so when some of those requests did not succeed.
-		console.warn(`  ${ep.name}: non-2xx responses in the sequential phase ${JSON.stringify(Object.fromEntries(failed))}`);
+		console.warn(
+			`  ${ep.name}: non-2xx responses in the sequential phase ${JSON.stringify(Object.fromEntries(failed))}`
+		);
 	}
 	const sql = await pgCalls();
 	const rds = redisCalls();
@@ -231,18 +303,31 @@ async function runEndpoint(ep, ctx) {
 		url,
 		bytes: first.bytes,
 		sequential: { ...stats(seq), status: seqStatus },
+		// Raw samples (ms, 0.1 ms resolution), so the percentiles above can be recomputed or re-plotted.
+		samples: {
+			sequential: seq.map((v) => Math.round(v * 10) / 10),
+			concurrent: conc.map((v) => Math.round(v * 10) / 10)
+		},
 		sqlPerRequest: sql ? Math.round((sql.calls / SEQ) * 100) / 100 : null,
 		sqlMsPerRequest: sql ? Math.round((sql.ms / SEQ) * 100) / 100 : null,
 		redisPerRequest: rds ? Math.round((rds.total / SEQ) * 100) / 100 : null,
 		redisCommands: rds ? rds.byCommand : null,
-		concurrent: { concurrency: CONCURRENCY, seconds: Math.round(elapsed * 100) / 100, rps: Math.round((conc.length / elapsed) * 10) / 10, ...stats(conc), status: concStatus }
+		concurrent: {
+			concurrency: CONCURRENCY,
+			seconds: Math.round(elapsed * 100) / 100,
+			rps: Math.round((conc.length / elapsed) * 10) / 10,
+			...stats(conc),
+			status: concStatus
+		}
 	};
 }
 
 async function main() {
 	const scenarios = JSON.parse(fs.readFileSync(scenarioFile, 'utf8'));
 	const ctx = await resolveContext();
-	console.log(`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`);
+	console.log(
+		`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`
+	);
 	const results = [];
 	for (const ep of scenarios.endpoints) {
 		if (ONLY && !ONLY.includes(ep.name)) continue;
@@ -258,7 +343,24 @@ async function main() {
 	}
 	if (OUT) {
 		fs.mkdirSync(path.dirname(OUT), { recursive: true });
-		fs.writeFileSync(OUT, JSON.stringify({ label: LABEL, base: BASE, seq: SEQ, concurrency: CONCURRENCY, duration: DURATION, at: new Date().toISOString(), results }, null, 2));
+		fs.writeFileSync(
+			OUT,
+			JSON.stringify(
+				{
+					label: LABEL,
+					base: BASE,
+					seq: SEQ,
+					warmup: WARMUP,
+					concurrency: CONCURRENCY,
+					duration: DURATION,
+					at: new Date().toISOString(),
+					provenance: provenance(),
+					results
+				},
+				null,
+				2
+			)
+		);
 		console.log(`wrote ${OUT}`);
 	}
 	if (pg) await pg.end();
