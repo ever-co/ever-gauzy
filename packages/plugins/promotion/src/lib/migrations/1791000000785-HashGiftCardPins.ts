@@ -22,7 +22,9 @@ import { hashGiftCardPin, isGiftCardPinDigest } from '../gift-card/gift-card-pin
  * once, in the migration, for all three dialects). Each statement is conditional on the value it read, so a row that
  * changed in between is left to the write that changed it. Soft-deleted cards are included: a restored card must
  * verify too. A plaintext PIN that is itself 64 hexadecimal characters cannot be told from a digest and is left as it
- * is; a blank `pin` is no second factor (the check treats it as none) and is left as well.
+ * is; an empty `pin` is no second factor (the check treats it as none) and is left as well, while a PIN of spaces is
+ * a PIN (REST accepted it and the check hashes it as stated) and is hashed. The empty string is told apart in
+ * JavaScript rather than in SQL, because a MySQL PAD SPACE collation compares `'   '` equal to `''`.
  *
  * ## Down
  *
@@ -177,7 +179,9 @@ export class HashGiftCardPins1791000000785 implements MigrationInterface {
 
 		const rows: Array<{ id: string; pin: string | null }> = await queryRunner.query(
 			`SELECT ${quote('id')} AS ${quote('id')}, ${quote('pin')} AS ${quote('pin')} FROM ${quote(table)} ` +
-				`WHERE ${quote('pin')} IS NOT NULL AND ${quote('pin')} <> ''`
+				// Only `IS NOT NULL` in SQL: under a MySQL PAD SPACE collation `pin <> ''` is false for a PIN of spaces,
+				// which REST accepted and the check hashes as stated; the empty string is skipped below, in JavaScript.
+				`WHERE ${quote('pin')} IS NOT NULL`
 		);
 		let hashed = 0;
 

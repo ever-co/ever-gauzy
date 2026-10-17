@@ -29,7 +29,14 @@ function runnerOver(type: string, rows: IRow[], options: { hasTable?: boolean } 
 				statements.push({ sql, parameters });
 
 				if (/^SELECT/i.test(sql)) {
-					return rows.filter((row) => row.pin !== null && row.pin !== '').map((row) => ({ ...row }));
+					// What the statement asks for, read as MySQL's PAD SPACE collation reads it: trailing spaces do
+					// not count, so a `pin <> ''` condition would also drop a PIN made of spaces.
+					const padSpace = (value: string) => value.replace(/ +$/, '');
+					const excludesEmpty = /<>\s*''/.test(sql);
+
+					return rows
+						.filter((row) => row.pin !== null && !(excludesEmpty && padSpace(row.pin) === ''))
+						.map((row) => ({ ...row }));
 				}
 
 				const placeholders = type === 'postgres' ? ['$1', '$2', '$3'] : ['?', '?', '?'];
@@ -95,6 +102,15 @@ describe('HashGiftCardPins1791000000785', () => {
 			]);
 		}
 	);
+
+	it('hashes a PIN made of spaces, which a PAD SPACE collation compares equal to the empty string', async () => {
+		const rows: IRow[] = [{ id: 'gc-spaces', pin: '   ' }];
+		const { runner } = runnerOver('mysql', rows);
+
+		await new HashGiftCardPins1791000000785().up(runner as never);
+
+		expect(rows[0].pin).toBe(digestOf('   '));
+	});
 
 	it('is idempotent: a second run finds nothing left to hash', async () => {
 		const rows: IRow[] = [{ id: 'gc-plain', pin: '4821' }];
