@@ -439,8 +439,10 @@ export const orderSchemaExtensions = gql`
 		email: String
 		phone: String
 		locale: String
+		"Not a field of an order: a stated note is refused (ORDER_NOTE_NOT_A_FIELD); a change carries one."
 		note: String
 		externalId: String
+		"Recorded by cancelOrder only: a stated reason is refused (ORDER_CANCEL_REASON_NOT_WRITABLE)."
 		cancelReason: String
 		paymentTermId: ID
 		"The version of the order this change was reasoned about; omitted, the write is refused."
@@ -485,6 +487,8 @@ export const orderSchemaExtensions = gql`
 		actions: [OrderChangeActionInput!]!
 		"Retry key: a repeat of this input under the same key is answered from the first attempt."
 		idempotencyKey: String
+		"The version of the order this change was reasoned about; omitted, the change is refused."
+		version: Int
 	}
 
 	"The writable surface of an order change, as the change's own update route states it."
