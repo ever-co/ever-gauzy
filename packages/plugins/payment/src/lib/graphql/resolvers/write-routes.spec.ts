@@ -224,6 +224,7 @@ import { PaymentMethodTokenResolver } from './payment-method-token.resolver';
 import { RefundResolver } from './refund.resolver';
 import { RefundReasonResolver } from './refund-reason.resolver';
 import { RefundLineResolver } from './refund-line.resolver';
+import { PaymentCollectionResolver } from './payment-collection.resolver';
 import { PaymentCaptureResolver } from './payment-capture.resolver';
 
 type Row = Record<string, any>;
@@ -1517,5 +1518,23 @@ describe('the refund acts whose inputs carry a retry key — one optional scope 
 
 		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, handlersOf(controller)[route])).toEqual(declared);
 		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, fieldsOf(resolver)[field])).toEqual(declared);
+	});
+});
+
+// R2-G16 review (Greptile): the new `UpdatePaymentCollectionInput.amount` is a `Decimal`, which carries more
+// fractional digits than the column's six; the route refuses a seventh with `@IsDecimalAmount()`, and so does the field.
+describe('updatePaymentCollection — the amount the route accepts, and no other', () => {
+	it('passes an exact six-digit amount on, and refuses a seventh digit before the service is reached', async () => {
+		const service = { updateCollection: jest.fn(async (id: string, input: Row) => ({ id, ...input })) };
+		const resolver = new PaymentCollectionResolver(service as never) as unknown as Row;
+
+		await expect(resolver.updatePaymentCollection({ id: ID, amount: '12.123456' })).resolves.toMatchObject({
+			userErrors: []
+		});
+		await expect(resolver.updatePaymentCollection({ id: ID, amount: '1.1234567' })).resolves.toMatchObject({
+			paymentCollection: null,
+			userErrors: [{ code: 'VALIDATION_FAILED' }]
+		});
+		expect(service.updateCollection).toHaveBeenCalledTimes(1);
 	});
 });

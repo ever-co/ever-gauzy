@@ -602,6 +602,26 @@ describe('SubscriptionPlanService — amending a plan that is already in use (do
 		});
 	});
 
+	it('checks and stores a stated currency in its canonical form, and refuses one that is not a code', async () => {
+		const fixture = planFixture({
+			plans: [planRow('plan-1')],
+			subscriptions: [subscriptionRow('sub-1', { status: SubscriptionStatus.ACTIVE })]
+		});
+		const currency = String(fixture.plan('plan-1')?.currency);
+
+		// A restatement in another spelling is the same currency, so a live plan accepts it.
+		await expect(
+			fixture.service.updatePlan('plan-1', { currency: ` ${currency.toLowerCase()} ` } as never)
+		).resolves.toMatchObject({ currency });
+
+		for (const invalid of [null, 'US', 'DOLLARS', 42]) {
+			await expect(fixture.service.updatePlan('plan-1', { currency: invalid } as never)).rejects.toThrow(
+				/SUBSCRIPTION_PLAN_CURRENCY_INVALID/
+			);
+		}
+		expect(fixture.plan('plan-1')?.currency).toBe(currency);
+	});
+
 	it('changes the currency of a plan nobody is subscribed to', async () => {
 		const fixture = planFixture({
 			plans: [planRow('plan-1')],
