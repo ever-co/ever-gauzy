@@ -140,6 +140,33 @@ function everWorksStatusOf(task: Task): string | null {
  *   cancelled in Ever Works, with a comment. Both links stop syncing.
  * - Recurring templates are never synced, and tasks hidden from the board (triage) only with the setting.
  */
+/** A push that has to wait, and why (a team or the parent not in Ever Works yet). */
+type TaskOutgoingWait = { wait: string; teamIds?: undefined };
+
+/** What a push sends, computed from the Gauzy task. */
+type TaskOutgoing = {
+	wait?: undefined;
+	g: TaskGauzySide;
+	teamIds: string[];
+	workId: string | null;
+	parentTaskId: string | null;
+	assignees: EverWorksPrincipalRef[];
+	labels: string[];
+	watchers: string[];
+	blockedBy: string[];
+	relations: string[];
+	pendingWatchers: string[];
+	pendingEdges: string[];
+};
+
+/**
+ * Whether a push has to wait. A type guard rather than `out.wait !== undefined`: the API build compiles this
+ * plugin without `strictNullChecks`, where an optional `undefined` member does not narrow the union.
+ */
+function waitsFor(out: TaskOutgoingWait | TaskOutgoing): out is TaskOutgoingWait {
+	return out.wait !== undefined;
+}
+
 @Injectable()
 export class EverWorksTasksService implements EverWorksInboundHandler, EverWorksOutboundHandler, EverWorksSyncSweeper {
 	readonly aggregateTypes = ['task'] as const;
@@ -884,26 +911,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	}
 
 	/** What a push sends, computed from the Gauzy task; or why it has to wait. */
-	private async outgoing(
-		context: EverWorksMappingContext,
-		task: Task
-	): Promise<
-		| { wait: string; teamIds?: undefined }
-		| {
-				wait?: undefined;
-				g: TaskGauzySide;
-				teamIds: string[];
-				workId: string | null;
-				parentTaskId: string | null;
-				assignees: EverWorksPrincipalRef[];
-				labels: string[];
-				watchers: string[];
-				blockedBy: string[];
-				relations: string[];
-				pendingWatchers: string[];
-				pendingEdges: string[];
-		  }
-	> {
+	private async outgoing(context: EverWorksMappingContext, task: Task): Promise<TaskOutgoingWait | TaskOutgoing> {
 		const g = await this.gauzySide(context, task);
 		const teamOf = new Map<ID, string>();
 		for (const teamId of g.teamIds ?? []) {
@@ -1059,7 +1067,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		change: EverWorksOutboundChange
 	): Promise<EverWorksPushOutcome> {
 		const out = await this.outgoing(context, task);
-		if (out.wait !== undefined) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
+		if (waitsFor(out)) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
 		const connectionId = context.connection.id as ID;
 		const wanted = everWorksStatusOf(task);
 		const priority = gauzyPriorityToEverWorks(out.g.priority);
@@ -1127,7 +1135,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		let pair = link;
 		for (let attempt = 0; attempt < 2; attempt++) {
 			const out = await this.outgoing(context, row);
-			if (out.wait !== undefined) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
+			if (waitsFor(out)) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
 			const snapshot = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(pair));
 			const prevG = snapshot.g;
 			const prevE = snapshot.e;
@@ -1342,7 +1350,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	 * The task sweep (plan 03 §C.2, the durable backstop), run by the sync loop for a connection it holds:
 	 * watchers and linked issues are often removed with a bulk delete the ORM hooks cannot see, so a linked
 	 * task whose watchers or edges drifted from its snapshot, or that has something pending that can go out
-	 * now, is queued for a push.
+	 * now, is queued for a push. The orphan sweep: a linked task that is gone from Gauzy without a captured
+	 * delete (a bulk or raw delete, a lost event) has its link marked `orphaned` and the delete policy queued
+	 * (Ever Works cancels the task; the push then unlinks it).
 	 */
 	async sweep(connection: EverWorksConnection): Promise<void> {
 		for (const context of await this.contexts.forConnection(connection)) {
@@ -1351,9 +1361,18 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			for (let start = 0; start < links.length; start += TASK_SWEEP_PAGE) {
 				const page = links.slice(start, start + TASK_SWEEP_PAGE);
 				const ids = page.map((link) => link.gauzyId as ID);
-				const [watchers, edges] = await Promise.all([this.store.watchersOf(context.tenantId, ids), this.store.edgesOf(context.tenantId, ids)]);
+				const [watchers, edges, present] = await Promise.all([
+					this.store.watchersOf(context.tenantId, ids),
+					this.store.edgesOf(context.tenantId, ids),
+					this.store.presentTaskIds(context.tenantId, ids)
+				]);
 				for (const link of page) {
 					const id = link.gauzyId as ID;
+					if (!present.has(id)) {
+						const queued = await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: id, op: 'delete' });
+						if (queued) await this.links.markOrphaned(link, 'the Gauzy task is gone without a captured delete; its delete is pushed');
+						continue;
+					}
 					const g = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(link)).g;
 					const ewOnly = this.everWorksOnly(link);
 					const edge = edges.get(id) ?? { blockedBy: [], relations: [] };
