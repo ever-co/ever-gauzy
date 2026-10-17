@@ -316,9 +316,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? managerRole : null;
 
-				// Only update if the role has changed
-				if (newRole && newRole.id !== member.roleId) {
-					await this.typeOrmOrganizationSprintEmployeeRepository.update(member.id, { role: newRole });
+				// Only update if the role or the manager flag has changed. A manager taken off the managers
+				// (`newRole` null) used to be skipped and kept the manager role, and `isManager` was never set.
+				if ((newRole?.id ?? null) !== (member.roleId ?? null) || !!member.isManager !== isManager) {
+					await this.typeOrmOrganizationSprintEmployeeRepository.update(member.id, {
+						role: newRole,
+						isManager
+					});
 				}
 			})
 		);
