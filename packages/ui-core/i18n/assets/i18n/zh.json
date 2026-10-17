@@ -2097,7 +2097,14 @@
 				"IN_DAYS": "{{ count }} 天后到期"
 			},
 			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
-			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+			"NO_TASKS_IN_VIEW": "此视图中没有任务",
+			"PROJECTS_CAPTION": "其项目及本期间在每个项目上的工作时间",
+			"NO_PROJECTS": "不是任何项目的成员，本期间也没有项目时间",
+			"NOT_A_MEMBER": "非成员",
+			"NOT_A_MEMBER_HINT": "在此项目上记录了时间，但其不是该项目的成员",
+			"VIEW_PROFILE": "查看资料",
+			"MEMBERSHIP_UNKNOWN": "无法加载项目成员关系，因此未区分成员与非成员。",
+			"PROJECT_TIMES_PARTIAL": "部分项目时间无法加载，因此显示无时间的项目实际可能有时间。"
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

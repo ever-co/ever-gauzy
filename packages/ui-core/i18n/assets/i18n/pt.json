@@ -2097,7 +2097,14 @@
 				"IN_DAYS": "Em {{ count }} dias"
 			},
 			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
-			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão",
+			"PROJECTS_CAPTION": "Os projetos e o tempo trabalhado em cada um neste período",
+			"NO_PROJECTS": "Não é membro de nenhum projeto e não tem tempo em projetos neste período",
+			"NOT_A_MEMBER": "Não é membro",
+			"NOT_A_MEMBER_HINT": "Foi registrado tempo neste projeto, mas a pessoa não é membro dele",
+			"VIEW_PROFILE": "Ver perfil",
+			"MEMBERSHIP_UNKNOWN": "Não foi possível carregar a participação nos projetos, por isso membros e não membros não são distinguidos.",
+			"PROJECT_TIMES_PARTIAL": "Não foi possível carregar alguns tempos de projeto, por isso um projeto sem tempo pode ainda assim ter."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

@@ -2096,7 +2096,14 @@
 				"IN_DAYS": "Za {{ count }} dni"
 			},
 			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
-			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku",
+			"PROJECTS_CAPTION": "Projekty tej osoby i czas poświęcony każdemu z nich w tym okresie",
+			"NO_PROJECTS": "Nie jest członkiem żadnego projektu i nie ma czasu w projektach w tym okresie",
+			"NOT_A_MEMBER": "Nie jest członkiem",
+			"NOT_A_MEMBER_HINT": "Zarejestrowano czas w tym projekcie, ale ta osoba nie jest jego członkiem",
+			"VIEW_PROFILE": "Zobacz profil",
+			"MEMBERSHIP_UNKNOWN": "Nie udało się wczytać członkostwa w projektach, więc członkowie i nie-członkowie nie są rozróżniani.",
+			"PROJECT_TIMES_PARTIAL": "Nie udało się wczytać części czasów projektów, więc projekt bez czasu może go jednak mieć."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

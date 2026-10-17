@@ -2097,7 +2097,14 @@
 				"IN_DAYS": "In {{ count }} Tagen"
 			},
 			"SHOWING": "{{ shown }} von {{ total }} Aufgaben angezeigt",
-			"NO_TASKS_IN_VIEW": "Keine Aufgaben in dieser Ansicht"
+			"NO_TASKS_IN_VIEW": "Keine Aufgaben in dieser Ansicht",
+			"PROJECTS_CAPTION": "Die Projekte und die darauf erfasste Zeit in diesem Zeitraum",
+			"NO_PROJECTS": "Kein Mitglied eines Projekts und keine Projektzeit in diesem Zeitraum",
+			"NOT_A_MEMBER": "Kein Mitglied",
+			"NOT_A_MEMBER_HINT": "Auf dieses Projekt wurde Zeit erfasst, die Person ist aber kein Mitglied",
+			"VIEW_PROFILE": "Profil anzeigen",
+			"MEMBERSHIP_UNKNOWN": "Die Projektmitgliedschaften konnten nicht geladen werden, daher werden Mitglieder und Nichtmitglieder nicht unterschieden.",
+			"PROJECT_TIMES_PARTIAL": "Einige Projektzeiten konnten nicht geladen werden; ein Projekt ohne Zeit kann dennoch Zeit haben."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

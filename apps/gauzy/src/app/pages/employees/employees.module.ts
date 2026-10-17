@@ -14,7 +14,8 @@ import {
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -80,6 +81,7 @@ import {
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { ViewEmployeeComponent } from './view-employee/view-employee.component';
 import { EmployeeHoursChartComponent } from './view-employee/employee-hours-chart/employee-hours-chart.component';
+import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view-header.component';
 import { BaseChartDirective } from 'ng2-charts';
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
@@ -125,6 +127,7 @@ const COMPONENTS = [
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
+		NbPopoverModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
 		TranslatePipe,
@@ -155,6 +158,8 @@ const COMPONENTS = [
 		DynamicTabsModule,
 		BaseChartDirective,
 		EmployeeHoursChartComponent,
+		// The assigned-task quick look's header — the same one the task lists and the team page use.
+		TaskViewHeaderComponent,
 		// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 		// imported directly — the Documents hub module is never pulled in here.
 		DocumentLinksPanelComponent
