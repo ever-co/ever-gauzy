@@ -56,11 +56,24 @@ export enum DatabaseTypeEnum {
 	mysql = 'mysql'
 }
 
-const isMysqlValue = process.env.DB_TYPE === DatabaseTypeEnum.mysql;
-const isSqliteValue = process.env.DB_TYPE === DatabaseTypeEnum.sqlite;
-const isBetterSqlite3Value = process.env.DB_TYPE === DatabaseTypeEnum.betterSqlite3;
-const isPostgresValue = process.env.DB_TYPE === DatabaseTypeEnum.postgres;
-const isMongodbValue = process.env.DB_TYPE === DatabaseTypeEnum.mongodb;
+/**
+ * The `DB_TYPE` the API connects with: an unset or empty value means better-sqlite3. `||`, not `??`, because
+ * compose / k8s templates render an unset variable as ''. `database.ts` builds the connection from it and the
+ * dialect helpers below answer from it, so both agree on the database actually in use.
+ *
+ * @param dbType - The raw `DB_TYPE` value.
+ * @returns The value itself when set, otherwise `better-sqlite3`.
+ */
+export const resolveDatabaseType = (dbType: string | undefined = process.env.DB_TYPE): string =>
+	dbType || DatabaseTypeEnum.betterSqlite3;
+
+const resolvedDbType = resolveDatabaseType();
+
+const isMysqlValue = resolvedDbType === DatabaseTypeEnum.mysql;
+const isSqliteValue = resolvedDbType === DatabaseTypeEnum.sqlite;
+const isBetterSqlite3Value = resolvedDbType === DatabaseTypeEnum.betterSqlite3;
+const isPostgresValue = resolvedDbType === DatabaseTypeEnum.postgres;
+const isMongodbValue = resolvedDbType === DatabaseTypeEnum.mongodb;
 
 export const isMySQL = (): boolean => isMysqlValue;
 export const isSqlite = (): boolean => isSqliteValue;
