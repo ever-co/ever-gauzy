@@ -2238,12 +2238,19 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		cart: Pick<CommerceCart, 'currency' | 'currencyDecimals'>,
 		metadata?: Record<string, unknown> | null
 	): Record<string, unknown> {
+		// The previous resolution's trace goes with the previous price: a price from no list must not keep the
+		// list the last one came from.
+		const kept: Record<string, unknown> = { ...(metadata ?? {}) };
+
+		delete kept['priceId'];
+		delete kept['priceListId'];
+
 		return {
 			unitPrice: this.toColumnAmount(price.amount, cart),
 			originalUnitPrice: this.toColumnAmount(price.originalAmount ?? price.amount, cart),
 			isTaxInclusive: price.taxInclusive === true,
 			metadata: {
-				...(metadata ?? {}),
+				...kept,
 				[LINE_PRICE_SOURCE]: 'ENGINE',
 				...(price.priceId ? { priceId: price.priceId } : {}),
 				...(price.priceListId ? { priceListId: price.priceListId } : {})
