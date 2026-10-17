@@ -11,8 +11,11 @@ export class RecoverSoundshotCommandHandler implements ICommandHandler<RecoverSo
 
 	public async execute(command: RecoverSoundshotCommand): Promise<ISoundshot> {
 		const { id } = command;
-		// An unknown id is left to softRecover; another employee's soundshot gets the same 404 it gives one
-		const soundshot = await this.soundshotService.findOneByIdString(id, { withDeleted: true }).catch(() => null);
+		// An unknown id is left to softRecover; another employee's soundshot gets the same 404 it gives one.
+		// Any other lookup failure stops the restore instead of skipping the ownership check.
+		const soundshot = await this.soundshotService
+			.findOneByIdString(id, { withDeleted: true })
+			.catch((error) => (error instanceof NotFoundException ? null : Promise.reject(error)));
 		if (soundshot) {
 			assertCallerOwnsUpload(
 				soundshot,

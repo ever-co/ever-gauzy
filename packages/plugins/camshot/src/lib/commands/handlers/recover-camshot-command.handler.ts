@@ -11,8 +11,11 @@ export class RecoverCamshotCommandHandler implements ICommandHandler<RecoverCams
 
 	public async execute(command: RecoverCamshotCommand): Promise<ICamshot> {
 		const { id } = command;
-		// An unknown id is left to softRecover; another employee's camshot gets the same 404 it gives one
-		const camshot = await this.camshotService.findOneByIdString(id, { withDeleted: true }).catch(() => null);
+		// An unknown id is left to softRecover; another employee's camshot gets the same 404 it gives one.
+		// Any other lookup failure stops the restore instead of skipping the ownership check.
+		const camshot = await this.camshotService
+			.findOneByIdString(id, { withDeleted: true })
+			.catch((error) => (error instanceof NotFoundException ? null : Promise.reject(error)));
 		if (camshot) {
 			assertCallerOwnsUpload(
 				camshot,
