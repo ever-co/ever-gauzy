@@ -14,6 +14,7 @@ jest.mock('@gauzy/core', () => {
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
+		RolePermissionModule: class RolePermissionModule {},
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, hasPermission: () => false },
 		FEATURE_GRAPHQL: 'FEATURE_GRAPHQL',
 		FeatureFlagGuard: class FeatureFlagGuard {},
@@ -30,17 +31,27 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 jest.mock('@gauzy/common', () => ({ FeatureFlag: () => () => undefined }));
+// The plugin decorator records what the plugin declares (the real one loads the configuration package).
+jest.mock('@gauzy/plugin', () => ({
+	GauzyCorePlugin: (metadata: unknown) => (target: { declared?: unknown }) => {
+		target.declared = metadata;
+	}
+}));
 
 import 'reflect-metadata';
 import { BadRequestException } from '@nestjs/common';
-import { GUARDS_METADATA } from '@nestjs/common/constants';
+import { GUARDS_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
 import { buildSchema, extendSchema, GraphQLObjectType } from 'graphql';
 import { InboxTabEnum, PermissionsEnum } from '@gauzy/contracts';
 import { InboxResolver, validatedInboxInput } from './inbox.resolver';
 import { inboxSchemaExtensions } from './inbox.schema';
 import { InboxStateDTO } from '../dto/inbox.dto';
+import { InboxModule } from '../inbox.module';
+import { InboxPlugin } from '../inbox.plugin';
 
 const ITEM_ID = '0b5a3f4e-6c1d-4f7a-9a52-3c2d1e0f9b8a';
+/** The core root types and scalars the plugin's SDL extends. */
+const CORE_SDL = 'scalar DateTime\nscalar JSON\ntype Query { ping: Boolean }\ntype Mutation { ping: Boolean }';
 
 function setup() {
 	const answer = { id: ITEM_ID, recipient: { isRead: true } };
@@ -55,9 +66,7 @@ function setup() {
 
 describe('Inbox GraphQL mirror', () => {
 	it('the SDL composes onto the core root types, and every root field it declares has its resolver method', () => {
-		const core = buildSchema(
-			'scalar DateTime\nscalar JSON\ntype Query { ping: Boolean }\ntype Mutation { ping: Boolean }'
-		);
+		const core = buildSchema(CORE_SDL);
 		const schema = extendSchema(core, inboxSchemaExtensions);
 		const fields = (type: GraphQLObjectType | null | undefined) =>
 			Object.keys(type?.getFields() ?? {}).filter((name) => name !== 'ping');
@@ -71,6 +80,27 @@ describe('Inbox GraphQL mirror', () => {
 			Object.values(type?.getFields() ?? {}).flatMap((field) => field.args.map((arg) => arg.name))
 		);
 		expect(args.filter((name) => /user|recipient|tenant/i.test(name))).toEqual([]);
+	});
+
+	it('is wired: each SDL root field is bound to its method, the module provides the resolver, the plugin declares both', () => {
+		const core = buildSchema(CORE_SDL);
+		const schema = extendSchema(core, inboxSchemaExtensions);
+		const bound = (type: 'Query' | 'Mutation', root: GraphQLObjectType | null | undefined) => {
+			for (const name of Object.keys(root?.getFields() ?? {}).filter((field) => field !== 'ping')) {
+				const method = (InboxResolver.prototype as unknown as Record<string, object>)[name];
+				expect([name, Reflect.getMetadata('graphql:resolver_type', method)]).toEqual([name, type]);
+				expect(Reflect.getMetadata('graphql:resolver_name', method)).toBe(name);
+			}
+		};
+		bound('Query', schema.getQueryType());
+		bound('Mutation', schema.getMutationType());
+		// A resolver only the plugin metadata names is never registered: the module must provide it too.
+		expect(Reflect.getMetadata(MODULE_METADATA.PROVIDERS, InboxModule)).toContain(InboxResolver);
+		const declared = (
+			InboxPlugin as unknown as { declared: { extensions: { schema: unknown; resolvers: unknown[] } } }
+		).declared;
+		expect(declared.extensions.schema).toBe(inboxSchemaExtensions);
+		expect(declared.extensions.resolvers).toEqual([InboxResolver]);
 	});
 
 	it('carries the controller’s guards and INBOX_VIEW (class and every field)', () => {
