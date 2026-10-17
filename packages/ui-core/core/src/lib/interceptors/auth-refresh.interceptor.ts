@@ -6,10 +6,13 @@ import {
 	type HttpEvent,
 	HttpInterceptor,
 	HttpErrorResponse,
+	HttpParams,
 	HttpStatusCode
 } from '@angular/common/http';
-import { Observable, Subject, throwError, from } from 'rxjs';
-import { catchError, take, switchMap, finalize } from 'rxjs/operators';
+import { EMPTY, Observable, ReplaySubject, throwError, from } from 'rxjs';
+import { catchError, concatWith, ignoreElements, take, switchMap, finalize } from 'rxjs/operators';
+import { environment } from '@gauzy/ui-config';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { AuthService } from '../services/auth/auth.service';
 import { Store } from '../services/store/store.service';
 import { isAuthUrl, LOGIN_URL, loginReturnUrl } from '../auth/login-return-url';
@@ -25,7 +28,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 	private readonly router = inject(Router);
 
 	private refreshTokenInProgress = false;
-	private refreshTokenSubject: Subject<string> = new Subject<string>();
+	private refreshTokenSubject: ReplaySubject<string> = new ReplaySubject<string>(1);
 
 	/**
 	 * Intercepts HTTP requests and handles authentication token refresh if necessary.
@@ -54,12 +57,16 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 					// This ensures all pending requests use the same refreshed token
 					return this.refreshTokenSubject.pipe(
 						take(1),
-						switchMap((token) => next.handle(this.addToken(req, token)))
+						switchMap((token) => this.replay(req, next, token))
 					);
 				} else {
 					this.refreshTokenInProgress = true;
+					// One subject per refresh, replaying its token: a request that fails after the token is
+					// published, while the first replay is still running, gets it instead of waiting forever
+					this.refreshTokenSubject = new ReplaySubject<string>(1);
 
 					return this.refreshAccessToken().pipe(
+						catchError((refreshError) => this.handleRefreshFailure(refreshError)),
 						switchMap((response) => {
 							if (response?.token) {
 								// Update the token in the store
@@ -68,22 +75,10 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 								this.store.refresh_token = response.refresh_token;
 								// Emit the new token to all waiting requests
 								this.refreshTokenSubject.next(response.token);
-								return next.handle(this.addToken(req, response.token));
+								return this.replay(req, next, response.token);
 							}
 							// If no token in response, throw error
-							return throwError(() => error);
-						}),
-						catchError((refreshError) => {
-							// Refresh failed, clear tokens
-							this.store.token = null;
-							this.store.refresh_token = null;
-							// Emit error to all waiting requests (completes the Subject)
-							this.refreshTokenSubject.error(refreshError);
-							// Recreate Subject since .error() completes it and makes it unusable
-							this.refreshTokenSubject = new Subject<string>();
-							// Redirect to login page
-							this.redirectToLogin();
-							return throwError(() => refreshError);
+							return this.handleRefreshFailure(error);
 						}),
 						// When the call to refreshToken completes we reset the refreshTokenInProgress to false
 						// for the next time the token needs to be refreshed
@@ -94,6 +89,70 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 				}
 			})
 		);
+	}
+
+	/**
+	 * Ends the session when its token cannot be refreshed: clears the token pair, fails the requests waiting
+	 * on the refresh and sends the user to the sign-in page.
+	 */
+	private handleRefreshFailure(refreshError: unknown): Observable<never> {
+		// Refresh failed, clear tokens
+		this.store.token = null;
+		this.store.refresh_token = null;
+		// Emit error to all waiting requests (completes the Subject, the next refresh creates its own)
+		this.refreshTokenSubject.error(refreshError);
+		// Redirect to login page
+		this.redirectToLogin();
+		return throwError(() => refreshError);
+	}
+
+	/**
+	 * Replays a request with the refreshed token, the one that started the refresh as well as the ones that waited
+	 * on it, so their errors go through the same handling.
+	 */
+	private replay(req: HttpRequest<any>, next: HttpHandler, token: string): Observable<HttpEvent<any>> {
+		return next
+			.handle(this.addToken(req, token))
+			.pipe(catchError((retryError: HttpErrorResponse) => this.handleRetryFailure(retryError, req, next, token)));
+	}
+
+	/**
+	 * Handles an error of the request replayed with the refreshed token.
+	 *
+	 * The refresh succeeded, so the error belongs to that request: a route can answer 401 for its own reason
+	 * (an integration whose upstream credentials are rejected). The session ends only when the API also rejects
+	 * the new token on `/user/me`, as it does for a user no longer in the organization of their token.
+	 */
+	private handleRetryFailure(
+		retryError: HttpErrorResponse,
+		req: HttpRequest<any>,
+		next: HttpHandler,
+		token: string
+	): Observable<never> {
+		if (retryError?.status !== HttpStatusCode.Unauthorized) {
+			return throwError(() => retryError);
+		}
+
+		return next.handle(this.sessionProbe(req, token)).pipe(
+			ignoreElements(),
+			catchError((probeError: HttpErrorResponse) =>
+				probeError?.status === HttpStatusCode.Unauthorized ? this.handleRefreshFailure(retryError) : EMPTY
+			),
+			concatWith(throwError(() => retryError))
+		);
+	}
+
+	/**
+	 * Builds `GET /user/me` with the refreshed token and the headers of the original request. It is sent through
+	 * `next`, after APIInterceptor has run, so the base URL is added here the same way.
+	 */
+	private sessionProbe(req: HttpRequest<any>, token: string): HttpRequest<any> {
+		return this.addToken(req, token).clone({
+			method: 'GET',
+			url: `${environment.API_BASE_URL || ''}${API_PREFIX}/user/me`,
+			body: null,
+			params: new HttpParams()
+		});
 	}
 
 	/**
@@ -123,7 +182,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 	 * Refreshes the access token by calling the AuthService.
 	 * @returns An Observable that emits the response of the token refresh request.
 	 */
-	private refreshAccessToken(): Observable<{ token: string, refresh_token: string } | null> {
+	private refreshAccessToken(): Observable<{ token: string; refresh_token: string } | null> {
 		const refresh_token = this.store.refresh_token;
 
 		if (!refresh_token) {
