@@ -291,6 +291,37 @@ and answered `202`.
   there shows the answer Ever Works holds. Read / unread and archive follow
   to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
   events are skipped.
+- **Docs ↔ the Ever Works Knowledge Base (G-P3-4).** Per mapped
+  organization, synced documents live under a root folder ("Ever Works", or
+  the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first
+  document: `Organization/` holds the organization documents and the library
+  folder tree, `Works/<Work name>/` each Work's documents (the folder is linked
+  to the Work's paired project). An Ever Works document becomes a Docs page:
+  title, description, the Markdown body as the editor's content (headings,
+  lists and task lists, quotes, code, tables, links, images; a `[[path]]`
+  link of a synced document becomes a document mention, any other stays
+  literal text), lock, archive state and review state (an agent's proposal is
+  pending in Gauzy's review queue; approving it there accepts it in Ever
+  Works). Class, tags, language and a decision record are kept in the page's
+  metadata. Before Gauzy's content is replaced it is kept as a page version.
+  When both sides changed the body since the last sync, Ever Works' version
+  wins, Gauzy's edit is kept as a version named "Gauzy edit (conflict)", the
+  conflict is logged and the last Gauzy editor gets an Inbox notice. A page
+  under the synced tree (not private) becomes an Ever Works document of its
+  area, with its path from its folder chain (a Work document under its class
+  folder, `freeform` unless it has a class); its title, description and body
+  (as Markdown) are patched, a move between library folders is filed there,
+  and a removed page is archived in Ever Works. A folder under `Organization/`
+  becomes a library folder and follows renames and moves; a Gauzy folder
+  delete is not pushed. A deleted Ever Works document or folder archives its
+  Gauzy node; nothing is hard-deleted on either side. Files, private pages and
+  folders outside the tree do not sync. A 10-minute sweep queues the tree's
+  changed pages and folders (and, on a process's first sweep, all of them, so
+  pages written before the sync are exported). Each side's body is compared
+  with its own last-synced fingerprint, so a construct one side cannot hold
+  exactly never flaps. Writes go as the attributed person, else as the key.
+  Marking another Gauzy folder "Sync with Ever Works" (plan 05 §1) is not part
+  of this version.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
