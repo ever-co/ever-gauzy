@@ -117,7 +117,14 @@ const MEMBERSHIP = [
 ];
 const PUBLICATION = { id: ID, productId: 'p', channelId: 'c', status: 'ACTIVE', sortOrder: 3, isFeatured: true };
 const VARIANT_PUBLICATION = { id: ID, variantId: 'v', channelId: 'c', status: 'ACTIVE', sortOrder: 3 };
-const COLLECTION_PUBLICATION = { id: ID, collectionId: COLLECTION, channelId: 'c', status: 'ACTIVE' };
+// An existing row with a date of its own, so a field that dropped the stated date would answer a different call.
+const COLLECTION_PUBLICATION = {
+	id: ID,
+	collectionId: COLLECTION,
+	channelId: 'c',
+	status: 'ACTIVE',
+	publishedAt: new Date('2026-09-01T00:00:00.000Z')
+};
 
 /** The stub that owns each of the three capabilities, which is the service the field must reach. */
 type ServiceKey = 'variantMembership' | 'productPublication' | 'variantPublication' | 'collectionChannel';
@@ -782,6 +789,7 @@ describe('the three fields — the two protocols write the same rows the same wa
 			const answer = await resolver[entry.field](...entry.fieldArgs);
 
 			expect(stubs[entry.service].update).toHaveBeenCalledTimes(2);
+			expect(stubs[entry.service].update).toHaveBeenLastCalledWith(...entry.serviceArgs);
 			expect(stubs[entry.service].findOneByIdString).toHaveBeenCalledTimes(1);
 			expect(stubs[entry.service].findOneByIdString).toHaveBeenCalledWith(ID);
 			expect(answer).toBe(await stubs[entry.service].findOneByIdString(ID));
