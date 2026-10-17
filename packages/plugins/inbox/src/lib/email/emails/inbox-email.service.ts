@@ -345,9 +345,11 @@ export class InboxEmailService {
 					sentAt: new Date(),
 					error: refused,
 					transport: sent.transport.slice(0, 120),
-					...(sent.messageId && sent.messageId !== messageId
-						? { providerMessageId: sent.messageId.slice(0, 255) }
-						: {})
+					...(sent.providerMessageId
+						? { providerMessageId: sent.providerMessageId.slice(0, 255) }
+						: sent.messageId && sent.messageId !== messageId
+							? { providerMessageId: sent.messageId.slice(0, 255) }
+							: {})
 				}
 			);
 		} catch (error) {
