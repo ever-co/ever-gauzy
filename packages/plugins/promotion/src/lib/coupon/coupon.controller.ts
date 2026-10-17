@@ -13,8 +13,8 @@ import {
 } from '@gauzy/core';
 import { Coupon } from './coupon.entity';
 import { CouponService } from './coupon.service';
-import { CreateCouponDTO, UpdateCouponDTO } from './dto';
-import { ICoupon, ICouponBatchResult, ICouponCodeFormat } from '../promotion.types';
+import { CreateCouponBatchDTO, CreateCouponDTO, UpdateCouponDTO } from './dto';
+import { ICoupon, ICouponBatchResult } from '../promotion.types';
 import { PromotionPermission } from '../promotion.permissions';
 
 /**
@@ -51,9 +51,10 @@ export class CouponController extends CrudController<Coupon> {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The count is out of range' })
 	@Permissions(PromotionPermission.COUPONS_CREATE as PermissionsEnum)
 	@Post('batch')
-	async createBatch(
-		@Body() entity: CreateCouponDTO & { count: number; couponCodeFormat?: ICouponCodeFormat }
-	): Promise<ICouponBatchResult> {
+	// The body is a class, so the pipe validates and whitelists it like every other write of this
+	// controller; typed as an intersection it reached the service unvalidated (R2-G34).
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async createBatch(@Body() entity: CreateCouponBatchDTO): Promise<ICouponBatchResult> {
 		return this.couponService.createBatch(entity as never);
 	}
 
