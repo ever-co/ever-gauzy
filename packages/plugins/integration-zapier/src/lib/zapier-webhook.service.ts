@@ -5,7 +5,8 @@ import {
 	BadRequestException,
 	ForbiddenException,
 	NotFoundException,
-	InternalServerErrorException
+	InternalServerErrorException,
+	HttpException
 } from '@nestjs/common';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { ID } from '@gauzy/contracts';
@@ -151,6 +152,10 @@ export class ZapierWebhookService {
 
 			this.logger.log(`Successfully deleted webhook subscription with id ${id}`);
 		} catch (error) {
+			// An unknown subscription (404) or another tenant's (403) is the caller's error: keep it
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
 			throw new InternalServerErrorException('Failed to delete webhook subscription.');
 		}
