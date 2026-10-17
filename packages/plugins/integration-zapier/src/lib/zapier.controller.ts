@@ -91,10 +91,14 @@ export class ZapierController {
 		description: 'Unauthorized - Invalid or missing authorization token'
 	})
 	@Get('/triggers')
-	async getTriggers(@Query('token') token: string): Promise<IZapierEndpoint[]> {
+	async getTriggers(
+		@Query('token') token: string,
+		@Query('integrationId') integrationId?: string
+	): Promise<IZapierEndpoint[]> {
 		try {
-			this.validateToken(token, true);
-			return await this.zapierService.fetchTriggers(token);
+			const accessToken = await this.resolveToken(token, integrationId);
+			this.validateToken(accessToken, true);
+			return await this.zapierService.fetchTriggers(accessToken);
 		} catch (error) {
 			this.handleZapierError(error, 'triggers');
 		}
@@ -110,10 +114,14 @@ export class ZapierController {
 		description: 'Unauthorized - Invalid or missing authorization token'
 	})
 	@Get('/actions')
-	async getActions(@Query('token') token: string): Promise<IZapierEndpoint[]> {
+	async getActions(
+		@Query('token') token: string,
+		@Query('integrationId') integrationId?: string
+	): Promise<IZapierEndpoint[]> {
 		try {
-			this.validateToken(token, true);
-			return await this.zapierService.fetchActions(token);
+			const accessToken = await this.resolveToken(token, integrationId);
+			this.validateToken(accessToken, true);
+			return await this.zapierService.fetchActions(accessToken);
 		} catch (error) {
 			this.handleZapierError(error, 'actions');
 		}
@@ -132,10 +140,14 @@ export class ZapierController {
 		description: 'Unauthorized - Invalid or missing authorization token'
 	})
 	@Get('/zaps')
-	async getZaps(@Query('token') token: string): Promise<IZapierZap[]> {
+	async getZaps(
+		@Query('token') token: string,
+		@Query('integrationId') integrationId?: string
+	): Promise<IZapierZap[]> {
 		try {
-			this.validateToken(token, true);
-			return await this.zapierService.fetchZaps(token);
+			const accessToken = await this.resolveToken(token, integrationId);
+			this.validateToken(accessToken, true);
+			return await this.zapierService.fetchZaps(accessToken);
 		} catch (error) {
 			this.handleZapierError(error, 'zaps');
 		}
@@ -160,14 +172,16 @@ export class ZapierController {
 	@Post('/zaps')
 	async createZap(
 		@Query('token') token: string,
-		@Body() body: IZapierCreateZapInput
+		@Body() body: IZapierCreateZapInput,
+		@Query('integrationId') integrationId?: string
 	): Promise<IZapierZap> {
 		try {
-			this.validateToken(token, true);
+			const accessToken = await this.resolveToken(token, integrationId);
+			this.validateToken(accessToken, true);
 			if (!body?.title || !Array.isArray(body?.steps) || body.steps.length === 0) {
 				throw new BadRequestException('Zap title and at least one step are required');
 			}
-			return await this.zapierService.createZap(body, token);
+			return await this.zapierService.createZap(body, accessToken);
 		} catch (error) {
 			this.handleZapierError(error, 'zaps');
 		}
@@ -191,6 +205,19 @@ export class ZapierController {
 		} catch (error) {
 			this.handleZapierError(error, 'zap-templates');
 		}
+	}
+
+	/**
+	 * The Zapier token to call Zapier with: the `token` query param when the caller sends one,
+	 * otherwise the access token stored for `integrationId`. The token endpoint only hands the
+	 * browser a masked value, so the web app sends the integration ID and the token is read here.
+	 */
+	private async resolveToken(token: string, integrationId?: string): Promise<string> {
+		if (token?.trim() || !integrationId?.trim()) {
+			return token;
+		}
+		const setting = await this.zapierService.getZapierToken(integrationId);
+		return setting?.settingsValue;
 	}
 
 	/**

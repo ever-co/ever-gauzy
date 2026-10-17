@@ -151,7 +151,7 @@ export class ZapierZapsComponent extends TranslationBaseComponent implements OnI
 
 		this.creating = true;
 		this._zapierService
-			.createZap(payload, this._accessToken)
+			.createZap(payload, this._accessToken, this.integrationId)
 			.pipe(
 				tap((zap: IZapierZap) => {
 					this.zaps = [zap, ...this.zaps];
@@ -237,7 +237,7 @@ export class ZapierZapsComponent extends TranslationBaseComponent implements OnI
 			.getAccessToken(this.integrationId)
 			.pipe(
 				tap((accessToken: string) => (this._accessToken = accessToken)),
-				switchMap((accessToken: string) => this._zapierService.getZaps(accessToken)),
+				switchMap((accessToken: string) => this._zapierService.getZaps(accessToken, this.integrationId)),
 				tap((zaps: IZapierZap[]) => {
 					this.zaps = zaps;
 				}),

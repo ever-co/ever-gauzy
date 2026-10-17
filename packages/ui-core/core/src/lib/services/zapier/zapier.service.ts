@@ -98,49 +98,57 @@ export class ZapierService {
 	/**
 	 * Get available Zapier triggers
 	 */
-	getTriggers(token: string): Observable<IZapierEndpoint[]> {
+	getTriggers(token: string, integrationId?: ID | null): Observable<IZapierEndpoint[]> {
 		return this.http.get<IZapierEndpoint[]>(`${API_PREFIX}/integration/zapier/triggers`, {
 			headers: {
 				Authorization: `Bearer ${token}`
 			},
-			params: { token }
+			params: this._tokenParams(token, integrationId)
 		});
 	}
 
 	/**
 	 * Get available Zapier actions
 	 */
-	getActions(token: string): Observable<IZapierEndpoint[]> {
+	getActions(token: string, integrationId?: ID | null): Observable<IZapierEndpoint[]> {
 		return this.http.get<IZapierEndpoint[]>(`${API_PREFIX}/integration/zapier/actions`, {
 			headers: {
 				Authorization: `Bearer ${token}`
 			},
-			params: { token }
+			params: this._tokenParams(token, integrationId)
 		});
 	}
 
 	/**
 	 * Get Zaps for the authenticated Zapier account
 	 */
-	getZaps(token: string): Observable<IZapierZap[]> {
+	getZaps(token: string, integrationId?: ID | null): Observable<IZapierZap[]> {
 		return this.http.get<IZapierZap[]>(`${API_PREFIX}/integration/zapier/zaps`, {
 			headers: {
 				Authorization: `Bearer ${token}`
 			},
-			params: { token }
+			params: this._tokenParams(token, integrationId)
 		});
 	}
 
 	/**
 	 * Create a new Zap on the authenticated Zapier account
 	 */
-	createZap(body: IZapierCreateZapInput, token: string): Observable<IZapierZap> {
+	createZap(body: IZapierCreateZapInput, token: string, integrationId?: ID | null): Observable<IZapierZap> {
 		return this.http.post<IZapierZap>(`${API_PREFIX}/integration/zapier/zaps`, body, {
 			headers: {
 				Authorization: `Bearer ${token}`
 			},
-			params: { token }
+			params: this._tokenParams(token, integrationId)
 		});
+	}
+
+	/**
+	 * Query params the API reads the Zapier token from. With an integration ID the API loads the
+	 * stored token itself, because the token endpoint only returns a masked value to the browser.
+	 */
+	private _tokenParams(token: string, integrationId?: ID | null): Record<string, string> {
+		return integrationId ? { integrationId } : { token };
 	}
 
 	/**
