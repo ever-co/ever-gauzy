@@ -95,7 +95,7 @@ a parameter. Answers are `Cache-Control: no-store`.
 The Notifications tab of the UI reads `/employee-notification` directly. The
 mailbox, email and provider routes (P4) are described in `EMAIL.md`.
 
-## GraphQL (served only with the plugin)
+### GraphQL (served only with the plugin)
 
 The read routes and the state route have GraphQL twins (plan 04 §3). They
 call the same service methods, with the same DTO rules, guards and

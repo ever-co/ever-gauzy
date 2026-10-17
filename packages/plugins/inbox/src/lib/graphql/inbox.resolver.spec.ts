@@ -30,7 +30,9 @@ jest.mock('@gauzy/core', () => {
 		}
 	};
 });
-jest.mock('@gauzy/common', () => ({ FeatureFlag: () => () => undefined }));
+jest.mock('@gauzy/common', () => ({
+	FeatureFlag: (flag: string) => jest.requireActual('@nestjs/common').SetMetadata('feature', flag)
+}));
 // The plugin decorator records what the plugin declares (the real one loads the configuration package).
 jest.mock('@gauzy/plugin', () => ({
 	GauzyCorePlugin: (metadata: unknown) => (target: { declared?: unknown }) => {
@@ -40,9 +42,10 @@ jest.mock('@gauzy/plugin', () => ({
 
 import 'reflect-metadata';
 import { BadRequestException } from '@nestjs/common';
-import { GUARDS_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
+import { GUARDS_METADATA, MODULE_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { buildSchema, extendSchema, GraphQLObjectType } from 'graphql';
 import { InboxTabEnum, PermissionsEnum } from '@gauzy/contracts';
+import { UUIDValidationPipe } from '@gauzy/core';
 import { InboxResolver, validatedInboxInput } from './inbox.resolver';
 import { inboxSchemaExtensions } from './inbox.schema';
 import { InboxStateDTO } from '../dto/inbox.dto';
@@ -101,6 +104,19 @@ describe('Inbox GraphQL mirror', () => {
 		).declared;
 		expect(declared.extensions.schema).toBe(inboxSchemaExtensions);
 		expect(declared.extensions.resolvers).toEqual([InboxResolver]);
+	});
+
+	it('the GraphQL capability gate is FEATURE_GRAPHQL, and both id arguments go through the route’s UUID pipe', () => {
+		expect(Reflect.getMetadata('feature', InboxResolver)).toBe('FEATURE_GRAPHQL');
+		for (const name of ['inboxItem', 'markInboxItem']) {
+			const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, InboxResolver, name) as Record<
+				string,
+				{ index: number; data: string; pipes: Array<{ name?: string }> }
+			>;
+			const id = Object.values(args).find((arg) => arg.index === 0);
+			expect([name, id?.data, id?.pipes.map((pipe) => pipe.name)]).toEqual([name, 'id', ['UUIDValidationPipe']]);
+		}
+		expect(() => new UUIDValidationPipe().transform('not-an-id', {} as never)).toThrow('valid uuid');
 	});
 
 	it('carries the controller’s guards and INBOX_VIEW (class and every field)', () => {
