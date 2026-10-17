@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommerceCartStatus, CommerceCheckoutSessionStatus } from '@gauzy/contracts';
 
 /**
@@ -25,4 +26,38 @@ export function isCartStatus(value: unknown): value is CommerceCartStatus {
  */
 export function isCheckoutSessionStatus(value: unknown): value is CommerceCheckoutSessionStatus {
 	return typeof value === 'string' && CHECKOUT_SESSION_STATUSES.includes(value);
+}
+
+/** The length of `commerce_checkout_session.step`, which the REST body states as `@MaxLength(64)`. */
+export const CHECKOUT_STEP_MAX_LENGTH = 64;
+
+/**
+ * Refuses a checkout-session member the column cannot hold (R2-G24).
+ *
+ * The schema declares `status` and `step` as `String`, so GraphQL validation lets any text through, and it
+ * reached the columns: a status outside the enumeration was stored (or, past the column's 16 characters, a
+ * database error), and a step past 64 characters was a database error — a 500 for what the REST body
+ * (`@IsEnum`, `@MaxLength(64)`) answers with a 400. An omitted member is not checked.
+ *
+ * @param input The members as the input carried them.
+ * @throws BadRequestException `CHECKOUT_SESSION_STATUS_INVALID` or `CHECKOUT_STEP_INVALID`.
+ */
+export function assertCheckoutSessionMembers(input: { status?: unknown; step?: unknown } | null | undefined): void {
+	const { status, step } = input ?? {};
+
+	if (status !== undefined && status !== null && !isCheckoutSessionStatus(status)) {
+		throw new BadRequestException({
+			message: `CHECKOUT_SESSION_STATUS_INVALID: status "${String(status)}" is not one of: ${CHECKOUT_SESSION_STATUSES.join(', ')}.`,
+			code: 'CHECKOUT_SESSION_STATUS_INVALID',
+			details: { field: 'status', value: status, allowed: CHECKOUT_SESSION_STATUSES }
+		});
+	}
+
+	if (step !== undefined && step !== null && (typeof step !== 'string' || step.length > CHECKOUT_STEP_MAX_LENGTH)) {
+		throw new BadRequestException({
+			message: `CHECKOUT_STEP_INVALID: a step is a string of at most ${CHECKOUT_STEP_MAX_LENGTH} characters.`,
+			code: 'CHECKOUT_STEP_INVALID',
+			details: { field: 'step', maxLength: CHECKOUT_STEP_MAX_LENGTH }
+		});
+	}
 }

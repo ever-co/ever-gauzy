@@ -52,6 +52,7 @@ import { OrderUnitOfWork, inOwnUnitOfWork } from '../order-totals/order-unit-of-
 import { Order } from '../order/order.entity';
 import { MikroOrmOrderRepository } from '../order/repository/mikro-orm-order.repository';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
+import { ORDER_CHANGE_ACTION_TYPES, ORDER_CHANGE_TYPES, assertEnumMember } from '../graphql/filters';
 
 /**
  * How many stale changes one read of the staleness sweep returns, and how many one run examines.
@@ -311,6 +312,16 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 * @returns The created change, with its actions persisted in submission order.
 	 */
 	public async create(entity: DeepPartial<OrderChange>): Promise<OrderChange> {
+		// What the change and its actions are has to be one of the kinds the columns carry, refused before
+		// anything is read (R2-G24): `requestOrderEdit` declares both as `String`, so a value outside the
+		// enumeration reached the varchar columns — a database error past their length, a stored row that the
+		// apply step could not interpret below it. The REST body validates the same with `@IsEnum`.
+		assertEnumMember(entity.changeType, ORDER_CHANGE_TYPES, 'changeType', 'ORDER_CHANGE_TYPE_INVALID');
+
+		for (const action of (entity as { actions?: DeepPartial<OrderChangeAction>[] }).actions ?? []) {
+			assertEnumMember(action?.action, ORDER_CHANGE_ACTION_TYPES, 'action', 'ORDER_CHANGE_ACTION_INVALID');
+		}
+
 		const orderId = entity.orderId as ID;
 		const order = await this.readOrder(orderId);
 

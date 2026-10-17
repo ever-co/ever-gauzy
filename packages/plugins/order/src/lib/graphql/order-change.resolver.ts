@@ -25,8 +25,11 @@ import { OrderSummaryService } from './../order-summary/order-summary.service';
 import { OrderTransactionService } from './../order-transaction/order-transaction.service';
 import { ORDER_PERMISSIONS } from './../order.permissions';
 import {
+	ORDER_CHANGE_ACTION_TYPES,
 	ORDER_CHANGE_STATUSES,
+	ORDER_CHANGE_TYPES,
 	ORDER_TRANSACTION_TYPES,
+	assertEnumMember,
 	isOrderChangeStatus,
 	isOrderTransactionType
 } from './filters';
@@ -312,6 +315,8 @@ export class OrderChangeResolver {
 		@Args('version', { type: () => Int, nullable: true }) version?: number,
 		@Context() context?: any
 	): Promise<OrderChange> {
+		assertEnumMember(input?.changeType, ORDER_CHANGE_TYPES, 'changeType', 'ORDER_CHANGE_TYPE_INVALID');
+
 		return this.changeService.commitChange(id, input as any, versionExpectationOf(context?.req));
 	}
 
@@ -399,6 +404,8 @@ export class OrderChangeResolver {
 		@Args('id', { type: () => ID }) id: string,
 		@Args('input', { type: () => Object }) input: Record<string, any>
 	): Promise<OrderChangeAction> {
+		assertEnumMember(input?.action, ORDER_CHANGE_ACTION_TYPES, 'action', 'ORDER_CHANGE_ACTION_INVALID');
+
 		await this.actionService.update(id, input as any);
 
 		return this.actionService.findOneByIdString(id);

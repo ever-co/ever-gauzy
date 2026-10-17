@@ -1,6 +1,9 @@
+import { BadRequestException } from '@nestjs/common';
 import {
 	FulfillmentStatus,
+	OrderChangeActionType,
 	OrderChangeStatus,
+	OrderChangeType,
 	OrderPaymentStatus,
 	OrderStatus,
 	OrderTransactionType
@@ -58,4 +61,38 @@ export function isOrderChangeStatus(value: unknown): value is OrderChangeStatus 
  */
 export function isOrderTransactionType(value: unknown): value is OrderTransactionType {
 	return typeof value === 'string' && ORDER_TRANSACTION_TYPES.includes(value);
+}
+
+/** The kinds of change and of change action an input may name (R2-G24). */
+export const ORDER_CHANGE_TYPES: readonly string[] = Object.values(OrderChangeType);
+export const ORDER_CHANGE_ACTION_TYPES: readonly string[] = Object.values(OrderChangeActionType);
+
+/**
+ * Refuses an input member that names no member of the enumeration its column carries (R2-G24).
+ *
+ * The schema declares these members as `String` — so a client that sends a value outside the enumeration
+ * is not refused by GraphQL validation, and the value reached the column: a value longer than the column
+ * was a database error (500), a shorter one was stored and failed later, where nothing could say why. The
+ * REST bodies validate the same members with `@IsEnum`, so this is the GraphQL half of the same rule, and
+ * it answers 400 with the members the column accepts. An omitted member (`undefined` or `null`) is not
+ * checked: whether it is required is the write's own rule.
+ *
+ * @param value The member as the input carried it.
+ * @param allowed The members of the enumeration.
+ * @param field The input member's name, for the answer.
+ * @param code The error code.
+ * @throws BadRequestException naming the member, the value and the accepted values.
+ */
+export function assertEnumMember(value: unknown, allowed: readonly string[], field: string, code: string): void {
+	if (value === undefined || value === null) {
+		return;
+	}
+
+	if (typeof value !== 'string' || !allowed.includes(value)) {
+		throw new BadRequestException({
+			message: `${code}: ${field} "${String(value)}" is not one of: ${allowed.join(', ')}.`,
+			code,
+			details: { field, value, allowed }
+		});
+	}
 }
