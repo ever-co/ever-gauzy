@@ -1,6 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import { PaymentInstrumentEligibilityService, PaymentInstrumentModule } from '@gauzy/core';
-import { CART_PROMOTION_EVALUATION, CART_STOCK_AVAILABILITY, CART_TAX_CALCULATION } from '@gauzy/plugin-cart';
+import {
+	CART_PRICE_RESOLUTION,
+	CART_PROMOTION_EVALUATION,
+	CART_STOCK_AVAILABILITY,
+	CART_TAX_CALCULATION
+} from '@gauzy/plugin-cart';
 import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
 import {
 	FulfillmentModule,
@@ -22,7 +27,7 @@ import {
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
-import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
+import { PricingModule, ProductPriceService, RecurringPriceService } from '@gauzy/plugin-pricing';
 import {
 	PAYMENT_ORDER_LEDGER,
 	PAYMENT_ORDER_LINE_REFUND,
@@ -173,6 +178,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// rather than recording an amount the caller stated — which is what it did before (R3-07): a buyer
 		// could name any code and any discount, and the cart re-priced from it.
 		{ provide: CART_PROMOTION_EVALUATION, useExisting: PromotionService },
+		// What a cart line costs is the pricing package's resolution — its price lists, sale and override
+		// lists, quantity bands and currency — for the cart and the line's quantity. Unbound, the cart refuses a
+		// line rather than recording the price its caller stated, which is what it did before (R3-07b).
+		{ provide: CART_PRICE_RESOLUTION, useExisting: ProductPriceService },
 		// The warehouse reads bin contents from the ledger and writes every physical move back through
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
@@ -215,6 +224,7 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		CART_STOCK_AVAILABILITY,
 		CART_TAX_CALCULATION,
 		CART_PROMOTION_EVALUATION,
+		CART_PRICE_RESOLUTION,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,
 		PURCHASING_INVENTORY,

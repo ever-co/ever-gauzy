@@ -173,7 +173,8 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	 * `/pagination?where[code]=…` and `/count` were cross-tenant oracles. Each is narrowed to the caller's tenant and
 	 * organization ({@link readScope}, spread last, so a stated `where` cannot widen it), as the reads by
 	 * identifier above and the GraphQL lists already are. The single-row reads by options are left as they are:
-	 * `update` and `delete` predicate their pre-read on the tenant alone, on purpose (see {@link writeScope}).
+	 * `update` predicates its pre-read on the tenant alone, on purpose (see {@link writeScope}); `delete` and
+	 * `softDelete` predicate theirs on the tenant and the organization (review R2-G26, see {@link delete}).
 	 */
 
 	/** `GET ''`: the caller's rows. */
@@ -240,14 +241,23 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	}
 
 	/**
-	 * Deletes a row of the caller's own tenant.
+	 * Deletes a row of the caller's own tenant and organization.
+	 *
+	 * **The organization is part of the scope here (review R2-G26).** The tenant alone was the boundary, as for
+	 * {@link update}, so `DELETE /promotions/:id`, `/coupons/:id`, `/campaigns/:id` (and every other inherited
+	 * hard delete of this package) destroyed a row of a sibling organization of the caller's tenant — a row no read
+	 * of these services shows the caller, and one the GraphQL `delete<Resource>` fields refuse, because they read the
+	 * row through the scoped finder first. A delete has no read-back that could answer the mismatch, and nothing to
+	 * undo once it ran, so the pre-read and the statement both carry {@link readScope}: a row outside the caller's
+	 * organization is the platform's 404 and nothing is written. A delete with no organization in context (a job, a
+	 * tenant-level caller) is narrowed by what is present, as every read of this package is.
 	 *
 	 * @param criteria The row's identifier, or the conditions it must satisfy.
 	 * @returns The deletion result.
 	 * @throws NotFoundException when no row of the caller's scope matches.
 	 */
 	public async delete(criteria: string | number | FindOptionsWhere<T>): Promise<DeleteResult> {
-		const scoped = { ...this.criteriaOf(criteria), ...this.writeScope } as FindOptionsWhere<T>;
+		const scoped = { ...this.criteriaOf(criteria), ...this.writeScope, ...this.readScope } as FindOptionsWhere<T>;
 
 		await this.findOneByWhereOptions(scoped);
 
@@ -255,14 +265,15 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	}
 
 	/**
-	 * Soft-deletes a row of the caller's own tenant.
+	 * Soft-deletes a row of the caller's own tenant and organization, for the reason {@link delete} states: the
+	 * recoverable withdrawal (`softRemove`) is already narrowed to both, and this sibling must not reach further.
 	 *
 	 * @param criteria The row's identifier, or the conditions it must satisfy.
 	 * @returns The update result, or the row, whichever the ORM answers.
 	 * @throws NotFoundException when no row of the caller's scope matches.
 	 */
 	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
-		const scoped = { ...this.criteriaOf(criteria), ...this.writeScope } as FindOptionsWhere<T>;
+		const scoped = { ...this.criteriaOf(criteria), ...this.writeScope, ...this.readScope } as FindOptionsWhere<T>;
 
 		await this.findOneByWhereOptions(scoped);
 

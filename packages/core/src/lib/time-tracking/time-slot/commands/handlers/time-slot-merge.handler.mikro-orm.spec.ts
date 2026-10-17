@@ -164,10 +164,11 @@ async function mergeOnMikroOrm(): Promise<IMerged> {
 					[MOVED_SCREENSHOT, MERGED_SLOT, null],
 					[REMOVED_SCREENSHOT, MERGED_SLOT, stored('2026-10-12T09:11:00.000Z')]
 				] as const) {
+					// A screenshot belongs to the user who took it: the table has userId, not employeeId.
 					await insert('screenshot', {
 						id,
 						...scope,
-						employeeId: EMPLOYEE,
+						userId: USER,
 						timeSlotId,
 						file: `${id}.png`,
 						thumb: `${id}-thumb.png`,
