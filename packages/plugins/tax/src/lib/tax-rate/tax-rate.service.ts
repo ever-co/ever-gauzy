@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { CurrencyCode, DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
+	IParsedDecimal,
 	Money,
 	RequestContext,
 	TenantAwareCrudService,
@@ -9,6 +10,7 @@ import {
 	compareDecimalStrings,
 	divideDecimalUnits,
 	formatDecimalUnits,
+	multiplyDecimalUnits,
 	normalizeDecimalString,
 	parseDecimalString
 } from '@gauzy/core';
@@ -54,11 +56,26 @@ const TAX_RATE_MATCH_LEVELS: readonly TaxRateMatchLevel[] = [
 ];
 
 /**
- * How many times the inclusive extraction walks a compound chain before it settles. A chain is monotone
- * and every rate of it is non-negative, so the walk converges in a couple of passes; the bound is what
- * keeps a pathological rate set from looping.
+ * Digits the extracted net is carried beyond the currency's scale before it is rounded half-up. The
+ * quotient is truncated there, and a truncated quotient rounds exactly as the true one does as long as
+ * at least one digit is kept below the boundary; four is the money layer's own division guard.
  */
-const TAX_EXTRACTION_PASSES = 4;
+const TAX_EXTRACTION_GUARD_DIGITS = 4;
+
+/** Exact zero and one, as the decimal kernel carries them. */
+const EXACT_ZERO: IParsedDecimal = { units: 0n, scale: 0 };
+const EXACT_ONE: IParsedDecimal = { units: 1n, scale: 0 };
+
+/**
+ * The tax of a chain as a function of the net it is assessed on: `tax(net) = slope × net + intercept`,
+ * with both coefficients exact. Every part of a chain is linear in the net — a percentage part is a share
+ * of the net or of the running total, and the running total is the net plus the parts before it; a fixed
+ * part is a constant — so the whole chain is.
+ */
+interface ILinearTax {
+	slope: IParsedDecimal;
+	intercept: IParsedDecimal;
+}
 
 /**
  * Renders a `numeric(9,6)` rate as the fixed six-decimal form the wire and the tax ledger carry.
@@ -1030,10 +1047,16 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 *
 	 * A single rate that does not compound and whose breakdown is the whole rate on the whole base is
 	 * extracted by one exact division — the net is the only unknown in `net + net × rate = gross`. Every
-	 * other chain has no closed form: a compound rate's base includes the amount of the rate before it and
-	 * a part's base is its own share of the value, so the net is found by walking the chain a bounded
-	 * number of times from the gross downward. The walk converges because the chain is monotone and every
-	 * rate of it is non-negative.
+	 * other chain is solved the same way, because it is linear in the net too: a compound rate's base is
+	 * the net plus the parts before it and a part's base is its own share of that, so the chain's tax is
+	 * `slope × net + intercept` (see {@link linearTaxOf}) and the net is the one unknown of
+	 * `net + slope × net + intercept = gross`. The coefficients are exact decimals and the one division
+	 * is rounded half-up at the currency's scale, exactly as the single-rate case is; the per-part rounding
+	 * of the drafts is then reconciled by the residual rule.
+	 *
+	 * This replaces a walk from the gross downward that stopped after four passes (R2-29). Its error only
+	 * shrank by the chain's effective rate per pass, so a 5 % + 9.975 % compound chain left a gross of
+	 * 10 000.00 about 0.77 away from its net, and a chain whose rates sum to 100 % or more never converged.
 	 *
 	 * @param gross The amount including tax.
 	 * @param chain The rates that are inside the gross.
@@ -1041,6 +1064,8 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 * @param currency The currency of the document.
 	 * @param regime The regime the document is taxed under.
 	 * @returns The net, at the currency's scale.
+	 * @throws BadRequestException when the chain takes the whole net or more, so that no net is contained
+	 * in the gross.
 	 */
 	private extractNet(
 		gross: Money,
@@ -1056,19 +1081,107 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			return gross.divide(denominator.amount, { scale: gross.decimals });
 		}
 
-		let net = gross;
-		for (let pass = 0; pass < TAX_EXTRACTION_PASSES; pass++) {
-			const tax = this.sumDrafts(this.chainTaxLines(net, chain, currency, quantity, regime), currency);
-			const candidate = gross.subtract(tax).round();
+		const { slope, intercept } = this.linearTaxOf(chain, quantity);
+		const denominator = this.addExact(EXACT_ONE, slope);
 
-			if (candidate.compare(net) === 0) {
-				return candidate;
-			}
+		if (denominator.units <= 0n) {
+			const rates = chain.map((rate) => rate.code ?? rate.name).join(', ');
+			const under = regime?.taxRegimeId ? ` under the regime ${regime.taxRegimeId}` : '';
 
-			net = candidate;
+			throw new BadRequestException(
+				`TAX_INCLUSIVE_NO_NET: the rates ${rates}${under} take the whole net or more, ` +
+					`so no net is contained in the gross ${gross.amount} ${currency}.`
+			);
 		}
 
-		return net.round();
+		const numerator = this.addExact(parseDecimalString(gross.amount), this.negateExact(intercept));
+		const scale = Math.min(WORKING_SCALE, gross.decimals + TAX_EXTRACTION_GUARD_DIGITS);
+		const quotient = formatDecimalUnits(divideDecimalUnits(numerator, denominator, scale), scale);
+
+		return Money.of(quotient, currency, gross.decimals).round();
+	}
+
+	/**
+	 * The tax of a chain as an exact linear function of the net it is assessed on.
+	 *
+	 * It mirrors {@link chainTaxLines} part by part, without the per-part rounding: a percentage part is
+	 * `rate × baseFactor × share` of the net, or of the running total when its rate compounds; a fixed
+	 * part is `fixedAmount × quantity × share` whatever the net; and the running total starts at the net
+	 * and accumulates every part.
+	 *
+	 * @param chain The rates, in the order they are applied.
+	 * @param quantity The owner's quantity, which a fixed part is applied per unit of.
+	 * @returns The slope and the intercept of the chain's tax.
+	 */
+	private linearTaxOf(chain: IResolvedTaxRate[], quantity: DecimalString): ILinearTax {
+		let slope = EXACT_ZERO;
+		let intercept = EXACT_ZERO;
+		let runningSlope = EXACT_ONE;
+		let runningIntercept = EXACT_ZERO;
+
+		for (const rate of chain) {
+			for (const part of [...rate.parts].sort((left, right) => left.sequence - right.sequence)) {
+				if (part.partType !== TaxPartType.TAX) {
+					continue;
+				}
+
+				const share = this.exact(this.fraction(part.factorPercent));
+				let partSlope = EXACT_ZERO;
+				let partIntercept = EXACT_ZERO;
+
+				if (part.amountType === TaxAmountType.FIXED) {
+					partIntercept = multiplyDecimalUnits(
+						multiplyDecimalUnits(this.exact(part.fixedAmount ?? '0'), this.exact(quantity)),
+						share
+					);
+				} else {
+					const factor = multiplyDecimalUnits(
+						multiplyDecimalUnits(this.exact(rate.rate), this.exact(part.baseFactor)),
+						share
+					);
+
+					partSlope = multiplyDecimalUnits(rate.isCompound ? runningSlope : EXACT_ONE, factor);
+					partIntercept = rate.isCompound ? multiplyDecimalUnits(runningIntercept, factor) : EXACT_ZERO;
+				}
+
+				slope = this.addExact(slope, partSlope);
+				intercept = this.addExact(intercept, partIntercept);
+				runningSlope = this.addExact(runningSlope, partSlope);
+				runningIntercept = this.addExact(runningIntercept, partIntercept);
+			}
+		}
+
+		return { slope, intercept };
+	}
+
+	/**
+	 * @param value A decimal as the wire or the kernel carries it.
+	 * @returns Its exact units, without redundant trailing zeroes so that products stay short.
+	 */
+	private exact(value: DecimalString | number): IParsedDecimal {
+		return parseDecimalString(normalizeDecimalString(value));
+	}
+
+	/**
+	 * @param left One exact decimal.
+	 * @param right Another.
+	 * @returns Their exact sum.
+	 */
+	private addExact(left: IParsedDecimal, right: IParsedDecimal): IParsedDecimal {
+		const scale = Math.max(left.scale, right.scale);
+
+		return {
+			units: left.units * 10n ** BigInt(scale - left.scale) + right.units * 10n ** BigInt(scale - right.scale),
+			scale
+		};
+	}
+
+	/**
+	 * @param value An exact decimal.
+	 * @returns The same decimal with the opposite sign.
+	 */
+	private negateExact(value: IParsedDecimal): IParsedDecimal {
+		return { units: -value.units, scale: value.scale };
 	}
 
 	/**
