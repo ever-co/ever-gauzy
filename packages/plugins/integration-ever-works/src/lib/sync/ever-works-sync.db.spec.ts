@@ -514,6 +514,45 @@ describe('Ever Works sync engine on SQLite', () => {
 			expect(await dataSource.getRepository(EverWorksSyncLog).count({ where: { action: 'push_refused' } })).toBe(1);
 		});
 
+		it('a 401 never dead-letters: the changes wait, the connection is checked once (needs_reauth) and the drain stops (review F17)', async () => {
+			const { EverWorksApiError } = await import('../client/ever-works-client');
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log, undefined, connections);
+			let calls = 0;
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async () => {
+					calls++;
+					throw new EverWorksApiError(401, 'unauthorized', 'The key was revoked.');
+				}
+			});
+			for (const id of ['k1', 'k2', 'k3']) await queue.enqueue(trigger(id));
+			for (const key of [...mock.keys.keys()]) mock.revokeKey(key);
+			await pusher.drain(connection, 100, new Date(Date.now() + 10_000));
+			expect(calls).toBe(1);
+			const rows = await dataSource.getRepository(EverWorksOutboundChange).find();
+			expect(rows.map((row) => row.status).sort()).toEqual([EverWorksOutboundStatus.DEFERRED, EverWorksOutboundStatus.PENDING, EverWorksOutboundStatus.PENDING]);
+			expect(rows.every((row) => (row.attempts ?? 0) === 0)).toBe(true);
+			expect(await dataSource.getRepository(EverWorksSyncLog).count({ where: { action: 'push_refused' } })).toBe(0);
+			await reload();
+			expect(connection.status).toBe(EverWorksConnectionStatus.NEEDS_REAUTH);
+		});
+
+		it('a pass whose feed poll finds the key revoked applies and pushes nothing (review F17)', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log);
+			const pusher = new EverWorksOutboundPusher(dataSource, log);
+			const poller = new EverWorksFeedPoller(dataSource, connections, store);
+			const loop = new EverWorksSyncLoop(dataSource, poller, applier, pusher, log, { EVER_WORKS_ENABLED: 'true' });
+			const applied = jest.spyOn(applier, 'drain');
+			const pushed = jest.spyOn(pusher, 'drain');
+			for (const key of [...mock.keys.keys()]) mock.revokeKey(key);
+			await loop.tick(new Date());
+			await reload();
+			expect(connection.status).toBe(EverWorksConnectionStatus.NEEDS_REAUTH);
+			expect(applied).not.toHaveBeenCalled();
+			expect(pushed).not.toHaveBeenCalled();
+		});
+
 		it('an organization mapped a moment after a refused trigger is seen at once (no negative cache)', async () => {
 			const queue = new EverWorksOutboundQueue(dataSource);
 			const other = randomUUID();
