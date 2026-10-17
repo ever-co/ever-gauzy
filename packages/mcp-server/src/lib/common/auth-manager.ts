@@ -25,6 +25,8 @@ export class AuthManager {
 	private apiClient: any;
 	private isLoginInProgress = false;
 	private isRefreshInProgress = false;
+	private isLogoutInProgress = false;
+	private pendingRefresh: Promise<boolean> | null = null;
 	private hasInitialized = false;
 
 	private constructor() {}
@@ -234,8 +236,29 @@ export class AuthManager {
 			return false;
 		}
 
-		this.isRefreshInProgress = true;
+		// Do not start a refresh while logout is revoking the current token pair
+		if (this.isLogoutInProgress) {
+			if (environment.debug) {
+				logger.warn('🔄 Logout in progress, skipping token refresh');
+			}
+			return false;
+		}
 
+		this.isRefreshInProgress = true;
+		this.pendingRefresh = this.performRefresh();
+
+		try {
+			return await this.pendingRefresh;
+		} finally {
+			this.isRefreshInProgress = false;
+			this.pendingRefresh = null;
+		}
+	}
+
+	/**
+	 * Call the refresh endpoint and store the rotated token pair
+	 */
+	private async performRefresh(): Promise<boolean> {
 		try {
 			if (!this.tokenData?.refreshToken) {
 				if (environment.debug) {
@@ -278,8 +301,6 @@ export class AuthManager {
 				logger.error('❌ Token refresh failed:', sanitizeForLogging(error));
 			}
 			return false;
-		} finally {
-			this.isRefreshInProgress = false;
 		}
 	}
 
@@ -344,7 +365,13 @@ export class AuthManager {
 	 * Logout and clear stored tokens
 	 */
 	public async logout(): Promise<void> {
+		this.isLogoutInProgress = true;
 		try {
+			// Wait for a running refresh so the rotated pair is the one revoked
+			if (this.pendingRefresh) {
+				await this.pendingRefresh;
+			}
+
 			if (this.tokenData?.accessToken && this.apiClient) {
 				const { accessToken, refreshToken } = this.tokenData;
 				// Call logout endpoint to invalidate refresh token on server.
@@ -361,6 +388,7 @@ export class AuthManager {
 		} finally {
 			this.clearTokenData();
 			this.hasInitialized = false; // Allow re-initialization after logout
+			this.isLogoutInProgress = false;
 			if (environment.debug) {
 				logger.log('🔑 Logged out successfully');
 			}
