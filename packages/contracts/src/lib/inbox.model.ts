@@ -211,6 +211,11 @@ export interface IInboxItemUpsertInput {
 	externalSource?: string;
 	externalId?: string;
 	recipients: IInboxRecipientInput[];
+	/**
+	 * On an update, remove the recipients the item has but `recipients` no longer names (default: recipients are only
+	 * added). For a source whose addressee can change (a pairing replaced): the former one stops reading the item.
+	 */
+	replaceRecipients?: boolean;
 }
 
 /** What `InboxService.upsertExternal` / `create` did. */

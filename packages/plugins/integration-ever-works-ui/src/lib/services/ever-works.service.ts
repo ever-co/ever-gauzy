@@ -77,7 +77,9 @@ export const EVER_WORKS_DOMAINS: Readonly<Record<string, ReadonlyArray<EverWorks
 	ideas: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	tasks: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	inbox: ['ew_to_gauzy', 'off'],
-	docs: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off']
+	docs: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
+	// The read-only copy of Ever Works agent mail in the Gauzy Inbox (off by default).
+	agentEmail: ['off', 'ew_to_gauzy']
 };
 
 /** One organization mapping and its settings. */

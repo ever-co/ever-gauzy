@@ -7,7 +7,8 @@ import {
 	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
-import { DeepPartial, FindOptionsWhere, In, LessThanOrEqual } from 'typeorm';
+import { randomUUID } from 'node:crypto';
+import { DeepPartial, FindOptionsWhere, In, IsNull, LessThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
@@ -29,7 +30,8 @@ import {
 	TenantAwareCrudService,
 	commitVersionedUpdate,
 	currencyPrecision,
-	normalizeDecimalString
+	normalizeDecimalString,
+	parseEntityVersion
 } from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
 import { digestCartToken, issueCartToken } from './cart-token';
@@ -99,6 +101,21 @@ const CART_PROMOTION_ADJUSTMENT_KEY = 'cartPromotionId';
  * the comparison and the increment are one statement, so no write here is a last-writer-wins write.
  */
 const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The statuses a cart may be claimed for checkout from — the same statuses the validation ladder lets
+ * complete and the order package creates an order from.
+ */
+const CHECKOUT_CLAIMABLE_STATUSES = [CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED];
+
+/**
+ * How long a checkout's claim on a cart holds (R3-10).
+ *
+ * A checkout places its order in seconds; a claim this old belongs to a process that died between the
+ * claim and the order, and lapses so the cart can be bought again. The order package's unique index on
+ * `order.cartId` still stands behind a claim that lapsed while its checkout was, after all, alive.
+ */
+const CHECKOUT_CLAIM_TTL_MS = 10 * 60 * 1000;
 
 /**
  * What the `STOCK` step refuses with: the ladder's error shape, plus what it measured, so an operator
@@ -182,6 +199,21 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		expectation: IVersionExpectation = ANY_VERSION,
 		reason: string = 'CART_UPDATED'
 	): Promise<CommerceCart> {
+		// A cart a checkout has claimed is the one its order is being built from (R3-10): an address or a
+		// currency changed now would be on the cart and not on the order.
+		// A miss is left to the conditional write below, which answers it the way every versioned write does.
+		const current = await this.findOneByIdString(id).catch((error: unknown) => {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		});
+
+		if (current && this.holdsLiveCheckoutClaim(current)) {
+			throw this.checkoutInProgress(id);
+		}
+
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id,
 			expectation,
@@ -807,11 +839,18 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * order package. An installation without a handler gets a loud failure rather than a cart that
 	 * silently never becomes an order.
 	 *
+	 * **The cart is claimed before the order exists (R3-10).** The first write this call makes is the
+	 * claim (`claimForCheckout`): one conditional update predicated on the version that was validated, a
+	 * completable status and `orderId IS NULL`. Of two concurrent completions only one claim lands, so
+	 * only one reaches the handler; the other is refused with `CART_CHECKOUT_IN_PROGRESS` (or
+	 * `CART_ALREADY_COMPLETED` once the order is recorded). A handler that fails releases the claim.
+	 * The order package's unique index on `order.cartId` is the database's own backstop behind this.
+	 *
 	 * @param cartId The cart.
 	 * @param options The checkout request.
 	 * @param expectation The version the caller read the cart at. It is spent by the first write this
-	 * call makes to the cart — the recomputation that precedes the order — because the cart's revision
-	 * moves with that write and the revision the caller stated no longer exists afterwards.
+	 * call makes to the cart — the claim that precedes the order — because the cart's revision moves
+	 * with that write and the revision the caller stated no longer exists afterwards.
 	 * @returns The placed order's identity and the cart it came from.
 	 */
 	public async complete(
@@ -825,11 +864,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		// not with the ladder's generic status refusal: the caller's next move is to read the order the
 		// cart points at, which the code and the id tell it how to do (doc 06, 409).
 		if (existing.orderId) {
-			throw new ConflictException({
-				message: `CART_ALREADY_COMPLETED: cart ${cartId} already became order ${existing.orderId}.`,
-				code: 'CART_ALREADY_COMPLETED',
-				details: { cartId, orderId: existing.orderId }
-			});
+			throw this.alreadyCompleted(cartId, existing.orderId);
+		}
+
+		// Another completion holds the cart and is placing its order right now.
+		if (this.holdsLiveCheckoutClaim(existing)) {
+			throw this.checkoutInProgress(cartId);
 		}
 
 		const verdict = await this.validate(cartId, CommerceCartValidationMode.STRICT);
@@ -842,34 +882,56 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			});
 		}
 
-		const cart = await this.recalculate(cartId, 'CHECKOUT_VALIDATION', expectation);
 		const handler = cartCheckoutRegistry.resolve();
 
+		// Resolved before the claim, so an installation without a handler refuses without ever holding
+		// the cart.
 		if (!handler) {
 			throw new ServiceUnavailableException(
 				'CHECKOUT_HANDLER_MISSING: no package has registered a checkout handler for this installation.'
 			);
 		}
 
-		const result = await handler.complete({
-			cart,
-			idempotencyKey: options.idempotencyKey,
-			paymentSessionId: options.paymentSessionId
-		});
+		const claimId = randomUUID();
+
+		await this.claimForCheckout(existing, claimId, expectation);
+
+		let cart: CommerceCart;
+		let result: { orderId: string; orderNumber: string };
+
+		try {
+			// The caller's version was spent by the claim; the recomputation rides on the version the
+			// claim produced, and the claim keeps every other writer off the cart meanwhile.
+			cart = await this.recalculate(cartId, 'CHECKOUT_VALIDATION', ANY_VERSION);
+			result = await handler.complete({
+				cart,
+				idempotencyKey: options.idempotencyKey,
+				paymentSessionId: options.paymentSessionId
+			});
+		} catch (error) {
+			await this.releaseCheckoutClaim(cartId, claimId);
+
+			throw error;
+		}
 
 		const completedAt = new Date();
 
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id: cart.id,
-			// The caller's version was spent by the recomputation above; this write rides on the version
-			// that recomputation produced.
+			// The caller's version was spent by the claim above; this write rides on the version the
+			// recomputation produced. `orderId IS NULL` is what makes the order recorded exactly once, and the
+			// claim id is what keeps a checkout that outlived its claim from recording over the one that took
+			// the cart over (it is refused, and the next completion is answered with its order — the order
+			// package's checkout handler returns a cart's placed order rather than placing a second one).
 			expectation: ANY_VERSION,
-			where: this.writeScope,
+			where: { ...this.writeScope, orderId: IsNull(), checkoutClaimId: claimId },
 			patch: {
 				status: CommerceCartStatus.COMPLETED,
 				orderId: result.orderId,
 				completedAt,
 				lastActivityAt: completedAt,
+				checkoutClaimId: null,
+				checkoutClaimedAt: null,
 				metadata: {
 					...(cart.metadata ?? {}),
 					checkoutStartedAt: null,
@@ -947,6 +1009,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		if (!source || source.status === CommerceCartStatus.COMPLETED || source.status === CommerceCartStatus.MERGED) {
 			throw new BadRequestException(`CART_MERGE_INVALID: a ${source?.status ?? 'missing'} cart cannot be merged.`);
+		}
+
+		// A source a checkout is turning into an order is not merged away underneath it (R3-10): the buyer would
+		// get the order and the same lines again in the surviving cart.
+		if (this.holdsLiveCheckoutClaim(source)) {
+			throw this.checkoutInProgress(source.id);
 		}
 
 		// The caller's version is spent by the first write this merge makes to the surviving cart: every
@@ -1087,6 +1155,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		for (const cart of due.items) {
 			if (expired.length >= limit) {
 				break;
+			}
+
+			// A cart a checkout holds is being turned into an order right now (R3-10); the checkout's own last
+			// write decides what it becomes, and the next sweep expires it if the checkout let it go.
+			if (this.holdsLiveCheckoutClaim(cart)) {
+				continue;
 			}
 
 			if (cart.expiresAt && new Date(cart.expiresAt).getTime() <= now) {
@@ -1979,6 +2053,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @returns The cart.
 	 * @throws NotFoundException when no such cart exists.
 	 * @throws BadRequestException when the cart is no longer mutable.
+	 * @throws ConflictException when a checkout holds the cart while its order is being placed.
 	 */
 	private async assertMutable(cartId: ID): Promise<CommerceCart> {
 		const cart = await this.findOneByIdString(cartId);
@@ -1989,6 +2064,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		if (![CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED].includes(cart.status)) {
 			throw new BadRequestException(`CART_STATUS_INVALID: a ${cart.status} cart is immutable.`);
+		}
+
+		// A cart a checkout has claimed is the one its order is being built from: a line added now would
+		// be on the cart and not on the order, so the change waits until the checkout ends either way.
+		if (this.holdsLiveCheckoutClaim(cart)) {
+			throw this.checkoutInProgress(cart.id);
 		}
 
 		return cart;
@@ -2009,6 +2090,135 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		}
 
 		return line;
+	}
+
+	/**
+	 * Claims a cart for one checkout, before any order exists (R3-10).
+	 *
+	 * Two completions of the same cart used to both reach the checkout handler: the cart was marked
+	 * completed only *after* the order was created, and the recomputation that ran first was predicated
+	 * on whatever version the row held when it ran — so a second completion that read the cart after the
+	 * first one's recomputation passed every check and placed a second order. The claim closes that
+	 * window with one statement: `UPDATE … SET checkoutClaimId, checkoutClaimedAt, version = v + 1 WHERE
+	 * id AND version = v AND status IN (ACTIVE, ABANDONED) AND orderId IS NULL`, where `v` is the version
+	 * this completion read and validated. Of two completions that read the same version only one update
+	 * matches the row; a completion that read the cart after the claim sees the claim and is refused
+	 * before it gets here. Both ORMs run the same statement through `commitVersionedUpdate`.
+	 *
+	 * @param cart The cart as this completion read and validated it.
+	 * @param claimId The id this completion claims the cart under.
+	 * @param expectation The version the caller read the cart at; the claim is the write that spends it.
+	 * @throws ConflictException `CART_ALREADY_COMPLETED` or `CART_CHECKOUT_IN_PROGRESS` when another
+	 * completion got there first, or the kernel's version conflict when the cart simply moved on.
+	 */
+	private async claimForCheckout(
+		cart: CommerceCart,
+		claimId: string,
+		expectation: IVersionExpectation
+	): Promise<void> {
+		const claimedAt = new Date();
+
+		try {
+			await commitVersionedUpdate<CommerceCart>(this, {
+				id: cart.id,
+				expectation,
+				// A wildcard resolves to the version this completion *validated*, not to whatever the row
+				// holds by the time the statement runs: a cart that moved on between the two is refused.
+				readVersion: async () => parseEntityVersion(cart.version),
+				where: {
+					...this.writeScope,
+					status: In(CHECKOUT_CLAIMABLE_STATUSES),
+					orderId: IsNull()
+				},
+				patch: { checkoutClaimId: claimId, checkoutClaimedAt: claimedAt }
+			});
+		} catch (error) {
+			// The statement matched nothing. The row is read again only to tell the caller *why*: a
+			// completion that won the race is a different answer from a cart that was simply edited.
+			const current = await this.findOneByIdString(cart.id).catch((): CommerceCart | null => null);
+
+			if (current?.orderId) {
+				throw this.alreadyCompleted(cart.id, current.orderId);
+			}
+
+			if (current && current.checkoutClaimId !== claimId && this.holdsLiveCheckoutClaim(current)) {
+				throw this.checkoutInProgress(cart.id);
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Releases this checkout's claim after the handler failed, so the buyer can try again at once.
+	 *
+	 * The release is predicated on the claim being this checkout's and on the cart still having no
+	 * order, so it can never clear another completion's claim or reopen a completed cart. It is best
+	 * effort: a release that does not land leaves a claim that lapses on its own after
+	 * `CHECKOUT_CLAIM_TTL_MS`, and the handler's own error is what the caller needs to hear.
+	 *
+	 * @param cartId The cart.
+	 * @param claimId The id this checkout claimed the cart under.
+	 */
+	private async releaseCheckoutClaim(cartId: ID, claimId: string): Promise<void> {
+		try {
+			await commitVersionedUpdate<CommerceCart>(this, {
+				id: cartId,
+				expectation: ANY_VERSION,
+				where: { ...this.writeScope, checkoutClaimId: claimId, orderId: IsNull() },
+				patch: { checkoutClaimId: null, checkoutClaimedAt: null }
+			});
+		} catch {
+			// Deliberately swallowed — see above.
+		}
+	}
+
+	/**
+	 * Whether a checkout currently holds the cart.
+	 *
+	 * A claim older than `CHECKOUT_CLAIM_TTL_MS` has lapsed: it belongs to a checkout that died before it
+	 * could record an order or release the cart, and a cart held by it forever could never be bought.
+	 *
+	 * @param cart The cart.
+	 * @returns True when a claim is present and has not lapsed.
+	 */
+	private holdsLiveCheckoutClaim(cart: CommerceCart): boolean {
+		if (!cart?.checkoutClaimId || !cart.checkoutClaimedAt) {
+			return false;
+		}
+
+		const claimedAt = new Date(cart.checkoutClaimedAt).getTime();
+
+		return Number.isFinite(claimedAt) && Date.now() - claimedAt < CHECKOUT_CLAIM_TTL_MS;
+	}
+
+	/**
+	 * The refusal a completion of a cart that already became an order gets.
+	 *
+	 * @param cartId The cart.
+	 * @param orderId The order it became.
+	 * @returns The exception.
+	 */
+	private alreadyCompleted(cartId: ID, orderId: ID): ConflictException {
+		return new ConflictException({
+			message: `CART_ALREADY_COMPLETED: cart ${cartId} already became order ${orderId}.`,
+			code: 'CART_ALREADY_COMPLETED',
+			details: { cartId, orderId }
+		});
+	}
+
+	/**
+	 * The refusal a write to a cart a checkout holds gets.
+	 *
+	 * @param cartId The cart.
+	 * @returns The exception.
+	 */
+	private checkoutInProgress(cartId: ID): ConflictException {
+		return new ConflictException({
+			message: `CART_CHECKOUT_IN_PROGRESS: cart ${cartId} is being checked out; read it again once it ends.`,
+			code: 'CART_CHECKOUT_IN_PROGRESS',
+			details: { cartId }
+		});
 	}
 
 	/**
