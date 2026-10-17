@@ -4,6 +4,7 @@ import { FindOperator } from 'typeorm';
 import { Money, RequestContext } from '@gauzy/core';
 import { GiftCardService } from './gift-card.service';
 import { GiftCardTransactionService } from '../gift-card-transaction/gift-card-transaction.service';
+import { keyGiftCardPinDigest } from './gift-card-pin';
 import { GiftCardStatus, GiftCardTransactionType } from '../promotion.types';
 
 /**
@@ -879,20 +880,27 @@ describe('GiftCardService — concurrent movements of one card', () => {
  */
 describe('GiftCardService — the PIN is stored as its digest (R2-G30)', () => {
 	const digestOf = (pin: string) => createHash('sha256').update(pin).digest('hex');
+	/** The stored form since R2-G30b: the keyed digest, under the suite's `ENCRYPTION_KEY`. */
+	const storedOf = (pin: string) => keyGiftCardPinDigest(digestOf(pin)) as string;
+	const environment = { ...process.env };
 
 	beforeEach(() => {
+		process.env.ENCRYPTION_KEY = 'suite-encryption-key-for-gift-card-pins';
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
 	});
 
-	afterEach(() => jest.restoreAllMocks());
+	afterEach(() => {
+		process.env = { ...environment };
+		jest.restoreAllMocks();
+	});
 
 	it('stores the digest of the PIN a card is issued with, and the card verifies with that PIN', async () => {
 		const { service, cards } = serviceUnderTest([]);
 
 		await service.issue({ code: 'GC-PIN', initialAmount: '100.000000', currency: 'USD', pin: '4821' });
 
-		expect(cards[0].pin).toBe(digestOf('4821'));
+		expect(cards[0].pin).toBe(storedOf('4821'));
 		expect(cards[0].pin).not.toBe('4821');
 		await expect(service.balanceByCode('GC-PIN', '4821')).resolves.toMatchObject({ balance: '100.000000' });
 		await expect(service.balanceByCode('GC-PIN', '0000')).rejects.toBeInstanceOf(BadRequestException);
@@ -904,8 +912,8 @@ describe('GiftCardService — the PIN is stored as its digest (R2-G30)', () => {
 		await service.issue({ code: 'GC-A', initialAmount: '10', currency: 'USD', pinHash: digestOf('1111') });
 		await service.issue({ code: 'GC-B', initialAmount: '10', currency: 'USD', pinHash: '2222' });
 
-		expect(cards[0].pin).toBe(digestOf('1111'));
-		expect(cards[1].pin).toBe(digestOf('2222'));
+		expect(cards[0].pin).toBe(storedOf('1111'));
+		expect(cards[1].pin).toBe(storedOf('2222'));
 	});
 
 	it('issues a card without a second factor when no PIN is stated', async () => {
@@ -931,12 +939,95 @@ describe('GiftCardService — the PIN is stored as its digest (R2-G30)', () => {
 
 		await service.update('gc-1', { pin: '9876' } as never);
 
-		expect(cards[0].pin).toBe(digestOf('9876'));
+		expect(cards[0].pin).toBe(storedOf('9876'));
 		await expect(service.balanceByCode('GC-1000', '9876')).resolves.toMatchObject({ balance: '100.000000' });
 
 		await service.update('gc-1', { pin: null } as never);
 
 		expect(cards[0].pin).toBeNull();
 		await expect(service.balanceByCode('GC-1000')).resolves.toMatchObject({ balance: '100.000000' });
+	});
+});
+
+/**
+ * R2-G30b: an unkeyed SHA-256 of a PIN is reversed from a database dump by trying every PIN. The stored form is
+ * `h1:<source>:<kid>:HMAC-SHA256(key, sha256hex(pin))`, the key derived from `ENCRYPTION_KEY` (or a non-default
+ * `JWT_SECRET`); a legacy digest still verifies until it is converted, and is keyed on its next successful check.
+ */
+describe('GiftCardService — the PIN digest is keyed (R2-G30b)', () => {
+	const digestOf = (pin: string) => createHash('sha256').update(pin).digest('hex');
+	const environment = { ...process.env };
+
+	beforeEach(() => {
+		delete process.env.JWT_SECRET;
+		process.env.ENCRYPTION_KEY = 'suite-encryption-key-for-gift-card-pins';
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => {
+		process.env = { ...environment };
+		jest.restoreAllMocks();
+	});
+
+	it('stores no unkeyed digest a dump could be searched for', async () => {
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-PIN', initialAmount: '10', currency: 'USD', pin: '4821' });
+
+		expect(cards[0].pin).toMatch(/^h1:k:[0-9a-f]{8}:[0-9a-f]{64}$/);
+		expect(cards[0].pin).not.toContain(digestOf('4821'));
+		await expect(service.balanceByCode('GC-PIN', '4821')).resolves.toMatchObject({ currency: 'USD' });
+		await expect(service.balanceByCode('GC-PIN', '4822')).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('verifies a legacy digest, and keys it on that successful check only', async () => {
+		const { service, cards } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-OLD', pin: digestOf('1234') })]);
+
+		await expect(service.balanceByCode('GC-OLD', '0000')).rejects.toBeInstanceOf(BadRequestException);
+		expect(cards[0].pin).toBe(digestOf('1234'));
+
+		await expect(service.balanceByCode('GC-OLD', '1234')).resolves.toMatchObject({ currency: 'USD' });
+		expect(cards[0].pin).toBe(keyGiftCardPinDigest(digestOf('1234')));
+		await expect(service.balanceByCode('GC-OLD', '1234')).resolves.toMatchObject({ currency: 'USD' });
+	});
+
+	it('refuses a digest keyed under another value of the secret instead of reading it as a wrong PIN silently', async () => {
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-PIN', initialAmount: '10', currency: 'USD', pin: '4821' });
+		process.env.ENCRYPTION_KEY = 'a-rotated-encryption-key';
+
+		await expect(service.balanceByCode('GC-PIN', '4821')).rejects.toBeInstanceOf(BadRequestException);
+		expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('does not have'));
+		expect(cards[0].pin).toMatch(/^h1:k:/);
+	});
+
+	it('keys under a non-default JWT_SECRET without ENCRYPTION_KEY, and moves to ENCRYPTION_KEY once it is set', async () => {
+		delete process.env.ENCRYPTION_KEY;
+		process.env.JWT_SECRET = 'a-strong-unique-jwt-secret-of-this-installation';
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-PIN', initialAmount: '10', currency: 'USD', pin: '4821' });
+		expect(cards[0].pin).toMatch(/^h1:j:/);
+
+		process.env.ENCRYPTION_KEY = 'suite-encryption-key-for-gift-card-pins';
+		await expect(service.balanceByCode('GC-PIN', '4821')).resolves.toMatchObject({ currency: 'USD' });
+
+		expect(cards[0].pin).toMatch(/^h1:k:/);
+		await expect(service.balanceByCode('GC-PIN', '4821')).resolves.toMatchObject({ currency: 'USD' });
+	});
+
+	it('never keys under a secret published in the repository, and falls back to the legacy digest with a warning', async () => {
+		delete process.env.ENCRYPTION_KEY;
+		process.env.JWT_SECRET = 'secretKey';
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-PIN', initialAmount: '10', currency: 'USD', pin: '4821' });
+
+		expect(cards[0].pin).toBe(digestOf('4821'));
+		await expect(service.balanceByCode('GC-PIN', '4821')).resolves.toMatchObject({ currency: 'USD' });
+		expect(cards[0].pin).toBe(digestOf('4821'));
 	});
 });
