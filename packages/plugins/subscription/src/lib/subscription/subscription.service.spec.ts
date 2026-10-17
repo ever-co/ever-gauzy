@@ -3951,3 +3951,179 @@ describe('SubscriptionService — an edit never writes back the credit a billing
 		});
 	});
 });
+
+/**
+ * R4-05 (interim): an unpaid `INVOICED` cycle was counted as settled.
+ *
+ * The run raised the cycle's order, the order was not paid, the cycle was recorded `INVOICED` — and
+ * `recordSuccess` then emitted `subscription.renewed` (which the entitlement package extends every right on)
+ * and, for a trial, `subscription.activated`, exactly as for a paid cycle. Rights were extended for a period
+ * nobody had paid. They now wait for the cycle's payment, which releases them once.
+ */
+describe('SubscriptionService — an invoiced cycle is not a settled one (R4-05)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const named = (events: Row[], name: string) => events.filter((event) => event.name === name);
+
+	it('raises the order but holds back the rights of a period nobody has paid for', async () => {
+		const fixture = subscriptionFixture({ orders: { paid: false } });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION);
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.INVOICED);
+		expect(outcome.message).toMatch(/rights of its period are put in force when its payment is recorded/);
+		expect(fixture.orderCalls).toHaveLength(1);
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(0);
+		expect(fixture.cycle(APRIL)?.metadata).toMatchObject({ rightsDeferred: true });
+	});
+
+	it('does not activate a trial on an unpaid invoice', async () => {
+		const fixture = subscriptionFixture({
+			orders: { paid: false },
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PENDING })]
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION);
+
+		expect(named(fixture.events, 'subscription.activated')).toHaveLength(0);
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(0);
+		expect(fixture.cycle(APRIL)?.metadata).toMatchObject({ rightsDeferred: true, activationDeferred: true });
+	});
+
+	it('puts the held-back rights in force when the invoiced cycle is paid, and only once', async () => {
+		const fixture = subscriptionFixture({
+			orders: { paid: false },
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PENDING })]
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION);
+
+		const cycle = fixture.cycle(APRIL) as Row;
+		const paid = await fixture.service.payCycle(cycle.id, { paidAt: new Date('2026-04-03T00:00:00.000Z') });
+
+		expect(paid.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(
+			fixture.events
+				.map((event) => event.name)
+				.filter((name) => name === 'subscription.activated' || name === 'subscription.renewed')
+		).toEqual(['subscription.activated', 'subscription.renewed']);
+		expect(named(fixture.events, 'subscription.renewed')[0].data).toMatchObject({
+			subscriptionId: SUBSCRIPTION,
+			billingId: cycle.id,
+			periodStart: cycle.periodStart,
+			periodEnd: cycle.periodEnd
+		});
+		expect(fixture.cycle(APRIL)?.metadata?.rightsDeferred).toBeUndefined();
+		expect(fixture.cycle(APRIL)?.metadata?.rightsReleasedAt).toEqual(expect.any(String));
+
+		// Paying it again is the ledger's no-op, and releases nothing a second time.
+		await fixture.service.payCycle(cycle.id);
+
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(1);
+		expect(named(fixture.events, 'subscription.activated')).toHaveLength(1);
+	});
+
+	it('releases once when two payments of the invoiced cycle race', async () => {
+		const fixture = subscriptionFixture({ orders: { paid: false } });
+
+		await fixture.service.billCycle(SUBSCRIPTION);
+
+		const cycle = fixture.cycle(APRIL) as Row;
+
+		await Promise.all([fixture.service.payCycle(cycle.id), fixture.service.payCycle(cycle.id)]);
+
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(1);
+		expect(fixture.cycle(APRIL)?.status).toBe(SubscriptionBillingStatus.PAID);
+	});
+
+	it('finishes the release when a payment is retried on a paid cycle whose rights are still held', async () => {
+		// The payment was recorded and the release did not get as far as clearing the flags: a retry of the
+		// payment finds the cycle paid and must not return before the rights are in force.
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'billing-half-released',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(MARCH),
+					periodEnd: new Date(APRIL),
+					dueAt: new Date(MARCH),
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					orderId: 'order-0',
+					attemptCount: 1,
+					metadata: { rightsDeferred: true }
+				}
+			]
+		});
+
+		await fixture.service.payCycle('billing-half-released');
+
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(1);
+		expect(named(fixture.events, 'subscription.renewed')[0].data).toMatchObject({
+			billingId: 'billing-half-released',
+			periodEnd: new Date(APRIL)
+		});
+	});
+
+	it('releases no rights when the subscription ended while its invoice was open', async () => {
+		// Review note (px-refunds): a late payment of a cancelled, expired or failed subscription's invoice is
+		// recorded, and extends nothing for a subscription that is over.
+		const fixture = subscriptionFixture({ orders: { paid: false } });
+
+		await fixture.service.billCycle(SUBSCRIPTION);
+		Object.assign(fixture.subscription(SUBSCRIPTION) as Row, { status: SubscriptionStatus.CANCELED });
+
+		const paid = await fixture.service.payCycle((fixture.cycle(APRIL) as Row).id);
+
+		expect(paid.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(0);
+		expect(fixture.cycle(APRIL)?.metadata).toMatchObject({ rightsWithheldFor: SubscriptionStatus.CANCELED });
+		expect(fixture.cycle(APRIL)?.metadata?.rightsDeferred).toBeUndefined();
+	});
+
+	it('still renews on the spot a cycle whose order was paid', async () => {
+		const fixture = subscriptionFixture({ orders: { paid: true } });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION);
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(1);
+		expect(fixture.cycle(APRIL)?.metadata?.rightsDeferred).toBeUndefined();
+	});
+
+	it('releases nothing when a cycle invoiced before this change is paid: its rights were extended then', async () => {
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'billing-legacy',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(MARCH),
+					periodEnd: new Date(APRIL),
+					dueAt: new Date(MARCH),
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.INVOICED,
+					orderId: 'order-0',
+					attemptCount: 1,
+					metadata: {}
+				}
+			]
+		});
+
+		const paid = await fixture.service.payCycle('billing-legacy');
+
+		expect(paid.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(0);
+	});
+});
