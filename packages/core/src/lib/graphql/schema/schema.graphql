@@ -11107,7 +11107,13 @@ type Mutation {
   """Restores a soft-deleted gift-card movement."""
   recoverGiftCardTransaction(id: ID!): RecoverGiftCardTransactionPayload!
   createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
-  updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
+
+  """
+  Updates a shipping profile. State the changes once: as `patch`, whose every member is optional, or as the
+  older `input`, the create's shape, which restates `name` and `code` and keeps working. Both, or neither,
+  is refused.
+  """
+  updateShippingProfile(id: ID!, input: CreateShippingProfileInput, patch: UpdateShippingProfileInput): ShippingProfile!
   deleteShippingProfile(id: ID!): Boolean!
 
   """
@@ -11127,7 +11133,13 @@ type Mutation {
   """Restore a soft-deleted variant attachment."""
   recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
   createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
-  updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
+
+  """
+  Updates a shipping option. State the changes once: as `patch`, whose every member is optional, or as the
+  older `input`, the create's shape, which restates `name`, `code` and `priceType` and keeps working. Both, or
+  neither, is refused.
+  """
+  updateShippingOption(id: ID!, input: CreateShippingOptionInput, patch: UpdateShippingOptionInput): ShippingOption!
   deleteShippingOption(id: ID!): Boolean!
 
   """
@@ -11139,6 +11151,12 @@ type Mutation {
   recoverShippingOption(id: ID!): ShippingOption!
   createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
   updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+
+  """
+  Append a line to a shipment that has not left yet: the shipment must still be PENDING, the order line must be
+  one of its order's and still have the quantity to ship, and the order line's counter moves with the line.
+  """
+  addFulfillmentLine(id: ID!, input: AddFulfillmentLineInput!): Fulfillment!
 
   """
   Correct one shipment line: the quantity, the location, the order line it covers, or its payload.
@@ -11461,7 +11479,9 @@ type Mutation {
   """Ends a subscription."""
   cancelSubscription(id: ID!, input: CancelSubscriptionInput): CustomerSubscriptionPayload!
 
-  """Withdraws a cancellation at the end of the period, so the subscription keeps billing."""
+  """
+  Withdraws a cancellation at the end of the period, so the subscription keeps billing.
+  """
   undoSubscriptionCancellation(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 
   """Ends a subscription because it ran out."""
@@ -53441,6 +53461,55 @@ input CreateFulfillmentInput {
   created twice ships the same goods twice, so the mutation is refused without one.
   """
   idempotencyKey: String
+}
+
+"""
+What a caller changes on a shipping profile. Every member is optional; `idempotencyKey` is absent, because an
+edit is not a create a retry could duplicate.
+"""
+input UpdateShippingProfileInput {
+  name: String
+  code: String
+  isDefault: Boolean
+  description: String
+}
+
+"""
+What a caller changes on a shipping option. Every member is optional; `idempotencyKey` is absent, because an
+edit is not a create a retry could duplicate.
+"""
+input UpdateShippingOptionInput {
+  name: String
+  code: String
+  priceType: String
+  amount: Decimal
+  currency: String
+  isTaxInclusive: Boolean
+  taxCategoryId: ID
+  providerKey: String
+  profileId: ID
+  channelId: ID
+  regionId: ID
+  priority: Int
+  estimatedMinDays: Int
+  estimatedMaxDays: Int
+  requiresShippingAddress: Boolean
+  allowPickup: Boolean
+  maxWeight: Decimal
+  maxItemCount: Int
+}
+
+"""
+A line appended to a shipment that has not left yet. `idempotencyKey` makes a retry safe; `version` is the
+version the caller read the shipment at, honoured when stated.
+"""
+input AddFulfillmentLineInput {
+  orderLineId: ID!
+  quantity: Decimal!
+  warehouseId: ID
+  metadata: JSON
+  idempotencyKey: String
+  version: Int
 }
 
 input UpdateFulfillmentInput {
