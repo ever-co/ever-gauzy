@@ -49,13 +49,21 @@ export class CommerceCartShippingMethodService extends TenantAwareCrudService<Co
 	/**
 	 * Records a delivery choice, refusing a shipping option or tax class of another tenant.
 	 *
+	 * **The organization is the request's when the payload states none (R2-G19).** The GraphQL inputs declare
+	 * no organization, and the tenant-aware base stamps the tenant only, so a row written over GraphQL had
+	 * `organizationId = NULL` and every organization-scoped read missed it. A stated organization is kept (REST
+	 * states it, validated against the caller).
+	 *
 	 * @param entity The choice to create.
 	 * @returns The created choice.
 	 */
 	public async create(entity: DeepPartial<CommerceCartShippingMethod>): Promise<CommerceCartShippingMethod> {
 		await this.assertReferences(entity);
 
-		return super.create(entity);
+		return super.create({
+			...entity,
+			organizationId: entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as DeepPartial<CommerceCartShippingMethod>);
 	}
 
 	/**

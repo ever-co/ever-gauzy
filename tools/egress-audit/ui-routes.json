@@ -1712,6 +1712,12 @@
       "source": "router"
     },
     {
+      "path": "/pages/settings/inbox-providers",
+      "file": "packages/plugins/inbox-ui/src/lib/inbox-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/settings/monitoring",
       "file": "apps/gauzy/src/app/pages/settings/monitoring/monitoring.module.ts:19",
       "source": "router"

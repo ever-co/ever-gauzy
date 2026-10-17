@@ -7,6 +7,7 @@ import { EverWorksNotifier } from '../../connection/ever-works-notifier.service'
 import { EverWorksSyncContext } from '../ever-works-sync.context';
 import { EverWorksInboundEvent, EverWorksInboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
+import { EverWorksLease, EverWorksLeaseLostError, everWorksLease, withLeaseFence } from '../ever-works-lease-fence';
 import { EverWorksStaleLinkError } from '../links/ever-works-link.service';
 import { compareSeq } from './ever-works-envelope';
 
@@ -42,13 +43,8 @@ export const INBOUND_MAX_PAGES = 10;
 
 const UNFINISHED = [EverWorksInboundStatus.PENDING, EverWorksInboundStatus.DEFERRED, EverWorksInboundStatus.FAILED];
 
-/** The process no longer holds the connection's lease: nothing more is written for it. */
-export class EverWorksLeaseLostError extends Error {
-	constructor() {
-		super('The sync lease on this connection moved to another process.');
-		this.name = 'EverWorksLeaseLostError';
-	}
-}
+// Moved to the lease fence (every sync write checks it); still exported from here for existing imports.
+export { EverWorksLeaseLostError } from '../ever-works-lease-fence';
 
 /**
  * The inbound applier (plan 03 §C.4): processes a connection's pending events grouped by aggregate, in
@@ -63,6 +59,10 @@ export class EverWorksLeaseLostError extends Error {
  *   that aggregate waits, so a later event never overtakes an earlier one.
  * - A handler whose link write was refused as older than the recorded version (`EverWorksStaleLinkError`,
  *   the link service's monotonic version) is `skipped` when that link is the event's own record.
+ * - With the loop's lease owner, every handler runs behind the **lease fence** (`withLeaseFence`): each of
+ *   its Gauzy writes checks, in the write's own transaction, that this process still holds the lease, so a
+ *   handler that outlived its lease writes nothing once another process holds it; the drain then stops and
+ *   the event is left to the new holder.
  */
 @Injectable()
 export class EverWorksInboundApplier {
@@ -88,8 +88,9 @@ export class EverWorksInboundApplier {
 	/**
 	 * Processes up to `limit` due events of one connection; returns how many were settled. With `owner`
 	 * (the sync loop's lease holder) every outcome is written only while that process still holds the
-	 * connection's lease; once it does not, the drain stops (the next owner applies the event again, and
-	 * handlers skip what their link's version already covers).
+	 * connection's lease, and every handler's Gauzy writes are fenced on it; once it does not hold it, the
+	 * drain stops (the next owner applies the event again, and handlers skip what their link's version
+	 * already covers).
 	 */
 	async drain(
 		connection: EverWorksConnection,
@@ -100,6 +101,7 @@ export class EverWorksInboundApplier {
 	): Promise<number> {
 		let settled = 0;
 		let after: string | null = null;
+		const lease = owner ? everWorksLease(this.dataSource, connection.id as ID, owner, now) : null;
 		try {
 			// Pages through the due events in `seq` order: an aggregate that must wait (an earlier event of
 			// it is not due yet) never fills the batch and starves the others.
@@ -107,7 +109,7 @@ export class EverWorksInboundApplier {
 				const due = await this.duePage(connection, now, after, limit);
 				if (!due.length) break;
 				after = String(due[due.length - 1].seq);
-				const result = await this.drainPage(connection, due, now, limit - settled, stillOwner, owner);
+				const result = await this.drainPage(connection, due, now, limit - settled, stillOwner, owner, lease);
 				settled += result.settled;
 				if (result.stopped || due.length < limit) break;
 			}
@@ -139,7 +141,8 @@ export class EverWorksInboundApplier {
 		now: Date,
 		budget: number,
 		stillOwner: (() => Promise<boolean>) | undefined,
-		owner: string | undefined
+		owner: string | undefined,
+		lease: EverWorksLease | null
 	): Promise<{ settled: number; stopped: boolean }> {
 		const repository = this.dataSource.getRepository(EverWorksInboundEvent);
 		// Per aggregate, the earliest event not yet settled — due or not, in this batch or not. A later event
@@ -170,7 +173,7 @@ export class EverWorksInboundApplier {
 			for (const event of events) {
 				if (settled >= budget) return { settled, stopped: true };
 				if (stillOwner && !(await stillOwner())) return { settled, stopped: true };
-				const done = await this.applyOne(connection, event, now, owner);
+				const done = await this.applyOne(connection, event, now, owner, lease);
 				if (!done) break; // keep the order: the rest of this aggregate waits
 				settled++;
 			}
@@ -201,7 +204,13 @@ export class EverWorksInboundApplier {
 	}
 
 	/** Applies one event; returns false when it must be retried (so its aggregate stops here). */
-	private async applyOne(connection: EverWorksConnection, event: EverWorksInboundEvent, now: Date, owner?: string): Promise<boolean> {
+	private async applyOne(
+		connection: EverWorksConnection,
+		event: EverWorksInboundEvent,
+		now: Date,
+		owner?: string,
+		lease: EverWorksLease | null = null
+	): Promise<boolean> {
 		const id = event.id as ID;
 		let envelope: EverWorksEventEnvelope;
 		try {
@@ -229,8 +238,12 @@ export class EverWorksInboundApplier {
 			return true;
 		}
 		try {
-			const outcome = await EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: event.eventId }, () =>
-				handler.apply(envelope, { connection, event, organizationId: event.organizationId as ID })
+			// Fenced: a write of this handler made after the lease moved is refused (and ends it with
+			// EverWorksLeaseLostError, whatever the handler made of the refusal).
+			const outcome = await withLeaseFence(lease, () =>
+				EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: event.eventId }, () =>
+					handler.apply(envelope, { connection, event, organizationId: event.organizationId as ID })
+				)
 			);
 			if (outcome.status === 'deferred') {
 				await this.settle(

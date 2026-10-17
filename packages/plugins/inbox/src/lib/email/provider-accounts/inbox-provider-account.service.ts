@@ -19,12 +19,14 @@ import {
 	IInboxProviderAccountCheck,
 	IInboxProviderAccountCreated,
 	IInboxProviderAccountCreateInput,
+	IInboxProviderAccountRemoved,
 	IInboxProviderAccountUpdateInput,
 	InboxProviderAccountScopeEnum,
 	InboxProviderAccountStatusEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { describeEmailSendError, RequestContext } from '@gauzy/core';
+import { InboxNamedLocks } from '../database/named-locks';
 import { InboxProviderAccount } from '../entities/inbox-provider-account.entity';
 import { INBOX_SECRET_BOX, inboundWebhookUrl, PROVIDER_ACCOUNT_ERROR_MAX } from '../inbox-email.constants';
 import { InboxEmailScopeService } from '../inbox-email-scope.service';
@@ -66,7 +68,21 @@ export class InboxProviderAccountService {
 		private readonly registry: EmailProviderRegistry,
 		private readonly scope: InboxEmailScopeService,
 		@Inject(INBOX_SECRET_BOX) private readonly secretBox: InboxSecretBox
-	) {}
+	) {
+		this.locks = new InboxNamedLocks(dataSource);
+	}
+
+	/** One named lock per account: its removal, and a mailbox being pointed at it, never overlap. */
+	private readonly locks: InboxNamedLocks;
+
+	/**
+	 * Runs `work` while the account can be neither removed nor attached by another request (in this process and
+	 * across the replicas). A mailbox is pointed at an account under this lock, after checking the account again, so a
+	 * removal never leaves a mailbox receiving through a deleted account.
+	 */
+	whileAccountHeld<T>(accountId: ID, work: () => Promise<T>): Promise<T> {
+		return this.locks.run(`provider-account:${accountId}`, work);
+	}
 
 	// ---------------------------------------------------------------- management API
 
@@ -259,6 +275,51 @@ export class InboxProviderAccountService {
 			checkedAt,
 			...(result?.details ? { details: result.details } : {})
 		};
+	}
+
+	/**
+	 * Removes an account (Settings → Inbox → Providers, "Delete"). Soft, as everywhere in Gauzy: the row stays, marked
+	 * deleted, disabled and no longer the scope's outbound default, so nothing is received or sent through it and it
+	 * leaves every list. Refused (409) while a mailbox still receives through it: those mailboxes are pointed at another
+	 * account first. A tenant-wide account also needs `ALL_ORG_EDIT`.
+	 */
+	async remove(id: ID, organizationId?: ID): Promise<IInboxProviderAccountRemoved> {
+		const row = await this.managed(id, organizationId, true);
+		await this.whileAccountHeld(row.id as ID, () => this.removeHeld(row));
+		return { id: row.id as ID, deleted: true };
+	}
+
+	/** The removal itself, under the account's named lock (no mailbox can be pointed at it meanwhile). */
+	private async removeHeld(row: InboxProviderAccount): Promise<void> {
+		await this.inTransaction(async (manager) => {
+			// Under the row lock too (where the database has one), so a parallel edit of the account waits for it.
+			const latest = await this.lockedRow(manager, row.id as ID);
+			if (!latest || latest.deletedAt) {
+				throw new NotFoundException('The provider account does not exist.');
+			}
+			const mailboxes = await manager
+				.createQueryBuilder()
+				.select('m.id', 'id')
+				.from('inbox_mailbox', 'm')
+				.where('m.providerAccountId = :id', { id: row.id })
+				.andWhere('m.deletedAt IS NULL')
+				.getRawMany<{ id: ID }>();
+			if (mailboxes.length > 0) {
+				throw new ConflictException(
+					mailboxes.length === 1
+						? 'A mailbox receives through this account: point it at another account first.'
+						: `${mailboxes.length} mailboxes receive through this account: point them at another account first.`
+				);
+			}
+			await manager.getRepository(InboxProviderAccount).update(
+				{ id: row.id },
+				{
+					deletedAt: new Date(),
+					status: InboxProviderAccountStatusEnum.DISABLED,
+					isDefaultOutbound: false
+				}
+			);
+		});
 	}
 
 	// ---------------------------------------------------------------- for the pipeline and the transport

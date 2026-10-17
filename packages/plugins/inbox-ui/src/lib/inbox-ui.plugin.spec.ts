@@ -2,14 +2,27 @@ import { Injector } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NavigationBuilderService, NavMenuBuilderService } from '@gauzy/ui-core/core';
-import { INBOX_HEADER_ACTION_ID, INBOX_LINK, INBOX_NAV_ID } from './inbox-ui.constants';
-import { INBOX_PAGE_ROUTE, InboxUiPlugin, registerInboxEntryPoints } from './inbox-ui.plugin';
+import {
+	INBOX_HEADER_ACTION_ID,
+	INBOX_LINK,
+	INBOX_NAV_ID,
+	INBOX_PROVIDERS_NAV_ID,
+	INBOX_PROVIDERS_SETTINGS_LINK
+} from './inbox-ui.constants';
+import {
+	INBOX_PAGE_ROUTE,
+	INBOX_PROVIDERS_SETTINGS_ROUTE,
+	InboxUiPlugin,
+	registerInboxEntryPoints,
+	registerInboxSettingsEntryPoints
+} from './inbox-ui.plugin';
 import { InboxAvailabilityService } from './services/inbox-availability.service';
+import { InboxEmailAvailabilityService } from './services/inbox-email-availability.service';
 
 /** The plugin: the route always; the nav entry and the badge only where the API serves the Inbox. */
 describe('InboxUiPlugin', () => {
 	function injectorWith(available: BehaviorSubject<boolean | null>) {
-		const nav = { addNavMenuSection: jest.fn() };
+		const nav = { addNavMenuSection: jest.fn(), addNavMenuItems: jest.fn() };
 		const header = { registerHeaderAction: jest.fn(), removeHeaderAction: jest.fn() };
 		const availability = {
 			available$: available.pipe() as unknown as InboxAvailabilityService['available$']
@@ -18,7 +31,8 @@ describe('InboxUiPlugin', () => {
 			providers: [
 				{ provide: NavMenuBuilderService, useValue: nav },
 				{ provide: NavigationBuilderService, useValue: header },
-				{ provide: InboxAvailabilityService, useValue: availability }
+				{ provide: InboxAvailabilityService, useValue: availability },
+				{ provide: InboxEmailAvailabilityService, useValue: availability }
 			]
 		});
 		return { injector, nav, header };
@@ -26,7 +40,7 @@ describe('InboxUiPlugin', () => {
 
 	it('declares /pages/inbox behind INBOX_VIEW, with the INBOX translations', () => {
 		expect(InboxUiPlugin.id).toBe('inbox');
-		expect(InboxUiPlugin.routes).toEqual([INBOX_PAGE_ROUTE]);
+		expect(InboxUiPlugin.routes).toEqual([INBOX_PAGE_ROUTE, INBOX_PROVIDERS_SETTINGS_ROUTE]);
 		expect(INBOX_PAGE_ROUTE).toMatchObject({
 			location: 'page-sections',
 			path: 'inbox',
@@ -73,5 +87,35 @@ describe('InboxUiPlugin', () => {
 		registerInboxEntryPoints(injector);
 		expect(nav.addNavMenuSection).not.toHaveBeenCalled();
 		expect(header.registerHeaderAction).not.toHaveBeenCalled();
+	});
+
+	it('declares Settings → Inbox → Providers in the settings shell, behind INBOX_MAILBOX_MANAGE', () => {
+		expect(INBOX_PROVIDERS_SETTINGS_ROUTE).toMatchObject({
+			location: 'settings-sections',
+			path: 'inbox-providers',
+			data: { permissions: { only: [PermissionsEnum.INBOX_MAILBOX_MANAGE], redirectTo: '/pages/settings' } }
+		});
+		expect(typeof INBOX_PROVIDERS_SETTINGS_ROUTE.loadComponent).toBe('function');
+	});
+
+	it('adds the Settings → Inbox entries once the API serves the email features, and hides them after', () => {
+		const available = new BehaviorSubject<boolean | null>(false);
+		const { injector, nav } = injectorWith(available);
+		registerInboxSettingsEntryPoints(injector);
+		expect(nav.addNavMenuItems).not.toHaveBeenCalled();
+
+		available.next(true);
+		available.next(true);
+		expect(nav.addNavMenuItems).toHaveBeenCalledTimes(1);
+		const [items, section] = nav.addNavMenuItems.mock.calls[0];
+		expect(section).toBe('settings');
+		expect(items[0]).toMatchObject({
+			id: INBOX_PROVIDERS_NAV_ID,
+			link: INBOX_PROVIDERS_SETTINGS_LINK,
+			data: { permissionKeys: [PermissionsEnum.INBOX_MAILBOX_MANAGE] }
+		});
+		expect(items[0].data.hide()).toBe(false);
+		available.next(false);
+		expect(items[0].data.hide()).toBe(true);
 	});
 });

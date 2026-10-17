@@ -4,6 +4,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { CurrencyCode, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PricePreferenceAttribute } from '../pricing.types';
+import { assertOrganizationUnchanged, organizationForCreate } from '../organization-scope';
 import { PricePreference } from './price-preference.entity';
 import { TypeOrmPricePreferenceRepository } from './repository/type-orm-price-preference.repository';
 import { MikroOrmPricePreferenceRepository } from './repository/mikro-orm-price-preference.repository';
@@ -119,6 +120,9 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 	 * one scope would make a displayed price depend on row order.
 	 */
 	public async createOne(entity: DeepPartial<PricePreference>): Promise<PricePreference> {
+		// The caller's organization, stamped rather than read from the payload: the GraphQL input states
+		// none, and a preference stored without one is never read by `findFor` (R2-G31).
+		const organizationId = organizationForCreate(entity, this.scope.organizationId, 'A price preference');
 		const attribute = entity.attribute;
 
 		if (!attribute) {
@@ -134,7 +138,7 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 			);
 		}
 
-		return await super.create({ ...entity, value });
+		return await super.create({ ...entity, value, organizationId });
 	}
 
 	/**
@@ -150,7 +154,9 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 	): Promise<UpdateResult | PricePreference> {
 		// Read first: this both scopes the write to the caller's tenant and organization and refuses
 		// an update to a preference the caller cannot see.
-		await this.findOneByIdString(id);
+		const existing = await this.findOneByIdString(id);
+
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price preference');
 
 		return await super.update(id, entity);
 	}

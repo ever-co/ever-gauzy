@@ -3,6 +3,7 @@ import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'ty
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { TaxWriteInput } from '../tax.types';
+import { assertOrganizationUnchanged, retirementResult } from '../write-rules';
 import { TaxCategory } from './tax-category.entity';
 import { MikroOrmTaxCategoryRepository } from './repository/mikro-orm-tax-category.repository';
 import { TypeOrmTaxCategoryRepository } from './repository/type-orm-tax-category.repository';
@@ -80,6 +81,13 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 			throw new NotFoundException(`The tax category ${id} was not found.`);
 		}
 
+		assertOrganizationUnchanged(
+			entity,
+			category.organizationId,
+			RequestContext.currentOrganizationId(),
+			'A tax category'
+		);
+
 		const organizationId = category.organizationId ?? this.resolveOrganizationId(entity);
 		const code = entity.code === undefined ? undefined : this.assertCode(entity.code);
 
@@ -114,8 +122,7 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 	 * @returns The delete result, so the route keeps the platform's response shape.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<TaxCategory>): Promise<DeleteResult> {
-		await super.softDelete(criteria);
-		return { affected: 1, raw: [] } as DeleteResult;
+		return retirementResult(await super.softDelete(criteria));
 	}
 
 	/**

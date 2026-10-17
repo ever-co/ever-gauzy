@@ -8,6 +8,7 @@ import {
 	linksOf,
 	optionsOf,
 	replaceItem,
+	mailboxLabelOf,
 	replyProblem,
 	routedNoticeOf,
 	snoozeUntil,
@@ -130,5 +131,13 @@ describe('Inbox UI helpers', () => {
 		expect(routedNoticeOf(answered('local'))).toBeNull();
 		expect(routedNoticeOf(answered(null))).toBeNull();
 		expect(routedNoticeOf({ source: 'GAUZY', response: null } as never)).toBeNull();
+	});
+
+	it('names the (virtual) mailbox a source lists an item under, as text', () => {
+		expect(mailboxLabelOf({ metadata: { mailbox: 'Ever Works — Builder' } } as never)).toBe('Ever Works — Builder');
+		expect(mailboxLabelOf({ metadata: { mailbox: '  ' } } as never)).toBeNull();
+		expect(mailboxLabelOf({ metadata: { mailbox: 42 } } as never)).toBeNull();
+		expect(mailboxLabelOf({ metadata: null } as never)).toBeNull();
+		expect(mailboxLabelOf({ metadata: { mailbox: 'x'.repeat(200) } } as never)).toHaveLength(120);
 	});
 });
