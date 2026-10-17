@@ -159,6 +159,20 @@ export class InboundAddressService implements IInboundAddressResolver {
 			throw new BadRequestException('That domain is reserved by the platform.');
 		}
 
+		// The check and the save under the namespace's claim of the address (where the Inbox provides one), so an Inbox
+		// mailbox and a capture address for the same address are never both created.
+		const register = () => this.registerCustomDomain(tenantId, organizationId, input, domain, localPart, address);
+		return this.namespace?.claim ? this.namespace.claim(address, register) : register();
+	}
+
+	private async registerCustomDomain(
+		tenantId: ID,
+		organizationId: ID,
+		input: IDocumentInboundAddressCreateInput,
+		domain: string,
+		localPart: string,
+		address: string
+	): Promise<{ row: DocumentInboundAddress; secret: IDocumentInboundAddressSecret }> {
 		const clash = await this.repository.findOne({ where: { address } });
 		if (clash || (await this.namespace?.isTaken(address))) {
 			throw new BadRequestException('That address is already registered.');

@@ -58,6 +58,7 @@ import { InboxEmailScopeService } from '../inbox-email-scope.service';
 import { InboxProviderAccountService } from '../provider-accounts/inbox-provider-account.service';
 import { EmailProviderRegistry } from '../providers/email-provider.registry';
 import { InboxSecretBox } from '../secrets/inbox-secret-box';
+import { InboxMailboxAccessService } from './inbox-mailbox-access.service';
 import { InboxMailboxService } from './inbox-mailbox.service';
 
 jest.setTimeout(60_000);
@@ -72,6 +73,7 @@ const ADA_EMPLOYEE = randomUUID();
 const BOB_EMPLOYEE = randomUUID();
 const AGENT_EMPLOYEE = randomUUID();
 const TEAM = randomUUID();
+const OTHER_TEAM = randomUUID();
 const DOMAIN = 'inbox.example.test';
 
 const base = {
@@ -198,6 +200,8 @@ describe('Mailbox management on SQLite', () => {
 			`CREATE TABLE "employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "userId" varchar, "kind" varchar DEFAULT ('human'), "isActive" boolean DEFAULT (1), "deletedAt" datetime)`,
 			`CREATE TABLE "organization_team" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "name" varchar)`,
 			`CREATE TABLE "user_organization" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "userId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0))`,
+			`CREATE TABLE "organization_team_employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationTeamId" varchar, "employeeId" varchar, "deletedAt" datetime)`,
+			`CREATE TABLE "role_permission" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "roleId" varchar, "permission" varchar, "enabled" boolean, "deletedAt" datetime)`,
 			`CREATE TABLE "document_inbound_address" ("id" varchar PRIMARY KEY NOT NULL, "address" varchar)`
 		]) {
 			await dataSource.query(sql);
@@ -239,7 +243,13 @@ describe('Mailbox management on SQLite', () => {
 			scope,
 			new InboxSecretBox({ ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64') })
 		);
-		service = new InboxMailboxService(dataSource, scope, accounts, registry);
+		service = new InboxMailboxService(
+			dataSource,
+			scope,
+			accounts,
+			registry,
+			new InboxMailboxAccessService(dataSource)
+		);
 		as(ADA);
 	});
 
@@ -379,6 +389,31 @@ describe('Mailbox management on SQLite', () => {
 			const lost = await service.verify(created.id as string);
 			expect([lost.status, lost.message]).toEqual([InboxMailboxDomainStatusEnum.FAILED, 'NXDOMAIN']);
 		});
+
+		it("checks one mailbox without touching another's status on the same domain", async () => {
+			const providerAccountId = await account();
+			const first = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				localPart: 'billing',
+				domain: 'acme.test',
+				providerAccountId
+			});
+			const lookup = jest.spyOn(service as never, 'resolveTxt');
+			lookup.mockResolvedValueOnce([first.verification?.recordValue] as never);
+			expect((await service.verify(first.id as string)).status).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
+			const second = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				localPart: 'sales',
+				domain: 'acme.test',
+				providerAccountId
+			});
+			// The second mailbox's value is not published yet: it stays PENDING, the first stays VERIFIED.
+			lookup.mockResolvedValueOnce([first.verification?.recordValue] as never);
+			expect((await service.verify(second.id as string)).status).toBe(InboxMailboxDomainStatusEnum.PENDING);
+			expect((await service.get(first.id as string)).domainStatus).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
+		});
 	});
 
 	describe('members, secrets, settings, provisioning', () => {
@@ -436,6 +471,50 @@ describe('Mailbox management on SQLite', () => {
 			expect(
 				await dataSource.getRepository(InboxMailbox).count({ where: { ownerEmployeeId: AGENT_EMPLOYEE } })
 			).toBe(0);
+		});
+
+		it('never provisions a mailbox twice when runs overlap', async () => {
+			await service.updateSettings({ autoProvisionEmployees: true });
+			const employee = { id: BOB_EMPLOYEE, tenantId: TENANT, organizationId: ORG, kind: 'human' };
+			await Promise.all([
+				service.provision({ employees: true, defaultOrganizationMailbox: true }),
+				service.provision({ employees: true, defaultOrganizationMailbox: true }),
+				service.onEmployeeCreated(employee)
+			]);
+			expect((await dataSource.getRepository(InboxMailbox).find()).map((row) => row.address).sort()).toEqual(
+				[`ada.lovelace.acme@${DOMAIN}`, `bob.stone.acme@${DOMAIN}`, `inbox.acme@${DOMAIN}`].sort()
+			);
+		});
+
+		it("keeps one team's default when another team's mailbox becomes its default", async () => {
+			await dataSource.query(
+				`INSERT INTO "organization_team" ("id", "tenantId", "organizationId", "name") VALUES (?, ?, ?, 'Sales Team')`,
+				[OTHER_TEAM, TENANT, ORG]
+			);
+			const design = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.TEAM,
+				ownerTeamId: TEAM,
+				isDefault: true
+			});
+			const sales = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.TEAM,
+				ownerTeamId: OTHER_TEAM,
+				isDefault: true
+			});
+			expect((await service.get(design.id as string)).isDefault).toBe(true);
+			expect((await service.get(sales.id as string)).isDefault).toBe(true);
+		});
+
+		it('lists the team mailbox a team member receives (no members: the team), not to others', async () => {
+			const design = await service.create({ ownerType: InboxMailboxOwnerTypeEnum.TEAM, ownerTeamId: TEAM });
+			await dataSource.query(
+				`INSERT INTO "organization_team_employee" ("id", "tenantId", "organizationTeamId", "employeeId") VALUES (?, ?, ?, ?)`,
+				[randomUUID(), TENANT, TEAM, BOB_EMPLOYEE]
+			);
+			as(BOB, [PermissionsEnum.INBOX_VIEW]);
+			expect((await service.mine()).map((mailbox) => mailbox.id)).toEqual([design.id]);
+			as(ADA, [PermissionsEnum.INBOX_VIEW]);
+			expect(await service.mine()).toEqual([]);
 		});
 
 		it('provisions a new employee only where the organization opted in', async () => {

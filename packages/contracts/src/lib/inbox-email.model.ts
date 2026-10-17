@@ -400,4 +400,9 @@ export const INBOUND_ADDRESS_NAMESPACE = 'INBOUND_ADDRESS_NAMESPACE';
 export interface IInboundAddressNamespace {
 	/** Whether an inbound address (lower-case, no `+tag`) is already taken. */
 	isTaken(address: string): Promise<boolean>;
+	/**
+	 * Runs `work` (the check of an address and the save that takes it) while no other claim of that address runs, in
+	 * either feature and across the replicas, so two requests for one address never both pass their checks.
+	 */
+	claim?<T>(address: string, work: () => Promise<T>): Promise<T>;
 }

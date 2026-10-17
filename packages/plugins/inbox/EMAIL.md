@@ -76,7 +76,8 @@ and providers that do not send are never used.
 
 The addresses an organization receives mail at (plan 04 §5.1, G-P4-1). An address is lower-case and unique across the
 deployment, and one namespace with the Docs capture addresses (each side checks the other through the
-`INBOUND_ADDRESS_NAMESPACE` token).
+`INBOUND_ADDRESS_NAMESPACE` token, and both check and save under the address's claim: a lock per address, across the
+replicas, so two requests for one address never both succeed).
 
 - **Platform addresses** on `GAUZY_INBOX_DOMAIN` (one domain for every tenant; each environment its own), the
   organization in the local part: `<first>.<last>.<orgSlug>` for an employee, `<name>.<orgSlug>` for the organization
@@ -84,15 +85,18 @@ deployment, and one namespace with the Docs capture addresses (each side checks 
   refused. They receive through the platform route.
 - **Custom domains**: any `x@acme.com`, received through a provider account of the organization (or the tenant), once
   the domain is proven by a DNS TXT record at `_gauzy-inbox.<domain>` (`POST /:id/verify`; a verified domain whose record
-  disappears fails). The platform's own domains are reserved.
+  disappears fails). Each mailbox has its own value (several TXT values can sit at that name), and a check changes only
+  that mailbox. The platform's own domains are reserved.
 - **Forwarding**: a platform address the user forwards an existing mailbox to; no DNS change (`forwardFrom` is kept for
   the instructions).
 - **Auto-provisioning** (opt-in per organization, `PUT /settings`): a mailbox for every new employee; and
   `POST /provision` creates the missing employee mailboxes and the default organization mailbox (`inbox.<orgSlug>`) now.
-  Agent employees never get one.
+  Agent employees never get one. The check and the creation run under the organization's lock, so overlapping runs
+  (the employee hook, a manual run, another replica) never create a mailbox twice.
 - **Members** of organization and team mailboxes (`PUT /:id/members`, READER or MANAGER; users of the organization only).
   With no members, a team mailbox reaches the team's members, an organization mailbox the users whose role grants
-  `INBOX_MAILBOX_MANAGE`.
+  `INBOX_MAILBOX_MANAGE`. `GET /mine` lists exactly the mailboxes whose mail the caller receives by these rules. A
+  default mailbox is one per owner (the organization, each team, each employee).
 - **Relay secret** (`POST /:id/rotate-secret`): answered once, stored as a scrypt digest.
 
 | Method      | Path                                     | Who                    |

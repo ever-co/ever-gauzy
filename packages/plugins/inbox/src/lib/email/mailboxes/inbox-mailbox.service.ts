@@ -31,9 +31,11 @@ import {
 	InboxMailboxMemberRoleEnum,
 	InboxMailboxOwnerTypeEnum,
 	InboxMailboxPurposeEnum,
-	InboxProviderAccountScopeEnum
+	InboxProviderAccountScopeEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
+import { InboxNamedLocks } from '../database/named-locks';
 import { InboxMailbox } from '../entities/inbox-mailbox.entity';
 import { InboxMailboxMember } from '../entities/inbox-mailbox-member.entity';
 import { InboxOrganizationSetting } from '../entities/inbox-organization-setting.entity';
@@ -42,6 +44,7 @@ import { InboxEmailScopeService } from '../inbox-email-scope.service';
 import { InboxProviderAccountService } from '../provider-accounts/inbox-provider-account.service';
 import { EmailProviderRegistry } from '../providers/email-provider.registry';
 import { normalizeAddress } from './address';
+import { InboxMailboxAccessService } from './inbox-mailbox-access.service';
 import {
 	chosenLocalPart,
 	employeeName,
@@ -82,14 +85,16 @@ interface OwnerNames {
  *   `<first>.<last>.<orgSlug>` for an employee, `<name>.<orgSlug>` for the organization (several), `<team>.<orgSlug>`
  *   for a team — with a numeric suffix on a collision. They receive through the platform route.
  * - **Custom domains**: any `x@acme.com` once the organization proves the domain with a DNS TXT record at
- *   `_gauzy-inbox.<domain>`; they receive through a provider account of the organization (or the tenant).
+ *   `_gauzy-inbox.<domain>` — each mailbox with its own value (several TXT values can sit at that name), and each
+ *   check changes only that mailbox; they receive through a provider account of the organization (or the tenant).
  * - **Forwarding**: a platform address the user forwards an existing mailbox to (no DNS change).
  * - **Auto-provisioning** (opt-in per organization): a mailbox for every employee, now and on each new employee (never
- *   for agent employees), and a default organization mailbox (`inbox.<orgSlug>`).
+ *   for agent employees), and a default organization mailbox (`inbox.<orgSlug>`). The check for a missing mailbox and
+ *   its creation run under the organization's lock, so overlapping runs never create one twice.
  * - **Members** of organization and team mailboxes (READER or MANAGER).
  *
  * One address namespace: an address is unique across all mailboxes of the deployment and is also checked against the
- * Docs plugin's capture addresses. Management needs `INBOX_MAILBOX_MANAGE` and a membership of the organization (the
+ * Docs plugin's capture addresses, both features checking and saving under the address's claim. Management needs `INBOX_MAILBOX_MANAGE` and a membership of the organization (the
  * routes check the permission, this service the membership); the tenant is always the caller's.
  */
 @Injectable()
@@ -100,8 +105,13 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		private readonly dataSource: DataSource,
 		private readonly scope: InboxEmailScopeService,
 		private readonly accounts: InboxProviderAccountService,
-		private readonly providers: EmailProviderRegistry
-	) {}
+		private readonly providers: EmailProviderRegistry,
+		private readonly access: InboxMailboxAccessService
+	) {
+		this.locks = new InboxNamedLocks(dataSource);
+	}
+
+	private readonly locks: InboxNamedLocks;
 
 	// ---------------------------------------------------------------- reads
 
@@ -114,7 +124,11 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		return rows.map((row) => this.toMailbox(row));
 	}
 
-	/** The caller's own mailboxes: their employee mailboxes and the shared ones they are a member of. */
+	/**
+	 * The caller's own mailboxes: the ones whose mail they receive, by the delivery rules (`InboxMailboxAccessService`)
+	 * — their employee mailboxes, the shared ones they are a member of, and the team and organization mailboxes without
+	 * members that fall back to them (the team's members; the organization's users who may manage mailboxes).
+	 */
 	async mine(): Promise<Array<IInboxMailbox & { forwardingInstructions?: string }>> {
 		const tenantId = RequestContext.currentTenantId();
 		const userId = RequestContext.currentUserId();
@@ -133,6 +147,29 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				.getRepository(InboxMailboxMember)
 				.find({ where: { tenantId, userId, deletedAt: IsNull() } })
 		).map((row) => row.mailboxId);
+		const teams = (
+			await this.dataSource
+				.createQueryBuilder()
+				.select('m.organizationTeamId', 'teamId')
+				.from('organization_team_employee', 'm')
+				.innerJoin('employee', 'e', 'e.id = m.employeeId')
+				.where('m.tenantId = :tenantId', { tenantId })
+				.andWhere('e.userId = :userId', { userId })
+				.andWhere('m.deletedAt IS NULL')
+				.getRawMany<{ teamId: ID }>()
+		).map((row) => row.teamId);
+		const managedOrganizations = RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_MANAGE)
+			? (
+					await this.dataSource
+						.createQueryBuilder()
+						.select('uo.organizationId', 'organizationId')
+						.from('user_organization', 'uo')
+						.where('uo.tenantId = :tenantId', { tenantId })
+						.andWhere('uo.userId = :userId', { userId })
+						.andWhere('uo.isActive = :active', { active: true })
+						.getRawMany<{ organizationId: ID }>()
+				).map((row) => row.organizationId)
+			: [];
 		const repository = this.dataSource.getRepository(InboxMailbox);
 		const rows = [
 			...(employees.length
@@ -140,11 +177,37 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				: []),
 			...(memberOf.length
 				? await repository.find({ where: { tenantId, id: In(memberOf), deletedAt: IsNull() } })
+				: []),
+			...(teams.length
+				? await repository.find({
+						where: {
+							tenantId,
+							ownerType: InboxMailboxOwnerTypeEnum.TEAM,
+							ownerTeamId: In(teams),
+							deletedAt: IsNull()
+						}
+					})
+				: []),
+			...(managedOrganizations.length
+				? await repository.find({
+						where: {
+							tenantId,
+							ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+							organizationId: In(managedOrganizations),
+							deletedAt: IsNull()
+						}
+					})
 				: [])
 		];
 		const seen = new Set<ID>();
-		return rows
-			.filter((row) => (seen.has(row.id as ID) ? false : (seen.add(row.id as ID), true)))
+		const candidates = rows.filter((row) => (seen.has(row.id as ID) ? false : (seen.add(row.id as ID), true)));
+		// The same rules the mail is delivered by (members first, the fallbacks only without members; users still in
+		// the organization).
+		const receives = await Promise.all(
+			candidates.map(async (row) => (await this.access.recipientsOf(row)).includes(userId as ID))
+		);
+		return candidates
+			.filter((_row, index) => receives[index])
 			.map((row) => ({
 				...this.toMailbox(row),
 				...(row.kind === InboxMailboxKindEnum.FORWARDING || row.kind === InboxMailboxKindEnum.PLATFORM
@@ -202,40 +265,47 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		}
 
 		const repository = this.dataSource.getRepository(InboxMailbox);
-		let row: InboxMailbox;
-		try {
-			row = await repository.save(
-				repository.create({
-					tenantId,
-					organizationId,
-					address,
-					displayName: (input?.displayName?.trim() || owner.displayName || null)?.slice(0, 200) ?? null,
-					kind,
-					ownerType: input.ownerType,
-					...(input.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE
-						? { ownerEmployeeId: input.ownerEmployeeId }
-						: {}),
-					...(input.ownerType === InboxMailboxOwnerTypeEnum.TEAM ? { ownerTeamId: input.ownerTeamId } : {}),
-					purpose: InboxMailboxPurposeEnum.INBOX,
-					...(providerAccountId ? { providerAccountId } : {}),
-					senderAllowlist: senderAllowlist.length ? JSON.stringify(senderAllowlist) : null,
-					domain,
-					domainStatus: domain ? InboxMailboxDomainStatusEnum.PENDING : null,
-					domainVerificationToken: domain ? `gauzy-inbox-verify=${randomBytes(16).toString('hex')}` : null,
-					isDefault: false,
-					autoProvisioned: false,
-					messageCount: 0,
-					settings:
-						kind === InboxMailboxKindEnum.FORWARDING && normalizeAddress(input?.forwardFrom)
-							? JSON.stringify({ forwardFrom: normalizeAddress(input?.forwardFrom)?.address })
-							: null
-				} as InboxMailbox)
-			);
-		} catch (error) {
-			// The unique address index: another request took it between the check and the insert.
+		// The last check and the save under the address's claim (shared with the Docs capture addresses).
+		const row = await this.claim(address, async () => {
 			if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
-			throw error;
-		}
+			try {
+				return await repository.save(
+					repository.create({
+						tenantId,
+						organizationId,
+						address,
+						displayName: (input?.displayName?.trim() || owner.displayName || null)?.slice(0, 200) ?? null,
+						kind,
+						ownerType: input.ownerType,
+						...(input.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE
+							? { ownerEmployeeId: input.ownerEmployeeId }
+							: {}),
+						...(input.ownerType === InboxMailboxOwnerTypeEnum.TEAM
+							? { ownerTeamId: input.ownerTeamId }
+							: {}),
+						purpose: InboxMailboxPurposeEnum.INBOX,
+						...(providerAccountId ? { providerAccountId } : {}),
+						senderAllowlist: senderAllowlist.length ? JSON.stringify(senderAllowlist) : null,
+						domain,
+						domainStatus: domain ? InboxMailboxDomainStatusEnum.PENDING : null,
+						domainVerificationToken: domain
+							? `gauzy-inbox-verify=${randomBytes(16).toString('hex')}`
+							: null,
+						isDefault: false,
+						autoProvisioned: false,
+						messageCount: 0,
+						settings:
+							kind === InboxMailboxKindEnum.FORWARDING && normalizeAddress(input?.forwardFrom)
+								? JSON.stringify({ forwardFrom: normalizeAddress(input?.forwardFrom)?.address })
+								: null
+					} as InboxMailbox)
+				);
+			} catch (error) {
+				// The unique address index: another request took it between the check and the insert.
+				if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
+				throw error;
+			}
+		});
 		if (input?.isDefault) await this.makeDefault(row);
 		const stored = (await repository.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
 		return {
@@ -299,13 +369,9 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			: row.domainStatus === InboxMailboxDomainStatusEnum.VERIFIED
 				? InboxMailboxDomainStatusEnum.FAILED
 				: InboxMailboxDomainStatusEnum.PENDING;
-		// Every mailbox of the organization on that domain follows the proof.
-		await this.dataSource
-			.getRepository(InboxMailbox)
-			.update(
-				{ tenantId: row.tenantId as ID, organizationId: row.organizationId as ID, domain: row.domain },
-				{ domainStatus: status }
-			);
+		// Only this mailbox follows the check: each mailbox has its own token, so another mailbox on the domain keeps
+		// the status its own record earned.
+		await this.dataSource.getRepository(InboxMailbox).update({ id: row.id as ID }, { domainStatus: status });
 		const stored = (await this.dataSource
 			.getRepository(InboxMailbox)
 			.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
@@ -403,25 +469,25 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			}
 		}
 		if (input?.defaultOrganizationMailbox) {
-			const has = await this.dataSource.getRepository(InboxMailbox).findOne({
-				where: {
-					tenantId,
-					organizationId,
-					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
-					isDefault: true,
-					deletedAt: IsNull()
-				}
-			});
-			if (has) {
-				existing += 1;
-			} else {
-				const mailbox = await this.createSystem(tenantId, organizationId, {
+			const mailbox = await this.provisioning(organizationId, async () => {
+				const has = await this.dataSource.getRepository(InboxMailbox).findOne({
+					where: {
+						tenantId,
+						organizationId,
+						ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+						isDefault: true,
+						deletedAt: IsNull()
+					}
+				});
+				if (has) return null;
+				return this.createSystem(tenantId, organizationId, {
 					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
 					localPart: 'inbox',
 					isDefault: true
 				});
-				if (mailbox) created.push(mailbox);
-			}
+			});
+			if (mailbox) created.push(mailbox);
+			else existing += 1;
 		}
 		return { created, existing };
 	}
@@ -486,6 +552,12 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 	}
 
 	// ---------------------------------------------------------------- the address namespace
+
+	/** Runs `work` (an address's check and save) while no other claim of the address runs, in either feature. */
+	claim<T>(address: string, work: () => Promise<T>): Promise<T> {
+		const normalized = normalizeAddress(address)?.address ?? address.trim().toLowerCase();
+		return this.locks.run(`address:${normalized}`, work);
+	}
 
 	/** Whether an address is taken by a mailbox or a Docs capture address (one namespace, plan 04 §5.1). */
 	async isTaken(address: string): Promise<boolean> {
@@ -649,7 +721,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		];
 	}
 
-	/** Makes `row` its owner's (organization's / team's) only default mailbox. */
+	/** Makes `row` its owner's (the organization's, this team's, this employee's) only default mailbox. */
 	private async makeDefault(row: InboxMailbox): Promise<void> {
 		const repository = this.dataSource.getRepository(InboxMailbox);
 		await repository.update(
@@ -657,6 +729,10 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				tenantId: row.tenantId as ID,
 				organizationId: row.organizationId as ID,
 				ownerType: row.ownerType,
+				...(row.ownerType === InboxMailboxOwnerTypeEnum.TEAM ? { ownerTeamId: row.ownerTeamId as ID } : {}),
+				...(row.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE
+					? { ownerEmployeeId: row.ownerEmployeeId as ID }
+					: {}),
 				isDefault: true
 			},
 			{ isDefault: false }
@@ -688,15 +764,25 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 	}
 
 	/** The employee's platform mailbox, created when it has none (answers `null` when it had one). */
-	private async provisionEmployee(tenantId: ID, organizationId: ID, employeeId: ID): Promise<IInboxMailbox | null> {
-		const has = await this.dataSource
-			.getRepository(InboxMailbox)
-			.findOne({ where: { tenantId, ownerEmployeeId: employeeId, deletedAt: IsNull() } });
-		if (has) return null;
-		return this.createSystem(tenantId, organizationId, {
-			ownerType: InboxMailboxOwnerTypeEnum.EMPLOYEE,
-			ownerEmployeeId: employeeId
+	private provisionEmployee(tenantId: ID, organizationId: ID, employeeId: ID): Promise<IInboxMailbox | null> {
+		return this.provisioning(organizationId, async () => {
+			const has = await this.dataSource
+				.getRepository(InboxMailbox)
+				.findOne({ where: { tenantId, ownerEmployeeId: employeeId, deletedAt: IsNull() } });
+			if (has) return null;
+			return this.createSystem(tenantId, organizationId, {
+				ownerType: InboxMailboxOwnerTypeEnum.EMPLOYEE,
+				ownerEmployeeId: employeeId
+			});
 		});
+	}
+
+	/**
+	 * Runs a provisioning step (the check for a missing mailbox and its creation) under the organization's lock: an
+	 * overlapping run (the employee-created hook, a manual provisioning, another replica) waits, then finds the mailbox.
+	 */
+	private provisioning<T>(organizationId: ID, work: () => Promise<T>): Promise<T> {
+		return this.locks.run(`provision:${organizationId}`, work);
 	}
 
 	/** A platform mailbox the system creates (provisioning), outside a request's organization membership check. */
