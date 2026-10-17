@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { SessionStore, SessionData, ConnectionData, SessionStoreConfig } from './session-store';
 import { authManager } from '../common/auth-manager';
+import { getAuthKey, runWithAuthKey } from '../common/auth-context';
 
 const logger = new Logger('SessionManager');
 
@@ -101,8 +102,13 @@ export class SessionManager {
 		let finalOrganizationId = organizationId;
 		let finalTenantId = tenantId;
 
-		// If auto-authenticate is enabled and no user info provided, use auth manager
-		if (autoAuthenticate && !finalUserId) {
+		// If auto-authenticate is enabled and no user info provided, use auth manager.
+		// Outside a session or OAuth call only the auto-login account may be bound, never another client's login.
+		if (
+			autoAuthenticate &&
+			!finalUserId &&
+			(getAuthKey() !== undefined || authManager.isSharedAutoLoginIdentity())
+		) {
 			if (authManager.isAuthenticated()) {
 				finalUserId = authManager.getUserId() || undefined;
 				finalOrganizationId = authManager.getOrganizationId() || undefined;
@@ -168,11 +174,16 @@ export class SessionManager {
 
 		// Check if authentication is still valid if required
 		if (requireActiveAuth) {
-			const isAuthValid = await this.validateAuthentication(session);
+			// The login kept for this session counts as well as the process-wide one
+			const isAuthValid =
+				(await this.validateAuthentication(session)) ||
+				(await runWithAuthKey(session.id, () => this.validateAuthentication(session)));
 			if (!isAuthValid) {
 				try {
 					// Try to refresh token if possible
-					const refreshed = await authManager.ensureValidToken();
+					const refreshed =
+						(await authManager.ensureValidToken()) ||
+						(await runWithAuthKey(session.id, () => authManager.ensureValidToken()));
 					if (!refreshed) {
 						return {
 							valid: false,
@@ -395,13 +406,16 @@ export class SessionManager {
 			throw new Error('User must be authenticated to create session');
 		}
 
-		return this.createSession({
+		const session = await this.createSession({
 			...options,
 			userId: authManager.getUserId() || undefined,
 			organizationId: authManager.getOrganizationId() || undefined,
 			tenantId: authManager.getTenantId() || undefined,
 			autoAuthenticate: false, // Already authenticated
 		});
+		// The new session keeps this login when it is used later over HTTP or WebSocket
+		authManager.copyLoginToKey(session.id);
+		return session;
 	}
 
 	/**
