@@ -70,7 +70,9 @@ the seed) and answers the routes below.
 - `EVER_WORKS_WEBHOOK_REQUESTS_PER_MINUTE`: per-process limit of the public
   webhook route (default 1200).
 - `EVER_WORKS_SYNC_LOOP=off`: keeps this process out of the sync loop (it still
-  serves the API).
+  serves the API). A process that does not host Gauzy's task, project and
+  employee services, which the sync's writes go through, stays out on its own
+  and logs why once: today that is the worker (see Runtime below).
 - `EVER_WORKS_HEALTH_CHECK=off`: keeps this process out of the daily key check.
 
 ## Configure the integration
@@ -239,9 +241,8 @@ and answered `202`.
   else the default "Ever Works" project. A delete in Ever Works soft-deletes
   the Gauzy task; a Gauzy delete cancels the Ever Works task with a comment.
   Private tasks, recurring templates, Idea tasks (synced as ideas) and, unless
-  the setting is on, triage tasks are not synced. Task writes need a process
-  that serves the API (it has the request context the task commands read);
-  where the worker also runs the plugin, set `EVER_WORKS_SYNC_LOOP=off` there.
+  the setting is on, triage tasks are not synced. Each task write runs in a
+  tenant-scoped request context of its own (see Runtime below).
 - **Ideas ↔ Idea tasks (G-P2-3).** An Ever Works idea is a Gauzy task of
   the organization's "Idea" issue type in the "Ever Works — Ideas" project
   (created when first needed): title, description (plain text, escaped),
@@ -326,6 +327,23 @@ and answered `202`.
 - **Runtime.** Every process that loads the plugin ticks; a database lease on
   the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.
+- **Writes in any process.** Gauzy's services read the tenant, the
+  organization and the author from the request context, which a background
+  sync does not have, so every Gauzy write of the sync runs inside a request
+  context of its own: signed in as the attributed person, agent or connecting
+  admin, in the mapping's tenant and organization, with no employee and no
+  permission. A process built without the platform's request context store
+  (the worker builds its own module graph without core's application module)
+  gets the process-wide store attached first; outside these writes nothing
+  changes for the rest of that process. The writes also go through the
+  platform's task, project and employee services and their commands. The API
+  hosts them; the worker does not (its module graph is the documents pipeline
+  and the commerce sweeps), so the sync loop runs only in a process that hosts
+  them and the worker stays out on its own, logging once which services it
+  lacks. The connection's lease therefore always goes to a process that can
+  apply every change, and no change waits on a process that could only defer
+  it. Should a write still reach a process without its write path, it is
+  deferred and retried, never failed.
 
 ## Build and verification
 
