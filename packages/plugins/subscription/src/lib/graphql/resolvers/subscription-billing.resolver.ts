@@ -8,6 +8,7 @@ import { SubscriptionFeatures } from '../../subscription.features';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import { SubscriptionBilling } from '../../subscription-billing/subscription-billing.entity';
 import { SubscriptionBillingService } from '../../subscription-billing/subscription-billing.service';
+import { SubscriptionService } from '../../subscription/subscription.service';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -48,7 +49,10 @@ interface ISubscriptionBillingFilter {
 @FeatureFlag(SubscriptionFeatures.SUBSCRIPTION)
 @Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 export class SubscriptionBillingResolver {
-	constructor(private readonly subscriptionBillingService: SubscriptionBillingService) {}
+	constructor(
+		private readonly subscriptionBillingService: SubscriptionBillingService,
+		private readonly subscriptionService: SubscriptionService
+	) {}
 
 	/**
 	 * Lists billing cycles.
@@ -127,7 +131,10 @@ export class SubscriptionBillingResolver {
 		}
 	) {
 		try {
-			return { subscriptionBilling: await this.subscriptionBillingService.createPending(input as any), userErrors: [] };
+			return {
+				subscriptionBilling: await this.subscriptionBillingService.createPending(input as any),
+				userErrors: []
+			};
 		} catch (error) {
 			return { subscriptionBilling: null, userErrors: [toUserError(error)] };
 		}
@@ -167,7 +174,8 @@ export class SubscriptionBillingResolver {
 	async paySubscriptionBilling(@Args('id') id: ID, @Args('input') input?: { paidAt?: Date; note?: string }) {
 		try {
 			return {
-				subscriptionBilling: await this.subscriptionBillingService.markPaid(id, { paidAt: input?.paidAt }),
+				// The route's own path: the payment of an INVOICED cycle settles its period (review R4-05, interim).
+				subscriptionBilling: await this.subscriptionService.settleCycle(id, { paidAt: input?.paidAt }),
 				userErrors: []
 			};
 		} catch (error) {

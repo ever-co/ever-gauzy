@@ -136,6 +136,33 @@ const SETTLED_CYCLE_STATUSES: SubscriptionBillingStatus[] = [
 	SubscriptionBillingStatus.REFUNDED
 ];
 
+/**
+ * Cycle statuses whose money is actually settled — the only ones that move the subscription's calendar and the
+ * customer's rights (review R4-05, interim).
+ *
+ * `SETTLED_CYCLE_STATUSES` above is the wider set of periods that must never be *charged* again, and an `INVOICED`
+ * cycle belongs there: its order is raised, and raising a second one is how a customer is billed twice. But its
+ * money has not arrived. Treated as settled for the calendar too, an unpaid invoice made the subscription `ACTIVE`,
+ * advanced the period, counted the cycle and emitted `subscription.renewed` — so the entitlement consumer extended
+ * the customer's rights for a period nobody paid for, and a trial converted on an invoice alone. An `INVOICED`
+ * cycle therefore stays the period's open cycle, and the calendar and the rights move when it is paid
+ * (`settleCycle`).
+ */
+const CYCLE_SETTLED_STATUSES: readonly SubscriptionBillingStatus[] = [
+	SubscriptionBillingStatus.PAID,
+	SubscriptionBillingStatus.WAIVED
+];
+
+/**
+ * The subscription statuses an invoiced cycle's payment may move the calendar of. A subscription that was
+ * cancelled, expired, paused or failed while the invoice was open is not revived by its payment: the cycle is
+ * recorded paid and the subscription keeps the status somebody decided.
+ */
+const SETTLEABLE_SUBSCRIPTION_STATUSES: readonly SubscriptionStatus[] = [
+	SubscriptionStatus.PENDING,
+	SubscriptionStatus.ACTIVE
+];
+
 /** The metadata key that records the plans whose setup fee was already charged. */
 const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 
@@ -1735,7 +1762,88 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return await this.recordFailure(subscription, billing, failure, now, spend());
 		}
 
+		// The order was raised. Whether the period is settled is the cycle's own answer: an order whose money has
+		// not arrived leaves the cycle `INVOICED`, and an invoice is not a payment — the calendar and the rights
+		// wait for `settleCycle` (review R4-05, interim). The period is still never raised twice: the next run
+		// finds the `INVOICED` cycle among `SETTLED_CYCLE_STATUSES` and replays it.
+		const raised = await this.billingService.findOneScoped(billing.id);
+
+		if (!CYCLE_SETTLED_STATUSES.includes(raised.status)) {
+			return {
+				subscriptionId: subscription.id,
+				billingId: raised.id,
+				status: raised.status,
+				replayed: false,
+				orderId: raised.orderId,
+				amount: raised.amount,
+				currency: raised.currency,
+				periodStart: period.start,
+				periodEnd: period.end,
+				message: "The cycle's order was raised and its money has not settled; the period and the rights move when it is paid."
+			};
+		}
+
 		return await this.recordSuccess(subscription, plan, billing, period, items, spend());
+	}
+
+	/**
+	 * Records that a cycle's money arrived, and settles the period it raised (review R4-05, interim).
+	 *
+	 * An `INVOICED` cycle is the period's open cycle: its order was raised, the calendar and the rights did not
+	 * move. This is the act that moves them. The cycle is marked paid (the billing service's own guarded
+	 * transition), and when it was the subscription's open period the success path runs exactly as for a cycle
+	 * paid at the charge — `ACTIVE`, the period, the cycle count, `subscription.renewed` (and `.activated` for a
+	 * trial that converts) — under the version this call read, so two payments of one invoice move the calendar
+	 * once. `POST /subscription-billings/:id/pay` and GraphQL `paySubscriptionBilling` reach it; the order-side
+	 * settlement port of Q7-W4 is meant to call it too.
+	 *
+	 * The calendar does not move when:
+	 * - the cycle was not `INVOICED` (a pending or failed cycle paid by hand keeps the behaviour it had);
+	 * - the subscription already covers the period (a cycle invoiced before this change, whose calendar moved at
+	 *   the invoice; or a concurrent payment that settled it first);
+	 * - the subscription was cancelled, expired, paused or failed meanwhile.
+	 *
+	 * @param billingId The cycle that was paid.
+	 * @param options When the money settled, and the order it settled.
+	 * @returns The cycle, paid.
+	 */
+	public async settleCycle(billingId: ID, options: { paidAt?: Date; orderId?: ID } = {}): Promise<SubscriptionBilling> {
+		// The status the payment settles from, read before the write: the read row is not to be trusted to keep it.
+		const invoiced = (await this.billingService.findOneScoped(billingId)).status === SubscriptionBillingStatus.INVOICED;
+		const paid = await this.billingService.markPaid(billingId, options);
+
+		if (!invoiced || paid.status !== SubscriptionBillingStatus.PAID) {
+			return paid;
+		}
+
+		const subscription = await this.findOneScoped(paid.subscriptionId);
+		const period: ISubscriptionPeriod = { start: new Date(paid.periodStart), end: new Date(paid.periodEnd) };
+		const covers = (row: Subscription): boolean =>
+			!!row.currentPeriodEnd && new Date(row.currentPeriodEnd).getTime() >= period.end.getTime();
+
+		if (covers(subscription) || !SETTLEABLE_SUBSCRIPTION_STATUSES.includes(subscription.status)) {
+			return paid;
+		}
+
+		const plan = await this.planService.findOneScoped(subscription.planId);
+		const items = await this.itemService.findForSubscription(subscription.id);
+
+		try {
+			await this.recordSuccess(subscription, plan, paid, period, items, {
+				wildcard: false,
+				versions: [subscription.version]
+			});
+		} catch (error) {
+			// Another payment of the same invoice moved the calendar between this read and this write: the period is
+			// settled, which is the outcome this call was for.
+			if (covers(await this.findOneScoped(subscription.id))) {
+				return await this.billingService.findOneScoped(billingId);
+			}
+
+			throw error;
+		}
+
+		return await this.billingService.findOneScoped(billingId);
 	}
 
 	/**
@@ -1964,6 +2072,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionBillingOutcome> {
 		const settled = await this.billingService.findOneScoped(billing.id);
+		// Read before the write below: whether this cycle converts a trial is a fact about the row as it was.
+		const wasPending = subscription.status === SubscriptionStatus.PENDING;
 		const cycleCount = (subscription.billingCycleCount ?? 0) + 1;
 		const ceilingReached =
 			plan.maxBillingCycles !== undefined && plan.maxBillingCycles !== null && cycleCount >= plan.maxBillingCycles;
@@ -1981,7 +2091,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 		});
 
-		if (subscription.status === SubscriptionStatus.PENDING && !ceilingReached) {
+		if (wasPending && !ceilingReached) {
 			// The trial converted. The write above is the transition, and this is what says so: a
 			// subscription that leaves `PENDING` because its first paid cycle settled has become active
 			// just as surely as one an operator activated by hand, and a consumer that only listens for

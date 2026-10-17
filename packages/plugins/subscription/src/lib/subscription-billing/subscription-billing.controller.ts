@@ -28,6 +28,7 @@ import {
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { SubscriptionFeatures } from '../subscription.features';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { SubscriptionPermissions } from '../subscription.permissions';
 import {
 	CreateSubscriptionBillingDTO,
@@ -52,7 +53,10 @@ import { SubscriptionBillingService } from './subscription-billing.service';
 @Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 @Controller('/subscription-billings')
 export class SubscriptionBillingController extends CrudController<SubscriptionBilling> {
-	constructor(private readonly subscriptionBillingService: SubscriptionBillingService) {
+	constructor(
+		private readonly subscriptionBillingService: SubscriptionBillingService,
+		private readonly subscriptionService: SubscriptionService
+	) {
 		super(subscriptionBillingService);
 	}
 
@@ -183,8 +187,13 @@ export class SubscriptionBillingController extends CrudController<SubscriptionBi
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_BILL)
 	@Post(':id/pay')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async pay(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: PaySubscriptionBillingDTO): Promise<SubscriptionBilling> {
-		return await this.subscriptionBillingService.markPaid(id, { paidAt: entity.paidAt });
+	async pay(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: PaySubscriptionBillingDTO
+	): Promise<SubscriptionBilling> {
+		// Through the subscription: an INVOICED cycle's payment is what settles its period and moves the rights
+		// (review R4-05, interim) — the billing row alone would record the money and leave the calendar frozen.
+		return await this.subscriptionService.settleCycle(id, { paidAt: entity.paidAt });
 	}
 
 	/**
