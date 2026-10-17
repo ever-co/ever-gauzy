@@ -53,6 +53,7 @@ import {
 	MikroOrmEverWorksSyncLogRepository
 } from './sync/entities/ever-works-sync.repositories';
 import { EverWorksSyncLogService } from './sync/ever-works-sync-log.service';
+import { EverWorksProcessCapability } from './sync/ever-works-process';
 import { EverWorksSyncLoop } from './sync/ever-works-sync.loop';
 import { EverWorksFeedPoller } from './sync/inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './sync/inbound/ever-works-inbound.applier';
@@ -145,6 +146,8 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksOutboundPusher,
 		EverWorksTaskEventListener,
 		EverWorksSyncLoop,
+		// Whether this process hosts the platform write paths the sync loop needs (the worker does not).
+		EverWorksProcessCapability,
 		EverWorksRateLimitGuard,
 		EverWorksLinkService,
 		EverWorksMappingContextService,

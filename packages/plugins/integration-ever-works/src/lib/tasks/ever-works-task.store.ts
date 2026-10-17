@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommandBus } from '@nestjs/cqrs';
-import { randomUUID } from 'node:crypto';
 import { DataSource, In, IsNull } from 'typeorm';
 import { ActorTypeEnum, BaseEntityEnum, EntitySubscriptionTypeEnum, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
@@ -10,7 +9,6 @@ import {
 	EntitySubscription,
 	OrganizationProject,
 	OrganizationStrategicInitiative,
-	RequestContext,
 	ResourceLink,
 	Tag,
 	Task,
@@ -21,6 +19,7 @@ import {
 	TaskStatus,
 	TaskUpdateCommand
 } from '@gauzy/core';
+import { runInSyncRequestContext, syncRequestUser } from '../sync/ever-works-process';
 import { gauzyStatusSlug, resolveGauzyStatusRow } from '../sync/mappers/status-priority.mapper';
 import { edgesFromRows, LinkedIssueRow } from './ever-works-task.mapper';
 
@@ -50,13 +49,14 @@ export interface EverWorksTaskOption {
 }
 
 /**
- * This process cannot open a request context (the worker builds its own module graph without core's
- * `AppModule`, so there is no CLS service and no task command handlers). Task writes are applied by a
- * process that serves the API; the change is retried there.
+ * This process cannot make the task write: it cannot open a request context, or it does not host the
+ * task commands and service (core's task module; the worker's module graph has no task module). Nothing
+ * was written; the change is retried by the process that holds the connection — the sync loop runs only
+ * where the task writes can be made (`ever-works-process.ts`).
  */
 export class EverWorksRequestContextUnavailableError extends Error {
 	constructor() {
-		super('This process has no request context for Gauzy task writes; a process that serves the API applies them.');
+		super('This process cannot make Gauzy task writes (no request context or no task commands); the sync retries it.');
 		this.name = 'EverWorksRequestContextUnavailableError';
 	}
 }
@@ -93,26 +93,13 @@ export class EverWorksTaskStore {
 	 * the creator added as a member (plan 01 §7), and no permission is held.
 	 */
 	async asActor<T>(scope: { tenantId: ID; organizationId: ID }, actor: EverWorksTaskActor | null, work: () => Promise<T>): Promise<T> {
-		const user = {
-			id: actor?.userId ?? undefined,
-			tenantId: scope.tenantId,
-			lastOrganizationId: scope.organizationId,
-			name: actor?.name ?? 'Ever Works',
-			firstName: actor?.name ?? 'Ever Works',
-			lastName: '',
-			employeeId: undefined,
-			permissions: []
-		};
-		const request = { user, headers: {}, query: {}, params: {}, body: {} };
-		return RequestContext.runWithRequest(
-			request as never,
-			async () => {
-				// A process without the platform's request context (the worker: no core AppModule, no CLS) would
-				// write tenant-less rows: refuse before anything is written.
-				if (RequestContext.currentTenantId() !== scope.tenantId) throw new EverWorksRequestContextUnavailableError();
-				return work();
-			},
-			{ id: randomUUID() as ID }
+		// A process without a context store (the worker) gets the process-wide one attached first; where no
+		// context can be opened, or the task commands are not hosted here, nothing is written and the
+		// change is retried.
+		return runInSyncRequestContext(
+			syncRequestUser(scope, actor?.userId ?? null, actor?.name ?? 'Ever Works'),
+			work,
+			() => new EverWorksRequestContextUnavailableError()
 		);
 	}
 

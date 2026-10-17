@@ -106,6 +106,10 @@ export const plugins = resolvePluginLoadOrder([
 	 * poll, reconcile, dirty and orphan sweeps, the daily health check). A `@ScheduledJob` fires only in
 	 * this process, so a plugin that is not hosted here would never sync on its own.
 	 *
+	 * Its sync loop stays out of this process on its own (it logs why once): the sync's Gauzy writes go
+	 * through core's task, project and employee services, which this module graph does not host, so the
+	 * loop runs where they are — the API — and the connection's lease never strands them here.
+	 *
 	 * 🛑 Off unless `EVER_WORKS_ENABLED` is exactly `true` — the same switch as the API's list — so a
 	 * worker of an installation that has not switched the integration on is unchanged: the plugin is not
 	 * loaded, its module graph is never built and nothing is scheduled.
