@@ -4,7 +4,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
 import { AfterViewInit, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import {
+	Router,
+	ActivatedRoute,
+	NavigationCancel,
+	NavigationCancellationCode,
+	NavigationEnd,
+	NavigationError
+} from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, filter, map, switchMap, take, tap } from 'rxjs';
@@ -64,6 +71,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _navigationService: NavigationService
 	) {
 		this.getActivateRouterDataEvent();
+		this.watchUnsettledNavigations();
 		this.getPreferredLanguage();
 
 		setTimeout(() => {
@@ -194,6 +202,37 @@ export class AppComponent implements OnInit, AfterViewInit {
 				baseUrl: chatwootBaseUrl
 			});
 		};
+	}
+
+	/**
+	 * Lets the loading skeleton go when a navigation ends without a `NavigationEnd` and nothing follows it (Q8d).
+	 *
+	 * The skeleton waits for the router to be ready, and only a `NavigationEnd` said so. A first navigation that
+	 * failed (a guard that rejected) or was refused with no redirect ended in an error or a cancel, and the skeleton
+	 * stayed over an outlet that would never fill. A cancel that hands over to another navigation — a redirect, or a
+	 * newer navigation — is left alone: that navigation's own end is the one to wait for.
+	 */
+	private watchUnsettledNavigations(): void {
+		this._router.events
+			.pipe(
+				filter(
+					(event) =>
+						event instanceof NavigationError ||
+						(event instanceof NavigationCancel &&
+							event.code !== NavigationCancellationCode.Redirect &&
+							event.code !== NavigationCancellationCode.SupersededByNewNavigation)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				// A guard that refuses usually starts the navigation it sends the user to first; that one is waited for.
+				setTimeout(() => {
+					if (!this._router.getCurrentNavigation()) {
+						this.routerReady = true;
+						this.checkLoadingComplete();
+					}
+				});
+			});
 	}
 
 	private checkLoadingComplete(): void {
