@@ -4,7 +4,7 @@
 import '../core/entities/internal';
 
 import { DataSource, EntitySchema, Repository } from 'typeorm';
-import { PayrollItemCategoryEnum, PayrollItemTypeEnum, PayrollRunStatusEnum } from '@gauzy/contracts';
+import { EmployeeKindEnum, PayrollItemCategoryEnum, PayrollItemTypeEnum, PayrollRunStatusEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { Employee } from '../core/entities/internal';
 import { PayrollItem } from '../payroll-item/payroll-item.entity';
@@ -76,7 +76,9 @@ const EmployeeSchema = new EntitySchema<Employee>({
 	columns: {
 		id: { type: 'varchar', primary: true },
 		tenantId: { type: 'varchar' },
-		organizationId: { type: 'varchar' }
+		organizationId: { type: 'varchar' },
+		// addItem pays people only: it reads the kind of the employee and refuses an agent
+		kind: { type: 'varchar', length: 16, default: EmployeeKindEnum.HUMAN }
 	} as any
 });
 
