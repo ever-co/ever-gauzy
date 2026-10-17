@@ -27,7 +27,10 @@ export class NoAuthGuard {
 			return true;
 		}
 
-		if (!(await this._authService.isAuthenticated())) {
+		// A check that fails — the API unreachable, or a stale session whose refresh failed — is "not logged in": the
+		// sign-in page opens. Rejected, the guard kept the sign-in form from opening, and the refresh interceptor no
+		// longer redirects again from an /auth page (Q8d; Greptile on #10888).
+		if (!(await this._authService.isAuthenticated().catch(() => false))) {
 			// not logged in so return true
 			return true;
 		}

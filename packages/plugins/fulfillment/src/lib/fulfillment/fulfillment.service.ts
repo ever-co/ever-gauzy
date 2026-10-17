@@ -368,15 +368,28 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		await this.assertReferences(entity);
 		await this.lineService.assertReferences(lines);
 
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a shipment created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads and the organization-scoped fulfilment subscriptions never found it again (review
+		// R2-G37, the R2-23 class). The caller's organization is stamped when the input states none; an organization the
+		// request stated is kept (REST validates it against the caller).
+		// Its lines are the shipment's own rows, so they carry the shipment's organization.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const fulfillment = await super.create({
 			...entity,
+			organizationId,
 			direction,
 			status: FulfillmentStatusDetail.PENDING,
 			version: 1
 		} as DeepPartial<Fulfillment>);
 
 		for (const line of lines) {
-			await this.lineService.create({ ...line, fulfillmentId: fulfillment.id } as DeepPartial<FulfillmentLine>);
+			await this.lineService.create({
+				...line,
+				organizationId: line.organizationId ?? fulfillment.organizationId ?? undefined,
+				fulfillmentId: fulfillment.id
+			} as DeepPartial<FulfillmentLine>);
 
 			if (direction !== FulfillmentDirection.RETURN) {
 				await this.bumpOrderLineCounters(line.orderLineId as ID, line.quantity as Quantity, 'FULFILLED');

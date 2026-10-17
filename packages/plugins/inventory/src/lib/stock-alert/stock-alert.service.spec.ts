@@ -427,6 +427,22 @@ describe('StockAlertService — the rules it watches (doc 09 §10.1)', () => {
 		expect(otherVariant.variantId).toBe(OTHER_VARIANT);
 	});
 
+	it('stamps the caller’s organization on a rule created without one, and keeps a stated one (R2-G37)', async () => {
+		// The GraphQL input declares no organization and the base stamps only the tenant, so a rule created over
+		// GraphQL was written with a NULL organization that no organization-scoped read ever found.
+		const fixture = alertFixture([]);
+
+		const unstated = await fixture.service.createAlert({ variantId: VARIANT, threshold: 3 });
+		const stated = await fixture.service.createAlert({
+			variantId: OTHER_VARIANT,
+			threshold: 3,
+			organizationId: 'org-stated'
+		});
+
+		expect(unstated.organizationId).toBe(ORG);
+		expect(stated.organizationId).toBe('org-stated');
+	});
+
 	it('lists the rules it watches', async () => {
 		const fixture = alertFixture([alertRow(), alertRow({ id: 'stock_alert-2', variantId: OTHER_VARIANT })]);
 
