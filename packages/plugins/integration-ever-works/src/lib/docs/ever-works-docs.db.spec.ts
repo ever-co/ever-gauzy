@@ -336,6 +336,40 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(documentToMarkdown(content, { resolveMention: toPath })).toBe('See [[support/escalation.md]].');
 		});
 
+		it('stops syncing a page moved out of the synced folders in Gauzy, and the sweep finds it (review #10834)', async () => {
+			const document = kb.addDocument(ewOrg.id, { body: 'First' });
+			await apply('kb.document.created', document);
+			const row = (await pageOf(document['id'])) as Row;
+			await documents().update({ id: row['id'] } as never, { parentId: null } as never);
+			Object.assign(document, { body: 'Second', version: 2 });
+			expect(await apply('kb.document.updated', document)).toMatchObject({ status: 'skipped' });
+			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('First');
+			expect((await links.byEw(M as never, EverWorksLinkType.DOC, String(document['id'])))?.state).toBe(EverWorksLinkState.UNLINKED);
+			// A moved page whose pairing is still live is queued by the sweep (its push then ends the pairing).
+			const other = kb.addDocument(ewOrg.id, { path: 'b.md', body: 'B' });
+			await apply('kb.document.created', other);
+			const otherRow = (await pageOf(other['id'])) as Row;
+			await documents().update({ id: otherRow['id'] } as never, { parentId: null } as never);
+			await service.sweep(connection as never);
+			expect((queue.enqueue.mock.calls as unknown as Array<[Row]>).map(([change]) => change['gauzyId'])).toContain(otherRow['id']);
+		});
+
+		it('leaves a folder deleted in Gauzy deleted: no duplicate row, and its documents land in Organization/ (review #10834)', async () => {
+			const folder = kb.addFolder(ewOrg.id, { name: 'Guides' });
+			await apply('kb.folder.created', folder, 'kb_folder');
+			const link = await links.byEw(M as never, EverWorksLinkType.DOC_FOLDER, folder['id'] as string);
+			await documents().softDelete({ id: link?.gauzyId } as never);
+			Object.assign(folder, { name: 'Handbooks', version: 2 });
+			expect(await apply('kb.folder.updated', folder, 'kb_folder')).toEqual({ status: 'applied' });
+			const rows = (await documents().find({ where: { externalId: DOCS_TREE.folder(folder['id'] as string) } as never, withDeleted: true })) as Row[];
+			expect(rows).toHaveLength(1);
+			expect(rows[0]['deletedAt']).toBeTruthy();
+			const document = kb.addDocument(ewOrg.id, { folderId: folder['id'], body: 'In the deleted folder' });
+			await apply('kb.document.created', document);
+			const organization = await store.organizationFolder(context as never);
+			expect(((await pageOf(document['id'])) as Row)['parentId']).toBe(organization);
+		});
+
 		it('follows a folder rename and archives a deleted folder', async () => {
 			const folder = kb.addFolder(ewOrg.id, { name: 'Guides' });
 			await apply('kb.folder.created', folder, 'kb_folder');
@@ -385,6 +419,34 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(await push(id)).toEqual({ status: 'pushed' });
 			expect(ew).toMatchObject({ title: 'Renamed in Ever Works', body: 'Body two' });
 			expect((await page(id))['name']).toBe('Renamed in Ever Works');
+		});
+
+		it('on 412 when both sides renamed it, Ever Works\' title wins and the conflict is logged (review #10834)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const id = await gauzyPage(organization, 'Body');
+			await push(id);
+			const [ew] = [...kb.documents.values()];
+			Object.assign(ew, { title: 'Ever Works title', version: Number(ew['version']) + 1 });
+			await documents().update({ id } as never, { name: 'Gauzy title' } as never);
+			expect(await push(id)).toEqual({ status: 'skipped', message: 'nothing changed' });
+			expect(ew['title']).toBe('Ever Works title');
+			expect((await page(id))['name']).toBe('Ever Works title');
+			expect(conflicts.record).toHaveBeenCalledWith(expect.objectContaining({ field: 'title', gauzyValue: 'Gauzy title', everWorksValue: 'Ever Works title', winner: 'ever_works' }));
+		});
+
+		it('sends edits and folder writes as the person who made them (review #10834)', async () => {
+			await dataSource.getRepository(Employee).insert({ id: 'e-editor', userId: 'u-editor', tenantId: T, organizationId: O } as never);
+			await links.record({ tenantId: T as never, organizationId: O as never, integrationTenantId: M as never, entityType: EverWorksLinkType.MEMBER, gauzyId: 'e-editor' as never, ewId: 'ew-editor', direction: 'inbound' });
+			const organization = await store.organizationFolder(context as never);
+			const folder = await gauzyFolder(organization, 'Guides');
+			await service.push({ tenantId: T, organizationId: O, integrationTenantId: M, entityType: EverWorksLinkType.DOC_FOLDER, gauzyId: folder, op: 'upsert', actorUserId: 'u-editor' } as never, { connection: connection as never, mapping: { id: M } as never });
+			const id = await gauzyPage(folder, 'One');
+			await push(id);
+			await documents().update({ id } as never, { contentJson: markdownToDocument('Two').contentJson } as never);
+			await service.push({ tenantId: T, organizationId: O, integrationTenantId: M, entityType: EverWorksLinkType.DOC, gauzyId: id, op: 'upsert', actorUserId: 'u-editor' } as never, { connection: connection as never, mapping: { id: M } as never });
+			const actAs = (method: string, path: RegExp) => mock.requests.filter((request) => request.method === method && path.test(request.path)).map((request) => request.headers['x-act-as-user'] ?? null);
+			expect(actAs('POST', /^\/kb\/folders$/)).toEqual(['ew-editor']);
+			expect(actAs('PATCH', /^\/kb\/documents\//)).toEqual(['ew-editor']);
 		});
 
 		it("accepts a proposed document approved in Gauzy's review queue, and archives a removed page", async () => {

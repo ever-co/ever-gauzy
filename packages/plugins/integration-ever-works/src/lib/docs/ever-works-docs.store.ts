@@ -105,7 +105,8 @@ export class EverWorksDocsStore {
 			if (seen.has(parentId)) break;
 			seen.add(parentId);
 			const parent = await this.load(context, parentId as ID);
-			if (!parent || parent.kind !== DocumentKindEnum.FOLDER || parent.isArchived) break;
+			// An archived folder still holds its nodes (an Ever Works folder delete archives it while its documents move).
+			if (!parent || parent.kind !== DocumentKindEnum.FOLDER) break;
 			folders.push(parent);
 			parentId = parent.parentId ?? null;
 		}
@@ -129,6 +130,24 @@ export class EverWorksDocsStore {
 			}
 		}
 		return ids;
+	}
+
+	/** The parent of each of the given nodes (`null` for a deleted one); a node that is gone is missing from the map. */
+	async parentsOf(context: EverWorksMappingContext, ids: ID[]): Promise<Map<string, string | null>> {
+		const out = new Map<string, string | null>();
+		for (let index = 0; index < ids.length; index += 200) {
+			const rows = await this.dataSource
+				.getRepository(Document)
+				.createQueryBuilder('document')
+				.withDeleted()
+				.select(['document.id', 'document.parentId', 'document.deletedAt'])
+				.where('document.tenantId = :tenantId', { tenantId: context.tenantId })
+				.andWhere('document.organizationId = :organizationId', { organizationId: context.organizationId })
+				.andWhere('document.id IN (:...ids)', { ids: ids.slice(index, index + 200) })
+				.getMany();
+			for (const row of rows) out.set(row.id as string, (row as { deletedAt?: Date | null }).deletedAt ? null : (row.parentId ?? null));
+		}
+		return out;
 	}
 
 	/** The PAGE and FOLDER nodes directly under the given folders (deleted and archived ones included). */

@@ -216,6 +216,12 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			return { status: 'applied' };
 		}
 
+		// A page moved out of the synced folders in Gauzy is no longer synced: Ever Works' edits never follow it.
+		const root = link ? await this.store.existingRoot(context) : null;
+		if (link && (!root || !(await this.store.ancestry(context, page, root)).underRoot)) {
+			await this.links.unlink(link, 'moved out of the synced folders in Gauzy; both documents are kept');
+			return { status: 'skipped', message: 'the Gauzy page was moved out of the synced folders; it is no longer synced' };
+		}
 		const fields: Partial<DocsPageFields> = { metadata: mergeMetadata(page.metadata, everWorksMetadataOf(document)) };
 		const next: DocSnapshot = { ...before, ewFolderId: document.folderId ?? null, status: document.status, reviewState: document.reviewState, locked: !!document.locked, eHash };
 		const gauzyHash = this.gauzyHash(page, resolveMention);
@@ -293,8 +299,24 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		const before = this.links.snapshot<FolderSnapshot>(link);
 		let row = link ? await this.store.load(context, link.gauzyId as ID, true) : null;
 		if (!row) row = await this.store.byExternalId(context, DOCS_TREE.folder(folder.id));
+		if (row && (row as { deletedAt?: Date | null }).deletedAt) {
+			// Deleted in Gauzy: it stays deleted (its provenance is unique, deleted rows included, so it is never
+			// created twice) and the pairing ends; its documents land in Organization/.
+			await this.links.record({
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				integrationTenantId: context.integrationTenantId,
+				entityType: EverWorksLinkType.DOC_FOLDER,
+				gauzyId: row.id as ID,
+				ewId: folder.id,
+				ewVersion: version ?? folder.version ?? null,
+				direction: 'inbound',
+				state: EverWorksLinkState.UNLINKED
+			});
+			return this.store.organizationFolder(context);
+		}
 		let id: ID;
-		if (row && !(row as { deletedAt?: Date | null }).deletedAt) {
+		if (row) {
 			id = row.id as ID;
 			await this.store.updateFolder(context, id, {
 				...(folder.name !== (before.name ?? row.name) ? { name: folder.name } : {}),
@@ -324,13 +346,15 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 	private async folderFor(context: EverWorksMappingContext, ewFolderId: string, depth: number): Promise<ID> {
 		if (depth > MAX_FOLDER_DEPTH) return this.store.organizationFolder(context);
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.DOC_FOLDER, ewFolderId);
-		if (link && link.state !== EverWorksLinkState.UNLINKED) {
+		// A folder that is no longer synced (deleted in Gauzy) holds nothing here: its documents go to Organization/.
+		if (link?.state === EverWorksLinkState.UNLINKED) return this.store.organizationFolder(context);
+		if (link) {
 			const row = await this.store.load(context, link.gauzyId as ID);
 			if (row && row.kind === DocumentKindEnum.FOLDER) return row.id as ID;
 		}
 		const folder = await this.fetchFolder(context, ewFolderId);
 		if (!folder) return this.store.organizationFolder(context);
-		return this.ensureFolder(context, folder, link && link.state !== EverWorksLinkState.UNLINKED ? link : null, folder.version ?? null, depth);
+		return this.ensureFolder(context, folder, link, folder.version ?? null, depth);
 	}
 
 	/** Where an Ever Works document lands: its library folder (or `Organization/`), or its Work's folder. */
@@ -406,7 +430,9 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		const [, resolveMention] = await this.resolvers(context, null);
 		const markdown = this.gauzyMarkdown(page, resolveMention);
 		if (!link) return this.createDocument(context, client, page, placement, markdown, change.actorUserId as ID | null);
-		return this.updateDocument(context, client, page, placement, markdown, link);
+		// Edits go as the person who made them (else the page's last editor), like the create.
+		const actAs = await everWorksUserOfGauzyUser(this.dataSource, this.links, context, (change.actorUserId as ID | null) ?? (page.updatedByUserId as ID | undefined) ?? null);
+		return this.updateDocument(context, client, page, placement, markdown, link, actAs);
 	}
 
 	private async createDocument(
@@ -472,7 +498,8 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		page: Document,
 		placement: DocsPlacement,
 		markdown: string,
-		link: EverWorksEntityLink
+		link: EverWorksEntityLink,
+		actAs: string | null
 	): Promise<EverWorksPushOutcome> {
 		let pair = link;
 		for (let attempt = 0; attempt < 2; attempt++) {
@@ -498,15 +525,15 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			try {
 				let current: EverWorksKbDocument | null = null;
 				let ifMatch = pair.ewVersion ?? undefined;
+				const write = (method: 'POST' | 'PATCH', path: string, body?: unknown, version?: number) =>
+					this.asPersonElseKey(actAs, (asUser) => client.request<EverWorksKbDocument>(method, path, { body, ifMatchVersion: version, actAsUserId: asUser }));
 				if (unarchive) {
-					current = await client.request<EverWorksKbDocument>('POST', `/kb/documents/${id}/unarchive`);
+					current = await write('POST', `/kb/documents/${id}/unarchive`);
 					ifMatch = current.version;
 				}
-				if (Object.keys(patch).length) {
-					current = await client.request<EverWorksKbDocument>('PATCH', `/kb/documents/${id}`, { body: patch, ifMatchVersion: ifMatch });
-				}
-				if (move) current = await client.request<EverWorksKbDocument>('POST', `/kb/documents/${id}/move`, { body: { folderId: ewFolderId } });
-				if (accept) current = await client.request<EverWorksKbDocument>('POST', `/kb/documents/${id}/accept`);
+				if (Object.keys(patch).length) current = await write('PATCH', `/kb/documents/${id}`, patch, ifMatch);
+				if (move) current = await write('POST', `/kb/documents/${id}/move`, { folderId: ewFolderId });
+				if (accept) current = await write('POST', `/kb/documents/${id}/accept`);
 				const latest = current as EverWorksKbDocument;
 				await this.record(context, page.id as ID, latest, latest.version ?? null, {
 					title: page.name,
@@ -535,9 +562,11 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 				// Works, with Gauzy's edit kept as a version (plan 05 §3).
 				const remote = await this.fetchDocument(context, pair.ewId);
 				if (!remote) return { status: 'skipped', message: 'the document is no longer visible in Ever Works' };
+				// A field Gauzy changed is kept only while Ever Works still has the last-synced value: when both
+				// changed it, Ever Works' version wins (and the conflict is logged), as for a live event.
 				const keep = new Set<KeptField>();
-				if (patch.title !== undefined) keep.add('title');
-				if (patch.description !== undefined) keep.add('description');
+				if (patch.title !== undefined && remote.title === before.title) keep.add('title');
+				if (patch.description !== undefined && gauzyDescriptionOf(remote.description) === (before.description ?? null)) keep.add('description');
 				if (patch.body !== undefined && markdownHash(remote.body ?? '') === before.eHash) keep.add('body');
 				if (move) keep.add('folder');
 				await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `doc-412:${pair.ewId}` }, () => this.applyDocument(context, pair, remote, remote.version ?? null, keep));
@@ -608,13 +637,25 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		}
 		const client = this.client(context);
 		const name = cut(folder.name, KB_LIMITS.folderName) || 'Folder';
+		// Folder writes go as the person who made them (an organization admin in Ever Works), else as the key.
+		const actAs = await everWorksUserOfGauzyUser(
+			this.dataSource,
+			this.links,
+			context,
+			(change.actorUserId as ID | null) ?? (folder.updatedByUserId as ID | undefined) ?? (folder.createdByUserId as ID | undefined) ?? null
+		);
 		if (!link) {
 			let created: EverWorksKbFolder;
 			try {
-				created = await client.request<EverWorksKbFolder>('POST', '/kb/folders', {
-					body: { name, parentId: ewParentId, externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: context.connection.id, externalId: folder.id } },
-					idempotencyKey: createHash('sha256').update(`${context.connection.id}:${EverWorksLinkType.DOC_FOLDER}:${folder.id}:create:${ewParentId}:${name}`).digest('hex')
-				});
+				created = await this.asPersonElseKey(actAs, (asUser) =>
+					client.request<EverWorksKbFolder>('POST', '/kb/folders', {
+						body: { name, parentId: ewParentId, externalRef: { source: EVER_WORKS_LINK_SOURCE, installationId: context.connection.id, externalId: folder.id } },
+						idempotencyKey: createHash('sha256')
+							.update(`${context.connection.id}:${EverWorksLinkType.DOC_FOLDER}:${folder.id}:create:${asUser ? 'user' : 'integration'}:${ewParentId}:${name}`)
+							.digest('hex'),
+						actAsUserId: asUser
+					})
+				);
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && error.status === 409)) throw error;
 				// A sibling of that name exists: the folders are the same folder, paired (unless it is paired already).
@@ -633,7 +674,9 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (ewParentId !== (before.ewParentId ?? null)) patch.parentId = ewParentId;
 		if (!Object.keys(patch).length) return { status: 'skipped', message: 'nothing changed' };
 		try {
-			const updated = await client.request<EverWorksKbFolder>('PATCH', `/kb/folders/${encodeURIComponent(link.ewId)}`, { body: patch, ifMatchVersion: link.ewVersion ?? undefined });
+			const updated = await this.asPersonElseKey(actAs, (asUser) =>
+				client.request<EverWorksKbFolder>('PATCH', `/kb/folders/${encodeURIComponent(link.ewId)}`, { body: patch, ifMatchVersion: link.ewVersion ?? undefined, actAsUserId: asUser })
+			);
 			await this.recordFolder(context, folder.id as ID, updated, folder.name, 'outbound');
 			return { status: 'pushed' };
 		} catch (error) {
@@ -672,7 +715,18 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			const last = this.lastSweep.get(context.integrationTenantId);
 			this.lastSweep.set(context.integrationTenantId, Date.now());
 			const folderIds = await this.store.treeFolderIds(context, root);
-			const nodes = await this.store.nodesUnder(context, folderIds, last ? new Date(last - 2 * 60_000) : undefined);
+			const nodes: Array<{ id?: unknown; kind?: DocumentKindEnum }> = await this.store.nodesUnder(context, folderIds, last ? new Date(last - 2 * 60_000) : undefined);
+			// Pairs whose Gauzy node left the tree (a move the subscriber did not see, or a delete): their push ends
+			// the pairing (a page) or skips it (a folder).
+			const inTree = new Set<string>(folderIds as string[]);
+			for (const type of [EverWorksLinkType.DOC, EverWorksLinkType.DOC_FOLDER]) {
+				const pairs = (await this.links.list(context.integrationTenantId, type)).filter((pair) => pair.state !== EverWorksLinkState.UNLINKED);
+				const parents = await this.store.parentsOf(context, pairs.map((pair) => pair.gauzyId as ID));
+				for (const pair of pairs) {
+					const parent = parents.get(pair.gauzyId as string);
+					if (!parent || !inTree.has(parent)) nodes.push({ id: pair.gauzyId, kind: type === EverWorksLinkType.DOC ? DocumentKindEnum.PAGE : DocumentKindEnum.FOLDER });
+				}
+			}
 			for (const [index, node] of nodes.entries()) {
 				if (index % 50 === 0 && stillOwner && !(await stillOwner())) return;
 				await this.queue.enqueue({
