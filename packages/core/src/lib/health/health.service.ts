@@ -16,7 +16,6 @@ import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 
-
 // Readiness probes call the health check every few seconds: its progress lines are debug-level (LOG_LEVEL).
 const logger = new Logger('HealthService');
 @Injectable()
