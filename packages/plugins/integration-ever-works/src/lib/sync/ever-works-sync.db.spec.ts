@@ -535,23 +535,40 @@ describe('Ever Works sync engine on SQLite', () => {
 			const queue = new EverWorksOutboundQueue(dataSource);
 			const pusher = new EverWorksOutboundPusher(dataSource, log, undefined, connections);
 			let calls = 0;
+			let revoked = true;
 			pusher.register({
 				entityTypes: [EverWorksLinkType.TASK],
 				push: async () => {
 					calls++;
-					throw new EverWorksApiError(401, 'unauthorized', 'The key was revoked.');
+					if (revoked) throw new EverWorksApiError(401, 'unauthorized', 'The key was revoked.');
+					return { status: 'pushed' };
 				}
 			});
 			for (const id of ['k1', 'k2', 'k3']) await queue.enqueue(trigger(id));
 			for (const key of [...mock.keys.keys()]) mock.revokeKey(key);
-			await pusher.drain(connection, 100, new Date(Date.now() + 10_000));
+			const start = Date.now();
+			await pusher.drain(connection, 100, new Date(start + 10_000));
 			expect(calls).toBe(1);
-			const rows = await dataSource.getRepository(EverWorksOutboundChange).find();
+			const repo = dataSource.getRepository(EverWorksOutboundChange);
+			let rows = await repo.find();
 			expect(rows.map((row) => row.status).sort()).toEqual([EverWorksOutboundStatus.DEFERRED, EverWorksOutboundStatus.PENDING, EverWorksOutboundStatus.PENDING]);
 			expect(rows.every((row) => (row.attempts ?? 0) === 0)).toBe(true);
 			expect(await dataSource.getRepository(EverWorksSyncLog).count({ where: { action: 'push_refused' } })).toBe(0);
 			await reload();
 			expect(connection.status).toBe(EverWorksConnectionStatus.NEEDS_REAUTH);
+			// The admin replaces the key (#11031 review): every saved change goes out, none counted as a failed attempt.
+			await connections.rotateKey(connection.id as string, { apiKey: mock.addKey({ organizations: [{ id: ewOrgId, slug: 'acme', displayName: 'Acme' }] }) });
+			await reload();
+			expect(connection.status).toBe(EverWorksConnectionStatus.ACTIVE);
+			revoked = false;
+			await pusher.drain(connection, 100, new Date(start + 20_000));
+			rows = await repo.find();
+			// The 401'd change waits for its retry time; the others go at once.
+			expect(rows.map((row) => row.status).sort()).toEqual([EverWorksOutboundStatus.DEFERRED, EverWorksOutboundStatus.PUSHED, EverWorksOutboundStatus.PUSHED]);
+			await pusher.drain(connection, 100, new Date(start + 6 * 60_000));
+			rows = await repo.find();
+			expect(rows.map((row) => row.status)).toEqual([EverWorksOutboundStatus.PUSHED, EverWorksOutboundStatus.PUSHED, EverWorksOutboundStatus.PUSHED]);
+			expect(rows.every((row) => (row.attempts ?? 0) === 0)).toBe(true);
 		});
 
 		it('a pass whose feed poll finds the key revoked applies and pushes nothing (review F17)', async () => {
