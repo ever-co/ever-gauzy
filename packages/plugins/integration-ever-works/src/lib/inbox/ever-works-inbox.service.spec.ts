@@ -368,6 +368,9 @@ describe('EverWorksInboxService', () => {
 		pairing.state = EverWorksLinkState.UNLINKED;
 		await expect(service.reply(gauzyItem(item), { optionId: 'pro' }, { id: ADA_USER, tenantId: TENANT })).rejects.toBeInstanceOf(ForbiddenException);
 		expect(mock.requests.some((r) => r.method === 'POST' && r.path.endsWith('/reply'))).toBe(false);
+		// …her read / archive stays in Gauzy (no PATCH, no error)…
+		await expect(service.mirrorState(gauzyItem(item), { userId: ADA_USER } as never, { isRead: true, isArchived: true })).resolves.toBeUndefined();
+		expect(mock.requests.some((r) => r.method === 'PATCH' && r.path.endsWith('/state'))).toBe(false);
 		// …and her Ever Works items are not delivered to it.
 		await expect(apply(envelope('inbox.item.created', item))).resolves.toMatchObject({ status: 'deferred' });
 		expect(writes).toHaveLength(0);
