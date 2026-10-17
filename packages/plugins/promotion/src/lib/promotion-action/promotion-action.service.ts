@@ -12,6 +12,7 @@ import {
 	PromotionType
 } from '../promotion.types';
 import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+import { TypeOrmPromotionRepository } from '../promotion/repository/type-orm-promotion.repository';
 
 /**
  * The effect half of a promotion.
@@ -25,9 +26,18 @@ import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
  */
 @Injectable()
 export class PromotionActionService extends TenantScopedCrudService<PromotionAction> {
+	/**
+	 * @param typeOrmPromotionActionRepository The action table, TypeORM.
+	 * @param mikroOrmPromotionActionRepository The action table, MikroORM.
+	 * @param typeOrmPromotionRepository The promotion table, read to prove the promotion an action is written on is
+	 * the caller's and to learn its type (the package reads through the TypeORM repositories under either ORM, as
+	 * `PromotionService.createPromotion` does). Always injected by the module; optional in the signature only so
+	 * suites that build the service by hand keep compiling.
+	 */
 	constructor(
 		readonly typeOrmPromotionActionRepository: TypeOrmPromotionActionRepository,
-		readonly mikroOrmPromotionActionRepository: MikroOrmPromotionActionRepository
+		readonly mikroOrmPromotionActionRepository: MikroOrmPromotionActionRepository,
+		readonly typeOrmPromotionRepository?: TypeOrmPromotionRepository
 	) {
 		super(typeOrmPromotionActionRepository, mikroOrmPromotionActionRepository);
 	}
@@ -182,6 +192,106 @@ export class PromotionActionService extends TenantScopedCrudService<PromotionAct
 		}
 
 		return stored;
+	}
+
+	/**
+	 * Creates one action on a promotion (`POST /promotion-actions`).
+	 *
+	 * The route used to hand its body to the inherited `create` (review R2-G28): no `assertValid`, so a `BUY_GET`
+	 * promotion could be given a `FREE_SHIPPING` action or an `EACH` action no cap; no check that `promotionId` named a
+	 * promotion of the caller's; and no scope stamped, so the row carried whatever tenancy the body stated. The rules
+	 * are now the ones {@link replaceActions} applies to a whole set: the promotion is read in the caller's tenant and
+	 * organization, the action is validated against its type, the identifier and the tenancy columns of the body are
+	 * dropped and the caller's scope is stamped.
+	 *
+	 * @param input The action to create.
+	 * @returns The stored action.
+	 * @throws NotFoundException when the promotion is not the caller's.
+	 * @throws BadRequestException when the action is not legal for the promotion's type.
+	 */
+	async createAction(input: Partial<IPromotionAction>): Promise<IPromotionAction> {
+		const promotion = await this.findOwningPromotion(input?.promotionId);
+
+		this.assertValid(input, promotion.type);
+
+		const fields = this.withoutKeys(input);
+
+		return this.create({ ...fields, promotionId: promotion.id, ...this.scope } as never);
+	}
+
+	/**
+	 * Changes one action (`PUT /promotion-actions/:id`).
+	 *
+	 * The route used to hand its body to the inherited `update` with neither check (review R2-G28). The action is read
+	 * in the caller's tenant and organization; the promotion it ends up on (its own, or the one the body moves it to)
+	 * must be the caller's too; and the action as the change leaves it is validated against that promotion's type, so
+	 * an edit cannot produce an action a replacement of the set would refuse.
+	 *
+	 * @param id The action to change.
+	 * @param input The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws NotFoundException when the action or the promotion is not the caller's.
+	 * @throws BadRequestException when the changed action is not legal for the promotion's type.
+	 */
+	async updateAction(id: ID, input: Partial<IPromotionAction>) {
+		const current = await this.findActionOrFail(id);
+		const changes = this.withoutKeys(input);
+		const promotion = await this.findOwningPromotion(changes.promotionId ?? current.promotionId);
+
+		this.assertValid({ ...current, ...changes } as Partial<IPromotionAction>, promotion.type);
+
+		return this.update(current.id, changes as never);
+	}
+
+	/**
+	 * A body without the members only the scope states: the identifier (a create carrying one is an upsert in both
+	 * ORMs) and the tenancy columns.
+	 *
+	 * @param input The body.
+	 * @returns The body without them.
+	 */
+	private withoutKeys(input: Partial<IPromotionAction>): Partial<IPromotionAction> {
+		const {
+			id: _key,
+			tenantId: _tenantId,
+			tenant: _tenant,
+			organizationId: _organizationId,
+			organization: _organization,
+			...fields
+		} = (input ?? {}) as Partial<IPromotionAction> & {
+			tenantId?: ID;
+			tenant?: unknown;
+			organizationId?: ID;
+			organization?: unknown;
+		};
+
+		return fields;
+	}
+
+	/**
+	 * Reads the promotion an action is written on, in the caller's tenant and organization.
+	 *
+	 * @param promotionId The promotion.
+	 * @returns Its identifier and its type.
+	 * @throws BadRequestException when no promotion is named.
+	 * @throws NotFoundException when it is not the caller's.
+	 */
+	private async findOwningPromotion(promotionId: ID | undefined): Promise<{ id: ID; type: PromotionType }> {
+		if (!promotionId) {
+			throw new BadRequestException('PROMOTION_NOT_FOUND: an action is written on a promotion.');
+		}
+
+		if (!this.typeOrmPromotionRepository) {
+			throw new Error('PromotionActionService: the promotion repository is not wired.');
+		}
+
+		const promotion = await this.typeOrmPromotionRepository.findOneBy({ id: promotionId, ...this.scope } as never);
+
+		if (!promotion) {
+			throw new NotFoundException('PROMOTION_NOT_FOUND: no promotion with that identifier.');
+		}
+
+		return { id: promotion.id, type: promotion.type };
 	}
 
 	/**

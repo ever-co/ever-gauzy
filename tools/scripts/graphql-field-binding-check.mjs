@@ -27,6 +27,12 @@
  * Both halves of the surface are read: the plugins, and the platform's own resolvers under
  * `packages/core/src/lib`, because a root field bound in either place is bound.
  *
+ * A flag-gated plugin — one `apps/api/src/plugins.ts` lists only behind its own flag, such as the Inbox behind
+ * `GAUZY_INBOX_ENABLED` — is not in the default composition, so the snapshot does not carry its SDL, and it must
+ * not: a deployment with the flag off serves none of it. Its resolvers are still in the source, though, so they are
+ * held to the SDL the plugin registers when it is on: `GATED_PLUGIN_SCHEMAS` names that document, the gate reads it
+ * on top of the snapshot, and both directions below then cover the plugin's fields as they cover everyone else's.
+ *
  * Run from the repository root: `node tools/scripts/graphql-field-binding-check.mjs`
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -36,18 +42,192 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const SDL = join(ROOT, 'packages', 'core', 'src', 'lib', 'graphql', 'schema', 'schema.graphql');
 const PLUGINS = join(ROOT, 'packages', 'plugins');
+const PLUGIN_LIST = join(ROOT, 'apps', 'api', 'src', 'plugins.ts');
 
 /**
- * The SDL, with descriptions removed.
+ * The SDL of each flag-gated plugin with a GraphQL surface, which the snapshot does not carry.
+ *
+ * Each entry is checked before it is read, so the list cannot drift into describing something else:
+ *
+ *   - `plugin` must be listed by `apps/api/src/plugins.ts` only behind a condition (`… ? [Plugin] : []`) — a plugin
+ *     loaded unconditionally is in the default composition, and its SDL belongs in the snapshot, not here;
+ *   - `exportName` must be what the plugin's own `@Plugin({ extensions: { schema } })` registers, so the document
+ *     read is the document served;
+ *   - the document must be a plain `gql` template (no `${…}`), since a static reader cannot evaluate one;
+ *   - none of the types it declares may already be in the snapshot — if they are, the plugin has joined the
+ *     default composition and the entry is stale.
+ */
+const GATED_PLUGIN_SCHEMAS = [
+	{
+		plugin: 'InboxPlugin',
+		flag: 'GAUZY_INBOX_ENABLED',
+		file: 'packages/plugins/inbox/src/lib/graphql/inbox.schema.ts',
+		exportName: 'inboxSchemaExtensions'
+	}
+];
+
+/**
+ * A description-free SDL text.
  *
  * GraphQL allows two description forms and this schema uses both — the block `"""…"""` and the
  * single-line `"…"` written above a field — and a description's lines are indented like the field they
  * document, so reading fields without removing them first invents fields out of prose.
  */
-const schema = readFileSync(SDL, 'utf8')
-	.replace(/"""(?:[\s\S]*?)"""/g, '')
-	.replace(/^[ \t]*"(?:[^"\\]|\\.)*"[ \t]*$/gm, '')
-	.replace(/^[ \t]*#.*$/gm, '');
+function withoutDescriptions(text) {
+	return text
+		.replace(/"""(?:[\s\S]*?)"""/g, '')
+		.replace(/^[ \t]*"(?:[^"\\]|\\.)*"[ \t]*$/gm, '')
+		.replace(/^[ \t]*#.*$/gm, '');
+}
+
+/** The text with the indentation every non-blank line shares removed, so its declarations start at column 0. */
+function dedent(text) {
+	const lines = text.split('\n');
+	const indents = lines.filter((line) => line.trim() !== '').map((line) => /^[ \t]*/.exec(line)[0].length);
+	const common = indents.length > 0 ? Math.min(...indents) : 0;
+	return lines.map((line) => line.slice(Math.min(common, /^[ \t]*/.exec(line)[0].length))).join('\n');
+}
+
+const gatedFailures = [];
+
+const snapshotSchema = withoutDescriptions(readFileSync(SDL, 'utf8'));
+const pluginList = stripComments(readFileSync(PLUGIN_LIST, 'utf8'));
+const gatedSchemas = [];
+
+for (const entry of GATED_PLUGIN_SCHEMAS) {
+	const where = `GATED_PLUGIN_SCHEMAS (${entry.plugin})`;
+	const source = readFileSync(join(ROOT, entry.file), 'utf8');
+	const start = new RegExp(`export\\s+const\\s+${entry.exportName}\\s*=\\s*gql\\s*\``).exec(source);
+	const end = start ? source.indexOf('`', start.index + start[0].length) : -1;
+
+	if (!start || end === -1) {
+		gatedFailures.push(`${where} -> ${entry.file} has no \`export const ${entry.exportName} = gql\`…\`\``);
+		continue;
+	}
+
+	const document = source.slice(start.index + start[0].length, end);
+
+	if (document.includes('${')) {
+		gatedFailures.push(
+			`${where} -> ${entry.exportName} interpolates a value, which a static reader cannot evaluate`
+		);
+		continue;
+	}
+
+	if (!new RegExp(`\\?\\s*\\[\\s*${entry.plugin}\\s*\\]\\s*:\\s*\\[\\s*\\]`).test(pluginList)) {
+		gatedFailures.push(
+			`${where} -> apps/api/src/plugins.ts does not list ${entry.plugin} behind a condition; a plugin in the ` +
+				'default composition belongs in the snapshot — remove the entry and regenerate it'
+		);
+		continue;
+	}
+
+	const pluginDir = join(ROOT, ...entry.file.split('/').slice(0, 3));
+	const registers = pluginFiles(pluginDir, '.plugin.ts').some((file) =>
+		registersSchema(readFileSync(file, 'utf8'), entry.plugin, entry.exportName)
+	);
+
+	if (!registers) {
+		gatedFailures.push(
+			`${where} -> the @Plugin({...}) of class ${entry.plugin} under ${relative(ROOT, pluginDir).split('\\').join('/')} ` +
+				`does not register \`schema: ${entry.exportName}\``
+		);
+		continue;
+	}
+
+	const text = dedent(withoutDescriptions(document));
+	const declared = [...text.matchAll(/^(?:type|interface|input|enum|union|scalar)\s+([A-Za-z_]\w*)/gm)].map(
+		(m) => m[1]
+	);
+	const alreadyServed = declared.filter((name) =>
+		new RegExp(`^(?:type|interface|input|enum|union|scalar)\\s+${name}\\b`, 'm').test(snapshotSchema)
+	);
+
+	if (alreadyServed.length > 0) {
+		gatedFailures.push(
+			`${where} -> the snapshot already declares ${alreadyServed.join(', ')}; the plugin is in the default ` +
+				'composition now, so the entry is stale'
+		);
+		continue;
+	}
+
+	gatedSchemas.push({ ...entry, text, types: declared.length });
+}
+
+if (gatedFailures.length > 0) {
+	console.error('FAILED — a flag-gated plugin schema this gate reads cannot be trusted:');
+	for (const failure of gatedFailures) console.error(`  ${failure}`);
+	process.exit(1);
+}
+
+/** The snapshot, then each flag-gated plugin's SDL: everything a resolver in the source may bind to. */
+const schema = [snapshotSchema, ...gatedSchemas.map((gated) => gated.text)].join('\n');
+
+/**
+ * Source text with its `//` and `/* … *\/` comments removed, strings kept intact — so a commented-out
+ * registration is not read as one.
+ */
+function stripComments(source) {
+	let out = '';
+	let quote = null;
+
+	for (let index = 0; index < source.length; index++) {
+		const character = source[index];
+		const next = source[index + 1];
+
+		if (quote) {
+			out += character;
+			if (character === '\\') {
+				out += next ?? '';
+				index++;
+			} else if (character === quote) {
+				quote = null;
+			}
+		} else if (character === '/' && next === '/') {
+			while (index < source.length && source[index] !== '\n') index++;
+			out += '\n';
+		} else if (character === '/' && next === '*') {
+			const end = source.indexOf('*/', index + 2);
+			index = end === -1 ? source.length : end + 1;
+		} else {
+			if (character === "'" || character === '"' || character === '`') quote = character;
+			out += character;
+		}
+	}
+
+	return out;
+}
+
+/**
+ * Whether the `@…Plugin({ … })` decorator of `class <plugin>` itself registers `schema: <exportName>` — not a comment,
+ * and not another class in the same file.
+ */
+function registersSchema(source, plugin, exportName) {
+	const code = stripComments(source);
+	const declaration = new RegExp(`\\bclass\\s+${plugin}\\b`).exec(code);
+	if (!declaration) return false;
+
+	const decorators = [...code.slice(0, declaration.index).matchAll(/@\w*Plugin\(/g)];
+	const decorator = decorators.at(-1);
+	if (!decorator) return false;
+
+	const open = decorator.index + decorator[0].length - 1;
+	const close = closingParen(code, open);
+	if (close === -1 || close > declaration.index) return false;
+
+	return new RegExp(`\\bschema:\\s*${exportName}\\b`).test(code.slice(open, close));
+}
+
+/** Every file under a directory with the given suffix, skipping build output. */
+function pluginFiles(dir, suffix, found = []) {
+	for (const entry of readdirSync(dir)) {
+		if (entry === 'node_modules' || entry === 'dist') continue;
+		const full = join(dir, entry);
+		if (statSync(full).isDirectory()) pluginFiles(full, suffix, found);
+		else if (entry.endsWith(suffix)) found.push(full);
+	}
+	return found;
+}
 
 /** The text between the brace at `open` and the brace that closes it. */
 function braceBody(open) {
@@ -396,6 +576,10 @@ if (failures.length > 0) {
 	for (const failure of failures) console.error(`  ${failure}`);
 	console.error('');
 	console.error(`${failures.length} unbound field(s) of ${checked.fields + checked.roots} checked.`);
+	console.error(
+		'A field of a flag-gated plugin (one apps/api/src/plugins.ts lists only behind its flag) is in no snapshot: ' +
+			'name the SDL its @Plugin registers in GATED_PLUGIN_SCHEMAS.'
+	);
 	process.exit(1);
 }
 
@@ -494,5 +678,11 @@ console.log(
 		(checked.typelessResolvers > 0 ? ` (${checked.typelessResolvers} typeless resolver(s) bind root fields)` : '') +
 		`; ${declaredRoots.length - recorded.length} of ${declaredRoots.length} declared root field(s) are ` +
 		`bound, and ${recorded.length} are recorded as unbound with their reason; ` +
-		`${declaredWithDeleted.size} field(s) offer \`withDeleted\` and every one of them reads it.`
+		`${declaredWithDeleted.size} field(s) offer \`withDeleted\` and every one of them reads it` +
+		(gatedSchemas.length > 0
+			? `; the snapshot was read with the SDL of ${gatedSchemas.length} flag-gated plugin(s) it does not carry (` +
+				gatedSchemas.map((gated) => `${gated.plugin} behind ${gated.flag}, ${gated.types} type(s)`).join('; ') +
+				')'
+			: '') +
+		'.'
 );

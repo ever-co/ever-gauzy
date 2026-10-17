@@ -17,6 +17,7 @@ export const SUBSCRIPTION_STREAMED_EVENTS: readonly string[] = [
 	'subscription.paused',
 	'subscription.resumed',
 	'subscription.canceled',
+	'subscription.cancellation-undone',
 	'subscription.expired',
 	'subscription.payment-failed',
 	'subscription.renewed'

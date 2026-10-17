@@ -86,6 +86,23 @@ describe('Roles & Permissions labels', () => {
 		expect(missing).toEqual([]);
 	});
 
+	it('labels every PermissionsEnum value in en.json, grouped or not (Q8c)', () => {
+		// A value outside PermissionGroups is not toggled on this page, but it is still named elsewhere — the
+		// "insufficient permissions" message lists the missing ones — and English is every language's fallback.
+		const missing = Object.values(PermissionsEnum).filter((permission) => !hasLabel(en, permission));
+		expect(missing).toEqual([]);
+	});
+
+	it.each([...languages.keys()])('%s.json holds no empty permission label (Q8c)', (language) => {
+		// An empty string is a translation as far as ngx-translate is concerned: it shadows the English fallback,
+		// so the toggle renders with no label at all — worse than a missing key.
+		const namespace = permissionsNamespace(languages.get(language) ?? {});
+		const empty = Object.entries(namespace)
+			.filter(([, value]) => typeof value === 'string' && value.trim().length === 0)
+			.map(([key]) => key);
+		expect(empty).toEqual([]);
+	});
+
 	it.each(GROUPS)('places every %s permission in a titled section, none in "Other"', (group, sections) => {
 		const other = toPermissionSections(PermissionGroups[group], sections).find(
 			(section) => section.key === OTHER_PERMISSION_SECTION

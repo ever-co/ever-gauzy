@@ -313,6 +313,27 @@ export class SubscriptionController extends CrudController<Subscription> {
 	}
 
 	/**
+	 * Withdraws a cancellation at the end of the period, so the subscription keeps billing.
+	 *
+	 * @param id The subscription.
+	 * @param request The request, which carries the version the caller read the subscription at.
+	 * @returns The subscription, billing on.
+	 */
+	@ApiOperation({ summary: 'Undo a cancellation at the end of the period' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The subscription keeps billing.' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The cancellation already took effect; reactivate the subscription as a new one.'
+	})
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.undo-cancellation', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
+	@Post(':id/undo-cancellation')
+	async undoCancellation(@Param('id', UUIDValidationPipe) id: ID, @Req() request: Request): Promise<Subscription> {
+		return await this.subscriptionService.undoCancellation(id, versionExpectationOf(request));
+	}
+
+	/**
 	 * Expires a subscription.
 	 *
 	 * @param id The subscription to expire.

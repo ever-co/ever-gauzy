@@ -816,7 +816,7 @@ export class SubscriptionOrderService implements ISubscriptionOrderGatewayPort {
 				requiresShipping: line.requiresShipping,
 				weight: line.weight,
 				position: line.position
-			});
+			}, undefined, { statedPrice: true });
 		}
 
 		if (input.changeLine) {
@@ -830,7 +830,7 @@ export class SubscriptionOrderService implements ISubscriptionOrderGatewayPort {
 				isDiscountable: false,
 				requiresShipping: false,
 				position: 0
-			});
+			}, undefined, { statedPrice: true });
 		} else if (input.setupFee.isPositive()) {
 			// The setup fee is an amount the plan charges once, with no catalogue item behind it: it is
 			// a line of its own so the invoice shows what it is, and it is not discountable because the
@@ -844,7 +844,7 @@ export class SubscriptionOrderService implements ISubscriptionOrderGatewayPort {
 				isDiscountable: false,
 				requiresShipping: false,
 				position: input.lines.length
-			});
+			}, undefined, { statedPrice: true });
 		}
 
 		return await this.cartService.findOneWithContent(cart.id);

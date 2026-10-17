@@ -43,6 +43,18 @@ export class IntegrationTenantUpdateHandler implements ICommandHandler<Integrati
 			// Extract properties from the request.
 			let { organizationId, isActive, isArchived, settings = [] } = request;
 
+			// The connection is read under the organization the caller states (Q8a). The id used to be read under the
+			// tenant alone, so a caller stating an organization it belongs to — which is all the membership rule checks
+			// on either protocol — changed the connection of ANOTHER organization of the tenant, and wrote that
+			// connection's settings stamped with the stated organization. A connection that is not the stated
+			// organization's is not found. With no organization stated the read stays the tenant's, as before.
+			const integration = await this._integrationTenantService.findOneByIdString(integrationId, {
+				where: organizationId ? { organizationId } : {}
+			});
+
+			// The settings belong to the connection's own organization, whatever the request carried.
+			organizationId = integration.organizationId ?? organizationId;
+
 			// Map and assign 'settings' and 'entitySettings' with tenant and organization IDs
 			settings = settings.map((item: IIntegrationSetting) => ({
 				...item,
@@ -63,11 +75,15 @@ export class IntegrationTenantUpdateHandler implements ICommandHandler<Integrati
 				await this._commandBus.execute(new IntegrationSettingUpdateCommand(integrationId, settings));
 			}
 
-			// Update the integration tenant's status and archive status.
-			await this._integrationTenantService.update(integrationId, {
-				isActive,
-				isArchived
-			});
+			// Update the integration tenant's status and archive status — predicated on the organization the row was read
+			// under, so the statement itself cannot reach another organization's connection.
+			await this._integrationTenantService.update(
+				organizationId ? ({ id: integrationId, organizationId } as any) : integrationId,
+				{
+					isActive,
+					isArchived
+				}
+			);
 
 			// Retrieve and return the updated integration tenant.
 			return await this._integrationTenantService.findOneByIdString(integrationId);

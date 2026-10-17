@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { PromotionActionService } from './promotion-action.service';
@@ -359,5 +359,144 @@ describe('PromotionActionService.replaceActions — the whole set, in order (doc
 			)
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(actions).toEqual([]);
+	});
+});
+
+/**
+ * R2-G28: `POST /promotion-actions` and `PUT /promotion-actions/:id` went to the inherited create and update - no
+ * `assertValid`, no check that the promotion is the caller's, no scope stamped on a create - while
+ * `PUT /promotions/:id/actions` (and GraphQL) apply all three to a whole set.
+ */
+describe('PromotionActionService.createAction / updateAction — one action, the set’s rules (R2-G28)', () => {
+	const SIBLING_ORG = '00000000-0000-4000-8000-0000000000ff';
+	const FOREIGN_PROMOTION = '00000000-0000-4000-8000-0000000000a9';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	function scoped(rows: Array<Record<string, unknown>>) {
+		const actions = rows as unknown as IActionRow[];
+		const promotions = [
+			{ id: PROMOTION, tenantId: TENANT, organizationId: ORG, type: PromotionType.BUY_GET },
+			{ id: FOREIGN_PROMOTION, tenantId: TENANT, organizationId: SIBLING_ORG, type: PromotionType.STANDARD }
+		];
+		const repository = {
+			findOneBy: async (where?: Record<string, unknown>) =>
+				actions.filter((row) => matches(row, where))[0] ?? null,
+			create: (partial: IActionRow) => ({ id: `act-${actions.length + 1}`, ...partial }),
+			save: async (entity: IActionRow) => {
+				actions.push(entity);
+
+				return entity;
+			},
+			update: async (criteria: Record<string, unknown>, partial: Partial<IActionRow>) => {
+				const matched = actions.filter((row) => matches(row, criteria));
+
+				matched.forEach((row) => Object.assign(row, partial));
+
+				return { affected: matched.length, raw: [], generatedMaps: [] };
+			}
+		};
+		const promotionRepository = {
+			findOneBy: async (where?: Record<string, unknown>) =>
+				promotions.filter((row) => matches(row, where))[0] ?? null
+		};
+
+		return {
+			actions,
+			service: new PromotionActionService(repository as never, {} as never, promotionRepository as never)
+		};
+	}
+
+	const percentage = {
+		promotionId: PROMOTION,
+		type: PromotionActionType.PERCENTAGE,
+		targetType: PromotionActionTargetType.ITEMS,
+		allocation: PromotionActionAllocation.ACROSS,
+		value: '10',
+		isTaxInclusive: false,
+		position: 0
+	};
+
+	it('refuses an action the promotion’s type cannot carry, and stores nothing', async () => {
+		const { service, actions } = scoped([]);
+
+		await expect(
+			service.createAction({ ...percentage, type: PromotionActionType.FREE_SHIPPING, currency: 'USD' } as never)
+		).rejects.toThrow(/PROMOTION_NOT_APPLICABLE/);
+		await expect(
+			service.createAction({ ...percentage, allocation: PromotionActionAllocation.EACH } as never)
+		).rejects.toThrow(/ACTION_MAX_QUANTITY_REQUIRED/);
+		expect(actions).toHaveLength(0);
+	});
+
+	it('refuses an action on a promotion that is not the caller’s', async () => {
+		const { service, actions } = scoped([]);
+
+		await expect(
+			service.createAction({ ...percentage, promotionId: FOREIGN_PROMOTION } as never)
+		).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.createAction({ ...percentage, promotionId: undefined } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(actions).toHaveLength(0);
+	});
+
+	it('stores a legal action with the caller’s scope, whatever key and tenancy the body states', async () => {
+		const { service, actions } = scoped([]);
+
+		await service.createAction({
+			...percentage,
+			id: 'act-of-someone-else',
+			tenantId: 'another-tenant',
+			organizationId: SIBLING_ORG
+		} as never);
+
+		expect(actions).toHaveLength(1);
+		expect(actions[0]).toMatchObject({
+			promotionId: PROMOTION,
+			tenantId: TENANT,
+			organizationId: ORG,
+			value: '10'
+		});
+		expect(actions[0].id).not.toBe('act-of-someone-else');
+	});
+
+	it('validates the action as an edit leaves it, and the promotion it is moved to', async () => {
+		const { service, actions } = scoped([
+			{ id: 'act-1', tenantId: TENANT, organizationId: ORG, ...percentage, value: '10' }
+		]);
+
+		await expect(service.updateAction('act-1', { value: '150' } as never)).rejects.toThrow(/ACTION_TIERS_INVALID/);
+		await expect(
+			service.updateAction('act-1', { allocation: PromotionActionAllocation.EACH } as never)
+		).rejects.toThrow(/ACTION_MAX_QUANTITY_REQUIRED/);
+		await expect(service.updateAction('act-1', { promotionId: FOREIGN_PROMOTION } as never)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+		expect(actions[0]).toMatchObject({ value: '10', promotionId: PROMOTION });
+
+		await service.updateAction('act-1', { value: '25', organizationId: SIBLING_ORG } as never);
+
+		expect(actions[0]).toMatchObject({ value: '25', organizationId: ORG });
+	});
+
+	it('answers 404 for an action of a sibling organization before writing anything', async () => {
+		const { service, actions } = scoped([
+			{
+				id: 'act-1',
+				tenantId: TENANT,
+				organizationId: SIBLING_ORG,
+				...percentage,
+				promotionId: FOREIGN_PROMOTION
+			}
+		]);
+
+		await expect(service.updateAction('act-1', { value: '20' } as never)).rejects.toBeInstanceOf(NotFoundException);
+		expect(actions[0].value).toBe('10');
 	});
 });
