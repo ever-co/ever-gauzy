@@ -445,9 +445,7 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 		}
 
 		if (!row.tenantId) {
-			throw new BadRequestException(
-				'A shipped search index definition is never changed in place; it is changed for one organization.'
-			);
+			throw new BadRequestException('A shipped search index definition is never changed in place; it is changed for one organization.');
 		}
 
 		return await this.typeOrmSearchIndexDefinitionRepository.save(row);

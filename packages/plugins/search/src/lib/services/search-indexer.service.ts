@@ -490,7 +490,10 @@ export class SearchIndexerService {
 	 * @param rows The source rows.
 	 * @returns Channel ids by source id.
 	 */
-	async resolveChannels(definition: ISearchIndexRegistration, rows: SearchSourceRow[]): Promise<Map<string, ID[]>> {
+	async resolveChannels(
+		definition: ISearchIndexRegistration,
+		rows: SearchSourceRow[]
+	): Promise<Map<string, ID[]>> {
 		const resolved = new Map<string, ID[]>();
 		const pivotName = definition.channels;
 
@@ -803,9 +806,7 @@ function normaliseVersion(value: unknown): number {
  * @returns The singular.
  */
 function singular(table: string): string {
-	return String(table ?? '')
-		.replace(/ies$/, 'y')
-		.replace(/s$/, '');
+	return String(table ?? '').replace(/ies$/, 'y').replace(/s$/, '');
 }
 
 /**

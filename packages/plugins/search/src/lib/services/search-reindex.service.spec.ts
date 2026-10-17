@@ -123,8 +123,7 @@ function matches(row: Row, where: any = {}): boolean {
 					return row[field] === null || row[field] === undefined;
 				case 'moreThanOrEqual':
 					return (
-						row[field] !== undefined &&
-						new Date(row[field]).getTime() >= new Date(operator._value as any).getTime()
+						row[field] !== undefined && new Date(row[field]).getTime() >= new Date(operator._value as any).getTime()
 					);
 				case 'lessThan':
 					// The stale-document count compares the definition version a document was stamped with
@@ -158,9 +157,7 @@ const VARIANT: ISearchIndexRegistration = {
 	keywordFields: ['sku'],
 	sourceUpdatedAtField: 'updatedAt',
 	channels: 'product_variant_channel',
-	fields: [
-		{ name: 'sku', kind: SearchFieldKind.KEYWORD, weight: 1, searchable: true, filterable: true, facetable: false }
-	]
+	fields: [{ name: 'sku', kind: SearchFieldKind.KEYWORD, weight: 1, searchable: true, filterable: true, facetable: false }]
 };
 const CONTACT: ISearchIndexRegistration = {
 	entity: 'organization_contact',
@@ -168,9 +165,7 @@ const CONTACT: ISearchIndexRegistration = {
 	permission: 'ORG_CONTACT_VIEW' as never,
 	titleTemplate: '{{name}}',
 	sourceUpdatedAtField: 'updatedAt',
-	fields: [
-		{ name: 'name', kind: SearchFieldKind.TEXT, weight: 1, searchable: true, filterable: false, facetable: false }
-	]
+	fields: [{ name: 'name', kind: SearchFieldKind.TEXT, weight: 1, searchable: true, filterable: false, facetable: false }]
 };
 
 /** A source row of the channel-scoped declaration. */
@@ -224,12 +219,7 @@ function reindexFixture(
 		name: targets[tableName].name,
 		targetName: targets[tableName].name,
 		target: targets[tableName],
-		columns: [
-			{ propertyName: 'id' },
-			{ propertyName: 'updatedAt' },
-			{ propertyName: 'tenantId' },
-			{ propertyName: 'organizationId' }
-		],
+		columns: [{ propertyName: 'id' }, { propertyName: 'updatedAt' }, { propertyName: 'tenantId' }, { propertyName: 'organizationId' }],
 		relations: [],
 		...extra
 	});
@@ -310,8 +300,7 @@ function reindexFixture(
 			if (order?.indexedAt === 'DESC') {
 				return (
 					[...found].sort(
-						(left, right) =>
-							new Date(right.indexedAt ?? 0).getTime() - new Date(left.indexedAt ?? 0).getTime()
+						(left, right) => new Date(right.indexedAt ?? 0).getTime() - new Date(left.indexedAt ?? 0).getTime()
 					)[0] ?? null
 				);
 			}
@@ -431,10 +420,7 @@ describe('SearchReindexService — the scope a request states (doc 12)', () => {
 	it('rebuilds one entity for an entity scope, and refuses one nothing declares', async () => {
 		const fixture = reindexFixture();
 
-		const runs = await fixture.service.run({
-			scope: SearchReindexScope.ENTITY,
-			entity: 'organization_contact'
-		} as never);
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'organization_contact' } as never);
 
 		expect(runs).toHaveLength(1);
 		expect(runs[0]).toMatchObject({ entity: 'organization_contact', indexed: 1, batches: 1 });
@@ -455,7 +441,7 @@ describe('SearchReindexService — the scope a request states (doc 12)', () => {
 	});
 
 	it.each([
-		['a scope it does not state', {}],
+		['a scope it does not state', { }],
 		['an entity scope with no entity', { scope: SearchReindexScope.ENTITY }],
 		['a channel scope with no channel', { scope: SearchReindexScope.CHANNEL }]
 	])('refuses %s', async (_label, request) => {
@@ -482,9 +468,7 @@ describe('SearchReindexService — the plan (doc 12)', () => {
 			queued: true,
 			estimatedCount: 3
 		});
-		expect(
-			await fixture.service.plan({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never)
-		).toMatchObject({
+		expect(await fixture.service.plan({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never)).toMatchObject({
 			entity: 'product_variant',
 			estimatedCount: 2
 		});
@@ -522,10 +506,7 @@ describe('SearchReindexService — the run (doc 12, doc 05 §3.18)', () => {
 
 		fixture.tables.product_variant = fixture.tables.product_variant.filter((row) => row.id !== 'v2');
 
-		const runs = await fixture.service.run({
-			scope: SearchReindexScope.ENTITY,
-			entity: 'product_variant'
-		} as never);
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
 
 		expect(runs[0].removed).toBe(1);
 		expect(fixture.documents().map((document) => document.entityId)).toEqual(['v1']);
@@ -642,12 +623,7 @@ describe('SearchReindexService — dropping an index (doc 12)', () => {
 
 		expect(dropped.deletedCount).toBe(1);
 		// The other declaration's documents are untouched: a drop is scoped to one entity and one channel.
-		expect(
-			fixture
-				.documents()
-				.map((document) => document.entityId)
-				.sort()
-		).toEqual(['c1', 'v2']);
+		expect(fixture.documents().map((document) => document.entityId).sort()).toEqual(['c1', 'v2']);
 	});
 
 	it('refuses to drop an entity nothing declares', async () => {
@@ -809,10 +785,7 @@ describe('SearchReindexService — what a paged sweep must not do to the documen
 		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
 		fixture.tables.product_variant = fixture.tables.product_variant.filter((row) => row.id !== 'v2');
 
-		const runs = await fixture.service.run({
-			scope: SearchReindexScope.ENTITY,
-			entity: 'product_variant'
-		} as never);
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
 
 		expect(runs[0].removed).toBe(1);
 	});
@@ -824,10 +797,7 @@ describe('SearchReindexService — what a paged sweep must not do to the documen
 			definitions: [{ entity: 'product_variant', version: 4, isActive: true }]
 		});
 
-		const runs = await fixture.service.run({
-			scope: SearchReindexScope.ENTITY,
-			entity: 'product_variant'
-		} as never);
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
 
 		expect(runs[0].stale).toBe(0);
 		expect(fixture.documents().every((document) => document.definitionVersion === 4)).toBe(true);

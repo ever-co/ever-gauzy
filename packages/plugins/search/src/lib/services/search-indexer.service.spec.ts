@@ -125,10 +125,7 @@ function matches(row: Row, where: any = {}): boolean {
 				case 'isNull':
 					return row[field] === null || row[field] === undefined;
 				case 'moreThanOrEqual':
-					return (
-						row[field] !== undefined &&
-						new Date(row[field]).getTime() >= new Date(operator._value as any).getTime()
-					);
+					return row[field] !== undefined && new Date(row[field]).getTime() >= new Date(operator._value as any).getTime();
 				default:
 					throw new Error(`the in-memory double does not implement the "${operator._type}" operator`);
 			}
@@ -160,30 +157,9 @@ const DECLARATION: ISearchIndexRegistration = {
 			facetable: false,
 			source: 'product.translations.name'
 		},
-		{
-			name: 'internalReference',
-			kind: SearchFieldKind.KEYWORD,
-			weight: 1,
-			searchable: true,
-			filterable: true,
-			facetable: false
-		},
-		{
-			name: 'enabled',
-			kind: SearchFieldKind.BOOLEAN,
-			weight: 1,
-			searchable: false,
-			filterable: true,
-			facetable: true
-		},
-		{
-			name: 'productId',
-			kind: SearchFieldKind.ENTITY,
-			weight: 1,
-			searchable: false,
-			filterable: true,
-			facetable: true
-		}
+		{ name: 'internalReference', kind: SearchFieldKind.KEYWORD, weight: 1, searchable: true, filterable: true, facetable: false },
+		{ name: 'enabled', kind: SearchFieldKind.BOOLEAN, weight: 1, searchable: false, filterable: true, facetable: true },
+		{ name: 'productId', kind: SearchFieldKind.ENTITY, weight: 1, searchable: false, filterable: true, facetable: true }
 	]
 };
 
@@ -223,9 +199,7 @@ function searchFixture(
 	let sequence = 0;
 	const tables = {
 		product_variant: [...(seed.rows ?? [sourceRow('v1')])],
-		product_variant_channel: [
-			...(seed.channels ?? [{ id: 'pivot-1', productVariantId: 'v1', channelId: CHANNEL }])
-		],
+		product_variant_channel: [...(seed.channels ?? [{ id: 'pivot-1', productVariantId: 'v1', channelId: CHANNEL }])],
 		search_document: [...(seed.documents ?? [])]
 	};
 
@@ -268,8 +242,7 @@ function searchFixture(
 
 				if (order?.updatedAt === 'ASC') {
 					found = [...found].sort(
-						(left, right) =>
-							new Date(left.updatedAt ?? 0).getTime() - new Date(right.updatedAt ?? 0).getTime()
+						(left, right) => new Date(left.updatedAt ?? 0).getTime() - new Date(right.updatedAt ?? 0).getTime()
 					);
 				}
 
@@ -344,12 +317,7 @@ function searchFixture(
 
 	indexRegistry.register(seed.declaration ?? DECLARATION);
 
-	const indexer = new SearchIndexerService(
-		new SearchSourceConnection(dataSource),
-		indexRegistry,
-		providerRegistry,
-		definitionRepository
-	);
+	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, definitionRepository);
 
 	return {
 		indexer,
@@ -375,13 +343,7 @@ describe('SearchIndexerService — one row becomes one document (doc 05 §3.18, 
 
 		const outcome = await fixture.indexer.index('product_variant');
 
-		expect(outcome).toMatchObject({
-			entity: 'product_variant',
-			indexed: 1,
-			removed: 0,
-			skipped: 0,
-			providerKey: 'database'
-		});
+		expect(outcome).toMatchObject({ entity: 'product_variant', indexed: 1, removed: 0, skipped: 0, providerKey: 'database' });
 
 		const document = fixture.documents()[0];
 
@@ -396,9 +358,7 @@ describe('SearchIndexerService — one row becomes one document (doc 05 §3.18, 
 		expect(document.title).toContain('SKU-v1');
 		expect(document.title).toContain('Widget v1');
 		// The keywords are the declaration's promoted fields plus the channel the row is published to.
-		expect(document.keywords).toEqual(
-			expect.arrayContaining(['sku:sku-v1', 'enabled:true', `channelid:${CHANNEL}`])
-		);
+		expect(document.keywords).toEqual(expect.arrayContaining(['sku:sku-v1', 'enabled:true', `channelid:${CHANNEL}`]));
 		// The weight is the average declared weight of the searchable fields the row actually filled, so a
 		// six-field entity does not outrank a two-field one carrying the same information.
 		expect(document.attributes).toMatchObject({ sku: 'SKU-v1', name: 'Widget v1', enabled: true, _weight: 2 });
@@ -582,16 +542,10 @@ describe('SearchIndexerService — the event seam (doc 12, doc 05 §3.18)', () =
 		const fixture = searchFixture();
 
 		expect(
-			await fixture.indexer.handleEvent({
-				name: 'invoice.updated',
-				aggregate: { type: 'Invoice', id: 'i1' }
-			} as never)
+			await fixture.indexer.handleEvent({ name: 'invoice.updated', aggregate: { type: 'Invoice', id: 'i1' } } as never)
 		).toBeUndefined();
 		expect(
-			await fixture.indexer.handleEvent({
-				name: 'product_variant.updated',
-				aggregate: { type: 'ProductVariant' }
-			} as never)
+			await fixture.indexer.handleEvent({ name: 'product_variant.updated', aggregate: { type: 'ProductVariant' } } as never)
 		).toBeUndefined();
 	});
 });
@@ -798,14 +752,7 @@ describe('SearchIndexerService — a declaration with a row rule (review R7-05)'
 			channels: [],
 			// v2 was indexed before the rule existed (or before its row moved outside it).
 			documents: [
-				{
-					id: 'stale-v2',
-					tenantId: TENANT,
-					entity: 'product_variant',
-					entityId: 'v2',
-					engineKey: null,
-					deletedAt: null
-				}
+				{ id: 'stale-v2', tenantId: TENANT, entity: 'product_variant', entityId: 'v2', engineKey: null, deletedAt: null }
 			]
 		});
 

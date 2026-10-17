@@ -189,9 +189,7 @@ export class SearchReindexService {
 
 		for (const key of entities) {
 			if (!this.indexRegistry.has(key)) {
-				throw new BadRequestException(
-					`No index definition is registered for "${key}", so it holds no documents.`
-				);
+				throw new BadRequestException(`No index definition is registered for "${key}", so it holds no documents.`);
 			}
 
 			if (channelId) {
@@ -228,7 +226,11 @@ export class SearchReindexService {
 	 * @param scope The tenant predicate the read and the write both carry.
 	 * @returns How many documents were dropped.
 	 */
-	private async dropChannel(entity: string, channelId: ID, scope: Record<string, unknown>): Promise<number> {
+	private async dropChannel(
+		entity: string,
+		channelId: ID,
+		scope: Record<string, unknown>
+	): Promise<number> {
 		const pageSize = Math.max(1, Number(SEARCH_SETTING_DEFAULTS.reindexBatchSize) || 500);
 		const token = `${CHANNEL_TOKEN_PREFIX}:${String(channelId).toLowerCase()}`;
 		let deletedCount = 0;
@@ -246,9 +248,7 @@ export class SearchReindexService {
 			}
 
 			const ids = documents
-				.filter((document) =>
-					(document.keywords ?? []).some((keyword) => String(keyword).toLowerCase() === token)
-				)
+				.filter((document) => (document.keywords ?? []).some((keyword) => String(keyword).toLowerCase() === token))
 				.map((document) => document.id);
 
 			if (ids.length > 0) {
