@@ -9,7 +9,8 @@ import {
 	Logger,
 	UnauthorizedException,
 	BadRequestException,
-	InternalServerErrorException
+	InternalServerErrorException,
+	HttpException
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
@@ -205,6 +206,11 @@ export class ZapierWebhookController {
 
 			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId);
 		} catch (error) {
+			// Invalid token (403), missing tenant (400), unknown or foreign subscription (404 / 403): keep them,
+			// as the subscribe route does, instead of answering 500
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
 			throw new InternalServerErrorException('Failed to delete webhook subscription.');
 		}
