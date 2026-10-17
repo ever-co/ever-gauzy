@@ -53,6 +53,13 @@ interface IResolvedAmount {
 	computation: IPriceComputation;
 }
 
+/** One `(variant, price list)` pair of a bulk batch; an absent member is the null one. */
+interface IBulkPair {
+	key: string;
+	variantId?: ID;
+	priceListId?: ID;
+}
+
 /** How deep a chain of derived price lists may be before a candidate is eliminated. */
 const MAX_BASE_LIST_DEPTH = 5;
 
@@ -228,7 +235,13 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * `REPLACE` mode retires — never deletes — the rows of the `(variant, price list)` pairs the
 	 * batch mentions that the batch did not supply, so a full matrix export turned back into an
 	 * import converges on the matrix it was exported from while nothing a merchant authored by hand
-	 * is lost.
+	 * is lost. A pair is the one the **written row** belongs to, so an open-scoped row (no variant)
+	 * retires only the other open-scoped rows of its list, and a row addressed by its identifier
+	 * alone retires only the rows of its own pair. A pair one of whose rows was refused retires
+	 * nothing: the refused row was meant to replace a price, and retiring that price while its
+	 * replacement failed would leave the variant unpriced in the list.
+	 *
+	 * Every succeeded entry is the stored row as it stands after the write, an update included.
 	 *
 	 * @param input The rows, the mode and the atomicity flag.
 	 * @returns The rows written and the rows refused.
@@ -244,6 +257,10 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		const succeeded: ProductPrice[] = [];
 		const failed: IProductPriceBulkResult['failed'] = [];
 		const writtenIds = new Set<string>();
+		// The pairs a REPLACE batch converges, and the pairs it must leave alone because one of their
+		// rows was refused.
+		const replacedPairs = new Map<string, IBulkPair>();
+		const heldPairs = new Set<string>();
 
 		if (atomic) {
 			// A pre-flight pass over exactly the checks the writes below perform, so an atomic batch
@@ -262,24 +279,64 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		}
 
 		for (const [index, item] of items.entries()) {
-			try {
-				const existing = await this.findExisting(item);
-				const written = existing
-					? await this.updateOne(existing.id, this.toPricePayload(item, existing))
-					: await this.createOne(this.toPricePayload(item, undefined));
+			let existing: ProductPrice | null = null;
 
-				succeeded.push(written as ProductPrice);
-				writtenIds.add(String((written as ProductPrice).id));
+			try {
+				existing = await this.findExisting(item);
+
+				// An update answers with the driver's result rather than the row, so the row is read back:
+				// its identifier is what keeps a REPLACE batch from retiring the very row it just updated,
+				// and the stored row is what the caller was promised.
+				const written = existing
+					? await this.updateExisting(existing, item)
+					: await this.createOne(this.toPricePayload(item, undefined));
+				const pair = this.pairOf(written.variantId, written.priceListId);
+
+				succeeded.push(written);
+				writtenIds.add(String(written.id));
+				replacedPairs.set(pair.key, pair);
 			} catch (error) {
 				failed.push({ index, variantId: item.variantId, message: this.messageOf(error) });
+				heldPairs.add(
+					this.pairOf(item.variantId ?? existing?.variantId, item.priceListId ?? existing?.priceListId).key
+				);
 			}
 		}
 
 		if (mode === PriceBulkMode.REPLACE) {
-			await this.retireRowsMissingFromBatch(items, writtenIds);
+			await this.retireRowsMissingFromBatch(
+				[...replacedPairs.values()].filter((pair) => !heldPairs.has(pair.key)),
+				writtenIds
+			);
 		}
 
 		return { succeeded, failed };
+	}
+
+	/**
+	 * Updates the row a bulk item addresses and reads it back.
+	 *
+	 * @param existing The stored row.
+	 * @param item The bulk item.
+	 * @returns The row as it stands after the write.
+	 */
+	private async updateExisting(existing: ProductPrice, item: IProductPriceBulkItem): Promise<ProductPrice> {
+		await this.updateOne(existing.id, this.toPricePayload(item, existing));
+
+		return await this.findOneByIdString(existing.id);
+	}
+
+	/**
+	 * @param variantId The variant of a row; absent for an open-scoped row.
+	 * @param priceListId The list of a row; absent for a default price.
+	 * @returns The `(variant, price list)` pair the row belongs to, with the key it is grouped by.
+	 */
+	private pairOf(variantId: ID | null | undefined, priceListId: ID | null | undefined): IBulkPair {
+		return {
+			key: `${variantId ?? ''}:${priceListId ?? ''}`,
+			variantId: variantId ?? undefined,
+			priceListId: priceListId ?? undefined
+		};
 	}
 
 	/*
@@ -1747,28 +1804,26 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	}
 
 	/**
-	 * Retires the rows of the pairs a `REPLACE` batch mentioned that the batch did not supply.
+	 * Retires the rows of the pairs a `REPLACE` batch wrote that the batch did not supply.
 	 *
 	 * Retirement is `INACTIVE`, never a delete: a price that was charged stays queryable, which is what
 	 * makes an import reversible by importing the previous matrix.
 	 *
-	 * @param items The batch.
+	 * Both members of a pair are always stated in the condition. A missing variant is the open scope
+	 * and is matched as `IS NULL`: left out of the condition, it matched every variant of the list,
+	 * and one open-scoped row in a REPLACE batch retired the whole price list (R2-26).
+	 *
+	 * @param pairs The pairs the batch wrote and did not hold back.
 	 * @param writtenIds The rows the batch wrote.
 	 */
-	private async retireRowsMissingFromBatch(items: IProductPriceBulkItem[], writtenIds: Set<string>): Promise<void> {
-		const pairs = new Map<string, { variantId: ID; priceListId?: ID }>();
-
-		for (const item of items) {
-			pairs.set(`${item.variantId}:${item.priceListId ?? ''}`, { variantId: item.variantId, priceListId: item.priceListId });
-		}
-
-		for (const pair of pairs.values()) {
+	private async retireRowsMissingFromBatch(pairs: IBulkPair[], writtenIds: Set<string>): Promise<void> {
+		for (const pair of pairs) {
 			const { tenantId, organizationId } = this.scope;
 			const rows = await this.typeOrmProductPriceRepository.find({
 				where: {
 					tenantId,
 					organizationId,
-					variantId: pair.variantId,
+					variantId: pair.variantId ?? IsNull(),
 					priceListId: pair.priceListId ?? IsNull()
 				} as FindOptionsWhere<ProductPrice>
 			});
