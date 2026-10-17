@@ -462,7 +462,8 @@ describe('the plugin schema — the members the two protocols share (doc 17 §6.
 		// One request may select several mutations, so a version cannot travel in a header: it travels
 		// as an argument of the field it qualifies, and the retry key travels with it.
 		expect(argsOf('revokeEntitlement')).toEqual(['id', 'reason', 'version', 'idempotencyKey']);
-		expect(argsOf('extendEntitlement')).toEqual(['id', 'endsAt', 'quantity', 'version', 'idempotencyKey']);
+		// `note` follows them: the route's body always took it, the field gained it after (R2-G16).
+		expect(argsOf('extendEntitlement')).toEqual(['id', 'endsAt', 'quantity', 'version', 'idempotencyKey', 'note']);
 	});
 
 	it('carries the retry key on the grant input and no version, because a grant creates the row', () => {

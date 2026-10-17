@@ -251,6 +251,9 @@ export interface IUpdatePaymentCollectionGraphInput {
 	readonly fxRateId?: ID;
 	readonly fxCapturedAt?: Date;
 	readonly metadata?: Record<string, unknown>;
+	/** The route's two members on top (R2-G16): `updateCollection` refuses both once money has moved. */
+	readonly amount?: string;
+	readonly currency?: string;
 }
 
 /**

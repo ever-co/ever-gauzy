@@ -214,6 +214,7 @@ import { PaymentMethodTokenController } from '../../payment-method-token/payment
 import { UpdatePaymentMethodTokenDTO } from '../../payment-method-token/dto';
 import { RefundController } from '../../refund/refund.controller';
 import { RefundReasonController } from '../../refund-reason/refund-reason.controller';
+import { RefundLineController } from '../../refund-line/refund-line.controller';
 import { PaymentCaptureController } from '../../payment-capture/payment-capture.controller';
 import { PaymentCollectionController } from '../../payment-collection/payment-collection.controller';
 import { PaymentWebhookEventController } from '../../payment-webhook-event/payment-webhook-event.controller';
@@ -222,6 +223,7 @@ import { PaymentSessionResolver } from './payment-session.resolver';
 import { PaymentMethodTokenResolver } from './payment-method-token.resolver';
 import { RefundResolver } from './refund.resolver';
 import { RefundReasonResolver } from './refund-reason.resolver';
+import { RefundLineResolver } from './refund-line.resolver';
 import { PaymentCaptureResolver } from './payment-capture.resolver';
 
 type Row = Record<string, any>;
@@ -1502,3 +1504,18 @@ function resolverFor(field: string, stubs: Row): Row {
 			throw new Error(`this suite declares no resolver for the field "${field}"`);
 	}
 }
+
+// R2-G16: `ApproveRefundInput` and `CreateRefundLineInput` declared `idempotencyKey`, and neither the field nor its
+// route declared a retry scope, so a presented key was read by nothing. Both surfaces now declare one scope per
+// act, optional, so a retried act is answered the first one.
+describe('the refund acts whose inputs carry a retry key — one optional scope on both protocols', () => {
+	it.each([
+		[RefundController, 'approve', RefundResolver, 'approveRefund', 'refund.approve', 'refund'],
+		[RefundLineController, 'create', RefundLineResolver, 'createRefundLine', 'refund.line.create', 'refund_line']
+	] as const)('%p.%s and %p.%s declare %s', (controller, route, resolver, field, scope, resourceType) => {
+		const declared = { scope, required: false, resourceType };
+
+		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, handlersOf(controller)[route])).toEqual(declared);
+		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, fieldsOf(resolver)[field])).toEqual(declared);
+	});
+});

@@ -162,6 +162,9 @@ export class RefundController extends CrudController<Refund> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Refund approved' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Already settled, or above what was captured' })
 	@Permissions(PaymentPermission.REFUNDS_APPROVE as PermissionsEnum)
+	// A retried approval is answered the first approval rather than a refusal of the second (R2-G16): the key is
+	// optional, and the GraphQL `approveRefund` honours the same scope through `ApproveRefundInput.idempotencyKey`.
+	@Idempotent({ scope: 'refund.approve', required: false, resourceType: 'refund' })
 	@Post(':id/approve')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })

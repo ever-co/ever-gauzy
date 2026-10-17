@@ -116,6 +116,20 @@ export class SubscriptionPlanService extends TenantAwareCrudService<Subscription
 			await this.assertCodeIsFree(changes.code, id);
 		}
 
+		// The currency is frozen under live subscriptions for the reason the code is (R2-G16): their lines, setup fee
+		// and prorations are priced in it, and `POST /subscriptions` refuses a request whose currency differs from
+		// the plan's. `PUT /subscription-plans/:id` always took a currency; `updateSubscriptionPlan` takes it now too.
+		if (
+			changes.currency !== undefined &&
+			changes.currency !== null &&
+			String(changes.currency).trim() !== String(plan.currency ?? '').trim() &&
+			(await this.hasLiveSubscriptions(id))
+		) {
+			throw new BadRequestException(
+				'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE: a plan with live subscriptions cannot change currency; they are priced and billed in it.'
+			);
+		}
+
 		if (changes.isActive === false && plan.isActive !== false && (await this.hasLiveSubscriptions(id))) {
 			throw new ConflictException(
 				'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS: this plan still has live subscriptions; they would keep billing, so deactivate it only once they have been moved or cancelled.'
