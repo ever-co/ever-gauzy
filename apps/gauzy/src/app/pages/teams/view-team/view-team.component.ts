@@ -13,6 +13,7 @@ import {
 	IEmployee,
 	IMembersStatistics,
 	IOrganization,
+	IOrganizationProject,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IPagination,
@@ -28,6 +29,7 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
 import {
+	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
 	TasksService,
@@ -40,9 +42,11 @@ import { IEmployeeHoursDay } from '../../employees/view-employee/employee-hours-
 import { AssigneePopoverKeyboard } from '../../employees/view-employee/assignee-popover-keyboard';
 import {
 	buildTaskViewSections,
+	isTaskFinished,
 	taskStatusOf,
 	TASK_VIEW_RELATIONS
 } from '../../tasks/components/task-view/task-view-sections';
+import { buildProjectViewSections, PROJECT_VIEW_RELATIONS } from './project-view-sections';
 
 /** The date windows the overview can be read over — the same as an employee's page. */
 export enum TeamViewPeriod {
@@ -95,6 +99,16 @@ interface IProjectOverviewRow {
 	width: number;
 	/** False for a project the members worked on that is not linked to the team. */
 	linked: boolean;
+}
+
+/** A project's task completion: done, in progress and still to do, out of all its tasks. */
+interface IProjectProgress {
+	total: number;
+	done: number;
+	progress: number;
+	todo: number;
+	/** Done share of all tasks, 0–100. */
+	percent: number;
 }
 
 /** A member's period figures, keyed by employee id. */
@@ -266,6 +280,16 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	/** Keyboard access to the assignee cards and the "+N" list. */
 	public readonly assigneeKeyboard = new AssigneePopoverKeyboard();
 	private _viewSequence = 0;
+
+	/** The project open in the quick-look drawer, and its sections. */
+	public viewedProject: IOrganizationProject | null = null;
+	/** The card it was opened from — its logo and initials head the drawer. */
+	public viewedProjectCard: IProjectOverviewRow | null = null;
+	/** Its task completion, and the team members who worked on it the most in the period. */
+	public projectProgress: Loadable<IProjectProgress | null> = Loadable.empty(null);
+	public projectContributors: Loadable<IRankedRow[]> = Loadable.empty([]);
+	public projectSections: IRecordViewSection[] = [];
+	private _projectSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
 
 	private _organization: IOrganization | null = null;
@@ -289,7 +313,8 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		private readonly _teamsService: OrganizationTeamsService,
 		private readonly _statisticsService: TimesheetStatisticsService,
 		private readonly _timesheetService: TimesheetService,
-		private readonly _tasksService: TasksService
+		private readonly _tasksService: TasksService,
+		private readonly _projectsService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -357,6 +382,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		// Nothing of the previous team stays on screen: not its open task, not its
 		// figures, and no reply still in flight for it may land afterwards.
 		this.closeTask();
+		this.closeProject();
 		this.resetPanels();
 		this.state = 'loading';
 		this.team = null;
@@ -692,6 +718,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	 * size, sprint, description…); a failed read keeps what the row had.
 	 */
 	async openTask(row: ITeamTaskRow): Promise<void> {
+		this.closeProject();
 		const sequence = ++this._viewSequence;
 		this.showTask(row.task);
 		try {
@@ -721,6 +748,123 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			hash: (value) => this._hashPipe.transform(value)
 		});
 		this.viewedTask = task;
+	}
+
+	/* ── Projects ────────────────────────────────────────────────────────── */
+
+	/**
+	 * Opens a project in the quick-look drawer without leaving the team page. It
+	 * opens at once with the card's name and logo, then fills in from the
+	 * project's full read (members, dates, billing, description…); a failed read
+	 * (e.g. no permission to view projects) keeps what the card had.
+	 */
+	async openProject(row: IProjectOverviewRow): Promise<void> {
+		this.closeTask();
+		const sequence = ++this._projectSequence;
+		this.viewedProjectCard = row;
+		this.showProject({ id: row.id, name: row.name, imageUrl: row.imageUrl } as IOrganizationProject);
+		void this.loadProjectProgress(row.id, sequence);
+		void this.loadProjectContributors(row.id, sequence);
+		try {
+			const project = await firstValueFrom(this._projectsService.getById(row.id, PROJECT_VIEW_RELATIONS));
+			if (sequence === this._projectSequence && this.viewedProject?.id === row.id && project) {
+				this.showProject(project);
+			}
+		} catch {
+			// The card's own data stays on screen.
+		}
+	}
+
+	closeProject(): void {
+		this._projectSequence++;
+		this.viewedProject = null;
+		this.viewedProjectCard = null;
+	}
+
+	/** The project's edit page, where its details are managed. */
+	projectEditLink(id: string): string[] {
+		return ['/pages/organization/projects', id, 'edit'];
+	}
+
+	/**
+	 * The project's task completion. A task counts as done when its status is
+	 * terminal (a tenant status's own `isDone` flag included), the same rule the
+	 * task views use.
+	 */
+	private async loadProjectProgress(projectId: string, sequence: number): Promise<void> {
+		const { organizationId, tenantId } = this.team;
+		this.projectProgress = Loadable.empty(null);
+		try {
+			const result = await firstValueFrom(
+				this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
+					params: toParams({ where: { organizationId, tenantId, projectId }, relations: ['taskStatus'] })
+				})
+			);
+			if (sequence !== this._projectSequence) return;
+			const tasks = result?.items || [];
+			const done = tasks.filter((task) => isTaskFinished(task)).length;
+			const progress = tasks.filter(
+				(task) => !isTaskFinished(task) && ViewTeamComponent.statusGroupOf(task.status) === 'progress'
+			).length;
+			this.projectProgress = {
+				loading: false,
+				failed: false,
+				value: {
+					total: tasks.length,
+					done,
+					progress,
+					todo: tasks.length - done - progress,
+					percent: tasks.length ? (done / tasks.length) * 100 : 0
+				}
+			};
+		} catch {
+			if (sequence === this._projectSequence)
+				this.projectProgress = { loading: false, failed: true, value: null };
+		}
+	}
+
+	/**
+	 * The team members who worked on the project the most in the period — the
+	 * same people and window as the card's time, so the shares add up to it.
+	 */
+	private async loadProjectContributors(projectId: string, sequence: number): Promise<void> {
+		this.projectContributors = { ...this.projectContributors, loading: true, failed: false };
+		// No members: an empty employee filter would read the whole organization.
+		if (!this.members.length) {
+			this.projectContributors = { loading: false, failed: false, value: [] };
+			return;
+		}
+		try {
+			const rows = await this._statisticsService.getMembers({
+				...this.buildRequest(this.periodRange()),
+				projectIds: [projectId]
+			});
+			if (sequence !== this._projectSequence) return;
+			const names = new Map(this.members.map((member) => [member.id, member.name]));
+			this.projectContributors = {
+				loading: false,
+				failed: false,
+				value: this.rank(
+					(rows || []).map((row: IMembersStatistics) => ({
+						id: row.id,
+						name: names.get(row.id) || row.user?.name,
+						meta: row.weekTime ? this.formatPercent(Number(row.weekTime.overall) || 0) : undefined,
+						duration: Number(row.weekTime?.duration) || 0
+					})),
+					(row) => row
+				)
+			};
+		} catch {
+			if (sequence === this._projectSequence)
+				this.projectContributors = { loading: false, failed: true, value: [] };
+		}
+	}
+
+	private showProject(project: IOrganizationProject): void {
+		this.projectSections = buildProjectViewSections(project, {
+			translate: (key) => this.getTranslation(key)
+		});
+		this.viewedProject = project;
 	}
 
 	get taskSummary(): TaskSummary {
@@ -769,6 +913,11 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	private loadFigures(): void {
 		const team = this.team;
 		if (!team?.organizationId) return;
+
+		// An open project quick look follows the period too.
+		if (this.viewedProject) {
+			void this.loadProjectContributors(this.viewedProject.id, this._projectSequence);
+		}
 
 		// A team with nobody on it has no figures: an empty employee filter would
 		// read the whole organization instead.
