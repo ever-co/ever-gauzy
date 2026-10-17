@@ -117,9 +117,11 @@ describe('InboxMailboxesPageComponent', () => {
 			mailbox('support', { isDefault: true }),
 			mailbox('ada', { ownerType: InboxMailboxOwnerTypeEnum.EMPLOYEE, ownerEmployeeId: 'e1' })
 		]);
-		const { find } = render();
+		const { component, find } = render();
 		expect(api.mailboxes).toHaveBeenCalledWith('org-1');
-		expect(find('platform-domain')?.textContent).toContain(DOMAIN);
+		// The text is the translated sentence with the domain in it; the spec's translations are the keys.
+		expect(component.platformDomain()).toBe(DOMAIN);
+		expect(find('platform-domain')?.textContent).toContain('INBOX.SETTINGS.MAILBOXES.PLATFORM_DOMAIN');
 		expect(find('group-SHARED')?.querySelector('[data-test="mailbox-support"]')).not.toBeNull();
 		expect(find('group-PERSONAL')?.querySelector('[data-test="mailbox-ada"]')).not.toBeNull();
 		expect(find('default-support')).not.toBeNull();
