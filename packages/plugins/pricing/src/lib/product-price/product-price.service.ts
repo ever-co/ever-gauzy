@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
+import { CurrencyCode, DecimalString, ID, RoundingMode } from '@gauzy/contracts';
 import { Money, MultiORMEnum, ProductVariantPrice, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import {
 	IPriceComputation,
@@ -416,6 +416,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 		const eligible = new Map<ID, ProductPrice[]>();
 		const unpriced: ID[] = [];
+		const unpricedNotices = new Map<ID, string[]>();
 		const legacyNeeded = new Set<ID>();
 
 		for (const variantId of variantIds) {
@@ -462,7 +463,10 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			const surviving = candidates.filter((row) => amounts.has(String(row.id)));
 
 			if (!surviving.length) {
+				// Every row was eliminated: the variant falls back like a variant with no row, and the
+				// fallback carries the reasons, so the operator can see which row to correct.
 				unpriced.push(variantId);
+				unpricedNotices.set(variantId, notices);
 				continue;
 			}
 
@@ -491,6 +495,16 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			);
 		}
 
+		// A variant whose every row was eliminated falls back exactly as one with no row does, so its
+		// legacy price is read too when the candidate pass did not need it.
+		const unread = unpriced.filter((variantId) => !legacy.has(variantId));
+
+		if (unread.length) {
+			for (const [variantId, legacyPrice] of await this.findLegacyPrices(unread)) {
+				legacy.set(variantId, legacyPrice);
+			}
+		}
+
 		for (const variantId of unpriced) {
 			const legacyPrice = legacy.get(variantId);
 
@@ -498,7 +512,9 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				continue;
 			}
 
-			resolved.push(await this.describeLegacyResolution(variantId, legacyPrice, scope));
+			resolved.push(
+				await this.describeLegacyResolution(variantId, legacyPrice, scope, unpricedNotices.get(variantId))
+			);
 		}
 
 		return resolved;
@@ -575,12 +591,14 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * @param variantId The variant being priced.
 	 * @param legacyPrice The legacy row.
 	 * @param scope The resolution scope.
+	 * @param notices Why the variant's own rows were eliminated, when it had rows at all.
 	 * @returns The resolution.
 	 */
 	private async describeLegacyResolution(
 		variantId: ID,
 		legacyPrice: ProductVariantPrice,
-		scope: IResolutionScope
+		scope: IResolutionScope,
+		notices: string[] = []
 	): Promise<IResolvedPrice> {
 		const currency = (legacyPrice.retailPriceCurrency ?? scope.currency) as CurrencyCode;
 		const amount = Money.fromStorage(legacyPrice.retailPrice, currency);
@@ -597,9 +615,12 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			taxInclusive,
 			source: PriceSource.VARIANT_RETAIL_PRICE,
 			matchedRules: [],
-			explain:
-				`No ${scope.currency} price row is configured for this variant, so the legacy variant retail price ` +
-				`(${amount.amount} ${currency}) applies. Create a product price to price it from the pricing tables.`
+			...(notices.length ? { notices } : {}),
+			explain: notices.length
+				? `No ${scope.currency} price row of this variant could compete, so the legacy variant retail price ` +
+					`(${amount.amount} ${currency}) applies. ${notices.join(' ')}`
+				: `No ${scope.currency} price row is configured for this variant, so the legacy variant retail price ` +
+					`(${amount.amount} ${currency}) applies. Create a product price to price it from the pricing tables.`
 		};
 	}
 
@@ -838,9 +859,10 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * Resolves what each candidate actually costs.
 	 *
 	 * A candidate whose `computeMode` is `AMOUNT` resolves to the number it stores. A `PERCENT_OFF`
-	 * candidate resolves to `base × (1 − percent / 100)`, then quantised to `roundTo` when it states
-	 * one — **before** the currency rounding boundary, which the caller applies, because a price ending
-	 * is a merchandising decision about a price and not a property of a currency.
+	 * candidate resolves to `base × (1 − percent)`, `percent` being a signed fraction, then quantised to
+	 * `roundTo` when it states one — **before** the currency rounding boundary, which the caller
+	 * applies, because a price ending is a merchandising decision about a price and not a property of a
+	 * currency. A derivation that comes out negative is eliminated with `PRICE_PERCENT_RANGE`.
 	 *
 	 * A candidate whose base cannot be resolved is left out of the map rather than given a substitute
 	 * amount, and the elimination is recorded as `PRICE_BASE_UNRESOLVED`. Comparing such a candidate on
@@ -894,8 +916,28 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				continue;
 			}
 
+			// A row stored before the share was read as a fraction may carry a percentage (`25` for 25 %),
+			// which as a fraction takes more than the whole base. Charging the negative amount it computes
+			// to would be a refund at checkout — and a price ending or the storage boundary can round a
+			// small negative to zero, which would be a free product — so the share itself is checked
+			// before anything is derived from it. The row is eliminated and the operator told how to
+			// restate it, exactly as a row with no base is.
+			const derived =
+				row.percent != null && Money.of(row.percent, row.currency).greaterThan(Money.of('1', row.currency))
+					? undefined
+					: this.deriveAmount(row, baseAmount);
+
+			if (derived === undefined || Money.of(derived, row.currency).isNegative()) {
+				notices.push(
+					`PRICE_PERCENT_RANGE: the price ${row.id} states a share of ${row.percent}, which is a fraction of the base ` +
+						`(0.25 is 25 % off) and would make its price negative, so the row did not compete. Restate the share as a fraction.`
+				);
+
+				continue;
+			}
+
 			amounts.set(String(row.id), {
-				amount: this.deriveAmount(row, baseAmount),
+				amount: derived,
 				baseAmount: this.toStorage(Money.of(baseAmount, row.currency), 'base amount'),
 				computation: this.computationOf(row)
 			});
@@ -935,8 +977,17 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 *
 	 * Both steps go through the platform money helper, so a derived price is a price the ledger would
 	 * also compute: the share is a subtraction of `base × share`, not a multiplication by
-	 * `1 − share / 100` evaluated in floating point, and the ending is the money layer's own
-	 * quantisation to an increment.
+	 * `1 − share` evaluated in floating point, and the ending is the money layer's own quantisation to
+	 * an increment.
+	 *
+	 * **The share is a signed fraction of the base**, as the REST and GraphQL contracts state it:
+	 * `0.25` is 25 % off and `-0.15` a 15 % markup. It used to be divided by 100 here, so the
+	 * documented `0.25` took 0.25 % off (R2-28).
+	 *
+	 * Without a price ending the derived amount crosses the storage boundary here (half-up at six
+	 * decimals): the product of a base and a six-decimal share carries more digits than a money column
+	 * holds, and handing it on unrounded refused the whole resolution with `PRICE_INVALID_DECIMAL`.
+	 * The currency boundary is still the caller's.
 	 *
 	 * @param row The derived row.
 	 * @param baseAmount The base it derives from, in the row's currency.
@@ -946,11 +997,11 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		const currency = row.currency;
 		const base = Money.of(baseAmount, currency);
 		const share = Money.of(row.percent ?? '0', currency);
-		const reduction = base.multiply(share.amount).divide('100');
+		const reduction = base.multiply(share.amount);
 		const derived = base.subtract(reduction);
 
 		if (row.roundTo == null) {
-			return this.toStorage(derived, 'derived amount');
+			return this.toStorage(derived.round(RoundingMode.HALF_UP, Money.STORAGE_SCALE), 'derived amount');
 		}
 
 		// The ending is applied to the derived amount and before the currency rounding boundary: a price
@@ -1242,9 +1293,13 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			throw new BadRequestException('PRICE_PERCENT_RANGE: a share is greater than -1000.');
 		}
 
-		if (Money.of(percent, currency).greaterThan(Money.of('100', currency))) {
+		// The share is a fraction, so the ceiling is 1 (100 % off, a price of zero). The database check
+		// constraint still admits up to 100 — the bound of the percentage reading this replaces — and is
+		// left as it is: this is the narrower rule, and it is stated on every dialect (R2-28).
+		if (Money.of(percent, currency).greaterThan(Money.of('1', currency))) {
 			throw new BadRequestException(
-				'PRICE_PERCENT_RANGE: a share of more than 100 would make the derived price negative.'
+				`PRICE_PERCENT_RANGE: a share is a signed fraction of the base (0.25 is 25 % off, -0.15 a 15 % markup); ` +
+					`${percent} is more than 1 and would make the derived price negative.`
 			);
 		}
 
