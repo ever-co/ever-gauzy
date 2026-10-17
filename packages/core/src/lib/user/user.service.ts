@@ -444,8 +444,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ id });
 
-			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.findOneBy({ id });
+			case MultiORMEnum.TypeORM: {
+				// `find`, not `findOneBy`: the JWT strategy calls this on EVERY authenticated request. `findOneBy`
+				// adds `take: 1`, and TypeORM answers a limited query that has joins (the user's eager `image`) with
+				// two round trips — a `SELECT DISTINCT` of the ids, then the rows. A primary-key lookup can match one
+				// row at most, so the unlimited `find` returns the same user (with the same eager relations and the
+				// same soft-delete filter) in one round trip.
+				const [user] = await this.typeOrmRepository.find({ where: { id } });
+				return user ?? null;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
