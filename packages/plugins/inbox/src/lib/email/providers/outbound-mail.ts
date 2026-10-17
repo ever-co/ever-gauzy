@@ -75,13 +75,18 @@ const addresses = (entries: MailAddress[] | undefined): OutboundAddress[] =>
 		.filter((entry) => typeof entry.address === 'string' && entry.address)
 		.map((entry) => {
 			const address = clean(entry.address);
-			const name = clean(entry.name).replace(/"/g, '');
+			const name = clean(entry.name);
 			return name ? { address, name } : { address };
 		});
 
-/** `Name <address>` or `address`. */
+/** A display name with an RFC 5322 special (a comma, a dot, `@`, …) goes in quotes, its `"` and `\` escaped. */
+export function displayName(name: string): string {
+	return /[()<>[\]:;@\\,."]/.test(name) ? `"${name.replace(/(["\\])/g, '\\$1')}"` : name;
+}
+
+/** `Name <address>` or `address` (the name quoted when it needs it, so a comma never splits the address). */
 export function formatAddress(entry: OutboundAddress): string {
-	return entry.name ? `${entry.name} <${entry.address}>` : entry.address;
+	return entry.name ? `${displayName(entry.name)} <${entry.address}>` : entry.address;
 }
 
 function resolve(mail: NodemailerMailObject, target: unknown, key: string): Promise<Buffer | string | undefined> {
