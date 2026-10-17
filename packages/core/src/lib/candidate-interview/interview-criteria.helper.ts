@@ -18,7 +18,8 @@ import { MultiORM, MultiORMEnum } from '../core/utils';
  * @param typeOrmRepository The criteria's TypeORM repository.
  * @param mikroOrmRepository The criteria's MikroORM repository.
  * @param interviewId The interview whose criteria are read.
- * @returns The interview's criteria, or none when the interview is not the current tenant's.
+ * @returns The interview's criteria, or none when the interview is not the current tenant's or there is no
+ * current tenant.
  */
 export async function findTenantInterviewCriteria<T extends { interviewId?: ID }>(
 	ormType: MultiORM,
@@ -27,6 +28,10 @@ export async function findTenantInterviewCriteria<T extends { interviewId?: ID }
 	interviewId: ID
 ): Promise<T[]> {
 	const tenantId = RequestContext.currentTenantId();
+	// A null tenant would match interviews with no tenant on MikroORM, while TypeORM's `= NULL` matches nothing.
+	if (!tenantId) {
+		return [];
+	}
 
 	switch (ormType) {
 		case MultiORMEnum.MikroORM:
