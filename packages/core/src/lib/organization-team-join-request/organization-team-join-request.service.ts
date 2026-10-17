@@ -71,7 +71,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		entity: IOrganizationTeamJoinRequestCreateInput & Partial<IAppIntegrationConfig>,
 		languageCode?: LanguagesEnum
 	): Promise<IOrganizationTeamJoinRequest> {
-		const { organizationTeamId, email } = entity;
+		const { organizationTeamId, email, fullName, linkAddress, position } = entity;
 
 		/** find existing team join request and throw exception */
 		const request = await this.count({
@@ -118,6 +118,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			const createEntityLike = this.typeOrmRepository.create({
 				organizationTeamId,
 				email,
+				fullName,
+				linkAddress,
+				position,
 				organizationId,
 				tenantId,
 				code,

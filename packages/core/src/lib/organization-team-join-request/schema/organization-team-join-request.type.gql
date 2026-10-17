@@ -44,9 +44,9 @@ type OrganizationTeamJoinRequest {
 	"The address that asked to join, and the address the confirmation is mailed to."
 	email: String!
 	"""
-	The name the applicant stated. The delivered write does not persist a stated name — see
-	`CreateOrganizationTeamJoinRequestInput` — so this member is read on a row some other write filled
-	in, and is null on a request filed over either protocol.
+	The name the applicant stated. The REST create stores the name its body carries.
+	`CreateOrganizationTeamJoinRequestInput` does not offer one yet, so a request filed over GraphQL
+	leaves it null.
 	"""
 	fullName: String
 	"A link the applicant stated about itself. Read and written the same way `fullName` is."
@@ -218,12 +218,12 @@ What a caller states when it asks to join one team.
 
 **Only the members the delivered write actually reads are offered.** `email` and `organizationTeamId`
 are the address and the team the row is filed under, and the six branding members are what the
-confirmation message is composed with — those are the whole of the payload the delivered create builds
-its row from, and it builds it explicitly: the team, the address, the tenant and organization of the
-team, the generated code and token, and a null status. A body member for the applicant's own name, link
-or position is validated by the delivered body and then dropped, so offering one here would be offering
-a write that is accepted and silently discarded; a member for the state would be dropped the same way,
-and the state a new ask is in is what the delivered write decides rather than what a caller states.
+confirmation message is composed with. The delivered create builds its row explicitly: the team, the
+address, the applicant's name, link and position, the tenant and organization of the team, the
+generated code and token, and a null status. The REST body carries the name, link and position; this
+input does not offer them yet, so a request filed over GraphQL stores them as null. A member for the
+state would be dropped, since the state a new ask is in is what the delivered write decides rather
+than what a caller states.
 
 Nothing names the tenant or the organization. Both are taken from the team the request names — the
 delivered write reads the team and stamps its tenant and organization — so a caller cannot file a
