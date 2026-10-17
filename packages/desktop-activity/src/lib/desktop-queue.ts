@@ -316,6 +316,18 @@ export class DesktopQueue {
 		}
 	}
 
+	public resumeQueue() {
+		this.timerQueue?.resume();
+		this.timeSlotQueue?.resume();
+		this.screenshotQueue?.resume();
+		// While offline, the retry queues stay paused until handleIsOnline sees the network back
+		if (this.online) {
+			this.timerQueueRetry?.resume();
+			this.timeSlotQueueRetry?.resume();
+			this.screenshotQueueRetry?.resume();
+		}
+	}
+
 	public initWorker() {
 		if (this.workerInterval) {
 			clearInterval(this.workerInterval);
