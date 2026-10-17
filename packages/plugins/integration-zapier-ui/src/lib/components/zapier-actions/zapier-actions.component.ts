@@ -100,7 +100,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 		this._zapierService
 			.getAccessToken(this.integrationId)
 			.pipe(
-				switchMap((accessToken: string) => this._zapierService.getActions(accessToken)),
+				switchMap((accessToken: string) => this._zapierService.getActions(accessToken, this.integrationId)),
 
 				// Store the retrieved actions
 				tap((actions: IZapierEndpoint[]) => {

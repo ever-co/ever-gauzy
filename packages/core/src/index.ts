@@ -132,6 +132,9 @@ export { InvoiceModule } from './lib/invoice/invoice.module';
 export { InvoiceService } from './lib/invoice/invoice.service';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
+// The membership check a REST DTO makes through `@IsOrganizationBelongsToUser()`, for a package that resolves the
+// organization from a stored record rather than from the request (an integration ID, for instance).
+export { assertCurrentUserBelongsToOrganization } from './lib/user-organization/assert-organization-membership';
 
 export * from './lib/organization';
 export {
