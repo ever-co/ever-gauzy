@@ -45,6 +45,16 @@ export const ACTIVATION_DEFERRED = 'activationDeferred';
 export const RIGHTS_RELEASED_AT = 'rightsReleasedAt';
 /** Why a paid cycle's rights were not put in force: the subscription's status when it was paid (R4-05). */
 export const RIGHTS_WITHHELD_FOR = 'rightsWithheldFor';
+/**
+ * The metadata key an invoiced cycle holds the subscription's calendar back under until it is paid (Q7-W4).
+ *
+ * A cycle invoiced with it set left the subscription on the period before it: its payment is what moves the
+ * calendar onto the cycle's period (`SubscriptionService.payCycle`). A cycle invoiced without it — by a build
+ * that rolled the calendar on the invoice — moves nothing when it is paid, because the subscription is already
+ * on its period. `CALENDAR_SETTLED_AT` records when the payment moved it.
+ */
+export const CALENDAR_DEFERRED = 'calendarDeferred';
+export const CALENDAR_SETTLED_AT = 'calendarSettledAt';
 
 /** The refusal of a settling action from a status it may not start from. */
 function invalidTransition(
@@ -180,7 +190,7 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 		id: ID,
 		orderId: ID,
 		amount?: DecimalString,
-		deferred?: { activation: boolean }
+		deferred?: { activation: boolean; calendar?: boolean }
 	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 
@@ -194,7 +204,8 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 						metadata: {
 							...(billing.metadata ?? {}),
 							[RIGHTS_DEFERRED]: true,
-							...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {})
+							...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {}),
+							...(deferred.calendar ? { [CALENDAR_DEFERRED]: true } : {})
 						}
 				  }
 				: {})
@@ -278,6 +289,43 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 */
 	public heldRights(billing: SubscriptionBilling): boolean {
 		return this.holdsDeferredRights(billing) || typeof billing?.metadata?.[RIGHTS_RELEASED_AT] === 'string';
+	}
+
+	/**
+	 * Whether a cycle still holds the subscription's calendar back until it is paid (Q7-W4).
+	 *
+	 * @param billing The cycle.
+	 * @returns True when its payment is what moves the subscription onto its period.
+	 */
+	public holdsDeferredCalendar(billing: SubscriptionBilling): boolean {
+		return billing?.metadata?.[CALENDAR_DEFERRED] === true;
+	}
+
+	/**
+	 * Records that a cycle's payment settled the calendar it held back, so it is never moved twice (Q7-W4).
+	 *
+	 * The row is read again right before the write, and a cycle that no longer holds the calendar is left as it
+	 * is: of two payments racing, the second reaches here after the first has cleared the flag and writes nothing
+	 * over the metadata the first one (and the rights release after it) wrote.
+	 *
+	 * @param id The cycle.
+	 * @returns The updated cycle.
+	 */
+	public async releaseDeferredCalendar(id: ID): Promise<SubscriptionBilling> {
+		const billing = await this.findOneScoped(id);
+
+		if (!this.holdsDeferredCalendar(billing)) {
+			return billing;
+		}
+
+		const metadata: Record<string, unknown> = { ...(billing.metadata ?? {}) };
+
+		delete metadata[CALENDAR_DEFERRED];
+		metadata[CALENDAR_SETTLED_AT] = new Date().toISOString();
+
+		await super.update(id, { metadata } as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -457,6 +505,27 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			where: {
 				subscriptionId,
 				periodStart,
+				...currentScope()
+			}
+		});
+	}
+
+	/**
+	 * Reads the open invoices of a set of subscriptions: the cycles a billing pass checks its candidates against, so a
+	 * subscription whose calendar waits on one is not selected (Q7-W4, `SubscriptionService.findDue`).
+	 *
+	 * @param subscriptionIds The subscriptions.
+	 * @returns Their `INVOICED` cycles.
+	 */
+	public async findInvoicedFor(subscriptionIds: ID[]): Promise<SubscriptionBilling[]> {
+		if (!subscriptionIds.length) {
+			return [];
+		}
+
+		return await this.typeOrmSubscriptionBillingRepository.find({
+			where: {
+				subscriptionId: In(subscriptionIds),
+				status: SubscriptionBillingStatus.INVOICED,
 				...currentScope()
 			}
 		});
