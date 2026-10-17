@@ -84,6 +84,7 @@ import {
 } from '@gauzy/core';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { CollectionChannelController } from '../../collection-channel/collection-channel.controller';
+import { CollectionChannelDTO } from '../../collection-channel/dto';
 import { CollectionProductController } from '../../collection-product/collection-product.controller';
 import { CollectionVariantController } from '../../collection-variant/collection-variant.controller';
 import { ProductChannelController } from '../../product-channel/product-channel.controller';
@@ -93,6 +94,7 @@ import { ProductVariantChannelDTO } from '../../product-variant-channel/dto';
 import { ProductVariantMediaController } from '../../product-variant-media/product-variant-media.controller';
 import { TagProductVariantController } from '../../tag-product-variant/tag-product-variant.controller';
 import { schemaExtensions } from '../schema-extensions';
+import { CollectionChannelResolver } from './collection-channel.resolver';
 import { CollectionVariantResolver } from './collection-variant.resolver';
 import { ProductPublicationResolver } from './product-publication.resolver';
 
@@ -114,9 +116,10 @@ const MEMBERSHIP = [
 ];
 const PUBLICATION = { id: ID, productId: 'p', channelId: 'c', status: 'ACTIVE', sortOrder: 3, isFeatured: true };
 const VARIANT_PUBLICATION = { id: ID, variantId: 'v', channelId: 'c', status: 'ACTIVE', sortOrder: 3 };
+const COLLECTION_PUBLICATION = { id: ID, collectionId: COLLECTION, channelId: 'c', status: 'ACTIVE' };
 
 /** The stub that owns each of the three capabilities, which is the service the field must reach. */
-type ServiceKey = 'variantMembership' | 'productPublication' | 'variantPublication';
+type ServiceKey = 'variantMembership' | 'productPublication' | 'variantPublication' | 'collectionChannel';
 
 /** One of the three routes, its two surfaces, and what its field must mirror. */
 interface IParity {
@@ -234,6 +237,31 @@ const PARITY: IParity[] = [
 				{ ofType: () => null } as never
 			) as Row
 		})
+	},
+	// Review sweep R2-G2: a collection publication's own update. `assignCollectionChannel` keeps an existing row's
+	// `publishedAt`, so the date the route writes was unreachable over GraphQL.
+	{
+		field: 'updateCollectionChannel',
+		route: 'update',
+		resource: 'CollectionChannel',
+		expects: 'updateCollectionChannel',
+		routeArgs: [ID, { publishedAt: '2026-10-01T00:00:00.000Z' }],
+		fieldArgs: [ID, { publishedAt: '2026-10-01T00:00:00.000Z' }],
+		serviceArgs: [ID, { publishedAt: '2026-10-01T00:00:00.000Z' }],
+		declared: [
+			['id', 'ID'],
+			['input', 'UpdateCollectionChannelInput']
+		],
+		answers: 'CollectionChannel',
+		grant: catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT),
+		method: 'update',
+		service: 'collectionChannel',
+		controller: CollectionChannelController,
+		resolver: CollectionChannelResolver,
+		build: (stubs) => ({
+			controller: new CollectionChannelController(stubs.collectionChannel) as Row,
+			resolver: new CollectionChannelResolver(stubs.collectionChannel) as Row
+		})
 	}
 ];
 
@@ -315,13 +343,6 @@ const COLLAPSED: {
 		resource: 'CollectionChannel',
 		route: 'create',
 		expects: 'createCollectionChannel',
-		field: 'assignCollectionChannel'
-	},
-	{
-		controller: CollectionChannelController,
-		resource: 'CollectionChannel',
-		route: 'update',
-		expects: 'updateCollectionChannel',
 		field: 'assignCollectionChannel'
 	},
 	{
@@ -473,6 +494,14 @@ function surfaces(entry: IParity): { stubs: Row; controller: Row; resolver: Row 
 			replacePublications: jest.fn().mockResolvedValue([VARIANT_PUBLICATION]),
 			softRemove: jest.fn().mockResolvedValue(VARIANT_PUBLICATION),
 			softRecover: jest.fn().mockResolvedValue(VARIANT_PUBLICATION)
+		},
+		collectionChannel: {
+			replaceVariants: jest.fn().mockResolvedValue(MEMBERSHIP),
+			update: jest.fn().mockResolvedValue(COLLECTION_PUBLICATION),
+			findOneByIdString: jest.fn().mockResolvedValue(COLLECTION_PUBLICATION),
+			replaceChannels: jest.fn().mockResolvedValue([COLLECTION_PUBLICATION]),
+			softRemove: jest.fn().mockResolvedValue(COLLECTION_PUBLICATION),
+			softRecover: jest.fn().mockResolvedValue(COLLECTION_PUBLICATION)
 		}
 	};
 
@@ -663,9 +692,16 @@ describe('the catalog document — the three routes no field answered are declar
 
 		expect(inputMembers('UpdateProductVariantPublicationInput')).toEqual(variantPublication);
 
+		const collectionPublication = dtoMembers(CollectionChannelDTO).filter(
+			(member) => !['channelId', 'collectionId'].includes(member)
+		);
+
+		expect(inputMembers('UpdateCollectionChannelInput')).toEqual(collectionPublication);
+
 		// A control, so the two comparisons above cannot pass on two empty readings.
 		expect(publication).toEqual(['isFeatured', 'publishedAt', 'sortOrder', 'status', 'unpublishedAt']);
 		expect(variantPublication).toEqual(['publishedAt', 'sortOrder', 'status', 'unpublishedAt']);
+		expect(collectionPublication).toEqual(['publishedAt', 'status']);
 	});
 
 	it('keeps every mutation the document already carried', () => {
@@ -832,9 +868,11 @@ describe('the three fields — the permission and the guards are the route’s',
  * renames a serving field, or that adds one of these twenty-four names without meaning to, fails here.
  */
 describe('the twenty-four collapsed routes — served under another name, not unserved', () => {
-	it('flags twenty-seven routes, collapses twenty-four and implements three', () => {
-		expect(COLLAPSED).toHaveLength(24);
-		expect(PARITY).toHaveLength(3);
+	it('flags twenty-seven routes, collapses twenty-three and implements four', () => {
+		// Twenty-four and three until R2-G2 delivered `updateCollectionChannel`, which moved the collection
+		// publication's update from the collapsed table to the implemented one.
+		expect(COLLAPSED).toHaveLength(23);
+		expect(PARITY).toHaveLength(4);
 
 		// The prose's arithmetic, asserted rather than left to a reader: of the twenty-four collapsed
 		// routes, five are `replace*` action routes and nineteen are a child's own create, update or
@@ -842,14 +880,14 @@ describe('the twenty-four collapsed routes — served under another name, not un
 		// delivers. Of the three genuine routes, one is the `replace*` route with no wrapper behind it and
 		// two are those child updates.
 		expect(COLLAPSED.filter(({ route }) => route.startsWith('replace'))).toHaveLength(5);
-		expect(COLLAPSED.filter(({ route }) => ['create', 'update', 'delete'].includes(route))).toHaveLength(19);
+		expect(COLLAPSED.filter(({ route }) => ['create', 'update', 'delete'].includes(route))).toHaveLength(18);
 		expect(PARITY.filter(({ route }) => route.startsWith('replace'))).toHaveLength(1);
-		expect(PARITY.filter(({ route }) => route === 'update')).toHaveLength(2);
+		expect(PARITY.filter(({ route }) => route === 'update')).toHaveLength(3);
 
 		// Seven child resources, three CRUD routes each, twenty-one flagged; two of them genuine leaves the
 		// nineteen collapsed above, and twenty-one child routes plus six `replace*` routes is the
 		// twenty-seven the audit reports.
-		expect(7 * 3 - 2).toBe(19);
+		expect(7 * 3 - 3).toBe(18);
 		expect(7 * 3 + 6).toBe(27);
 	});
 
