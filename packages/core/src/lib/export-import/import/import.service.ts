@@ -330,26 +330,19 @@ export class ImportService {
 	 * Map static tables import record before insert data
 	 */
 	async migrateImportEntityRecord(item: IRepositoryModel, entity: any): Promise<any> {
-		const { repository, uniqueIdentifiers = [] } = item;
+		const { repository } = item;
 		const masterTable = repository.metadata.tableName;
 
 		return await new Promise(async (resolve, reject) => {
 			try {
 				const source = JSON.parse(JSON.stringify(entity));
-				const where = [];
-				if (isNotEmpty(uniqueIdentifiers) && Array.isArray(uniqueIdentifiers)) {
-					if ('tenantId' in entity && isNotEmpty(entity['tenantId'])) {
-						where.push({ tenantId: RequestContext.currentTenantId() });
-					}
-					for (const unique of uniqueIdentifiers) {
-						where.push({ [unique.column]: entity[unique.column] });
-					}
-				}
+				// The lookup reads the mapped row: the archive's tenant and foreign keys are the source ids.
+				const mapped = await this.mapFields(item, entity);
 				const destination = await this.commandBus.execute(
 					new ImportEntityFieldMapOrCreateCommand(
 						repository,
-						where,
-						await this.mapFields(item, entity),
+						this.uniqueKeyConditions(item, mapped),
+						mapped,
 						source.id
 					)
 				);
@@ -362,6 +355,31 @@ export class ImportService {
 				reject(error);
 			}
 		});
+	}
+
+	/**
+	 * One condition per unique constraint of the table, each matching every column of the constraint
+	 * within the importing tenant. A constraint with an empty column is skipped: a null never collides,
+	 * and an undefined key would be dropped from the query and match any row.
+	 *
+	 * @param item - The table being imported.
+	 * @param row - The row after {@link mapFields}.
+	 */
+	private uniqueKeyConditions(item: IRepositoryModel, row: Record<string, unknown>): Record<string, unknown>[] {
+		const { repository, uniqueConstraints = [] } = item;
+		const isTenantScoped = !!repository.metadata.findColumnWithPropertyName('tenantId');
+		const where: Record<string, unknown>[] = [];
+		for (const columns of uniqueConstraints) {
+			if (columns.some((column) => row[column] === null || row[column] === undefined)) {
+				continue;
+			}
+			const condition: Record<string, unknown> = isTenantScoped ? { tenantId: row['tenantId'] ?? IsNull() } : {};
+			for (const column of columns) {
+				condition[column] = row[column];
+			}
+			where.push(condition);
+		}
+		return where;
 	}
 
 	/*

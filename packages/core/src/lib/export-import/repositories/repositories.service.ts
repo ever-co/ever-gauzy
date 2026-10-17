@@ -452,6 +452,8 @@ export interface IRepositoryModel<T = any> {
 	relations?: IColumnRelationMetadata<T>[];
 	foreignKeys?: IForeignKey<any>[];
 	uniqueIdentifiers?: { column: string }[];
+	/** Property names of every column of each unique constraint, one entry per constraint. */
+	uniqueConstraints?: string[][];
 
 	// additional condition
 	isStatic?: boolean;
@@ -1210,6 +1212,19 @@ export class RepositoriesService implements OnModuleInit {
 				};
 			}) || [];
 
+		// A constraint on a relation property has no key of its own in an imported row, and matching on
+		// only part of a constraint would match rows it does not cover, so such a constraint is left out.
+		const uniqueConstraints = entityMetadata.uniques
+			.map((unique) => unique.columns.map((col) => col.propertyName))
+			.filter(
+				(columns) =>
+					columns.length > 0 &&
+					columns.every(
+						(propertyName) =>
+							!entityMetadata.relations.some((relation) => relation.propertyName === propertyName)
+					)
+			);
+
 		// Get foreign keys and relations
 		const foreignKeys =
 			entityMetadata.relations
@@ -1251,6 +1266,7 @@ export class RepositoriesService implements OnModuleInit {
 			repository,
 			isCheckRelation: foreignKeys.length > 0,
 			uniqueIdentifiers,
+			uniqueConstraints,
 			foreignKeys,
 			relations,
 			isTenantBased
