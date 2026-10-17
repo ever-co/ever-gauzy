@@ -40,6 +40,9 @@ export class SubscriptionItemInputDTO {
  * cadence. Naming the originating order is what makes the request idempotent — a retried checkout
  * finds the subscription it already created instead of making a second one.
  */
+// R2-G14: no `discountPercentage` member here, deliberately. The per-subscription discount override is served by
+// the GraphQL `createSubscription` only (see the resolver), under the same SUBSCRIPTIONS_CREATE grant that can
+// create a discounted plan; whether REST takes it too is owner question G14-1 (2026-10-17 px-improvements handover).
 export class CreateSubscriptionDTO extends SubscriptionDTO {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

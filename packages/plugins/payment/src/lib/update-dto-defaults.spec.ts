@@ -21,6 +21,7 @@ import { UpdatePaymentProviderDTO } from './payment-provider/dto';
 import { UpdatePaymentSessionDTO } from './payment-session/dto';
 import { UpdatePaymentWebhookEventDTO } from './payment-webhook-event/dto';
 import { UpdateRefundDTO } from './refund/dto';
+import { UpdateRefundReasonDTO } from './refund-reason/dto';
 
 /** The pipe every one of these routes mounts: `@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })`. */
 const pipe = new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true });
@@ -90,5 +91,24 @@ describe('payment update bodies carry only what the client sent', () => {
 		const body = { amount: '120.00', currency: 'EUR', settlementCurrency: 'USD', fxRate: '1.08', metadata: {} };
 
 		expect({ ...(await received(UpdatePaymentCollectionDTO, body)) }).toEqual(body);
+	});
+});
+
+// R2-G12: `PUT /refund-reasons/:id` "changes a reason: its label, its description, its parent or its active state",
+// and the GraphQL `UpdateRefundReasonInput` carries `isActive`, but the DTO did not declare it: the route mounts
+// `forbidNonWhitelisted`, so a body stating it was refused with a 400 and a deactivated reason could only be
+// reactivated over GraphQL.
+describe('the refund reason update body carries the active state', () => {
+	it('accepts isActive, both ways, and nothing else is added', async () => {
+		await expect(received(UpdateRefundReasonDTO, { isActive: true })).resolves.toEqual({ isActive: true });
+		await expect(received(UpdateRefundReasonDTO, { isActive: false, label: 'Damaged' })).resolves.toEqual({
+			isActive: false,
+			label: 'Damaged'
+		});
+	});
+
+	it('still validates it as a boolean, and still refuses an undeclared member', async () => {
+		await expect(received(UpdateRefundReasonDTO, { isActive: 'no' })).rejects.toBeInstanceOf(BadRequestException);
+		await expect(received(UpdateRefundReasonDTO, { status: 'ACTIVE' })).rejects.toBeInstanceOf(BadRequestException);
 	});
 });

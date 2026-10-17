@@ -730,6 +730,10 @@ export const schemaExtensions = gql`
 		fxRateId: ID
 		fxCapturedAt: DateTime
 		metadata: JSON
+		"The amount to collect, as \`PUT /payment-collections/:id\` takes it; refused once money has moved against the collection."
+		amount: Decimal
+		"The currency of the amount, as the route takes it; refused once money has moved against the collection."
+		currency: String
 	}
 
 	input OpenPaymentSessionInput {

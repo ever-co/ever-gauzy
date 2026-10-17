@@ -14,6 +14,26 @@ const DECIMAL_PATTERN = /^[+-]?\d{1,14}(\.\d{1,6})?$/;
  * anything else — `NaN`, `Infinity`, an exponent, more than six fractional digits — is rejected here
  * rather than silently rounded later.
  *
+ * The predicate is exported so a GraphQL resolver checks a `Decimal` member the way the route's DTO does.
+ *
+ * @param value The stated amount.
+ * @returns Whether it is an exact decimal with at most six fractional digits.
+ */
+export function isDecimalAmount(value: unknown): boolean {
+	if (typeof value === 'string') {
+		return DECIMAL_PATTERN.test(value.trim());
+	}
+
+	if (typeof value === 'number') {
+		return Number.isFinite(value) && DECIMAL_PATTERN.test(String(value));
+	}
+
+	return false;
+}
+
+/**
+ * The decorator form of {@link isDecimalAmount}, for a DTO member.
+ *
  * @param validationOptions Standard class-validator options.
  * @returns The property decorator.
  */
@@ -26,15 +46,7 @@ export function IsDecimalAmount(validationOptions?: ValidationOptions): Property
 			options: validationOptions,
 			validator: {
 				validate(value: unknown): boolean {
-					if (typeof value === 'string') {
-						return DECIMAL_PATTERN.test(value.trim());
-					}
-
-					if (typeof value === 'number') {
-						return Number.isFinite(value) && DECIMAL_PATTERN.test(String(value));
-					}
-
-					return false;
+					return isDecimalAmount(value);
 				},
 				defaultMessage(args: ValidationArguments): string {
 					return `${args.property} must be an exact decimal amount with at most six fractional digits`;

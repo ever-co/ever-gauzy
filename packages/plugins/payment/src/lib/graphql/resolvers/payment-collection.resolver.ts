@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FEATURE_GRAPHQL,
@@ -15,6 +15,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { PaymentCollectionService } from '../../payment-collection/payment-collection.service';
 import { IPaymentCollection } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
+import { isDecimalAmount } from '../../payment.validators';
 import { rejection, toConnection, toOrder } from '../types/connection';import {
 	ICreatePaymentCollectionGraphInput,
 	ICreatePaymentCollectionPayload,
@@ -117,6 +118,14 @@ export class PaymentCollectionResolver {
 		@Args('input') input: IUpdatePaymentCollectionGraphInput
 	): Promise<IUpdatePaymentCollectionPayload> {
 		try {
+			// The route checks `amount` with `@IsDecimalAmount()`: at most six fractional digits, the column's scale, so a
+			// seventh is refused here as it is there rather than rounded by the database (R2-G16, Greptile).
+			if (input?.amount !== undefined && input?.amount !== null && !isDecimalAmount(input.amount)) {
+				throw new BadRequestException(
+					'VALIDATION_FAILED: amount must be an exact decimal amount with at most six fractional digits'
+				);
+			}
+
 			return {
 				paymentCollection: await this.paymentCollectionService.updateCollection(input.id, input as never),
 				userErrors: []

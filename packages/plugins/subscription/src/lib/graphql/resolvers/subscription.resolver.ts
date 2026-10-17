@@ -214,6 +214,15 @@ export class SubscriptionResolver {
 	 * subscription's version is published in the payload, which is what the writes that follow it state
 	 * back.
 	 *
+	 * **`discountPercentage` is GraphQL-only, deliberately for now (R2-G14).** It is the per-subscription
+	 * discount override (`metadata.discountPercentage`, a reserved key the service alone writes, a fraction
+	 * in `[0, 1]` — `normalizeDiscountFraction`). `CreateSubscriptionDTO` does not declare it, so
+	 * `POST /subscriptions` strips it. The permission is the right one for both surfaces:
+	 * `SUBSCRIPTIONS_CREATE` is also the grant that creates a plan with any `discountPercentage` and
+	 * subscribes a customer to it, so the override grants nothing the caller could not grant already.
+	 * Whether REST should take it too is recorded as owner question G14-1 in the 2026-10-17
+	 * px-improvements handover. The default is to leave it as it is: GraphQL keeps it, REST does not add it.
+	 *
 	 * @param input The request.
 	 * @returns The payload, with the subscription or the reason it was refused.
 	 */

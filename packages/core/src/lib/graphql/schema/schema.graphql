@@ -11727,7 +11727,18 @@ type Mutation {
   Extends the term of a right, which is what a successful renewal does. The caller states the
   'version' it read, and a right that has moved on since is refused.
   """
-  extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int, version: Int, idempotencyKey: String): EntitlementPayload!
+  extendEntitlement(
+    id: ID!
+    endsAt: DateTime!
+    quantity: Int
+    version: Int
+    idempotencyKey: String
+
+    """
+    What extended the right (e.g. the subscription billing cycle), carried on the renewal event, as POST /entitlements/:id/extend takes it.
+    """
+    note: String
+  ): EntitlementPayload!
 
   """
   Edits a right: its ceiling, its term, its grace, its activation limit, its extras and its
@@ -50766,6 +50777,16 @@ input UpdatePaymentCollectionInput {
   fxRateId: ID
   fxCapturedAt: DateTime
   metadata: JSON
+
+  """
+  The amount to collect, as `PUT /payment-collections/:id` takes it; refused once money has moved against the collection.
+  """
+  amount: Decimal
+
+  """
+  The currency of the amount, as the route takes it; refused once money has moved against the collection.
+  """
+  currency: String
 }
 
 input OpenPaymentSessionInput {
@@ -54473,6 +54494,11 @@ input CreateSubscriptionPlanInput {
   setupFee: Decimal
   discountPercentage: Decimal
   metadata: JSON
+
+  """
+  Create the plan inactive (not offered to new subscriptions), as POST /subscription-plans allows. Defaults to active.
+  """
+  isActive: Boolean
 }
 
 """The plan as it is updated."""
@@ -54490,6 +54516,11 @@ input UpdateSubscriptionPlanInput {
   discountPercentage: Decimal
   isActive: Boolean
   metadata: JSON
+
+  """
+  The currency the plan's amounts are expressed in, as PUT /subscription-plans/:id takes it; refused while the plan has live subscriptions (SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE).
+  """
+  currency: String
 }
 
 """One recurring line as it is stated."""
@@ -54522,6 +54553,10 @@ input CreateSubscriptionInput {
 
   """Leave the subscription inside the plan's trial."""
   startTrial: Boolean
+
+  """
+  A discount for this subscription only, as a fraction between 0 and 1, applied to every cycle in place of the plan's own discount. Served over GraphQL only: POST /subscriptions does not take it.
+  """
   discountPercentage: Decimal
   metadata: JSON
   idempotencyKey: String
@@ -55839,6 +55874,11 @@ input GrantEntitlementInput {
   a grant that names no key behaves exactly as it always did.
   """
   idempotencyKey: String
+
+  """
+  An explicit number for the right (at most 32 characters), as POST /entitlements takes it; allocated from the ENTITLEMENT series when absent.
+  """
+  number: String
 }
 
 """The request that occupies a slot."""
@@ -55862,6 +55902,11 @@ input ActivateEntitlementInput {
   activation that states no key behaves exactly as it always did.
   """
   idempotencyKey: String
+
+  """
+  Refresh lastSeenAt of an existing activation only after this many seconds (0 or more), as POST /entitlement-activations takes it.
+  """
+  seenIntervalSeconds: Int
 }
 
 """The request that asks whether a right may be exercised."""

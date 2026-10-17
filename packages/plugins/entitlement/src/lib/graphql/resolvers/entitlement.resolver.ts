@@ -1,4 +1,4 @@
-import { Inject, Optional, UseGuards } from '@nestjs/common';
+import { BadRequestException, Inject, Optional, UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
 import { ID, IPagination } from '@gauzy/contracts';
@@ -209,6 +209,11 @@ export class EntitlementResolver {
 	@Mutation('grantEntitlement')
 	async grantEntitlement(@Args('input') input: IEntitlementGrantInput) {
 		try {
+			// `number` is the member `POST /entitlements` validates with `@MaxLength(32)` (R2-G16); the column holds 32.
+			if (input?.number !== undefined && input?.number !== null && String(input.number).length > 32) {
+				throw new BadRequestException('VALIDATION_FAILED: number must be at most 32 characters.');
+			}
+
 			const result = await this.entitlementService.grant(input);
 
 			return {
@@ -269,13 +274,15 @@ export class EntitlementResolver {
 		@Args('id') id: ID,
 		@Args('endsAt') endsAt: Date,
 		@Args('quantity') quantity?: number,
-		@Context() context?: any
+		@Context() context?: any,
+		// Last, so the positional arguments before it keep their places (R2-G16: the route always took a note).
+		@Args('note') note?: string
 	) {
 		try {
 			return {
 				entitlement: await this.entitlementService.extend(
 					id,
-					{ endsAt: new Date(endsAt), quantity },
+					{ endsAt: new Date(endsAt), quantity, ...(note !== undefined && note !== null ? { note } : {}) },
 					{},
 					versionExpectationOf(context?.req)
 				),
