@@ -2097,7 +2097,14 @@
 				"IN_DAYS": "Over {{ count }} dagen"
 			},
 			"SHOWING": "{{ shown }} van {{ total }} taken getoond",
-			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave"
+			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave",
+			"PROJECTS_CAPTION": "Hun projecten en de tijd die er deze periode aan is besteed",
+			"NO_PROJECTS": "Geen lid van een project en geen projecttijd in deze periode",
+			"NOT_A_MEMBER": "Geen lid",
+			"NOT_A_MEMBER_HINT": "Er is tijd op dit project geregistreerd, maar zij zijn er geen lid van",
+			"VIEW_PROFILE": "Profiel bekijken",
+			"MEMBERSHIP_UNKNOWN": "Het projectlidmaatschap kon niet worden geladen, dus leden en niet-leden worden niet onderscheiden.",
+			"PROJECT_TIMES_PARTIAL": "Sommige projecttijden konden niet worden geladen, dus een project zonder tijd kan toch tijd hebben."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

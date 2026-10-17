@@ -2583,7 +2583,14 @@
 				"IN_DAYS": "In {{ count }} days"
 			},
 			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
-			"NO_TASKS_IN_VIEW": "No tasks in this view"
+			"NO_TASKS_IN_VIEW": "No tasks in this view",
+			"PROJECTS_CAPTION": "Their projects and the time worked on each in this period",
+			"NO_PROJECTS": "Not a member of any project, and no project time in this period",
+			"NOT_A_MEMBER": "Not a member",
+			"NOT_A_MEMBER_HINT": "Time was tracked on this project, but they are not a member of it",
+			"VIEW_PROFILE": "View profile",
+			"MEMBERSHIP_UNKNOWN": "Project membership could not be loaded, so members and non-members are not told apart.",
+			"PROJECT_TIMES_PARTIAL": "Some project times could not be loaded, so a project without a time may still have some."
 		}
 	},
 	"STRATEGIC_INITIATIVES": {

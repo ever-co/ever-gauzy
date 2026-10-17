@@ -1362,3 +1362,536 @@ nb-card-body.ev-body {
 		overflow-x: auto;
 	}
 }
+
+/* ── Project cards: a project, its time and share in the period ─────────────
+ * Shared with the team page, which builds on this sheet. */
+
+.project-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: $gap-sm;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+// One project: logo, name, its time and share in the period, and a bar sized
+// against the most-worked project.
+.project-card {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-md;
+	min-width: 0;
+	padding: $gap-md;
+	border-radius: var(--gauzy-radius-sm);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	transition: background-color 0.12s ease-in-out;
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	// No time this period: still listed, but quieter.
+	&.is-idle .project-logo {
+		opacity: 0.7;
+	}
+}
+
+.project-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.project-name-row {
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	min-width: 0;
+}
+
+.project-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.project-chip {
+	flex: 0 0 auto;
+	font-size: 0.625rem;
+}
+
+.project-figures {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: $gap-sm;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.project-time {
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-1);
+
+	.is-idle & {
+		font-weight: 400;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.project-logo {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-active-tint);
+	font-size: 0.6875rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-1);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: var(--gauzy-radius-sm);
+		object-fit: cover;
+	}
+}
+
+/* ── Interactive task rows: a row opens the quick look; the icon opens the task page ──
+* Shared with the team page, which builds on this sheet. */
+
+.task-row--interactive {
+	// Task button (dot, title, due) | assignees | link to the task page.
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	column-gap: 0;
+	padding: 0;
+
+	&.is-viewed {
+		background-color: var(--gauzy-active-tint);
+	}
+
+	&:hover .task-link,
+	&:focus-within .task-link {
+		opacity: 1;
+	}
+}
+
+.task-open {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: start;
+	column-gap: $gap-md;
+	width: 100%;
+	min-width: 0;
+	padding: 0.625rem 0 0.625rem 1rem;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	text-align: start;
+	color: inherit;
+	cursor: pointer;
+
+	&:hover .task-title {
+		color: nb-theme(color-primary-500);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+		border-radius: var(--gauzy-radius-sm);
+	}
+}
+
+// Assignees as overlapping avatars, the way issue trackers show them.
+.task-people {
+	display: inline-flex;
+	align-items: center;
+	align-self: center;
+	padding-inline: 0.75rem 0.25rem;
+}
+
+.task-person {
+	display: inline-flex;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	text-decoration: none;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	margin-inline-start: -0.3125rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-active-tint);
+	box-shadow: 0 0 0 2px var(--gauzy-card-1);
+	font-size: 0.5rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-1);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	&--more {
+		background-color: var(--gauzy-hover-tint);
+		color: var(--gauzy-text-color-2);
+		cursor: pointer;
+	}
+
+	// Avatars and the "+N" chip are links and a button now: show where focus is.
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 2px;
+	}
+
+	&--none {
+		background-color: transparent;
+		border: 1px dashed var(--gauzy-border-default-color);
+		color: var(--gauzy-text-color-2);
+
+		nb-icon {
+			width: 0.625rem;
+			height: 0.625rem;
+			font-size: 0.625rem;
+		}
+	}
+}
+
+.task-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	margin: 0 0.5rem;
+	border-radius: var(--gauzy-radius-sm);
+	color: var(--gauzy-text-color-2);
+	opacity: 0.55;
+	transition:
+		opacity 0.12s ease-in-out,
+		background-color 0.12s ease-in-out;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+
+	&:hover {
+		opacity: 1;
+		color: nb-theme(color-primary-500);
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	&:focus-visible {
+		opacity: 1;
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 2px;
+	}
+}
+
+.table-footer--action {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $gap-sm;
+}
+
+@media screen and (max-width: 36rem) {
+	.task-people {
+		display: none;
+	}
+
+	.task-row--interactive {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.task-link {
+		transition: none;
+	}
+}
+
+/* ── Assignee hover card: a profile card, in the manner of a chat app's ───────
+ * A banner in the theme's accent, the photo overlapping it with a presence dot,
+ * the name and handle, status and tenure, a short about, and a way to the full
+ * profile. Kept to 18rem — a glance, not a page. Shared with the team page. */
+
+// The popover draws its own padding and edge; the card fills it edge to edge.
+::ng-deep .person-popover {
+	padding: 0 !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden;
+
+	.primitive-overlay {
+		padding: 0 !important;
+	}
+}
+
+.person-card {
+	position: relative;
+	width: 18rem;
+	background-color: var(--gauzy-card-1);
+}
+
+.person-card-banner {
+	height: 4.25rem;
+	background: linear-gradient(
+		135deg,
+		color-mix(in srgb, nb-theme(color-primary-500) 55%, var(--gauzy-card-1)),
+		color-mix(in srgb, nb-theme(color-primary-500) 20%, var(--gauzy-card-1))
+	);
+}
+
+.person-card-photo {
+	position: absolute;
+	top: 2rem;
+	left: 1rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 4.75rem;
+	height: 4.75rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-active-tint);
+	// A ring in the card's colour lifts the photo off the banner.
+	box-shadow: 0 0 0 0.3125rem var(--gauzy-card-1);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+}
+
+.person-card-initials {
+	font-size: 1.375rem;
+	font-weight: $weight-strong;
+	color: var(--gauzy-text-color-1);
+}
+
+.person-card-dot {
+	position: absolute;
+	right: 0.125rem;
+	bottom: 0.125rem;
+	width: 1.125rem;
+	height: 1.125rem;
+	border-radius: 50%;
+	background-color: var(--presence);
+	box-shadow: 0 0 0 0.25rem var(--gauzy-card-1);
+}
+
+.person-card-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 2.75rem 1rem 1rem;
+}
+
+.person-card-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 1.125rem;
+	font-weight: 700;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.person-card-handle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	line-height: 1.125rem;
+	color: var(--gauzy-text-color-2);
+	text-decoration: none;
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+		text-decoration: underline;
+	}
+}
+
+.person-card-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.5rem;
+	margin-top: 0.375rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+
+	> * + *::before {
+		content: '•';
+		margin-inline-end: 0.5rem;
+	}
+}
+
+.person-card-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+}
+
+.person-card-status-dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--presence);
+}
+
+.person-card-bio {
+	display: -webkit-box;
+	margin: 0.5rem 0 0;
+	overflow: hidden;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+// A soft full-width button at the foot of the card.
+.person-card-action {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-top: 0.875rem;
+	padding: 0.625rem 0.875rem;
+	border-radius: 0.5rem;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.8125rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-1);
+	text-decoration: none;
+	transition: background-color 0.12s ease-in-out;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+
+	&:hover {
+		background-color: var(--gauzy-active-tint);
+		text-decoration: none;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 2px;
+	}
+}
+
+// The "+N" list: the assignees the chip stands for, one per row.
+.people-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	max-width: 16rem;
+	max-height: 16rem;
+	margin: 0;
+	padding: 0.375rem;
+	overflow-y: auto;
+	list-style: none;
+	background-color: var(--gauzy-card-1);
+}
+
+.people-list-row {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.375rem 0.5rem;
+	border-radius: 0.375rem;
+	color: inherit;
+	text-decoration: none;
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		text-decoration: none;
+
+		.people-list-name {
+			color: nb-theme(color-primary-500);
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+	}
+}
+
+.people-list-avatar {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-active-tint);
+	font-size: 0.625rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-1);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+}
+
+.people-list-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	color: var(--gauzy-text-color-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.person-card-action {
+		transition: none;
+	}
+}
+
+// Above the project cards when the membership list could not be read.
+.panel-note {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	margin: 0 0 0.75rem;
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		flex: 0 0 auto;
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+}
