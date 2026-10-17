@@ -23,7 +23,9 @@ function fixture(placed: { id: string; number: string; status?: OrderStatus } | 
 		canCreateFromCart: jest.fn(() => true),
 		findPlacedForCart: jest.fn(async () => placed),
 		createFromCart: jest.fn(async () => ({ id: 'order-new', number: 'ORD-NEW' })),
-		confirm: jest.fn(async (id: string) => ({ ...placed, id, status: OrderStatus.CONFIRMED }))
+		confirm: jest.fn(async (id: string) => ({ ...placed, id, status: OrderStatus.CONFIRMED })),
+		// The recovery also finishes the promotion registration a dead checkout left (Q7-W1c).
+		registerPromotionUsage: jest.fn(async () => undefined)
 	};
 	const cartService = { findOneWithContent: jest.fn(async () => cart) };
 	const handler = new OrderCheckoutHandler(orderService as never, cartService as never);
@@ -45,6 +47,7 @@ describe('OrderCheckoutHandler — one placed order per cart (R3-10)', () => {
 		expect(orderService.findPlacedForCart).toHaveBeenCalledWith('cart-1');
 		expect(orderService.createFromCart).not.toHaveBeenCalled();
 		expect(orderService.confirm).not.toHaveBeenCalled();
+		expect(orderService.registerPromotionUsage).toHaveBeenCalledWith('order-1', 'cart-1');
 	});
 
 	it('confirms a recovered order the dead checkout placed but did not confirm', async () => {
