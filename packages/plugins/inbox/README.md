@@ -7,6 +7,7 @@
       "## Tables (migrations for PostgreSQL, MySQL and SQLite)",
       "## API (`/api/inbox/items`, `INBOX_VIEW`)",
       "## Feeding the Inbox from another plugin",
+      "## Real time (G-P3-6)",
       "## Tests"
     ]
   }
@@ -138,7 +139,7 @@ The writer (`create`, `upsertExternal`), the recipient model and the
 source-handler registry are the stable surface other plugins build on (the Ever
 Works integration, the P4 inbound-email pipeline): change them additively.
 
-## Real time (`inbox_item.created`, G-P3-6)
+## Real time (G-P3-6)
 
 When an item is created for at least one user, the plugin appends
 `inbox_item.created` to the platform outbox and declares it with the

@@ -112,7 +112,8 @@ export class InboxRealtime implements OnModuleInit {
 				aggregateType: INBOX_ITEM_AGGREGATE,
 				aggregateId: item.id as ID,
 				tenantId: item.tenantId as ID,
-				...(item.organizationId ? { organizationId: item.organizationId as ID } : {}),
+				// A tenant-wide item stays tenant-wide: the writing request's organization is not stamped on it.
+				...(item.organizationId ? { organizationId: item.organizationId as ID } : { tenantWide: true }),
 				data: inboxItemCreatedData(item, recipientUserIds) as unknown as Record<string, unknown>
 			});
 		} catch (error) {

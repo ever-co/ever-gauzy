@@ -175,6 +175,8 @@ describe('InboxRealtime', () => {
 		);
 		await realtime.itemCreated({ ...ITEM, organizationId: null } as unknown as InboxItem, ['user-a']);
 		expect(appended[0].input).not.toHaveProperty('organizationId');
+		// Stated as tenant-wide, so the outbox does not take the writing request's organization instead.
+		expect(appended[0].input['tenantWide']).toBe(true);
 		expect(
 			inboxItemCreatedData({ ...ITEM, organizationId: undefined } as unknown as InboxItem, []).organizationId
 		).toBeNull();
