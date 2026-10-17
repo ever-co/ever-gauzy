@@ -181,12 +181,42 @@ export class ExtendedMcpServer extends McpServer {
 			}
 
 			const tool = serverInternal._registeredTools[name];
-			if (!tool || typeof tool.callback !== 'function') {
+			// SDK >= 1.25 keeps the tool function under `handler`, older releases under `callback`
+			const fn = typeof tool?.handler === 'function' ? tool.handler : tool?.callback;
+			if (typeof fn !== 'function') {
 				throw new Error(`Tool '${name}' has no valid callback`);
 			}
+			if (tool.enabled === false) {
+				throw new Error(`Tool '${name}' disabled`);
+			}
 
-			// Execute the tool with the provided arguments
-			const result = await tool.callback(args || {});
+			// Same steps as the SDK tools/call handler used on stdio: parse the args with the
+			// tool schema (defaults, checks), then call handler(args, extra) or handler(extra)
+			const extra = {
+				signal: new AbortController().signal,
+				sendNotification: async () => undefined,
+				sendRequest: async () => {
+					throw new Error('sendRequest is not supported on this transport');
+				}
+			};
+			let result: unknown;
+			if (tool.inputSchema) {
+				let toolArgs: unknown = args || {};
+				if (typeof tool.inputSchema.safeParseAsync === 'function') {
+					const parsed = await tool.inputSchema.safeParseAsync(toolArgs);
+					if (!parsed.success) {
+						throw new Error(
+							`Input validation error: Invalid arguments for tool ${name}: ${
+								parsed.error?.message ?? 'Unknown error'
+							}`
+						);
+					}
+					toolArgs = parsed.data;
+				}
+				result = await fn(toolArgs, extra);
+			} else {
+				result = await fn(extra);
+			}
 			logger.debug(`Tool ${name} executed successfully. Result:`, mask(result as Record<string, unknown>));
 
 			return result;
