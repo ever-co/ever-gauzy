@@ -137,6 +137,8 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/projects` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/projects` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/initiatives` | `VIEW` |
+| PUT | `/mappings/:integrationTenantId/initiatives` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/sync/status` | `VIEW` |
 | GET | `/mappings/:integrationTenantId/sync/preview` | `VIEW` |
 | POST | `/mappings/:integrationTenantId/sync/start` | `EDIT` |
@@ -253,6 +255,42 @@ and answered `202`.
   Ever Works: no other status move is pushed, and a refused move writes Ever
   Works' status back. A task whose type changes away from Idea is unlinked
   (both kept); a deleted idea archives its task; private ideas never sync.
+- **Goals ↔ Goal + key results (G-P2-1).** An Ever Works goal is a Gauzy
+  goal: title, description, deadline (the narrowest active time frame that
+  contains it, else a new `Q<n> <yyyy>` time frame), scope (its first team →
+  level Team, no team → Organization; a Gauzy Employee goal stays one), lead
+  (its agent, else its owner), progress, archived and the primary mission's
+  initiative. Criteria, a metric and the Definition of Done become key results
+  (numeric with bucketed weights, True/False for Definition-of-Done items); a
+  key result Ever Works drops is archived. A Gauzy goal becomes an Ever Works
+  goal that is **always a draft** (numeric key results → a metric goal on the
+  external source, else a delivery goal from its True/False key results);
+  edits, criteria and the Definition of Done follow, and key result values are
+  pushed as samples (`POST /goals/:id/samples`). Gauzy never activates,
+  resumes or completes an Ever Works goal: no status is sent.
+- **Missions ↔ strategic initiatives (G-P2-2).** The Initiatives tab
+  (`GET`/`PUT …/initiatives`) pairs missions and initiatives (same-title
+  suggestions the admin confirms, or "create on the other side"); missions
+  and initiatives created after the mapping pair without a review. From Ever
+  Works: title, description → intent, status (active → active, paused →
+  active with momentum "stalled", completed/failed → resolved with the
+  outcome in the strategic notes), owner → steward, teams (scope team or
+  organization), works → projects and the primary goals → the goals'
+  initiative. To Ever Works (only with the missions direction `both`): a
+  mission Ever Works creates **paused**, then title, intent, teams, works and
+  goals; resolving or retiring the initiative completes the mission. Gauzy
+  never activates a mission. Drafts wait until active, and **leadership
+  initiatives never sync** (one that turns leadership stops syncing, flagged).
+- **Inbox (where the Gauzy Inbox is loaded).** Ever Works inbox items
+  (questions, approvals, escalations, notices; `inbox.item.*`, served to a key
+  with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
+  Gauzy user paired with the recipient, with the linked task, project and
+  agent. An item whose recipient is not paired yet waits (deferred, retried
+  hourly) until the People tab pairs them. A reply in Gauzy goes to Ever Works
+  at once, acting as the recipient (`inbox:write`); an item already decided
+  there shows the answer Ever Works holds. Read / unread and archive follow
+  to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
+  events are skipped.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
