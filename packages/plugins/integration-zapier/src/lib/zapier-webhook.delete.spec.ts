@@ -10,7 +10,12 @@ jest.mock('@gauzy/core', () => {
 	});
 });
 
-import { ForbiddenException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	ForbiddenException,
+	InternalServerErrorException,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { ZapierWebhookController } from './zapier-webhook.controller';
 import { ZapierWebhookService } from './zapier-webhook.service';
 
@@ -19,11 +24,13 @@ import { ZapierWebhookService } from './zapier-webhook.service';
  * or an invalid token were all rethrown as InternalServerErrorException by the service and the controller.
  */
 describe('Zapier webhook deletion keeps its client errors', () => {
-	const subscriptionOf = (tenantId: string | null) =>
-		tenantId ? { id: 'subscription-1', tenantId } : null;
+	const subscriptionOf = (tenantId: string | null) => (tenantId ? { id: 'subscription-1', tenantId } : null);
 
 	// `resolveIntegration` stands for the token check: it answers the integration, or rejects the token
-	const build = (subscription: unknown, resolveIntegration: () => Promise<unknown> = async () => ({ tenantId: 'tenant-1' })) => {
+	const build = (
+		subscription: unknown,
+		resolveIntegration: () => Promise<unknown> = async () => ({ tenantId: 'tenant-1' })
+	) => {
 		const repository = {
 			findOne: jest.fn().mockResolvedValue(subscription),
 			delete: jest.fn().mockResolvedValue({ affected: 1 })
@@ -41,7 +48,9 @@ describe('Zapier webhook deletion keeps its client errors', () => {
 
 	it('answers 404 for an unknown subscription, through the controller too', async () => {
 		const { service, controller } = build(subscriptionOf(null));
-		await expect(service.deleteSubscription('subscription-1', 'tenant-1')).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.deleteSubscription('subscription-1', 'tenant-1')).rejects.toBeInstanceOf(
+			NotFoundException
+		);
 		await expect(controller.deleteWebhook('subscription-1', 'Bearer token')).rejects.toBeInstanceOf(
 			NotFoundException
 		);
