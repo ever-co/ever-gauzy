@@ -12,9 +12,10 @@
  * `X-Gauzy-Inbox-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<body>">`. The API answers 202
  * `{ accepted, duplicates, dropped }`.
  *
- * - Only Cloudflare's own verdicts are forwarded: the topmost `Authentication-Results` (or, without one, the first
- *   `ARC-Authentication-Results`) whose authserv-id is `GAUZY_INBOX_TRUSTED_AUTHSERV_ID` (default `mx.cloudflare.net`).
- *   A sender's own header is never forwarded.
+ * - Only Cloudflare's own verdicts are forwarded: the topmost authentication header (`Authentication-Results` or
+ *   `ARC-Authentication-Results`), when its authserv-id is `GAUZY_INBOX_TRUSTED_AUTHSERV_ID` (default
+ *   `mx.cloudflare.net`). A sender's own header, or an earlier hop's, lies below it and is never forwarded.
+ * - Only the API's own acknowledgement (202 with its counters) counts as stored; a redirect is never followed.
  * - A message over `GAUZY_INBOX_MAX_MESSAGE_BYTES` (default 25 MB, as the API's) is rejected before it is read.
  * - A delivery no mailbox took (nothing accepted, nothing a duplicate) is rejected: the sender gets a bounce.
  * - 413 and the API's other definite refusals reject the message; a network error, a 5xx, a 429, a 401 or a 404 (the
@@ -91,12 +92,22 @@ export async function deliver(message, env, fetcher = fetch) {
 
 	const response = await fetcher(`${settings.apiUrl}${INBOUND_PATH}`, {
 		method: 'POST',
+		// The signed message goes to the configured API only, never where a redirect points.
+		redirect: 'error',
 		headers: { 'content-type': 'application/json', [SIGNATURE_HEADER]: `t=${timestamp},v1=${signature}` },
 		body
 	});
 	if (response.status >= 200 && response.status < 300) {
+		// Only the API's own acknowledgement counts (202 with its counters): anything else in front of it (a proxy's
+		// HTML page) is no proof the mail was stored, so the sender keeps it and retries.
 		const result = await response.json().catch(() => null);
-		if (result && Number(result.accepted) === 0 && Number(result.duplicates) === 0) {
+		const counted = (key) => Number.isInteger(result?.[key]) && result[key] >= 0;
+		if (response.status !== 202 || !counted('accepted') || !counted('duplicates') || !counted('dropped')) {
+			throw new Error(
+				`The Gauzy API answered ${response.status} without a delivery result; the sending server retries later.`
+			);
+		}
+		if (result.accepted === 0 && result.duplicates === 0) {
 			return reject(message, 'No such mailbox');
 		}
 		return { outcome: 'accepted', result };
@@ -114,22 +125,25 @@ function reject(message, reason) {
 }
 
 /**
- * The verdicts the receiving MX added: the topmost `Authentication-Results` (else the first
- * `ARC-Authentication-Results`, its `i=` instance stripped) when its authserv-id is the trusted one, else nothing.
+ * The verdicts the receiving MX added: the topmost authentication header, `Authentication-Results` or
+ * `ARC-Authentication-Results` (its `i=` instance stripped), when its authserv-id is the trusted one, else nothing.
+ * The MX prepends its headers, so the topmost one is its own; a header of an earlier hop (or the sender's) lies below
+ * it and is never read.
  */
 export function trustedAuthenticationResults(raw, authservId = DEFAULT_AUTHSERV_ID) {
 	const head = latin1(raw.subarray(0, Math.min(raw.length, HEADER_SCAN_BYTES)));
 	const end = head.search(/\r?\n\r?\n/);
 	const lines = (end >= 0 ? head.slice(0, end) : head).replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/);
-	const first = (name) => {
-		const prefix = `${name}:`;
-		const line = lines.find((entry) => entry.toLowerCase().startsWith(prefix));
-		return line === undefined ? undefined : line.slice(prefix.length).trim();
-	};
-	const direct = first('authentication-results');
-	const arc = direct === undefined ? first('arc-authentication-results') : undefined;
-	const value = direct ?? (arc === undefined ? undefined : arc.replace(/^i=\d+\s*;\s*/i, ''));
-	if (value === undefined) return undefined;
+	const line = lines.find((entry) => /^(arc-)?authentication-results:/i.test(entry));
+	if (line === undefined) return undefined;
+	const colon = line.indexOf(':');
+	const arc = /^arc-/i.test(line);
+	const value = arc
+		? line
+				.slice(colon + 1)
+				.trim()
+				.replace(/^i=\d+\s*;\s*/i, '')
+		: line.slice(colon + 1).trim();
 	const id = value.split(';', 1)[0].trim().toLowerCase();
 	return id === authservId.toLowerCase() ? value.slice(0, 2000) : undefined;
 }

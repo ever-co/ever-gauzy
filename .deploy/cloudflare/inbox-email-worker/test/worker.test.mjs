@@ -100,6 +100,60 @@ describe('Gauzy Inbox Cloudflare Email Worker', () => {
 		);
 	});
 
+	it('reads the topmost authentication header of either kind (the MX prepends its own)', () => {
+		const bytes = (text) => new TextEncoder().encode(text);
+		// The MX's ARC verdict above an earlier hop's Authentication-Results.
+		assert.equal(
+			trustedAuthenticationResults(
+				bytes(
+					'ARC-Authentication-Results: i=2; mx.cloudflare.net; dmarc=pass\r\n' +
+						'Authentication-Results: relay.example; dmarc=fail\r\n\r\nx'
+				)
+			),
+			'mx.cloudflare.net; dmarc=pass'
+		);
+		// The MX's direct header above an earlier ARC set.
+		assert.equal(
+			trustedAuthenticationResults(
+				bytes(
+					'Authentication-Results: mx.cloudflare.net; dmarc=pass\r\n' +
+						'ARC-Authentication-Results: i=1; relay.example; dmarc=fail\r\n\r\nx'
+				)
+			),
+			'mx.cloudflare.net; dmarc=pass'
+		);
+		// A trusted-looking header below an untrusted topmost one is never read.
+		assert.equal(
+			trustedAuthenticationResults(
+				bytes(
+					'Authentication-Results: relay.example; dmarc=fail\r\n' +
+						'ARC-Authentication-Results: i=1; mx.cloudflare.net; dmarc=pass\r\n\r\nx'
+				)
+			),
+			undefined
+		);
+	});
+
+	it('acknowledges only the API’s own delivery result; anything else is retried', async () => {
+		for (const [status, body] of [
+			[200, { accepted: 1, duplicates: 0, dropped: 0 }],
+			[202, { ok: true }],
+			[202, { accepted: '1', duplicates: 0, dropped: 0 }]
+		]) {
+			const kept = message();
+			await assert.rejects(deliver(kept, ENV, api(status, body).fetcher), /without a delivery result/);
+			assert.deepEqual(kept.rejected, []);
+		}
+		const html = message();
+		const page = async () =>
+			new Response('<html>ok</html>', { status: 202, headers: { 'content-type': 'text/html' } });
+		await assert.rejects(deliver(html, ENV, page), /without a delivery result/);
+		// And never follows a redirect with the signed message.
+		const { calls, fetcher } = api(202);
+		await deliver(message(), ENV, fetcher);
+		assert.equal(calls[0].init.redirect, 'error');
+	});
+
 	it('rejects an oversized message before reading it, and a delivery no mailbox took', async () => {
 		const big = api(202);
 		const oversized = message(RAW, { rawSize: 26 * 1024 * 1024 });
