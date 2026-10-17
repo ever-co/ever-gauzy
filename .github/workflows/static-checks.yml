@@ -219,6 +219,12 @@ jobs:
         if: always()
         run: node tools/scripts/api-parity-check.mjs
 
+      # The parity gate's acknowledgement readers: a commented-out REST-only route is not mapped, and a mirror
+      # field declared without arguments is still declared (single-route rule and ledger rule).
+      - name: The parity gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/api-parity-check.test.mjs
+
       - name: GraphQL feature gates
         if: always()
         run: node tools/scripts/graphql-feature-gate-check.mjs
