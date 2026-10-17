@@ -58,8 +58,14 @@ test('a REST-only route that was commented out reads as not mapped', () => {
 
 test('a live REST-only route with no mirror is acknowledged, not reported', () => {
 	const out = report({
-		'returns/src/order-exchange.controller.ts': controller('order-exchanges', "\t@Post(':id/close')\n\tasync close() {}"),
-		'order/src/order-change-action.controller.ts': controller('order-change-actions', '\t@Post()\n\tasync create() {}')
+		'returns/src/order-exchange.controller.ts': controller(
+			'order-exchanges',
+			"\t@Post(':id/close')\n\tasync close() {}"
+		),
+		'order/src/order-change-action.controller.ts': controller(
+			'order-change-actions',
+			'\t@Post()\n\tasync create() {}'
+		)
 	});
 
 	assert.doesNotMatch(out, /\[(?:stale-route|route-mirrored)\] [a-z]+: POST \/order-(?:exchanges|change-actions)/);
@@ -69,7 +75,10 @@ test('a live REST-only route with no mirror is acknowledged, not reported', () =
 
 test('a mirror field declared without arguments still reads as declared', () => {
 	const out = report({
-		'returns/src/order-exchange.controller.ts': controller('order-exchanges', "\t@Post(':id/close')\n\tasync close() {}"),
+		'returns/src/order-exchange.controller.ts': controller(
+			'order-exchanges',
+			"\t@Post(':id/close')\n\tasync close() {}"
+		),
 		'returns/src/graphql/schema-extensions.ts': schema('type Mutation {\n\tcloseOrderExchange: Boolean!\n}')
 	});
 
