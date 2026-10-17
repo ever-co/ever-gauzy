@@ -90,6 +90,8 @@ function matches(stored: Row, where: Row = {}): boolean {
  */
 function storage(rows: Row[]) {
 	const writes: Array<{ orm: MultiORM; op: string; id: string }> = [];
+	/** The conditions every delete and soft delete statement was handed, as the ORM received them. */
+	const statements: Array<{ orm: MultiORM; op: string; where: Row }> = [];
 	const visible = (withDeleted: boolean) => rows.filter((stored) => withDeleted || !stored.deletedAt);
 
 	const typeOrm = {
@@ -130,6 +132,7 @@ function storage(rows: Row[]) {
 		},
 		// A `DELETE … WHERE <criteria>`: every row the criteria match is gone.
 		delete: async (where: Row) => {
+			statements.push({ orm: 'typeorm', op: 'delete', where });
 			const matched = rows.filter((stored) => matches(stored, where));
 			for (const stored of matched) {
 				writes.push({ orm: 'typeorm', op: 'delete', id: stored.id });
@@ -137,6 +140,17 @@ function storage(rows: Row[]) {
 			}
 
 			return { affected: matched.length, raw: [] };
+		},
+		// An `UPDATE … SET "deletedAt" = now WHERE <criteria>`, as TypeORM's `softDelete` issues it.
+		softDelete: async (where: Row) => {
+			statements.push({ orm: 'typeorm', op: 'softDelete', where });
+			const matched = visible(false).filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'typeorm', op: 'softDelete', id: stored.id });
+				stored.deletedAt = WITHDRAWN_AT;
+			}
+
+			return { affected: matched.length, raw: [], generatedMaps: [] };
 		}
 	};
 
@@ -167,6 +181,7 @@ function storage(rows: Row[]) {
 		},
 		// The same `DELETE … WHERE <criteria>`, answering the count MikroORM answers.
 		nativeDelete: async (where: Row) => {
+			statements.push({ orm: 'mikro-orm', op: 'nativeDelete', where });
 			const matched = rows.filter((stored) => matches(stored, where));
 			for (const stored of matched) {
 				writes.push({ orm: 'mikro-orm', op: 'nativeDelete', id: stored.id });
@@ -177,7 +192,7 @@ function storage(rows: Row[]) {
 		}
 	};
 
-	return { typeOrm, mikroOrm, writes };
+	return { typeOrm, mikroOrm, writes, statements };
 }
 
 /** A service of this package's shape, with the ORM branch chosen by the case rather than by `DB_ORM`. */
@@ -489,13 +504,55 @@ describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s
 
 	it('deletes the caller’s own row, with the organization in the statement', async () => {
 		const rows = table();
-		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const { typeOrm, mikroOrm, writes, statements } = storage(rows);
 		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
 
 		await service.delete(OWN);
 
 		expect(rows.map(({ id }) => id)).toEqual([FOREIGN_TENANT, FOREIGN_ORG]);
 		expect(writes.map(({ id }) => id)).toEqual([OWN]);
+		// The statement itself carries the scope, not only the read before it: an id alone would delete the same row
+		// here, so the conditions the ORM received are what this asserts.
+		expect(statements).toHaveLength(1);
+		expect(statements[0].where).toMatchObject({ id: OWN, tenantId: TENANT, organizationId: ORG });
+	});
+
+	it('keeps a stated organization from widening the statement', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, statements } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.delete({ id: OWN, organizationId: OTHER_ORG } as any);
+
+		expect(statements[0].where).toMatchObject({ id: OWN, tenantId: TENANT, organizationId: ORG });
+	});
+
+	it('refuses to soft delete a sibling organization’s row, and writes nothing', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.softDelete(FOREIGN_ORG)).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(find(rows, FOREIGN_ORG).deletedAt).toBeNull();
+		expect(writes).toEqual([]);
+	});
+
+	it('soft deletes the caller’s own row, with the organization in the statement', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes, statements } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.softDelete(OWN);
+
+		expect(find(rows, OWN).deletedAt).toEqual(WITHDRAWN_AT);
+		expect(writes.map(({ id }) => id)).toEqual([OWN]);
+
+		// TypeORM hands the conditions to `softDelete`; MikroORM resolves the row through `findOne` with them and
+		// removes the entity it found, so on that branch the read is the statement's predicate.
+		if (orm === 'typeorm') {
+			expect(statements[0].where).toMatchObject({ id: OWN, tenantId: TENANT, organizationId: ORG });
+		}
 	});
 
 	it('still reaches the row a job names when no organization is in context', async () => {
