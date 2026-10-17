@@ -476,11 +476,22 @@ const DEFAULT_PROMOTION_GRANTS: Record<string, PromotionGrant> = {
 	PENNIES: '0.1'
 };
 
+/** What the price capability double charges for one unit of a variant: an amount, or one per quantity. */
+type PriceGrant = number | ((quantity: number) => number);
+
 function cartFixture(
 	options: {
 		stock?: Record<string, StockLevel> | false;
 		taxRate?: number;
 		promotions?: Record<string, PromotionGrant> | false;
+		/**
+		 * The price capability (R3-07b). Absent: the suite's money cases, which add lines at the prices they
+		 * state, are in-process callers that resolved their price themselves — the service is built without a
+		 * price capability and `addLine` / `updateLine` are called with `statedPrice`. A table: the capability
+		 * prices each variant from it, as it does for a route. `'unbound'`: no capability and no stated price —
+		 * the installation that has no pricing package.
+		 */
+		prices?: Record<string, PriceGrant> | 'unbound';
 	} = {}
 ) {
 	const tables: ITables = {
@@ -680,6 +691,31 @@ function cartFixture(
 					})
 				};
 
+	/** The price capability double (R3-07b): a mutable table, so a case can move a price between two calls. */
+	const priceTable: Record<string, PriceGrant> =
+		options.prices && options.prices !== 'unbound' ? { ...options.prices } : {};
+	const pricePort =
+		options.prices && options.prices !== 'unbound'
+			? {
+					resolvePrices: jest.fn(async (query: any): Promise<any[]> =>
+						(query.variantIds ?? [])
+							.filter((variantId: string) => priceTable[variantId] !== undefined)
+							.map((variantId: string) => {
+								const grant = priceTable[variantId];
+								const amount = typeof grant === 'function' ? grant(Number(query.quantity ?? 1)) : grant;
+
+								return {
+									variantId,
+									priceId: `price-${variantId}`,
+									currency: query.currency,
+									amount: String(amount),
+									taxInclusive: false
+								};
+							})
+					)
+				}
+			: undefined;
+
 	const service = new CommerceCartService(
 		repository(tables, 'commerce_cart') as never,
 		{} as never,
@@ -691,8 +727,23 @@ function cartFixture(
 		taxLineService as never,
 		stockPort as never,
 		taxPort as never,
-		promotionPort as never
+		promotionPort as never,
+		pricePort as never
 	);
+
+	if (options.prices === undefined) {
+		// The in-process callers of the money cases state the prices they resolved (see `prices` above).
+		const addLine = service.addLine.bind(service);
+		const updateLine = service.updateLine.bind(service);
+
+		service.addLine = ((cartId: any, line: any, expectation?: any, writeOptions: any = {}) =>
+			addLine(cartId, line, expectation, { statedPrice: true, ...writeOptions })) as typeof service.addLine;
+		service.updateLine = ((cartId: any, lineId: any, changes: any, expectation?: any, writeOptions: any = {}) =>
+			updateLine(cartId, lineId, changes, expectation, {
+				statedPrice: true,
+				...writeOptions
+			})) as typeof service.updateLine;
+	}
 
 	return {
 		service,
@@ -703,7 +754,9 @@ function cartFixture(
 		promotionService,
 		checkoutSessionService,
 		stockPort,
-		promotionPort
+		promotionPort,
+		pricePort,
+		priceTable
 	};
 }
 
@@ -2386,5 +2439,185 @@ describe('CommerceCartService — rows are written in the organization (R2-G19)'
 		await checkoutSessionService.create({ cartId: 'cart-1', status: CommerceCheckoutSessionStatus.STARTED });
 
 		expect(tables.commerce_checkout_session[0].organizationId).toBe('org-1');
+	});
+});
+
+/**
+ * R3-07b: a cart line's price was whatever its caller stated.
+ *
+ * `addLine` and `updateLine` recorded the request's `unitPrice` ("the caller states the resolved unit price"),
+ * and `POST /carts/:id/lines`, `addCartLine` and `updateCartLine` handed it the request's — so a buyer could name
+ * their own price. The line is now priced by the price capability (`CART_PRICE_RESOLUTION`, the pricing
+ * package's `ProductPriceService`) for the cart and the quantity, and priced again at checkout.
+ */
+describe('CommerceCartService — a line is priced by the pricing package (R3-07b)', () => {
+	/** A cart the strict ladder accepts once it holds a line: a contact and a currency. */
+	const openCart = (fixture: ReturnType<typeof cartFixture>) =>
+		fixture.service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+	it('prices a line from the pricing package and ignores the price the request states', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+
+		const priced = await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 2,
+			unitPrice: 0.01,
+			originalUnitPrice: 0.01,
+			isTaxInclusive: true,
+			metadata: { priceSource: 'STATED' }
+		} as any);
+
+		const [line] = fixture.tables.commerce_cart_line;
+		expect(Number(line.unitPrice)).toBe(20);
+		expect(line.isTaxInclusive).toBe(false);
+		expect(line.metadata).toMatchObject({ priceSource: 'ENGINE', priceId: 'price-v1' });
+		expect(priced.itemSubtotal).toBe(40);
+		expect(fixture.pricePort!.resolvePrices).toHaveBeenCalledWith(
+			expect.objectContaining({ variantIds: ['v1'], currency: 'USD', quantity: 2, channelId: 'channel-1' })
+		);
+	});
+
+	it('prices a merged line for the sum, so a quantity band applies to what the cart holds', async () => {
+		const fixture = cartFixture({ prices: { v1: (quantity: number) => (quantity >= 3 ? 8 : 10) } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 } as any);
+		const merged = await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10
+		} as any);
+
+		const live = fixture.tables.commerce_cart_line.filter((row: any) => !row.deletedAt);
+		expect(live).toHaveLength(1);
+		expect(Number(live[0].quantity)).toBe(3);
+		expect(Number(live[0].unitPrice)).toBe(8);
+		expect(merged.itemSubtotal).toBe(24);
+	});
+
+	it('refuses a variant the pricing package cannot price, and writes nothing', async () => {
+		const fixture = cartFixture({ prices: {} });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v9', title: 'Z', quantity: 1, unitPrice: 1 } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_LINE_PRICE_UNRESOLVED' } });
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('fails closed when no price capability is bound', async () => {
+		const fixture = cartFixture({ prices: 'unbound' });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 1 } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_PRICE_ENGINE_MISSING' } });
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('ignores a stated price on a change, and prices the line again for its new quantity', async () => {
+		const fixture = cartFixture({ prices: { v1: (quantity: number) => (quantity >= 5 ? 7 : 10) } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1 } as any);
+		const [line] = fixture.tables.commerce_cart_line;
+
+		await fixture.service.updateLine(cart.id, line.id, {
+			quantity: 5,
+			unitPrice: 0.5,
+			originalUnitPrice: 0.5,
+			isTaxInclusive: true,
+			metadata: { priceSource: 'STATED', note: 'gift' }
+		} as any);
+
+		expect(Number(line.unitPrice)).toBe(7);
+		expect(line.isTaxInclusive).toBe(false);
+		expect(line.metadata).toMatchObject({ priceSource: 'ENGINE', note: 'gift' });
+
+		// A change that names only a price changes nothing about it.
+		await fixture.service.updateLine(cart.id, line.id, { unitPrice: 0.5 } as any);
+		expect(Number(line.unitPrice)).toBe(7);
+	});
+
+	it('prices the cart again at checkout: a moved price and an old line, never a stated one', async () => {
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		// An in-process caller's line, at the price it resolved itself.
+		await fixture.service.addLine(
+			cart.id,
+			{ variantId: 'v3', title: 'Plan', quantity: 1, unitPrice: 5, requiresShipping: false } as any,
+			undefined,
+			{ statedPrice: true }
+		);
+		// A line written before the rule, at a price its caller chose.
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-legacy',
+			cartId: cart.id,
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			unitPrice: 1,
+			originalUnitPrice: 1,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false
+		});
+		fixture.priceTable.v1 = 25;
+		registerCheckoutHandler();
+
+		const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		const byVariant = (variantId: string) =>
+			fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId && !row.deletedAt);
+		expect(Number(byVariant('v1').unitPrice)).toBe(25);
+		expect(Number(byVariant('v2').unitPrice)).toBe(30);
+		expect(byVariant('v2').metadata).toMatchObject({ priceSource: 'ENGINE' });
+		expect(Number(byVariant('v3').unitPrice)).toBe(5);
+		expect(completed.cart.itemSubtotal).toBe(60);
+		expect(checkoutCalls).toBe(1);
+	});
+
+	it('refuses the checkout, and releases the cart, when a line can no longer be priced', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		delete fixture.priceTable.v1;
+		registerCheckoutHandler();
+
+		await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+		expect(checkoutCalls).toBe(0);
+		expect(fixture.tables.commerce_cart[0].checkoutClaimId ?? null).toBeNull();
+	});
+
+	it('records a price an in-process caller states, and keeps it', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(
+			cart.id,
+			{ variantId: 'v1', title: 'Plan', quantity: 1, unitPrice: 12 } as any,
+			undefined,
+			{ statedPrice: true }
+		);
+
+		const [line] = fixture.tables.commerce_cart_line;
+		expect(Number(line.unitPrice)).toBe(12);
+		expect(line.metadata).toMatchObject({ priceSource: 'STATED' });
+		expect(fixture.pricePort!.resolvePrices).not.toHaveBeenCalled();
 	});
 });

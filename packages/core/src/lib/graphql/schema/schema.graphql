@@ -49302,7 +49302,7 @@ input AddCartLineInput {
   sku: String
   thumbnail: String
   quantity: Decimal!
-  unitPrice: Decimal!
+  unitPrice: Decimal
   originalUnitPrice: Decimal
   isTaxInclusive: Boolean
   taxCategoryId: ID

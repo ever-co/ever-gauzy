@@ -289,3 +289,75 @@ export interface ICartPromotionPort {
  * to an amount the caller stated, because that fallback is the defect this port exists to close.
  */
 export const CART_PROMOTION_EVALUATION = Symbol('CART_PROMOTION_EVALUATION');
+
+
+/*
+|--------------------------------------------------------------------------
+| The price capability (R3-07b)
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * What the cart asks the price capability to resolve: the pricing package's own `IPriceContext`, restated.
+ *
+ * Restated for the reason the tax and promotion shapes above are: the cart does not depend on the pricing
+ * package, and a structural type is what lets the installation bind `ProductPriceService` to this port.
+ * Customer groups are not stated: the platform has no server-side record of a customer's groups, and a
+ * group stated by the caller is exactly the kind of input this port exists to stop trusting. A price list
+ * bound to a group is therefore not applied to a cart line.
+ */
+export interface ICartPriceQuery {
+	readonly variantIds: ID[];
+	readonly currency: CurrencyCode;
+	/** Units being priced; quantity bands are selected by it. */
+	readonly quantity?: DecimalString | number;
+	readonly date?: Date;
+	readonly channelId?: ID;
+	readonly regionId?: ID;
+	readonly customerId?: ID;
+}
+
+/** One resolved price, as the cart reads it. */
+export interface ICartResolvedPrice {
+	readonly variantId: ID;
+	/** The winning `product_price` row, absent for the legacy variant price. */
+	readonly priceId?: ID;
+	/** The winning price list, absent for a default price. */
+	readonly priceListId?: ID;
+	readonly currency: CurrencyCode;
+	/** What one unit costs. */
+	readonly amount: DecimalString;
+	/** What it would cost without the winning list: the "was" price. */
+	readonly originalAmount?: DecimalString;
+	/** Whether `amount` already contains tax. */
+	readonly taxInclusive: boolean;
+}
+
+/**
+ * The price capability as this package sees it.
+ *
+ * **It is the only source of a cart line's price (R3-07b).** A line used to carry whatever `unitPrice` the
+ * caller stated — `POST /carts/:id/lines`, `addCartLine` and `updateCartLine` all took one — so a buyer could
+ * name their own price. A line added or changed through a route is now priced by this capability, for the
+ * cart's currency, channel, region and buyer and for the line's quantity, and re-priced at checkout; the
+ * stated price is accepted for compatibility and ignored. Only an in-process caller that resolved the price
+ * itself (the subscription cycle's cart) states one, explicitly.
+ *
+ * The capability is the pricing package's `ProductPriceService`, whose `resolvePrices` is structurally this
+ * interface.
+ */
+export interface ICartPricePort {
+	/**
+	 * @param query The variants, the currency, the quantity and who is buying.
+	 * @returns One price per variant that has one; a variant with none is omitted.
+	 */
+	resolvePrices(query: ICartPriceQuery): Promise<ICartResolvedPrice[]>;
+}
+
+/**
+ * Token the price capability is injected under.
+ *
+ * Optional like the other ports, and **unbound it fails closed**: a line added or changed through a route is
+ * refused (`CART_PRICE_ENGINE_MISSING`) rather than priced at what its caller stated.
+ */
+export const CART_PRICE_RESOLUTION = Symbol('CART_PRICE_RESOLUTION');
