@@ -527,6 +527,8 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 
 	unlinkMission(ewMissionId: string): void {
 		this.removed.initiatives.add(ewMissionId);
+		// A choice kept for it from before (it cannot have one while paired) must not come back either.
+		delete this.missionChoice[ewMissionId];
 		this.run('initiatives', this.api.decideInitiatives(this.organizationId, this.id, { unlinks: [ewMissionId] }), (view) => this.setInitiatives(view));
 	}
 

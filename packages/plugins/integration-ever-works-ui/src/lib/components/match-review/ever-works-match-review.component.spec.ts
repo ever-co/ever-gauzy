@@ -204,12 +204,19 @@ describe('EverWorksMatchReviewComponent', () => {
 		});
 
 		it('accepts every suggestion, removes a pairing without suggesting it again, and refuses a double choice', () => {
-			api.decideInitiatives.mockReturnValue(of(INITIATIVES));
+			// Accepting pairs m-1 with i1; removing that pairing makes m-1 unpaired again (with its suggestion).
+			const paired = {
+				missions: INITIATIVES.missions.map((row) => (row.ewMissionId === 'm-1' ? { ...row, linkedInitiativeId: 'i1', suggestion: null } : row)),
+				unmatchedInitiatives: INITIATIVES.unmatchedInitiatives.filter((row) => row.initiativeId !== 'i1')
+			};
+			api.decideInitiatives.mockReturnValueOnce(of(paired)).mockReturnValueOnce(of(INITIATIVES));
 			const { component } = render();
 			component.acceptInitiatives();
 			expect(api.decideInitiatives).toHaveBeenLastCalledWith('org-1', 'm1', { acceptSuggestions: true });
+			expect(component.missionChoice).toEqual({ 'm-2': '' });
 			component.unlinkMission('m-1');
 			expect(api.decideInitiatives).toHaveBeenLastCalledWith('org-1', 'm1', { unlinks: ['m-1'] });
+			// The removed pairing's suggestion is not preselected again.
 			expect(component.missionChoice['m-1']).toBe('');
 			api.decideInitiatives.mockClear();
 			component.missionChoice['m-1'] = 'i2';
