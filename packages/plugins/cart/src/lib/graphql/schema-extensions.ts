@@ -248,7 +248,9 @@ export const cartSchemaExtensions = gql`
 		promotionId: ID
 		couponId: ID
 		code: String
-		amount: Decimal!
+		# Ignored (R3-07): the discount is what the promotion engine grants for the named promotion.
+		# Optional so an existing client that still sends it keeps validating.
+		amount: Decimal
 		isAutomatic: Boolean
 		version: Int
 		idempotencyKey: String

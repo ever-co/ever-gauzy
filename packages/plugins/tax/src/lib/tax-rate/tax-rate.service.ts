@@ -187,14 +187,23 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 		if (entity.rate !== undefined) {
 			this.assertRate(entity.rate);
 		}
+		// A member the caller states — `null` included, which clears it — is validated as written; only an
+		// absent member keeps the stored value. Reading `null` as "keep" checked a value the write was
+		// about to replace (R2-30).
 		if (entity.startsAt !== undefined || entity.endsAt !== undefined) {
-			this.assertWindow(entity.startsAt ?? rate.startsAt, entity.endsAt ?? rate.endsAt);
+			this.assertWindow(
+				entity.startsAt !== undefined ? entity.startsAt : rate.startsAt,
+				entity.endsAt !== undefined ? entity.endsAt : rate.endsAt
+			);
 		}
 		if (entity.postalCodePattern !== undefined) {
 			this.assertPostalCodePattern(entity.postalCodePattern);
 		}
-		if (entity.isCompound === true) {
-			this.assertCompoundPriority(entity.isCompound, entity.priority ?? rate.priority);
+		// A rate that compounds after the write — because the caller made it compound, or because it already
+		// was and the caller changes its priority — must keep a priority.
+		const compoundAfterWrite = entity.isCompound !== undefined ? entity.isCompound : rate.isCompound;
+		if (compoundAfterWrite === true && (entity.isCompound !== undefined || entity.priority !== undefined)) {
+			this.assertCompoundPriority(true, entity.priority !== undefined ? entity.priority : rate.priority);
 		}
 		this.assertDirection(entity.direction);
 		if (entity.amountType === TaxAmountType.FIXED) {
@@ -1378,18 +1387,20 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			return;
 		}
 
+		// Every rate of the code is read, not only those of the same direction: a `BOTH` rate applies to sales
+		// and purchases alike, so a `SALE` rate of the same code and window is the same code meaning two
+		// rates on the sales path — which the direction filter in the query used to hide (R2-30).
 		const neighbours = await this.find({
 			where: {
 				organizationId: candidate.organizationId ?? this.requireOrganizationId(),
-				code: candidate.code,
-				direction: candidate.direction
+				code: candidate.code
 			} as FindOptionsWhere<TaxRate>
 		});
 
 		const overlap = neighbours.find(
 			(rate) =>
 				rate.id !== candidate.exceptId &&
-				(rate.direction ?? TaxDirection.SALE) === candidate.direction &&
+				this.directionsOverlap(rate.direction ?? TaxDirection.SALE, candidate.direction) &&
 				this.windowsOverlap(candidate.startsAt, candidate.endsAt, this.toDate(rate.startsAt), this.toDate(rate.endsAt))
 		);
 
@@ -1398,6 +1409,16 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 				`TAX_RATE_WINDOW_OVERLAP: the rate "${candidate.code}" already exists for this direction and its window overlaps the one being written.`
 			);
 		}
+	}
+
+	/**
+	 * @param left The direction of one rate.
+	 * @param right The direction of another.
+	 * @returns Whether a document of some direction is taxed by both: the same direction, or either of
+	 * them `BOTH`.
+	 */
+	private directionsOverlap(left: TaxDirection, right: TaxDirection): boolean {
+		return left === right || left === TaxDirection.BOTH || right === TaxDirection.BOTH;
 	}
 
 	/**
