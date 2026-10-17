@@ -21,7 +21,10 @@ describe('OrganizationVendorService.deleteVendor (TypeORM)', () => {
 		}
 		query.getOne = jest.fn().mockResolvedValue(null);
 		const service = new OrganizationVendorService(
-			{ metadata: { tableName: 'organization_vendor' }, createQueryBuilder: jest.fn().mockReturnValue(query) } as any,
+			{
+				metadata: { tableName: 'organization_vendor' },
+				createQueryBuilder: jest.fn().mockReturnValue(query)
+			} as any,
 			{} as any
 		);
 		const remove = jest.spyOn(service, 'delete').mockResolvedValue({ affected: 1 } as any);
