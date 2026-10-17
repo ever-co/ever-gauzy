@@ -360,6 +360,10 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			event: { name: ORDER_EVENTS.PLACED, data: { ...placedWith, ...(placedLines ?? {}) } }
 		});
 
+		// The lines record what the placement granted only now that it has committed: a placement refused above
+		// leaves its draft's lines as they were (Greptile on #10914).
+		await this.lineService.recordPlacedEntitlements(order, lines, placedLines);
+
 		// The entry carries the order's own tenancy, because a placement is also made with no request
 		// behind it — the checkout handler, a recurrence — and the tenant-aware create would otherwise
 		// write it with no tenant, off the timeline of the order it describes.

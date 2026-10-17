@@ -18,8 +18,7 @@ import {
 	IOrderLineEntitlementPolicyPort,
 	IOrderPlacedLines,
 	ORDER_LINE_ENTITLEMENT_POLICY,
-	placedLinesOf,
-	statedEntitlementOf
+	placedLinesOf
 } from './order-line-entitlement';
 
 /** One refund as the payment side records it against a line. */
@@ -70,15 +69,15 @@ export class OrderLineService extends TenantAwareCrudService<OrderLine> {
 	/**
 	 * The `lines` an order's `order.placed` event carries, with the right each line grants (Q7-W5).
 	 *
-	 * The policy is the line's own `metadata.entitlement` (copied from its cart line at checkout) or, when the
-	 * line states none, the variant's and then the product's — the entitlement package answers which. A
-	 * policy that came from the catalogue is snapshotted onto the line (`metadata.entitlement`), so what was
-	 * bought does not change when the catalogue does, and a replayed placement announces the same right.
+	 * The policy is the variant's, else the product's — the entitlement package answers which, from the catalogue.
+	 * A line's own `metadata.entitlement` is not asked about: line metadata is whatever the cart editor wrote, and
+	 * checkout copies it onto the order line, so honouring it let a cart editor choose the right a purchase grants
+	 * (Greptile on #10914).
 	 *
-	 * Asked before the placement is committed, so it never fails it: an unbound port, a capability that is
-	 * off for the order's scope, or a port that throws all answer `undefined` and the order announces no
-	 * lines — what every order did before. A snapshot that cannot be written is logged; the event still
-	 * carries the policy.
+	 * Asked before the placement is committed, and it writes nothing, so it never fails the placement or changes a
+	 * draft that the placement then refuses: an unbound port, a capability that is off for the order's scope, or a
+	 * port that throws all answer `undefined` and the order announces no lines — what every order did before. The
+	 * record of what was granted is written once the placement has committed (`recordPlacedEntitlements`).
 	 *
 	 * @param order The order being placed.
 	 * @param lines Its lines.
@@ -102,8 +101,7 @@ export class OrderLineService extends TenantAwareCrudService<OrderLine> {
 					orderLineId: line.id,
 					productId: line.productId ?? null,
 					variantId: line.variantId ?? null,
-					quantity: Number(line.quantity ?? 1),
-					stated: statedEntitlementOf(line.metadata)
+					quantity: Number(line.quantity ?? 1)
 				}))
 			});
 		} catch (error) {
@@ -119,17 +117,47 @@ export class OrderLineService extends TenantAwareCrudService<OrderLine> {
 			return undefined;
 		}
 
-		for (const line of lines) {
-			const policy = policies[line.id];
+		return placedLinesOf(lines, policies);
+	}
 
-			if (!policy || statedEntitlementOf(line.metadata)) {
+	/**
+	 * Records on each line the right its placement granted (`metadata.entitlement`), once the placement committed.
+	 *
+	 * The snapshot keeps what was bought readable on the line when the catalogue changes later. It is written after
+	 * the placing write rather than before it, so a placement refused on a stale version leaves the draft as it was
+	 * (Greptile on #10914). A line that grants a right carries exactly the policy the event announced; a line that
+	 * grants nothing loses a `metadata.entitlement` a cart editor wrote, so the record never shows a right that was
+	 * not granted. Its other metadata is kept. A write that fails is logged: the event already carries the policy.
+	 *
+	 * @param order The placed order.
+	 * @param lines Its lines, as read for the placement.
+	 * @param placed What its `order.placed` event carried, or undefined when it announced no lines.
+	 */
+	public async recordPlacedEntitlements(
+		order: Pick<Order, 'id'>,
+		lines: readonly OrderLine[],
+		placed: IOrderPlacedLines | undefined
+	): Promise<void> {
+		if (!placed) {
+			return;
+		}
+
+		const granted = new Map(placed.lines.map((line) => [String(line.orderLineId), line.entitlement]));
+
+		for (const line of lines) {
+			const metadata = { ...((line.metadata as Record<string, unknown>) ?? {}) };
+			const policy = granted.get(String(line.id));
+
+			if (policy) {
+				metadata['entitlement'] = policy;
+			} else if (metadata['entitlement'] !== undefined) {
+				delete metadata['entitlement'];
+			} else {
 				continue;
 			}
 
 			try {
-				await this.update(line.id, {
-					metadata: { ...((line.metadata as Record<string, unknown>) ?? {}), entitlement: policy }
-				} as any);
+				await this.update(line.id, { metadata } as any);
 			} catch (error) {
 				this.logger.warn(
 					`ORDER_LINE_ENTITLEMENT_NOT_SNAPSHOTTED: line ${line.id} of order ${order.id}: ${
@@ -138,8 +166,6 @@ export class OrderLineService extends TenantAwareCrudService<OrderLine> {
 				);
 			}
 		}
-
-		return placedLinesOf(lines, policies);
 	}
 
 	/**

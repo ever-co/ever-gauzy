@@ -21,14 +21,18 @@ export const ORDER_PLACED_LINES_CAP = 500;
 /** A right a line grants, as the catalogue or the line states it (`metadata.entitlement`). */
 export type IOrderLineEntitlementPolicy = Record<string, unknown>;
 
-/** One line, as the order states it to the policy port. */
+/**
+ * One line, as the order states it to the policy port.
+ *
+ * The line's own `metadata.entitlement` is deliberately not part of it (Greptile on #10914): line metadata is
+ * written by whoever edits the cart — checkout copies the cart line's onto the order line — so a policy read from
+ * it would let a cart editor choose the right a purchase grants. The right is the catalogue's to state.
+ */
 export interface IOrderLineEntitlementQueryLine {
 	readonly orderLineId: ID;
 	readonly productId?: ID | null;
 	readonly variantId?: ID | null;
 	readonly quantity: number;
-	/** The policy the line already carries — copied from its cart line, or stated by staff. */
-	readonly stated?: IOrderLineEntitlementPolicy | null;
 }
 
 /** What an order asks the policy port. */
@@ -119,6 +123,9 @@ export function placedLinesOf(
 }
 
 /**
+ * The policy a line's metadata records (`metadata.entitlement`) — the snapshot a placement wrote, or a value a cart
+ * editor wrote, which is why it is read only to keep that record true and never to decide what is granted.
+ *
  * @param metadata A line's metadata.
  * @returns The policy it states (`metadata.entitlement`), when that is an object.
  */

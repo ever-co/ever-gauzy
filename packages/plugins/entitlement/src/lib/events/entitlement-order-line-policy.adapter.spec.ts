@@ -45,23 +45,25 @@ function adapter(enabled: boolean, catalog?: Record<string, Record<string, unkno
 
 describe('EntitlementOrderLinePolicyAdapter', () => {
 	it('answers null when FEATURE_ENTITLEMENT is off, so the order announces no lines', async () => {
-		const { adapter: subject, reads } = adapter(false, {});
+		const { adapter: subject, reads } = adapter(false, {
+			'variant:v1': { id: 'v1', metadata: { entitlement: { kind: 'SEAT' } } }
+		});
 
 		await expect(
 			subject.policiesFor({
 				tenantId: TENANT,
 				organizationId: ORG,
-				lines: [{ orderLineId: 'l1', quantity: 1, stated: { kind: 'SEAT' } }]
+				lines: [{ orderLineId: 'l1', variantId: 'v1', quantity: 1 }]
 			})
 		).resolves.toBeNull();
 		expect(reads).toEqual([]);
 	});
 
-	it("takes the line's own policy first, then the variant's, then the product's, reading each item once", async () => {
+	it("takes the variant's policy, then the product's, reading each item once", async () => {
 		const { adapter: subject, reads } = adapter(true, {
 			'variant:v1': { id: 'v1', metadata: { entitlement: { kind: 'SEAT', quantity: 5 } } },
 			'variant:v2': { id: 'v2', metadata: {} },
-			'product:p2': { id: 'p2', metadata: { entitlement: { kind: 'TERM', endsAt: '2027-01-01T00:00:00.000Z' } } },
+			'product:p2': { id: 'p2', metadata: { entitlement: { kind: 'TERM', endsAt: '2999-01-01T00:00:00.000Z' } } },
 			'variant:v3': { id: 'v3' },
 			'product:p3': { id: 'p3' }
 		});
@@ -70,7 +72,7 @@ describe('EntitlementOrderLinePolicyAdapter', () => {
 			tenantId: TENANT,
 			organizationId: ORG,
 			lines: [
-				{ orderLineId: 'l0', variantId: 'v1', productId: 'p1', quantity: 1, stated: { kind: 'LICENCE' } },
+				{ orderLineId: 'l0', variantId: 'v1', productId: 'p1', quantity: 1 },
 				{ orderLineId: 'l1', variantId: 'v1', productId: 'p1', quantity: 2 },
 				{ orderLineId: 'l1b', variantId: 'v1', productId: 'p1', quantity: 3 },
 				{ orderLineId: 'l2', variantId: 'v2', productId: 'p2', quantity: 1 },
@@ -79,30 +81,31 @@ describe('EntitlementOrderLinePolicyAdapter', () => {
 		});
 
 		expect(answer).toEqual({
-			l0: { kind: 'LICENCE' },
+			l0: { kind: 'SEAT', quantity: 5 },
 			l1: { kind: 'SEAT', quantity: 5 },
 			l1b: { kind: 'SEAT', quantity: 5 },
-			l2: { kind: 'TERM', endsAt: '2027-01-01T00:00:00.000Z' },
+			l2: expect.objectContaining({ kind: 'TERM', endsAt: '2999-01-01T00:00:00.000Z' }),
 			l3: null
 		});
-		// v1 once for two lines; the line that states its own policy reads nothing.
+		// v1 once for three lines.
 		expect(reads).toEqual(['variant:v1', 'variant:v2', 'product:p2', 'variant:v3', 'product:p3']);
 	});
 
 	it('makes a line with an unusable policy grant nothing, and drops members it does not know', async () => {
-		const { adapter: subject } = adapter(true);
+		const policyOf = (entitlement: Record<string, unknown>) => ({ metadata: { entitlement } });
+		const { adapter: subject } = adapter(true, {
+			'variant:bad-kind': policyOf({ kind: 'FOREVER' }),
+			'variant:bad-qty': policyOf({ quantity: 0 }),
+			'variant:bad-term': policyOf({ startsAt: '2027-01-02', endsAt: '2027-01-01' }),
+			'variant:ok': policyOf({ kind: 'USAGE', quantity: 100, tenantId: 'other', note: 'x' })
+		});
 
 		const answer = await subject.policiesFor({
-			lines: [
-				{ orderLineId: 'bad-kind', quantity: 1, stated: { kind: 'FOREVER' } },
-				{ orderLineId: 'bad-qty', quantity: 1, stated: { quantity: 0 } },
-				{ orderLineId: 'bad-term', quantity: 1, stated: { startsAt: '2027-01-02', endsAt: '2027-01-01' } },
-				{
-					orderLineId: 'ok',
-					quantity: 1,
-					stated: { kind: 'USAGE', quantity: 100, tenantId: 'other', note: 'x' }
-				}
-			]
+			lines: ['bad-kind', 'bad-qty', 'bad-term', 'ok'].map((id) => ({
+				orderLineId: id,
+				variantId: id,
+				quantity: 1
+			}))
 		});
 
 		expect(answer).toEqual({
@@ -111,6 +114,29 @@ describe('EntitlementOrderLinePolicyAdapter', () => {
 			'bad-term': null,
 			ok: { kind: 'USAGE', quantity: 100 }
 		});
+	});
+
+	it('starts a term that states only its end at the placement, and refuses one whose end has passed', async () => {
+		// Greptile on #10914: the grant path started such a term when the event was delivered, so a late delivery put
+		// the start after the end and the grant refused the whole event, every other line with it.
+		const policyOf = (entitlement: Record<string, unknown>) => ({ metadata: { entitlement } });
+		const { adapter: subject } = adapter(true, {
+			'variant:past': policyOf({ kind: 'TERM', endsAt: '2020-01-01T00:00:00.000Z' }),
+			'variant:future': policyOf({ kind: 'TERM', endsAt: '2999-01-01T00:00:00.000Z' })
+		});
+		const before = Date.now();
+
+		const answer = await subject.policiesFor({
+			lines: [
+				{ orderLineId: 'past', variantId: 'past', quantity: 1 },
+				{ orderLineId: 'future', variantId: 'future', quantity: 1 }
+			]
+		});
+
+		expect(answer?.['past']).toBeNull();
+		expect(answer?.['future']).toMatchObject({ kind: 'TERM', endsAt: '2999-01-01T00:00:00.000Z' });
+		expect(new Date(String(answer?.['future']?.['startsAt'])).getTime()).toBeGreaterThanOrEqual(before);
+		expect(policyProblemOf({ endsAt: '2020-01-01T00:00:00.000Z' })).toBe('endsAt has already passed');
 	});
 
 	it('accepts every kind the package grants', () => {

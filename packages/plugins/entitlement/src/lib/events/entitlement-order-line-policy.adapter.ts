@@ -8,14 +8,17 @@ import { ENTITLEMENT_CATALOG_PORT, IEntitlementCatalogPort } from '../entitlemen
 /** A right a line grants, as the order states it and as `order.placed` carries it. */
 export type IEntitlementLinePolicy = Record<string, unknown>;
 
-/** One order line, as the order states it to this adapter. */
+/**
+ * One order line, as the order states it to this adapter.
+ *
+ * It carries no policy of its own: a line's metadata is written by whoever edits the cart, so a policy read from it
+ * would let a cart editor choose the right a purchase grants (Greptile on #10914).
+ */
 export interface IEntitlementPolicyLine {
 	readonly orderLineId: ID;
 	readonly productId?: ID | null;
 	readonly variantId?: ID | null;
 	readonly quantity: number;
-	/** The policy the line already carries (`metadata.entitlement`). */
-	readonly stated?: IEntitlementLinePolicy | null;
 }
 
 /** What the order asks: its own scope and its lines. */
@@ -36,11 +39,14 @@ const POLICY_MEMBERS = ['kind', 'quantity', 'startsAt', 'endsAt', 'gracePeriodDa
  *
  * - `null` when `FEATURE_ENTITLEMENT` is off for the order's scope — the order then announces no lines and
  *   nothing is granted, so a tenant that does not sell rights gets no rows;
- * - per line, the line's own `metadata.entitlement` (copied from its cart line at checkout), else the
- *   variant's, else the product's — read through the catalogue port this package already declares;
+ * - per line, the variant's `metadata.entitlement`, else the product's — read through the catalogue port this
+ *   package already declares. Never the line's own metadata, which the cart editor writes;
  * - a policy is checked before it travels: an unknown `kind`, a non-positive `quantity`, a negative grace or
  *   limit, or a term that cannot be read makes the line grant nothing (reported), because a right granted on
- *   a guess is worse than a line an operator re-grants by hand. Unknown members are dropped.
+ *   a guess is worse than a line an operator re-grants by hand. Unknown members are dropped;
+ * - a term with an end and no start starts at the placement, and the event says so (`startsAt`): left to the grant
+ *   path, the start was the moment the event was delivered, so a delayed delivery could put it after the end and
+ *   the grant refused the whole event. An end already behind the start makes the line grant nothing.
  *
  * The flag is read through the platform's `FeatureService`, which answers for the request in context; on a
  * placement with no request behind it the answer is the flag's default (off), and the order announces no
@@ -69,19 +75,21 @@ export class EntitlementOrderLinePolicyAdapter {
 		const variants = new Map<ID, IEntitlementLinePolicy | null>();
 		const products = new Map<ID, IEntitlementLinePolicy | null>();
 		const answer: Record<string, IEntitlementLinePolicy | null> = {};
+		// The instant the order is placed at: the start of a term that states only its end.
+		const placedAt = new Date();
 
 		for (const line of query.lines) {
-			let stated = policyObjectOf(line.stated);
+			let policy: IEntitlementLinePolicy | null = null;
 
-			if (!stated && line.variantId) {
-				stated = await this.catalogPolicy(variants, line.variantId, (id) => this.catalog?.findVariant(id));
+			if (line.variantId) {
+				policy = await this.catalogPolicy(variants, line.variantId, (id) => this.catalog?.findVariant(id));
 			}
 
-			if (!stated && line.productId) {
-				stated = await this.catalogPolicy(products, line.productId, (id) => this.catalog?.findProduct(id));
+			if (!policy && line.productId) {
+				policy = await this.catalogPolicy(products, line.productId, (id) => this.catalog?.findProduct(id));
 			}
 
-			answer[line.orderLineId] = stated ? this.checked(stated, line.orderLineId) : null;
+			answer[line.orderLineId] = policy ? this.checked(policy, line.orderLineId, placedAt) : null;
 		}
 
 		return answer;
@@ -110,19 +118,26 @@ export class EntitlementOrderLinePolicyAdapter {
 	/**
 	 * @param policy The stated policy.
 	 * @param orderLineId The line, for the report.
+	 * @param placedAt The instant the order is placed at, which starts a term that states only its end.
 	 * @returns The policy with its known members only, or null when one of them is not usable.
 	 */
-	private checked(policy: IEntitlementLinePolicy, orderLineId: ID): IEntitlementLinePolicy | null {
-		const problem = policyProblemOf(policy);
+	private checked(policy: IEntitlementLinePolicy, orderLineId: ID, placedAt: Date): IEntitlementLinePolicy | null {
+		const problem = policyProblemOf(policy, placedAt);
 
 		if (problem) {
 			this.logger.warn(`ENTITLEMENT_POLICY_INVALID: order line ${orderLineId} grants nothing: ${problem}.`);
 			return null;
 		}
 
-		return Object.fromEntries(
+		const known: IEntitlementLinePolicy = Object.fromEntries(
 			Object.entries(policy).filter(([member, value]) => POLICY_MEMBERS.includes(member) && value !== undefined)
 		);
+
+		if (known['endsAt'] !== null && known['endsAt'] !== undefined && !known['startsAt']) {
+			known['startsAt'] = placedAt.toISOString();
+		}
+
+		return known;
 	}
 }
 
@@ -136,9 +151,10 @@ function policyObjectOf(value: unknown): IEntitlementLinePolicy | null {
 
 /**
  * @param policy A stated policy.
+ * @param placedAt The instant the order is placed at: the start of a term that states only its end.
  * @returns What makes it unusable, or null.
  */
-export function policyProblemOf(policy: IEntitlementLinePolicy): string | null {
+export function policyProblemOf(policy: IEntitlementLinePolicy, placedAt: Date = new Date()): string | null {
 	const { kind, quantity, startsAt, endsAt, gracePeriodDays, activationLimit, metadata } = policy as Record<
 		string,
 		any
@@ -172,6 +188,12 @@ export function policyProblemOf(policy: IEntitlementLinePolicy): string | null {
 
 	if (startsAt && endsAt && new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
 		return 'endsAt must be later than startsAt';
+	}
+
+	// A term with no start starts at the placement, so an end at or before it is a term that is over already: the
+	// grant would refuse it, and with it the whole event and every other line it carries (Greptile on #10914).
+	if (!startsAt && endsAt && new Date(endsAt).getTime() <= placedAt.getTime()) {
+		return 'endsAt has already passed';
 	}
 
 	if (metadata !== undefined && metadata !== null && (typeof metadata !== 'object' || Array.isArray(metadata))) {

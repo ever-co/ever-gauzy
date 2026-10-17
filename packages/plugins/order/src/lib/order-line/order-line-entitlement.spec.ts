@@ -93,7 +93,7 @@ describe('OrderLineService.placedLinesFor', () => {
 		await expect(subject.placedLinesFor(ORDER, [line('a')])).resolves.toBeUndefined();
 	});
 
-	it("asks with the order's scope and the stated policies, snapshots a catalogue policy onto its line, and projects", async () => {
+	it("asks with the order's scope and the lines alone, writes nothing, and projects", async () => {
 		const queries: any[] = [];
 		const { subject, updates } = service({
 			policiesFor: async (query) => {
@@ -103,7 +103,8 @@ describe('OrderLineService.placedLinesFor', () => {
 		});
 
 		const projected = await subject.placedLinesFor(ORDER, [
-			line('a', { entitlement: { kind: 'LICENCE' }, cartLineId: 'cl-a' }),
+			// A cart editor's own `metadata.entitlement` is not offered to the port (Greptile on #10914).
+			line('a', { entitlement: { kind: 'SEAT', quantity: 1000000 }, cartLineId: 'cl-a' }),
 			line('b', { cartLineId: 'cl-b' }),
 			line('c')
 		]);
@@ -113,16 +114,14 @@ describe('OrderLineService.placedLinesFor', () => {
 				tenantId: 'tenant-1',
 				organizationId: 'org-1',
 				lines: [
-					{ orderLineId: 'a', productId: 'p-a', variantId: 'v-a', quantity: 2, stated: { kind: 'LICENCE' } },
-					{ orderLineId: 'b', productId: 'p-b', variantId: 'v-b', quantity: 2, stated: null },
-					{ orderLineId: 'c', productId: 'p-c', variantId: 'v-c', quantity: 2, stated: null }
+					{ orderLineId: 'a', productId: 'p-a', variantId: 'v-a', quantity: 2 },
+					{ orderLineId: 'b', productId: 'p-b', variantId: 'v-b', quantity: 2 },
+					{ orderLineId: 'c', productId: 'p-c', variantId: 'v-c', quantity: 2 }
 				]
 			}
 		]);
-		// Only the line whose policy came from the catalogue is written; its other metadata is kept.
-		expect(updates).toEqual([
-			['b', { metadata: { cartLineId: 'cl-b', entitlement: { kind: 'SEAT', quantity: 3 } } }]
-		]);
+		// Nothing is written before the placement commits.
+		expect(updates).toEqual([]);
 		expect(projected).toEqual({
 			lines: [
 				{ orderLineId: 'a', productId: 'p-a', variantId: 'v-a', quantity: 2, entitlement: { kind: 'LICENCE' } },
@@ -139,18 +138,53 @@ describe('OrderLineService.placedLinesFor', () => {
 			linesTruncated: false
 		});
 	});
+});
 
-	it('still announces the policy when its snapshot cannot be written', async () => {
-		const { subject } = service({ policiesFor: async () => ({ a: { kind: 'SEAT' } }) });
+describe('OrderLineService.recordPlacedEntitlements', () => {
+	const placed = {
+		lines: [
+			{ orderLineId: 'a', productId: 'p-a', variantId: 'v-a', quantity: 2, entitlement: { kind: 'LICENCE' } },
+			{ orderLineId: 'b', productId: 'p-b', variantId: 'v-b', quantity: 2 },
+			{ orderLineId: 'c', productId: 'p-c', variantId: 'v-c', quantity: 2 }
+		],
+		linesTotal: 3,
+		linesTruncated: false
+	};
+
+	it('records the granted policy on its line and clears one a cart editor wrote on a line that grants nothing', async () => {
+		const { subject, updates } = service();
+
+		await subject.recordPlacedEntitlements(
+			ORDER,
+			[
+				line('a', { entitlement: { kind: 'SEAT', quantity: 1000000 }, cartLineId: 'cl-a' }),
+				line('b', { entitlement: { kind: 'SEAT' }, cartLineId: 'cl-b' }),
+				line('c', { cartLineId: 'cl-c' })
+			],
+			placed as never
+		);
+
+		expect(updates).toEqual([
+			['a', { metadata: { cartLineId: 'cl-a', entitlement: { kind: 'LICENCE' } } }],
+			['b', { metadata: { cartLineId: 'cl-b' } }]
+		]);
+	});
+
+	it('writes nothing when the order announced no lines', async () => {
+		const { subject, updates } = service();
+
+		await subject.recordPlacedEntitlements(ORDER, [line('a', { entitlement: { kind: 'SEAT' } })], undefined);
+
+		expect(updates).toEqual([]);
+	});
+
+	it('logs a snapshot that cannot be written instead of failing the placed order', async () => {
+		const { subject } = service();
 
 		(subject as any).update = async () => {
 			throw new Error('no tenant');
 		};
 
-		await expect(subject.placedLinesFor(ORDER, [line('a')])).resolves.toEqual(
-			expect.objectContaining({
-				lines: [expect.objectContaining({ orderLineId: 'a', entitlement: { kind: 'SEAT' } })]
-			})
-		);
+		await expect(subject.recordPlacedEntitlements(ORDER, [line('a')], placed as never)).resolves.toBeUndefined();
 	});
 });
