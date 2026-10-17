@@ -18,6 +18,7 @@ import {
 } from '../pricing.types';
 import { ExchangeRateService } from '../exchange-rate/exchange-rate.service';
 import { PricePreferenceService } from '../price-preference/price-preference.service';
+import { PriceList } from '../price-list/price-list.entity';
 import { ProductPrice } from './product-price.entity';
 import { TypeOrmProductPriceRepository } from './repository/type-orm-product-price.repository';
 import { MikroOrmProductPriceRepository } from './repository/mikro-orm-product-price.repository';
@@ -123,13 +124,19 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * Creates a price after checking it can be resolved at all.
 	 *
 	 * @param entity The price to create.
+	 * @param options.ignoreTierOf Stored rows a batch rewrites, whose bands an atomic batch has already
+	 * checked against the matrix it leaves behind.
 	 * @returns The stored price.
 	 * @throws BadRequestException when the row is not a valid price, when its quantity band overlaps
 	 * a band that already exists for the same tuple, or when it sits below its own margin floor.
 	 */
-	public async createOne(entity: DeepPartial<ProductPrice>): Promise<ProductPrice> {
+	public async createOne(
+		entity: DeepPartial<ProductPrice>,
+		options: { ignoreTierOf?: Set<string> } = {}
+	): Promise<ProductPrice> {
 		const prepared = this.prepare(entity);
-		await this.assertTierIsFree(prepared);
+		await this.assertListsAreLive(prepared);
+		await this.assertTierIsFree(prepared, options.ignoreTierOf);
 		this.assertMarginFloor(prepared);
 		await this.assertBaseChainIsUsable(prepared, []);
 
@@ -148,11 +155,16 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 *
 	 * @param id The price to update.
 	 * @param entity The fields to change.
+	 * @param options.ignoreTierOf Stored rows a batch rewrites, as for `createOne`.
 	 * @returns The update result.
 	 * @throws BadRequestException when the row is not a valid price, when the change would overlap a
 	 * neighbouring band, or when it would fall below the margin floor.
 	 */
-	public async updateOne(id: ID, entity: DeepPartial<ProductPrice>): Promise<UpdateResult | ProductPrice> {
+	public async updateOne(
+		id: ID,
+		entity: DeepPartial<ProductPrice>,
+		options: { ignoreTierOf?: Set<string> } = {}
+	): Promise<UpdateResult | ProductPrice> {
 		const existing = await this.findOneByIdString(id);
 		// The row as it would stand after the change: the fields the caller did not state keep the value
 		// they already hold, which is what makes the overlap and margin checks meaningful on a partial
@@ -184,11 +196,20 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			maxQuantity: (entity.maxQuantity as DecimalString) ?? existing.maxQuantity,
 			costAmount: (entity.costAmount as DecimalString) ?? existing.costAmount,
 			minMarginPercent: (entity.minMarginPercent as DecimalString) ?? existing.minMarginPercent,
-			status: (entity.status as PriceStatus) ?? existing.status
+			status: (entity.status as PriceStatus) ?? existing.status,
+			// The window takes part in the overlap check, so the row's own window is carried too.
+			startsAt: entity.startsAt !== undefined ? (entity.startsAt as Date) : existing.startsAt,
+			endsAt: entity.endsAt !== undefined ? (entity.endsAt as Date) : existing.endsAt
 		};
 		const prepared = this.prepare(merged);
 
-		await this.assertTierIsFree(prepared);
+		// Only a list the caller names is checked: a row of a list deleted since stays editable — it no
+		// longer resolves anyway — and can be moved to a live list.
+		await this.assertListsAreLive({
+			priceListId: entity.priceListId !== undefined ? prepared.priceListId : undefined,
+			basePriceListId: entity.basePriceListId !== undefined ? prepared.basePriceListId : undefined
+		});
+		await this.assertTierIsFree(prepared, options.ignoreTierOf);
 		this.assertMarginFloor(prepared);
 		await this.assertBaseChainIsUsable(prepared, []);
 
@@ -262,21 +283,10 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		const replacedPairs = new Map<string, IBulkPair>();
 		const heldPairs = new Set<string>();
 
-		if (atomic) {
-			// A pre-flight pass over exactly the checks the writes below perform, so an atomic batch
-			// either writes every row or writes none.
-			for (const [index, item] of items.entries()) {
-				try {
-					const prepared = this.prepare(this.toPricePayload(item, await this.findExisting(item)));
-					await this.assertTierIsFree(prepared);
-					this.assertMarginFloor(prepared);
-				} catch (error) {
-					throw new BadRequestException(
-						`PRICE_BULK_INVALID: row ${index} of the batch cannot be written — ${this.messageOf(error)}`
-					);
-				}
-			}
-		}
+		// An atomic batch is checked once, as the matrix it leaves behind, and its writes then skip the
+		// bands of the stored rows it rewrites: in the order the rows arrive, a new band can meet a stored
+		// row the same batch only retires further down, and refusing it there would half-write the batch.
+		const ignoreTierOf = atomic ? await this.preflightAtomicBatch(items) : undefined;
 
 		for (const [index, item] of items.entries()) {
 			let existing: ProductPrice | null = null;
@@ -288,8 +298,8 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				// its identifier is what keeps a REPLACE batch from retiring the very row it just updated,
 				// and the stored row is what the caller was promised.
 				const written = existing
-					? await this.updateExisting(existing, item)
-					: await this.createOne(this.toPricePayload(item, undefined));
+					? await this.updateExisting(existing, item, ignoreTierOf)
+					: await this.createOne(this.toPricePayload(item, undefined), { ignoreTierOf });
 				const pair = this.pairOf(written.variantId, written.priceListId);
 
 				succeeded.push(written);
@@ -314,14 +324,117 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	}
 
 	/**
+	 * The pre-flight of an atomic batch: every check the writes below perform, against the matrix as it
+	 * will stand once the whole batch is written, so an atomic batch either writes every row or none.
+	 *
+	 * Checking each row against the database alone was not that (R2-30): two rows of the same batch
+	 * whose bands overlap each other both passed and the second failed mid-write, while a row that only
+	 * overlapped a stored row the same batch re-bands was refused although the writes would succeed. The
+	 * matrix after the batch is the stored rows it does not address plus the rows it writes, so each row
+	 * is checked against exactly that: the stored rows other than those the batch addresses, and the
+	 * batch's other rows. The list and base-chain checks of the single write path run here too.
+	 *
+	 * @param items The batch.
+	 * @returns The stored rows the batch rewrites.
+	 * @throws BadRequestException `PRICE_BULK_INVALID` naming the first row that cannot be written.
+	 */
+	private async preflightAtomicBatch(items: IProductPriceBulkItem[]): Promise<Set<string>> {
+		const prepared: DeepPartial<ProductPrice>[] = [];
+		const addressed = new Set<string>();
+
+		for (const [index, item] of items.entries()) {
+			try {
+				const existing = await this.findExisting(item);
+
+				if (existing) {
+					addressed.add(String(existing.id));
+				}
+
+				// A matrix item states no window, so a row it updates keeps its own, which the overlap checks
+				// below have to see; the write path reads it from the stored row the same way.
+				prepared.push({
+					...this.prepare(this.toPricePayload(item, existing)),
+					startsAt: existing?.startsAt,
+					endsAt: existing?.endsAt
+				});
+			} catch (error) {
+				throw new BadRequestException(
+					`PRICE_BULK_INVALID: row ${index} of the batch cannot be written — ${this.messageOf(error)}`
+				);
+			}
+		}
+
+		for (const [index, row] of prepared.entries()) {
+			try {
+				await this.assertListsAreLive(row);
+				await this.assertTierIsFree(row, addressed);
+				this.assertMarginFloor(row);
+				await this.assertBaseChainIsUsable(row, []);
+
+				const rival = prepared.findIndex(
+					(other, otherIndex) => otherIndex < index && this.competesWith(row, other)
+				);
+
+				if (rival >= 0) {
+					throw new BadRequestException(
+						`PRICE_TIER_OVERLAP: its band overlaps the band of row ${rival} of the same batch for the same ` +
+							'variant, currency and price list.'
+					);
+				}
+			} catch (error) {
+				throw new BadRequestException(
+					`PRICE_BULK_INVALID: row ${index} of the batch cannot be written — ${this.messageOf(error)}`
+				);
+			}
+		}
+
+		return addressed;
+	}
+
+	/**
+	 * @param left One prepared row.
+	 * @param right Another.
+	 * @returns Whether the two would be candidates of the same tuple at the same instant for the same
+	 * quantity: both active, same variant (or both open-scoped), currency and list, overlapping windows
+	 * and overlapping bands.
+	 */
+	private competesWith(left: DeepPartial<ProductPrice>, right: DeepPartial<ProductPrice>): boolean {
+		return (
+			(left.status ?? PriceStatus.ACTIVE) === PriceStatus.ACTIVE &&
+			(right.status ?? PriceStatus.ACTIVE) === PriceStatus.ACTIVE &&
+			String(left.variantId ?? '') === String(right.variantId ?? '') &&
+			String(left.currency ?? '') === String(right.currency ?? '') &&
+			String(left.priceListId ?? '') === String(right.priceListId ?? '') &&
+			this.periodsOverlap(
+				left.startsAt as Date,
+				left.endsAt as Date,
+				right.startsAt as Date,
+				right.endsAt as Date
+			) &&
+			this.tiersOverlap(
+				left.minQuantity as DecimalString,
+				left.maxQuantity as DecimalString,
+				right.minQuantity as DecimalString,
+				right.maxQuantity as DecimalString,
+				left.currency as CurrencyCode
+			)
+		);
+	}
+
+	/**
 	 * Updates the row a bulk item addresses and reads it back.
 	 *
 	 * @param existing The stored row.
 	 * @param item The bulk item.
+	 * @param ignoreTierOf Stored rows an atomic batch rewrites.
 	 * @returns The row as it stands after the write.
 	 */
-	private async updateExisting(existing: ProductPrice, item: IProductPriceBulkItem): Promise<ProductPrice> {
-		await this.updateOne(existing.id, this.toPricePayload(item, existing));
+	private async updateExisting(
+		existing: ProductPrice,
+		item: IProductPriceBulkItem,
+		ignoreTierOf?: Set<string>
+	): Promise<ProductPrice> {
+		await this.updateOne(existing.id, this.toPricePayload(item, existing), { ignoreTierOf });
 
 		return await this.findOneByIdString(existing.id);
 	}
@@ -560,7 +673,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			false;
 
 		const notices: string[] = [...candidateNotices];
-		const marginNotice = this.marginNotice(price, resolvedAmount.amount, legacyPrice);
+		const marginNotice = await this.marginNotice(price, resolvedAmount.amount, legacyPrice, scope);
 
 		if (marginNotice) {
 			notices.push(marginNotice);
@@ -1066,9 +1179,13 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			}
 
 			case PriceBaseSource.COST: {
-				const cost = row.costAmount ?? legacyPrice?.unitCost;
-
-				return cost == null ? undefined : String(cost);
+				try {
+					return await this.costInRowCurrency(row, legacyPrice, scope);
+				} catch (error) {
+					throw new BadRequestException(
+						`PRICE_BASE_CURRENCY_MISMATCH: the row ${row.id} derives from the variant's unit cost, and ${this.messageOf(error)}`
+					);
+				}
 			}
 
 			case PriceBaseSource.PRICE_LIST: {
@@ -1203,6 +1320,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		};
 
 		this.prepareComputation(prepared, entity, currency);
+		this.assertGuardRails(prepared, currency);
 
 		if (prepared.minQuantity != null && prepared.maxQuantity != null) {
 			const min = Money.of(prepared.minQuantity, currency);
@@ -1216,6 +1334,38 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		}
 
 		return prepared;
+	}
+
+	/**
+	 * Refuses guard rails no price can honour (R2-30). Both are fractions: a margin floor of `1` (100 %)
+	 * or more has no price that satisfies it, and a discount ceiling outside `0..1` is not a share of a
+	 * price. They used to be accepted on write, and a floor of 100 % then threw out of every resolution
+	 * of the variant.
+	 *
+	 * @param prepared The row being assembled.
+	 * @param currency Currency the row is priced in.
+	 * @throws BadRequestException `PRICE_MARGIN_RANGE` or `PRICE_DISCOUNT_RANGE`.
+	 */
+	private assertGuardRails(prepared: DeepPartial<ProductPrice>, currency: CurrencyCode): void {
+		const one = Money.of('1', currency);
+
+		if (prepared.minMarginPercent != null && !Money.of(prepared.minMarginPercent, currency).lessThan(one)) {
+			throw new BadRequestException(
+				`PRICE_MARGIN_RANGE: minMarginPercent is a fraction below 1 (0.25 is a 25 % floor); ` +
+					`${prepared.minMarginPercent} leaves no price that satisfies it.`
+			);
+		}
+
+		if (prepared.maxDiscountPercent != null) {
+			const ceiling = Money.of(prepared.maxDiscountPercent, currency);
+
+			if (ceiling.isNegative() || ceiling.greaterThan(one)) {
+				throw new BadRequestException(
+					`PRICE_DISCOUNT_RANGE: maxDiscountPercent is a fraction between 0 and 1 (0.30 is a 30 % ceiling); ` +
+						`${prepared.maxDiscountPercent} is not.`
+				);
+			}
+		}
 	}
 
 	/**
@@ -1383,11 +1533,23 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	}
 
 	/**
+	 * Only rows that could compete with it are compared (R2-30): an `ACTIVE` row whose window shares an
+	 * instant with the incoming row's. A row that is not active never competes, so it neither blocks a
+	 * band nor is checked until it is activated — which goes through this check again — and two rows of
+	 * the same band whose windows do not meet are a scheduled price change, not an ambiguity. The check
+	 * used to compare every row of the tuple whatever its status and window, which refused a price
+	 * change scheduled for the same band and let a retired row block a new one.
+	 *
 	 * @param entity The prepared price.
+	 * @param ignoreIds Stored rows the caller is about to rewrite, which therefore do not stand as they are.
 	 * @throws BadRequestException when a band of the same `(variant, currency, price list)` tuple
 	 * overlaps it, because two overlapping bands make the answer depend on row order.
 	 */
-	private async assertTierIsFree(entity: DeepPartial<ProductPrice>): Promise<void> {
+	private async assertTierIsFree(entity: DeepPartial<ProductPrice>, ignoreIds?: Set<string>): Promise<void> {
+		if ((entity.status ?? PriceStatus.ACTIVE) !== PriceStatus.ACTIVE) {
+			return;
+		}
+
 		const { tenantId, organizationId } = this.scope;
 		const rows = await this.typeOrmProductPriceRepository.find({
 			where: {
@@ -1398,13 +1560,17 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				variantId: entity.variantId ?? IsNull(),
 				currency: entity.currency,
 				priceListId: entity.priceListId ?? IsNull(),
+				status: PriceStatus.ACTIVE,
 				...(entity.id ? { id: Not(entity.id as ID) } : {})
 			} as FindOptionsWhere<ProductPrice>
 		});
 
 		const currency = entity.currency as CurrencyCode;
-		const overlapping = rows.find((row) =>
-			this.tiersOverlap(entity.minQuantity, entity.maxQuantity, row.minQuantity, row.maxQuantity, currency)
+		const overlapping = rows.find(
+			(row) =>
+				!ignoreIds?.has(String(row.id)) &&
+				this.periodsOverlap(entity.startsAt as Date, entity.endsAt as Date, row.startsAt, row.endsAt) &&
+				this.tiersOverlap(entity.minQuantity, entity.maxQuantity, row.minQuantity, row.maxQuantity, currency)
 		);
 
 		if (overlapping) {
@@ -1414,6 +1580,74 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 					'variant, currency and price list.'
 			);
 		}
+	}
+
+	/**
+	 * @param leftStart Start of one window; absent is open.
+	 * @param leftEnd End of one window; absent is open.
+	 * @param rightStart Start of the other window.
+	 * @param rightEnd End of the other window.
+	 * @returns Whether the two half-open windows share an instant.
+	 */
+	private periodsOverlap(
+		leftStart: Date | null | undefined,
+		leftEnd: Date | null | undefined,
+		rightStart: Date | null | undefined,
+		rightEnd: Date | null | undefined
+	): boolean {
+		const time = (value: Date | null | undefined) => (value ? new Date(value).getTime() : null);
+		const [ls, le, rs, re] = [time(leftStart), time(leftEnd), time(rightStart), time(rightEnd)];
+
+		return (ls === null || re === null || ls < re) && (rs === null || le === null || rs < le);
+	}
+
+	/**
+	 * Refuses a price that names a list which is not a live list of the caller's organization.
+	 *
+	 * The foreign key only says that a list row exists. A list of another organization of the tenant, or
+	 * one that was soft-deleted, was accepted on write (R2-30): the first lends its scope and status to a
+	 * row it does not own, and the second is a row that can never resolve. Both are refused here, for the
+	 * row's own list and for the list a derivation reads.
+	 *
+	 * @param lists The lists the row names.
+	 * @throws BadRequestException `PRICE_LIST_NOT_FOUND` naming the field.
+	 */
+	private async assertListsAreLive(lists: { priceListId?: unknown; basePriceListId?: unknown }): Promise<void> {
+		const named: Array<[string, unknown]> = [
+			['priceListId', lists.priceListId],
+			['basePriceListId', lists.basePriceListId]
+		];
+
+		for (const [field, listId] of named) {
+			if (!listId) {
+				continue;
+			}
+
+			if (!(await this.findLiveList(String(listId)))) {
+				throw new BadRequestException(
+					`PRICE_LIST_NOT_FOUND: ${field} ${listId} is not a live price list of this organization.`
+				);
+			}
+		}
+	}
+
+	/**
+	 * @param id A price list identifier.
+	 * @returns The list when it is the caller's tenant's and organization's and not soft-deleted, read
+	 * through whichever ORM is active.
+	 */
+	private async findLiveList(id: ID): Promise<PriceList | null> {
+		const { tenantId, organizationId } = this.scope;
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return (await this.mikroOrmProductPriceRepository
+				.getEntityManager()
+				.findOne(PriceList, { id, tenantId, organizationId, deletedAt: null } as any)) as PriceList | null;
+		}
+
+		return await this.typeOrmProductPriceRepository.manager.findOne(PriceList, {
+			where: { id, tenantId, organizationId } as FindOptionsWhere<PriceList>
+		});
 	}
 
 	/**
@@ -1489,33 +1723,99 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	}
 
 	/**
+	 * The margin check of a resolution, which reports and never refuses.
+	 *
+	 * The cost is the row's own snapshot, else the legacy unit cost **in the row's currency** — converted
+	 * through the exchange-rate table when the legacy cost is stated in another one. It used to be read as
+	 * a number whatever its currency, so a floor computed from a USD cost was applied to a EUR price
+	 * (R2-30). A floor that cannot be computed — no rate for the pair, or a stored floor of 100 % or more,
+	 * which used to throw out of the resolution and fail every variant of the call — is reported as a
+	 * notice instead.
+	 *
 	 * @param price A price row that is being resolved.
 	 * @param resolvedAmount The amount the row resolved to — its derived amount for a derived row.
 	 * @param legacyPrice The legacy variant price row, when one was read.
+	 * @param scope The resolution scope, whose instant a conversion is made at.
 	 * @returns The margin notice, or undefined when the row states no floor, no cost is known, or the
 	 * price is at or above the floor.
 	 */
-	private marginNotice(
+	private async marginNotice(
 		price: ProductPrice,
 		resolvedAmount: DecimalString,
-		legacyPrice?: ProductVariantPrice
-	): string | undefined {
+		legacyPrice: ProductVariantPrice | undefined,
+		scope: IResolutionScope
+	): Promise<string | undefined> {
 		if (price.minMarginPercent == null) {
 			return undefined;
 		}
 
-		const cost = price.costAmount ?? legacyPrice?.unitCost;
+		let floor: Money | undefined;
 
-		if (cost == null) {
+		try {
+			const cost = await this.costInRowCurrency(price, legacyPrice, scope);
+
+			floor = cost == null ? undefined : this.minimumPriceForMargin(cost, price.minMarginPercent, price.currency);
+		} catch (error) {
+			return `MARGIN_UNCHECKED: the margin floor of the price ${price.id} was not checked, because ${this.messageOf(error)}`;
+		}
+
+		if (!floor) {
 			return undefined;
 		}
 
-		const floor = this.minimumPriceForMargin(cost, price.minMarginPercent, price.currency);
 		const amount = Money.of(resolvedAmount, price.currency);
 
 		return amount.lessThan(floor)
 			? `MARGIN_BELOW_MINIMUM: ${amount.amount} ${price.currency} is below the ${price.minMarginPercent} margin floor of ${floor.amount}.`
 			: undefined;
+	}
+
+	/**
+	 * The cost a row is measured against, in the row's currency.
+	 *
+	 * The row's own `costAmount` is in its currency by construction. The legacy `unitCost` is stated in
+	 * `unitCostCurrency` (else the retail currency) and is converted through the exchange-rate table when
+	 * that is not the row's currency. A legacy cost of zero or less is no cost: the column defaults to
+	 * `0` for a variant whose cost was never recorded, and a derivation or a floor computed from it priced
+	 * a cost-plus row at zero (R2-30).
+	 *
+	 * @param row The price row.
+	 * @param legacyPrice The legacy variant price row, when one was read.
+	 * @param scope The resolution scope, whose instant a conversion is made at.
+	 * @returns The cost in the row's currency, or undefined when none is known.
+	 * @throws Error naming the pair when the legacy cost is in another currency and no rate covers it.
+	 */
+	private async costInRowCurrency(
+		row: ProductPrice,
+		legacyPrice: ProductVariantPrice | undefined,
+		scope: IResolutionScope
+	): Promise<DecimalString | undefined> {
+		if (row.costAmount != null) {
+			return String(row.costAmount);
+		}
+
+		const unitCost = legacyPrice?.unitCost;
+
+		if (unitCost == null || !Money.of(unitCost, row.currency).isPositive()) {
+			return undefined;
+		}
+
+		const costCurrency = this.normalizeCurrency(
+			(legacyPrice?.unitCostCurrency || legacyPrice?.retailPriceCurrency || row.currency) as CurrencyCode
+		);
+
+		if (costCurrency === row.currency) {
+			return String(unitCost);
+		}
+
+		try {
+			return (await this.exchangeRateService.convert(unitCost, costCurrency, row.currency, scope.at)).amount;
+		} catch {
+			throw new Error(
+				`the unit cost is in ${costCurrency} and no ${costCurrency}/${row.currency} rate covers ${scope.at.toISOString()}. ` +
+					'Record the rate, or state costAmount on the row.'
+			);
+		}
 	}
 
 	/*
