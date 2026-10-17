@@ -67,6 +67,9 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 				// The transactional manager below is raw: TenantAwareCrudService's create/save guards do not
 				// run, so the ownership check has to be explicit here.
 				await this.assertNotForeignRow({ id } as any, tenantId);
+				// Same for the nested translations and products, which save() resolves by id alone. Checked
+				// before the delete, while the caller's own rows are still there to be recognized as owned.
+				await this.assertNestedGraphNotForeign([payload], tenantId);
 				return await this.typeOrmRepository.manager.transaction(async (transactionalEntityManager) => {
 					// 1. Ensure delete is scoped to the current tenant
 					await transactionalEntityManager.delete(ProductType, {
