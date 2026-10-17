@@ -3,7 +3,7 @@ import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
- * States that one cart becomes at most one order (R3-10).
+ * States that one cart becomes at most one placed order (R3-10).
  *
  * ## Why
  *
@@ -11,29 +11,38 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * the database accepted two live orders naming the same cart — and two concurrent completions of one cart
  * produced exactly that. The cart package now claims the cart before the order is created; this tick is
  * the database's own statement of the same rule behind it, so an order written by any path (a retry that
- * outlived its claim, an import, a manual correction) cannot be a second order of a cart either.
+ * outlived its claim, an import, a manual correction) cannot be a second placed order of a cart either.
+ *
+ * ## Which orders it covers: the placed ones
+ *
+ * An order is created `DRAFT` and placed afterwards (lines, delivery, addresses, then `place`). A checkout
+ * that fails between the two leaves its `DRAFT` behind, and a checkout that fails before placement is
+ * meant to cancel its draft. Counting either would make that cart impossible to buy again: every retry's
+ * insert would collide with the leftover. So the rule covers the live orders that are neither `DRAFT` nor
+ * `CANCELED` — and a second completion is still refused by the database, at the placement that would make
+ * its draft the cart's second placed order.
  *
  * ## What it does
  *
- * **`UQ_order_cart`** — unique over the live orders that name a cart. On Postgres and SQLite it is partial
- * (`WHERE "cartId" IS NOT NULL AND "deletedAt" IS NULL`), the form every other unique index of this set
- * takes; on MySQL, which has no partial index, it covers `(cartId, deletedKey)` — the generated column the
- * create tick gives `order` for exactly this purpose ('0' for a live row, the row's own id once it is
- * deleted) — and MySQL's own rule that a unique index never compares two `NULL`s exempts the orders that
- * name no cart. `IDX_order_cart` is left exactly where it is: this tick adds, it does not replace.
+ * **`UQ_order_cart`** — on Postgres and SQLite a partial unique index over `cartId`
+ * (`WHERE "cartId" IS NOT NULL AND "deletedAt" IS NULL AND "status" NOT IN ('DRAFT','CANCELED')`). MySQL has
+ * no partial index, so the same predicate is a **virtual generated column**, `placedCartKey` — the cart id
+ * when the order is a live placed order of a cart, otherwise `NULL` — and the unique index covers it; MySQL's
+ * own rule that a unique index never compares two `NULL`s exempts every other order. `IDX_order_cart` is
+ * left exactly where it is: this tick adds, it does not replace.
  *
  * ## Fail-safe: existing duplicates are reported, never deleted
  *
- * An installation that already holds two live orders of one cart cannot be given the index, and those
- * orders are commercial records a migration has no business choosing between. The tick therefore probes
- * for duplicates first; where there are any it **creates nothing, changes no row** and logs which carts
- * are affected and how to finish the job once a person has resolved them. The cart's claim still stops
- * every new duplicate on such an installation. The migration does not fail, because a boot that cannot
- * complete over a data question nobody has answered yet is worse than the index arriving later.
+ * An installation that already holds two placed live orders of one cart cannot be given the index, and
+ * those orders are commercial records a migration has no business choosing between. The tick therefore
+ * probes for duplicates first; where there are any it **creates nothing, changes no row** and logs which
+ * carts are affected and how to finish the job once a person has resolved them. The cart's claim still
+ * stops every new duplicate on such an installation. The migration does not fail, because a boot that
+ * cannot complete over a data question nobody has answered yet is worse than the index arriving later.
  *
- * Every statement is guarded: the index is created only where the catalogue does not already carry it and
- * dropped only where it does, so a re-run, or a replay onto a restored snapshot, changes nothing. `down`
- * drops exactly the index this tick creates.
+ * Every statement is guarded: the index (and MySQL's column) is created only where the catalogue does not
+ * already carry it and dropped only where it does, so a re-run, or a replay onto a restored snapshot,
+ * changes nothing. `down` drops exactly what this tick creates.
  */
 export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface {
 	name = 'AddOrderCartUniqueIndex1791000000782';
@@ -44,8 +53,18 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 	/** The table it is created on. */
 	private static readonly TABLE = 'order';
 
+	/** MySQL's generated column the index covers there. */
+	private static readonly MYSQL_KEY = 'placedCartKey';
+
 	/** How many affected carts the duplicate report names, so a large one stays readable. */
 	private static readonly REPORT_LIMIT = 20;
+
+	/** The rule, in the Postgres/SQLite form: the live placed orders of a cart. */
+	private static readonly PLACED = `"cartId" IS NOT NULL AND "deletedAt" IS NULL AND "status" NOT IN ('DRAFT', 'CANCELED')`;
+
+	/** The rule, in MySQL's form. */
+	private static readonly MYSQL_PLACED =
+		"`cartId` IS NOT NULL AND `deletedAt` IS NULL AND `status` NOT IN ('DRAFT', 'CANCELED')";
 
 	/**
 	 * Up Migration
@@ -101,12 +120,7 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await this.addIndex(
-			queryRunner,
-			DatabaseTypeEnum.postgres,
-			`SELECT "cartId" FROM "order" WHERE "cartId" IS NOT NULL AND "deletedAt" IS NULL GROUP BY "cartId" HAVING COUNT(*) > 1`,
-			`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_order_cart" ON "order" ("cartId") WHERE "cartId" IS NOT NULL AND "deletedAt" IS NULL`
-		);
+		await this.addIndex(queryRunner, DatabaseTypeEnum.postgres, [this.partialIndexStatement()]);
 	}
 
 	/**
@@ -124,12 +138,7 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await this.addIndex(
-			queryRunner,
-			DatabaseTypeEnum.sqlite,
-			`SELECT "cartId" FROM "order" WHERE "cartId" IS NOT NULL AND "deletedAt" IS NULL GROUP BY "cartId" HAVING COUNT(*) > 1`,
-			`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_order_cart" ON "order" ("cartId") WHERE "cartId" IS NOT NULL AND "deletedAt" IS NULL`
-		);
+		await this.addIndex(queryRunner, DatabaseTypeEnum.sqlite, [this.partialIndexStatement()]);
 	}
 
 	/**
@@ -144,26 +153,24 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 	/**
 	 * MySQL Up Migration
 	 *
-	 * The unique index folds the deletion state in through `deletedKey` where the table carries it. A table
-	 * whose schema the ORM synchronised has no generated column, and is given the index over `cartId` alone —
-	 * a soft-deleted order then still holds its cart, which is the stricter of the two readings — with the
-	 * duplicate probe counting deleted rows too, so the probe and the index always agree.
+	 * The generated column is virtual, so adding it rewrites no row; the unique index over it is what holds
+	 * the rule. A column left behind by an earlier, interrupted run is reused rather than added twice.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		const folded = await queryRunner.hasColumn(AddOrderCartUniqueIndex1791000000782.TABLE, 'deletedKey');
+		const key = AddOrderCartUniqueIndex1791000000782.MYSQL_KEY;
+		const statements: string[] = [];
 
-		await this.addIndex(
-			queryRunner,
-			DatabaseTypeEnum.mysql,
-			folded
-				? 'SELECT `cartId` FROM `order` WHERE `cartId` IS NOT NULL AND `deletedAt` IS NULL GROUP BY `cartId` HAVING COUNT(*) > 1'
-				: 'SELECT `cartId` FROM `order` WHERE `cartId` IS NOT NULL GROUP BY `cartId` HAVING COUNT(*) > 1',
-			folded
-				? 'CREATE UNIQUE INDEX `UQ_order_cart` ON `order` (`cartId`, `deletedKey`)'
-				: 'CREATE UNIQUE INDEX `UQ_order_cart` ON `order` (`cartId`)'
-		);
+		if (!(await queryRunner.hasColumn(AddOrderCartUniqueIndex1791000000782.TABLE, key))) {
+			statements.push(
+				`ALTER TABLE \`order\` ADD COLUMN \`${key}\` varchar(36) GENERATED ALWAYS AS (IF(${AddOrderCartUniqueIndex1791000000782.MYSQL_PLACED}, \`cartId\`, NULL)) VIRTUAL`
+			);
+		}
+
+		statements.push(`CREATE UNIQUE INDEX \`UQ_order_cart\` ON \`order\` (\`${key}\`)`);
+
+		await this.addIndex(queryRunner, DatabaseTypeEnum.mysql, statements);
 	}
 
 	/**
@@ -173,6 +180,39 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await this.dropIndex(queryRunner, DatabaseTypeEnum.mysql, 'DROP INDEX `UQ_order_cart` ON `order`');
+
+		if (
+			(await queryRunner.hasTable(AddOrderCartUniqueIndex1791000000782.TABLE)) &&
+			(await queryRunner.hasColumn(
+				AddOrderCartUniqueIndex1791000000782.TABLE,
+				AddOrderCartUniqueIndex1791000000782.MYSQL_KEY
+			))
+		) {
+			await queryRunner.query(
+				`ALTER TABLE \`order\` DROP COLUMN \`${AddOrderCartUniqueIndex1791000000782.MYSQL_KEY}\``
+			);
+		}
+	}
+
+	/**
+	 * The partial unique index, in the form Postgres and SQLite share.
+	 *
+	 * @returns The statement.
+	 */
+	private partialIndexStatement(): string {
+		return `CREATE UNIQUE INDEX IF NOT EXISTS "UQ_order_cart" ON "order" ("cartId") WHERE ${AddOrderCartUniqueIndex1791000000782.PLACED}`;
+	}
+
+	/**
+	 * The query for the carts that more than one live placed order names — the rows the index would refuse.
+	 *
+	 * @param dialect The dialect whose quoting is used.
+	 * @returns The query.
+	 */
+	private duplicatesQuery(dialect: DatabaseTypeEnum): string {
+		return dialect === DatabaseTypeEnum.mysql
+			? `SELECT \`cartId\` FROM \`order\` WHERE ${AddOrderCartUniqueIndex1791000000782.MYSQL_PLACED} GROUP BY \`cartId\` HAVING COUNT(*) > 1`
+			: `SELECT "cartId" FROM "order" WHERE ${AddOrderCartUniqueIndex1791000000782.PLACED} GROUP BY "cartId" HAVING COUNT(*) > 1`;
 	}
 
 	/**
@@ -180,15 +220,9 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 	 *
 	 * @param queryRunner
 	 * @param dialect The dialect whose catalogue is probed.
-	 * @param duplicates The dialect's query for the carts that more than one live order names.
-	 * @param statement The dialect's own `CREATE UNIQUE INDEX`.
+	 * @param statements The dialect's own statements, in order, that create the index.
 	 */
-	private async addIndex(
-		queryRunner: QueryRunner,
-		dialect: DatabaseTypeEnum,
-		duplicates: string,
-		statement: string
-	): Promise<void> {
+	private async addIndex(queryRunner: QueryRunner, dialect: DatabaseTypeEnum, statements: string[]): Promise<void> {
 		if (!(await queryRunner.hasTable(AddOrderCartUniqueIndex1791000000782.TABLE))) {
 			return;
 		}
@@ -197,7 +231,7 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 			return;
 		}
 
-		const rows: unknown = await queryRunner.query(duplicates);
+		const rows: unknown = await queryRunner.query(this.duplicatesQuery(dialect));
 		const affected = Array.isArray(rows) ? rows.map((row: any) => String(row?.cartId ?? row?.cartid ?? '')) : [];
 
 		if (affected.length > 0) {
@@ -209,18 +243,20 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 
 			console.warn(
 				chalk.red(
-					`${this.name}: ${affected.length} cart(s) are named by more than one live order, so ` +
+					`${this.name}: ${affected.length} cart(s) are named by more than one live placed order, so ` +
 						`${AddOrderCartUniqueIndex1791000000782.INDEX} was NOT created and no row was changed: ${named}${more}. ` +
 						'The cart checkout claim still prevents new duplicates. Once a person has resolved these orders ' +
-						'(cancel or soft-delete the extra one of each cart), create the index with the statement this ' +
-						`migration issues: ${statement}`
+						'(cancel or soft-delete the extra one of each cart), create the index with the statements this ' +
+						`migration issues: ${statements.join('; ')}`
 				)
 			);
 
 			return;
 		}
 
-		await queryRunner.query(statement);
+		for (const statement of statements) {
+			await queryRunner.query(statement);
+		}
 	}
 
 	/**

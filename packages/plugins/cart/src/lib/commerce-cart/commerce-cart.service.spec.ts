@@ -1535,12 +1535,54 @@ describe('CommerceCartService — checkout', () => {
 			});
 			expect(checkoutCalls).toBe(0);
 
+			// The cart's own fields, a merge of it into another cart and the expiry sweep wait too.
+			await expect(fixture.service.applyChanges(cart.id, { note: 'Ring twice.' } as any)).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			const other = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+			await expect(fixture.service.merge(other.id, cart.id)).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			row.expiresAt = new Date(Date.now() - 1000);
+			expect(await fixture.service.expireDueCarts()).not.toContain(cart.id);
+			expect(row.status).toBe(CommerceCartStatus.ACTIVE);
+			row.expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
 			// A claim older than the bound belongs to a checkout that died: the cart can be bought again.
 			row.checkoutClaimedAt = new Date(Date.now() - 11 * 60 * 1000);
 
 			const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
 			expect(completed.orderId).toBe('order-1');
 			expect(checkoutCalls).toBe(1);
+		});
+
+		it('refuses the last write of a checkout whose claim another one took over, and records nothing', async () => {
+			// A checkout that outlived its claim must not record its order over the one that took the cart over;
+			// the next completion is answered with the placed order by the order package's handler instead.
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					checkoutCalls++;
+					Object.assign(
+						fixture.tables.commerce_cart.find((candidate: any) => candidate.id === cart.id),
+						{ checkoutClaimId: 'the-checkout-that-took-over', checkoutClaimedAt: new Date() }
+					);
+
+					return { orderId: 'order-late', orderNumber: 'ORD-LATE' };
+				}
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				code: 'ENTITY_VERSION_CONFLICT'
+			});
+
+			const stored = await fixture.service.findOneByIdString(cart.id);
+			expect(stored.orderId ?? null).toBeNull();
+			expect(stored.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(stored.checkoutClaimId).toBe('the-checkout-that-took-over');
 		});
 	});
 

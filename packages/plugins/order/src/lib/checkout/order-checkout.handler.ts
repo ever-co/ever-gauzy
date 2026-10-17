@@ -49,6 +49,16 @@ export class OrderCheckoutHandler implements ICartCheckoutHandler {
 			);
 		}
 
+		// R3-10: a checkout that placed this cart's order and then died before the cart recorded it left a
+		// placed order behind. The completion that comes next answers with that order rather than placing a
+		// second one — which the unique index over a cart's placed orders would refuse at placement anyway,
+		// leaving the cart impossible to complete.
+		const placed = await this.orderService.findPlacedForCart(cart.id);
+
+		if (placed) {
+			return { orderId: placed.id, orderNumber: placed.number };
+		}
+
 		const order = await this.orderService.createFromCart(cart as any, {
 			idempotencyKey: context.idempotencyKey,
 			source: 'CHANNEL'

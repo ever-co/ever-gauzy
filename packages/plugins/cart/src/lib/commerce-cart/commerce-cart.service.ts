@@ -188,6 +188,21 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		expectation: IVersionExpectation = ANY_VERSION,
 		reason: string = 'CART_UPDATED'
 	): Promise<CommerceCart> {
+		// A cart a checkout has claimed is the one its order is being built from (R3-10): an address or a
+		// currency changed now would be on the cart and not on the order.
+		// A miss is left to the conditional write below, which answers it the way every versioned write does.
+		const current = await this.findOneByIdString(id).catch((error: unknown) => {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		});
+
+		if (current && this.holdsLiveCheckoutClaim(current)) {
+			throw this.checkoutInProgress(id);
+		}
+
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id,
 			expectation,
@@ -863,9 +878,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id: cart.id,
 			// The caller's version was spent by the claim above; this write rides on the version the
-			// recomputation produced. `orderId IS NULL` is what makes the order recorded exactly once.
+			// recomputation produced. `orderId IS NULL` is what makes the order recorded exactly once, and the
+			// claim id is what keeps a checkout that outlived its claim from recording over the one that took
+			// the cart over (it is refused, and the next completion is answered with its order — the order
+			// package's checkout handler returns a cart's placed order rather than placing a second one).
 			expectation: ANY_VERSION,
-			where: { ...this.writeScope, orderId: IsNull() },
+			where: { ...this.writeScope, orderId: IsNull(), checkoutClaimId: claimId },
 			patch: {
 				status: CommerceCartStatus.COMPLETED,
 				orderId: result.orderId,
@@ -950,6 +968,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		if (!source || source.status === CommerceCartStatus.COMPLETED || source.status === CommerceCartStatus.MERGED) {
 			throw new BadRequestException(`CART_MERGE_INVALID: a ${source?.status ?? 'missing'} cart cannot be merged.`);
+		}
+
+		// A source a checkout is turning into an order is not merged away underneath it (R3-10): the buyer would
+		// get the order and the same lines again in the surviving cart.
+		if (this.holdsLiveCheckoutClaim(source)) {
+			throw this.checkoutInProgress(source.id);
 		}
 
 		// The caller's version is spent by the first write this merge makes to the surviving cart: every
@@ -1090,6 +1114,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		for (const cart of due.items) {
 			if (expired.length >= limit) {
 				break;
+			}
+
+			// A cart a checkout holds is being turned into an order right now (R3-10); the checkout's own last
+			// write decides what it becomes, and the next sweep expires it if the checkout let it go.
+			if (this.holdsLiveCheckoutClaim(cart)) {
+				continue;
 			}
 
 			if (cart.expiresAt && new Date(cart.expiresAt).getTime() <= now) {

@@ -29,8 +29,8 @@ export { AddOrderCartUniqueIndex1791000000782 } from './migrations/1791000000782
  * the shape a line that is not an item must have, which is a rule about the table the first file creates
  * and therefore cannot ride along with it. The sixth states the version column the order and the order
  * change carry, which is likewise a rule about two tables the first file creates. The seventh makes
- * `order.cartId` unique over live orders, so one cart becomes at most one order (R3-10); it reports
- * existing duplicates instead of deleting anything.
+ * `order.cartId` unique over live placed orders (not `DRAFT`, not `CANCELED`), so one cart becomes at most
+ * one order (R3-10); it reports existing duplicates instead of deleting anything.
  *
  * All seven files carry all three dialects and a `down()` that reverses what the file changed.
  *
