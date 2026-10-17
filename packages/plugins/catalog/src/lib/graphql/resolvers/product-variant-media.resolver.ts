@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { BadRequestException, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
@@ -118,12 +118,13 @@ export class ProductVariantMediaResolver {
 	/**
 	 * Reorders a variant's gallery without changing its membership.
 	 *
-	 * The order is written through the gallery's set write, which also adds and removes: a list that named an
-	 * image the gallery does not hold attached it, and one that left an image out deleted it, so the field did
-	 * more than its name and its description say (review sweep R2-G4). A list that is not exactly the gallery's
-	 * images is refused; attaching and detaching are `attachProductVariantMedia` and `detachProductVariantMedia`.
+	 * It used to write through the gallery's set write, which also adds and removes: a list that named an image
+	 * the gallery does not hold attached it, and one that left an image out deleted it, so the field did more
+	 * than its name and its description say (review sweep R2-G4). It now reaches the service's own reorder,
+	 * which refuses a list that is not exactly the gallery's images and never inserts or deletes; attaching and
+	 * detaching are `attachProductVariantMedia` and `detachProductVariantMedia`.
 	 *
-	 * @throws BadRequestException When the list adds to or drops from the gallery.
+	 * @throws BadRequestException When the list adds to, drops from or repeats an image of the gallery.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
 	@Mutation('reorderProductVariantMedia')
@@ -131,24 +132,7 @@ export class ProductVariantMediaResolver {
 		@Args('variantId') variantId: ID,
 		@Args('imageAssetIds') imageAssetIds: ID[]
 	): Promise<ProductVariantMedia[]> {
-		const existing = await this.productVariantMediaService.findByVariant(variantId);
-		const current = new Set(existing.map((row) => row.imageAssetId));
-		const stated = imageAssetIds ?? [];
-
-		if (
-			new Set(stated).size !== stated.length ||
-			stated.length !== current.size ||
-			stated.some((id) => !current.has(id))
-		) {
-			throw new BadRequestException(
-				'reorderProductVariantMedia reorders the gallery the variant has: state each of its images once. ' +
-					'Attach or detach images with attachProductVariantMedia / detachProductVariantMedia.'
-			);
-		}
-
-		const primary = existing.find((row) => row.isPrimary);
-
-		return this.productVariantMediaService.replaceMedia(variantId, stated, primary?.imageAssetId);
+		return this.productVariantMediaService.reorderMedia(variantId, imageAssetIds ?? []);
 	}
 
 	/**

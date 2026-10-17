@@ -5,7 +5,6 @@
  * `reorderProductVariantMedia` — "without changing its membership" — wrote through the set write, so a list that
  * named a new image attached it and one that left an image out deleted it.
  */
-import { BadRequestException } from '@nestjs/common';
 import { galleryOrder, ProductVariantMediaResolver } from './product-variant-media.resolver';
 
 const VARIANT = '00000000-0000-4000-8000-000000000201';
@@ -19,6 +18,9 @@ function resolverWith(gallery = ['A', 'B', 'C']) {
 				gallery.map((imageAssetId, position) => ({ imageAssetId, position, isPrimary: position === 0 }))
 			),
 		replaceMedia: jest.fn(async (_variantId: string, ids: string[]) =>
+			ids.map((imageAssetId) => ({ imageAssetId }))
+		),
+		reorderMedia: jest.fn(async (_variantId: string, ids: string[]) =>
 			ids.map((imageAssetId) => ({ imageAssetId }))
 		)
 	};
@@ -54,26 +56,12 @@ describe('ProductVariantMediaResolver — gallery order and membership (R2-G4)',
 		).toEqual(['z', 'x', 'y']);
 	});
 
-	it('reorders the gallery it has, keeping the primary', async () => {
+	it('reorders through the service’s own reorder, never through the set write that adds and removes', async () => {
 		const { resolver, service } = resolverWith();
 
 		await resolver.reorderProductVariantMedia(VARIANT, ['C', 'A', 'B']);
 
-		expect(service.replaceMedia).toHaveBeenCalledWith(VARIANT, ['C', 'A', 'B'], 'A');
-	});
-
-	it('refuses a reorder that would attach or detach an image, and writes nothing', async () => {
-		const { resolver, service } = resolverWith();
-
-		await expect(resolver.reorderProductVariantMedia(VARIANT, ['C', 'A', 'B', 'D'])).rejects.toBeInstanceOf(
-			BadRequestException
-		);
-		await expect(resolver.reorderProductVariantMedia(VARIANT, ['C', 'A'])).rejects.toThrow(
-			/attachProductVariantMedia/
-		);
-		await expect(resolver.reorderProductVariantMedia(VARIANT, ['C', 'A', 'A'])).rejects.toBeInstanceOf(
-			BadRequestException
-		);
+		expect(service.reorderMedia).toHaveBeenCalledWith(VARIANT, ['C', 'A', 'B']);
 		expect(service.replaceMedia).not.toHaveBeenCalled();
 	});
 });
