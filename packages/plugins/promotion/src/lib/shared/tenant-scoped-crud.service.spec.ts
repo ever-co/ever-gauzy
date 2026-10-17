@@ -127,6 +127,16 @@ function storage(rows: Row[]) {
 			}
 
 			return { affected: matched.length, raw: [], generatedMaps: [] };
+		},
+		// A `DELETE … WHERE <criteria>`: every row the criteria match is gone.
+		delete: async (where: Row) => {
+			const matched = rows.filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'typeorm', op: 'delete', id: stored.id });
+				rows.splice(rows.indexOf(stored), 1);
+			}
+
+			return { affected: matched.length, raw: [] };
 		}
 	};
 
@@ -151,6 +161,16 @@ function storage(rows: Row[]) {
 			for (const stored of matched) {
 				writes.push({ orm: 'mikro-orm', op: 'nativeUpdate', id: stored.id });
 				Object.assign(stored, patch);
+			}
+
+			return matched.length;
+		},
+		// The same `DELETE … WHERE <criteria>`, answering the count MikroORM answers.
+		nativeDelete: async (where: Row) => {
+			const matched = rows.filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'mikro-orm', op: 'nativeDelete', id: stored.id });
+				rows.splice(rows.indexOf(stored), 1);
 			}
 
 			return matched.length;
@@ -423,5 +443,94 @@ describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s
 		expect(own.tenantId).toBe(TENANT);
 		expect(own.organizationId).toBe(ORG);
 		expect(own.code).toBe('SPRING');
+	});
+});
+
+/**
+ * R2-G26: a hard delete is narrowed to the caller's organization, not only its tenant.
+ *
+ * `delete` predicated its pre-read and its statement on the tenant alone, so `DELETE /promotions/:id`, `/coupons/:id`
+ * and `/campaigns/:id` destroyed a sibling organization's row of the caller's tenant — one no read of this package
+ * shows the caller and one the GraphQL `delete<Resource>` fields refuse. Run on both ORM branches of the kernel's own
+ * `CrudService`, and through the real promotion route.
+ */
+describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s — a hard delete (R2-G26)', (orm) => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to delete a row of a sibling organization of the caller’s tenant, and writes nothing', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.delete(FOREIGN_ORG)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.delete({ id: FOREIGN_ORG, organizationId: OTHER_ORG } as any)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+
+		expect(rows.map(({ id }) => id)).toContain(FOREIGN_ORG);
+		expect(writes).toEqual([]);
+	});
+
+	it('refuses to delete another tenant’s row, and writes nothing', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.delete(FOREIGN_TENANT)).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(rows.map(({ id }) => id)).toContain(FOREIGN_TENANT);
+		expect(writes).toEqual([]);
+	});
+
+	it('deletes the caller’s own row, with the organization in the statement', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.delete(OWN);
+
+		expect(rows.map(({ id }) => id)).toEqual([FOREIGN_TENANT, FOREIGN_ORG]);
+		expect(writes.map(({ id }) => id)).toEqual([OWN]);
+	});
+
+	it('still reaches the row a job names when no organization is in context', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as any);
+
+		const rows = table();
+		const { typeOrm, mikroOrm } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.delete(FOREIGN_ORG);
+
+		expect(rows.map(({ id }) => id)).toEqual([OWN, FOREIGN_TENANT]);
+	});
+
+	it('answers DELETE /promotions/:id of a sibling organization’s promotion with 404 and keeps it', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new PromotionService(
+			typeOrm as never,
+			mikroOrm as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never
+		);
+
+		Object.defineProperty(service, 'ormType', { get: () => orm });
+		const controller = new PromotionController(service);
+
+		await expect(controller.delete(FOREIGN_ORG)).rejects.toBeInstanceOf(NotFoundException);
+		expect(rows.map(({ id }) => id)).toContain(FOREIGN_ORG);
+		expect(writes).toEqual([]);
+
+		await controller.delete(OWN);
+		expect(rows.map(({ id }) => id)).not.toContain(OWN);
 	});
 });
