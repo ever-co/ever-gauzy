@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
@@ -80,6 +80,28 @@ export class CollectionChannelService extends TenantAwareCrudService<CollectionC
 	public async findByCollection(collectionId: ID): Promise<CollectionChannel[]> {
 		return this.typeOrmCollectionChannelRepository.find({
 			where: { collectionId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
+			order: { createdAt: 'ASC' }
+		});
+	}
+
+	/**
+	 * Reads the publication rows of several collections in one statement, inside the same scope as
+	 * {@link findByCollection} — the batched read the `Collection.channels` field makes for a page.
+	 *
+	 * @param collectionIds The collections to read.
+	 * @returns Their publication rows, in creation order.
+	 */
+	public async findByCollections(collectionIds: readonly ID[]): Promise<CollectionChannel[]> {
+		if (!collectionIds.length) {
+			return [];
+		}
+
+		return this.typeOrmCollectionChannelRepository.find({
+			where: {
+				collectionId: In([...collectionIds]),
+				...callerScope(),
+				organizationId: RequestContext.currentOrganizationId()
+			},
 			order: { createdAt: 'ASC' }
 		});
 	}
