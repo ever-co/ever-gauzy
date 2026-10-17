@@ -1,7 +1,8 @@
+import { SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { EverWorksUiService } from '../../services/ever-works.service';
-import { CREATE, EverWorksMatchReviewComponent, preselect } from './ever-works-match-review.component';
+import { CREATE, DRAFT_INITIATIVE, EverWorksMatchReviewComponent, preselect } from './ever-works-match-review.component';
 
 const PEOPLE = {
 	members: [
@@ -36,6 +37,19 @@ const TEAMS = {
 	]
 };
 
+const INITIATIVES = {
+	missions: [
+		{ ewMissionId: 'm-1', title: 'Grow the community', status: 'active', linkedInitiativeId: null, suggestion: { initiativeId: 'i1', reason: 'same_title' as const } },
+		{ ewMissionId: 'm-2', title: 'Launch the docs', status: 'paused', linkedInitiativeId: null, suggestion: null },
+		{ ewMissionId: 'm-3', title: 'Ship v2', status: 'active', linkedInitiativeId: 'i9', suggestion: null }
+	],
+	unmatchedInitiatives: [
+		{ initiativeId: 'i1', title: 'Grow the community', state: 'active' },
+		{ initiativeId: 'i2', title: 'Hire a designer', state: 'active' },
+		{ initiativeId: 'i3', title: 'Plan the offsite', state: DRAFT_INITIATIVE }
+	]
+};
+
 /** Match review: suggestions are preselected, nothing is paired until saved, creates are explicit. */
 describe('EverWorksMatchReviewComponent', () => {
 	const api = {
@@ -43,9 +57,11 @@ describe('EverWorksMatchReviewComponent', () => {
 		agents: jest.fn(),
 		teams: jest.fn(),
 		projects: jest.fn(),
+		initiatives: jest.fn(),
 		decidePeople: jest.fn(),
 		decideTeams: jest.fn(),
-		decideProjects: jest.fn()
+		decideProjects: jest.fn(),
+		decideInitiatives: jest.fn()
 	};
 
 	function render() {
@@ -63,6 +79,7 @@ describe('EverWorksMatchReviewComponent', () => {
 		api.agents.mockReturnValue(of([{ ewAgentId: 'a1', employeeId: 'e5', name: 'Builder', status: 'idle', isActive: true }]));
 		api.teams.mockReturnValue(of(TEAMS));
 		api.projects.mockReturnValue(of({ works: [], unmatchedProjects: [] }));
+		api.initiatives.mockReturnValue(of(INITIATIVES));
 	});
 
 	it('preselects suggestions and sends only the pairs chosen for unpaired members', () => {
@@ -98,6 +115,27 @@ describe('EverWorksMatchReviewComponent', () => {
 		component.createInEverWorks['g2'] = true;
 		component.saveTeams();
 		expect(api.decideTeams).toHaveBeenCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }], createInGauzy: ['t2'], createInEverWorks: ['g2'] });
+	});
+
+	it('lists the inbox items waiting for an unpaired member, by name (or id once they left), and nothing when none wait', () => {
+		api.people.mockReturnValue(
+			of({
+				...PEOPLE,
+				deferredInbox: [
+					{ ewUserId: 'u3', count: 2, items: [{ ewItemId: 'i1', title: 'Approve the deploy?', kind: 'approval', occurredAt: null }] },
+					{ ewUserId: 'u-gone', count: 1, items: [{ ewItemId: 'i2', title: '', kind: null, occurredAt: null }] }
+				]
+			})
+		);
+		const { el } = render();
+		const block = el.querySelector('[data-test="deferred-inbox"]');
+		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('cy');
+		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('Approve the deploy?');
+		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('u-gone');
+		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('i2');
+		TestBed.resetTestingModule();
+		api.people.mockReturnValue(of(PEOPLE));
+		expect(render().el.querySelector('[data-test="deferred-inbox"]')).toBeNull();
 	});
 
 	it('an API refusal is shown on its tab', () => {
@@ -162,6 +200,115 @@ describe('EverWorksMatchReviewComponent', () => {
 				new Set(['d'])
 			)
 		).toEqual({ a: 'x', b: '', c: '', d: '', e: '' });
+	});
+
+	describe('initiatives ↔ missions (G-P2-2)', () => {
+		it('preselects the same-title initiative and sends pairs, creates in Gauzy and paused creates in Ever Works', () => {
+			api.decideInitiatives.mockReturnValue(of(INITIATIVES));
+			const { component } = render();
+			expect(api.initiatives).toHaveBeenCalledWith('org-1', 'm1');
+			// The paired mission keeps its pairing; the suggestion is preselected, nothing is saved yet.
+			expect(component.missionChoice).toEqual({ 'm-1': 'i1', 'm-2': '' });
+			expect(api.decideInitiatives).not.toHaveBeenCalled();
+			component.missionChoice['m-2'] = CREATE;
+			// i1 is chosen for m-1, so only the others are offered for Ever Works.
+			expect(component.unpairedGauzyInitiatives().map((row) => row.initiativeId)).toEqual(['i2', 'i3']);
+			component.createMissionInEverWorks['i2'] = true;
+			component.createMissionInEverWorks['i3'] = true;
+			component.saveInitiatives();
+			expect(api.decideInitiatives).toHaveBeenCalledWith('org-1', 'm1', {
+				links: [{ ewMissionId: 'm-1', initiativeId: 'i1' }],
+				createInGauzy: ['m-2'],
+				// The draft is never sent: it goes to Ever Works once it is active.
+				createInEverWorks: ['i2']
+			});
+		});
+
+		it('accepts every suggestion, removes a pairing without suggesting it again, and refuses a double choice', () => {
+			// Accepting pairs m-1 with i1; removing that pairing makes m-1 unpaired again (with its suggestion).
+			const paired = {
+				missions: INITIATIVES.missions.map((row) => (row.ewMissionId === 'm-1' ? { ...row, linkedInitiativeId: 'i1', suggestion: null } : row)),
+				unmatchedInitiatives: INITIATIVES.unmatchedInitiatives.filter((row) => row.initiativeId !== 'i1')
+			};
+			api.decideInitiatives.mockReturnValueOnce(of(paired)).mockReturnValueOnce(of(INITIATIVES));
+			const { component } = render();
+			component.acceptInitiatives();
+			expect(api.decideInitiatives).toHaveBeenLastCalledWith('org-1', 'm1', { acceptSuggestions: true });
+			expect(component.missionChoice).toEqual({ 'm-2': '' });
+			component.unlinkMission('m-1');
+			expect(api.decideInitiatives).toHaveBeenLastCalledWith('org-1', 'm1', { unlinks: ['m-1'] });
+			// The removed pairing's suggestion is not preselected again.
+			expect(component.missionChoice['m-1']).toBe('');
+			api.decideInitiatives.mockClear();
+			component.missionChoice['m-1'] = 'i2';
+			component.missionChoice['m-2'] = 'i2';
+			component.saveInitiatives();
+			expect(api.decideInitiatives).not.toHaveBeenCalled();
+			expect(component.errors.initiatives).toBe('EVER_WORKS.REVIEW.DUPLICATE_CHOICE');
+		});
+
+		it('offers only the creates the mapping allows, and never sends one it does not', () => {
+			api.decideInitiatives.mockReturnValue(of(INITIATIVES));
+			const { component, fixture } = render();
+			// New mappings sync missions one way (Ever Works → Gauzy): no mission is created from Gauzy.
+			component.mapping = { isEnabled: true, directions: { missions: 'ew_to_gauzy' } } as never;
+			component.ngOnChanges({ mapping: new SimpleChange(null, component.mapping, false) });
+			fixture.detectChanges();
+			expect(api.initiatives).toHaveBeenCalledTimes(1);
+			expect(component.canCreateInitiatives).toBe(true);
+			expect(component.canCreateMissions).toBe(false);
+			component.missionChoice['m-2'] = CREATE;
+			component.createMissionInEverWorks['i2'] = true;
+			component.saveInitiatives();
+			expect(api.decideInitiatives).toHaveBeenCalledWith('org-1', 'm1', { links: [{ ewMissionId: 'm-1', initiativeId: 'i1' }], createInGauzy: ['m-2'] });
+			// A mapping that is off creates nothing on either side.
+			component.mapping = { isEnabled: false, directions: { missions: 'both' } } as never;
+			expect(component.canCreateInitiatives).toBe(false);
+			expect(component.canCreateMissions).toBe(false);
+			component.mapping = { isEnabled: true, directions: { missions: 'both' } } as never;
+			expect(component.canCreateMissions).toBe(true);
+		});
+
+		it('keeps the choices of the other missions when one pairing is removed', () => {
+			api.decideInitiatives.mockReturnValue(of(INITIATIVES));
+			const { component } = render();
+			// The admin turned the suggestion of m-1 down and chose to create m-2 in Gauzy, then removes m-3's pairing.
+			component.missionChoice['m-1'] = '';
+			component.missionChoice['m-2'] = CREATE;
+			component.createMissionInEverWorks['i2'] = true;
+			component.unlinkMission('m-3');
+			expect(component.missionChoice).toEqual({ 'm-1': '', 'm-2': CREATE });
+			expect(component.createMissionInEverWorks).toEqual({ i2: true });
+		});
+
+		it('drops the previous mapping\u2019s initiatives when the mapping changes', () => {
+			const { component } = render();
+			expect(component.initiatives).not.toBeNull();
+			api.initiatives.mockReturnValue(throwError(() => ({ status: 404 })));
+			component.integrationTenantId = 'm2';
+			component.ngOnChanges({ integrationTenantId: new SimpleChange('m1', 'm2', false) });
+			expect(component.initiatives).toBeNull();
+			expect(component.missionChoice).toEqual({});
+			expect(component.initiativesUnavailable).toBe(true);
+		});
+
+		it('does not preselect a suggestion when another free initiative has the same title', () => {
+			api.initiatives.mockReturnValue(
+				of({
+					missions: [INITIATIVES.missions[0]],
+					unmatchedInitiatives: [...INITIATIVES.unmatchedInitiatives, { initiativeId: 'i4', title: ' grow the COMMUNITY ', state: 'active' }]
+				})
+			);
+			const { component } = render();
+			expect(component.missionChoice).toEqual({ 'm-1': '' });
+		});
+
+		it('says the tab is not available when the API has no initiatives route yet', () => {
+			api.initiatives.mockReturnValue(throwError(() => ({ status: 404 })));
+			const { component } = render();
+			expect(component.initiativesUnavailable).toBe(true);
+			expect(component.errors.initiatives).toBeNull();
+		});
 	});
 
 	it('a late answer for a previous mapping is dropped', () => {

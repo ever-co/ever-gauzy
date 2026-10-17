@@ -49,7 +49,7 @@ type Loaded =
  *   deferred, failed, dead), open conflicts, the last error, link totals and the running or last sync with
  *   its phases; Resync, cancel a running sync, pause and resume. A mapping that never synced offers the
  *   dry run and Start.
- * - **Mapping**: the match review (people, agents, teams, projects).
+ * - **Mapping**: the match review (people, agents, teams, projects, initiatives ↔ missions).
  * - **Entities and directions**.
  * - **Activity**: the sync log (filters, more) and the conflicts, with "Keep" and "Use the other value".
  * - **Advanced**: switch the mapping on or off, replace the integration key, register the webhook again,
@@ -229,7 +229,7 @@ type Loaded =
 								}
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_WORKS.SETTINGS.TABS.MAPPING' | translate" data-test="tab-mapping">
-								<ngx-ever-works-match-review [organizationId]="organizationId" [integrationTenantId]="integrationTenantId" />
+								<ngx-ever-works-match-review [organizationId]="organizationId" [integrationTenantId]="integrationTenantId" [mapping]="mapping" />
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_WORKS.SETTINGS.TABS.DIRECTIONS' | translate" data-test="tab-directions">
 								<ngx-ever-works-directions [organizationId]="organizationId" [mapping]="mapping" (savedMapping)="mapping = $event" />

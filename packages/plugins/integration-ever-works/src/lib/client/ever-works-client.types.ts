@@ -121,3 +121,59 @@ export interface EverWorksListPage<T> {
 	nextCursor: string | null;
 	hasMore: boolean;
 }
+
+/** An option of an inbox item: its `id` is sent back as the reply's `optionId` (P3, `inbox-item.schema.json`). */
+export interface EverWorksInboxItemOption {
+	id: string;
+	label: string;
+	description?: string;
+	recommended?: boolean;
+}
+
+/**
+ * An Ever Works inbox item (P3, CR-4, `resources/inbox-item.schema.json`): one message addressed to ONE human,
+ * its recipient. Not a ResourceBase (no visibility, owner or links): keyed by its id. Also the `data` of the
+ * `inbox.item.*` events, which Ever Works serves only to a key holding `inbox:read` (recipient-scoped).
+ */
+export interface EverWorksInboxItem {
+	id: string;
+	organizationId: string | null;
+	version: number;
+	createdAt: string;
+	updatedAt: string;
+	recipientUserId: string;
+	kind: 'question' | 'approval' | 'escalation' | 'notice' | string;
+	title: string;
+	body: string;
+	options: EverWorksInboxItemOption[] | null;
+	/** Which producer filed it: an open set (`agent-run`, `fleet-run`, `escalation`, `proposal`, `system`, `work`, …). */
+	sourceType: string;
+	status: 'open' | 'answered' | 'archived' | string;
+	unread: boolean;
+	answeredAt: string | null;
+	answerText: string | null;
+	answerOptionId: string | null;
+	agentId: string | null;
+	agentRunId: string | null;
+	taskId: string | null;
+	workId: string | null;
+	escalationId: string | null;
+	proposalId: string | null;
+	webUrl?: string | null;
+	/** Only on `inbox.item.deleted`. */
+	deleted?: true;
+}
+
+/** `POST /inbox/items/:id/reply` (CR-4, `resources/inbox-reply-result.schema.json`). */
+export interface EverWorksInboxReplyResult {
+	/** The item after the answer (with the winning answer when `routed` is `already-decided`). */
+	item: EverWorksInboxItem;
+	/** What happened to the record behind it: `steered`, `resumed`, `approved`, `rejected`, `already-decided`, … (open set). */
+	routed: string;
+	/** What happened to the run behind it: `injected`, `resumed`, `queued`, `failed`, `none` (open set). */
+	restart: string;
+	runId?: string;
+}
+
+/** The longest reply text Ever Works takes (`requests.schema.json` `InboxReply`). */
+export const EVER_WORKS_INBOX_REPLY_MAX = 8000;

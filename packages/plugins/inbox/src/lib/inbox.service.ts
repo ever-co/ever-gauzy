@@ -7,6 +7,7 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { Brackets, DataSource, In, SelectQueryBuilder } from 'typeorm';
@@ -25,6 +26,7 @@ import {
 	IInboxItemWriter,
 	IInboxRecipientStateInput,
 	IInboxReplyInput,
+	IInboxSourceReplyResult,
 	INBOX_DECISION_KINDS,
 	InboxItemBodyFormatEnum,
 	InboxItemKindEnum,
@@ -38,6 +40,7 @@ import { RequestContext } from '@gauzy/core';
 import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
+import { InboxRealtime } from './realtime/inbox-realtime';
 
 /** A recipient row's own state change (the columns are nullable; the base entity types them optional). */
 type RecipientChange = {
@@ -135,7 +138,9 @@ export class InboxService implements IInboxItemWriter {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly registry: InboxSourceHandlerRegistry
+		private readonly registry: InboxSourceHandlerRegistry,
+		/** Streams `inbox_item.created` to the recipients (G-P3-6); absent in bare test wiring. */
+		@Optional() private readonly realtime?: InboxRealtime
 	) {}
 
 	// ---------------------------------------------------------------- reads
@@ -243,6 +248,8 @@ export class InboxService implements IInboxItemWriter {
 		}
 
 		let routed = 'local';
+		/** The answer the source holds, when another answer won there (recorded after the claim is settled). */
+		let sourceAnswer: IInboxSourceReplyResult['response'] = null;
 		try {
 			const handler = this.registry.get(item.source);
 			if (handler) {
@@ -260,6 +267,7 @@ export class InboxService implements IInboxItemWriter {
 					}
 				);
 				routed = result?.routed || 'delivered';
+				sourceAnswer = result?.response ?? null;
 			} else if (!LOCAL_SOURCES.includes(item.source)) {
 				throw new ServiceUnavailableException(
 					'The source of this item is not connected, so the reply cannot be delivered. Try again later.'
@@ -284,15 +292,33 @@ export class InboxService implements IInboxItemWriter {
 			throw new BadGatewayException('The source of this item did not take the reply. Try again later.');
 		}
 
-		// The source took the reply: the claim stays whatever happens next. Recording where it was routed is
-		// bookkeeping — a failure here must not re-open the item, or a second reply would be delivered again.
+		// The source took the reply: the claim stays whatever happens next (nothing below may re-open the item,
+		// or a second reply would be delivered again).
 		response.routed = routed;
-		try {
-			await this.dataSource.getRepository(InboxItem).update({ id, tenantId }, { response: toJson(response) });
-		} catch (error) {
-			this.logger.warn(
-				`The reply to inbox item ${id} was delivered (${routed}), but recording it failed: ${(error as Error)?.message}`
-			);
+		if (sourceAnswer) {
+			// Another answer won at the source: record that one, so the item shows what was decided there. A
+			// malformed date from the source keeps the claim's time.
+			response.text = sourceAnswer.text ?? null;
+			response.optionId = sourceAnswer.optionId ?? null;
+			const answeredAt = sourceAnswer.answeredAt ? new Date(sourceAnswer.answeredAt) : null;
+			if (answeredAt && !Number.isNaN(answeredAt.getTime())) response.answeredAt = answeredAt.toISOString();
+		}
+		// Where it was routed is bookkeeping; the source's own answer is not, so its write is tried twice and a
+		// failure is an error in the log. Either way the source re-delivers its state (an answered event, a
+		// reconcile through `upsertExternal`), which corrects the item.
+		for (let attempt = 1; ; attempt++) {
+			try {
+				await this.dataSource.getRepository(InboxItem).update({ id, tenantId }, { response: toJson(response) });
+				break;
+			} catch (error) {
+				if (sourceAnswer && attempt < 2) continue;
+				const message = `The reply to inbox item ${id} was delivered (${routed}), but recording ${
+					sourceAnswer ? "the source's answer" : 'it'
+				} failed: ${(error as Error)?.message}`;
+				if (sourceAnswer) this.logger.error(message);
+				else this.logger.warn(message);
+				break;
+			}
 		}
 
 		if (!recipient.isRead) {
@@ -357,18 +383,49 @@ export class InboxService implements IInboxItemWriter {
 	/** Marks every unread item of the caller (of a tab) read. */
 	async markAllRead(tab?: InboxTabEnum): Promise<{ updated: number }> {
 		const { tenantId, userId } = this.caller();
-		const ids = (
-			await this.recipientItems(tenantId, userId, { tab: tab ?? InboxTabEnum.ALL, unread: true })
-				.select('recipient.id', 'recipientId')
-				.getRawMany<{ recipientId: ID }>()
-		).map((row) => row.recipientId);
+		const rows = await this.recipientItems(tenantId, userId, { tab: tab ?? InboxTabEnum.ALL, unread: true })
+			.select('recipient.id', 'recipientId')
+			.addSelect('item.id', 'itemId')
+			.addSelect('item.source', 'source')
+			.getRawMany<{ recipientId: ID; itemId: ID; source: string }>();
+		const ids = rows.map((row) => row.recipientId);
 
 		const repository = this.dataSource.getRepository(InboxItemRecipient);
 		const now = new Date();
 		for (let start = 0; start < ids.length; start += 500) {
 			await repository.update({ id: In(ids.slice(start, start + 500)) }, { isRead: true, readAt: now });
 		}
+		// The sources mirror the state, as for one item; in the background (a source may be slow, and it is best
+		// effort either way), one item after the other.
+		const mirrored = rows.filter((row) => !!this.registry.get(row.source)?.onStateChange);
+		if (mirrored.length) {
+			void this.mirrorReads(tenantId, userId, mirrored);
+		}
 		return { updated: ids.length };
+	}
+
+	/** Tells each item's source that the caller read it (`markAllRead`); a failure is logged, the state stays. */
+	private async mirrorReads(
+		tenantId: ID,
+		userId: ID,
+		rows: Array<{ recipientId: ID; itemId: ID; source: string }>
+	): Promise<void> {
+		for (const row of rows) {
+			try {
+				const item = await this.findItem(tenantId, row.itemId);
+				const handler = item ? this.registry.get(item.source) : undefined;
+				if (!item || !handler?.onStateChange) continue;
+				// Read again just before telling the source: a later choice of the user (marked unread meanwhile,
+				// already told to the source by that request) is never overwritten by this older bulk read.
+				const recipient = await this.findRecipient(tenantId, row.itemId, userId);
+				if (!recipient?.isRead) continue;
+				await handler.onStateChange(toInboxItem(item), recipient, { isRead: true });
+			} catch (error) {
+				this.logger.warn(
+					`The ${row.source} handler did not take the read state of inbox item ${row.itemId}: ${(error as Error)?.message}`
+				);
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------- writes by sources
@@ -429,6 +486,8 @@ export class InboxService implements IInboxItemWriter {
 
 		const { recipientUserIds, skippedUserIds } = await this.writeRecipients(item, input.recipients ?? []);
 		const stored = (await repository.findOne({ where: { id: item.id } })) as InboxItem;
+		// A new item is announced to its recipients' subscriptions (never fails the write).
+		if (created) await this.realtime?.itemCreated(stored, recipientUserIds);
 		return { item: toInboxItem(stored), created, recipientUserIds, skippedUserIds };
 	}
 
