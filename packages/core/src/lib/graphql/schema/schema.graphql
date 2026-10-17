@@ -10032,6 +10032,11 @@ type Mutation {
   """Restores a soft-deleted facet."""
   recoverTagProductVariant(id: ID!): TagProductVariant!
   assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
+
+  """
+  Updates one collection publication row - its status or its date - as PUT /collection-channels/:id does.
+  """
+  updateCollectionChannel(id: ID!, input: UpdateCollectionChannelInput!): CollectionChannel!
   unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
 
   """
@@ -46185,6 +46190,11 @@ input UpdateProductRelationInput {
 input CollectionChannelInput {
   channelId: ID!
   status: PublicationStatus!
+  publishedAt: DateTime
+}
+
+input UpdateCollectionChannelInput {
+  status: PublicationStatus
   publishedAt: DateTime
 }
 
