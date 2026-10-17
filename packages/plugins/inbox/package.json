@@ -41,12 +41,15 @@
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.15.1",
 		"graphql-tag": "^2.12.7",
+		"mailparser": "^3.9.1",
+		"sanitize-html": "^2.18.0",
 		"tslib": "^2.8.1",
 		"typeorm": "^1.1.2"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^26.6.5",
+		"@types/sanitize-html": "^2.16.2",
 		"typescript": "~6.0.3"
 	},
 	"keywords": [

@@ -218,7 +218,10 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			if (existing) Object.assign(existing, values);
 			else links.push({ id: `l${links.length + 1}`, integrationTenantId: input['integrationTenantId'], entityType: input['entityType'], ewVersion: null, snapshot: null, ewOnly: null, ...values });
 		},
-		unlink: async (link: LinkRow, reason: string) => Object.assign(link, { state: EverWorksLinkState.UNLINKED, lastError: reason })
+		unlink: async (link: LinkRow, reason: string) => Object.assign(link, { state: EverWorksLinkState.UNLINKED, lastError: reason }),
+		markOrphaned: async (link: LinkRow, reason: string) => {
+			if (link.state === EverWorksLinkState.OK) Object.assign(link, { state: EverWorksLinkState.ORPHANED, lastError: reason });
+		}
 	};
 	const link = (type: EverWorksLinkType, gauzyId: string, ewId: string) =>
 		links.push({ id: `x-${ewId}`, integrationTenantId: 'm1', entityType: type, gauzyId, ewId, ewVersion: null, snapshot: null, ewOnly: null, state: 'ok' });
@@ -313,6 +316,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			if (at >= 0) subscriptions.splice(at, 1);
 		},
 		edgesOf: async (_t: string, ids: string[]) => new Map(ids.map((id) => [id, edgesFromRows(id, linkedIssues)])),
+		presentTaskIds: async (_t: string, ids: string[]) => new Set(ids.filter((id) => tasks.has(id) && !(tasks.get(id) as GauzyTask)['deletedAt'])),
 		ensureLinkedIssues: async (_s: unknown, rows: LinkedIssueRow[]) => {
 			for (const row of rows) if (!linkedIssues.some((existing) => sameRow(existing, row))) linkedIssues.push({ ...row });
 		},
@@ -732,6 +736,33 @@ describe('task watchers and linked issues (G-P1-9, 2/3)', () => {
 		t.subscriptions.length = 0;
 		await t.service.sweep(t.context.connection as never);
 		expect(t.queue.enqueued).toEqual([expect.objectContaining({ gauzyId: 'g1' })]);
+	});
+
+	it('orphan sweep: a linked task gone from Gauzy without a captured delete is marked orphaned and its delete queued', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g-kept', title: 'Kept' });
+		t.addGauzyTask({ id: 'g-gone', title: 'Gone' });
+		t.addGauzyTask({ id: 'g-soft', title: 'Soft' });
+		for (const id of ['g-kept', 'g-gone', 'g-soft']) await t.push(id);
+		t.queue.enqueued.length = 0;
+		t.tasks.delete('g-gone'); // a raw or bulk delete: no TaskEvent
+		(t.tasks.get('g-soft') as GauzyTask)['deletedAt'] = new Date(); // a soft delete whose event was lost
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued).toEqual([
+			expect.objectContaining({ gauzyId: 'g-gone', op: 'delete' }),
+			expect.objectContaining({ gauzyId: 'g-soft', op: 'delete' })
+		]);
+		expect(t.links.find((l) => l.gauzyId === 'g-gone')?.state).toBe(EverWorksLinkState.ORPHANED);
+		expect(t.links.find((l) => l.gauzyId === 'g-kept')?.state).toBe(EverWorksLinkState.OK);
+		// The delete push applies the delete policy: Ever Works cancels the task, the link stops syncing.
+		expect(await t.push('g-gone', 'delete')).toEqual({ status: 'pushed', message: 'cancelled in Ever Works (delete policy)' });
+		const ewGone = [...t.mock.tasks.values()].find((row) => row['title'] === 'Gone') as Record<string, unknown>;
+		expect(ewGone['status']).toBe('cancelled');
+		expect(t.links.find((l) => l.gauzyId === 'g-gone')?.state).toBe(EverWorksLinkState.UNLINKED);
+		// Swept again: nothing new (the orphan is no longer a synced link; the soft one is still queued).
+		t.queue.enqueued.length = 0;
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued).toEqual([]);
 	});
 });
 

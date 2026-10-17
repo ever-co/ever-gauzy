@@ -163,7 +163,10 @@ export class EventOutboxMikroOrmStore {
 			partitionKey,
 			sequence,
 			tenantId: input.tenantId ?? RequestContext.currentTenantId(),
-			organizationId: input.organizationId ?? RequestContext.currentOrganizationId(),
+			// A tenant-wide fact keeps no organization, whichever one the writing request has selected.
+			organizationId: input.tenantWide
+				? undefined
+				: (input.organizationId ?? RequestContext.currentOrganizationId()),
 			createdAt: now,
 			updatedAt: now
 		};
