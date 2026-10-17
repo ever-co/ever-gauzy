@@ -49855,8 +49855,16 @@ input UpdateOrderInput {
   email: String
   phone: String
   locale: String
+
+  """
+  Not a field of an order: a stated note is refused (ORDER_NOTE_NOT_A_FIELD); a change carries one.
+  """
   note: String
   externalId: String
+
+  """
+  Recorded by cancelOrder only: a stated reason is refused (ORDER_CANCEL_REASON_NOT_WRITABLE).
+  """
   cancelReason: String
   paymentTermId: ID
 
@@ -49914,6 +49922,11 @@ input RequestOrderEditInput {
   Retry key: a repeat of this input under the same key is answered from the first attempt.
   """
   idempotencyKey: String
+
+  """
+  The version of the order this change was reasoned about; omitted, the change is refused.
+  """
+  version: Int
 }
 
 """
