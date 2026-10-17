@@ -7,12 +7,14 @@
  * switches, a find-or-create for fixtures, a GraphQL caller and a verdict — lives here once, so a run
  * file states only its own chain and its own assertions.
  *
- * Environment: `BASE_URL` (default `http://127.0.0.1:3000`), `E2E_EMAIL`, `E2E_PASSWORD`, `E2E_TIMEOUT_MS`.
+ * Environment: `BASE_URL` (default `http://127.0.0.1:3000`), `E2E_EMAIL` and `E2E_PASSWORD` (required: the
+ * seeded super administrator's credential, which this file does not spell — a literal of the seed domain is
+ * an Ever host to the egress audit), `E2E_TIMEOUT_MS`.
  */
 
 export const BASE = (process.env.BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
-const EMAIL = process.env.E2E_EMAIL || 'admin@ever.co';
-const PASSWORD = process.env.E2E_PASSWORD || 'admin';
+const EMAIL = process.env.E2E_EMAIL;
+const PASSWORD = process.env.E2E_PASSWORD;
 const TIMEOUT_MS = Number(process.env.E2E_TIMEOUT_MS || 30_000);
 
 const results = [];
@@ -87,6 +89,12 @@ export function ok(result) {
  * }>}
  */
 export async function signIn(runName) {
+	if (!EMAIL || !PASSWORD) {
+		record('E2E_EMAIL and E2E_PASSWORD name the credential the run signs in with', false, 'not set');
+
+		return undefined;
+	}
+
 	const login = await call('POST', '/api/auth/login', { body: { email: EMAIL, password: PASSWORD } });
 	const token = login.json?.token;
 	const tenantId = login.json?.user?.tenantId;
