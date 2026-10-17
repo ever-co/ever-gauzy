@@ -247,7 +247,8 @@ export class ImportService {
 					stream.on('end', async () => {
 						results = results.filter(isNotEmpty);
 
-						let inserted = 0;
+						// `orIgnore` hides whether a pair was new, so the count is of rows linked, new or already there.
+						let linked = 0;
 						let skipped = 0;
 						for await (const data of results) {
 							try {
@@ -269,7 +270,7 @@ export class ImportService {
 										.values(row)
 										.orIgnore()
 										.execute();
-									inserted++;
+									linked++;
 								}
 							} catch (error) {
 								console.log(chalk.red(`Failed to inserts data for table: ${joinTableName}`), error);
@@ -277,7 +278,7 @@ export class ImportService {
 							}
 						}
 						this.logger.log(
-							`Imported junction table ${joinTableName}: ${inserted} rows inserted, ${skipped} skipped with an end not imported`
+							`Imported junction table ${joinTableName}: ${linked} rows linked (new or already present), ${skipped} skipped with an end not imported`
 						);
 						resolve(true);
 					});
