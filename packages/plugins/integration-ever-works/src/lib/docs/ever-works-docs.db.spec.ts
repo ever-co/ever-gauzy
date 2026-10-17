@@ -475,6 +475,48 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(conflicts.record).toHaveBeenCalledWith(expect.objectContaining({ field: 'title', gauzyValue: 'Gauzy title', everWorksValue: 'Ever Works title', winner: 'ever_works' }));
 		});
 
+		it('with docs gauzy_to_ew, a 412 never writes Ever Works into Gauzy: the Gauzy edit goes on top of the newer version (review F27)', async () => {
+			context['directions'] = { docs: 'gauzy_to_ew' };
+			const organization = await store.organizationFolder(context as never);
+			const id = await gauzyPage(organization, 'Body one');
+			await push(id);
+			const [ew] = [...kb.documents.values()];
+			// Ever Works edits the body and the title meanwhile (its events are not applied: Gauzy is the source).
+			Object.assign(ew, { body: 'Ever Works body', title: 'Ever Works title', version: Number(ew['version']) + 1 });
+			await documents().update({ id } as never, { contentJson: markdownToDocument('Gauzy body').contentJson } as never);
+			expect(await push(id)).toEqual({ status: 'pushed' });
+			expect(ew['body']).toBe('Gauzy body');
+			const row = await page(id);
+			expect(documentToMarkdown(row['contentJson'])).toBe('Gauzy body');
+			expect(row['name']).toBe('Onboarding');
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(0);
+			expect(inbox.upsertExternal).not.toHaveBeenCalled();
+		});
+
+		it('with docs gauzy_to_ew, a folder 412 retries the Gauzy rename on the newer version instead of taking Ever Works\' (review F27)', async () => {
+			context['directions'] = { docs: 'gauzy_to_ew' };
+			const organization = await store.organizationFolder(context as never);
+			const folder = await gauzyFolder(organization, 'Guides');
+			await push(folder, EverWorksLinkType.DOC_FOLDER);
+			const [ewFolder] = [...kb.folders.values()];
+			Object.assign(ewFolder, { name: 'Renamed in Ever Works', version: Number(ewFolder['version']) + 1 });
+			await documents().update({ id: folder } as never, { name: 'Handbooks' } as never);
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'pushed' });
+			expect(ewFolder['name']).toBe('Handbooks');
+			expect((await page(folder))['name']).toBe('Handbooks');
+			// Ever Works changes it again while the retry runs (#11033 review): deferred, the rename still pending.
+			await documents().update({ id: folder } as never, { name: 'Manuals' } as never);
+			mock.fail({ method: 'PATCH', path: /^\/kb\/folders\//, status: 412, body: { error: { code: 'version_mismatch', message: 'The record changed.' } }, times: 2 });
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({
+				status: 'deferred',
+				message: 'Ever Works changed the folder again; the Gauzy change is retried',
+				retryInMs: 60_000
+			});
+			expect(ewFolder['name']).toBe('Handbooks');
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'pushed' });
+			expect(ewFolder['name']).toBe('Manuals');
+		});
+
 		it('sends edits and folder writes as the person who made them (review #10834)', async () => {
 			await dataSource.getRepository(Employee).insert({ id: 'e-editor', userId: 'u-editor', tenantId: T, organizationId: O } as never);
 			await links.record({ tenantId: T as never, organizationId: O as never, integrationTenantId: M as never, entityType: EverWorksLinkType.MEMBER, gauzyId: 'e-editor' as never, ewId: 'ew-editor', direction: 'inbound' });
