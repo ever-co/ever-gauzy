@@ -13,9 +13,12 @@
  * over the other surface, asserting that the order's `discountTotal`, `taxTotal` and `grandTotal` are the
  * cart's at the moment it was completed.
  *
- * The discount is applied as the cart's own promotion snapshot (`POST /api/carts/:id/promotions` with an
- * amount). When the caller-stated amount is refused — the R3-07 change makes the engine state it — the run
- * records that and checks the totals that remain, which must still match.
+ * The discount is a real promotion (seeded: 5 off the order, by code) that the cart asks the engine for —
+ * since R3-07 the cart records only what the engine grants — applied with `POST /api/carts/:id/promotions` /
+ * `applyCartPromotion`, and a refused discount **fails** the run: an undiscounted cart cannot show a
+ * dropped discount. Tax is compared, not required: the platform's tax rows
+ * need a region, a regime and a rate (the tax package's own fixtures), and the carry-over of tax lines is
+ * pinned row by row in `order-cart-ledger-carryover.service.spec.ts` and `order.service.spec.ts`.
  *
  * Run by hand against a booted API:
  *
@@ -26,6 +29,7 @@ import {
 	brief,
 	enableCapabilities,
 	ensureCatalogue,
+	ensurePromotion,
 	finish,
 	ok,
 	record,
@@ -96,15 +100,15 @@ async function pricedCartOverRest(session, catalogue) {
 	const promotion = await api(
 		'POST',
 		`/api/carts/${cartId}/promotions`,
-		owned({ cartId, code: `${PREFIX}-OFF`, amount: '5.00' }),
+		owned({ cartId, code: `${PREFIX}-OFF` }),
 		version ? { 'If-Match': version } : undefined
 	);
 
 	const discounted = ok(promotion);
 
 	record(
-		'the cart is discounted (or the engine refused a caller-stated amount, R3-07)',
-		discounted || promotion.status === 400 || promotion.status === 422,
+		'the cart is discounted (a refusal fails the run: without a discount the carry-over goes unobserved)',
+		discounted,
 		`HTTP ${promotion.status}${discounted ? '' : ` ${brief(promotion)}`}`
 	);
 
@@ -159,11 +163,17 @@ async function main() {
 
 	const { api, gql, key, organizationId } = session;
 
-	await enableCapabilities(api, organizationId, ['FEATURE_CART', 'FEATURE_ORDER', 'FEATURE_GRAPHQL']);
+	await enableCapabilities(api, organizationId, [
+		'FEATURE_CART',
+		'FEATURE_ORDER',
+		'FEATURE_PROMOTION',
+		'FEATURE_GRAPHQL'
+	]);
 
 	const catalogue = await ensureCatalogue(api, organizationId, PREFIX);
+	const promotion = await ensurePromotion(api, organizationId, { code: `${PREFIX}-OFF`, value: '5' });
 
-	if (!catalogue) return finish(RUN);
+	if (!catalogue || !promotion) return finish(RUN);
 
 	// --- 1. REST completes, GraphQL reads ------------------------------------------------------------
 	const rest = await pricedCartOverRest(session, catalogue);
@@ -219,15 +229,12 @@ async function main() {
 
 		const applied = await gql(
 			`mutation ($input: ApplyCartPromotionInput!) { applyCartPromotion(input: $input) { id version discountTotal } }`,
-			{ input: { cartId: gqlCart.id, code: `${PREFIX}-GQL-OFF`, amount: '4.00', version } }
+			// `amount` is required by the input type and ignored since R3-07: the engine states the discount.
+			{ input: { cartId: gqlCart.id, code: `${PREFIX}-OFF`, amount: '0', version } }
 		);
 		const discounted = Boolean(applied.json?.data?.applyCartPromotion?.id);
 
-		record(
-			'the GraphQL cart is discounted (or the engine refused a caller-stated amount, R3-07)',
-			discounted || Boolean(applied.json?.errors?.length),
-			brief(applied)
-		);
+		record('the GraphQL cart is discounted (a refusal fails the run, as over REST)', discounted, brief(applied));
 
 		version = applied.json?.data?.applyCartPromotion?.version ?? version;
 

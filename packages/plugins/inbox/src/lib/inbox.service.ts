@@ -484,7 +484,11 @@ export class InboxService implements IInboxItemWriter {
 			}
 		}
 
-		const { recipientUserIds, skippedUserIds } = await this.writeRecipients(item, input.recipients ?? []);
+		const { recipientUserIds, skippedUserIds } = await this.writeRecipients(
+			item,
+			input.recipients ?? [],
+			input.replaceRecipients === true
+		);
 		const stored = (await repository.findOne({ where: { id: item.id } })) as InboxItem;
 		// A new item is announced to its recipients' subscriptions (never fails the write).
 		if (created) await this.realtime?.itemCreated(stored, recipientUserIds);
@@ -589,7 +593,8 @@ export class InboxService implements IInboxItemWriter {
 
 	private async writeRecipients(
 		item: InboxItem,
-		recipients: IInboxItemUpsertInput['recipients']
+		recipients: IInboxItemUpsertInput['recipients'],
+		replace = false
 	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[] }> {
 		const stated = new Map<ID, IInboxItemUpsertInput['recipients'][number]>();
 		for (const recipient of recipients) {
@@ -653,8 +658,17 @@ export class InboxService implements IInboxItemWriter {
 				if (Object.keys(state).length > 0) await repository.update({ id: raced.id }, state as RecipientUpdate);
 			}
 		}
+		// `replaceRecipients`: whoever the source no longer addresses the item to loses it (a pairing replaced in the source).
+		const kept = new Set<ID>(userIds.filter((id) => known.has(id)));
+		const removed =
+			replace && kept.size > 0 ? [...existing.keys()].filter((userId) => !kept.has(userId as ID)) : [];
+		if (removed.length > 0) {
+			await repository.delete({ inboxItemId: item.id, userId: In(removed) } as never);
+		}
 		return {
-			recipientUserIds: [...new Set([...existing.keys(), ...userIds.filter((id) => known.has(id))])],
+			recipientUserIds: [
+				...new Set([...[...existing.keys()].filter((userId) => !removed.includes(userId)), ...kept])
+			] as ID[],
 			skippedUserIds: userIds.filter((id) => !known.has(id))
 		};
 	}

@@ -11371,6 +11371,42 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Ever Works integration pages (#10765) added it to the route list"
+		},
+		{
+			"route": "/pages/inbox",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Inbox UI plugin (#10802, /pages/inbox) added it to the route list"
+		},
+		{
+			"route": "/pages/inbox",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Inbox UI plugin (#10802, /pages/inbox) added it to the route list"
+		},
+		{
+			"route": "/pages/inbox",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Inbox UI plugin (#10802, /pages/inbox) added it to the route list"
+		},
+		{
+			"route": "/pages/inbox",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Inbox UI plugin (#10802, /pages/inbox) added it to the route list"
+		},
+		{
+			"route": "/pages/inbox",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Inbox UI plugin (#10802, /pages/inbox) added it to the route list"
+		},
+		{
+			"route": "/pages/inbox",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Inbox UI plugin (#10802, /pages/inbox) added it to the route list"
 		}
 	]
 }

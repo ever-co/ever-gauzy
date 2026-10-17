@@ -157,6 +157,31 @@ export class CommerceCart extends TenantOrganizationBaseEntity implements IComme
 	@MultiORMColumn({ nullable: true })
 	orderId?: ID;
 
+	/**
+	 * The checkout that holds this cart while its order is being placed (R3-10).
+	 *
+	 * A completion claims the cart with one conditional update — predicated on the version it validated,
+	 * on a completable status and on `orderId IS NULL` — **before** the checkout handler creates the order.
+	 * Two concurrent completions therefore cannot both reach the handler: the second one's update matches
+	 * no row and it is told the checkout is already in progress. The claim is cleared when the order is
+	 * recorded, released when the handler fails, and lapses after a bounded time so a process that died
+	 * mid-checkout does not hold the cart forever.
+	 *
+	 * No DTO or GraphQL input declares it, so the validation pipe strips it from any body that tries to
+	 * set it; only the checkout path writes it.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ nullable: true, type: 'varchar', length: 36 })
+	checkoutClaimId?: string;
+
+	/** When the checkout named by `checkoutClaimId` claimed the cart; what decides that a claim lapsed. */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	checkoutClaimedAt?: Date;
+
 	/** The address book row the shipping address came from, kept for traceability. */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

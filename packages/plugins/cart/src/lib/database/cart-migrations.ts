@@ -1,10 +1,12 @@
 import { CreateCartTables1791000000200 } from './migrations/1791000000200-CreateCartTables';
 import { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-AddCartVersionColumn';
 import { AddCartTokenHashColumn1791000000660 } from './migrations/1791000000660-AddCartTokenHashColumn';
+import { AddCartCheckoutClaimColumns1791000000781 } from './migrations/1791000000781-AddCartCheckoutClaimColumns';
 
 export { CreateCartTables1791000000200 } from './migrations/1791000000200-CreateCartTables';
 export { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-AddCartVersionColumn';
 export { AddCartTokenHashColumn1791000000660 } from './migrations/1791000000660-AddCartTokenHashColumn';
+export { AddCartCheckoutClaimColumns1791000000781 } from './migrations/1791000000781-AddCartCheckoutClaimColumns';
 
 /**
  * The plugin's migration set, in run order.
@@ -21,5 +23,6 @@ export { AddCartTokenHashColumn1791000000660 } from './migrations/1791000000660-
 export const ALL_CART_MIGRATIONS = [
 	CreateCartTables1791000000200,
 	AddCartVersionColumn1791000000570,
-	AddCartTokenHashColumn1791000000660
+	AddCartTokenHashColumn1791000000660,
+	AddCartCheckoutClaimColumns1791000000781
 ];

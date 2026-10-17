@@ -27,6 +27,7 @@ import {
 	optionsOf,
 	replyProblem,
 	snoozeUntil,
+	mailboxLabelOf,
 	routedNoticeOf,
 	sourceLabelOf
 } from '../../inbox-ui.helpers';
@@ -63,6 +64,9 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 					<span class="chip" data-test="detail-source">{{
 						isKey(sourceLabel()) ? (sourceLabel() | translate) : sourceLabel()
 					}}</span>
+					@if (mailboxLabel(); as mailbox) {
+						<span class="chip" data-test="detail-mailbox">{{ mailbox }}</span>
+					}
 					@if (current.priority === 'high' || current.priority === 'urgent') {
 						<span class="chip priority" data-test="detail-priority">{{
 							'INBOX.PRIORITY.' + current.priority | translate
@@ -372,6 +376,8 @@ export class InboxItemDetailComponent {
 	});
 	/** The source's name: translated for the known sources, as stated for a handler's own. */
 	readonly sourceLabel = computed(() => sourceLabelOf(this.item().source));
+	/** The (virtual) mailbox a source lists the item under, e.g. "Ever Works — Builder" for an agent's mail. */
+	readonly mailboxLabel = computed(() => mailboxLabelOf(this.item()));
 	/** Where the answer went: "Already decided in <source>" when the source had decided it first. */
 	readonly routedNotice = computed(() => routedNoticeOf(this.item()));
 	readonly textLabel = computed(() => {

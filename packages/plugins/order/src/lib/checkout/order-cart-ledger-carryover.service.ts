@@ -8,7 +8,7 @@ import {
 	ITaxLine,
 	TaxLineOwnerType
 } from '@gauzy/contracts';
-import { AdjustmentService, TaxLineService } from '@gauzy/core';
+import { AdjustmentService, Money, TaxLineService } from '@gauzy/core';
 
 /**
  * Which order row each cart row became.
@@ -22,6 +22,14 @@ export interface ICartToOrderRowMap {
 	readonly lines: ReadonlyMap<ID, ID>;
 	/** Cart shipping method id → order shipping method id. */
 	readonly shippingMethods: ReadonlyMap<ID, ID>;
+	/**
+	 * Order line id → the line's value (quantity × unit price, an exact decimal): the weights a document-level
+	 * (`CART`) row is spread over. A line that is missing weighs nothing; when every line weighs nothing the
+	 * row is spread evenly.
+	 */
+	readonly lineWeights?: ReadonlyMap<ID, string>;
+	/** The currency's decimal places, snapshotted on the cart; the allocation is exact at that scale. */
+	readonly currencyDecimals?: number;
 }
 
 /** What one carry-over wrote, so the caller can say what the order now carries. */
@@ -35,8 +43,7 @@ export interface ICartLedgerCarryoverResult {
 /** The cart owner each order owner is the counterpart of (`AdjustmentOwnerType` documents the pairs). */
 const ADJUSTMENT_OWNER_PAIRS: ReadonlyArray<[AdjustmentOwnerType, AdjustmentOwnerType]> = [
 	[AdjustmentOwnerType.CART_LINE, AdjustmentOwnerType.ORDER_LINE],
-	[AdjustmentOwnerType.CART_SHIPPING, AdjustmentOwnerType.ORDER_SHIPPING],
-	[AdjustmentOwnerType.CART, AdjustmentOwnerType.ORDER]
+	[AdjustmentOwnerType.CART_SHIPPING, AdjustmentOwnerType.ORDER_SHIPPING]
 ];
 
 /**
@@ -57,6 +64,14 @@ const ADJUSTMENT_OWNER_PAIRS: ReadonlyArray<[AdjustmentOwnerType, AdjustmentOwne
  * recalculation wrote (checkout recalculates immediately before it hands the cart over), so the order
  * keeps the price the buyer accepted even if a rate or a promotion changes a second later. A row whose
  * owner did not become an order row (a line the order did not take) is skipped rather than guessed at.
+ *
+ * **A document-level row is spread over the order's lines.** A `CART` row — an order-wide discount or fee —
+ * has the order-level counterpart `ORDER`, but the order's per-line breakdown (`computeBreakdown`, which the
+ * invoice is built from) bills lines and delivery choices only, so a row owned by the order as a whole would
+ * make the parts stop adding up to the totals. The row is therefore allocated across the order's lines by
+ * their value, exactly (the shares are computed with the money kernel's allocation, so they sum to the row),
+ * each share an `ORDER_LINE` row that names the row it came from. The totals are the same either way: the
+ * calculator counts a document discount and a line discount into the same item discount total.
  *
  * **When it runs.** Between the creation of the order's rows and its placement, so the totals the
  * placement computes — and the `order.placed` event it announces — already include the discount and the
@@ -79,22 +94,32 @@ export class OrderCartLedgerCarryover {
 	 * Copies the cart's adjustment and tax rows onto the order's counterpart rows.
 	 *
 	 * @param cartId The cart the order came from; the owner of its document-level (`CART`) adjustments.
-	 * @param orderId The order; the owner of the copied document-level adjustments.
-	 * @param rows Which order row each cart row became.
+	 * @param orderId The order the rows are carried onto.
+	 * @param rows Which order row each cart row became, and what each order line weighs.
 	 * @returns How many rows were written.
 	 */
 	async carry(cartId: ID, orderId: ID, rows: ICartToOrderRowMap): Promise<ICartLedgerCarryoverResult> {
+		void orderId;
 		let adjustments = 0;
 		let taxLines = 0;
 
 		for (const [cartOwnerType, orderOwnerType] of ADJUSTMENT_OWNER_PAIRS) {
-			for (const [cartOwnerId, orderOwnerId] of this.ownersOf(cartOwnerType, cartId, orderId, rows)) {
+			const owners = cartOwnerType === AdjustmentOwnerType.CART_LINE ? rows.lines : rows.shippingMethods;
+
+			for (const [cartOwnerId, orderOwnerId] of owners) {
 				for (const row of await this.adjustmentService.findByOwner(cartOwnerType, cartOwnerId)) {
 					await this.adjustmentService.append(
 						copyOfAdjustment(row, orderOwnerType, orderOwnerId, cartOwnerType, cartOwnerId)
 					);
 					adjustments++;
 				}
+			}
+		}
+
+		for (const row of await this.adjustmentService.findByOwner(AdjustmentOwnerType.CART, cartId)) {
+			for (const share of allocateOverLines(row, rows)) {
+				await this.adjustmentService.append(share);
+				adjustments++;
 			}
 		}
 
@@ -115,31 +140,6 @@ export class OrderCartLedgerCarryover {
 		}
 
 		return { adjustments, taxLines };
-	}
-
-	/**
-	 * The cart owners of one type, each paired with the order owner its rows move to.
-	 *
-	 * @param ownerType The cart owner type.
-	 * @param cartId The cart, for the document-level owner.
-	 * @param orderId The order, for the document-level owner.
-	 * @param rows The row map.
-	 * @returns `[cartOwnerId, orderOwnerId]` pairs.
-	 */
-	private ownersOf(
-		ownerType: AdjustmentOwnerType,
-		cartId: ID,
-		orderId: ID,
-		rows: ICartToOrderRowMap
-	): Iterable<[ID, ID]> {
-		switch (ownerType) {
-			case AdjustmentOwnerType.CART_LINE:
-				return rows.lines.entries();
-			case AdjustmentOwnerType.CART_SHIPPING:
-				return rows.shippingMethods.entries();
-			default:
-				return [[cartId, orderId]];
-		}
 	}
 }
 
@@ -217,4 +217,80 @@ export function copyOfTaxLine(
 			carriedFrom: { ownerType: fromType, ownerId: fromId, taxLineId: row.id }
 		}
 	};
+}
+
+/**
+ * Spreads one document-level (`CART`) adjustment over the order's lines by their value.
+ *
+ * @param row The cart row.
+ * @param rows The order's lines and their weights.
+ * @returns One append input per line that receives a non-zero share; the shares sum to the row exactly.
+ */
+export function allocateOverLines(row: IAdjustment, rows: ICartToOrderRowMap) {
+	const orderLineIds = [...rows.lines.values()];
+
+	if (orderLineIds.length === 0) {
+		return [];
+	}
+
+	const currency = row.currency as CurrencyCode;
+	const decimals = rows.currencyDecimals;
+	const amount = Money.fromStorage(String(row.amount), currency, decimals);
+	const weights = orderLineIds.map((id) =>
+		Money.fromStorage(rows.lineWeights?.get(id) ?? '0', currency, decimals).abs()
+	);
+	const even = weights.every((weight) => weight.isZero());
+	const shares = even ? amount.abs().allocate(orderLineIds.map(() => 1)) : amount.abs().allocateBy(weights);
+	const netAmount = readDecimal(row.metadata?.['netAmount']);
+	const netShares =
+		netAmount === undefined
+			? undefined
+			: even
+				? Money.fromStorage(netAmount, currency, decimals)
+						.abs()
+						.allocate(orderLineIds.map(() => 1))
+				: Money.fromStorage(netAmount, currency, decimals).abs().allocateBy(weights);
+	const negative = amount.isNegative();
+
+	return orderLineIds
+		.map((orderLineId, index) => ({ orderLineId, share: shares[index], net: netShares?.[index] }))
+		.filter(({ share }) => !share.isZero())
+		.map(({ orderLineId, share, net }) => {
+			const copy = copyOfAdjustment(
+				row,
+				AdjustmentOwnerType.ORDER_LINE,
+				orderLineId,
+				AdjustmentOwnerType.CART,
+				row.ownerId
+			);
+			const signed = negative ? share.negate() : share;
+
+			return {
+				...copy,
+				amount: signed.toStorageString(),
+				metadata: {
+					...copy.metadata,
+					...(net ? { netAmount: (negative ? net.negate() : net).toStorageString() } : {}),
+					carriedFrom: { ...copy.metadata.carriedFrom, allocatedTo: orderLineId }
+				}
+			};
+		});
+}
+
+/**
+ * A metadata member as an exact decimal, when it is one.
+ *
+ * @param value The member.
+ * @returns The decimal text, or `undefined`.
+ */
+function readDecimal(value: unknown): string | undefined {
+	if (typeof value === 'number' && Number.isFinite(value)) {
+		return String(value);
+	}
+
+	if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+		return value.trim();
+	}
+
+	return undefined;
 }
