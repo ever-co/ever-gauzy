@@ -1,5 +1,4 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { timingSafeEqual } from 'crypto';
 import { EntityManager, FindOptionsWhere, IsNull, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { restatesStoredValue } from '@gauzy/common';
@@ -8,7 +7,7 @@ import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { EventBus, Money, normalizeDecimalString, readAffectedRows, RequestContext } from '@gauzy/core';
 import { GiftCardRedeemedEvent } from '../events';
 import { GiftCard } from './gift-card.entity';
-import { hashGiftCardPin, isGiftCardPinDigest, storedGiftCardPin } from './gift-card-pin';
+import { storedGiftCardPin, storedGiftCardPinFromDigest, verifyGiftCardPin } from './gift-card-pin';
 import { TypeOrmGiftCardRepository } from './repository/type-orm-gift-card.repository';
 import { MikroOrmGiftCardRepository } from './repository/mikro-orm-gift-card.repository';
 import { GiftCardTransactionService } from '../gift-card-transaction/gift-card-transaction.service';
@@ -104,9 +103,10 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	 * *after* it and not to this one: counting the row and the column would show every reconciliation
 	 * twice the card (doc 08 §13.3 `ISSUE`, GC1; doc 05 §10.9).
 	 *
-	 * The second factor is stored as its digest only (review R2-G30): `pin` is the PIN as the caller stated it and is
-	 * hashed here, the one place both surfaces issue through; `pinHash` is a digest an internal caller already holds
-	 * and is stored as it is when it is one (anything else is hashed, so no plaintext ever reaches the column).
+	 * The second factor is stored as its keyed digest only (reviews R2-G30, R2-G30b; `gift-card-pin.ts`): `pin` is the
+	 * PIN as the caller stated it and is digested here, the one place both surfaces issue through; `pinHash` is a
+	 * digest an internal caller already holds - kept when keyed, keyed when legacy, and digested as a PIN otherwise, so
+	 * no plaintext ever reaches the column.
 	 *
 	 * @param input The card to issue.
 	 * @returns The stored card.
@@ -136,7 +136,8 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 		}
 
 		const { pin, pinHash, ...descriptive } = input;
-		const storedPin = isGiftCardPinDigest(pinHash) ? pinHash : storedGiftCardPin(pinHash ?? pin);
+		// A stated `pinHash` is a digest an internal caller holds (kept when keyed, keyed when legacy); `pin` is a PIN.
+		const storedPin = pinHash ? storedGiftCardPinFromDigest(pinHash) : storedGiftCardPin(pin);
 
 		const card = await this.create({
 			...descriptive,
@@ -371,8 +372,17 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 			throw new NotFoundException('GIFT_CARD_NOT_FOUND');
 		}
 
-		if (card.pin && !this.pinMatches(pin, card.pin)) {
-			throw new BadRequestException('GIFT_CARD_INVALID: the second factor is missing or wrong.');
+		if (card.pin) {
+			// Constant time over the digests, in the keyed form or - until it is migrated - the legacy one (R2-G30b).
+			const verification = verifyGiftCardPin(pin, card.pin);
+
+			if (!verification.matches) {
+				throw new BadRequestException('GIFT_CARD_INVALID: the second factor is missing or wrong.');
+			}
+
+			if (verification.upgrade) {
+				await this.upgradePin(card.id, card.pin, verification.upgrade);
+			}
 		}
 
 		return { balance: card.balance, currency: card.currency, status: card.status };
@@ -665,43 +675,26 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	}
 
 	/**
-	 * Compares a presented second factor with the stored hash, in constant time.
+	 * Stores the keyed form of a PIN that has just verified under an older one: a legacy digest the migration did not
+	 * reach (no secret was configured when it ran), or a digest keyed under `JWT_SECRET` once `ENCRYPTION_KEY` is set
+	 * (review R2-G30b). Conditional on the value it verified against, so a PIN changed in between is left alone, and
+	 * best effort: the caller's balance answer never fails because the upgrade did.
 	 *
-	 * A card's code is printed on the card and is not a secret; the second factor is, which is why it
-	 * is stored only as a digest and why the comparison does not return early on the first difference.
-	 *
-	 * @param presented The value the caller presented.
-	 * @param stored The stored digest.
-	 * @returns True when they match.
+	 * @param id The card.
+	 * @param verified The stored value the PIN verified against.
+	 * @param upgrade The value to store instead.
 	 */
-	private pinMatches(presented: string | undefined, stored: string): boolean {
-		if (!presented) {
-			return false;
+	private async upgradePin(id: ID, verified: string, upgrade: string): Promise<void> {
+		try {
+			await this.typeOrmGiftCardRepository.update(
+				{ id, pin: verified, ...this.readScope } as never,
+				{
+					pin: upgrade
+				} as never
+			);
+		} catch (error) {
+			console.warn(`GiftCardService: the PIN of gift card ${id} verified but could not be re-keyed: ${error}`);
 		}
-
-		const presentedDigest = hashGiftCardPin(presented);
-		const left = this.hexToBytes(presentedDigest);
-		const right = this.hexToBytes(stored);
-
-		return left.length > 0 && left.length === right.length && timingSafeEqual(left, right);
-	}
-
-	/**
-	 * Turns a hexadecimal digest into its bytes, so a comparison can run over the digest rather than
-	 * over its textual form.
-	 *
-	 * @param hex The hexadecimal digest.
-	 * @returns Its bytes.
-	 */
-	private hexToBytes(hex: string): Uint8Array {
-		const clean = hex.length % 2 === 0 ? hex : `0${hex}`;
-		const bytes = new Uint8Array(clean.length / 2);
-
-		for (let index = 0; index < bytes.length; index++) {
-			bytes[index] = parseInt(clean.substr(index * 2, 2), 16);
-		}
-
-		return bytes;
 	}
 }
 

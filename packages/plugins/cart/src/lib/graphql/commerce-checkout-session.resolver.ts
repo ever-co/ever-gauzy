@@ -20,7 +20,7 @@ import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CommerceCheckoutSession } from '../commerce-checkout-session/commerce-checkout-session.entity';
 import { CommerceCheckoutSessionService } from '../commerce-checkout-session/commerce-checkout-session.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
-import { CHECKOUT_SESSION_STATUSES, isCheckoutSessionStatus } from './filters';
+import { CHECKOUT_SESSION_STATUSES, assertCheckoutSessionMembers, isCheckoutSessionStatus } from './filters';
 import { ICheckoutResult, ICheckoutSessionConnection } from './types';
 
 /**
@@ -131,6 +131,8 @@ export class CommerceCheckoutSessionResolver {
 	@Idempotent({ scope: 'checkout.session.create', required: false, resourceType: 'checkout_session' })
 	@Mutation(() => Object, { name: 'startCheckout' })
 	async startCheckout(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<CommerceCheckoutSession> {
+		assertCheckoutSessionMembers({ step: input?.step });
+
 		const open = await this.commerceCheckoutSessionService.findOpenForCart(input.cartId);
 
 		if (open) {
@@ -225,6 +227,9 @@ export class CommerceCheckoutSessionResolver {
 		@Args('id', { type: () => ID }) id: string,
 		@Args('input', { type: () => Object }) input: Record<string, any>
 	): Promise<CommerceCheckoutSession> {
+		// The body's `@IsEnum` / `@MaxLength(64)`, which the String-typed input does not carry (R2-G24).
+		assertCheckoutSessionMembers(input);
+
 		await this.commerceCheckoutSessionService.update(id, input as any);
 
 		return this.commerceCheckoutSessionService.findOneByIdString(id);
@@ -260,6 +265,8 @@ export class CommerceCheckoutSessionResolver {
 		@Args('step', { type: () => String }) step: string,
 		@Args('data', { type: () => Object, nullable: true }) data?: Record<string, unknown>
 	): Promise<CommerceCheckoutSession> {
+		assertCheckoutSessionMembers({ step });
+
 		return this.commerceCheckoutSessionService.completeStep(id, step, data);
 	}
 

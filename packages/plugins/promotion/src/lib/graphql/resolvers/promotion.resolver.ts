@@ -13,6 +13,7 @@ import {
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
+import { assertMayPublishOnCreate } from '../../promotion/promotion-publish';
 import { ICampaign, ICoupon, IPromotion, IPromotionAction, IPromotionUsage } from '../../promotion.types';
 import { PromotionChangedEvent } from '../../events';
 import { PromotionService } from '../../promotion/promotion.service';
@@ -155,6 +156,11 @@ export class PromotionResolver {
 	/**
 	 * Creates a promotion in draft.
 	 *
+	 * The field's own grant is `PROMOTIONS_CREATE`, the grant to author a draft. An input that also states an action
+	 * set or `status: ACTIVE` publishes a discount in the same call - what `replacePromotionActions` and
+	 * `activatePromotion` grant under `PROMOTIONS_EDIT` - so it needs that grant as well (review R2-G29); without it
+	 * the payload carries `PROMOTION_PUBLISH_FORBIDDEN` and nothing is written.
+	 *
 	 * @param input The offer to create, with its action set when it has one.
 	 * @returns The payload.
 	 */
@@ -162,6 +168,8 @@ export class PromotionResolver {
 	@Mutation('createPromotion')
 	async createPromotion(@Args('input') input: ICreatePromotionInput): Promise<CreatePromotionPayload> {
 		try {
+			assertMayPublishOnCreate(input);
+
 			return { promotion: await this.promotionService.createPromotion(input), operation: null, userErrors: [] };
 		} catch (error) {
 			return { promotion: null, operation: null, userErrors: [toUserError(error)] };

@@ -69,6 +69,7 @@ import { TypeOrmOrderHistoryRepository } from './order-history/repository/type-o
 import { MikroOrmOrderHistoryRepository } from './order-history/repository/mikro-orm-order-history.repository';
 import { OrderCheckoutHandler } from './checkout/order-checkout.handler';
 import { OrderCartLedgerCarryover } from './checkout/order-cart-ledger-carryover.service';
+import { OrderPaymentLedgerService } from './order-payment/order-payment-ledger.service';
 import { OrderTotalsService } from './order-totals/order-totals.service';
 import { OrderTotalsReconciliationScheduler } from './order-totals/order-totals-reconciliation.scheduler';
 import { OrderUnitOfWork } from './order-totals/order-unit-of-work';
@@ -159,6 +160,8 @@ import { OrderInvoicingService } from './order-invoicing/order-invoicing.service
 		OrderCheckoutHandler,
 		// Copies a cart's discount and tax rows onto the order it becomes (Q7-W1a).
 		OrderCartLedgerCarryover,
+		// The order's money ledger as the payment domain writes to it, and the completion it triggers (Q7-W1b).
+		OrderPaymentLedgerService,
 		SubscriptionOrderService,
 		// The bridge to the accounting documents that bill an order. The documents themselves are the
 		// platform's finance rows, reached through the `ORDER_INVOICING` port, which this module does not
@@ -228,7 +231,8 @@ import { OrderInvoicingService } from './order-invoicing/order-invoicing.service
 		OrderHistoryService,
 		OrderCheckoutHandler,
 		SubscriptionOrderService,
-		OrderInvoicingService
+		OrderInvoicingService,
+		OrderPaymentLedgerService
 	]
 })
 export class OrderModule {}

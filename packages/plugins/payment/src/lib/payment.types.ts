@@ -404,6 +404,27 @@ export interface IReturnRefundRequest {
 	readonly reasonId?: ID;
 	/** Free-text note kept beside the refund. */
 	readonly note?: string;
+	/**
+	 * The caller's identity for this refund (review R3-09r2): the request's `Idempotency-Key` on a return
+	 * refund, the decision key a claim takes when it decides. Kept on the refund, so a retry under the same key
+	 * — after an answer that was lost, or an outcome nobody saw — finds the refund it already produced instead
+	 * of paying again: a succeeded one is answered as it is, a pending one is settled.
+	 */
+	readonly idempotencyKey?: string;
+}
+
+/** What a refund is looked up by from the flow that caused it: the return or the claim, and its key. */
+export interface IReturnRefundLookup {
+	readonly orderId?: ID;
+	readonly returnId?: ID;
+	readonly claimId?: ID;
+	readonly idempotencyKey: string;
+}
+
+/** A refund the lookup found, and whether its money has gone back yet. */
+export interface IReturnRefundFound extends IReturnRefundResult {
+	/** `SUCCEEDED`, or `PENDING` when it was recorded and not settled. */
+	readonly status: RefundStatus;
 }
 
 /**
@@ -593,6 +614,78 @@ export interface IPaymentOrderLineRefundPort {
  * unbound, and the refund path reports rather than fails.
  */
 export const PAYMENT_ORDER_LINE_REFUND = Symbol('PAYMENT_ORDER_LINE_REFUND');
+
+/**
+ * One money fact about an order, as the payment domain states it to the order's money ledger (Q7-W1b).
+ *
+ * The order is totalled from its own `order_transaction` ledger — authorised, captured, refunded, voided —
+ * and nothing in this package used to write it, so an order paid in full answered `NOT_PAID` for ever and
+ * could never complete. Each fact names the payment-side row that caused it (`referenceType` +
+ * `referenceId`), which is the key the order side writes it under at most once: a fact reported twice —
+ * the synchronous report and the outbox consumer that backs it up, or a retried request — moves the
+ * ledger once.
+ *
+ * `amount` is the **magnitude** of the movement; the order side applies the sign its ledger uses for the
+ * type (a refund is a negative row there).
+ */
+export interface IPaymentOrderMoneyFact {
+	/** The order the money is for. */
+	orderId: ID;
+	/** What happened to the money. */
+	type: 'AUTHORIZATION' | 'CAPTURE' | 'REFUND' | 'VOID';
+	/** The magnitude, as an exact decimal. */
+	amount: DecimalString;
+	/** The currency the movement is in; the order refuses a fact in another currency than its own. */
+	currency: string;
+	/** The payment-side row that caused the fact. */
+	referenceType: 'PAYMENT' | 'PAYMENT_CAPTURE' | 'REFUND';
+	/** That row's id. */
+	referenceId: ID;
+	/** The core payment row the movement belongs to, when there is one. */
+	paymentId?: ID;
+	/** When the movement happened at the provider. */
+	occurredAt?: Date;
+}
+
+/** What the order's ledger answered for one fact. */
+export interface IPaymentOrderMoneyFactResult {
+	/** True when a ledger row was written; false when the fact was already on the ledger. */
+	recorded: boolean;
+	/** The order's ledger row for the fact. */
+	transactionId?: ID;
+}
+
+/**
+ * The order's money ledger, as the payment domain reports to it.
+ *
+ * Provided by the order capability (`OrderPaymentLedgerService`) and injected under
+ * `PAYMENT_ORDER_LEDGER`, through the same global composition module that binds
+ * `PAYMENT_ORDER_LINE_REFUND` and for the same reason: neither package imports the other.
+ *
+ * **When it is called, and what a caller may rely on.** After the payment's own transaction has
+ * committed — the money moved at the provider, so a ledger that refused or lagged must not turn into a
+ * payment the caller is told failed. The report is idempotent on the fact's reference, so the outbox
+ * consumer that re-applies `payment.captured` / `payment.refunded` (Q7-W3) can safely back it up.
+ */
+export interface IPaymentOrderLedgerPort {
+	/** Records one money fact on the order's ledger, at most once, and re-derives the order. */
+	record(fact: IPaymentOrderMoneyFact): Promise<IPaymentOrderMoneyFactResult>;
+}
+
+/**
+ * Token the order's money ledger is injected under (Q7-W1b).
+ *
+ * Optional: a payment settles an invoice or a payout as readily as an order, and a deployment without the
+ * order package still captures and refunds. Unbound, a fact about an order is reported under
+ * `PAYMENT_ORDER_LEDGER_UNAVAILABLE` so an operator can see which orders were not told.
+ */
+export const PAYMENT_ORDER_LEDGER = Symbol('PAYMENT_ORDER_LEDGER');
+
+/**
+ * The refund metadata member a caller's identity for the refund is kept under (review R3-09r2): the key a return
+ * or a claim refund was requested under, which a retry under the same key is answered by.
+ */
+export const REFUND_IDEMPOTENCY_KEY = 'idempotencyKey';
 
 /**
  * Paginated provider registrations.

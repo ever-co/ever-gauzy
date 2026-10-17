@@ -24,12 +24,14 @@ import {
 	IRefundLine,
 	IRefundUpdateInput,
 	PAYMENT_ORDER_LINE_REFUND,
+	REFUND_IDEMPOTENCY_KEY,
 	RefundStatus
 } from '../payment.types';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLineService } from '../refund-line/refund-line.service';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
+import { PaymentOrderLedgerMirror } from '../payment-order-ledger/payment-order-ledger.mirror';
 
 /**
  * The statuses a refund may be retired from: the two that moved no money and never will. See
@@ -116,7 +118,13 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		 */
 		@Optional()
 		@Inject(PAYMENT_ORDER_LINE_REFUND)
-		private readonly orderLineRefunds?: IPaymentOrderLineRefundPort
+		private readonly orderLineRefunds?: IPaymentOrderLineRefundPort,
+		/**
+		 * Tells the order the money went back (Q7-W1b): the order's ledger carries a `REFUND` row for every
+		 * succeeded refund, which is what moves its refunded total and its payment status. Optional and last.
+		 */
+		@Optional()
+		private readonly orderLedger?: PaymentOrderLedgerMirror
 	) {
 		super(typeOrmRefundRepository, mikroOrmRefundRepository);
 	}
@@ -222,7 +230,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 
 		const { lines, ...fields } = input;
 
+		const key = (fields.metadata as Record<string, unknown> | undefined)?.[REFUND_IDEMPOTENCY_KEY];
 		const refund = await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (typeof key === 'string' && key && input.orderId) {
+				// **One refund per key** (review R3-09r2). A return or a claim retried under the same key looks its
+				// refund up first; two retries that both looked before either wrote are told apart here, under the
+				// order's lock, so the second is refused by name and answered with the first's refund.
+				await this.lockOrderPayments(manager, input.orderId);
+				await this.assertKeyUnused(input, key, manager);
+			}
+
 			if (!input.paymentId && input.orderId) {
 				// **A refund that names no payment is measured against its order under the order's lock** (review
 				// R3-08r1). The return or claim flow measured it already, but two of them for one order could both read
@@ -534,6 +551,26 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		 * that has not gone back.
 		 */
 		await this.mirrorToOrderLines(await this.findRefundOrFail(id));
+
+		// A refund that names only the payment it gives back belongs to that payment's order, and the order's
+		// ledger has to hear of it all the same (Greptile on #10897).
+		const refundOrderId = refund.orderId ?? payment?.orderId;
+
+		if (refundOrderId) {
+			await this.orderLedger?.mirror(
+				{
+					orderId: refundOrderId,
+					type: 'REFUND',
+					amount: refund.amount,
+					currency: refund.currency,
+					referenceType: 'REFUND',
+					referenceId: refund.id,
+					...(refund.paymentId ? { paymentId: refund.paymentId } : {}),
+					occurredAt: new Date()
+				},
+				`refund ${refund.id}`
+			);
+		}
 
 		await this.publish(
 			new PaymentRefundedEvent(
@@ -870,6 +907,33 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	}
 
 	/**
+	 * Refuses a second standing refund under a key the same return, claim or order already has one under.
+	 *
+	 * @param input The refund being recorded.
+	 * @param key Its key.
+	 * @param manager The transaction holding the order's lock.
+	 * @throws ConflictException with `REFUND_IDEMPOTENCY_KEY_IN_USE`, naming the refund that holds the key.
+	 */
+	private async assertKeyUnused(input: IRefundCreateInput, key: string, manager: EntityManager): Promise<void> {
+		const standing = new Set<string>([RefundStatus.SUCCEEDED, RefundStatus.PENDING]);
+		const holder = (await this.readRefunds({ orderId: input.orderId }, manager)).find(
+			(refund) =>
+				standing.has(refund.status as string) &&
+				(refund.metadata as Record<string, unknown> | undefined)?.[REFUND_IDEMPOTENCY_KEY] === key &&
+				String(refund.returnId ?? '') === String(input.returnId ?? '') &&
+				String(refund.claimId ?? '') === String(input.claimId ?? '')
+		);
+
+		if (holder) {
+			throw new ConflictException({
+				message: `REFUND_IDEMPOTENCY_KEY_IN_USE: refund '${holder.id}' already stands under this key.`,
+				code: 'REFUND_IDEMPOTENCY_KEY_IN_USE',
+				details: { refundId: holder.id }
+			});
+		}
+	}
+
+	/**
 	 * Locks the payment rows of an order for the rest of the caller's transaction.
 	 *
 	 * The order's payments are the money its refunds are measured against, and every write that spends that
@@ -889,6 +953,28 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 
 		if (!ROW_LOCKING_DRIVERS.includes(type)) {
 			return;
+		}
+
+		// **The order's own row first** (Greptile, #10906). A `FOR UPDATE` that matches no row locks nothing, and a
+		// return or claim refund of an order with no payment rows is a supported path: two such refunds under one key
+		// both locked nothing, both read no holder and both wrote. The order row always exists for a refund (its
+		// identifier is checked as the caller's, R3-08), so it is the lock every refund of the order takes first; the
+		// payment rows follow, in the same order on every path. An installation without the order table keeps the
+		// payment rows alone.
+		if (manager.dataSource.hasMetadata?.('order')) {
+			const order = this.q('lockedOrder');
+
+			await manager
+				.createQueryBuilder()
+				.select(`${order}.${this.q('id')}`, 'id')
+				.from('order', 'lockedOrder')
+				.where(`${order}.${this.q('id')} = :orderId`, { orderId })
+				.andWhere(`${order}.${this.q('tenantId')} = :tenantId`, { tenantId: this.scope.tenantId })
+				.andWhere(`${order}.${this.q('organizationId')} = :organizationId`, {
+					organizationId: this.scope.organizationId
+				})
+				.setLock('pessimistic_write')
+				.getRawMany();
 		}
 
 		await manager

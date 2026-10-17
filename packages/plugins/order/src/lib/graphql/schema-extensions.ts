@@ -569,6 +569,8 @@ export const orderSchemaExtensions = gql`
 		updateOrder(id: ID!, input: UpdateOrderInput!): Order!
 		cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!
 		archiveOrder(id: ID!, version: Int): Order!
+		"Completes an order whose goods are accounted for and whose money is settled; refused with ORDER_NOT_COMPLETABLE otherwise."
+		completeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
 		placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
 		confirmOrder(id: ID!, version: Int): Order!
 		"""

@@ -2630,3 +2630,71 @@ describe('OrderReturnService — a refund claims the return before the money mov
 		expect(refunded?.data).toMatchObject({ refundedAmount: '10.000000', refundId: 'refund-1', version: 2 });
 	});
 });
+
+describe('OrderReturnService — a retried refund is answered by the refund its key produced (review R3-09r2)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const received = (overrides: Row = {}) =>
+		returnFixture({ returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED, ...overrides })] });
+
+	it('answers a retry whose refund already went back, and claims and pays nothing again', async () => {
+		// The first attempt claimed 10 on the return and its refund settled; its answer never arrived.
+		const fixture = received({ refundAmount: '10.000000', version: 2 });
+		const lookups: Row[] = [];
+
+		(fixture.service as any).refundGateway.findRefund = async (query: Row) => {
+			lookups.push(query);
+
+			return { refundId: 'refund-earlier', amount: '10.000000', currency: 'USD', status: 'SUCCEEDED' };
+		};
+
+		const answer = await fixture.service.refund('return-1', '10.00', undefined, undefined, undefined, 'key-1');
+
+		expect(answer).toMatchObject({ refundId: 'refund-earlier', amount: '10.000000' });
+		expect(lookups).toEqual([{ orderId: ORDER, returnId: 'return-1', idempotencyKey: 'key-1' }]);
+		expect(fixture.refundCalls).toEqual([]);
+		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+		// A plain replay announces nothing again.
+		expect(fixture.events.filter((event) => event.name === 'return.refunded')).toEqual([]);
+	});
+
+	it('settles a refund the key left pending without claiming the return a second time', async () => {
+		const fixture = received({ refundAmount: '10.000000', version: 2 });
+
+		(fixture.service as any).refundGateway.findRefund = async () => ({
+			refundId: 'refund-pending',
+			amount: '10.000000',
+			currency: 'USD',
+			status: 'PENDING'
+		});
+
+		await fixture.service.refund('return-1', '10.00', undefined, undefined, undefined, 'key-1');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.refundCalls[0]).toMatchObject({
+			returnId: 'return-1',
+			idempotencyKey: 'key-1',
+			amount: '10.000000'
+		});
+		expect(fixture.returnRow('return-1')).toMatchObject({ refundAmount: '10.000000', version: 2 });
+		// The attempt that left it pending never announced it; the retry that settled it does (Greptile, #10906).
+		expect(fixture.events.filter((event) => event.name === 'return.refunded')).toHaveLength(1);
+	});
+
+	it('claims and pays under the key when the key produced nothing yet', async () => {
+		const fixture = received({ refundAmount: '0.000000' });
+
+		(fixture.service as any).refundGateway.findRefund = async () => null;
+
+		await fixture.service.refund('return-1', '10.00', undefined, undefined, undefined, 'key-1');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.refundCalls[0]).toMatchObject({ idempotencyKey: 'key-1' });
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('10.000000');
+	});
+});

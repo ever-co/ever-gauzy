@@ -361,3 +361,80 @@ export interface ICartPricePort {
  * refused (`CART_PRICE_ENGINE_MISSING`) rather than priced at what its caller stated.
  */
 export const CART_PRICE_RESOLUTION = Symbol('CART_PRICE_RESOLUTION');
+
+
+/*
+|--------------------------------------------------------------------------
+| The delivery rate and the tax category (R3-07c)
+|--------------------------------------------------------------------------
+*/
+
+/** What a delivery choice is rated against: the fulfilment package's eligibility context, restated. */
+export interface ICartShippingRateQuery {
+	readonly channelId?: ID;
+	readonly regionId?: ID;
+	/** How many shippable items the cart holds. */
+	readonly itemCount?: number;
+	/** The order value, for the rules that band on it. */
+	readonly orderTotal?: number;
+}
+
+/** What one shipping option costs on a cart, as the fulfilment package answers it. */
+export interface ICartShippingRate {
+	readonly amount: number | DecimalString;
+	readonly currency?: string;
+	/** Present when the option is priced by a calculation strategy, which nothing in the cart can call. */
+	readonly providerKey?: string;
+	readonly eligible: boolean;
+	readonly reason?: string;
+}
+
+/** The configured option a delivery choice snapshots: its name, and how its amount is taxed. */
+export interface ICartShippingOption {
+	readonly id: ID;
+	readonly name: string;
+	readonly isTaxInclusive?: boolean;
+	readonly taxCategoryId?: ID;
+}
+
+/**
+ * The delivery-rate capability as this package sees it.
+ *
+ * **It is the only source of a delivery choice's amount (R3-07c).** A choice used to carry whatever name and
+ * amount its caller stated — `POST /carts/:id/shipping-methods` and `setCartShippingMethod` took both — so a
+ * buyer could ship for free. The cart now names the configured option and records what the fulfilment package
+ * says it costs on this cart, and how it is taxed; at checkout it asks again.
+ *
+ * The capability is the fulfilment package's `ShippingOptionService`, whose `calculate` and `findOneByIdString`
+ * are structurally this interface.
+ */
+export interface ICartShippingRatePort {
+	calculate(optionId: ID, context: ICartShippingRateQuery): Promise<ICartShippingRate>;
+	findOneByIdString(id: ID): Promise<ICartShippingOption>;
+}
+
+/**
+ * Token the delivery-rate capability is injected under. Unbound, it fails closed: a delivery choice is refused
+ * (`CART_SHIPPING_ENGINE_MISSING`) rather than recorded at the amount its caller stated.
+ */
+export const CART_SHIPPING_RATE = Symbol('CART_SHIPPING_RATE');
+
+/**
+ * The tax-category capability as this package sees it (R3-07c).
+ *
+ * A line's tax category decides which rate taxes it, so it is the catalogue's — the variant's category, or the
+ * organization's default — and never the caller's. The capability is the tax package's `TaxCategoryService`.
+ */
+export interface ICartTaxCategoryPort {
+	/**
+	 * @param variantIds The variants.
+	 * @returns The category each one is taxed under, null when there is none.
+	 */
+	taxCategoriesOf(variantIds: ID[]): Promise<Array<{ variantId: ID; taxCategoryId: ID | null }>>;
+}
+
+/**
+ * Token the tax-category capability is injected under. Unbound, a line carries no category — the rate
+ * resolution then applies the organization's default — and never the one its caller stated.
+ */
+export const CART_TAX_CATEGORY = Symbol('CART_TAX_CATEGORY');

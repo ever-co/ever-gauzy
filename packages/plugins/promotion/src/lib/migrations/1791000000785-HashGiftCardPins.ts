@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { hashGiftCardPin, isGiftCardPinDigest } from '../gift-card/gift-card-pin';
+import { hashGiftCardPin, isGiftCardPinDigest, isKeyedGiftCardPin } from '../gift-card/gift-card-pin';
 
 /**
  * Hashes the gift-card PINs that were stored in plaintext (review R2-G30).
@@ -186,7 +186,14 @@ export class HashGiftCardPins1791000000785 implements MigrationInterface {
 		let hashed = 0;
 
 		for (const row of rows ?? []) {
-			if (typeof row?.pin !== 'string' || row.pin === '' || isGiftCardPinDigest(row.pin)) {
+			// A keyed `h1:` digest (R2-G30b) is never plaintext: a database whose code wrote one before this tick ran
+			// (migrations run late) keeps it rather than having it digested as a PIN.
+			if (
+				typeof row?.pin !== 'string' ||
+				row.pin === '' ||
+				isGiftCardPinDigest(row.pin) ||
+				isKeyedGiftCardPin(row.pin)
+			) {
 				continue;
 			}
 

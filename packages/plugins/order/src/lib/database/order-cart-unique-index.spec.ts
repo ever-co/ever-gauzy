@@ -283,7 +283,8 @@ describe('AddOrderCartUniqueIndex1791000000782 — what it issues', () => {
 	});
 
 	it('is the last tick of the plugin’s set, and its name is its class’s', () => {
-		expect(ALL_ORDER_MIGRATIONS[ALL_ORDER_MIGRATIONS.length - 1]).toBe(AddOrderCartUniqueIndex1791000000782);
+		// Followed by the payment-fact unique index of Q7-W1b, which is the last tick now.
+		expect(ALL_ORDER_MIGRATIONS[ALL_ORDER_MIGRATIONS.length - 2]).toBe(AddOrderCartUniqueIndex1791000000782);
 		expect(new AddOrderCartUniqueIndex1791000000782().name).toBe(AddOrderCartUniqueIndex1791000000782.name);
 	});
 });
