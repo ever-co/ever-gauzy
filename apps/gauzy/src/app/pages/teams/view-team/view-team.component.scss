@@ -192,3 +192,128 @@ $weight-medium: 500;
 .state button[nbButton] {
   margin-top: $gap-sm;
 }
+
+/* ── Projects: a card opens the project's quick look ─────────────────────── */
+
+.project-open {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  color: inherit;
+  cursor: pointer;
+
+  &.is-viewed {
+    background-color: var(--gauzy-active-tint);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: -2px;
+  }
+}
+
+// The drawer's head: the project's logo, name and, for those who may, its edit page.
+.project-view-header {
+  display: flex;
+  align-items: center;
+  gap: $gap-md;
+  margin-bottom: $gap-md;
+
+  .project-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+.project-view-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-view-edit {
+  flex: 0 0 auto;
+}
+
+// The drawer's panels: progress, then who worked the most, above the details.
+.project-view-panel {
+  margin-bottom: $gap-md;
+}
+
+.project-progress-percent {
+  font-size: 0.875rem;
+  font-weight: $weight-medium;
+  color: var(--gauzy-text-color-1);
+  font-variant-numeric: tabular-nums;
+}
+
+// Done then in progress, end to end; the rest of the track is what is left to do.
+.project-progress-track {
+  display: flex;
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  overflow: hidden;
+}
+
+.project-progress-done {
+  background-color: var(--gauzy-chart-revenue);
+}
+
+.project-progress-active {
+  background-color: var(--gauzy-chart-profit);
+}
+
+.project-progress-meta {
+  margin: $gap-sm 0 0;
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-progress-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $gap-xs $gap-md;
+  margin: $gap-sm 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: $gap-xs;
+  }
+
+  strong {
+    font-weight: $weight-medium;
+    color: var(--gauzy-text-color-1);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--gauzy-hover-tint);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+  &--done {
+    background-color: var(--gauzy-chart-revenue);
+    box-shadow: none;
+  }
+
+  &--active {
+    background-color: var(--gauzy-chart-profit);
+    box-shadow: none;
+  }
+}
