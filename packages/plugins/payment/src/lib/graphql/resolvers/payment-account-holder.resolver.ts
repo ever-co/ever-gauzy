@@ -14,6 +14,7 @@ import {
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PaymentPermission } from '../../payment.permissions';
+import { assertNoCardData } from '../../payment.card-data.pipe';
 import { PaymentAccountHolderLifecycleService } from '../../payment-account-holder/payment-account-holder-lifecycle.service';
 import { PaymentMethodTokenLifecycleService } from '../../payment-method-token/payment-method-token-lifecycle.service';
 import { rejection, toConnection, toOrder } from '../types/connection';
@@ -48,6 +49,13 @@ import {
  * loaded its instruments would be one query per row for a field nobody asked for. The rows are the
  * masked summary — brand, last four, expiry — because no list carries a stored instrument reference,
  * for any caller (17-graphql-api-specification.md §6.4).
+ *
+ * **No mutation stores card data.** The three writes whose routes refuse a card-shaped body with
+ * `@UseCardDataRefusal()` — record, change and verify — run the same refusal on their input before the
+ * service is reached: the schema declares no card member, so what it catches is card data nested in the
+ * free-form `metadata`, answered with `PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED` and `details.field` as an
+ * error entry rather than as a payload `userError`, exactly as `createPaymentMethodToken` answers it.
+ * Before it, `createPaymentAccountHolder(input: { metadata: { card: { number } } })` stored the number.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
@@ -116,6 +124,9 @@ export class PaymentAccountHolderResolver {
 	async createPaymentAccountHolder(
 		@Args('input') input: ICreatePaymentAccountHolderGraphInput
 	): Promise<ICreatePaymentAccountHolderPayload> {
+		// The route's card refusal, on the input: see `assertNoCardData` and the class comment.
+		assertNoCardData(input);
+
 		try {
 			return { paymentAccountHolder: await this.paymentAccountHolderService.createHolder(input as never), userErrors: [] };
 		} catch (error) {
@@ -131,6 +142,8 @@ export class PaymentAccountHolderResolver {
 	async updatePaymentAccountHolder(
 		@Args('input') input: IUpdatePaymentAccountHolderGraphInput
 	): Promise<IUpdatePaymentAccountHolderPayload> {
+		assertNoCardData(input);
+
 		try {
 			return { paymentAccountHolder: await this.accountHolders.update(input.id, input as never), userErrors: [] };
 		} catch (error) {
@@ -149,6 +162,8 @@ export class PaymentAccountHolderResolver {
 	async verifyPaymentAccountHolder(
 		@Args('input') input: IVerifyPaymentAccountHolderGraphInput
 	): Promise<IVerifyPaymentAccountHolderPayload> {
+		assertNoCardData(input);
+
 		try {
 			return { paymentAccountHolder: await this.accountHolders.verify(input.id, input as never), userErrors: [] };
 		} catch (error) {
