@@ -35,6 +35,12 @@ The UI has no switch of its own. It follows the API:
   Opened on an installation without the Inbox, the page only says that the
   Inbox is off: it asks the API first and shows no tab (not even
   Notifications) until the API answers.
+- The **Settings → Inbox** entries (permission `INBOX_MAILBOX_MANAGE`)
+  appear only where the API also serves the Inbox email features
+  (`GAUZY_INBOX_EMAIL_ENABLED=true`): once the Inbox check passed, the UI
+  asks `GET /api/inbox/mailboxes/mine` once per user (404, 401 and 403 are
+  final, a temporary failure is retried). Their routes always exist; opened
+  without the email features, a page says they are off.
 
 ## What it shows
 
@@ -68,6 +74,20 @@ The UI has no switch of its own. It follows the API:
 - **Header badge:** a bell with my unread count. It is read every 60 s (and
   not while the tab is hidden), and again at once after the page changes an
   item. It stops on 404 or 403.
+- **Settings → Inbox → Providers** (`/pages/settings/inbox-providers`):
+  the email provider plugins of the server (what each can do) and the
+  accounts of the organization and of the tenant. Each account form is
+  rendered from the provider plugin's `configSchema`: text (email, URL,
+  host name), multi-line text, number, on/off, a choice, required marks and
+  the plugin's help texts. Secrets are write-only: the form never holds a
+  stored one (the card says which are set); left empty a secret is kept,
+  typed it is replaced, an optional one can be cleared, and a generated one
+  (Postmark's webhook credential) is made by the server and shown once, in
+  a dialog only an acknowledgement closes. The webhook URL to configure at
+  the provider is the API's answer, never a host the UI assumes. Test
+  connection, enable / disable, outbound default and delete (refused while a
+  mailbox receives through the account). A tenant-wide account is read-only
+  without `ALL_ORG_EDIT`.
 
 The badge is a header action: `NavigationBuilderService.registerHeaderAction`
 in `@gauzy/ui-core/core` is the extension point. The header renders plugins'
@@ -85,6 +105,11 @@ actions after its own.
 - the email viewer's sandbox and policy;
 - the badge's polling (at once, every 60 s, after a change, stopping on 404);
 - the plugin's registration: the route always, the nav entry and the badge
-  only where the API serves the Inbox.
+  only where the API serves the Inbox, the Settings → Inbox entries only
+  where it serves the email features;
+- the provider form: the fields of a `configSchema`, the checks, the
+  payload (a secret kept, replaced, cleared or generated anew, never shown);
+- the providers page and the account dialog (the "off" notice, the one-time
+  values, test, disable, delete and its refusal).
 
 `yarn nx test ui-core` covers the header-action registry.
