@@ -1,0 +1,430 @@
+{
+  "label": "fixed3",
+  "base": "http://localhost:3999/api",
+  "seq": 60,
+  "concurrency": 16,
+  "duration": 10,
+  "at": "2026-10-17T19:12:32.084Z",
+  "results": [
+    {
+      "name": "health",
+      "url": "/health",
+      "bytes": 289,
+      "sequential": {
+        "n": 60,
+        "mean": 7.23,
+        "p50": 7.02,
+        "p90": 7.92,
+        "p99": 11.19,
+        "min": 6.04,
+        "max": 11.19,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 1,
+      "sqlMsPerRequest": 0.15,
+      "redisPerRequest": 2.02,
+      "redisCommands": {
+        "set": 60,
+        "config|resetstat": 1,
+        "get": 60
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.01,
+        "rps": 220.2,
+        "n": 2204,
+        "mean": 72.56,
+        "p50": 65.1,
+        "p90": 94.76,
+        "p99": 156.99,
+        "min": 17.72,
+        "max": 570,
+        "status": {
+          "200": 2204
+        }
+      }
+    },
+    {
+      "name": "feature-toggle-definition",
+      "url": "/feature/toggle/definition",
+      "bytes": 2,
+      "sequential": {
+        "n": 60,
+        "mean": 2.04,
+        "p50": 1.89,
+        "p90": 2.64,
+        "p99": 3.08,
+        "min": 1.47,
+        "max": 3.08,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 0,
+      "sqlMsPerRequest": 0,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.03,
+        "rps": 744.3,
+        "n": 7464,
+        "mean": 21.41,
+        "p50": 20.64,
+        "p90": 27.27,
+        "p99": 35.87,
+        "min": 2.88,
+        "max": 78.43,
+        "status": {
+          "200": 7464
+        }
+      }
+    },
+    {
+      "name": "user-me",
+      "url": "/user/me",
+      "bytes": 2249,
+      "sequential": {
+        "n": 60,
+        "mean": 19.27,
+        "p50": 18.52,
+        "p90": 21.5,
+        "p99": 31.49,
+        "min": 16.42,
+        "max": 31.49,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 5,
+      "sqlMsPerRequest": 0.36,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.11,
+        "rps": 72.9,
+        "n": 737,
+        "mean": 218.58,
+        "p50": 207.43,
+        "p90": 248.54,
+        "p99": 698.72,
+        "min": 71.12,
+        "max": 803.4,
+        "status": {
+          "200": 737
+        }
+      }
+    },
+    {
+      "name": "role-permissions-me",
+      "url": "/role-permissions/me",
+      "bytes": 164402,
+      "sequential": {
+        "n": 60,
+        "mean": 45.97,
+        "p50": 43.28,
+        "p90": 61.71,
+        "p99": 74.79,
+        "min": 34.81,
+        "max": 74.79,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 4,
+      "sqlMsPerRequest": 1.48,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.61,
+        "rps": 25.2,
+        "n": 267,
+        "mean": 618.52,
+        "p50": 607.88,
+        "p90": 711.49,
+        "p99": 1147.62,
+        "min": 157.06,
+        "max": 1217.13,
+        "status": {
+          "200": 267
+        }
+      }
+    },
+    {
+      "name": "tags",
+      "url": "/tags?where[organizationId]=7a814ee5-c7ef-4fc6-844f-bbc19712d719&where[tenantId]=47fa4430-5070-4988-ba74-5054851839ba",
+      "bytes": 15236,
+      "sequential": {
+        "n": 60,
+        "mean": 76.8,
+        "p50": 76.32,
+        "p90": 84.29,
+        "p99": 90.11,
+        "min": 68.01,
+        "max": 90.11,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 5,
+      "sqlMsPerRequest": 44.56,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.29,
+        "rps": 42.1,
+        "n": 433,
+        "mean": 376.56,
+        "p50": 352.31,
+        "p90": 456.69,
+        "p99": 861.5,
+        "min": 151.18,
+        "max": 989.82,
+        "status": {
+          "200": 433
+        }
+      }
+    },
+    {
+      "name": "organization-team-me",
+      "url": "/organization-team/me?where[organizationId]=7a814ee5-c7ef-4fc6-844f-bbc19712d719&where[tenantId]=47fa4430-5070-4988-ba74-5054851839ba",
+      "bytes": 6982,
+      "sequential": {
+        "n": 60,
+        "mean": 21.57,
+        "p50": 21.04,
+        "p90": 24.19,
+        "p99": 34.78,
+        "min": 18.33,
+        "max": 34.78,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 5,
+      "sqlMsPerRequest": 0.39,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.14,
+        "rps": 72.7,
+        "n": 737,
+        "mean": 218.98,
+        "p50": 199.85,
+        "p90": 269.84,
+        "p99": 529.32,
+        "min": 113.79,
+        "max": 679.83,
+        "status": {
+          "200": 737
+        }
+      }
+    },
+    {
+      "name": "projects-pagination",
+      "url": "/organization-projects/pagination?where[organizationId]=7a814ee5-c7ef-4fc6-844f-bbc19712d719&where[tenantId]=47fa4430-5070-4988-ba74-5054851839ba&take=10&skip=0",
+      "bytes": 11055,
+      "sequential": {
+        "n": 60,
+        "mean": 22.9,
+        "p50": 22.57,
+        "p90": 24.49,
+        "p99": 30.52,
+        "min": 19.78,
+        "max": 30.52,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 7,
+      "sqlMsPerRequest": 0.76,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.16,
+        "rps": 58.7,
+        "n": 597,
+        "mean": 270.43,
+        "p50": 259.64,
+        "p90": 311.39,
+        "p99": 588.86,
+        "min": 165,
+        "max": 713.4,
+        "status": {
+          "200": 597
+        }
+      }
+    },
+    {
+      "name": "employees-pagination",
+      "url": "/employee/pagination?where[organizationId]=7a814ee5-c7ef-4fc6-844f-bbc19712d719&where[tenantId]=47fa4430-5070-4988-ba74-5054851839ba&where[isActive]=true&take=10&skip=0&relations[]=user",
+      "bytes": 27631,
+      "sequential": {
+        "n": 60,
+        "mean": 32.77,
+        "p50": 32.3,
+        "p90": 37.65,
+        "p99": 41.18,
+        "min": 28.39,
+        "max": 41.18,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 7,
+      "sqlMsPerRequest": 1.03,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.26,
+        "rps": 44.1,
+        "n": 452,
+        "mean": 360.05,
+        "p50": 348.29,
+        "p90": 397.9,
+        "p99": 718.52,
+        "min": 276.21,
+        "max": 896.21,
+        "status": {
+          "200": 452
+        }
+      }
+    },
+    {
+      "name": "tasks-pagination",
+      "url": "/tasks/pagination?where[organizationId]=7a814ee5-c7ef-4fc6-844f-bbc19712d719&where[tenantId]=47fa4430-5070-4988-ba74-5054851839ba&take=10&skip=0",
+      "bytes": 54049,
+      "sequential": {
+        "n": 60,
+        "mean": 19.65,
+        "p50": 18.6,
+        "p90": 23.21,
+        "p99": 27.86,
+        "min": 15.56,
+        "max": 27.86,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 6,
+      "sqlMsPerRequest": 1.14,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.13,
+        "rps": 73.6,
+        "n": 746,
+        "mean": 216.14,
+        "p50": 195.4,
+        "p90": 257.73,
+        "p99": 488.88,
+        "min": 130.25,
+        "max": 644.48,
+        "status": {
+          "200": 746
+        }
+      }
+    },
+    {
+      "name": "teams-pagination",
+      "url": "/organization-team/pagination?where[organizationId]=7a814ee5-c7ef-4fc6-844f-bbc19712d719&where[tenantId]=47fa4430-5070-4988-ba74-5054851839ba&take=10&skip=0",
+      "bytes": 6351,
+      "sequential": {
+        "n": 60,
+        "mean": 19.68,
+        "p50": 19.44,
+        "p90": 23.05,
+        "p99": 24.92,
+        "min": 16.42,
+        "max": 24.92,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 7,
+      "sqlMsPerRequest": 0.41,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.13,
+        "rps": 69.2,
+        "n": 701,
+        "mean": 230.21,
+        "p50": 223.25,
+        "p90": 269.47,
+        "p99": 501.05,
+        "min": 129.59,
+        "max": 643.01,
+        "status": {
+          "200": 701
+        }
+      }
+    },
+    {
+      "name": "employee-by-id",
+      "url": "/employee/e3968c03-bf48-4876-a95c-8452746e60f5?relations[]=user",
+      "bytes": 3977,
+      "sequential": {
+        "n": 60,
+        "mean": 20.14,
+        "p50": 19.83,
+        "p90": 22.14,
+        "p99": 26.57,
+        "min": 17.45,
+        "max": 26.57,
+        "status": {
+          "200": 60
+        }
+      },
+      "sqlPerRequest": 5,
+      "sqlMsPerRequest": 0.38,
+      "redisPerRequest": 0.02,
+      "redisCommands": {
+        "config|resetstat": 1
+      },
+      "concurrent": {
+        "concurrency": 16,
+        "seconds": 10.14,
+        "rps": 81.2,
+        "n": 823,
+        "mean": 195.99,
+        "p50": 187.07,
+        "p90": 225.02,
+        "p99": 502.31,
+        "min": 128.35,
+        "max": 652.42,
+        "status": {
+          "200": 823
+        }
+      }
+    }
+  ]
+}
