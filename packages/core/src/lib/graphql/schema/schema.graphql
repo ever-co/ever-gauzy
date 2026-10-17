@@ -9995,6 +9995,11 @@ type Mutation {
   removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 
   """
+  Writes the whole product set of a collection in one call, in order — the set route's own operation.
+  """
+  replaceCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+
+  """
   Retires one collection membership recoverably, so the product stays curated into the collection.
   """
   softDeleteCollectionProduct(id: ID!): CollectionProduct!
@@ -49354,7 +49359,7 @@ input ApplyCartPromotionInput {
   promotionId: ID
   couponId: ID
   code: String
-  amount: Decimal!
+  amount: Decimal
   isAutomatic: Boolean
   version: Int
   idempotencyKey: String
@@ -57713,7 +57718,12 @@ input SearchIndexDefinitionUpdateInput {
 
 """What a rebuild covers."""
 input SearchReindexInput {
-  scope: SearchReindexScope!
+  """
+  The scope `reindexAll` rebuilds — honoured as `POST /search/reindex` honours it; `ENTITY` is refused there
+  (use `reindexEntity`). When omitted, `reindexAll` rebuilds one channel when `channelId` is stated and every
+  index otherwise. `reindexEntity` always rebuilds its entity.
+  """
+  scope: SearchReindexScope
 
   """Required for the entity scope."""
   entity: String

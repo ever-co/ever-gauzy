@@ -8,7 +8,8 @@ import { DecimalAmount, IsDecimalAmount } from '../../shared/is-decimal-amount.v
  *
  * `amount` is produced by the promotion engine: the cart records the discount that was granted rather
  * than recomputing it, so a promotion edited afterwards cannot silently change a cart that has already
- * been quoted.
+ * been quoted. **It is never the caller's (R3-07):** the member is still accepted so an existing client's
+ * body validates, and it is ignored — the cart asks the engine what the named promotion grants.
  */
 export class CommerceCartPromotionDTO extends TenantOrganizationBaseDTO {
 	@ApiProperty({ type: () => String })
@@ -32,12 +33,18 @@ export class CommerceCartPromotionDTO extends TenantOrganizationBaseDTO {
 	readonly code: string;
 
 	/**
-	 * The discount the promotion engine granted. A decimal string or a number, for the same reason the
-	 * other money members of this package take both: the GraphQL schema types it `Decimal!`.
+	 * Ignored (R3-07): the discount is what the promotion engine grants, never what a request states.
+	 * Kept, optional, so a body that still carries it validates; a decimal string or a number, for the
+	 * same reason the other money members of this package take both.
 	 */
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({
+		type: () => String,
+		deprecated: true,
+		description: 'Ignored: the discount is computed by the promotion engine.'
+	})
+	@IsOptional()
 	@IsDecimalAmount()
-	readonly amount: DecimalAmount;
+	readonly amount?: DecimalAmount;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

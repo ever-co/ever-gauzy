@@ -95,6 +95,7 @@ import { ProductVariantMediaController } from '../../product-variant-media/produ
 import { TagProductVariantController } from '../../tag-product-variant/tag-product-variant.controller';
 import { schemaExtensions } from '../schema-extensions';
 import { CollectionChannelResolver } from './collection-channel.resolver';
+import { CollectionProductResolver } from './collection-product.resolver';
 import { CollectionVariantResolver } from './collection-variant.resolver';
 import { ProductPublicationResolver } from './product-publication.resolver';
 
@@ -311,7 +312,8 @@ const COLLAPSED: {
 		resource: 'CollectionProduct',
 		route: 'replaceProducts',
 		expects: 'replaceProducts',
-		field: 'addCollectionProducts'
+		// The set route's own twin since R2-G1; the add and the removal reach the same call but cannot reorder.
+		field: 'replaceCollectionProducts'
 	},
 	// A variant membership: the same set semantics, and the set field this wave delivers is the door — the
 	// document's `addCollectionVariants` and `removeCollectionVariants` are declared with no resolver.
@@ -912,5 +914,32 @@ describe('the twenty-four collapsed routes — served under another name, not un
 		expect(declares('updateProductVariantChannel')).toBe(true);
 		expect(declares('replaceVariants')).toBe(false);
 		expect(declares('replaceCollectionVariants')).toBe(true);
+	});
+
+	// Review sweep R2-G1: the product set could be reordered over REST only.
+	it('answers the product set route with replaceCollectionProducts: same grant, same call, same arguments', async () => {
+		const MEMBERS = [
+			{ id: 'cp1', collectionId: COLLECTION, productId: 'p2', position: 0 },
+			{ id: 'cp2', collectionId: COLLECTION, productId: 'p1', position: 1 }
+		];
+		const service = {
+			replaceProducts: jest.fn().mockResolvedValue(MEMBERS),
+			findByCollection: jest.fn().mockResolvedValue([])
+		};
+		const controller = new CollectionProductController(service as never);
+		const resolver = new CollectionProductResolver(service as never);
+
+		const overRest = await controller.replaceProducts(COLLECTION, { productIds: ['p2', 'p1'] });
+		const overGraphql = await resolver.replaceCollectionProducts(COLLECTION, ['p2', 'p1']);
+
+		expect(service.replaceProducts.mock.calls).toEqual([
+			[COLLECTION, ['p2', 'p1']],
+			[COLLECTION, ['p2', 'p1']]
+		]);
+		expect(overGraphql).toEqual(overRest);
+		expect(
+			Reflect.getMetadata(PERMISSIONS_METADATA, CollectionProductResolver.prototype.replaceCollectionProducts)
+		).toEqual(Reflect.getMetadata(PERMISSIONS_METADATA, CollectionProductController.prototype.replaceProducts));
+		expect(declares('replaceCollectionProducts')).toBe(true);
 	});
 });
