@@ -2,7 +2,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { CamshotService } from '../../services/camshot.service';
 import { DeleteCamshotCommand } from '../delete-camshot.command';
 import { NotFoundException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { assertCallerOwnsUpload, RequestContext } from '@gauzy/core';
 
 @CommandHandler(DeleteCamshotCommand)
 export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamshotCommand> {
@@ -29,6 +29,9 @@ export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamsho
 		if (!camshot) {
 			throw new NotFoundException(`Cannot delete because camshot with id ${id} not found`);
 		}
+
+		// Another employee's camshot answers like an unknown id
+		assertCallerOwnsUpload(camshot, 'The requested record was not found');
 
 		if (forceDelete) {
 			await this.camshotService.delete(id, { withDeleted: true });

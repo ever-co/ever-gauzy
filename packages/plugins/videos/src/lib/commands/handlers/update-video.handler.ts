@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { assertCallerOwnsUpload } from '@gauzy/core';
 import { IVideo } from '../../video.model';
 import { VideosService } from '../../services/videos.service';
 import { UpdateVideoCommand } from '../update-video.command';
@@ -22,6 +23,10 @@ export class UpdateVideoHandler implements ICommandHandler<UpdateVideoCommand> {
 
 		// Destructure the input fields for clarity
 		const { title, description } = input;
+
+		// Only the uploader, or a caller who may act for other employees, may edit the video
+		const video = await this.videosService.findOneByIdString(id);
+		assertCallerOwnsUpload(video, 'The requested record was not found');
 
 		// Update the video entity in the database using the provided ID and input fields
 		await this.videosService.update(id, {
