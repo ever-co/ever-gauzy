@@ -255,10 +255,33 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 
 			return row;
 		},
+		// `UQ_tag_product_variant` is not partial on `deletedAt`, so a retired row still holds its pair: the
+		// double refuses a second row for a pair as the database does (R2-24 (d)).
 		insert: async (entity: unknown, partial: any) => {
+			const clash = rows(entity).some(
+				(row: any) => same(row.productVariantId, partial.productVariantId) && same(row.tagId, partial.tagId)
+			);
+
+			if (clash) {
+				throw new Error('duplicate key value violates unique constraint "UQ_tag_product_variant"');
+			}
+
 			rows(entity).push({ id: `inserted-${++sequence}`, ...partial });
 
 			return partial;
+		},
+		restore: async (entity: unknown, criteria: unknown) => {
+			const ids = Array.isArray(criteria) ? criteria : [criteria];
+			let affected = 0;
+
+			for (const row of rows(entity)) {
+				if (ids.some((id) => same(row.id, id)) && row.deletedAt) {
+					row.deletedAt = null;
+					affected += 1;
+				}
+			}
+
+			return { affected };
 		},
 		update: async (entity: unknown, id: unknown, patch: any) => {
 			const row = rows(entity).find((candidate: any) => same(candidate.id, id));
@@ -317,18 +340,22 @@ function repository(tables: ITables, tableName: keyof ITables, writeManager: any
 			return String(row[field] ?? '') === String(expected ?? '');
 		});
 
+	// TypeORM leaves a retired row out of every read unless the read asks for `withDeleted`.
+	const visible = (options: any = {}) => rows().filter((row) => options.withDeleted || !row.deletedAt);
+
 	return {
 		rows,
 		manager: writeManager,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => rows().filter((row) => matches(row, options.where)),
-		findOne: async (options: any = {}) => rows().find((row) => matches(row, options.where)) ?? null,
-		findOneBy: async (where: any) => rows().find((row) => matches(row, where)) ?? null,
+		find: async (options: any = {}) => visible(options).filter((row) => matches(row, options.where)),
+		findOne: async (options: any = {}) => visible(options).find((row) => matches(row, options.where)) ?? null,
+		findOneBy: async (where: any) => visible().find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
-			const items = rows().filter((row) => matches(row, options.where));
+			const items = visible(options).filter((row) => matches(row, options.where));
 
 			return [items, items.length];
 		},
+		restore: async (id: any) => writeManager.restore(TagProductVariant, id),
 		count: async () => rows().length,
 		create: (partial: any) => ({ ...partial }),
 		save: async (entity: any) => {
@@ -533,5 +560,61 @@ describe('TagProductVariantService — variant facets (doc 05 §4.7)', () => {
 		// The intersecting read is organization-scoped too: the other organization's complete pair must
 		// not make its variant answer a filter asked inside this one.
 		expect(await fixture.service.findVariantsWithAllTags([RED, BLUE])).toEqual([VARIANT]);
+	});
+});
+
+describe('TagProductVariantService — a retired facet row attached again (R2-24 (d))', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const RETIRED = new Date('2026-10-01T00:00:00.000Z');
+
+	it('restores the retired row of a requested facet value instead of inserting a second one', async () => {
+		// `softDeleteTagProductVariant` / `DELETE /tag-product-variants/:id/soft` retire the row and keep it; the
+		// pair's unique index still holds it, so the insert the set write used to make failed on the constraint.
+		const fixture = facetFixture([facetRow('red-row', RED, { deletedAt: RETIRED })]);
+
+		const facets = await fixture.service.replaceTags(VARIANT, [RED, BLUE]);
+
+		expect(facets.map((row) => row.tagId).sort()).toEqual([RED, BLUE].sort());
+		expect(facets.find((row) => row.tagId === RED)?.id).toBe('red-row');
+		expect(fixture.tables.tag_product_variant).toHaveLength(2);
+		expect(fixture.tables.tag_product_variant.find((row) => row.id === 'red-row').deletedAt).toBeNull();
+	});
+
+	it('leaves a retired facet row that is not requested retired', async () => {
+		const fixture = facetFixture([facetRow('red-row', RED, { deletedAt: RETIRED }), facetRow('blue-row', BLUE)]);
+
+		const facets = await fixture.service.replaceTags(VARIANT, [BLUE]);
+
+		expect(facets.map((row) => row.id)).toEqual(['blue-row']);
+		expect(fixture.tables.tag_product_variant.find((row) => row.id === 'red-row')).toMatchObject({
+			deletedAt: RETIRED
+		});
+	});
+
+	it('restores a retired pair on create, and refuses a pair that is already attached', async () => {
+		const fixture = facetFixture([facetRow('red-row', RED, { deletedAt: RETIRED }), facetRow('blue-row', BLUE)]);
+
+		const restored = await fixture.service.create({ productVariantId: VARIANT, tagId: RED } as never);
+
+		expect(restored).toMatchObject({ id: 'red-row', tagId: RED });
+		expect(fixture.tables.tag_product_variant).toHaveLength(2);
+		await expect(
+			fixture.service.create({ productVariantId: VARIANT, tagId: BLUE } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('creates a pair the variant never carried', async () => {
+		const fixture = facetFixture();
+
+		const created = await fixture.service.create({ productVariantId: VARIANT, tagId: GREEN } as never);
+
+		expect(created).toMatchObject({ productVariantId: VARIANT, tagId: GREEN });
+		expect(fixture.tables.tag_product_variant).toHaveLength(1);
 	});
 });

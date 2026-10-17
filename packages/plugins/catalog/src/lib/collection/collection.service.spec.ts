@@ -603,6 +603,61 @@ describe('CollectionService — the tree and the cycle refusal (doc 05 §4.3, §
 		expect(fixture.store('child')).toMatchObject({ parentId: 'sibling' });
 		expect(fixture.published).toHaveLength(1);
 	});
+
+	// R2-24 (c): `PUT /collections/:id` and `updateCollection` both reach `update` with a `parentId`, and only
+	// `move` — which nothing calls — refused a cycle.
+	it('refuses an update that makes a collection its own parent, and writes nothing', async () => {
+		const fixture = treeFixture();
+
+		await expect(fixture.service.update('child', { parentId: 'child' } as never)).rejects.toThrow(/own parent/);
+		expect(fixture.store('child')).toMatchObject({ parentId: 'root' });
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('refuses an update that moves a collection under one of its own descendants', async () => {
+		const fixture = treeFixture();
+
+		await expect(fixture.service.update('root', { parentId: 'grandchild' } as never)).rejects.toThrow(
+			/descendants/
+		);
+		await expect(fixture.service.update('child', { parentId: 'grandchild', name: 'x' } as never)).rejects.toThrow(
+			/descendants/
+		);
+		expect(fixture.store('root').parentId).toBeUndefined();
+		expect(fixture.store('child')).toMatchObject({ parentId: 'root', name: 'Collection child' });
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('accepts an update that re-parents under a sibling, restates the same parent, or makes a root', async () => {
+		const fixture = collectionFixture([
+			collectionRow('root'),
+			collectionRow('child', { parentId: 'root' }),
+			collectionRow('sibling', { parentId: 'root' })
+		]);
+
+		await fixture.service.update('child', { parentId: 'sibling' } as never);
+		expect(fixture.store('child')).toMatchObject({ parentId: 'sibling' });
+
+		await fixture.service.update('child', { parentId: 'sibling', name: 'Renamed' } as never);
+		expect(fixture.store('child')).toMatchObject({ parentId: 'sibling', name: 'Renamed' });
+
+		await fixture.service.update('child', { parentId: null } as never);
+		expect(fixture.store('child').parentId).toBeNull();
+	});
+
+	it('ends the walk on a chain that is already cyclic instead of looping forever', async () => {
+		// `a` and `b` point at each other — data an earlier unchecked update could have written. Placing `c`
+		// under `a` is not a cycle through `c`, and the walk up from `a` has to stop when it meets `a` again.
+		const fixture = collectionFixture([
+			collectionRow('a', { parentId: 'b' }),
+			collectionRow('b', { parentId: 'a' }),
+			collectionRow('c')
+		]);
+
+		await fixture.service.update('c', { parentId: 'a' } as never);
+
+		expect(fixture.store('c')).toMatchObject({ parentId: 'a' });
+	});
 });
 
 /**
@@ -736,5 +791,46 @@ describe('ProductRelationService — the organization of a relation created with
 		await service.create({ productId: 'product-a', relatedProductId: 'product-b', organizationId: OTHER_ORG } as never);
 
 		expect(rows[0].organizationId).toBe(OTHER_ORG);
+	});
+});
+
+describe('ProductRelationService — an update answers the relation it wrote (R2-24 (a))', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const relation = {
+		id: 'relation-1',
+		tenantId: TENANT,
+		organizationId: ORG,
+		productId: 'product-a',
+		relatedProductId: 'product-b',
+		type: 'RELATED',
+		position: 0
+	};
+
+	it('answers the updated row, not the write’s affected-row count', async () => {
+		// The double's `update` answers `{ affected }`, as TypeORM's does; `updateProductRelation: ProductRelation!`
+		// cannot be answered with that.
+		const tables = { collection: [{ ...relation }] };
+		const service = new ProductRelationService(repository(tables, 'collection') as never, undefined as never);
+
+		const updated = await service.update('relation-1', { position: 3 } as never);
+
+		expect(updated).toMatchObject({ id: 'relation-1', position: 3, productId: 'product-a' });
+		expect(updated).not.toHaveProperty('affected');
+	});
+
+	it('still refuses an update that relates a product to itself, and writes nothing', async () => {
+		const tables = { collection: [{ ...relation }] };
+		const service = new ProductRelationService(repository(tables, 'collection') as never, undefined as never);
+
+		await expect(service.update('relation-1', { relatedProductId: 'product-a' } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(tables.collection[0]).toMatchObject({ relatedProductId: 'product-b' });
 	});
 });

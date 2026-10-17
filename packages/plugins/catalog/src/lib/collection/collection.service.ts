@@ -88,15 +88,25 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 * the same state, which is what lets a subscriber invalidate the listing it is told about rather
 	 * than an unnamed one.
 	 *
+	 * A new parent goes through the same refusal `move` applies (review R2-24 (c)): `PUT /collections/:id` and
+	 * `updateCollection` both reach this method with a `parentId`, and neither checked it — a collection could
+	 * be made its own parent, or a child of its own descendant, and every walk up the tree from it then never
+	 * ended.
+	 *
 	 * @param id Id of the collection.
 	 * @param entity The fields to change.
 	 * @returns The updated collection.
+	 * @throws BadRequestException When the new parent would put the collection in a cycle.
 	 */
 	public async update(id: ID, entity: DeepPartial<Collection>): Promise<Collection> {
 		const collection = await this.findOneByIdString(id);
 
 		if (entity.slug && entity.slug !== collection.slug) {
 			await this.assertSlugIsAvailable(entity.slug, entity.customerId ?? collection.customerId ?? null, id);
+		}
+
+		if (entity.parentId && entity.parentId !== collection.parentId) {
+			await this.assertParentKeepsTreeAcyclic(id, entity.parentId);
 		}
 
 		await super.update(id, entity);
@@ -125,15 +135,7 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 */
 	public async move(id: ID, parentId: ID | null): Promise<Collection> {
 		if (parentId) {
-			if (parentId === id) {
-				throw new BadRequestException('A collection cannot be its own parent.');
-			}
-
-			if (await this.isDescendantOf(parentId, id)) {
-				throw new BadRequestException(
-					'A collection cannot be moved under one of its own descendants; that would create a cycle.'
-				);
-			}
+			await this.assertParentKeepsTreeAcyclic(id, parentId);
 		}
 
 		await super.update(id, { parentId });
@@ -207,22 +209,48 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	}
 
 	/**
+	 * Refuses a parent that would put the collection in a cycle: itself, or one of its own descendants.
+	 *
+	 * @param id The collection being given a parent.
+	 * @param parentId The parent it is given.
+	 * @throws BadRequestException When the parent is the collection or sits below it.
+	 */
+	private async assertParentKeepsTreeAcyclic(id: ID, parentId: ID): Promise<void> {
+		if (parentId === id) {
+			throw new BadRequestException('A collection cannot be its own parent.');
+		}
+
+		if (await this.isDescendantOf(parentId, id)) {
+			throw new BadRequestException(
+				'A collection cannot be moved under one of its own descendants; that would create a cycle.'
+			);
+		}
+	}
+
+	/**
 	 * @param candidateId The id being tested as a descendant.
 	 * @param ancestorId The id being tested as an ancestor.
-	 * @returns True when `candidateId` sits below `ancestorId` in the tree. The walk is bounded by the
-	 * tree's depth, which a move cannot exceed because a cycle is refused as soon as it would form.
+	 * @returns True when `candidateId` sits below `ancestorId` in the tree. The walk reads the caller's tenant
+	 * only — a parent chain never leaves it, because a foreign parent is refused on write — and it stops at a
+	 * collection it has already visited, so a chain that is already cyclic (written before the update path
+	 * refused one) ends the walk instead of looping forever.
 	 */
 	private async isDescendantOf(candidateId: ID, ancestorId: ID): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+		const visited = new Set<ID>();
 		let current: ID | undefined | null = candidateId;
 
-		while (current) {
+		while (current && !visited.has(current)) {
 			if (current === ancestorId) {
 				return true;
 			}
 
+			visited.add(current);
+
 			const parent = await this.typeOrmCollectionRepository.findOne({
-				where: { id: current },
-				select: { id: true, parentId: true }
+				where: { id: current, ...(tenantId ? { tenantId } : {}) },
+				select: { id: true, parentId: true },
+				withDeleted: true
 			});
 
 			current = parent?.parentId;
