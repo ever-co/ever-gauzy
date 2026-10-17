@@ -172,14 +172,20 @@ interface LogsPage {
 	sortOrder: string;
 }
 
-/** One page of logs: from the API, or read and filtered here when a filter the API ignores is set. */
+/** Largest `take` that `GET /api/activity-log` accepts. */
+const API_MAX_TAKE = 100;
+
+/**
+ * One page of logs: from the API, or read and filtered here when a filter the API ignores is set or the
+ * page is larger than the API serves.
+ */
 const findLogsPage = async (
 	defaultParams: DefaultParams,
 	filters: Record<string, unknown>,
 	clientFilters: ClientLogFilters,
 	{ page, limit, sortBy, sortOrder }: LogsPage
 ) =>
-	hasClientFilters(clientFilters)
+	hasClientFilters(clientFilters) || limit > API_MAX_TAKE
 		? pageOf(
 				sortLogs(await findFilteredLogs(defaultParams, filters, clientFilters), sortBy, sortOrder),
 				page,
@@ -558,18 +564,17 @@ export const registerActivityLogTools = (server: McpServer) => {
 				// Calculate the start date based on hours
 				const startDate = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
-				const params = activityLogQuery(defaultParams, {
-					take: limit,
-					...(entity && { entity }),
-					...(action && { action }),
-					...(relations && { relations }),
-					orderBy: 'createdAt',
-					order: 'DESC'
-				});
-
-				// The API has no date filter: keep the newest logs that fall in the window
-				const { items = [] } = await apiClient.get<{ items?: ActivityLog[] }>('/api/activity-log', { params });
-				const recent = items.filter(({ createdAt }) => isWithinDates(createdAt, startDate));
+				// The API has no date filter and serves at most 100 logs a page: read the newest logs, page by
+				// page, until `limit` of them fall in the window
+				const recent = (
+					await findNewestLogs(
+						defaultParams,
+						{ ...(entity && { entity }), ...(action && { action }), ...(relations && { relations }) },
+						({ createdAt }) => isWithinDates(createdAt, startDate),
+						limit,
+						startDate
+					)
+				).slice(0, limit);
 				const response = { items: recent, total: recent.length };
 
 				return {
