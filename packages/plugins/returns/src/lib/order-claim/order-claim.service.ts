@@ -1,8 +1,10 @@
 import {
 	BadRequestException,
 	ConflictException,
+	HttpException,
 	Inject,
 	Injectable,
+	Logger,
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
@@ -46,6 +48,8 @@ const DECIDABLE_STATUSES: OrderClaimStatus[] = [OrderClaimStatus.OPEN, OrderClai
  */
 @Injectable()
 export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
+	private readonly logger = new Logger(OrderClaimService.name);
+
 	constructor(
 		readonly typeOrmOrderClaimRepository: TypeOrmOrderClaimRepository,
 		readonly mikroOrmOrderClaimRepository: MikroOrmOrderClaimRepository,
@@ -168,8 +172,22 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			try {
 				refund = await this.settleRefund(claim, refundAmount, note);
 			} catch (error) {
-				// Nothing was paid back: the claim is decidable again, as it was before this call.
-				await this.releaseRefundDecision(claim, decidedFrom);
+				// A refusal (4xx: no amount, no gateway, past the ceiling, no grant, a lost compare-and-swap) is
+				// answered before the refund commits, so nothing was paid back and the claim is decidable again.
+				// Anything else may have come after the refund committed — a read of the settled row that failed —
+				// and reopening the claim then would let a retry pay it back twice. Such a claim stays APPROVED,
+				// which `reject`, `cancel` and `close` accept, for an operator to finish against the refund list
+				// (Greptile, #10856).
+				if (this.isRefusal(error)) {
+					await this.releaseRefundDecision(claim, decidedFrom);
+				} else {
+					this.logger.warn(
+						`CLAIM_REFUND_OUTCOME_UNKNOWN: claim ${claim.id} is left APPROVED because its refund failed with ` +
+							`a non-refusal (${error instanceof Error ? error.message : String(error)}); check the refunds of ` +
+							'the claim before closing, rejecting or cancelling it.'
+					);
+				}
+
 				throw error;
 			}
 
@@ -491,9 +509,30 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 					status: from
 				} as any
 			);
-		} catch {
-			// Argued above: the original refusal is what the caller is answered with.
+		} catch (error) {
+			// The original refusal is what the caller is answered with; the claim it could not reopen is reported.
+			this.logger.warn(
+				`CLAIM_DECISION_RELEASE_FAILED: claim ${claim.id} stays APPROVED after a refused refund ` +
+					`(${error instanceof Error ? error.message : String(error)}); reject, cancel or close it by hand.`
+			);
 		}
+	}
+
+	/**
+	 * Whether an error is a refusal answered before anything was written — an HTTP 4xx — rather than a fault
+	 * whose effect is unknown.
+	 *
+	 * @param error What the settlement threw.
+	 * @returns True for a 4xx `HttpException`.
+	 */
+	private isRefusal(error: unknown): boolean {
+		if (!(error instanceof HttpException)) {
+			return false;
+		}
+
+		const status = error.getStatus();
+
+		return status >= 400 && status < 500;
 	}
 
 	/**

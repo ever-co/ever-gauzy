@@ -108,7 +108,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
 import { OrderClaimReason, OrderClaimStatus, OrderClaimType } from '../returns.types';
 import { OrderClaimLineService } from '../order-claim-line/order-claim-line.service';
@@ -973,7 +973,7 @@ describe('OrderClaimService — a refund claim settles once (review R3-09, the c
 		const settle = gateway.createRefund;
 
 		gateway.createRefund = async () => {
-			throw new Error('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
 		};
 
 		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
@@ -985,6 +985,24 @@ describe('OrderClaimService — a refund claim settles once (review R3-09, the c
 			claim: { status: OrderClaimStatus.CLOSED }
 		});
 		expect(fixture.refundCalls).toHaveLength(1);
+	});
+
+	it('leaves the claim in flight, not decidable, when the refund failed in a way that may have paid it back', async () => {
+		// A fault that is not a refusal can come after the refund committed (a read of the settled row); reopening
+		// the claim then would let a retry pay it back twice (Greptile, #10856).
+		const fixture = claimFixture({ lines: [line] });
+		const warn = jest.spyOn((fixture.service as any).logger, 'warn').mockImplementation(() => undefined);
+
+		(fixture.service as any).refundGateway.createRefund = async () => {
+			throw new Error('connection reset while reading the settled refund');
+		};
+
+		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/connection reset/);
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.APPROVED });
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('CLAIM_REFUND_OUTCOME_UNKNOWN'));
+
+		// A second approval is refused rather than paying the claim back again; cancel, reject or close finish it.
+		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/cannot approve/);
 	});
 
 	it('refuses a caller who may not settle a refund before the claim moves', async () => {
