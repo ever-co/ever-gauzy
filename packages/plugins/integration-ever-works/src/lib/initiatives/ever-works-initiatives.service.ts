@@ -60,6 +60,9 @@ import {
 /** How often the initiative sweep (initiatives deleted by id, goals moved between initiatives) runs per connection. */
 export const INITIATIVE_SWEEP_MS = 10 * 60_000;
 
+/** Why a TEAM-scoped initiative with no paired team to scope its mission to is not created in Ever Works (review F24). */
+export const TEAM_SCOPE_WAITS = 'a team-scoped initiative goes to Ever Works once it is linked to a paired team';
+
 /** What only Ever Works has, kept on the link (fields one side lacks are preserved, never nulled). */
 interface MissionEverWorksOnly {
 	owner?: EverWorksMission['owner'];
@@ -334,6 +337,9 @@ export class EverWorksInitiativesService
 				throw new BadRequestException(`${id} is a leadership initiative; leadership initiatives never sync.`);
 			if (eligible === 'draft')
 				throw new BadRequestException(`${id} is a draft; an initiative goes to Ever Works once it is active.`);
+			const prepared = await this.prepare(context, row, null);
+			if ('outcome' in prepared && prepared.outcome.message === TEAM_SCOPE_WAITS)
+				throw new BadRequestException(`${id}: ${TEAM_SCOPE_WAITS}.`);
 		}
 		for (const ewMissionId of decision.unlinks ?? []) {
 			const link = await this.links.byEw(
@@ -1146,13 +1152,19 @@ export class EverWorksInitiativesService
 			// person: it leaves the mission. Any other (Gauzy never showed it here) the mission keeps.
 			if (!gauzyId || !(ew.representedGoals ?? []).includes(goal.goalId)) keepGoals.push(goal.goalId);
 		}
-		return {
-			now: gauzyInitiativeShared(row, scope.scope.teamIds, workIds, goalIds, before, {
-				teamIds: ew.unmappedTeams ?? [],
-				workIds: ew.unmappedWorks ?? [],
-				goalIds: keepGoals
-			})
-		};
+		const now = gauzyInitiativeShared(row, scope.scope.teamIds, workIds, goalIds, before, {
+			teamIds: ew.unmappedTeams ?? [],
+			workIds: ew.unmappedWorks ?? [],
+			goalIds: keepGoals
+		});
+		// D11 (review F24): a TEAM-scoped initiative is never sent organization-visible. With no team to scope the
+		// mission to (it reaches its teams through its aligned projects only, or its direct teams were cleared), a new
+		// one waits for a paired team, and a paired mission keeps the teams it has (its other fields still follow).
+		if (row.visibilityScope === OrganizationStrategicVisibilityScopeEnum.TEAM && !now.teamIds.length) {
+			if (!link) return { outcome: { status: 'skipped', message: TEAM_SCOPE_WAITS } };
+			now.teamIds = [...(before.teamIds ?? [])].sort();
+		}
+		return { now };
 	}
 
 	/** One write to the paired mission, as its owner (Ever Works answers someone else's mission with 404). */
