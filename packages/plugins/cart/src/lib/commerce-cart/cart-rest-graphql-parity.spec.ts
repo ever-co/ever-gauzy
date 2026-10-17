@@ -63,7 +63,8 @@ jest.mock('@gauzy/core', () => {
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
 			.IDEMPOTENT_METADATA_KEY,
-		VERSIONED_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').VERSIONED_METADATA_KEY,
+		VERSIONED_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util')
+			.VERSIONED_METADATA_KEY,
 		// The real decorator mounts the guard and interceptor, which reach the entity graph; what is read
 		// here is the metadata it writes, on the kernel's own key.
 		Versioned: (options: any = {}) =>
