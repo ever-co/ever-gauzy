@@ -35,6 +35,8 @@ export class AuthManager {
 	private readonly processState: IAuthState = createAuthState();
 	// Logins of HTTP/WebSocket sessions and OAuth subjects, by auth key
 	private readonly keyedStates = new Map<string, IAuthState>();
+	// First logins still in flight for keys with no login yet, so overlapping attempts share one guard
+	private readonly pendingStates = new Map<string, IAuthState>();
 	private apiClient: any;
 	private hasInitialized = false;
 
@@ -133,7 +135,10 @@ export class AuthManager {
 	 */
 	public async login(email?: string, password?: string): Promise<boolean> {
 		const authKey = getAuthKey();
-		const state = authKey === undefined ? this.processState : (this.keyedStates.get(authKey) ?? createAuthState());
+		const state =
+			authKey === undefined
+				? this.processState
+				: (this.keyedStates.get(authKey) ?? this.pendingStates.get(authKey) ?? createAuthState());
 
 		// Prevent concurrent login attempts
 		if (state.isLoginInProgress) {
@@ -144,6 +149,9 @@ export class AuthManager {
 		}
 
 		state.isLoginInProgress = true;
+		if (authKey !== undefined && !this.keyedStates.has(authKey)) {
+			this.pendingStates.set(authKey, state);
+		}
 
 		try {
 			const credentials = {
@@ -239,6 +247,9 @@ export class AuthManager {
 			return false;
 		} finally {
 			state.isLoginInProgress = false;
+			if (authKey !== undefined && this.pendingStates.get(authKey) === state) {
+				this.pendingStates.delete(authKey);
+			}
 		}
 	}
 
@@ -403,6 +414,8 @@ export class AuthManager {
 			}
 		}
 		this.keyedStates.delete(authKey);
+		// A login still in flight for this key is dropped when it completes (see setTokenData)
+		this.pendingStates.delete(authKey);
 	}
 
 	/**
@@ -444,7 +457,11 @@ export class AuthManager {
 	 */
 	private setTokenData(state: IAuthState, tokenData: ITokenData, authKey?: string): void {
 		state.tokenData = tokenData;
-		if (authKey !== undefined) {
+		// Only keep it while the key still owns this state: a key cleared during the login must not get it back
+		if (
+			authKey !== undefined &&
+			(this.keyedStates.get(authKey) === state || this.pendingStates.get(authKey) === state)
+		) {
 			this.keyedStates.set(authKey, state);
 		}
 	}

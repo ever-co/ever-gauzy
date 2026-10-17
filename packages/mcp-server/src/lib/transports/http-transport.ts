@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { McpTransportConfig } from '../common/config';
 import { environment } from '../environments/environment';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
@@ -15,6 +16,7 @@ import { sanitizeErrorMessage } from '../common/error-utils';
 import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 import { runWithAuthKey } from '../common/auth-context';
+import { authManager } from '../common/auth-manager';
 
 const logger = new Logger('HttpTransport');
 
@@ -839,13 +841,20 @@ export class HttpTransport {
 
 				case 'tools/call': {
 					// Tools run with the Gauzy login of this session, or of this OAuth subject.
-					// Callers with neither share one login of their own, so it never replaces the auto-login account.
-					const authKey =
+					// A caller with neither gets a key for this call only: a login it runs is never seen by another
+					// caller and is kept only through the session the login tool creates.
+					const callerKey =
 						userContext?.sessionId ??
-						(tokenInfo?.subject
-							? `oauth:${tokenInfo.subject}:${tokenInfo.clientId ?? ''}`
-							: 'http:anonymous');
-					const result = await this.callTool(params as Record<string, unknown>, authKey);
+						(tokenInfo?.subject ? `oauth:${tokenInfo.subject}:${tokenInfo.clientId ?? ''}` : undefined);
+					const authKey = callerKey ?? `http:anonymous:${randomUUID()}`;
+					let result: unknown;
+					try {
+						result = await this.callTool(params as Record<string, unknown>, authKey);
+					} finally {
+						if (callerKey === undefined) {
+							authManager.clearKey(authKey);
+						}
+					}
 					transport.send({
 						jsonrpc: '2.0',
 						id,
