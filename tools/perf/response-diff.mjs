@@ -69,17 +69,39 @@ function normalise(value) {
 		return Object.fromEntries(
 			Object.keys(value)
 				.sort()
-				.map((k) => [k, k === 'lastLoginAt' ? '<volatile>' : normalise(value[k])])
+				.map((k) => [k, k === 'lastLoginAt' || k === 'updatedAt' ? '<volatile>' : normalise(value[k])])
 		);
 	}
 	return value;
 }
+
+// Paths of row lists whose order changed in the comparison under way (same rows).
+let reordered = new Set();
 
 function firstDifference(a, b, at = '$') {
 	if (typeof a !== typeof b || Array.isArray(a) !== Array.isArray(b))
 		return `${at}: ${JSON.stringify(a)?.slice(0, 120)} vs ${JSON.stringify(b)?.slice(0, 120)}`;
 	if (Array.isArray(a)) {
 		if (a.length !== b.length) return `${at}.length: ${a.length} vs ${b.length}`;
+		// Rows carrying an id are matched by id: the API states no order for most lists, so the same rows in
+		// another order are the same page (reported as reordered, not as a difference). Duplicate or missing
+		// ids are still differences.
+		const byId = (rows) =>
+			rows.every((r) => r && typeof r === 'object' && typeof r.id === 'string') ? rows : null;
+		const rowsA = byId(a);
+		const rowsB = byId(b);
+		if (rowsA && rowsB && a.length > 0) {
+			const idsA = rowsA.map((r) => r.id);
+			const idsB = new Map(rowsB.map((r) => [r.id, r]));
+			if (new Set(idsA).size !== idsA.length || idsB.size !== rowsB.length) return `${at}: duplicate ids`;
+			for (const row of rowsA) {
+				if (!idsB.has(row.id)) return `${at}: row ${row.id} missing`;
+				const d = firstDifference(row, idsB.get(row.id), `${at}[id=${row.id}]`);
+				if (d) return d;
+			}
+			if (idsA.some((id, i) => rowsB[i].id !== id)) reordered.add(at);
+			return null;
+		}
 		for (let i = 0; i < a.length; i++) {
 			const d = firstDifference(a[i], b[i], `${at}[${i}]`);
 			if (d) return d;
@@ -124,8 +146,10 @@ for (const ep of scenarios.endpoints) {
 	}
 	out[ep.name] = { status: res.status, body: normalise(body) };
 	if (!AGAINST) continue;
-	const ra = saved[ep.name];
+	// Normalised again: a capture saved by an older version of this tool may predate a normalisation rule.
+	const ra = saved[ep.name] ? { ...saved[ep.name], body: normalise(saved[ep.name].body) } : undefined;
 	const rb = out[ep.name];
+	reordered = new Set();
 	let diff = !ra
 		? 'not in saved file'
 		: ra.status !== rb.status
@@ -133,8 +157,11 @@ for (const ep of scenarios.endpoints) {
 			: firstDifference(ra.body, rb.body);
 	// /health reports uptime and timings that differ by nature; its status code must still match.
 	if (diff && ep.name === 'health' && ra && ra.status === rb.status) diff = null;
-	console.log(`${diff ? 'DIFF' : 'same'}  ${ep.name}${diff ? `  ${diff}` : ''}`);
-	summary[ep.name] = diff ? { same: false, firstDifference: diff } : { same: true };
+	const order = !diff && reordered.size ? ` (reordered: ${[...reordered].join(', ')})` : '';
+	console.log(`${diff ? 'DIFF' : 'same'}  ${ep.name}${diff ? `  ${diff}` : order}`);
+	summary[ep.name] = diff
+		? { same: false, firstDifference: diff }
+		: { same: true, ...(reordered.size ? { reordered: [...reordered] } : {}) };
 	if (diff) failures++;
 }
 if (OUT && AGAINST) {

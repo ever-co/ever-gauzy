@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { execFileSync } from 'node:child_process';
 
@@ -65,9 +66,7 @@ function redisCalls() {
 	}
 	return { total, byCommand };
 }
-const scenarioFile =
-	process.argv[2] ||
-	path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), 'scenarios.json');
+const scenarioFile = process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), 'scenarios.json');
 
 const baseUrl = new URL(BASE);
 const lib = baseUrl.protocol === 'https:' ? https : http;
@@ -165,6 +164,22 @@ async function pgCalls() {
  * be that commit; state it in `BUILD_COMMIT` when it is not), the invocation, the runtime and the machine, and the
  * correctness check that accompanied the run (`CORRECTNESS_RESULT`: the summary written by response-diff.mjs).
  */
+/**
+ * The response-diff summary named by CORRECTNESS_RESULT, read and checked: an endpoint whose rows differ (not
+ * merely reordered) is reported loudly, because a benchmark of a build that answers differently proves nothing.
+ */
+function correctnessResult() {
+	if (!env.CORRECTNESS_RESULT) return null;
+	const result = JSON.parse(fs.readFileSync(env.CORRECTNESS_RESULT, 'utf8'));
+	const differing = Object.entries(result.endpoints ?? {})
+		.filter(([, r]) => r && r.same === false)
+		.map(([name, r]) => `${name} (${r.firstDifference})`);
+	if (differing.length) {
+		console.warn(`WARNING: the correctness check reports different responses on: ${differing.join('; ')}`);
+	}
+	return { ...result, differingEndpoints: differing.length };
+}
+
 function provenance() {
 	let commit = null;
 	try {
@@ -198,7 +213,7 @@ function provenance() {
 			cpus: cpus.length,
 			memoryGB: Math.round(os.totalmem() / 1073741824)
 		},
-		correctness: env.CORRECTNESS_RESULT ? JSON.parse(fs.readFileSync(env.CORRECTNESS_RESULT, 'utf8')) : null
+		correctness: correctnessResult()
 	};
 }
 
@@ -248,11 +263,10 @@ async function runEndpoint(ep, ctx) {
 	const method = ep.method || 'GET';
 	const body = ep.body ? JSON.parse(fill(JSON.stringify(ep.body), ctx.vars)) : undefined;
 
-	// Warm up and sanity check
-	let first;
-	for (let i = 0; i < WARMUP; i++) {
-		const r = await request(method, url, { headers, body });
-		if (i === 0) first = r;
+	// Sanity check (its response is also the first warm-up request), then the remaining warm-up requests
+	const first = await request(method, url, { headers, body });
+	for (let i = 1; i < WARMUP; i++) {
+		await request(method, url, { headers, body });
 	}
 	if (!first || first.status >= 400 || first.status === 0) {
 		return {

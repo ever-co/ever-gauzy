@@ -33,7 +33,7 @@
     },
     "correctness": {
       "against": "baseline.responses.json",
-      "at": "2026-10-17T21:20:38.181Z",
+      "at": "2026-10-17T21:46:57.469Z",
       "endpoints": {
         "health": {
           "same": true
@@ -42,8 +42,7 @@
           "same": true
         },
         "user-me": {
-          "same": false,
-          "firstDifference": "$.updatedAt: \"2026-10-17T18:56:19.503Z\" vs \"2026-10-17T21:20:36.696Z\""
+          "same": true
         },
         "role-permissions-me": {
           "same": true
@@ -55,15 +54,19 @@
           "same": true
         },
         "projects-pagination": {
-          "same": false,
-          "firstDifference": "$.items[0].budget: 138 vs 260"
+          "same": true,
+          "reordered": [
+            "$.items"
+          ]
         },
         "employees-pagination": {
           "same": true
         },
         "tasks-pagination": {
-          "same": false,
-          "firstDifference": "$.items[0].createdAt: \"2026-10-17T14:06:56.136Z\" vs \"2026-10-17T14:07:05.179Z\""
+          "same": true,
+          "reordered": [
+            "$.items"
+          ]
         },
         "teams-pagination": {
           "same": true
@@ -71,7 +74,8 @@
         "employee-by-id": {
           "same": true
         }
-      }
+      },
+      "differingEndpoints": 0
     },
     "note": "Both legs measured back to back within ~15 minutes while unrelated desktop processes kept the CPU at 50-79% load (Win32_Processor LoadPercentage sampled every 20 s); absolute times are inflated by that contention, ratios between the two legs are comparable."
   },

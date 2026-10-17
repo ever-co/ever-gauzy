@@ -32,6 +32,15 @@ describe('redactHeaders', () => {
 			'/api/auth/confirm?email=a%40b.c&code=%5BFiltered%5D&refresh_token=%5BFiltered%5D'
 		);
 		expect(redactUrl('/api/tags?where%5BorganizationId%5D=o1')).toBe('/api/tags?where%5BorganizationId%5D=o1');
+		// A bracketed key is judged by each of its segments, in the parsed query and in the URL alike.
+		expect(redactQuery({ where: { organizationId: 'o1' }, 'where[token]': 't', 'filters[0][refresh_token]': 'r' })).toEqual({
+			where: { organizationId: 'o1' },
+			'where[token]': '[Filtered]',
+			'filters[0][refresh_token]': '[Filtered]'
+		});
+		expect(redactUrl('/api/x?where%5Btoken%5D=t&where%5Bname%5D=n')).toBe(
+			'/api/x?where%5Btoken%5D=%5BFiltered%5D&where%5Bname%5D=n'
+		);
 		expect(redactUrl('/api/tags')).toBe('/api/tags');
 	});
 });

@@ -39,9 +39,17 @@ export const REDACTED_QUERY_KEYS: ReadonlySet<string> = new Set([
 	'state'
 ]);
 
-function isRedactedKey(name: string): boolean {
-	const key = name.toLowerCase().replace(/\[\]$/, '');
+function isRedactedSegment(key: string): boolean {
 	return REDACTED_QUERY_KEYS.has(key) || key.endsWith('token') || key.endsWith('secret') || key.endsWith('password');
+}
+
+/** `token`, `where[token]`, `filters[0][refresh_token]`: every bracketed segment of the name is checked. */
+function isRedactedKey(name: string): boolean {
+	return name
+		.toLowerCase()
+		.split(/[\[\]]+/)
+		.filter(Boolean)
+		.some(isRedactedSegment);
 }
 
 /** The parsed query with every credential-bearing value (at any depth) replaced by `[Filtered]`. */
