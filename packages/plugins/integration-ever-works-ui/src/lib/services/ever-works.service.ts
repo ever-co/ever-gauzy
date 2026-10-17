@@ -123,6 +123,14 @@ export interface EverWorksPersonRow {
 export interface EverWorksPeopleView {
 	members: EverWorksPersonRow[];
 	unmatchedEmployees: Array<{ employeeId: string; name: string; email: string | null }>;
+	/** Ever Works inbox items waiting for their recipient to be paired (absent from an older API). */
+	deferredInbox?: EverWorksDeferredInboxRow[];
+}
+/** One unpaired member's inbox items that wait (deferred) until the member is paired. */
+export interface EverWorksDeferredInboxRow {
+	ewUserId: string;
+	count: number;
+	items: Array<{ ewItemId: string; title: string; kind: string | null; occurredAt: string | null }>;
 }
 export interface EverWorksPeopleDecision {
 	links?: Array<{ ewUserId: string; employeeId: string }>;

@@ -98,6 +98,25 @@ type Section = 'people' | 'agents' | 'teams' | 'projects';
 							</button>
 						</div>
 					}
+					@if (people.deferredInbox?.length) {
+						<div class="deferred-inbox" data-test="deferred-inbox">
+							<h6>{{ 'EVER_WORKS.REVIEW.DEFERRED_INBOX' | translate }}</h6>
+							<p>{{ 'EVER_WORKS.REVIEW.DEFERRED_INBOX_HINT' | translate }}</p>
+							<ul>
+								@for (row of people.deferredInbox; track row.ewUserId) {
+									<li [attr.data-test]="'deferred-' + row.ewUserId">
+										<strong>{{ memberName(row.ewUserId) }}</strong>:
+										{{ 'EVER_WORKS.REVIEW.DEFERRED_COUNT' | translate: { count: row.count } }}
+										<ul>
+											@for (item of row.items; track item.ewItemId) {
+												<li>{{ item.title || item.ewItemId }}</li>
+											}
+										</ul>
+									</li>
+								}
+							</ul>
+						</div>
+					}
 				}
 			</nb-tab>
 			<nb-tab [lazyLoad]="true" [tabTitle]="'EVER_WORKS.REVIEW.AGENTS' | translate" data-test="tab-agents">
@@ -282,6 +301,12 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 
 	stateLabel(linked: boolean, suggested: boolean): string {
 		return linked ? 'EVER_WORKS.REVIEW.LINKED' : suggested ? 'EVER_WORKS.REVIEW.SUGGESTED' : 'EVER_WORKS.REVIEW.UNMATCHED';
+	}
+
+	/** An Ever Works member's name on the People tab (their id when they are no longer a member). */
+	memberName(ewUserId: string): string {
+		const member = this.people?.members.find((row) => row.ewUserId === ewUserId);
+		return member ? member.displayName || member.username : ewUserId;
 	}
 
 	/** Gauzy teams paired with nothing and not chosen for an Ever Works team in this form. */
