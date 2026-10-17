@@ -10259,7 +10259,14 @@ type Mutation {
   cancelStockAdjustment(id: ID!): StockAdjustment!
   createStockReservation(input: StockReservationInput!): StockReservation!
   releaseStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
-  consumeStockReservation(id: ID!): StockReservation!
+
+  """
+  Consumes a hold: the held units leave, and the hold closes with them.
+  
+  `reason` is the machine-readable reason recorded on the ledger row, as `POST /stock-reservations/:id/consume?reason=`
+  records it; `idempotencyKey` makes a retry safe, as on the release beside it.
+  """
+  consumeStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
 
   """
   Pushes the expiry of every active hold of a document.
@@ -10278,7 +10285,14 @@ type Mutation {
   cancelStockTransfer(id: ID!, reason: String): StockTransfer!
   addStockTransferLine(input: StockTransferLineInput!): StockTransferLine!
   createStockAlert(input: StockAlertInput!): StockAlert!
-  updateStockAlert(id: ID!, input: StockAlertInput!): StockAlert!
+
+  """
+  Updates an alert rule and answers it as it now stands.
+  
+  State the changes once: as `patch`, whose every member is optional, or as the older `input`, the create's
+  shape, which restates the rule's required members and keeps working. Both, or neither, is refused.
+  """
+  updateStockAlert(id: ID!, input: StockAlertInput, patch: UpdateStockAlertInput): StockAlert!
   deleteStockAlert(id: ID!): Boolean!
   createStockCount(input: StockCountInput!): StockCount!
   openStockCount(id: ID!): StockCount!
@@ -48102,6 +48116,20 @@ input StockAlertInput {
   cooldownMinutes: Int
   isActive: Boolean
   idempotencyKey: String
+}
+
+"""
+What a caller changes on an alert rule. Every member is optional, because an edit states what changed rather
+than restating the rule; `idempotencyKey` is absent, because an edit is not a create a retry could duplicate.
+"""
+input UpdateStockAlertInput {
+  variantId: ID
+  warehouseId: ID
+  threshold: Float
+  notifyEmails: [String!]
+  notifyRoles: [String!]
+  cooldownMinutes: Int
+  isActive: Boolean
 }
 
 input StockCountInput {
