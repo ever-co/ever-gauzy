@@ -53,6 +53,14 @@ const convertTimeOffDateFields = (timeOffData: TimeOffData): ConvertedTimeOffDat
 
 type DefaultParams = { tenantId?: string; organizationId?: string };
 
+/** The fields of a listed time-off request the statistics read. */
+type TimeOffRequestRow = Record<string, unknown> & {
+	status?: string;
+	start?: string;
+	employees?: { id: string }[];
+	policy?: { name?: string; leaveType?: string };
+};
+
 interface TimeOffRequestFilters {
 	employeeId?: string;
 	startDate?: string;
@@ -865,13 +873,16 @@ export const registerTimeOffTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				// No statistics route: count the requests the list route answers
+				// The list route always joins `employees` and `policy`
 				const requests = (
-					await findTimeOffRequests(defaultParams, { startDate, endDate, employeeId, policyId })
-				).filter(
-					({ policy }) =>
-						!type || (policy as { leaveType?: string } | undefined)?.leaveType === toLeaveType(type)
-				);
-				const groupings = {
+					(await findTimeOffRequests(defaultParams, {
+						startDate,
+						endDate,
+						employeeId,
+						policyId
+					})) as TimeOffRequestRow[]
+				).filter(({ policy }) => !type || policy?.leaveType === toLeaveType(type));
+				const groupings: Record<string, (request: TimeOffRequestRow) => unknown> = {
 					employee: (request) => (request.employees ?? []).map(({ id }) => id),
 					policy: (request) => request.policy?.name,
 					type: (request) => request.policy?.leaveType,
