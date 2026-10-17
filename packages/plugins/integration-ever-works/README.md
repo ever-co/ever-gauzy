@@ -211,6 +211,35 @@ and answered `202`.
   (`EVER_WORKS_PROJECT_WORKS_ENABLED=true` there); otherwise, or when Ever
   Works refuses, the reason is returned in `failures` and nothing is linked.
   A retry never creates a second work. Gauzy never creates a work on its own.
+- **Tasks.** Both ways, through Gauzy's own task commands (numbering,
+  sanitizing, subscriptions and other integrations behave as for any task
+  write), attributed to the mapped person or agent, else to the admin who
+  connected. Title (cut to 200 in Ever Works, the full title in the
+  description), description (Markdown ↔ rich HTML), status (the task's own
+  status set by slug, then by flag; Ever Works' gates decide, and a refused move
+  puts Ever Works' status back with a comment), priority, labels ↔ tags,
+  parent, teams (the scope), assignees ↔ members (agents included), watchers ↔
+  manual subscriptions (people), and blockers and relations ↔ linked issues
+  (written as a pair on both Gauzy tasks; `follow-up` is "relates to", the kind
+  kept on the link; a bulk delete is caught by a 10-minute sweep). Task chat ↔
+  task comments: an agent's message is a comment by its agent employee
+  (`Agent` actor), a Gauzy comment is posted as its author (cut to 16384
+  characters); Ever Works lets only the author edit, a person for 5 minutes, so
+  a later Gauzy edit is logged, not pushed. The Gauzy task links to its Ever
+  Works page and, once there is one, its pull request. Due and start dates and
+  the estimate sync too (Gauzy seconds ↔ Ever Works minutes; a start after the
+  due date is not sent, as Ever Works refuses it). Each
+  side is compared with its own last-synced value, so a value the other side
+  cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
+  changed a field the later edit wins, and a lost description is kept as a
+  comment. An Ever Works task lands in its work's project, else the Ideas
+  project for an idea's task, else the only project of its mission's initiative,
+  else the default "Ever Works" project. A delete in Ever Works soft-deletes
+  the Gauzy task; a Gauzy delete cancels the Ever Works task with a comment.
+  Private tasks, recurring templates, Idea tasks (synced as ideas) and, unless
+  the setting is on, triage tasks are not synced. Task writes need a process
+  that serves the API (it has the request context the task commands read);
+  where the worker also runs the plugin, set `EVER_WORKS_SYNC_LOOP=off` there.
 - **Ideas ↔ Idea tasks (G-P2-3).** An Ever Works idea is a Gauzy task of
   the organization's "Idea" issue type in the "Ever Works — Ideas" project
   (created when first needed): title, description (plain text, escaped),

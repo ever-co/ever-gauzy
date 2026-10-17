@@ -11,6 +11,7 @@ import {
 	IssueType,
 	OrganizationProject,
 	OrganizationProjectCreateCommand,
+	RequestContext,
 	TaskView,
 	Tenant
 } from '@gauzy/core';
@@ -231,12 +232,27 @@ export class EverWorksMappingService {
 
 	/** `POST /mappings/:id/projects/default`: the "Ever Works" project, created on first need (plan 06 G-P1-4). */
 	async ensureDefaultProject(integrationTenantId: ID, organizationId?: ID): Promise<{ projectId: ID; created: boolean }> {
-		return this.ensureProject(integrationTenantId, S.DEFAULT_PROJECT_ID, EVER_WORKS_DEFAULT_PROJECT_NAME, organizationId);
+		return this.ensureProject(integrationTenantId, S.DEFAULT_PROJECT_ID, EVER_WORKS_DEFAULT_PROJECT_NAME, () => this.scopes.resolve(organizationId));
 	}
 
 	/** `POST /mappings/:id/projects/ideas`: the "Ever Works — Ideas" project, created on first need. */
 	async ensureIdeasProject(integrationTenantId: ID, organizationId?: ID): Promise<{ projectId: ID; created: boolean }> {
-		return this.ensureProject(integrationTenantId, S.IDEAS_PROJECT_ID, EVER_WORKS_IDEAS_PROJECT_NAME, organizationId);
+		return this.ensureProject(integrationTenantId, S.IDEAS_PROJECT_ID, EVER_WORKS_IDEAS_PROJECT_NAME, () => this.scopes.resolve(organizationId));
+	}
+
+	/**
+	 * For the sync engine (no request, so no caller to check): the mapping's "Ever Works" (`default`) or
+	 * "Ever Works — Ideas" (`ideas`) project, created on first need exactly as the routes above create it.
+	 * The caller runs it inside a request context of its own, so the platform's project command sees the
+	 * tenant (plan 01 §7.2: every synced task sits in a project).
+	 */
+	async ensureProjectForSync(tenantId: ID, organizationId: ID, integrationTenantId: ID, kind: 'default' | 'ideas'): Promise<ID> {
+		const scope: EverWorksScope = { tenantId, organizationId, userId: (RequestContext.currentUserId() ?? '') as ID };
+		const { projectId } =
+			kind === 'ideas'
+				? await this.ensureProject(integrationTenantId, S.IDEAS_PROJECT_ID, EVER_WORKS_IDEAS_PROJECT_NAME, async () => scope)
+				: await this.ensureProject(integrationTenantId, S.DEFAULT_PROJECT_ID, EVER_WORKS_DEFAULT_PROJECT_NAME, async () => scope);
+		return projectId;
 	}
 
 	// ── Internals ──────────────────────────────────────────────────────────────────────────────
@@ -245,10 +261,15 @@ export class EverWorksMappingService {
 	 * Returns the configured project, or creates it through the platform's own command (so the project
 	 * gets its task statuses, priorities, sizes and issue types like any other) and records it.
 	 */
-	private async ensureProject(integrationTenantId: ID, name: S, projectName: string, organizationId?: ID): Promise<{ projectId: ID; created: boolean }> {
+	private async ensureProject(
+		integrationTenantId: ID,
+		name: S,
+		projectName: string,
+		scopeOf: () => Promise<EverWorksScope>
+	): Promise<{ projectId: ID; created: boolean }> {
 		const key = `${integrationTenantId}:${name}`;
 		const previous = this.projectCreations.get(key) ?? Promise.resolve();
-		const current = previous.catch(() => undefined).then(() => this.ensureProjectOnce(integrationTenantId, name, projectName, organizationId));
+		const current = previous.catch(() => undefined).then(() => this.ensureProjectOnce(integrationTenantId, name, projectName, scopeOf));
 		this.projectCreations.set(key, current);
 		try {
 			return await current;
@@ -257,8 +278,13 @@ export class EverWorksMappingService {
 		}
 	}
 
-	private async ensureProjectOnce(integrationTenantId: ID, name: S, projectName: string, organizationId?: ID): Promise<{ projectId: ID; created: boolean }> {
-		const scope = await this.scopes.resolve(organizationId);
+	private async ensureProjectOnce(
+		integrationTenantId: ID,
+		name: S,
+		projectName: string,
+		scopeOf: () => Promise<EverWorksScope>
+	): Promise<{ projectId: ID; created: boolean }> {
+		const scope = await scopeOf();
 		const mapping = await this.require(this.dataSource.manager, scope, integrationTenantId);
 		const configured = this.setting(mapping, name);
 		if (configured) {
