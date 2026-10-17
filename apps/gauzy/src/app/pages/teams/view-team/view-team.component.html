@@ -739,7 +739,29 @@
 				<span aria-hidden="true">{{ viewedProjectCard?.initials }}</span>
 				}
 			</span>
-			<h5 class="project-view-name">{{ viewedProject.name }}</h5>
+			<div class="project-view-title">
+				<h5 class="project-view-name" [title]="viewedProject.name">{{ viewedProject.name }}</h5>
+				<!-- Status line: status, visibility and client, as far as they are known. -->
+				@if (projectFacts?.status || projectFacts?.isPublic !== undefined || projectFacts?.client) {
+				<p class="project-view-meta">
+					@if (projectFacts.status; as status) {
+					<span class="project-status" [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
+					}
+					@if (projectFacts.isPublic !== undefined) {
+					<span class="project-meta-item">
+						<nb-icon [icon]="projectFacts.isPublic ? 'globe-outline' : 'lock-outline'" aria-hidden="true"></nb-icon>
+						{{ (projectFacts.isPublic ? 'BUTTONS.PUBLIC' : 'BUTTONS.PRIVATE') | translate }}
+					</span>
+					}
+					@if (projectFacts.client) {
+					<span class="project-meta-item" [title]="projectFacts.client">
+						<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+						{{ projectFacts.client }}
+					</span>
+					}
+				</p>
+				}
+			</div>
 			<a
 				*ngxPermissionsOnly="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT]"
 				nbButton
@@ -753,6 +775,27 @@
 				{{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}
 			</a>
 		</div>
+
+		<!-- Key figures: the team's time on it in the period, its members, and its deadline. -->
+		<dl recordViewHeader class="project-facts">
+			<div class="project-fact">
+				<dt>{{ 'EMPLOYEES_PAGE.VIEW.WORKED_PERIOD' | translate }}</dt>
+				<dd>{{ viewedProjectCard?.duration ? formatDuration(viewedProjectCard.duration) : '—' }}</dd>
+			</div>
+			<div class="project-fact">
+				<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS' | translate }}</dt>
+				<dd>{{ projectFacts?.members ?? '—' }}</dd>
+			</div>
+			<div class="project-fact">
+				<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}</dt>
+				<dd>
+					{{ projectFacts?.endDate || '—' }}
+					@if (projectFacts?.due; as due) {
+					<span class="project-fact-hint" [class.is-overdue]="projectFacts.overdue">{{ due.key | translate : { count: due.count } }}</span>
+					}
+				</dd>
+			</div>
+		</dl>
 
 		<!-- Progress: the share of the project's tasks that are done, and how the rest stand. -->
 		<section recordViewHeader class="panel project-view-panel" [nbSpinner]="projectProgress.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
