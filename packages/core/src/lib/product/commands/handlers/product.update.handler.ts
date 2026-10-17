@@ -54,7 +54,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		 */
 
 		const optionsGroupsCreate: IProductOptionGroupTranslatable[] = await Promise.all(
-			optionGroupCreateInputs.map(async (group: IProductOptionGroupTranslatable) => {
+			(optionGroupCreateInputs || []).map(async (group: IProductOptionGroupTranslatable) => {
 				let newGroup = new ProductOptionGroup();
 				newGroup.name = group.name;
 				newGroup.productId = productUpdateRequest.id;

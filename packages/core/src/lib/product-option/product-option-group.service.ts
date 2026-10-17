@@ -19,7 +19,7 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 	}
 
 	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]): Promise<void> {
-		const ids = productOptionGroupsInput
+		const ids = (productOptionGroupsInput ?? [])
 			.filter((g): g is IProductOptionGroupTranslatable & { id: string } => 'id' in g && !!g.id)
 			.map((g) => g.id);
 		if (ids.length > 0) {
