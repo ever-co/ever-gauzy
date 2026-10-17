@@ -626,7 +626,24 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		const list = row.priceList;
 
 		if (!list) {
+			// A row that names a list whose list did not load is not a default price. The relation join
+			// filters a soft-deleted list (`deletedAt IS NULL`), so the row of a deleted list arrives with
+			// no list at all, and reading that absence as "no list" priced every row of a deleted list
+			// as the variant's default price (R2-27). Only a row that names no list is a default price.
+			if (row.priceListId) {
+				return false;
+			}
+
 			return scope.priceListId === undefined;
+		}
+
+		// The list is the row's own tenant's and organization's. A row is only ever written inside the
+		// caller's organization, and a list of another organization has no say over its prices.
+		if (
+			(list.tenantId && row.tenantId && String(list.tenantId) !== String(row.tenantId)) ||
+			(list.organizationId && row.organizationId && String(list.organizationId) !== String(row.organizationId))
+		) {
+			return false;
 		}
 
 		// A dry run names the list it is asking about, and asking about a draft list is the whole point
