@@ -138,10 +138,10 @@ describe('AddCartTokenHashColumn1791000000660 — what it issues', () => {
 		);
 	});
 
-	it('is the last tick of the plugin’s set, and its name is its class’s', () => {
+	it('runs after every tick before it, and its name is its class’s', () => {
 		// A migration's timestamp is frozen once it has shipped, so this one runs after every file the set
-		// already holds and cannot be inserted between two of them.
-		expect(ALL_CART_MIGRATIONS[ALL_CART_MIGRATIONS.length - 1]).toBe(AddCartTokenHashColumn1791000000660);
+		// held when it shipped; the checkout-claim tick (R3-10) is the only one after it.
+		expect(ALL_CART_MIGRATIONS[ALL_CART_MIGRATIONS.length - 2]).toBe(AddCartTokenHashColumn1791000000660);
 		expect(new AddCartTokenHashColumn1791000000660().name).toBe(AddCartTokenHashColumn1791000000660.name);
 	});
 });
