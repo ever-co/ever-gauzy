@@ -33,8 +33,9 @@ jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
 
 import 'reflect-metadata';
 import { InboxItemKindEnum, InboxItemSourceEnum } from '@gauzy/contracts';
-import { Employee } from '@gauzy/core';
+import { Employee, User } from '@gauzy/core';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
+import { EverWorksStaleLinkError } from '../sync/links/ever-works-link.service';
 import { EVER_WORKS_EMAIL_EXTERNAL_SOURCE, EverWorksAgentEmailMirror } from './ever-works-agent-email.mirror';
 
 type Row = Record<string, any>;
@@ -127,12 +128,13 @@ function setup(options: { direction?: string; inbox?: boolean } = {}) {
 		isEnabled: true
 	};
 	const employees: Row[] = [{ id: 'emp-ann', userId: 'user-ann', tenantId: 't1', organizationId: 'o1' }];
+	const users: Row[] = [{ id: 'user-ann', tenantId: 't1' }];
 	const dataSource = {
 		getRepository: (target: unknown) => ({
-			findOne: async ({ where }: { where: Row }) =>
-				target === Employee
-					? (employees.find((e) => e['id'] === where['id'] && e['tenantId'] === where['tenantId']) ?? null)
-					: null
+			findOne: async ({ where }: { where: Row }) => {
+				const rows = target === Employee ? employees : target === User ? users : [];
+				return rows.find((row) => row['id'] === where['id'] && row['tenantId'] === where['tenantId']) ?? null;
+			}
 		})
 	};
 	const upserts: Row[] = [];
@@ -155,7 +157,7 @@ function setup(options: { direction?: string; inbox?: boolean } = {}) {
 		{ client: () => ({ request }) } as never,
 		(options.inbox === false ? undefined : inbox) as never
 	);
-	return { mirror, links, upserts, inbox, request };
+	return { mirror, links, upserts, inbox, request, users, linkService };
 }
 
 const applyContext = { connection: { id: 'c1' }, event: {}, organizationId: 'o1' } as never;
@@ -225,6 +227,22 @@ describe('EverWorksAgentEmailMirror — EW agent mail as read-only Gauzy Inbox c
 		(links.find((l) => l['entityType'] === EverWorksLinkType.AGENT) as Row)['state'] = EverWorksLinkState.UNLINKED;
 		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'applied' });
 		expect(upserts[0]).toMatchObject({ agentEmployeeId: null, metadata: { mailbox: 'Ever Works — agent' } });
+	});
+
+	it('never addresses a copy to a user of another tenant (the paired employee’s user is checked)', async () => {
+		const { mirror, users, upserts } = setup();
+		users[0]['tenantId'] = 't9';
+		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'deferred' });
+		expect(upserts).toHaveLength(0);
+	});
+
+	it('a newer version applied meanwhile by another process: the copy is rewritten from Ever Works and the event skipped', async () => {
+		const { mirror, upserts, request, linkService } = setup();
+		linkService.record.mockRejectedValueOnce(new EverWorksStaleLinkError('l1' as never, 'ew-mail-1', 9, 3));
+		request.mockResolvedValueOnce(message({ version: 9, subject: 'Your refund (final)' }) as never);
+		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		expect(request).toHaveBeenCalledWith('GET', '/email/messages/ew-mail-1');
+		expect(upserts.map((row) => row['title'])).toEqual(['Your refund', 'Your refund (final)']);
 	});
 
 	it('reads an omitted body (over 256 KiB) from GET /email/messages/:id', async () => {

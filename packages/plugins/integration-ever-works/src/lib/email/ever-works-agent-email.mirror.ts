@@ -11,7 +11,7 @@ import {
 	InboxItemPriorityEnum,
 	InboxItemSourceEnum
 } from '@gauzy/contracts';
-import { Employee } from '@gauzy/core';
+import { Employee, User } from '@gauzy/core';
 import type { EverWorksEmailMessage, EverWorksEventEnvelope } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
@@ -21,7 +21,7 @@ import type {
 	EverWorksApplyOutcome,
 	EverWorksInboundHandler
 } from '../sync/inbound/ever-works-inbound.applier';
-import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
+import { EverWorksLinkService, EverWorksStaleLinkError } from '../sync/links/ever-works-link.service';
 
 /** The aggregate of the `email.message.*` events (contract event catalog v1, CR-11). */
 export const EVER_WORKS_EMAIL_AGGREGATE = 'email_message';
@@ -157,31 +157,47 @@ export class EverWorksAgentEmailMirror implements EverWorksInboundHandler {
 		const task = message.taskId
 			? await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, message.taskId)
 			: null;
-		const result = await this.inbox.upsertExternal(
-			mirroredEmailUpsertOf(
-				message,
-				{ tenantId: context.tenantId, organizationId: context.organizationId, recipientUserId },
-				{
-					taskId: (task?.gauzyId as ID | undefined) ?? null,
-					agentEmployeeId: (live?.gauzyId as ID | undefined) ?? null,
-					agentName: (this.links.snapshot<{ name?: string }>(live).name as string | undefined) ?? null
-				}
-			)
+		const scope = { tenantId: context.tenantId, organizationId: context.organizationId, recipientUserId };
+		const extras = {
+			taskId: (task?.gauzyId as ID | undefined) ?? null,
+			agentEmployeeId: (live?.gauzyId as ID | undefined) ?? null,
+			agentName: (this.links.snapshot<{ name?: string }>(live).name as string | undefined) ?? null
+		};
+		// The version again, right before the write: a newer one applied meanwhile (by another process) wins.
+		const latest = await this.links.byEw(
+			context.integrationTenantId,
+			EverWorksLinkType.AGENT_EMAIL_MIRROR,
+			message.id
 		);
+		if (latest?.ewVersion != null && version != null && version <= latest.ewVersion) {
+			return { status: 'skipped', message: 'already applied (version)' };
+		}
+		const result = await this.inbox.upsertExternal(mirroredEmailUpsertOf(message, scope, extras));
 		if (!result.recipientUserIds.includes(recipientUserId)) {
 			return { status: 'deferred', message: 'the matched Gauzy user is not a user of this tenant' };
 		}
-		await this.links.record({
-			tenantId: context.tenantId,
-			organizationId: context.organizationId,
-			integrationTenantId: context.integrationTenantId,
-			entityType: EverWorksLinkType.AGENT_EMAIL_MIRROR,
-			gauzyId: result.item.id as ID,
-			ewId: message.id,
-			ewVersion: version,
-			ewUpdatedAt: message.updatedAt ?? null,
-			direction: 'inbound'
-		});
+		try {
+			await this.links.record({
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				integrationTenantId: context.integrationTenantId,
+				entityType: EverWorksLinkType.AGENT_EMAIL_MIRROR,
+				gauzyId: result.item.id as ID,
+				ewId: message.id,
+				ewVersion: version,
+				ewUpdatedAt: message.updatedAt ?? null,
+				direction: 'inbound'
+			});
+		} catch (error) {
+			if (!(error instanceof EverWorksStaleLinkError)) throw error;
+			// Another process applied a newer version while this one worked (its lease lapsed): the copy written above
+			// may be older than that one, so it is written again from the message as Ever Works holds it now.
+			const current = await this.connections
+				.client(context.connection, context.everWorksOrganizationSlug)
+				.request<EverWorksEmailMessage>('GET', `/email/messages/${encodeURIComponent(message.id)}`);
+			await this.inbox.upsertExternal(mirroredEmailUpsertOf({ ...current, id: message.id }, scope, extras));
+			return { status: 'skipped', message: `superseded: ${error.message}`.slice(0, 2000) };
+		}
 		return { status: 'applied' };
 	}
 
@@ -193,6 +209,12 @@ export class EverWorksAgentEmailMirror implements EverWorksInboundHandler {
 			where: { id: link.gauzyId, tenantId: context.tenantId, organizationId: context.organizationId },
 			select: { id: true, userId: true }
 		});
-		return (employee?.userId as ID | undefined) ?? null;
+		if (!employee?.userId) return null;
+		// The user of that employee, in this tenant (a copy is never addressed to a user of another tenant).
+		const user = await this.dataSource.getRepository(User).findOne({
+			where: { id: employee.userId, tenantId: context.tenantId },
+			select: { id: true }
+		});
+		return (user?.id as ID | undefined) ?? null;
 	}
 }
