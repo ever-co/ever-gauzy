@@ -189,6 +189,8 @@ const { EverWorksTaskCommentsService } = load('tasks/ever-works-task-comments.se
 const { everWorksSideOf } = load('tasks/ever-works-task.mapper.ts');
 const { EverWorksTasksService, gauzySideOf } = load('tasks/ever-works-tasks.service.ts');
 const { ActorTypeEnum } = require('../packages/contracts/src/index.ts');
+// The platform's own column transformer (`ActorTypeEnum` ↔ the stored integer), so comments round-trip as in production.
+const { ActorTypeTransformer } = require('../packages/core/src/lib/shared/pipes/actor-type-transform.ts');
 Module._load = originalLoad;
 
 // ── Schema ───────────────────────────────────────────────────────────────────────────────────────
@@ -241,7 +243,8 @@ const coreSchemas = [
 		taskPriority: { type: 'many-to-one', target: 'TaskPriority', joinColumn: { name: 'taskPriorityId' }, createForeignKeyConstraints: false }
 	}),
 	s('Comment', entities.Comment, 'comment', {
-		entity: str(false), entityId: str(false), comment: txt(false), actorType: int(), employeeId: str(), editedAt: date, deletedAt: { type: Date, nullable: true, deleteDate: true }
+		entity: str(false), entityId: str(false), comment: txt(false), actorType: { ...int(), transformer: new ActorTypeTransformer() }, employeeId: str(), editedAt: date,
+		deletedAt: { type: Date, nullable: true, deleteDate: true }
 	}),
 	s('EntitySubscription', entities.EntitySubscription, 'entity_subscription', { entity: str(false), entityId: str(false), employeeId: str(), type: str() }),
 	s('TaskLinkedIssue', entities.TaskLinkedIssue, 'task_linked_issues', { taskToId: str(false), taskFromId: str(false), action: int(false) }),
@@ -775,6 +778,8 @@ describe('boundary', () => {
 		const comments = await db.getRepository(entities.Comment).findBy({ entityId: id });
 		assert.equal(comments.length, 1);
 		assert.equal(comments[0].actorType, ActorTypeEnum.System);
+		// Stored as the platform stores it (0 = System, through ActorTypeTransformer).
+		assert.deepEqual(await db.query('SELECT "actorType" FROM "comment" WHERE "entityId" = ?', [id]), [{ actorType: 0 }]);
 		assert.match(comments[0].comment, /Ever Works kept the status &quot;in_progress&quot; instead of &quot;done&quot;: blocked by T-43/);
 		const logged = await db.getRepository(sync.EverWorksSyncLog).findBy({ gauzyId: id, action: 'conflict:resolved-by-ew' });
 		assert.equal(logged.length, 1);
