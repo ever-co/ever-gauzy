@@ -22,7 +22,9 @@ export enum EverWorksLinkType {
 	TASK_LINK = 'TASK_LINK',
 	INBOX_ITEM = 'INBOX_ITEM',
 	DOC_FOLDER = 'DOC_FOLDER',
-	DOC = 'DOC'
+	DOC = 'DOC',
+	/** A Gauzy mailbox message handed to an Ever Works agent (P4c): the inbox email ↔ the EW email message. */
+	AGENT_EMAIL = 'AGENT_EMAIL'
 }
 
 export enum EverWorksLinkState {
