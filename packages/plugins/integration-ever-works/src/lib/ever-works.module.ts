@@ -15,7 +15,13 @@ import { EverWorksCatalogService } from './ever-works-catalog.service';
 import { readEverWorksConfig } from './ever-works-config';
 import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
+import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
+import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
+import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
+import { EverWorksInitiativeCapture, EverWorksInitiativeGoalSubscriber, EverWorksInitiativeSubscriber } from './initiatives/ever-works-initiative.signals';
+import { EverWorksInitiativesController } from './initiatives/ever-works-initiatives.controller';
+import { EverWorksInitiativesService } from './initiatives/ever-works-initiatives.service';
 import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
@@ -27,7 +33,8 @@ import { EverWorksPeopleController } from './people/ever-works-people.controller
 import { EverWorksPeopleService } from './people/ever-works-people.service';
 import { EverWorksProjectsController } from './projects/ever-works-projects.controller';
 import { EverWorksProjectsService } from './projects/ever-works-projects.service';
-import { EverWorksTaskEdgeCapture, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskWatcherSubscriber } from './tasks/ever-works-task.signals';
+import { EverWorksTaskCommentsService } from './tasks/ever-works-task-comments.service';
+import { EverWorksTaskCommentSubscriber, EverWorksTaskEdgeCapture, EverWorksTaskLinkedIssueSubscriber, EverWorksTaskWatcherSubscriber } from './tasks/ever-works-task.signals';
 import { EverWorksTaskStore } from './tasks/ever-works-task.store';
 import { EverWorksTasksService } from './tasks/ever-works-tasks.service';
 import { EverWorksTeamCapture, EverWorksTeamMemberSubscriber, EverWorksTeamSubscriber } from './teams/ever-works-team.signals';
@@ -52,6 +59,7 @@ import {
 	MikroOrmEverWorksSyncLogRepository
 } from './sync/entities/ever-works-sync.repositories';
 import { EverWorksSyncLogService } from './sync/ever-works-sync-log.service';
+import { EverWorksProcessCapability } from './sync/ever-works-process';
 import { EverWorksSyncLoop } from './sync/ever-works-sync.loop';
 import { EverWorksFeedPoller } from './sync/inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './sync/inbound/ever-works-inbound.applier';
@@ -73,7 +81,9 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly teams: EverWorksTeamsService,
 		private readonly projects: EverWorksProjectsService,
 		private readonly initialSync: EverWorksInitialSyncService,
-		private readonly tasks: EverWorksTasksService
+		private readonly tasks: EverWorksTasksService,
+		private readonly taskComments: EverWorksTaskCommentsService,
+		private readonly inbox: EverWorksInboxService
 	) {}
 
 	onModuleInit(): void {
@@ -88,11 +98,26 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.applier.register(this.tasks);
 		this.pusher.register(this.tasks);
 		this.loop.registerSweeper(this.tasks);
+		this.pusher.register(this.taskComments);
+		this.loop.registerSweeper(this.taskComments);
+		// EW inbox items → the Gauzy Inbox (skipped while the Gauzy Inbox is off).
+		this.applier.register(this.inbox);
 	}
 }
 
 /** The entity subscribers the plugin adds to the ORMs (outbound triggers of records without a platform event). */
-export const EVER_WORKS_SUBSCRIBERS = [EverWorksTeamSubscriber, EverWorksTeamMemberSubscriber, EverWorksTaskWatcherSubscriber, EverWorksTaskLinkedIssueSubscriber];
+export const EVER_WORKS_SUBSCRIBERS = [
+	EverWorksTeamSubscriber,
+	EverWorksTeamMemberSubscriber,
+	EverWorksTaskWatcherSubscriber,
+	EverWorksTaskLinkedIssueSubscriber,
+	EverWorksTaskCommentSubscriber,
+	EverWorksGoalSubscriber,
+	EverWorksKeyResultSubscriber,
+	EverWorksKeyResultUpdateSubscriber,
+	EverWorksInitiativeSubscriber,
+	EverWorksInitiativeGoalSubscriber
+];
 
 /** Every table the plugin owns (its migrations create them). */
 export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog, EverWorksSyncRun];
@@ -121,6 +146,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksPeopleController,
 		EverWorksTeamsController,
 		EverWorksProjectsController,
+		EverWorksInitiativesController,
 		EverWorksWebhookController,
 		EverWorksSyncController
 	],
@@ -141,6 +167,8 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksOutboundPusher,
 		EverWorksTaskEventListener,
 		EverWorksSyncLoop,
+		// Whether this process hosts the platform write paths the sync loop needs (the worker does not).
+		EverWorksProcessCapability,
 		EverWorksRateLimitGuard,
 		EverWorksLinkService,
 		EverWorksMappingContextService,
@@ -150,7 +178,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksProjectsService,
 		EverWorksTaskStore,
 		EverWorksTasksService,
+		EverWorksTaskCommentsService,
 		EverWorksTaskEdgeCapture,
+		EverWorksInboxService,
 		EverWorksTeamCapture,
 		EverWorksConflictsService,
 		EverWorksInitialSyncService,
@@ -158,6 +188,12 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		// Ideas ↔ Idea tasks (G-P2-3): registers itself with the applier and the pusher.
 		EverWorksIdeasService,
 		EverWorksIdeaTaskCapture,
+		// Goals ↔ Goal + KeyResults (G-P2-1): registers itself with the applier and the pusher.
+		EverWorksGoalsService,
+		EverWorksGoalCapture,
+		// Missions ↔ Strategic Initiatives (G-P2-2): registers itself with the applier and the pusher.
+		EverWorksInitiativesService,
+		EverWorksInitiativeCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,

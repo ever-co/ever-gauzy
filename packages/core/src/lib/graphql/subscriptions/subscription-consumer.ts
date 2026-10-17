@@ -9,6 +9,7 @@ import {
 import { EventConsumerRegistry } from '../../event-outbox/event-consumer.registry';
 import { SubscriptionCatalogue } from './subscription-catalogue';
 import { GraphqlSubscriptionHub, SubscriptionEnvelope } from './subscription-hub.service';
+import { addressedRecipientsOf } from './subscription-scope';
 
 /**
  * The consumer key the subscription surface registers under.
@@ -102,6 +103,8 @@ export class GraphqlSubscriptionConsumer implements IEventConsumer, OnModuleInit
 			return;
 		}
 
+		// A payload that names its recipients makes the event addressed: the hub delivers it to them only.
+		const recipientUserIds = addressedRecipientsOf(event.data);
 		const envelope: SubscriptionEnvelope = {
 			eventId: String(event.id),
 			name: event.name,
@@ -113,7 +116,8 @@ export class GraphqlSubscriptionConsumer implements IEventConsumer, OnModuleInit
 				? { type: String(event.aggregate.type), id: String(event.aggregate.id) }
 				: undefined,
 			sequence: event.sequence,
-			data: event.data
+			data: event.data,
+			...(recipientUserIds !== undefined ? { recipientUserIds } : {})
 		};
 
 		await this.hub.publish(envelope);
