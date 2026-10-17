@@ -6,8 +6,10 @@ import { RolePermissionModule } from '@gauzy/core';
 import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
 import { InboxController } from './inbox.controller';
+import { InboxResolver } from './graphql/inbox.resolver';
 import { InboxService } from './inbox.service';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
+import { InboxRealtime } from './realtime/inbox-realtime';
 
 /** Every table the plugin owns (its migrations create them). */
 export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
@@ -25,12 +27,18 @@ export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
 		TypeOrmModule.forFeature(INBOX_ENTITIES),
 		MikroOrmModule.forFeature(INBOX_ENTITIES),
 		// The tenant and permission guards of the routes need the role permissions.
+		// (The resolver's GraphQL capability gate, `FeatureFlagGuard`, reads the global `FeatureModule`.)
 		RolePermissionModule
 	],
 	controllers: [InboxController],
 	providers: [
 		InboxSourceHandlerRegistry,
 		InboxService,
+		// Listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is never
+		// registered, and the schema would advertise fields nothing resolves.
+		InboxResolver,
+		// Real time (G-P3-6): `inbox_item.created` appended to the outbox and streamed to the recipients.
+		InboxRealtime,
 		{ provide: INBOX_SOURCE_HANDLER_REGISTRY, useExisting: InboxSourceHandlerRegistry },
 		{ provide: INBOX_ITEM_WRITER, useExisting: InboxService }
 	],

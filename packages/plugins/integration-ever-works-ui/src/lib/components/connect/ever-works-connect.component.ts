@@ -186,7 +186,7 @@ export interface EverWorksConnectResult {
 			}
 			@case ('review') {
 				<section data-test="step-review">
-					<ngx-ever-works-match-review [organizationId]="organizationId" [integrationTenantId]="mapping?.integrationTenantId ?? null" />
+					<ngx-ever-works-match-review [organizationId]="organizationId" [integrationTenantId]="mapping?.integrationTenantId ?? null" [mapping]="mapping" />
 					<div class="actions">
 						<button nbButton status="primary" type="button" data-test="review-next" (click)="go('directions')">{{ 'EVER_WORKS.COMMON.NEXT' | translate }}</button>
 					</div>

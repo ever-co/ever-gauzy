@@ -2,6 +2,7 @@ import { EventOutboxStatus, ID, IOutboxWriteInput } from '@gauzy/contracts';
 import { EventDelivery } from './event-delivery.entity';
 import { EventOutbox } from './event-outbox.entity';
 import { EventOutboxService, describeFailure } from './event-outbox.service';
+import { RequestContext } from '../core/context/request-context';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 
@@ -444,6 +445,22 @@ describe('appending inside the caller’s transaction', () => {
 
 		// One aggregate's events are ordered against each other; another aggregate has its own count.
 		expect(sequences).toEqual([1, 2, 1, 3]);
+	});
+
+	it('takes a missing organization from the request, except for a tenant-wide fact', async () => {
+		const { service, db } = outbox();
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('organization-of-the-request' as ID);
+
+		const [fromRequest, stated, tenantWide] = await db.manager.transaction(async (manager) => [
+			await service.append(manager, placed()),
+			await service.append(manager, placed({ aggregateId: OTHER_ORDER, organizationId: 'organization-stated' as ID })),
+			await service.append(manager, placed({ name: 'order.confirmed', tenantWide: true }))
+		]);
+
+		expect(fromRequest.organizationId).toBe('organization-of-the-request');
+		expect(stated.organizationId).toBe('organization-stated');
+		// The request's selected organization is not the fact's: it stays without one.
+		expect(tenantWide.organizationId ?? null).toBeNull();
 	});
 
 	it('lets a producer state its own ordering key', async () => {

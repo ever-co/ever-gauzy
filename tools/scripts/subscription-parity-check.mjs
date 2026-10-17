@@ -194,7 +194,14 @@ const REFUSED = new Map([
 ]);
 
 /** Durable aggregates a plugin streams that deliberately get no typed field, with the reason. */
-const AGGREGATES_WITHOUT_A_FIELD = new Map([]);
+const AGGREGATES_WITHOUT_A_FIELD = new Map([
+	[
+		'inbox_item',
+		'`inbox_item.created` (@gauzy/plugin-inbox, G-P3-6) is addressed to the item’s recipients and streamed through ' +
+			'`events(names:)`; a typed field waits until the schema snapshot and the field-binding gate read the SDL of a ' +
+			'flag-gated plugin (the Inbox is off unless GAUZY_INBOX_ENABLED=true, so a field of its own is in no snapshot).'
+	]
+]);
 
 // ————————————————————————————————————————————————————————————————————————————————————————————————————————————
 // The readers. Pure functions over source text, exported so `subscription-parity-check.test.mjs` can hold each one

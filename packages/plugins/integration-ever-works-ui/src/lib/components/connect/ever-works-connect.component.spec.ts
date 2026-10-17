@@ -46,6 +46,8 @@ describe('EverWorksConnectComponent', () => {
 		agents: jest.fn(),
 		teams: jest.fn(),
 		projects: jest.fn(),
+		initiatives: jest.fn(),
+		decideInitiatives: jest.fn(),
 		decidePeople: jest.fn(),
 		decideTeams: jest.fn(),
 		decideProjects: jest.fn()
@@ -69,6 +71,7 @@ describe('EverWorksConnectComponent', () => {
 		api.agents.mockReturnValue(of([]));
 		api.teams.mockReturnValue(of({ teams: [], unmatchedTeams: [] }));
 		api.projects.mockReturnValue(of({ works: [], unmatchedProjects: [] }));
+		api.initiatives.mockReturnValue(of({ missions: [], unmatchedInitiatives: [] }));
 	});
 
 	it('starts with the key steps and the preset link; the default API URL is prefilled', () => {

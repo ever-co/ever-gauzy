@@ -28,9 +28,11 @@ settings; any other one gets the **connect wizard** (plan item G-P1-11):
    sent once, stored encrypted by the API and cleared from the form.
 3. **Organization**: map this organization to one of the key's pinned Ever
    Works organizations (a connected tenant starts here).
-4. **Review matches**: People, Agents, Teams and Projects. Suggestions are
-   preselected and nothing is paired until saved; teams and projects can be
-   created on the other side where the mapping allows it.
+4. **Review matches**: People, Agents, Teams, Projects and Initiatives ↔
+   Missions. Suggestions are preselected and nothing is paired until saved;
+   teams, projects and initiatives can be created on the other side where the
+   mapping allows it (a mission created from Gauzy starts paused; a draft
+   initiative waits until it is active).
 5. **Entities and directions**: one direction per synced domain (only the
    directions that domain allows) and whether tasks of projects not paired with
    a work sync too.
@@ -49,7 +51,8 @@ the address the list of connected integrations opens) are in tabs:
   sync with its phases (read again every 10 seconds while it runs); Resync,
   cancel a running sync, pause and resume. A mapping that never synced offers
   the dry run and Start.
-- **Mapping**: the match review (people, agents, teams, projects).
+- **Mapping**: the match review (people, agents, teams, projects, initiatives ↔
+  missions).
 - **Entities and directions**.
 - **Activity**: the conflicts (open, resolved or all; both values and the side
   that won; **Keep** or **Use the other value**) and the sync log (filters by
