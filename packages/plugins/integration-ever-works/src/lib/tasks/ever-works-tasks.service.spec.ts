@@ -243,7 +243,17 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 	// ── Gauzy stand-ins ──
 	const tasks = new Map<string, GauzyTask>();
 	const tags = new Map<string, { id: string; name: string }>();
-	const comments: Array<{ id: string; taskId: string; html: string; actorType: unknown; employeeId: string | null; deletedAt?: Date | null }> = [];
+	const comments: Array<{
+		id: string;
+		taskId: string;
+		html: string;
+		actorType: unknown;
+		employeeId: string | null;
+		deletedAt?: Date | null;
+		createdByUserId?: string | null;
+		updatedByUserId?: string | null;
+		deletedByUserId?: string | null;
+	}> = [];
 	const resourceLinks: Array<{ id: string; taskId: string; title: string; url: string }> = [];
 	const subscriptions: Array<{ taskId: string; employeeId: string }> = [];
 	const linkedIssues: LinkedIssueRow[] = [];
@@ -295,7 +305,18 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 		loadComment: async (_t: string, id: string) => {
 			const row = comments.find((comment) => comment.id === id);
 			return row
-				? { id: row.id, comment: row.html, entity: 'Task', entityId: row.taskId, organizationId: 'o1', employeeId: row.employeeId, deletedAt: row.deletedAt ?? null }
+				? {
+						id: row.id,
+						comment: row.html,
+						entity: 'Task',
+						entityId: row.taskId,
+						organizationId: 'o1',
+						employeeId: row.employeeId,
+						deletedAt: row.deletedAt ?? null,
+						createdByUserId: row.createdByUserId ?? null,
+						updatedByUserId: row.updatedByUserId ?? null,
+						deletedByUserId: row.deletedByUserId ?? null
+					}
 				: null;
 		},
 		updateComment: async (id: string, html: string) => void Object.assign(comments.find((comment) => comment.id === id) as object, { html }),
@@ -317,7 +338,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			return { id, owned: true };
 		},
 		userOfEmployee: async (employeeId: string) => ({ userId: `user-of-${employeeId}`, name: 'Someone' }),
-		employeeOfUser: async (_t: string, _o: string, userId: string) => (userId === 'u-alice' ? 'e-alice' : null),
+		employeeOfUser: async (_t: string, _o: string, userId: string) => ({ 'u-alice': 'e-alice', 'u-bob': 'e-bob' })[userId] ?? null,
 		projectExists: async (_t: string, _o: string, projectId: string) => ['p-default', 'p-site'].includes(projectId),
 		initiativeProjects: async () => [],
 		isSelfOrAncestor: async (taskId: string, parentId: string) => taskId === parentId,
@@ -398,8 +419,8 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 			connection: context.connection,
 			mapping: { id: 'm1' }
 		} as never);
-	const pushComment = (gauzyId: string, op: 'upsert' | 'delete' = 'upsert') =>
-		comments$.push({ tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', entityType: EverWorksLinkType.COMMENT, gauzyId, op, actorUserId: null, attempts: 0 } as never, {
+	const pushComment = (gauzyId: string, op: 'upsert' | 'delete' = 'upsert', actorUserId: string | null = null) =>
+		comments$.push({ tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', entityType: EverWorksLinkType.COMMENT, gauzyId, op, actorUserId, attempts: 0 } as never, {
 			connection: context.connection,
 			mapping: { id: 'm1' }
 		} as never);
@@ -919,13 +940,13 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
 		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
 		await t.push('g1');
-		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Looks <em>good</em></p>', actorType: 'User', employeeId: 'e-alice' });
+		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Looks <em>good</em></p>', actorType: 'User', employeeId: 'e-alice', createdByUserId: 'u-alice' });
 		expect(await t.pushComment('gc1')).toEqual({ status: 'pushed', message: 'posted to the Ever Works task chat' });
 		const post = t.mock.requests.find((r) => r.method === 'POST' && r.path.endsWith('/comments'));
 		expect(post?.headers['x-act-as-user']).toBe('ew-alice');
 		expect(post?.body).toMatchObject({ body: 'Looks *good*', externalRef: { source: 'gauzy', installationId: 'c1', externalId: 'gc1' } });
 		(t.comments.find((c) => c.id === 'gc1') as { html: string }).html = '<p>Looks great</p>';
-		expect(await t.pushComment('gc1')).toEqual({ status: 'pushed' });
+		expect(await t.pushComment('gc1', 'upsert', 'u-alice')).toEqual({ status: 'pushed' });
 		expect([...t.mock.comments.values()][0]).toMatchObject({ body: 'Looks great' });
 		expect(commentBodyForEverWorks(`<p>${'x'.repeat(20000)}</p>`).length).toBe(16384);
 	});
@@ -1059,7 +1080,7 @@ describe('task comments review fixes (#10813)', () => {
 		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
 		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
 		await t.push('g1');
-		t.comments.push({ id: 'gc1', taskId: 'g1', html, actorType: 'User', employeeId: 'e-alice' });
+		t.comments.push({ id: 'gc1', taskId: 'g1', html, actorType: 'User', employeeId: 'e-alice', createdByUserId: 'u-alice' });
 		await t.pushComment('gc1');
 		const [ewTask] = [...t.mock.tasks.values()];
 		const [ew] = [...t.mock.comments.values()];
@@ -1093,9 +1114,78 @@ describe('task comments review fixes (#10813)', () => {
 		const t = setup();
 		await pushed(t, '<p>Bye</p>');
 		(t.comments.find((c) => c.id === 'gc1') as { deletedAt?: Date }).deletedAt = new Date();
-		expect(await t.pushComment('gc1', 'delete')).toEqual({ status: 'pushed', message: 'deleted in Ever Works' });
+		expect(await t.pushComment('gc1', 'delete', 'u-alice')).toEqual({ status: 'pushed', message: 'deleted in Ever Works' });
 		expect(t.mock.requests.find((r) => r.method === 'DELETE')?.headers['x-act-as-user']).toBe('ew-alice');
 		expect(t.mock.comments.size).toBe(0);
+	});
+
+	it('edits and deletes go as the Ever Works author only when that person made them in Gauzy (review F21)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		const task = t.mock.addTask(t.org.id, { title: 'Chat' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		// Alice's Ever Works message, copied into Gauzy.
+		const message = ewComment(task['id'] as string, { body: 'Original' });
+		t.mock.comments.set(message.id, { ...message });
+		await t.deliver({ type: 'task.comment.created', data: message, aggregate: { id: task['id'] as string, version: 1 } });
+		const copy = t.comments[0] as (typeof t.comments)[number];
+		const ewSide = () => t.mock.comments.get(message.id) as Record<string, unknown>;
+		const lastAs = (method: string) => [...t.mock.requests].reverse().find((r) => r.method === method)?.headers['x-act-as-user'] ?? null;
+		// Bob (a manager who may edit any comment) edits the copy: it goes as the integration, and Ever Works keeps Alice's text.
+		copy.html = '<p>Rewritten by Bob</p>';
+		copy.updatedByUserId = 'u-bob';
+		expect((await t.pushComment(copy.id, 'upsert', 'u-bob')).status).toBe('skipped');
+		expect(lastAs('PATCH')).toBeNull();
+		expect(ewSide()['body']).toBe('Original');
+		expect(t.logged).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'comment_edit_refused' })]));
+		// A change the sweep found (no captured actor) goes as the comment's last editor, Bob: refused the same way.
+		copy.html = '<p>Rewritten again</p>';
+		expect((await t.pushComment(copy.id)).status).toBe('skipped');
+		expect(lastAs('PATCH')).toBeNull();
+		// Bob deletes it: refused too, the Ever Works message stays.
+		copy.deletedAt = new Date();
+		copy.deletedByUserId = 'u-bob';
+		expect(await t.pushComment(copy.id, 'delete', 'u-bob')).toEqual({ status: 'skipped', message: 'deleted in Gauzy; Ever Works refused the delete, so its copy stays (logged)' });
+		expect(lastAs('DELETE')).toBeNull();
+		expect(ewSide()['body']).toBe('Original');
+	});
+
+	it("a retried change of the author never carries someone else's later edit or delete as the author (review F21, #11021 review)", async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
+		await t.push('g1');
+		t.comments.push({ id: 'gc1', taskId: 'g1', html: '<p>Mine</p>', actorType: 'User', employeeId: 'e-alice', createdByUserId: 'u-alice' });
+		await t.pushComment('gc1', 'upsert', 'u-alice');
+		const lastAs = (method: string) => [...t.mock.requests].reverse().find((r) => r.method === method)?.headers['x-act-as-user'] ?? null;
+		const row = t.comments[0] as (typeof t.comments)[number];
+		// Alice's edit is queued (actor Alice); before its retry runs, Bob edits the comment: the row now has Bob's text.
+		row.html = '<p>Bob was here</p>';
+		row.updatedByUserId = 'u-bob';
+		expect((await t.pushComment('gc1', 'upsert', 'u-alice')).status).toBe('skipped');
+		expect(lastAs('PATCH')).toBeNull();
+		expect([...t.mock.comments.values()][0]).toMatchObject({ body: 'Mine' });
+		// The same for a delete Bob made while Alice's change waited.
+		row.deletedAt = new Date();
+		row.deletedByUserId = 'u-bob';
+		expect((await t.pushComment('gc1', 'delete', 'u-alice')).status).toBe('skipped');
+		expect(lastAs('DELETE')).toBeNull();
+		expect(t.mock.comments.size).toBe(1);
+	});
+
+	it("a new Gauzy comment is posted as the person who wrote it, not as the comment's stated employee (review F21)", async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Discuss' });
+		await t.push('g1');
+		// A caller with no employee of their own posted with Alice's employeeId.
+		t.comments.push({ id: 'gc-spoof', taskId: 'g1', html: '<p>Not Alice</p>', actorType: 'User', employeeId: 'e-alice', createdByUserId: 'u-carol' });
+		expect(await t.pushComment('gc-spoof', 'upsert', 'u-carol')).toEqual({ status: 'pushed', message: 'posted to the Ever Works task chat' });
+		const post = t.mock.requests.find((r) => r.method === 'POST' && r.path.endsWith('/comments'));
+		expect(post?.headers['x-act-as-user'] ?? null).toBeNull();
+		expect(post?.body).toMatchObject({ externalAuthor: expect.objectContaining({ source: 'gauzy' }) });
 	});
 
 	it('the sweep queues a linked comment that was edited or deleted without a captured event', async () => {

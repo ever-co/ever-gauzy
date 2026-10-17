@@ -84,9 +84,10 @@ function cutForEverWorks(body: string): string {
  * - **G → EW** (the comment subscriber, and a sweep for what the ORM hooks miss): `POST /tasks/:id/comments`
  *   as the author (`X-Act-As-User` = the author's linked person), else as the integration with
  *   `externalAuthor`, with an `externalRef` and a deterministic `Idempotency-Key`; the body is cut to 16384
- *   characters (CR-2). Edits `PATCH`, deletes `DELETE`, both as Ever Works' author of the comment. Ever Works
- *   lets only the author edit, and a person only for 5 minutes (`422 domain_rule`): a refused Gauzy edit is
- *   logged, kept in Gauzy and not sent again (plan 01 §7).
+ *   characters (CR-2). Edits `PATCH`, deletes `DELETE`, both as Ever Works' author of the comment when that
+ *   person made the change in Gauzy, else as the integration (review F21). Ever Works lets only the author edit,
+ *   and a person only for 5 minutes (`422 domain_rule`): a refused Gauzy edit is logged, kept in Gauzy and not
+ *   sent again (plan 01 §7).
  * - A comment of a task that is not linked yet waits for the task (which is queued).
  */
 @Injectable()
@@ -207,7 +208,9 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the comment is no longer synced' };
 		const row = await this.store.loadComment(context.tenantId, change.gauzyId as ID);
 		try {
-			if (change.op === 'delete' || !row || row.deletedAt) return await this.pushDelete(context, link);
+			// Who made the change being sent: the captured actor and the row's own audit column must both be the author
+			// (a retried change keeps its first actor while the row may carry someone else's later edit or delete).
+			if (change.op === 'delete' || !row || row.deletedAt) return await this.pushDelete(context, link, [change.actorUserId, row?.deletedByUserId]);
 			if (row.entity !== BaseEntityEnum.Task || row.organizationId !== context.organizationId) return { status: 'skipped', message: 'not a comment of a task of this organization' };
 			const taskOrganizationId = await this.store.organizationOfTask(context.tenantId, row.entityId as ID);
 			if (taskOrganizationId && taskOrganizationId !== context.organizationId) return { status: 'skipped', message: TASK_IN_ANOTHER_ORGANIZATION };
@@ -221,7 +224,9 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 			const full = htmlToMarkdown(row.comment);
 			if (!full.trim()) return { status: 'skipped', message: 'the comment has no text' };
 			const client = this.client(context);
-			return link ? await this.pushEdit(context, client, link, taskLink, full) : await this.pushCreate(context, client, row, taskLink, full);
+			return link
+				? await this.pushEdit(context, client, link, taskLink, full, [change.actorUserId, row.updatedByUserId])
+				: await this.pushCreate(context, client, row, taskLink, full, row.createdByUserId ?? change.actorUserId ?? null);
 		} catch (error) {
 			if (error instanceof EverWorksRequestContextUnavailableError) return { status: 'deferred', message: error.message, retryInMs: 5 * 60_000 };
 			throw error;
@@ -233,11 +238,14 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		client: EverWorksClient,
 		row: { id?: ID; employeeId?: ID | null },
 		taskLink: EverWorksEntityLink,
-		full: string
+		full: string,
+		writerUserId: ID | null
 	): Promise<EverWorksPushOutcome> {
 		const connectionId = context.connection.id as ID;
 		const commentId = row.id as ID;
-		const actAs = await this.actAsFor(context, (row.employeeId as ID) ?? null);
+		// As the person who wrote it (the comment's creator), never as the employee the comment names: a caller with
+		// no employee of their own may set any employeeId (review F21). Else the integration, with `externalAuthor`.
+		const actAs = await this.everWorksUserOf(context, writerUserId);
 		const idempotencyKey = createHash('sha256').update(`${connectionId}:${EverWorksLinkType.COMMENT}:${commentId}:create`).digest('hex');
 		const name = row.employeeId ? ((await this.store.userOfEmployee(row.employeeId as ID)).name ?? 'Ever Gauzy') : 'Ever Gauzy';
 		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments`;
@@ -263,15 +271,26 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		return { status: 'pushed', message: 'posted to the Ever Works task chat' };
 	}
 
-	private async pushEdit(context: EverWorksMappingContext, client: EverWorksClient, link: EverWorksEntityLink, taskLink: EverWorksEntityLink, full: string): Promise<EverWorksPushOutcome> {
+	private async pushEdit(
+		context: EverWorksMappingContext,
+		client: EverWorksClient,
+		link: EverWorksEntityLink,
+		taskLink: EverWorksEntityLink,
+		full: string,
+		editorUserIds: ReadonlyArray<ID | null | undefined>
+	): Promise<EverWorksPushOutcome> {
 		const snapshot = this.snapshotOf(link);
 		const ewOnly = this.everWorksOnly(link);
 		if ((snapshot.g?.body ?? null) === full) return { status: 'skipped', message: 'nothing changed' };
 		if ((ewOnly.refusedBody ?? null) === full) return { status: 'skipped', message: 'Ever Works refused this edit before; it stays in Gauzy' };
 		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments/${encodeURIComponent(link.ewId)}`;
 		try {
-			// Only Ever Works' author of the comment may edit it: the person it was written as, or the integration.
-			const updated = await client.request<EverWorksComment>('PATCH', path, { body: { body: cutForEverWorks(full) }, actAsUserId: this.everWorksAuthor(ewOnly) });
+			// Only Ever Works' author of the comment may edit it: the person it was written as (only when that person made
+			// the edit in Gauzy), or the integration — so anyone else's edit is refused by Ever Works (review F21).
+			const updated = await client.request<EverWorksComment>('PATCH', path, {
+				body: { body: cutForEverWorks(full) },
+				actAsUserId: await this.actAsAuthor(context, ewOnly, editorUserIds)
+			});
 			await this.record(context, link.gauzyId as ID, { ...updated, taskId: taskLink.ewId }, { g: { body: full }, e: { body: normaliseMarkdown(updated.body) } }, 'outbound', link, null);
 			return { status: 'pushed' };
 		} catch (error) {
@@ -286,14 +305,18 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 	}
 
 	/** A Gauzy comment deleted: deleted in Ever Works too (plan 03 §C.3), as its Ever Works author; a refusal is logged. */
-	private async pushDelete(context: EverWorksMappingContext, link: EverWorksEntityLink | null): Promise<EverWorksPushOutcome> {
+	private async pushDelete(
+		context: EverWorksMappingContext,
+		link: EverWorksEntityLink | null,
+		deletedByUserIds: ReadonlyArray<ID | null | undefined>
+	): Promise<EverWorksPushOutcome> {
 		if (!link) return { status: 'skipped', message: 'the comment is not in Ever Works' };
 		const ewOnly = this.everWorksOnly(link);
 		let refused: string | null = null;
 		if (ewOnly.taskId) {
 			try {
 				await this.client(context).request('DELETE', `/tasks/${encodeURIComponent(ewOnly.taskId)}/comments/${encodeURIComponent(link.ewId)}`, {
-					actAsUserId: this.everWorksAuthor(ewOnly)
+					actAsUserId: await this.actAsAuthor(context, ewOnly, deletedByUserIds)
 				});
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && (error.status === 404 || error.status === 422 || error.status === 403))) throw error;
@@ -352,6 +375,30 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 	/** Who may edit or delete a linked comment in Ever Works: the person it was written as, else the integration. */
 	private everWorksAuthor(ewOnly: CommentEverWorksOnly): string | null {
 		return ewOnly.authorType === 'user' && ewOnly.authorId ? ewOnly.authorId : null;
+	}
+
+	/** The Ever Works person a Gauzy user writes as (their employee in the organization, paired as a member), or `null`. */
+	private async everWorksUserOf(context: EverWorksMappingContext, userId: ID | null | undefined): Promise<string | null> {
+		if (!userId) return null;
+		return this.actAsFor(context, await this.store.employeeOfUser(context.tenantId, context.organizationId, userId));
+	}
+
+	/**
+	 * Who an edit or delete of a linked comment goes as (review F21): its Ever Works author only when every known actor
+	 * of the change (the captured actor, the row's updatedBy / deletedBy user) is that same person; anyone else (a
+	 * manager editing any comment, the admin who owns an unmapped author's copy, no known actor) goes as the
+	 * integration, which Ever Works refuses for a person's message (logged).
+	 */
+	private async actAsAuthor(
+		context: EverWorksMappingContext,
+		ewOnly: CommentEverWorksOnly,
+		actorUserIds: ReadonlyArray<ID | null | undefined>
+	): Promise<string | null> {
+		const author = this.everWorksAuthor(ewOnly);
+		const actors = [...new Set(actorUserIds.filter((id): id is ID => !!id))];
+		if (!author || !actors.length) return null;
+		for (const actor of actors) if ((await this.everWorksUserOf(context, actor)) !== author) return null;
+		return author;
 	}
 
 	private async record(
