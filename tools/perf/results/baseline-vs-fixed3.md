@@ -1,3 +1,7 @@
+# baseline vs fixed1 vs fixed3
+
+<!-- markdownlint-disable MD013 -->
+
 | endpoint | metric | baseline | fixed1 | fixed3 | baseline→fixed3 |
 |---|---|---|---|---|---|
 | health | seq p50 ms | 14.08 | 12.93 | 7.02 | 2.01× faster |

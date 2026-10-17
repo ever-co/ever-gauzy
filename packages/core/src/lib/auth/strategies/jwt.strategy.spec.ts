@@ -361,7 +361,7 @@ describe('JwtStrategy.validate', () => {
 
 			const { err } = await result;
 			expect(err).toMatchObject({
-				response: { statusCode: 401, message: 'unauthorized', error: 'employee lookup failed' }
+				response: { statusCode: 401, message: 'unauthorized', error: 'Unauthorized' }
 			});
 		});
 
@@ -459,7 +459,7 @@ describe('JwtStrategy.validate', () => {
 			it('still answers any other failure with a 401', async () => {
 				const { strategy } = buildFailing(lookup, new Error('database is down'));
 				await expect(strategy.validate(payload)).rejects.toMatchObject({
-					response: { statusCode: 401, message: 'unauthorized', error: 'database is down' }
+					response: { statusCode: 401, message: 'unauthorized', error: 'Unauthorized' }
 				});
 			});
 		});
@@ -467,7 +467,7 @@ describe('JwtStrategy.validate', () => {
 		it('still answers a missing record with a 401', async () => {
 			const { strategy } = buildFailing('employee', new NotFoundException('The requested record was not found'));
 			await expect(strategy.validate(payload)).rejects.toMatchObject({
-				response: { statusCode: 401, message: 'unauthorized', error: 'The requested record was not found' }
+				response: { statusCode: 401, message: 'unauthorized', error: 'Unauthorized' }
 			});
 		});
 
@@ -599,7 +599,7 @@ describe('JwtStrategy.validate', () => {
 			const result = strategy.validate({ id: 'first-user', tenantId: 'tenant' });
 			await expect(result).rejects.toBeInstanceOf(UnauthorizedException);
 			await expect(result).rejects.toMatchObject({
-				response: { statusCode: 401, message: 'unauthorized', error: 'lookup failed' }
+				response: { statusCode: 401, message: 'unauthorized', error: 'Unauthorized' }
 			});
 		});
 

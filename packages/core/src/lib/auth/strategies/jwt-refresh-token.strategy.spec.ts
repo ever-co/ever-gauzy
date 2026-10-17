@@ -102,7 +102,7 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 			const result = strategy.validate(request, { id: 'user-1' });
 			await expect(result).rejects.toBeInstanceOf(UnauthorizedException);
 			await expect(result).rejects.toMatchObject({
-				response: { statusCode: 401, message: 'Unauthorized', error: 'lookup failed' }
+				response: { statusCode: 401, message: 'Unauthorized', error: 'Unauthorized' }
 			});
 		});
 	});
@@ -141,7 +141,7 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 			refreshTokenService.verify.mockRejectedValue(new Error('database is down'));
 
 			await expect(strategy.validate(request, { id: 'user-1' })).rejects.toMatchObject({
-				response: { statusCode: 401, message: 'Unauthorized', error: 'database is down' }
+				response: { statusCode: 401, message: 'Unauthorized', error: 'Unauthorized' }
 			});
 		});
 	});

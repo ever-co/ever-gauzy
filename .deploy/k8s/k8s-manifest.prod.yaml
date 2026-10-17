@@ -492,6 +492,48 @@ spec:
                         value: '--max-old-space-size=1536'
                       - name: UV_THREADPOOL_SIZE
                         value: '16'
+                      # File storage, as on the API: the worker now runs the Documents pipeline, which reads uploaded files
+                      # through these providers (GAUZY_DOCS_QUEUE_WORKER_ENABLED=false on the API).
+                      - name: AWS_ACCESS_KEY_ID
+                        value: '$AWS_ACCESS_KEY_ID'
+                      - name: AWS_SECRET_ACCESS_KEY
+                        value: '$AWS_SECRET_ACCESS_KEY'
+                      - name: AWS_REGION
+                        value: '$AWS_REGION'
+                      - name: AWS_S3_BUCKET
+                        value: '$AWS_S3_BUCKET'
+                      - name: WASABI_ACCESS_KEY_ID
+                        value: '$WASABI_ACCESS_KEY_ID'
+                      - name: WASABI_SECRET_ACCESS_KEY
+                        value: '$WASABI_SECRET_ACCESS_KEY'
+                      - name: WASABI_REGION
+                        value: '$WASABI_REGION'
+                      - name: WASABI_SERVICE_URL
+                        value: '$WASABI_SERVICE_URL'
+                      - name: WASABI_S3_BUCKET
+                        value: '$WASABI_S3_BUCKET'
+                      - name: WASABI_S3_FORCE_PATH_STYLE
+                        value: '$WASABI_S3_FORCE_PATH_STYLE'
+                      - name: DIGITALOCEAN_ACCESS_KEY_ID
+                        value: '$DIGITALOCEAN_ACCESS_KEY_ID'
+                      - name: DIGITALOCEAN_SECRET_ACCESS_KEY
+                        value: '$DIGITALOCEAN_SECRET_ACCESS_KEY'
+                      - name: DIGITALOCEAN_REGION
+                        value: '$DIGITALOCEAN_REGION'
+                      - name: DIGITALOCEAN_SERVICE_URL
+                        value: '$DIGITALOCEAN_SERVICE_URL'
+                      - name: DIGITALOCEAN_CDN_URL
+                        value: '$DIGITALOCEAN_CDN_URL'
+                      - name: DIGITALOCEAN_S3_BUCKET
+                        value: '$DIGITALOCEAN_S3_BUCKET'
+                      - name: DIGITALOCEAN_S3_FORCE_PATH_STYLE
+                        value: '$DIGITALOCEAN_S3_FORCE_PATH_STYLE'
+                      - name: CLOUDINARY_API_KEY
+                        value: '$CLOUDINARY_API_KEY'
+                      - name: CLOUDINARY_API_SECRET
+                        value: '$CLOUDINARY_API_SECRET'
+                      - name: CLOUDINARY_CLOUD_NAME
+                        value: '$CLOUDINARY_CLOUD_NAME'
                       - name: LOG_LEVEL
                         value: 'info'
                       - name: CLOUD_PROVIDER

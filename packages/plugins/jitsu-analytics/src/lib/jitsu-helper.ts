@@ -51,8 +51,10 @@ export const parseConfig = (config: JitsuOptions): Record<string, any> => ({
 export const DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS = 500;
 
 export function jitsuClientRecycleEvents(env: NodeJS.ProcessEnv = process.env): number {
-	const parsed = Number.parseInt(String(env.JITSU_CLIENT_RECYCLE_EVENTS ?? ''), 10);
-	return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS;
+	// Strict: a whole number only (`10abc` or `1e3` is not silently read as 10 or 1).
+	const raw = String(env.JITSU_CLIENT_RECYCLE_EVENTS ?? '').trim();
+	const parsed = /^\d+$/.test(raw) ? Number(raw) : NaN;
+	return Number.isSafeInteger(parsed) ? parsed : DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS;
 }
 
 /** The calls that add to the analytics core's state. */

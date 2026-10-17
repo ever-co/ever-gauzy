@@ -57,7 +57,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			if (isDatabaseUnavailableError(error)) {
 				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
 			}
-			throw new UnauthorizedException('unauthorized', error.message);
+			// Logged above and kept as the cause; never sent: it can name database, DNS or TLS internals (CWE-209).
+			throw new UnauthorizedException('unauthorized', { cause: error });
 		}
 
 		// A refusal decided by `resolveAuthenticatedUser` is passed on exactly as it was built, never

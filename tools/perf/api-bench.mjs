@@ -150,7 +150,7 @@ async function pgCalls() {
 
 async function resolveContext() {
 	const login = await request('POST', '/auth/login', { body: { email: EMAIL, password: PASSWORD } });
-	if (login.status >= 300 || login.status === 0) throw new Error(`login failed: ${login.status} ${login.error?.message ?? login.body}`);
+	if (login.status >= 300 || login.status === 0) throw new Error(`login failed: ${login.status} ${login.error?.message ?? login.body?.toString().slice(0, 300)}`);
 	const data = JSON.parse(login.body.toString());
 	const token = data.token;
 	const user = data.user;
@@ -201,6 +201,11 @@ async function runEndpoint(ep, ctx) {
 		const r = await request(method, url, { headers, body });
 		seq.push(r.ms);
 		seqStatus[r.status] = (seqStatus[r.status] || 0) + 1;
+	}
+	const failed = Object.entries(seqStatus).filter(([status]) => !(Number(status) >= 200 && Number(status) < 300));
+	if (failed.length) {
+		// Per-request SQL/Redis averages divide by SEQ: say so when some of those requests did not succeed.
+		console.warn(`  ${ep.name}: non-2xx responses in the sequential phase ${JSON.stringify(Object.fromEntries(failed))}`);
 	}
 	const sql = await pgCalls();
 	const rds = redisCalls();

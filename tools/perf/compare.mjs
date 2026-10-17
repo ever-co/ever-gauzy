@@ -14,8 +14,12 @@ const runs = files.map((f) => JSON.parse(fs.readFileSync(f, 'utf8')));
 const base = runs[0];
 const names = base.results.map((r) => r.name);
 const pick = (run, name) => run.results.find((r) => r.name === name);
-const ratio = (a, b) => (a && b ? `${(a / b).toFixed(2)}×` : '');
 
+console.log(`# ${runs.map((r) => r.label).join(' vs ')}`);
+console.log('');
+// Table rows are wider than markdownlint's 80 columns by nature.
+console.log('<!-- markdownlint-disable MD013 -->');
+console.log('');
 const head = ['endpoint', 'metric', ...runs.map((r) => r.label), `${runs[0].label}→${runs[runs.length - 1].label}`];
 console.log(`| ${head.join(' | ')} |`);
 console.log(`|${head.map(() => '---').join('|')}|`);
@@ -33,7 +37,10 @@ for (const name of names) {
 		if (values.every((v) => v === undefined || v === null)) continue;
 		const first = values[0];
 		const last = values[values.length - 1];
-		const change = better === 'lower' ? ratio(first, last) + ' faster' : ratio(last, first) + ' more';
-		console.log(`| ${name} | ${metric} | ${values.map((v) => (v ?? '–')).join(' | ')} | ${first && last ? change : ''} |`);
+		const factor = better === 'lower' ? first / last : last / first;
+		const label = better === 'lower' ? (factor >= 1 ? 'faster' : 'slower') : factor >= 1 ? 'more' : 'less';
+		const shown = factor >= 1 ? factor : 1 / factor;
+		const change = Number.isFinite(factor) && factor > 0 ? `${shown.toFixed(2)}× ${label}` : '';
+		console.log(`| ${name} | ${metric} | ${values.map((v) => (v ?? '–')).join(' | ')} | ${change} |`);
 	}
 }

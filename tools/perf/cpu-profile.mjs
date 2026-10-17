@@ -13,8 +13,18 @@ const port = Number(portArg || 9230);
 const seconds = Number(secondsArg || 20);
 const interval = Number(intervalArg || 200);
 
-const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+let targets;
+try {
+	targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+} catch (error) {
+	console.error(`No inspector on 127.0.0.1:${port} (start the API with --inspect=127.0.0.1:${port}): ${error.message}`);
+	process.exit(1);
+}
 const target = targets.find((t) => t.type === 'node') ?? targets[0];
+if (!target?.webSocketDebuggerUrl) {
+	console.error(`No debuggable target on 127.0.0.1:${port}`);
+	process.exit(1);
+}
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((resolve, reject) => {
 	ws.onopen = resolve;
@@ -29,10 +39,24 @@ ws.onmessage = (event) => {
 		pending.delete(msg.id);
 	}
 };
-const send = (method, params = {}) =>
-	new Promise((resolve) => {
+const failAll = (reason) => {
+	for (const resolve of pending.values()) resolve({ error: { message: reason } });
+	pending.clear();
+};
+ws.onclose = () => failAll('inspector connection closed');
+ws.onerror = () => failAll('inspector connection error');
+const send = (method, params = {}, timeoutMs = 30_000) =>
+	new Promise((resolve, reject) => {
 		const msgId = ++id;
-		pending.set(msgId, resolve);
+		const timer = setTimeout(() => {
+			pending.delete(msgId);
+			reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+		}, timeoutMs);
+		pending.set(msgId, (msg) => {
+			clearTimeout(timer);
+			if (msg.error) reject(new Error(`${method}: ${msg.error.message}`));
+			else resolve(msg);
+		});
 		ws.send(JSON.stringify({ id: msgId, method, params }));
 	});
 

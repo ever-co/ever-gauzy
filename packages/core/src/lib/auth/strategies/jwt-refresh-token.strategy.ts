@@ -1,6 +1,6 @@
 import { environment } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
-import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
@@ -9,6 +9,8 @@ import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../../
 import { RefreshTokenService } from '../../refresh-token/refresh-token.service';
 import { UserService } from './../../user/user.service';
 import { JWT_ALGORITHMS } from '../purpose-token';
+
+const refreshLogger = new Logger('JwtRefreshTokenStrategy');
 
 @Injectable()
 export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh-token') {
@@ -45,9 +47,11 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 			if (isDatabaseUnavailableError(err)) {
 				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: err });
 			}
-			// Handle errors and provide a meaningful response
+			// The cause is logged here and kept on the exception, never sent: a lookup error can name database, DNS or
+			// TLS internals (CWE-209), and the response says no more than "Unauthorized".
 			const message = err instanceof Error ? err.message : String(err);
-			throw new UnauthorizedException('Unauthorized', message);
+			refreshLogger.warn(`Refresh token validation failed: ${message}`);
+			throw new UnauthorizedException('Unauthorized', { cause: err });
 		}
 
 		// A refusal decided by `resolveUser` is passed on exactly as it was built, never re-wrapped above.

@@ -68,7 +68,7 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 		try {
 			entity.fullIconUrl = await localFileUrl(entity.icon);
 		} catch (error) {
-			console.error('TaskPrioritySubscriber: Error during the setFullIconUrl process:', error);
+			console.error('IssueTypeSubscriber: Error during the setFullIconUrl process:', error);
 			throw error;
 		}
 	}
@@ -88,7 +88,7 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 			}
 			entity.fullIconUrl = entity.image?.fullUrl ?? entity.fullIconUrl;
 		} catch (error) {
-			console.error('TaskPrioritySubscriber: Error during the setImageUrl process:', error);
+			console.error('IssueTypeSubscriber: Error during the setImageUrl process:', error);
 			throw error;
 		}
 	}

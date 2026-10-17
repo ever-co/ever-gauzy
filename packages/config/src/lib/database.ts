@@ -174,7 +174,10 @@ function readConnectionPoolSettings(type: DatabaseTypeEnum.postgres | DatabaseTy
 
 	// Connections the active ORM's pool keeps open even when idle, so that a request after a quiet spell
 	// does not pay for a new connection. 0 restores the previous behaviour (every idle connection closes).
-	const poolMin = Math.min(parseIntEnv('DB_POOL_MIN', process.env.DB_POOL_MIN, 2, { onInvalid: 'warn' }), poolSize);
+	// parseIntEnv only warns about an invalid value and still returns it, so a negative or unparsable one falls back
+	// to the default here instead of reaching the pool as -1 or NaN.
+	const parsedPoolMin = parseIntEnv('DB_POOL_MIN', process.env.DB_POOL_MIN, 2, { onInvalid: 'warn' });
+	const poolMin = Math.min(Number.isFinite(parsedPoolMin) && parsedPoolMin >= 0 ? parsedPoolMin : 2, poolSize);
 
 	// 0 turns TypeORM's slow-query warning off: it only logs when maxQueryExecutionTime is truthy. An
 	// unparsable value also switched it off and a negative one logged every query, but neither stopped

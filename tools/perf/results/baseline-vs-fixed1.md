@@ -1,8 +1,12 @@
+# baseline vs fixed1
+
+<!-- markdownlint-disable MD013 -->
+
 | endpoint | metric | baseline | fixed1 | baseline→fixed1 |
 |---|---|---|---|---|
 | health | seq p50 ms | 14.08 | 12.93 | 1.09× faster |
 | health | seq p90 ms | 18.26 | 14.37 | 1.27× faster |
-| health | c16 rps | 129.8 | 128.2 | 0.99× more |
+| health | c16 rps | 129.8 | 128.2 | 1.01× less |
 | health | c16 p99 ms | 518.82 | 476.57 | 1.09× faster |
 | health | SQL/req | 1 | 1 | 1.00× faster |
 | health | Redis/req | 2.02 | 2.02 | 1.00× faster |
@@ -27,7 +31,7 @@
 | tags | seq p50 ms | 1218.17 | 1049.29 | 1.16× faster |
 | tags | seq p90 ms | 1587.11 | 1290.49 | 1.23× faster |
 | tags | c16 rps | 3 | 3 | 1.00× more |
-| tags | c16 p99 ms | 6430.08 | 6667.36 | 0.96× faster |
+| tags | c16 p99 ms | 6430.08 | 6667.36 | 1.04× slower |
 | tags | SQL/req | 6.08 | 5.03 | 1.21× faster |
 | tags | Redis/req | 1.02 | 0.02 | 51.00× faster |
 | organization-team-me | seq p50 ms | 46.67 | 24.6 | 1.90× faster |
@@ -51,13 +55,13 @@
 | tasks-pagination | seq p50 ms | 38.77 | 31.9 | 1.22× faster |
 | tasks-pagination | seq p90 ms | 45.31 | 35.33 | 1.28× faster |
 | tasks-pagination | c16 rps | 37.7 | 40.5 | 1.07× more |
-| tasks-pagination | c16 p99 ms | 570.34 | 626.29 | 0.91× faster |
+| tasks-pagination | c16 p99 ms | 570.34 | 626.29 | 1.10× slower |
 | tasks-pagination | SQL/req | 8 | 7 | 1.14× faster |
 | tasks-pagination | Redis/req | 1.02 | 0.02 | 51.00× faster |
 | teams-pagination | seq p50 ms | 44.59 | 23.35 | 1.91× faster |
 | teams-pagination | seq p90 ms | 46.91 | 25.99 | 1.80× faster |
 | teams-pagination | c16 rps | 32.4 | 52.8 | 1.63× more |
-| teams-pagination | c16 p99 ms | 1120.76 | 1519.93 | 0.74× faster |
+| teams-pagination | c16 p99 ms | 1120.76 | 1519.93 | 1.36× slower |
 | teams-pagination | SQL/req | 8 | 7 | 1.14× faster |
 | teams-pagination | Redis/req | 1.02 | 0.02 | 51.00× faster |
 | employee-by-id | seq p50 ms | 34.79 | 25.65 | 1.36× faster |

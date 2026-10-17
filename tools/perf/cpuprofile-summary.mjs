@@ -25,7 +25,9 @@ for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n
 const dt = new Map();
 const { samples, timeDeltas } = profile;
 for (let i = 0; i < samples.length; i++) {
-	const d = (timeDeltas[i + 1] ?? timeDeltas[i] ?? 0) / 1000; // ms
+	// Chrome DevTools' convention: a sample stands for the interval up to the NEXT sample. The last sample has no
+	// next one, so it counts for nothing rather than repeating its own preceding interval.
+	const d = (timeDeltas[i + 1] ?? 0) / 1000; // ms
 	dt.set(i, d);
 }
 
@@ -87,6 +89,11 @@ for (let i = 0; i < samples.length; i++) {
 }
 
 const busy = total - idle;
+if (busy <= 0) {
+	console.log(`profile: ${file}
+no busy samples${filter ? ` matching ${filter}` : ''} (sampled ${total.toFixed(0)}ms, all idle)`);
+	process.exit(0);
+}
 const fmt = (v) => `${v.toFixed(0).padStart(8)}ms ${((v / busy) * 100).toFixed(1).padStart(5)}%`;
 console.log(`profile: ${file}`);
 console.log(`sampled ${total.toFixed(0)}ms, idle ${idle.toFixed(0)}ms, busy ${busy.toFixed(0)}ms, gc ${gc.toFixed(0)}ms (${((gc / busy) * 100).toFixed(1)}% of busy)`);

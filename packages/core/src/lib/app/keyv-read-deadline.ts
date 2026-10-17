@@ -1,3 +1,5 @@
+import { readNonNegativeIntEnv } from '../bootstrap/strict-int-env';
+
 /**
  * A read deadline for the Redis (L2) layer of the API's cache.
  *
@@ -12,8 +14,7 @@
 export const DEFAULT_REDIS_CACHE_READ_TIMEOUT_MS = 250;
 
 export function resolveRedisCacheReadTimeout(value: string | undefined): number {
-	const parsed = Number.parseInt(String(value ?? ''), 10);
-	return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_REDIS_CACHE_READ_TIMEOUT_MS;
+	return readNonNegativeIntEnv('REDIS_CACHE_READ_TIMEOUT_MS', value, DEFAULT_REDIS_CACHE_READ_TIMEOUT_MS);
 }
 
 const READS: Record<string, (args: unknown[]) => unknown> = {

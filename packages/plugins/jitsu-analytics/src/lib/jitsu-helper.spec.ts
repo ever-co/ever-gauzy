@@ -73,5 +73,7 @@ describe('recyclingJitsu', () => {
 		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '0' })).toBe(0);
 		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '42' })).toBe(42);
 		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: 'x' })).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
+		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '10abc' })).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
+		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '1e3' })).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
 	});
 });

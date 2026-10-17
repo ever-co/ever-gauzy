@@ -438,6 +438,18 @@ describe('database.ts at import time', () => {
 				expect(dbKnexConnectionConfig.config.connection).toMatchObject({ statement_timeout: 60000 });
 			});
 
+			it('fall back to the default for an invalid DB_POOL_MIN', () => {
+				const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+				try {
+					for (const value of ['-1', 'many']) {
+						const { dbTypeOrmConnectionConfig } = loadDatabaseConfig({ DB_TYPE: 'postgres', DB_POOL_MIN: value });
+						expect(dbTypeOrmConnectionConfig.extra.min).toBe(2);
+					}
+				} finally {
+					warn.mockRestore();
+				}
+			});
+
 			it('never keep more connections open than the pool may hold', () => {
 				const { dbTypeOrmConnectionConfig } = loadDatabaseConfig({
 					DB_TYPE: 'postgres',

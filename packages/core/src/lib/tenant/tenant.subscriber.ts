@@ -94,7 +94,7 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
 			}
 			entity.logo = entity.image?.fullUrl ?? entity.logo;
 		} catch (error) {
-			console.error('UserSubscriber: Error during the setImageUrl process:', error);
+			console.error('TenantSubscriber: Error during the setImageUrl process:', error);
 			throw error;
 		}
 	}

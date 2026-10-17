@@ -1,4 +1,5 @@
 import type { Store } from 'express-session';
+import { readNonNegativeIntEnv } from './strict-int-env';
 
 /**
  * How long a session store operation may take before the request carries on without it.
@@ -14,8 +15,7 @@ import type { Store } from 'express-session';
 export const DEFAULT_SESSION_STORE_TIMEOUT_MS = 2000;
 
 export function resolveSessionStoreTimeout(value: string | undefined): number {
-	const parsed = Number.parseInt(String(value ?? ''), 10);
-	return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_SESSION_STORE_TIMEOUT_MS;
+	return readNonNegativeIntEnv('REDIS_SESSION_TIMEOUT_MS', value, DEFAULT_SESSION_STORE_TIMEOUT_MS);
 }
 
 type Callback = (err?: unknown, data?: unknown) => void;

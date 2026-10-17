@@ -2,6 +2,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import {
 	cachedPresign,
 	clearS3Caches,
+	EVICTED_CLIENT_DESTROY_DELAY_MS,
 	getCachedS3Client,
 	getCachedSignedUrl,
 	s3ClientCacheKey,
@@ -28,6 +29,23 @@ describe('s3-client-cache', () => {
 		expect(getCachedS3Client(config())).toBe(a);
 		expect(getCachedS3Client(config('secret-b'))).not.toBe(a);
 		expect(getCachedS3Client(config('secret-a', 'eu-west-1'))).not.toBe(a);
+	});
+
+	it('does not destroy an evicted client while a caller may still be using it', () => {
+		jest.useFakeTimers();
+		try {
+			const first = getCachedS3Client(config('secret-0'));
+			const destroy = jest.spyOn(first, 'destroy');
+			for (let i = 1; i <= 64; i++) getCachedS3Client(config(`secret-${i}`));
+			// Evicted from the cache (a new lookup builds another client)...
+			expect(getCachedS3Client(config('secret-0'))).not.toBe(first);
+			// ...but only destroyed after the grace period.
+			expect(destroy).not.toHaveBeenCalled();
+			jest.advanceTimersByTime(EVICTED_CLIENT_DESTROY_DELAY_MS);
+			expect(destroy).toHaveBeenCalledTimes(1);
+		} finally {
+			jest.useRealTimers();
+		}
 	});
 
 	it('never puts the secret itself in a cache key', () => {

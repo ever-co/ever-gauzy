@@ -35,6 +35,8 @@ export function signedUrlCacheSeconds(env: NodeJS.ProcessEnv = process.env): num
 export const PRESIGNED_URL_MIN_REMAINING_SECONDS = 600;
 
 const MAX_CLIENTS = 64;
+/** How long an evicted client stays usable by whoever still holds it (uploads of up to 50 MB included). */
+export const EVICTED_CLIENT_DESTROY_DELAY_MS = 15 * 60 * 1000;
 const MAX_URLS = 20_000;
 
 const clients = new Map<string, S3Client>();
@@ -79,11 +81,17 @@ export function getCachedS3Client(config: S3ClientConfig): S3Client {
 	if (clients.size > MAX_CLIENTS) {
 		const [oldestKey, oldest] = clients.entries().next().value as [string, S3Client];
 		clients.delete(oldestKey);
-		try {
-			oldest.destroy();
-		} catch {
-			// A client being destroyed has nothing left to report.
-		}
+		// Not destroyed at once: callers keep the client across async work (an upload streaming through
+		// multer-s3, a download whose body is read later), and destroy() closes the sockets in use. It leaves the
+		// cache now and is destroyed once anything it was serving has long finished.
+		const timer = setTimeout(() => {
+			try {
+				oldest.destroy();
+			} catch {
+				// A client being destroyed has nothing left to report.
+			}
+		}, EVICTED_CLIENT_DESTROY_DELAY_MS);
+		timer.unref?.();
 	}
 	return client;
 }

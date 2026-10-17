@@ -27,8 +27,17 @@ async function context(base) {
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ email: EMAIL, password: PASSWORD })
 	});
-	const { token, user } = await res.json();
-	return { token, user };
+	const text = await res.text();
+	let data;
+	try {
+		data = JSON.parse(text);
+	} catch {
+		data = undefined;
+	}
+	if (!res.ok || !data?.token || !data?.user) {
+		throw new Error(`login failed: ${res.status} ${text.slice(0, 300)}`);
+	}
+	return { token: data.token, user: data.user };
 }
 
 async function vars(user) {
@@ -68,7 +77,10 @@ function firstDifference(a, b, at = '$') {
 		}
 		return null;
 	}
-	if (a && typeof a === 'object') {
+	if (a === null || b === null) {
+		return a === b ? null : `${at}: ${JSON.stringify(a)?.slice(0, 120)} vs ${JSON.stringify(b)?.slice(0, 120)}`;
+	}
+	if (typeof a === 'object') {
 		const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 		for (const k of keys) {
 			const d = firstDifference(a[k], b[k], `${at}.${k}`);
@@ -101,8 +113,8 @@ for (const ep of scenarios.endpoints) {
 	const ra = saved[ep.name];
 	const rb = out[ep.name];
 	let diff = !ra ? 'not in saved file' : ra.status !== rb.status ? `status ${ra.status} vs ${rb.status}` : firstDifference(ra.body, rb.body);
-	// /health reports uptime and timings that differ by nature.
-	if (diff && ep.name === 'health') diff = null;
+	// /health reports uptime and timings that differ by nature; its status code must still match.
+	if (diff && ep.name === 'health' && ra && ra.status === rb.status) diff = null;
 	console.log(`${diff ? 'DIFF' : 'same'}  ${ep.name}${diff ? `  ${diff}` : ''}`);
 	if (diff) failures++;
 }
