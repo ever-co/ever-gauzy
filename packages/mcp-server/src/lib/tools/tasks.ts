@@ -53,6 +53,16 @@ const updateTaskMembers = async (
 	});
 };
 
+/** `PUT /api/tasks/:id` requires `title` and `status`: an update that leaves them out sends the task's own. */
+const withRequiredTaskFields = async (id: string, data: Record<string, unknown>) => {
+	if (data.title !== undefined && data.status !== undefined) {
+		return data;
+	}
+
+	const task = await apiClient.get<TaskWithMembers>(`/api/tasks/${id}`);
+	return { ...data, title: data.title ?? task.title, status: data.status ?? task.status };
+};
+
 export const registerTaskTools = (server: McpServer) => {
 	// Get tasks tool
 	registerTool(
@@ -588,8 +598,8 @@ export const registerTaskTools = (server: McpServer) => {
 					data: convertDateFields(update.data)
 				}));
 
-				const response = await applyInTurn(processedUpdates, ({ id, data }) =>
-					apiClient.put(`/api/tasks/${id}`, data)
+				const response = await applyInTurn(processedUpdates, async ({ id, data }) =>
+					apiClient.put(`/api/tasks/${id}`, await withRequiredTaskFields(id, data))
 				);
 
 				return {
