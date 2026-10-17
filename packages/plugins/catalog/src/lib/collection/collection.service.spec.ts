@@ -230,14 +230,21 @@ function repository(tables: ITables, tableName: keyof ITables) {
 		});
 	};
 
+	// TypeORM leaves a soft-deleted row out of every read unless the read asks for `withDeleted`.
+	const visible = (options: any = {}) => rows().filter((row) => options.withDeleted || !row.deletedAt);
+
 	return {
 		rows,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => sorted(rows().filter((row) => matches(row, options.where)), options.order),
-		findOne: async (options: any = {}) => rows().find((row) => matches(row, options.where)) ?? null,
-		findOneBy: async (where: any) => rows().find((row) => matches(row, where)) ?? null,
+		find: async (options: any = {}) =>
+			sorted(
+				visible(options).filter((row) => matches(row, options.where)),
+				options.order
+			),
+		findOne: async (options: any = {}) => visible(options).find((row) => matches(row, options.where)) ?? null,
+		findOneBy: async (where: any) => visible().find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
-			const items = rows().filter((row) => matches(row, options.where));
+			const items = visible(options).filter((row) => matches(row, options.where));
 
 			return [items, items.length];
 		},
@@ -643,6 +650,65 @@ describe('CollectionService — the tree and the cycle refusal (doc 05 §4.3, §
 
 		await fixture.service.update('child', { parentId: null } as never);
 		expect(fixture.store('child').parentId).toBeNull();
+	});
+
+	it('walks through a soft-deleted collection, which still links the chain', async () => {
+		// `mid` is retired but `leaf` still points at it: moving `root` under `leaf` is a cycle through `mid`.
+		const fixture = collectionFixture([
+			collectionRow('root'),
+			collectionRow('mid', { parentId: 'root', deletedAt: new Date('2026-10-01T00:00:00.000Z') }),
+			collectionRow('leaf', { parentId: 'mid' })
+		]);
+
+		await expect(fixture.service.update('root', { parentId: 'leaf' } as never)).rejects.toThrow(/descendants/);
+		expect(fixture.store('root').parentId).toBeUndefined();
+	});
+
+	it('refuses a parent of another organization, on update and on create', async () => {
+		const fixture = collectionFixture([
+			collectionRow('mine'),
+			collectionRow('theirs', { organizationId: OTHER_ORG })
+		]);
+
+		await expect(fixture.service.update('mine', { parentId: 'theirs' } as never)).rejects.toThrow(
+			/not found in this organization/
+		);
+		await expect(
+			fixture.service.create({ name: 'Child', slug: 'child', parentId: 'theirs' } as never)
+		).rejects.toThrow(/not found in this organization/);
+		expect(fixture.store('mine').parentId).toBeUndefined();
+		expect(fixture.tables.collection).toHaveLength(2);
+	});
+
+	it('undoes a re-parent that a concurrent move turned into a cycle, and writes nothing else of it', async () => {
+		// `a` → under `b` and, between this request's walk and its write, another request moved `b` under `a`.
+		const tables = { collection: [collectionRow('a'), collectionRow('b')] };
+		const store = repository(tables, 'collection');
+		const write = store.update;
+		let concurrent = true;
+
+		store.update = async (criteria: any, partial: any) => {
+			const result = await write(criteria, partial);
+
+			if (concurrent && partial?.parentId === 'b') {
+				concurrent = false;
+				tables.collection.find((row) => row.id === 'b').parentId = 'a';
+			}
+
+			return result;
+		};
+
+		const service = new CollectionService(
+			store as never,
+			{} as never,
+			{ publish: async (event: any) => event } as never
+		);
+
+		await expect(service.update('a', { parentId: 'b', name: 'Renamed' } as never)).rejects.toThrow(
+			/concurrent move/
+		);
+		expect(tables.collection.find((row) => row.id === 'a')).toMatchObject({ parentId: null, name: 'Collection a' });
+		expect(tables.collection.find((row) => row.id === 'b')).toMatchObject({ parentId: 'a' });
 	});
 
 	it('ends the walk on a chain that is already cyclic instead of looping forever', async () => {

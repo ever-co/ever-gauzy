@@ -65,6 +65,10 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			await this.assertSlugIsAvailable(entity.slug, entity.customerId ?? null);
 		}
 
+		if (entity.parentId) {
+			await this.assertParentIsInOrganization(entity.parentId, organizationId);
+		}
+
 		const collection = await super.create({
 			type: CollectionType.MANUAL,
 			status: PublicationStatus.DRAFT,
@@ -93,10 +97,14 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 * be made its own parent, or a child of its own descendant, and every walk up the tree from it then never
 	 * ended.
 	 *
+	 * The new parent has to be a collection of the same organization: the base class refuses another
+	 * tenant's row, not another organization's of the same tenant.
+	 *
 	 * @param id Id of the collection.
 	 * @param entity The fields to change.
 	 * @returns The updated collection.
-	 * @throws BadRequestException When the new parent would put the collection in a cycle.
+	 * @throws BadRequestException When the new parent is not a collection of the same organization, or would
+	 * put the collection in a cycle.
 	 */
 	public async update(id: ID, entity: DeepPartial<Collection>): Promise<Collection> {
 		const collection = await this.findOneByIdString(id);
@@ -106,10 +114,23 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 		}
 
 		if (entity.parentId && entity.parentId !== collection.parentId) {
+			await this.assertParentIsInOrganization(entity.parentId, collection.organizationId);
 			await this.assertParentKeepsTreeAcyclic(id, entity.parentId);
-		}
 
-		await super.update(id, entity);
+			// The parent goes first and alone, so a re-parent a concurrent move turned into a cycle is undone
+			// before anything else of this update is written.
+			const others: DeepPartial<Collection> = { ...entity };
+
+			delete others.parentId;
+
+			await this.writeParent(id, entity.parentId as ID, collection.parentId ?? null);
+
+			if (Object.keys(others).length) {
+				await super.update(id, others);
+			}
+		} else {
+			await super.update(id, entity);
+		}
 
 		const updated = await this.findOneByIdString(id);
 
@@ -135,10 +156,14 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 */
 	public async move(id: ID, parentId: ID | null): Promise<Collection> {
 		if (parentId) {
-			await this.assertParentKeepsTreeAcyclic(id, parentId);
-		}
+			const collection = await this.findOneByIdString(id);
 
-		await super.update(id, { parentId });
+			await this.assertParentIsInOrganization(parentId, collection.organizationId);
+			await this.assertParentKeepsTreeAcyclic(id, parentId);
+			await this.writeParent(id, parentId, collection.parentId ?? null);
+		} else {
+			await super.update(id, { parentId });
+		}
 
 		const moved = await this.findOneByIdString(id);
 
@@ -209,6 +234,50 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	}
 
 	/**
+	 * Refuses a parent that is not a live collection of the given organization.
+	 *
+	 * @param parentId The proposed parent.
+	 * @param organizationId The organization of the collection being given the parent.
+	 * @throws BadRequestException When no such collection exists in the caller's tenant and that organization.
+	 */
+	private async assertParentIsInOrganization(parentId: ID, organizationId: ID | undefined): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const parent = await this.typeOrmCollectionRepository.findOne({
+			where: { id: parentId, organizationId, ...(tenantId ? { tenantId } : {}) },
+			select: { id: true }
+		});
+
+		if (!parent) {
+			throw new BadRequestException('The parent collection was not found in this organization.');
+		}
+	}
+
+	/**
+	 * Writes a new parent and re-runs the cycle walk on the written state.
+	 *
+	 * The walk before the write cannot see a concurrent one: two requests that each move one of two collections
+	 * under the other both pass it before either writes, and both writes would land. Walking again after the
+	 * write closes that — the later of two such writes sees both, finds the cycle, and puts its own row back —
+	 * without a lock the three databases would each take differently.
+	 *
+	 * @param id The collection being re-parented.
+	 * @param parentId The new parent.
+	 * @param previousParentId The parent it had, restored when the write formed a cycle.
+	 * @throws BadRequestException When the written parent closed a cycle.
+	 */
+	private async writeParent(id: ID, parentId: ID, previousParentId: ID | null): Promise<void> {
+		await super.update(id, { parentId });
+
+		if (await this.isDescendantOf(parentId, id)) {
+			await super.update(id, { parentId: previousParentId });
+
+			throw new BadRequestException(
+				'A collection cannot be moved under one of its own descendants; a concurrent move made this one a cycle.'
+			);
+		}
+	}
+
+	/**
 	 * Refuses a parent that would put the collection in a cycle: itself, or one of its own descendants.
 	 *
 	 * @param id The collection being given a parent.
@@ -237,7 +306,7 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 */
 	private async isDescendantOf(candidateId: ID, ancestorId: ID): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
-		const visited = new Set<ID>();
+		let visited = new Set<ID>();
 		let current: ID | undefined | null = candidateId;
 
 		while (current && !visited.has(current)) {

@@ -65,6 +65,24 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 			}
 
 			if (existing) {
+				// A retired pair is restored only between a variant and a facet value the caller may still use: a
+				// retired variant or tag, or another tenant's, is refused as `replaceTags` refuses it.
+				await assertInCallerScope(
+					this.typeOrmTagProductVariantRepository.manager,
+					ProductVariant,
+					productVariantId,
+					'variant'
+				);
+				await assertAllInCallerScope(
+					this.typeOrmTagProductVariantRepository.manager,
+					Tag,
+					[tagId],
+					'facet values',
+					{
+						tenantWide: true,
+						global: true
+					}
+				);
 				await this.typeOrmTagProductVariantRepository.restore(existing.id);
 
 				return this.findOneByIdString(existing.id);

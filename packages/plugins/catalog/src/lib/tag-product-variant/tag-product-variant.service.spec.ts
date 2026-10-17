@@ -609,6 +609,19 @@ describe('TagProductVariantService — a retired facet row attached again (R2-24
 		).rejects.toBeInstanceOf(BadRequestException);
 	});
 
+	it('refuses to restore a retired pair whose variant the caller may no longer use', async () => {
+		const fixture = facetFixture([facetRow('red-row', RED, { deletedAt: RETIRED })]);
+		const manager = (fixture.service as any).typeOrmTagProductVariantRepository.manager;
+
+		// The variant is retired, or another tenant's: the scoped existence check finds nothing.
+		jest.spyOn(manager, 'count').mockResolvedValueOnce(0);
+
+		await expect(fixture.service.create({ productVariantId: VARIANT, tagId: RED } as never)).rejects.toThrow(
+			/variant was not found/
+		);
+		expect(fixture.tables.tag_product_variant[0]).toMatchObject({ deletedAt: RETIRED });
+	});
+
 	it('creates a pair the variant never carried', async () => {
 		const fixture = facetFixture();
 
