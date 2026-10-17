@@ -418,6 +418,11 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (page.kind !== DocumentKindEnum.PAGE) return { status: 'skipped', message: 'only pages sync as documents' };
 		const root = await this.store.existingRoot(context);
 		const placement = root ? await this.placementOf(context, page, root) : null;
+		// A PRIVATE folder's name is metadata that must not leak (the Docs plugin's §3.2 rule): nothing under one syncs.
+		if (placement && 'privateFolder' in placement) {
+			if (link) await this.links.unlink(link, 'in a private folder in Gauzy; no longer shared with Ever Works');
+			return { status: 'skipped', message: 'pages in a private folder never sync' };
+		}
 		if (!placement || 'waitingFor' in placement) {
 			if (placement && 'waitingFor' in placement) return { status: 'deferred', message: `waiting for the folder ${placement.waitingFor} to sync first` };
 			if (link) await this.links.unlink(link, 'moved out of the synced folders; both documents are kept');
@@ -620,9 +625,18 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			return { status: 'skipped', message: 'a Gauzy folder delete is not pushed (nothing is deleted in Ever Works)' };
 		if (folder.kind !== DocumentKindEnum.FOLDER) return { status: 'skipped', message: 'not a folder' };
 		if (folder.externalSource === EVER_WORKS_DOCS_SOURCE && String(folder.externalId ?? '').startsWith('tree:')) return { status: 'skipped', message: 'a folder of the synced tree' };
+		// A PRIVATE folder (or one inside a private folder) never syncs: its name must not leak (the Docs plugin's §3.2 rule).
+		if (folder.visibility === DocumentVisibilityEnum.PRIVATE) {
+			if (link) await this.links.unlink(link, 'private in Gauzy; no longer shared with Ever Works');
+			return { status: 'skipped', message: 'private folders never sync' };
+		}
 		const root = await this.store.existingRoot(context);
 		if (!root) return { status: 'skipped', message: 'not in the synced folders' };
 		const { folders, underRoot } = await this.store.ancestry(context, folder, root);
+		if (folders.some((above) => above.visibility === DocumentVisibilityEnum.PRIVATE)) {
+			if (link) await this.links.unlink(link, 'in a private folder in Gauzy; no longer shared with Ever Works');
+			return { status: 'skipped', message: 'folders in a private folder never sync' };
+		}
 		const top = folders[folders.length - 1];
 		if (!underRoot || !top || top.externalSource !== EVER_WORKS_DOCS_SOURCE || top.externalId !== DOCS_TREE.organization) {
 			if (link) await this.links.unlink(link, 'moved out of the organization documents; both folders are kept');
@@ -744,12 +758,18 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 
 	/**
 	 * Where a Gauzy page sits in the synced tree: `Organization/…` (with the nearest linked library folder),
-	 * `Works/<Work>/…`, `null` outside the tree, or `waitingFor` a folder of its chain that is not linked yet
-	 * (so it lands in the right Ever Works folder).
+	 * `Works/<Work>/…`, `null` outside the tree, `waitingFor` a folder of its chain that is not linked yet
+	 * (so it lands in the right Ever Works folder), or `privateFolder` when a folder of its chain is PRIVATE.
 	 */
-	private async placementOf(context: EverWorksMappingContext, page: Document, rootId: ID): Promise<DocsPlacement | { waitingFor: ID } | null> {
+	private async placementOf(
+		context: EverWorksMappingContext,
+		page: Document,
+		rootId: ID
+	): Promise<DocsPlacement | { waitingFor: ID } | { privateFolder: ID } | null> {
 		const { folders, underRoot } = await this.store.ancestry(context, page, rootId);
 		if (!underRoot || !folders.length) return null;
+		const hidden = folders.find((folder) => folder.visibility === DocumentVisibilityEnum.PRIVATE);
+		if (hidden) return { privateFolder: hidden.id as ID };
 		const chain = [...folders].reverse(); // from the root's child down to the page's parent
 		const top = chain[0] as Document;
 		if (top.externalSource !== EVER_WORKS_DOCS_SOURCE) return null;
