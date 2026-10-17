@@ -42,6 +42,13 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 	 * gets a named refusal instead of a constraint violation.
 	 */
 	public async createAlert(input: Partial<StockAlert>): Promise<StockAlert> {
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a rule created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads and the organization's evaluation pass never found it again (review R2-G37, the R2-23
+		// class). The caller's organization is stamped when the input states none; an organization the request stated is
+		// kept (REST validates it against the caller).
+		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const existing = await this.typeOrmStockAlertRepository.findOne({
 			where: {
 				variantId: input.variantId,
@@ -56,7 +63,7 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 				{ details: { alertId: existing.id } }
 			);
 		}
-		return await this.create(input);
+		return await this.create({ ...input, organizationId });
 	}
 
 	/**

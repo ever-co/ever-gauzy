@@ -678,6 +678,47 @@ describe('FulfillmentService — a shipment against what the order line has left
 		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
 	});
 
+	it('stamps the caller’s organization on a shipment and its lines created without one (R2-G37)', async () => {
+		// The GraphQL input declares no organization and the base stamps only the tenant, so a shipment created
+		// over GraphQL was written with a NULL organization that no organization-scoped read ever found.
+		const caller = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-caller' as never);
+
+		try {
+			const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+			const created = await fixture.service.create({
+				orderId: ORDER,
+				warehouseId: UNKNOWN,
+				lines: [request(LINE_A, 3)]
+			} as never);
+
+			expect(created.organizationId).toBe('org-caller');
+			expect(fixture.linesOf(created.id)).toEqual([expect.objectContaining({ organizationId: 'org-caller' })]);
+		} finally {
+			caller.mockRestore();
+		}
+	});
+
+	it('keeps an organization the request stated, and gives its lines the shipment’s', async () => {
+		const caller = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-caller' as never);
+
+		try {
+			const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+			const created = await fixture.service.create({
+				orderId: ORDER,
+				organizationId: 'org-stated',
+				warehouseId: UNKNOWN,
+				lines: [request(LINE_A, 3)]
+			} as never);
+
+			expect(created.organizationId).toBe('org-stated');
+			expect(fixture.linesOf(created.id)).toEqual([expect.objectContaining({ organizationId: 'org-stated' })]);
+		} finally {
+			caller.mockRestore();
+		}
+	});
+
 	it('refuses a shipment with no lines and writes nothing at all', async () => {
 		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
 
