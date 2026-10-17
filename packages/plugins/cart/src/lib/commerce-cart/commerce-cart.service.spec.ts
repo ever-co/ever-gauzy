@@ -1413,7 +1413,7 @@ describe('CommerceCartService — checkout', () => {
 	 * makes now, predicated on the version it validated, a completable status and `orderId IS NULL`.
 	 */
 	describe('the checkout claim (R3-10)', () => {
-		it('refuses a completion that arrives while another one is placing the order, and places one order', async () => {
+		it('refuses a completion arriving while another one places the order; one order', async () => {
 			const fixture = cartFixture();
 			const cart = await completableCart(fixture);
 			let racing: { value?: unknown; error?: any } | undefined;
@@ -1438,7 +1438,10 @@ describe('CommerceCartService — checkout', () => {
 			const first = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
 
 			expect(checkoutCalls).toBe(1);
-			expect(racing?.error?.response).toMatchObject({ code: 'CART_CHECKOUT_IN_PROGRESS', details: { cartId: cart.id } });
+			expect(racing?.error?.response).toMatchObject({
+				code: 'CART_CHECKOUT_IN_PROGRESS',
+				details: { cartId: cart.id }
+			});
 			expect(first.orderId).toBe('order-1');
 
 			const stored = await fixture.service.findOneByIdString(cart.id);
@@ -1495,7 +1498,9 @@ describe('CommerceCartService — checkout', () => {
 				}
 			});
 
-			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toThrow(/ORDER_CREATE_FAILED/);
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toThrow(
+				/ORDER_CREATE_FAILED/
+			);
 
 			const released = await fixture.service.findOneByIdString(cart.id);
 			expect(released.status).toBe(CommerceCartStatus.ACTIVE);
@@ -1517,7 +1522,13 @@ describe('CommerceCartService — checkout', () => {
 			Object.assign(row, { checkoutClaimId: 'another-checkout', checkoutClaimedAt: new Date() });
 
 			await expect(
-				fixture.service.addLine(cart.id, { variantId: 'variant-2', title: 'More', quantity: 1, unitPrice: 5, requiresShipping: false })
+				fixture.service.addLine(cart.id, {
+					variantId: 'variant-2',
+					title: 'More',
+					quantity: 1,
+					unitPrice: 5,
+					requiresShipping: false
+				})
 			).rejects.toMatchObject({ response: { code: 'CART_CHECKOUT_IN_PROGRESS' } });
 			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
 				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }

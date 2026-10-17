@@ -1877,7 +1877,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @throws ConflictException `CART_ALREADY_COMPLETED` or `CART_CHECKOUT_IN_PROGRESS` when another
 	 * completion got there first, or the kernel's version conflict when the cart simply moved on.
 	 */
-	private async claimForCheckout(cart: CommerceCart, claimId: string, expectation: IVersionExpectation): Promise<void> {
+	private async claimForCheckout(
+		cart: CommerceCart,
+		claimId: string,
+		expectation: IVersionExpectation
+	): Promise<void> {
 		const claimedAt = new Date();
 
 		try {
@@ -1977,7 +1981,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 */
 	private checkoutInProgress(cartId: ID): ConflictException {
 		return new ConflictException({
-			message: `CART_CHECKOUT_IN_PROGRESS: cart ${cartId} is being checked out; read it again once the checkout ends.`,
+			message: `CART_CHECKOUT_IN_PROGRESS: cart ${cartId} is being checked out; read it again once it ends.`,
 			code: 'CART_CHECKOUT_IN_PROGRESS',
 			details: { cartId }
 		});

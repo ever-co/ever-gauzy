@@ -36,7 +36,9 @@ function sqliteRunner(db: BetterSqlite3.Database): QueryRunner {
 		hasTable: async (table: string) =>
 			Boolean(db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`).get(table)),
 		hasColumn: async (table: string, column: string) =>
-			(db.prepare(`PRAGMA table_info("${table}")`).all() as Array<{ name: string }>).some((row) => row.name === column)
+			(db.prepare(`PRAGMA table_info("${table}")`).all() as Array<{ name: string }>).some(
+				(row) => row.name === column
+			)
 	} as unknown as QueryRunner;
 }
 
@@ -80,9 +82,11 @@ describe('AddOrderCartUniqueIndex1791000000782 — on a real SQLite database', (
 		insert(db, 'order-6', 'cart-2');
 
 		// `IDX_order_cart` is left exactly where it was: this tick adds, it does not replace.
-		const names = (db.prepare(`SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'order'`).all() as Array<{
-			name: string;
-		}>).map((row) => row.name);
+		const names = (
+			db.prepare(`SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'order'`).all() as Array<{
+				name: string;
+			}>
+		).map((row) => row.name);
 		expect(names).toEqual(expect.arrayContaining(['IDX_order_cart', 'UQ_order_cart']));
 	});
 
@@ -96,7 +100,9 @@ describe('AddOrderCartUniqueIndex1791000000782 — on a real SQLite database', (
 		await new AddOrderCartUniqueIndex1791000000782().up(sqliteRunner(db));
 
 		expect(db.prepare(`SELECT COUNT(*) AS "n" FROM "order"`).get()).toEqual({ n: 3 });
-		expect(db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'UQ_order_cart'`).get()).toBeUndefined();
+		expect(
+			db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'UQ_order_cart'`).get()
+		).toBeUndefined();
 		expect(warn).toHaveBeenCalledWith(expect.stringContaining('cart-1'));
 		expect(warn.mock.calls[0][0]).not.toContain('cart-2');
 	});
@@ -111,7 +117,9 @@ describe('AddOrderCartUniqueIndex1791000000782 — on a real SQLite database', (
 
 		insert(db, 'order-1', 'cart-1');
 		expect(() => insert(db, 'order-2', 'cart-1')).not.toThrow();
-		expect(db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'IDX_order_cart'`).get()).toBeTruthy();
+		expect(
+			db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'IDX_order_cart'`).get()
+		).toBeTruthy();
 	});
 });
 
@@ -121,14 +129,20 @@ describe('AddOrderCartUniqueIndex1791000000782 — on a real SQLite database', (
  * @param state The dialect, whether the index is already there, the carts the duplicate probe answers,
  * and whether the MySQL table carries the generated `deletedKey` column.
  */
-function recordingRunner(state: { type: DatabaseTypeEnum; index?: boolean; duplicates?: string[]; deletedKey?: boolean }) {
+function recordingRunner(state: {
+	type: DatabaseTypeEnum;
+	index?: boolean;
+	duplicates?: string[];
+	deletedKey?: boolean;
+}) {
 	const statements: string[] = [];
 
 	return {
 		statements,
 		connection: { options: { type: state.type } },
 		hasTable: async (table: string) => table === 'order',
-		hasColumn: async (table: string, column: string) => table === 'order' && column === 'deletedKey' && state.deletedKey !== false,
+		hasColumn: async (table: string, column: string) =>
+			table === 'order' && column === 'deletedKey' && state.deletedKey !== false,
 		query: async (sql: string) => {
 			statements.push(sql);
 
@@ -146,7 +160,8 @@ function recordingRunner(state: { type: DatabaseTypeEnum; index?: boolean; dupli
 }
 
 /** The statements that change the schema, with the probes left out. */
-const ddlOf = (runner: { statements: string[] }): string[] => runner.statements.filter((statement) => !statement.startsWith('SELECT '));
+const ddlOf = (runner: { statements: string[] }): string[] =>
+	runner.statements.filter((statement) => !statement.startsWith('SELECT '));
 
 describe('AddOrderCartUniqueIndex1791000000782 — what it issues', () => {
 	beforeEach(() => {
@@ -221,8 +236,12 @@ describe('AddOrderCartUniqueIndex1791000000782 — what it issues', () => {
 	it('refuses a dialect it has no statements for', async () => {
 		const runner = recordingRunner({ type: 'oracle' as DatabaseTypeEnum });
 
-		await expect(new AddOrderCartUniqueIndex1791000000782().up(runner as never)).rejects.toThrow(/Unsupported database/);
-		await expect(new AddOrderCartUniqueIndex1791000000782().down(runner as never)).rejects.toThrow(/Unsupported database/);
+		await expect(new AddOrderCartUniqueIndex1791000000782().up(runner as never)).rejects.toThrow(
+			/Unsupported database/
+		);
+		await expect(new AddOrderCartUniqueIndex1791000000782().down(runner as never)).rejects.toThrow(
+			/Unsupported database/
+		);
 	});
 
 	it('is the last tick of the plugin’s set, and its name is its class’s', () => {

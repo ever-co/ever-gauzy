@@ -122,7 +122,9 @@ describe('AddCartCheckoutClaimColumns1791000000781 — what it issues', () => {
 	it('refuses a dialect it has no statements for', async () => {
 		const runner = recordingRunner({ type: 'oracle' as DatabaseTypeEnum });
 
-		await expect(new AddCartCheckoutClaimColumns1791000000781().up(runner as never)).rejects.toThrow(/Unsupported database/);
+		await expect(new AddCartCheckoutClaimColumns1791000000781().up(runner as never)).rejects.toThrow(
+			/Unsupported database/
+		);
 		await expect(new AddCartCheckoutClaimColumns1791000000781().down(runner as never)).rejects.toThrow(
 			/Unsupported database/
 		);

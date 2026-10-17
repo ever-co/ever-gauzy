@@ -259,7 +259,9 @@ export class AddOrderCartUniqueIndex1791000000782 implements MigrationInterface 
 				[AddOrderCartUniqueIndex1791000000782.TABLE, name]
 			);
 		} else if (dialect === DatabaseTypeEnum.sqlite) {
-			rows = await queryRunner.query(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ? LIMIT 1`, [name]);
+			rows = await queryRunner.query(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ? LIMIT 1`, [
+				name
+			]);
 		} else {
 			rows = await queryRunner.query(`SELECT 1 FROM pg_indexes WHERE indexname = $1 LIMIT 1`, [name]);
 		}

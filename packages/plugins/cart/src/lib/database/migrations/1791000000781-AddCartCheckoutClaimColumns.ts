@@ -37,10 +37,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * `checkoutClaimId` carries a UUID, stored as the 36-character varchar every identifier column of this
 	 * set uses; `checkoutClaimedAt` is the dialect's own timestamp type, as `completedAt` beside it is.
 	 */
-	private static readonly COLUMNS: ReadonlyArray<{ name: string; postgres: string; sqlite: string; mysql: string }> = [
-		{ name: 'checkoutClaimId', postgres: 'character varying(36)', sqlite: 'varchar(36)', mysql: 'varchar(36) NULL' },
-		{ name: 'checkoutClaimedAt', postgres: 'TIMESTAMP', sqlite: 'datetime', mysql: 'datetime NULL' }
-	];
+	private static readonly COLUMNS: ReadonlyArray<{ name: string; postgres: string; sqlite: string; mysql: string }> =
+		[
+			{
+				name: 'checkoutClaimId',
+				postgres: 'character varying(36)',
+				sqlite: 'varchar(36)',
+				mysql: 'varchar(36) NULL'
+			},
+			{ name: 'checkoutClaimedAt', postgres: 'TIMESTAMP', sqlite: 'datetime', mysql: 'datetime NULL' }
+		];
 
 	/**
 	 * Up Migration
@@ -97,7 +103,11 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of AddCartCheckoutClaimColumns1791000000781.COLUMNS) {
-			await this.addColumn(queryRunner, column.name, `ALTER TABLE "commerce_cart" ADD COLUMN "${column.name}" ${column.postgres}`);
+			await this.addColumn(
+				queryRunner,
+				column.name,
+				`ALTER TABLE "commerce_cart" ADD COLUMN "${column.name}" ${column.postgres}`
+			);
 		}
 	}
 
@@ -119,7 +129,11 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of AddCartCheckoutClaimColumns1791000000781.COLUMNS) {
-			await this.addColumn(queryRunner, column.name, `ALTER TABLE "commerce_cart" ADD COLUMN "${column.name}" ${column.sqlite}`);
+			await this.addColumn(
+				queryRunner,
+				column.name,
+				`ALTER TABLE "commerce_cart" ADD COLUMN "${column.name}" ${column.sqlite}`
+			);
 		}
 	}
 
@@ -141,7 +155,11 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of AddCartCheckoutClaimColumns1791000000781.COLUMNS) {
-			await this.addColumn(queryRunner, column.name, `ALTER TABLE \`commerce_cart\` ADD COLUMN \`${column.name}\` ${column.mysql}`);
+			await this.addColumn(
+				queryRunner,
+				column.name,
+				`ALTER TABLE \`commerce_cart\` ADD COLUMN \`${column.name}\` ${column.mysql}`
+			);
 		}
 	}
 
@@ -152,7 +170,11 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of [...AddCartCheckoutClaimColumns1791000000781.COLUMNS].reverse()) {
-			await this.dropColumn(queryRunner, column.name, `ALTER TABLE \`commerce_cart\` DROP COLUMN \`${column.name}\``);
+			await this.dropColumn(
+				queryRunner,
+				column.name,
+				`ALTER TABLE \`commerce_cart\` DROP COLUMN \`${column.name}\``
+			);
 		}
 	}
 
