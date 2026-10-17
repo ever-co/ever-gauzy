@@ -252,7 +252,8 @@ export function markdownToHtml(markdown: string | null | undefined): string {
 
 // ── HTML → Markdown ──────────────────────────────────────────────────────────────────────────────
 
-interface HtmlNode {
+/** A parsed HTML element (also read by the docs sync, which walks it into TipTap nodes). */
+export interface HtmlNode {
 	tag: string;
 	attributes: Record<string, string>;
 	children: Array<HtmlNode | string>;
@@ -273,7 +274,7 @@ function decodeEntities(text: string): string {
 }
 
 /** A tolerant parser for the HTML Gauzy stores (already sanitised, so well formed in practice). */
-function parseHtml(html: string): HtmlNode {
+export function parseHtml(html: string): HtmlNode {
 	const root: HtmlNode = { tag: '#root', attributes: {}, children: [] };
 	const stack: HtmlNode[] = [root];
 	const token = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*(\/?)>|([^<]+|<)/g;
@@ -305,7 +306,8 @@ function parseHtml(html: string): HtmlNode {
 	return root;
 }
 
-function textContent(node: HtmlNode | string): string {
+/** The text of a parsed node (`<br>` → a line break). */
+export function textContent(node: HtmlNode | string): string {
 	if (typeof node === 'string') return node;
 	if (node.tag === 'br') return '\n';
 	return node.children.map(textContent).join('');
