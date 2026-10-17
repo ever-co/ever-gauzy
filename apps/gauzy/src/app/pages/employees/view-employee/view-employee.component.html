@@ -236,23 +236,23 @@
 			<div class="panel-body">
 				@if (projects.failed) {
 				<ng-container *ngTemplateOutlet="unavailable"></ng-container>
-				} @else if (!projects.loading && !projectOverview.length) {
-				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_PROJECTS', icon: 'briefcase-outline' }"></ng-container>
 				} @else {
-				@if (projects.value.partial) {
+				<!-- What could not be read is said first, so an empty or short list is never taken as complete. -->
+				@if (!projects.loading && projects.value.partial) {
 				<!-- Some project times could not be read: a card without a time may not mean no time. -->
 				<p class="panel-note">
 					<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
 					{{ 'EMPLOYEES_PAGE.VIEW.PROJECT_TIMES_PARTIAL' | translate }}
 				</p>
 				}
-				@if (projects.value.assigned === null) {
+				@if (!projects.loading && projects.value.assigned === null) {
 				<!-- The membership list could not be read: say so, rather than mark every card as outside their projects. -->
 				<p class="panel-note">
 					<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
 					{{ 'EMPLOYEES_PAGE.VIEW.MEMBERSHIP_UNKNOWN' | translate }}
 				</p>
 				}
+				@if (projectOverview.length) {
 				<ul class="project-grid">
 					@for (project of projectOverview; track project.id) {
 					<li class="project-card" [class.is-idle]="!project.duration">
@@ -288,6 +288,10 @@
 					</li>
 					}
 				</ul>
+				} @else if (!projects.loading && !projects.value.partial && projects.value.assigned !== null) {
+				<!-- Definitive only when membership is known and every read succeeded. -->
+				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_PROJECTS', icon: 'briefcase-outline' }"></ng-container>
+				}
 				}
 			</div>
 		</section>
