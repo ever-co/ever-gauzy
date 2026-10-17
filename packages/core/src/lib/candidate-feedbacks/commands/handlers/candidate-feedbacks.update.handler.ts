@@ -17,7 +17,15 @@ export class FeedbackUpdateHandler implements ICommandHandler<FeedbackUpdateComm
 		const { entity } = command;
 		const feedback = await this.update(id, entity);
 		if (feedback) {
-			const interviewId = entity.interviewer ? entity.interviewer.interviewId : null;
+			// The interview whose rating is recomputed: the flat `interviewId` the REST body carries (only the
+			// nested `interviewer.interviewId` was read, so a REST edit left the interview rating stale), the
+			// nested one, or else the stored feedback's own — read back, since the saved entity only holds the
+			// fields the edit sent
+			const interviewId =
+				entity.interviewId ??
+				entity.interviewer?.interviewId ??
+				(await this.candidateFeedbackService.findOneByIdString(id))?.interviewId ??
+				null;
 			if (interviewId) {
 				const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(interviewId);
 				let interviewRating: number;
