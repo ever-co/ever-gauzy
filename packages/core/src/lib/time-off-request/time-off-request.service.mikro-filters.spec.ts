@@ -58,15 +58,11 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 			endDate: '2026-09-30 23:59:59'
 		});
 		const where = lastWhere();
-		expect(where.$or).toBeUndefined();
-		expect(where.$and).toHaveLength(2);
-		// First half: the time off overlaps the requested window (start or end inside it)
-		expect(where.$and[0].$or).toEqual([
-			{ start: { $gte: '2026-09-01 00:00:00', $lte: '2026-09-30 23:59:59' } },
-			{ end: { $gte: '2026-09-01 00:00:00', $lte: '2026-09-30 23:59:59' } }
-		]);
-		// Second half: any keyword matches the employee's first or last name
-		expect(where.$and[1].$or).toEqual([
+		// The time off overlaps the requested window, including one spanning all of it
+		expect(where.start).toEqual({ $lte: '2026-09-30 23:59:59' });
+		expect(where.end).toEqual({ $gte: '2026-09-01 00:00:00' });
+		// Any keyword matches the employee's first or last name
+		expect(where.$or).toEqual([
 			{ employees: { user: { firstName: mikroOrmContains('Ada') } } },
 			{ employees: { user: { lastName: mikroOrmContains('Ada') } } },
 			{ employees: { user: { firstName: mikroOrmContains('Love') } } },
@@ -76,7 +72,7 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 
 	it('ignores repeated and surrounding spaces in the employee name', async () => {
 		await paginate({ user: { name: '  Ada   Love ' } });
-		expect(lastWhere().$and[1].$or).toEqual([
+		expect(lastWhere().$or).toEqual([
 			{ employees: { user: { firstName: mikroOrmContains('Ada') } } },
 			{ employees: { user: { lastName: mikroOrmContains('Ada') } } },
 			{ employees: { user: { firstName: mikroOrmContains('Love') } } },
@@ -86,7 +82,7 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 
 	it('adds no name filter when only spaces are typed', async () => {
 		await paginate({ user: { name: '   ' } });
-		expect(lastWhere().$and).toBeUndefined();
+		expect(lastWhere().$or).toBeUndefined();
 	});
 
 	it('adds no text filter when none is requested', async () => {
@@ -94,6 +90,6 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 		const where = lastWhere();
 		expect(where.description).toBeUndefined();
 		expect(where.policy).toBeUndefined();
-		expect(where.$and).toBeUndefined();
+		expect(where.$or).toBeUndefined();
 	});
 });

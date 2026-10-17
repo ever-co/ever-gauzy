@@ -58,7 +58,9 @@ describe('TimeOffRequestService.getAllTimeOffRequests date window', () => {
 		it('bounds the window with the given dates on the 24-hour clock', async () => {
 			await service.getAllTimeOffRequests([], { organizationId: fixture.organizationId, ...range });
 
-			expect(find.mock.calls[0][0].start).toEqual({ $gte: '2026-10-01 00:00:00', $lte: '2026-10-31 23:59:59' });
+			// Every time off overlapping the window, including one starting before it
+			expect(find.mock.calls[0][0].start).toEqual({ $lte: '2026-10-31 23:59:59' });
+			expect(find.mock.calls[0][0].end).toEqual({ $gte: '2026-10-01 00:00:00' });
 		});
 	});
 
@@ -89,17 +91,19 @@ describe('TimeOffRequestService.getAllTimeOffRequests date window', () => {
 			);
 		});
 
-		it('adds no BETWEEN when no dates are given', async () => {
+		it('adds no date condition when no dates are given', async () => {
 			await service.getAllTimeOffRequests([], { organizationId: fixture.organizationId });
 
-			expect(conditions.some(([condition]) => condition.includes('BETWEEN'))).toBe(false);
+			expect(conditions.some(([condition]) => condition.includes('"start"'))).toBe(false);
 		});
 
-		it('bounds the window with the given dates on the 24-hour clock', async () => {
+		it('bounds the window with the given dates on the 24-hour clock, overlap included', async () => {
 			await service.getAllTimeOffRequests([], { organizationId: fixture.organizationId, ...range });
 
-			const between = conditions.find(([condition]) => condition.includes('BETWEEN'));
-			expect(between?.[1]).toEqual({ begin: '2026-10-01 00:00:00', end: '2026-10-31 23:59:59' });
+			const window = conditions.find(([condition]) => condition.includes('"start"'));
+			// Starting before the window and ending inside it still counts
+			expect(window?.[0]).toMatch(/"start" <= :end AND .*"end" >= :begin/);
+			expect(window?.[1]).toEqual({ begin: '2026-10-01 00:00:00', end: '2026-10-31 23:59:59' });
 		});
 	});
 });
