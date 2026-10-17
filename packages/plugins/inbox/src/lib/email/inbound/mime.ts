@@ -188,7 +188,7 @@ export function derivedMessageId(content: Buffer | string): string {
  * attachments with a `contentId`); the HTML is NOT sanitized here — the worker does that before anything is stored.
  *
  * @param raw The message bytes.
- * @param extra What the provider knows beyond the message: the envelope, the verdicts, the score, the time.
+ * @param extra What the provider knows beyond the message: the envelope, the verdicts, the score, a hold, the time.
  */
 export async function parseMimeMessage(
 	raw: Buffer,
@@ -202,6 +202,7 @@ export async function parseMimeMessage(
 			| 'dkim'
 			| 'dmarc'
 			| 'spamScore'
+			| 'hold'
 			| 'providerMessageId'
 		>
 	> = {}
@@ -245,6 +246,8 @@ export async function parseMimeMessage(
 		...(extra.dkim ? { dkim: extra.dkim } : {}),
 		...(extra.dmarc ? { dmarc: extra.dmarc } : {}),
 		...(typeof extra.spamScore === 'number' ? { spamScore: extra.spamScore } : {}),
+		// A provider's hold (SES: a failed virus scan) quarantines the message whatever its spam verdict.
+		...(extra.hold ? { hold: extra.hold } : {}),
 		attachments,
 		raw
 	};
