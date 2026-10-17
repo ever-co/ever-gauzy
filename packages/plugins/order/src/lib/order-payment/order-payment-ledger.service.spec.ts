@@ -16,9 +16,16 @@ import { OrderTransactionType } from '@gauzy/contracts';
 import { IOrderMoneyFact } from '../order.types';
 import { OrderPaymentLedgerService } from './order-payment-ledger.service';
 
-const ORDER = { id: 'order-1', currency: 'USD', tenantId: 'tenant-1', organizationId: 'org-1' };
+const ORDER = {
+	id: 'order-1',
+	currency: 'USD',
+	tenantId: 'tenant-1',
+	organizationId: 'org-1',
+	paymentStatus: 'CAPTURED',
+	paidTotal: 40
+};
 
-function fixture(options: { completeFails?: boolean } = {}) {
+function fixture(options: { completeFails?: boolean; ledgerPaid?: number; ledgerStatus?: string } = {}) {
 	const rows: any[] = [];
 	const orderService = {
 		findOneByIdString: jest.fn(async (id: string) => (id === ORDER.id ? { ...ORDER } : undefined)),
@@ -41,7 +48,12 @@ function fixture(options: { completeFails?: boolean } = {}) {
 			return row;
 		})
 	};
-	const totalsService = { recompute: jest.fn(async () => ORDER) };
+	const totalsService = {
+		recompute: jest.fn(async () => ORDER),
+		// What the ledger says now, which a repeated report compares the stored order against.
+		computeTotals: jest.fn(async () => ({ paidTotal: options.ledgerPaid ?? 40 })),
+		derivePaymentStatus: jest.fn(async () => options.ledgerStatus ?? 'CAPTURED')
+	};
 	const ledger = new OrderPaymentLedgerService(
 		orderService as never,
 		transactionService as never,
@@ -153,5 +165,36 @@ describe('OrderPaymentLedgerService (Q7-W1b)', () => {
 
 		expect(recorded).toBe(2);
 		expect(rows.map((row) => row.referenceId)).toEqual(['payment-1', 'capture-1']);
+	});
+});
+
+describe('OrderPaymentLedgerService — a repeated report finishes what a failed one left (Greptile on #10890)', () => {
+	it('re-derives an order whose stored money state disagrees with its ledger, then lets it complete', async () => {
+		const { ledger, totalsService, orderService } = fixture({ ledgerStatus: 'CAPTURED', ledgerPaid: 40 });
+		await ledger.record(fact());
+		totalsService.recompute.mockClear();
+		orderService.completeIfSettled.mockClear();
+		// The stored order still says what it said before the first report's recompute failed.
+		orderService.findOneByIdString.mockResolvedValueOnce({
+			...ORDER,
+			paymentStatus: 'AUTHORIZED',
+			paidTotal: 0
+		} as never);
+
+		await expect(ledger.record(fact())).resolves.toMatchObject({ recorded: false });
+
+		expect(totalsService.recompute).toHaveBeenCalledWith(ORDER.id, 'PAYMENT_RECORDED');
+		expect(orderService.completeIfSettled).toHaveBeenCalledWith(ORDER.id);
+	});
+
+	it('leaves an order whose stored state already matches its ledger as it is, without bumping its version', async () => {
+		const { ledger, totalsService, orderService } = fixture();
+		await ledger.record(fact());
+		totalsService.recompute.mockClear();
+
+		await ledger.record(fact());
+
+		expect(totalsService.recompute).not.toHaveBeenCalled();
+		expect(orderService.completeIfSettled).toHaveBeenCalledTimes(2);
 	});
 });

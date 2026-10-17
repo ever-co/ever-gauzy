@@ -303,12 +303,18 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 				});
 
 				if (moved) {
-					await this.paymentCollectionService.recordAuthorization(collection.id, session.amount, manager);
+					// The collection as it stands under the authorisation's lock: a checkout that attached it to its
+					// order after the read above is seen here, so the payment names that order (Greptile on #10890).
+					const locked = await this.paymentCollectionService.recordAuthorization(
+						collection.id,
+						session.amount,
+						manager
+					);
 					// The payment the authorisation is (Q7-W1b). Nothing wrote the core `payment` row, so a capture
 					// — which is taken against it — was refused `PAYMENT_NOT_AUTHORIZED` for every session ever
 					// authorised. Written by the delivery that won the conditional transition only, on the same
 					// transaction, so a re-delivered approval cannot write a second one.
-					authorizedPayment = await this.writeAuthorizedPayment(manager, session, collection);
+					authorizedPayment = await this.writeAuthorizedPayment(manager, session, locked ?? collection);
 				}
 
 				return moved;
