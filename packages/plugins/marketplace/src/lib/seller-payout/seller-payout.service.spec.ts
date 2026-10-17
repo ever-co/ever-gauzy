@@ -581,10 +581,17 @@ describe('SellerPayoutService — the SELLER_PAYOUT numbering series (Q7-W3)', (
 	afterEach(() => jest.restoreAllMocks());
 
 	/** A series store with no SELLER_PAYOUT series until `ensure` creates it, as `SequenceService` answers. */
-	function sequenceStore(options: { ensureFails?: boolean; createdElsewhere?: boolean } = {}) {
+	function sequenceStore(options: { ensureFails?: boolean; createdElsewhere?: boolean; orderPadding?: number } = {}) {
 		let exists = false;
 		let next = 1;
+		let padding = 6;
 		return {
+			findSeries: jest.fn(async (key: string) => {
+				if (key === 'ORDER' && options.orderPadding) {
+					return { key, padding: options.orderPadding };
+				}
+				throw new NotFoundException(`No numbering series is configured for "${key}".`);
+			}),
 			allocate: jest.fn(async (key: string) => {
 				if (!exists) {
 					if (options.createdElsewhere) {
@@ -596,13 +603,14 @@ describe('SellerPayoutService — the SELLER_PAYOUT numbering series (Q7-W3)', (
 					);
 				}
 				const value = next++;
-				return { key, value, formatted: `SP-${String(value).padStart(6, '0')}` };
+				return { key, value, formatted: `SP-${String(value).padStart(padding, '0')}` };
 			}),
 			ensure: jest.fn(async (input: Record<string, unknown>) => {
 				if (options.ensureFails) {
 					throw new Error('UNIQUE constraint failed: sequence.organizationId, sequence.key');
 				}
 				exists = true;
+				padding = Number(input.padding);
 				return { id: 'series-1', ...input };
 			})
 		};
@@ -628,6 +636,16 @@ describe('SellerPayoutService — the SELLER_PAYOUT numbering series (Q7-W3)', (
 			})
 		);
 		expect(sequence.allocate).toHaveBeenCalledTimes(2);
+	});
+
+	it('pads the created series as wide as the organization’s ORDER series, as the seed would have', async () => {
+		const sequence = sequenceStore({ orderPadding: 4 });
+		const fixture = payoutFixture({ transactions: [transactionRow('t1')], sequence });
+
+		const payout = await fixture.service.createPayout({ sellerId: SELLER, currency: EUR });
+
+		expect(payout.number).toBe('SP-0001');
+		expect(sequence.ensure).toHaveBeenCalledWith(expect.objectContaining({ key: 'SELLER_PAYOUT', padding: 4 }));
 	});
 
 	it('numbers from the row a concurrent first payout created when its own insert is refused', async () => {

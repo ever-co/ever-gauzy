@@ -31,9 +31,10 @@ const DEFAULT_PADDING = 6;
  * `organization` columns this reads skips the step with one line instead of failing to boot. A transaction-scoped
  * advisory lock (Postgres) or a named lock (MySQL) makes two processes booting together run it one after the other.
  *
- * `down` removes only the rows nobody has used: the organization-wide `SELLER_PAYOUT` series still at its seeded
- * state (prefix `SP-`, `nextValue` 1, step 1, never reset, never reset-dated). A series that has numbered a payout,
- * or that an operator changed, is left in place — deleting it would restart numbering, and a rollback that
+ * `down` removes only the rows nobody has used or changed: the organization-wide `SELLER_PAYOUT` series still
+ * exactly as seeded (prefix `SP-`, the seeded padding, `nextValue` 1, step 1, never reset, active, no description)
+ * and never written since (`createdAt` = `updatedAt`). A series that has numbered a payout, or that an operator
+ * changed, is left in place — deleting it would restart numbering, and a rollback that
  * destroys an operator's data is worse than one that leaves a seed row behind.
  */
 export class SeedSellerPayoutSequence1791000000790 implements MigrationInterface {
@@ -58,12 +59,41 @@ export class SeedSellerPayoutSequence1791000000790 implements MigrationInterface
 
 		const dialect = this.dialectOf(queryRunner);
 
-		if (!(await queryRunner.hasTable('sequence'))) {
-			this.skip('down', ['sequence (table)']);
+		// Every column the "untouched" test reads must be there; without one, nothing is provably untouched and
+		// every row is kept.
+		const missing = await this.missingSchema(queryRunner, 'sequence', [
+			'key',
+			'channelId',
+			'prefix',
+			'padding',
+			'nextValue',
+			'step',
+			'resetPolicy',
+			'lastResetAt',
+			'isActive',
+			'description',
+			'createdAt',
+			'updatedAt'
+		]);
+		if (missing.length > 0) {
+			this.skip('down', missing);
 			return;
 		}
 
+		// The padding the seed wrote: the default channel's, else 6. A series with any other width was edited.
+		const paddingGuard = (await queryRunner.hasTable('channel'))
+			? `AND ("padding" = $6 OR "padding" IN (
+					SELECT "c"."orderNumberPadding" FROM "channel" "c"
+					WHERE "c"."organizationId" = "sequence"."organizationId"
+					  AND "c"."isDefault" = ${this.booleanLiteral(dialect, true)}
+					  AND "c"."deletedAt" IS NULL
+				 ))`
+			: `AND "padding" = $6`;
+
 		await this.locked(queryRunner, dialect, async () => {
+			// Untouched = exactly as seeded and never written since (`createdAt` = `updatedAt`: an allocation, an
+			// operator's edit or a reset through the service moves `updatedAt`); a deactivated, described, re-padded
+			// or used series is an operator's and stays.
 			await this.run(
 				queryRunner,
 				dialect,
@@ -75,8 +105,12 @@ export class SeedSellerPayoutSequence1791000000790 implements MigrationInterface
 				   AND "step" = $4
 				   AND "resetPolicy" = $5
 				   AND "lastResetAt" IS NULL
-				   AND "deletedAt" IS NULL`,
-				[SELLER_PAYOUT_SERIES.key, SELLER_PAYOUT_SERIES.prefix, 1, 1, 'NEVER']
+				   AND "deletedAt" IS NULL
+				   AND "isActive" = ${this.booleanLiteral(dialect, true)}
+				   AND "description" IS NULL
+				   AND "createdAt" = "updatedAt"
+				   ${paddingGuard}`,
+				[SELLER_PAYOUT_SERIES.key, SELLER_PAYOUT_SERIES.prefix, 1, 1, 'NEVER', DEFAULT_PADDING]
 			);
 		});
 	}

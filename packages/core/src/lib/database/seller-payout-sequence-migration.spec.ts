@@ -146,6 +146,43 @@ describe('SeedSellerPayoutSequence1791000000790 on SQLite', () => {
 		]);
 	});
 
+	it('down keeps a series an operator deactivated, re-padded, described or wrote since (Greptile #10911)', async () => {
+		const ORG_C = '7a0c4b1e-0000-4000-8000-0000000000c1';
+		const ORG_D = '7a0c4b1e-0000-4000-8000-0000000000e1';
+		for (const id of [ORG_C, ORG_D]) {
+			await dataSource.query(`INSERT INTO "organization" ("id", "tenantId", "name") VALUES (?, ?, ?)`, [
+				id,
+				TENANT,
+				id
+			]);
+		}
+		await run('up');
+		const edit = (set: string, organizationId: string) =>
+			dataSource.query(`UPDATE "sequence" SET ${set} WHERE "organizationId" = ? AND "key" = 'SELLER_PAYOUT'`, [
+				organizationId
+			]);
+		await edit(`"isActive" = 0`, ORG_A);
+		await edit(`"padding" = 8`, ORG_B);
+		await edit(`"description" = 'Payouts'`, ORG_C);
+		await edit(`"updatedAt" = datetime('now', '+1 minute')`, ORG_D);
+
+		await run('down');
+
+		expect((await series()).map((row: any) => row.organizationId)).toEqual([ORG_A, ORG_B, ORG_C, ORG_D]);
+	});
+
+	it('down removes a series padded like the organization’s default channel, as seeded', async () => {
+		await dataSource.query(
+			`INSERT INTO "channel" ("id", "tenantId", "organizationId", "code", "isDefault", "orderNumberPadding") VALUES ('c1', ?, ?, 'DEFAULT', 1, 4)`,
+			[TENANT, ORG_A]
+		);
+		await run('up');
+
+		await run('down');
+
+		expect(await series()).toEqual([]);
+	});
+
 	it('skips, without failing the boot, when the sequence table is not there yet', async () => {
 		await dataSource.query(`DROP TABLE "sequence"`);
 
@@ -218,6 +255,7 @@ describe('SeedSellerPayoutSequence1791000000790 statements on Postgres and MySQL
 		await migration.down(queryRunner);
 		const deletion = queries.find((query) => query.sql.startsWith('DELETE FROM `sequence`'));
 		expect(deletion?.sql).not.toMatch(/\$\d|"/);
-		expect(deletion?.parameters).toEqual(['SELLER_PAYOUT', 'SP-', 1, 1, 'NEVER']);
+		expect(deletion?.parameters).toEqual(['SELLER_PAYOUT', 'SP-', 1, 1, 'NEVER', 6]);
+		expect(deletion?.sql).toContain('`createdAt` = `updatedAt`');
 	});
 });

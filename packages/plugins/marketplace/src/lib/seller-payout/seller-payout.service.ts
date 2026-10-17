@@ -1089,6 +1089,9 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	/**
 	 * Creates the organization's default `SELLER_PAYOUT` series when it has none.
 	 *
+	 * Its width follows the organization's `ORDER` series, which both seed paths pad from the default channel
+	 * (so a payout number is as wide as the seed would have made it), and 6 when there is none.
+	 *
 	 * A concurrent first payout of the same organization may create it a moment earlier; the unique series
 	 * index then refuses this insert, which is fine — the retried allocation numbers from that row. Any other
 	 * cause surfaces through the retried allocation, which fails exactly as it did before. Nothing is created
@@ -1102,13 +1105,25 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			return;
 		}
 
+		let padding = 6;
+
+		try {
+			const orderSeries = await this.sequenceService.findSeries('ORDER');
+
+			if (orderSeries?.padding != null && Number(orderSeries.padding) > 0) {
+				padding = Number(orderSeries.padding);
+			}
+		} catch {
+			// No ORDER series either: the documented default width.
+		}
+
 		try {
 			await this.sequenceService.ensure({
 				tenantId,
 				organizationId,
 				key: SELLER_PAYOUT_SEQUENCE,
 				prefix: SELLER_PAYOUT_SEQUENCE_PREFIX,
-				padding: 6,
+				padding,
 				nextValue: 1,
 				step: 1
 			});
