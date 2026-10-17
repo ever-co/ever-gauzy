@@ -292,8 +292,16 @@ describe('TenantAwareCrudService scopes a TypeORM read without joining the tenan
 			expect(statement).toContain(LIVE_TENANT_PREDICATE);
 		}
 		expect(statements[0]).not.toMatch(/\bDISTINCT\b/i);
-		expect(statements[0]).toMatch(/LIMIT 1 OFFSET 0$/);
+		// The joined shape's id query ordered by primary key when the caller gave no order; the page keeps that.
+		expect(statements[0]).toMatch(/ORDER BY "ReadScopeRow"\."id" ASC LIMIT 1 OFFSET 0$/);
 		expect(statements[1]).toMatch(/^SELECT COUNT\(/);
+	});
+
+	it("keeps a caller's own order on a page", async () => {
+		const statements = await log.during(async () => {
+			await service.paginate({ take: 1, order: { name: 'DESC' } } as any);
+		});
+		expect(statements[0]).toMatch(/ORDER BY "ReadScopeRow"\."name" DESC LIMIT 1 OFFSET 0$/);
 	});
 
 	it('CONTROL: the joined shape pages in three statements, counting over the join', async () => {

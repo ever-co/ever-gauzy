@@ -576,7 +576,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async findAll(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
-		return await super.findAll(this.findManyWithTenant(filter));
+		return await super.findAll(this.findManyWithTenant(this.withStableOrder(filter, !!(filter?.take || filter?.skip))));
 	}
 
 	/**
@@ -586,7 +586,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async find(filter?: LegacyFindManyOptions<T>): Promise<T[]> {
-		return await super.find(this.findManyWithTenant(filter));
+		return await super.find(this.findManyWithTenant(this.withStableOrder(filter, !!(filter?.take || filter?.skip))));
 	}
 
 	/**
@@ -598,7 +598,39 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async paginate(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
-		return await super.paginate(this.findManyWithTenant(filter));
+		// paginate() always limits (10 rows when no `take` is given).
+		return await super.paginate(this.findManyWithTenant(this.withStableOrder(filter, true)));
+	}
+
+	/**
+	 * The order a limited TypeORM read without one of its own has always had: by primary key.
+	 *
+	 * Until scoped reads stopped joining the tenant (see {@link readScopedBy}), every limited scoped read had a join,
+	 * so TypeORM paged it with its two-query algorithm, whose id query is `ORDER BY <primary key> ASC` when the
+	 * caller states no order. Pages were therefore ordered by id, and successive pages never overlapped. Without the
+	 * join TypeORM sends one plain `LIMIT` query, which PostgreSQL may answer in any order — so the primary-key order
+	 * is now stated explicitly, keeping every page exactly what it was. A caller's own order is left alone, as is
+	 * MikroORM (it never joined) and any read without `take`/`skip` (it was never ordered).
+	 *
+	 * @param filter The caller's options.
+	 * @param limited Whether the read is limited (`take`/`skip`, or paginate's default page).
+	 */
+	private withStableOrder(filter: LegacyFindManyOptions<T> | undefined, limited: boolean): LegacyFindManyOptions<T> {
+		if (!limited || this.ormType !== MultiORMEnum.TypeORM || this.readsMikroOrmMapping()) {
+			return filter;
+		}
+		const order = (filter as { order?: unknown })?.order;
+		if (order && (typeof order !== 'object' || Object.keys(order).length > 0)) {
+			return filter;
+		}
+		const primaryColumns = this.typeOrmRepository?.metadata?.primaryColumns ?? [];
+		if (primaryColumns.length === 0) {
+			return filter;
+		}
+		return {
+			...(filter ?? {}),
+			order: Object.fromEntries(primaryColumns.map((column) => [column.propertyName, 'ASC']))
+		} as LegacyFindManyOptions<T>;
 	}
 
 	/*
