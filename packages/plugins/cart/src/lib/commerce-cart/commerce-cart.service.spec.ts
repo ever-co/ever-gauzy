@@ -2562,6 +2562,23 @@ describe('CommerceCartService — a line is priced by the pricing package (R3-07
 		expect(merged.itemSubtotal).toBe(24);
 	});
 
+	it('refuses a price the pricing package answers in another currency', async () => {
+		// The capability's legacy fallback answers in the currency the retail price was entered in; 100 USD is
+		// not 100 JPY, and the cart does not convert.
+		const fixture = cartFixture({ prices: { v1: 100 } });
+		fixture.pricePort!.resolvePrices.mockImplementation(async () => [
+			{ variantId: 'v1', currency: 'USD', amount: '100', taxInclusive: false }
+		]);
+		const cart = await fixture.service.create({ channelId: 'channel-1', currency: 'JPY' });
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1 } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED', details: { priceCurrency: 'USD' } }
+		});
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
 	it('refuses a variant the pricing package cannot price, and writes nothing', async () => {
 		const fixture = cartFixture({ prices: {} });
 		const cart = await openCart(fixture);
@@ -2668,6 +2685,59 @@ describe('CommerceCartService — a line is priced by the pricing package (R3-07
 		});
 		expect(checkoutCalls).toBe(0);
 		expect(fixture.tables.commerce_cart[0].checkoutClaimId ?? null).toBeNull();
+	});
+
+	it('writes no new price at a refused checkout, so the lines still match the totals', async () => {
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		fixture.priceTable.v1 = 25;
+		delete fixture.priceTable.v2;
+		registerCheckoutHandler();
+
+		await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+
+		const first = fixture.tables.commerce_cart_line.find((row: any) => row.variantId === 'v1');
+		expect(Number(first.unitPrice)).toBe(20);
+	});
+
+	it('records a moved price list at checkout even when the amount is the same', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		fixture.pricePort!.resolvePrices.mockImplementation(async (query: any) => [
+			{
+				variantId: 'v1',
+				currency: query.currency,
+				amount: '20',
+				taxInclusive: false,
+				priceId: 'price-b',
+				priceListId: 'list-b'
+			}
+		]);
+		registerCheckoutHandler();
+
+		await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(fixture.tables.commerce_cart_line[0].metadata).toMatchObject({ priceId: 'price-b', priceListId: 'list-b' });
 	});
 
 	it('refuses a merge whose lines cannot all be priced for the surviving cart, before copying any', async () => {

@@ -2219,11 +2219,22 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		});
 		const price = (prices ?? []).find((candidate) => String(candidate.variantId) === String(variantId));
 
-		if (!price || price.amount === undefined || price.amount === null) {
+		// A price in another currency is not this cart's price: the capability's legacy fallback answers with the
+		// variant's retail price in whatever currency it was entered in, and recording it would charge 100 JPY for
+		// a 100 USD price. Nothing is converted here; a conversion is the pricing package's decision.
+		const sameCurrency =
+			!price?.currency || `${price.currency}`.toUpperCase() === `${cart.currency ?? ''}`.toUpperCase();
+
+		if (!price || price.amount === undefined || price.amount === null || !sameCurrency) {
 			throw new BadRequestException({
 				message: `CART_LINE_PRICE_UNRESOLVED: variant ${variantId} has no price in ${cart.currency} for this cart.`,
 				code: 'CART_LINE_PRICE_UNRESOLVED',
-				details: { variantId, currency: cart.currency, quantity }
+				details: {
+					variantId,
+					currency: cart.currency,
+					quantity,
+					...(price && !sameCurrency ? { priceCurrency: price.currency } : {})
+				}
 			});
 		}
 
@@ -2322,6 +2333,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			(await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>
 		).items;
 
+		// Every price is resolved before any line is written: a line that cannot be priced refuses the checkout
+		// with the cart exactly as it was, rather than with some lines re-priced under totals that were not.
+		const repriced: Array<{ line: CommerceCartLine; fields: Record<string, unknown> }> = [];
+
 		for (const line of lines) {
 			if (!line.variantId) {
 				throw new BadRequestException({
@@ -2332,13 +2347,22 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			}
 
 			const priced = await this.resolveLinePrice(cart, line.variantId, Number(line.quantity));
-			const fields = this.pricedFields(priced, cart, line.metadata);
 
+			repriced.push({ line, fields: this.pricedFields(priced, cart, line.metadata) });
+		}
+
+		for (const { line, fields } of repriced) {
+			const trace = fields['metadata'] as Record<string, unknown>;
+
+			// The resolution's trace counts as part of the price: an order copies it, and a price from another
+			// list at the same amount is still another price.
 			if (
 				Number(line.unitPrice) !== fields['unitPrice'] ||
 				Number(line.originalUnitPrice) !== fields['originalUnitPrice'] ||
 				Boolean(line.isTaxInclusive) !== fields['isTaxInclusive'] ||
-				this.priceSourceOf(line) !== 'ENGINE'
+				this.priceSourceOf(line) !== 'ENGINE' ||
+				(line.metadata?.['priceId'] ?? null) !== (trace['priceId'] ?? null) ||
+				(line.metadata?.['priceListId'] ?? null) !== (trace['priceListId'] ?? null)
 			) {
 				await this.lineService.update(line.id, fields as any);
 			}
