@@ -214,6 +214,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					query.where((qb: SelectQueryBuilder<Tag>) => {
 						this.getFilterTagQuery(qb, input);
 					});
+					// The tags came back ordered by id when every counter was a GROUP BY aggregate (PostgreSQL grouped
+					// by sorting); without the GROUP BY that order is no longer implied, so it is stated.
+					query.orderBy(`${query.alias}.id`, 'ASC');
 					let items = await query.getRawMany();
 
 					items = await Promise.all(items.map(async (item) => {
