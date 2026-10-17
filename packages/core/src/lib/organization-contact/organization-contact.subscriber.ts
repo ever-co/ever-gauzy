@@ -4,6 +4,7 @@ import { OrganizationContact } from './organization-contact.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { getDummyImage } from './../core/utils';
+import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 /**
  * The two rules a party row is written through, on every path that writes one.
@@ -148,23 +149,22 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the imageUrl.
+	 * Sets `imageUrl` from the image's `fullUrl`, falling back to the existing `imageUrl`. Waits only for the
+	 * image's own URL resolution, and not at all when there is no image (see `imageAssetUrlsReady`).
 	 *
 	 * @param entity
 	 * @returns
 	 */
-	private setImageUrl(entity: OrganizationContact): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
-					resolve();
-				});
-			} catch (error) {
-				console.error('OrganizationContactSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
+	private async setImageUrl(entity: OrganizationContact): Promise<void> {
+		try {
+			const ready = imageAssetUrlsReady(entity.image);
+			if (ready) {
+				await ready;
 			}
-		});
+			entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
+		} catch (error) {
+			console.error('OrganizationContactSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }

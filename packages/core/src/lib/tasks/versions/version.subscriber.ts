@@ -1,8 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/utils';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from '../../core/file-storage/file-storage';
+import { localFileUrl } from '../../core/file-storage/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskVersion } from './version.entity';
 
@@ -55,24 +54,17 @@ export class TaskVersionSubscriber extends BaseEntityEventSubscriber<TaskVersion
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
+	 * Sets the full icon URL, as served by the LOCAL file storage provider.
 	 *
 	 * @param entity
 	 * @returns
 	 */
 	private async setFullIconUrl(entity: TaskVersion): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskStatusSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
+		try {
+			entity.fullIconUrl = await localFileUrl(entity.icon);
+		} catch (error) {
+			console.error('TaskStatusSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }
