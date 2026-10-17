@@ -603,9 +603,9 @@ export class WebSocketTransport {
 				name === 'login' ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : sanitized;
 			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
-			// Use the public method for tool invocation
+			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is
 			const result = await runWithAuthKey(authKey, () =>
-				this.mcpServer.invokeTool(name, sanitized as Record<string, unknown>)
+				this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {})
 			);
 			logger.debug(`Tool ${name} executed successfully`);
 

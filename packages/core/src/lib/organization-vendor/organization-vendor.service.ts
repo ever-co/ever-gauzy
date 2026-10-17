@@ -5,6 +5,7 @@ import { OrganizationVendor } from './organization-vendor.entity';
 import { Expense } from '../expense/expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum } from './../core/utils';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationVendorRepository } from './repository/type-orm-organization-vendor.repository';
 import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
 import { FavoriteService } from '../core/decorators';
@@ -35,8 +36,10 @@ export class OrganizationVendorService extends TenantAwareCrudService<Organizati
 			default: {
 				const vendor = await this.typeOrmRepository
 					.createQueryBuilder('vendor')
-					.leftJoin(Expense, 'expense', 'vendor.id = expense."vendorId"')
-					.where('expense."vendorId" = :vendorId', { vendorId: vendorId })
+					// Quoted through p(): MySQL reads a double-quoted name as a string, so the raw `expense."vendorId"`
+					// was a syntax error and no vendor could be deleted there
+					.leftJoin(Expense, 'expense', p('"vendor"."id" = "expense"."vendorId"'))
+					.where(p('"expense"."vendorId" = :vendorId'), { vendorId: vendorId })
 					.getOne();
 
 				if (vendor) {

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
@@ -197,25 +197,21 @@ export class ActivepiecesMcpService {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			// 1. Try tenant-specific API key from database
-			let integrationTenant: any = null;
-			try {
-				integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					},
-					relations: ['settings']
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
+			// 1. Try tenant-specific API key from database, from any of the tenant's rows that holds one,
+			// since connection calls used to add rows without an API key
+			const integrationTenants: any[] = await this.integrationTenantService.find({
+				where: {
+					tenantId,
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				},
+				relations: ['settings']
+			});
 
-			const apiKeySetting = integrationTenant?.settings?.find(
-				(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY
-			);
+			const apiKeySetting = integrationTenants
+				.flatMap((integrationTenant: any) => integrationTenant.settings ?? [])
+				.find(
+					(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY && setting.settingsValue
+				);
 
 			if (apiKeySetting?.settingsValue) {
 				return apiKeySetting.settingsValue;

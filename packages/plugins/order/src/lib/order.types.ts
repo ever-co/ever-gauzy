@@ -492,6 +492,44 @@ export interface IOrderCheckoutPaymentsPort {
  */
 export const ORDER_CHECKOUT_PAYMENTS = Symbol('ORDER_CHECKOUT_PAYMENTS');
 
+/** One promotion a cart carries into checkout, as the order states it to the promotion domain (Q7-W1c). */
+export interface IOrderPromotionUsageReservation {
+	cartId: ID;
+	promotionId: ID;
+	couponId?: ID;
+	code?: string;
+	customerId?: ID;
+	amount: string;
+	currency: string;
+}
+
+/**
+ * The redemption half of the promotion engine, as an order's checkout and cancellation reach it (Q7-W1c).
+ *
+ * The cart asks the engine what a promotion grants; this records that it was used. Declared here and
+ * bound by the installation's composition module to the promotion package's `PromotionOrderUsageAdapter`,
+ * so neither package imports the other.
+ */
+export interface IOrderPromotionUsagePort {
+	/**
+	 * Takes the use of one promotion before the order exists; refuses with `PROMOTION_USAGE_LIMIT_REACHED`
+	 * when none is left. A reservation the cart already holds is reused.
+	 */
+	reserveForCart(input: IOrderPromotionUsageReservation): Promise<ID>;
+	/** Releases every reservation a cart holds, when its checkout failed before the order was placed. */
+	releaseForCart(cartId: ID): Promise<number>;
+	/** Registers a placed order's reservations against it. */
+	registerForOrder(orderId: ID, cartId: ID): Promise<number>;
+	/** Reverts every redemption of a cancelled order and gives back the uses. */
+	revertForOrder(orderId: ID): Promise<number>;
+}
+
+/**
+ * Token the promotion redemptions are injected under (Q7-W1c). Optional: without the promotion package an
+ * order records no redemption, exactly as before.
+ */
+export const ORDER_PROMOTION_USAGE = Symbol('ORDER_PROMOTION_USAGE');
+
 /**
  * What one line's counters say, and how the status follows from them.
  *

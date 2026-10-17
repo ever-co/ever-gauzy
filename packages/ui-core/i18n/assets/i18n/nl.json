@@ -6311,6 +6311,7 @@
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
 		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
+		"LOGIN_WITH_EVER_ID": "Inloggen met {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {

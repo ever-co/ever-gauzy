@@ -26,6 +26,7 @@ import { TypeOrmProductRepository } from './repository/type-orm-product.reposito
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertTranslationsOfTenant } from '../product-option/translation-ownership.helper';
 
 /** Largest page `findAllProducts` serves when paging is requested. */
 export const MAX_PRODUCTS_PAGE_SIZE = 100;
@@ -389,7 +390,9 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				relations: ['gallery', 'variants']
 			});
 
-			if (product.variants.find((variant) => variant.image.id == imageId)) {
+			// A variant may have no image (`image` is nullable): reading `variant.image.id` threw for it, and the
+			// gallery image could not be removed from any product with such a variant
+			if (product.variants?.some((variant) => (variant.imageId ?? variant.image?.id) === imageId)) {
 				throw new HttpException('Image is used in product variants', HttpStatus.BAD_REQUEST);
 			}
 
@@ -411,6 +414,11 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	}
 
 	async saveProductTranslation(productTranslation: ProductTranslation): Promise<ProductTranslation> {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductTranslationRepository,
+			productTranslation,
+			this.typeOrmRepository
+		);
 		return await this.typeOrmProductTranslationRepository.save(productTranslation);
 	}
 

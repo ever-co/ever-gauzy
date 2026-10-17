@@ -25,9 +25,17 @@ interface IAuthState {
 	tokenData: ITokenData | null;
 	isLoginInProgress: boolean;
 	isRefreshInProgress: boolean;
+	isLogoutInProgress: boolean;
+	pendingRefresh: Promise<boolean> | null;
 }
 
-const createAuthState = (): IAuthState => ({ tokenData: null, isLoginInProgress: false, isRefreshInProgress: false });
+const createAuthState = (): IAuthState => ({
+	tokenData: null,
+	isLoginInProgress: false,
+	isRefreshInProgress: false,
+	isLogoutInProgress: false,
+	pendingRefresh: null
+});
 
 export class AuthManager {
 	private static instance: AuthManager;
@@ -267,8 +275,29 @@ export class AuthManager {
 			return false;
 		}
 
-		state.isRefreshInProgress = true;
+		// Do not start a refresh while logout is revoking the current token pair
+		if (state.isLogoutInProgress) {
+			if (environment.debug) {
+				logger.warn('🔄 Logout in progress, skipping token refresh');
+			}
+			return false;
+		}
 
+		state.isRefreshInProgress = true;
+		state.pendingRefresh = this.performRefresh(state);
+
+		try {
+			return await state.pendingRefresh;
+		} finally {
+			state.isRefreshInProgress = false;
+			state.pendingRefresh = null;
+		}
+	}
+
+	/**
+	 * Call the refresh endpoint and store the rotated token pair on the given login state
+	 */
+	private async performRefresh(state: IAuthState): Promise<boolean> {
 		try {
 			if (!state.tokenData?.refreshToken) {
 				if (environment.debug) {
@@ -286,10 +315,14 @@ export class AuthManager {
 				refresh_token: state.tokenData.refreshToken
 			});
 
-			if (response?.token) {
-				// Update only the access token and expiry
+			if (response?.token && state.tokenData) {
+				// Update the access token and expiry, and keep the rotated refresh token
+				// since the API marks the previous one as rotated
 				state.tokenData.accessToken = response.token;
 				state.tokenData.expiresAt = this.calculateTokenExpiry(response.token);
+				if (response.refresh_token) {
+					state.tokenData.refreshToken = response.refresh_token;
+				}
 
 				if (environment.debug) {
 					logger.log('✅ Token refreshed successfully');
@@ -307,8 +340,6 @@ export class AuthManager {
 				logger.error('❌ Token refresh failed:', sanitizeForLogging(error));
 			}
 			return false;
-		} finally {
-			state.isRefreshInProgress = false;
 		}
 	}
 
@@ -376,13 +407,25 @@ export class AuthManager {
 	public async logout(): Promise<void> {
 		const authKey = getAuthKey();
 		// A keyed caller only logs out its own login, never the shared auto-login account it may fall back to
-		const ownTokenData =
-			authKey === undefined ? this.processState.tokenData : this.keyedStates.get(authKey)?.tokenData;
+		const ownState = authKey === undefined ? this.processState : this.keyedStates.get(authKey);
+		if (ownState) {
+			ownState.isLogoutInProgress = true;
+		}
 
 		try {
+			// Wait for a running refresh so the rotated pair is the one revoked
+			if (ownState?.pendingRefresh) {
+				await ownState.pendingRefresh;
+			}
+
+			const ownTokenData = ownState?.tokenData;
 			if (ownTokenData?.accessToken && this.apiClient) {
-				// Call logout endpoint to invalidate refresh token on server
-				await this.apiClient.get('/api/auth/logout');
+				const { accessToken, refreshToken } = ownTokenData;
+				// Call logout endpoint to invalidate refresh token on server.
+				// The header is set here because the request interceptor skips auth endpoints.
+				await this.apiClient.post('/api/auth/logout', refreshToken ? { refresh_token: refreshToken } : {}, {
+					headers: { Authorization: `Bearer ${accessToken}` }
+				});
 			}
 		} catch (error) {
 			// Ignore logout errors, we're clearing local data anyway
@@ -393,6 +436,9 @@ export class AuthManager {
 			this.clearTokenData(authKey);
 			if (authKey === undefined) {
 				this.hasInitialized = false; // Allow re-initialization after logout
+			}
+			if (ownState) {
+				ownState.isLogoutInProgress = false;
 			}
 			if (environment.debug) {
 				logger.log('🔑 Logged out successfully');

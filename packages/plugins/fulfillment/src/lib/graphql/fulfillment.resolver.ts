@@ -180,6 +180,36 @@ export class FulfillmentResolver {
 	}
 
 	/**
+	 * Appends a line to a shipment that has not left yet.
+	 *
+	 * The twin of `POST /fulfillments/:id/lines`, over the same `FulfillmentService.addLine`: the shipment must
+	 * still be `PENDING`, the order line must be one of its order's and still have the quantity to ship, and the
+	 * order line's counter moves with the line (review R2-G40). The key and the version ride in the input, the
+	 * members the kernel reads them from.
+	 *
+	 * @param id The shipment.
+	 * @param input The line, with the retry key and the version the caller read the shipment at.
+	 * @param context The operation's context, which carries the request the guard ran on.
+	 * @returns The shipment, with its lines.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'fulfillment.line.add', required: false, resourceType: 'fulfillment' })
+	@Versioned({ resource: FulfillmentService, required: false })
+	@Mutation(() => Object, { name: 'addFulfillmentLine' })
+	async addFulfillmentLine(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>,
+		@Context() context?: any
+	): Promise<Fulfillment> {
+		const { idempotencyKey, version, ...line } = input ?? {};
+
+		void idempotencyKey;
+		void version;
+
+		return this.fulfillmentService.addLine(id, line as any, fulfillmentVersionOf(context?.req));
+	}
+
+	/**
 	 * Updates a fulfilment's tracking details or note.
 	 *
 	 * @param id The fulfilment.

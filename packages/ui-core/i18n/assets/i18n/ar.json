@@ -6309,6 +6309,7 @@
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
 		"OR_SIGN_IN_WITH": "أو قم بتسجيل الدخول بـ",
 		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
+		"LOGIN_WITH_EVER_ID": "تسجيل الدخول باستخدام {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {

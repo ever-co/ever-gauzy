@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
+import { restatesStoredValue } from '@gauzy/common';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockTransferStatus } from './../inventory.enums';
@@ -29,6 +30,16 @@ const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
 	]
 };
 
+/** States in which the outbound movements are written at the source. */
+const DISPATCHED = [
+	StockTransferStatus.IN_TRANSIT,
+	StockTransferStatus.PARTIALLY_RECEIVED,
+	StockTransferStatus.RECEIVED
+];
+
+/** States in which inbound movements may have landed at the destination. */
+const ARRIVED = [StockTransferStatus.PARTIALLY_RECEIVED, StockTransferStatus.RECEIVED];
+
 /**
  * Refusal code of a transition a caller attempted from a version the document has moved past.
  *
@@ -37,6 +48,9 @@ const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
  * the document and try again.
  */
 const TRANSFER_VERSION_CONFLICT = 'STOCK_TRANSFER_VERSION_CONFLICT';
+
+/** Units in one whole quantity at the six decimals of a transfer line's `numeric(20,6)` columns. */
+const QUANTITY_UNITS = 1e6;
 
 /**
  * Moves stock between locations.
@@ -160,6 +174,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
 			const transfer = await this.requireTransfer(manager, id);
 			this.assertVersion(transfer, expectedVersion);
+			await this.assertEditable(manager, transfer, partialEntity);
 
 			// The version the caller stated is not a column it writes: the stored counter is the one the
 			// compare-and-set below moves, so a body that carries a version cannot overwrite it.
@@ -216,18 +231,24 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 					});
 				}
 				const shipped = Number(input.shippedQuantity);
-				if (!Number.isFinite(shipped) || shipped < 0 || shipped > Number(line.requestedQuantity)) {
+				// A dispatch may name the same line once per carton or scan: the entries add up, so the line
+				// records every unit the source loses and the sum, not each entry, is held to the request.
+				// The sum is taken at the columns' six decimals: in a double, 0.1 + 0.2 is 0.30000000000000004,
+				// which would refuse two entries that add up exactly to a request of 0.3.
+				const total =
+					Math.round((Number(line.shippedQuantity ?? 0) + shipped) * QUANTITY_UNITS) / QUANTITY_UNITS;
+				if (!Number.isFinite(shipped) || shipped < 0 || total > Number(line.requestedQuantity)) {
 					throw inventoryError(
 						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
 						'A line cannot ship more than it requested.',
-						{ details: { lineId: line.id, requested: Number(line.requestedQuantity), shipped } }
+						{ details: { lineId: line.id, requested: Number(line.requestedQuantity), shipped: total } }
 					);
 				}
 				if (shipped === 0) {
 					continue;
 				}
 
-				line.shippedQuantity = shipped;
+				line.shippedQuantity = total;
 				await manager.save(StockTransferLine, line);
 
 				// The movement joins this dispatch's transaction: a line refused later in the loop takes
@@ -518,6 +539,77 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		}
 	}
 
+	/**
+	 * Refuses an edit that would move what only the transitions move.
+	 *
+	 * The state and its dates change through request, approve, ship, receive and cancel, each with its
+	 * own permission and stock movements, so the edit refuses to move them; a body that restates the
+	 * stored values still passes. A location can still be corrected inside the caller's scope until a
+	 * movement was written there: the source once units left it, the destination once units arrived.
+	 *
+	 * @param manager The transaction the edit runs in.
+	 * @param transfer The transfer as it was read, inside that transaction.
+	 * @param patch The columns the caller asked to write.
+	 */
+	private async assertEditable(manager: any, transfer: StockTransfer, patch: Partial<StockTransfer>): Promise<void> {
+		const moves = (member: keyof StockTransfer) =>
+			patch[member] !== undefined && !restatesStoredValue(transfer[member], patch[member]);
+
+		const lifecycle = (['status', 'shippedAt', 'receivedAt'] as const).filter(moves);
+		if (lifecycle.length) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`An edit cannot change ${lifecycle.join(', ')}: use the request, approve, ship, receive or cancel route.`,
+				{ details: { transferId: transfer.id, status: transfer.status, members: lifecycle } }
+			);
+		}
+
+		const fromMoves = moves('fromWarehouseId');
+		const toMoves = moves('toWarehouseId');
+		if (!fromMoves && !toMoves) {
+			return;
+		}
+
+		// A cancel may follow a partial receipt, so a canceled transfer keeps its destination only when a
+		// line recorded units there; one canceled while still in transit never reached it.
+		const shipped = Boolean(transfer.shippedAt) || DISPATCHED.includes(transfer.status);
+		const arrived =
+			ARRIVED.includes(transfer.status) ||
+			(toMoves &&
+				shipped &&
+				transfer.status === StockTransferStatus.CANCELED &&
+				(await manager.find(StockTransferLine, { where: { transferId: transfer.id } })).some(
+					(line: StockTransferLine) =>
+						Number(line.receivedQuantity ?? 0) > 0 || Number(line.damagedQuantity ?? 0) > 0
+				));
+		const fixed = [
+			...(fromMoves && shipped ? ['fromWarehouseId'] : []),
+			...(toMoves && arrived ? ['toWarehouseId'] : [])
+		];
+		if (fixed.length) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer in ${transfer.status} cannot change ${fixed.join(', ')} once its stock has moved.`,
+				{ details: { transferId: transfer.id, status: transfer.status, members: fixed } }
+			);
+		}
+
+		const fromWarehouseId = fromMoves ? patch.fromWarehouseId : transfer.fromWarehouseId;
+		const toWarehouseId = toMoves ? patch.toWarehouseId : transfer.toWarehouseId;
+		if (fromWarehouseId === toWarehouseId) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_SAME_LOCATION,
+				'A transfer must move stock between two different locations.',
+				{ badRequest: true, details: { warehouseId: fromWarehouseId } }
+			);
+		}
+		if (fromMoves) {
+			await assertLocationInScope(manager, fromWarehouseId);
+		}
+		if (toMoves) {
+			await assertLocationInScope(manager, toWarehouseId);
+		}
+	}
 
 	/**
 	 * Writes the state a transition reached, under the version the document was read at.

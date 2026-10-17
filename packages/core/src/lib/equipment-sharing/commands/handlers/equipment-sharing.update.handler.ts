@@ -1,5 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { RequestApprovalStatusTypesEnum, ApprovalPolicyTypesStringEnum } from '@gauzy/contracts';
 import { RequestApprovalService } from '../../../request-approval/request-approval.service';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingUpdateCommand } from '../equipment-sharing.update.command';
@@ -55,9 +55,12 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 		// Create a new request approval record for the updated equipment sharing.
 		await this._requestApprovalService.create({
 			requestId: equipmentSharing.id,
+			requestType: ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
 			status: equipmentSharing.status ?? RequestApprovalStatusTypesEnum.REQUESTED,
 			name: equipmentSharing.name,
-			min_count: 1
+			min_count: 1,
+			organizationId: existing.organizationId,
+			tenantId: existing.tenantId
 		});
 
 		return equipmentSharing;

@@ -6311,6 +6311,7 @@
 		"FORGOT_PASSWORD_TITLE": "Password dimenticata?",
 		"OR_SIGN_IN_WITH": "O accedi con",
 		"SIGN_IN_WITH_EVER_ID": "Accedi con Ever ID",
+		"LOGIN_WITH_EVER_ID": "Accedi con {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Accedi con Keycloak",
 		"FORGOT_EMAIL_TITLE": "Hai dimenticato l'email?",
 		"LOGIN_MAGIC": {

@@ -114,7 +114,9 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 					where: { name: In(keys(input)), tenantId: IsNull() }
 				});
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
-				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				// The managed entities, written back below: a serialized copy is a plain object, which
+				// persistAndFlush rejects (not a discovered entity), so saving an existing setting failed
+				settings = items;
 				break;
 			}
 			case MultiORMEnum.TypeORM: {
@@ -241,7 +243,9 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 					where: { name: In(keys(input)), tenantId }
 				});
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
-				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				// The managed entities, written back below: a serialized copy is a plain object, which
+				// persistAndFlush rejects (not a discovered entity), so saving an existing setting failed
+				settings = items;
 				break;
 			}
 			case MultiORMEnum.TypeORM: {

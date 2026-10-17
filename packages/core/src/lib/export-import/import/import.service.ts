@@ -121,6 +121,7 @@ export class ImportService {
 		// legacy dump, a filled-in `/export/template` or an externally built CSV set would otherwise
 		// lose a legitimate leading apostrophe from a value such as `'=notes` (GHSA-7xp5-j564-4752).
 		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
+		const junctionOwners: IRepositoryModel[] = [];
 		for await (const item of repositories) {
 			const { repository, isStatic = false, relations = [] } = item;
 			const nameFile = repository.metadata.tableName;
@@ -188,15 +189,23 @@ export class ImportService {
 				await this.rebuildProductCategoryClosure(tenantId);
 			}
 
-			// export pivot relational tables
 			if (isNotEmpty(relations)) {
-				await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
+				junctionOwners.push(item);
 			}
+		}
+
+		// A junction row links two master tables, so both must be imported first: `tag_task` names
+		// tags, and tags are imported after tasks.
+		for (const item of junctionOwners) {
+			await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
 		}
 	}
 
 	/**
 	 * Imports the junction tables of one entity.
+	 *
+	 * Each row is written between the destination ids of its two ends. A row with an end that was not
+	 * imported for the tenant is skipped. Run it once every master table is imported.
 	 *
 	 * @param extractPath - This request's extraction directory.
 	 * @param entity - The entity whose junction tables to read.
@@ -238,22 +247,39 @@ export class ImportService {
 					stream.on('end', async () => {
 						results = results.filter(isNotEmpty);
 
+						// `orIgnore` hides whether a pair was new, so the count is of rows linked, new or already there.
+						let linked = 0;
+						let skipped = 0;
 						for await (const data of results) {
 							try {
 								if (isNotEmpty(data)) {
 									const fields = await this.mapRelationFields(item, data);
-									const sql = `INSERT INTO "${joinTableName}" (${
-										'"' + Object.keys(fields).join(`", "`) + '"'
-									}) VALUES ("$1", "$2")`;
-									// const items = await getManager().query(sql, Object.values(fields));
-									console.log(sql);
-									// console.log(chalk.green(`Success to inserts data for table: ${joinTableName}`));
+									const row = Object.fromEntries(
+										item.foreignKeys.map(({ column }) => [column, fields[column]])
+									);
+									// An end with no import record for this tenant maps to undefined: nothing to link.
+									if (item.foreignKeys.some(({ column }) => !isNotEmpty(row[column]))) {
+										skipped++;
+										continue;
+									}
+									// `orIgnore` lets a merge re-import of the same archive pass the composite primary key.
+									await entity.repository.manager
+										.createQueryBuilder()
+										.insert()
+										.into(joinTableName)
+										.values(row)
+										.orIgnore()
+										.execute();
+									linked++;
 								}
 							} catch (error) {
 								console.log(chalk.red(`Failed to inserts data for table: ${joinTableName}`), error);
-								reject(error);
+								return reject(error);
 							}
 						}
+						this.logger.log(
+							`Imported junction table ${joinTableName}: ${linked} rows linked (new or already present), ${skipped} skipped with an end not imported`
+						);
 						resolve(true);
 					});
 				} catch (error) {
@@ -304,26 +330,19 @@ export class ImportService {
 	 * Map static tables import record before insert data
 	 */
 	async migrateImportEntityRecord(item: IRepositoryModel, entity: any): Promise<any> {
-		const { repository, uniqueIdentifiers = [] } = item;
+		const { repository } = item;
 		const masterTable = repository.metadata.tableName;
 
 		return await new Promise(async (resolve, reject) => {
 			try {
 				const source = JSON.parse(JSON.stringify(entity));
-				const where = [];
-				if (isNotEmpty(uniqueIdentifiers) && Array.isArray(uniqueIdentifiers)) {
-					if ('tenantId' in entity && isNotEmpty(entity['tenantId'])) {
-						where.push({ tenantId: RequestContext.currentTenantId() });
-					}
-					for (const unique of uniqueIdentifiers) {
-						where.push({ [unique.column]: entity[unique.column] });
-					}
-				}
+				// The lookup reads the mapped row: the archive's tenant and foreign keys are the source ids.
+				const mapped = await this.mapFields(item, entity);
 				const destination = await this.commandBus.execute(
 					new ImportEntityFieldMapOrCreateCommand(
 						repository,
-						where,
-						await this.mapFields(item, entity),
+						this.uniqueKeyConditions(item, mapped),
+						mapped,
 						source.id
 					)
 				);
@@ -336,6 +355,31 @@ export class ImportService {
 				reject(error);
 			}
 		});
+	}
+
+	/**
+	 * One condition per unique constraint of the table, each matching every column of the constraint
+	 * within the importing tenant. A constraint with an empty column is skipped: a null never collides,
+	 * and an undefined key would be dropped from the query and match any row.
+	 *
+	 * @param item - The table being imported.
+	 * @param row - The row after {@link mapFields}.
+	 */
+	private uniqueKeyConditions(item: IRepositoryModel, row: Record<string, unknown>): Record<string, unknown>[] {
+		const { repository, uniqueConstraints = [] } = item;
+		const isTenantScoped = !!repository.metadata.findColumnWithPropertyName('tenantId');
+		const where: Record<string, unknown>[] = [];
+		for (const columns of uniqueConstraints) {
+			if (columns.some((column) => row[column] === null || row[column] === undefined)) {
+				continue;
+			}
+			const condition: Record<string, unknown> = isTenantScoped ? { tenantId: row['tenantId'] ?? IsNull() } : {};
+			for (const column of columns) {
+				condition[column] = row[column];
+			}
+			where.push(condition);
+		}
+		return where;
 	}
 
 	/*
@@ -373,7 +417,10 @@ export class ImportService {
 		if ('id' in data && isNotEmpty(data['id'])) {
 			delete data['id'];
 		}
-		if ('tenantId' in data && isNotEmpty(data['tenantId'])) {
+		// An empty or missing tenantId would save the row without a tenant, where every tenant reads it
+		// as a platform default, so any table with the column gets the importer's tenant.
+		const hasTenantColumn = !!item.repository.metadata.findColumnWithPropertyName('tenantId');
+		if (hasTenantColumn || ('tenantId' in data && isNotEmpty(data['tenantId']))) {
 			data['tenantId'] = RequestContext.currentTenantId();
 		}
 		if ('organizationId' in data && isNotEmpty(data['organizationId'])) {

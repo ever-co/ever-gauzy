@@ -6,7 +6,7 @@ import {
 	inject,
 	OnInit,
 	signal,
-	WritableSignal
+	type WritableSignal
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
