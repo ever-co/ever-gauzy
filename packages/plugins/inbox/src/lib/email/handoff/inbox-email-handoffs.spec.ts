@@ -33,13 +33,38 @@ function setup(email: Row | null) {
 		settings: JSON.stringify({ everWorksAgentId: 'ew-agent-1' })
 	};
 	const attachments: Row[] = [
-		{ emailId: 'e1', tenantId: 't1', filename: 'receipt.pdf', contentType: 'application/pdf', size: 1200, isInline: false },
+		{
+			emailId: 'e1',
+			tenantId: 't1',
+			filename: 'receipt.pdf',
+			contentType: 'application/pdf',
+			size: 1200,
+			isInline: false
+		},
 		{ emailId: 'e1', tenantId: 't1', filename: 'logo.png', contentType: 'image/png', size: 300, isInline: true }
 	];
 	const repositories = new Map<unknown, Row>([
-		[InboxEmail, { findOne: async ({ where }: { where: Row }) => (email && email['id'] === where['id'] && email['tenantId'] === where['tenantId'] ? email : null) }],
-		[InboxMailbox, { findOne: async ({ where }: { where: Row }) => (mailbox['id'] === where['id'] && mailbox['tenantId'] === where['tenantId'] ? mailbox : null) }],
-		[InboxEmailAttachment, { find: async ({ where }: { where: Row }) => attachments.filter((a) => a['emailId'] === where['emailId'] && a['tenantId'] === where['tenantId']) }]
+		[
+			InboxEmail,
+			{
+				findOne: async ({ where }: { where: Row }) =>
+					email && email['id'] === where['id'] && email['tenantId'] === where['tenantId'] ? email : null
+			}
+		],
+		[
+			InboxMailbox,
+			{
+				findOne: async ({ where }: { where: Row }) =>
+					mailbox['id'] === where['id'] && mailbox['tenantId'] === where['tenantId'] ? mailbox : null
+			}
+		],
+		[
+			InboxEmailAttachment,
+			{
+				find: async ({ where }: { where: Row }) =>
+					attachments.filter((a) => a['emailId'] === where['emailId'] && a['tenantId'] === where['tenantId'])
+			}
+		]
 	]);
 	const dataSource = { getRepository: (target: unknown) => repositories.get(target) };
 	return { handoffs: new InboxEmailHandoffs(dataSource as never), mailbox };
@@ -73,7 +98,14 @@ describe('InboxEmailHandoffs', () => {
 		handoffs.register({ id: 'bridge', delivered: async (email) => void seen.push(email) });
 		await expect(handoffs.delivered(stored as never, mailbox as never, 'item-1')).resolves.toBeUndefined();
 		expect(seen).toEqual([
-			{ tenantId: 't1', organizationId: 'o1', mailboxId: 'mb1', mailboxSettings: { everWorksAgentId: 'ew-agent-1' }, emailId: 'e1', inboxItemId: 'item-1' }
+			{
+				tenantId: 't1',
+				organizationId: 'o1',
+				mailboxId: 'mb1',
+				mailboxSettings: { everWorksAgentId: 'ew-agent-1' },
+				emailId: 'e1',
+				inboxItemId: 'item-1'
+			}
 		]);
 		handoffs.unregister('bridge');
 		await handoffs.delivered(stored as never, mailbox as never, null);
@@ -106,7 +138,9 @@ describe('InboxEmailHandoffs', () => {
 
 	it('answers nothing for another tenant, a message not delivered (quarantined, failed), an outbound or a deleted one', async () => {
 		expect(await setup(stored).handoffs.read('t2', 'e1')).toBeNull();
-		expect(await setup({ ...stored, status: InboxEmailStatusEnum.QUARANTINED }).handoffs.read('t1', 'e1')).toBeNull();
+		expect(
+			await setup({ ...stored, status: InboxEmailStatusEnum.QUARANTINED }).handoffs.read('t1', 'e1')
+		).toBeNull();
 		expect(await setup({ ...stored, status: InboxEmailStatusEnum.FAILED }).handoffs.read('t1', 'e1')).toBeNull();
 		expect(await setup({ ...stored, direction: InboxEmailDirectionEnum.OUT }).handoffs.read('t1', 'e1')).toBeNull();
 		expect(await setup({ ...stored, deletedAt: new Date() }).handoffs.read('t1', 'e1')).toBeNull();
