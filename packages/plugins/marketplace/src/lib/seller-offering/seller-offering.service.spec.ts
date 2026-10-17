@@ -327,15 +327,23 @@ describe('SellerOfferingService — authoring an offering (doc 20 §3.2, §3.3)'
 	it('accepts a create that restates DRAFT, or states no status at all', async () => {
 		const fixture = offeringFixture({ offerings: [] });
 
-		const created = await fixture.service.createOffering({
-			sellerId: SELLER,
+		const body = { sellerId: SELLER, priceAmount: '10.00', priceCurrency: 'EUR' };
+
+		const restated = await fixture.service.createOffering({
+			...body,
 			variantId: VARIANT,
-			priceAmount: '10.00',
-			priceCurrency: 'EUR',
 			status: OfferingStatus.DRAFT
 		} as never);
+		const omitted = await fixture.service.createOffering({ ...body, variantId: 'variant-omitted' } as never);
+		const nulled = await fixture.service.createOffering({
+			...body,
+			variantId: 'variant-null',
+			status: null
+		} as never);
 
-		expect(created).toMatchObject({ status: OfferingStatus.DRAFT });
+		expect(restated).toMatchObject({ status: OfferingStatus.DRAFT });
+		expect(omitted).toMatchObject({ status: OfferingStatus.DRAFT });
+		expect(nulled).toMatchObject({ status: OfferingStatus.DRAFT });
 	});
 
 	it('refuses an offering with no seller or no variant', async () => {

@@ -314,21 +314,41 @@ describe('SellerSettlementService — recording what the provider reported (doc 
 		expect(fixture.events()).toEqual([]);
 	});
 
-	it('records OPEN when the body restates OPEN', async () => {
+	it('records OPEN when the body restates OPEN or states a null status', async () => {
 		const fixture = settlementFixture({ transactions: [transactionRow('t1', { netAmount: '98.000000' })] });
-
-		const recorded = await fixture.service.record({
+		const body = {
 			sellerId: SELLER,
 			providerKey: 'acquirer',
 			currency: EUR,
 			currencyDecimals: 2,
 			grossAmount: '120.000000',
 			commissionAmount: '20.000000',
-			feeAmount: '2.000000',
-			status: SellerSettlementStatus.OPEN
-		} as never);
+			feeAmount: '2.000000'
+		};
 
-		expect(recorded.status).toBe(SellerSettlementStatus.OPEN);
+		const restated = await fixture.service.record({ ...body, status: SellerSettlementStatus.OPEN } as never);
+		const nulled = await fixture.service.record({ ...body, status: null } as never);
+
+		expect(restated.status).toBe(SellerSettlementStatus.OPEN);
+		expect(nulled.status).toBe(SellerSettlementStatus.OPEN);
+	});
+
+	it('refuses a null reconcile or close stamp, because null is a stated value', async () => {
+		const fixture = settlementFixture({ transactions: [transactionRow('t1', { netAmount: '98.000000' })] });
+		const body = {
+			sellerId: SELLER,
+			providerKey: 'acquirer',
+			currency: EUR,
+			currencyDecimals: 2,
+			grossAmount: '120.000000',
+			commissionAmount: '20.000000',
+			feeAmount: '2.000000'
+		};
+
+		await expect(fixture.service.record({ ...body, closedAt: null } as never)).rejects.toThrow(
+			/SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: closedAt/
+		);
+		expect(fixture.events()).toEqual([]);
 	});
 
 	it('refuses a settlement with no seller, no provider or no currency', async () => {
