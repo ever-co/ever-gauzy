@@ -235,8 +235,9 @@ export const cartSchemaExtensions = gql`
 	input SetCartShippingMethodInput {
 		cartId: ID!
 		shippingOptionId: ID
-		name: String!
-		amount: Decimal!
+		# Ignored (R3-07c): the name, the amount and the tax treatment are the shipping option's.
+		name: String
+		amount: Decimal
 		isTaxInclusive: Boolean
 		isManual: Boolean
 		taxCategoryId: ID
