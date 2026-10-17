@@ -93,6 +93,8 @@ jest.mock('@gauzy/core', () => {
 		BaseEvent: class {},
 		EventBus: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The platform's own affected-row reader, so the claim's conditional decision is judged as in production.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		SequenceService: class SequenceService {},
 		Warehouse: class Warehouse {},
 		RequestContext: {
@@ -106,7 +108,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
 import { OrderClaimReason, OrderClaimStatus, OrderClaimType } from '../returns.types';
 import { OrderClaimLineService } from '../order-claim-line/order-claim-line.service';
@@ -205,9 +207,11 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 			return created;
 		},
+		// The WHOLE criteria is applied, as TypeORM applies it: a conditional write that states the status it read
+		// must change nothing once another call moved the row on, or a lost race would read as a write that landed.
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = tables[tableName].findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = tables[tableName].findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(tables[tableName][index], partial);
@@ -308,7 +312,7 @@ function claimFixture(
 							currency: request.currency
 						};
 					}
-			  };
+				};
 	/** Every recompute the service asked the order capability for. */
 	const totalsCalls: Row[] = [];
 	const orderTotals =
@@ -324,7 +328,7 @@ function claimFixture(
 
 						return { id: orderId };
 					}
-			  };
+				};
 	const service = new OrderClaimService(
 		typeOrmOrderClaimRepository as never,
 		{} as never,
@@ -456,7 +460,11 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 	afterEach(() => jest.restoreAllMocks());
 
 	it('issues the refund and closes the claim, because nothing else has to happen', async () => {
-		const fixture = claimFixture({ lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }] });
+		const fixture = claimFixture({
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
+		});
 
 		const outcome = await fixture.service.approve('claim-1', '25.00', 'goodwill');
 
@@ -472,7 +480,9 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 	it('settles for the amount the claim was raised with when the caller states none', async () => {
 		const fixture = claimFixture({
 			claims: [claimRow('claim-1', { refundAmount: '18.500000' })],
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }]
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
 		});
 
 		const outcome = await fixture.service.approve('claim-1');
@@ -482,7 +492,11 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 	});
 
 	it('refuses a refund claim with no amount at all, and issues nothing', async () => {
-		const fixture = claimFixture({ lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }] });
+		const fixture = claimFixture({
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
+		});
 
 		await expect(fixture.service.approve('claim-1')).rejects.toThrow(
 			/refund claim needs an amount before it can be settled/
@@ -493,7 +507,9 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 
 	it('refuses a refund when no payment capability is registered', async () => {
 		const fixture = claimFixture({
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }],
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			],
 			withRefund: false
 		});
 
@@ -502,12 +518,14 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 	});
 
 	it('refuses an amount that is not positive once it has crossed the currency’s boundary', async () => {
-		const fixture = claimFixture({ lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }] });
+		const fixture = claimFixture({
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
+		});
 
 		for (const amount of ['0', '0.004', '-5']) {
-			await expect(fixture.service.approve('claim-1', amount)).rejects.toThrow(
-				/must be for a positive amount/
-			);
+			await expect(fixture.service.approve('claim-1', amount)).rejects.toThrow(/must be for a positive amount/);
 		}
 		expect(fixture.refundCalls).toEqual([]);
 
@@ -517,7 +535,11 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 	});
 
 	it('normalises the amount it asks the payment capability for', async () => {
-		const fixture = claimFixture({ lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }] });
+		const fixture = claimFixture({
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
+		});
 
 		await fixture.service.approve('claim-1', '10.005');
 
@@ -529,7 +551,11 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 		// record of why. The payment side treats a claim as attribution on its own — precisely so a
 		// refund can be recorded when no captured payment can carry it — and it can only do that if the
 		// request names the claim.
-		const fixture = claimFixture({ lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }] });
+		const fixture = claimFixture({
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
+		});
 
 		await fixture.service.approve('claim-1', '25.00');
 
@@ -540,7 +566,9 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 		// The port documents that the amount refunded "may be less than the amount requested", and what is
 		// recorded on the claim is what actually left.
 		const fixture = claimFixture({
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }],
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			],
 			refundReturns: '20.000000'
 		});
 
@@ -572,7 +600,9 @@ describe('OrderClaimService — the order columns a refund claim moves (ADR-26)'
 
 	it('asks for the recompute when the claim settles in money', async () => {
 		const fixture = claimFixture({
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }]
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			]
 		});
 
 		await fixture.service.approve('claim-1', '25.00');
@@ -647,7 +677,9 @@ describe('OrderClaimService — the order columns a refund claim moves (ADR-26)'
 		// The money has moved by the time the recompute runs, so its failure is not reported as the
 		// refund's — the reasoning is stated once, on `OrderReturnService.refreshOrderTotals`.
 		const fixture = claimFixture({
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }],
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			],
 			totalsFail: true
 		});
 
@@ -662,7 +694,9 @@ describe('OrderClaimService — the order columns a refund claim moves (ADR-26)'
 		// The port is optional, like the one beside it: a tenant without the order plugin still settles a
 		// claim, and the order's own columns are the order package's to bring up to date.
 		const fixture = claimFixture({
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }],
+			lines: [
+				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }
+			],
 			withTotals: false
 		});
 
@@ -687,7 +721,16 @@ describe('OrderClaimService — a replacement claim settles in goods (doc 10 §1
 		// item was asked for and no exchange exists to ship one.
 		const fixture = claimFixture({
 			claims: [claimRow('claim-1', { type: OrderClaimType.REPLACE })],
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE, isAdditionalItem: false }]
+			lines: [
+				{
+					id: 'line-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					claimId: 'claim-1',
+					orderLineId: ORDER_LINE,
+					isAdditionalItem: false
+				}
+			]
 		});
 
 		await expect(fixture.service.approve('claim-1')).rejects.toThrow(
@@ -700,8 +743,22 @@ describe('OrderClaimService — a replacement claim settles in goods (doc 10 §1
 		const fixture = claimFixture({
 			claims: [claimRow('claim-1', { type: OrderClaimType.REPLACE })],
 			lines: [
-				{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE, isAdditionalItem: false },
-				{ id: 'line-2', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', variantId: VARIANT, isAdditionalItem: true }
+				{
+					id: 'line-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					claimId: 'claim-1',
+					orderLineId: ORDER_LINE,
+					isAdditionalItem: false
+				},
+				{
+					id: 'line-2',
+					tenantId: TENANT,
+					organizationId: ORG,
+					claimId: 'claim-1',
+					variantId: VARIANT,
+					isAdditionalItem: true
+				}
 			]
 		});
 
@@ -718,7 +775,16 @@ describe('OrderClaimService — a replacement claim settles in goods (doc 10 §1
 		// replacements in against its return.
 		const fixture = claimFixture({
 			claims: [claimRow('claim-1', { type: OrderClaimType.REPLACE, returnId: RETURN })],
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE, isAdditionalItem: false }],
+			lines: [
+				{
+					id: 'line-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					claimId: 'claim-1',
+					orderLineId: ORDER_LINE,
+					isAdditionalItem: false
+				}
+			],
 			exchanges: [{ id: 'exchange-1', tenantId: TENANT, organizationId: ORG, returnId: RETURN }]
 		});
 
@@ -730,11 +796,22 @@ describe('OrderClaimService — a replacement claim settles in goods (doc 10 §1
 	it('does not count an exchange of another organization as the claim’s own', async () => {
 		const fixture = claimFixture({
 			claims: [claimRow('claim-1', { type: OrderClaimType.REPLACE, returnId: RETURN })],
-			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE, isAdditionalItem: false }],
+			lines: [
+				{
+					id: 'line-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					claimId: 'claim-1',
+					orderLineId: ORDER_LINE,
+					isAdditionalItem: false
+				}
+			],
 			exchanges: [{ id: 'exchange-1', tenantId: TENANT, organizationId: OTHER_ORG, returnId: RETURN }]
 		});
 
-		await expect(fixture.service.approve('claim-1')).rejects.toThrow(/at least one additional item or a linked exchange/);
+		await expect(fixture.service.approve('claim-1')).rejects.toThrow(
+			/at least one additional item or a linked exchange/
+		);
 	});
 
 	it('closes an approved replacement once it has been shipped', async () => {
@@ -777,9 +854,7 @@ describe('OrderClaimService — the state machine around the decision (doc 10 §
 			]
 		});
 
-		await expect(fixture.service.approve('approved')).rejects.toThrow(
-			/cannot approve; expected OPEN or REQUESTED/
-		);
+		await expect(fixture.service.approve('approved')).rejects.toThrow(/cannot approve; expected OPEN or REQUESTED/);
 		await expect(fixture.service.approve('closed', '5.00')).rejects.toThrow(
 			/cannot approve; expected OPEN or REQUESTED/
 		);
@@ -860,5 +935,67 @@ describe('OrderClaimService — the state machine around the decision (doc 10 §
 			/must claim a positive quantity/
 		);
 		expect(fixture.liveLines()).toEqual([]);
+	});
+});
+
+describe('OrderClaimService — a refund claim settles once (review R3-09, the claim twin)', () => {
+	const line = { id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE };
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('issues one refund when two approvals of the same claim overlap', async () => {
+		const fixture = claimFixture({ lines: [line] });
+
+		// The failure scenario: both approvals read the claim as OPEN, and each settled a refund of its own.
+		const outcomes = await Promise.allSettled([
+			fixture.service.approve('claim-1', '25.00'),
+			fixture.service.approve('claim-1', '25.00')
+		]);
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+
+		const refused = outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult;
+
+		expect(refused.reason).toBeInstanceOf(ConflictException);
+		expect(refused.reason.getResponse()).toMatchObject({ code: 'CLAIM_DECISION_CONFLICT' });
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.CLOSED, refundAmount: '25.000000' });
+	});
+
+	it('gives the claim back its decidable status when the refund is refused, so it can be approved again', async () => {
+		const fixture = claimFixture({ lines: [line] });
+		const gateway = (fixture.service as any).refundGateway;
+		const settle = gateway.createRefund;
+
+		gateway.createRefund = async () => {
+			throw new Error('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+		};
+
+		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.OPEN });
+
+		gateway.createRefund = settle;
+
+		await expect(fixture.service.approve('claim-1', '25.00')).resolves.toMatchObject({
+			claim: { status: OrderClaimStatus.CLOSED }
+		});
+		expect(fixture.refundCalls).toHaveLength(1);
+	});
+
+	it('refuses a caller who may not settle a refund before the claim moves', async () => {
+		const fixture = claimFixture({ lines: [line] });
+
+		(fixture.service as any).refundGateway.assertMayRefund = () => {
+			throw new ForbiddenException('REFUND_APPROVAL_REQUIRED');
+		};
+
+		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toBeInstanceOf(ForbiddenException);
+		expect(fixture.refundCalls).toEqual([]);
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.OPEN });
 	});
 });
