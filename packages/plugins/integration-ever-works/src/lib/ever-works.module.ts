@@ -109,6 +109,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.applier.register(this.inbox);
 		// Mailboxes routed to an Ever Works agent → POST /email/inbound (only queued where the Inbox email features run).
 		this.pusher.register(this.agentEmail);
+		this.loop.registerSweeper(this.agentEmail);
 	}
 }
 

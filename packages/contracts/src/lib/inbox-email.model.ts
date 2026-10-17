@@ -456,6 +456,11 @@ export interface IInboxEmailHandoffs {
 	unregister(id: string): void;
 	/** The stored message of a tenant (`null` when it is gone, or not delivered: received, quarantined, failed). */
 	read(tenantId: ID, emailId: ID): Promise<IInboxEmailHandoff | null>;
+	/**
+	 * The messages of a tenant delivered since a time, oldest first (at most `limit`): a listener's recovery sweep,
+	 * for a notice it may have missed (a restart between the delivery and the listener's own write).
+	 */
+	deliveredSince(tenantId: ID, since: Date, limit: number): Promise<IInboxEmailDelivered[]>;
 }
 
 /** The DI token of {@link IInboxEmailHandoffs}, provided by the Inbox email features when they are loaded. */

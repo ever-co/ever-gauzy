@@ -122,10 +122,20 @@ function setup(options: { scopes?: string[]; stored?: IInboxEmailHandoff | null;
 	const registry = {
 		register: jest.fn(),
 		unregister: jest.fn(),
-		read: jest.fn(async () => (options.stored === undefined ? message() : options.stored))
+		read: jest.fn(async () => (options.stored === undefined ? message() : options.stored)),
+		deliveredSince: jest.fn(async () => [] as Row[])
+	};
+	// The outbound changes the recovery sweep looks at (any state).
+	const changes: Row[] = [];
+	const dataSource = {
+		getRepository: () => ({
+			find: async ({ where }: { where: Row }) =>
+				changes.filter((row) => (where['gauzyId'] as { value: string[] }).value.includes(row['gauzyId']))
+		})
 	};
 	const service = new EverWorksAgentEmailService(
-		{ forOrganization: async () => context } as never,
+		dataSource as never,
+		{ forOrganization: async () => context, forConnection: async () => [context] } as never,
 		{ client: () => client } as never,
 		linkService as never,
 		queue as never,
@@ -134,7 +144,7 @@ function setup(options: { scopes?: string[]; stored?: IInboxEmailHandoff | null;
 	);
 	const change = { id: 'ch1', tenantId: 't1', organizationId: 'o1', gauzyId: EMAIL_ID, op: 'upsert' } as never;
 	const pushContext = { connection: { id: 'c1' }, mapping: { id: 'm1' } } as never;
-	return { service, mock, email, links, linkService, queue, log, registry, change, pushContext };
+	return { service, mock, email, links, linkService, queue, log, registry, change, pushContext, changes };
 }
 
 describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works agent', () => {
@@ -261,6 +271,39 @@ describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works
 		expect(refused).toMatchObject({ status: 422, code: 'domain_rule' });
 		expect(refused.retryable).toBe(false);
 		expect(links.some((l) => l['entityType'] === EverWorksLinkType.AGENT_EMAIL)).toBe(false);
+	});
+
+	it('the recovery sweep queues a routed message whose notice was missed, and nothing already queued or handed off', async () => {
+		const { service, registry, queue, links, changes } = setup();
+		const notice = (emailId: string, settings: Row | null = { everWorksAgentId: 'ew-agent-1' }) => ({
+			tenantId: 't1',
+			organizationId: 'o1',
+			mailboxId: 'mb1',
+			mailboxSettings: settings,
+			emailId,
+			inboxItemId: null
+		});
+		registry.deliveredSince.mockResolvedValue([
+			notice('missed'),
+			notice('queued'),
+			notice('handed-off'),
+			notice('not-routed', {}),
+			{ ...notice('other-org'), organizationId: 'o9' }
+		]);
+		changes.push({ gauzyId: 'queued' });
+		links.push({
+			integrationTenantId: 'm1',
+			entityType: EverWorksLinkType.AGENT_EMAIL,
+			gauzyId: 'handed-off',
+			ewId: 'ew-mail-9',
+			state: 'ok'
+		});
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(registry.deliveredSince).toHaveBeenCalledWith('t1', expect.any(Date), 500);
+		expect(queue.enqueue).toHaveBeenCalledTimes(1);
+		expect(queue.enqueue).toHaveBeenCalledWith(
+			expect.objectContaining({ gauzyId: 'missed', entityType: EverWorksLinkType.AGENT_EMAIL })
+		);
 	});
 
 	it('defers where the Inbox email features are not loaded (another process takes it)', async () => {
