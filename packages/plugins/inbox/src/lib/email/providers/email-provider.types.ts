@@ -103,13 +103,25 @@ export interface ParsedInboundEmail {
 	raw?: Buffer;
 }
 
+/**
+ * What a verified delivery is known by, for single use: the pipeline marks it used before it stores the delivery, and
+ * releases the mark when storing fails, so a provider's retry of the same signed request is not refused.
+ */
+export interface IInboundDeliveryIdentity {
+	/** The delivery's identity: the signature that verified and its timestamp (or the provider's event id). */
+	fingerprint: string;
+	/** How long the mark must last (at least the signature's freshness window). */
+	ttlMs: number;
+}
+
 /** The inbound half of a provider (plan 04 §5.2). */
 export interface IInboundEmailProvider {
 	/**
 	 * Proves the request comes from the provider, for this account. Throws when it does not (the route answers 401).
-	 * There is no "accept unsigned" mode: a provider that cannot verify a request must refuse it.
+	 * There is no "accept unsigned" mode: a provider that cannot verify a request must refuse it. Answers the delivery's
+	 * identity, which the pipeline makes single use (a replay answers 401).
 	 */
-	verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<void>;
+	verify(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<IInboundDeliveryIdentity | void>;
 	/** The messages the request carries (fetching them from the provider's API when the webhook is metadata only). */
 	parse(request: IInboundWebhookRequest, account: IProviderAccountContext): Promise<ParsedInboundEmail[]>;
 	/**
