@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { FindOptionsWhere, IsNull } from 'typeorm';
-import { ID, ISearchIndexField, ISearchIndexRegistration, JsonData } from '@gauzy/contracts';
+import { ID, ISearchIndexField, ISearchIndexRegistration, JsonData, SearchFieldKind } from '@gauzy/contracts';
 import {
 	CrudService,
 	MikroOrmSearchIndexDefinitionRepository,
@@ -34,6 +34,29 @@ interface IDefinitionShape {
 	defaultWeight: number;
 	sourceUpdatedAtField: string;
 }
+
+/** The kinds a field may declare — the registry's own list (`registry/search-index.registry.ts`). */
+const FIELD_KINDS: ReadonlySet<string> = new Set<string>(Object.values(SearchFieldKind));
+
+/**
+ * Refuses a text member longer than the REST contract allows.
+ *
+ * @param value The member, when stated.
+ * @param max Its longest form.
+ * @param what How the refusal names it.
+ * @throws BadRequestException When it is longer.
+ */
+function assertMaxLength(value: unknown, max: number, what: string): void {
+	if (value !== undefined && value !== null && String(value).length > max) {
+		throw new BadRequestException(`An index definition's ${what} is at most ${max} characters.`);
+	}
+}
+
+/** A field name's longest form, as `SearchIndexFieldDTO.name` caps it on REST. */
+const MAX_FIELD_NAME_LENGTH = 128;
+
+/** A field source path's longest form, as `SearchIndexFieldDTO.source` caps it on REST. */
+const MAX_FIELD_SOURCE_LENGTH = 255;
 
 /**
  * The persisted half of the index declarations.
@@ -368,6 +391,12 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	private async saveChanges(row: SearchIndexDefinition, changes: IDefinitionChanges): Promise<SearchIndexDefinition> {
 		const shapeBefore = this.serialiseShape(this.shapeOfRow(row));
 
+		// The caps `UpdateSearchIndexDefinitionDTO` puts on REST, applied to GraphQL too (R2-G5).
+		assertMaxLength(changes.label, 255, 'label');
+		assertMaxLength(changes.titleTemplate, 512, 'title template');
+		assertMaxLength(changes.bodyTemplate, 1024, 'body template');
+		assertMaxLength(changes.sourceUpdatedAtField, 64, 'source timestamp field');
+
 		if (changes.label !== undefined) {
 			row.label = String(changes.label);
 		}
@@ -524,6 +553,12 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	 * The rules are the same ones the in-memory registry applies, restated here because this is the
 	 * path an operator writes through and the registry never sees that input.
 	 *
+	 * It is also the one place both doors meet (review sweep R2-G5): `PUT /search/index-definitions/:id`
+	 * validated a field's weight (`@Min(0)`) and its lengths but took any `kind` string, while
+	 * `updateSearchIndexDefinition` checked the kind (an SDL enum) but stored a negative weight — which the
+	 * document builder then silently ignored — and any length. Kind, weight, source and the name/source
+	 * lengths are now checked here, for both.
+	 *
 	 * @param entity The entity key, for the message.
 	 * @param fields The declared fields.
 	 * @returns The fields.
@@ -544,6 +579,47 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 
 			if (!name) {
 				throw new BadRequestException(`An index definition for "${entity}" declares a field with no name.`);
+			}
+
+			if (name.length > MAX_FIELD_NAME_LENGTH) {
+				throw new BadRequestException(
+					`The index definition for "${entity}" declares a field name longer than ${MAX_FIELD_NAME_LENGTH} characters.`
+				);
+			}
+
+			if (!FIELD_KINDS.has(String(field.kind))) {
+				throw new BadRequestException(
+					`The index definition for "${entity}" declares the kind "${field.kind}" for the field ` +
+						`"${name}". A kind is one of ${Array.from(FIELD_KINDS).join(', ')}.`
+				);
+			}
+
+			if (field.weight !== undefined && field.weight !== null) {
+				const weight = Number(field.weight);
+
+				if (!Number.isFinite(weight) || weight < 0) {
+					throw new BadRequestException(
+						`The index definition for "${entity}" gives the field "${name}" the weight ` +
+							`"${field.weight}". A weight is a non-negative number.`
+					);
+				}
+			}
+
+			if (field.source !== undefined && field.source !== null) {
+				const source = String(field.source);
+
+				if (!source.trim()) {
+					throw new BadRequestException(
+						`The index definition for "${entity}" gives the field "${name}" an empty source path.`
+					);
+				}
+
+				if (source.length > MAX_FIELD_SOURCE_LENGTH) {
+					throw new BadRequestException(
+						`The index definition for "${entity}" gives the field "${name}" a source path longer than ` +
+							`${MAX_FIELD_SOURCE_LENGTH} characters.`
+					);
+				}
 			}
 
 			if (names.has(name)) {
