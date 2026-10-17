@@ -127,7 +127,8 @@
 		"ideas": "Ideas",
 		"tasks": "Tasks and comments",
 		"inbox": "Inbox",
-		"docs": "Docs"
+		"docs": "Docs",
+		"agentEmail": "Agent email (a read-only copy in the Inbox)"
 	},
 	"PHASES": {
 		"members": "People",
