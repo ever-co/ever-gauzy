@@ -1,8 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OmitType } from '@nestjs/mapped-types';
-import { Type } from 'class-transformer';
-import { IsDate, IsInt, IsOptional, IsString, Max, MaxLength, Min, ValidateNested } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsDate, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, ValidateNested } from 'class-validator';
+import { ID } from '@gauzy/contracts';
 import { CouponDTO } from './coupon.dto';
+
+/**
+ * Reads a whole number from its wire forms: a JSON number, or a numeric string as the unvalidated route
+ * accepted. Anything else — `true`, `[1]` — is left as it came, so `@IsInt` refuses it rather than a
+ * blanket `Number()` turning it into 1.
+ */
+const toWholeNumber = ({ value }: { value: unknown }) =>
+	typeof value === 'number' || (typeof value === 'string' && value.trim() !== '') ? Number(value) : value;
 
 /** The largest batch the service mints in one request; the service states the same bound. */
 export const COUPON_BATCH_MAX_COUNT = 100000;
@@ -25,14 +34,14 @@ export class CouponCodeFormatDTO {
 
 	@ApiPropertyOptional({ type: () => Number, description: 'Number of significant characters.' })
 	@IsOptional()
-	@Type(() => Number)
+	@Transform(toWholeNumber)
 	@IsInt()
 	@Min(1)
 	readonly significantLength?: number;
 
 	@ApiPropertyOptional({ type: () => Number, description: 'Characters per group.' })
 	@IsOptional()
-	@Type(() => Number)
+	@Transform(toWholeNumber)
 	@IsInt()
 	@Min(1)
 	readonly groupSize?: number;
@@ -63,10 +72,31 @@ export class CouponCodeFormatDTO {
  * not a class, so the validation pipe had nothing to validate against and the body reached the service
  * as it came — unknown members included (R2-G34). This class is the same shape the GraphQL input states:
  * the coupon's shared fields, `code` accepted and never read (a batch mints its own codes), the count and
- * the format. The window is converted from its wire form, which the unvalidated route accepted, so a
- * request that worked before keeps working.
+ * the format. The window and the count are converted from their wire forms, which the unvalidated route
+ * accepted, so a request that worked before keeps working.
+ *
+ * **The organization is not required here.** The base DTO requires `organization` or `organizationId`, and
+ * the unvalidated route never did: the service writes every generated code into the caller's own scope and
+ * ignores whatever tenancy the body states. The three members are therefore left out of the inherited shape,
+ * and `organizationId` is accepted back as an optional identifier so a client that sends it is not refused.
  */
-export class CreateCouponBatchDTO extends OmitType(CouponDTO, ['code', 'usageCount', 'startsAt', 'endsAt'] as const) {
+export class CreateCouponBatchDTO extends OmitType(CouponDTO, [
+	'code',
+	'usageCount',
+	'startsAt',
+	'endsAt',
+	'organization',
+	'organizationId',
+	'sentTo'
+] as const) {
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'Accepted and never read: the caller’s organization is used.'
+	})
+	@IsOptional()
+	@IsUUID()
+	readonly organizationId?: ID;
+
 	@ApiPropertyOptional({ type: () => String, description: 'Accepted and never read: a batch mints its own codes.' })
 	@IsOptional()
 	@IsString()
@@ -86,7 +116,7 @@ export class CreateCouponBatchDTO extends OmitType(CouponDTO, ['code', 'usageCou
 	readonly endsAt?: Date;
 
 	@ApiProperty({ type: () => Number, description: 'How many codes to mint.' })
-	@Type(() => Number)
+	@Transform(toWholeNumber)
 	@IsInt()
 	@Min(1)
 	@Max(COUPON_BATCH_MAX_COUNT)

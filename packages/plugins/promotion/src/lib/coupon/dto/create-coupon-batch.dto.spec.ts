@@ -34,6 +34,9 @@ describe('CreateCouponBatchDTO — the body of POST /coupons/batch (R2-G34)', ()
 		await expect(run({ count: 0 })).rejects.toBeDefined();
 		await expect(run({ count: 100001 })).rejects.toBeDefined();
 		await expect(run({ count: 1.5 })).rejects.toBeDefined();
+		// `Number(true)` and `Number([1])` are both 1; the shapes are refused rather than read as one code.
+		await expect(run({ count: true })).rejects.toBeDefined();
+		await expect(run({ count: [1] })).rejects.toBeDefined();
 	});
 
 	it('refuses a format whose group size is not a positive whole number', async () => {
@@ -51,7 +54,18 @@ describe('CreateCouponBatchDTO — the body of POST /coupons/batch (R2-G34)', ()
 
 		expect(batch.id).toBeUndefined();
 		expect(batch.usageCount).toBeUndefined();
+		// The coupon's own active switch: admitted, it would be spread onto every generated row.
+		expect(batch.isActive).toBeUndefined();
 		expect(batch.unknown).toBeUndefined();
+	});
+
+	it('does not require an organization in the body, which the unvalidated route never did', async () => {
+		// The service writes every code into the caller's own scope; the base DTO's "organization or
+		// organizationId" rule would have refused the request the route accepted before.
+		await expect(run({ count: 5 })).resolves.toMatchObject({ count: 5 });
+		await expect(run({ count: 5, organizationId: '00000000-0000-4000-8000-000000000002' })).resolves.toMatchObject({
+			count: 5
+		});
 	});
 
 	it('still accepts a code, which a batch never reads', async () => {

@@ -130,21 +130,24 @@ const REST_ONLY = {
 };
 
 /**
- * Ledger resources: rows written only by the operations that own them, served read-only over both protocols.
+ * Ledger resources whose direct writes GraphQL deliberately does not mirror.
  *
- * Each is reached over GraphQL (as a root, or through its parent) and over REST, and on both its direct create, update and
- * hard delete are refused — REST answers the routes it inherits from `CrudController` with a refusal, GraphQL
- * declares no such field — while the recoverable withdraw/restore pair is served on both. That is a decision,
- * not a gap, and it used to be recorded only in the package's own write-route suite
- * (`promotion/src/lib/graphql/resolvers/write-routes.spec.ts`, `REFUSED`); listing it here makes the gate say
- * so too (R2-G34), and an entry that names a resource no controller declares fails as stale.
+ * Each is read over both protocols and serves the recoverable withdraw/restore pair on both, while its direct
+ * create, update and hard delete have no GraphQL field — the rows are written by the operations that own them,
+ * and the specifications refuse to mirror a direct write over a ledger. What REST does with those routes differs
+ * and each entry says it: the gift-card ledger refuses them on REST too, while the two usage ledgers keep them
+ * on REST as a gated back-office correction. That is a decision, not a gap, and it used to be recorded only in
+ * the package's own write-route suite (`promotion/src/lib/graphql/resolvers/write-routes.spec.ts`, `REFUSED`);
+ * listing it here makes the gate say so too (R2-G34). An entry fails when no controller declares the resource
+ * (stale), and when the package's schema declares a `create`/`update`/`delete` field for it after all.
  */
 const LEDGERS = {
 	'gift-card-transactions':
-		'The append-only ledger of a gift card, written by the card operations (issue, redeem, refund, adjust, void).',
-	'promotion-usages': 'The redemption ledger, written by the checkout and cancellation operations.',
+		'The append-only ledger of a gift card, written by the card operations (issue, redeem, refund, adjust, void); REST refuses the direct writes too (GIFT_CARD_TRANSACTION_APPEND_ONLY).',
+	'promotion-usages':
+		'The redemption ledger, written by the checkout and cancellation operations; the direct writes stay REST-only, gated as a back-office correction (06 §7.22).',
 	'campaign-budget-usages':
-		'The per-value consumption of a campaign budget, maintained by the budget increment inside its transaction.'
+		'The per-value consumption of a campaign budget, maintained by the budget increment inside its transaction; the direct writes stay REST-only, gated (08 §8.3).'
 };
 
 /** Reads a file, or the empty string when it cannot be read. */
@@ -499,6 +502,28 @@ for (const name of PACKAGES) {
 		fields: fields.size
 	});
 
+	// A ledger whose direct writes GraphQL is said not to mirror must not have grown such a field: the
+	// acknowledgement would then describe a surface that no longer exists.
+	const ledgersHere = [...resources].filter((resource) => LEDGERS[resource]);
+	if (ledgersHere.length) {
+		const schema = schemaSourceOf(dir);
+
+		for (const resource of ledgersHere) {
+			const type = camelCase(singular(resource)).replace(/^./, (first) => first.toUpperCase());
+			const writes = ['create', 'update', 'delete']
+				.map((verb) => `${verb}${type}`)
+				.filter((field) => new RegExp(`\\b${field}\\s*\\(`).test(schema));
+
+			if (writes.length) {
+				problems.push({
+					package: name,
+					kind: 'ledger-write',
+					detail: `/${resource} is acknowledged as a ledger GraphQL does not write, and the schema declares ${writes.join(', ')}`
+				});
+			}
+		}
+	}
+
 	for (const resource of resources) declaredResources.add(resource);
 }
 
@@ -558,7 +583,7 @@ for (const entry of oneSided) {
 
 console.log('');
 console.log(
-	`  ${Object.keys(LEDGERS).length} ledger resource(s) served read-only on both protocols, their direct writes refused on both:`
+	`  ${Object.keys(LEDGERS).length} ledger resource(s) read and withdrawn/restored on both protocols, their direct writes not mirrored over GraphQL:`
 );
 for (const [resource, reason] of Object.entries(LEDGERS)) {
 	console.log(`    ${`/${resource}`.padEnd(28)} ${reason}`);
