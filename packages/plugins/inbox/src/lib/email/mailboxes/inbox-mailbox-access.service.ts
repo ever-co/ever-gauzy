@@ -18,6 +18,10 @@ export const MAX_MAILBOX_RECIPIENTS = 500;
  * Reading a message needs one of those, or `INBOX_MAILBOX_READ_ALL` in the mailbox's tenant. Managing it (the raw
  * message, the quarantine) needs the employee owner, a `MANAGER` member, `INBOX_MAILBOX_READ_ALL`, or
  * `INBOX_MAILBOX_MANAGE` as a member of the mailbox's organization.
+ *
+ * Everyone is checked against the current state: for a mailbox of an organization, only users who are still active
+ * members of that organization count (a user removed from it keeps their saved mailbox membership, which then grants
+ * nothing until they are back).
  */
 @Injectable()
 export class InboxMailboxAccessService {
@@ -34,7 +38,7 @@ export class InboxMailboxAccessService {
 
 	/** The users a mailbox's message is delivered to. */
 	async recipientsOf(mailbox: InboxMailbox): Promise<ID[]> {
-		const users = new Set<ID>(await this.memberUserIds(mailbox));
+		const users = new Set<ID>(await this.current(mailbox, await this.memberUserIds(mailbox)));
 		if (mailbox.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE && mailbox.ownerEmployeeId) {
 			const owner = await this.employeeUserId(mailbox.tenantId as ID, mailbox.ownerEmployeeId);
 			if (owner) users.add(owner);
@@ -49,7 +53,7 @@ export class InboxMailboxAccessService {
 				users.add(id);
 			}
 		}
-		return [...users].slice(0, MAX_MAILBOX_RECIPIENTS);
+		return (await this.current(mailbox, [...users])).slice(0, MAX_MAILBOX_RECIPIENTS);
 	}
 
 	/** Whether the caller may read the mailbox's messages. */
@@ -61,13 +65,19 @@ export class InboxMailboxAccessService {
 	/** Whether the caller may manage the mailbox (download the raw message, release the quarantine). */
 	async canManage(mailbox: InboxMailbox, userId: ID): Promise<boolean> {
 		if (RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_READ_ALL)) return true;
+		const stillMember = async () => (await this.current(mailbox, [userId])).length > 0;
 		if (mailbox.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE && mailbox.ownerEmployeeId) {
-			if ((await this.employeeUserId(mailbox.tenantId as ID, mailbox.ownerEmployeeId)) === userId) return true;
+			if (
+				(await this.employeeUserId(mailbox.tenantId as ID, mailbox.ownerEmployeeId)) === userId &&
+				(await stillMember())
+			) {
+				return true;
+			}
 		}
 		const member = await this.dataSource
 			.getRepository(InboxMailboxMember)
 			.findOne({ where: { mailboxId: mailbox.id as ID, userId, deletedAt: IsNull() } });
-		if (member?.role === InboxMailboxMemberRoleEnum.MANAGER) return true;
+		if (member?.role === InboxMailboxMemberRoleEnum.MANAGER && (await stillMember())) return true;
 		if (!RequestContext.hasPermission(PermissionsEnum.INBOX_MAILBOX_MANAGE) || !mailbox.organizationId)
 			return false;
 		const membership = await this.dataSource
@@ -80,6 +90,25 @@ export class InboxMailboxAccessService {
 			.andWhere('uo.isActive = :active', { active: true })
 			.getRawOne<{ id: ID }>();
 		return !!membership;
+	}
+
+	/**
+	 * Of these users, those who are active members of the mailbox's organization now (all of them for a mailbox of the
+	 * tenant itself), in the given order.
+	 */
+	private async current(mailbox: InboxMailbox, userIds: ID[]): Promise<ID[]> {
+		if (userIds.length === 0 || !mailbox.organizationId) return userIds;
+		const rows = await this.dataSource
+			.createQueryBuilder()
+			.select('uo.userId', 'userId')
+			.from('user_organization', 'uo')
+			.where('uo.tenantId = :tenantId', { tenantId: mailbox.tenantId })
+			.andWhere('uo.organizationId = :organizationId', { organizationId: mailbox.organizationId })
+			.andWhere('uo.userId IN (:...userIds)', { userIds })
+			.andWhere('uo.isActive = :active', { active: true })
+			.getRawMany<{ userId: ID | null }>();
+		const active = new Set(rows.map((row) => row.userId));
+		return userIds.filter((id) => active.has(id));
 	}
 
 	private async memberUserIds(mailbox: InboxMailbox): Promise<ID[]> {

@@ -34,7 +34,12 @@ import {
 import { InboundReplayGuard } from './replay-guard.service';
 import { getInboxEmailConfig, InboxEmailConfig } from './inbox-email.config';
 import { InboxEmailStorage } from './inbox-email-storage';
-import { INBOX_EMAIL_PROCESSOR, IInboxEmailProcessor } from './inbox-email-processor.types';
+import {
+	HOLD_UNVERIFIED_SENDER,
+	INBOX_EMAIL_PROCESSOR,
+	INBOX_HOLD_HEADER,
+	IInboxEmailProcessor
+} from './inbox-email-processor.types';
 import { ALLOWLISTED_HEADERS, serializeParsedMessage } from './mime';
 
 /** The JSON array text of a value (`null` for nothing). */
@@ -47,6 +52,8 @@ const json = (value: unknown): string | null =>
 interface MatchedMailbox {
 	mailbox: InboxMailbox;
 	tag?: string;
+	/** Why the message is held in the quarantine whatever its verdict (see {@link INBOX_HOLD_HEADER}). */
+	hold?: string;
 }
 
 /**
@@ -59,8 +66,9 @@ interface MatchedMailbox {
  * 3. Per message: only the envelope recipients (or `To` / `Cc` when the provider gives no envelope) that are active
  *    mailboxes **of this account** count — a mailbox receives only through the account it points at (the platform
  *    route: mailboxes without an account), in the account's tenant (and organization, for an organization's account);
- *    a custom-domain mailbox only once its domain is verified; and only from senders its allowlist admits. The
- *    mailbox row decides the tenant and the organization, never the payload. Other recipients are dropped.
+ *    a custom-domain mailbox only once its domain is verified; and only from senders its allowlist admits (one without
+ *    a DMARC pass is held in the quarantine). The mailbox row decides the tenant and the organization, never the
+ *    payload. Other recipients are dropped.
  * 4. The raw message (`.eml`, or the normalized `.json`) goes to FileStorage once per tenant, and one `inbox_email`
  *    row per mailbox (`RECEIVED`, unique on `(mailboxId, messageId)`: a provider's retry is counted as a duplicate).
  * 5. The rows are handed to the worker; the answer is `{ accepted, duplicates, dropped }` with 202.
@@ -216,7 +224,7 @@ export class InboxInboundService {
 			const key = `inbox/${tenantId}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}.${extension}`;
 			const stored = await this.storage.put(message.raw ?? serializeParsedMessage(message), key);
 
-			for (const { mailbox, tag } of fresh) {
+			for (const { mailbox, tag, hold } of fresh) {
 				try {
 					const row = await this.dataSource.getRepository(InboxEmail).save(
 						this.dataSource.getRepository(InboxEmail).create({
@@ -232,7 +240,7 @@ export class InboxInboundService {
 							ccAddresses: json(message.cc),
 							replyToAddresses: json(message.replyTo),
 							subject: message.subject?.slice(0, 500) ?? null,
-							headers: json(this.headersOf(message, tag)),
+							headers: json(this.headersOf(message, tag, hold)),
 							spf: message.spf ?? null,
 							dkim: message.dkim ?? null,
 							dmarc: message.dmarc ?? null,
@@ -271,8 +279,9 @@ export class InboxInboundService {
 		const rows = await this.mailboxes.findActiveByAddresses(recipients.map((entry) => entry.address));
 		const byAddress = new Map(rows.map((row) => [row.address, row]));
 		const sender = message.from?.address ?? message.envelopeFrom;
-		// The From header alone is forgeable: an allowlist admits a sender only when the provider says its domain is
-		// authenticated (DMARC pass). A mailbox with an allowlist therefore needs a relay that reports verdicts.
+		// The From header alone is forgeable: an allowlist admits a sender outright only when the provider says its
+		// domain is authenticated (DMARC pass). An allowlisted sender without that proof (a relay that reports no
+		// verdict, or a failed one) is held in the quarantine for a manager to release, never dropped unseen.
 		const authenticated = message.dmarc === 'pass';
 		const out: MatchedMailbox[] = [];
 		for (const recipient of recipients) {
@@ -285,8 +294,9 @@ export class InboxInboundService {
 				continue;
 			}
 			const allowlist = this.allowlist(mailbox);
-			if (allowlist.length > 0 && (!authenticated || !isSenderAllowed(allowlist, sender))) continue;
-			out.push(recipient.tag ? { mailbox, tag: recipient.tag } : { mailbox });
+			if (allowlist.length > 0 && !isSenderAllowed(allowlist, sender)) continue;
+			const hold = allowlist.length > 0 && !authenticated ? HOLD_UNVERIFIED_SENDER : undefined;
+			out.push({ mailbox, ...(recipient.tag ? { tag: recipient.tag } : {}), ...(hold ? { hold } : {}) });
 		}
 		return out;
 	}
@@ -307,15 +317,16 @@ export class InboxInboundService {
 
 	/**
 	 * The headers a stored message keeps: the allowlist, whatever form the provider delivered (MIME or JSON), plus the
-	 * recipient's `+tag`.
+	 * recipient's `+tag` and the webhook's hold (`x-gauzy-*` headers of the delivery itself are never kept).
 	 */
-	private headersOf(message: ParsedInboundEmail, tag?: string): Record<string, string> {
+	private headersOf(message: ParsedInboundEmail, tag?: string, hold?: string): Record<string, string> {
 		const headers: Record<string, string> = {};
 		for (const [name, value] of Object.entries(message.headers ?? {})) {
 			const key = name.toLowerCase();
 			if (ALLOWLISTED_HEADERS.has(key) && typeof value === 'string') headers[key] = value.slice(0, 1000);
 		}
 		if (tag) headers['x-gauzy-inbox-tag'] = tag.slice(0, 64);
+		if (hold) headers[INBOX_HOLD_HEADER] = hold;
 		return headers;
 	}
 

@@ -6,12 +6,12 @@ jest.mock('@gauzy/core', () => ({
 	...jest.requireActual('../../../../../../../core/src/lib/webhook/webhook-signature')
 }));
 
-import { UnauthorizedException } from '@nestjs/common';
+import { PayloadTooLargeException, UnauthorizedException } from '@nestjs/common';
 import { signWebhookPayload } from '../../../../../../../core/src/lib/webhook/webhook-signature';
 import { SAMPLE_MIME } from '../../testing/sample-mime';
 import { EmailProviderRegistry } from '../email-provider.registry';
 import { IInboundWebhookRequest, IProviderAccountContext } from '../email-provider.types';
-import { GENERIC_SIGNATURE_HEADER, GenericWebhookProvider } from './generic-webhook.provider';
+import { GENERIC_MAX_MESSAGES, GENERIC_SIGNATURE_HEADER, GenericWebhookProvider } from './generic-webhook.provider';
 
 const SECRET = 'a-signing-secret-of-enough-length-1234';
 const account: IProviderAccountContext = {
@@ -150,6 +150,16 @@ describe('GenericWebhookProvider', () => {
 				})
 			);
 			expect(withFile?.messageId).not.toBe(messages[1]?.messageId);
+		});
+
+		it('refuses an oversized batch whole, never cutting it short', async () => {
+			const one = { from: 'bob@acme.test', to: 'support.ever@inbox.example.test', subject: 'Hi' };
+			await expect(
+				provider.parse(request({ messages: Array.from({ length: GENERIC_MAX_MESSAGES + 1 }, () => one) }))
+			).rejects.toBeInstanceOf(PayloadTooLargeException);
+			expect(
+				await provider.parse(request({ messages: Array.from({ length: GENERIC_MAX_MESSAGES }, () => one) }))
+			).toHaveLength(GENERIC_MAX_MESSAGES);
 		});
 	});
 
