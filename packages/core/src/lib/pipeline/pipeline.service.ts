@@ -10,6 +10,7 @@ import { LIKE_OPERATOR } from '../core/util';
 import { assertSensitiveRelationsAllowed } from '../core/util/sensitive-relations.helper';
 import { parseFindOptionsRelations } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
+import { IPartialEntity } from './../core/crud/icrud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
@@ -99,6 +100,10 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		// Retrieve the current tenant ID from the request context
 		const tenantId = RequestContext.currentTenantId();
 
+		// The stages below are saved by primary key alone, so run the nested check create() and save() run.
+		// It stays outside the try block, whose catch would swallow the refusal.
+		await this.assertNestedGraphNotForeign([{ ...partialEntity, id } as IPartialEntity<Pipeline>], tenantId);
+
 		const queryRunner = this.connectionEntityManager.rawConnection.createQueryRunner();
 
 		try {
@@ -107,7 +112,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			await queryRunner.startTransaction();
 
 			// Fetch the existing pipeline
-			await queryRunner.manager.findOneByOrFail(Pipeline, { id, tenantId });
+			const existing = await queryRunner.manager.findOneByOrFail(Pipeline, { id, tenantId });
 
 			// Create a new pipeline instance with the updated data
 			const pipeline: Pipeline = queryRunner.manager.create(
@@ -138,6 +143,13 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			const createdStages = (pipeline.stages ?? []).filter(
 				(stage) => !updatedStages.some((updatedStage) => updatedStage.id === stage.id)
 			);
+
+			// A new stage the body files under no tenant or organization (GraphQL never states them) takes the
+			// pipeline's, or the deals read and the next edit would never see it.
+			for (const stage of createdStages) {
+				stage.tenantId ??= tenantId;
+				stage.organizationId ??= pipeline.organizationId ?? existing.organizationId;
+			}
 
 			// Prepare the pipeline for saving
 			pipeline.__before_persist();
