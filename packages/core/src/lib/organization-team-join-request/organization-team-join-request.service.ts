@@ -71,7 +71,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		entity: IOrganizationTeamJoinRequestCreateInput & Partial<IAppIntegrationConfig>,
 		languageCode?: LanguagesEnum
 	): Promise<IOrganizationTeamJoinRequest> {
-		const { organizationTeamId, email } = entity;
+		const { organizationTeamId, email, fullName, linkAddress, position } = entity;
 
 		/** find existing team join request and throw exception */
 		const request = await this.count({
@@ -118,6 +118,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			const createEntityLike = this.typeOrmRepository.create({
 				organizationTeamId,
 				email,
+				fullName,
+				linkAddress,
+				position,
 				organizationId,
 				tenantId,
 				code,
@@ -398,7 +401,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			 * Current user is not belong to this tenant
 			 */
 			if (!currentTenantUser) {
-				const names = request?.fullName?.split(' ');
+				const names = request?.fullName?.trim().split(/\s+/) ?? [];
 
 				const role: IRole = await this._roleService.findOneByWhereOptions({
 					name: RolesEnum.EMPLOYEE
@@ -406,8 +409,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				const newTenantUser = await this._inviteService.createUser(
 					{
 						user: {
-							firstName: (names && names.length && names[0]) || '',
-							lastName: (names && names.length && names[1]) || '',
+							firstName: names[0] ?? '',
+							lastName: names.slice(1).join(' '),
 							email: request.email,
 							tenantId: tenantId,
 							role: role
