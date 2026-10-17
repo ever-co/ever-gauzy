@@ -743,6 +743,7 @@
 			<a
 				*ngxPermissionsOnly="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT]"
 				nbButton
+				outline
 				size="small"
 				status="basic"
 				class="project-view-edit"
@@ -753,47 +754,60 @@
 			</a>
 		</div>
 
-		<!-- Progress: the project's tasks done, in progress and still to do. -->
+		<!-- Progress: the share of the project's tasks that are done, and how the rest stand. -->
 		<section recordViewHeader class="panel project-view-panel" [nbSpinner]="projectProgress.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 			<header class="panel-header">
 				<h5 class="panel-title panel-title--icon">
 					<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
 					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS' | translate }}
 				</h5>
-				@if (projectProgress.value?.total) {
-				<span class="project-progress-percent">{{ formatPercent(projectProgress.value.percent) }}</span>
-				}
 			</header>
 			<div class="panel-body">
 				@if (projectProgress.failed) {
 				<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 				} @else if (projectProgress.value && !projectProgress.value.total) {
 				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_PROJECT_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
-				} @else if (projectProgress.value) {
+				} @else if (projectProgress.value; as progress) {
+				<div class="progress-summary">
+					<span class="progress-value">{{ formatPercent(progress.percent) }}</span>
+					<span class="progress-caption">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS_META' | translate : { done: progress.done, total: progress.total } }}
+					</span>
+				</div>
 				<div
-					class="project-progress-track"
+					class="progress-track"
 					role="progressbar"
 					aria-valuemin="0"
 					aria-valuemax="100"
-					[attr.aria-valuenow]="projectProgress.value.percent | number : '1.0-0'"
+					[attr.aria-valuenow]="progress.percent | number : '1.0-0'"
 					[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS' | translate"
 				>
-					<span class="project-progress-done" [style.width.%]="(projectProgress.value.done / projectProgress.value.total) * 100"></span>
-					<span class="project-progress-active" [style.width.%]="(projectProgress.value.progress / projectProgress.value.total) * 100"></span>
+					@if (progress.done) {
+					<span class="progress-segment progress-segment--done" [style.width.%]="(progress.done / progress.total) * 100"></span>
+					}
+					@if (progress.progress) {
+					<span class="progress-segment progress-segment--active" [style.width.%]="(progress.progress / progress.total) * 100"></span>
+					}
 				</div>
-				<p class="project-progress-meta">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS_META' | translate : { done: projectProgress.value.done, total: projectProgress.value.total } }}
-				</p>
-				<ul class="project-progress-legend">
-					<li><span class="legend-dot legend-dot--done" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate }} <strong>{{ projectProgress.value.done }}</strong></li>
-					<li><span class="legend-dot legend-dot--active" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate }} <strong>{{ projectProgress.value.progress }}</strong></li>
-					<li><span class="legend-dot" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate }} <strong>{{ projectProgress.value.todo }}</strong></li>
-				</ul>
+				<dl class="progress-stats">
+					<div class="progress-stat">
+						<dt><span class="progress-dot progress-dot--done" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate }}</dt>
+						<dd>{{ progress.done }}</dd>
+					</div>
+					<div class="progress-stat">
+						<dt><span class="progress-dot progress-dot--active" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate }}</dt>
+						<dd>{{ progress.progress }}</dd>
+					</div>
+					<div class="progress-stat">
+						<dt><span class="progress-dot" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate }}</dt>
+						<dd>{{ progress.todo }}</dd>
+					</div>
+				</dl>
 				}
 			</div>
 		</section>
 
-		<!-- Who worked the most: the team members' time on the project in the period. -->
+		<!-- Who worked the most: the team members' time on the project in the period, each with their photo. -->
 		<section recordViewHeader class="panel project-view-panel" [nbSpinner]="projectContributors.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 			<header class="panel-header">
 				<div class="panel-heading">
@@ -805,9 +819,38 @@
 				</div>
 			</header>
 			<div class="panel-body panel-body--flush">
-				<ng-container
-					*ngTemplateOutlet="ranked; context: { $implicit: projectContributors, column: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.MEMBER', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"
-				></ng-container>
+				@if (projectContributors.failed) {
+				<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+				} @else if (!projectContributors.loading && !projectContributors.value.length) {
+				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"></ng-container>
+				} @else {
+				<ol class="contributor-list">
+					@for (person of projectContributors.value; track person.id) {
+					<li class="contributor">
+						<a class="contributor-person" [routerLink]="['/pages/employees/view', person.id]">
+							<span class="member-avatar contributor-avatar">
+								@if (person.avatarUrl) {
+								<img [src]="person.avatarUrl" [alt]="person.name" />
+								} @else {
+								<span aria-hidden="true">{{ person.initials }}</span>
+								}
+							</span>
+							<span class="contributor-text">
+								<span class="contributor-name" [title]="person.name">{{ person.name }}</span>
+								@if (person.activity !== undefined) {
+								<span class="contributor-meta">{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent(person.activity) } }}</span>
+								}
+							</span>
+						</a>
+						<span class="contributor-bar" aria-hidden="true"><span [style.width.%]="person.width"></span></span>
+						<span class="contributor-figures">
+							<span class="contributor-time">{{ formatDuration(person.duration) }}</span>
+							<span class="contributor-share">{{ formatPercent(person.share) }}</span>
+						</span>
+					</li>
+					}
+				</ol>
+				}
 			</div>
 		</section>
 	</ngx-record-view>
