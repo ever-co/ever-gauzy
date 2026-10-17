@@ -141,7 +141,8 @@ const updateTimeOffPolicy = async (
 		throw new Error('Time-off policy not found');
 	}
 
-	const { employees = [], ...fields } = policy;
+	// The list answers rows typed `unknown`: name the shape of the relation read here
+	const { employees = [], ...fields } = policy as Record<string, unknown> & { employees?: { id: string }[] };
 	const employeeIds = employees.map((employee) => employee.id);
 	return apiClient.put(`/api/time-off-policy/${id}`, {
 		...fields,
@@ -866,7 +867,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 				// No statistics route: count the requests the list route answers
 				const requests = (
 					await findTimeOffRequests(defaultParams, { startDate, endDate, employeeId, policyId })
-				).filter(({ policy }) => !type || policy?.leaveType === toLeaveType(type));
+				).filter(
+					({ policy }) =>
+						!type || (policy as { leaveType?: string } | undefined)?.leaveType === toLeaveType(type)
+				);
 				const groupings = {
 					employee: (request) => (request.employees ?? []).map(({ id }) => id),
 					policy: (request) => request.policy?.name,
