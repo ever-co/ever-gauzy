@@ -359,6 +359,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 		const eligible = new Map<ID, ProductPrice[]>();
 		const unpriced: ID[] = [];
+		const unpricedNotices = new Map<ID, string[]>();
 		const legacyNeeded = new Set<ID>();
 
 		for (const variantId of variantIds) {
@@ -405,7 +406,10 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			const surviving = candidates.filter((row) => amounts.has(String(row.id)));
 
 			if (!surviving.length) {
+				// Every row was eliminated: the variant falls back like a variant with no row, and the
+				// fallback carries the reasons, so the operator can see which row to correct.
 				unpriced.push(variantId);
+				unpricedNotices.set(variantId, notices);
 				continue;
 			}
 
@@ -434,6 +438,16 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			);
 		}
 
+		// A variant whose every row was eliminated falls back exactly as one with no row does, so its
+		// legacy price is read too when the candidate pass did not need it.
+		const unread = unpriced.filter((variantId) => !legacy.has(variantId));
+
+		if (unread.length) {
+			for (const [variantId, legacyPrice] of await this.findLegacyPrices(unread)) {
+				legacy.set(variantId, legacyPrice);
+			}
+		}
+
 		for (const variantId of unpriced) {
 			const legacyPrice = legacy.get(variantId);
 
@@ -441,7 +455,9 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				continue;
 			}
 
-			resolved.push(await this.describeLegacyResolution(variantId, legacyPrice, scope));
+			resolved.push(
+				await this.describeLegacyResolution(variantId, legacyPrice, scope, unpricedNotices.get(variantId))
+			);
 		}
 
 		return resolved;
@@ -518,12 +534,14 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * @param variantId The variant being priced.
 	 * @param legacyPrice The legacy row.
 	 * @param scope The resolution scope.
+	 * @param notices Why the variant's own rows were eliminated, when it had rows at all.
 	 * @returns The resolution.
 	 */
 	private async describeLegacyResolution(
 		variantId: ID,
 		legacyPrice: ProductVariantPrice,
-		scope: IResolutionScope
+		scope: IResolutionScope,
+		notices: string[] = []
 	): Promise<IResolvedPrice> {
 		const currency = (legacyPrice.retailPriceCurrency ?? scope.currency) as CurrencyCode;
 		const amount = Money.fromStorage(legacyPrice.retailPrice, currency);
@@ -540,9 +558,12 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			taxInclusive,
 			source: PriceSource.VARIANT_RETAIL_PRICE,
 			matchedRules: [],
-			explain:
-				`No ${scope.currency} price row is configured for this variant, so the legacy variant retail price ` +
-				`(${amount.amount} ${currency}) applies. Create a product price to price it from the pricing tables.`
+			...(notices.length ? { notices } : {}),
+			explain: notices.length
+				? `No ${scope.currency} price row of this variant could compete, so the legacy variant retail price ` +
+					`(${amount.amount} ${currency}) applies. ${notices.join(' ')}`
+				: `No ${scope.currency} price row is configured for this variant, so the legacy variant retail price ` +
+					`(${amount.amount} ${currency}) applies. Create a product price to price it from the pricing tables.`
 		};
 	}
 
@@ -821,13 +842,18 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				continue;
 			}
 
-			const derived = this.deriveAmount(row, baseAmount);
-
 			// A row stored before the share was read as a fraction may carry a percentage (`25` for 25 %),
 			// which as a fraction takes more than the whole base. Charging the negative amount it computes
-			// to would be a refund at checkout, so the row is eliminated and the operator told how to
+			// to would be a refund at checkout — and a price ending or the storage boundary can round a
+			// small negative to zero, which would be a free product — so the share itself is checked
+			// before anything is derived from it. The row is eliminated and the operator told how to
 			// restate it, exactly as a row with no base is.
-			if (Money.of(derived, row.currency).isNegative()) {
+			const derived =
+				row.percent != null && Money.of(row.percent, row.currency).greaterThan(Money.of('1', row.currency))
+					? undefined
+					: this.deriveAmount(row, baseAmount);
+
+			if (derived === undefined || Money.of(derived, row.currency).isNegative()) {
 				notices.push(
 					`PRICE_PERCENT_RANGE: the price ${row.id} states a share of ${row.percent}, which is a fraction of the base ` +
 						`(0.25 is 25 % off) and would make its price negative, so the row did not compete. Restate the share as a fraction.`

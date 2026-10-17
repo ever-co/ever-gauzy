@@ -217,4 +217,41 @@ describe('ProductPriceService — `percent` is a signed fraction of the base (R2
 		expect(resolved.source).toBe(PriceSource.DEFAULT_PRICE);
 		expect(resolved.notices?.some((notice) => notice.startsWith('PRICE_PERCENT_RANGE'))).toBe(true);
 	});
+
+	it('eliminates a share just above 1 even when the price ending would round its negative price to zero', async () => {
+		const [resolved] = await resolve(
+			serviceUnderTest(
+				[
+					{
+						id: 'p-default',
+						tenantId: TENANT,
+						organizationId: ORG,
+						variantId: VARIANT,
+						currency: 'USD',
+						amount: '0.990000',
+						status: PriceStatus.ACTIVE,
+						computeMode: PriceComputeMode.AMOUNT
+					},
+					// 1.00 − 1.01 × 1.00 = −0.01, which the 0.05 ending rounds to 0.00: a free product.
+					derivedRow({ id: 'p-free', percent: '1.010000', roundTo: '0.050000', priceListId: SALE_LIST })
+				],
+				'1.000000'
+			)
+		);
+
+		expect(resolved.priceId).toBe('p-default');
+		expect(resolved.amount).toBe('0.990000');
+		expect(resolved.notices?.some((notice) => notice.startsWith('PRICE_PERCENT_RANGE'))).toBe(true);
+	});
+
+	it('carries the reason into the legacy fallback when the only row is eliminated', async () => {
+		const [resolved] = await resolve(
+			serviceUnderTest([derivedRow({ id: 'p-legacy-percentage', percent: '25.000000', priceListId: SALE_LIST })])
+		);
+
+		expect(resolved.source).toBe(PriceSource.VARIANT_RETAIL_PRICE);
+		expect(resolved.amount).toBe('20.000000');
+		expect(resolved.notices?.some((notice) => notice.startsWith('PRICE_PERCENT_RANGE'))).toBe(true);
+		expect(resolved.explain).toContain('PRICE_PERCENT_RANGE');
+	});
 });
