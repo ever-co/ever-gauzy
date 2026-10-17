@@ -69,7 +69,7 @@ export interface IOrderPlacedLines {
 
 /** The line shape the projection reads. */
 export interface IOrderPlacedLineSource {
-	id: ID;
+	id?: ID;
 	productId?: ID | null;
 	variantId?: ID | null;
 	quantity?: number | string | null;
@@ -91,12 +91,12 @@ export function placedLinesOf(
 	policies: Record<string, IOrderLineEntitlementPolicy | null | undefined>,
 	cap: number = ORDER_PLACED_LINES_CAP
 ): IOrderPlacedLines {
-	const granting = lines.filter((line) => !!policies[line.id]).length;
+	const granting = lines.filter((line) => !!policies[line.id as ID]).length;
 	let room = Math.max(0, cap - granting);
 	const projected: IOrderPlacedLine[] = [];
 
 	for (const line of lines) {
-		const entitlement = policies[line.id] ?? undefined;
+		const entitlement = policies[line.id as ID] ?? undefined;
 
 		if (!entitlement) {
 			if (room <= 0) {
@@ -107,7 +107,7 @@ export function placedLinesOf(
 		}
 
 		projected.push({
-			orderLineId: line.id,
+			orderLineId: line.id as ID,
 			productId: line.productId ?? null,
 			variantId: line.variantId ?? null,
 			quantity: Number(line.quantity ?? 1),
@@ -125,5 +125,7 @@ export function placedLinesOf(
 export function statedEntitlementOf(metadata: unknown): IOrderLineEntitlementPolicy | null {
 	const policy = (metadata as Record<string, unknown> | null | undefined)?.entitlement;
 
-	return policy && typeof policy === 'object' && !Array.isArray(policy) ? (policy as IOrderLineEntitlementPolicy) : null;
+	return policy && typeof policy === 'object' && !Array.isArray(policy)
+		? (policy as IOrderLineEntitlementPolicy)
+		: null;
 }

@@ -42,9 +42,7 @@ function service(port?: { policiesFor: (query: any) => Promise<any> }) {
 
 describe('placedLinesOf', () => {
 	it('carries every line, with the policy of the lines that grant one', () => {
-		expect(
-			placedLinesOf([line('a'), line('b')] as never, { a: { kind: 'SEAT' }, b: null })
-		).toEqual({
+		expect(placedLinesOf([line('a'), line('b')] as never, { a: { kind: 'SEAT' }, b: null })).toEqual({
 			lines: [
 				{ orderLineId: 'a', productId: 'p-a', variantId: 'v-a', quantity: 2, entitlement: { kind: 'SEAT' } },
 				{ orderLineId: 'b', productId: 'p-b', variantId: 'v-b', quantity: 2 }
@@ -122,11 +120,19 @@ describe('OrderLineService.placedLinesFor', () => {
 			}
 		]);
 		// Only the line whose policy came from the catalogue is written; its other metadata is kept.
-		expect(updates).toEqual([['b', { metadata: { cartLineId: 'cl-b', entitlement: { kind: 'SEAT', quantity: 3 } } }]]);
+		expect(updates).toEqual([
+			['b', { metadata: { cartLineId: 'cl-b', entitlement: { kind: 'SEAT', quantity: 3 } } }]
+		]);
 		expect(projected).toEqual({
 			lines: [
 				{ orderLineId: 'a', productId: 'p-a', variantId: 'v-a', quantity: 2, entitlement: { kind: 'LICENCE' } },
-				{ orderLineId: 'b', productId: 'p-b', variantId: 'v-b', quantity: 2, entitlement: { kind: 'SEAT', quantity: 3 } },
+				{
+					orderLineId: 'b',
+					productId: 'p-b',
+					variantId: 'v-b',
+					quantity: 2,
+					entitlement: { kind: 'SEAT', quantity: 3 }
+				},
 				{ orderLineId: 'c', productId: 'p-c', variantId: 'v-c', quantity: 2 }
 			],
 			linesTotal: 3,
@@ -142,7 +148,9 @@ describe('OrderLineService.placedLinesFor', () => {
 		};
 
 		await expect(subject.placedLinesFor(ORDER, [line('a')])).resolves.toEqual(
-			expect.objectContaining({ lines: [expect.objectContaining({ orderLineId: 'a', entitlement: { kind: 'SEAT' } })] })
+			expect.objectContaining({
+				lines: [expect.objectContaining({ orderLineId: 'a', entitlement: { kind: 'SEAT' } })]
+			})
 		);
 	});
 });

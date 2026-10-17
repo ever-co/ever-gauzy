@@ -37,7 +37,7 @@ function adapter(enabled: boolean, catalog?: Record<string, Record<string, unkno
 					reads.push(`product:${id}`);
 					return catalog[`product:${id}`] ?? null;
 				}
-		  }
+			}
 		: undefined;
 
 	return { adapter: new EntitlementOrderLinePolicyAdapter(featureService as never, port as never), reads };
@@ -97,11 +97,20 @@ describe('EntitlementOrderLinePolicyAdapter', () => {
 				{ orderLineId: 'bad-kind', quantity: 1, stated: { kind: 'FOREVER' } },
 				{ orderLineId: 'bad-qty', quantity: 1, stated: { quantity: 0 } },
 				{ orderLineId: 'bad-term', quantity: 1, stated: { startsAt: '2027-01-02', endsAt: '2027-01-01' } },
-				{ orderLineId: 'ok', quantity: 1, stated: { kind: 'USAGE', quantity: 100, tenantId: 'other', note: 'x' } }
+				{
+					orderLineId: 'ok',
+					quantity: 1,
+					stated: { kind: 'USAGE', quantity: 100, tenantId: 'other', note: 'x' }
+				}
 			]
 		});
 
-		expect(answer).toEqual({ 'bad-kind': null, 'bad-qty': null, 'bad-term': null, ok: { kind: 'USAGE', quantity: 100 } });
+		expect(answer).toEqual({
+			'bad-kind': null,
+			'bad-qty': null,
+			'bad-term': null,
+			ok: { kind: 'USAGE', quantity: 100 }
+		});
 	});
 
 	it('accepts every kind the package grants', () => {
@@ -150,7 +159,13 @@ describe('EntitlementGrantConsumer — order.placed lines and order.canceled', (
 				orderId: ORDER,
 				customerId: 'customer-1',
 				lines: [
-					{ orderLineId: 'line-1', productId: 'p1', variantId: 'v1', quantity: 2, entitlement: { kind: 'SEAT' } },
+					{
+						orderLineId: 'line-1',
+						productId: 'p1',
+						variantId: 'v1',
+						quantity: 2,
+						entitlement: { kind: 'SEAT' }
+					},
 					{ orderLineId: 'line-2', productId: 'p2', variantId: 'v2', quantity: 1 }
 				],
 				linesTotal: 2,
