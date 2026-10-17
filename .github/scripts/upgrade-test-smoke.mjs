@@ -10,6 +10,7 @@
  *   E2E_EMAIL       the super admin's e-mail
  *   E2E_PASSWORD    its password
  *   SMOKE_COMMERCE  "true" adds the GraphQL checks (the before image is develop's: no commerce schema)
+ *   SMOKE_GET_PATHS optional, comma-separated GET routes (e.g. of the plugins a boot switched on) that must answer 200
  *   E2E_TIMEOUT_MS  default 30000, per request
  *
  * Prints one PASS/FAIL line per check; exits 0 only when every check passed.
@@ -20,6 +21,10 @@ const BASE = (process.env.BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '
 const EMAIL = process.env.E2E_EMAIL || '';
 const PASSWORD = process.env.E2E_PASSWORD || '';
 const COMMERCE = process.env.SMOKE_COMMERCE === 'true';
+const GET_PATHS = (process.env.SMOKE_GET_PATHS || '')
+	.split(',')
+	.map((path) => path.trim())
+	.filter((path) => path.startsWith('/'));
 const TIMEOUT_MS = Number(process.env.E2E_TIMEOUT_MS || 30_000);
 
 let failures = 0;
@@ -71,6 +76,17 @@ async function main() {
 	// The payload must be the super admin that signed in (UserController.findMe returns the User row).
 	const who = me.json?.email;
 	record('GET /api/user/me', me.status === 200 && who === EMAIL, me.status === 200 ? String(who) : brief(me));
+
+	// The routes of the plugins the boot switched on (the upgrade test's gated-plugins boot): each answers 200 to
+	// the super admin, so the plugin is loaded, its tables exist and its permissions were granted.
+	for (const path of GET_PATHS) {
+		const response = await call('GET', path, { token, tenantId });
+		record(
+			`GET ${path}`,
+			response.status === 200,
+			`HTTP ${response.status}${response.status === 200 ? '' : ` ${(response.text || '').slice(0, 160)}`}`
+		);
+	}
 
 	if (!COMMERCE) return;
 
