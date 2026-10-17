@@ -1,8 +1,9 @@
 /**
- * The REST doors of the cart that were looser than their GraphQL twins (R2-G17, R2-G25).
+ * The REST doors of the cart that were looser than their GraphQL twins (R2-G17, R2-G18, R2-G25).
  *
  * - `POST /carts/:id/abandon` asked `CARTS_EDIT` where `abandonCheckout` asks `CARTS_CHECKOUT` for the
  *   same `CommerceCartService.abandon` — both now state the checkout grant.
+ * - `DELETE /carts/:id` demanded no version where `deleteCart` demands one — both are versioned now.
  * - `PUT /carts/:id` wrote any `status` its body carried (a COMPLETED cart could be put back to ACTIVE);
  *   the `updateCart` input carries none. A differing status is now refused before anything is written.
  * - `POST /cart-lines` and `POST /cart-shipping-methods` wrote their row through the child's own
@@ -109,6 +110,7 @@ import { CommerceCartService } from './commerce-cart.service';
 import { CommerceCartLineController } from '../commerce-cart-line/commerce-cart-line.controller';
 import { CommerceCartShippingMethodController } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.controller';
 import { CommerceCheckoutSessionResolver } from '../graphql/commerce-checkout-session.resolver';
+import { CommerceCartResolver } from '../graphql/commerce-cart.resolver';
 
 const CART_ID = '00000000-0000-4000-8000-0000000000c1';
 
@@ -146,6 +148,20 @@ describe('R2-G17 — abandoning a cart asks the same grant over REST and GraphQL
 
 		expect(cartService.abandon).toHaveBeenNthCalledWith(1, CART_ID, EXPECTATION);
 		expect(cartService.abandon).toHaveBeenNthCalledWith(2, CART_ID, EXPECTATION);
+	});
+});
+
+describe('R2-G18 — deleting a cart is versioned on both protocols', () => {
+	it('states on DELETE /carts/:id the version requirement deleteCart states', () => {
+		const route = versioningOf(CommerceCartController, 'delete');
+		const field = versioningOf(CommerceCartResolver, 'deleteCart');
+
+		expect(field?.resource).toBe(CommerceCartService);
+		expect(route?.resource).toBe(field.resource);
+		// Required on both: neither states `required: false`, so a delete that names no version is a 428.
+		expect(route?.required ?? true).toBe(true);
+		expect(field?.required ?? true).toBe(true);
+		expect(grantOf(CommerceCartController, 'delete')).toEqual(grantOf(CommerceCartResolver, 'deleteCart'));
 	});
 });
 

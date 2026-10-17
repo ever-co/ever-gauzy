@@ -452,12 +452,20 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	 * `CARTS_VIEW` alone. Removing a cart is a `CARTS_DELETE` action, the same grant the `deleteCart`
 	 * mutation states.
 	 *
+	 * **Versioned, as `deleteCart` is (R2-G18).** A deletion is a write to a versioned record even though it
+	 * overwrites no column: the caller states in `If-Match` the version it read, and a cart that has moved on
+	 * since — a line added, a checkout completed — is refused (`409`) rather than removed from under the
+	 * change that moved it; no version is `428`. The mutation demanded its `version` argument and this route
+	 * demanded nothing, so the same act was guarded on one protocol only. The refusal is the guard's, before
+	 * the handler runs: a deletion has no update statement for a conditional write to predicate.
+	 *
 	 * @param id The cart.
 	 * @returns The result of the deletion.
 	 */
 	@ApiOperation({ summary: 'Delete a cart' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Cart deleted' })
 	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Versioned({ resource: CommerceCartService })
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
