@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DeepPartial, In, Like } from 'typeorm';
+import { In, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService, environment } from '@gauzy/config';
 import {
@@ -1067,6 +1067,11 @@ export class ZapierService {
 	 * @param refreshToken - The refresh token to store
 	 */
 	async storeTokens(integrationId: ID, accessToken: string, refreshToken: string): Promise<void> {
+		// The repository delete below is bounded by this id, so it must be set
+		if (!integrationId) {
+			throw new BadRequestException('Integration ID is required');
+		}
+
 		// Get existing settings
 		const existingSettings = await this._integrationSettingService.find({
 			where: {
@@ -1101,21 +1106,15 @@ export class ZapierService {
 			'oauth_access_token',
 			'oauth_refresh_token'
 		];
-		const staleTokens = existingSettings.filter((setting) => oauthTokenSettingNames.includes(setting.settingsName));
-		await Promise.all(
-			staleTokens
-				.map((s) => s.id)
-				.filter((id): id is string => id != null)
-				.map((id) => this._integrationSettingService.delete(id))
-		);
+		// The token endpoints are public, so there is no user for the tenant-aware delete and save:
+		// go through the repository, bounded by integration and tenant, as completeOAuthFlow does
+		await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
+			integrationId,
+			...(tenantId ? { tenantId } : {}),
+			settingsName: In(oauthTokenSettingNames)
+		});
 
-		const filteredExistingSettings = existingSettings.filter(
-			(setting) => !oauthTokenSettingNames.includes(setting.settingsName)
-		);
-
-		const allSettings = [...filteredExistingSettings, ...tokenSettings] as DeepPartial<IIntegrationEntitySetting>;
-
-		await this._integrationSettingService.save(allSettings);
+		await this._integrationSettingService.typeOrmIntegrationSettingRepository.save(tokenSettings);
 	}
 
 	/**
