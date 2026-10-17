@@ -39,12 +39,16 @@
 		"@nestjs/typeorm": "^12.0.2",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.15.1",
+		"mailparser": "^3.9.1",
+		"rxjs": "^7.8.2",
+		"sanitize-html": "^2.18.0",
 		"tslib": "^2.8.1",
 		"typeorm": "^1.1.2"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^26.6.5",
+		"@types/sanitize-html": "^2.16.2",
 		"typescript": "~6.0.3"
 	},
 	"keywords": [

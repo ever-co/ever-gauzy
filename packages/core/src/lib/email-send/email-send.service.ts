@@ -71,6 +71,8 @@ export interface IOutboundEmailResult {
 	rejected: string[];
 	/** `provider:<resolution source>` when a resolver's transport sent it, `smtp` for the SMTP chain. */
 	transport: string;
+	/** The provider's own id for the message, when its transport reports one (`info.providerMessageId`). */
+	providerMessageId?: string | null;
 }
 
 /** The addresses of a nodemailer result list (strings or `{ address }` objects). */
@@ -212,7 +214,8 @@ export class EmailSendService {
 			messageId: typeof info?.messageId === 'string' ? info.messageId : null,
 			accepted: addressesOf(info?.accepted),
 			rejected: addressesOf(info?.rejected),
-			transport: provided ? `provider:${provided.source}` : 'smtp'
+			transport: provided ? `provider:${provided.source}` : 'smtp',
+			providerMessageId: typeof info?.providerMessageId === 'string' ? info.providerMessageId : null
 		};
 	}
 

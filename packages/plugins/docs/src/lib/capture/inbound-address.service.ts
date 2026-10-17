@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
@@ -7,6 +7,8 @@ import {
 	DocumentInboundAddressKindEnum,
 	DocumentInboundDomainStatusEnum,
 	ID,
+	IInboundAddressNamespace,
+	INBOUND_ADDRESS_NAMESPACE,
 	IDocumentInboundAddressCreateInput,
 	IDocumentInboundAddressSecret,
 	IDocumentInboundAddressUpdateInput,
@@ -61,7 +63,15 @@ export class InboundAddressService implements IInboundAddressResolver {
 
 	constructor(
 		@InjectRepository(DocumentInboundAddress)
-		private readonly repository: Repository<DocumentInboundAddress>
+		private readonly repository: Repository<DocumentInboundAddress>,
+		/**
+		 * The Inbox's address namespace (present where the Inbox email features are on): an address is one namespace
+		 * across capture addresses and Inbox mailboxes (plan 04 §5.1), so a custom capture address an Inbox mailbox
+		 * already has is refused.
+		 */
+		@Optional()
+		@Inject(INBOUND_ADDRESS_NAMESPACE)
+		private readonly namespace?: IInboundAddressNamespace
 	) {}
 
 	/**
@@ -148,9 +158,27 @@ export class InboundAddressService implements IInboundAddressResolver {
 		if (platformDomain && (domain === platformDomain || domain.endsWith(`.${platformDomain}`))) {
 			throw new BadRequestException('That domain is reserved by the platform.');
 		}
+		// Nor the Inbox's platform mailbox domain (`GAUZY_INBOX_DOMAIN`), whose addresses the Inbox allocates.
+		if (this.namespace?.isReservedDomain?.(domain)) {
+			throw new BadRequestException('That domain is reserved by the platform.');
+		}
 
+		// The check and the save under the namespace's claim of the address (where the Inbox provides one), so an Inbox
+		// mailbox and a capture address for the same address are never both created.
+		const register = () => this.registerCustomDomain(tenantId, organizationId, input, domain, localPart, address);
+		return this.namespace?.claim ? this.namespace.claim(address, register) : register();
+	}
+
+	private async registerCustomDomain(
+		tenantId: ID,
+		organizationId: ID,
+		input: IDocumentInboundAddressCreateInput,
+		domain: string,
+		localPart: string,
+		address: string
+	): Promise<{ row: DocumentInboundAddress; secret: IDocumentInboundAddressSecret }> {
 		const clash = await this.repository.findOne({ where: { address } });
-		if (clash) {
+		if (clash || (await this.namespace?.isTaken(address))) {
 			throw new BadRequestException('That address is already registered.');
 		}
 

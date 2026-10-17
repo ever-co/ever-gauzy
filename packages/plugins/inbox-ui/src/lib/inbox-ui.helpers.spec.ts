@@ -9,6 +9,7 @@ import {
 	optionsOf,
 	replaceItem,
 	replyProblem,
+	routedNoticeOf,
 	snoozeUntil,
 	sourceLabelOf
 } from './inbox-ui.helpers';
@@ -111,5 +112,23 @@ describe('Inbox UI helpers', () => {
 			{ id: 'a', n: 1 },
 			{ id: 'b', n: 2 }
 		]);
+	});
+
+	it('says "Already decided in <source>" when the source had decided the item first, else where the reply went', () => {
+		const answered = (routed: string | null, source = 'EVER_WORKS') =>
+			({ source, response: { answeredByUserId: 'u1', answeredAt: '2026-10-17T00:00:00Z', routed } }) as never;
+		expect(routedNoticeOf(answered('already-decided'))).toEqual({
+			alreadyDecided: true,
+			source: 'INBOX.SOURCE.EVER_WORKS'
+		});
+		expect(routedNoticeOf(answered('already-decided', 'ACME'))).toEqual({ alreadyDecided: true, source: 'ACME' });
+		expect(routedNoticeOf(answered('already-decided', ''))).toEqual({
+			alreadyDecided: true,
+			source: 'INBOX.THE_SOURCE'
+		});
+		expect(routedNoticeOf(answered('resumed'))).toEqual({ alreadyDecided: false, routed: 'resumed' });
+		expect(routedNoticeOf(answered('local'))).toBeNull();
+		expect(routedNoticeOf(answered(null))).toBeNull();
+		expect(routedNoticeOf({ source: 'GAUZY', response: null } as never)).toBeNull();
 	});
 });
